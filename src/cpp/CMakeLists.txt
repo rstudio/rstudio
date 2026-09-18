@@ -242,8 +242,18 @@ if(UNIX)
          set(BOOST_FIND_OPTIONS NO_CMAKE_SYSTEM_PATH NO_SYSTEM_ENVIRONMENT_PATH)
       endif()
 
-      # FindBoost honored BOOST_ROOT, and CMP0144 has find_package do the same.
-      # set it for this call only: it changes where every package is looked for
+      # FindBoost honored BOOST_ROOT. find_package only does from CMake 3.27
+      # (CMP0144), so hand it over as Boost_ROOT for the versions before that
+      if(NOT DEFINED Boost_ROOT)
+         if(DEFINED BOOST_ROOT)
+            set(Boost_ROOT "${BOOST_ROOT}")
+         elseif(DEFINED ENV{BOOST_ROOT})
+            set(Boost_ROOT "$ENV{BOOST_ROOT}")
+         endif()
+      endif()
+
+      # set the policy too, so that newer versions don't warn about BOOST_ROOT;
+      # for this call only, as it changes where every package is looked for
       cmake_policy(PUSH)
       if(POLICY CMP0144)
          cmake_policy(SET CMP0144 NEW)
@@ -257,7 +267,7 @@ if(UNIX)
       if(NOT Boost_FOUND)
          message(FATAL_ERROR
             "Could not find Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} or newer with all of "
-            "the components RStudio needs; the warning above has the details.\n"
+            "the components RStudio needs; CMake's messages above may say why.\n"
             "Boost is found through the CMake package files it installs "
             "(<prefix>/lib/cmake/Boost-<version>/BoostConfig.cmake), not through "
             "CMake's FindBoost module. A Boost installed without them (b2 "
