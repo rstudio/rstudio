@@ -190,7 +190,7 @@ public class SessionOpener
    
    protected void waitForSessionRestart(Command onCompleted)
    {
-      sendPing(200, RESTART_TIMEOUT_MS, onCompleted);
+      sendPing(200, RESTART_TIMEOUT_MS, RESTART_LATE_ANSWER_GRACE_MS, onCompleted);
    }
    
    /**
@@ -205,11 +205,14 @@ public class SessionOpener
     *
     * @param delayMs interval between ping attempts.
     * @param timeoutMs how long to keep trying before giving up.
+    * @param lateGraceMs how long past the timeout an answered ping still
+    *    announces the restart.
     * @param onCompleted run exactly once: on an answered ping, or on timeout.
     */
    // package-private so SessionOpenerTests can drive it with its own budget
    void sendPing(int delayMs,
                  final int timeoutMs,
+                 final int lateGraceMs,
                  final Command onCompleted)
    {
       final long startMs = System.currentTimeMillis();
@@ -217,7 +220,6 @@ public class SessionOpener
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
          private boolean completed_ = false;
-         private boolean restartAnnounced_ = false;
          private boolean pingInFlight_ = false;
          
          @Override
@@ -254,8 +256,13 @@ public class SessionOpener
                   pingInFlight_ = false;
                   
                   // the session answered, so the restart really is done --
-                  // announce it even if the loop above already timed out
-                  announceRestartCompleted();
+                  // announce it even if the loop above already timed out, but
+                  // not so late that refocusing the console would pull the
+                  // user away from whatever they moved on to
+                  long elapsedMs = System.currentTimeMillis() - startMs;
+                  if (elapsedMs <= timeoutMs + lateGraceMs)
+                     pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
+
                   complete();
                }
                
@@ -270,15 +277,6 @@ public class SessionOpener
             
             // keep trying until completion is signaled
             return true;
-         }
-         
-         private void announceRestartCompleted()
-         {
-            if (restartAnnounced_)
-               return;
-
-            restartAnnounced_ = true;
-            pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
          }
          
          private void complete()
@@ -300,6 +298,11 @@ public class SessionOpener
    // session still has to restore the workspace and search path before it
    // services RPCs.
    private static final int RESTART_TIMEOUT_MS = 60000;
+
+   // How long past the timeout an answered ping still announces the restart.
+   // Announcing refocuses the console, which is unwelcome once the restart has
+   // been given up on and the user has moved on.
+   private static final int RESTART_LATE_ANSWER_GRACE_MS = 5000;
 
    // injected
    protected final Provider<Application> pApplication_;

@@ -49,7 +49,7 @@ public class SessionOpenerTests extends GWTTestCase
       events_.addHandler(ConsoleRestartRCompletedEvent.TYPE, event -> announced.add("announced"));
 
       List<String> completed = new ArrayList<>();
-      opener.sendPing(10, 5000, () -> completed.add("completed"));
+      opener.sendPing(10, 5000, 5000, () -> completed.add("completed"));
 
       delayTestFinish(30000);
       new Timer()
@@ -91,7 +91,7 @@ public class SessionOpenerTests extends GWTTestCase
       events_.addHandler(ConsoleRestartRCompletedEvent.TYPE, event -> announced.add("announced"));
 
       List<String> completed = new ArrayList<>();
-      opener.sendPing(10, 100, () -> completed.add("completed"));
+      opener.sendPing(10, 100, 5000, () -> completed.add("completed"));
 
       delayTestFinish(30000);
       new Timer()
@@ -109,6 +109,36 @@ public class SessionOpenerTests extends GWTTestCase
 
             server.succeedAll();
             assertEquals("late ping did not announce the restart", 1, announced.size());
+            assertEquals("late ping completed the wait twice", 1, completed.size());
+            finishTest();
+         }
+      }.schedule(1000);
+   }
+
+   // Announcing a restart refocuses the console, so an answer that arrives
+   // well after we gave up must not pull the user back to it.
+   public void testAnswerPastTheGracePeriodIsIgnored()
+   {
+      PingServer server = new PingServer();
+      SessionOpener opener = createOpener(server);
+
+      List<String> announced = new ArrayList<>();
+      events_.addHandler(ConsoleRestartRCompletedEvent.TYPE, event -> announced.add("announced"));
+
+      List<String> completed = new ArrayList<>();
+      opener.sendPing(10, 100, 100, () -> completed.add("completed"));
+
+      delayTestFinish(30000);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            assertEquals("timed-out wait did not complete", 1, completed.size());
+            assertEquals("expected the timed-out ping to be outstanding", 1, server.pending_.size());
+
+            server.succeedAll();
+            assertEquals("announced a restart long after giving up", 0, announced.size());
             assertEquals("late ping completed the wait twice", 1, completed.size());
             finishTest();
          }
