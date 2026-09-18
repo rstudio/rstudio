@@ -105,6 +105,7 @@ public:
    void setRequestTimeout(const boost::posix_time::time_duration&) override {}
    void execute(const ResponseHandler&, const ErrorHandler&, const FixedBufferHandler&) override {}
    void setFixedBufferHandler(const FixedBufferHandler&) override {}
+   void setResponseHeadersHandler(const ResponseHeadersHandler&) override {}
    void setStreamNonChunkedResponses(bool) override {}
    void setBufferPredicate(const boost::function<bool(const http::Response&)>&) override {}
    void setFixedBufferHandlerSupportsPause(bool) override {}
