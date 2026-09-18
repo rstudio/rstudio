@@ -55,14 +55,17 @@ endif()
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
 
-# enable c++17
+# enable c++17, with GNU extensions. CMAKE_CXX_STANDARD (cmake/compiler.cmake)
+# asks for the same, but CMake leaves its -std=gnu++17 out when that is already
+# the compiler's default (CMP0128); a plain -std=c++17 here would then be the
+# only such flag, and turn the extensions off
 if(NOT MSVC)
    include(CheckCXXCompilerFlag)
-   CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+   CHECK_CXX_COMPILER_FLAG("-std=gnu++17" COMPILER_SUPPORTS_CXX17)
    if(NOT COMPILER_SUPPORTS_CXX17)
       message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
    else()
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
    endif()
 endif()
 
