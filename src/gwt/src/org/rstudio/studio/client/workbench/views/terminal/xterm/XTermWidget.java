@@ -173,6 +173,12 @@ public class XTermWidget extends Widget
    protected void onUnload()
    {
       super.onUnload();
+
+      // a link hovered as the terminal goes away never hears about the mouse
+      // leaving, so say so here rather than leave this widget referenced
+      if (terminalEmulatorLoaded())
+         terminal_.disposeFileLinkProvider();
+
       if (initialized_)
       {
          initialized_ = false;

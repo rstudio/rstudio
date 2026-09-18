@@ -61,6 +61,102 @@ var POSITION_PATTERNS = [
 
 var CLOSERS = { ")": "(", "]": "[", "}": "{", ">": "<" };
 
+// Links are only decorated -- and only activate -- while the platform's
+// open-link modifier is held, so hovering ordinary output does not light up
+// every word that happens to name a file. xterm reads a link's decorations
+// when a hover begins and then swaps in live accessors of its own, so the
+// state at hover time comes from a getter and later changes are written
+// through xterm's object (Linkifier._handleNewLink, read from @xterm/xterm
+// 6.0.0 -- the version pinned in src/gwt/tools/build-xterm). Only one link is
+// ever hovered, so one tracker serves every terminal; it records the owning
+// provider too, so a terminal torn down mid-hover can let go of its link.
+var modifier = {
+   isMac: false,
+   held: false,
+   link: null,
+   owner: null
+};
+
+function hasModifier(event)
+{
+   return modifier.isMac ? !!event.metaKey : !!event.ctrlKey;
+}
+
+function forgetHoveredLink()
+{
+   modifier.link = null;
+   modifier.owner = null;
+}
+
+function setModifierHeld(held)
+{
+   if (modifier.held === held)
+      return;
+
+   modifier.held = held;
+
+   // writing through the accessors xterm installed repaints the hovered link
+   var link = modifier.link;
+   if (link && link.decorations)
+   {
+      link.decorations.pointerCursor = held;
+      link.decorations.underline = held;
+   }
+}
+
+// The decorations xterm reads when a hover begins; getters, because the
+// modifier may have been pressed or released since the link was built. Writes
+// are ignored: xterm owns the decorations once the hover has started.
+function createDecorations()
+{
+   var property = {
+      configurable: true,
+      enumerable: true,
+      get: function() { return modifier.held; },
+      set: function() {}
+   };
+
+   var decorations = {};
+   Object.defineProperty(decorations, "pointerCursor", property);
+   Object.defineProperty(decorations, "underline", property);
+   return decorations;
+}
+
+// Watch the modifier, so a hovered link lights up as soon as it is pressed and
+// goes dark when it is released. Key events only arrive while this document
+// has focus, so the terminal's own mouse events -- which carry the modifier
+// state -- are consulted as well; that also covers moving into the terminal
+// with the modifier already down.
+function trackModifier(element, isMac)
+{
+   modifier.isMac = isMac;
+
+   if (element)
+   {
+      element.addEventListener("mousemove", function(event) {
+         setModifierHeld(hasModifier(event));
+      }, true);
+   }
+
+   // the key listeners are shared by every terminal in the document
+   var ownerDocument = element && element.ownerDocument;
+   if (!ownerDocument || ownerDocument.rstudioFileLinkModifier_)
+      return;
+
+   ownerDocument.rstudioFileLinkModifier_ = true;
+   ownerDocument.addEventListener("keydown", function(event) {
+      setModifierHeld(hasModifier(event));
+   }, true);
+   ownerDocument.addEventListener("keyup", function(event) {
+      setModifierHeld(hasModifier(event));
+   }, true);
+
+   // a release that happens while another window has focus is never delivered
+   var view = ownerDocument.defaultView;
+   if (view)
+      view.addEventListener("blur", function() { setModifierHeld(false); });
+}
+
 function FileLinkProvider(terminal, host)
 {
    this._terminal = terminal;
@@ -69,6 +165,8 @@ function FileLinkProvider(terminal, host)
    this._cacheGeneration = 0;
    this._cache = {};
    this._cacheKeys = [];
+
+   trackModifier(terminal.element, !!host.isMac);
 }
 
 FileLinkProvider.prototype.provideLinks = function(bufferLineNumber, callback)
@@ -146,24 +244,47 @@ FileLinkProvider.prototype._createLink = function(range, match, path)
    var self = this;
    var cacheGeneration = this._cacheGeneration;
    var host = this._host;
-   return {
+   var link = {
       range: range,
       text: match.text,
+      decorations: createDecorations(),
       activate: function(event) {
          if (event.button !== 0 || cacheGeneration !== self._cacheGeneration)
             return;
-         var modifierHeld = host.isMac ? event.metaKey : event.ctrlKey;
-         if (!modifierHeld)
+
+         if (!hasModifier(event))
             return;
+
          host.open(path, match.line, match.column);
       },
       hover: function() {
+         modifier.link = link;
+         modifier.owner = self;
          host.hover(path);
       },
       leave: function() {
+         if (modifier.link === link)
+            forgetHoveredLink();
+
+         // put our own decorations back, so a later hover of this same link
+         // consults the modifier again rather than xterm's remembered state
+         link.decorations = createDecorations();
          host.leave();
       }
    };
+
+   return link;
+};
+
+// A terminal can be torn down with a link still hovered: xterm's linkifier
+// does not call leave() when it is disposed, and an element detached from the
+// document gets no mouseleave either. The hovered link closes over the
+// provider and the host widget, so without this the dead terminal would be
+// kept alive until some other link happened to be hovered.
+FileLinkProvider.prototype.dispose = function()
+{
+   if (modifier.owner === this)
+      forgetHoveredLink();
 };
 
 FileLinkProvider.prototype.clearCache = function()
