@@ -61,9 +61,6 @@ cd "${SOCI_DIR}"
 mkdir -p "$SOCI_BIN_DIR"
 cd "$SOCI_BIN_DIR"
 
-# create symlink to our boost datetime library so it is properly discovered by the SOCI build
-ln -nfs "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
-
 # set compilation visibility
 if [[ "$OSTYPE" = "darwin"* ]]; then
    COMPILE_VISIBILITY="hidden"
@@ -92,23 +89,29 @@ if [[ "$OSTYPE" = "darwin"* ]]; then
    export POSTGRESQL_ROOT="${HOMEBREW_PREFIX}/opt/libpq"
 fi
 
+# SOCI's Boost lookup is optional and quiet: on a miss it would build without
+# Boost, or against a system Boost (which lacks our namespace), and not say so
+BOOST_CMAKE_DIR="$BOOST_DIR/lib/cmake/Boost-${BOOST_VERSION//_/.}"
+if ! [ -f "$BOOST_CMAKE_DIR/BoostConfig.cmake" ]; then
+   echo "Boost CMake package not found at '$BOOST_CMAKE_DIR'; run install-boost first" >&2
+   exit 1
+fi
+
+# SOCI's find_package(Boost) goes through CMake's deprecated FindBoost module
+# unless CMP0167 is NEW (CMake 3.30+); either way, Boost_DIR points it
+# straight at our Boost's BoostConfig.cmake, with no search to go astray
 "${CMAKE}" -G"${CMAKE_GENERATOR}"                      \
    -DCMAKE_POLICY_DEFAULT_CMP0063="NEW"                \
    -DCMAKE_POLICY_DEFAULT_CMP0074="NEW"                \
+   -DCMAKE_POLICY_DEFAULT_CMP0167="NEW"                \
    -DCMAKE_POLICY_VERSION_MINIMUM=3.5                  \
    -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true         \
    -DCMAKE_CXX_VISIBILITY_PRESET="$COMPILE_VISIBILITY" \
    -DSOCI_TESTS=OFF                                    \
    -DSOCI_CXX11=ON                                     \
    -DSOCI_EMPTY=OFF                                    \
-   -DBoost_NO_SYSTEM_PATHS=1                           \
-   -DBOOST_ROOT="$BOOST_DIR"                           \
-   -DBOOST_INCLUDE_DIRS="$BOOST_DIR/include"           \
-   -DBOOST_LIBRARY_DIRS="$BOOST_DIR/lib"               \
+   -DBoost_DIR="$BOOST_CMAKE_DIR"                      \
    -DBoost_USE_STATIC_LIBS=ON                          \
-   -DBoost_DEBUG=1                                     \
-   -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include"           \
-   -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib"               \
    -DWITH_BOOST=ON                                     \
    -DWITH_POSTGRESQL=ON                                \
    -DWITH_SQLITE3=ON                                   \
