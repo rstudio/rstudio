@@ -7,7 +7,7 @@ therefore likely to only correctly configure and build on more recent Linux
 systems. Specific version requirements for various components include:
 
 - R 3.6.0
-- CMake 3.19.8 or newer
+- CMake 3.25 or newer
 - Boost 1.91.0
 - patchelf 0.9 [Required only for Desktop]
 

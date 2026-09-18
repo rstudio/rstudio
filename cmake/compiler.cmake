@@ -72,6 +72,11 @@ if(MSVC)
   # assume sources are utf-8
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 
+  # CMake no longer adds a default warning level; keep the /W3 it used to add
+  if(NOT CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
+  endif()
+
   # disable C4800 warning; this is very noisy, rarely useful, and was completely removed
   # in Visual Studio 2017 (we're currently using VS 2015).
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4800")
@@ -91,27 +96,26 @@ if(MSVC)
 
   # embed debug information into the generated objects
   # (otherwise we can run into annoying PDB errors during compilation)
-  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
 
-  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-
-  # ensure that we're using linker flags compatible with
+  # ensure that we're using a runtime library compatible with
   # the version of Boost that will be linked in
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
      set(ITERATOR_DEBUG_LEVEL 0)
-     set(LINKER_FLAG "/MD")
+     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
   else()
      set(ITERATOR_DEBUG_LEVEL 2)
      add_definitions(-D_DEBUG)
-     set(LINKER_FLAG "/MDd")
+     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
   endif()
 
-  foreach(RELEASE_TYPE "" "_DEBUG" "_RELEASE" "_MINSIZEREL" "_RELWITHDEBINFO")
-    foreach(FLAG CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
-      string(REGEX REPLACE "/MDd?" "${LINKER_FLAG}" ${FLAG}${RELEASE_TYPE} "${${FLAG}${RELEASE_TYPE}}")
-    endforeach()
+  # CMake now adds the runtime library and debug information flags itself,
+  # from the variables above; drop the copies that build directories
+  # configured before we required CMake 3.25 still have in their cache.
+  # only CXX is enabled at this point: setting the C flag variables here
+  # would hide the defaults CMake gives C once src/cpp enables it
+  foreach(CONFIG DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
+    string(REGEX REPLACE "/(MDd?|Zi)" "" CMAKE_CXX_FLAGS_${CONFIG} "${CMAKE_CXX_FLAGS_${CONFIG}}")
   endforeach()
 
   # disable CMake's automatic manifest generation (we always provide our own)

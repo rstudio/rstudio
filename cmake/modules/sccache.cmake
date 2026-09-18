@@ -28,13 +28,13 @@ if(CCACHE_PROGRAM)
     # C1041 "cannot open program database" errors. Use embedded debug info (/Z7)
     # instead -- each object file carries its own symbols, no shared PDB needed.
     #
-    # Three layers, most-to-least reliable:
+    # compiler.cmake already selects /Z7 via CMAKE_MSVC_DEBUG_INFORMATION_FORMAT;
+    # two more layers cover what that misses:
     # 1. add_compile_options(/Z7) -- directory property, inherited by ALL
-    #    subdirectories including FetchContent subprojects (libgit2, pcre, ...).
+    #    subdirectories including FetchContent subprojects (libgit2, pcre, ...)
+    #    that write /Zi into their own flags.
     # 2. CACHE FORCE on per-config flag variables -- strips /Zi so it doesn't
     #    appear alongside /Z7 in the final command line.
-    # 3. CMP0141 (CMake 3.25+) -- tells CMake to stop managing debug-info flags
-    #    through the flags variables entirely; uses target properties instead.
     if(MSVC)
         add_compile_options(/Z7)
         foreach(_lang C CXX)
@@ -46,10 +46,6 @@ if(CCACHE_PROGRAM)
                 endif()
             endforeach()
         endforeach()
-        if(POLICY CMP0141)
-            cmake_policy(SET CMP0141 NEW)
-            set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded" CACHE STRING "" FORCE)
-        endif()
     endif()
 endif()
 

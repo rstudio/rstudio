@@ -30,7 +30,6 @@ if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
    set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
 endif()
 
-cmake_policy(SET CMP0048 NEW)
 set(FETCHCONTENT_QUIET TRUE)
 set(CMAKE_WARN_DEPRECATED FALSE)
 
@@ -173,11 +172,7 @@ function(fetch)
 
       if(${_PREFIX}_ENABLED)
          if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
-            if(CMAKE_VERSION VERSION_GREATER "3.24")
-               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
-            else()
-               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
-            endif()
+            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
          else()
             set(${_PREFIX}_FETCHED TRUE)
 
@@ -265,6 +260,11 @@ set(USE_HTTPS OFF CACHE BOOL "" FORCE)
 set(USE_ICONV OFF CACHE BOOL "" FORCE)
 set(USE_NTLMCLIENT OFF CACHE BOOL "" FORCE)
 set(USE_BUNDLED_ZLIB OFF CACHE BOOL "" FORCE)
+
+# libgit2 defaults to the static CRT with MSVC, and writes its CRT flag into
+# its own compiler flags; use the DLL runtime that the rest of the build uses
+# (CMAKE_MSVC_RUNTIME_LIBRARY, see cmake/compiler.cmake), so the two agree
+set(STATIC_CRT OFF CACHE BOOL "" FORCE)
 
 # Choose libgit2's regex backend. On Windows we use the bundled PCRE ("builtin"),
 # matching libgit2's own auto-detected default there. On Unix we use the libc
