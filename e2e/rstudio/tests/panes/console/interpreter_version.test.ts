@@ -4,7 +4,6 @@ import { restartSessionWithSentinel } from '@utils/project';
 
 const INTERPRETER_VERSION = '#rstudio_console_interpreter_version_tabbed';
 const RVERSION_RPC = /\/rpc\/get_rversion_info(?:\?|$)/;
-const PING_RPC = /\/rpc\/ping(?:\?|$)/;
 
 test.describe('Console interpreter version', () => {
   test('uses session info at startup without requesting the R version', async ({ rstudioPage: page }) => {
@@ -36,16 +35,6 @@ test.describe('Console interpreter version', () => {
     const label = page.locator(INTERPRETER_VERSION);
     const refreshedVersion = await page.evaluate(() => `R ${window.rstudio!.version.rstudio}`);
     await expect(label).not.toHaveText(refreshedVersion);
-
-    // A restart's completion ping can otherwise hit the old process while it
-    // shuts down, preventing ConsoleRestartRCompletedEvent from being fired.
-    await page.route(PING_RPC, async (route) => {
-      await page.waitForFunction(() => window.rstudio?.ready === true, null, {
-        timeout: TIMEOUTS.sessionRestart,
-        polling: 50,
-      });
-      await route.continue();
-    });
 
     let releaseRpc = () => {};
     const rpcHeld = new Promise<void>((resolve) => (releaseRpc = resolve));
@@ -88,7 +77,6 @@ test.describe('Console interpreter version', () => {
     } finally {
       releaseRpc();
       await page.unroute(RVERSION_RPC);
-      await page.unroute(PING_RPC);
       // Remove the synthetic cached version before the worker's next test.
       await page.reload();
       await page.waitForFunction(() => window.rstudio?.ready === true, null, {

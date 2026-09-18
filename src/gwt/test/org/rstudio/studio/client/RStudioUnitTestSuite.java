@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
+import org.rstudio.studio.client.workbench.model.SessionOpenerTests;
 import org.rstudio.studio.client.workbench.model.SessionTests;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsTests;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponseTests;
@@ -79,6 +80,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(TextCursorTests.class);
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(SessionTests.class);
+      suite.addTestSuite(SessionOpenerTests.class);
       suite.addTestSuite(WorkbenchListManagerTests.class);
       suite.addTestSuite(ErrorManagerTests.class);
       suite.addTestSuite(JobsListTests.class);
