@@ -247,7 +247,7 @@ if(UNIX)
       if(NOT DEFINED Boost_ROOT)
          if(DEFINED BOOST_ROOT)
             set(Boost_ROOT "${BOOST_ROOT}")
-         elseif(DEFINED ENV{BOOST_ROOT})
+         elseif(DEFINED ENV{BOOST_ROOT} AND NOT DEFINED ENV{Boost_ROOT})
             set(Boost_ROOT "$ENV{BOOST_ROOT}")
          endif()
       endif()
@@ -265,6 +265,11 @@ if(UNIX)
 
       # not REQUIRED above, so that we can say more than CMake's generic error
       if(NOT Boost_FOUND)
+         set(BOOST_SYSTEM_PATHS_NOTE "")
+         if(NOT RSTUDIO_USE_SYSTEM_BOOST)
+            set(BOOST_SYSTEM_PATHS_NOTE "The system locations were not searched; use -DRSTUDIO_USE_SYSTEM_BOOST=1 to build against a system Boost.\n")
+         endif()
+
          message(FATAL_ERROR
             "Could not find Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} or newer with all of "
             "the components RStudio needs; CMake's messages above may say why.\n"
@@ -273,6 +278,7 @@ if(UNIX)
             "CMake's FindBoost module. A Boost installed without them (b2 "
             "--no-cmake-config, or a distribution package that leaves them out) "
             "cannot be used.\n"
+            "${BOOST_SYSTEM_PATHS_NOTE}"
             "Set Boost_ROOT or BOOST_ROOT to the prefix of a suitable Boost, or run "
             "dependencies/common/install-boost to build the copy RStudio normally uses.")
       endif()
