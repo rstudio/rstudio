@@ -198,30 +198,35 @@ if(GWT_COPY)
    # directory need not be the repository root (e.g. cmake -S src)
    get_filename_component(GZIP_HELPER_SCRIPT
       "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/gzip-file.cmake" ABSOLUTE)
-   install(CODE "
+
+   # the code below runs at install time. it is a bracket argument, so it
+   # needs no escaping: only the @VAR@ references are filled in now, and the
+   # ${VAR} references are left for the install script
+   string(CONFIGURE [[
       # resolve symlinks (the folder exists by install time): the helper
       # runs with this directory as its working directory, and
       # file(ARCHIVE_CREATE) misresolves paths from symlinked directories
       get_filename_component(SYMBOL_MAPS_SOURCE_DIR
-         \"${GWT_EXTRAS_ABSOLUTE_DIR}/rstudio/symbolMaps\" REALPATH)
-      set(SYMBOL_MAPS_DIR \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps\")
-      file(MAKE_DIRECTORY \"\${SYMBOL_MAPS_DIR}\")
-      file(GLOB SYMBOL_MAPS \"\${SYMBOL_MAPS_SOURCE_DIR}/*.symbolMap\")
-      foreach(SYMBOL_MAP \${SYMBOL_MAPS})
-         get_filename_component(SYMBOL_MAP_NAME \"\${SYMBOL_MAP}\" NAME)
-         message(STATUS \"Compressing: \${SYMBOL_MAP_NAME}\")
+         "@GWT_EXTRAS_ABSOLUTE_DIR@/rstudio/symbolMaps" REALPATH)
+      set(SYMBOL_MAPS_DIR "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@RSTUDIO_INSTALL_SUPPORTING@/www-symbolmaps")
+      file(MAKE_DIRECTORY "${SYMBOL_MAPS_DIR}")
+      file(GLOB SYMBOL_MAPS "${SYMBOL_MAPS_SOURCE_DIR}/*.symbolMap")
+      foreach(SYMBOL_MAP ${SYMBOL_MAPS})
+         get_filename_component(SYMBOL_MAP_NAME "${SYMBOL_MAP}" NAME)
+         message(STATUS "Compressing: ${SYMBOL_MAP_NAME}")
          execute_process(
-            COMMAND \"\${CMAKE_COMMAND}\"
-               \"-DINPUT=\${SYMBOL_MAP_NAME}\"
-               \"-DOUTPUT=\${SYMBOL_MAPS_DIR}/\${SYMBOL_MAP_NAME}.gz\"
-               -P \"${GZIP_HELPER_SCRIPT}\"
-            WORKING_DIRECTORY \"\${SYMBOL_MAPS_SOURCE_DIR}\"
+            COMMAND "${CMAKE_COMMAND}"
+               "-DINPUT=${SYMBOL_MAP_NAME}"
+               "-DOUTPUT=${SYMBOL_MAPS_DIR}/${SYMBOL_MAP_NAME}.gz"
+               -P "@GZIP_HELPER_SCRIPT@"
+            WORKING_DIRECTORY "${SYMBOL_MAPS_SOURCE_DIR}"
             RESULT_VARIABLE GZIP_RESULT)
          if(NOT GZIP_RESULT EQUAL 0)
-            message(FATAL_ERROR \"Failed to compress \${SYMBOL_MAP_NAME}\")
+            message(FATAL_ERROR "Failed to compress ${SYMBOL_MAP_NAME}")
          endif()
       endforeach()
-   ")
+   ]] SYMBOL_MAPS_INSTALL_CODE @ONLY)
+   install(CODE "${SYMBOL_MAPS_INSTALL_CODE}")
 
 endif()
 
