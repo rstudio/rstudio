@@ -61,6 +61,10 @@ struct Dependency
 // once. Exposed for testing.
 std::string buildCombinedInstallScript(const std::vector<Dependency>& deps);
 
+// Builds a script which raises an R error if any of the dependencies are not
+// installed, or are older than required. Exposed for testing.
+std::string buildVerifyInstallScript(const std::vector<Dependency>& deps);
+
 core::Error initialize();
 
 } // namespace dependencies
