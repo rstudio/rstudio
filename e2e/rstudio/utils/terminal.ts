@@ -5,7 +5,7 @@
 // moves focus away from the terminal; use focusTerminal() before typing.
 
 import type { Page } from 'playwright';
-import { expect } from '@fixtures/rstudio.fixture';
+import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
@@ -74,4 +74,47 @@ export async function openTerminal(page: Page): Promise<void> {
     .toBe('TRUE');
 
   await focusTerminal(page);
+}
+
+/**
+ * Run `input` -- keystrokes that submit one or more shell commands at the
+ * focused terminal -- then `landed`, which must throw until their effect is
+ * observable. If it never is, interrupt the prompt and do both once more.
+ *
+ * A keystroke typed while the pty is being resized can be lost. Seen on
+ * Windows CI (ConPTY + MSYS bash): "echo" arrived as "cho" and "expr 1 + 1"
+ * as "expr 1+ 1", each within ~50ms of a process_set_size RPC. A resize tends
+ * to land just as a test starts typing: a hidden terminal is not re-fit, so
+ * a size change that comes up while openTerminal() has the Console tab
+ * selected is sent when the Terminal tab is shown again, and switching
+ * terminal_renderer re-fits too. Nothing signals that the shell is done
+ * handling a resize, so detect the loss rather than trying to wait it out.
+ * The size has settled by the second attempt.
+ *
+ * The commands must be safe to submit twice. A retry is recorded as a test
+ * annotation so that lost input stays visible in the report.
+ */
+export async function retryTerminalInput(
+  page: Page,
+  input: () => Promise<void>,
+  landed: () => Promise<void>,
+): Promise<void> {
+  await input();
+
+  try {
+    await landed();
+    return;
+  } catch (error) {
+    test.info().annotations.push({
+      type: 'terminal-input-retry',
+      description: error instanceof Error ? error.message.split('\n')[0] : String(error),
+    });
+  }
+
+  // `landed` may have driven the R console; Ctrl+C discards whatever is left
+  // of the first attempt on the command line.
+  await focusTerminal(page);
+  await page.keyboard.press('Control+C');
+  await input();
+  await landed();
 }
