@@ -16,6 +16,7 @@
 #include "SessionUriHandlers.hpp"
 
 #include <session/SessionConstants.hpp>
+#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 
@@ -25,7 +26,8 @@ namespace uri_handlers {
 
 http::UriHandlers& handlers()
 {
-   static http::UriHandlers instance;
+   // leaked: consulted by the http listener thread on every request (#18318)
+   static http::UriHandlers& instance = core::make_leaked<http::UriHandlers>();
    return instance;
 }
 

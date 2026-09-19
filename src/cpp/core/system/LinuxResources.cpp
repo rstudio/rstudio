@@ -15,6 +15,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/Algorithm.hpp>
@@ -909,9 +910,12 @@ std::string getMemoryCgroup(uid_t uid)
 // Factory for memory provider instantiation
 boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider(bool writeLimit, uid_t uid)
 {
-   static boost::mutex s_mutex;
-   static boost::shared_ptr<LinuxMemoryProvider> s_readLimitProvider;
-   static boost::shared_ptr<LinuxMemoryProvider> s_writeLimitProvider;
+   // leaked: memory usage is queried from the offline service thread (#18318)
+   static boost::mutex& s_mutex = core::make_leaked<boost::mutex>();
+   static boost::shared_ptr<LinuxMemoryProvider>& s_readLimitProvider =
+         core::make_leaked<boost::shared_ptr<LinuxMemoryProvider>>();
+   static boost::shared_ptr<LinuxMemoryProvider>& s_writeLimitProvider =
+         core::make_leaked<boost::shared_ptr<LinuxMemoryProvider>>();
 
    // Return memory provider if we have one
    if (writeLimit && s_writeLimitProvider)

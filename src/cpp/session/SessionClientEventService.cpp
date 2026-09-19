@@ -33,6 +33,7 @@
 #include <session/SessionClientEventService.hpp>
 
 #include "SessionClientEventQueue.hpp"
+#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -60,7 +61,8 @@ bool hasEventIdLessThanOrEqualTo(const json::Value& event, int targetId)
 
 ClientEventService& clientEventService()
 {
-   static ClientEventService instance;
+   // leaked: the service thread is not stopped in desktop mode (#18318)
+   static ClientEventService& instance = core::make_leaked<ClientEventService>();
    return instance;
 }
 

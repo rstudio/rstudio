@@ -32,6 +32,7 @@
 #include "modules/SessionReticulate.hpp"
 
 #include "SessionConsoleProcessTable.hpp"
+#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -42,7 +43,9 @@ namespace console_process {
 
 namespace {
 
-ConsoleProcessSocket s_terminalSocket;
+// leaked: used from the websocket thread; destroying it would also join that
+// thread, without a timeout, in the middle of static teardown (#18318)
+ConsoleProcessSocket& s_terminalSocket = core::make_leaked<ConsoleProcessSocket>();
 
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";

@@ -30,6 +30,7 @@
 #include <r/RJson.hpp>
 #include <r/RJsonRpc.hpp>
 #include <r/RRoutines.hpp>
+#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -41,7 +42,8 @@ namespace {
 // a delay used when processing RPC methods (used to simulate network latency)
 int s_rpcDelayMs = -1;
 
-std::set<std::string> s_offlineableUris;
+// leaked: read by the offline service and http listener threads (#18318)
+std::set<std::string>& s_offlineableUris = core::make_leaked<std::set<std::string>>();
 
 // json rpc methods
 core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = nullptr;

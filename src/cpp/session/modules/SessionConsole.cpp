@@ -33,6 +33,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "rmarkdown/SessionRmdNotebook.hpp"
+#include <shared_core/Memory.hpp>
 
 #define kMinConsoleLines 10
 
@@ -80,7 +81,8 @@ boost::regex suppressOutputRegex()
 
 bool suppressOutput(const std::string& output)
 {
-   static boost::regex reTokens = suppressOutputRegex();
+   // leaked: read by the output capture thread, which is never stopped (#18318)
+   static boost::regex& reTokens = core::make_leaked<boost::regex>(suppressOutputRegex());
    return boost::regex_search(output, reTokens);
 }
 

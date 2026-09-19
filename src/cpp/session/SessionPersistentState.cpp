@@ -30,6 +30,8 @@
 #include <server_core/UrlPorts.hpp>
 #endif
 
+#include <shared_core/Memory.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -42,7 +44,8 @@ const char * const kAbend = "abend";
    
 PersistentState& persistentState()
 {
-   static PersistentState instance;
+   // leaked: read by the offline service thread (#18318)
+   static PersistentState& instance = core::make_leaked<PersistentState>();
    return instance;
 }
    

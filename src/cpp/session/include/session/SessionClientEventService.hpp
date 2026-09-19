@@ -24,6 +24,7 @@
 #include <core/BoostThread.hpp>
 
 #include <core/json/JsonRpc.hpp>
+#include <shared_core/Memory.hpp>
 
 namespace rstudio {
 namespace core {
@@ -44,6 +45,8 @@ class ClientEventService : boost::noncopyable
 private:
    ClientEventService() {}
    friend ClientEventService& clientEventService();
+   template <typename T, typename... Args>
+   friend T& core::make_leaked(Args&&... args);
 
 public:
    // COPYING: boost::noncopyable

@@ -39,6 +39,7 @@
 #include <r/session/RBusy.hpp>
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
+#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 
@@ -58,7 +59,8 @@ std::atomic<int> s_rProcessingInput(0);
 std::atomic<int> s_sessionExecuting(0);
 
 // Controls access to s_sessionExecuting and the file system
-boost::mutex s_sessionExecutingMutex;
+// leaked: locked by the offline service thread (#18318)
+boost::mutex& s_sessionExecutingMutex = core::make_leaked<boost::mutex>();
 
 // last prompt we issued
 std::string s_lastPrompt;

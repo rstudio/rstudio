@@ -21,6 +21,7 @@
 
 #include <core/BoostThread.hpp>
 #include <shared_core/json/Json.hpp>
+#include <shared_core/Memory.hpp>
 
 namespace rstudio {
 namespace core {
@@ -53,6 +54,8 @@ class ConsoleActions : boost::noncopyable
 private:
    ConsoleActions();
    friend ConsoleActions& consoleActions();
+   template <typename T, typename... Args>
+   friend T& core::make_leaked(Args&&... args);
    
 public:
    int capacity() const;

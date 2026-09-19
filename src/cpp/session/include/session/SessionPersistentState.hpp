@@ -21,6 +21,7 @@
 #include <boost/utility.hpp>
 
 #include <core/Settings.hpp>
+#include <shared_core/Memory.hpp>
 
 namespace rstudio {
 namespace session {
@@ -34,6 +35,8 @@ class PersistentState : boost::noncopyable
 private:
    PersistentState() : serverMode_(false) {}
    friend PersistentState& persistentState();
+   template <typename T, typename... Args>
+   friend T& core::make_leaked(Args&&... args);
    
 public:
    // COPYING: boost::noncopyable
