@@ -29,6 +29,7 @@
 #include <core/text/AnsiCodeParser.hpp>
 
 #include <r/ROptions.hpp>
+#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 
@@ -45,7 +46,8 @@ const char * const kActionData = "data";
    
 ConsoleActions& consoleActions()
 {
-   static ConsoleActions instance;
+   // leaked: console output is flushed here from background threads (#18318)
+   static ConsoleActions& instance = core::make_leaked<ConsoleActions>();
    return instance;
 }
    

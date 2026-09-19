@@ -69,6 +69,7 @@
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
 #include "SessionGit.hpp"
+#include <shared_core/Memory.hpp>
 
 #ifdef BOOST_WINDOWS_API
 # define kEmptyString L""
@@ -1046,8 +1047,10 @@ struct UploadState
    FilePath tmpFile;
 };
 
-boost::mutex s_uploadMutex;
-std::map<const http::Request*, boost::shared_ptr<UploadState>> s_uploadStateMap;
+// leaked: uploads are handled on the http listener thread (#18318)
+boost::mutex& s_uploadMutex = core::make_leaked<boost::mutex>();
+std::map<const http::Request*, boost::shared_ptr<UploadState>>& s_uploadStateMap =
+      core::make_leaked<std::map<const http::Request*, boost::shared_ptr<UploadState>>>();
 
 void parseContentBuffer(const std::string& buffer,
                         const boost::shared_ptr<UploadState>& pUploadState)

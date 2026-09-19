@@ -34,6 +34,7 @@
 #include "SessionProjectFirstRun.hpp"
 #include "SessionProjectsInternal.hpp"
 #include "../modules/SessionTrust.hpp"
+#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 
@@ -43,7 +44,8 @@ namespace projects {
 
 namespace {
 
-ProjectContext s_projectContext;
+// leaked: the file monitor thread calls back into this for its filter (#18318)
+ProjectContext& s_projectContext = core::make_leaked<ProjectContext>();
 
 core::r_util::ProjectId s_projectId;
 

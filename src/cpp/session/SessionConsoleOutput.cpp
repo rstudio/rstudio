@@ -27,6 +27,7 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionConsoleOutput.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <shared_core/Memory.hpp>
 
 
 #define kNeverMatch "^(?!)$"
@@ -50,9 +51,10 @@ std::atomic<bool> s_isErrorAnnotationEnabled;
 std::atomic<bool> s_isWarningAnnotationEnabled;
 std::atomic<bool> s_isMessageAnnotationEnabled;
 
-boost::regex s_reErrorPrefix(kNeverMatch);
-boost::regex s_reWarningPrefix(kNeverMatch);
-boost::regex s_reInAdditionPrefix(kNeverMatch);
+// leaked: console output is annotated on background threads (#18318)
+boost::regex& s_reErrorPrefix = core::make_leaked<boost::regex>(kNeverMatch);
+boost::regex& s_reWarningPrefix = core::make_leaked<boost::regex>(kNeverMatch);
+boost::regex& s_reInAdditionPrefix = core::make_leaked<boost::regex>(kNeverMatch);
 
 void synchronize()
 {

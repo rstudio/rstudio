@@ -48,6 +48,7 @@
 #include <session/projects/SessionProjectSharing.hpp>
 
 #include "session-config.h"
+#include <shared_core/Memory.hpp>
 
 #ifdef _WIN32
 # define kPandocExe "pandoc.exe"
@@ -94,7 +95,8 @@ void ensureDefaultDirectory(std::string* pDirectory,
 
 Options& options()
 {
-   static Options instance;
+   // leaked: read by the http listener and other threads, which can outlive exit() (#18318)
+   static Options& instance = core::make_leaked<Options>();
    return instance;
 }
 
