@@ -439,6 +439,33 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
    return cmd;
 }
 
+std::string buildVerifyInstallScript(const std::vector<Dependency>& deps)
+{
+   std::vector<std::string> required;
+   for (const Dependency& dep : deps)
+      required.push_back("'" + dep.name + "' = '" + dep.version + "'");
+
+   std::string script = "local({\n";
+   script += "   required <- c(" + boost::algorithm::join(required, ", ") + ")\n";
+   script += R"EOF(   failed <- character()
+   for (pkg in names(required)) {
+      installed <- tryCatch(utils::packageVersion(pkg), error = function(e) NULL)
+      satisfied <- !is.null(installed) && (
+         !nzchar(required[[pkg]]) ||
+         tryCatch(installed >= required[[pkg]], error = function(e) TRUE)
+      )
+      if (!satisfied)
+         failed <- c(failed, pkg)
+   }
+   if (length(failed) > 0)
+      stop("Failed to install ", paste0("'", failed, "'", collapse = ", "), call. = FALSE)
+})
+
+)EOF";
+
+   return script;
+}
+
 namespace {
 
 // Builds an installation script which will install the packages one at a time. This is desirable
@@ -621,8 +648,13 @@ Error installDependencies(const json::JsonRpcRequest& request,
       script += buildCombinedInstallScript(deps);
    }
 
-   // Emit a message indicating that we're done. The script aborts on error, so if we get here we
-   // can presume everything installed successfully.
+   // install.packages() reports a failed installation as a warning, not an error, so the script
+   // would otherwise carry on and claim success. Check the outcome, and abort if anything is
+   // missing so that the job is reported as failed.
+   script += buildVerifyInstallScript(deps);
+
+   // Emit a message indicating that we're done. The verification above aborts the script on
+   // failure, so if we get here everything installed successfully.
    script += "message('\\n\\n\\u2714 ";  // Heavy checkmark
    if (deps.size() < 2) 
       script += "Package \\'" + deps[0].name + "\\' successfully installed.";
