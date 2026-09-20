@@ -420,18 +420,29 @@ export class ChatPaneActions {
    *
    * A turn that ends with Posit AI reporting a failure on its side skips the
    * test (see skipIfProviderFailed), unless that failure was already showing
-   * when the poll began: it then belongs to a turn that had ended -- the
-   * previous one, when sendChatMessage waits it out before sending -- and the
-   * test about to send its own message should still get to try. A failure
-   * that is not skipped is looked at once; isDone and the timeout decide.
+   * when the poll began: it then belongs to a turn that had ended, not to the
+   * one being waited on. It is ignored only while it is still the last
+   * message -- a caller polling right after clicking send can get here before
+   * its own message has rendered, and the turn it started is still watched. A
+   * failure that is not skipped is looked at once; isDone and the timeout
+   * decide.
+   *
+   * `watchForProviderFailure: false` turns that off, for a wait on a turn the
+   * caller did not send (see sendChatMessage).
    */
   async pollWithAllowDialogs(
     isDone: () => Promise<boolean>,
     timeout: number = 120000,
-    answerQuestion?: RegExp | string
+    answerQuestion?: RegExp | string,
+    options: { watchForProviderFailure?: boolean } = {}
   ): Promise<void> {
     const deadline = Date.now() + timeout;
-    let watchForProviderFailure = providerFailure(await this.chatPane.lastMessageText()) === null;
+    let watchForProviderFailure = options.watchForProviderFailure ?? true;
+
+    // Count before text: a message landing between the two reads then counts
+    // as new, which errs toward watching it.
+    const initialCount = await this.chatPane.getMessageCount();
+    let staleFailure = providerFailure(await this.chatPane.lastMessageText()) !== null;
 
     while (Date.now() < deadline) {
       if (await this.chatPane.isPendingQuestionVisible()) {
@@ -473,7 +484,10 @@ export class ChatPaneActions {
 
       // A provider failure ends the turn short of whatever isDone waits for;
       // catch it here rather than after the full timeout.
-      if (watchForProviderFailure && (await this.skipIfProviderFailed())) {
+      if (staleFailure && (await this.chatPane.getMessageCount()) !== initialCount) {
+        staleFailure = false;
+      }
+      if (watchForProviderFailure && !staleFailure && (await this.skipIfProviderFailed())) {
         watchForProviderFailure = false;
       }
 
@@ -588,10 +602,15 @@ export class ChatPaneActions {
     // and a turn parked on an approval stays active until it is granted.
     // Wait the turn out here, before typing: the composer re-renders when the
     // turn ends, so text buffered into it beforehand does not survive.
+    //
+    // No provider-failure watch: waitForResponse can return with its turn
+    // still running, so the turn being waited out may be a previous test's,
+    // and its failing must not skip a test that has yet to send anything.
     await this.pollWithAllowDialogs(
       () => this.isTurnIdle(),
       60000,
-      answerQuestion
+      answerQuestion,
+      { watchForProviderFailure: false }
     );
 
     const baseline = await this.chatPane.getMessageCount();

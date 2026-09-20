@@ -1,12 +1,14 @@
-import { test, expect } from '@playwright/test';
-import { providerFailure } from '@actions/chat_pane.actions';
+import { test, expect, type Page } from '@playwright/test';
+import { ChatPaneActions, providerFailure } from '@actions/chat_pane.actions';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 
 // Harness self-test for providerFailure, which decides whether a chat turn
 // that ended in an error was Posit AI failing on its side (skip) or something
 // a product change could cause (fail). The strings are Posit Assistant's own
 // (databot's formatApiError), and the DOM below is the shape it rendered in
-// run 34994843398.
+// run 34994843398. The poll tests at the end cover which turn's failure
+// pollWithAllowDialogs holds against the test.
 
 test('recognizes a request that failed without an HTTP status', () => {
   const network = [
@@ -60,20 +62,99 @@ test('leaves failures a product change could cause alone', () => {
   }
 });
 
-test('reads the failure from the rendered chat message', async ({ page }) => {
-  // The error detail renders as a code span inside the reply's content div.
-  const chat = `
-    <div data-testid="chat-message-user"><p>Who is the Norse god of mischief?</p></div>
+const USER_MESSAGE = '<div data-testid="chat-message-user"><p>Who is the Norse god of mischief?</p></div>';
+
+// The error detail renders as a code span inside the reply's content div.
+function failedReply(messageId: string): string {
+  return `
     <div class="chat-message-assistant">
-      <div class="message-content relative" data-message-id="m1">
+      <div class="message-content relative" data-message-id="${messageId}">
         <div class="space-y-4"><p>Error making request: <code>read ETIMEDOUT</code></p></div>
       </div>
     </div>`;
+}
+
+async function showConversation(page: Page, chat: string): Promise<void> {
   await page.setContent(`<iframe title="Posit Assistant" srcdoc="${chat.replace(/"/g, '&quot;')}"></iframe>`);
+}
+
+test('reads the failure from the rendered chat message', async ({ page }) => {
+  await showConversation(page, USER_MESSAGE + failedReply('m1'));
 
   const chatPane = new ChatPane(page);
   await expect(chatPane.messageItem).toHaveCount(2);
 
   const text = await chatPane.lastMessageText();
   expect(providerFailure(text)).toEqual({ message: 'Error making request: read ETIMEDOUT', side: 'network' });
+});
+
+/**
+ * Run pollWithAllowDialogs over `chat` for two rounds, appending `arriving`
+ * to the conversation in between, and return how many times the poll looked
+ * at a provider failure. skipIfProviderFailed is stubbed out: what it does
+ * with a failure needs the live service, and which failures reach it is the
+ * poll's own decision.
+ */
+async function providerFailureLooks(
+  page: Page,
+  chat: string,
+  arriving: string,
+  options?: { watchForProviderFailure?: boolean }
+): Promise<number> {
+  await showConversation(page, chat);
+  const actions = new ChatPaneActions(page, new ConsolePaneActions(page));
+  await expect(actions.chatPane.messageItem.first()).toBeVisible();
+
+  let looks = 0;
+  actions.skipIfProviderFailed = async () => {
+    const failed = providerFailure(await actions.chatPane.lastMessageText()) !== null;
+    if (failed) {
+      looks++;
+    }
+    return failed;
+  };
+
+  let rounds = 0;
+  await actions.pollWithAllowDialogs(
+    async () => {
+      rounds++;
+      if (rounds === 1 && arriving !== '') {
+        await actions.chatPane.frame.locator('body').evaluate(
+          (body, html) => body.insertAdjacentHTML('beforeend', html),
+          arriving
+        );
+      }
+      return rounds === 2;
+    },
+    30000,
+    undefined,
+    options
+  );
+  return looks;
+}
+
+test('a poll ignores a failure that was showing when it began', async ({ page }) => {
+  expect(await providerFailureLooks(page, USER_MESSAGE + failedReply('m1'), '')).toBe(0);
+});
+
+test('a poll that began on an old failure still watches the turn after it', async ({ page }) => {
+  // The poll starts before the new turn's messages have rendered.
+  const looks = await providerFailureLooks(
+    page,
+    USER_MESSAGE + failedReply('m1'),
+    USER_MESSAGE + failedReply('m2')
+  );
+  expect(looks).toBe(1);
+});
+
+test('a poll watches for a failure unless told not to', async ({ page }) => {
+  expect(await providerFailureLooks(page, USER_MESSAGE, failedReply('m1'))).toBe(1);
+
+  const unwatched = await providerFailureLooks(
+    page,
+    USER_MESSAGE,
+    failedReply('m1'),
+    { watchForProviderFailure: false }
+  );
+  expect(unwatched).toBe(0);
 });
