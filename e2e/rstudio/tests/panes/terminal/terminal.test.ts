@@ -10,6 +10,7 @@ import {
   captureResult,
   killAllTerminals,
   openTerminal,
+  retryTerminalInput,
 } from '@utils/terminal';
 import type { Page } from 'playwright';
 
@@ -55,31 +56,39 @@ async function loseWebGLContext(page: Page): Promise<void> {
 // line does not (the quotes split it), so the assertion can only match real
 // rendered output. Assert on the terminal's rendered DOM rows, not
 // rstudioapi::terminalBuffer(): the server-side buffer still receives output
-// when client rendering is broken, which is exactly the bug.
+// when client rendering is broken, which is exactly the bug. Retyping cannot
+// mask that bug: nothing typed shows up while rendering is broken.
 async function expectTerminalRenders(page: Page, markerPrefix: string): Promise<void> {
   await page.locator(XTERM_SELECTOR).click();
-  await page.keyboard.type(`echo "${markerPrefix}""loss_ok"`);
-  await page.keyboard.press('Enter');
 
-  await expect
-    .poll(
-      async () => {
-        // .xterm-rows only exists under the DOM renderer, so this throws
-        // while the dead WebGL renderer is still in place -- report that as
-        // "nothing rendered" and keep polling until the fallback happens.
-        const text = await page
-          .locator('.xterm-rows')
-          .innerText()
-          .catch(() => '');
-        // innerText yields one line per xterm row and the hard wrap can land
-        // anywhere depending on prompt width, so strip whitespace; also
-        // strip U+00B7, seen in terminal-derived text on some platforms
-        // (see the send-to-editor test above).
-        return text.replace(/[\s\u00B7]+/g, '');
-      },
-      { timeout: TIMEOUTS.consoleReady },
-    )
-    .toContain(`${markerPrefix}loss_ok`);
+  await retryTerminalInput(
+    page,
+    async () => {
+      await page.keyboard.type(`echo "${markerPrefix}""loss_ok"`);
+      await page.keyboard.press('Enter');
+    },
+    () =>
+      expect
+        .poll(
+          async () => {
+            // .xterm-rows only exists under the DOM renderer, so this throws
+            // while the dead WebGL renderer is still in place -- report that
+            // as "nothing rendered" and keep polling until the fallback
+            // happens.
+            const text = await page
+              .locator('.xterm-rows')
+              .innerText()
+              .catch(() => '');
+            // innerText yields one line per xterm row and the hard wrap can
+            // land anywhere depending on prompt width, so strip whitespace;
+            // also strip U+00B7, seen in terminal-derived text on some
+            // platforms (see the send-to-editor test above).
+            return text.replace(/[\s\u00B7]+/g, '');
+          },
+          { timeout: TIMEOUTS.consoleReady },
+        )
+        .toContain(`${markerPrefix}loss_ok`),
+  );
 }
 
 // Sandbox for file-creation test (terminal cwd is its own shell, so we
@@ -114,20 +123,24 @@ test.describe.serial('Terminal pane', () => {
     await openTerminal(page);
 
     // After openTerminal returns, the terminal tab is selected and xterm
-    // is focused. Type the command via the page keyboard.
-    await page.keyboard.type('expr 1 + 1');
-    await page.keyboard.press('Enter');
-
-    // Wait for the terminal buffer to include the result line. Poll via
+    // is focused. Type the command via the page keyboard, then wait for the
+    // terminal buffer to include the result line. Poll via
     // rstudioapi::terminalBuffer -- the xterm canvas isn't directly readable.
-    await expect.poll(
-      () => captureResult(
-        page,
-        '{ ids <- rstudioapi::terminalList(); ' +
-        'length(ids) > 0 && any(grepl("^2$", rstudioapi::terminalBuffer(ids[[1]]))) }',
-      ),
-      { timeout: TIMEOUTS.consoleReady },
-    ).toBe('TRUE');
+    await retryTerminalInput(
+      page,
+      async () => {
+        await page.keyboard.type('expr 1 + 1');
+        await page.keyboard.press('Enter');
+      },
+      () => expect.poll(
+        () => captureResult(
+          page,
+          '{ ids <- rstudioapi::terminalList(); ' +
+          'length(ids) > 0 && any(grepl("^2$", rstudioapi::terminalBuffer(ids[[1]]))) }',
+        ),
+        { timeout: TIMEOUTS.consoleReady },
+      ).toBe('TRUE'),
+    );
 
     // Send the terminal contents to a new editor tab.
     await executeCommand(page, 'sendTerminalToEditor');
@@ -172,17 +185,21 @@ test.describe.serial('Terminal pane', () => {
     await killAllTerminals(page);
     await openTerminal(page);
 
-    await page.keyboard.type('R --version');
-    await page.keyboard.press('Enter');
-
-    await expect.poll(
-      () => captureResult(
-        page,
-        '{ ids <- rstudioapi::terminalList(); ' +
-        'length(ids) > 0 && any(grepl("R version", rstudioapi::terminalBuffer(ids[[1]]))) }',
-      ),
-      { timeout: TIMEOUTS.consoleReady },
-    ).toBe('TRUE');
+    await retryTerminalInput(
+      page,
+      async () => {
+        await page.keyboard.type('R --version');
+        await page.keyboard.press('Enter');
+      },
+      () => expect.poll(
+        () => captureResult(
+          page,
+          '{ ids <- rstudioapi::terminalList(); ' +
+          'length(ids) > 0 && any(grepl("R version", rstudioapi::terminalBuffer(ids[[1]]))) }',
+        ),
+        { timeout: TIMEOUTS.consoleReady },
+      ).toBe('TRUE'),
+    );
   });
 
   test('a file created in the terminal appears in a directory listing', async ({
@@ -205,22 +222,26 @@ test.describe.serial('Terminal pane', () => {
     // the wrap dependency; this way a match still proves touch succeeded,
     // since ls only lists the file if it exists.)
     const sandboxDir = sandbox.dir.replace(/\\/g, '/');
-    await page.keyboard.type(`cd ${sandboxDir}`);
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('touch "ztest""file.txt"');
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('ls');
-    await page.keyboard.press('Enter');
-
-    await expect.poll(
-      () => captureResult(
-        page,
-        '{ ids <- rstudioapi::terminalList(); ' +
-        'buf <- rstudioapi::terminalBuffer(ids[[1]]); ' +
-        'length(ids) > 0 && any(grepl("ztestfile.txt", buf, fixed = TRUE)) }',
-      ),
-      { timeout: TIMEOUTS.consoleReady },
-    ).toBe('TRUE');
+    await retryTerminalInput(
+      page,
+      async () => {
+        await page.keyboard.type(`cd ${sandboxDir}`);
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('touch "ztest""file.txt"');
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('ls');
+        await page.keyboard.press('Enter');
+      },
+      () => expect.poll(
+        () => captureResult(
+          page,
+          '{ ids <- rstudioapi::terminalList(); ' +
+          'buf <- rstudioapi::terminalBuffer(ids[[1]]); ' +
+          'length(ids) > 0 && any(grepl("ztestfile.txt", buf, fixed = TRUE)) }',
+        ),
+        { timeout: TIMEOUTS.consoleReady },
+      ).toBe('TRUE'),
+    );
   });
 
   test('terminal keeps rendering after WebGL context loss', async ({ rstudioPage: page }) => {
@@ -283,25 +304,31 @@ test.describe.serial('Terminal pane', () => {
       // older Ubuntu erased in place -- and also depends on prompt width,
       // which varies per CI runner (hostname and sandbox path lengths).
       const sandboxDir = sandbox.dir.replace(/\\/g, '/');
-      await page.keyboard.type(`cd ${sandboxDir}`);
-      await page.keyboard.press('Enter');
-      await page.keyboard.type('touch term_bs_test.txtQ');
-      await page.keyboard.press('Shift+Backspace');
-      await page.keyboard.press('Enter');
-
       // If Shift+Backspace deleted the trailing "Q", the file without the
       // "Q" exists and the file with it does not. If the keystroke had no
       // effect, only "term_bs_test.txtQ" exists and the first condition
       // stays false; if it deleted more than one character, neither file
       // matches. The file is cleaned up with the sandbox by globalTeardown.
-      await expect.poll(
-        () => captureResult(
-          page,
-          `{ file.exists(file.path(${rStringLiteral(sandboxDir)}, "term_bs_test.txt")) && ` +
-          `!file.exists(file.path(${rStringLiteral(sandboxDir)}, "term_bs_test.txtQ")) }`,
-        ),
-        { timeout: TIMEOUTS.consoleReady },
-      ).toBe('TRUE');
+      // A retry cannot hide a Shift+Backspace that does nothing: the "Q"
+      // file from the first attempt keeps the second condition false.
+      await retryTerminalInput(
+        page,
+        async () => {
+          await page.keyboard.type(`cd ${sandboxDir}`);
+          await page.keyboard.press('Enter');
+          await page.keyboard.type('touch term_bs_test.txtQ');
+          await page.keyboard.press('Shift+Backspace');
+          await page.keyboard.press('Enter');
+        },
+        () => expect.poll(
+          () => captureResult(
+            page,
+            `{ file.exists(file.path(${rStringLiteral(sandboxDir)}, "term_bs_test.txt")) && ` +
+            `!file.exists(file.path(${rStringLiteral(sandboxDir)}, "term_bs_test.txtQ")) }`,
+          ),
+          { timeout: TIMEOUTS.consoleReady },
+        ).toBe('TRUE'),
+      );
     },
   );
 });
