@@ -19,6 +19,8 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/bind/bind.hpp>
 
+#include <fmt/printf.h>
+
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/Environment.hpp>
@@ -445,9 +447,11 @@ std::string buildVerifyInstallScript(const std::vector<Dependency>& deps)
    for (const Dependency& dep : deps)
       required.push_back("'" + dep.name + "' = '" + dep.version + "'");
 
-   std::string script = "local({\n";
-   script += "   required <- c(" + boost::algorithm::join(required, ", ") + ")\n";
-   script += R"EOF(   failed <- character()
+   // printf-style, so that R's braces need no escaping (a literal '%' would need doubling)
+   constexpr auto fmt = R"EOF(
+local({
+   required <- c(%s)
+   failed <- character()
    for (pkg in names(required)) {
       installed <- tryCatch(utils::packageVersion(pkg), error = function(e) NULL)
       satisfied <- !is.null(installed) && (
@@ -463,7 +467,7 @@ std::string buildVerifyInstallScript(const std::vector<Dependency>& deps)
 
 )EOF";
 
-   return script;
+   return fmt::sprintf(fmt, boost::algorithm::join(required, ", "));
 }
 
 namespace {
