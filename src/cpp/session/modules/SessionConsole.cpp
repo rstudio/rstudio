@@ -20,6 +20,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/Exec.hpp>
 #include <core/system/OutputCapture.hpp>
@@ -33,7 +34,6 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "rmarkdown/SessionRmdNotebook.hpp"
-#include <shared_core/Memory.hpp>
 
 #define kMinConsoleLines 10
 

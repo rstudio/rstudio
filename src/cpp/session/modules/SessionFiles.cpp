@@ -31,6 +31,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/Log.hpp>
@@ -69,7 +70,6 @@
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
 #include "SessionGit.hpp"
-#include <shared_core/Memory.hpp>
 
 #ifdef BOOST_WINDOWS_API
 # define kEmptyString L""

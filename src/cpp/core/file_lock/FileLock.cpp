@@ -24,6 +24,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/Settings.hpp>
 #include <core/Log.hpp>
@@ -31,7 +32,6 @@
 #include <core/http/SocketUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Xdg.hpp>
-#include <shared_core/Memory.hpp>
 
 // borrowed from SessionConstants.hpp
 #define kRStudioSessionRoute "RSTUDIO_SESSION_ROUTE"

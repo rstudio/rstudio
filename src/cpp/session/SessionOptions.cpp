@@ -22,6 +22,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/Log.hpp>
@@ -48,7 +49,6 @@
 #include <session/projects/SessionProjectSharing.hpp>
 
 #include "session-config.h"
-#include <shared_core/Memory.hpp>
 
 #ifdef _WIN32
 # define kPandocExe "pandoc.exe"

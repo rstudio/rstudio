@@ -20,7 +20,9 @@
 #include "SessionClientEventQueue.hpp"
 #include "SessionAsyncRpcConnection.hpp"
 
+#include <shared_core/Memory.hpp>
 #include <shared_core/json/Json.hpp>
+
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
@@ -30,7 +32,6 @@
 #include <r/RJson.hpp>
 #include <r/RJsonRpc.hpp>
 #include <r/RRoutines.hpp>
-#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;

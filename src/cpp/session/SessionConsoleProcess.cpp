@@ -15,6 +15,7 @@
 
 #include <sstream>
 
+#include <shared_core/Memory.hpp>
 #include <shared_core/system/EnvironmentLock.hpp>
 
 #include <core/StringUtils.hpp>
@@ -32,7 +33,6 @@
 #include "modules/SessionReticulate.hpp"
 
 #include "SessionConsoleProcessTable.hpp"
-#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;

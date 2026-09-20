@@ -21,10 +21,11 @@
 
 #include <boost/utility.hpp>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/BoostThread.hpp>
 
 #include <core/json/JsonRpc.hpp>
-#include <shared_core/Memory.hpp>
 
 namespace rstudio {
 namespace core {

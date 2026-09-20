@@ -20,8 +20,9 @@
 
 #include <boost/utility.hpp>
 
-#include <core/Settings.hpp>
 #include <shared_core/Memory.hpp>
+
+#include <core/Settings.hpp>
 
 namespace rstudio {
 namespace session {

@@ -13,11 +13,11 @@
  *
  */
 
+#include <shared_core/Memory.hpp>
+
 #include <core/json/JsonRpc.hpp>
 
 #include <core/Exec.hpp>
-
-#include <shared_core/Memory.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>

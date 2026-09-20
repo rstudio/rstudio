@@ -15,8 +15,9 @@
 
 #include "SessionUriHandlers.hpp"
 
-#include <session/SessionConstants.hpp>
 #include <shared_core/Memory.hpp>
+
+#include <session/SessionConstants.hpp>
 
 using namespace rstudio::core;
 

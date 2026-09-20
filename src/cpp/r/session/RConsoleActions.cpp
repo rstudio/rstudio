@@ -21,6 +21,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
@@ -29,7 +30,6 @@
 #include <core/text/AnsiCodeParser.hpp>
 
 #include <r/ROptions.hpp>
-#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 

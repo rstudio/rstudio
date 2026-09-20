@@ -34,6 +34,7 @@
 
 #include <shared_core/json/Json.hpp>
 #include <shared_core/Logger.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/StartupTiming.hpp>
 #include <core/Thread.hpp>
@@ -66,7 +67,6 @@
 
 #include "SessionAsyncRpcConnection.hpp"
 #include "SessionOfflineService.hpp"
-#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;

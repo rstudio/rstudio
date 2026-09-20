@@ -17,9 +17,11 @@
 
 #include <boost/function.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/Memory.hpp>
+
 #include <core/BoostThread.hpp>
 #include <core/Log.hpp>
-#include <shared_core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
@@ -33,7 +35,6 @@
 #include <session/SessionClientEventService.hpp>
 
 #include "SessionClientEventQueue.hpp"
-#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;

@@ -18,6 +18,8 @@
 
 #include <fmt/format.h>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/AnsiEscapes.hpp>
 #include <core/regex/RegexDebug.hpp>
 
@@ -27,7 +29,6 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionConsoleOutput.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <shared_core/Memory.hpp>
 
 
 #define kNeverMatch "^(?!)$"

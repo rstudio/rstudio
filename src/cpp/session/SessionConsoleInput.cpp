@@ -15,6 +15,8 @@
 
 #include <signal.h>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/Algorithm.hpp>
 
 #include "SessionConsoleInput.hpp"
@@ -39,7 +41,6 @@
 #include <r/session/RBusy.hpp>
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
-#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 

@@ -16,6 +16,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/projects/SessionProjectsOverlay.hpp>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
@@ -34,7 +36,6 @@
 #include "SessionProjectFirstRun.hpp"
 #include "SessionProjectsInternal.hpp"
 #include "../modules/SessionTrust.hpp"
-#include <shared_core/Memory.hpp>
 
 using namespace rstudio::core;
 
