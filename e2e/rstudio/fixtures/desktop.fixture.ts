@@ -321,8 +321,10 @@ function createTempConfig(): TempConfig {
  * sandbox-setup.ts when PW_SEED_PAI is set) into a per-spec data home so the
  * session under test finds it at RSTUDIO_DATA_HOME/pai. A symlink (junction
  * on Windows, which needs no elevation) avoids copying the install once per
- * spec. A flow that deletes pai via boost::filesystem::remove_all removes
- * the link itself without following it, so it can't destroy the shared seed.
+ * spec. Nothing in the product deletes pai today (the uninstall command that
+ * removed pai/bin is gone); should a flow do so via boost::filesystem::
+ * remove_all, it removes the link itself without following it and can't
+ * destroy the shared seed.
  * Writes into pai (e.g. manifest-check.json) do go through the link to the
  * seed -- same exposure as the previous fully shared data home, now scoped to
  * pai only. No-op when nothing was seeded or the link already exists
