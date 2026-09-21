@@ -225,14 +225,18 @@ export class ConsolePaneActions {
     const repos = getInstallRepos();
     // Pick the install type at R runtime so source-only R builds (Homebrew
     // macOS, all Linux) don't error with "type 'binary' is not supported".
-    const typeExpr = `if (identical(.Platform$pkgType, "source")) "source" else "binary"`;
+    //
     // Retry from source in the same submission when the binary install leaves
     // the package missing: type = "binary" never falls back on its own, and
     // neither CRAN nor PPM publishes a full binary set for older R.
-    const installExpr =
-      `local({ t <- ${typeExpr}; install.packages("${pkg}", repos = "${repos}", type = t); ` +
-      `if (!requireNamespace("${pkg}", quietly = TRUE) && !identical(t, "source")) ` +
-      `install.packages("${pkg}", repos = "${repos}", type = "source") })`;
+    const installExpr = heredoc`
+      local({
+        type <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
+        install.packages("${pkg}", repos = "${repos}", type = type)
+        if (!requireNamespace("${pkg}", quietly = TRUE) && !identical(type, "source"))
+          install.packages("${pkg}", repos = "${repos}", type = "source")
+      })
+    `;
     // install.packages can run for a while, so submit it fire-and-forget and
     // then wait for R to go idle (with a generous timeout) rather than polling
     // output for a done-marker. Confirm R actually picked up the install
