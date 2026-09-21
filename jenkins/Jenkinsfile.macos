@@ -97,7 +97,7 @@ pipeline {
         GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
       }
       steps {
-        sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx && cd ../..'
+        sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx --arch=x86_64,arm64 && cd ../..'
       }
     }
 
@@ -169,7 +169,7 @@ pipeline {
         // build rstudio
         dir ("package/osx") {
           withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-            sh "${ENV} ./make-package clean --rstudio-target=Electron"
+            sh "${ENV} ./make-package clean --arch=x86_64,arm64 --rstudio-target=Electron"
           }
         }
       }

@@ -33,7 +33,13 @@ Options
 USAGE
 }
 
-NATIVE_ARCH="$(uname -m)"
+# ask the hardware rather than the shell: under a Rosetta shell, uname -m
+# reports x86_64 on an Apple Silicon machine
+if [ "$(sysctl -n hw.optional.arm64 2> /dev/null)" = "1" ]; then
+   NATIVE_ARCH="arm64"
+else
+   NATIVE_ARCH="x86_64"
+fi
 
 # a universal package needs both sets of dependencies, but only Jenkins
 # builds one routinely; everywhere else the other architecture's tools are
