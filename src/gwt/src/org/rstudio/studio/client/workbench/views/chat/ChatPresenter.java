@@ -605,47 +605,6 @@ public class ChatPresenter extends BasePresenter
    }
 
    // No @Handler: bound via ChatTab.Shim so the command works before the
-   // presenter is delay-loaded.
-   void onUninstallPositAssistant()
-   {
-      globalDisplay_.showYesNoMessage(
-         GlobalDisplay.MSG_WARNING,
-         constants_.uninstallPositAssistantCaption(),
-         constants_.uninstallPositAssistantMessage(),
-         () -> performUninstall(),
-         false);
-   }
-
-   private void performUninstall()
-   {
-      server_.chatUninstallPositAssistant(new ServerRequestCallback<VoidResponse>()
-      {
-         @Override
-         public void onResponseReceived(VoidResponse response)
-         {
-            // doRestart() is cancelable (user can decline to save unsaved
-            // changes). If canceled, PAI files are already deleted but the
-            // session continues unrestarted — an acceptable edge case
-            // consistent with other RStudio restart flows.
-            applicationQuit_.doRestart(session_);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            // Backend delivers user-facing text via client_info; fall back
-            // to the generic user message when no client_info is provided.
-            String clientInfo = PositAiInstallManager.clientInfoMessage(error);
-            String message =
-               clientInfo != null ? clientInfo : error.getUserMessage();
-            globalDisplay_.showErrorMessage(
-               constants_.uninstallPositAssistantCaption(),
-               message);
-         }
-      });
-   }
-
-   // No @Handler: bound via ChatTab.Shim so the command works before the
    // presenter is delay-loaded. Also invoked when Posit Assistant sends a
    // ui/checkForUpdates JSON-RPC request (see ChatCheckForUpdatesEvent).
    //

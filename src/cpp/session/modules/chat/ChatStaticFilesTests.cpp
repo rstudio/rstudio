@@ -440,10 +440,10 @@ TEST_F(ChatStaticFilesPin, CspFollowsThePinWithoutABackendPortChange)
    setChatBackendPort(1234);
    EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
 
-   // Changing which installation is served is enough on its own: uninstall
-   // unpins without starting a backend, so nothing sets the port afterwards
-   // and a policy that only followed the port would outlive the installation
-   // it came from.
+   // Changing which installation is served is enough on its own: a caller
+   // that re-pins without starting a backend sets no port afterwards, and a
+   // policy that only followed the port would outlive the installation it
+   // came from.
    setInstallationPath(second);
 
    std::string header = requestPageCsp();

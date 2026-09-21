@@ -101,7 +101,7 @@ public class PositAiInstallManager
 
       /**
        * Called when the administrator manages the Posit Assistant installation.
-       * No install, update, or uninstall is possible, and no manifest was
+       * No install or update is possible, and no manifest was
        * fetched, so there is never an update to offer.
        *
        * @param installed Whether an administrator-managed (or bundled)
