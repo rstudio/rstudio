@@ -1830,21 +1830,51 @@ namespace session {
 
 void exitEarly(int status)
 {
-   // exit() runs static destructors on the calling thread, so from a
-   // background thread it would tear statics down underneath a main thread
-   // that is still running. Release what outlives the process, then leave
-   // without any teardown.
-   if (!core::thread::isMainThread())
+   // exit() runs static destructors on the calling thread. From a background
+   // thread (the parent-termination monitor, the http listener's accept-error
+   // bailout) that would tear statics down underneath a main thread that is
+   // still running, so those callers leave through _Exit() instead, which
+   // runs no teardown at all.
+   //
+   // Everything a background thread does on the way out must therefore be
+   // safe against a live main thread -- including one that is itself already
+   // inside exit() and destroying statics.
+   bool mainThread = core::thread::isMainThread();
+
+   // These joins exist so that no worker is still running when exit()
+   // destroys the statics it uses. _Exit() destroys nothing, so a background
+   // caller has no need for them (and must not block on them).
+   if (mainThread)
    {
-      FileLock::cleanUp();
-      FilePath(s_fallbackLibraryPath).removeIfExists();
-      std::_Exit(status);
+      stopMonitorWorkerThread();
+      server_rpc::stop();
+      offlineService().stop();
    }
 
-   stopMonitorWorkerThread();
-   server_rpc::stop();
-   offlineService().stop();
+   // Release link-based locks explicitly on both paths. Unlike advisory
+   // locks, which the kernel drops with the process, these are files that
+   // stay on disk marked as held. On a single host that is mostly harmless,
+   // since a lock whose owner pid is gone is treated as stale at once. But
+   // load-balanced sessions cannot check a pid from another host, and would
+   // have to wait out the full lock timeout.
+   //
+   // This releases every lock in the process, the main thread's included,
+   // which is what we want given that the process is going away. It is safe
+   // from any thread: the lock registry is heap-allocated and never
+   // destroyed, and a release racing the owning thread (or a refresh) is
+   // resolved by the registry mutex and each lock's 'released' flag, never
+   // done twice.
    FileLock::cleanUp();
+
+   if (!mainThread)
+      std::_Exit(status);
+
+   // Main thread only. s_fallbackLibraryPath is a std::string with a real
+   // destructor, so a background thread could read it after a main thread
+   // inside exit() had destroyed it -- and removeIfExists() deletes
+   // recursively. Skipping the removal there costs nothing: the path is
+   // shared by every session the desktop launches, a normal quit never
+   // removes it either, and reticulate re-creates the symlink on use.
    FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
 }
