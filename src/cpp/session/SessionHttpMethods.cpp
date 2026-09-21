@@ -34,6 +34,7 @@
 
 #include <shared_core/json/Json.hpp>
 #include <shared_core/Logger.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/StartupTiming.hpp>
 #include <core/Thread.hpp>
@@ -74,7 +75,9 @@ namespace rstudio {
 namespace session {
 namespace {
 
-core::http::UriHandlerFunction s_defaultUriHandler;
+// leaked: invoked directly on the static asset thread (#18318)
+core::http::UriHandlerFunction& s_defaultUriHandler =
+      core::make_leaked<core::http::UriHandlerFunction>();
 
 // whether s_defaultUriHandler has been assigned; the listener thread gates
 // its static-asset fast path on this. registerGwtHandlers() runs (in desktop

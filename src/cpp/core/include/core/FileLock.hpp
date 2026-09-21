@@ -151,7 +151,7 @@ protected:
    static int s_liveOwnerGraceMultiplier;
    static bool s_loggingEnabled;
    static bool s_isLoadBalanced;
-   static FilePath s_logFile;
+   static FilePath& s_logFile;
 };
 
 class AdvisoryFileLock : public FileLock

@@ -13,6 +13,8 @@
  *
  */
 
+#include <shared_core/Memory.hpp>
+
 #include <core/json/JsonRpc.hpp>
 
 #include <core/Exec.hpp>
@@ -87,7 +89,9 @@ json::Array allStateLayers()
 
 UserStateValues& userState()
 {
-   static UserState instance;
+   // intentionally leaked: other threads can read state while the process
+   // exits, so this must never be destroyed during static teardown (#18318)
+   static UserState& instance = make_leaked<UserState>();
    return instance;
 }
 

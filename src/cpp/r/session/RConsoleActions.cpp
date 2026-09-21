@@ -21,6 +21,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
@@ -45,7 +46,8 @@ const char * const kActionData = "data";
    
 ConsoleActions& consoleActions()
 {
-   static ConsoleActions instance;
+   // leaked: console output is flushed here from background threads (#18318)
+   static ConsoleActions& instance = core::make_leaked<ConsoleActions>();
    return instance;
 }
    

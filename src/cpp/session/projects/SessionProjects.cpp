@@ -16,6 +16,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/projects/SessionProjectsOverlay.hpp>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
@@ -43,7 +45,8 @@ namespace projects {
 
 namespace {
 
-ProjectContext s_projectContext;
+// leaked: the file monitor thread calls back into this for its filter (#18318)
+ProjectContext& s_projectContext = core::make_leaked<ProjectContext>();
 
 core::r_util::ProjectId s_projectId;
 

@@ -15,6 +15,7 @@
 
 #include <sstream>
 
+#include <shared_core/Memory.hpp>
 #include <shared_core/system/EnvironmentLock.hpp>
 
 #include <core/StringUtils.hpp>
@@ -42,7 +43,9 @@ namespace console_process {
 
 namespace {
 
-ConsoleProcessSocket s_terminalSocket;
+// leaked: used from the websocket thread; destroying it would also join that
+// thread, without a timeout, in the middle of static teardown (#18318)
+ConsoleProcessSocket& s_terminalSocket = core::make_leaked<ConsoleProcessSocket>();
 
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
