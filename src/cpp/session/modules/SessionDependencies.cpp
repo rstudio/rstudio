@@ -23,6 +23,7 @@
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -31,6 +32,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionOptions.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
@@ -447,27 +449,47 @@ std::string buildVerifyInstallScript(const std::vector<Dependency>& deps)
    for (const Dependency& dep : deps)
       required.push_back("'" + dep.name + "' = '" + dep.version + "'");
 
+   // The job's R process has Tools.R but none of the session modules, so load the dependency
+   // walker the same way ScriptJob loads SourceWithProgress.R.
+   std::string modulePath = session::options()
+         .modulesRSourcePath()
+         .completePath("SessionDependencies.R")
+         .getAbsolutePath();
+
    // printf-style, so that R's braces need no escaping (a literal '%' would need doubling)
    constexpr auto fmt = R"EOF(
 local({
+   sys.source('%s', envir = as.environment('tools:rstudio'))
+
    required <- c(%s)
    failed <- character()
-   for (pkg in names(required)) {
+   for (i in seq_along(required)) {
+      pkg <- names(required)[[i]]
+      version <- required[[i]]
       installed <- tryCatch(utils::packageVersion(pkg), error = function(e) NULL)
       satisfied <- !is.null(installed) && (
-         !nzchar(required[[pkg]]) ||
-         tryCatch(installed >= required[[pkg]], error = function(e) TRUE)
+         !nzchar(version) ||
+         tryCatch(installed >= version, error = function(e) TRUE)
       )
       if (!satisfied)
          failed <- c(failed, pkg)
    }
+
+   # The install pulls in the packages these depend on as well, and the IDE looks for those
+   # again once the job finishes; a binary package installs happily without them.
+   unsatisfied <- .rs.findUnsatisfiedRuntimeDependencies(names(required))
+   failed <- unique(c(failed, vapply(unsatisfied, `[[`, character(1), "name")))
+
    if (length(failed) > 0)
       stop("Failed to install ", paste0("'", failed, "'", collapse = ", "), call. = FALSE)
 })
 
 )EOF";
 
-   return fmt::sprintf(fmt, boost::algorithm::join(required, ", "));
+   return fmt::sprintf(
+         fmt,
+         string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(modulePath)),
+         boost::algorithm::join(required, ", "));
 }
 
 namespace {

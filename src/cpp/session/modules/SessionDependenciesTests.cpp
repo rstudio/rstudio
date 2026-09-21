@@ -179,6 +179,54 @@ TEST(SessionDependenciesTest, VerifyInstallScriptRejectsOutdatedPackages)
       << error.asString();
 }
 
+TEST(SessionDependenciesTest, VerifyInstallScriptChecksEachDuplicateEntry)
+{
+   // the unversioned entry must not answer for the versioned one
+   std::vector<Dependency> deps = {
+      cranDependency("utils"),
+      versionedDependency("utils", "9999.0")
+   };
+
+   core::Error error = r::exec::executeString(buildVerifyInstallScript(deps));
+   ASSERT_TRUE(error);
+   EXPECT_NE(error.asString().find("Failed to install 'utils'"), std::string::npos)
+      << error.asString();
+}
+
+TEST(SessionDependenciesTest, VerifyInstallScriptRejectsMissingRecursiveDependencies)
+{
+   // a binary package installs without its dependencies being present, so the
+   // requested package can be in place while one it pulled in failed to install
+   constexpr auto setup = R"EOF(
+local({
+   lib <- tempfile("rstudio-deps-lib-")
+   dir.create(file.path(lib, "rstudioFakeParent"), recursive = TRUE)
+   writeLines(
+      c("Package: rstudioFakeParent", "Version: 1.0", "Imports: utils, rstudioNoSuchPackage"),
+      file.path(lib, "rstudioFakeParent", "DESCRIPTION")
+   )
+   options(rstudio.tests.libPaths = .libPaths())
+   .libPaths(c(lib, .libPaths()))
+})
+)EOF";
+
+   core::Error error = r::exec::executeString(setup);
+   ASSERT_FALSE(error) << error.asString();
+
+   std::vector<Dependency> deps = {
+      cranDependency("rstudioFakeParent")
+   };
+   error = r::exec::executeString(buildVerifyInstallScript(deps));
+
+   core::Error restoreError = r::exec::executeString(
+         ".libPaths(getOption('rstudio.tests.libPaths')); options(rstudio.tests.libPaths = NULL)");
+   EXPECT_FALSE(restoreError) << restoreError.asString();
+
+   ASSERT_TRUE(error);
+   EXPECT_NE(error.asString().find("Failed to install 'rstudioNoSuchPackage'"), std::string::npos)
+      << error.asString();
+}
+
 } // anonymous namespace
 } // namespace dependencies
 } // namespace modules
