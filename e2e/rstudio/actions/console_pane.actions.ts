@@ -14,6 +14,7 @@ import {
 import { sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { setConsoleInput } from '../utils/console';
+import { heredoc } from '../utils/heredoc';
 
 let cachedInstallRepos: string | null = null;
 
@@ -208,10 +209,12 @@ export class ConsolePaneActions {
   async ensurePackage(pkg: string, timeoutMs = 60000): Promise<boolean> {
     // The dependency walk is absent from builds that predate it; they don't
     // prompt for recursive dependencies either, so loadable is enough there.
-    const availableExpr =
-      `requireNamespace("${pkg}", quietly = TRUE) && ` +
-      `(!exists(".rs.findUnsatisfiedRuntimeDependencies") || ` +
-      `length(.rs.findUnsatisfiedRuntimeDependencies("${pkg}")) == 0)`;
+    const availableExpr = heredoc`
+      requireNamespace("${pkg}", quietly = TRUE) && (
+        !exists(".rs.findUnsatisfiedRuntimeDependencies") ||
+        length(.rs.findUnsatisfiedRuntimeDependencies("${pkg}")) == 0
+      )
+    `;
 
     if ((await this.evalRLogical(availableExpr)) === true) {
       return true;
