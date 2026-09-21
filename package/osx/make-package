@@ -263,7 +263,17 @@ done
 
 # each architecture builds against its own dependencies; fail up front rather
 # than partway through the build when a set is missing
-for build_arch in ${arch//,/ }; do
+IFS=',' read -r -a arch_list <<< "${arch}"
+if [ "${#arch_list[@]}" -eq 0 ]; then
+   error "no architectures given; expected --arch=x86_64, --arch=arm64 or --arch=x86_64,arm64"
+fi
+
+for build_arch in "${arch_list[@]}"; do
+   case "${build_arch}" in
+   x86_64|arm64) ;;
+   *) error "unknown architecture '${build_arch}'; expected x86_64 or arm64" ;;
+   esac
+
    arch_tools_root="${RSTUDIO_TOOLS_ROOT}/../${build_arch}"
    if ! [ -d "${arch_tools_root}" ]; then
       error "no ${build_arch} dependencies found at ${arch_tools_root}; run 'dependencies/osx/install-dependencies-osx --arch=${arch}' first"
