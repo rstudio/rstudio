@@ -1830,6 +1830,17 @@ namespace session {
 
 void exitEarly(int status)
 {
+   // exit() runs static destructors on the calling thread, so from a
+   // background thread it would tear statics down underneath a main thread
+   // that is still running. Release what outlives the process, then leave
+   // without any teardown.
+   if (!core::thread::isMainThread())
+   {
+      FileLock::cleanUp();
+      FilePath(s_fallbackLibraryPath).removeIfExists();
+      std::_Exit(status);
+   }
+
    stopMonitorWorkerThread();
    server_rpc::stop();
    offlineService().stop();
