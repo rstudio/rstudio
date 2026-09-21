@@ -21,7 +21,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -167,8 +166,7 @@ public class ChatPresenter extends BasePresenter
       SatelliteManager satelliteManager,
       PaneManager paneManager,
       Session session,
-      GlobalDisplay globalDisplay,
-      ApplicationQuit applicationQuit)
+      GlobalDisplay globalDisplay)
    {
       super(display);
       binder.bind(commands, this);
@@ -182,9 +180,7 @@ public class ChatPresenter extends BasePresenter
       lastEffectiveChatProvider_ = paiUtil_.getConfiguredChatProvider();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
-      session_ = session;
       globalDisplay_ = globalDisplay;
-      applicationQuit_ = applicationQuit;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -1581,9 +1577,7 @@ public class ChatPresenter extends BasePresenter
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
    private final PaneManager paneManager_;
-   private final Session session_;
    private final GlobalDisplay globalDisplay_;
-   private final ApplicationQuit applicationQuit_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;

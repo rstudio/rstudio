@@ -58,7 +58,7 @@ RStudio does not provide a command for removing Posit Assistant. To remove the c
 | macOS         | `~/.local/share/rstudio/pai`       |
 | Linux         | `~/.local/share/rstudio/pai`       |
 
-If `RSTUDIO_DATA_HOME` or `XDG_DATA_HOME` is set, the `pai` directory is under that location instead.
+If an `ai.prev` directory is present beside `pai`, left by an interrupted install or update, delete it as well. If `RSTUDIO_DATA_HOME` is set, the directory is `$RSTUDIO_DATA_HOME/pai`. If `XDG_DATA_HOME` is set instead, it is `$XDG_DATA_HOME/rstudio/pai` on macOS and Linux, or `%XDG_DATA_HOME%\RStudio\pai` on Windows.
 
 This directory holds the downloaded Posit Assistant program files and RStudio's record of its update checks. Your chat history and provider settings are stored separately by Posit Assistant, under `~/.posit/assistant`, and remain available if you install Posit Assistant again.
 
