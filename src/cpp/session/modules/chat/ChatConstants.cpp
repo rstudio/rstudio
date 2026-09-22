@@ -58,7 +58,10 @@ const char* const kSlotManifestFileName = ".slot-manifest.json";
 // rename that publishes a slot is never a cross-device copy.
 const char* const kStagingDirPrefix = ".tmp-";
 
-// Protocol Version (SUPPORTED_PROTOCOL_VERSION)
+// Protocol Version (SUPPORTED_PROTOCOL_VERSION in the assistant). Published
+// and matched as an exact string, and always of the form <major>.0; the
+// manifest lookup, the selector and the install identity check all rely on
+// that. ChatConstantsTests pins the form.
 const char* const kProtocolVersion = "11.0";
 
 // The one capability that varies by mode; see negotiatedCapabilities().

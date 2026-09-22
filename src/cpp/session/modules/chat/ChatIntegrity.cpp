@@ -100,124 +100,87 @@ Error getPackageInfoFromManifest(
       return error;
    }
 
-   // Parse RStudio's protocol version to get major version
-   SemanticVersion rstudioProtocol;
-   if (!rstudioProtocol.parse(protocolVersion))
-   {
-      WLOG("Failed to parse RStudio protocol version: {}", protocolVersion);
-      return systemError(boost::system::errc::invalid_argument,
-                        "Invalid protocol version format",
-                        ERROR_LOCATION);
-   }
-
-   DLOG("Looking for compatible protocols with major version {}", rstudioProtocol.major);
-
-   // Find all compatible protocol versions (matching major version)
-   // and select the highest minor version
-   SemanticVersion bestProtocol;
-   std::string bestPackageVersion;
-   std::string bestDownloadUrl;
-   std::string bestSha256;
-   std::vector<std::string> bestProviders;
-   bool foundCompatible = false;
-
+   // Protocol versions are published as <major>.0 and matched as exact strings
+   // here and everywhere else (the mismatch check, the selector, the install
+   // identity check). Any other form is a publishing slip; it can never be
+   // selected, so surface it rather than silently skipping it.
    for (const auto& entry : versions)
    {
-      std::string manifestProtocol = entry.getName();
-
-      // Parse this manifest protocol version
-      SemanticVersion manifestProtocolVer;
-      if (!manifestProtocolVer.parse(manifestProtocol))
+      SemanticVersion entryProtocol;
+      if (!entryProtocol.parse(entry.getName()) || entryProtocol.minor != 0 ||
+          entryProtocol.patch != 0)
       {
-         WLOG("Skipping manifest entry with invalid protocol version: {}", manifestProtocol);
-         continue;
-      }
-
-      // Check if major version matches
-      if (manifestProtocolVer.major != rstudioProtocol.major)
-      {
-         DLOG("Skipping protocol {} (major version mismatch)", manifestProtocol);
-         continue;
-      }
-
-      // Extract version info for this protocol
-      json::Value versionValue = entry.getValue();
-      if (!versionValue.isObject())
-      {
-         WLOG("Skipping protocol {} (value is not an object)", manifestProtocol);
-         continue;
-      }
-
-      json::Object versionInfo = versionValue.getObject();
-
-      std::string packageVersion;
-      std::string downloadUrl;
-
-      error = json::readObject(versionInfo, "version", packageVersion);
-      if (error)
-      {
-         WLOG("Skipping protocol {} (missing 'version' field)", manifestProtocol);
-         continue;
-      }
-
-      error = json::readObject(versionInfo, "url", downloadUrl);
-      if (error)
-      {
-         WLOG("Skipping protocol {} (missing 'url' field)", manifestProtocol);
-         continue;
-      }
-
-      // Validate download URL is HTTPS
-      if (!isHttpsUrl(downloadUrl))
-      {
-         WLOG("Skipping protocol {} (non-HTTPS URL: {})", manifestProtocol, downloadUrl);
-         continue;
-      }
-
-      // Read optional sha256 field
-      std::string sha256;
-      json::readObject(versionInfo, "sha256", sha256); // ignore error - field is optional
-
-      // Read optional providers field (advertised provider identifiers). On any
-      // error -- absent, not an array, or a non-string element -- treat the entry
-      // as having no providers. readObject appends valid elements before failing
-      // on a bad one, so reset to avoid an order-dependent partial result.
-      std::vector<std::string> providers;
-      if (json::readObject(versionInfo, "providers", providers))
-         providers.clear();
-
-      // Check if this is the best (highest) protocol version so far
-      if (!foundCompatible || manifestProtocolVer > bestProtocol)
-      {
-         bestProtocol = manifestProtocolVer;
-         bestPackageVersion = packageVersion;
-         bestDownloadUrl = downloadUrl;
-         bestSha256 = sha256;
-         bestProviders = providers;
-         foundCompatible = true;
-         DLOG("Found compatible protocol {}.{} with package version {}",
-              manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
+         WLOG("Manifest lists protocol '{}', which is not of the form <major>.0",
+              entry.getName());
       }
    }
 
-   if (!foundCompatible)
+   json::Object::Iterator it = versions.find(protocolVersion);
+   if (it == versions.end())
    {
-      WLOG("No compatible protocol found in manifest for major version {}", rstudioProtocol.major);
+      WLOG("No entry for protocol {} in manifest", protocolVersion);
       return systemError(boost::system::errc::protocol_not_supported,
                         "No compatible protocol version found in manifest",
                         ERROR_LOCATION);
    }
 
-   *pPackageVersion = bestPackageVersion;
-   *pDownloadUrl = bestDownloadUrl;
-   if (pSha256)
-      *pSha256 = bestSha256;
-   if (pProviders)
-      *pProviders = bestProviders;
+   json::Value versionValue = (*it).getValue();
+   if (!versionValue.isObject())
+   {
+      WLOG("Manifest entry for protocol {} is not an object", protocolVersion);
+      return systemError(boost::system::errc::bad_message,
+                        "Manifest entry for protocol " + protocolVersion + " is not an object",
+                        ERROR_LOCATION);
+   }
 
-   DLOG("Selected best compatible protocol {}.{}: package version={}, url={}, sha256={}",
-        bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl,
-        bestSha256.empty() ? "(none)" : bestSha256);
+   json::Object versionInfo = versionValue.getObject();
+
+   std::string packageVersion;
+   error = json::readObject(versionInfo, "version", packageVersion);
+   if (error)
+   {
+      WLOG("Manifest entry for protocol {} has no 'version' field", protocolVersion);
+      return error;
+   }
+
+   std::string downloadUrl;
+   error = json::readObject(versionInfo, "url", downloadUrl);
+   if (error)
+   {
+      WLOG("Manifest entry for protocol {} has no 'url' field", protocolVersion);
+      return error;
+   }
+
+   if (!isHttpsUrl(downloadUrl))
+   {
+      WLOG("Manifest entry for protocol {} has a non-HTTPS URL: {}", protocolVersion, downloadUrl);
+      return systemError(boost::system::errc::protocol_not_supported,
+                        "Manifest download URL for protocol " + protocolVersion + " is not HTTPS",
+                        ERROR_LOCATION);
+   }
+
+   // Read optional sha256 field
+   std::string sha256;
+   json::readObject(versionInfo, "sha256", sha256); // ignore error - field is optional
+
+   // Read optional providers field (advertised provider identifiers). On any
+   // error -- absent, not an array, or a non-string element -- treat the entry
+   // as having no providers. readObject appends valid elements before failing
+   // on a bad one, so reset to avoid an order-dependent partial result.
+   std::vector<std::string> providers;
+   if (json::readObject(versionInfo, "providers", providers))
+      providers.clear();
+
+   *pPackageVersion = packageVersion;
+   *pDownloadUrl = downloadUrl;
+   if (pSha256)
+      *pSha256 = sha256;
+   if (pProviders)
+      *pProviders = providers;
+
+   DLOG("Selected protocol {}: package version={}, url={}, sha256={}",
+        protocolVersion, packageVersion, downloadUrl,
+        sha256.empty() ? "(none)" : sha256);
 
    return Success();
 }

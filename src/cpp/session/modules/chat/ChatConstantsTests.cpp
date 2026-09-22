@@ -18,10 +18,27 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include <vector>
 
 using namespace rstudio::session::modules::chat::constants;
+
+// -- kProtocolVersion --------------------------------------------------------
+
+TEST(ProtocolVersion, IsOfTheFormMajorDotZero)
+{
+   // Every site that compares protocols does so as an exact string, so a
+   // constant with any other minor would be offered by the manifest and then
+   // refused by the install identity check.
+   std::string version = kProtocolVersion;
+   std::string::size_type dot = version.find('.');
+   ASSERT_NE(dot, std::string::npos) << version;
+   std::string major = version.substr(0, dot);
+   EXPECT_FALSE(major.empty()) << version;
+   EXPECT_TRUE(std::all_of(major.begin(), major.end(), ::isdigit)) << version;
+   EXPECT_EQ(version.substr(dot), ".0") << version;
+}
 
 // -- assembleWebSocketPath ---------------------------------------------------
 
