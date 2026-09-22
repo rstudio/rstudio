@@ -20,9 +20,10 @@
 #include "ChatSlotManifest.hpp"
 
 #include <cctype>
+#include <chrono>
+#include <thread>
 
 #include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
@@ -126,14 +127,14 @@ std::string slotNameForOrdinal(const std::string& version, int ordinal)
    return version + "-" + safe_convert::numberToString(ordinal);
 }
 
-// Budgeted against the 255-byte limit on a path component, which the ".tmp-"
-// prefix, the pid and the nonce also draw on. This truncation is what bounds
-// the name: getHostname() returns the HOSTNAME environment variable verbatim,
-// and only its gethostname() fallback is capped. A hostname can reach 253
-// characters, so this can in principle shorten two long names to the same
-// prefix; the nonce, not the hostname, is what keeps staging directories
-// distinct.
-const std::string::size_type kMaxHostnameLength = 180;
+// Short on purpose: the nonce, not the hostname, is what keeps staging
+// directories distinct, and the hostname is only there to tell a cleanup pass
+// whose abandoned extraction it is looking at. A longer cap would only push
+// the deep dist/client/assets/ paths extracted beneath it towards MAX_PATH on
+// Windows. getHostname() returns the HOSTNAME environment variable verbatim
+// (only its gethostname() fallback is capped), so the truncation here is
+// what bounds the name.
+const std::string::size_type kMaxHostnameLength = 32;
 
 // Names a staging directory. The nonce is what makes it private: no other
 // session can compute this name, so nothing else can write into the tree we
@@ -158,6 +159,39 @@ std::string stagingDirName()
       safe_convert::numberToString(
          static_cast<int64_t>(core::system::currentProcessId())) + "-" +
       core::system::generateUuid(false);
+}
+
+// A transient failure of the publish rename is retried this often, for this
+// long in total. On Windows, antivirus or the search indexer briefly holds a
+// handle inside a freshly extracted tree, and MoveFileEx then fails with
+// access denied for a moment even though nothing is wrong with the tree.
+const int kPublishAttempts = 10;
+const std::chrono::milliseconds kPublishRetryDelay(100);
+
+// Renames the staged tree into its final name, retrying a spurious failure.
+// MoveDirect, never MoveCrossDevice: the staging directory is a sibling of the
+// slot, so a copy fallback would mean the invariant that makes this rename
+// atomic has been broken and we want to hear about it.
+//
+// The retry is bounded and only for a failure that leaves the name free: a
+// target that appeared belongs to another session's install, which the caller
+// arbitrates, and a staging directory that disappeared cannot be retried.
+Error publishStagingDir(const FilePath& stagingDir, const FilePath& target)
+{
+   Error error;
+   for (int attempt = 1; attempt <= kPublishAttempts; ++attempt)
+   {
+      error = stagingDir.move(target, FilePath::MoveDirect);
+      if (!error || target.exists() || !stagingDir.exists())
+         return error;
+
+      DLOG("Publishing {} failed (attempt {} of {}): {}",
+           target.getAbsolutePath(), attempt, kPublishAttempts,
+           error.getMessage());
+      std::this_thread::sleep_for(kPublishRetryDelay);
+   }
+
+   return error;
 }
 
 } // anonymous namespace
@@ -263,9 +297,13 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir)
 
    for (const FilePath& child : children)
    {
-      // Staging directories and any other bookkeeping are dot-prefixed; a slot
-      // never is, because a version cannot start with a dot.
-      if (boost::algorithm::starts_with(child.getFilename(), "."))
+      // The same rule resolveSlot() applies to a selection: staging
+      // directories and other dot-prefixed bookkeeping, and any name that
+      // could not be recorded and read back as a selection. Without it a
+      // hand-made directory with a trailing space would be recorded as the
+      // fallback, rejected on the next read, and recorded again on every
+      // resolve.
+      if (!isUsableSlotName(child.getFilename()))
          continue;
 
       SlotInfo info;
@@ -353,10 +391,7 @@ Error allocateSlot(const FilePath& stagingDir,
          continue;
       }
 
-      // MoveDirect, never MoveCrossDevice: the staging directory is a sibling
-      // of the slot, so a copy fallback would mean the invariant that makes
-      // this rename atomic has been broken and we want to hear about it.
-      Error moveError = stagingDir.move(candidate, FilePath::MoveDirect);
+      Error moveError = publishStagingDir(stagingDir, candidate);
       if (!moveError)
       {
          DLOG("Published slot {}", candidate.getAbsolutePath());

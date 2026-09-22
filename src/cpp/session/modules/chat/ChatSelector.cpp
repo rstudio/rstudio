@@ -46,28 +46,6 @@ FilePath selectorPath(const FilePath& storageDir)
    return storageDir.completeChildPath(kSelectorFileName);
 }
 
-// The release part of a version, i.e. everything before a prerelease or build
-// suffix. SemanticVersion::parse converts each dot-separated component with
-// boost::lexical_cast, which rejects trailing text, so "1.2.0-beta.1" would
-// otherwise fail to parse and rank below every release version.
-std::string releasePortion(const std::string& version)
-{
-   return version.substr(0, version.find_first_of("-+"));
-}
-
-// Whether a version carries a prerelease suffix. Build metadata is not one:
-// "1.2.0+build.1" has the precedence of plain 1.2.0 and so outranks
-// "1.2.0-beta.1", which testing for any suffix at all gets backwards.
-bool hasPrerelease(const std::string& version)
-{
-   std::string::size_type dash = version.find('-');
-   if (dash == std::string::npos)
-      return false;
-
-   std::string::size_type plus = version.find('+');
-   return plus == std::string::npos || dash < plus;
-}
-
 // Which reinstall of a version a slot holds: 1 for the plain name, N for
 // "<version>-N", and 0 when the name is not derived from the version at all.
 //
@@ -95,35 +73,24 @@ int slotOrdinal(const std::string& name, const std::string& version)
 }
 
 // Orders two verifying slots by which one a session should prefer: the higher
-// release version, then a release over a prerelease of it, then -- only for
-// two slots holding the very same version -- the later reinstall, and finally
-// the version and name as strings so the answer is always stable.
+// version, then the later reinstall of the same version, and finally the name
+// so the answer is always stable.
 //
-// The string comparisons are a stable arbitrary order, not semantic-version
-// precedence: distinguishing "1.2.0-beta.9" from "1.2.0-beta.10" would need
-// identifier-by-identifier comparison, and nothing published for RStudio
-// carries a prerelease suffix at all.
+// Posit Assistant versions are plain x.y.z, and every other parser site
+// rejects a suffixed one, so a version SemanticVersion cannot parse is not
+// given a second reading here either: it ranks below every version that does
+// parse and is otherwise ordered by name.
 bool preferredOver(const slots::SlotInfo& lhs, const slots::SlotInfo& rhs)
 {
    SemanticVersion lhsVersion, rhsVersion;
-   bool lhsParsed = lhsVersion.parse(releasePortion(lhs.version));
-   bool rhsParsed = rhsVersion.parse(releasePortion(rhs.version));
+   bool lhsParsed = lhsVersion.parse(lhs.version);
+   bool rhsParsed = rhsVersion.parse(rhs.version);
 
    if (lhsParsed != rhsParsed)
       return lhsParsed;
 
    if (lhsParsed && lhsVersion != rhsVersion)
       return lhsVersion > rhsVersion;
-
-   // 1.2.0 outranks 1.2.0-beta.1, as semantic versioning has it.
-   if (hasPrerelease(lhs.version) != hasPrerelease(rhs.version))
-      return hasPrerelease(rhs.version);
-
-   // An ordinal counts reinstalls of one version, so it says nothing about two
-   // slots holding different ones -- comparing across them would let
-   // 1.2.0-beta.1-10 outrank the newer 1.2.0-beta.2.
-   if (lhs.version != rhs.version)
-      return lhs.version > rhs.version;
 
    int lhsOrdinal = slotOrdinal(lhs.name, lhs.version);
    int rhsOrdinal = slotOrdinal(rhs.name, rhs.version);
@@ -227,7 +194,37 @@ Error selectSlot(const FilePath& storageDir,
    return writeSelections(storageDir, selections);
 }
 
-FilePath resolveSlot(const FilePath& storageDir, const std::string& protocol)
+bool selectInstalledVersion(const FilePath& storageDir,
+                            const std::string& protocol,
+                            const std::string& version)
+{
+   std::vector<slots::SlotInfo> installed =
+      slots::verifiedSlots(slots::versionsDir(storageDir));
+
+   for (const slots::SlotInfo& slot : installed)
+   {
+      if (slot.version != version || slot.protocol != protocol)
+         continue;
+
+      Error error = selectSlot(storageDir, protocol, slot.name);
+      if (error)
+      {
+         WLOG("Version {} is installed as slot {} but could not be recorded: {}",
+              version, slot.name, error.getMessage());
+         return false;
+      }
+
+      DLOG("Protocol {} now resolves to already-installed slot {}",
+           protocol, slot.name);
+      return true;
+   }
+
+   return false;
+}
+
+FilePath resolveSlot(const FilePath& storageDir,
+                     const std::string& protocol,
+                     SelectorRepair repair)
 {
    FilePath slotsDir = slots::versionsDir(storageDir);
 
@@ -274,11 +271,14 @@ FilePath resolveSlot(const FilePath& storageDir, const std::string& protocol)
 
    // Best effort: an unwritable storage directory costs us the repair, not the
    // resolve. The same fallback runs again next session.
-   Error error = selectSlot(storageDir, protocol, fallback.name);
-   if (error)
+   if (repair == SelectorRepair::Enabled)
    {
-      WLOG("Could not record slot {} for protocol {}: {}",
-           fallback.name, protocol, error.getMessage());
+      Error error = selectSlot(storageDir, protocol, fallback.name);
+      if (error)
+      {
+         WLOG("Could not record slot {} for protocol {}: {}",
+              fallback.name, protocol, error.getMessage());
+      }
    }
 
    return fallback.path;

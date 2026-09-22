@@ -17,6 +17,10 @@
 
 #include <string>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include "ChatSlotManifest.hpp"
@@ -204,7 +208,7 @@ TEST_F(ChatSelector, ResolvesTheSelectedSlot)
    ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.0.4"));
 
    // The selection wins over the newer slot: a session runs what was chosen.
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.0.4")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.0.4")));
 }
 
 TEST_F(ChatSelector, RepairsASelectionOfAMissingSlot)
@@ -212,7 +216,7 @@ TEST_F(ChatSelector, RepairsASelectionOfAMissingSlot)
    makeSlot("1.1.0", "1.1.0", "11.0");
    ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.0.4"));
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
    EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
 }
 
@@ -222,7 +226,7 @@ TEST_F(ChatSelector, RepairsASelectionOfACorruptSlot)
    makeSlot("1.1.0", "1.1.0", "11.0");
    ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.2.0"));
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
    EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
 }
 
@@ -232,7 +236,7 @@ TEST_F(ChatSelector, RepairsASelectionOfASlotForAnotherProtocol)
    makeSlot("1.1.0", "1.1.0", "11.0");
    ASSERT_FALSE(selectSlot(storageDir_, "11.0", "2.0.0"));
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
    EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
 }
 
@@ -240,7 +244,7 @@ TEST_F(ChatSelector, ResolvesAndRecordsWithNoSelectorAtAll)
 {
    makeSlot("1.1.0", "1.1.0", "11.0");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
    EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
 }
 
@@ -249,7 +253,7 @@ TEST_F(ChatSelector, ResolvesAndRewritesAMalformedSelector)
    makeSlot("1.1.0", "1.1.0", "11.0");
    writeSelectorFile("{\"selected\": [");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
    EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
 }
 
@@ -260,7 +264,7 @@ TEST_F(ChatSelector, RepairingOneProtocolLeavesTheOthersAlone)
    ASSERT_FALSE(selectSlot(storageDir_, "11.0", "gone"));
    ASSERT_FALSE(selectSlot(storageDir_, "10.0", "0.4.8"));
 
-   ASSERT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   ASSERT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
 
    Selections read = readSelections(storageDir_);
    EXPECT_EQ(read["11.0"], "1.1.0");
@@ -274,7 +278,7 @@ TEST_F(ChatSelector, FallsBackToTheNewestVersion)
    makeSlot("1.2.0", "1.2.0", "11.0");
 
    // Numeric, not lexical: 1.10.0 is newer than 1.2.0.
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.10.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.10.0")));
 }
 
 TEST_F(ChatSelector, PrefersTheLatestReinstallOfAVersion)
@@ -283,7 +287,7 @@ TEST_F(ChatSelector, PrefersTheLatestReinstallOfAVersion)
    makeSlot("1.1.0", "1.1.0", "11.0");
    makeSlot("1.1.0-2", "1.1.0", "11.0");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0-2")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0-2")));
 }
 
 TEST_F(ChatSelector, OrdersReinstallsNumericallyPastNine)
@@ -294,58 +298,19 @@ TEST_F(ChatSelector, OrdersReinstallsNumericallyPastNine)
    makeSlot("1.1.0-9", "1.1.0", "11.0");
    makeSlot("1.1.0-10", "1.1.0", "11.0");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0-10")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0-10")));
 }
 
-TEST_F(ChatSelector, RanksPrereleasesByTheirReleaseVersion)
+TEST_F(ChatSelector, RanksAnUnparsableVersionBelowEveryParsedOne)
 {
-   // SemanticVersion::parse rejects a version with a prerelease suffix, so
-   // ordering has to compare the release portion or 1.2.0-beta.1 ranks below
-   // every version that happens to parse.
+   // Posit Assistant versions are plain x.y.z. A suffixed version is rejected
+   // everywhere else a version is parsed, so the selector does not give it a
+   // second reading: it ranks below anything that parses.
    makeSlot("0.0.1", "0.0.1", "11.0");
    makeSlot("1.2.0-beta.1", "1.2.0-beta.1", "11.0");
 
    EXPECT_TRUE(
-      resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0-beta.1")));
-}
-
-TEST_F(ChatSelector, PrefersAReleaseOverItsPrerelease)
-{
-   makeSlot("1.2.0-beta.1", "1.2.0-beta.1", "11.0");
-   makeSlot("1.2.0", "1.2.0", "11.0");
-
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0")));
-}
-
-TEST_F(ChatSelector, PrefersTheLatestReinstallOfAPrerelease)
-{
-   makeSlot("1.2.0-beta.1", "1.2.0-beta.1", "11.0");
-   makeSlot("1.2.0-beta.1-2", "1.2.0-beta.1", "11.0");
-
-   EXPECT_TRUE(
-      resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0-beta.1-2")));
-}
-
-TEST_F(ChatSelector, DoesNotCompareReinstallOrdinalsAcrossVersions)
-{
-   // An ordinal counts reinstalls of one version; comparing it against a
-   // different version would let the tenth reinstall of beta.1 outrank beta.2.
-   makeSlot("1.2.0-beta.1-10", "1.2.0-beta.1", "11.0");
-   makeSlot("1.2.0-beta.2", "1.2.0-beta.2", "11.0");
-
-   EXPECT_TRUE(
-      resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0-beta.2")));
-}
-
-TEST_F(ChatSelector, TreatsBuildMetadataAsARelease)
-{
-   // Build metadata carries no precedence, so 1.2.0+build.1 ranks as plain
-   // 1.2.0 and outranks a prerelease of it.
-   makeSlot("1.2.0-beta.1", "1.2.0-beta.1", "11.0");
-   makeSlot("1.2.0+build.1", "1.2.0+build.1", "11.0");
-
-   EXPECT_TRUE(
-      resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0+build.1")));
+      resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("0.0.1")));
 }
 
 TEST_F(ChatSelector, FallsBackOnlyToSlotsServingTheProtocol)
@@ -353,8 +318,8 @@ TEST_F(ChatSelector, FallsBackOnlyToSlotsServingTheProtocol)
    makeSlot("2.0.0", "2.0.0", "12.0");
    makeSlot("1.1.0", "1.1.0", "11.0");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
-   EXPECT_TRUE(resolveSlot(storageDir_, "12.0").isEquivalentTo(slot("2.0.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "12.0", SelectorRepair::Enabled).isEquivalentTo(slot("2.0.0")));
 }
 
 TEST_F(ChatSelector, FallsBackOnlyToSlotsThatVerify)
@@ -362,7 +327,7 @@ TEST_F(ChatSelector, FallsBackOnlyToSlotsThatVerify)
    makeDamagedSlot("1.2.0", "11.0");
    makeSlot("1.1.0", "1.1.0", "11.0");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
 }
 
 TEST_F(ChatSelector, IgnoresASelectionNamingAStagingDirectory)
@@ -376,7 +341,7 @@ TEST_F(ChatSelector, IgnoresASelectionNamingAStagingDirectory)
       slot(".tmp-host-1-abc")));
    writeSelectorFile("{\"selected\":{\"11.0\":\".tmp-host-1-abc\"}}");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
 }
 
 TEST_F(ChatSelector, IgnoresASelectionThatTriesToEscapeTheVersionsDirectory)
@@ -386,7 +351,7 @@ TEST_F(ChatSelector, IgnoresASelectionThatTriesToEscapeTheVersionsDirectory)
    makeSlot("1.1.0", "1.1.0", "11.0");
    writeSelectorFile("{\"selected\":{\"11.0\":\"../../elsewhere\"}}");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
 }
 
 TEST_F(ChatSelector, IgnoresAnEmptySelection)
@@ -394,22 +359,140 @@ TEST_F(ChatSelector, IgnoresAnEmptySelection)
    makeSlot("1.1.0", "1.1.0", "11.0");
    writeSelectorFile("{\"selected\":{\"11.0\":\"\"}}");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.1.0")));
 }
 
 TEST_F(ChatSelector, ResolvesNothingWhenNoSlotServesTheProtocol)
 {
    makeSlot("1.1.0", "1.1.0", "11.0");
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "12.0").isEmpty());
+   EXPECT_TRUE(resolveSlot(storageDir_, "12.0", SelectorRepair::Enabled).isEmpty());
    EXPECT_EQ(readSelections(storageDir_).count("12.0"), 0u);
+}
+
+// ============================================================================
+// Read-only resolution
+// ============================================================================
+
+TEST_F(ChatSelector, ReadOnlyResolveFallsBackWithoutRepairingTheSelector)
+{
+   // The administrator's storage directory carries the same selector, but it
+   // is theirs: a stale entry is resolved around, never rewritten.
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"9.9.9\"}}");
+
+   EXPECT_TRUE(
+      resolveSlot(storageDir_, "11.0", SelectorRepair::Disabled).isEquivalentTo(slot("1.1.0")));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "9.9.9");
+}
+
+TEST_F(ChatSelector, ReadOnlyResolveWithNoSelectorCreatesNone)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+
+   EXPECT_TRUE(
+      resolveSlot(storageDir_, "11.0", SelectorRepair::Disabled).isEquivalentTo(slot("1.1.0")));
+   EXPECT_FALSE(storageDir_.completeChildPath("selected.json").exists());
+}
+
+TEST_F(ChatSelector, ReadOnlyResolveStillHonoursTheSelection)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("1.0.4", "1.0.4", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"1.0.4\"}}");
+
+   // An administrator holding users on an older slot beside a newer one.
+   EXPECT_TRUE(
+      resolveSlot(storageDir_, "11.0", SelectorRepair::Disabled).isEquivalentTo(slot("1.0.4")));
+}
+
+#ifndef _WIN32
+TEST_F(ChatSelector, StillResolvesWhenTheStorageDirectoryCannotBeWritten)
+{
+   // Repair is best effort: a read-only storage directory costs the repair,
+   // not the resolve. POSIX only, because directory permissions do not stop
+   // file creation on Windows, and skipped for root, whom they do not stop
+   // either.
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root is not subject to directory permissions";
+
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"9.9.9\"}}");
+   ASSERT_FALSE(storageDir_.changeFileMode("555"));
+
+   FilePath resolved = resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled);
+
+   // Restore before asserting so a failure does not strand the directory.
+   ASSERT_FALSE(storageDir_.changeFileMode("755"));
+
+   EXPECT_TRUE(resolved.isEquivalentTo(slot("1.1.0")));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "9.9.9");
+}
+#endif
+
+// ============================================================================
+// selectInstalledVersion
+// ============================================================================
+
+TEST_F(ChatSelector, SelectsAVersionAlreadyOnDisk)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("1.0.4", "1.0.4", "11.0");
+   ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.1.0"));
+
+   // The manifest-driven downgrade: 1.0.4 is already installed, so returning
+   // to it is a selector update rather than a download.
+   EXPECT_TRUE(selectInstalledVersion(storageDir_, "11.0", "1.0.4"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.0.4");
+   EXPECT_TRUE(
+      resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.0.4")));
+}
+
+TEST_F(ChatSelector, DoesNotSelectAVersionThatIsNotInstalled)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.1.0"));
+
+   EXPECT_FALSE(selectInstalledVersion(storageDir_, "11.0", "1.2.0"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
+}
+
+TEST_F(ChatSelector, DoesNotSelectAVersionInstalledForAnotherProtocol)
+{
+   // The same package version can serve different protocols. Selecting the
+   // wrong one would strand the session: resolution rejects a slot whose
+   // protocol does not match what it was asked for.
+   makeSlot("1.1.0", "1.1.0", "10.0");
+
+   EXPECT_FALSE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_).count("11.0"), 0u);
+}
+
+TEST_F(ChatSelector, DoesNotSelectAVersionWhoseOnlySlotIsDamaged)
+{
+   // The version is nominally on disk, but the slot does not verify, so the
+   // install has to download rather than take the shortcut.
+   makeDamagedSlot("1.1.0", "11.0");
+
+   EXPECT_FALSE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_).count("11.0"), 0u);
+}
+
+TEST_F(ChatSelector, SelectsAReinstallSlotByTheVersionItHolds)
+{
+   // A slot name carries no meaning, so the version has to come from the
+   // package.json inside: "1.1.0-2" holds 1.1.0.
+   makeSlot("1.1.0-2", "1.1.0", "11.0");
+
+   EXPECT_TRUE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0-2");
 }
 
 TEST_F(ChatSelector, ResolvesNothingBeforeTheFirstInstall)
 {
    ASSERT_FALSE(storageDir_.remove());
 
-   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEmpty());
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEmpty());
    EXPECT_FALSE(storageDir_.exists());
 }
 

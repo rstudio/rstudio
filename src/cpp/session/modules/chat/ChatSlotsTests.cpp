@@ -322,6 +322,20 @@ TEST_F(ChatSlots, SkipsStagingDirectories)
    EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
 }
 
+TEST_F(ChatSlots, ListsOnlySlotsWhoseNamesCouldBeSelected)
+{
+   // A complete tree under a name isUsableSlotName() rejects is not a slot:
+   // recorded as a fallback it would be rejected on the next read and
+   // recorded again on every resolve. A leading '-' is the one rejected
+   // shape every platform can create.
+   makeSlot(slot("-1.1.0"), "1.1.0", "11.0");
+   makeSlot(slot("1.1.0"), "1.1.0", "11.0");
+
+   std::vector<SlotInfo> found = verifiedSlots(versionsDir_);
+   ASSERT_EQ(found.size(), 1u);
+   EXPECT_EQ(found[0].name, "1.1.0");
+}
+
 TEST_F(ChatSlots, FindsNothingBeforeTheFirstInstall)
 {
    ASSERT_FALSE(versionsDir_.remove());

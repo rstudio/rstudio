@@ -86,24 +86,63 @@ core::Error selectSlot(const core::FilePath& storageDir,
                        const std::string& slotName);
 
 /**
+ * Record an existing slot that already holds `version` as the active one.
+ *
+ * An install whose target version is already on disk in a verifying slot has
+ * nothing to download; it is a selector update. Any matching slot will do --
+ * two slots holding one version hold the same package -- so the first one
+ * found is taken. A forced reinstall exists precisely to replace bits that
+ * verification cannot fault, so it must not use this.
+ *
+ * @param storageDir The Posit Assistant storage directory.
+ * @param protocol The protocol version the slot must serve (e.g. "11.0").
+ * @param version The package version the slot must hold (e.g. "1.1.0").
+ * @return true when a slot was found and recorded. false when no slot holds
+ *         that version for that protocol, or the selector could not be
+ *         written.
+ */
+bool selectInstalledVersion(const core::FilePath& storageDir,
+                            const std::string& protocol,
+                            const std::string& version);
+
+/**
+ * Whether resolveSlot() may write the fallback it finds back into
+ * selected.json.
+ */
+enum class SelectorRepair
+{
+   // Record the fallback, so a dropped or damaged selector heals itself. For
+   // the user's own storage directory, which RStudio writes.
+   Enabled,
+
+   // Resolve through the same fallback without writing anything. For a
+   // storage directory RStudio does not own -- the administrator's, which is
+   // typically read-only and whose selector is the administrator's to keep.
+   Disabled
+};
+
+/**
  * Find the slot to run for a protocol.
  *
  * Prefers the recorded selection. When that slot is missing, fails
  * verification, or turns out to serve a different protocol, falls back to the
- * newest-versioned verifying slot for the protocol and records it, so a
- * dropped or damaged selector heals itself. Ties on version are broken by slot
- * name, descending -- arbitrary, but stable across sessions.
+ * newest-versioned verifying slot for the protocol; with repair enabled it
+ * also records that slot, so a dropped or damaged selector heals itself. Ties
+ * on version are broken by the later reinstall, then by slot name descending
+ * -- arbitrary, but stable across sessions.
  *
  * Repair is best effort: a slot is still returned when the storage directory
  * cannot be written.
  *
  * @param storageDir The Posit Assistant storage directory.
  * @param protocol The protocol version to resolve for (e.g. "11.0").
+ * @param repair Whether a fallback is written back into selected.json.
  * @return The slot directory, or an empty FilePath when no slot serves the
  *         protocol.
  */
 core::FilePath resolveSlot(const core::FilePath& storageDir,
-                           const std::string& protocol);
+                           const std::string& protocol,
+                           SelectorRepair repair);
 
 } // namespace selector
 } // namespace chat
