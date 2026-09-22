@@ -4368,7 +4368,7 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
 
 // Publish a downloaded package as an install slot and select it for the
-// protocol it serves. Nothing already on disk is modified: the package is
+// protocol it serves. No existing installation is modified: the package is
 // extracted into a staging directory no other session can name, and reaches a
 // slot name only once allocateSlot() has recorded its manifest and verified
 // the result, so a torn install never exists under a resolvable name.
