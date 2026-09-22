@@ -19,9 +19,9 @@
 
 #ifndef _WIN32
 
+#include <cerrno>
+#include <csignal>
 #include <cstdlib>
-#include <string>
-#include <thread>
 
 #include <sys/wait.h>
 #include <unistd.h>
@@ -30,7 +30,6 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/FileLock.hpp>
-#include <core/FileSerializer.hpp>
 
 using namespace rstudio::core;
 
@@ -45,44 +44,43 @@ const int kTeardownRanStatus = 99;
 const int kChildFailedStatus = 98;
 const unsigned int kChildTimeoutSeconds = 30;
 
-// what a released link-based lock reads as (see LinkBasedFileLock.cpp)
-const char* const kReleasedLockContents = "-1\n";
-
-// Runs in the forked child, and only returns (or throws) on failure.
-void exitEarlyFromBackgroundThread(const FilePath& lockFilePath)
+// Runs in the forked child, and only returns on failure.
+void exitFromBackgroundThreadInChild(const FilePath& root)
 {
+   // don't hang the suite if the exit never happens
+   ::alarm(kChildTimeoutSeconds);
+
+   // The child is a copy of a multithreaded process, so the logger's locks
+   // may have been snapshotted held; route lock logging around them.
+   FileLock::setLogFileForTesting(root.completePath("lock.log"));
+
    // Reached only if exit-time teardown runs; it replaces the status so
    // that the parent can tell exit() from _Exit().
    std::atexit([]() { ::_exit(kTeardownRanStatus); });
 
-   // don't hang the suite if the exit never happens
-   ::alarm(kChildTimeoutSeconds);
-
    // Taken here rather than before the fork, since a forked child starts
    // with an empty lock registry. A hard-linked lock keeps its public entry
-   // when released, which is what lets the parent read it afterwards.
+   // when released, so the parent sees the release rather than a missing
+   // file.
    FileLock::setUseSymlinksForTesting(false);
    LinkBasedFileLock lock;
-   if (lock.acquire(lockFilePath))
+   if (lock.acquire(root.completePath("lock")))
       return;
 
-   // the forking thread is the child's main thread; keep it alive, as the
-   // session's main thread would be, while a background thread exits
-   std::thread exiter([]() { exitEarly(kRequestedStatus); });
-   for (;;)
-      ::pause();
+   detail::exitFromBackgroundThread(kRequestedStatus);
 }
 
 } // anonymous namespace
 
 // exit() runs atexit handlers and static destructors on the calling thread,
 // underneath a main thread that is still running. A background caller must
-// therefore leave without any exit-time teardown, but still release its
-// link-based locks, which outlive the process otherwise.
+// therefore leave without any exit-time teardown, but still release the
+// link-based locks of a load-balanced session, which cannot be recognized
+// as stale by their owner's pid.
 //
-// Only this direction is checked. The main-thread path joins worker threads
-// that do not exist in a forked child, so it cannot be driven from here.
-TEST(SessionMainTest, ExitEarlyFromBackgroundThreadSkipsTeardown)
+// The rest of exitEarly() joins worker threads that do not exist in a
+// forked child, so only the background tail is driven from here.
+TEST(SessionMainTest, ExitFromBackgroundThreadSkipsTeardown)
 {
    FileLock::initialize();
 
@@ -91,15 +89,19 @@ TEST(SessionMainTest, ExitEarlyFromBackgroundThreadSkipsTeardown)
    ASSERT_FALSE(root.ensureDirectory());
    FilePath lockFilePath = root.completePath("lock");
 
+   // load-balanced, so that neither side can treat the lock as released
+   // merely because its owner is gone
+   bool wasLoadBalanced = FileLock::isLoadBalanced();
+   FileLock::setLoadBalancedForTesting(true);
+
    pid_t child = ::fork();
-   ASSERT_NE(child, -1);
    if (child == 0)
    {
       // The child is a copy of a live session. It must never get back into
       // the rest of the suite, which ends in a real rCleanup() and exit().
       try
       {
-         exitEarlyFromBackgroundThread(lockFilePath);
+         exitFromBackgroundThreadInChild(root);
       }
       catch (...)
       {
@@ -109,15 +111,31 @@ TEST(SessionMainTest, ExitEarlyFromBackgroundThreadSkipsTeardown)
    }
 
    int status = 0;
-   ASSERT_EQ(::waitpid(child, &status, 0), child);
+   pid_t waited = -1;
+   if (child != -1)
+   {
+      do
+      {
+         waited = ::waitpid(child, &status, 0);
+      } while (waited == -1 && errno == EINTR);
+
+      if (waited != child)
+      {
+         ::kill(child, SIGKILL);
+         ::waitpid(child, nullptr, 0);
+      }
+   }
+
+   bool locked = LinkBasedFileLock().isLocked(lockFilePath);
+
+   FileLock::setLoadBalancedForTesting(wasLoadBalanced);
+   EXPECT_FALSE(root.removeIfExists());
+
+   ASSERT_NE(child, -1);
+   ASSERT_EQ(waited, child);
    ASSERT_TRUE(WIFEXITED(status));
    EXPECT_EQ(WEXITSTATUS(status), kRequestedStatus);
-
-   std::string contents;
-   EXPECT_FALSE(readStringFromFile(lockFilePath, &contents));
-   EXPECT_EQ(contents, kReleasedLockContents);
-
-   EXPECT_FALSE(root.removeIfExists());
+   EXPECT_FALSE(locked);
 }
 
 } // namespace tests

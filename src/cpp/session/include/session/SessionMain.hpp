@@ -49,6 +49,13 @@ void controlledExit(int statusCode);
 
 void exitEarly(int statusCode);
 
+namespace detail {
+
+// exitEarly()'s tail when called off the main thread; exposed for tests
+[[noreturn]] void exitFromBackgroundThread(int statusCode);
+
+} // namespace detail
+
 }
 }
 

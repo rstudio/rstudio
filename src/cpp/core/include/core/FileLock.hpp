@@ -137,6 +137,8 @@ public:
    {
       s_liveOwnerGraceMultiplier = multiplier;
    }
+   // logs to 'logFile' directly, bypassing the logger (and its locks)
+   static void setLogFileForTesting(const FilePath& logFile);
 #endif
    static bool isNoLockAvailable(const Error& error)
    {

@@ -283,6 +283,14 @@ bool FileLock::s_useSymlinks(false);
 // leaked: locks are refreshed on the http listener thread (#18318)
 FilePath& FileLock::s_logFile = core::make_leaked<FilePath>();
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+void FileLock::setLogFileForTesting(const FilePath& logFile)
+{
+   s_logFile = logFile;
+   s_loggingEnabled = true;
+}
+#endif
+
 boost::shared_ptr<FileLock> FileLock::create(LockType type)
 {
    verifyInitialized();

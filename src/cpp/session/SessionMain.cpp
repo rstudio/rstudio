@@ -283,7 +283,8 @@ namespace session {
 
 namespace {
 
-std::string s_fallbackLibraryPath;
+// leaked: exitEarly() reads it from background threads (see there)
+std::string& s_fallbackLibraryPath = core::make_leaked<std::string>();
 
 } // end anonymous namespace
 
@@ -1732,11 +1733,7 @@ void detectParentTermination()
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-
-      // we no longer exit with ::abort because it generated unwanted exceptions
-      // ::_Exit should perform the same functionality (not running destructors and exiting process)
-      // without generating an exception
-      std::_Exit(EXIT_FAILURE);
+      exitEarly(EXIT_FAILURE);
    }
    else if (result == ParentTerminationNormal)
    {
@@ -1755,11 +1752,7 @@ void detectParentTermination(int parentFdRead, int parentFdWrite)
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-
-      // we no longer exit with ::abort because it generated unwanted exceptions
-      // ::_Exit should perform the same functionality (not running destructors and exiting process)
-      // without generating an exception
-      std::_Exit(EXIT_FAILURE);
+      exitEarly(EXIT_FAILURE);
    }
    else if (result == ParentTerminationNormal)
    {
@@ -1828,53 +1821,49 @@ void loadCranRepos(const std::string& repos,
 namespace rstudio {
 namespace session {
 
-void exitEarly(int status)
-{
-   // exit() runs static destructors on the calling thread. From a background
-   // thread (the parent-termination monitor, the http listener's accept-error
-   // bailout) that would tear statics down underneath a main thread that is
-   // still running, so those callers leave through _Exit() instead, which
-   // runs no teardown at all.
-   //
-   // Everything a background thread does on the way out must therefore be
-   // safe against a live main thread -- including one that is itself already
-   // inside exit() and destroying statics.
-   bool mainThread = core::thread::isMainThread();
+namespace detail {
 
-   // These joins exist so that no worker is still running when exit()
-   // destroys the statics it uses. _Exit() destroys nothing, so a background
-   // caller has no need for them (and must not block on them).
-   if (mainThread)
+void exitFromBackgroundThread(int status)
+{
+   // Nothing may escape: the listener thread would swallow an exception and
+   // keep the session running, and the macOS monitor thread would terminate()
+   // with the crash report it exists to avoid.
+   try
    {
-      stopMonitorWorkerThread();
-      server_rpc::stop();
-      offlineService().stop();
+      // On a single host, a lock whose owner pid is gone reads as stale at
+      // once. Load-balanced sessions cannot check a pid on another host, and
+      // would otherwise make contenders wait out the full lock timeout.
+      // Best effort: the main thread may still be taking or using locks.
+      if (FileLock::isLoadBalanced())
+         FileLock::cleanUp();
+
+      FilePath(s_fallbackLibraryPath).removeIfExists();
+   }
+   catch (...)
+   {
    }
 
-   // Release link-based locks explicitly on both paths. Unlike advisory
-   // locks, which the kernel drops with the process, these are files that
-   // stay on disk marked as held. On a single host that is mostly harmless,
-   // since a lock whose owner pid is gone is treated as stale at once. But
-   // load-balanced sessions cannot check a pid from another host, and would
-   // have to wait out the full lock timeout.
-   //
-   // This releases every lock in the process, the main thread's included,
-   // which is what we want given that the process is going away. It is safe
-   // from any thread: the lock registry is heap-allocated and never
-   // destroyed, and a release racing the owning thread (or a refresh) is
-   // resolved by the registry mutex and each lock's 'released' flag, never
-   // done twice.
+   std::_Exit(status);
+}
+
+} // namespace detail
+
+void exitEarly(int status)
+{
+   // stop the workers first, so no in-flight write is cut off or left
+   // running after its locks are released (all waits are bounded)
+   stopMonitorWorkerThread();
+   server_rpc::stop();
+   offlineService().stop();
+
+   // exit() runs atexit handlers and static destructors on the calling
+   // thread, underneath a main thread that may still be using them. _Exit()
+   // skips both for the executable (on Windows, rsession.dll still gets
+   // DLL_PROCESS_DETACH and destroys its own statics).
+   if (!core::thread::isMainThread())
+      detail::exitFromBackgroundThread(status);
+
    FileLock::cleanUp();
-
-   if (!mainThread)
-      std::_Exit(status);
-
-   // Main thread only. s_fallbackLibraryPath is a std::string with a real
-   // destructor, so a background thread could read it after a main thread
-   // inside exit() had destroyed it -- and removeIfExists() deletes
-   // recursively. Skipping the removal there costs nothing: the path is
-   // shared by every session the desktop launches, a normal quit never
-   // removes it either, and reticulate re-creates the symlink on use.
    FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
 }
