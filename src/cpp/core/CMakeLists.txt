@@ -396,15 +396,8 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    )
 
    target_link_libraries(rstudio-core-tests
-      rstudio-shared-core
       rstudio-core
       rstudio-core-synctex
-      rstudio-dtl
-      rstudio-hunspell
-      rstudio-utfcpp
-      ${Boost_LIBRARIES}
-      ${SOCI_LIBRARIES}
-      ${CORE_SYSTEM_LIBRARIES}
       gtest
    )
 

@@ -82,10 +82,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${SERVER_CORE_HEADER_FILES}
    )
    target_link_libraries(rstudio-server-core-tests
-      rstudio-core
       rstudio-server-core
-      ${Boost_LIBRARIES}
-      ${CORE_SYSTEM_LIBRARIES}
       gtest
       pthread
    )
