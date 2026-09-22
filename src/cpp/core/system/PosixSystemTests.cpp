@@ -18,14 +18,20 @@
 #include <core/system/PosixSystem.hpp>
 
 #include <grp.h>
+#include <limits.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <atomic>
 #include <cerrno>
+#include <chrono>
 #include <condition_variable>
 #include <cstring>
+#include <functional>
+#include <future>
 #include <limits>
 #include <mutex>
 #include <thread>
@@ -1044,6 +1050,60 @@ TEST(PosixTests, ChildProcessTrackerLeavesRunningChildAlone)
    EXPECT_EQ(ECHILD, errno);
 }
 
+namespace {
+
+// generous budgets for the forked children below, well past anything a
+// healthy child needs; a child that blows one has hung
+const std::chrono::milliseconds kChildTimeout(10000);
+
+bool waitUntil(const std::function<bool()>& predicate, std::chrono::milliseconds timeout)
+{
+   auto deadline = std::chrono::steady_clock::now() + timeout;
+   while (!predicate())
+   {
+      if (std::chrono::steady_clock::now() >= deadline)
+         return false;
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+
+   return true;
+}
+
+// reaps the child, killing it first if it hasn't exited within the timeout
+bool waitForChildExit(pid_t child, int* pStatus, std::chrono::milliseconds timeout)
+{
+   bool exited = waitUntil([&]() { return ::waitpid(child, pStatus, WNOHANG) == child; }, timeout);
+   if (!exited)
+   {
+      ::kill(child, SIGKILL);
+      ::waitpid(child, nullptr, 0);
+   }
+
+   return exited;
+}
+
+// runs the function on its own thread; a function that doesn't finish within
+// the timeout is abandoned there, so that the test can fail instead of hang
+bool completesWithin(const std::function<void()>& function, std::chrono::milliseconds timeout)
+{
+   auto pDone = std::make_shared<std::promise<void>>();
+   std::future<void> done = pDone->get_future();
+   std::thread thread([function, pDone]()
+   {
+      function();
+      pDone->set_value();
+   });
+
+   if (done.wait_for(timeout) != std::future_status::ready)
+   {
+      thread.detach();
+      return false;
+   }
+
+   thread.join();
+   return true;
+}
+
 // a log destination whose writes block until released, so that a thread
 // writing to it holds the logger's read lock for as long as a test needs
 class BlockingLogDestination : public log::ILogDestination
@@ -1069,10 +1129,10 @@ public:
       condition_.wait(lock, [this] { return released_; });
    }
 
-   void waitUntilWriting()
+   bool waitUntilWriting(std::chrono::milliseconds timeout)
    {
       std::unique_lock<std::mutex> lock(mutex_);
-      condition_.wait(lock, [this] { return writing_; });
+      return condition_.wait_for(lock, timeout, [this] { return writing_; });
    }
 
    void release()
@@ -1089,14 +1149,30 @@ private:
    bool released_ = false;
 };
 
-TEST(PosixTests, PermanentlyDropPrivToResolvedUserSurvivesForkDuringLogWrite)
+// notes that a fork has begun. registered by the test below, after the
+// logger's handlers, so it runs before them and thus before any wait they impose
+std::atomic<bool> s_forkPrepared(false);
+std::once_flag s_forkPreparedRegistration;
+
+void noteForkPrepared()
 {
-   // a child forked while another thread is mid log write inherits the
-   // logger's read lock with no thread left to release it. rserver drops
-   // privilege in just such a child when it launches a session, so the drop
-   // must not wait on that lock: a child stuck there never becomes the session
-   User user;
-   ASSERT_FALSE(User::getCurrentUser(user));
+   s_forkPrepared = true;
+}
+
+} // anonymous namespace
+
+TEST(PosixTests, ForkWaitsForInFlightLogWriteAndChildCanLog)
+{
+   // rserver forks the child that becomes a session while other threads log,
+   // and that child drops privilege and logs before it execs. fork() would
+   // copy a mid-write thread's read lock into the child with no thread left to
+   // release it, so the logger holds its lock across the fork instead: the fork
+   // waits for the write to finish, and the child starts with a usable logger
+   std::call_once(s_forkPreparedRegistration, []()
+   {
+      ASSERT_EQ(0, ::pthread_atfork(noteForkPrepared, nullptr, nullptr));
+   });
+   s_forkPrepared = false;
 
    const std::string section = "fork-during-log-write";
    auto pDestination = std::make_shared<BlockingLogDestination>();
@@ -1106,38 +1182,141 @@ TEST(PosixTests, PermanentlyDropPrivToResolvedUserSurvivesForkDuringLogWrite)
    {
       log::logErrorMessage("holding the logger's read lock", section);
    });
-   pDestination->waitUntilWriting();
+   bool writing = pDestination->waitUntilWriting(kChildTimeout);
+
+   // fork on another thread, so this one can release the writer the fork is waiting for
+   std::promise<pid_t> childPromise;
+   std::future<pid_t> childFuture = childPromise.get_future();
+   std::thread forker([&]()
+   {
+      pid_t pid = ::fork();
+      if (pid == 0)
+      {
+         // both of these hang in a child forked before the write finished: the
+         // write blocks on this destination's release, which it would have
+         // inherited unreleased, and the refresh on the inherited read lock
+         log::logErrorMessage("logging in the child", section);
+         log::refreshAllLogDestinations();
+         ::_exit(0);
+      }
+
+      childPromise.set_value(pid);
+   });
+
+   bool forkStarted = waitUntil([]() { return s_forkPrepared.load(); }, kChildTimeout);
+   pDestination->release();
+   writer.join();
+
+   pid_t child = -1;
+   bool forked = childFuture.wait_for(kChildTimeout) == std::future_status::ready;
+   if (forked)
+   {
+      child = childFuture.get();
+      forker.join();
+   }
+   else
+   {
+      forker.detach();
+   }
+
+   int status = 0;
+   bool exited = child != -1 && waitForChildExit(child, &status, kChildTimeout);
+
+   // the parent must have its lock back as well
+   bool parentLogs = completesWithin([section]()
+   {
+      log::logErrorMessage("logging in the parent after the fork", section);
+      log::refreshAllLogDestinations();
+   }, kChildTimeout);
+
+   log::removeLogDestination(pDestination->getId(), section);
+
+   ASSERT_TRUE(writing) << "the writer never reached the log destination";
+   ASSERT_TRUE(forkStarted) << "the fork never began";
+   ASSERT_TRUE(forked) << "the fork never returned to the parent";
+   ASSERT_NE(-1, child);
+   ASSERT_TRUE(exited) << "the child hung logging after the fork";
+   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
+   EXPECT_TRUE(parentLogs) << "the parent could not log after the fork";
+}
+
+TEST(PosixTests, ResolveUserReturnsCurrentUserAndGroups)
+{
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   ResolvedUser resolved;
+   ASSERT_FALSE(resolveUser(user.getUsername(), &resolved));
+   EXPECT_EQ(user.getUserId(), resolved.user.getUserId());
+   EXPECT_EQ(user.getGroupId(), resolved.user.getGroupId());
+
+   // getgrouplist(3) always includes the primary group
+   auto begin = resolved.groupIds.begin();
+   auto end = resolved.groupIds.end();
+   EXPECT_NE(end, std::find(begin, end, user.getGroupId()));
+}
+
+TEST(PosixTests, PermanentlyDropPrivToResolvedUserReturnsAfterFork)
+{
+   // the drop must return in a forked child without any lookup; unprivileged,
+   // the drop itself fails with EPERM and returning at all is what counts
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   ResolvedUser resolved;
+   ASSERT_FALSE(resolveUser(user.getUsername(), &resolved));
 
    pid_t child = ::fork();
+   ASSERT_NE(-1, child);
    if (child == 0)
    {
-      // unprivileged, the drop itself fails; returning at all is what counts
-      permanentlyDropPriv(user);
+      Error error = permanentlyDropPriv(resolved);
+      ::_exit(error && effectiveUserIsRoot() ? 1 : 0);
+   }
+
+   int status = 0;
+   ASSERT_TRUE(waitForChildExit(child, &status, kChildTimeout)) << "the child hung dropping privilege";
+   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
+}
+
+TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivToResolvedUserSetsIdsAndGroups)
+{
+   ResolvedUser resolved;
+   ASSERT_FALSE(resolveUser(testUser.getUsername(), &resolved));
+   ASSERT_FALSE(resolved.groupIds.empty());
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      if (permanentlyDropPriv(resolved))
+         ::_exit(1);
+
+      if (::getuid() != testUser.getUserId() || ::geteuid() != testUser.getUserId())
+         ::_exit(2);
+
+      if (::getgid() != testUser.getGroupId() || ::getegid() != testUser.getGroupId())
+         ::_exit(3);
+
+      // the supplementary groups are the resolved ones (as many as the kernel takes)
+      gid_t groups[NGROUPS_MAX];
+      int numGroups = ::getgroups(NGROUPS_MAX, groups);
+      if (numGroups < 0)
+         ::_exit(4);
+
+      std::size_t numExpected = std::min<std::size_t>(resolved.groupIds.size(), NGROUPS_MAX);
+      for (std::size_t i = 0; i < numExpected; i++)
+      {
+         if (std::find(groups, groups + numGroups, resolved.groupIds[i]) == groups + numGroups)
+            ::_exit(5);
+      }
+
       ::_exit(0);
    }
 
-   // give the child ample time before declaring it hung
-   bool exited = false;
-   for (int i = 0; child != -1 && i < 100 && !exited; i++)
-   {
-      if (::waitpid(child, nullptr, WNOHANG) == child)
-         exited = true;
-      else
-         ::usleep(100000);
-   }
-
-   if (child != -1 && !exited)
-   {
-      ::kill(child, SIGKILL);
-      ::waitpid(child, nullptr, 0);
-   }
-
-   pDestination->release();
-   writer.join();
-   log::removeLogDestination(pDestination->getId(), section);
-
-   ASSERT_NE(-1, child);
-   EXPECT_TRUE(exited) << "child hung dropping privilege after the fork";
+   int status = 0;
+   ASSERT_TRUE(waitForChildExit(child, &status, kChildTimeout)) << "the child hung dropping privilege";
+   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
 }
 
 } // namespace tests

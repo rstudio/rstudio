@@ -173,40 +173,15 @@ Error updateGroupCacheById(gid_t gid, Group* pGroup, const std::string& opName)
 
 std::vector<GidType> updateUserGroupCache(const User& user, const std::string& opName)
 {
-   // define a different gid type if we are on Mac vs Linux
-   // BSD expects int values, but Linux expects unsigned ints
-#ifndef __APPLE__
-   typedef gid_t GIDTYPE;
-#else
-   typedef int GIDTYPE;
-#endif
-
    const std::string& username = user.getUsername();
 
    LOG_DEBUG_MESSAGE(opName + " group list for user: " + username);
 
-   // get the groups for the user - we start with 100 groups which should be enough for most cases
-   // if it is not, resize the vector with the correct amount of groups and try again
-   int numGroups = 100;
-   std::vector<GIDTYPE> gids(numGroups);
-   int lastNumGroups = numGroups;
-   while (getgrouplist(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
-   {
-      if (numGroups == lastNumGroups)
-      {
-         LOG_ERROR_MESSAGE("Error retrieving groups for: " + username + " errno: " + std::to_string(errno));
-         break; // Continuing on with no groups for this user - should this return an error to the caller?
-      }
-      gids.resize(numGroups);
-      lastNumGroups = numGroups;
-   }
-
+   // continue on with no groups for this user if the lookup fails
    std::vector<GidType> groupIds;
-   groupIds.reserve(numGroups);
-   for(int i = 0; i < numGroups; i++) {
-      groupIds.push_back(static_cast<GidType>(gids[i]));
-   }
-
+   Error error = queryUserGroupIds(user, &groupIds);
+   if (error)
+      LOG_ERROR(error);
 
    UserGroupCache cacheEnt;
    cacheEnt.groupIds = groupIds;
@@ -348,6 +323,43 @@ Error groupFromId(gid_t gid, Group* pGroup)
  * @param user user to get groups for
  * @return vector containing the groupIds related to user
  */
+Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds)
+{
+   // define a different gid type if we are on Mac vs Linux
+   // BSD expects int values, but Linux expects unsigned ints
+#ifndef __APPLE__
+   typedef gid_t GIDTYPE;
+#else
+   typedef int GIDTYPE;
+#endif
+
+   const std::string& username = user.getUsername();
+
+   // get the groups for the user - we start with 100 groups which should be enough for most cases
+   // if it is not, resize the vector with the correct amount of groups and try again
+   int numGroups = 100;
+   std::vector<GIDTYPE> gids(numGroups);
+   int lastNumGroups = numGroups;
+   while (getgrouplist(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
+   {
+      if (numGroups == lastNumGroups)
+      {
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("description", "Error retrieving groups for: " + username);
+         return error;
+      }
+      gids.resize(numGroups);
+      lastNumGroups = numGroups;
+   }
+
+   pGroupIds->clear();
+   pGroupIds->reserve(numGroups);
+   for (int i = 0; i < numGroups; i++)
+      pGroupIds->push_back(static_cast<GidType>(gids[i]));
+
+   return Success();
+}
+
 std::vector<GidType> userGroupIds(const User& user)
 {
    const std::string& username = user.getUsername();

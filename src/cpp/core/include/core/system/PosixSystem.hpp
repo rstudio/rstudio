@@ -231,6 +231,15 @@ Error runProcess(const std::string& path,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter);
 
+// as above, but switching to runAsUser as resolved before a fork (see ResolvedUser
+// below) instead of looking it up here; pRunAsUser may be null
+struct ResolvedUser;
+Error runProcess(const std::string& path,
+                 const std::string& runAsUser,
+                 const ResolvedUser* pRunAsUser,
+                 ProcessConfig& config,
+                 ProcessConfigFilter configFilter);
+
 // get _all descendants_ of this process (not just direct children!)
 Error getChildProcesses(
       std::vector<rstudio::core::system::ProcessInfo> *pOutProcesses,
@@ -269,16 +278,29 @@ bool realUserIsRoot();
 
 // privilege management - not thread safe
 // call from main thread at app startup or just after fork() prior to exec() for new processes
-// do not call after a fork in a multithreaded process, as this can cause deadlock!
+//
+// these name-based overloads consult the password and group databases, so do not
+// call them after a fork in a multithreaded process: another thread may have held
+// a lock in one of those lookups (in our caches, or in the NSS modules beneath
+// them) when the child was created, and a child waiting on it never gets to exec.
+// Resolve the user before the fork and use the ResolvedUser overload instead.
 core::Error temporarilyDropPriv(const std::string& newUsername, bool chownLogDir);
 core::Error temporarilyDropPriv(const std::string& newUsername, const std::string& newGroupname, bool chownLogDir);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname);
 
-// drops to a user resolved before the fork: unlike the overloads above, this
-// neither looks the user up nor refreshes the log destinations, whose locks
-// another thread may have held when a multithreaded process forked
-core::Error permanentlyDropPriv(const User& user);
+// a user and the ids of the groups it belongs to, looked up ahead of a fork
+struct ResolvedUser
+{
+   User user;
+   std::vector<GidType> groupIds;
+};
+
+core::Error resolveUser(const std::string& username, ResolvedUser* pUser);
+
+// drops to a user resolved before the fork: makes no lookups, and (unlike the
+// name-based overloads) does not refresh the log destinations
+core::Error permanentlyDropPriv(const ResolvedUser& user);
 
 core::Error restorePriv();
 

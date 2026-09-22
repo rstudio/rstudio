@@ -35,8 +35,8 @@ typedef boost::unique_lock<boost::recursive_mutex> Lock;
 // ReaderWriterMutex ===================================================================================================
 struct ReaderWriterMutex::Impl
 {
-   bool IsWriting;
-   unsigned int ReaderCount;
+   bool IsWriting = false;
+   unsigned int ReaderCount = 0;
    boost::recursive_mutex Mutex;
    // This mutex is used to allow re-entrant lock behaviour on write. On read it's basically already re-entrant.
    boost::recursive_mutex WriteMutex;
@@ -48,8 +48,6 @@ PRIVATE_IMPL_DELETER_IMPL(ReaderWriterMutex);
 ReaderWriterMutex::ReaderWriterMutex() :
    m_impl(new Impl())
 {
-   m_impl->IsWriting = false;
-   m_impl->ReaderCount = 0;
 }
 
 ReaderWriterMutex::ReaderWriterMutex(ReaderWriterMutex&& in_other) noexcept :
@@ -133,6 +131,14 @@ void ReaderWriterMutex::unlockWrite()
       m_impl->IsWriting = false;
       m_impl->Condition.notify_all();
    }
+}
+
+void ReaderWriterMutex::reinitializeAfterFork()
+{
+   // The inherited state is leaked rather than destroyed: it holds a mutex locked by a thread that does not exist in
+   // this process, and destroying a locked mutex is undefined.
+   m_impl.release();
+   m_impl.reset(new Impl());
 }
 
 // ReaderLock ==========================================================================================================

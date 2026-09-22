@@ -41,7 +41,14 @@ struct Group
 
 Error groupFromName(const std::string& name, Group* pGroup);
 Error groupFromId(gid_t gid, Group* pGroup);
+
+// the ids of the groups the user belongs to, from a cache refreshed every few
+// minutes; a failed lookup is logged and yields an empty list
 std::vector<GidType> userGroupIds(const User& user);
+
+// the same list, read from the group database each time (as initgroups(3)
+// would), with a failed lookup reported to the caller
+Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds);
 Error userGroups(const std::string& userName, std::vector<Group>* pGroups);
 void removeUserFromGroupCache(const std::string& username);
 

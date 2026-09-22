@@ -24,6 +24,7 @@
 
 #include <fcntl.h>
 #include <grp.h>
+#include <limits.h>
 #include <pwd.h>
 #include <signal.h>
 #include <sys/resource.h>
@@ -2682,12 +2683,32 @@ Error launchChildProcess(std::string path,
                          ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
-   // Ensure the config.user is populated before the fork so runProcess is not accessing the password db in the
-   // weird after-fork-before-exec state (i.e. skip the getCurrentUser call in runProcess, and the user lookup
-   // when it drops privilege)
+   // Resolve the user the child will switch to before the fork, so that the child
+   // needn't consult the password or group databases in the weird after-fork-before-exec
+   // state: another thread may have held one of their locks when we forked, and a
+   // child waiting on such a lock never gets to exec (see ResolvedUser)
+   boost::optional<ResolvedUser> resolvedRunAsUser;
+   if (!runAsUser.empty() && posix::realUserIsRoot())
+   {
+      ResolvedUser resolved;
+      Error error = resolveUser(runAsUser, &resolved);
+      if (error)
+      {
+         LOG_DEBUG_MESSAGE("Error from resolveUser in launchChildProcess: " + error.asString());
+         return error;
+      }
+
+      resolvedRunAsUser = resolved;
+   }
+
+   // Likewise ensure config.user is populated before the fork (i.e. skip the getCurrentUser call in runProcess)
    if (config.user.isEmpty())
    {
-      if (!runAsUser.empty())
+      if (resolvedRunAsUser)
+      {
+         config.user = resolvedRunAsUser->user;
+      }
+      else if (!runAsUser.empty())
       {
          Error error = getUserFromUsername(runAsUser, config.user);
          if (error)
@@ -2727,7 +2748,7 @@ Error launchChildProcess(std::string path,
          ::_exit(EXIT_FAILURE);
       }
 
-      Error error = runProcess(path, runAsUser, config, configFilter);
+      Error error = runProcess(path, runAsUser, resolvedRunAsUser.get_ptr(), config, configFilter);
       if (error)
       {
          // Use safe logger in 'after fork before exec'
@@ -2745,6 +2766,15 @@ Error launchChildProcess(std::string path,
 
 Error runProcess(const std::string& path,
                  const std::string& runAsUser,
+                 ProcessConfig& config,
+                 ProcessConfigFilter configFilter)
+{
+   return runProcess(path, runAsUser, nullptr, config, configFilter);
+}
+
+Error runProcess(const std::string& path,
+                 const std::string& runAsUser,
+                 const ResolvedUser* pRunAsUser,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter)
 {
@@ -2772,12 +2802,9 @@ Error runProcess(const std::string& path,
       // set limits - after the pamSessionFilter since it will define cgroups and set ulimit itself
       setProcessLimits(config.limits);
 
-      // switch user, to the one launchChildProcess resolved before the fork when
-      // it's the one we want: the name-based overload takes the user cache and
-      // logger locks, which another thread may have held when we forked, and
-      // waiting on one of those leaves the child hung before it ever execs
-      if (config.user.getUsername() == runAsUser)
-         error = permanentlyDropPriv(config.user);
+      // switch user, without any lookups when the caller resolved it ahead of a fork
+      if (pRunAsUser != nullptr)
+         error = permanentlyDropPriv(*pRunAsUser);
       else
          error = permanentlyDropPriv(runAsUser);
       if (error)
@@ -3403,52 +3430,88 @@ void resetKeyring()
 #endif
 }
 
+namespace {
+
 // privilege manipulation for systems that support setresuid/getresuid
 #if defined(HAVE_SETRESUID)
 
-namespace {
-
-Error permanentlyDropPrivImpl(const User& user, GidType targetGID)
+Error setGroupId(GidType gid)
 {
-   bool isRootAtStart = realUserIsRoot();
-
-   // clear error state
-   errno = 0;
-
-   // supplemental group list
-   // NOTE: We are intentionally specifying the user's primary group here
-   // regardless of whether an alternate group is provided. This so all of
-   // the user's groups are maintained for the new process. Initializing
-   // with the alternate group results in the process running with only a single
-   // group.
-   if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
+   if (::setresgid(gid, gid, gid) < 0)
       return systemError(errno, ERROR_LOCATION);
 
-   // set group
-   if (::setresgid(targetGID, targetGID, targetGID) < 0)
-      return systemError(errno, ERROR_LOCATION);
    // verify
    gid_t rgid, egid, sgid;
    if (::getresgid(&rgid, &egid, &sgid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (rgid != targetGID || egid != targetGID || sgid != targetGID)
+   if (rgid != gid || egid != gid || sgid != gid)
       return systemError(EACCES, ERROR_LOCATION);
 
-   // set user
-   if (::setresuid(user.getUserId(), user.getUserId(), user.getUserId()) < 0)
+   return Success();
+}
+
+Error setUserId(UidType uid)
+{
+   if (::setresuid(uid, uid, uid) < 0)
       return systemError(errno, ERROR_LOCATION);
+
    // verify
    uid_t ruid, euid, suid;
    if (::getresuid(&ruid, &euid, &suid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (ruid != user.getUserId() || euid != user.getUserId() || suid != user.getUserId())
+   if (ruid != uid || euid != uid || suid != uid)
       return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+}
+
+// privilege manipulation for systems that don't support setresuid/getresuid
+#else
+
+Error setGroupId(GidType gid)
+{
+   if (::setregid(gid, gid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   if (::getgid() != gid || ::getegid() != gid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+}
+
+Error setUserId(UidType uid)
+{
+   if (::setreuid(uid, uid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   if (::getuid() != uid || ::geteuid() != uid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+}
+
+#endif
+
+// the steps every permanentlyDropPriv overload shares once the supplementary
+// group list has been set
+Error permanentlyDropPrivImpl(UidType uid, GidType targetGID)
+{
+   bool isRootAtStart = realUserIsRoot();
+
+   Error error = setGroupId(targetGID);
+   if (error)
+      return error;
+
+   error = setUserId(uid);
+   if (error)
+      return error;
 
    // just in case this method is ever called not as root
    if (isRootAtStart)
       resetKeyring();
 
-   // success
    return Success();
 }
 
@@ -3495,23 +3558,6 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    // are set up to log in case there are errors before we call ::execve - in particular, for syslog
    core::log::refreshAllLogDestinations();
 
-   return permanentlyDropPrivImpl(user, targetGID);
-}
-
-Error permanentlyDropPriv(const User& user)
-{
-   return permanentlyDropPrivImpl(user, user.getGroupId());
-}
-
-// privilege manipulation for systems that don't support setresuid/getresuid
-#else
-
-namespace {
-
-Error permanentlyDropPrivImpl(const User& user, GidType targetGID)
-{
-   bool isRootAtStart = realUserIsRoot();
-
    // clear error state
    errno = 0;
 
@@ -3524,75 +3570,32 @@ Error permanentlyDropPrivImpl(const User& user, GidType targetGID)
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
-   // set group
-   if (::setregid(targetGID, targetGID) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::getgid() != targetGID || ::getegid() != targetGID)
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // set user
-   if (::setreuid(user.getUserId(), user.getUserId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::getuid() != user.getUserId() || ::geteuid() != user.getUserId())
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // just in case this method is ever called not as root
-   if (isRootAtStart)
-      resetKeyring();
-
-   // success
-   return Success();
+   return permanentlyDropPrivImpl(user.getUserId(), targetGID);
 }
 
-} // anonymous namespace
-
-Error permanentlyDropPriv(const std::string& newUsername)
+Error resolveUser(const std::string& username, ResolvedUser* pUser)
 {
-   return permanentlyDropPriv(newUsername, std::string());
-}
-
-Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
-{
-   // get user info
-   User user;
-   Error error = getUserFromUsername(newUsername, user);
+   Error error = getUserFromUsername(username, pUser->user);
    if (error)
       return error;
 
-   // get group info if one was provided
-   boost::optional<GidType> groupOpt;
-   if (!newGroupname.empty())
-   {
-      // verify that the user is a member of the provided group
-      bool belongs = false;
-      error = userBelongsToGroup(user, newGroupname, &belongs);
-      if (error)
-         return error;
-
-      if (!belongs)
-         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
-
-      group::Group group;
-      error = group::groupFromName(newGroupname, &group);
-      if (error)
-         return error;
-
-      groupOpt = group.groupId;
-   }
-
-   GidType targetGID = groupOpt.value_or(user.getGroupId());
-
-   return permanentlyDropPrivImpl(user, targetGID);
+   return group::queryUserGroupIds(pUser->user, &pUser->groupIds);
 }
 
-Error permanentlyDropPriv(const User& user)
+Error permanentlyDropPriv(const ResolvedUser& user)
 {
-   return permanentlyDropPrivImpl(user, user.getGroupId());
-}
+   // clear error state
+   errno = 0;
 
-#endif
+   // supplemental group list, resolved ahead of the fork in place of the
+   // initgroups(3) call above; like initgroups, pass no more groups than the
+   // kernel accepts
+   int numGroups = static_cast<int>(std::min<std::size_t>(user.groupIds.size(), NGROUPS_MAX));
+   if (::setgroups(numGroups, user.groupIds.data()) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   return permanentlyDropPrivImpl(user.user.getUserId(), user.user.getGroupId());
+}
 
 Error restoreRoot()
 {

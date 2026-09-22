@@ -537,6 +537,17 @@ LogLevel logLevelFromStr(const std::string& in_levelStr);
 void refreshAllLogDestinations(const log::RefreshParams& in_refreshParams = log::RefreshParams());
 
 /**
+ * @brief Registers the fork handlers that hold the logger's lock across fork(), so a child is never created while
+ *        another thread is mid log write (the child would inherit a lock nobody remains to release).
+ *
+ * Registration is idempotent, and the logger performs it during static initialization. Prepare handlers run in the
+ * reverse order of their registration, and the logger's must run last: a fork handler that holds a mutex under which
+ * a thread may log must therefore be registered after this one, so its registration should call this first. No-op on
+ * Windows.
+ */
+void registerForkHandlers();
+
+/**
  * @brief Removes a log destination from the logger.
  *
  * If a log destination does not exist with the given ID, no destination will be removed.
