@@ -106,57 +106,54 @@ Error getPackageInfoFromManifest(
    // selected, so surface it rather than silently skipping it.
    for (const auto& entry : versions)
    {
-      SemanticVersion entryProtocol;
-      if (!entryProtocol.parse(entry.getName()) || entryProtocol.minor != 0 ||
-          entryProtocol.patch != 0)
+      if (!isProtocolVersionForm(entry.getName()))
       {
          WLOG("Manifest lists protocol '{}', which is not of the form <major>.0",
               entry.getName());
       }
    }
 
+   // An absent or unusable entry both report protocol_not_supported: the
+   // update check reads that code as "nothing to offer for this protocol",
+   // which is what a fresh installation needs to hear in either case.
+   Error unusable = systemError(boost::system::errc::protocol_not_supported,
+                                "No usable entry for protocol " + protocolVersion + " in manifest",
+                                ERROR_LOCATION);
+
    json::Object::Iterator it = versions.find(protocolVersion);
    if (it == versions.end())
    {
       WLOG("No entry for protocol {} in manifest", protocolVersion);
-      return systemError(boost::system::errc::protocol_not_supported,
-                        "No compatible protocol version found in manifest",
-                        ERROR_LOCATION);
+      return unusable;
    }
 
    json::Value versionValue = (*it).getValue();
    if (!versionValue.isObject())
    {
       WLOG("Manifest entry for protocol {} is not an object", protocolVersion);
-      return systemError(boost::system::errc::bad_message,
-                        "Manifest entry for protocol " + protocolVersion + " is not an object",
-                        ERROR_LOCATION);
+      return unusable;
    }
 
    json::Object versionInfo = versionValue.getObject();
 
    std::string packageVersion;
-   error = json::readObject(versionInfo, "version", packageVersion);
-   if (error)
+   if (json::readObject(versionInfo, "version", packageVersion))
    {
       WLOG("Manifest entry for protocol {} has no 'version' field", protocolVersion);
-      return error;
+      return unusable;
    }
 
    std::string downloadUrl;
-   error = json::readObject(versionInfo, "url", downloadUrl);
-   if (error)
+   if (json::readObject(versionInfo, "url", downloadUrl))
    {
       WLOG("Manifest entry for protocol {} has no 'url' field", protocolVersion);
-      return error;
+      return unusable;
    }
 
    if (!isHttpsUrl(downloadUrl))
    {
       WLOG("Manifest entry for protocol {} has a non-HTTPS URL: {}", protocolVersion, downloadUrl);
-      return systemError(boost::system::errc::protocol_not_supported,
-                        "Manifest download URL for protocol " + protocolVersion + " is not HTTPS",
-                        ERROR_LOCATION);
+      return unusable;
    }
 
    // Read optional sha256 field

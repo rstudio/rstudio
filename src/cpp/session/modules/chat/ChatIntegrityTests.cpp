@@ -341,6 +341,50 @@ TEST(ChatIntegrity, GetPackageInfoErrorsWhenOnlyAHigherMinorIsPublished)
    EXPECT_TRUE(error != Success());
 }
 
+TEST(ChatIntegrity, GetPackageInfoUnusableEntryReportsProtocolNotSupported)
+{
+   // The update check only treats protocol_not_supported as "nothing to
+   // offer"; any other code would leave a fresh installation looking current.
+   const int kNotSupported = boost::system::errc::protocol_not_supported;
+   std::string packageVersion, downloadUrl;
+
+   json::Object notAnObject;
+   json::Object versions;
+   versions["1.0"] = "1.0.0";
+   notAnObject["versions"] = versions;
+   Error error = getPackageInfoFromManifest(
+      notAnObject, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object noUrl;
+   noUrl["version"] = "1.0.0";
+   versions["1.0"] = noUrl;
+   json::Object missingUrl;
+   missingUrl["versions"] = versions;
+   error = getPackageInfoFromManifest(
+      missingUrl, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object noVersion;
+   noVersion["url"] = "https://example.com/pkg.zip";
+   versions["1.0"] = noVersion;
+   json::Object missingVersion;
+   missingVersion["versions"] = versions;
+   error = getPackageInfoFromManifest(
+      missingVersion, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object http = makeManifest("1.0", "1.0.0", "http://example.com/pkg.zip");
+   error = getPackageInfoFromManifest(
+      http, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object absent = makeManifest("2.0", "1.0.0", "https://example.com/pkg.zip");
+   error = getPackageInfoFromManifest(
+      absent, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+}
+
 TEST(ChatIntegrity, GetPackageInfoIgnoresDifferentMajorVersion)
 {
    json::Object v10Info;
