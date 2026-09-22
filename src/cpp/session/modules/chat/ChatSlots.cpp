@@ -205,6 +205,18 @@ bool verifySlotForProtocol(const FilePath& slotDir,
       return false;
    }
 
+   // The protocol comes first so that a slot for another protocol costs this
+   // one small read and nothing more.
+   std::string protocol = installation::declaredProtocol(slotDir);
+   if (protocol.empty())
+   {
+      DLOG("Slot {} declares no protocol version", slotDir.getAbsolutePath());
+      return false;
+   }
+
+   if (pRequiredProtocol != nullptr && protocol != *pRequiredProtocol)
+      return false;
+
    if (!installation::verifyInstallDir(slotDir))
    {
       DLOG("Slot {} is missing required files", slotDir.getAbsolutePath());
@@ -217,16 +229,6 @@ bool verifySlotForProtocol(const FilePath& slotDir,
       DLOG("Slot {} declares no package version", slotDir.getAbsolutePath());
       return false;
    }
-
-   std::string protocol = installation::declaredProtocol(slotDir);
-   if (protocol.empty())
-   {
-      DLOG("Slot {} declares no protocol version", slotDir.getAbsolutePath());
-      return false;
-   }
-
-   if (pRequiredProtocol != nullptr && protocol != *pRequiredProtocol)
-      return false;
 
    if (!slot_manifest::matchesSlotManifest(slotDir))
       return false;
