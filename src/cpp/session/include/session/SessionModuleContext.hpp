@@ -220,7 +220,7 @@ bool disablePackages();
 // checks: allow-posit-assistant, posit-assistant-enabled, RSTUDIO_DISABLE_POSIT_ASSISTANT
 bool isPositAssistantEnabledByAdmin();
 
-// may the user install, update, and uninstall Posit Assistant themselves?
+// may the user install and update Posit Assistant themselves?
 // checks: posit-assistant-installation-enabled, RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION.
 // Deliberately not an allow-* option: those are OR'd with allowOverlay(), which
 // open-source builds define as always true, and this must work in open-source

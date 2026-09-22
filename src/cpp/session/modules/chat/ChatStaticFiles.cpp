@@ -69,9 +69,9 @@ std::mutex s_authTokenMutex;
 std::string s_chatBackendAuthToken;
 
 // The installation the chat backend was last started from, set by
-// SessionChat.cpp. Empty before the first start, and after an uninstall
-// deletes it. Guarded by a mutex for the same reason as the port: written
-// from the main thread, read from HTTP handler threads.
+// SessionChat.cpp. Empty before the first start, or when cleared by a caller
+// whose installation is gone. Guarded by a mutex for the same reason as the
+// port: written from the main thread, read from HTTP handler threads.
 std::mutex s_installationMutex;
 FilePath s_installationPath;
 
@@ -603,9 +603,9 @@ void setInstallationPath(const FilePath& path)
 
    // The policy belongs to the installation, so changing which one is served
    // rebuilds it here rather than leaving each caller to pair the change with
-   // a setChatBackendPort() call. Uninstall did not pair them -- it stops the
-   // backend, which rebuilds while this pin is still set, and only then clears
-   // it -- so the removed installation's policy outlived it (#18831).
+   // a setChatBackendPort() call. A caller that changed the pin after the
+   // backend stopped, without starting another, would otherwise leave the
+   // previous installation's policy in force (#18831).
    //
    // Outside the lock above: rebuilding reads the pin back through
    // servedInstallationPath(), so holding it here would take
