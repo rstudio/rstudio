@@ -21,7 +21,10 @@
 
 #include <cerrno>
 #include <csignal>
+#include <cstdio>
 #include <cstdlib>
+#include <string>
+#include <thread>
 
 #include <sys/wait.h>
 #include <unistd.h>
@@ -30,6 +33,7 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/FileLock.hpp>
+#include <core/FileSerializer.hpp>
 
 using namespace rstudio::core;
 
@@ -43,9 +47,10 @@ const int kRequestedStatus = 42;
 const int kTeardownRanStatus = 99;
 const int kChildFailedStatus = 98;
 const unsigned int kChildTimeoutSeconds = 30;
+const char* const kBufferedOutput = "buffered output\n";
 
 // Runs in the forked child, and only returns on failure.
-void exitFromBackgroundThreadInChild(const FilePath& root)
+void exitEarlyFromThreadInChild(const FilePath& root)
 {
    // don't hang the suite if the exit never happens
    ::alarm(kChildTimeoutSeconds);
@@ -67,20 +72,26 @@ void exitFromBackgroundThreadInChild(const FilePath& root)
    if (lock.acquire(root.completePath("lock")))
       return;
 
-   detail::exitFromBackgroundThread(kRequestedStatus);
+   // left in the stream's buffer, as R leaves writes to a file() connection
+   std::string outputPath = root.completePath("output").getAbsolutePath();
+   FILE* pOutput = std::fopen(outputPath.c_str(), "w");
+   if (pOutput == nullptr || std::fputs(kBufferedOutput, pOutput) == EOF)
+      return;
+
+   // never returns, since exitEarly() ends the process
+   std::thread([]()
+   {
+      exitEarly(kRequestedStatus);
+   }).join();
 }
 
 } // anonymous namespace
 
 // exit() runs atexit handlers and static destructors on the calling thread,
-// underneath a main thread that is still running. A background caller must
-// therefore leave without any exit-time teardown, but still release the
-// link-based locks of a load-balanced session, which cannot be recognized
-// as stale by their owner's pid.
-//
-// The rest of exitEarly() joins worker threads that do not exist in a
-// forked child, so only the background tail is driven from here.
-TEST(SessionMainTest, ExitFromBackgroundThreadSkipsTeardown)
+// underneath a main thread that is still running. A background caller of
+// exitEarly() must therefore leave without any exit-time teardown, but still
+// release its link-based locks and flush stdio, as exit() would have.
+TEST(SessionMainTest, ExitEarlyFromBackgroundThreadSkipsTeardown)
 {
    FileLock::initialize();
 
@@ -89,7 +100,7 @@ TEST(SessionMainTest, ExitFromBackgroundThreadSkipsTeardown)
    ASSERT_FALSE(root.ensureDirectory());
    FilePath lockFilePath = root.completePath("lock");
 
-   // load-balanced, so that neither side can treat the lock as released
+   // load-balanced, so that the parent cannot treat the lock as released
    // merely because its owner is gone
    bool wasLoadBalanced = FileLock::isLoadBalanced();
    FileLock::setLoadBalancedForTesting(true);
@@ -101,7 +112,7 @@ TEST(SessionMainTest, ExitFromBackgroundThreadSkipsTeardown)
       // the rest of the suite, which ends in a real rCleanup() and exit().
       try
       {
-         exitFromBackgroundThreadInChild(root);
+         exitEarlyFromThreadInChild(root);
       }
       catch (...)
       {
@@ -128,6 +139,9 @@ TEST(SessionMainTest, ExitFromBackgroundThreadSkipsTeardown)
 
    bool locked = LinkBasedFileLock().isLocked(lockFilePath);
 
+   std::string output;
+   Error outputError = readStringFromFile(root.completePath("output"), &output);
+
    FileLock::setLoadBalancedForTesting(wasLoadBalanced);
    EXPECT_FALSE(root.removeIfExists());
 
@@ -136,6 +150,8 @@ TEST(SessionMainTest, ExitFromBackgroundThreadSkipsTeardown)
    ASSERT_TRUE(WIFEXITED(status));
    EXPECT_EQ(WEXITSTATUS(status), kRequestedStatus);
    EXPECT_FALSE(locked);
+   EXPECT_FALSE(outputError);
+   EXPECT_EQ(output, kBufferedOutput);
 }
 
 } // namespace tests

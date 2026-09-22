@@ -27,9 +27,12 @@
 #include <unistd.h>
 #endif
 
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
+#include <cstdio>
 #include <cstdlib>
 #include <csignal>
 
@@ -283,7 +286,7 @@ namespace session {
 
 namespace {
 
-// leaked: exitEarly() reads it from background threads (see there)
+// leaked: exitFromBackgroundThread() reads it (see there)
 std::string& s_fallbackLibraryPath = core::make_leaked<std::string>();
 
 } // end anonymous namespace
@@ -1821,8 +1824,6 @@ void loadCranRepos(const std::string& repos,
 namespace rstudio {
 namespace session {
 
-namespace detail {
-
 void exitFromBackgroundThread(int status)
 {
    // Nothing may escape: the listener thread would swallow an exception and
@@ -1830,14 +1831,31 @@ void exitFromBackgroundThread(int status)
    // with the crash report it exists to avoid.
    try
    {
-      // On a single host, a lock whose owner pid is gone reads as stale at
-      // once. Load-balanced sessions cannot check a pid on another host, and
-      // would otherwise make contenders wait out the full lock timeout.
-      // Best effort: the main thread may still be taking or using locks.
-      if (FileLock::isLoadBalanced())
-         FileLock::cleanUp();
+      // Link-based locks stay on disk marked as held. Only a reader on this
+      // host that is not load-balanced treats a dead owner's lock as stale at
+      // once; any other reader would wait out the lock timeout. Best effort:
+      // the main thread may still be taking or using locks.
+      FileLock::cleanUp();
 
       FilePath(s_fallbackLibraryPath).removeIfExists();
+   }
+   catch (...)
+   {
+   }
+
+   // exit() flushes stdio, which output to R's file() and pipe() connections
+   // relies on to reach disk. Unlike exit(), fflush() waits on each stream's
+   // lock, which a thread blocked in a read or write can hold indefinitely,
+   // so a watchdog bounds the wait (and without one, we skip the flush).
+   try
+   {
+      std::thread([status]()
+      {
+         std::this_thread::sleep_for(std::chrono::seconds(2));
+         std::_Exit(status);
+      }).detach();
+
+      std::fflush(nullptr);
    }
    catch (...)
    {
@@ -1846,22 +1864,22 @@ void exitFromBackgroundThread(int status)
    std::_Exit(status);
 }
 
-} // namespace detail
-
 void exitEarly(int status)
 {
-   // stop the workers first, so no in-flight write is cut off or left
-   // running after its locks are released (all waits are bounded)
-   stopMonitorWorkerThread();
-   server_rpc::stop();
-   offlineService().stop();
-
    // exit() runs atexit handlers and static destructors on the calling
    // thread, underneath a main thread that may still be using them. _Exit()
    // skips both for the executable (on Windows, rsession.dll still gets
-   // DLL_PROCESS_DETACH and destroys its own statics).
+   // DLL_PROCESS_DETACH and destroys its own statics). A background caller
+   // skips the worker joins below too: the main thread may be stopping or
+   // destroying the same thread handles, and _Exit() destroys nothing the
+   // workers use.
    if (!core::thread::isMainThread())
-      detail::exitFromBackgroundThread(status);
+      exitFromBackgroundThread(status);
+
+   // no worker may still be running when exit() destroys the statics it uses
+   stopMonitorWorkerThread();
+   server_rpc::stop();
+   offlineService().stop();
 
    FileLock::cleanUp();
    FilePath(s_fallbackLibraryPath).removeIfExists();
