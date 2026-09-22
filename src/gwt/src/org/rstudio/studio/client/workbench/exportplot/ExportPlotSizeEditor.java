@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -396,12 +399,18 @@ public class ExportPlotSizeEditor extends Composite
               getImageHeight() != iframe.getClientHeight());
    }
    
+   public void addSizeChangedHandler(Command handler)
+   {
+      sizeChangedHandlers_.add(handler);
+   }
+
    private void setWidthTextBox(int width)
    {
       settingDimenensionInProgress_ = true;
       lastWidth_ = width;
       widthTextBox_.setText(Integer.toString(width));
       settingDimenensionInProgress_ = false;
+      fireSizeChanged();
    }
    
    
@@ -411,6 +420,13 @@ public class ExportPlotSizeEditor extends Composite
       lastHeight_ = height;
       heightTextBox_.setText(Integer.toString(height));
       settingDimenensionInProgress_ = false;
+      fireSizeChanged();
+   }
+
+   private void fireSizeChanged()
+   {
+      for (Command handler : sizeChangedHandlers_)
+         handler.execute();
    }
    
    private int constrainWidth(int width)
@@ -520,6 +536,7 @@ public class ExportPlotSizeEditor extends Composite
    private int lastHeight_;
   
    private boolean settingDimenensionInProgress_ = false;
+   private final List<Command> sizeChangedHandlers_ = new ArrayList<>();
    
    private final int MIN_SIZE = 100;
    private LayoutPanel previewPanel_;

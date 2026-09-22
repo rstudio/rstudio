@@ -100,3 +100,42 @@ test_that("a fixed plot size pins the size of the RStudio graphics device (#4422
    writeFixedPlotSize(FALSE, width = 4, height = 3, units = "in")
    expect_equal(dev.size("in"), paneSize)
 })
+
+# Reads the resolution, in DPI, recorded in a PNG (pHYs chunk) or JPEG (JFIF
+# header) file; NA when there is none.
+imageResolution <- function(path) {
+   bytes <- readBin(path, "raw", file.size(path))
+   readInt <- function(offset, size)
+      sum(as.integer(bytes[offset + seq_len(size)]) * 256^((size - 1):0))
+
+   if (identical(bytes[1:4], as.raw(c(0x89, 0x50, 0x4E, 0x47)))) {
+      offset <- 8
+      while (offset < length(bytes)) {
+         length <- readInt(offset, 4)
+         type <- rawToChar(bytes[offset + 5:8])
+         if (type == "pHYs" && as.integer(bytes[offset + 17]) == 1)
+            return(round(readInt(offset + 8, 4) * 0.0254))
+         offset <- offset + 12 + length
+      }
+      return(NA)
+   }
+
+   isJfif <- identical(bytes[c(1:4, 7:10)], as.raw(c(0xFF, 0xD8, 0xFF, 0xE0, 0x4A, 0x46, 0x49, 0x46)))
+   if (isJfif && as.integer(bytes[14]) == 1)
+      return(readInt(14, 2))
+
+   NA
+}
+
+test_that("saved plot images record their resolution (#4422)", {
+   # R's quartz() bitmap devices don't record it themselves (PR#19076)
+   .rs.activateGraphicsDevice()
+   plot(1:10)
+
+   for (format in c("png", "jpeg")) {
+      file <- tempfile(fileext = paste0(".", format))
+      on.exit(unlink(file), add = TRUE)
+      .rs.api.savePlotAsImage(file, format, 480, 288)
+      expect_equal(imageResolution(file), 96, info = format)
+   }
+})

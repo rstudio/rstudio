@@ -340,6 +340,10 @@ public class UserStateAccessor extends Prefs
          return this && this.useDevicePixelRatio || true;
       }-*/;
 
+      public final native int getResolution() /*-{
+         return this && this.resolution || 0;
+      }-*/;
+
    }
 
    /**

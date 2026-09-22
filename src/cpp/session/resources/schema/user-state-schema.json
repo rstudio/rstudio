@@ -189,6 +189,10 @@
                 },
                 "useDevicePixelRatio": {
                     "type": "boolean"
+                },
+                "resolution": {
+                    "type": "integer",
+                    "description": "The resolution of saved images in DPI; 0 (or unset) uses the display's."
                 }
             },
             "default": {

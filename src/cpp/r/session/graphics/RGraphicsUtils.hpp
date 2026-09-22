@@ -47,6 +47,10 @@ private:
 
 void reportError(const core::Error& error);
 
+// Records the resolution (in DPI) in a bitmap image file, if it's missing or
+// wrong. Only needed for images written by R's Quartz devices on macOS.
+core::Error ensureImageResolution(const core::FilePath& imagePath, int dpi);
+
 void logAndReportError(const core::Error& error,
                        const core::ErrorLocation& location);
 

@@ -16,6 +16,7 @@
 #include "RGraphicsPlotManager.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/function.hpp>
@@ -311,7 +312,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    // adjust for device pixel ratio
    width = gsl::narrow_cast<int>(width * pixelRatio);
    height = gsl::narrow_cast<int>(height * pixelRatio);
-   res = gsl::narrow_cast<int>(res * pixelRatio);
+   res = gsl::narrow_cast<int>(std::lround(res * pixelRatio));
    
    // handle ragg specially
    std::string backend = getDefaultBackend();
@@ -383,7 +384,11 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                                extraParams);
 
    // save the file
-   return savePlotAsFile(deviceCreationCode);
+   Error error = savePlotAsFile(deviceCreationCode);
+   if (error)
+      return error;
+
+   return ensureImageResolution(targetPath, res);
 }
 
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 

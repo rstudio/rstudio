@@ -60,6 +60,7 @@ namespace prefs {
 #define kExportPlotOptionsViewAfterSave "viewAfterSave"
 #define kExportPlotOptionsCopyAsMetafile "copyAsMetafile"
 #define kExportPlotOptionsUseDevicePixelRatio "useDevicePixelRatio"
+#define kExportPlotOptionsResolution "resolution"
 #define kExportViewerOptions "export_viewer_options"
 #define kExportViewerOptionsWidth "width"
 #define kExportViewerOptionsHeight "height"

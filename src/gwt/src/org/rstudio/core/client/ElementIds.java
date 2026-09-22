@@ -536,6 +536,12 @@ public class ElementIds
    public final static String MB_PLOTS_SIZE = "mb_plots_size";
    public static String getMbPlotsSize() { return getElementId(MB_PLOTS_SIZE); }
 
+   // SavePlotAsImageDialog
+   public final static String EXPORT_PLOT_RESOLUTION = "export_plot_resolution";
+   public static String getExportPlotResolution() { return getElementId(EXPORT_PLOT_RESOLUTION); }
+   public final static String EXPORT_PLOT_SIZE_TEXT = "export_plot_size_text";
+   public static String getExportPlotSizeText() { return getElementId(EXPORT_PLOT_SIZE_TEXT); }
+
    // FixedPlotSizeDialog
    public final static String FIXED_PLOT_SIZE_WIDTH = "fixed_plot_size_width";
    public static String getFixedPlotSizeWidth() { return getElementId(FIXED_PLOT_SIZE_WIDTH); }

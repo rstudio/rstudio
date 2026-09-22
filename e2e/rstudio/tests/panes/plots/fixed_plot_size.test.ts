@@ -4,10 +4,17 @@ import { PlotsPane } from '@pages/plots_pane.page';
 import { CONFIRM_BTN, CANCEL_BTN } from '@pages/modals.page';
 import { isCommandChecked } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
+import { useSuiteSandbox } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
 // Plots can be drawn at a fixed size instead of the size of the Plots pane
 // (rstudio/rstudio#4422).
+
+// GWT file chooser's accept button (see plots_pane.test.ts)
+const FILE_ACCEPT_SAVE = '#rstudio_file_accept_save';
+
+// saved images land in the sandbox working directory, which is cleaned up
+useSuiteSandbox();
 
 let consoleActions: ConsolePaneActions;
 let plotsPane: PlotsPane;
@@ -184,6 +191,51 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
       'exists("p") && abs(grconvertX(p$x, "user", "ndc") - 0.5) < 0.02 && ' +
       'abs(grconvertY(p$y, "user", "ndc") - 0.5) < 0.02',
     ), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+  });
+
+  test('saving an image at a resolution keeps its size in inches', async ({ rstudioPage: page }) => {
+    await createPlot(page);
+    await openFixedSizeDialog(page);
+    await plotsPane.fixedSizeWidth.fill('4');
+    await plotsPane.fixedSizeHeight.fill('3');
+    await page.locator(CONFIRM_BTN).click();
+    await expect.poll(() => deviceSizeIs(4, 3), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+
+    await plotsPane.exportMenu.click();
+    await plotsPane.saveAsImageItem.click();
+    const dialog = plotsPane.saveAsImageDialog;
+    await expect(dialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    const resolution = dialog.locator('#rstudio_export_plot_resolution');
+    const sizeText = dialog.locator('#rstudio_export_plot_size_text');
+    await resolution.selectOption('300');
+    await expect(sizeText).toHaveText('4 x 3 in, 1200 x 900 pixels');
+
+    // vector formats have no resolution
+    const format = dialog.getByLabel('Image format:');
+    await format.selectOption('svg');
+    await expect(resolution).toBeDisabled();
+    await expect(sizeText).toHaveText('4 x 3 in');
+    await format.selectOption('png');
+    await expect(resolution).toBeEnabled();
+
+    await page.locator(CONFIRM_BTN).click();
+    await page.locator(FILE_ACCEPT_SAVE).click();
+    await expect(dialog).toBeHidden();
+
+    // the newest saved PNG is 1200 x 900 pixels and records 300 DPI, so it
+    // is inserted into other documents at 4 x 3 inches
+    const checkSavedImage = 'local({' +
+      'f <- list.files(getwd(), pattern = "^Rplot.*[.]png$", full.names = TRUE); ' +
+      'if (!length(f)) return(FALSE); ' +
+      'b <- readBin(f[which.max(file.mtime(f))], "raw", 1e7); ' +
+      'n <- function(i) sum(as.integer(b[i:(i + 3)]) * 256^(3:0)); ' +
+      'p <- grepRaw("pHYs", b); ' +
+      'n(17) == 1200 && n(21) == 900 && length(p) == 1 && round(n(p + 4) * 0.0254) == 300' +
+      '})';
+    await expect.poll(() => consoleActions.evalRLogical(checkSavedImage), {
+      timeout: TIMEOUTS.fileOpen,
+    }).toBe(true);
   });
 
   test('Fit to Pane draws plots at the size of the pane again', async ({ rstudioPage: page }) => {
