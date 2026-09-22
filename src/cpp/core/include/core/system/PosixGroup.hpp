@@ -43,7 +43,7 @@ Error groupFromName(const std::string& name, Group* pGroup);
 Error groupFromId(gid_t gid, Group* pGroup);
 
 // the ids of the groups the user belongs to, from a cache refreshed every few
-// minutes; a failed lookup is logged and yields an empty list
+// minutes; a failed lookup is logged and yields whatever it filled in
 std::vector<GidType> userGroupIds(const User& user);
 
 // the same list, read from the group database each time (as initgroups(3)

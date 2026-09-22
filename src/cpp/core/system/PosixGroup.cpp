@@ -177,7 +177,7 @@ std::vector<GidType> updateUserGroupCache(const User& user, const std::string& o
 
    LOG_DEBUG_MESSAGE(opName + " group list for user: " + username);
 
-   // continue on with no groups for this user if the lookup fails
+   // continue on with whatever groups the lookup filled in if it fails
    std::vector<GidType> groupIds;
    Error error = queryUserGroupIds(user, &groupIds);
    if (error)
@@ -340,13 +340,16 @@ Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds)
    int numGroups = 100;
    std::vector<GIDTYPE> gids(numGroups);
    int lastNumGroups = numGroups;
+   Error error;
+   errno = 0;
    while (getgrouplist(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
    {
       if (numGroups == lastNumGroups)
       {
-         Error error = systemError(errno, ERROR_LOCATION);
+         // getgrouplist(3) needn't set errno; hand back whatever it filled in
+         error = systemError(errno != 0 ? errno : ENOENT, ERROR_LOCATION);
          error.addProperty("description", "Error retrieving groups for: " + username);
-         return error;
+         break;
       }
       gids.resize(numGroups);
       lastNumGroups = numGroups;
@@ -357,7 +360,7 @@ Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds)
    for (int i = 0; i < numGroups; i++)
       pGroupIds->push_back(static_cast<GidType>(gids[i]));
 
-   return Success();
+   return error;
 }
 
 std::vector<GidType> userGroupIds(const User& user)
