@@ -21,6 +21,7 @@
 - ([#1687](https://github.com/rstudio/rstudio/issues/1687)): Ctrl+Shift+C now copies the selection and Ctrl+Shift+V pastes in the Terminal pane, matching the shortcuts used by common terminal emulators.
 - ([#18774](https://github.com/rstudio/rstudio/issues/18774)): RStudio now runs the newest compatible Posit Assistant installation among the copy bundled with RStudio, the system-wide installation, and the user's own, instead of always preferring the user's own. A per-user installation no longer shadows a newer bundled or system-wide copy.
 - ([#18857](https://github.com/rstudio/rstudio/issues/18857)): The Console pane now shows the R version as soon as the session starts, instead of displaying "(unknown)" until the session finished initializing.
+- ([#4422](https://github.com/rstudio/rstudio/issues/4422)): Plots can now be drawn at a fixed size instead of the size of the Plots pane (Plots > Fixed Size..., or the size menu in the Plots pane toolbar). The plot is scaled down to fit the pane without being redrawn when the pane is resized, and exported plots default to the same size.
 
 ### Fixed
 - ([#18870](https://github.com/rstudio/rstudio/issues/18870)): Fixed an issue where a Restart R that took more than about ten seconds to come back left the console without focus and its prompt unrefreshed, and kept showing the previous R version after a restart into a different R.

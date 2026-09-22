@@ -556,7 +556,8 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
                              r::session::graphics::device::getWidth(),
                              r::session::graphics::device::getHeight(),
                              activePlotIndex(), 
-                             plotCount());
+                             plotCount(),
+                             r::session::graphics::device::hasFixedSize());
    outputFunction(currentState);
 }
    

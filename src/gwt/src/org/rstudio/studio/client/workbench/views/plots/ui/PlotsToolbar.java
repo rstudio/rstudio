@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui;
 
+import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -48,6 +49,13 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       removeAllWidgets();
       installStandardUI();
    }
+
+   public void setSizeLabel(String label)
+   {
+      sizeLabel_ = label;
+      if (sizeButton_ != null)
+         sizeButton_.setText(label);
+   }
    
    private void installStandardUI()
    {
@@ -58,6 +66,18 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       
       // popout current plot
       addLeftWidget(commands_.zoomPlot().createToolbarButton());
+      addLeftSeparator();
+
+      // plot size
+      ToolbarPopupMenu sizeMenu = new ToolbarPopupMenu();
+      sizeMenu.addItem(commands_.fitPlotToPane().createMenuItem(false));
+      sizeMenu.addItem(commands_.useFixedPlotSize().createMenuItem(false));
+
+      sizeButton_ = new ToolbarMenuButton(
+            sizeLabel_, constants_.plotSizeTitle(), (ImageResource) null, sizeMenu);
+      ElementIds.assignElementId(sizeButton_, ElementIds.MB_PLOTS_SIZE);
+
+      addLeftWidget(sizeButton_);
       addLeftSeparator();
       
       // export commands
@@ -95,5 +115,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
    
    private final Commands commands_;   
    private final RSConnectPublishButton publishButton_;
+   private ToolbarMenuButton sizeButton_;
+   private String sizeLabel_ = constants_.fitToPaneLabel();
    private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

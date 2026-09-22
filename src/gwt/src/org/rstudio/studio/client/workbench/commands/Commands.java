@@ -442,6 +442,8 @@ public abstract class
    public abstract AppCommand savePlotAsPdf();
    public abstract AppCommand copyPlotToClipboard();
    public abstract AppCommand zoomPlot();
+   public abstract AppCommand fitPlotToPane();
+   public abstract AppCommand useFixedPlotSize();
    public abstract AppCommand removePlot();
    public abstract AppCommand clearPlots();
    public abstract AppCommand refreshPlot();

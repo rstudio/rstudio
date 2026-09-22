@@ -62,3 +62,41 @@ test_that("the default antialiasing preference defers to RStudioGD.antialias (#9
       prefValue = "subpixel"
    )
 })
+
+# Writes the fixed plot size user state; object members must be scalars.
+writeFixedPlotSize <- function(enabled, width = 7, height = 5, units = "in") {
+   .rs.writeUserState("fixed_plot_size", list(
+      enabled = .rs.scalar(enabled),
+      width   = .rs.scalar(width),
+      height  = .rs.scalar(height),
+      units   = .rs.scalar(units)
+   ))
+}
+
+test_that("a fixed plot size pins the size of the RStudio graphics device (#4422)", {
+   oldState <- .rs.readUserState("fixed_plot_size")
+   on.exit(.rs.writeUserState("fixed_plot_size", lapply(oldState, .rs.scalar)), add = TRUE)
+
+   writeFixedPlotSize(FALSE)
+   .rs.activateGraphicsDevice()
+   expect_equal(names(dev.cur()), "RStudioGD")
+   paneSize <- dev.size("in")
+
+   writeFixedPlotSize(TRUE, width = 4, height = 3, units = "in")
+   expect_equal(dev.size("in"), c(4, 3))
+
+   writeFixedPlotSize(TRUE, width = 10.16, height = 5.08, units = "cm")
+   expect_equal(dev.size("in"), c(4, 2))
+
+   # pixels are at 96 DPI, regardless of the display's pixel ratio
+   writeFixedPlotSize(TRUE, width = 480, height = 288, units = "px")
+   expect_equal(dev.size("in"), c(5, 3))
+
+   # sizes are clamped to the supported range (1 to 30 inches)
+   writeFixedPlotSize(TRUE, width = 100, height = 0.5, units = "in")
+   expect_equal(dev.size("in"), c(30, 1))
+
+   # turning it off follows the pane again
+   writeFixedPlotSize(FALSE, width = 4, height = 3, units = "in")
+   expect_equal(dev.size("in"), paneSize)
+})

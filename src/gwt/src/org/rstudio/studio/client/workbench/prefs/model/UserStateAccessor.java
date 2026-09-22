@@ -56,6 +56,7 @@ public class UserStateAccessor extends Prefs
    public static final String EXPORT_PLOT_OPTIONS = "export_plot_options";
    public static final String EXPORT_VIEWER_OPTIONS = "export_viewer_options";
    public static final String SAVE_PLOT_AS_PDF_OPTIONS = "save_plot_as_pdf_options";
+   public static final String FIXED_PLOT_SIZE = "fixed_plot_size";
    public static final String COMPILE_R_NOTEBOOK_PREFS = "compile_r_notebook_prefs";
    public static final String COMPILE_R_MARKDOWN_NOTEBOOK_PREFS = "compile_r_markdown_notebook_prefs";
    public static final String SHOW_PUBLISH_UI = "show_publish_ui";
@@ -422,6 +423,40 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
+    * Whether plots in the Plots pane are drawn at a fixed size rather than the size of the pane, and that size.
+    */
+   public PrefValue<FixedPlotSize> fixedPlotSize()
+   {
+      return object(
+         "fixed_plot_size",
+         _constants.fixedPlotSizeTitle(), 
+         _constants.fixedPlotSizeDescription(), 
+         null);
+   }
+
+   public static class FixedPlotSize extends JavaScriptObject
+   {
+      protected FixedPlotSize() {} 
+
+      public final native boolean getEnabled() /*-{
+         return this && this.enabled || false;
+      }-*/;
+
+      public final native double getWidth() /*-{
+         return this && this.width || 7;
+      }-*/;
+
+      public final native double getHeight() /*-{
+         return this && this.height || 5;
+      }-*/;
+
+      public final native String getUnits() /*-{
+         return this && this.units || "in";
+      }-*/;
+
+   }
+
+   /**
     * Most recently used settings for compiling a notebook from an R script.
     */
    public PrefValue<CompileRNotebookPrefs> compileRNotebookPrefs()
@@ -753,6 +788,8 @@ public class UserStateAccessor extends Prefs
          exportViewerOptions().setValue(layer, source.getObject("export_viewer_options"));
       if (source.hasKey("save_plot_as_pdf_options"))
          savePlotAsPdfOptions().setValue(layer, source.getObject("save_plot_as_pdf_options"));
+      if (source.hasKey("fixed_plot_size"))
+         fixedPlotSize().setValue(layer, source.getObject("fixed_plot_size"));
       if (source.hasKey("compile_r_notebook_prefs"))
          compileRNotebookPrefs().setValue(layer, source.getObject("compile_r_notebook_prefs"));
       if (source.hasKey("compile_r_markdown_notebook_prefs"))
@@ -806,6 +843,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(exportPlotOptions());
       prefs.add(exportViewerOptions());
       prefs.add(savePlotAsPdfOptions());
+      prefs.add(fixedPlotSize());
       prefs.add(compileRNotebookPrefs());
       prefs.add(compileRMarkdownNotebookPrefs());
       prefs.add(showPublishUi());

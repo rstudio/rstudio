@@ -41,14 +41,17 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor.FixedPlotSize;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
+import org.rstudio.studio.client.workbench.views.plots.model.FixedPlotSizeUtils;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
+import org.rstudio.studio.client.workbench.views.plots.ui.FixedPlotSizeDialog;
 import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
@@ -77,8 +80,11 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
    public interface Display extends WorkbenchView, HasResizeHandlers
    {
       void showEmptyPlot();
-      void showPlot(String plotUrl);
+
+      // fixedSize is null when the plot was drawn at the size of the pane
+      void showPlot(String plotUrl, Size fixedSize);
       String getPlotUrl();
+      void setPlotSizeLabel(String label);
 
       void refresh();
 
@@ -103,6 +109,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       view_ = view;
       globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
+      commands_ = commands;
       userState_ = userState;
       server_ = server;
       session_ = session;
@@ -118,9 +125,12 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
             org.rstudio.studio.client.workbench.views.plots.model.Point p = null;
             if (e.getSelectedItem() != null)
             {
-               p = org.rstudio.studio.client.workbench.views.plots.model.Point.create(
+               Point plotPoint = toPlotPoint(
                      e.getSelectedItem().getX(),
-                     e.getSelectedItem().getY()
+                     e.getSelectedItem().getY());
+               p = org.rstudio.studio.client.workbench.views.plots.model.Point.create(
+                     plotPoint.getX(),
+                     plotPoint.getY()
                );
             }
 
@@ -148,16 +158,22 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
             @Override
             public void onClick(ClickEvent event)
             {
-               int x = Double.valueOf(event.getX()).intValue();
-               int y = Double.valueOf(event.getY()).intValue();
-               server_.manipulatorPlotClicked(x, y, new ManipulatorRequestCallback());
+               Point plotPoint = toPlotPoint(
+                     Double.valueOf(event.getX()).intValue(),
+                     Double.valueOf(event.getY()).intValue());
+               server_.manipulatorPlotClicked(plotPoint.getX(),
+                                              plotPoint.getY(),
+                                              new ManipulatorRequestCallback());
             }
          }
       );
 
       events.addHandler(DeferredInitCompletedEvent.TYPE, this);
       events.addHandler(PlotsZoomSizeChangedEvent.TYPE, this);
-}
+
+      userState.get().fixedPlotSize().bind(size ->
+         view_.setPlotSizeLabel(FixedPlotSizeUtils.label(size)));
+   }
 
    public void onPlotsChanged(PlotsChangedEvent event)
    {
@@ -180,7 +196,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       else
       {
          String url = server_.getGraphicsUrl(plotsState.getFilename());
-         view_.showPlot(url);
+         Size size = new Size(plotsState.getWidth(), plotsState.getHeight());
+         view_.showPlot(url, plotsState.getFixedSize() ? size : null);
       }
 
       // activate the plots tab if requested
@@ -189,6 +206,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
 
       // update plot size
       plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
+      plotSizeFixed_ = plotsState.getFixedSize();
 
       // manipulator
       manipulatorManager_.setManipulator(plotsState.getManipulator(),
@@ -440,6 +458,40 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       );
    }
 
+   void onFitPlotToPane()
+   {
+      FixedPlotSize size = userState_.get().fixedPlotSize().getValue();
+      if (!FixedPlotSizeUtils.isEnabled(size))
+         return;
+
+      setFixedPlotSize(FixedPlotSizeUtils.create(
+            false, size.getWidth(), size.getHeight(), size.getUnits()));
+   }
+
+   void onUseFixedPlotSize()
+   {
+      view_.bringToFront();
+
+      FixedPlotSize size = userState_.get().fixedPlotSize().getValue();
+      if (size == null)
+         size = FixedPlotSizeUtils.create(false, 7, 5, FixedPlotSizeUtils.UNITS_INCHES);
+
+      // a native menu checks a radio item when it is selected, so restore the
+      // checked state if the dialog is cancelled
+      new FixedPlotSizeDialog(
+            size,
+            this::setFixedPlotSize,
+            () -> FixedPlotSizeUtils.syncCommands(commands_, userState_.get().fixedPlotSize().getValue())
+      ).showModal();
+   }
+
+   private void setFixedPlotSize(FixedPlotSize size)
+   {
+      UserState state = userState_.get();
+      state.fixedPlotSize().setGlobalValue(size);
+      state.writeState();
+   }
+
    void onRefreshPlot()
    {
       view_.bringToFront();
@@ -560,6 +612,26 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
          return view_.getPlotFrameSize();
    }
 
+   // Maps a point in the Plots pane to the plot's own coordinates: a plot with
+   // a fixed size is scaled down to fit the pane and centered in it (see
+   // ImageFrame.replaceLocation).
+   private Point toPlotPoint(int x, int y)
+   {
+      if (!plotSizeFixed_ || plotSize_ == null)
+         return Point.create(x, y);
+
+      Size frame = view_.getPlotFrameSize();
+      double scale = Math.min(1.0, Math.min(
+            (double) frame.width / plotSize_.width,
+            (double) frame.height / plotSize_.height));
+      double left = (frame.width - plotSize_.width * scale) / 2;
+      double top = (frame.height - plotSize_.height * scale) / 2;
+
+      return Point.create(
+            (int) Math.round((x - left) / scale),
+            (int) Math.round((y - top) / scale));
+   }
+
    private class ManipulatorRequestCallback extends ServerRequestCallback<VoidResponse>
    {
       public ManipulatorRequestCallback()
@@ -590,6 +662,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
    private final GlobalDisplay globalDisplay_;
    private final PlotsServerOperations server_;
    private final WorkbenchContext workbenchContext_;
+   private final Commands commands_;
    private final Session session_;
    private final Provider<UserState> userState_;
    private final Locator locator_;
@@ -600,7 +673,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
    // export plot impl
    private final ExportPlot exportPlot_;
 
-   // size of most recently rendered plot
+   // size of most recently rendered plot, and whether it was a fixed size
    Size plotSize_ = null;
+   boolean plotSizeFixed_ = false;
    private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }
