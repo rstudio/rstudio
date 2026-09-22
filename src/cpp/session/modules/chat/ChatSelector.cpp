@@ -198,28 +198,60 @@ bool selectInstalledVersion(const FilePath& storageDir,
                             const std::string& protocol,
                             const std::string& version)
 {
+   // The preferred slot among those holding the version, by the same order
+   // the fallback uses. Two slots hold one version after a reinstall, and
+   // the later one exists precisely because the earlier one is suspect, so
+   // the first slot the directory listing happens to yield will not do.
    std::vector<slots::SlotInfo> installed =
       slots::verifiedSlots(slots::versionsDir(storageDir));
 
+   bool found = false;
+   slots::SlotInfo best;
    for (const slots::SlotInfo& slot : installed)
    {
       if (slot.version != version || slot.protocol != protocol)
          continue;
 
-      Error error = selectSlot(storageDir, protocol, slot.name);
-      if (error)
+      if (!found || preferredOver(slot, best))
       {
-         WLOG("Version {} is installed as slot {} but could not be recorded: {}",
-              version, slot.name, error.getMessage());
-         return false;
+         best = slot;
+         found = true;
       }
-
-      DLOG("Protocol {} now resolves to already-installed slot {}",
-           protocol, slot.name);
-      return true;
    }
 
-   return false;
+   if (!found)
+      return false;
+
+   // A selection that already names a slot holding the version stays: it may
+   // be a reinstall chosen over the one preferred here, and it is what the
+   // caller is running.
+   Selections selections = readSelections(storageDir);
+   Selections::const_iterator selection = selections.find(protocol);
+   if (selection != selections.end())
+   {
+      for (const slots::SlotInfo& slot : installed)
+      {
+         if (slot.name == selection->second && slot.version == version &&
+             slot.protocol == protocol)
+         {
+            DLOG("Protocol {} already resolves to slot {} holding {}",
+                 protocol, slot.name, version);
+            return true;
+         }
+      }
+   }
+
+   Error error = selectSlot(storageDir, protocol, best.name);
+   if (error)
+   {
+      WLOG("Version {} is installed as slot {} but could not be recorded: {}",
+           version, best.name, error.getMessage());
+      return false;
+   }
+
+   DLOG("Protocol {} now resolves to already-installed slot {}",
+        protocol, best.name);
+   return true;
 }
 
 FilePath resolveSlot(const FilePath& storageDir,

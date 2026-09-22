@@ -478,6 +478,32 @@ TEST_F(ChatSelector, DoesNotSelectAVersionWhoseOnlySlotIsDamaged)
    EXPECT_EQ(readSelections(storageDir_).count("11.0"), 0u);
 }
 
+TEST_F(ChatSelector, SelectsTheLatestReinstallOfAVersionAlreadyOnDisk)
+{
+   // The later reinstall exists because the earlier slot is suspect, so
+   // re-selecting the version must not hand back whichever slot the
+   // directory listing yields first.
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("1.1.0-2", "1.1.0", "11.0");
+   makeSlot("1.1.0-3", "1.1.0", "11.0");
+
+   EXPECT_TRUE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0-3");
+}
+
+TEST_F(ChatSelector, KeepsASelectionThatAlreadyHoldsTheVersion)
+{
+   // A selection naming the plain slot while a reinstall exists was made
+   // deliberately (or is what the session runs); re-selecting the version
+   // is not a reason to move it.
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("1.1.0-2", "1.1.0", "11.0");
+   ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.1.0"));
+
+   EXPECT_TRUE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
+}
+
 TEST_F(ChatSelector, SelectsAReinstallSlotByTheVersionItHolds)
 {
    // A slot name carries no meaning, so the version has to come from the
