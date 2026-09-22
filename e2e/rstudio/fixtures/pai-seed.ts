@@ -25,6 +25,9 @@ const SELECTOR_FILE_NAME = 'selected.json';
 const SLOT_MANIFEST_FILE_NAME = '.slot-manifest.json';
 const PACKAGE_JSON_FILE_NAME = 'package.json';
 const PROTOCOL_FILE_NAME = 'protocol.json';
+const CLIENT_DIR_PATH = 'dist/client';
+const SERVER_SCRIPT_PATH = 'dist/server/main.js';
+const INDEX_FILE_NAME = 'index.html';
 
 /**
  * The subdirectory of a PW_SEED_PAI tree holding the extracted package: the
@@ -114,11 +117,44 @@ function readJsonField(filePath: string, field: string): string {
   return value;
 }
 
+function isNonEmptyFile(filePath: string): boolean {
+  try {
+    const stat = fs.statSync(filePath);
+    return stat.isFile() && stat.size > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Whether a directory holds a package RStudio could launch.
+ *
+ * Mirrors `installation::verifyInstallDir()` in ChatInstallation.cpp: the
+ * client directory exists, and the server script and index.html exist and are
+ * non-empty. A seed that fails this would be written as a selected slot and
+ * then rejected by RStudio -- which then downloads the official package, so
+ * the failure would be silent.
+ */
+function isRunnablePackage(packageDir: string): boolean {
+  const clientDir = path.join(packageDir, CLIENT_DIR_PATH);
+  let isDir = false;
+  try {
+    isDir = fs.statSync(clientDir).isDirectory();
+  } catch {
+    return false;
+  }
+  return (
+    isDir &&
+    isNonEmptyFile(path.join(packageDir, SERVER_SCRIPT_PATH)) &&
+    isNonEmptyFile(path.join(clientDir, INDEX_FILE_NAME))
+  );
+}
+
 /**
  * Validate a PW_SEED_PAI tree and report the version it holds.
  *
- * Called before the sandbox is populated so a typo or a stale path fails setup
- * with a clear message rather than a mystery download later.
+ * Called before the sandbox is populated so a typo, a stale path or a partial
+ * build fails setup with a clear message rather than a mystery download later.
  */
 export function inspectSeed(seedRoot: string): { version: string; protocol: string } {
   const packageDir = path.join(seedRoot, SEED_PACKAGE_DIR);
@@ -126,6 +162,13 @@ export function inspectSeed(seedRoot: string): { version: string; protocol: stri
     throw new Error(
       `PW_SEED_PAI="${seedRoot}" does not look like a Posit Assistant install ` +
         `(missing ${SEED_PACKAGE_DIR}/${PACKAGE_JSON_FILE_NAME})`,
+    );
+  }
+  if (!isRunnablePackage(packageDir)) {
+    throw new Error(
+      `PW_SEED_PAI="${seedRoot}" is not a complete Posit Assistant build: ` +
+        `${SEED_PACKAGE_DIR}/${SERVER_SCRIPT_PATH} and ` +
+        `${SEED_PACKAGE_DIR}/${CLIENT_DIR_PATH}/${INDEX_FILE_NAME} must exist and be non-empty`,
     );
   }
   const version = readJsonField(path.join(packageDir, PACKAGE_JSON_FILE_NAME), 'version');

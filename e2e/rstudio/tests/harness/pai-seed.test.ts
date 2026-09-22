@@ -124,6 +124,27 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
       .toThrow(/does not look like a Posit Assistant install/);
   });
 
+  test('refuses a build missing a file RStudio requires', () => {
+    // RStudio's verifyInstallDir() would reject the slot, and the seeded run
+    // would then download the official package without saying so.
+    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
+    fs.rmSync(path.join(seed, 'bin', 'dist', 'server', 'main.js'));
+    const storage = path.join(root, 'data-home', 'pai');
+
+    expect(() => seedPaiSlot(seed, storage)).toThrow(/not a complete Posit Assistant build/);
+    expect(fs.existsSync(storage)).toBe(false);
+  });
+
+  test('refuses a build whose required files are empty', () => {
+    // A truncated build leaves zero-byte files in place; existence alone is
+    // not what RStudio checks.
+    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
+    fs.writeFileSync(path.join(seed, 'bin', 'dist', 'client', 'index.html'), '');
+
+    expect(() => seedPaiSlot(seed, path.join(root, 'data-home', 'pai')))
+      .toThrow(/not a complete Posit Assistant build/);
+  });
+
   test('provisions a per-spec storage directory that installs cannot leak out of', () => {
     const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
     const seedStorage = path.join(root, 'data-home', 'pai');
