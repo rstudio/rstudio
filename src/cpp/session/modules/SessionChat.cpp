@@ -303,8 +303,7 @@ using chat_installation::positAiStorageDir;
 using chat_installation::positAssistantSearchPaths;
 using chat_installation::InstallSearchPaths;
 using chat_installation::userInstallWouldBeSelected;
-using chat_installation::declaredProtocol;
-using chat_installation::declaredVersion;
+using chat_installation::verifyDeclaredIdentity;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
 
@@ -4369,18 +4368,10 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
 
 // Publish a downloaded package as an install slot and select it for the
-// protocol it serves.
-//
-// Nothing already on disk is modified. The package is extracted into a staging
-// directory no other session can name, and reaches a slot name only once
-// allocateSlot() has recorded its manifest and verified the result -- so a torn
-// install cannot exist under a name a session might resolve, and there is no
-// half-replaced installation for a backup to restore. That is why the ai.prev
-// backup and its restore branches are gone rather than reproduced here.
-//
-// A failed extraction leaves its staging directory behind: no other session
-// can be using it, but removing directories is exactly what this layout exists
-// to avoid, and the issue accounts for the orphans (#18658, "Deferred").
+// protocol it serves. Nothing already on disk is modified: the package is
+// extracted into a staging directory no other session can name, and reaches a
+// slot name only once allocateSlot() has recorded its manifest and verified
+// the result, so a torn install never exists under a resolvable name.
 Error installPackage(const FilePath& packagePath,
                      const std::string& expectedVersion,
                      std::string* pVersion)
@@ -4403,6 +4394,20 @@ Error installPackage(const FilePath& packagePath,
       return error;
    }
 
+   // The staging directory is this call's own, so a failure below abandons
+   // nothing another session could be using; leaving it would add an
+   // orphaned tree under pai/versions on every retry of the same update.
+   auto discardStaging = [&stagingDir](const Error& cause)
+   {
+      Error removeError = stagingDir.removeIfExists();
+      if (removeError)
+      {
+         WLOG("Could not remove staging directory {}: {}",
+              stagingDir.getAbsolutePath(), removeError.getMessage());
+      }
+      return cause;
+   };
+
    DLOG("Extracting package {} to {}",
         packagePath.getAbsolutePath(), stagingDir.getAbsolutePath());
 
@@ -4414,28 +4419,15 @@ Error installPackage(const FilePath& packagePath,
    if (error)
    {
       WLOG("Failed to extract package: {}", error.getMessage());
-      return error;
+      return discardStaging(error);
    }
 
    // The archive was SHA-256 checked against the manifest entry chosen for
-   // this protocol, so a package declaring something else is a mis-published
-   // one rather than a corrupt download -- but it must still be refused here.
-   // Selecting a slot for another protocol would change what a different
-   // RStudio release resolves, and either mismatch would report an update this
-   // session cannot run and would then be offered again on every check. A
-   // package without protocol.json fails this check too: backfilling this
-   // build's protocol would make the check pass by construction.
-   std::string version = declaredVersion(stagingDir);
-   std::string protocol = declaredProtocol(stagingDir);
-   if (version != expectedVersion || protocol != kProtocolVersion)
-   {
-      return systemError(
-         boost::system::errc::invalid_argument,
-         fmt::format("Downloaded package declares version '{}' for protocol "
-                     "'{}', but version '{}' for protocol '{}' was requested",
-                     version, protocol, expectedVersion, kProtocolVersion),
-         ERROR_LOCATION);
-   }
+   // this protocol, so a package declaring something else is mis-published
+   // rather than corrupt, and would be offered again on every check.
+   error = verifyDeclaredIdentity(stagingDir, expectedVersion, kProtocolVersion);
+   if (error)
+      return discardStaging(error);
 
    FilePath slotDir;
    error = chat_slots::allocateSlot(
@@ -4443,13 +4435,13 @@ Error installPackage(const FilePath& packagePath,
    if (error)
    {
       WLOG("Failed to publish install slot: {}", error.getMessage());
-      return error;
+      return discardStaging(error);
    }
 
    // The published slot declares what the staged package did: on a lost rename
    // race allocateSlot() adopts an existing slot only when its version and
    // protocol match the staged one.
-   error = chat_selector::selectSlot(storageDir, protocol, slotDir.getFilename());
+   error = chat_selector::selectSlot(storageDir, kProtocolVersion, slotDir.getFilename());
    if (error)
    {
       WLOG("Failed to select slot {}: {}",
@@ -4458,9 +4450,9 @@ Error installPackage(const FilePath& packagePath,
    }
 
    DLOG("Installed Posit Assistant {} (protocol {}) as slot {}",
-        version, protocol, slotDir.getFilename());
+        expectedVersion, kProtocolVersion, slotDir.getFilename());
 
-   *pVersion = version;
+   *pVersion = expectedVersion;
    return Success();
 }
 

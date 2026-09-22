@@ -77,6 +77,21 @@ std::string declaredVersion(const core::FilePath& installDir);
 std::string declaredProtocol(const core::FilePath& installDir);
 
 /**
+ * Checks that an extracted package declares the version and protocol it was
+ * downloaded as. A package that declares neither file, or other values, is a
+ * mis-published one: installing it would select a slot for a protocol another
+ * RStudio release resolves, or report a version this session does not run.
+ *
+ * @param installDir The directory holding the extracted package.
+ * @param expectedVersion The version the manifest entry promised.
+ * @param expectedProtocol The protocol the manifest entry was chosen for.
+ * @return Success, or an invalid_argument error naming both identities.
+ */
+core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
+                                   const std::string& expectedVersion,
+                                   const std::string& expectedProtocol);
+
+/**
  * The Posit Assistant storage directory for this user.
  *
  * Shared by every install: it holds the version slots under versions/, the

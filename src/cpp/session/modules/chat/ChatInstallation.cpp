@@ -21,6 +21,7 @@
 #include "ChatSlots.hpp"
 
 #include <algorithm>
+#include <fmt/format.h>
 #include <mutex>
 #include <vector>
 
@@ -106,6 +107,25 @@ std::string declaredVersion(const core::FilePath& installDir)
 std::string declaredProtocol(const core::FilePath& installDir)
 {
    return readJsonStringField(installDir, kProtocolVersionFileName, "protocol");
+}
+
+core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
+                                   const std::string& expectedVersion,
+                                   const std::string& expectedProtocol)
+{
+   // A package without protocol.json fails here too: backfilling this build's
+   // protocol would make the check pass by construction.
+   std::string version = declaredVersion(installDir);
+   std::string protocol = declaredProtocol(installDir);
+   if (version == expectedVersion && protocol == expectedProtocol)
+      return core::Success();
+
+   return core::systemError(
+      boost::system::errc::invalid_argument,
+      fmt::format("Downloaded package declares version '{}' for protocol "
+                  "'{}', but version '{}' for protocol '{}' was requested",
+                  version, protocol, expectedVersion, expectedProtocol),
+      ERROR_LOCATION);
 }
 
 core::FilePath positAiStorageDir()

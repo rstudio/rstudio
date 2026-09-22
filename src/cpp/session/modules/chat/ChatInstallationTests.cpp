@@ -194,6 +194,72 @@ TEST(ChatInstallation, DeclaredProtocolReadsProtocolJson)
 }
 
 // ============================================================================
+// verifyDeclaredIdentity
+// ============================================================================
+
+class ChatInstallationIdentity : public testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FilePath tempPath;
+      ASSERT_FALSE(FilePath::tempFilePath(tempPath));
+      dir_ = tempPath.completePath("staged");
+      ASSERT_FALSE(dir_.ensureDirectory());
+   }
+
+   void TearDown() override
+   {
+      dir_.getParent().removeIfExists();
+   }
+
+   FilePath dir_;
+};
+
+TEST_F(ChatInstallationIdentity, AcceptsAMatchingPackage)
+{
+   stageInstallation(dir_, "1.2.0", "11.0");
+   EXPECT_FALSE(verifyDeclaredIdentity(dir_, "1.2.0", "11.0"));
+}
+
+TEST_F(ChatInstallationIdentity, RejectsAVersionMismatch)
+{
+   stageInstallation(dir_, "1.2.1", "11.0");
+   Error error = verifyDeclaredIdentity(dir_, "1.2.0", "11.0");
+   ASSERT_TRUE(error);
+   EXPECT_EQ(error.getCode(), boost::system::errc::invalid_argument);
+   EXPECT_NE(errorDescription(error).find("'1.2.1'"), std::string::npos);
+   EXPECT_NE(errorDescription(error).find("'1.2.0'"), std::string::npos);
+}
+
+TEST_F(ChatInstallationIdentity, RejectsAProtocolMismatch)
+{
+   stageInstallation(dir_, "1.2.0", "12.0");
+   Error error = verifyDeclaredIdentity(dir_, "1.2.0", "11.0");
+   ASSERT_TRUE(error);
+   EXPECT_EQ(error.getCode(), boost::system::errc::invalid_argument);
+   EXPECT_NE(errorDescription(error).find("'12.0'"), std::string::npos);
+}
+
+TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutProtocolJson)
+{
+   stageInstallation(dir_);
+   writeStringToFile(dir_.completeChildPath(kPackageJsonFileName),
+                     "{\"version\": \"1.2.0\"}");
+   Error error = verifyDeclaredIdentity(dir_, "1.2.0", "11.0");
+   ASSERT_TRUE(error);
+   EXPECT_EQ(error.getCode(), boost::system::errc::invalid_argument);
+}
+
+TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutPackageJson)
+{
+   stageVersionlessInstallation(dir_);
+   Error error = verifyDeclaredIdentity(dir_, "1.2.0", kProtocolVersion);
+   ASSERT_TRUE(error);
+   EXPECT_EQ(error.getCode(), boost::system::errc::invalid_argument);
+}
+
+// ============================================================================
 // Bundled installation
 // ============================================================================
 

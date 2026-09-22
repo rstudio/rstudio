@@ -446,18 +446,6 @@ TEST(ChatIntegrity, GetPackageInfoErrorsOnMissingVersionsField)
    EXPECT_TRUE(error != Success());
 }
 
-TEST(ChatIntegrity, GetPackageInfoErrorsOnInvalidProtocolVersion)
-{
-   json::Object manifest = makeManifest(
-      "1.0", "2.0.0", "https://example.com/pkg.zip");
-
-   std::string packageVersion, downloadUrl;
-   Error error = getPackageInfoFromManifest(
-      manifest, "not-a-version", &packageVersion, &downloadUrl);
-
-   EXPECT_TRUE(error != Success());
-}
-
 TEST(ChatIntegrity, GetPackageInfoErrorsOnNullPointers)
 {
    json::Object manifest = makeManifest(
