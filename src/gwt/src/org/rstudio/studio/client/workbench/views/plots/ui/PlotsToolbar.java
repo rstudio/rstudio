@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui;
 
-import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -73,8 +72,9 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       sizeMenu.addItem(commands_.fitPlotToPane().createMenuItem(false));
       sizeMenu.addItem(commands_.useFixedPlotSize().createMenuItem(false));
 
+      // the empty icon lines the label up with the labels of buttons with icons
       sizeButton_ = new ToolbarMenuButton(
-            sizeLabel_, constants_.plotSizeTitle(), (ImageResource) null, sizeMenu);
+            sizeLabel_, constants_.plotSizeTitle(), StandardIcons.INSTANCE.empty_command(), sizeMenu);
       ElementIds.assignElementId(sizeButton_, ElementIds.MB_PLOTS_SIZE);
 
       addLeftWidget(sizeButton_);
