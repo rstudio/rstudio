@@ -106,14 +106,11 @@ bool bestSlotForProtocol(const FilePath& storageDir,
                          slots::SlotInfo* pInfo)
 {
    std::vector<slots::SlotInfo> candidates =
-      slots::verifiedSlots(slots::versionsDir(storageDir));
+      slots::verifiedSlots(slots::versionsDir(storageDir), protocol);
 
    bool found = false;
    for (const slots::SlotInfo& candidate : candidates)
    {
-      if (candidate.protocol != protocol)
-         continue;
-
       if (!found || preferredOver(candidate, *pInfo))
       {
          *pInfo = candidate;
@@ -203,13 +200,13 @@ bool selectInstalledVersion(const FilePath& storageDir,
    // the later one exists precisely because the earlier one is suspect, so
    // the first slot the directory listing happens to yield will not do.
    std::vector<slots::SlotInfo> installed =
-      slots::verifiedSlots(slots::versionsDir(storageDir));
+      slots::verifiedSlots(slots::versionsDir(storageDir), protocol);
 
    bool found = false;
    slots::SlotInfo best;
    for (const slots::SlotInfo& slot : installed)
    {
-      if (slot.version != version || slot.protocol != protocol)
+      if (slot.version != version)
          continue;
 
       if (!found || preferredOver(slot, best))
@@ -231,8 +228,7 @@ bool selectInstalledVersion(const FilePath& storageDir,
    {
       for (const slots::SlotInfo& slot : installed)
       {
-         if (slot.name == selection->second && slot.version == version &&
-             slot.protocol == protocol)
+         if (slot.name == selection->second && slot.version == version)
          {
             DLOG("Protocol {} already resolves to slot {} holding {}",
                  protocol, slot.name, version);

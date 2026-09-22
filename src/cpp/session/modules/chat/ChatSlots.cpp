@@ -231,7 +231,8 @@ bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
    return true;
 }
 
-std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir)
+std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir,
+                                    const std::string& protocol)
 {
    std::vector<SlotInfo> found;
    if (!slotsDir.isDirectory())
@@ -255,6 +256,9 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir)
       // fallback, rejected on the next read, and recorded again on every
       // resolve.
       if (!isUsableSlotName(child.getFilename()))
+         continue;
+
+      if (installation::declaredProtocol(child) != protocol)
          continue;
 
       SlotInfo info;

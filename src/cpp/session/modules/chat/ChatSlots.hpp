@@ -102,17 +102,22 @@ bool isUsableSlotName(const std::string& name);
 bool verifySlot(const core::FilePath& slotDir, SlotInfo* pInfo = nullptr);
 
 /**
- * Every slot under `slotsDir` that verifies, in unspecified order.
+ * Every slot under `slotsDir` for `protocol` that verifies, in unspecified
+ * order.
  *
  * Entries that could not be recorded and read back as a selection -- staging
  * directories, other dot-prefixed bookkeeping, and any name isUsableSlotName()
- * rejects -- are skipped. A versions directory that does not exist yields no
- * slots rather than an error.
+ * rejects -- are skipped, as is any slot declaring another protocol; that
+ * check comes before the manifest walk, so slots left by earlier protocols
+ * cost one small read each. A versions directory that does not exist yields
+ * no slots rather than an error.
  *
  * @param slotsDir The directory holding the slots.
- * @return The verifying slots.
+ * @param protocol The protocol the slots must declare.
+ * @return The verifying slots for that protocol.
  */
-std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir);
+std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir,
+                                    const std::string& protocol);
 
 /**
  * Create an empty staging directory to extract a package into.

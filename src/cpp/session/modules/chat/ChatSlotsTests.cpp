@@ -278,7 +278,7 @@ TEST_F(ChatSlots, RejectsASlotThatIsALink)
              0);
 
    EXPECT_FALSE(verifySlot(slot("1.1.0")));
-   EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
+   EXPECT_TRUE(verifiedSlots(versionsDir_, "11.0").empty());
 }
 
 #endif // !_WIN32
@@ -299,10 +299,10 @@ TEST_F(ChatSlots, RejectsASlotThatChangedAfterInstall)
 TEST_F(ChatSlots, ListsOnlyVerifyingSlots)
 {
    makeSlot(slot("1.1.0"), "1.1.0", "11.0");
-   makeSlot(slot("1.0.4"), "1.0.4", "10.0");
-   writeSlotFiles(slot("0.9.0"), "0.9.0", "10.0"); // no manifest
+   makeSlot(slot("1.0.4"), "1.0.4", "11.0");
+   writeSlotFiles(slot("0.9.0"), "0.9.0", "11.0"); // no manifest
 
-   std::vector<SlotInfo> found = verifiedSlots(versionsDir_);
+   std::vector<SlotInfo> found = verifiedSlots(versionsDir_, "11.0");
    ASSERT_EQ(found.size(), 2u);
 
    std::vector<std::string> names;
@@ -313,13 +313,26 @@ TEST_F(ChatSlots, ListsOnlyVerifyingSlots)
    EXPECT_EQ(names[1], "1.1.0");
 }
 
+TEST_F(ChatSlots, ListsOnlySlotsForTheRequestedProtocol)
+{
+   makeSlot(slot("1.1.0"), "1.1.0", "11.0");
+   makeSlot(slot("1.0.4"), "1.0.4", "10.0");
+   writeSlotFiles(slot("1.0.3"), "1.0.3", "10.0"); // no manifest
+
+   std::vector<SlotInfo> found = verifiedSlots(versionsDir_, "10.0");
+   ASSERT_EQ(found.size(), 1u);
+   EXPECT_EQ(found[0].name, "1.0.4");
+
+   EXPECT_TRUE(verifiedSlots(versionsDir_, "12.0").empty());
+}
+
 TEST_F(ChatSlots, SkipsStagingDirectories)
 {
    // A staged install is a complete tree that would otherwise verify; it must
    // not be resolvable before the rename publishes it.
    makeSlot(staging("session-a"), "1.1.0", "11.0");
 
-   EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
+   EXPECT_TRUE(verifiedSlots(versionsDir_, "11.0").empty());
 }
 
 TEST_F(ChatSlots, ListsOnlySlotsWhoseNamesCouldBeSelected)
@@ -331,7 +344,7 @@ TEST_F(ChatSlots, ListsOnlySlotsWhoseNamesCouldBeSelected)
    makeSlot(slot("-1.1.0"), "1.1.0", "11.0");
    makeSlot(slot("1.1.0"), "1.1.0", "11.0");
 
-   std::vector<SlotInfo> found = verifiedSlots(versionsDir_);
+   std::vector<SlotInfo> found = verifiedSlots(versionsDir_, "11.0");
    ASSERT_EQ(found.size(), 1u);
    EXPECT_EQ(found[0].name, "1.1.0");
 }
@@ -339,7 +352,7 @@ TEST_F(ChatSlots, ListsOnlySlotsWhoseNamesCouldBeSelected)
 TEST_F(ChatSlots, FindsNothingBeforeTheFirstInstall)
 {
    ASSERT_FALSE(versionsDir_.remove());
-   EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
+   EXPECT_TRUE(verifiedSlots(versionsDir_, "11.0").empty());
 }
 
 // ============================================================================
@@ -369,7 +382,7 @@ TEST_F(ChatSlots, AStagedInstallIsNotResolvableBeforeItIsPublished)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    ASSERT_TRUE(verifySlot(stagingDir));
-   EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
+   EXPECT_TRUE(verifiedSlots(versionsDir_, "11.0").empty());
 }
 
 TEST_F(ChatSlots, DoesNotDisturbAnotherSessionsStagedInstall)
