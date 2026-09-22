@@ -51,7 +51,10 @@ Error getLastCryptoError(const ErrorLocation& in_location)
    unsigned long ec = ::ERR_get_error();
    if (ec == 0)
    {
-      log::logWarningMessage("getLastCryptoError called with no pending error");
+      // Some OpenSSL operations report failure only by return value - not adding an error
+      // The version detection can lead to intermittent errors decrypting when the first byte happens
+      // to match a supported version. These errors look concerning but are not.
+      log::logDebugMessage("getLastCryptoError called with no pending error");
       return systemError(
           boost::system::errc::not_supported,
           "getLastCryptoError called with no pending error",
@@ -226,11 +229,16 @@ Error aesDecrypt(
 
    // Extract v1 byte info and only decrypt actual encrypted data:
    // [ version byte ][ v1 encrypted data ]
-   // Use std::max to prevent index math going negative.
-   out_decrypted.resize(std::max(in_v1_data.size() - ENCRYPTION_VERSION_SIZE_BYTES, (size_t)0));
+   // avoid using unsigned arithmetic here
+   const size_t v1_OVERHEAD_BYTES = ENCRYPTION_VERSION_SIZE_BYTES;
+   if (in_v1_data.size() <= v1_OVERHEAD_BYTES)
+      throw EncryptionVersionMismatchException();
+
+   const size_t dataLength = in_v1_data.size() - v1_OVERHEAD_BYTES;
+   out_decrypted.resize(dataLength);
 
    return aesDecrypt(&in_v1_data[ENCRYPTION_VERSION_SIZE_BYTES],
-                     gsl::narrow_cast<int>(std::max(in_v1_data.size() - ENCRYPTION_VERSION_SIZE_BYTES, (size_t)0)),
+                     gsl::narrow_cast<int>(dataLength),
                      in_key,
                      in_iv,
                      out_decrypted);
@@ -313,11 +321,19 @@ Error aesDecrypt(
    // Finalize encryption. Additional encryption data is not written here for GCM
    // A positive return value indicates success,
    // anything else is a failure - the plaintext is not trustworthy.
-   if(EVP_DecryptFinal_ex(ctx, &out_decrypted[outLen - 1], &outLen) <= 0)
+   if(EVP_DecryptFinal_ex(ctx, out_decrypted.data() + bytesDecrypted, &outLen) <= 0)
    {
       EVP_CIPHER_CTX_free(ctx);
       out_decrypted.resize(0);
-      return getLastCryptoError(ERROR_LOCATION);
+
+      // A GCM tag mismatch is reported solely through the return value -
+      // OpenSSL queues no error for it - so don't consult the error queue
+      // here. Doing so would either report an unrelated stale entry or, on an
+      // empty queue, look like an internal fault. This is an expected outcome
+      // whenever aesDecrypt speculatively tries v2 on data that isn't v2.
+      return systemError(boost::system::errc::bad_message,
+                         "Decryption failed - authentication tag mismatch",
+                         ERROR_LOCATION);
    }
    bytesDecrypted += outLen;
 
@@ -397,9 +413,13 @@ Error aesDecrypt(
       throw EncryptionVersionMismatchException();
 
    // Index maths. v2 buffer structure is: [ version byte ][ v2 encrypted data ][ mac ]
-   // Use std::max to prevent index math going negative.
-   auto dataLength = std::max(in_v2_data.size() - ENCRYPTION_VERSION_SIZE_BYTES - MAC_SIZE_BYTES, (size_t)0);
-   auto macIndex = ENCRYPTION_VERSION_SIZE_BYTES + dataLength;
+   // avoid using unsigned comparisons here
+   const size_t v2_OVERHEAD_BYTES = ENCRYPTION_VERSION_SIZE_BYTES + MAC_SIZE_BYTES;
+   if (in_v2_data.size() <= v2_OVERHEAD_BYTES)
+      throw EncryptionVersionMismatchException();
+
+   const size_t dataLength = in_v2_data.size() - v2_OVERHEAD_BYTES;
+   const size_t macIndex = ENCRYPTION_VERSION_SIZE_BYTES + dataLength;
 
    out_decrypted.resize(dataLength);
 
