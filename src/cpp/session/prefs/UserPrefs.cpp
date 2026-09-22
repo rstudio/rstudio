@@ -13,6 +13,8 @@
  *
  */
 
+#include <shared_core/Memory.hpp>
+
 #include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -195,7 +197,10 @@ json::Array allPrefLayers()
 
 UserPrefValuesNative& userPrefs()
 {
-   static UserPrefs instance;
+   // intentionally leaked: the pref layers unregister their file monitors on
+   // destruction, and other threads can read preferences while the process
+   // exits, so this must never be destroyed during static teardown (#18318)
+   static UserPrefs& instance = make_leaked<UserPrefs>();
    return instance;
 }
 

@@ -24,6 +24,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/Settings.hpp>
 #include <core/Log.hpp>
@@ -278,7 +279,9 @@ int FileLock::s_liveOwnerGraceMultiplier(kDefaultLiveOwnerGraceMultiplier);
 bool FileLock::s_loggingEnabled(false);
 bool FileLock::s_isLoadBalanced(false);
 bool FileLock::s_useSymlinks(false);
-FilePath FileLock::s_logFile;
+
+// leaked: locks are refreshed on the http listener thread (#18318)
+FilePath& FileLock::s_logFile = core::make_leaked<FilePath>();
 
 boost::shared_ptr<FileLock> FileLock::create(LockType type)
 {
@@ -385,7 +388,10 @@ void FileLock::refreshPeriodically(boost::asio::io_context& service,
    
    verifyInitialized();
    
-   static boost::asio::system_timer timer(service, std::chrono::milliseconds(interval.total_milliseconds()));
+   // leaked: the timer is rescheduled on the thread running 'service' (#18318)
+   static boost::asio::system_timer& timer = core::make_leaked<boost::asio::system_timer>(
+         service,
+         std::chrono::milliseconds(interval.total_milliseconds()));
    timer.async_wait(boost::bind(
                        schedulePeriodicExecution,
                        boost::asio::placeholders::error,

@@ -167,12 +167,14 @@ cd package/osx
 ./make-package clean
 ```
 
-On an Apple Silicon Mac the default is to build both `x86_64` and `arm64` and
-produce a universal application; on an Intel Mac only `x86_64` is built.
-Restrict this with `--arch`:
+By default the build targets the machine's own architecture: `arm64` on an
+Apple Silicon Mac, `x86_64` on an Intel Mac. Jenkins builds both on Apple
+Silicon to produce a universal application. Request that locally with
+`--arch`, after installing both sets of dependencies as described in
+`dependencies/osx/README.md`:
 
 ```bash
-./make-package --arch=arm64
+./make-package --arch=x86_64,arm64
 ```
 
 Other options, from `./make-package --help`:

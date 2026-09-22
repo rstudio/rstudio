@@ -17,9 +17,11 @@
 
 #include <boost/function.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/Memory.hpp>
+
 #include <core/BoostThread.hpp>
 #include <core/Log.hpp>
-#include <shared_core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
@@ -60,7 +62,8 @@ bool hasEventIdLessThanOrEqualTo(const json::Value& event, int targetId)
 
 ClientEventService& clientEventService()
 {
-   static ClientEventService instance;
+   // leaked: the service thread is not stopped in desktop mode (#18318)
+   static ClientEventService& instance = core::make_leaked<ClientEventService>();
    return instance;
 }
 

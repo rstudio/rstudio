@@ -197,7 +197,8 @@ private:
 
 ConsoleInputService& consoleInputService()
 {
-   static ConsoleInputService instance;
+   // leaked: the service thread can be blocked in a session request at exit (#18318)
+   static ConsoleInputService& instance = core::make_leaked<ConsoleInputService>();
    return instance;
 }
 
@@ -2150,7 +2151,9 @@ std::string rVersionModule()
 
 r_util::ActiveSession& activeSession()
 {
-   static boost::shared_ptr<r_util::ActiveSession> pSession;
+   // leaked: read by the offline service thread (#18318)
+   static boost::shared_ptr<r_util::ActiveSession>& pSession =
+         core::make_leaked<boost::shared_ptr<r_util::ActiveSession>>();
    if (!pSession)
    {
       std::string id = options().sessionScope().id();
@@ -2869,13 +2872,16 @@ FilePath shellWorkingDirectory()
 
 Events& events()
 {
-   static Events instance;
+   // leaked: signals can be fired by an abandoned offline service thread (#18318)
+   static Events& instance = core::make_leaked<Events>();
    return instance;
 }
 
 core::system::ProcessSupervisor& processSupervisor()
 {
-   static core::system::ProcessSupervisor instance;
+   // leaked: polled by the offline service thread (#18318)
+   static core::system::ProcessSupervisor& instance =
+         core::make_leaked<core::system::ProcessSupervisor>();
    return instance;
 }
 

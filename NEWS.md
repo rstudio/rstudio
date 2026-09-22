@@ -53,9 +53,13 @@
 - ([#18831](https://github.com/rstudio/rstudio/issues/18831)): Fixed an issue where updating Posit Assistant from the chat pane left the new version being served under the previous version's Content-Security-Policy until RStudio was restarted, which could break the chat pane.
 - ([#18777](https://github.com/rstudio/rstudio/issues/18777)): Fixed an issue where each session restart added another copy of the Git and SVN directories to the `PATH` of restored terminals.
 - ([#18896](https://github.com/rstudio/rstudio/issues/18896)): Removed spurious warning: `getLastCryptoError called with no pending error`.
+- ([#18882](https://github.com/rstudio/rstudio/issues/18882)): Fixed an issue where the background job that installs a feature's required R packages reported success, and claimed the packages were installed, even when the installation had failed.
+
+### Deprecated / Removed
+- ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
 
 ### Dependencies
 - Copilot Language Server 1.544.0
-- Electron 43.7.1
+- Electron 43.7.3
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)
 

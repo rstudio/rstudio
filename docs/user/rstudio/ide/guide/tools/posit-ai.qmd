@@ -50,9 +50,19 @@ For information on using Posit Assistant, visit the [Posit Assistant documentati
 
 ## Removing Posit Assistant
 
-To uninstall the downloaded Posit Assistant components, select **Help** \> **Diagnostics** \> **Uninstall Posit Assistant**. RStudio restarts after the uninstall completes.
+RStudio does not provide a command for removing Posit Assistant. To remove the components RStudio downloaded, quit RStudio and delete the `pai` directory from RStudio's data directory:
 
-RStudio preserves your chat history and account settings, which remain available if you reinstall Posit Assistant.
+| Platform      | Directory                          |
+|---------------|------------------------------------|
+| Windows       | `%LOCALAPPDATA%\RStudio\pai`       |
+| macOS         | `~/.local/share/rstudio/pai`       |
+| Linux         | `~/.local/share/rstudio/pai`       |
+
+If an `ai.prev` directory is present beside `pai`, left by an interrupted install or update, delete it as well. If `RSTUDIO_DATA_HOME` is set, the directory is `$RSTUDIO_DATA_HOME/pai`. If `XDG_DATA_HOME` is set instead on macOS or Linux, it is `$XDG_DATA_HOME/rstudio/pai`.
+
+This directory holds the downloaded Posit Assistant program files and RStudio's record of its update checks. Posit Assistant keeps your chat history and settings under `~/.posit`, outside this directory, and they remain available if you install Posit Assistant again.
+
+A copy of Posit Assistant installed by an administrator or bundled with RStudio is not affected by removing this directory, and cannot be removed by the user.
 
 ## Hiding Posit Assistant features
 

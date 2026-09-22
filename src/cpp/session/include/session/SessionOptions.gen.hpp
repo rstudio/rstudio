@@ -495,7 +495,7 @@ protected:
       "Indicates whether or not Posit Assistant integration can be enabled.")
       ("posit-assistant-installation-enabled",
       value<bool>(&positAssistantInstallationEnabled_)->default_value(true),
-      "Indicates whether or not users may install, update, and uninstall Posit Assistant themselves. When disabled, the session uses only an administrator-managed installation, ignores any user-level installation, and performs no update checks.")
+      "Indicates whether or not users may install and update Posit Assistant themselves. When disabled, the session uses only an administrator-managed installation, ignores any user-level installation, and performs no update checks.")
       ("posit-assistant-ssl-certificates-file",
       value<std::string>(&positAssistantSslCertificatesFile_)->default_value(""),
       "The path to a file containing one or more trusted certificates in PEM format.")

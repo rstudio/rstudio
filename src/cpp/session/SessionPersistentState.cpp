@@ -15,9 +15,11 @@
 
 #include <session/SessionPersistentState.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
+
+#include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
@@ -42,7 +44,8 @@ const char * const kAbend = "abend";
    
 PersistentState& persistentState()
 {
-   static PersistentState instance;
+   // leaked: read by the offline service thread (#18318)
+   static PersistentState& instance = core::make_leaked<PersistentState>();
    return instance;
 }
    

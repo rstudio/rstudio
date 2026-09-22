@@ -36,13 +36,15 @@
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
+
 #include <core/http/URL.hpp>
 #include <core/http/Header.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/Log.hpp>
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 
@@ -558,13 +560,17 @@ const char * const kAtomDateFormat = "%Y-%m-%dT%H:%M:%S%F%Q";
 
 // facet for http date (construct w/ a_ref == 1 so we manage memory)
 // statically initialized because init is very expensive
-boost::posix_time::time_facet s_httpDateFacet(kHttpDateFormat,
-                                              boost::posix_time::time_facet::period_formatter_type(),
-                                              boost::posix_time::time_facet::special_values_formatter_type(),
-                                              boost::posix_time::time_facet::date_gen_formatter_type(),
-                                              1);
+// leaked: used by threads serving http requests, which can outlive exit()
+// (#18318)
+boost::posix_time::time_facet& s_httpDateFacet = core::make_leaked<boost::posix_time::time_facet>(
+      kHttpDateFormat,
+      boost::posix_time::time_facet::period_formatter_type(),
+      boost::posix_time::time_facet::special_values_formatter_type(),
+      boost::posix_time::time_facet::date_gen_formatter_type(),
+      1);
 
-boost::posix_time::time_input_facet s_httpDateInputFacet(kHttpDateFormat, 1);
+boost::posix_time::time_input_facet& s_httpDateInputFacet =
+      core::make_leaked<boost::posix_time::time_input_facet>(kHttpDateFormat, 1);
 
 boost::posix_time::ptime parseDate(const std::string& date, const char* format)
 {

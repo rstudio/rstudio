@@ -8,7 +8,7 @@ import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { resetSourcePaneState, setPref } from '@utils/commands';
 import {
-  aiServiceOutageReason,
+  failUnlessAiServiceGone,
   hasAiCredentials,
   requireAiCredentials,
   type AIProvider,
@@ -75,20 +75,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     // manifest download timed out and the agent reported NotSignedIn, which
     // surfaced here as a 30s ghost-text timeout). Re-probe and skip
     // retroactively when the service is gone; otherwise rethrow untouched.
-    const failUnlessServiceGone = async (err: unknown): Promise<never> => {
-      const reason = await aiServiceOutageReason(aiProvider);
-      if (reason !== null) {
-        test.skip(true, reason);
-      }
-      throw err;
-    };
-
+    //
     // Keep the shared retry logic and re-probe the service if it times out.
     const expectSuggestionIndicator = async (timeout = TIMEOUTS.nesApply) => {
       try {
         await sourceActions.waitForNesSuggestion(timeout);
       } catch (err) {
-        await failUnlessServiceGone(err);
+        await failUnlessAiServiceGone(aiProvider, err);
       }
     };
 
@@ -96,7 +89,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       try {
         await sourceActions.waitForGhostText(timeout);
       } catch (err) {
-        await failUnlessServiceGone(err);
+        await failUnlessAiServiceGone(aiProvider, err);
       }
     };
 

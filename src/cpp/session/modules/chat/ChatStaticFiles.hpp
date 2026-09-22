@@ -140,8 +140,7 @@ void setChatBackendAuthToken(const std::string& token);
  * Not cleared when the backend stops: the page of a backend that exited can
  * still request lazily-loaded chunks, and the next start pins again. Pass an
  * empty path to clear, which restores the pre-start behaviour of resolving
- * the installation on each request; uninstall does this, having deleted the
- * directory the pin names. A pinned path that no longer holds a complete
+ * the installation on each request. A pinned path that no longer holds a complete
  * installation resolves per request in the same way, so a removal or a failed
  * extraction that does not clear the pin still falls back to whatever other
  * tier holds one.

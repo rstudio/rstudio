@@ -24,6 +24,7 @@
 #include <boost/algorithm/string/classification.hpp>
 
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/Thread.hpp>
 #include <core/system/FileScanner.hpp>
@@ -44,8 +45,11 @@ const std::size_t kBuffSize = 32768;
 
 // handle registry (use a mutex to protect access as we might attempt
 // to register and de-register from main vs. monitor thread)
-boost::mutex s_handleMutex;
-std::set<Handle> s_handleRegistry;
+//
+// leaked: the monitor thread uses these in its own cleanup, which an
+// abandoned thread can reach during static teardown (#18318)
+boost::mutex& s_handleMutex = core::make_leaked<boost::mutex>();
+std::set<Handle>& s_handleRegistry = core::make_leaked<std::set<Handle>>();
 
 class FileEventContext : boost::noncopyable
 {
