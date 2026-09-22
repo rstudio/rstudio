@@ -254,13 +254,15 @@ void FileLock::log(const std::string& message)
 
          if (error)
          {
-            LOG_ERROR(error);
+            if (!s_loggerBypassed)
+               LOG_ERROR(error);
             ++counter;
          }
       }
       else if (counter == max)
       {
-         LOG_ERROR_MESSAGE("failed to write lockfile logs");
+         if (!s_loggerBypassed)
+            LOG_ERROR_MESSAGE("failed to write lockfile logs");
          ++counter;
       }
       else
@@ -277,6 +279,7 @@ boost::posix_time::seconds FileLock::s_timeoutInterval(static_cast<long>(kDefaul
 boost::posix_time::seconds FileLock::s_refreshRate(static_cast<long>(kDefaultRefreshRate));
 int FileLock::s_liveOwnerGraceMultiplier(kDefaultLiveOwnerGraceMultiplier);
 bool FileLock::s_loggingEnabled(false);
+bool FileLock::s_loggerBypassed(false);
 bool FileLock::s_isLoadBalanced(false);
 bool FileLock::s_useSymlinks(false);
 
@@ -288,6 +291,7 @@ void FileLock::setLogFileForTesting(const FilePath& logFile)
 {
    s_logFile = logFile;
    s_loggingEnabled = true;
+   s_loggerBypassed = true;
 }
 #endif
 

@@ -208,7 +208,6 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
       // abort the process without running destructors, releasing its file
       // locks first so that a reloaded session can take them at once
       exitFromBackgroundThread(EXIT_SUCCESS);
-      return true;
    }
    else
    {

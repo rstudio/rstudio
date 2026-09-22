@@ -105,6 +105,10 @@ TEST(SessionMainTest, ExitEarlyFromBackgroundThreadSkipsTeardown)
    bool wasLoadBalanced = FileLock::isLoadBalanced();
    FileLock::setLoadBalancedForTesting(true);
 
+   // whatever the suite has buffered would otherwise be written by both
+   // processes, since the child flushes stdio on its way out
+   std::fflush(nullptr);
+
    pid_t child = ::fork();
    if (child == 0)
    {

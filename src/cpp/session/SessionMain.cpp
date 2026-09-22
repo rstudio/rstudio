@@ -1828,25 +1828,15 @@ void exitFromBackgroundThread(int status)
 {
    // Nothing may escape: the listener thread would swallow an exception and
    // keep the session running, and the macOS monitor thread would terminate()
-   // with the crash report it exists to avoid.
-   try
-   {
-      // Link-based locks stay on disk marked as held. Only a reader on this
-      // host that is not load-balanced treats a dead owner's lock as stale at
-      // once; any other reader would wait out the lock timeout. Best effort:
-      // the main thread may still be taking or using locks.
-      FileLock::cleanUp();
+   // with the crash report it exists to avoid. Each step below is best
+   // effort on its own, so one failing must not skip the rest.
 
-      FilePath(s_fallbackLibraryPath).removeIfExists();
-   }
-   catch (...)
-   {
-   }
-
-   // exit() flushes stdio, which output to R's file() and pipe() connections
-   // relies on to reach disk. Unlike exit(), fflush() waits on each stream's
-   // lock, which a thread blocked in a read or write can hold indefinitely,
-   // so a watchdog bounds the wait (and without one, we skip the flush).
+   // Everything below can block indefinitely: the lock release writes to a
+   // session directory that may sit on a stalled network mount, and fflush()
+   // waits on each stream's lock, which a thread blocked in a read or write
+   // can hold forever. A watchdog bounds the whole exit; without one, we
+   // leave at once rather than risk never leaving.
+   bool bounded = false;
    try
    {
       std::thread([status]()
@@ -1855,6 +1845,39 @@ void exitFromBackgroundThread(int status)
          std::_Exit(status);
       }).detach();
 
+      bounded = true;
+   }
+   catch (...)
+   {
+   }
+
+   if (!bounded)
+      std::_Exit(status);
+
+   // Link-based locks stay on disk marked as held. Only a reader on this
+   // host that is not load-balanced treats a dead owner's lock as stale at
+   // once; any other reader would wait out the lock timeout. The main thread
+   // may still be taking or using locks.
+   try
+   {
+      FileLock::cleanUp();
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      FilePath(s_fallbackLibraryPath).removeIfExists();
+   }
+   catch (...)
+   {
+   }
+
+   // exit() flushes stdio, which output to R's file() and pipe() connections
+   // relies on to reach disk
+   try
+   {
       std::fflush(nullptr);
    }
    catch (...)
