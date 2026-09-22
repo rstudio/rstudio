@@ -5077,9 +5077,12 @@ Error startChatBackend(bool resumeConversation)
    FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
+      // Without a pinned path, the one system location an administrator can
+      // populate by hand is the legacy bin directory; versioned slots need the
+      // manifest only an install writes.
       InstallSearchPaths paths = positAssistantSearchPaths();
       std::string systemPath = paths.pinnedPath.isEmpty()
-         ? paths.systemStorageDir.getAbsolutePath()
+         ? paths.systemStorageDir.completeChildPath(kLegacyInstallDirName).getAbsolutePath()
          : paths.pinnedPath.getAbsolutePath();
 
       // Naming the user directory in managed mode would point the user at the
