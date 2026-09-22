@@ -5094,11 +5094,12 @@ Error startChatBackend(bool resumeConversation)
       }
       else
       {
-         std::string userPath =
-            chat_slots::versionsDir(paths.userStorageDir).getAbsolutePath();
+         // Only an in-product install produces a slot RStudio will use, so
+         // there is no user directory to tell the user to copy files into.
          errorMsg = fmt::format(
-            "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
-            userPath, systemPath);
+            "Posit Assistant installation not found. Install it from the "
+            "Posit Assistant pane, or have an administrator install it at: {}",
+            systemPath);
       }
       return systemError(boost::system::errc::no_such_file_or_directory,
                         errorMsg,
