@@ -182,7 +182,15 @@ FilePath versionsDir(const FilePath& storageDir)
    return storageDir.completeChildPath(kVersionsDirName);
 }
 
-bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
+namespace {
+
+// verifySlot(), optionally stopping before the manifest walk when the slot
+// declares a protocol other than the one the caller is collecting. The link
+// and directory checks come first either way, and the protocol is read once,
+// so the slot returned is the one that was checked.
+bool verifySlotForProtocol(const FilePath& slotDir,
+                           const std::string* pRequiredProtocol,
+                           SlotInfo* pInfo)
 {
    if (!slotDir.isDirectory())
       return false;
@@ -217,6 +225,9 @@ bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
       return false;
    }
 
+   if (pRequiredProtocol != nullptr && protocol != *pRequiredProtocol)
+      return false;
+
    if (!slot_manifest::matchesSlotManifest(slotDir))
       return false;
 
@@ -229,6 +240,13 @@ bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
    }
 
    return true;
+}
+
+} // anonymous namespace
+
+bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
+{
+   return verifySlotForProtocol(slotDir, nullptr, pInfo);
 }
 
 std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir,
@@ -258,11 +276,8 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir,
       if (!isUsableSlotName(child.getFilename()))
          continue;
 
-      if (installation::declaredProtocol(child) != protocol)
-         continue;
-
       SlotInfo info;
-      if (verifySlot(child, &info))
+      if (verifySlotForProtocol(child, &protocol, &info))
          found.push_back(info);
    }
 

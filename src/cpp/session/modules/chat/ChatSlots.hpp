@@ -107,10 +107,10 @@ bool verifySlot(const core::FilePath& slotDir, SlotInfo* pInfo = nullptr);
  *
  * Entries that could not be recorded and read back as a selection -- staging
  * directories, other dot-prefixed bookkeeping, and any name isUsableSlotName()
- * rejects -- are skipped, as is any slot declaring another protocol; that
- * check comes before the manifest walk, so slots left by earlier protocols
- * cost one small read each. A versions directory that does not exist yields
- * no slots rather than an error.
+ * rejects -- are skipped, as is any slot declaring another protocol. That
+ * check follows the link and directory checks and precedes the manifest walk,
+ * so slots left by earlier protocols cost one small read each. A versions
+ * directory that does not exist yields no slots rather than an error.
  *
  * @param slotsDir The directory holding the slots.
  * @param protocol The protocol the slots must declare.
