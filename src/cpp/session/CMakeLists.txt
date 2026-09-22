@@ -604,7 +604,6 @@ list(APPEND SESSION_LIBRARIES
    rstudio-monitor
    rstudio-r
    rstudio-session-workers
-   rstudio-core-synctex
    rstudio-core
    libgit2package
    ${SESSION_SYSTEM_LIBRARIES}
