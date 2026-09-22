@@ -274,6 +274,12 @@ core::Error temporarilyDropPriv(const std::string& newUsername, bool chownLogDir
 core::Error temporarilyDropPriv(const std::string& newUsername, const std::string& newGroupname, bool chownLogDir);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname);
+
+// drops to a user resolved before the fork: unlike the overloads above, this
+// neither looks the user up nor refreshes the log destinations, whose locks
+// another thread may have held when a multithreaded process forked
+core::Error permanentlyDropPriv(const User& user);
+
 core::Error restorePriv();
 
 // restoreRoot should be used to set the effective ID back to root (0) before using

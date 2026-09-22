@@ -2683,7 +2683,8 @@ Error launchChildProcess(std::string path,
                          PidType* pProcessId)
 {
    // Ensure the config.user is populated before the fork so runProcess is not accessing the password db in the
-   // weird after-fork-before-exec state (i.e. skip the getCurrentUser call in runProcess)
+   // weird after-fork-before-exec state (i.e. skip the getCurrentUser call in runProcess, and the user lookup
+   // when it drops privilege)
    if (config.user.isEmpty())
    {
       if (!runAsUser.empty())
@@ -2771,8 +2772,14 @@ Error runProcess(const std::string& path,
       // set limits - after the pamSessionFilter since it will define cgroups and set ulimit itself
       setProcessLimits(config.limits);
 
-      // switch user
-      error = permanentlyDropPriv(runAsUser);
+      // switch user, to the one launchChildProcess resolved before the fork when
+      // it's the one we want: the name-based overload takes the user cache and
+      // logger locks, which another thread may have held when we forked, and
+      // waiting on one of those leaves the child hung before it ever execs
+      if (config.user.getUsername() == runAsUser)
+         error = permanentlyDropPriv(config.user);
+      else
+         error = permanentlyDropPriv(runAsUser);
       if (error)
          return error;
    }
@@ -3399,48 +3406,11 @@ void resetKeyring()
 // privilege manipulation for systems that support setresuid/getresuid
 #if defined(HAVE_SETRESUID)
 
-Error permanentlyDropPriv(const std::string& newUsername)
-{
-   return permanentlyDropPriv(newUsername, std::string());
-}
+namespace {
 
-Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
+Error permanentlyDropPrivImpl(const User& user, GidType targetGID)
 {
    bool isRootAtStart = realUserIsRoot();
-
-   // get user info
-   User user;
-   Error error = getUserFromUsername(newUsername, user);
-   if (error)
-      return error;
-
-   // get group info if one was provided
-   boost::optional<GidType> groupOpt;
-   if (!newGroupname.empty())
-   {
-      // verify that the user is a member of the provided group
-      bool belongs = false;
-      error = userBelongsToGroup(user, newGroupname, &belongs);
-      if (error)
-         return error;
-
-      if (!belongs)
-         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
-
-      group::Group group;
-      error = group::groupFromName(newGroupname, &group);
-      if (error)
-         return error;
-
-      groupOpt = group.groupId;
-   }
-
-   GidType targetGID = groupOpt.value_or(user.getGroupId());
-
-   // Refresh the destinations without providing a user since we have the parent processes's file destinations
-   // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we
-   // are set up to log in case there are errors before we call ::execve - in particular, for syslog
-   core::log::refreshAllLogDestinations();
 
    // clear error state
    errno = 0;
@@ -3482,8 +3452,7 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    return Success();
 }
 
-// privilege manipulation for systems that don't support setresuid/getresuid
-#else
+} // anonymous namespace
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
@@ -3492,11 +3461,6 @@ Error permanentlyDropPriv(const std::string& newUsername)
 
 Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
 {
-   bool isRootAtStart = realUserIsRoot();
-
-   // clear error state
-   errno = 0;
-
    // get user info
    User user;
    Error error = getUserFromUsername(newUsername, user);
@@ -3525,6 +3489,31 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    }
 
    GidType targetGID = groupOpt.value_or(user.getGroupId());
+
+   // Refresh the destinations without providing a user since we have the parent processes's file destinations
+   // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we
+   // are set up to log in case there are errors before we call ::execve - in particular, for syslog
+   core::log::refreshAllLogDestinations();
+
+   return permanentlyDropPrivImpl(user, targetGID);
+}
+
+Error permanentlyDropPriv(const User& user)
+{
+   return permanentlyDropPrivImpl(user, user.getGroupId());
+}
+
+// privilege manipulation for systems that don't support setresuid/getresuid
+#else
+
+namespace {
+
+Error permanentlyDropPrivImpl(const User& user, GidType targetGID)
+{
+   bool isRootAtStart = realUserIsRoot();
+
+   // clear error state
+   errno = 0;
 
    // supplemental group list
    // NOTE: We are intentionally specifying the user's primary group here
@@ -3555,6 +3544,52 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 
    // success
    return Success();
+}
+
+} // anonymous namespace
+
+Error permanentlyDropPriv(const std::string& newUsername)
+{
+   return permanentlyDropPriv(newUsername, std::string());
+}
+
+Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
+{
+   // get user info
+   User user;
+   Error error = getUserFromUsername(newUsername, user);
+   if (error)
+      return error;
+
+   // get group info if one was provided
+   boost::optional<GidType> groupOpt;
+   if (!newGroupname.empty())
+   {
+      // verify that the user is a member of the provided group
+      bool belongs = false;
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
+
+      if (!belongs)
+         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+
+      group::Group group;
+      error = group::groupFromName(newGroupname, &group);
+      if (error)
+         return error;
+
+      groupOpt = group.groupId;
+   }
+
+   GidType targetGID = groupOpt.value_or(user.getGroupId());
+
+   return permanentlyDropPrivImpl(user, targetGID);
+}
+
+Error permanentlyDropPriv(const User& user)
+{
+   return permanentlyDropPrivImpl(user, user.getGroupId());
 }
 
 #endif

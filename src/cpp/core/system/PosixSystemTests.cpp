@@ -24,8 +24,11 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <condition_variable>
 #include <cstring>
 #include <limits>
+#include <mutex>
+#include <thread>
 
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
@@ -41,6 +44,9 @@
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/PosixChildProcessTracker.hpp>
 #include <core/system/PosixGroup.hpp>
+
+#include <shared_core/ILogDestination.hpp>
+#include <shared_core/Logger.hpp>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
 
@@ -1036,6 +1042,102 @@ TEST(PosixTests, ChildProcessTrackerLeavesRunningChildAlone)
    errno = 0;
    EXPECT_EQ(-1, ::waitpid(pid, nullptr, WNOHANG));
    EXPECT_EQ(ECHILD, errno);
+}
+
+// a log destination whose writes block until released, so that a thread
+// writing to it holds the logger's read lock for as long as a test needs
+class BlockingLogDestination : public log::ILogDestination
+{
+public:
+   BlockingLogDestination()
+      : log::ILogDestination("blocking-log-destination",
+                             log::LogLevel::ERR,
+                             log::LogMessageFormatType::PRETTY,
+                             false)
+   {
+   }
+
+   void refresh(const log::RefreshParams&) override
+   {
+   }
+
+   void writeLog(log::LogLevel, const std::string&) override
+   {
+      std::unique_lock<std::mutex> lock(mutex_);
+      writing_ = true;
+      condition_.notify_all();
+      condition_.wait(lock, [this] { return released_; });
+   }
+
+   void waitUntilWriting()
+   {
+      std::unique_lock<std::mutex> lock(mutex_);
+      condition_.wait(lock, [this] { return writing_; });
+   }
+
+   void release()
+   {
+      std::lock_guard<std::mutex> lock(mutex_);
+      released_ = true;
+      condition_.notify_all();
+   }
+
+private:
+   std::mutex mutex_;
+   std::condition_variable condition_;
+   bool writing_ = false;
+   bool released_ = false;
+};
+
+TEST(PosixTests, PermanentlyDropPrivToResolvedUserSurvivesForkDuringLogWrite)
+{
+   // a child forked while another thread is mid log write inherits the
+   // logger's read lock with no thread left to release it. rserver drops
+   // privilege in just such a child when it launches a session, so the drop
+   // must not wait on that lock: a child stuck there never becomes the session
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   const std::string section = "fork-during-log-write";
+   auto pDestination = std::make_shared<BlockingLogDestination>();
+   log::addLogDestination(pDestination, section);
+
+   std::thread writer([&]()
+   {
+      log::logErrorMessage("holding the logger's read lock", section);
+   });
+   pDestination->waitUntilWriting();
+
+   pid_t child = ::fork();
+   if (child == 0)
+   {
+      // unprivileged, the drop itself fails; returning at all is what counts
+      permanentlyDropPriv(user);
+      ::_exit(0);
+   }
+
+   // give the child ample time before declaring it hung
+   bool exited = false;
+   for (int i = 0; child != -1 && i < 100 && !exited; i++)
+   {
+      if (::waitpid(child, nullptr, WNOHANG) == child)
+         exited = true;
+      else
+         ::usleep(100000);
+   }
+
+   if (child != -1 && !exited)
+   {
+      ::kill(child, SIGKILL);
+      ::waitpid(child, nullptr, 0);
+   }
+
+   pDestination->release();
+   writer.join();
+   log::removeLogDestination(pDestination->getId(), section);
+
+   ASSERT_NE(-1, child);
+   EXPECT_TRUE(exited) << "child hung dropping privilege after the fork";
 }
 
 } // namespace tests
