@@ -67,8 +67,8 @@ public class PaiUtil
    }
 
    /**
-    * Returns true if the user may install, update, and uninstall Posit
-    * Assistant. When false the administrator manages the installation: the
+    * Returns true if the user may install and update Posit Assistant. When
+    * false the administrator manages the installation: the
     * session runs only an administrator-managed or bundled copy, makes no
     * update checks, and refuses those operations.
     *
