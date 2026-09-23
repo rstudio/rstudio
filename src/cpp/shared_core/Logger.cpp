@@ -673,6 +673,11 @@ void setProgramId(const std::string& in_programId)
    RW_LOCK_END(false)
 }
 
+std::string getProgramId()
+{
+   return logger().ProgramId;
+}
+
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination)
 {
    WRITE_LOCK_BEGIN(logger().Mutex)

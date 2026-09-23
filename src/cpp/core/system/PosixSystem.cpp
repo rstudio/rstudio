@@ -2531,7 +2531,36 @@ void printCoreDumpable(const std::string& context)
 }
 
 
+namespace {
+
+void logErrorToLogger(const Error& error)
+{
+   LOG_ERROR(error);
+}
+
+// for a child between fork and exec, which must not touch the logger: the fork
+// handlers in Logger.cpp keep our own locks usable there, but the child should
+// not depend on them, so it goes straight to syslog as launchChildProcess does
+void logErrorAfterFork(const Error& error)
+{
+   safeLogToSyslog(log::getProgramId(), log::LogLevel::ERR, error.asString());
+}
+
+Error runProcessImpl(const std::string& path,
+                     const std::string& runAsUser,
+                     const ResolvedUser* pRunAsUser,
+                     ProcessConfig& config,
+                     ProcessConfigFilter configFilter,
+                     const boost::function<void(const Error&)>& logError);
+
+} // anonymous namespace
+
 void setProcessLimits(ProcessLimits limits)
+{
+   setProcessLimits(limits, logErrorToLogger);
+}
+
+void setProcessLimits(const ProcessLimits& limits, const boost::function<void(const Error&)>& logError)
 {
    // memory limit
    if (limits.memoryLimitBytes != 0)
@@ -2546,7 +2575,7 @@ void setProcessLimits(ProcessLimits limits)
       Error error = setResourceLimit(MemoryLimit, limits.memoryLimitBytes);
       if (error)
       {
-         LOG_ERROR(error);
+         logError(error);
       }
    }
 
@@ -2555,7 +2584,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(StackLimit, limits.stackLimitBytes);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // user processes limit
@@ -2564,7 +2593,7 @@ void setProcessLimits(ProcessLimits limits)
       Error error = setResourceLimit(UserProcessesLimit,
                                      limits.userProcessesLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // cpu limit
@@ -2572,7 +2601,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(CpuLimit, limits.cpuLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // nice limit
@@ -2580,7 +2609,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(NiceLimit, limits.niceLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // files limit
@@ -2588,14 +2617,14 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(FilesLimit, limits.filesLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // priority
    if (limits.priority != 0)
    {
       if (::setpriority(PRIO_PROCESS, 0, limits.priority) == -1)
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         logError(systemError(errno, ERROR_LOCATION));
    }
 
    // cpu affinity
@@ -2604,7 +2633,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setCpuAffinity(limits.cpuAffinity);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 #endif
 }
@@ -2748,7 +2777,7 @@ Error launchChildProcess(std::string path,
          ::_exit(EXIT_FAILURE);
       }
 
-      Error error = runProcess(path, runAsUser, resolvedRunAsUser.get_ptr(), config, configFilter);
+      Error error = runProcessImpl(path, runAsUser, resolvedRunAsUser.get_ptr(), config, configFilter, logErrorAfterFork);
       if (error)
       {
          // Use safe logger in 'after fork before exec'
@@ -2769,14 +2798,21 @@ Error runProcess(const std::string& path,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter)
 {
-   return runProcess(path, runAsUser, nullptr, config, configFilter);
+   return runProcessImpl(path, runAsUser, nullptr, config, configFilter, logErrorToLogger);
 }
 
-Error runProcess(const std::string& path,
-                 const std::string& runAsUser,
-                 const ResolvedUser* pRunAsUser,
-                 ProcessConfig& config,
-                 ProcessConfigFilter configFilter)
+namespace {
+
+// runProcess, switching to runAsUser as resolved before a fork when pRunAsUser is
+// given, and reporting the failures it carries on past through logError:
+// launchChildProcess calls this in the child, where that must be syslog rather
+// than the logger
+Error runProcessImpl(const std::string& path,
+                     const std::string& runAsUser,
+                     const ResolvedUser* pRunAsUser,
+                     ProcessConfig& config,
+                     ProcessConfigFilter configFilter,
+                     const boost::function<void(const Error&)>& logError)
 {
    // change user here if requested and we have privilege. if we don't have privilege, we can only
    // "run as" the current user (we'll check that later)
@@ -2800,11 +2836,11 @@ Error runProcess(const std::string& path,
       }
 
       // set limits - after the pamSessionFilter since it will define cgroups and set ulimit itself
-      setProcessLimits(config.limits);
+      setProcessLimits(config.limits, logError);
 
       // switch user, without any lookups when the caller resolved it ahead of a fork
       if (pRunAsUser != nullptr)
-         error = permanentlyDropPriv(*pRunAsUser);
+         error = permanentlyDropPrivAfterFork(*pRunAsUser);
       else
          error = permanentlyDropPriv(runAsUser);
       if (error)
@@ -2814,7 +2850,7 @@ Error runProcess(const std::string& path,
    {
       // set limits - calls may fail if attempting to set greater than max allowed values
       // since the user is potentially unprivileged
-      setProcessLimits(config.limits);
+      setProcessLimits(config.limits, logError);
    }
 
    // clear the signal mask so the child process can handle whatever
@@ -2956,6 +2992,8 @@ Error runProcess(const std::string& path,
    
    return error;
 }
+
+} // anonymous namespace
 
 Error getChildProcesses(
       std::vector<ProcessInfo>* pOutProcesses,
@@ -3393,12 +3431,12 @@ Error restorePriv()
  * commands like 'cifscred add' that are then shared with other users. Linux cleans up keys when the process exits.
  * Use 'keyctl show' to see the keyrings of a session and 'cat /proc/keys' to see the keys on a system.
  */
-void resetKeyring()
+Error resetKeyring()
 {
 #ifdef __linux__
    // just in case permanentlyDropPrivs was used to change back to root for some reason
    if (realUserIsRoot())
-      return;
+      return Success();
 
    /*
     * Create a new session keyring, replacing the one owned by root. When the name arg is NULL, an anonymous keyring
@@ -3411,9 +3449,12 @@ void resetKeyring()
    {
       // EPERM is returned in a docker container when SYS_ADMIN capability is not present. In that case, nothing in
       // the container can change the keyring omitting the error in that case.
-      if (errno != EPERM)
-         LOG_ERROR_MESSAGE("Unable to create new session keyring - errno: " + std::to_string(errno));
-      return;
+      if (errno == EPERM)
+         return Success();
+
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("description", "Unable to create new session keyring");
+      return error;
    }
 
    /* Now link the new session keyring to the current user's keyring */
@@ -3424,10 +3465,13 @@ void resetKeyring()
 
    if (ret < 0)
    {
-      LOG_ERROR_MESSAGE("Unable to link new session keyring with the user keyring - errno: " + std::to_string(errno));
-      return;
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("description", "Unable to link new session keyring with the user keyring");
+      return error;
    }
 #endif
+
+   return Success();
 }
 
 namespace {
@@ -3495,8 +3539,9 @@ Error setUserId(UidType uid)
 #endif
 
 // the steps every permanentlyDropPriv overload shares once the supplementary
-// group list has been set
-Error permanentlyDropPrivImpl(UidType uid, GidType targetGID)
+// group list has been set; a failure to reset the keyring afterwards does not
+// fail the drop, and is reported through logError (syslog, after a fork)
+Error permanentlyDropPrivImpl(UidType uid, GidType targetGID, const boost::function<void(const Error&)>& logError)
 {
    bool isRootAtStart = realUserIsRoot();
 
@@ -3510,7 +3555,11 @@ Error permanentlyDropPrivImpl(UidType uid, GidType targetGID)
 
    // just in case this method is ever called not as root
    if (isRootAtStart)
-      resetKeyring();
+   {
+      error = resetKeyring();
+      if (error)
+         logError(error);
+   }
 
    return Success();
 }
@@ -3570,7 +3619,7 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
-   return permanentlyDropPrivImpl(user.getUserId(), targetGID);
+   return permanentlyDropPrivImpl(user.getUserId(), targetGID, logErrorToLogger);
 }
 
 Error resolveUser(const std::string& username, ResolvedUser* pUser)
@@ -3582,7 +3631,7 @@ Error resolveUser(const std::string& username, ResolvedUser* pUser)
    return group::queryUserGroupIds(pUser->user, &pUser->groupIds);
 }
 
-Error permanentlyDropPriv(const ResolvedUser& user)
+Error permanentlyDropPrivAfterFork(const ResolvedUser& user)
 {
    // clear error state
    errno = 0;
@@ -3594,7 +3643,7 @@ Error permanentlyDropPriv(const ResolvedUser& user)
    if (::setgroups(numGroups, user.groupIds.data()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
-   return permanentlyDropPrivImpl(user.user.getUserId(), user.user.getGroupId());
+   return permanentlyDropPrivImpl(user.user.getUserId(), user.user.getGroupId(), logErrorAfterFork);
 }
 
 Error restoreRoot()

@@ -133,6 +133,16 @@ std::string cleanDelimiters(const std::string& in_str);
 void setProgramId(const std::string& in_programId);
 
 /**
+ * @brief Gets the program ID of the logger.
+ *
+ * Reads without the logger's lock: the ID is set once at startup, and a child between fork and exec needs it to
+ * identify itself to syslog without touching the logger.
+ *
+ * @return The ID of the program, or an empty string if none was set.
+ */
+std::string getProgramId();
+
+/**
  * @brief Adds an un-sectioned log destination to the logger.
  *
  * If a duplicate destination is added, the duplicate will be ignored.

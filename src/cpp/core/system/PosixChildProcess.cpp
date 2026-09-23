@@ -626,7 +626,7 @@ Error ChildProcess::run()
             if (resolvedRunAsUser)
             {
                // switch user if not root
-               error = core::system::permanentlyDropPriv(*resolvedRunAsUser);
+               error = core::system::permanentlyDropPrivAfterFork(*resolvedRunAsUser);
                if (error)
                   LOG_ERROR(error);
             }

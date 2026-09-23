@@ -1256,7 +1256,33 @@ TEST(PosixTests, ResolveUserReturnsCurrentUserAndGroups)
    EXPECT_NE(end, std::find(begin, end, user.getGroupId()));
 }
 
-TEST(PosixTests, PermanentlyDropPrivToResolvedUserReturnsAfterFork)
+TEST(PosixTests, SetProcessLimitsReportsFailuresThroughCallback)
+{
+   // a child between fork and exec hands setProcessLimits a syslog sink, so a
+   // limit it cannot set has to reach that sink rather than the logger
+   struct rlimit files;
+   ASSERT_EQ(0, ::getrlimit(RLIMIT_NOFILE, &files));
+
+   std::vector<Error> reported;
+   auto report = [&reported](const Error& error) { reported.push_back(error); };
+
+   // raising the soft limit to the hard one is allowed of any process
+   ProcessLimits limits;
+   limits.filesLimit = files.rlim_max;
+   setProcessLimits(limits, report);
+   EXPECT_TRUE(reported.empty());
+
+   // raising the hard limit is not, unless privileged
+   if (::geteuid() == 0 || files.rlim_max == RLIM_INFINITY)
+      GTEST_SKIP() << "raising the hard file limit would succeed here";
+
+   limits.filesLimit = files.rlim_max + 1;
+   setProcessLimits(limits, report);
+   ASSERT_EQ(1u, reported.size());
+   EXPECT_EQ(EPERM, reported[0].getCode());
+}
+
+TEST(PosixTests, PermanentlyDropPrivAfterForkReturnsInChild)
 {
    // the drop must return in a forked child without any lookup; unprivileged,
    // the drop itself fails with EPERM and returning at all is what counts
@@ -1270,7 +1296,7 @@ TEST(PosixTests, PermanentlyDropPrivToResolvedUserReturnsAfterFork)
    ASSERT_NE(-1, child);
    if (child == 0)
    {
-      Error error = permanentlyDropPriv(resolved);
+      Error error = permanentlyDropPrivAfterFork(resolved);
       ::_exit(error && effectiveUserIsRoot() ? 1 : 0);
    }
 
@@ -1279,7 +1305,7 @@ TEST(PosixTests, PermanentlyDropPrivToResolvedUserReturnsAfterFork)
    EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
 }
 
-TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivToResolvedUserSetsIdsAndGroups)
+TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivAfterForkSetsIdsAndGroups)
 {
    ResolvedUser resolved;
    ASSERT_FALSE(resolveUser(testUser.getUsername(), &resolved));
@@ -1289,7 +1315,7 @@ TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivToResolvedUserSetsIdsAndG
    ASSERT_NE(-1, child);
    if (child == 0)
    {
-      if (permanentlyDropPriv(resolved))
+      if (permanentlyDropPrivAfterFork(resolved))
          ::_exit(1);
 
       if (::getuid() != testUser.getUserId() || ::geteuid() != testUser.getUserId())

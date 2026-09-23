@@ -192,6 +192,10 @@ struct ProcessLimits
 
 void setProcessLimits(ProcessLimits limits);
 
+// as above, but reporting each limit that could not be set through logError
+// instead of the logger, for a child between fork and exec
+void setProcessLimits(const ProcessLimits& limits, const boost::function<void(const core::Error&)>& logError);
+
 
 struct ProcessConfig
 {
@@ -228,15 +232,6 @@ core::Error launchChildProcess(std::string path,
 // note, this does not create a child process, but replaces the currently running one
 Error runProcess(const std::string& path,
                  const std::string& runAsUser,
-                 ProcessConfig& config,
-                 ProcessConfigFilter configFilter);
-
-// as above, but switching to runAsUser as resolved before a fork (see ResolvedUser
-// below) instead of looking it up here; pRunAsUser may be null
-struct ResolvedUser;
-Error runProcess(const std::string& path,
-                 const std::string& runAsUser,
-                 const ResolvedUser* pRunAsUser,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter);
 
@@ -283,7 +278,7 @@ bool realUserIsRoot();
 // call them after a fork in a multithreaded process: another thread may have held
 // a lock in one of those lookups (in our caches, or in the NSS modules beneath
 // them) when the child was created, and a child waiting on it never gets to exec.
-// Resolve the user before the fork and use the ResolvedUser overload instead.
+// Resolve the user before the fork and use permanentlyDropPrivAfterFork instead.
 core::Error temporarilyDropPriv(const std::string& newUsername, bool chownLogDir);
 core::Error temporarilyDropPriv(const std::string& newUsername, const std::string& newGroupname, bool chownLogDir);
 core::Error permanentlyDropPriv(const std::string& newUsername);
@@ -298,9 +293,11 @@ struct ResolvedUser
 
 core::Error resolveUser(const std::string& username, ResolvedUser* pUser);
 
-// drops to a user resolved before the fork: makes no lookups, and (unlike the
-// name-based overloads) does not refresh the log destinations
-core::Error permanentlyDropPriv(const ResolvedUser& user);
+// drops to a user resolved before the fork, for a child between fork and exec:
+// makes no lookups, takes none of the locks the name-based overloads take (it
+// does not refresh the log destinations), and reports through syslog rather than
+// the logger
+core::Error permanentlyDropPrivAfterFork(const ResolvedUser& user);
 
 core::Error restorePriv();
 
