@@ -281,10 +281,14 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
    // disabled user-managed installs -- or copied there to get around the
    // setting -- is ignored, never removed. That silently changes which version
    // runs, and can be a downgrade, so say so once per session. Read-only:
-   // ignoring the directory includes not repairing its selector.
-   if (!paths.userInstallEnabled &&
-       !userSlot(paths, selector::SelectorRepair::Disabled).isEmpty() && RS_ONCE())
+   // ignoring the directory includes not repairing its selector. The flag is
+   // checked first: an empty resolution is not held, so this runs on every
+   // locate until something resolves.
+   static bool s_warnedManagedIgnoresUserSlot = false;
+   if (!paths.userInstallEnabled && !s_warnedManagedIgnoresUserSlot &&
+       !userSlot(paths, selector::SelectorRepair::Disabled).isEmpty())
    {
+      s_warnedManagedIgnoresUserSlot = true;
       WLOG("Ignoring user-level AI installation under {}: Posit Assistant "
            "installation is managed by the administrator",
            paths.userStorageDir.getAbsolutePath());
