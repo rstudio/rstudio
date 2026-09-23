@@ -388,7 +388,12 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    if (error)
       return error;
 
-   return ensureImageResolution(targetPath, res);
+   // the image is usable without the resolution, so don't fail the save
+   error = ensureImageResolution(targetPath, res);
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
 }
 
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 

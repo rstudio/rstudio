@@ -101,28 +101,31 @@ test_that("a fixed plot size pins the size of the RStudio graphics device (#4422
    expect_equal(dev.size("in"), paneSize)
 })
 
+# Reads the big-endian integer of `size` bytes following `offset`.
+readBigEndianInt <- function(bytes, offset, size) {
+   sum(as.integer(bytes[offset + seq_len(size)]) * 256^((size - 1):0))
+}
+
 # Reads the resolution, in DPI, recorded in a PNG (pHYs chunk) or JPEG (JFIF
 # header) file; NA when there is none.
 imageResolution <- function(path) {
    bytes <- readBin(path, "raw", file.size(path))
-   readInt <- function(offset, size)
-      sum(as.integer(bytes[offset + seq_len(size)]) * 256^((size - 1):0))
 
    if (identical(bytes[1:4], as.raw(c(0x89, 0x50, 0x4E, 0x47)))) {
       offset <- 8
       while (offset < length(bytes)) {
-         length <- readInt(offset, 4)
+         chunkLength <- readBigEndianInt(bytes, offset, 4)
          type <- rawToChar(bytes[offset + 5:8])
          if (type == "pHYs" && as.integer(bytes[offset + 17]) == 1)
-            return(round(readInt(offset + 8, 4) * 0.0254))
-         offset <- offset + 12 + length
+            return(round(readBigEndianInt(bytes, offset + 8, 4) * 0.0254))
+         offset <- offset + 12 + chunkLength
       }
       return(NA)
    }
 
    isJfif <- identical(bytes[c(1:4, 7:10)], as.raw(c(0xFF, 0xD8, 0xFF, 0xE0, 0x4A, 0x46, 0x49, 0x46)))
    if (isJfif && as.integer(bytes[14]) == 1)
-      return(readInt(14, 2))
+      return(readBigEndianInt(bytes, 14, 2))
 
    NA
 }

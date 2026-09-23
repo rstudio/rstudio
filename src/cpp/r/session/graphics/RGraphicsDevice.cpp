@@ -905,14 +905,14 @@ Error initialize(
 
 namespace {
 
-void updateSize(double devicePixelRatio)
+void updateSize(double devicePixelRatio, bool force)
 {
    int width = hasFixedSize() ? s_fixedWidth : s_clientWidth;
    int height = hasFixedSize() ? s_fixedHeight : s_clientHeight;
 
    // only set if the values have changed (prevents unnecessary plot
    // invalidations from occurring)
-   if (width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
+   if (force || width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
    {
       s_width = width;
       s_height = height;
@@ -930,15 +930,19 @@ void setSize(int width, int height, double devicePixelRatio)
 {
    s_clientWidth = width;
    s_clientHeight = height;
-   updateSize(devicePixelRatio);
+   updateSize(devicePixelRatio, false);
 }
 
 void setFixedSize(int width, int height)
 {
+   bool wasFixed = hasFixedSize();
    bool fixed = width > 0 && height > 0;
    s_fixedWidth = fixed ? width : 0;
    s_fixedHeight = fixed ? height : 0;
-   updateSize(s_devicePixelRatio);
+
+   // the client lays out a fixed size plot differently, so it needs a new
+   // plot state when the mode changes, even if the size doesn't
+   updateSize(s_devicePixelRatio, fixed != wasFixed);
 }
 
 bool hasFixedSize()

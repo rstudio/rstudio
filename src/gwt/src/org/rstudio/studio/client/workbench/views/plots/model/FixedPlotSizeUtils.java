@@ -71,6 +71,18 @@ public class FixedPlotSizeUtils
       return NumberFormat.getFormat(pattern).format(value);
    }
 
+   // Formats a value for a number input, which needs a '.' decimal separator
+   // whatever the locale (NumberFormat uses the locale's).
+   public static String formatInputValue(double value, String units)
+   {
+      double rounded = UNITS_PIXELS.equals(units)
+            ? Math.round(value)
+            : Math.round(value * 100) / 100.0;
+      if (rounded == Math.rint(rounded))
+         return Long.toString((long) rounded);
+      return Double.toString(rounded);
+   }
+
    // The label for the Plots pane's size menu, e.g. "7 x 5 in".
    public static String label(FixedPlotSize size)
    {

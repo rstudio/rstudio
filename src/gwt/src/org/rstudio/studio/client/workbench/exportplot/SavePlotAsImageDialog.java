@@ -98,13 +98,11 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       // option where the saved image is drawn by R (see supportsResolution)
       resolutionListBox_ = new ListBox();
       resolutionListBox_.getElement().setId(ElementIds.getElementId(ElementIds.EXPORT_PLOT_RESOLUTION));
-      int screenDpi = screenResolution();
-      resolutionListBox_.addItem(constants_.screenResolutionText(Integer.toString(screenDpi)), "0");
+      // an explicit resolution is listed even when it matches the screen's,
+      // since the screen's changes with the display
+      resolutionListBox_.addItem(constants_.screenResolutionText(Integer.toString(screenResolution())), "0");
       for (int dpi : RESOLUTIONS)
-      {
-         if (dpi != screenDpi)
-            resolutionListBox_.addItem(constants_.resolutionText(Integer.toString(dpi)), Integer.toString(dpi));
-      }
+         resolutionListBox_.addItem(constants_.resolutionText(Integer.toString(dpi)), Integer.toString(dpi));
       resolutionListBox_.setSelectedIndex(0);
       for (int i = 0; i < resolutionListBox_.getItemCount(); i++)
       {
@@ -216,8 +214,10 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
          return;
       }
 
-      int dpi = getResolution() == 0 ? screenResolution() : getResolution();
-      double scale = dpi / 96.0;
+      // the session scales by the exact pixel ratio for the screen's resolution
+      double scale = getResolution() == 0
+            ? BrowseCap.devicePixelRatio()
+            : getResolution() / 96.0;
       sizeText_.setText(constants_.exportSizeText(
             widthInches,
             heightInches,

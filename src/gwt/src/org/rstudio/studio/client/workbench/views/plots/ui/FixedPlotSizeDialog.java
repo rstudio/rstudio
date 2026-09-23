@@ -50,9 +50,9 @@ public class FixedPlotSizeDialog extends ModalDialog<FixedPlotSize>
 
       units_ = size.getUnits();
       width_ = createValueBox(ElementIds.FIXED_PLOT_SIZE_WIDTH);
-      width_.setText(FixedPlotSizeUtils.formatValue(size.getWidth(), units_));
+      width_.setText(FixedPlotSizeUtils.formatInputValue(size.getWidth(), units_));
       height_ = createValueBox(ElementIds.FIXED_PLOT_SIZE_HEIGHT);
-      height_.setText(FixedPlotSizeUtils.formatValue(size.getHeight(), units_));
+      height_.setText(FixedPlotSizeUtils.formatInputValue(size.getHeight(), units_));
 
       unitsList_ = new ListBox();
       ElementIds.assignElementId(unitsList_, ElementIds.FIXED_PLOT_SIZE_UNITS);
@@ -99,7 +99,9 @@ public class FixedPlotSizeDialog extends ModalDialog<FixedPlotSize>
    @Override
    protected boolean validate(FixedPlotSize size)
    {
-      if (isValid(size.getWidth()) && isValid(size.getHeight()))
+      // check the entered values rather than the size's getters, which
+      // substitute defaults for zero and missing values
+      if (isValid(readValue(width_)) && isValid(readValue(height_)))
          return true;
 
       GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
@@ -127,7 +129,7 @@ public class FixedPlotSizeDialog extends ModalDialog<FixedPlotSize>
    {
       double value = readValue(box);
       if (!Double.isNaN(value))
-         box.setText(FixedPlotSizeUtils.formatValue(value * scale, units));
+         box.setText(FixedPlotSizeUtils.formatInputValue(value * scale, units));
    }
 
    private boolean isValid(double value)
