@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -32,6 +33,12 @@ public class ChunkDataWidget extends SimplePanel
       data_ = data;
       metadata_ = metadata;
       chunkOutputSize_ = chunkOutputSize;
+
+      // Use the IDE's proportional font rather than a font stack of our own:
+      // the table sits in the editor (which uses the fixed-width font), and a
+      // hardcoded stack led with "Lucida Sans", whose only installed face on
+      // some Windows machines is Demibold, rendering every cell in bold (#18874)
+      getElement().getStyle().setProperty("fontFamily", ThemeFonts.getProportionalFont());
 
       if (chunkOutputSize_ == ChunkOutputSize.Full)
       {
