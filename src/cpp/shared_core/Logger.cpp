@@ -23,10 +23,16 @@
 
 #include <shared_core/Logger.hpp>
 
+#include <algorithm>
 #include <cassert>
+#include <mutex>
 #include <sstream>
 #include <typeindex>
 #include <unordered_map>
+
+#ifndef _WIN32
+# include <pthread.h>
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/noncopyable.hpp>
@@ -451,6 +457,77 @@ Logger& logger()
    return logger;
 }
 
+#ifndef _WIN32
+
+namespace {
+
+// Hold the write lock across fork() so that no thread is mid log write when the child is created: the child would
+// inherit that thread's read lock, and its own first write lock (e.g. a refresh before exec) would wait forever.
+void lockLoggerBeforeFork()
+{
+   logger().Mutex.prepareForFork();
+}
+
+void unlockLoggerInParent()
+{
+   logger().Mutex.resumeAfterForkInParent();
+}
+
+void resetLoggerInChild()
+{
+   logger().Mutex.resumeAfterForkInChild();
+}
+
+std::once_flag s_forkHandlersRegistered;
+
+struct ForkHandlerRegistration
+{
+   ForkHandlerRegistration()
+   {
+      registerForkHandlers();
+   }
+};
+
+ForkHandlerRegistration s_forkHandlerRegistration;
+
+} // anonymous namespace
+
+void registerForkHandlers()
+{
+   std::call_once(s_forkHandlersRegistered, []()
+   {
+      ::pthread_atfork(lockLoggerBeforeFork, unlockLoggerInParent, resetLoggerInChild);
+   });
+}
+
+#else
+
+void registerForkHandlers()
+{
+}
+
+#endif
+
+namespace {
+
+// Recomputes MaxLogLevel after destinations were removed; call with the write lock held.
+void updateMaxLogLevel(Logger& in_logger)
+{
+   LogLevel maxLevel = LogLevel::OFF;
+   for (const auto& dest : in_logger.DefaultLogDestinations)
+      maxLevel = std::max(maxLevel, dest.second->getLogLevel());
+
+   for (const auto& section : in_logger.SectionedLogDestinations)
+   {
+      for (const auto& dest : section.second)
+         maxLevel = std::max(maxLevel, dest.second->getLogLevel());
+   }
+
+   in_logger.MaxLogLevel = maxLevel;
+}
+
+} // anonymous namespace
+
 void Logger::writeMessageToDestinations(
    LogLevel in_logLevel,
    const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
@@ -594,6 +671,11 @@ void setProgramId(const std::string& in_programId)
       logger().ProgramId = in_programId;
    }
    RW_LOCK_END(false)
+}
+
+std::string getProgramId()
+{
+   return logger().ProgramId;
 }
 
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination)
@@ -879,6 +961,8 @@ void removeLogDestination(const std::string& in_destinationId, const std::string
          // Clean up any empty sections.
          for (const std::string& toRemove: sectionsToRemove)
             log.SectionedLogDestinations.erase(log.SectionedLogDestinations.find(toRemove));
+
+         updateMaxLogLevel(log);
       }
       RW_LOCK_END(false);
 
@@ -902,6 +986,7 @@ void removeLogDestination(const std::string& in_destinationId, const std::string
             if (secIter->second.empty())
                log.SectionedLogDestinations.erase(secIter);
 
+            updateMaxLogLevel(log);
             return;
          }
       }
@@ -945,6 +1030,8 @@ void removeReloadableLogDestinations()
                ++sectionIter;
          }
       }
+
+      updateMaxLogLevel(logger());
    }
    RW_LOCK_END(false)
 

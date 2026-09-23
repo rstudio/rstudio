@@ -29,6 +29,8 @@
 
 #include <shared_core/system/EnvironmentLock.hpp>
 
+#include <shared_core/Logger.hpp>
+
 #ifdef _WIN32
 # include <windows.h>
 #else
@@ -68,6 +70,8 @@ struct AtForkRegistration
 {
    AtForkRegistration()
    {
+      // the logger's handlers must run after ours (see registerForkHandlers)
+      log::registerForkHandlers();
       ::pthread_atfork(lockEnvironmentMutex,
                        unlockEnvironmentMutex,
                        unlockEnvironmentMutex);

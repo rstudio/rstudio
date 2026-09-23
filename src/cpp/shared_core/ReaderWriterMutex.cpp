@@ -23,6 +23,8 @@
 
 #include <shared_core/ReaderWriterMutex.hpp>
 
+#include <memory>
+
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
@@ -35,12 +37,14 @@ typedef boost::unique_lock<boost::recursive_mutex> Lock;
 // ReaderWriterMutex ===================================================================================================
 struct ReaderWriterMutex::Impl
 {
-   bool IsWriting;
-   unsigned int ReaderCount;
+   bool IsWriting = false;
+   unsigned int ReaderCount = 0;
    boost::recursive_mutex Mutex;
    // This mutex is used to allow re-entrant lock behaviour on write. On read it's basically already re-entrant.
    boost::recursive_mutex WriteMutex;
    boost::condition_variable_any Condition;
+   // Readied by prepareForFork(), so that the child of the fork can install it without allocating.
+   std::unique_ptr<Impl> ForkReplacement;
 };
 
 PRIVATE_IMPL_DELETER_IMPL(ReaderWriterMutex);
@@ -48,8 +52,6 @@ PRIVATE_IMPL_DELETER_IMPL(ReaderWriterMutex);
 ReaderWriterMutex::ReaderWriterMutex() :
    m_impl(new Impl())
 {
-   m_impl->IsWriting = false;
-   m_impl->ReaderCount = 0;
 }
 
 ReaderWriterMutex::ReaderWriterMutex(ReaderWriterMutex&& in_other) noexcept :
@@ -133,6 +135,30 @@ void ReaderWriterMutex::unlockWrite()
       m_impl->IsWriting = false;
       m_impl->Condition.notify_all();
    }
+}
+
+void ReaderWriterMutex::prepareForFork()
+{
+   lockWrite();
+
+   // Allocate the child's replacement state here, before the fork: heap allocation is not async-signal-safe, so the
+   // child may not allocate, and the child handler installs this instead.
+   m_impl->ForkReplacement.reset(new Impl());
+}
+
+void ReaderWriterMutex::resumeAfterForkInParent()
+{
+   m_impl->ForkReplacement.reset();
+   unlockWrite();
+}
+
+void ReaderWriterMutex::resumeAfterForkInChild()
+{
+   // The inherited state is leaked rather than destroyed: it holds mutexes locked by a thread that does not exist in
+   // this process, and destroying a locked mutex is undefined.
+   Impl* pReplacement = m_impl->ForkReplacement.release();
+   m_impl.release();
+   m_impl.reset(pReplacement);
 }
 
 // ReaderLock ==========================================================================================================

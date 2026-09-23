@@ -133,6 +133,16 @@ std::string cleanDelimiters(const std::string& in_str);
 void setProgramId(const std::string& in_programId);
 
 /**
+ * @brief Gets the program ID of the logger.
+ *
+ * Reads without the logger's lock: the ID is set once at startup, and a child between fork and exec needs it to
+ * identify itself to syslog without touching the logger.
+ *
+ * @return The ID of the program, or an empty string if none was set.
+ */
+std::string getProgramId();
+
+/**
  * @brief Adds an un-sectioned log destination to the logger.
  *
  * If a duplicate destination is added, the duplicate will be ignored.
@@ -535,6 +545,21 @@ LogLevel logLevelFromStr(const std::string& in_levelStr);
  * @param in_refreshParams   Refresh params to use when refreshing the log destinations (if applicable).
  */
 void refreshAllLogDestinations(const log::RefreshParams& in_refreshParams = log::RefreshParams());
+
+/**
+ * @brief Registers the fork handlers that hold the logger's lock across fork(), so a child is never created while
+ *        another thread is mid log write (the child would inherit a lock nobody remains to release).
+ *
+ * Registration is idempotent, and the logger performs it during static initialization. Prepare handlers run in the
+ * reverse order of their registration, and the logger's must run last: a fork handler that holds a mutex under which
+ * a thread may log must therefore be registered after this one, so its registration should call this first. No-op on
+ * Windows.
+ *
+ * Every fork() in the process then waits for the log writes in flight, so a stalled write (a hung log directory, a
+ * full stderr pipe, a blocked syslog socket) stalls every fork with it; that is the price of a child never inheriting
+ * a lock it cannot take. For the same reason, a log destination must never fork while writing or refreshing.
+ */
+void registerForkHandlers();
 
 /**
  * @brief Removes a log destination from the logger.
