@@ -266,6 +266,29 @@ bool isModifiedSince(const FilePath& scratchPath, std::time_t since)
    return modified;
 }
 
+// Whether the session's directory holds suspended session data, including any
+// set aside after it failed to restore (suspended-session-data-unrestored).
+bool hasSuspendedWorkspace(const FilePath& scratchPath)
+{
+   std::vector<FilePath> children;
+   Error error = scratchPath.getChildren(children);
+
+   // if we can't tell, assume it does
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   for (const FilePath& child : children)
+   {
+      if (boost::algorithm::starts_with(child.getFilename(), "suspended-session-data"))
+         return true;
+   }
+
+   return false;
+}
+
 } // anonymous namespace
 
 void ActiveSessions::removeStaleInvalidSessions(
@@ -281,7 +304,7 @@ void ActiveSessions::removeStaleInvalidSessions(
          continue;
 
       // keep a suspended workspace, which can still be recovered by hand
-      if (scratchPath.completeChildPath("suspended-session-data").exists())
+      if (hasSuspendedWorkspace(scratchPath))
          continue;
 
       // validation also fails when the properties it checks can't be read

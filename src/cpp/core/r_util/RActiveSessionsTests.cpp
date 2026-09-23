@@ -138,13 +138,21 @@ TEST_F(ActiveSessionsTest, KeepsInvalidSessionsBeingWritten)
 
 TEST_F(ActiveSessionsTest, KeepsInvalidSessionsWithSuspendedWorkspace)
 {
-   FilePath dir = createInvalidSession("dddddddd");
-   ASSERT_FALSE(dir.completeChildPath("suspended-session-data").ensureDirectory());
-   setModified(dir, std::time(nullptr) - 2 * kMaxAgeSeconds);
+   std::time_t old = std::time(nullptr) - 2 * kMaxAgeSeconds;
+
+   FilePath suspended = createInvalidSession("dddddddd");
+   ASSERT_FALSE(suspended.completeChildPath("suspended-session-data").ensureDirectory());
+   setModified(suspended, old);
+
+   // one whose suspended data was set aside after it failed to restore
+   FilePath setAside = createInvalidSession("ffffffff");
+   ASSERT_FALSE(setAside.completeChildPath("suspended-session-data-unrestored").ensureDirectory());
+   setModified(setAside, old);
 
    sessions_->removeStaleInvalidSessions(listInvalid(), kMaxAgeSeconds);
 
-   EXPECT_TRUE(dir.exists());
+   EXPECT_TRUE(suspended.exists());
+   EXPECT_TRUE(setAside.exists());
 }
 
 #ifndef _WIN32
