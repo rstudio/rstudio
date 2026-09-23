@@ -70,6 +70,7 @@ const char * const kSearchPath = "search_path";
 const char * const kGlobalEnvironment = "global_environment";
 const char * const kAfterRestartCommand = "after_restart_command";
 const char * const kBuiltPackagePath = "built_package_path";
+const char * const kRestoreStartedFile = "restore_started";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -511,6 +512,10 @@ void initSaveContext(const FilePath& statePath,
       reportError(kSaving, "creating directory", error, ERROR_LOCATION);
       *pSaved = false;
    }
+
+   // the state is about to be replaced, so an earlier restore of it no
+   // longer matters (and mustn't cause the new state to be set aside)
+   restoreFinished(statePath);
 
    // init session settings
    error = pSettings->initialize(statePath.completePath(kSettingsFile));
@@ -1115,6 +1120,52 @@ bool destroy(const FilePath& statePath)
    {
       return true;
    }
+}
+
+void restoreStarted(const FilePath& statePath)
+{
+   // if this fails the restore goes ahead, just without the protection
+   Error error = statePath.completePath(kRestoreStartedFile).ensureFile();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void restoreFinished(const FilePath& statePath)
+{
+   Error error = statePath.completePath(kRestoreStartedFile).removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+}
+
+std::string setAsideUnfinishedRestore(const FilePath& statePath)
+{
+   if (!statePath.completePath(kRestoreStartedFile).exists())
+      return std::string();
+
+   // keep the state rather than deleting it, so what it holds (e.g. the
+   // environment) can still be recovered by hand
+   FilePath setAsidePath = statePath.getParent().completePath(statePath.getFilename() + "-unrestored");
+   Error error = setAsidePath.removeIfExists();
+   if (!error)
+      error = statePath.move(setAsidePath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+
+   WLOGF("An earlier restore of the session state in {} did not finish; moved it to {}",
+         statePath.getAbsolutePath(),
+         setAsidePath.getAbsolutePath());
+
+   return fmt::format(
+      "Warning: RStudio did not restore your previous R session, because an "
+      "earlier attempt to restore it did not finish (R may have crashed or run "
+      "out of memory while loading it). A new R session was started instead. "
+      "The saved session was kept in:\n"
+      "\n"
+      "    {}\n",
+      setAsidePath.getAbsolutePath());
 }
 
 SessionStateInfo getSessionStateInfo()

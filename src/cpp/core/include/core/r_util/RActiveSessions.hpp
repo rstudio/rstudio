@@ -17,6 +17,7 @@
 #ifndef CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 #define CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 
+#include <ctime>
 #include <map>
 #include <set>
 
@@ -857,6 +858,14 @@ public:
    std::vector<boost::shared_ptr<ActiveSession> > list(bool validate,
                                                        const std::set<std::string>& propertiesToCache,
                                                        std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions = nullptr) const;
+
+   // Removes file-based sessions that failed validation in list() and whose files haven't
+   // changed for at least maxAgeSeconds. Nothing can resume such a session, but every listing
+   // validates it again, which can involve retries. The age check leaves alone a session whose
+   // properties are still being written, e.g. one another process is creating.
+   void removeStaleInvalidSessions(
+      const std::vector<boost::shared_ptr<ActiveSession>>& invalidSessions,
+      std::time_t maxAgeSeconds) const;
 
    size_t count() const;
 

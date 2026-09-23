@@ -240,6 +240,56 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(bool validat
    return sessions;
 }
 
+namespace {
+
+// Whether anything in the session's directory has changed since the given time.
+bool isModifiedSince(const FilePath& scratchPath, std::time_t since)
+{
+   if (scratchPath.getLastWriteTime() >= since)
+      return true;
+
+   bool modified = false;
+   Error error = scratchPath.getChildrenRecursive(
+      [&](int, const FilePath& child)
+      {
+         modified = child.getLastWriteTime() >= since;
+         return !modified;
+      });
+
+   // if we can't tell, assume it's in use
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   return modified;
+}
+
+} // anonymous namespace
+
+void ActiveSessions::removeStaleInvalidSessions(
+   const std::vector<boost::shared_ptr<ActiveSession>>& invalidSessions,
+   std::time_t maxAgeSeconds) const
+{
+   std::time_t cutoff = std::time(nullptr) - maxAgeSeconds;
+   for (const boost::shared_ptr<ActiveSession>& session : invalidSessions)
+   {
+      // only file-based sessions have a directory we can inspect
+      const FilePath& scratchPath = session->scratchPath();
+      if (scratchPath.isEmpty() || !scratchPath.exists())
+         continue;
+
+      if (isModifiedSince(scratchPath, cutoff))
+         continue;
+
+      LOG_INFO_MESSAGE("Removing invalid session " + session->id() + " at " + scratchPath.getAbsolutePath());
+      Error error = session->destroy();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 size_t ActiveSessions::count() const
 {
    return storage_->getSessionCount();

@@ -72,6 +72,19 @@ bool restore(const core::FilePath& statePath,
    
 bool destroy(const core::FilePath& statePath);
 
+// Mark the state at statePath as being restored, until restoreFinished() is
+// called. If the process dies in between (e.g. R crashes or runs out of memory
+// while loading the state), setAsideUnfinishedRestore() finds the mark on the
+// next start.
+void restoreStarted(const core::FilePath& statePath);
+void restoreFinished(const core::FilePath& statePath);
+
+// If an earlier restore of the state at statePath never finished, moves the
+// state aside so it isn't restored again (restoring it would likely fail the
+// same way), and returns a message explaining this for the console. Returns an
+// empty string otherwise.
+std::string setAsideUnfinishedRestore(const core::FilePath& statePath);
+
 SessionStateInfo getSessionStateInfo();
      
 } // namespace state

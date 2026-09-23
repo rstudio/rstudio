@@ -67,7 +67,9 @@ void RestartContext::initialize(const FilePath& scopePath,
 
 bool RestartContext::hasSessionState() const
 {
-   return !sessionStatePath().isEmpty();
+   // the state may have been moved aside since initialize()
+   // (see state::setAsideUnfinishedRestore)
+   return !sessionStatePath().isEmpty() && sessionStatePath().exists();
 }
 
 bool RestartContext::rProfileOnRestore() const

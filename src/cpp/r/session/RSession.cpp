@@ -356,6 +356,10 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    restartContext().initialize(s_options.scopedScratchPath,
                                s_options.sessionPort);
 
+   // don't restore saved state that crashed (or otherwise ended) the last
+   // start that tried to restore it
+   setAsideUnfinishedRestores();
+
    // register methods
    RS_REGISTER_CALL_METHOD(rs_browseURL);
    RS_REGISTER_CALL_METHOD(rs_editFile);

@@ -64,6 +64,12 @@ boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 // latent deserialization actions are taking place
 std::atomic<bool> s_isSessionDeserialized(false);
 boost::function<void()> s_deferredDeserializationAction;
+
+// the saved state being restored, until its deferred restore has run
+FilePath s_restoringStatePath;
+
+// explains any saved state set aside by setAsideUnfinishedRestores()
+std::string s_setAsideStateWarning;
    
 void reportDeferredDeserializationError(const Error& error)
 {
@@ -183,6 +189,11 @@ void deferredRestoreNewSession()
 void restoreSession(const FilePath& suspendedSessionPath,
                     std::string* pErrorMessages)
 {
+   // if the process dies before the restore finishes (see ensureDeserialized),
+   // the next start sets this state aside instead of failing the same way
+   state::restoreStarted(suspendedSessionPath);
+   s_restoringStatePath = suspendedSessionPath;
+
    if (s_beforeResumeCallback)
      s_beforeResumeCallback();
 
@@ -210,6 +221,15 @@ void restoreSession(const FilePath& suspendedSessionPath,
 
    if (s_afterResumeCallback)
      s_afterResumeCallback();
+}
+
+void setAsideUnfinishedRestores()
+{
+   for (const FilePath& statePath : { restartContext().sessionStatePath(), suspendedSessionPath() })
+   {
+      if (!statePath.isEmpty() && statePath.exists())
+         s_setAsideStateWarning += state::setAsideUnfinishedRestore(statePath);
+   }
 }
 
 // one-time per session initialization
@@ -300,6 +320,11 @@ Error initialize()
    session::clientState().restore(utils::clientStatePath(),
                                   utils::projectClientStatePath());
       
+   // explain any saved state that wasn't restored because an earlier
+   // restore of it never finished
+   if (!s_setAsideStateWarning.empty())
+      REprintf("%s", s_setAsideStateWarning.c_str());
+
    // restore suspended session if we have one
    bool wasResumed = false;
    
@@ -428,6 +453,14 @@ void ensureDeserialized()
          LOG_ERROR(error);
 
       s_deferredDeserializationAction.clear();
+   }
+
+   // the restore has run its course (even if it reported errors) without
+   // taking the process down with it
+   if (!s_restoringStatePath.isEmpty())
+   {
+      state::restoreFinished(s_restoringStatePath);
+      s_restoringStatePath = FilePath();
    }
 
    // mark session as deserialized
