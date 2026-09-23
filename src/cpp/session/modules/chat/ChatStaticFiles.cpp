@@ -233,9 +233,11 @@ bool s_cspHeaderBuilt = false;
  * installation, and whenever the backend port changes via
  * setChatBackendPort(). The directives are re-read on each rebuild, so a
  * backend restart -- which is how an in-session update takes effect -- serves
- * the policy belonging to the installation now being served (#18831).
+ * the policy belonging to the installation now being served (#18831). The
+ * installation is passed in rather than resolved here so that the page and
+ * the policy come from the one resolution the request handler made.
  */
-void rebuildCspHeaderCache()
+void rebuildCspHeaderCache(const FilePath& positAiPath)
 {
    // Held across the read as well as the store. Two rebuilds can overlap --
    // the lazy one below on an HTTP handler thread, and the one a backend start
@@ -244,7 +246,6 @@ void rebuildCspHeaderCache()
    // next restart, which is the staleness of #18831 one layer down.
    std::lock_guard<std::mutex> lock(s_cspMutex);
 
-   FilePath positAiPath = servedInstallationPath();
    std::map<std::string, std::string> directives = loadCspDirectives(positAiPath);
 
    // If csp.json was missing, use a restrictive fallback
@@ -321,17 +322,17 @@ void rebuildCspHeaderCache()
  * and an installation removed out of band is resolved around -- so a policy
  * that only followed the port would outlive the installation it came from.
  *
+ * @param positAiPath The installation the page being served comes from.
  * @return CSP header string
  */
-std::string buildCspHeader()
+std::string buildCspHeader(const FilePath& positAiPath)
 {
-   FilePath positAiPath = servedInstallationPath();
    {
       std::lock_guard<std::mutex> lock(s_cspMutex);
       if (s_cspHeaderBuilt && s_cspInstallationPath == positAiPath)
          return s_cachedCspHeader;
    }
-   rebuildCspHeaderCache();
+   rebuildCspHeaderCache(positAiPath);
    std::lock_guard<std::mutex> lock(s_cspMutex);
    return s_cachedCspHeader;
 }
@@ -538,7 +539,7 @@ Error handleAIChatRequest(const http::Request& request,
             }
          }
       }
-      pResponse->setHeader("Content-Security-Policy", buildCspHeader());
+      pResponse->setHeader("Content-Security-Policy", buildCspHeader(positAiPath));
    }
    pResponse->setContentType(getContentType(extension));
 
@@ -568,7 +569,7 @@ Error handleAIChatRequest(const http::Request& request,
 void setChatBackendPort(int port)
 {
    s_chatBackendPort = port;
-   rebuildCspHeaderCache();
+   rebuildCspHeaderCache(servedInstallationPath());
 }
 
 void setChatBackendAuthToken(const std::string& token)
