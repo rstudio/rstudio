@@ -325,6 +325,16 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // a plot with a fixed size is published at that size, like other exports;
+   // otherwise the full plot is a standard size
+   int fullWidth = 1024;
+   int fullHeight = 768;
+   if (r::session::graphics::device::hasFixedSize())
+   {
+      width = fullWidth = r::session::graphics::device::getWidth();
+      height = fullHeight = r::session::graphics::device::getHeight();
+   }
+
    // create a temp directory to work in
    FilePath tempPath = module_context::tempFile("plots-rpubs", "dir");
    error = tempPath.ensureDirectory();
@@ -344,7 +354,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
 
    // save full plot
    FilePath fullPlotPath = tempPath.completeChildPath("plot-full.png");
-   error = display.savePlotAsImage(fullPlotPath, "png", 1024, 768, 2.0);
+   error = display.savePlotAsImage(fullPlotPath, "png", fullWidth, fullHeight, 2.0);
    if (error)
    {
        LOG_ERROR(error);

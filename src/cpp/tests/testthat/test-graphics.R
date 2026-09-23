@@ -155,3 +155,27 @@ test_that("saving a plot image refuses sizes that would exhaust memory", {
    .rs.api.savePlotAsImage(file, "png", 20000, 20000)
    expect_false(file.exists(file))
 })
+
+# Reads the width and height, in pixels, from a PNG's IHDR chunk.
+pngDimensions <- function(path) {
+   bytes <- readBin(path, "raw", 24)
+   c(readBigEndianInt(bytes, 16, 4), readBigEndianInt(bytes, 20, 4))
+}
+
+test_that("a plot with a fixed size is published to RPubs at that size (#4422)", {
+   oldState <- .rs.readUserState("fixed_plot_size")
+   on.exit(.rs.writeUserState("fixed_plot_size", lapply(oldState, .rs.scalar)), add = TRUE)
+
+   writeFixedPlotSize(TRUE, width = 4, height = 3, units = "in")
+   .rs.activateGraphicsDevice()
+   plot(1:10)
+
+   # the images are written next to the page; the size the client sends,
+   # derived from the pane, is ignored
+   target <- .rs.invokeRpc("plots_create_rpubs_html", "Plot", "", 400L, 350L)
+   dir <- dirname(path.expand(target))
+   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+   expect_equal(pngDimensions(file.path(dir, "plot-small.png")), c(384, 288))
+   expect_equal(pngDimensions(file.path(dir, "plot-full.png")), c(768, 576))
+})
