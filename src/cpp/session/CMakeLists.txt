@@ -594,12 +594,17 @@ elseif(APPLE)
    set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} ${MAC_APPKIT_LIBRARY})
 endif()
 
-set(SESSION_LIBRARIES
-   rstudio-core
-   rstudio-core-synctex
+# Static libraries must be linked before the libraries they depend on, so
+# rstudio-core comes after everything that uses it; otherwise it gets linked twice.
+set(SESSION_LIBRARIES)
+if(RSTUDIO_SERVER)
+   list(APPEND SESSION_LIBRARIES rstudio-server-core)
+endif()
+list(APPEND SESSION_LIBRARIES
    rstudio-monitor
    rstudio-r
    rstudio-session-workers
+   rstudio-core
    libgit2package
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS})
@@ -634,9 +639,6 @@ if(WIN32)
    target_compile_definitions(rsession-shared PRIVATE RSESSION_BUILDING_SHARED)
 
    target_link_libraries(rsession-shared ${SESSION_LIBRARIES} "${LIBR_LIBRARIES}")
-   if(RSTUDIO_SERVER)
-      target_link_libraries(rsession-shared rstudio-server-core)
-   endif()
 
    # thin launcher stub; identical code, manifest embedded via the .rc differs
    add_stripped_executable(
@@ -680,10 +682,6 @@ if(NOT WIN32)
       target_link_libraries(rsession "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/rsession.exports")
    else()
       target_link_libraries(rsession "${LIBR_LIBRARIES}")
-   endif()
-
-   if(RSTUDIO_SERVER)
-      target_link_libraries(rsession rstudio-server-core)
    endif()
 
 endif()
