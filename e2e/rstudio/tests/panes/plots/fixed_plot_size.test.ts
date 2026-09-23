@@ -19,11 +19,16 @@ useSuiteSandbox();
 let consoleActions: ConsolePaneActions;
 let plotsPane: PlotsPane;
 
-// Turns the fixed size off from R. The session tells the client about the
-// change, so this also resets the toolbar and the menu's checked state.
-const RESET_FIXED_SIZE = 'invisible(.rs.writeUserState("fixed_plot_size", list(' +
-  'enabled = .rs.scalar(FALSE), width = .rs.scalar(7), ' +
-  'height = .rs.scalar(5), units = .rs.scalar("in"))))';
+// R code that writes the fixed size, in inches. The session tells the client
+// about the change, so this also updates the toolbar and the menu's checked
+// state.
+function writeFixedSize(enabled: boolean, width: number, height: number): string {
+  return 'invisible(.rs.writeUserState("fixed_plot_size", list(' +
+    `enabled = .rs.scalar(${enabled ? 'TRUE' : 'FALSE'}), width = .rs.scalar(${width}), ` +
+    `height = .rs.scalar(${height}), units = .rs.scalar("in"))))`;
+}
+
+const RESET_FIXED_SIZE = writeFixedSize(false, 7, 5);
 
 async function createPlot(page: Page): Promise<void> {
   await consoleActions.executeInConsole('plot(1:10)');
@@ -49,6 +54,33 @@ async function openFixedSizeDialog(page: Page): Promise<void> {
 async function plotImageBox(page: Page) {
   const img = page.frameLocator('#rstudio_plot_image_frame').locator('#img');
   return img.boundingBox();
+}
+
+// Waits for the pane to show a fixed-size plot with the given aspect ratio,
+// and returns its bounding box.
+async function fixedPlotImageBox(page: Page, aspect: number) {
+  await expect.poll(async () => {
+    const box = await plotImageBox(page);
+    return box ? Math.abs(box.width / box.height - aspect) < 0.02 : false;
+  }, { timeout: TIMEOUTS.fileOpen }).toBe(true);
+  return (await plotImageBox(page))!;
+}
+
+// Whether the zoom window shows a plot of the given width, rendered with as
+// many pixels as it's displayed at: no more, and no fewer. The session
+// renders for the main window's pixel ratio, which the popup's viewport
+// emulation can report differently.
+async function zoomRenderedAsShown(
+  popup: Page,
+  plotWidth: number,
+  pixelRatio: number,
+): Promise<boolean> {
+  return popup.evaluate(({ plotWidth, pixelRatio }) => {
+    const img = document.getElementById('plot') as HTMLImageElement | null;
+    if (!img || !img.complete || !img.naturalWidth || !img.src.includes(`width=${plotWidth}&`))
+      return false;
+    return Math.abs(img.naturalWidth - img.clientWidth * pixelRatio) <= 2;
+  }, { plotWidth, pixelRatio }).catch(() => false);
 }
 
 test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
@@ -150,6 +182,25 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
     expect(await isCommandChecked(page, 'fitPlotToPane')).toBe(true);
   });
 
+  test('the toolbar shows the size the session applies', async ({ rstudioPage: page }) => {
+    await plotsPane.tab.click();
+
+    // a saved size outside the supported range is clamped
+    await consoleActions.executeInConsole(writeFixedSize(true, 100, 0.5));
+    await expect(plotsPane.sizeMenu).toContainText('30 x 1 in');
+    await expect.poll(() => deviceSizeIs(30, 1), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+
+    // a saved size the session can't read isn't applied
+    await consoleActions.executeInConsole(
+      'invisible(.rs.writeUserState("fixed_plot_size", list(enabled = .rs.scalar(TRUE), ' +
+      'width = .rs.scalar(4), height = .rs.scalar(3), units = .rs.scalar(1))))',
+    );
+    await expect(plotsPane.sizeMenu).toContainText('Fit to Pane');
+    await expect.poll(() => deviceSizeIs(30, 1), { timeout: TIMEOUTS.fileOpen }).toBe(false);
+    expect(await isCommandChecked(page, 'fitPlotToPane')).toBe(true);
+    expect(await isCommandChecked(page, 'useFixedPlotSize')).toBe(false);
+  });
+
   test('exporting defaults to the fixed size', async ({ rstudioPage: page }) => {
     await createPlot(page);
     await openFixedSizeDialog(page);
@@ -170,24 +221,26 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
     await expect(plotsPane.saveAsImageDialog).toBeHidden();
   });
 
-  test('locator() maps clicks on a scaled plot to the plot', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('plot(0:1, 0:1)');
-    await openFixedSizeDialog(page);
-    await plotsPane.fixedSizeWidth.fill('4');
-    await plotsPane.fixedSizeHeight.fill('3');
-    await page.locator(CONFIRM_BTN).click();
-    await expect.poll(() => deviceSizeIs(4, 3), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+  // The plots in these tests are portrait, which the pane isn't, so that
+  // their aspect ratio shows the pane has laid them out.
 
-    // the plot is centered in the pane (and scaled if the pane is small), so
-    // its center is only reported as the center if the click is mapped
-    await expect.poll(async () => {
-      const box = await plotImageBox(page);
-      return box ? Math.abs(box.width / box.height - 4 / 3) < 0.02 : false;
-    }, { timeout: TIMEOUTS.fileOpen }).toBe(true);
-    const box = (await plotImageBox(page))!;
+  test('locator() ignores clicks beside a centered plot', async ({ rstudioPage: page }) => {
+    // the default margins don't fit in a 1 in wide plot
+    await consoleActions.executeInConsole('par(mar = rep(0, 4)); plot(0:1, 0:1)');
+    await consoleActions.executeInConsole(writeFixedSize(true, 1, 1.5));
+    await expect.poll(() => deviceSizeIs(1, 1.5), { timeout: TIMEOUTS.fileOpen }).toBe(true);
 
+    // the plot is shown at its own size, centered, with room beside it
+    const box = await fixedPlotImageBox(page, 1 / 1.5);
+    const frame = (await plotsPane.plotImage.boundingBox())!;
+    expect(Math.abs(box.width - 96)).toBeLessThanOrEqual(1);
+    expect(box.x - frame.x).toBeGreaterThan(20);
+
+    // the click beside the plot is ignored, so only the second one is
+    // reported, as the plot's center
     await consoleActions.executeInConsole('p <- locator(1)', { wait: false });
     await expect(page.getByRole('button', { name: 'Finish' })).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await page.mouse.click(box.x - 10, box.y + box.height / 2);
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
     await expect.poll(() => consoleActions.evalRLogical(
@@ -195,6 +248,58 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
       'abs(grconvertY(p$y, "user", "ndc") - 0.5) < 0.02',
     ), { timeout: TIMEOUTS.fileOpen }).toBe(true);
   });
+
+  test('locator() maps clicks on a scaled-down plot to the plot', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole('plot(0:1, 0:1)');
+    await consoleActions.executeInConsole(writeFixedSize(true, 15, 20));
+    await expect.poll(() => deviceSizeIs(15, 20), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+
+    // the plot is larger than the pane, so it's scaled down to fit
+    const box = await fixedPlotImageBox(page, 15 / 20);
+    expect(box.height).toBeLessThan(20 * 96);
+
+    // a quarter of the way in from the left and from the bottom
+    await consoleActions.executeInConsole('p <- locator(1)', { wait: false });
+    await expect(page.getByRole('button', { name: 'Finish' })).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.75);
+
+    await expect.poll(() => consoleActions.evalRLogical(
+      'exists("p") && abs(grconvertX(p$x, "user", "ndc") - 0.25) < 0.02 && ' +
+      'abs(grconvertY(p$y, "user", "ndc") - 0.25) < 0.02',
+    ), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+  });
+
+  test(
+    'the zoom window renders a fixed-size plot at the size it shows it',
+    { tag: ['@desktop_only'] },
+    async ({ rstudioPage: page }) => {
+      await createPlot(page);
+      await consoleActions.executeInConsole(writeFixedSize(true, 15, 20));
+      await expect.poll(() => deviceSizeIs(15, 20), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+
+      const [popup] = await Promise.all([
+        page.context().waitForEvent('page'),
+        plotsPane.zoomPlotBtn.click(),
+      ]);
+      await expect(popup.locator('#plot')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      const pixelRatio = await page.evaluate(() => window.devicePixelRatio);
+
+      // resizing reloads the window at its new size, which is smaller than
+      // the 1440 x 1920 px plot
+      await popup.setViewportSize({ width: 480, height: 640 });
+      await expect.poll(() => zoomRenderedAsShown(popup, 15 * 96, pixelRatio), {
+        timeout: TIMEOUTS.fileOpen,
+      }).toBe(true);
+
+      // a smaller plot is enlarged to fit the window, and rendered sharp
+      await consoleActions.executeInConsole(writeFixedSize(true, 1.5, 2));
+      await expect.poll(() => zoomRenderedAsShown(popup, 1.5 * 96, pixelRatio), {
+        timeout: TIMEOUTS.fileOpen,
+      }).toBe(true);
+
+      await popup.close();
+    },
+  );
 
   test('saving an image at a resolution keeps its size in inches', async ({ rstudioPage: page }) => {
     await createPlot(page);
