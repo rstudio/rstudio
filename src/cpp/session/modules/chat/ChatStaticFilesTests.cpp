@@ -232,19 +232,20 @@ Error requestApp(http::Response* pResponse)
 // The handler serves from the installation the session resolved, so each
 // test drives that resolution through the pinned-path source: a single
 // unversioned directory, which is the simplest thing the resolver accepts.
-// The session's own sources are restored, and the backend port cleared, after
-// each test so a later test sees the state of a session whose chat backend
-// has not started yet. Both setters rebuild the CSP header from whatever is
-// resolvable on the machine running the tests, so a test asserting on that
-// header must serve an installation of its own rather than rely on the state
-// left here.
+// The backend port is cleared, and then the session's own sources restored,
+// after each test so a later test sees the state of a session whose chat
+// backend has not started yet. Clearing the port rebuilds the CSP header from
+// whatever resolves, so it runs while the test's sources are still in place:
+// resolving against the real user storage would repair the selector of the
+// machine running the tests. A test asserting on the header must serve an
+// installation of its own rather than rely on the state left here.
 class ChatStaticFilesResolution : public ::testing::Test
 {
 protected:
    void TearDown() override
    {
-      setSearchPathsForTesting(boost::none);
       setChatBackendPort(kChatBackendPortNone);
+      setSearchPathsForTesting(boost::none);
    }
 
    // Makes `install` the installation the session resolves. Discards any
