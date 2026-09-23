@@ -153,16 +153,19 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
   test('exporting defaults to the fixed size', async ({ rstudioPage: page }) => {
     await createPlot(page);
     await openFixedSizeDialog(page);
+    // The export dialog caps its size at the window's client height minus
+    // 200px; the 645px test window leaves only 380px on Windows, where the
+    // title and menu bars sit inside the window. Stay under that.
     await plotsPane.fixedSizeWidth.fill('5');
-    await plotsPane.fixedSizeHeight.fill('4');
+    await plotsPane.fixedSizeHeight.fill('3.5');
     await page.locator(CONFIRM_BTN).click();
-    await expect.poll(() => deviceSizeIs(5, 4), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+    await expect.poll(() => deviceSizeIs(5, 3.5), { timeout: TIMEOUTS.fileOpen }).toBe(true);
 
     await plotsPane.exportMenu.click();
     await plotsPane.saveAsImageItem.click();
     await expect(plotsPane.saveAsImageDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
     await expect(plotsPane.saveAsImageDialog.getByLabel('Width')).toHaveValue('480');
-    await expect(plotsPane.saveAsImageDialog.getByLabel('Height')).toHaveValue('384');
+    await expect(plotsPane.saveAsImageDialog.getByLabel('Height')).toHaveValue('336');
     await page.locator(CANCEL_BTN).click();
     await expect(plotsPane.saveAsImageDialog).toBeHidden();
   });
