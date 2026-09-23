@@ -90,13 +90,15 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     }
   });
 
-  test('leaves the seed machine\'s own slots and selector behind', () => {
+  test('leaves the seed machine\'s own slots, selector and locks behind', () => {
     // A real ~/.local/share/rstudio/pai on a machine running this RStudio
     // already holds versions/ and selected.json; the build under test is the
     // one deploy:rstudio wrote to bin/, not whatever that machine installed.
     const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
     fs.mkdirSync(path.join(seed, 'versions', '9.9.9'), { recursive: true });
     fs.writeFileSync(path.join(seed, 'selected.json'), JSON.stringify({ selected: { '11.0': '9.9.9' } }));
+    fs.mkdirSync(path.join(seed, 'locks'));
+    fs.writeFileSync(path.join(seed, 'locks', 'install.lock'), '');
     const storage = path.join(root, 'data-home', 'pai');
 
     seedPaiSlot(seed, storage);
@@ -104,6 +106,7 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     expect(fs.readdirSync(path.join(storage, 'versions'))).toEqual(['1.2.2']);
     expect(JSON.parse(fs.readFileSync(path.join(storage, 'selected.json'), 'utf-8')))
       .toEqual({ selected: { '11.0': '1.2.2' } });
+    expect(fs.existsSync(path.join(storage, 'locks'))).toBe(false);
   });
 
   test('refuses a version that cannot name a slot', () => {

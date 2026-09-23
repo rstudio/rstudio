@@ -22,6 +22,7 @@ import { cloneTreeHardlinks } from './r-libs-setup';
 // Mirrors chat::constants in src/cpp/session/modules/chat/ChatConstants.cpp.
 const VERSIONS_DIR_NAME = 'versions';
 const SELECTOR_FILE_NAME = 'selected.json';
+const LOCKS_DIR_NAME = 'locks';
 const SLOT_MANIFEST_FILE_NAME = '.slot-manifest.json';
 const PACKAGE_JSON_FILE_NAME = 'package.json';
 const PROTOCOL_FILE_NAME = 'protocol.json';
@@ -195,7 +196,9 @@ export function inspectSeed(seedRoot: string): { version: string; protocol: stri
  * per sandbox and make a resolver regression harder to notice. A `versions`
  * directory or `selected.json` already in the seed (a real `pai` that this
  * RStudio has installed into) is not copied either, so the slot under test is
- * exactly the one `bin` holds.
+ * exactly the one `bin` holds. Nor is `locks`: a real `pai` carries its
+ * machine's live in-use lock entries, which would make installs in the
+ * sandbox refuse.
  *
  * @returns the version that was seeded.
  */
@@ -204,7 +207,12 @@ export function seedPaiSlot(seedRoot: string, storageDir: string): string {
 
   fs.mkdirSync(storageDir, { recursive: true });
   for (const entry of fs.readdirSync(seedRoot)) {
-    if (entry === SEED_PACKAGE_DIR || entry === VERSIONS_DIR_NAME || entry === SELECTOR_FILE_NAME) {
+    if (
+      entry === SEED_PACKAGE_DIR ||
+      entry === VERSIONS_DIR_NAME ||
+      entry === SELECTOR_FILE_NAME ||
+      entry === LOCKS_DIR_NAME
+    ) {
       continue;
     }
     fs.cpSync(path.join(seedRoot, entry), path.join(storageDir, entry), { recursive: true });
