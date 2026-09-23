@@ -140,13 +140,40 @@ Error readTrustFileForUpdate(std::vector<std::string>* pTrusted,
       return error;
 
    error = parseTrustFile(filePath, contents, pTrusted, pUntrusted);
-   if (error)
+   if (!error)
+      return Success();
+
+   // writes aren't atomic, so another session may have been partway through
+   // writing the file; read it again before deciding it's invalid
+   std::string latestContents;
+   Error readError = readStringFromFile(filePath, &latestContents);
+   if (readError)
+      return readError;
+
+   if (latestContents != contents)
    {
-      WLOGF("Replacing invalid trust settings in {}: {}", filePath.getAbsolutePath(), error.asString());
-      pTrusted->clear();
-      pUntrusted->clear();
+      error = parseTrustFile(filePath, latestContents, pTrusted, pUntrusted);
+      if (!error)
+         return Success();
    }
 
+   // keep a copy of the contents being replaced, so they can be recovered by
+   // hand; if that isn't possible, fail rather than lose them
+   FilePath backupPath = filePath.getParent().completeChildPath(filePath.getFilename() + ".invalid");
+   Error backupError = writeStringToFile(backupPath, latestContents);
+   if (backupError)
+   {
+      LOG_ERROR(backupError);
+      return error;
+   }
+
+   WLOGF("Replacing invalid trust settings in {} (previous contents kept in {}): {}",
+         filePath.getAbsolutePath(),
+         backupPath.getAbsolutePath(),
+         error.asString());
+
+   pTrusted->clear();
+   pUntrusted->clear();
    return Success();
 }
 

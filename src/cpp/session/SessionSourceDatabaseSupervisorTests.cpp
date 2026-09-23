@@ -391,12 +391,31 @@ TEST_F(SourceDatabaseSupervisorTest, LeavesRestartingSessionsAlone)
    expectDocuments(originalDir_);
 }
 
+TEST_F(SourceDatabaseSupervisorTest, LeavesSlowRestartsAlone)
+{
+   // e.g. a restart still waiting for the Launcher to schedule the new session
+   FilePath restartFile = originalDir_.completePath("restart_file");
+   ASSERT_FALSE(restartFile.ensureFile());
+   restartFile.setLastWriteTime(std::time(nullptr) - 60 * 60 * 6);
+
+   FailingFileLock lock{Success()};
+   bool reclaimed = true;
+   EXPECT_FALSE(supervisor::detail::reclaimOrphanedSession(
+      sourceRoot_,
+      targetDir_,
+      lock,
+      &reclaimed));
+   EXPECT_FALSE(reclaimed);
+   EXPECT_EQ(0, lock.acquisitions);
+   expectDocuments(originalDir_);
+}
+
 TEST_F(SourceDatabaseSupervisorTest, RecoversSessionsWithStaleRestartFiles)
 {
    // a restart that never completed shouldn't protect the directory forever
    FilePath restartFile = originalDir_.completePath("restart_file");
    ASSERT_FALSE(restartFile.ensureFile());
-   restartFile.setLastWriteTime(std::time(nullptr) - 60 * 10);
+   restartFile.setLastWriteTime(std::time(nullptr) - 60 * 60 * 48);
 
    FailingFileLock lock{Success()};
    bool reclaimed = false;

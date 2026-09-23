@@ -134,8 +134,12 @@ FilePath sessionRestartFilePath(const FilePath& sessionDir)
    return sessionDir.completePath("restart_file");
 }
 
-// a restart file older than this belongs to a restart that never completed
-const std::time_t kRestartFileMaxAgeSeconds = 60 * 5;
+// a restart file older than this belongs to a restart that never completed.
+// a restart can wait a long time for the Launcher to schedule the new session,
+// and another session adopting its directory in the meantime would take its
+// documents, so this is generous; the documents of a restart that did fail
+// are only recovered later, not lost
+const std::time_t kRestartFileMaxAgeSeconds = 60 * 60 * 24;
 
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
 boost::shared_ptr<FileLock> createSessionDirLock()
@@ -431,8 +435,8 @@ Error reclaimOrphanedSession(
       {
          if (std::time(nullptr) - restartFile.getLastWriteTime() > kRestartFileMaxAgeSeconds)
          {
-            // the file exists, but it's more than five minutes old, so 
-            // something went wrong 
+            // the file exists, but it's too old to belong to a restart
+            // still in progress, so something went wrong
             Error error = restartFile.remove();
             if (error)
                LOG_ERROR(error);

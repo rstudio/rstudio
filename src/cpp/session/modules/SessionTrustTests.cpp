@@ -96,13 +96,34 @@ protected:
 
 TEST_F(SessionTrustTest, GrantReplacesUnparseableTrustFile)
 {
-   ASSERT_FALSE(writeStringToFile(trustFile(), "{ \"trustedDirectories\": ["));
+   const std::string invalid = "{ \"trustedDirectories\": [";
+   ASSERT_FALSE(writeStringToFile(trustFile(), invalid));
 
    EXPECT_FALSE(grantTrust(project_));
 
    std::vector<std::string> expected = { project_.getCanonicalPath() };
    EXPECT_EQ(expected, readList("trustedDirectories"));
    EXPECT_TRUE(readList("untrustedDirectories").empty());
+
+   // the replaced contents are kept, to be recovered by hand
+   std::string backup;
+   EXPECT_FALSE(readStringFromFile(dataHome_.completePath("trust.json.invalid"), &backup));
+   EXPECT_EQ(invalid, backup);
+}
+
+TEST_F(SessionTrustTest, GrantLeavesInvalidTrustFileItCannotKeep)
+{
+   const std::string invalid = "{ \"trustedDirectories\": [";
+   ASSERT_FALSE(writeStringToFile(trustFile(), invalid));
+
+   // something in the way of the backup
+   ASSERT_FALSE(dataHome_.completePath("trust.json.invalid").ensureDirectory());
+
+   EXPECT_TRUE(grantTrust(project_));
+
+   std::string contents;
+   EXPECT_FALSE(readStringFromFile(trustFile(), &contents));
+   EXPECT_EQ(invalid, contents);
 }
 
 TEST_F(SessionTrustTest, RevokeReplacesTrustFileWithWrongShape)
