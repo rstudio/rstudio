@@ -1854,13 +1854,13 @@ void exitFromBackgroundThread(int status)
    if (!bounded)
       std::_Exit(status);
 
-   // Link-based locks stay on disk marked as held. Only a reader on this
-   // host that is not load-balanced treats a dead owner's lock as stale at
-   // once; any other reader would wait out the lock timeout. The main thread
-   // may still be taking or using locks.
+   // exit() flushes stdio, which output to R's file() and pipe() connections
+   // relies on to reach disk. This runs before the lock release below, so a
+   // hung flush costs a successor some waiting rather than costing the user
+   // buffered output.
    try
    {
-      FileLock::cleanUp();
+      std::fflush(nullptr);
    }
    catch (...)
    {
@@ -1874,11 +1874,16 @@ void exitFromBackgroundThread(int status)
    {
    }
 
-   // exit() flushes stdio, which output to R's file() and pipe() connections
-   // relies on to reach disk
+   // Link-based locks stay on disk marked as held. Only a reader on this
+   // host that is not load-balanced treats a dead owner's lock as stale at
+   // once; any other reader would wait out the lock timeout. The main thread
+   // may still be taking or using locks, so a successor that reads the
+   // release could act on a directory this process is still writing to. That
+   // window is kept to the release itself, with nothing else between it and
+   // _Exit(); the main-thread path has always released before exit() too.
    try
    {
-      std::fflush(nullptr);
+      FileLock::cleanUp();
    }
    catch (...)
    {
