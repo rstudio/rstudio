@@ -21,6 +21,11 @@
 #include <string>
 #include <vector>
 
+#ifndef _WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
@@ -130,6 +135,39 @@ TEST_F(ActiveSessionsTest, KeepsInvalidSessionsBeingWritten)
 
    EXPECT_TRUE(dir.exists());
 }
+
+TEST_F(ActiveSessionsTest, KeepsInvalidSessionsWithSuspendedWorkspace)
+{
+   FilePath dir = createInvalidSession("dddddddd");
+   ASSERT_FALSE(dir.completeChildPath("suspended-session-data").ensureDirectory());
+   setModified(dir, std::time(nullptr) - 2 * kMaxAgeSeconds);
+
+   sessions_->removeStaleInvalidSessions(listInvalid(), kMaxAgeSeconds);
+
+   EXPECT_TRUE(dir.exists());
+}
+
+#ifndef _WIN32
+TEST_F(ActiveSessionsTest, KeepsSessionsWithUnreadableProperties)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root bypasses file permissions";
+
+   // an old session that may be fine, but whose project property was left
+   // unreadable (e.g. owned by root after a sudo run)
+   FilePath dir = createInvalidSession("eeeeeeee");
+   FilePath project = dir.completeChildPath("properites").completeChildPath(ActiveSession::kProject);
+   ASSERT_FALSE(writeStringToFile(project, "~/project"));
+   setModified(dir, std::time(nullptr) - 2 * kMaxAgeSeconds);
+   ASSERT_EQ(0, ::chmod(project.getAbsolutePath().c_str(), 0));
+
+   std::vector<boost::shared_ptr<ActiveSession>> invalid = listInvalid();
+   ASSERT_EQ(1u, invalid.size());
+   sessions_->removeStaleInvalidSessions(invalid, kMaxAgeSeconds);
+
+   EXPECT_TRUE(dir.exists());
+}
+#endif
 
 } // namespace r_util
 } // namespace core

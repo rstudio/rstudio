@@ -280,11 +280,26 @@ void ActiveSessions::removeStaleInvalidSessions(
       if (scratchPath.isEmpty() || !scratchPath.exists())
          continue;
 
+      // keep a suspended workspace, which can still be recovered by hand
+      if (scratchPath.completeChildPath("suspended-session-data").exists())
+         continue;
+
+      // validation also fails when the properties it checks can't be read
+      // (e.g. a file left owned by root by a sudo run), but the session itself
+      // may be fine, so only remove it when they're readable and still invalid
+      std::map<std::string, std::string> properties;
+      Error error = session->storage_->readProperties({ ActiveSession::kEditor, ActiveSession::kProject }, &properties);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
       if (isModifiedSince(scratchPath, cutoff))
          continue;
 
       LOG_INFO_MESSAGE("Removing invalid session " + session->id() + " at " + scratchPath.getAbsolutePath());
-      Error error = session->destroy();
+      error = session->destroy();
       if (error)
          LOG_ERROR(error);
    }

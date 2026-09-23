@@ -862,7 +862,8 @@ public:
    // Removes file-based sessions that failed validation in list() and whose files haven't
    // changed for at least maxAgeSeconds. Nothing can resume such a session, but every listing
    // validates it again, which can involve retries. The age check leaves alone a session whose
-   // properties are still being written, e.g. one another process is creating.
+   // properties are still being written, e.g. one another process is creating. Sessions whose
+   // properties can't be read, or that hold a suspended workspace, are kept too.
    void removeStaleInvalidSessions(
       const std::vector<boost::shared_ptr<ActiveSession>>& invalidSessions,
       std::time_t maxAgeSeconds) const;

@@ -65,7 +65,7 @@ boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 std::atomic<bool> s_isSessionDeserialized(false);
 boost::function<void()> s_deferredDeserializationAction;
 
-// the saved state being restored, until its deferred restore has run
+// the saved state whose deferred restore hasn't run yet
 FilePath s_restoringStatePath;
 
 // explains any saved state set aside by setAsideUnfinishedRestores()
@@ -189,11 +189,6 @@ void deferredRestoreNewSession()
 void restoreSession(const FilePath& suspendedSessionPath,
                     std::string* pErrorMessages)
 {
-   // if the process dies before the restore finishes (see ensureDeserialized),
-   // the next start sets this state aside instead of failing the same way
-   state::restoreStarted(suspendedSessionPath);
-   s_restoringStatePath = suspendedSessionPath;
-
    if (s_beforeResumeCallback)
      s_beforeResumeCallback();
 
@@ -206,17 +201,25 @@ void restoreSession(const FilePath& suspendedSessionPath,
    // errorMessages buffer (this mechanism is used because we generally
    // suppress output during restore but we need a way for the error
    // messages to make their way back to the user)
+   //
+   // if the process dies while the state is loading, the next start sets it
+   // aside instead of failing the same way. only the loading is marked (here
+   // and in ensureDeserialized), so the session exiting while it waits for a
+   // client doesn't count against the state
    boost::function<Error()> deferredRestoreAction;
+   state::restoreStarted(suspendedSessionPath);
    r::session::state::restore(suspendedSessionPath,
                               utils::isServerMode(),
                               &deferredRestoreAction,
                               pErrorMessages);
+   state::restoreFinished(suspendedSessionPath);
 
    if (deferredRestoreAction)
    {
       s_deferredDeserializationAction = boost::bind(
                                           deferredRestoreSuspendedSession,
                                           deferredRestoreAction);
+      s_restoringStatePath = suspendedSessionPath;
    }
 
    if (s_afterResumeCallback)
@@ -441,6 +444,10 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
+      // mark the saved state while the rest of it loads (see restoreSession)
+      if (!s_restoringStatePath.isEmpty())
+         state::restoreStarted(s_restoringStatePath);
+
       // do the deferred action, containing any R error it raises so that it
       // cannot longjmp through the C++ frames of session initialization
       // (#18718). clear the action after either result so subsequent calls
@@ -453,14 +460,14 @@ void ensureDeserialized()
          LOG_ERROR(error);
 
       s_deferredDeserializationAction.clear();
-   }
 
-   // the restore has run its course (even if it reported errors) without
-   // taking the process down with it
-   if (!s_restoringStatePath.isEmpty())
-   {
-      state::restoreFinished(s_restoringStatePath);
-      s_restoringStatePath = FilePath();
+      // the restore has run its course (even if it reported errors) without
+      // taking the process down with it
+      if (!s_restoringStatePath.isEmpty())
+      {
+         state::restoreFinished(s_restoringStatePath);
+         s_restoringStatePath = FilePath();
+      }
    }
 
    // mark session as deserialized

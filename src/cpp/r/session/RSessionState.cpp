@@ -1143,11 +1143,15 @@ std::string setAsideUnfinishedRestore(const FilePath& statePath)
       return std::string();
 
    // keep the state rather than deleting it, so what it holds (e.g. the
-   // environment) can still be recovered by hand
-   FilePath setAsidePath = statePath.getParent().completePath(statePath.getFilename() + "-unrestored");
-   Error error = setAsidePath.removeIfExists();
-   if (!error)
-      error = statePath.move(setAsidePath);
+   // environment) can still be recovered by hand; each set-aside gets its own
+   // directory, so a later one can't replace what an earlier one kept
+   FilePath parentPath = statePath.getParent();
+   std::string setAsideName = statePath.getFilename() + "-unrestored";
+   FilePath setAsidePath = parentPath.completePath(setAsideName);
+   for (int i = 2; setAsidePath.exists(); ++i)
+      setAsidePath = parentPath.completePath(setAsideName + "-" + std::to_string(i));
+
+   Error error = statePath.move(setAsidePath);
    if (error)
    {
       LOG_ERROR(error);
