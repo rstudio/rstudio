@@ -151,6 +151,26 @@ def _rs_test_empty():
 
 })
 
+test_that("Python argument completions are empty when there are no arguments", {
+
+   skipIfPythonUnavailable()
+
+   # the docstring fallback finds no arguments in '_rs_test_wrapper()'
+   reticulate::py_run_string('
+def _rs_test_empty():
+    pass
+
+def _rs_test_wrapper(*args, **kwargs):
+    """_rs_test_wrapper()"""
+    pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_empty, _rs_test_wrapper"), add = TRUE)
+
+   expect_length(.rs.python.getCompletionsArguments("_rs_test_empty", ""), 0)
+   expect_length(.rs.python.getCompletionsArguments("_rs_test_wrapper", ""), 0)
+
+})
+
 test_that("Python parameter help includes each parameter's description", {
 
    skipIfPythonUnavailable()

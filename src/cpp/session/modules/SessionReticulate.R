@@ -828,8 +828,11 @@
    if (inherits(object, "error"))
       return(.rs.python.emptyCompletions())
    
+   # (checked up front, since paste() would turn no arguments into a lone '=')
    arguments <- .rs.python.getFunctionArguments(object)
-   
+   if (!length(arguments))
+      return(.rs.python.emptyCompletions())
+
    # paste on an '=' for completions (Python users seem to prefer no
    # spaces between the argument name and value)
    .rs.python.completions(
