@@ -779,10 +779,11 @@ public class ChatPresenter extends BasePresenter
    }
 
    // An update (or initial install) is available -- offer to install it.
-   // Accepting reuses the existing install engine, which stops the running
-   // backend under a cross-process lock (refusing if another session is using
-   // Posit Assistant) and swaps the installation; the client then restarts the
-   // backend (onInstallComplete -> initializeChat), preserving the in-progress
+   // Accepting reuses the existing install engine, which installs the new
+   // version beside the running one under a cross-process lock (refusing if
+   // another session is using Posit Assistant), then stops the backend and
+   // agent so they pick it up; the client then restarts the backend
+   // (onInstallComplete -> initializeChat), preserving the in-progress
    // conversation via the existing resume mechanism.
    private void promptToInstallUpdate(String caption, String message, String confirmLabel)
    {
