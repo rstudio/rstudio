@@ -13,6 +13,21 @@
 #
 #
 
+# Our dependencies' own cmake_minimum_required() calls are old enough that
+# CMake warns about them at every configure. Nothing we can do about that from
+# here, so silence deprecation diagnostics for the rest of this directory.
+# CMake 4.4 replaced CMAKE_WARN_DEPRECATED with cmake_diagnostic(), and merely
+# touching the old variable there trips policy CMP0218.
+#
+# This must come before include(FetchContent): like policies, the diagnostic
+# state is captured when a function is defined, and the dependencies are added
+# from inside FetchContent_MakeAvailable().
+if(COMMAND cmake_diagnostic)
+   cmake_diagnostic(SET CMD_DEPRECATED IGNORE)
+else()
+   set(CMAKE_WARN_DEPRECATED FALSE)
+endif()
+
 include(ExternalProject)
 include(FetchContent)
 
@@ -31,7 +46,6 @@ if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
 endif()
 
 set(FETCHCONTENT_QUIET TRUE)
-set(CMAKE_WARN_DEPRECATED FALSE)
 
 
 #
