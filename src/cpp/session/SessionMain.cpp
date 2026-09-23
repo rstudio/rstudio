@@ -956,6 +956,25 @@ void notifyIfWorkingDirectoryTooLong()
 // until the console is available.
 std::string s_temporaryDataDirWarning;
 
+// Whether the session was given a scope on the command line, as rserver does
+// for the sessions it manages (e.g. with multiple sessions or the Launcher).
+// Checked before the options are read, since they depend on the data directory.
+bool hasSessionScopeArgument(int argc, char * const argv[])
+{
+   for (int i = 1; i < argc; i++)
+   {
+      std::string arg = argv[i];
+      if (arg == "-" kScopeSessionOptionShort ||
+          arg == "--" kScopeSessionOption ||
+          boost::algorithm::starts_with(arg, "--" kScopeSessionOption "="))
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 void reportUnwritableUserDataDir(const FilePath& dataDir,
                                  const Error& dataDirError,
                                  const FilePath& temporaryDir,
@@ -2456,13 +2475,20 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       
 #ifndef _WIN32
       // the log and all session state live in the user data directory; if it
-      // can't be written, switch to a temporary directory before either is used
+      // can't be written, switch to a temporary directory before either is used.
+      // a session with a scope is left alone: other processes, possibly on
+      // other hosts, look for its state (e.g. a suspended session) in the data
+      // directory, and a temporary directory would hide it from them
       FilePath originalDataDir = core::system::xdg::userDataDir();
       FilePath temporaryDataDir;
       Error temporaryDataDirError;
-      Error dataDirError = core::system::xdg::redirectUnwritableUserDataDir(
-         &temporaryDataDir,
-         &temporaryDataDirError);
+      Error dataDirError;
+      if (!hasSessionScopeArgument(argc, argv))
+      {
+         dataDirError = core::system::xdg::redirectUnwritableUserDataDir(
+            &temporaryDataDir,
+            &temporaryDataDirError);
+      }
 #endif
 
       // initialize log so we capture all errors including ones which occur

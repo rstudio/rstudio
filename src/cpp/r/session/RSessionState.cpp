@@ -1165,8 +1165,9 @@ std::string setAsideUnfinishedRestore(const FilePath& statePath)
    return fmt::format(
       "Warning: RStudio did not restore your previous R session, because an "
       "earlier attempt to restore it did not finish (R may have crashed or run "
-      "out of memory while loading it). A new R session was started instead. "
-      "The saved session was kept in:\n"
+      "out of memory while loading it, or the session was closed before it "
+      "finished loading). A new R session was started instead. The saved "
+      "session was kept in:\n"
       "\n"
       "    {}\n",
       setAsidePath.getAbsolutePath());
