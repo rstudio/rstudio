@@ -111,6 +111,7 @@ ShellArgs gitArgs()
 std::vector<std::string> s_branches;
 std::string s_gitExePath;
 uint64_t s_gitVersion;
+bool s_gitInstalled;
 const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
                            ((uint64_t)7 << 32) |
                            ((uint64_t)2 << 16);
@@ -3176,22 +3177,12 @@ FilePath whichGitExe()
 
 } // anonymous namespace
 
+// forward declaration
+bool initGitBin();
+
 bool isGitInstalled()
 {
-   if (!prefs::userPrefs().vcsEnabled())
-      return false;
-
-   core::system::ProcessResult result;
-   Error error = gitExec(gitArgs() << "--version", &result);
-   if (error)
-      return false;
-   
-#ifdef __APPLE__
-   if (result.exitStatus != EXIT_SUCCESS)
-      module_context::checkXcodeLicense();
-#endif
-   
-   return result.exitStatus == EXIT_SUCCESS;
+   return prefs::userPrefs().vcsEnabled() && s_gitInstalled;
 }
 
 bool isGitEnabled()
@@ -3267,6 +3258,8 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
          s_gitExePath = "";
 #endif
       }
+      // refresh git version and installation status for the (possibly new) git binary
+      initGitBin();
    }
 }
 
@@ -3367,8 +3360,9 @@ bool initGitBin()
 #endif
    }
 
-   // Save version
+   // Save version and installation status
    s_gitVersion = GIT_1_7_2;
+   s_gitInstalled = false;
    core::system::ProcessResult result;
    error = gitExec(gitArgs() << "--version", &result);
    if (error)
@@ -3377,6 +3371,7 @@ bool initGitBin()
    {
       if (result.exitStatus == 0)
       {
+         s_gitInstalled = true;
          boost::smatch matches;
          if (regex_utils::search(result.stdOut,
                                  matches,
@@ -3385,6 +3380,13 @@ bool initGitBin()
             string_utils::parseVersion(matches[0], &s_gitVersion);
          }
       }
+#ifdef __APPLE__
+      else
+      {
+         // prompt user to accept xcode license if git probe failed
+         module_context::checkXcodeLicense();
+      }
+#endif
    }
 
    return true;
