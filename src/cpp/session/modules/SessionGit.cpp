@@ -3192,7 +3192,10 @@ Error resolveGitExePath()
 bool probeGit()
 {
    // without an explicit binary, look for git again: it may have been
-   // installed, or the PATH changed, since the last look
+   // installed, or the PATH changed, since the last look. on Windows that is
+   // the full discovery, since a new install lands in a standard location and
+   // the Start menu rather than on this process's PATH; with no git installed
+   // it's only a few file lookups, as the shortcut is read only if one exists
 #ifdef _WIN32
    if (s_gitExePath.empty())
    {
