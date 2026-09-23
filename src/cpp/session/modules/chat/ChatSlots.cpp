@@ -118,7 +118,13 @@ std::string stagingDirName()
 // long in total. On Windows, antivirus or the search indexer briefly holds a
 // handle inside a freshly extracted tree, and MoveFileEx then fails with
 // access denied for a moment even though nothing is wrong with the tree.
+// Elsewhere a rename between siblings either works or fails for good, so a
+// retry would only delay the error.
+#ifdef _WIN32
 const int kPublishAttempts = 10;
+#else
+const int kPublishAttempts = 1;
+#endif
 const std::chrono::milliseconds kPublishRetryDelay(100);
 
 // Renames the staged tree into its final name, retrying a spurious failure.
