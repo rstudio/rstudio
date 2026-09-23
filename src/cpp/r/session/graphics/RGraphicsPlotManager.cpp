@@ -49,6 +49,10 @@ namespace graphics {
 
 namespace {
 
+// The most pixels a saved bitmap may have (about 400 MB as RGBA); a large size
+// at a high resolution could otherwise exhaust the session's memory.
+const double kMaxBitmapPixels = 100e6;
+
 double pixelsToInches(int pixels)
 {
    return (double)pixels / 96.0;
@@ -313,8 +317,19 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    int res = 96;
 
    // adjust for device pixel ratio
-   width = gsl::narrow_cast<int>(width * pixelRatio);
-   height = gsl::narrow_cast<int>(height * pixelRatio);
+   double scaledWidth = width * pixelRatio;
+   double scaledHeight = height * pixelRatio;
+   if (scaledWidth * scaledHeight > kMaxBitmapPixels)
+   {
+      boost::format fmt("The image would be %1% x %2% pixels; reduce its size or resolution");
+      std::string description = boost::str(fmt %
+                                           static_cast<long long>(scaledWidth) %
+                                           static_cast<long long>(scaledHeight));
+      return systemError(boost::system::errc::value_too_large, description, ERROR_LOCATION);
+   }
+
+   width = gsl::narrow_cast<int>(scaledWidth);
+   height = gsl::narrow_cast<int>(scaledHeight);
    res = gsl::narrow_cast<int>(std::lround(res * pixelRatio));
    
    // handle ragg specially

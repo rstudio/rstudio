@@ -142,3 +142,13 @@ test_that("saved plot images record their resolution (#4422)", {
       expect_equal(imageResolution(file), 96, info = format)
    }
 })
+
+test_that("saving a plot image refuses sizes that would exhaust memory", {
+   .rs.activateGraphicsDevice()
+   plot(1:10)
+
+   file <- tempfile(fileext = ".png")
+   on.exit(unlink(file), add = TRUE)
+   .rs.api.savePlotAsImage(file, "png", 20000, 20000)
+   expect_false(file.exists(file))
+})
