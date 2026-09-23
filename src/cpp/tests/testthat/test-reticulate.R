@@ -95,6 +95,30 @@ class _rs_test_class:
 
 })
 
+test_that("Python function arguments tolerate unresolvable lazy annotations", {
+
+   skipIfPythonUnavailable()
+   skip_if(reticulate::py_version() < "3.14", "lazy annotations require Python 3.14")
+
+   # '_RsTestMissing' is never bound, as with imports guarded by TYPE_CHECKING
+   reticulate::py_run_string('
+def _rs_test_function(a, b: _RsTestMissing = None):
+    pass
+
+class _rs_test_class:
+    def __init__(self, x: _RsTestMissing, *, y=1):
+        pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_class"), add = TRUE)
+
+   object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("a", "b"))
+
+   object <- reticulate::py_eval("_rs_test_class", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("x", "y"))
+
+})
+
 test_that("Python positional-only arguments are not offered", {
 
    skipIfPythonUnavailable()

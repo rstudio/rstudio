@@ -874,7 +874,15 @@
    # inspect.getargspec() was removed in Python 3.11, and before that failed
    # for any function with keyword-only arguments or annotations. note that
    # for classes, inspect.signature() describes the constructor (sans 'self')
-   signature <- inspect$signature(object)
+   signature <- if (reticulate::py_module_available("annotationlib")) {
+      # Python 3.14 evaluates lazy annotations here by default, which fails for
+      # names bound only under TYPE_CHECKING; we only need parameter names
+      annotationlib <- reticulate::import("annotationlib", convert = FALSE)
+      inspect$signature(object, annotation_format = annotationlib$Format$FORWARDREF)
+   } else {
+      inspect$signature(object)
+   }
+
    parameters <- reticulate::iterate(signature$parameters$values())
 
    names <- vapply(parameters, function(parameter) {
