@@ -885,10 +885,10 @@
    # only offer parameters that can be supplied as 'name=value'
    keyword <- kinds %in% c("POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY")
 
-   # a signature with parameters but none of those, e.g. a wrapper taking
-   # only '(*args, **kwargs)', hides the real arguments; fail so the caller
-   # can try the docstring instead
-   if (length(kinds) && !any(keyword))
+   # a signature with only '*args' and '**kwargs' to offer, e.g. a wrapper,
+   # hides the real arguments; fail so the caller can try the docstring
+   variadic <- kinds %in% c("VAR_POSITIONAL", "VAR_KEYWORD")
+   if (any(variadic) && !any(keyword))
       stop("signature has no named parameters")
 
    names[keyword]
