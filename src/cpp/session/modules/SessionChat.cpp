@@ -5965,6 +5965,19 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
    finishInstall(newVersion, cont);
 }
 
+// Runs the install from the scheduler rather than from the update check's
+// completion. When the main thread's own process-supervisor poll reaps the
+// manifest fetch, that completion runs inside the poll, and the agent stop in
+// finishInstall() waits on the same poll, which is a no-op when re-entered:
+// the agent would never be reaped within the wait and the install would fail
+// for nothing. Scheduled work runs after the poll has returned.
+void performInstallAfterPoll(const json::JsonRpcFunctionContinuation& cont)
+{
+   module_context::scheduleDelayedWork(boost::posix_time::milliseconds(1),
+                                       boost::bind(performInstall, cont),
+                                       false);
+}
+
 // Async RPC. Installs the available update; if the update state hasn't been
 // populated yet (e.g. user selected Posit Assistant after startup), run an async
 // check first, then install. The install body itself is unchanged and the
@@ -6009,7 +6022,7 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
    else
    {
       DLOG("Update state not populated, performing async check before install");
-      startUpdateCheck(true, boost::bind(performInstall, cont));
+      startUpdateCheck(true, boost::bind(performInstallAfterPoll, cont));
    }
 }
 
