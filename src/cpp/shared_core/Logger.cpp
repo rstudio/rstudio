@@ -945,7 +945,7 @@ void removeLogDestination(const std::string& in_destinationId, const std::string
 
          // Remove it from any sections it may have been registered to.
          std::vector<std::string> sectionsToRemove;
-         for (auto secIter: log.SectionedLogDestinations)
+         for (auto& secIter: log.SectionedLogDestinations)
          {
             iter = secIter.second.find(in_destinationId);
             if (iter != secIter.second.end())
