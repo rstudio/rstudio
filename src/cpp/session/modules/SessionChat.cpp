@@ -5783,13 +5783,28 @@ void finishInstall(const std::string& version,
    // changed the answer, and the components restarting need the new one.
    clearPinnedInstallation();
 
+   // Report what the session now runs, not what was installed: a read-only
+   // source can outrank the new slot, and the next throttled check compares
+   // against this value.
+   std::string currentVersion = getInstalledVersion();
+   if (currentVersion.empty())
+   {
+      WLOG("No Posit Assistant installation resolves after installing {}", version);
+      currentVersion = version;
+   }
+   else if (currentVersion != version)
+   {
+      DLOG("Installed Posit Assistant {} but the session resolves {}",
+           version, currentVersion);
+   }
+
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.installStatus = UpdateState::Status::Complete;
       s_updateState.installMessage = "Update complete";
       s_updateState.updateAvailable = false;
       s_updateState.unsupportedInstalledVersion = false;
-      s_updateState.currentVersion = version;
+      s_updateState.currentVersion = currentVersion;
    }
 
    json::JsonRpcResponse response;
