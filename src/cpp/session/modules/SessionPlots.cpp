@@ -175,11 +175,11 @@ Error savePlotAs(const json::JsonRpcRequest& request,
       // the width and height are in pixels at 96 DPI; draw at the requested
       // resolution instead
       double pixelRatio = resolution / 96.0;
-      error = display.savePlotAsImage(plotPath, format, width, height, pixelRatio);
+      error = display.savePlotAsImage(plotPath, format, width, height, pixelRatio, /*recordResolution=*/true);
    }
    else
    {
-      error = display.savePlotAsImage(plotPath, format, width, height, useDevicePixelRatio);
+      error = display.savePlotAsImage(plotPath, format, width, height, useDevicePixelRatio, /*recordResolution=*/true);
    }
    if (error)
    {
@@ -289,7 +289,7 @@ Error copyPlotToCocoaPasteboard(const json::JsonRpcRequest& request,
    // save as png
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsImage(targetFile, "png", width, height, true);
+   error = display.savePlotAsImage(targetFile, "png", width, height, true, /*recordResolution=*/true);
    if (error)
       return error;
 
@@ -999,7 +999,7 @@ SEXP rs_savePlotAsImage(SEXP fileSEXP,
 
    r::session::graphics::Display& display = r::session::graphics::display();
    if (display.hasOutput())
-      display.savePlotAsImage(filePath, format, width, height, false);
+      display.savePlotAsImage(filePath, format, width, height, false, /*recordResolution=*/true);
 
    return R_NilValue;
 }

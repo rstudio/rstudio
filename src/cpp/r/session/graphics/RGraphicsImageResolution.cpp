@@ -84,30 +84,32 @@ double readResolution(CGImageSourceRef source)
    return dpi;
 }
 
-// ImageIO records a JPEG's resolution in its JFIF header as a pixel aspect
-// ratio (density unit 0), keeping the DPI in its EXIF data. Applications that
-// read only the JFIF header then fall back to a default resolution, so record
-// the density in dots per inch, as the other devices' JPEGs do. The densities
-// are written too, since an aspect ratio may be stored as 1:1.
-Error setJfifDensityInInches(const FilePath& imagePath, int dpi)
+// Records the resolution in a JPEG's JFIF header, in dots per inch, when the
+// file has one; *pPatched says whether it did. Quartz and ImageIO store an
+// aspect ratio there (density unit 0), so applications that read only the JFIF
+// header fall back to a default resolution. Patching the header in place
+// avoids re-encoding the (lossy) image.
+Error setJfifDensity(const FilePath& imagePath, int dpi, bool* pPatched)
 {
    // SOI, then an APP0 segment: FF E0, length (2), "JFIF\0", version (2),
    // density unit (1), X density (2), Y density (2)
    const std::streamoff kUnitsOffset = 13;
    const char kJfifSignature[] = { '\xFF', '\xD8', '\xFF', '\xE0' };
 
+   *pPatched = false;
+
    std::fstream stream(imagePath.getAbsolutePath(), std::ios::in | std::ios::out | std::ios::binary);
    if (!stream)
       return systemError(boost::system::errc::io_error, ERROR_LOCATION);
 
-   char header[kUnitsOffset + 1];
+   char header[kUnitsOffset];
    if (!stream.read(header, sizeof(header)))
       return Success();
 
    bool isJfif =
          std::memcmp(header, kJfifSignature, sizeof(kJfifSignature)) == 0 &&
          std::memcmp(header + 6, "JFIF", 5) == 0;
-   if (!isJfif || header[kUnitsOffset] != 0)
+   if (!isJfif)
       return Success();
 
    char highByte = static_cast<char>((dpi >> 8) & 0xFF);
@@ -115,9 +117,11 @@ Error setJfifDensityInInches(const FilePath& imagePath, int dpi)
    const char density[] = { 1, highByte, lowByte, highByte, lowByte };
    stream.seekp(kUnitsOffset);
    stream.write(density, sizeof(density));
+   stream.flush();
    if (!stream)
       return systemError(boost::system::errc::io_error, ERROR_LOCATION);
 
+   *pPatched = true;
    return Success();
 }
 
@@ -133,8 +137,8 @@ Error imageIOError(const std::string& description, const FilePath& imagePath)
 // R's Quartz bitmap devices don't record the resolution they drew at in the
 // files they write (https://bugs.r-project.org/show_bug.cgi?id=19076), so
 // applications such as Word insert those images at the wrong physical size.
-// Rewrite the image with the resolution when it's missing or wrong; this is a
-// no-op for the other devices, and for Quartz once R records it.
+// Record the resolution when it's missing or wrong; this is a no-op for the
+// other devices, and for Quartz once R records it.
 Error ensureImageResolution(const FilePath& imagePath, int dpi)
 {
    CFURLRef url = createFileUrl(imagePath);
@@ -150,7 +154,13 @@ Error ensureImageResolution(const FilePath& imagePath, int dpi)
    if (std::fabs(readResolution(source) - dpi) < 0.5)
       return Success();
 
-   // write the image next to the original, then replace it
+   // a JPEG with a JFIF header is patched in place
+   bool patched = false;
+   Error error = setJfifDensity(imagePath, dpi, &patched);
+   if (error || patched)
+      return error;
+
+   // otherwise, write the image next to the original, then replace it
    FilePath tempPath = imagePath.getParent().completeChildPath(
             "." + imagePath.getFilename() + ".resolution");
    CFURLRef tempUrl = createFileUrl(tempPath);
@@ -192,7 +202,8 @@ Error ensureImageResolution(const FilePath& imagePath, int dpi)
       return imageIOError("Unable to write image", tempPath);
    }
 
-   Error error = setJfifDensityInInches(tempPath, dpi);
+   // ImageIO writes a JPEG's resolution as an aspect ratio, as above
+   error = setJfifDensity(tempPath, dpi, &patched);
    if (error)
       LOG_ERROR(error);
 

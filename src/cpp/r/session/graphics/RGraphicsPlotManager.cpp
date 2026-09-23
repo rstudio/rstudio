@@ -261,11 +261,12 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    const std::string& format,
                                    int widthPx,
                                    int heightPx,
-                                   bool useDevicePixelRatio)
+                                   bool useDevicePixelRatio,
+                                   bool recordResolution)
 {
    double pixelRatio = useDevicePixelRatio ?
                          r::session::graphics::device::devicePixelRatio() : 1;
-   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio);
+   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
 }
 
 
@@ -273,14 +274,15 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    const std::string& format,
                                    int widthPx,
                                    int heightPx,
-                                   double pixelRatio)
+                                   double pixelRatio,
+                                   bool recordResolution)
 {
    if (format == kPngFormat ||
        format == kBmpFormat ||
        format == kJpegFormat ||
        format == kTiffFormat)
    {
-      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio);
+      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
    }
    else if (format == kSvgFormat)
    {
@@ -304,7 +306,8 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                         const std::string& bitmapFileType,
                                         int width,
                                         int height,
-                                        double pixelRatio)
+                                        double pixelRatio,
+                                        bool recordResolution)
 {
    // default res
    int res = 96;
@@ -385,7 +388,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
 
    // save the file
    Error error = savePlotAsFile(deviceCreationCode);
-   if (error)
+   if (error || !recordResolution)
       return error;
 
    // the image is usable without the resolution, so don't fail the save
