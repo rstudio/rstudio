@@ -559,8 +559,9 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    int scale = request.queryParamValue("scale", 1);
 
    // the image fills the window, unless the plot has a fixed size: then it
-   // keeps its aspect ratio, and is rendered at a higher pixel ratio so that
-   // it stays sharp when enlarged to fit the window
+   // keeps its aspect ratio, and is rendered at the pixel ratio it's shown at
+   // when scaled to fit the window, so it stays sharp when enlarged and isn't
+   // over-rendered when shrunk
    std::string imageAttributes = "width=\"100%\" height=\"100%\"";
    std::string imageUrl = boost::str(boost::format("plot_zoom_png?width=%1%&height=%2%") %
                                      width % height);
@@ -573,8 +574,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
       double fit = std::min(
          static_cast<double>(width) / fixedWidth,
          static_cast<double>(height) / fixedHeight);
-      double ratio = graphics::device::devicePixelRatio() * std::max(1.0, fit);
-      ratio = std::min(ratio, static_cast<double>(MAX_FIG_SIZE) / std::max(fixedWidth, fixedHeight));
+      double ratio = graphics::device::devicePixelRatio() * fit;
 
       boost::format fmt(
          "style=\"position: absolute; inset: 0; margin: auto; "
@@ -645,7 +645,8 @@ void handleZoomPngRequest(const http::Request& request,
    if (!extractSizeParams(request, kMinFixedPlotSize, MAX_FIG_SIZE, &width, &height, pResponse))
      return;
 
-   // an explicit pixel ratio is requested for plots with a fixed size
+   // an explicit pixel ratio is requested for plots with a fixed size; clamp
+   // it here, since the URL can be hand-built
    double ratio = request.queryParamValue("ratio", 0.0);
    if (ratio > 0)
       ratio = std::min(ratio, static_cast<double>(MAX_FIG_SIZE) / std::max(width, height));
