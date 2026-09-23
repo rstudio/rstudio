@@ -107,15 +107,22 @@ def _rs_test_function(a, /, b):
 def _rs_test_positional(x, /):
     """_rs_test_positional(x)"""
     pass
+
+def _rs_test_varargs(x, /, *args):
+    """_rs_test_varargs(x)"""
+    pass
 ')
-   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_positional"), add = TRUE)
+   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_positional, _rs_test_varargs"), add = TRUE)
 
    object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
    expect_equal(.rs.python.getFunctionArguments(object), "b")
 
-   # a signature that is only positional-only is complete; don't consult
+   # functions that accept no keywords at all are complete; don't consult
    # the docstring for names that can't be passed as 'name=value'
    object <- reticulate::py_eval("_rs_test_positional", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), character())
+
+   object <- reticulate::py_eval("_rs_test_varargs", convert = FALSE)
    expect_equal(.rs.python.getFunctionArguments(object), character())
 
 })
