@@ -86,9 +86,10 @@ double readResolution(CGImageSourceRef source)
 
 // ImageIO records a JPEG's resolution in its JFIF header as a pixel aspect
 // ratio (density unit 0), keeping the DPI in its EXIF data. Applications that
-// read only the JFIF header then fall back to a default resolution, so mark
-// the density as dots per inch, as the other devices' JPEGs do.
-Error setJfifDensityInInches(const FilePath& imagePath)
+// read only the JFIF header then fall back to a default resolution, so record
+// the density in dots per inch, as the other devices' JPEGs do. The densities
+// are written too, since an aspect ratio may be stored as 1:1.
+Error setJfifDensityInInches(const FilePath& imagePath, int dpi)
 {
    // SOI, then an APP0 segment: FF E0, length (2), "JFIF\0", version (2),
    // density unit (1), X density (2), Y density (2)
@@ -109,8 +110,11 @@ Error setJfifDensityInInches(const FilePath& imagePath)
    if (!isJfif || header[kUnitsOffset] != 0)
       return Success();
 
+   char highByte = static_cast<char>((dpi >> 8) & 0xFF);
+   char lowByte = static_cast<char>(dpi & 0xFF);
+   const char density[] = { 1, highByte, lowByte, highByte, lowByte };
    stream.seekp(kUnitsOffset);
-   stream.put(1);
+   stream.write(density, sizeof(density));
    if (!stream)
       return systemError(boost::system::errc::io_error, ERROR_LOCATION);
 
@@ -188,11 +192,19 @@ Error ensureImageResolution(const FilePath& imagePath, int dpi)
       return imageIOError("Unable to write image", tempPath);
    }
 
-   Error error = setJfifDensityInInches(tempPath);
+   Error error = setJfifDensityInInches(tempPath, dpi);
    if (error)
       LOG_ERROR(error);
 
-   return tempPath.move(imagePath, FilePath::MoveDirect, true);
+   error = tempPath.move(imagePath, FilePath::MoveDirect, true);
+   if (error)
+   {
+      Error removeError = tempPath.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+   }
+
+   return error;
 }
 
 #else
