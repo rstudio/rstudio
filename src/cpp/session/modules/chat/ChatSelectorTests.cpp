@@ -313,6 +313,17 @@ TEST_F(ChatSelector, RanksAnUnparsableVersionBelowEveryParsedOne)
       resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("0.0.1")));
 }
 
+TEST_F(ChatSelector, DoesNotCompareReinstallOrdinalsAcrossVersions)
+{
+   // An ordinal counts reinstalls of one version; comparing it against a
+   // different version would let the tenth reinstall of beta.1 outrank beta.2.
+   makeSlot("1.2.0-beta.1-10", "1.2.0-beta.1", "11.0");
+   makeSlot("1.2.0-beta.2", "1.2.0-beta.2", "11.0");
+
+   EXPECT_TRUE(
+      resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled).isEquivalentTo(slot("1.2.0-beta.2")));
+}
+
 TEST_F(ChatSelector, FallsBackOnlyToSlotsServingTheProtocol)
 {
    makeSlot("2.0.0", "2.0.0", "12.0");

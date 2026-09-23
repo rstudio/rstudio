@@ -92,6 +92,12 @@ bool preferredOver(const slots::SlotInfo& lhs, const slots::SlotInfo& rhs)
    if (lhsParsed && lhsVersion != rhsVersion)
       return lhsVersion > rhsVersion;
 
+   // An ordinal counts reinstalls of one version and says nothing about two
+   // slots holding different ones, so unparsed versions that differ are
+   // ordered by string before any ordinal is looked at.
+   if (lhs.version != rhs.version)
+      return lhs.version > rhs.version;
+
    int lhsOrdinal = slotOrdinal(lhs.name, lhs.version);
    int rhsOrdinal = slotOrdinal(rhs.name, rhs.version);
    if (lhsOrdinal != rhsOrdinal)
