@@ -147,7 +147,8 @@ Error publishStagingDir(const FilePath& stagingDir, const FilePath& target)
       DLOG("Publishing {} failed (attempt {} of {}): {}",
            target.getAbsolutePath(), attempt, kPublishAttempts,
            error.getMessage());
-      std::this_thread::sleep_for(kPublishRetryDelay);
+      if (attempt < kPublishAttempts)
+         std::this_thread::sleep_for(kPublishRetryDelay);
    }
 
    return error;
