@@ -2913,12 +2913,32 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // set working directory
       FilePath workingDir = dirs::getInitialWorkingDirectory();
 
+      // the saved working directory can exist yet be impossible to enter (e.g.
+      // its permissions changed); exiting here would leave it saved and fail
+      // every later start the same way, so fall back to the default working
+      // directory and then the home directory
+      error = workingDir.makeCurrentPath();
+      if (error)
+      {
+         LOG_ERROR(error);
+         workingDir = dirs::getDefaultWorkingDirectory();
+         error = workingDir.makeCurrentPath();
+      }
+      if (error)
+      {
+         LOG_ERROR(error);
+         workingDir = options.userHomePath();
+         error = workingDir.makeCurrentPath();
+      }
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
 #ifdef _WIN32
       // Long path awareness (see the longPathAware entry in rsession.exe.manifest)
       // does not extend to the current directory: per the SetCurrentDirectory docs,
       // "Setting a current directory longer than MAX_PATH causes CreateProcessW to
       // fail", which would take out git, terminals, builds and R CMD. Before we
-      // declared long path awareness this call simply failed; now it succeeds and the
+      // declared long path awareness makeCurrentPath() simply failed; now it succeeds and the
       // damage shows up later with no obvious cause, so say so up front. See #12806.
       //
       // Measure in UTF-16 units, which is what MAX_PATH counts and what the wide APIs
@@ -2940,26 +2960,6 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          LOG_WARNING_MESSAGE(s_workingDirWarning);
       }
 #endif
-
-      // the saved working directory can exist yet be impossible to enter (e.g.
-      // its permissions changed); exiting here would leave it saved and fail
-      // every later start the same way, so fall back to the default working
-      // directory and then the home directory
-      error = workingDir.makeCurrentPath();
-      if (error)
-      {
-         LOG_ERROR(error);
-         workingDir = dirs::getDefaultWorkingDirectory();
-         error = workingDir.makeCurrentPath();
-      }
-      if (error)
-      {
-         LOG_ERROR(error);
-         workingDir = options.userHomePath();
-         error = workingDir.makeCurrentPath();
-      }
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
 
       // override the active session's working directory
       // it is created with the default value of ~, so if our session options
