@@ -5764,9 +5764,20 @@ void finishInstall(const std::string& version,
    DLOG("Stopping backend to pick up Posit Assistant {}", version);
    stopChatBackendForInstall("update");
 
+   // An agent still running from the old slot after the backend restarts on
+   // the new one would put the two on different installations. The slot is
+   // published and selected, so a retry skips the download and only repeats
+   // this stop; the held resolution stays so the restart meanwhile is
+   // consistent.
    DLOG("Stopping assistant agent to pick up Posit Assistant {}", version);
    if (!assistant::stopAgentForUpdate())
+   {
       WLOG("Timeout waiting for assistant agent to stop");
+      failInstall("A Posit Assistant process is still shutting down. "
+                  "Please try again, or restart RStudio.",
+                  cont);
+      return;
+   }
 
    // This session's resolution is what it was running; the install just
    // changed the answer, and the components restarting need the new one.
