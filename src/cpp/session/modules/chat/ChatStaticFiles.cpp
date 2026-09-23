@@ -235,9 +235,11 @@ bool s_cspHeaderBuilt = false;
  * backend restart -- which is how an in-session update takes effect -- serves
  * the policy belonging to the installation now being served (#18831). The
  * installation is passed in rather than resolved here so that the page and
- * the policy come from the one resolution the request handler made.
+ * the policy come from the one resolution the request handler made, and the
+ * header built is returned under the same lock so the caller cannot read a
+ * later rebuild's result.
  */
-void rebuildCspHeaderCache(const FilePath& positAiPath)
+std::string rebuildCspHeaderCache(const FilePath& positAiPath)
 {
    // Held across the read as well as the store. Two rebuilds can overlap --
    // the lazy one below on an HTTP handler thread, and the one a backend start
@@ -309,6 +311,7 @@ void rebuildCspHeaderCache(const FilePath& positAiPath)
    s_cachedCspHeader = header;
    s_cspInstallationPath = positAiPath;
    s_cspHeaderBuilt = true;
+   return header;
 }
 
 /**
@@ -332,9 +335,7 @@ std::string buildCspHeader(const FilePath& positAiPath)
       if (s_cspHeaderBuilt && s_cspInstallationPath == positAiPath)
          return s_cachedCspHeader;
    }
-   rebuildCspHeaderCache(positAiPath);
-   std::lock_guard<std::mutex> lock(s_cspMutex);
-   return s_cachedCspHeader;
+   return rebuildCspHeaderCache(positAiPath);
 }
 
 } // anonymous namespace
