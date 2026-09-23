@@ -554,6 +554,10 @@ void refreshAllLogDestinations(const log::RefreshParams& in_refreshParams = log:
  * reverse order of their registration, and the logger's must run last: a fork handler that holds a mutex under which
  * a thread may log must therefore be registered after this one, so its registration should call this first. No-op on
  * Windows.
+ *
+ * Every fork() in the process then waits for the log writes in flight, so a stalled write (a hung log directory, a
+ * full stderr pipe, a blocked syslog socket) stalls every fork with it; that is the price of a child never inheriting
+ * a lock it cannot take. For the same reason, a log destination must never fork while writing or refreshing.
  */
 void registerForkHandlers();
 

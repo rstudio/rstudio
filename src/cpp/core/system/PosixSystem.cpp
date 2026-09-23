@@ -2715,7 +2715,10 @@ Error launchChildProcess(std::string path,
    // Resolve the user the child will switch to before the fork, so that the child
    // needn't consult the password or group databases in the weird after-fork-before-exec
    // state: another thread may have held one of their locks when we forked, and a
-   // child waiting on such a lock never gets to exec (see ResolvedUser)
+   // child waiting on such a lock never gets to exec (see ResolvedUser). The group
+   // lookup the child's initgroups(3) used to make now runs on the calling thread;
+   // it bypasses the group cache so that each session starts with the user's
+   // current groups, as it did before
    boost::optional<ResolvedUser> resolvedRunAsUser;
    if (!runAsUser.empty() && posix::realUserIsRoot())
    {
