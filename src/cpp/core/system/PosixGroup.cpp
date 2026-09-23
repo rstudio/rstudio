@@ -19,6 +19,7 @@
 #include <grp.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
@@ -337,23 +338,32 @@ Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds, const
    const std::string& username = user.getUsername();
 
    // get the groups for the user - we start with 100 groups which should be enough for most cases
-   // if it is not, resize the vector with the correct amount of groups and try again
+   // if it is not, resize the vector and try again: glibc reports how many groups it needs, but
+   // macOS leaves the count as it was (having filled the buffer), so there we double it ourselves,
+   // up to the most groups Linux allows a process
+   const int kMaxNumGroups = 65536;
    int numGroups = 100;
    std::vector<GroupListGidType> gids(numGroups);
    int lastNumGroups = numGroups;
    errno = 0;
    while (lookup(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
    {
-      if (numGroups == lastNumGroups)
+      if (numGroups <= lastNumGroups)
       {
-         // a failed lookup needn't have filled anything in (nor set errno), so
-         // publish nothing: the zeroed buffer would read as membership in gid 0
-         pGroupIds->clear();
+         if (lastNumGroups >= kMaxNumGroups)
+         {
+            // a failed lookup needn't have filled anything in (nor set errno), so
+            // publish nothing: the zeroed buffer would read as membership in gid 0
+            pGroupIds->clear();
 
-         Error error = systemError(errno != 0 ? errno : ENOENT, ERROR_LOCATION);
-         error.addProperty("description", "Error retrieving groups for: " + username);
-         return error;
+            Error error = systemError(errno != 0 ? errno : ENOENT, ERROR_LOCATION);
+            error.addProperty("description", "Error retrieving groups for: " + username);
+            return error;
+         }
+
+         numGroups = std::min(lastNumGroups * 2, kMaxNumGroups);
       }
+
       gids.resize(numGroups);
       lastNumGroups = numGroups;
    }

@@ -1278,8 +1278,9 @@ TEST(PosixTests, ResolveUserReturnsCurrentUserAndGroups)
 
 TEST(PosixTests, QueryUserGroupIdsPublishesNothingWhenTheLookupFails)
 {
-   // getgrouplist(3) can fail without touching the count or the buffer, and the
-   // zeroed buffer must not then be handed back as membership in gid 0
+   // getgrouplist(3) can fail without touching the count or the buffer, and when
+   // no larger buffer helps, the zeroed buffer must not then be handed back as
+   // membership in gid 0
    User user;
    ASSERT_FALSE(User::getCurrentUser(user));
 
@@ -1315,6 +1316,37 @@ TEST(PosixTests, QueryUserGroupIdsGrowsTheBufferToFit)
 
       for (int i = 0; i < numGroups; i++)
          groups[i] = static_cast<group::GroupListGidType>(1000 + i);
+      *pNumGroups = numGroups;
+      return 0;
+   };
+
+   std::vector<GidType> groupIds;
+   ASSERT_FALSE(group::queryUserGroupIds(user, &groupIds, lookup));
+   EXPECT_EQ(2, calls);
+   ASSERT_EQ(static_cast<std::size_t>(numGroups), groupIds.size());
+   EXPECT_EQ(1000u, groupIds.front());
+   EXPECT_EQ(1000u + numGroups - 1, groupIds.back());
+}
+
+TEST(PosixTests, QueryUserGroupIdsGrowsTheBufferWhenTheCountIsUnchanged)
+{
+   // macOS's getgrouplist(3) fills a short buffer and fails without saying how
+   // many groups it needs, so the buffer is grown until they all fit
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   const int numGroups = 150;
+   int calls = 0;
+   auto lookup = [&calls, numGroups](const char*, gid_t, group::GroupListGidType* groups, int* pNumGroups) -> int
+   {
+      calls++;
+      int numFilled = std::min(*pNumGroups, numGroups);
+      for (int i = 0; i < numFilled; i++)
+         groups[i] = static_cast<group::GroupListGidType>(1000 + i);
+
+      if (numFilled < numGroups)
+         return -1;
+
       *pNumGroups = numGroups;
       return 0;
    };
