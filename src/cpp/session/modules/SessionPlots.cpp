@@ -931,8 +931,10 @@ double pixelsPerUnit(const std::string& units)
 
 int fixedPlotSizeInPixels(double value, const std::string& units)
 {
-   int pixels = static_cast<int>(std::round(value * pixelsPerUnit(units)));
-   return std::max(kMinFixedPlotSize, std::min(pixels, kMaxFixedPlotSize));
+   // clamp before converting, since the saved size may be out of int range
+   double pixels = std::round(value * pixelsPerUnit(units));
+   pixels = std::max<double>(kMinFixedPlotSize, std::min<double>(pixels, kMaxFixedPlotSize));
+   return static_cast<int>(pixels);
 }
 
 void syncFixedPlotSize()

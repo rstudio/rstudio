@@ -96,6 +96,9 @@ test_that("a fixed plot size pins the size of the RStudio graphics device (#4422
    writeFixedPlotSize(TRUE, width = 100, height = 0.5, units = "in")
    expect_equal(dev.size("in"), c(30, 1))
 
+   writeFixedPlotSize(TRUE, width = 1e12, height = -1e12, units = "in")
+   expect_equal(dev.size("in"), c(30, 1))
+
    # turning it off follows the pane again
    writeFixedPlotSize(FALSE, width = 4, height = 3, units = "in")
    expect_equal(dev.size("in"), paneSize)
