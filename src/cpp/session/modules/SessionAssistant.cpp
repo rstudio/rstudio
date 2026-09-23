@@ -1403,7 +1403,8 @@ Error startAgent(const std::string& assistantType = "")
    // it costs at most a retryable refusal while an update runs, and an
    // update refused because a dev agent is running is the conservative
    // outcome. Copilot without an override never launches from a Posit
-   // Assistant installation and never locks (lockToken stays 0, which release treats as a no-op).
+   // Assistant installation and never locks (lockToken stays 0, which
+   // release treats as a no-op).
    bool helperBranchSelected =
       (assistant == kAssistantPosit && positHelperConfigured) ||
       (assistant == kAssistantCopilot &&
