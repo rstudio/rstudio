@@ -177,11 +177,15 @@ std::vector<GidType> updateUserGroupCache(const User& user, const std::string& o
 
    LOG_DEBUG_MESSAGE(opName + " group list for user: " + username);
 
-   // continue on with whatever groups the lookup filled in if it fails
+   // a failed lookup yields no groups, and is kept out of the cache so that the
+   // next lookup tries again rather than serving a failure for the cache period
    std::vector<GidType> groupIds;
    Error error = queryUserGroupIds(user, &groupIds);
    if (error)
+   {
       LOG_ERROR(error);
+      return groupIds;
+   }
 
    UserGroupCache cacheEnt;
    cacheEnt.groupIds = groupIds;
@@ -325,31 +329,30 @@ Error groupFromId(gid_t gid, Group* pGroup)
  */
 Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds)
 {
-   // define a different gid type if we are on Mac vs Linux
-   // BSD expects int values, but Linux expects unsigned ints
-#ifndef __APPLE__
-   typedef gid_t GIDTYPE;
-#else
-   typedef int GIDTYPE;
-#endif
+   return queryUserGroupIds(user, pGroupIds, ::getgrouplist);
+}
 
+Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds, const GroupListLookup& lookup)
+{
    const std::string& username = user.getUsername();
 
    // get the groups for the user - we start with 100 groups which should be enough for most cases
    // if it is not, resize the vector with the correct amount of groups and try again
    int numGroups = 100;
-   std::vector<GIDTYPE> gids(numGroups);
+   std::vector<GroupListGidType> gids(numGroups);
    int lastNumGroups = numGroups;
-   Error error;
    errno = 0;
-   while (getgrouplist(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
+   while (lookup(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
    {
       if (numGroups == lastNumGroups)
       {
-         // getgrouplist(3) needn't set errno; hand back whatever it filled in
-         error = systemError(errno != 0 ? errno : ENOENT, ERROR_LOCATION);
+         // a failed lookup needn't have filled anything in (nor set errno), so
+         // publish nothing: the zeroed buffer would read as membership in gid 0
+         pGroupIds->clear();
+
+         Error error = systemError(errno != 0 ? errno : ENOENT, ERROR_LOCATION);
          error.addProperty("description", "Error retrieving groups for: " + username);
-         break;
+         return error;
       }
       gids.resize(numGroups);
       lastNumGroups = numGroups;
@@ -360,7 +363,7 @@ Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds)
    for (int i = 0; i < numGroups; i++)
       pGroupIds->push_back(static_cast<GidType>(gids[i]));
 
-   return error;
+   return Success();
 }
 
 std::vector<GidType> userGroupIds(const User& user)

@@ -1276,6 +1276,57 @@ TEST(PosixTests, ResolveUserReturnsCurrentUserAndGroups)
    EXPECT_NE(end, std::find(begin, end, user.getGroupId()));
 }
 
+TEST(PosixTests, QueryUserGroupIdsPublishesNothingWhenTheLookupFails)
+{
+   // getgrouplist(3) can fail without touching the count or the buffer, and the
+   // zeroed buffer must not then be handed back as membership in gid 0
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   std::vector<GidType> groupIds = { 12345 };
+   Error error = group::queryUserGroupIds(user, &groupIds, [](const char*, gid_t, group::GroupListGidType*, int*)
+   {
+      errno = EIO;
+      return -1;
+   });
+
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EIO, error.getCode());
+   EXPECT_TRUE(groupIds.empty());
+}
+
+TEST(PosixTests, QueryUserGroupIdsGrowsTheBufferToFit)
+{
+   // a lookup that reports a larger count is retried with room for it, and only
+   // the entries it reports come back
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   const int numGroups = 150;
+   int calls = 0;
+   auto lookup = [&calls](const char*, gid_t, group::GroupListGidType* groups, int* pNumGroups) -> int
+   {
+      calls++;
+      if (*pNumGroups < numGroups)
+      {
+         *pNumGroups = numGroups;
+         return -1;
+      }
+
+      for (int i = 0; i < numGroups; i++)
+         groups[i] = static_cast<group::GroupListGidType>(1000 + i);
+      *pNumGroups = numGroups;
+      return 0;
+   };
+
+   std::vector<GidType> groupIds;
+   ASSERT_FALSE(group::queryUserGroupIds(user, &groupIds, lookup));
+   EXPECT_EQ(2, calls);
+   ASSERT_EQ(static_cast<std::size_t>(numGroups), groupIds.size());
+   EXPECT_EQ(1000u, groupIds.front());
+   EXPECT_EQ(1000u + numGroups - 1, groupIds.back());
+}
+
 TEST(PosixTests, SetProcessLimitsReportsFailuresThroughCallback)
 {
    // a child between fork and exec hands setProcessLimits a syslog sink, so a
