@@ -27,9 +27,12 @@
 #include <unistd.h>
 #endif
 
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
+#include <cstdio>
 #include <cstdlib>
 #include <csignal>
 
@@ -283,7 +286,8 @@ namespace session {
 
 namespace {
 
-std::string s_fallbackLibraryPath;
+// leaked: exitFromBackgroundThread() reads it (see there)
+std::string& s_fallbackLibraryPath = core::make_leaked<std::string>();
 
 } // end anonymous namespace
 
@@ -1732,11 +1736,7 @@ void detectParentTermination()
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-
-      // we no longer exit with ::abort because it generated unwanted exceptions
-      // ::_Exit should perform the same functionality (not running destructors and exiting process)
-      // without generating an exception
-      std::_Exit(EXIT_FAILURE);
+      exitEarly(EXIT_FAILURE);
    }
    else if (result == ParentTerminationNormal)
    {
@@ -1755,11 +1755,7 @@ void detectParentTermination(int parentFdRead, int parentFdWrite)
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-
-      // we no longer exit with ::abort because it generated unwanted exceptions
-      // ::_Exit should perform the same functionality (not running destructors and exiting process)
-      // without generating an exception
-      std::_Exit(EXIT_FAILURE);
+      exitEarly(EXIT_FAILURE);
    }
    else if (result == ParentTerminationNormal)
    {
@@ -1828,11 +1824,91 @@ void loadCranRepos(const std::string& repos,
 namespace rstudio {
 namespace session {
 
+void exitFromBackgroundThread(int status)
+{
+   // Nothing may escape: the listener thread would swallow an exception and
+   // keep the session running, and the macOS monitor thread would terminate()
+   // with the crash report it exists to avoid. Each step below is best
+   // effort on its own, so one failing must not skip the rest.
+
+   // Everything below can block indefinitely: the lock release writes to a
+   // session directory that may sit on a stalled network mount, and fflush()
+   // waits on each stream's lock, which a thread blocked in a read or write
+   // can hold forever. A watchdog bounds the whole exit; without one, we
+   // leave at once rather than risk never leaving.
+   bool bounded = false;
+   try
+   {
+      std::thread([status]()
+      {
+         std::this_thread::sleep_for(std::chrono::seconds(2));
+         std::_Exit(status);
+      }).detach();
+
+      bounded = true;
+   }
+   catch (...)
+   {
+   }
+
+   if (!bounded)
+      std::_Exit(status);
+
+   // exit() flushes stdio, which output to R's file() and pipe() connections
+   // relies on to reach disk. This runs before the lock release below, so a
+   // hung flush costs a successor some waiting rather than costing the user
+   // buffered output.
+   try
+   {
+      std::fflush(nullptr);
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      FilePath(s_fallbackLibraryPath).removeIfExists();
+   }
+   catch (...)
+   {
+   }
+
+   // Link-based locks stay on disk marked as held. Only a reader on this
+   // host that is not load-balanced treats a dead owner's lock as stale at
+   // once; any other reader would wait out the lock timeout. The main thread
+   // may still be taking or using locks, so a successor that reads the
+   // release could act on a directory this process is still writing to. That
+   // window is kept to the release itself, with nothing else between it and
+   // _Exit(); the main-thread path has always released before exit() too.
+   try
+   {
+      FileLock::cleanUp();
+   }
+   catch (...)
+   {
+   }
+
+   std::_Exit(status);
+}
+
 void exitEarly(int status)
 {
+   // exit() runs atexit handlers and static destructors on the calling
+   // thread, underneath a main thread that may still be using them. _Exit()
+   // skips both for the executable (on Windows, rsession.dll still gets
+   // DLL_PROCESS_DETACH and destroys its own statics). A background caller
+   // skips the worker joins below too: the main thread may be stopping or
+   // destroying the same thread handles, and _Exit() destroys nothing the
+   // workers use.
+   if (!core::thread::isMainThread())
+      exitFromBackgroundThread(status);
+
+   // no worker may still be running when exit() destroys the statics it uses
    stopMonitorWorkerThread();
    server_rpc::stop();
    offlineService().stop();
+
    FileLock::cleanUp();
    FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);

@@ -62,6 +62,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/DateTime.hpp>
@@ -99,11 +100,13 @@ const char * const kReleasedProcessId = "-1";
 const int kLockFileMode = 0644;
 
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
-boost::function<void()> s_beforeRelease;
-boost::function<void()> s_beforeRefresh;
-boost::function<Error(int)> s_beforeWrite;
-boost::function<void(const FilePath&)> s_beforeClaim;
-boost::function<void(const FilePath&)> s_afterRename;
+// Leaked, since cleanUp() can run on a background thread while the main
+// thread is in exit() destroying statics (see session::exitEarly).
+boost::function<void()>& s_beforeRelease = make_leaked<boost::function<void()>>();
+boost::function<void()>& s_beforeRefresh = make_leaked<boost::function<void()>>();
+boost::function<Error(int)>& s_beforeWrite = make_leaked<boost::function<Error(int)>>();
+boost::function<void(const FilePath&)>& s_beforeClaim = make_leaked<boost::function<void(const FilePath&)>>();
+boost::function<void(const FilePath&)>& s_afterRename = make_leaked<boost::function<void(const FilePath&)>>();
 bool s_forceClaimDirectoryChownFailure = false;
 bool s_forceFallback = false;
 #endif

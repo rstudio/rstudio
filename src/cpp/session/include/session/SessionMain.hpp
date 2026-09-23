@@ -49,6 +49,11 @@ void controlledExit(int statusCode);
 
 void exitEarly(int statusCode);
 
+// Releases file locks, flushes stdio, and ends the process with _Exit(),
+// running no atexit handlers or static destructors. For callers on a
+// background thread, which must not tear down statics under the main thread.
+[[noreturn]] void exitFromBackgroundThread(int statusCode);
+
 }
 }
 
