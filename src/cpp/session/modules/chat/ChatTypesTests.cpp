@@ -197,3 +197,32 @@ TEST(SemanticVersion, InequalityOperatorWorksCorrectly)
    v2.parse("1.2.3");
    EXPECT_FALSE(v1 != v2);
 }
+
+// -- isProtocolVersionForm ---------------------------------------------------
+
+TEST(IsProtocolVersionForm, AcceptsMajorDotZero)
+{
+   EXPECT_TRUE(isProtocolVersionForm("11.0"));
+   EXPECT_TRUE(isProtocolVersionForm("9.0"));
+   EXPECT_TRUE(isProtocolVersionForm("100.0"));
+}
+
+TEST(IsProtocolVersionForm, RejectsEverythingSemanticVersionWouldAccept)
+{
+   // Each of these parses as a SemanticVersion, which is why the parser cannot
+   // be the check.
+   EXPECT_FALSE(isProtocolVersionForm("11"));
+   EXPECT_FALSE(isProtocolVersionForm("v11.0"));
+   EXPECT_FALSE(isProtocolVersionForm("11.0.0"));
+   EXPECT_FALSE(isProtocolVersionForm("11.1"));
+   EXPECT_FALSE(isProtocolVersionForm("11.00"));
+}
+
+TEST(IsProtocolVersionForm, RejectsMalformedStrings)
+{
+   EXPECT_FALSE(isProtocolVersionForm(""));
+   EXPECT_FALSE(isProtocolVersionForm(".0"));
+   EXPECT_FALSE(isProtocolVersionForm("a.0"));
+   EXPECT_FALSE(isProtocolVersionForm("11.0 "));
+   EXPECT_FALSE(isProtocolVersionForm(" 11.0"));
+}

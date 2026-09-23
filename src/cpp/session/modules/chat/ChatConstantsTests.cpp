@@ -14,6 +14,7 @@
  */
 
 #include "ChatConstants.hpp"
+#include "ChatTypes.hpp"
 
 #include <gtest/gtest.h>
 
@@ -22,6 +23,17 @@
 #include <vector>
 
 using namespace rstudio::session::modules::chat::constants;
+
+// -- kProtocolVersion --------------------------------------------------------
+
+TEST(ProtocolVersion, IsOfTheFormMajorDotZero)
+{
+   // Every site that compares protocols does so as an exact string, so a
+   // constant with any other minor would be offered by the manifest and then
+   // refused by the install identity check.
+   EXPECT_TRUE(rstudio::session::modules::chat::types::isProtocolVersionForm(
+      kProtocolVersion)) << kProtocolVersion;
+}
 
 // -- assembleWebSocketPath ---------------------------------------------------
 

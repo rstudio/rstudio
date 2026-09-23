@@ -68,41 +68,17 @@ std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
 std::mutex s_authTokenMutex;
 std::string s_chatBackendAuthToken;
 
-// The installation the chat backend was last started from, set by
-// SessionChat.cpp. Empty before the first start, or when cleared by a caller
-// whose installation is gone. Guarded by a mutex for the same reason as the
-// port: written from the main thread, read from HTTP handler threads.
-std::mutex s_installationMutex;
-FilePath s_installationPath;
-
 /**
  * The installation to serve client assets from.
  *
- * The installation the chat backend was last started from, once it has
- * started -- including after it exits, so a page that outlives its backend
- * can still load chunks. Otherwise the tier search runs, which is the only
- * answer available before the first start.
- *
- * A pinned path that no longer holds an installation counts as nothing
- * pinned: an update that rolled back without restoring it, a removal out of
- * band, or an extraction that failed and could not be cleaned up must not
- * cost the requests a copy in another tier could still answer. Tested with
- * verifyPositAiInstallation(), the same definition the resolver requires of
- * a tier, so a half-extracted directory does not stay selected just because
- * its root is there. The pin is left set rather than cleared, since an update
- * can put a working installation back at the same path.
+ * The one this session resolved and runs, so the page is served from the
+ * same installation as the backend it talks to -- including after that
+ * backend exits, so a page that outlives its backend can still load chunks.
+ * The resolution re-checks its answer on each read, so an installation
+ * removed out of band does not stay served just because it was resolved once.
  */
 FilePath servedInstallationPath()
 {
-   FilePath pinned;
-   {
-      std::lock_guard<std::mutex> lock(s_installationMutex);
-      pinned = s_installationPath;
-   }
-
-   if (!pinned.isEmpty() && verifyPositAiInstallation(pinned))
-      return pinned;
-
    return locatePositAssistantInstallation();
 }
 
@@ -177,26 +153,24 @@ void injectThemeInfo(std::string* pContent)
 }
 
 /**
- * Load CSP directives from dist/csp.json in the Posit Assistant installation
- * currently being served.
+ * Load CSP directives from dist/csp.json in the given Posit Assistant
+ * installation.
  *
  * The file is emitted by the databot build and contains the same defaults
  * that DatabotServer uses in its Express middleware, so it belongs to the
  * client it ships with. Read on every call rather than cached, because the
- * installation changes underneath the session: an in-session update extracts
- * a new package -- over the same directory today, into a new one once
- * installs are versioned -- and the client served afterwards must be served
- * under its own policy. Callers are the header cache below, which runs once
- * per backend start, not once per request.
+ * installation being served changes underneath the session: an in-session
+ * update publishes a new slot, and the client served afterwards must be
+ * served under its own policy. Callers are the header cache below, which
+ * runs once per backend start or installation change, not once per request.
  *
  * @return Directive map (e.g., {"default-src": "'self'", ...}), or empty
  *         map if the file is missing or unparseable.
  */
-std::map<std::string, std::string> loadCspDirectives()
+std::map<std::string, std::string> loadCspDirectives(const FilePath& positAiPath)
 {
    std::map<std::string, std::string> result;
 
-   FilePath positAiPath = servedInstallationPath();
    if (positAiPath.isEmpty())
       return result;
 
@@ -245,21 +219,27 @@ std::map<std::string, std::string> loadCspDirectives()
    return result;
 }
 
-// Cached CSP header string, rebuilt when the backend port changes.
+// Cached CSP header string, rebuilt when the backend port changes or the
+// installation being served does.
 std::mutex s_cspMutex;
 std::string s_cachedCspHeader;
+FilePath s_cspInstallationPath;
 bool s_cspHeaderBuilt = false;
 
 /**
  * Rebuild the cached CSP header string from dist/csp.json directives.
  *
- * Called once lazily on the first HTML request and again whenever the
- * backend port changes via setChatBackendPort(). The directives are re-read
- * on each rebuild, so a backend restart -- which is how an in-session update
- * takes effect -- serves the policy belonging to the installation now being
- * served (#18831).
+ * Called on an HTML request that finds the cache empty or built for another
+ * installation, and whenever the backend port changes via
+ * setChatBackendPort(). The directives are re-read on each rebuild, so a
+ * backend restart -- which is how an in-session update takes effect -- serves
+ * the policy belonging to the installation now being served (#18831). The
+ * installation is passed in rather than resolved here so that the page and
+ * the policy come from the one resolution the request handler made, and the
+ * header built is returned under the same lock so the caller cannot read a
+ * later rebuild's result.
  */
-void rebuildCspHeaderCache()
+std::string rebuildCspHeaderCache(const FilePath& positAiPath)
 {
    // Held across the read as well as the store. Two rebuilds can overlap --
    // the lazy one below on an HTTP handler thread, and the one a backend start
@@ -268,7 +248,7 @@ void rebuildCspHeaderCache()
    // next restart, which is the staleness of #18831 one layer down.
    std::lock_guard<std::mutex> lock(s_cspMutex);
 
-   std::map<std::string, std::string> directives = loadCspDirectives();
+   std::map<std::string, std::string> directives = loadCspDirectives(positAiPath);
 
    // If csp.json was missing, use a restrictive fallback
    if (directives.empty())
@@ -329,28 +309,33 @@ void rebuildCspHeaderCache()
    }
 
    s_cachedCspHeader = header;
+   s_cspInstallationPath = positAiPath;
    s_cspHeaderBuilt = true;
+   return header;
 }
 
 /**
  * Get the Content-Security-Policy header value.
  *
  * Returns a cached string built from dist/csp.json directives, augmented
- * with RStudio-specific additions. The cache is rebuilt lazily on first
- * call and whenever the backend port changes.
+ * with RStudio-specific additions. The cache is rebuilt when the backend
+ * port changes and when the installation being served is not the one the
+ * cached policy was read from: the policy belongs to the installation, and
+ * the resolution can change without a backend start -- an install clears it,
+ * and an installation removed out of band is resolved around -- so a policy
+ * that only followed the port would outlive the installation it came from.
  *
+ * @param positAiPath The installation the page being served comes from.
  * @return CSP header string
  */
-std::string buildCspHeader()
+std::string buildCspHeader(const FilePath& positAiPath)
 {
    {
       std::lock_guard<std::mutex> lock(s_cspMutex);
-      if (s_cspHeaderBuilt)
+      if (s_cspHeaderBuilt && s_cspInstallationPath == positAiPath)
          return s_cachedCspHeader;
    }
-   rebuildCspHeaderCache();
-   std::lock_guard<std::mutex> lock(s_cspMutex);
-   return s_cachedCspHeader;
+   return rebuildCspHeaderCache(positAiPath);
 }
 
 } // anonymous namespace
@@ -555,7 +540,7 @@ Error handleAIChatRequest(const http::Request& request,
             }
          }
       }
-      pResponse->setHeader("Content-Security-Policy", buildCspHeader());
+      pResponse->setHeader("Content-Security-Policy", buildCspHeader(positAiPath));
    }
    pResponse->setContentType(getContentType(extension));
 
@@ -585,33 +570,13 @@ Error handleAIChatRequest(const http::Request& request,
 void setChatBackendPort(int port)
 {
    s_chatBackendPort = port;
-   rebuildCspHeaderCache();
+   rebuildCspHeaderCache(servedInstallationPath());
 }
 
 void setChatBackendAuthToken(const std::string& token)
 {
    std::lock_guard<std::mutex> lock(s_authTokenMutex);
    s_chatBackendAuthToken = token;
-}
-
-void setInstallationPath(const FilePath& path)
-{
-   {
-      std::lock_guard<std::mutex> lock(s_installationMutex);
-      s_installationPath = path;
-   }
-
-   // The policy belongs to the installation, so changing which one is served
-   // rebuilds it here rather than leaving each caller to pair the change with
-   // a setChatBackendPort() call. A caller that changed the pin after the
-   // backend stopped, without starting another, would otherwise leave the
-   // previous installation's policy in force (#18831).
-   //
-   // Outside the lock above: rebuilding reads the pin back through
-   // servedInstallationPath(), so holding it here would take
-   // s_installationMutex before s_cspMutex and deadlock against the one
-   // ordering every other path uses.
-   rebuildCspHeaderCache();
 }
 
 } // namespace staticfiles
