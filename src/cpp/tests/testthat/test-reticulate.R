@@ -55,3 +55,170 @@ test_that("Python help topics reject code injection payloads", {
    expect_false(.rs.python.isHelpTopicValid(""))
 
 })
+
+# initializing Python with no interpreter configured can make reticulate
+# provision one over the network, so only run when one was requested
+skipIfPythonUnavailable <- function()
+{
+   skip_if_not_installed("reticulate")
+   skip_if(!nzchar(Sys.getenv("RETICULATE_PYTHON")), "RETICULATE_PYTHON is not set")
+
+   available <- tryCatch(
+      reticulate::py_available(initialize = TRUE),
+      error = function(e) FALSE
+   )
+
+   skip_if_not(available, "Python is not available")
+}
+
+test_that("Python function arguments are discovered with inspect.signature()", {
+
+   skipIfPythonUnavailable()
+
+   reticulate::py_run_string('
+def _rs_test_function(a, b: int, c=1, *args, d, e=2, **kwargs):
+    pass
+
+class _rs_test_class:
+    def __init__(self, x, y=1, *, z=2):
+        pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_class"), add = TRUE)
+
+   # variadic parameters can't be supplied as 'name=value'
+   object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("a", "b", "c", "d", "e"))
+
+   # classes report their constructor's arguments, without 'self'
+   object <- reticulate::py_eval("_rs_test_class", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("x", "y", "z"))
+
+})
+
+test_that("Python function arguments tolerate unresolvable lazy annotations", {
+
+   skipIfPythonUnavailable()
+   skip_if(reticulate::py_version() < "3.14", "lazy annotations require Python 3.14")
+
+   # '_RsTestMissing' is never bound, as with imports guarded by TYPE_CHECKING
+   reticulate::py_run_string('
+def _rs_test_function(a, b: _RsTestMissing = None):
+    pass
+
+class _rs_test_class:
+    def __init__(self, x: _RsTestMissing, *, y=1):
+        pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_class"), add = TRUE)
+
+   object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("a", "b"))
+
+   object <- reticulate::py_eval("_rs_test_class", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("x", "y"))
+
+})
+
+test_that("Python positional-only arguments are not offered", {
+
+   skipIfPythonUnavailable()
+   skip_if(reticulate::py_version() < "3.8", "positional-only syntax requires Python 3.8")
+
+   reticulate::py_run_string('
+def _rs_test_function(a, /, b):
+    pass
+
+def _rs_test_positional(x, /):
+    """_rs_test_positional(x)"""
+    pass
+
+def _rs_test_varargs(x, /, *args):
+    """_rs_test_varargs(x)"""
+    pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_positional, _rs_test_varargs"), add = TRUE)
+
+   object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), "b")
+
+   # functions that accept no keywords at all are complete; don't consult
+   # the docstring for names that can't be passed as 'name=value'
+   object <- reticulate::py_eval("_rs_test_positional", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), character())
+
+   object <- reticulate::py_eval("_rs_test_varargs", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), character())
+
+})
+
+test_that("Python function arguments fall back to the docstring only for opaque signatures", {
+
+   skipIfPythonUnavailable()
+
+   reticulate::py_run_string('
+def _rs_test_function(*args, **kwargs):
+    """_rs_test_function(x, y=1)"""
+    pass
+
+def _rs_test_empty():
+    """Same as _rs_test_function(x, y=1)"""
+    pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_empty"), add = TRUE)
+
+   object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("x", "y"))
+
+   # a function that genuinely takes no arguments shouldn't borrow any
+   object <- reticulate::py_eval("_rs_test_empty", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), character())
+
+})
+
+test_that("Python argument completions are empty when there are no arguments", {
+
+   skipIfPythonUnavailable()
+
+   # the docstring fallback finds no arguments in '_rs_test_wrapper()'
+   reticulate::py_run_string('
+def _rs_test_empty():
+    pass
+
+def _rs_test_wrapper(*args, **kwargs):
+    """_rs_test_wrapper()"""
+    pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_empty, _rs_test_wrapper"), add = TRUE)
+
+   expect_length(.rs.python.getCompletionsArguments("_rs_test_empty", ""), 0)
+   expect_length(.rs.python.getCompletionsArguments("_rs_test_wrapper", ""), 0)
+
+})
+
+test_that("Python parameter help includes each parameter's description", {
+
+   skipIfPythonUnavailable()
+
+   # the docstring ends with the last parameter's description
+   reticulate::py_run_string('
+def _rs_test_function(alpha, *, beta=1):
+    """Test function.
+
+    Parameters
+    ----------
+    alpha : int
+        The first parameter.
+    beta : int
+        The second parameter."""
+    pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function"), add = TRUE)
+
+   help <- .rs.python.getParameterHelp("_rs_test_function")
+   expect_equal(help$args, c("alpha", "beta"))
+   expect_equal(
+      help$arg_descriptions,
+      c("int\nThe first parameter.", "int\nThe second parameter.")
+   )
+
+})
