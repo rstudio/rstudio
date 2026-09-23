@@ -143,24 +143,16 @@ Error readTrustFileForUpdate(std::vector<std::string>* pTrusted,
    if (!error)
       return Success();
 
-   // writes aren't atomic, so another session may have been partway through
-   // writing the file; read it again before deciding it's invalid
-   std::string latestContents;
-   Error readError = readStringFromFile(filePath, &latestContents);
-   if (readError)
-      return readError;
+   // keep a copy of the contents being replaced (e.g. a hand edit with a typo),
+   // so they can be recovered by hand, without replacing a copy kept earlier;
+   // if that isn't possible, fail rather than lose them
+   FilePath parentPath = filePath.getParent();
+   std::string backupName = filePath.getFilename() + ".invalid";
+   FilePath backupPath = parentPath.completeChildPath(backupName);
+   for (int i = 2; backupPath.exists(); ++i)
+      backupPath = parentPath.completeChildPath(backupName + "-" + std::to_string(i));
 
-   if (latestContents != contents)
-   {
-      error = parseTrustFile(filePath, latestContents, pTrusted, pUntrusted);
-      if (!error)
-         return Success();
-   }
-
-   // keep a copy of the contents being replaced, so they can be recovered by
-   // hand; if that isn't possible, fail rather than lose them
-   FilePath backupPath = filePath.getParent().completeChildPath(filePath.getFilename() + ".invalid");
-   Error backupError = writeStringToFile(backupPath, latestContents);
+   Error backupError = writeStringToFile(backupPath, contents);
    if (backupError)
    {
       LOG_ERROR(backupError);

@@ -19,6 +19,11 @@
 #include <string>
 #include <vector>
 
+#ifndef _WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include <shared_core/FilePath.hpp>
@@ -111,20 +116,41 @@ TEST_F(SessionTrustTest, GrantReplacesUnparseableTrustFile)
    EXPECT_EQ(invalid, backup);
 }
 
+TEST_F(SessionTrustTest, SuccessiveRecoveriesKeepEarlierCopies)
+{
+   ASSERT_FALSE(writeStringToFile(trustFile(), "first"));
+   EXPECT_FALSE(grantTrust(project_));
+
+   ASSERT_FALSE(writeStringToFile(trustFile(), "second"));
+   EXPECT_FALSE(grantTrust(project_));
+
+   std::string backup;
+   EXPECT_FALSE(readStringFromFile(dataHome_.completePath("trust.json.invalid"), &backup));
+   EXPECT_EQ("first", backup);
+   EXPECT_FALSE(readStringFromFile(dataHome_.completePath("trust.json.invalid-2"), &backup));
+   EXPECT_EQ("second", backup);
+}
+
+#ifndef _WIN32
 TEST_F(SessionTrustTest, GrantLeavesInvalidTrustFileItCannotKeep)
 {
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root bypasses file permissions";
+
    const std::string invalid = "{ \"trustedDirectories\": [";
    ASSERT_FALSE(writeStringToFile(trustFile(), invalid));
 
-   // something in the way of the backup
-   ASSERT_FALSE(dataHome_.completePath("trust.json.invalid").ensureDirectory());
+   // the backup can't be created next to the trust file
+   ASSERT_EQ(0, ::chmod(dataHome_.getAbsolutePath().c_str(), 0555));
+   Error error = grantTrust(project_);
+   ASSERT_EQ(0, ::chmod(dataHome_.getAbsolutePath().c_str(), 0755));
 
-   EXPECT_TRUE(grantTrust(project_));
-
+   EXPECT_TRUE(error);
    std::string contents;
    EXPECT_FALSE(readStringFromFile(trustFile(), &contents));
    EXPECT_EQ(invalid, contents);
 }
+#endif
 
 TEST_F(SessionTrustTest, RevokeReplacesTrustFileWithWrongShape)
 {
