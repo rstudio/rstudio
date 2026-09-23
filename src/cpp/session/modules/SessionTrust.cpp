@@ -87,18 +87,11 @@ std::vector<std::string> extractStringArray(const json::Object& obj,
    return result;
 }
 
-Error readTrustFile(std::vector<std::string>* pTrusted,
-                    std::vector<std::string>* pUntrusted)
+Error parseTrustFile(const FilePath& filePath,
+                     const std::string& contents,
+                     std::vector<std::string>* pTrusted,
+                     std::vector<std::string>* pUntrusted)
 {
-   FilePath filePath = trustFilePath();
-   if (!filePath.exists())
-      return Success();
-
-   std::string contents;
-   Error error = readStringFromFile(filePath, &contents);
-   if (error)
-      return error;
-
    json::Value value;
    if (value.parse(contents))
       return systemError(boost::system::errc::invalid_argument,
@@ -111,6 +104,48 @@ Error readTrustFile(std::vector<std::string>* pTrusted,
    json::Object obj = value.getObject();
    *pTrusted = extractStringArray(obj, "trustedDirectories");
    *pUntrusted = extractStringArray(obj, "untrustedDirectories");
+
+   return Success();
+}
+
+Error readTrustFile(std::vector<std::string>* pTrusted,
+                    std::vector<std::string>* pUntrusted)
+{
+   FilePath filePath = trustFilePath();
+   if (!filePath.exists())
+      return Success();
+
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   return parseTrustFile(filePath, contents, pTrusted, pUntrusted);
+}
+
+// Reads the trust lists ahead of changing them. Unlike readTrustFile, contents
+// that can't be parsed are discarded rather than returned as an error: their
+// entries are already being ignored, and the update rewrites the file, which
+// would otherwise have to be repaired by hand before trust could be granted.
+Error readTrustFileForUpdate(std::vector<std::string>* pTrusted,
+                             std::vector<std::string>* pUntrusted)
+{
+   FilePath filePath = trustFilePath();
+   if (!filePath.exists())
+      return Success();
+
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   error = parseTrustFile(filePath, contents, pTrusted, pUntrusted);
+   if (error)
+   {
+      WLOGF("Replacing invalid trust settings in {}: {}", filePath.getAbsolutePath(), error.asString());
+      pTrusted->clear();
+      pUntrusted->clear();
+   }
 
    return Success();
 }
@@ -282,7 +317,7 @@ Error grantTrust(const FilePath& directory)
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
-   Error error = readTrustFile(&trustedDirs, &untrustedDirs);
+   Error error = readTrustFileForUpdate(&trustedDirs, &untrustedDirs);
    if (error)
       return error;
 
@@ -307,7 +342,7 @@ Error revokeTrust(const FilePath& directory)
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
-   Error error = readTrustFile(&trustedDirs, &untrustedDirs);
+   Error error = readTrustFileForUpdate(&trustedDirs, &untrustedDirs);
    if (error)
       return error;
 
@@ -332,7 +367,7 @@ Error resetTrust(const FilePath& directory)
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
-   Error error = readTrustFile(&trustedDirs, &untrustedDirs);
+   Error error = readTrustFileForUpdate(&trustedDirs, &untrustedDirs);
    if (error)
       return error;
 

@@ -21,10 +21,17 @@
 # include <winsock2.h>
 #endif
 
+#ifndef _WIN32
+# include <cerrno>
+# include <sys/stat.h>
+# include <unistd.h>
+#endif
+
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/User.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
@@ -400,6 +407,117 @@ void verifyUserDirs(
    testDir(userDataDir(user, homeDir).completePath("log"), ERROR_LOCATION);
 #endif
 }
+
+namespace {
+
+bool s_userDataDirTemporary = false;
+
+} // anonymous namespace
+
+bool isUserDataDirTemporary()
+{
+   return s_userDataDirTemporary;
+}
+
+#ifndef _WIN32
+
+Error checkDirectoryWritable(const FilePath& dir)
+{
+   Error error = dir.ensureDirectory();
+   if (error)
+      return error;
+
+   // create a file rather than inspecting permission bits, so that a read-only
+   // file system or an exhausted quota is caught too. this runs before logging
+   // is set up, so leave reporting the error to the caller
+   FilePath probe = dir.completePath(".write-test-" + core::system::generateShortenedUuid());
+   error = writeStringToFile(
+      probe,
+      "rstudio",
+      string_utils::LineEndingPassthrough,
+      true,   // truncate
+      0,      // maxOpenRetrySeconds
+      false); // logError
+   if (error)
+   {
+      probe.removeIfExists();
+      return error;
+   }
+
+   return probe.remove();
+}
+
+Error temporaryUserDataDir(FilePath* pDir)
+{
+   FilePath tempFile;
+   Error error = FilePath::tempFilePath(tempFile);
+   if (error)
+      return error;
+
+   FilePath dir = tempFile.getParent().completeChildPath("rstudio-data-" + username());
+   std::string path = dir.getAbsolutePath();
+   if (::mkdir(path.c_str(), 0700) != 0 && errno != EEXIST)
+   {
+      error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   // the temporary directory is often shared with other users, so don't
+   // accept a directory (or a symlink to one) that somebody else created
+   struct stat info;
+   if (::lstat(path.c_str(), &info) != 0)
+   {
+      error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   if (!S_ISDIR(info.st_mode) || info.st_uid != ::geteuid())
+   {
+      error = systemError(
+         boost::system::errc::permission_denied,
+         "Not a directory owned by the current user",
+         ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   if ((info.st_mode & 077) != 0 && ::chmod(path.c_str(), 0700) != 0)
+   {
+      error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   *pDir = dir;
+   return Success();
+}
+
+Error redirectUnwritableUserDataDir(FilePath* pTemporaryDir, Error* pTemporaryDirError)
+{
+   Error dataDirError = checkDirectoryWritable(userDataDir());
+   if (!dataDirError)
+      return Success();
+
+   FilePath temporaryDir;
+   Error error = temporaryUserDataDir(&temporaryDir);
+   if (!error)
+      error = checkDirectoryWritable(temporaryDir);
+   if (error)
+   {
+      *pTemporaryDirError = error;
+      return dataDirError;
+   }
+
+   setenv("RSTUDIO_DATA_HOME", temporaryDir.getAbsolutePath());
+   s_userDataDirTemporary = true;
+
+   *pTemporaryDir = temporaryDir;
+   return dataDirError;
+}
+
+#endif
 
 FilePath systemConfigDir()
 {

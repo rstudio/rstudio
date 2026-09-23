@@ -19,6 +19,9 @@
 
 #include <boost/filesystem.hpp>
 
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <vector>
 
 #include <core/FileSerializer.hpp>
@@ -192,6 +195,133 @@ TEST(XdgTest, SystemConfigFileSearch)
 
    // clean up
    boost::filesystem::remove_all(testDir);
+}
+
+namespace {
+
+// A unique directory for a single test, removed when the test finishes.
+class ScopedTestDir : boost::noncopyable
+{
+public:
+   ScopedTestDir()
+   {
+      EXPECT_FALSE(FilePath::tempFilePath(path_));
+      EXPECT_FALSE(path_.ensureDirectory());
+   }
+
+   ~ScopedTestDir()
+   {
+      EXPECT_FALSE(path_.removeIfExists());
+   }
+
+   const FilePath& path() const
+   {
+      return path_;
+   }
+
+private:
+   FilePath path_;
+};
+
+mode_t fileMode(const FilePath& path)
+{
+   struct stat info;
+   EXPECT_EQ(0, ::lstat(path.getAbsolutePath().c_str(), &info));
+   return info.st_mode & 07777;
+}
+
+} // anonymous namespace
+
+TEST(XdgTest, CheckDirectoryWritable)
+{
+   ScopedTestDir testDir;
+
+   EXPECT_FALSE(checkDirectoryWritable(testDir.path()));
+
+   // a missing directory is created, and no probe file is left behind
+   FilePath missing = testDir.path().completePath("a/b");
+   EXPECT_FALSE(checkDirectoryWritable(missing));
+   EXPECT_TRUE(missing.isDirectory());
+   std::vector<FilePath> children;
+   EXPECT_FALSE(missing.getChildren(children));
+   EXPECT_TRUE(children.empty());
+
+   FilePath file = testDir.path().completePath("file");
+   ASSERT_FALSE(file.ensureFile());
+   EXPECT_TRUE(checkDirectoryWritable(file));
+
+   // root can write regardless of permission bits
+   if (::geteuid() != 0)
+   {
+      FilePath readOnly = testDir.path().completePath("read-only");
+      ASSERT_FALSE(readOnly.ensureDirectory());
+      ASSERT_EQ(0, ::chmod(readOnly.getAbsolutePath().c_str(), 0555));
+      EXPECT_TRUE(checkDirectoryWritable(readOnly));
+      ASSERT_EQ(0, ::chmod(readOnly.getAbsolutePath().c_str(), 0755));
+   }
+}
+
+TEST(XdgTest, TemporaryUserDataDir)
+{
+   ScopedTestDir testDir;
+   EnvironmentScope scope("TMPDIR", testDir.path().getAbsolutePath().c_str());
+   FilePath expected = testDir.path().completePath("rstudio-data-" + username());
+
+   FilePath temporaryDir;
+   ASSERT_FALSE(temporaryUserDataDir(&temporaryDir));
+   EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
+   EXPECT_TRUE(temporaryDir.isDirectory());
+   EXPECT_EQ(0700, fileMode(temporaryDir));
+
+   // an existing directory is reused, and made private again
+   ASSERT_EQ(0, ::chmod(expected.getAbsolutePath().c_str(), 0755));
+   ASSERT_FALSE(temporaryUserDataDir(&temporaryDir));
+   EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
+   EXPECT_EQ(0700, fileMode(temporaryDir));
+
+   // anything else at that path is refused, including a symlink to a directory
+   ASSERT_FALSE(expected.remove());
+   FilePath target = testDir.path().completePath("target");
+   ASSERT_FALSE(target.ensureDirectory());
+   ASSERT_EQ(0, ::symlink(target.getAbsolutePath().c_str(), expected.getAbsolutePath().c_str()));
+   EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
+
+   ASSERT_EQ(0, ::unlink(expected.getAbsolutePath().c_str()));
+   ASSERT_FALSE(expected.ensureFile());
+   EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
+}
+
+TEST(XdgTest, RedirectUnwritableUserDataDir)
+{
+   // root can write regardless of permission bits
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "permission checks don't apply to root";
+
+   ScopedTestDir testDir;
+   FilePath dataDir = testDir.path().completePath("data");
+   ASSERT_FALSE(dataDir.ensureDirectory());
+   EnvironmentScope tmpScope("TMPDIR", testDir.path().getAbsolutePath().c_str());
+   EnvironmentScope dataScope("RSTUDIO_DATA_HOME", dataDir.getAbsolutePath().c_str());
+
+   // a writable data directory is left alone
+   FilePath temporaryDir;
+   Error temporaryDirError;
+   EXPECT_FALSE(redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError));
+   EXPECT_TRUE(temporaryDir.isEmpty());
+   EXPECT_EQ(dataDir.getAbsolutePath(), userDataDir().getAbsolutePath());
+
+   // an unwritable one is replaced by the temporary directory. note that this
+   // leaves isUserDataDirTemporary() set for the rest of the test process
+   ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0555));
+   Error error = redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError);
+   ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0755));
+
+   EXPECT_TRUE(error);
+   EXPECT_FALSE(temporaryDirError);
+   FilePath expected = testDir.path().completePath("rstudio-data-" + username());
+   EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
+   EXPECT_EQ(expected.getAbsolutePath(), userDataDir().getAbsolutePath());
+   EXPECT_TRUE(isUserDataDirTemporary());
 }
 
 } // namespace tests

@@ -18,6 +18,8 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <core/Exec.hpp>
+#include <core/Log.hpp>
+#include <core/system/System.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -97,7 +99,25 @@ UserStateValues& userState()
 
 Error initializeState()
 {
-   return userState().initialize();
+   Error error = userState().initialize();
+   if (error)
+      return error;
+
+   // this must happen before a project is opened, since the project's scratch
+   // path is named after the context ID
+   ensureContextId();
+
+   return Success();
+}
+
+void ensureContextId()
+{
+   if (!userState().contextId().empty())
+      return;
+
+   Error error = userState().setContextId(core::system::generateShortenedUuid());
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // namespace prefs

@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <ctime>
 #include <thread>
 #include <vector>
 
@@ -34,6 +35,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/FileLock.hpp>
 #include <core/FileUtils.hpp>
+#include <core/Log.hpp>
 #include <core/BoostErrors.hpp>
 
 #include <r/session/RSession.hpp>
@@ -131,6 +133,9 @@ FilePath sessionRestartFilePath(const FilePath& sessionDir)
 {
    return sessionDir.completePath("restart_file");
 }
+
+// a restart file older than this belongs to a restart that never completed
+const std::time_t kRestartFileMaxAgeSeconds = 60 * 5;
 
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
 boost::shared_ptr<FileLock> createSessionDirLock()
@@ -424,8 +429,7 @@ Error reclaimOrphanedSession(
       FilePath restartFile = sessionRestartFilePath(sessionDir);
       if (restartFile.exists())
       {
-         if (std::time(nullptr) - restartFile.getLastWriteTime() >
-              (1000 * 60 * 5))
+         if (std::time(nullptr) - restartFile.getLastWriteTime() > kRestartFileMaxAgeSeconds)
          {
             // the file exists, but it's more than five minutes old, so 
             // something went wrong 
@@ -440,6 +444,23 @@ Error reclaimOrphanedSession(
             // it alone
             continue;
          }
+      }
+
+      // Leave alone directories we can't write to (e.g. one left behind by a
+      // session run as root). We couldn't lock one after adopting it, and as
+      // adopting renames it after this session, each later start would adopt
+      // it and fail again.
+      bool writeable = false;
+      Error writeableError = sessionDir.isWriteable(writeable);
+      if (writeableError)
+      {
+         LOG_ERROR(writeableError);
+         continue;
+      }
+      if (!writeable)
+      {
+         WLOGF("Not recovering source database {}: directory is not writable", sessionDir.getAbsolutePath());
+         continue;
       }
 
       // Adopt only a session dir we can confirm is unlocked. isLocked() fails

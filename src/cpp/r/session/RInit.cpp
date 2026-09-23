@@ -274,6 +274,16 @@ Error initialize()
       if (utils::isR3())
          path += "-r3";
       graphicsPath = utils::sessionScratchPath().completePath(path);
+
+      // plots won't survive a suspend without the stable directory, but that
+      // is better than failing to start the session
+      error = graphicsPath.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         graphicsPath = r::session::utils::tempDir().completePath(
+            "rs-graphics-" + core::system::generateUuid());
+      }
    }
    else
    {

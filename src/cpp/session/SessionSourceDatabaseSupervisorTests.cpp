@@ -20,6 +20,11 @@
 #include <thread>
 #include <vector>
 
+#ifndef _WIN32
+# include <sys/stat.h>
+# include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include <core/FileLock.hpp>
@@ -386,7 +391,50 @@ TEST_F(SourceDatabaseSupervisorTest, LeavesRestartingSessionsAlone)
    expectDocuments(originalDir_);
 }
 
+TEST_F(SourceDatabaseSupervisorTest, RecoversSessionsWithStaleRestartFiles)
+{
+   // a restart that never completed shouldn't protect the directory forever
+   FilePath restartFile = originalDir_.completePath("restart_file");
+   ASSERT_FALSE(restartFile.ensureFile());
+   restartFile.setLastWriteTime(std::time(nullptr) - 60 * 10);
+
+   FailingFileLock lock{Success()};
+   bool reclaimed = false;
+   EXPECT_FALSE(supervisor::detail::reclaimOrphanedSession(
+      sourceRoot_,
+      targetDir_,
+      lock,
+      &reclaimed));
+   EXPECT_TRUE(reclaimed);
+   EXPECT_EQ(1, lock.acquisitions);
+   EXPECT_FALSE(targetDir_.completePath("restart_file").exists());
+   expectDocuments(targetDir_);
+}
+
 #ifndef _WIN32
+TEST_F(SourceDatabaseSupervisorTest, LeavesUnwritableDirectoriesAlone)
+{
+   // access() ignores permission bits for root
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "permission checks don't apply to root";
+
+   ASSERT_EQ(0, ::chmod(originalDir_.getAbsolutePath().c_str(), 0555));
+   FailingFileLock lock{Success()};
+   bool reclaimed = true;
+   Error error = supervisor::detail::reclaimOrphanedSession(
+      sourceRoot_,
+      targetDir_,
+      lock,
+      &reclaimed);
+   ASSERT_EQ(0, ::chmod(originalDir_.getAbsolutePath().c_str(), 0755));
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(reclaimed);
+   EXPECT_EQ(0, lock.acquisitions);
+   EXPECT_FALSE(targetDir_.exists());
+   expectDocuments(originalDir_);
+}
+
 TEST_F(SourceDatabaseSupervisorTest, ChecksLinkOwnershipWhenAdvisoryLockingIsUnsupported)
 {
    LinkBasedFileLock owner;

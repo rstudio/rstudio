@@ -951,6 +951,60 @@ void notifyIfWorkingDirectoryTooLong()
       console_output::OutputTypeWarning);
 }
 
+// Set during startup when the user data directory can't be written and a
+// temporary directory is used in its place. Like the warning above, it's held
+// until the console is available.
+std::string s_temporaryDataDirWarning;
+
+void reportUnwritableUserDataDir(const FilePath& dataDir,
+                                 const Error& dataDirError,
+                                 const FilePath& temporaryDir,
+                                 const Error& temporaryDirError)
+{
+   if (temporaryDir.isEmpty())
+   {
+      // startup carries on with the unwritable directory, and will likely fail
+      ELOGF("Unable to write to user data directory {}: {}",
+            dataDir.getAbsolutePath(),
+            dataDirError.asString());
+      ELOGF("Unable to use a temporary directory in its place: {}",
+            temporaryDirError.asString());
+      return;
+   }
+
+   WLOGF("Unable to write to user data directory {}; using temporary directory {} instead: {}",
+         dataDir.getAbsolutePath(),
+         temporaryDir.getAbsolutePath(),
+         dataDirError.asString());
+
+   s_temporaryDataDirWarning = fmt::format(
+      "WARNING: RStudio can't write to its data directory, so this session is "
+      "keeping its state in a temporary directory instead.\n"
+      "\n"
+      "    Data directory:      {} ({})\n"
+      "    Temporary directory: {}\n"
+      "\n"
+      "State kept in the temporary directory, including unsaved documents, may "
+      "be deleted by the system, and it will not be moved back once the data "
+      "directory is fixed. To fix it, make sure the data directory is owned by "
+      "you and writable; this can happen if RStudio was previously run as "
+      "another user, e.g. with sudo.",
+      dataDir.getAbsolutePath(),
+      dataDirError.getMessage(),
+      temporaryDir.getAbsolutePath());
+}
+
+void notifyIfUserDataDirTemporary()
+{
+   if (s_temporaryDataDirWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_temporaryDataDirWarning,
+      console_output::OutputTypeWarning);
+}
+
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -989,6 +1043,9 @@ void rSessionInitHook(bool newSession)
 
    // notify the user if the working directory is too long to launch children from
    notifyIfWorkingDirectoryTooLong();
+
+   // notify the user if session state is being kept in a temporary directory
+   notifyIfUserDataDirTemporary();
 
    // synchronize session info
    json::Object dataJson;
@@ -2397,6 +2454,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       }
 #endif
       
+#ifndef _WIN32
+      // the log and all session state live in the user data directory; if it
+      // can't be written, switch to a temporary directory before either is used
+      FilePath originalDataDir = core::system::xdg::userDataDir();
+      FilePath temporaryDataDir;
+      Error temporaryDataDirError;
+      Error dataDirError = core::system::xdg::redirectUnwritableUserDataDir(
+         &temporaryDataDir,
+         &temporaryDataDirError);
+#endif
+
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
@@ -2408,6 +2476,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                   core::system::xdg::userLogDir(),
                                   true); // force log dir to be under user's home directory
       core::startup_timing::checkpoint("log-initialized");
+
+#ifndef _WIN32
+      if (dataDirError)
+      {
+         reportUnwritableUserDataDir(
+            originalDataDir,
+            dataDirError,
+            temporaryDataDir,
+            temporaryDataDirError);
+      }
+#endif
 
       // report any failure from initHook(), which ran before logging was up
 #ifdef _WIN32
@@ -2836,7 +2915,23 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       }
 #endif
 
+      // the saved working directory can exist yet be impossible to enter (e.g.
+      // its permissions changed); exiting here would leave it saved and fail
+      // every later start the same way, so fall back to the default working
+      // directory and then the home directory
       error = workingDir.makeCurrentPath();
+      if (error)
+      {
+         LOG_ERROR(error);
+         workingDir = dirs::getDefaultWorkingDirectory();
+         error = workingDir.makeCurrentPath();
+      }
+      if (error)
+      {
+         LOG_ERROR(error);
+         workingDir = options.userHomePath();
+         error = workingDir.makeCurrentPath();
+      }
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
