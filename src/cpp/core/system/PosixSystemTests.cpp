@@ -18,17 +18,26 @@
 #include <core/system/PosixSystem.hpp>
 
 #include <grp.h>
+#include <limits.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <atomic>
 #include <cerrno>
+#include <chrono>
+#include <condition_variable>
 #include <cstring>
+#include <functional>
 #include <limits>
+#include <mutex>
+#include <thread>
 
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <gtest/gtest.h>
 
@@ -41,6 +50,9 @@
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/PosixChildProcessTracker.hpp>
 #include <core/system/PosixGroup.hpp>
+
+#include <shared_core/ILogDestination.hpp>
+#include <shared_core/Logger.hpp>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
 
@@ -1036,6 +1048,416 @@ TEST(PosixTests, ChildProcessTrackerLeavesRunningChildAlone)
    errno = 0;
    EXPECT_EQ(-1, ::waitpid(pid, nullptr, WNOHANG));
    EXPECT_EQ(ECHILD, errno);
+}
+
+namespace {
+
+// generous budgets for the forked children below, well past anything a
+// healthy child needs; a child that blows one has hung
+const std::chrono::milliseconds kChildTimeout(10000);
+
+bool waitUntil(const std::function<bool()>& predicate, std::chrono::milliseconds timeout)
+{
+   auto deadline = std::chrono::steady_clock::now() + timeout;
+   while (!predicate())
+   {
+      if (std::chrono::steady_clock::now() >= deadline)
+         return false;
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+
+   return true;
+}
+
+// reaps the child, killing it first if it hasn't exited within the timeout
+bool waitForChildExit(pid_t child, int* pStatus, std::chrono::milliseconds timeout)
+{
+   bool exited = waitUntil([&]() { return ::waitpid(child, pStatus, WNOHANG) == child; }, timeout);
+   if (!exited)
+   {
+      ::kill(child, SIGKILL);
+      ::waitpid(child, nullptr, 0);
+   }
+
+   return exited;
+}
+
+// a log destination whose writes block until released, so that a thread
+// writing to it holds the logger's read lock for as long as a test needs
+class BlockingLogDestination : public log::ILogDestination
+{
+public:
+   BlockingLogDestination()
+      : log::ILogDestination("blocking-log-destination",
+                             log::LogLevel::ERR,
+                             log::LogMessageFormatType::PRETTY,
+                             false)
+   {
+   }
+
+   void refresh(const log::RefreshParams&) override
+   {
+   }
+
+   void writeLog(log::LogLevel, const std::string&) override
+   {
+      std::unique_lock<std::mutex> lock(mutex_);
+      writing_ = true;
+      condition_.notify_all();
+      condition_.wait(lock, [this] { return released_; });
+   }
+
+   bool waitUntilWriting(std::chrono::milliseconds timeout)
+   {
+      std::unique_lock<std::mutex> lock(mutex_);
+      return condition_.wait_for(lock, timeout, [this] { return writing_; });
+   }
+
+   void release()
+   {
+      std::lock_guard<std::mutex> lock(mutex_);
+      released_ = true;
+      condition_.notify_all();
+   }
+
+private:
+   std::mutex mutex_;
+   std::condition_variable condition_;
+   bool writing_ = false;
+   bool released_ = false;
+};
+
+// notes that a fork has begun. registered by the test below, after the
+// logger's handlers, so it runs before them and thus before any wait they impose
+std::atomic<bool> s_forkPrepared(false);
+std::once_flag s_forkPreparedRegistration;
+
+void noteForkPrepared()
+{
+   s_forkPrepared = true;
+}
+
+// how the scenario below ended, as the exit status of the process it runs in
+enum ForkDuringLogWriteResult
+{
+   kForkScenarioPassed = 0,
+   kForkScenarioWriterNeverWrote,
+   kForkScenarioForkNeverBegan,
+   kForkScenarioForkFailed,
+   kForkScenarioChildHung,
+   kForkScenarioChildFailed
+};
+
+const char* const kForkDuringLogWriteResults[] = {
+   "passed",
+   "the writer never reached the log destination",
+   "the fork never began",
+   "fork() failed",
+   "the child hung logging after the fork",
+   "the child could not log after the fork"
+};
+
+// forks while another thread is mid log write, then logs in both the child and
+// the parent. runs in a process of its own (see the test below): a regression
+// hangs the fork, the child, or the parent's next log write, and none of those
+// can be abandoned from inside the process that hit them
+int runForkDuringLogWrite()
+{
+   s_forkPrepared = false;
+
+   const std::string section = "fork-during-log-write";
+   auto pDestination = std::make_shared<BlockingLogDestination>();
+   log::addLogDestination(pDestination, section);
+
+   std::thread writer([&]()
+   {
+      log::logErrorMessage("holding the logger's read lock", section);
+   });
+
+   bool writing = pDestination->waitUntilWriting(kChildTimeout);
+   if (!writing)
+   {
+      pDestination->release();
+      writer.join();
+      return kForkScenarioWriterNeverWrote;
+   }
+
+   // fork on another thread, so this one can release the writer the fork is waiting for
+   pid_t child = -1;
+   std::thread forker([&]()
+   {
+      child = ::fork();
+      if (child == 0)
+      {
+         // both of these hang in a child forked before the write finished: the
+         // write blocks on this destination's release, which it would have
+         // inherited unreleased, and the refresh on the inherited read lock
+         log::logErrorMessage("logging in the child", section);
+         log::refreshAllLogDestinations();
+         ::_exit(0);
+      }
+   });
+
+   bool forkStarted = waitUntil([]() { return s_forkPrepared.load(); }, kChildTimeout);
+   pDestination->release();
+   writer.join();
+   forker.join();
+
+   // reap the child before reporting anything, so that a hung one doesn't outlive us
+   int status = 0;
+   bool exited = false;
+   if (child > 0)
+      exited = waitForChildExit(child, &status, kChildTimeout);
+
+   if (!forkStarted)
+      return kForkScenarioForkNeverBegan;
+
+   if (child == -1)
+      return kForkScenarioForkFailed;
+
+   if (!exited)
+      return kForkScenarioChildHung;
+
+   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+      return kForkScenarioChildFailed;
+
+   // the parent must have its lock back as well; a logger left locked hangs here
+   log::logErrorMessage("logging in the parent after the fork", section);
+   log::refreshAllLogDestinations();
+   log::removeLogDestination(pDestination->getId(), section);
+
+   return kForkScenarioPassed;
+}
+
+} // anonymous namespace
+
+TEST(PosixTests, ForkWaitsForInFlightLogWriteAndChildCanLog)
+{
+   // rserver forks the child that becomes a session while other threads log,
+   // and that child drops privilege and logs before it execs. fork() would
+   // copy a mid-write thread's read lock into the child with no thread left to
+   // release it, so the logger holds its lock across the fork instead: the fork
+   // waits for the write to finish, and the child starts with a usable logger
+   std::call_once(s_forkPreparedRegistration, []()
+   {
+      ASSERT_EQ(0, ::pthread_atfork(noteForkPrepared, nullptr, nullptr));
+   });
+
+   // the scenario hangs rather than fails when the fix regresses, so run it in
+   // a process this test can kill; the scenario's own waits fit inside this budget
+   pid_t scenario = ::fork();
+   ASSERT_NE(-1, scenario);
+   if (scenario == 0)
+      ::_exit(runForkDuringLogWrite());
+
+   int status = 0;
+   ASSERT_TRUE(waitForChildExit(scenario, &status, 4 * kChildTimeout))
+      << "the scenario hung: a fork or a log write after it never returned";
+   ASSERT_TRUE(WIFEXITED(status)) << "scenario status: " << status;
+
+   int result = WEXITSTATUS(status);
+   ASSERT_LT(result, static_cast<int>(sizeof(kForkDuringLogWriteResults) / sizeof(*kForkDuringLogWriteResults)));
+   EXPECT_EQ(kForkScenarioPassed, result) << kForkDuringLogWriteResults[result];
+}
+
+TEST(PosixTests, ResolveUserReturnsCurrentUserAndGroups)
+{
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   ResolvedUser resolved;
+   ASSERT_FALSE(resolveUser(user.getUsername(), &resolved));
+   EXPECT_EQ(user.getUserId(), resolved.user.getUserId());
+   EXPECT_EQ(user.getGroupId(), resolved.user.getGroupId());
+
+   // getgrouplist(3) always includes the primary group
+   auto begin = resolved.groupIds.begin();
+   auto end = resolved.groupIds.end();
+   EXPECT_NE(end, std::find(begin, end, user.getGroupId()));
+}
+
+TEST(PosixTests, QueryUserGroupIdsPublishesNothingWhenTheLookupFails)
+{
+   // getgrouplist(3) can fail without touching the count or the buffer, and when
+   // no larger buffer helps, the zeroed buffer must not then be handed back as
+   // membership in gid 0
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   std::vector<GidType> groupIds = { 12345 };
+   Error error = group::queryUserGroupIds(user, &groupIds, [](const char*, gid_t, group::GroupListGidType*, int*)
+   {
+      errno = EIO;
+      return -1;
+   });
+
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EIO, error.getCode());
+   EXPECT_TRUE(groupIds.empty());
+}
+
+TEST(PosixTests, QueryUserGroupIdsGrowsTheBufferToFit)
+{
+   // a lookup that reports a larger count is retried with room for it, and only
+   // the entries it reports come back
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   const int numGroups = 150;
+   int calls = 0;
+   auto lookup = [&calls](const char*, gid_t, group::GroupListGidType* groups, int* pNumGroups) -> int
+   {
+      calls++;
+      if (*pNumGroups < numGroups)
+      {
+         *pNumGroups = numGroups;
+         return -1;
+      }
+
+      for (int i = 0; i < numGroups; i++)
+         groups[i] = static_cast<group::GroupListGidType>(1000 + i);
+      *pNumGroups = numGroups;
+      return 0;
+   };
+
+   std::vector<GidType> groupIds;
+   ASSERT_FALSE(group::queryUserGroupIds(user, &groupIds, lookup));
+   EXPECT_EQ(2, calls);
+   ASSERT_EQ(static_cast<std::size_t>(numGroups), groupIds.size());
+   EXPECT_EQ(1000u, groupIds.front());
+   EXPECT_EQ(1000u + numGroups - 1, groupIds.back());
+}
+
+TEST(PosixTests, QueryUserGroupIdsGrowsTheBufferWhenTheCountIsUnchanged)
+{
+   // macOS's getgrouplist(3) fills a short buffer and fails without saying how
+   // many groups it needs, so the buffer is grown until they all fit
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   const int numGroups = 150;
+   int calls = 0;
+   auto lookup = [&calls, numGroups](const char*, gid_t, group::GroupListGidType* groups, int* pNumGroups) -> int
+   {
+      calls++;
+      int numFilled = std::min(*pNumGroups, numGroups);
+      for (int i = 0; i < numFilled; i++)
+         groups[i] = static_cast<group::GroupListGidType>(1000 + i);
+
+      if (numFilled < numGroups)
+         return -1;
+
+      *pNumGroups = numGroups;
+      return 0;
+   };
+
+   std::vector<GidType> groupIds;
+   ASSERT_FALSE(group::queryUserGroupIds(user, &groupIds, lookup));
+   EXPECT_EQ(2, calls);
+   ASSERT_EQ(static_cast<std::size_t>(numGroups), groupIds.size());
+   EXPECT_EQ(1000u, groupIds.front());
+   EXPECT_EQ(1000u + numGroups - 1, groupIds.back());
+}
+
+TEST(PosixTests, SetProcessLimitsReportsFailuresThroughCallback)
+{
+   // a child between fork and exec hands setProcessLimits a syslog sink, so a
+   // limit it cannot set has to reach that sink rather than the logger
+   struct rlimit files;
+   ASSERT_EQ(0, ::getrlimit(RLIMIT_NOFILE, &files));
+
+   // the probes below only ever raise the soft limit, so this can put it back
+   BOOST_SCOPE_EXIT(&files)
+   {
+      ::setrlimit(RLIMIT_NOFILE, &files);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // both probes need a finite hard limit: the first sets the soft limit to it
+   // (which some systems refuse for RLIM_INFINITY), and the second exceeds it
+   if (files.rlim_max == RLIM_INFINITY)
+      GTEST_SKIP() << "the hard file limit is unlimited here";
+
+   std::vector<Error> reported;
+   auto report = [&reported](const Error& error) { reported.push_back(error); };
+
+   // raising the soft limit to the hard one is allowed of any process
+   ProcessLimits limits;
+   limits.filesLimit = files.rlim_max;
+   setProcessLimits(limits, report);
+   EXPECT_TRUE(reported.empty());
+
+   // raising the hard limit is not, unless privileged
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "raising the hard file limit would succeed here";
+
+   limits.filesLimit = files.rlim_max + 1;
+   setProcessLimits(limits, report);
+   ASSERT_EQ(1u, reported.size());
+   EXPECT_EQ(EPERM, reported[0].getCode());
+}
+
+TEST(PosixTests, PermanentlyDropPrivAfterForkReturnsInChild)
+{
+   // the drop must return in a forked child without any lookup; unprivileged,
+   // the drop itself fails with EPERM and returning at all is what counts
+   User user;
+   ASSERT_FALSE(User::getCurrentUser(user));
+
+   ResolvedUser resolved;
+   ASSERT_FALSE(resolveUser(user.getUsername(), &resolved));
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      Error error = permanentlyDropPrivAfterFork(resolved);
+      ::_exit(error && effectiveUserIsRoot() ? 1 : 0);
+   }
+
+   int status = 0;
+   ASSERT_TRUE(waitForChildExit(child, &status, kChildTimeout)) << "the child hung dropping privilege";
+   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
+}
+
+TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivAfterForkSetsIdsAndGroups)
+{
+   ResolvedUser resolved;
+   ASSERT_FALSE(resolveUser(testUser.getUsername(), &resolved));
+   ASSERT_FALSE(resolved.groupIds.empty());
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      if (permanentlyDropPrivAfterFork(resolved))
+         ::_exit(1);
+
+      if (::getuid() != testUser.getUserId() || ::geteuid() != testUser.getUserId())
+         ::_exit(2);
+
+      if (::getgid() != testUser.getGroupId() || ::getegid() != testUser.getGroupId())
+         ::_exit(3);
+
+      // the supplementary groups are the resolved ones (as many as the kernel takes)
+      gid_t groups[NGROUPS_MAX];
+      int numGroups = ::getgroups(NGROUPS_MAX, groups);
+      if (numGroups < 0)
+         ::_exit(4);
+
+      std::size_t numExpected = std::min<std::size_t>(resolved.groupIds.size(), NGROUPS_MAX);
+      for (std::size_t i = 0; i < numExpected; i++)
+      {
+         if (std::find(groups, groups + numGroups, resolved.groupIds[i]) == groups + numGroups)
+            ::_exit(5);
+      }
+
+      ::_exit(0);
+   }
+
+   int status = 0;
+   ASSERT_TRUE(waitForChildExit(child, &status, kChildTimeout)) << "the child hung dropping privilege";
+   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
 }
 
 } // namespace tests

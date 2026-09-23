@@ -15,6 +15,8 @@
 
 #include "ChatTypes.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <shared_core/SafeConvert.hpp>
@@ -65,6 +67,17 @@ bool SemanticVersion::parse(const std::string& versionStr)
    }
 
    return true;
+}
+
+bool isProtocolVersionForm(const std::string& protocol)
+{
+   std::string::size_type dot = protocol.find('.');
+   if (dot == std::string::npos || dot == 0)
+      return false;
+   if (protocol.substr(dot) != ".0")
+      return false;
+   return std::all_of(protocol.begin(), protocol.begin() + dot,
+                      [](unsigned char c) { return std::isdigit(c) != 0; });
 }
 
 bool SemanticVersion::operator>(const SemanticVersion& other) const

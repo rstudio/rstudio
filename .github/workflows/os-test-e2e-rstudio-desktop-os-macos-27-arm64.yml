@@ -226,13 +226,13 @@ jobs:
           key: rstudio-gwt-macos27-arm64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
             rstudio-gwt-macos27-arm64-${{ env.GWT_STYLE }}-v2-
-      # install-dependencies-osx (the entry-point script) builds both arm64
-      # and x86_64 dependencies on an M1 Mac, which we don't need. Call the
-      # per-arch script directly to install only arm64 brew formulae; that
-      # script also chains into dependencies/common/install-common at the
-      # end, so this single step covers brew formulae + Boost + SOCI + GWT
-      # + node + pandoc/quarto + panmirror + copilot-language-server +
-      # sccache + dictionaries + mathjax.
+      # install-dependencies-osx (the entry-point script) adds local-dev
+      # extras (PAM profile, i18n venv) we don't need in CI. Call the per-arch
+      # script directly to install only arm64 brew formulae; that script also
+      # chains into dependencies/common/install-common at the end, so this
+      # single step covers brew formulae + Boost + SOCI + GWT + node +
+      # pandoc/quarto + panmirror + copilot-language-server + sccache +
+      # dictionaries + mathjax.
       - name: Install build dependencies
         working-directory: dependencies/osx
         run: ./install-dependencies-osx-arch

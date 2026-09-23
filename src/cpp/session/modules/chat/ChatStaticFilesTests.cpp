@@ -15,8 +15,10 @@
 
 #include "ChatStaticFiles.hpp"
 #include "ChatConstants.hpp"
+#include "ChatInstallation.hpp"
 
 #include <gtest/gtest.h>
+#include <boost/optional.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -25,6 +27,8 @@
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::staticfiles;
 using namespace rstudio::session::modules::chat::constants;
+using rstudio::session::modules::chat::installation::InstallSearchPaths;
+using rstudio::session::modules::chat::installation::setSearchPathsForTesting;
 
 TEST(ChatStaticFiles, GetContentTypeReturnsCorrectMimeTypesForCommonExtensions)
 {
@@ -194,9 +198,9 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
 
 namespace {
 
-// Stages the files verifyPositAiInstallation() requires, plus one client
-// asset. The asset is a .js so the request under test skips the handler's
-// HTML branch, which reads session options and the current editor theme.
+// Stages the files verifyInstallDir() requires, plus one client asset. The
+// asset is a .js so the request under test skips the handler's HTML branch,
+// which reads session options and the current editor theme.
 FilePath stageInstallationServingApp(const std::string& assetContent)
 {
    FilePath dir;
@@ -225,131 +229,145 @@ Error requestApp(http::Response* pResponse)
    return handleAIChatRequest(request, pResponse);
 }
 
-// Unpins the installation and clears the backend port after each test, so a
-// later test sees the state of a session whose chat backend has not started
-// yet. Both setters rebuild the CSP header from whatever is resolvable on the
-// machine running the tests, so a test asserting on that header must pin an
+// The handler serves from the installation the session resolved, so each
+// test drives that resolution through the pinned-path source: a single
+// unversioned directory, which is the simplest thing the resolver accepts.
+// The backend port is cleared, and then the session's own sources restored,
+// after each test so a later test sees the state of a session whose chat
+// backend has not started yet. Clearing the port rebuilds the CSP header from
+// whatever resolves, so it runs while the test's sources are still in place:
+// resolving against the real user storage would repair the selector of the
+// machine running the tests. A test asserting on the header must serve an
 // installation of its own rather than rely on the state left here.
-class ChatStaticFilesPin : public ::testing::Test
+class ChatStaticFilesResolution : public ::testing::Test
 {
 protected:
    void TearDown() override
    {
-      setInstallationPath(FilePath());
       setChatBackendPort(kChatBackendPortNone);
+      setSearchPathsForTesting(boost::none);
+   }
+
+   // Makes `install` the installation the session resolves. Discards any
+   // held resolution, as changing the sources does.
+   void serve(const FilePath& install)
+   {
+      InstallSearchPaths paths;
+      paths.pinnedPath = install;
+      paths.userInstallEnabled = false;
+      setSearchPathsForTesting(paths);
    }
 };
 
 } // anonymous namespace
 
-TEST_F(ChatStaticFilesPin, ServesAssetsFromThePinnedInstallation)
+TEST_F(ChatStaticFilesResolution, ServesAssetsFromTheResolvedInstallation)
 {
-   FilePath install = stageInstallationServingApp("// pinned build");
-   setInstallationPath(install);
+   FilePath install = stageInstallationServingApp("// resolved build");
+   serve(install);
 
    http::Response response;
    Error error = requestApp(&response);
 
    EXPECT_FALSE(error);
    EXPECT_EQ(response.statusCode(), http::status::Ok);
-   EXPECT_EQ(response.body(), "// pinned build");
+   EXPECT_EQ(response.body(), "// resolved build");
    EXPECT_EQ(response.contentType(), getContentType(".js"));
 
    install.removeIfExists();
 }
 
-TEST_F(ChatStaticFilesPin, LaterPinReplacesTheEarlierInstallation)
+TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
 {
    FilePath first = stageInstallationServingApp("// first build");
    FilePath second = stageInstallationServingApp("// second build");
 
-   // A backend restart re-resolves and pins again; the newer pin is what the
-   // page that restart loads must be served from.
-   setInstallationPath(first);
-   setInstallationPath(second);
+   InstallSearchPaths paths;
+   paths.pinnedPath = first;
+   paths.userInstallEnabled = false;
+   setSearchPathsForTesting(paths);
 
    http::Response response;
-   Error error = requestApp(&response);
+   requestApp(&response);
+   ASSERT_EQ(response.body(), "// first build");
+
+   // Replacing the tree the pinned path names is what a third party does to
+   // an unversioned directory; the held resolution keeps serving the same
+   // path, and the page it loaded keeps getting the same installation.
+   ASSERT_FALSE(first.remove());
+   ASSERT_FALSE(second.move(first, FilePath::MoveDirect));
+
+   http::Response held;
+   requestApp(&held);
+   EXPECT_EQ(held.body(), "// second build");
+
+   first.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesResolution, ResolvedInstallationThatIsGoneIsNotServedFrom)
+{
+   FilePath install = stageInstallationServingApp("// removed build");
+   serve(install);
+
+   http::Response before;
+   requestApp(&before);
+   ASSERT_EQ(before.body(), "// removed build");
+
+   // Removed out of band after being resolved. The handler must not keep
+   // serving from it just because it was resolved once: with nothing else to
+   // resolve, the request fails as if nothing were installed.
+   ASSERT_FALSE(install.remove());
+
+   http::Response after;
+   Error error = requestApp(&after);
 
    EXPECT_FALSE(error);
-   EXPECT_EQ(response.body(), "// second build");
+   EXPECT_EQ(after.statusCode(), http::status::NotFound);
+}
+
+TEST_F(ChatStaticFilesResolution, PartiallyExtractedInstallationIsNotServedFrom)
+{
+   FilePath install = stageInstallationServingApp("// partial build");
+   serve(install);
+
+   http::Response before;
+   requestApp(&before);
+   ASSERT_EQ(before.body(), "// partial build");
+
+   // A directory that no longer holds a complete installation -- here the
+   // server script is gone -- is resolved around the same way, even though
+   // the asset itself is still there.
+   ASSERT_FALSE(install.completeChildPath(kServerScriptPath).remove());
+
+   http::Response after;
+   requestApp(&after);
+
+   EXPECT_EQ(after.statusCode(), http::status::NotFound);
+
+   install.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesResolution, ClearingTheResolutionServesTheNewInstallation)
+{
+   FilePath first = stageInstallationServingApp("// first build");
+   FilePath second = stageInstallationServingApp("// second build");
+   serve(first);
+
+   http::Response response;
+   requestApp(&response);
+   ASSERT_EQ(response.body(), "// first build");
+
+   // What an install does: the sources now resolve elsewhere, and the held
+   // answer is discarded so the components restarting -- and the page --
+   // come back on the new installation.
+   serve(second);
+
+   http::Response cleared;
+   requestApp(&cleared);
+   EXPECT_EQ(cleared.body(), "// second build");
 
    first.removeIfExists();
    second.removeIfExists();
-}
-
-TEST_F(ChatStaticFilesPin, PinnedInstallationThatIsGoneIsNotServedFrom)
-{
-   FilePath install = stageInstallationServingApp("// removed build");
-   setInstallationPath(install);
-
-   // Confirm the pin is live before removing what it names, so the assertion
-   // below is about the removal and not about the pin never having worked.
-   http::Response served;
-   EXPECT_FALSE(requestApp(&served));
-   EXPECT_EQ(served.body(), "// removed build");
-
-   // A rolled-back update or an out-of-band removal leaves the pin naming a
-   // directory that is gone. The handler must resolve for itself rather than
-   // answer from the vanished path for the rest of the session. What it
-   // resolves to depends on what is installed on this machine, so only the
-   // negative is asserted.
-   install.removeIfExists();
-
-   http::Response response;
-   requestApp(&response);
-
-   EXPECT_NE(response.body(), "// removed build");
-
-   // Forbidden is the signature of the dead pin having been used: the client
-   // root under it cannot be canonicalized, so validateAndResolvePath()
-   // rejects the path. Resolving instead answers Ok or NotFound depending on
-   // what this machine has installed, but never this.
-   EXPECT_NE(response.statusCode(), http::status::Forbidden);
-}
-
-TEST_F(ChatStaticFilesPin, PartiallyExtractedPinnedInstallationIsNotServedFrom)
-{
-   FilePath install = stageInstallationServingApp("// partial build");
-   setInstallationPath(install);
-
-   http::Response served;
-   EXPECT_FALSE(requestApp(&served));
-   EXPECT_EQ(served.body(), "// partial build");
-
-   // An extraction that failed and could not be cleaned up leaves the root in
-   // place without the files that make it an installation. The asset itself
-   // survives here, so serving it would succeed -- which is exactly why the
-   // pin must be tested against verifyPositAiInstallation() and not merely
-   // for the root's existence.
-   install.completeChildPath(kClientDirPath)
-      .completeChildPath(kIndexFileName)
-      .removeIfExists();
-
-   http::Response response;
-   requestApp(&response);
-
-   EXPECT_NE(response.body(), "// partial build");
-
-   install.removeIfExists();
-}
-
-TEST_F(ChatStaticFilesPin, UnpinnedInstallationIsNotServedFrom)
-{
-   FilePath install = stageInstallationServingApp("// unpinned build");
-   setInstallationPath(install);
-   setInstallationPath(FilePath());
-
-   // With nothing pinned the handler resolves the installation for itself, so
-   // it must not still be serving the one that was pinned. What it resolves to
-   // instead depends on what is installed on this machine, so only the
-   // negative is asserted.
-   http::Response response;
-   requestApp(&response);
-
-   EXPECT_NE(response.body(), "// unpinned build");
-
-   install.removeIfExists();
 }
 
 namespace {
@@ -386,18 +404,17 @@ std::string requestPageCsp()
 
 } // anonymous namespace
 
-TEST_F(ChatStaticFilesPin, CspFollowsAnUpdateThatReplacesTheInstallationInPlace)
+TEST_F(ChatStaticFilesResolution, CspIsRereadWhenTheBackendPortChanges)
 {
    FilePath install = stageInstallationServingCsp("https://before.example");
-   setInstallationPath(install);
+   serve(install);
    setChatBackendPort(1234);
 
    EXPECT_NE(requestPageCsp().find("https://before.example"), std::string::npos);
 
-   // An in-session update extracts over the same directory, so the path the
-   // backend restart pins is unchanged -- only the contents differ. The
-   // directives must come from the installation being served, not from
-   // whatever the first request happened to read.
+   // An unversioned installation replaced in place keeps its path, so only
+   // the contents differ. A backend restart re-reads the directives, so the
+   // policy served is the one belonging to what is being served now.
    writeStringToFile(install.completeChildPath(kCspConfigPath),
                      "{\"connect-src\": \"https://after.example\"}");
    setChatBackendPort(5678);
@@ -409,18 +426,18 @@ TEST_F(ChatStaticFilesPin, CspFollowsAnUpdateThatReplacesTheInstallationInPlace)
    install.removeIfExists();
 }
 
-TEST_F(ChatStaticFilesPin, CspIsReadFromTheInstallationThePinNames)
+TEST_F(ChatStaticFilesResolution, CspIsReadFromTheInstallationBeingServed)
 {
    FilePath first = stageInstallationServingCsp("https://first.example");
    FilePath second = stageInstallationServingCsp("https://second.example");
 
-   setInstallationPath(first);
+   serve(first);
    setChatBackendPort(1234);
    EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
 
    // A restart onto another installation -- what a versioned install does --
    // must serve that installation's directives.
-   setInstallationPath(second);
+   serve(second);
    setChatBackendPort(5678);
 
    std::string header = requestPageCsp();
@@ -431,20 +448,20 @@ TEST_F(ChatStaticFilesPin, CspIsReadFromTheInstallationThePinNames)
    second.removeIfExists();
 }
 
-TEST_F(ChatStaticFilesPin, CspFollowsThePinWithoutABackendPortChange)
+TEST_F(ChatStaticFilesResolution, CspFollowsTheResolutionWithoutABackendPortChange)
 {
    FilePath first = stageInstallationServingCsp("https://first.example");
    FilePath second = stageInstallationServingCsp("https://second.example");
 
-   setInstallationPath(first);
+   serve(first);
    setChatBackendPort(1234);
    EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
 
-   // Changing which installation is served is enough on its own: uninstall
-   // unpins without starting a backend, so nothing sets the port afterwards
-   // and a policy that only followed the port would outlive the installation
-   // it came from.
-   setInstallationPath(second);
+   // Changing which installation is served is enough on its own: the
+   // resolution can change with no backend start behind it -- an install
+   // clears it, a removed installation is resolved around -- and a policy
+   // that only followed the port would outlive the installation it came from.
+   serve(second);
 
    std::string header = requestPageCsp();
    EXPECT_NE(header.find("https://second.example"), std::string::npos);

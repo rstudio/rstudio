@@ -23,6 +23,8 @@
 #include "chat/ChatInstallation.hpp"
 #include "chat/ChatInstallLock.hpp"
 #include "chat/ChatIntegrity.hpp"
+#include "chat/ChatSelector.hpp"
+#include "chat/ChatSlots.hpp"
 #include "chat/ChatStaticFiles.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
 
@@ -215,13 +217,13 @@ bool isPositAssistantEnabledByAdmin()
 
 // Returns true when the administrator has taken installation away from the
 // user: the session runs only an administrator-managed or bundled copy, makes
-// no manifest requests, and refuses install, update, and uninstall.
+// no manifest requests, and refuses install and update.
 bool isInstallationManaged()
 {
    return !module_context::isPositAssistantInstallationEnabledByAdmin();
 }
 
-// Refusal shown for every install, update, and uninstall path in managed mode.
+// Refusal shown for every install and update path in managed mode.
 // Delivered via client_info on the JSON-RPC error so the frontend can show it
 // verbatim (Error::getSummary() would otherwise wrap the system errno text and
 // obscure the description).
@@ -268,6 +270,8 @@ namespace chat_constants = rstudio::session::modules::chat::constants;
 namespace chat_types = rstudio::session::modules::chat::types;
 namespace chat_logging = rstudio::session::modules::chat::logging;
 namespace chat_installation = rstudio::session::modules::chat::installation;
+namespace chat_selector = rstudio::session::modules::chat::selector;
+namespace chat_slots = rstudio::session::modules::chat::slots;
 namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
 
 // Constants used throughout
@@ -276,8 +280,8 @@ using chat_constants::kMaxQueueSize;
 using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
 using chat_constants::kMaxRestartAttempts;
-using chat_constants::kPositAiDirName;
-using chat_constants::kPositAiBackupDirName;
+using chat_constants::kPositAiStorageDirName;
+using chat_constants::kLegacyInstallDirName;
 using chat_constants::kServerScriptPath;
 
 // Types used throughout
@@ -293,14 +297,15 @@ using chat_logging::shouldLogBackendMessage;
 using chat_logging::rs_chatSetLogLevel;
 
 // Installation functions used throughout
-using chat_installation::bundledPositAssistantInstallPath;
 using chat_installation::locatePositAssistantInstallation;
-using chat_installation::systemPositAssistantInstallPath;
+using chat_installation::clearPinnedInstallation;
+using chat_installation::positAiStorageDir;
+using chat_installation::positAssistantSearchPaths;
+using chat_installation::InstallSearchPaths;
 using chat_installation::userInstallWouldBeSelected;
-using chat_installation::verifyPositAiInstallation;
+using chat_installation::verifyDeclaredIdentity;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
-using chat_installation::writeProtocolVersionFileIfMissing;
 
 // Update throttle types used throughout
 using throttle::ManifestCheckRecord;
@@ -4362,125 +4367,89 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
 
 
-// Install package (backup, extract, cleanup)
-Error installPackage(const FilePath& packagePath)
+// Publish a downloaded package as an install slot and select it for the
+// protocol it serves. No existing installation is modified: the package is
+// extracted into a staging directory no other session can name, and reaches a
+// slot name only once allocateSlot() has recorded its manifest and verified
+// the result, so a torn install never exists under a resolvable name.
+Error installPackage(const FilePath& packagePath, const std::string& expectedVersion)
 {
-   FilePath userDataDir = xdg::userDataDir();
-   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
-   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
+   FilePath storageDir = positAiStorageDir();
+   FilePath slotsDir = chat_slots::versionsDir(storageDir);
 
-   DLOG("Installing package from: {}", packagePath.getAbsolutePath());
-
-   // Step 1: Remove old backup if it exists
-   if (aiPrevDir.exists())
-   {
-      DLOG("Removing old backup directory: {}", aiPrevDir.getAbsolutePath());
-      Error error = aiPrevDir.removeIfExists();
-      if (error)
-      {
-         WLOG("Failed to remove old backup: {}", error.getMessage());
-         return error;
-      }
-   }
-
-   // Step 2: Backup current installation if it exists
-   if (aiDir.exists())
-   {
-      DLOG("Backing up current installation to: {}", aiPrevDir.getAbsolutePath());
-      Error error = aiDir.move(aiPrevDir);
-      if (error)
-      {
-         WLOG("Failed to backup current installation: {}", error.getMessage());
-         return error;
-      }
-   }
-
-   // Step 3: Create new ai directory
-   Error error = aiDir.ensureDirectory();
+   Error error = slotsDir.ensureDirectory();
    if (error)
    {
-      WLOG("Failed to create ai directory: {}", error.getMessage());
-      // Try to restore backup
-      if (aiPrevDir.exists())
-      {
-         aiPrevDir.move(aiDir);
-      }
+      WLOG("Failed to create {}: {}", slotsDir.getAbsolutePath(), error.getMessage());
       return error;
    }
 
-   // Step 4: Extract package using R's unzip()
-   DLOG("Extracting package to: {}", aiDir.getAbsolutePath());
+   FilePath stagingDir;
+   error = chat_slots::prepareStagingDir(slotsDir, &stagingDir);
+   if (error)
+   {
+      WLOG("Failed to create staging directory: {}", error.getMessage());
+      return error;
+   }
+
+   // The staging directory is this call's own, so a failure below abandons
+   // nothing another session could be using; leaving it would add an
+   // orphaned tree under pai/versions on every retry of the same update.
+   auto discardStaging = [&stagingDir](const Error& cause)
+   {
+      Error removeError = stagingDir.removeIfExists();
+      if (removeError)
+      {
+         WLOG("Could not remove staging directory {}: {}",
+              stagingDir.getAbsolutePath(), removeError.getMessage());
+      }
+      return cause;
+   };
+
+   DLOG("Extracting package {} to {}",
+        packagePath.getAbsolutePath(), stagingDir.getAbsolutePath());
+
    r::exec::RFunction unzipFunc("unzip");
    unzipFunc.addParam("zipfile", packagePath.getAbsolutePath());
-   unzipFunc.addParam("exdir", aiDir.getAbsolutePath());
+   unzipFunc.addParam("exdir", stagingDir.getAbsolutePath());
 
    error = unzipFunc.call();
    if (error)
    {
       WLOG("Failed to extract package: {}", error.getMessage());
-      // Clean up partial extraction
-      Error cleanupError = aiDir.removeIfExists();
-      if (cleanupError)
-      {
-         ELOG("Failed to clean up failed extraction directory: {}", cleanupError.getMessage());
-      }
-      // Restore backup
-      if (aiPrevDir.exists())
-      {
-         Error restoreError = aiPrevDir.move(aiDir);
-         if (restoreError)
-         {
-            ELOG("Failed to restore backup after extraction failure: {}", restoreError.getMessage());
-         }
-      }
+      return discardStaging(error);
+   }
+
+   // The archive was SHA-256 checked against the manifest entry chosen for
+   // this protocol, so a package declaring something else is mis-published
+   // rather than corrupt, and would be offered again on every check.
+   error = verifyDeclaredIdentity(stagingDir, expectedVersion, kProtocolVersion);
+   if (error)
+      return discardStaging(error);
+
+   FilePath slotDir;
+   error = chat_slots::allocateSlot(
+      stagingDir, chat_slots::SlotPolicy::AdoptExisting, &slotDir);
+   if (error)
+   {
+      WLOG("Failed to publish install slot: {}", error.getMessage());
+      return discardStaging(error);
+   }
+
+   // The published slot declares what the staged package did: on a lost rename
+   // race allocateSlot() adopts an existing slot only when its version and
+   // protocol match the staged one.
+   error = chat_selector::selectSlot(storageDir, kProtocolVersion, slotDir.getFilename());
+   if (error)
+   {
+      WLOG("Failed to select slot {}: {}",
+           slotDir.getFilename(), error.getMessage());
       return error;
    }
 
-   // Step 5: Verify installation
-   if (!verifyPositAiInstallation(aiDir))
-   {
-      WLOG("Extracted package failed verification");
-      // Clean up invalid extraction
-      Error cleanupError = aiDir.removeIfExists();
-      if (cleanupError)
-      {
-         ELOG("Failed to clean up invalid extraction directory: {}", cleanupError.getMessage());
-      }
-      // Restore backup
-      if (aiPrevDir.exists())
-      {
-         Error restoreError = aiPrevDir.move(aiDir);
-         if (restoreError)
-         {
-            ELOG("Failed to restore backup after verification failure: {}", restoreError.getMessage());
-         }
-      }
-      return systemError(boost::system::errc::io_error,
-                        "Extracted package is incomplete or invalid",
-                        ERROR_LOCATION);
-   }
+   DLOG("Installed Posit Assistant {} (protocol {}) as slot {}",
+        expectedVersion, kProtocolVersion, slotDir.getFilename());
 
-   // Step 6: Success - remove backup
-   if (aiPrevDir.exists())
-   {
-      DLOG("Installation successful, removing backup");
-      Error backupCleanup = aiPrevDir.removeIfExists();
-      if (backupCleanup)
-      {
-         WLOG("Failed to remove backup directory after successful install: {}", backupCleanup.getMessage());
-         // Don't fail the installation for this - backup will be cleaned up next time
-      }
-   }
-
-   // Write protocol.json so future update checks can detect mismatches, unless
-   // the package already shipped one (newer packages bundle protocol.json).
-   Error protoError = writeProtocolVersionFileIfMissing(aiDir);
-   if (protoError)
-   {
-      return protoError;
-   }
-
-   DLOG("Package installation complete");
    return Success();
 }
 
@@ -5097,7 +5066,13 @@ Error startChatBackend(bool resumeConversation)
    FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
-      std::string systemPath = systemPositAssistantInstallPath().getAbsolutePath();
+      // Without a pinned path, the one system location an administrator can
+      // populate by hand is the legacy bin directory; versioned slots need the
+      // manifest only an install writes.
+      InstallSearchPaths paths = positAssistantSearchPaths();
+      std::string systemPath = paths.pinnedPath.isEmpty()
+         ? paths.systemStorageDir.completeChildPath(kLegacyInstallDirName).getAbsolutePath()
+         : paths.pinnedPath.getAbsolutePath();
 
       // Naming the user directory in managed mode would point the user at the
       // one location the session ignores and refuses to install into.
@@ -5111,11 +5086,12 @@ Error startChatBackend(bool resumeConversation)
       }
       else
       {
-         std::string userPath =
-            xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
+         // Only an in-product install produces a slot RStudio will use, so
+         // there is no user directory to tell the user to copy files into.
          errorMsg = fmt::format(
-            "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
-            userPath, systemPath);
+            "Posit Assistant installation not found. Install it from the "
+            "Posit Assistant pane, or have an administrator install it at: {}",
+            systemPath);
       }
       return systemError(boost::system::errc::no_such_file_or_directory,
                         errorMsg,
@@ -5166,7 +5142,7 @@ Error startChatBackend(bool resumeConversation)
    args.push_back(workspacePath.getAbsolutePath());
 
    // Create storage base path: {XDG_DATA_HOME}/pai/
-   FilePath storagePath = xdg::userDataDir().completePath("pai");
+   FilePath storagePath = positAiStorageDir();
    error = storagePath.ensureDirectory();
    if (error)
       return(error);
@@ -5174,7 +5150,8 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--storage");
    args.push_back(storagePath.getAbsolutePath());
 
-   // Pass config file path (config is in pai/, but working dir is pai/bin/)
+   // Pass config file path (config is in pai/, which is not the working
+   // directory -- that is the resolved installation)
    FilePath configPath = storagePath.completePath("paconfig.json");
    args.push_back("--config");
    args.push_back(configPath.getAbsolutePath());
@@ -5247,16 +5224,12 @@ Error startChatBackend(bool resumeConversation)
    core::system::setHomeToUserProfile(&environment);
 #endif
 
-   // Coordinate with other rsession processes sharing the per-user install:
-   // hold this session's in-use lock while the backend runs, and refuse to
-   // start while an install/update/uninstall is in progress (we would be
-   // launching from a directory mid-swap). Only the read-only system
-   // install skips locking: mutations never touch it, and it cannot alias
-   // the per-user install. The env-var override, posit-assistant-path, and
-   // the copy bundled with RStudio all over-lock deliberately — mirroring
-   // the agent's rule — because deciding whether they truly resolve outside
-   // pai/bin is unreliable (symlinks), and over-locking costs at most a
-   // retryable refusal.
+   // Hold this session's in-use lock while the backend runs, and refuse to
+   // start while another session is installing. Vestigial now that installs
+   // only create directories -- there is no swap to be caught mid-flight --
+   // and removed with the rest of the locking in the follow-up PR. Only the
+   // administrator's legacy directory skips it, as before; every other
+   // source over-locks, which costs at most a retryable refusal.
    uint64_t generation = ++s_chatBackendGeneration;
 
    // A stale flag from a previous unreaped generation must not classify a
@@ -5265,7 +5238,9 @@ Error startChatBackend(bool resumeConversation)
 
    uint64_t lockToken = 0;
    bool systemInstall =
-      (positAiPath == xdg::systemConfigDir().completePath(kPositAiDirName));
+      (positAiPath == xdg::systemConfigDir()
+                         .completePath(kPositAiStorageDirName)
+                         .completeChildPath(kLegacyInstallDirName));
    if (!systemInstall)
    {
       std::string lockMessage;
@@ -5337,14 +5312,10 @@ Error startChatBackend(bool resumeConversation)
       return error;
    }
 
-   // Publish only once the backend is running, so a failed start never pins
-   // its installation or announces its port and token (the lock and launch
-   // failures above do reset both, via clearChatBackendPort()).
-   //
-   // Both calls below rebuild the CSP header, so the end state is the same
-   // either way; the installation goes first so that no request landing in
-   // between is served under the previous installation's policy (#18831).
-   staticfiles::setInstallationPath(positAiPath);
+   // Publish only once the backend is running, so a failed start never
+   // announces its port and token (the lock and launch failures above do
+   // reset both, via clearChatBackendPort()). The static file handler serves
+   // from the same resolved installation the backend was just launched from.
 
    // Share the port with the static file handler for CSP connect-src
    staticfiles::setChatBackendPort(s_chatBackendPort);
@@ -5587,7 +5558,7 @@ void buildUpdateStateResult(json::Object* pResult)
    (*pResult)["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
 
    // Session-constant, so read from the option rather than the check state: the
-   // client uses it to hide the install, update, and uninstall affordances.
+   // client uses it to hide the install and update affordances.
    (*pResult)["installationManaged"] = isInstallationManaged();
 }
 
@@ -5707,12 +5678,11 @@ Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// Stops the chat backend for an install mutation: graceful shutdown request,
-// bounded wait, force terminate, then a bounded wait for the process to
-// actually exit so file handles are released before the installation
-// directory is modified. The in-use lock component is released by
+// Stops the chat backend so it can be restarted on a newly installed version:
+// graceful shutdown request, bounded wait, force terminate, then a bounded wait
+// for the process to actually exit. The in-use lock component is released by
 // onBackendExit once the process is reaped.
-void stopChatBackendForInstallMutation(const std::string& reason)
+void stopChatBackendForInstall(const std::string& reason)
 {
    if (s_chatBackendPid == -1)
       return;
@@ -5763,24 +5733,83 @@ void stopChatBackendForInstallMutation(const std::string& reason)
    s_backendOutputBuffer.clear();
 }
 
-// Waits (bounded, pumping the event loop so exit callbacks are delivered)
-// until this session's components have released the in-use lock — the
-// authoritative signal that our own backend/agent processes are reaped.
-// Mutators must not touch the installation on disk while it is held: their
-// session-lock probe excludes our own lock, so our processes are on us.
-// Returns false on timeout.
-bool waitForOwnComponentsReaped(int timeoutMs)
+// Record an install failure and resolve the continuation. Every failure path
+// below leaves the running assistant exactly as it found it: an install only
+// ever creates a directory, so there is nothing to roll back.
+void failInstall(const std::string& message,
+                 const json::JsonRpcFunctionContinuation& cont)
 {
-   const int POLL_MS = 50;
-   int elapsed = 0;
-   while (installLock().inUseHeld() && elapsed < timeoutMs)
    {
-      module_context::onBackgroundProcessing(false);
-      r::session::event_loop::processEvents();
-      boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_MS));
-      elapsed += POLL_MS;
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage = message;
    }
-   return !installLock().inUseHeld();
+
+   json::JsonRpcResponse response;
+   response.setResult(json::Value());
+   cont(Success(), &response);
+}
+
+// Take this session onto the slot the install just selected, then resolve the
+// continuation.
+//
+// The components are stopped here rather than before the install because
+// nothing on disk was mutated -- a slot is created, never modified -- so
+// stopping is only about picking up the new version. Stopping afterwards is
+// also what keeps a failed install from taking a working assistant down with
+// it. The client restarts the backend once this reports Complete.
+void finishInstall(const std::string& version,
+                   const json::JsonRpcFunctionContinuation& cont)
+{
+   DLOG("Stopping backend to pick up Posit Assistant {}", version);
+   stopChatBackendForInstall("update");
+
+   // An agent still running from the old slot after the backend restarts on
+   // the new one would put the two on different installations. The slot is
+   // published and selected, so a retry skips the download and only repeats
+   // this stop; the held resolution stays so the restart meanwhile is
+   // consistent.
+   DLOG("Stopping assistant agent to pick up Posit Assistant {}", version);
+   if (!assistant::stopAgentForUpdate())
+   {
+      WLOG("Timeout waiting for assistant agent to stop");
+      failInstall("A Posit Assistant process is still shutting down. "
+                  "Please try again, or restart RStudio.",
+                  cont);
+      return;
+   }
+
+   // This session's resolution is what it was running; the install just
+   // changed the answer, and the components restarting need the new one.
+   clearPinnedInstallation();
+
+   // Report what the session now runs, not what was installed: a read-only
+   // source can outrank the new slot, and the next throttled check compares
+   // against this value.
+   std::string currentVersion = getInstalledVersion();
+   if (currentVersion.empty())
+   {
+      WLOG("No Posit Assistant installation resolves after installing {}", version);
+      currentVersion = version;
+   }
+   else if (currentVersion != version)
+   {
+      DLOG("Installed Posit Assistant {} but the session resolves {}",
+           version, currentVersion);
+   }
+
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Complete;
+      s_updateState.installMessage = "Update complete";
+      s_updateState.updateAvailable = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.currentVersion = currentVersion;
+   }
+
+   json::JsonRpcResponse response;
+   response.setResult(json::Value());
+   cont(Success(), &response);
 }
 
 // Download + install the available update using the current state, then resolve
@@ -5832,47 +5861,29 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
    lock.unlock();
 
    // Serialize with other rsession processes and refuse while any other
-   // session is running Posit Assistant — checked before stopping our own
-   // processes, so a refused update doesn't kill a working assistant.
-   // The scope releases the mutation lock on every exit below.
+   // session is running Posit Assistant. Vestigial after this change -- an
+   // install creates a slot and touches nothing another session could be
+   // executing from -- and removed with the rest of the locking in the
+   // follow-up PR. The scope releases the mutation lock on every exit below.
    install_lock::MutationScope mutationScope(installLock());
    if (mutationScope.error())
    {
-      boost::mutex::scoped_lock lock2(s_updateStateMutex);
-      s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage = mutationScope.userMessage();
-      lock2.unlock();
-
-      response.setResult(json::Value());
-      cont(Success(), &response);
+      failInstall(mutationScope.userMessage(), cont);
       return;
    }
 
-   // Stop backend if running (graceful request + reap wait so file handles
-   // are released before the directory swap)
-   DLOG("Stopping backend for update");
-   stopChatBackendForInstallMutation("update");
-
-   // Stop assistant agent (language server) if running - it also uses pai/bin/
-   DLOG("Stopping assistant agent for update");
-   if (!assistant::stopAgentForUpdate())
+   // A version already on disk in a verifying slot needs no download: the
+   // install is a selector update. This is what makes the manifest-driven
+   // downgrade case (isVersionDowngrade) cheap, since the version being
+   // returned to is normally still installed, and what lets a session still
+   // running an older slot after another session installed the offered one
+   // just re-select it.
+   if (chat_selector::selectInstalledVersion(
+          positAiStorageDir(), kProtocolVersion, newVersion))
    {
-      WLOG("Timeout waiting for assistant agent to stop");
-   }
-
-   // Confirm our own processes are actually gone before touching the
-   // installation on disk.
-   if (!waitForOwnComponentsReaped(2000))
-   {
-      boost::mutex::scoped_lock lock2(s_updateStateMutex);
-      s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage =
-         "A Posit Assistant process is still shutting down. "
-         "Please try again, or restart RStudio.";
-      lock2.unlock();
-
-      response.setResult(json::Value());
-      cont(Success(), &response);
+      DLOG("Posit Assistant {} is already installed; selected it without downloading",
+           newVersion);
+      finishInstall(newVersion, cont);
       return;
    }
 
@@ -5882,20 +5893,17 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
 
    if (error)
    {
-      boost::mutex::scoped_lock lock2(s_updateStateMutex);
-      s_updateState.installStatus = UpdateState::Status::Error;
       // errorDescription, not getMessage: downloadPackage reports the reason R
       // gave for the failure in the error's description, and getMessage() would
       // show only the bare errno string ("Input/output error").
-      s_updateState.installMessage = "Download failed: " + core::errorDescription(error);
+      std::string message = "Download failed: " + core::errorDescription(error);
 
       // Clean up temp file
       Error cleanupError = tempPackage.removeIfExists();
       if (cleanupError)
          WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
 
-      response.setResult(json::Value());
-      cont(Success(), &response);
+      failInstall(message, cont);
       return;
    }
 
@@ -5905,37 +5913,27 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
       ELOG("Manifest does not include a SHA-256 hash for this package; "
            "refusing to install unverified package");
 
-      boost::mutex::scoped_lock lock2(s_updateStateMutex);
-      s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage =
-         "Package integrity check failed (no SHA-256 hash in manifest).";
-
       Error cleanupError = tempPackage.removeIfExists();
       if (cleanupError)
          WLOG("Failed to remove temp package after missing hash: {}",
               cleanupError.getMessage());
 
-      response.setResult(json::Value());
-      cont(Success(), &response);
+      failInstall("Package integrity check failed (no SHA-256 hash in manifest).",
+                  cont);
       return;
    }
 
    error = integrity::verifyPackageSha256(tempPackage, expectedSha256);
    if (error)
    {
-      boost::mutex::scoped_lock lock2(s_updateStateMutex);
-      s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage =
-         "Package integrity check failed (SHA-256 mismatch). "
-         "The download may be corrupted or tampered with.";
-
       Error cleanupError = tempPackage.removeIfExists();
       if (cleanupError)
          WLOG("Failed to remove temp package after integrity failure: {}",
               cleanupError.getMessage());
 
-      response.setResult(json::Value());
-      cont(Success(), &response);
+      failInstall("Package integrity check failed (SHA-256 mismatch). "
+                  "The download may be corrupted or tampered with.",
+                  cont);
       return;
    }
 
@@ -5946,7 +5944,7 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
       s_updateState.installMessage = "Installing update...";
    }
 
-   error = installPackage(tempPackage);
+   error = installPackage(tempPackage, newVersion);
 
    // Always clean up temp file (do this before error handling)
    Error cleanupError = tempPackage.removeIfExists();
@@ -5957,66 +5955,27 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
 
    if (error)
    {
-      boost::mutex::scoped_lock lock2(s_updateStateMutex);
-      s_updateState.installStatus = UpdateState::Status::Error;
-
-#ifdef _WIN32
-      if (error.getCode() == ERROR_ACCESS_DENIED ||
-          error.getCode() == ERROR_SHARING_VIOLATION)
-      {
-         s_updateState.installMessage =
-            "Unable to install update (access denied). "
-            "Please close all other instances of RStudio and try again.";
-      }
-      else
-#endif
-      {
-         s_updateState.installMessage = "Installation failed: " + error.getMessage();
-      }
-
-      // Note: installPackage() already handles backup restoration internally,
-      // so we don't need to call restoreFromBackup() here again.
-      // Just verify backup was restored and clean up if needed.
-      FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
-
-      // Defensive cleanup: remove orphaned backup if it exists
-      if (aiPrevDir.exists())
-      {
-         Error prevCleanup = aiPrevDir.removeIfExists();
-         if (prevCleanup)
-            WLOG("Failed to clean up backup directory after failed install: {}", prevCleanup.getMessage());
-      }
-
-      response.setResult(json::Value());
-      cont(Success(), &response);
+      // errorDescription, not getMessage: installPackage() and the slot
+      // machinery report what went wrong in the error's description, and
+      // getMessage() would show only the bare errno string.
+      failInstall("Installation failed: " + core::errorDescription(error), cont);
       return;
    }
 
-   // Success - ensure backup is cleaned up
-   {
-      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+   finishInstall(newVersion, cont);
+}
 
-      // Defensive cleanup: ensure ai.prev is removed
-      FilePath userDataDir = xdg::userDataDir();
-      FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
-      if (aiPrevDir.exists())
-      {
-         WLOG("Backup directory still exists after successful install, cleaning up");
-         Error prevCleanup = aiPrevDir.removeIfExists();
-         if (prevCleanup)
-            WLOG("Failed to clean up backup directory: {}", prevCleanup.getMessage());
-      }
-
-      s_updateState.installStatus = UpdateState::Status::Complete;
-      s_updateState.installMessage = "Update complete";
-      s_updateState.updateAvailable = false;
-      s_updateState.unsupportedInstalledVersion = false;
-      s_updateState.currentVersion = newVersion;
-   }
-
-   response.setResult(json::Value());
-   cont(Success(), &response);
+// Runs the install from the scheduler rather than from the update check's
+// completion. When the main thread's own process-supervisor poll reaps the
+// manifest fetch, that completion runs inside the poll, and the agent stop in
+// finishInstall() waits on the same poll, which is a no-op when re-entered:
+// the agent would never be reaped within the wait and the install would fail
+// for nothing. Scheduled work runs after the poll has returned.
+void performInstallAfterPoll(const json::JsonRpcFunctionContinuation& cont)
+{
+   module_context::scheduleDelayedWork(boost::posix_time::milliseconds(1),
+                                       boost::bind(performInstall, cont),
+                                       false);
 }
 
 // Async RPC. Installs the available update; if the update state hasn't been
@@ -6063,7 +6022,7 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
    else
    {
       DLOG("Update state not populated, performing async check before install");
-      startUpdateCheck(true, boost::bind(performInstall, cont));
+      startUpdateCheck(true, boost::bind(performInstallAfterPoll, cont));
    }
 }
 
@@ -6110,172 +6069,6 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    }
 
    pResponse->setResult(result);
-   return Success();
-}
-
-// NOTE: No isPositAssistantWanted()/isPositAssistantEnabledByAdmin() gate — the user may have
-// disabled Posit Assistant but still wants to clean up installed files. The
-// managed-installation gate below is the one exception.
-Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
-{
-   // Refuse before looking at disk: in managed mode a leftover user-level
-   // installation may well exist, and it is ignored rather than removed.
-   if (isInstallationManaged())
-   {
-      pResponse->setError(
-         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
-         json::Value(kInstallationManagedMessage));
-      return Success();
-   }
-
-   FilePath userDataDir = xdg::userDataDir();
-   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
-   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
-
-   // No user-data install paths exist. Distinguish system/none to give the
-   // user a targeted message. Each branch delivers its message via
-   // client_info on the JSON-RPC error so the frontend can show it verbatim
-   // (Error::getSummary() would otherwise wrap the system errno text and
-   // obscure our description).
-   if (!aiDir.exists() && !aiPrevDir.exists())
-   {
-      // With no user-data install, anything the search still resolves to is
-      // read-only: the administrator's installation, or the copy shipped with
-      // RStudio. Resolve rather than re-testing each location, so the refusal
-      // names the installation actually in use.
-      FilePath readOnlyPath = locatePositAssistantInstallation();
-      if (!readOnlyPath.isEmpty())
-      {
-         bool bundled = (readOnlyPath == bundledPositAssistantInstallPath());
-         pResponse->setError(
-            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
-            json::Value(
-               bundled
-                  ? "Posit Assistant was installed as part of RStudio and "
-                    "cannot be uninstalled from RStudio."
-                  : "Posit Assistant is installed at the system level by an "
-                    "administrator and cannot be uninstalled from RStudio."));
-         return Success();
-      }
-
-      DLOG("Posit Assistant is not installed; nothing to remove");
-      // Clear cached state in case the directory was removed out-of-band
-      // while the session still thinks Posit Assistant is available.
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState = UpdateState();
-      }
-      s_positAssistantVersion.clear();
-      pResponse->setError(
-         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
-         json::Value("Posit Assistant is not installed."));
-      return Success();
-   }
-
-   // Serialize with other rsession processes and refuse while any other
-   // session is running Posit Assistant — checked before stopping our own
-   // processes. The scope releases the mutation lock on every exit below.
-   install_lock::MutationScope mutationScope(installLock());
-   if (mutationScope.error())
-   {
-      pResponse->setError(
-         systemError(boost::system::errc::device_or_resource_busy,
-                     ERROR_LOCATION),
-         json::Value("Unable to uninstall Posit Assistant: " +
-                     mutationScope.userMessage()));
-      return Success();
-   }
-
-   // Stop chat backend (graceful request + reap wait so file handles are
-   // released before we delete the installation directory)
-   stopChatBackendForInstallMutation("uninstall");
-
-   // Stop assistant agent (NES language server).
-   // stopAgentForUpdate() is synchronous — it waits for the agent
-   // process to exit before returning, so file handles are released.
-   bool agentStopped = assistant::stopAgentForUpdate();
-   if (!agentStopped)
-      WLOG("Timeout waiting for assistant agent to stop during uninstall");
-
-   // Deleting the installation under a still-live process is exactly the
-   // corruption this lock prevents for other sessions — abort rather than
-   // proceed when our own processes could not be reaped.
-   if (!waitForOwnComponentsReaped(2000))
-   {
-      pResponse->setError(
-         systemError(boost::system::errc::device_or_resource_busy,
-                     ERROR_LOCATION),
-         json::Value("Failed to stop Posit Assistant processes. "
-                     "Please restart RStudio and try again."));
-      return Success();
-   }
-
-   // Delete installation.
-   // If the agent timed out it may still hold file handles open
-   // (especially on Windows), so warn when deletion fails after a
-   // timeout and suggest restarting.
-   Error error = aiDir.removeIfExists();
-   if (error)
-   {
-      // Processes are already stopped but files remain on disk.
-      // Reset cached state so the session doesn't think PAI is usable,
-      // and tell the user to restart.
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState = UpdateState();
-      }
-      s_positAssistantVersion.clear();
-
-      std::string message =
-         "Failed to remove Posit Assistant installation: " + error.getMessage();
-      if (!agentStopped)
-         message += " (a background process may still be running)";
-      message += ". Please restart RStudio and try again.";
-
-      return systemError(
-         boost::system::errc::io_error, message, ERROR_LOCATION);
-   }
-
-   // The installation the static file handler was serving is gone. Unpin it
-   // here rather than on the success path below, so the backup-removal
-   // failure also leaves asset requests resolving again -- a system-wide or
-   // bundled copy may still be there -- rather than failing against a
-   // directory that no longer exists.
-   staticfiles::setInstallationPath(FilePath());
-
-   // Remove any backup left by a failed install/update. Unlike an install,
-   // reporting uninstall success while an executable tree remains would leave
-   // it behind with no guaranteed later cleanup, so treat failure to remove
-   // it as an uninstall failure (mirrors the pai/bin failure path above).
-   Error prevError = aiPrevDir.removeIfExists();
-   if (prevError)
-   {
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState = UpdateState();
-      }
-      s_positAssistantVersion.clear();
-
-      return systemError(
-         boost::system::errc::io_error,
-         "Failed to remove Posit Assistant installation backup: " +
-            prevError.getMessage() +
-            ". Please restart RStudio and try again.",
-         ERROR_LOCATION);
-   }
-
-   // Reset cached update state so the session correctly detects the
-   // missing installation if the user cancels the subsequent restart.
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      s_updateState = UpdateState();
-   }
-   s_positAssistantVersion.clear();
-   s_expectedShutdown = false;
-
-   DLOG("Posit Assistant uninstalled successfully");
-   pResponse->setResult(json::Value());
    return Success();
 }
 
@@ -6613,7 +6406,6 @@ Error initialize()
       (bind(registerRpcMethod, "chat_set_update_check_override", chatSetUpdateCheckOverride))
       (bind(registerAsyncRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
-      (bind(registerRpcMethod, "chat_uninstall_posit_assistant", chatUninstallPositAssistant))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
       (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))

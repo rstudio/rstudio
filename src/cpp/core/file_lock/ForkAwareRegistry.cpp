@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include <shared_core/Logger.hpp>
+
 #ifdef _WIN32
 # include <windows.h>
 #endif
@@ -58,6 +60,9 @@ void ForkAwareRegistry::publishRegistry(ForkAwareRegistry*)
 
 ForkAwareRegistry::AtForkRegistration::AtForkRegistration()
 {
+   // registries log under their mutex, so the logger's handlers must run
+   // after ours (see registerForkHandlers)
+   log::registerForkHandlers();
    ::pthread_atfork(prepareFork, parentAfterFork, childAfterFork);
 }
 
