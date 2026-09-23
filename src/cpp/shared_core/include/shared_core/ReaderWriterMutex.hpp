@@ -89,14 +89,26 @@ public:
    void unlockWrite();
 
    /**
-    * @brief Reinitializes this mutex in the child of a fork() made while the forking thread held it for write.
+    * @brief Locks this mutex for write ahead of a fork(), from a pthread_atfork prepare handler.
     *
-    * A pthread_atfork prepare handler that locks for write guarantees no other thread is mid-read or mid-write when
-    * the child is created. The child cannot then simply unlock: the recursive mutex underneath records the identity
-    * of the parent's thread, which the child's sole thread need not match. Call this from the child handler instead
-    * to discard the inherited state; the parent handler unlocks as usual.
+    * Holding the write lock guarantees no other thread is mid-read or mid-write when the child is created. The child
+    * cannot then simply unlock: the recursive mutex underneath records the identity of the parent's thread, which the
+    * child's sole thread need not match. This also readies, while allocating is still safe, the replacement state
+    * that resumeAfterForkInChild() installs. Pair it with resumeAfterForkInParent() and resumeAfterForkInChild() in
+    * the parent and child handlers.
     */
-   void reinitializeAfterFork();
+   void prepareForFork();
+
+   /**
+    * @brief Unlocks this mutex in the parent after a fork() prepared with prepareForFork().
+    */
+   void resumeAfterForkInParent();
+
+   /**
+    * @brief Discards the inherited lock state in the child of a fork() prepared with prepareForFork(), leaving this
+    *        mutex unlocked. Allocates nothing, and must not: the child of a multithreaded process may not.
+    */
+   void resumeAfterForkInChild();
 
 private:
 

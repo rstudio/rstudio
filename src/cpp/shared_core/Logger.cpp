@@ -465,17 +465,17 @@ namespace {
 // inherit that thread's read lock, and its own first write lock (e.g. a refresh before exec) would wait forever.
 void lockLoggerBeforeFork()
 {
-   logger().Mutex.lockWrite();
+   logger().Mutex.prepareForFork();
 }
 
 void unlockLoggerInParent()
 {
-   logger().Mutex.unlockWrite();
+   logger().Mutex.resumeAfterForkInParent();
 }
 
 void resetLoggerInChild()
 {
-   logger().Mutex.reinitializeAfterFork();
+   logger().Mutex.resumeAfterForkInChild();
 }
 
 std::once_flag s_forkHandlersRegistered;

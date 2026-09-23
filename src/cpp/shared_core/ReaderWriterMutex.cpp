@@ -23,6 +23,8 @@
 
 #include <shared_core/ReaderWriterMutex.hpp>
 
+#include <memory>
+
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
@@ -41,6 +43,8 @@ struct ReaderWriterMutex::Impl
    // This mutex is used to allow re-entrant lock behaviour on write. On read it's basically already re-entrant.
    boost::recursive_mutex WriteMutex;
    boost::condition_variable_any Condition;
+   // Readied by prepareForFork(), so that the child of the fork can install it without allocating.
+   std::unique_ptr<Impl> ForkReplacement;
 };
 
 PRIVATE_IMPL_DELETER_IMPL(ReaderWriterMutex);
@@ -133,12 +137,28 @@ void ReaderWriterMutex::unlockWrite()
    }
 }
 
-void ReaderWriterMutex::reinitializeAfterFork()
+void ReaderWriterMutex::prepareForFork()
 {
-   // The inherited state is leaked rather than destroyed: it holds a mutex locked by a thread that does not exist in
+   lockWrite();
+
+   // Allocate the child's replacement state here, before the fork: heap allocation is not async-signal-safe, so the
+   // child may not allocate, and the child handler installs this instead.
+   m_impl->ForkReplacement.reset(new Impl());
+}
+
+void ReaderWriterMutex::resumeAfterForkInParent()
+{
+   m_impl->ForkReplacement.reset();
+   unlockWrite();
+}
+
+void ReaderWriterMutex::resumeAfterForkInChild()
+{
+   // The inherited state is leaked rather than destroyed: it holds mutexes locked by a thread that does not exist in
    // this process, and destroying a locked mutex is undefined.
+   Impl* pReplacement = m_impl->ForkReplacement.release();
    m_impl.release();
-   m_impl.reset(new Impl());
+   m_impl.reset(pReplacement);
 }
 
 // ReaderLock ==========================================================================================================

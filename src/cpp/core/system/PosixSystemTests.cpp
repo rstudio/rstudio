@@ -31,13 +31,13 @@
 #include <condition_variable>
 #include <cstring>
 #include <functional>
-#include <future>
 #include <limits>
 #include <mutex>
 #include <thread>
 
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <gtest/gtest.h>
 
@@ -1082,28 +1082,6 @@ bool waitForChildExit(pid_t child, int* pStatus, std::chrono::milliseconds timeo
    return exited;
 }
 
-// runs the function on its own thread; a function that doesn't finish within
-// the timeout is abandoned there, so that the test can fail instead of hang
-bool completesWithin(const std::function<void()>& function, std::chrono::milliseconds timeout)
-{
-   auto pDone = std::make_shared<std::promise<void>>();
-   std::future<void> done = pDone->get_future();
-   std::thread thread([function, pDone]()
-   {
-      function();
-      pDone->set_value();
-   });
-
-   if (done.wait_for(timeout) != std::future_status::ready)
-   {
-      thread.detach();
-      return false;
-   }
-
-   thread.join();
-   return true;
-}
-
 // a log destination whose writes block until released, so that a thread
 // writing to it holds the logger's read lock for as long as a test needs
 class BlockingLogDestination : public log::ILogDestination
@@ -1159,6 +1137,98 @@ void noteForkPrepared()
    s_forkPrepared = true;
 }
 
+// how the scenario below ended, as the exit status of the process it runs in
+enum ForkDuringLogWriteResult
+{
+   kForkScenarioPassed = 0,
+   kForkScenarioWriterNeverWrote,
+   kForkScenarioForkNeverBegan,
+   kForkScenarioForkFailed,
+   kForkScenarioChildHung,
+   kForkScenarioChildFailed
+};
+
+const char* const kForkDuringLogWriteResults[] = {
+   "passed",
+   "the writer never reached the log destination",
+   "the fork never began",
+   "fork() failed",
+   "the child hung logging after the fork",
+   "the child could not log after the fork"
+};
+
+// forks while another thread is mid log write, then logs in both the child and
+// the parent. runs in a process of its own (see the test below): a regression
+// hangs the fork, the child, or the parent's next log write, and none of those
+// can be abandoned from inside the process that hit them
+int runForkDuringLogWrite()
+{
+   s_forkPrepared = false;
+
+   const std::string section = "fork-during-log-write";
+   auto pDestination = std::make_shared<BlockingLogDestination>();
+   log::addLogDestination(pDestination, section);
+
+   std::thread writer([&]()
+   {
+      log::logErrorMessage("holding the logger's read lock", section);
+   });
+
+   bool writing = pDestination->waitUntilWriting(kChildTimeout);
+   if (!writing)
+   {
+      pDestination->release();
+      writer.join();
+      return kForkScenarioWriterNeverWrote;
+   }
+
+   // fork on another thread, so this one can release the writer the fork is waiting for
+   pid_t child = -1;
+   std::thread forker([&]()
+   {
+      child = ::fork();
+      if (child == 0)
+      {
+         // both of these hang in a child forked before the write finished: the
+         // write blocks on this destination's release, which it would have
+         // inherited unreleased, and the refresh on the inherited read lock
+         log::logErrorMessage("logging in the child", section);
+         log::refreshAllLogDestinations();
+         ::_exit(0);
+      }
+   });
+
+   bool forkStarted = waitUntil([]() { return s_forkPrepared.load(); }, kChildTimeout);
+   pDestination->release();
+   writer.join();
+   forker.join();
+
+   // reap the child before reporting anything, so that a hung one doesn't outlive us
+   int status = 0;
+   bool exited = false;
+   if (child > 0)
+      exited = waitForChildExit(child, &status, kChildTimeout);
+
+   if (!forkStarted)
+      return kForkScenarioForkNeverBegan;
+
+   if (child == -1)
+      return kForkScenarioForkFailed;
+
+   if (!exited)
+      return kForkScenarioChildHung;
+
+   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+      return kForkScenarioChildFailed;
+
+   // the parent must have its lock back as well; a logger left locked hangs here
+   log::logErrorMessage("logging in the parent after the fork", section);
+   log::refreshAllLogDestinations();
+   log::removeLogDestination(pDestination->getId(), section);
+
+   return kForkScenarioPassed;
+}
+
 } // anonymous namespace
 
 TEST(PosixTests, ForkWaitsForInFlightLogWriteAndChildCanLog)
@@ -1172,72 +1242,22 @@ TEST(PosixTests, ForkWaitsForInFlightLogWriteAndChildCanLog)
    {
       ASSERT_EQ(0, ::pthread_atfork(noteForkPrepared, nullptr, nullptr));
    });
-   s_forkPrepared = false;
 
-   const std::string section = "fork-during-log-write";
-   auto pDestination = std::make_shared<BlockingLogDestination>();
-   log::addLogDestination(pDestination, section);
-
-   std::thread writer([&]()
-   {
-      log::logErrorMessage("holding the logger's read lock", section);
-   });
-   bool writing = pDestination->waitUntilWriting(kChildTimeout);
-
-   // fork on another thread, so this one can release the writer the fork is waiting for
-   std::promise<pid_t> childPromise;
-   std::future<pid_t> childFuture = childPromise.get_future();
-   std::thread forker([&]()
-   {
-      pid_t pid = ::fork();
-      if (pid == 0)
-      {
-         // both of these hang in a child forked before the write finished: the
-         // write blocks on this destination's release, which it would have
-         // inherited unreleased, and the refresh on the inherited read lock
-         log::logErrorMessage("logging in the child", section);
-         log::refreshAllLogDestinations();
-         ::_exit(0);
-      }
-
-      childPromise.set_value(pid);
-   });
-
-   bool forkStarted = waitUntil([]() { return s_forkPrepared.load(); }, kChildTimeout);
-   pDestination->release();
-   writer.join();
-
-   pid_t child = -1;
-   bool forked = childFuture.wait_for(kChildTimeout) == std::future_status::ready;
-   if (forked)
-   {
-      child = childFuture.get();
-      forker.join();
-   }
-   else
-   {
-      forker.detach();
-   }
+   // the scenario hangs rather than fails when the fix regresses, so run it in
+   // a process this test can kill; the scenario's own waits fit inside this budget
+   pid_t scenario = ::fork();
+   ASSERT_NE(-1, scenario);
+   if (scenario == 0)
+      ::_exit(runForkDuringLogWrite());
 
    int status = 0;
-   bool exited = child != -1 && waitForChildExit(child, &status, kChildTimeout);
+   ASSERT_TRUE(waitForChildExit(scenario, &status, 4 * kChildTimeout))
+      << "the scenario hung: a fork or a log write after it never returned";
+   ASSERT_TRUE(WIFEXITED(status)) << "scenario status: " << status;
 
-   // the parent must have its lock back as well
-   bool parentLogs = completesWithin([section]()
-   {
-      log::logErrorMessage("logging in the parent after the fork", section);
-      log::refreshAllLogDestinations();
-   }, kChildTimeout);
-
-   log::removeLogDestination(pDestination->getId(), section);
-
-   ASSERT_TRUE(writing) << "the writer never reached the log destination";
-   ASSERT_TRUE(forkStarted) << "the fork never began";
-   ASSERT_TRUE(forked) << "the fork never returned to the parent";
-   ASSERT_NE(-1, child);
-   ASSERT_TRUE(exited) << "the child hung logging after the fork";
-   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
-   EXPECT_TRUE(parentLogs) << "the parent could not log after the fork";
+   int result = WEXITSTATUS(status);
+   ASSERT_LT(result, static_cast<int>(sizeof(kForkDuringLogWriteResults) / sizeof(*kForkDuringLogWriteResults)));
+   EXPECT_EQ(kForkScenarioPassed, result) << kForkDuringLogWriteResults[result];
 }
 
 TEST(PosixTests, ResolveUserReturnsCurrentUserAndGroups)
@@ -1263,6 +1283,18 @@ TEST(PosixTests, SetProcessLimitsReportsFailuresThroughCallback)
    struct rlimit files;
    ASSERT_EQ(0, ::getrlimit(RLIMIT_NOFILE, &files));
 
+   // the probes below only ever raise the soft limit, so this can put it back
+   BOOST_SCOPE_EXIT(&files)
+   {
+      ::setrlimit(RLIMIT_NOFILE, &files);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // both probes need a finite hard limit: the first sets the soft limit to it
+   // (which some systems refuse for RLIM_INFINITY), and the second exceeds it
+   if (files.rlim_max == RLIM_INFINITY)
+      GTEST_SKIP() << "the hard file limit is unlimited here";
+
    std::vector<Error> reported;
    auto report = [&reported](const Error& error) { reported.push_back(error); };
 
@@ -1273,7 +1305,7 @@ TEST(PosixTests, SetProcessLimitsReportsFailuresThroughCallback)
    EXPECT_TRUE(reported.empty());
 
    // raising the hard limit is not, unless privileged
-   if (::geteuid() == 0 || files.rlim_max == RLIM_INFINITY)
+   if (::geteuid() == 0)
       GTEST_SKIP() << "raising the hard file limit would succeed here";
 
    limits.filesLimit = files.rlim_max + 1;
