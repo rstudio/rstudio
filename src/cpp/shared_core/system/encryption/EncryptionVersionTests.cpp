@@ -337,18 +337,34 @@ TEST(SharedCoreTest, VersionedCryptoCalls)
    {
       ASSERT_TRUE(generateKeys(crypto::v2::VERSION_BYTE));
 
-      // [ version byte ][ data ][ mac ] needs more than 1 + MAC_SIZE_BYTES bytes.
+      // [ version byte ][ data ][ mac ] needs at least 1 + MAC_SIZE_BYTES bytes.
       // Anything shorter used to wrap the unsigned length arithmetic around to
       // a huge value; it must throw the version mismatch instead so the caller
       // falls back to an earlier version.
       const size_t overhead = crypto::ENCRYPTION_VERSION_SIZE_BYTES + crypto::v2::MAC_SIZE_BYTES;
       std::vector<unsigned char> decryptedData;
 
-      for (size_t len : {(size_t)1, overhead - 1, overhead})
+      for (size_t len : {(size_t)1, overhead - 1})
       {
          std::vector<unsigned char> shortData(len, crypto::v2::VERSION_BYTE);
          EXPECT_ANY_THROW(core::system::crypto::v2::aesDecrypt(shortData, g_key, g_iv, decryptedData));
       }
+   }
+
+   // An empty plaintext round-trips through v2 - its ciphertext is exactly the overhead
+   {
+      ASSERT_TRUE(generateKeys(crypto::v2::VERSION_BYTE));
+
+      std::vector<unsigned char> emptyData;
+      std::vector<unsigned char> encryptedData;
+      Error error = core::system::crypto::v2::aesEncrypt(emptyData, g_key, g_iv, encryptedData);
+      ASSERT_FALSE(error);
+      ASSERT_EQ(crypto::ENCRYPTION_VERSION_SIZE_BYTES + crypto::v2::MAC_SIZE_BYTES, encryptedData.size());
+
+      std::vector<unsigned char> decryptedData(1, 'x');
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
+      ASSERT_FALSE(error);
+      ASSERT_TRUE(decryptedData.empty());
    }
 
    // A v1 buffer with no payload after its version byte is rejected

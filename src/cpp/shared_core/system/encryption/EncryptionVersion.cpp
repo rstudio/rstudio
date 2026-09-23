@@ -51,9 +51,10 @@ Error getLastCryptoError(const ErrorLocation& in_location)
    unsigned long ec = ::ERR_get_error();
    if (ec == 0)
    {
-      // Some OpenSSL operations report failure only by return value - not adding an error
-      // The version detection can lead to intermittent errors decrypting when the first byte happens
-      // to match a supported version. These errors look concerning but are not.
+      // Some OpenSSL operations report failure only by return value, leaving the error queue
+      // empty. Callers that know an operation fails this way (e.g. a GCM tag mismatch) should
+      // return their own error rather than calling this. Reaching here means some other caller
+      // hit such a failure; log it quietly since it is not necessarily a problem.
       log::logDebugMessage("getLastCryptoError called with no pending error");
       return systemError(
           boost::system::errc::not_supported,
@@ -413,9 +414,10 @@ Error aesDecrypt(
       throw EncryptionVersionMismatchException();
 
    // Index maths. v2 buffer structure is: [ version byte ][ v2 encrypted data ][ mac ]
-   // avoid using unsigned comparisons here
+   // Check the size before subtracting so the unsigned arithmetic can't wrap. A buffer of
+   // exactly the overhead size is valid - it is the encryption of an empty plaintext.
    const size_t v2_OVERHEAD_BYTES = ENCRYPTION_VERSION_SIZE_BYTES + MAC_SIZE_BYTES;
-   if (in_v2_data.size() <= v2_OVERHEAD_BYTES)
+   if (in_v2_data.size() < v2_OVERHEAD_BYTES)
       throw EncryptionVersionMismatchException();
 
    const size_t dataLength = in_v2_data.size() - v2_OVERHEAD_BYTES;
