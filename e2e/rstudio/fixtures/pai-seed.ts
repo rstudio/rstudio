@@ -189,8 +189,8 @@ export function inspectSeed(seedRoot: string): { version: string; protocol: stri
  * Lay out `seedRoot` as an installed slot in `storageDir`.
  *
  * The package becomes `versions/<version>` with its manifest, selected for the
- * protocol it declares. Everything else in the seed (paconfig.json,
- * manifest-check.json, ...) is copied across as-is, since it is shared state
+ * protocol it declares. Everything else in the seed (manifest-check.json,
+ * ...) is copied across as-is, since it is shared state
  * that lives beside the slots. The seed's `bin` is deliberately not copied: a
  * versioned-aware RStudio never reads it, so copying it would only add 18 MB
  * per sandbox and make a resolver regression harder to notice. A `versions`
@@ -240,8 +240,7 @@ export function seedPaiSlot(seedRoot: string, storageDir: string): string {
  * other spec reads. The seed's slots are immutable once published, so each
  * one is hardlink-cloned rather than copied (18 MB per slot per spec
  * otherwise); the small files beside them (`selected.json`,
- * `manifest-check.json`, `paconfig.json`) are copied, since the session
- * writes them.
+ * `manifest-check.json`) are copied, since the session writes them.
  *
  * No-op when the destination already exists (config-root reuse across a
  * restart).
