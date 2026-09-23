@@ -95,8 +95,8 @@ core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
  * The Posit Assistant storage directory for this user.
  *
  * Shared by every install: it holds the version slots under versions/, the
- * selector naming the active slot per protocol, the record of update checks,
- * and the backend's own configuration. Passed to the backend as --storage.
+ * selector naming the active slot per protocol, and the record of update
+ * checks. The assistant's own storage is under ~/.posit/assistant, not here.
  *
  * @return <userDataDir>/pai. Not guaranteed to exist.
  */
