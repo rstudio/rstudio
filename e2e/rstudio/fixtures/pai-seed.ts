@@ -9,10 +9,12 @@ import { cloneTreeHardlinks } from './r-libs-setup';
  * RStudio installs each package version into its own slot under
  * `pai/versions/<version>` and records the active slot per protocol in
  * `pai/selected.json` (rstudio/rstudio#18658). The legacy unversioned
- * `pai/bin` is never read. So a seed cannot just be a copy of the source
- * tree: it has to be laid out the way an install leaves it, manifest and
- * selector included, or the IDE resolves nothing and downloads the official
- * package instead -- silently testing the wrong build.
+ * `pai/bin` is never read. The assistant repo's `npm run deploy:rstudio`
+ * publishes its build in that layout, and the build under test is the slot
+ * the seed's `selected.json` names. That slot is re-published into the
+ * sandbox -- manifest and selector rewritten -- rather than the seed being
+ * copied wholesale: a sandbox that does not verify resolves nothing, and the
+ * IDE downloads the official package instead, silently testing the wrong build.
  *
  * The C++ side of this lives in `src/cpp/session/modules/chat/ChatSlots.cpp`
  * and `ChatSelector.cpp`; the file names and JSON shapes below mirror
@@ -30,11 +32,8 @@ const CLIENT_DIR_PATH = 'dist/client';
 const SERVER_SCRIPT_PATH = 'dist/server/main.js';
 const INDEX_FILE_NAME = 'index.html';
 
-/**
- * The subdirectory of a PW_SEED_PAI tree holding the extracted package: the
- * assistant repo's `npm run deploy:rstudio` writes the package to `pai/bin`.
- */
-const SEED_PACKAGE_DIR = 'bin';
+/** Legacy unversioned install, never read by RStudio and never seeded. */
+const LEGACY_PACKAGE_DIR = 'bin';
 
 interface ManifestEntry {
   size: number;
@@ -152,27 +151,79 @@ function isRunnablePackage(packageDir: string): boolean {
 }
 
 /**
- * Validate a PW_SEED_PAI tree and report the version it holds.
+ * The slot directory a PW_SEED_PAI tree's `selected.json` names.
+ *
+ * A `deploy:rstudio` tree selects exactly one slot, so a selector naming more
+ * than one protocol is not one: it is a `pai` RStudio has installed into, and
+ * picking an entry would pick a build nobody deployed.
+ */
+function selectedSeedSlot(seedRoot: string): string {
+  const selectorPath = path.join(seedRoot, SELECTOR_FILE_NAME);
+  if (!fs.existsSync(selectorPath)) {
+    throw new Error(
+      `PW_SEED_PAI="${seedRoot}" does not look like a Posit Assistant install ` +
+        `(missing ${SELECTOR_FILE_NAME}); publish one with the assistant repo's ` +
+        '`npm run deploy:rstudio`',
+    );
+  }
+
+  let selected: unknown;
+  try {
+    selected = JSON.parse(fs.readFileSync(selectorPath, 'utf-8')).selected;
+  } catch (err) {
+    throw new Error(`Could not parse ${selectorPath}: ${(err as Error).message}`);
+  }
+  if (typeof selected !== 'object' || selected === null || Array.isArray(selected)) {
+    throw new Error(`${selectorPath} has no "selected" object`);
+  }
+
+  const entries = Object.entries(selected);
+  if (entries.length !== 1) {
+    throw new Error(
+      `${selectorPath} selects ${entries.length} protocols; a ` +
+        '`npm run deploy:rstudio` tree selects exactly one',
+    );
+  }
+  const [protocol, slotName] = entries[0];
+  if (typeof slotName !== 'string' || !isUsableSlotName(slotName)) {
+    throw new Error(
+      `${selectorPath} selects ${JSON.stringify(slotName)} for protocol ${protocol}, ` +
+        'which cannot name an install slot',
+    );
+  }
+
+  const slotDir = path.join(seedRoot, VERSIONS_DIR_NAME, slotName);
+  if (!fs.existsSync(path.join(slotDir, PACKAGE_JSON_FILE_NAME))) {
+    throw new Error(
+      `${selectorPath} selects slot "${slotName}", but ` +
+        `${VERSIONS_DIR_NAME}/${slotName}/${PACKAGE_JSON_FILE_NAME} does not exist`,
+    );
+  }
+  return slotDir;
+}
+
+/**
+ * Validate a PW_SEED_PAI tree and report the slot it selects and the version
+ * and protocol that slot holds.
  *
  * Called before the sandbox is populated so a typo, a stale path or a partial
  * build fails setup with a clear message rather than a mystery download later.
  */
-export function inspectSeed(seedRoot: string): { version: string; protocol: string } {
-  const packageDir = path.join(seedRoot, SEED_PACKAGE_DIR);
-  if (!fs.existsSync(path.join(packageDir, PACKAGE_JSON_FILE_NAME))) {
-    throw new Error(
-      `PW_SEED_PAI="${seedRoot}" does not look like a Posit Assistant install ` +
-        `(missing ${SEED_PACKAGE_DIR}/${PACKAGE_JSON_FILE_NAME})`,
-    );
-  }
-  if (!isRunnablePackage(packageDir)) {
+export function inspectSeed(seedRoot: string): {
+  slotDir: string;
+  version: string;
+  protocol: string;
+} {
+  const slotDir = selectedSeedSlot(seedRoot);
+  const slot = path.relative(seedRoot, slotDir).split(path.sep).join('/');
+  if (!isRunnablePackage(slotDir)) {
     throw new Error(
       `PW_SEED_PAI="${seedRoot}" is not a complete Posit Assistant build: ` +
-        `${SEED_PACKAGE_DIR}/${SERVER_SCRIPT_PATH} and ` +
-        `${SEED_PACKAGE_DIR}/${CLIENT_DIR_PATH}/${INDEX_FILE_NAME} must exist and be non-empty`,
+        `${slot}/${SERVER_SCRIPT_PATH} and ` +
+        `${slot}/${CLIENT_DIR_PATH}/${INDEX_FILE_NAME} must exist and be non-empty`,
     );
   }
-  const version = readJsonField(path.join(packageDir, PACKAGE_JSON_FILE_NAME), 'version');
+  const version = readJsonField(path.join(slotDir, PACKAGE_JSON_FILE_NAME), 'version');
   if (!isUsableSlotName(version)) {
     throw new Error(
       `PW_SEED_PAI="${seedRoot}" declares version "${version}", which cannot name an ` +
@@ -180,37 +231,37 @@ export function inspectSeed(seedRoot: string): { version: string; protocol: stri
     );
   }
   return {
+    slotDir,
     version,
-    protocol: readJsonField(path.join(packageDir, PROTOCOL_FILE_NAME), 'protocol'),
+    protocol: readJsonField(path.join(slotDir, PROTOCOL_FILE_NAME), 'protocol'),
   };
 }
 
 /**
- * Lay out `seedRoot` as an installed slot in `storageDir`.
+ * Lay out the slot `seedRoot` selects as the only slot in `storageDir`.
  *
- * The package becomes `versions/<version>` with its manifest, selected for the
- * protocol it declares. Everything else in the seed (manifest-check.json,
- * ...) is copied across as-is, since it is shared state
- * that lives beside the slots. The seed's `bin` is deliberately not copied: a
- * versioned-aware RStudio never reads it, so copying it would only add 18 MB
- * per sandbox and make a resolver regression harder to notice. A `versions`
- * directory or `selected.json` already in the seed (a real `pai` that this
- * RStudio has installed into) is not copied either, so the slot under test is
- * exactly the one `bin` holds. Nor is `locks`: a real `pai` carries its
- * machine's live in-use lock entries, which would make installs in the
- * sandbox refuse.
+ * The slot is copied to `versions/<version>`, its manifest is rewritten, and
+ * it is selected for the protocol it declares. The manifest is recorded from
+ * the copied files rather than trusted, so the sandbox slot verifies against
+ * exactly what was copied. The seed's other slots and its `selected.json` are not copied, so the build
+ * under test is the only one there. Nor is `bin`: RStudio never reads it, so
+ * copying it would only add 18 MB per sandbox and make a resolver regression
+ * harder to notice. Nor is `locks`: a real `pai` carries its machine's live
+ * in-use lock entries, which would make installs in the sandbox refuse.
+ * Everything else (`ai-logs`, `manifest-check.json`, ...) is shared state
+ * that lives beside the slots and is copied as-is.
  *
  * @returns the version that was seeded.
  */
 export function seedPaiSlot(seedRoot: string, storageDir: string): string {
-  const { version, protocol } = inspectSeed(seedRoot);
+  const { slotDir: seedSlotDir, version, protocol } = inspectSeed(seedRoot);
 
   fs.mkdirSync(storageDir, { recursive: true });
   for (const entry of fs.readdirSync(seedRoot)) {
     if (
-      entry === SEED_PACKAGE_DIR ||
       entry === VERSIONS_DIR_NAME ||
       entry === SELECTOR_FILE_NAME ||
+      entry === LEGACY_PACKAGE_DIR ||
       entry === LOCKS_DIR_NAME
     ) {
       continue;
@@ -219,7 +270,7 @@ export function seedPaiSlot(seedRoot: string, storageDir: string): string {
   }
 
   const slotDir = path.join(storageDir, VERSIONS_DIR_NAME, version);
-  fs.cpSync(path.join(seedRoot, SEED_PACKAGE_DIR), slotDir, { recursive: true });
+  fs.cpSync(seedSlotDir, slotDir, { recursive: true });
   writeSlotManifest(slotDir);
 
   fs.writeFileSync(
