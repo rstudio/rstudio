@@ -76,7 +76,7 @@ test_that("Python function arguments are discovered with inspect.signature()", {
    skipIfPythonUnavailable()
 
    reticulate::py_run_string('
-def _rs_test_function(a, /, b: int, c=1, *args, d, e=2, **kwargs):
+def _rs_test_function(a, b: int, c=1, *args, d, e=2, **kwargs):
     pass
 
 class _rs_test_class:
@@ -85,13 +85,45 @@ class _rs_test_class:
 ')
    on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_class"), add = TRUE)
 
-   # positional-only and variadic parameters can't be supplied as 'name=value'
+   # variadic parameters can't be supplied as 'name=value'
    object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
-   expect_equal(.rs.python.getFunctionArguments(object), c("b", "c", "d", "e"))
+   expect_equal(.rs.python.getFunctionArguments(object), c("a", "b", "c", "d", "e"))
 
    # classes report their constructor's arguments, without 'self'
    object <- reticulate::py_eval("_rs_test_class", convert = FALSE)
    expect_equal(.rs.python.getFunctionArguments(object), c("x", "y", "z"))
+
+})
+
+test_that("Python positional-only arguments are not offered", {
+
+   skipIfPythonUnavailable()
+   skip_if(reticulate::py_version() < "3.8", "positional-only syntax requires Python 3.8")
+
+   reticulate::py_run_string('
+def _rs_test_function(a, /, b):
+    pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function"), add = TRUE)
+
+   object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), "b")
+
+})
+
+test_that("Python function arguments fall back to the docstring for opaque signatures", {
+
+   skipIfPythonUnavailable()
+
+   reticulate::py_run_string('
+def _rs_test_function(*args, **kwargs):
+    """_rs_test_function(x, y=1)"""
+    pass
+')
+   on.exit(reticulate::py_run_string("del _rs_test_function"), add = TRUE)
+
+   object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), c("x", "y"))
 
 })
 

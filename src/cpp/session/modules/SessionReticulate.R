@@ -850,9 +850,11 @@
       function() .rs.python.getNumpyFunctionArguments(object)
    )
    
+   # an empty result can mean the signature is opaque, e.g. a builtin or
+   # wrapper taking only '(*args, **kwargs)', so let the docstring have a go
    for (method in methods) {
       arguments <- .rs.tryCatch(method())
-      if (!inherits(arguments, "error"))
+      if (!inherits(arguments, "error") && length(arguments))
          return(arguments)
    }
    
@@ -862,10 +864,15 @@
 
 .rs.addFunction("python.getSignatureArguments", function(object)
 {
+   inspect <- reticulate::import("inspect", convert = FALSE)
+
+   # Python 2 has no inspect.signature()
+   if (!reticulate::py_has_attr(inspect, "signature"))
+      return(.rs.python.getArgspecArguments(object))
+
    # inspect.getargspec() was removed in Python 3.11, and before that failed
    # for any function with keyword-only arguments or annotations. note that
    # for classes, inspect.signature() describes the constructor (sans 'self')
-   inspect <- reticulate::import("inspect", convert = FALSE)
    signature <- inspect$signature(object)
    parameters <- reticulate::iterate(signature$parameters$values())
 
@@ -879,6 +886,20 @@
 
    # only offer parameters that can be supplied as 'name=value'
    names[kinds %in% c("POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY")]
+})
+
+.rs.addFunction("python.getArgspecArguments", function(object)
+{
+   inspect <- reticulate::import("inspect", convert = TRUE)
+
+   # for class objects, we'll look up arguments on the associated
+   # __init__ method instead
+   if (inspect$isclass(object)) {
+      init <- reticulate::py_get_attr(object, "__init__")
+      return(setdiff(inspect$getargspec(init)$args, "self"))
+   }
+
+   inspect$getargspec(object)$args
 })
 
 .rs.addFunction("python.getNumpyFunctionArguments", function(object)
