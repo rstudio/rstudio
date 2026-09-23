@@ -4372,9 +4372,7 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 // extracted into a staging directory no other session can name, and reaches a
 // slot name only once allocateSlot() has recorded its manifest and verified
 // the result, so a torn install never exists under a resolvable name.
-Error installPackage(const FilePath& packagePath,
-                     const std::string& expectedVersion,
-                     std::string* pVersion)
+Error installPackage(const FilePath& packagePath, const std::string& expectedVersion)
 {
    FilePath storageDir = positAiStorageDir();
    FilePath slotsDir = chat_slots::versionsDir(storageDir);
@@ -4452,7 +4450,6 @@ Error installPackage(const FilePath& packagePath,
    DLOG("Installed Posit Assistant {} (protocol {}) as slot {}",
         expectedVersion, kProtocolVersion, slotDir.getFilename());
 
-   *pVersion = expectedVersion;
    return Success();
 }
 
@@ -5921,8 +5918,7 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
       s_updateState.installMessage = "Installing update...";
    }
 
-   std::string installedVersion;
-   error = installPackage(tempPackage, newVersion, &installedVersion);
+   error = installPackage(tempPackage, newVersion);
 
    // Always clean up temp file (do this before error handling)
    Error cleanupError = tempPackage.removeIfExists();
@@ -5940,7 +5936,7 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
       return;
    }
 
-   finishInstall(installedVersion, cont);
+   finishInstall(newVersion, cont);
 }
 
 // Async RPC. Installs the available update; if the update state hasn't been
