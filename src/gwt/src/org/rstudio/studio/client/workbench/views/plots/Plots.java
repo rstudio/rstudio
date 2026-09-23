@@ -125,9 +125,13 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
             org.rstudio.studio.client.workbench.views.plots.model.Point p = null;
             if (e.getSelectedItem() != null)
             {
+               // R keeps waiting for a click on the plot
                Point plotPoint = toPlotPoint(
                      e.getSelectedItem().getX(),
                      e.getSelectedItem().getY());
+               if (plotPoint == null)
+                  return;
+
                p = org.rstudio.studio.client.workbench.views.plots.model.Point.create(
                      plotPoint.getX(),
                      plotPoint.getY()
@@ -161,6 +165,9 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
                Point plotPoint = toPlotPoint(
                      Double.valueOf(event.getX()).intValue(),
                      Double.valueOf(event.getY()).intValue());
+               if (plotPoint == null)
+                  return;
+
                server_.manipulatorPlotClicked(plotPoint.getX(),
                                               plotPoint.getY(),
                                               new ManipulatorRequestCallback());
@@ -184,6 +191,10 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       view_.setProgress(false);
       manipulatorManager_.setProgress(false);
 
+      // update plot size
+      plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
+      plotSizeFixed_ = plotsState.getFixedSize();
+
       // if this is the empty plot then clear the display
       // NOTE: we currently return a zero byte PNG as our "empty.png" from
       // the server. this is shown as a blank pane by Webkit, however
@@ -196,17 +207,12 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       else
       {
          String url = server_.getGraphicsUrl(plotsState.getFilename());
-         Size size = new Size(plotsState.getWidth(), plotsState.getHeight());
-         view_.showPlot(url, plotsState.getFixedSize() ? size : null);
+         view_.showPlot(url, plotSizeFixed_ ? plotSize_ : null);
       }
 
       // activate the plots tab if requested
       if (plotsState.getActivatePlots())
          view_.bringToFront();
-
-      // update plot size
-      plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
-      plotSizeFixed_ = plotsState.getFixedSize();
 
       // manipulator
       manipulatorManager_.setManipulator(plotsState.getManipulator(),
@@ -460,8 +466,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
 
    void onFitPlotToPane()
    {
-      FixedPlotSize size = userState_.get().fixedPlotSize().getValue();
-      if (!FixedPlotSizeUtils.isEnabled(size))
+      FixedPlotSize size = FixedPlotSizeUtils.effectiveSize(userState_.get().fixedPlotSize().getValue());
+      if (!size.getEnabled())
          return;
 
       setFixedPlotSize(FixedPlotSizeUtils.create(
@@ -472,9 +478,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
    {
       view_.bringToFront();
 
-      FixedPlotSize size = userState_.get().fixedPlotSize().getValue();
-      if (size == null)
-         size = FixedPlotSizeUtils.create(false, 7, 5, FixedPlotSizeUtils.UNITS_INCHES);
+      FixedPlotSize size = FixedPlotSizeUtils.effectiveSize(userState_.get().fixedPlotSize().getValue());
 
       // a native menu checks a radio item when it is selected, so restore the
       // checked state if the dialog is cancelled
@@ -614,7 +618,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
 
    // Maps a point in the Plots pane to the plot's own coordinates: a plot with
    // a fixed size is scaled down to fit the pane and centered in it (see
-   // ImageFrame.replaceLocation).
+   // ImageFrame.replaceLocation). Returns null for a point beside the plot,
+   // which a plot filling the pane never has.
    private Point toPlotPoint(int x, int y)
    {
       if (!plotSizeFixed_ || plotSize_ == null)
@@ -627,9 +632,12 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       double left = (frame.width - plotSize_.width * scale) / 2;
       double top = (frame.height - plotSize_.height * scale) / 2;
 
-      return Point.create(
-            (int) Math.round((x - left) / scale),
-            (int) Math.round((y - top) / scale));
+      double plotX = (x - left) / scale;
+      double plotY = (y - top) / scale;
+      if (plotX < 0 || plotX > plotSize_.width || plotY < 0 || plotY > plotSize_.height)
+         return null;
+
+      return Point.create((int) Math.round(plotX), (int) Math.round(plotY));
    }
 
    private class ManipulatorRequestCallback extends ServerRequestCallback<VoidResponse>
