@@ -844,26 +844,9 @@
 
 .rs.addFunction("python.getFunctionArguments", function(object)
 {
-   inspect <- reticulate::import("inspect", convert = TRUE)
-   
-   # for class objects, we'll look up arguments on the associated
-   # __init__ method instead
-   if (inspect$isclass(object)) {
-      
-      init <- .rs.tryCatch(reticulate::py_get_attr(object, "__init__"))
-      if (inherits(init, "error"))
-         return(.rs.python.emptyCompletions())
-      
-      arguments <- .rs.tryCatch(inspect$getargspec(init)$args)
-      if (inherits(arguments, "error"))
-         return(.rs.python.emptyCompletions())
-      
-      return(setdiff(arguments, "self"))
-   }
-   
    # try a set of methods for extracting these arguments
    methods <- list(
-      function() inspect$getargspec(object)$args,
+      function() .rs.python.getSignatureArguments(object),
       function() .rs.python.getNumpyFunctionArguments(object)
    )
    
@@ -875,6 +858,27 @@
    
    character()
    
+})
+
+.rs.addFunction("python.getSignatureArguments", function(object)
+{
+   # inspect.getargspec() was removed in Python 3.11, and before that failed
+   # for any function with keyword-only arguments or annotations. note that
+   # for classes, inspect.signature() describes the constructor (sans 'self')
+   inspect <- reticulate::import("inspect", convert = FALSE)
+   signature <- inspect$signature(object)
+   parameters <- reticulate::iterate(signature$parameters$values())
+
+   names <- vapply(parameters, function(parameter) {
+      reticulate::py_to_r(parameter$name)
+   }, character(1))
+
+   kinds <- vapply(parameters, function(parameter) {
+      reticulate::py_to_r(parameter$kind$name)
+   }, character(1))
+
+   # only offer parameters that can be supplied as 'name=value'
+   names[kinds %in% c("POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY")]
 })
 
 .rs.addFunction("python.getNumpyFunctionArguments", function(object)
@@ -1503,14 +1507,11 @@ def _rstudio_html_generator_():
    if (inherits(object, "error"))
       return(error)
    
-   # extract argument names using inspect (note that this can fail for
-   # some Python function types; e.g. builtin Python functions)
-   inspect <- reticulate::import("inspect", convert = TRUE)
-   spec <- .rs.tryCatch(inspect$getargspec(object))
-   if (inherits(spec, "error"))
+   # use the same arguments offered as completions, so that each
+   # completion item can find its description
+   args <- .rs.python.getFunctionArguments(object)
+   if (!length(args))
       return(error)
-   
-   args <- spec$args
    
    # attempt to scrape parameter documentation
    docs <- reticulate::py_get_attr(object, "__doc__", silent = TRUE)
@@ -1541,7 +1542,9 @@ def _rstudio_html_generator_():
          # consume lines of greater indent that the current
          indent <- regexpr("(?:\\S|$)", line)
          start <- end <- index + 1
-         while (TRUE) {
+         # (the description may run to the end of the docstring; Python 3.13+
+         # dedents docstrings, so there's no trailing indented line to stop at)
+         while (end <= length(lines)) {
             if (regexpr("(?:\\S|$)", lines[[end]]) <= indent)
                break
             end <- end + 1
