@@ -111,7 +111,7 @@ def _rs_test_function(a, /, b):
 
 })
 
-test_that("Python function arguments fall back to the docstring for opaque signatures", {
+test_that("Python function arguments fall back to the docstring only for opaque signatures", {
 
    skipIfPythonUnavailable()
 
@@ -119,11 +119,19 @@ test_that("Python function arguments fall back to the docstring for opaque signa
 def _rs_test_function(*args, **kwargs):
     """_rs_test_function(x, y=1)"""
     pass
+
+def _rs_test_empty():
+    """Same as _rs_test_function(x, y=1)"""
+    pass
 ')
-   on.exit(reticulate::py_run_string("del _rs_test_function"), add = TRUE)
+   on.exit(reticulate::py_run_string("del _rs_test_function, _rs_test_empty"), add = TRUE)
 
    object <- reticulate::py_eval("_rs_test_function", convert = FALSE)
    expect_equal(.rs.python.getFunctionArguments(object), c("x", "y"))
+
+   # a function that genuinely takes no arguments shouldn't borrow any
+   object <- reticulate::py_eval("_rs_test_empty", convert = FALSE)
+   expect_equal(.rs.python.getFunctionArguments(object), character())
 
 })
 

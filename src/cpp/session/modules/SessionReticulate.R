@@ -850,11 +850,9 @@
       function() .rs.python.getNumpyFunctionArguments(object)
    )
    
-   # an empty result can mean the signature is opaque, e.g. a builtin or
-   # wrapper taking only '(*args, **kwargs)', so let the docstring have a go
    for (method in methods) {
       arguments <- .rs.tryCatch(method())
-      if (!inherits(arguments, "error") && length(arguments))
+      if (!inherits(arguments, "error"))
          return(arguments)
    }
    
@@ -885,7 +883,15 @@
    }, character(1))
 
    # only offer parameters that can be supplied as 'name=value'
-   names[kinds %in% c("POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY")]
+   keyword <- kinds %in% c("POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY")
+
+   # a signature with parameters but none of those, e.g. a wrapper taking
+   # only '(*args, **kwargs)', hides the real arguments; fail so the caller
+   # can try the docstring instead
+   if (length(kinds) && !any(keyword))
+      stop("signature has no named parameters")
+
+   names[keyword]
 })
 
 .rs.addFunction("python.getArgspecArguments", function(object)
