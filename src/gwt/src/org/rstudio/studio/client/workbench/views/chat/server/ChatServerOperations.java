@@ -51,7 +51,12 @@ public interface ChatServerOperations
     */
    public void chatSetUpdateCheckOverride(JavaScriptObject override,
                                           ServerRequestCallback<JavaScriptObject> requestCallback);
-   public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback);
+   /**
+    * Installs the available update, or with reinstall set, a fresh copy of
+    * the installed version (offered when the check reports reinstallAvailable).
+    */
+   public void chatInstallUpdate(boolean reinstall,
+                                 ServerRequestCallback<VoidResponse> requestCallback);
    public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback);
 
    public void chatDocFocused(String documentId, ServerRequestCallback<VoidResponse> requestCallback);
