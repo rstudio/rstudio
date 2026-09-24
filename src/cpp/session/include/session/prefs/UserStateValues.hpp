@@ -60,6 +60,7 @@ namespace prefs {
 #define kExportPlotOptionsViewAfterSave "viewAfterSave"
 #define kExportPlotOptionsCopyAsMetafile "copyAsMetafile"
 #define kExportPlotOptionsUseDevicePixelRatio "useDevicePixelRatio"
+#define kExportPlotOptionsResolution "resolution"
 #define kExportViewerOptions "export_viewer_options"
 #define kExportViewerOptionsWidth "width"
 #define kExportViewerOptionsHeight "height"
@@ -73,6 +74,11 @@ namespace prefs {
 #define kSavePlotAsPdfOptionsPortrait "portrait"
 #define kSavePlotAsPdfOptionsCairoPdf "cairo_pdf"
 #define kSavePlotAsPdfOptionsViewAfterSave "viewAfterSave"
+#define kFixedPlotSize "fixed_plot_size"
+#define kFixedPlotSizeEnabled "enabled"
+#define kFixedPlotSizeWidth "width"
+#define kFixedPlotSizeHeight "height"
+#define kFixedPlotSizeUnits "units"
 #define kCompileRNotebookPrefs "compile_r_notebook_prefs"
 #define kCompileRNotebookPrefsAuthor "author"
 #define kCompileRNotebookPrefsType "type"
@@ -195,6 +201,12 @@ public:
     */
    core::json::Object savePlotAsPdfOptions();
    core::Error setSavePlotAsPdfOptions(core::json::Object val);
+
+   /**
+    * Whether plots in the Plots pane are drawn at a fixed size rather than the size of the pane, and that size.
+    */
+   core::json::Object fixedPlotSize();
+   core::Error setFixedPlotSize(core::json::Object val);
 
    /**
     * Most recently used settings for compiling a notebook from an R script.

@@ -619,13 +619,15 @@ Error initialize()
                                                       kListsPath,
                                                       onListsFileChanged);
 
+   // these tidy up the project MRU; if they fail, the list is only left in
+   // its older form, so don't let that prevent the session from starting
    Error error = migrateLegacyProjectMru();
    if (error)
-      return error;
+      LOG_ERROR(error);
 
    error = normalizeProjectMru();
    if (error)
-      return error;
+      LOG_ERROR(error);
 
    using boost::bind;
    using namespace module_context;

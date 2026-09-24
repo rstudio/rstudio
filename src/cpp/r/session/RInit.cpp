@@ -13,8 +13,12 @@
  *
  */
 
+#include <string>
+#include <vector>
+
 #include <boost/bind/bind.hpp>
 
+#include <core/Log.hpp>
 #include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 
@@ -64,6 +68,12 @@ boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 // latent deserialization actions are taking place
 std::atomic<bool> s_isSessionDeserialized(false);
 boost::function<void()> s_deferredDeserializationAction;
+
+// the saved state whose deferred restore hasn't run yet
+FilePath s_restoringStatePath;
+
+// where setAsideUnfinishedRestores() moved any saved state it set aside
+std::vector<FilePath> s_setAsideStatePaths;
    
 void reportDeferredDeserializationError(const Error& error)
 {
@@ -117,6 +127,15 @@ void deferredRestoreSuspendedSession(
    Error error = deferredRestoreAction();
    if (error)
       reportDeferredDeserializationError(error);
+
+   // the saved state has loaded without taking the process down; what follows
+   // is initialization unrelated to it, so a crash there mustn't count
+   // against the state (see ensureDeserialized)
+   if (!s_restoringStatePath.isEmpty())
+   {
+      state::restoreFinished(s_restoringStatePath);
+      s_restoringStatePath = FilePath();
+   }
 
    // complete deferred init
    completeDeferredSessionInit(false);
@@ -195,21 +214,49 @@ void restoreSession(const FilePath& suspendedSessionPath,
    // errorMessages buffer (this mechanism is used because we generally
    // suppress output during restore but we need a way for the error
    // messages to make their way back to the user)
+   //
+   // if the process dies while the state is loading, the next start sets it
+   // aside instead of failing the same way. only the loading is marked (here
+   // and in ensureDeserialized), so the session exiting while it waits for a
+   // client doesn't count against the state
    boost::function<Error()> deferredRestoreAction;
+   state::restoreStarted(suspendedSessionPath);
    r::session::state::restore(suspendedSessionPath,
                               utils::isServerMode(),
                               &deferredRestoreAction,
                               pErrorMessages);
+   state::restoreFinished(suspendedSessionPath);
 
    if (deferredRestoreAction)
    {
       s_deferredDeserializationAction = boost::bind(
                                           deferredRestoreSuspendedSession,
                                           deferredRestoreAction);
+      s_restoringStatePath = suspendedSessionPath;
    }
 
    if (s_afterResumeCallback)
      s_afterResumeCallback();
+}
+
+void setAsideUnfinishedRestore(const FilePath& statePath)
+{
+   if (statePath.isEmpty() || !statePath.exists())
+      return;
+
+   FilePath setAsidePath = state::setAsideUnfinishedRestore(statePath);
+   if (!setAsidePath.isEmpty())
+      s_setAsideStatePaths.push_back(setAsidePath);
+}
+
+void setAsideUnfinishedRestores()
+{
+   setAsideUnfinishedRestore(restartContext().sessionStatePath());
+   setAsideUnfinishedRestore(suspendedSessionPath());
+
+   // state set aside long enough ago has had its chance to be recovered
+   state::removeExpiredSetAsideState(restartContext().contextsPath(), kRestartContextPrefix);
+   state::removeExpiredSetAsideState(suspendedSessionPath().getParent(), suspendedSessionPath().getFilename());
 }
 
 // one-time per session initialization
@@ -274,6 +321,16 @@ Error initialize()
       if (utils::isR3())
          path += "-r3";
       graphicsPath = utils::sessionScratchPath().completePath(path);
+
+      // plots won't survive a suspend without the stable directory, but that
+      // is better than failing to start the session
+      error = graphicsPath.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         graphicsPath = r::session::utils::tempDir().completePath(
+            "rs-graphics-" + core::system::generateUuid());
+      }
    }
    else
    {
@@ -290,6 +347,32 @@ Error initialize()
    session::clientState().restore(utils::clientStatePath(),
                                   utils::projectClientStatePath());
       
+   // explain any saved state that wasn't restored because an earlier
+   // restore of it never finished, and what happens in its place (other
+   // saved state, if there is any, is still restored below)
+   if (!s_setAsideStatePaths.empty())
+   {
+      bool otherStateExists = restartContext().hasSessionState() || suspendedSessionPath().exists();
+
+      std::string setAsidePaths;
+      for (const FilePath& setAsidePath : s_setAsideStatePaths)
+         setAsidePaths += "    " + setAsidePath.getAbsolutePath() + "\n";
+
+      std::string warning = fmt::format(
+         "Warning: RStudio did not restore your previous R session, because an "
+         "earlier attempt to restore it did not finish (R may have crashed or run "
+         "out of memory while loading it, or the session was closed before it "
+         "finished loading). {} The saved session was kept in:\n"
+         "\n"
+         "{}"
+         "\n"
+         "It will be removed after {} days.\n",
+         otherStateExists ? "Another saved session was restored instead." : "A new R session was started instead.",
+         setAsidePaths,
+         state::kSetAsideStateMaxAgeDays);
+      REprintf("%s", warning.c_str());
+   }
+
    // restore suspended session if we have one
    bool wasResumed = false;
    
@@ -406,6 +489,10 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
+      // mark the saved state while the rest of it loads (see restoreSession)
+      if (!s_restoringStatePath.isEmpty())
+         state::restoreStarted(s_restoringStatePath);
+
       // do the deferred action, containing any R error it raises so that it
       // cannot longjmp through the C++ frames of session initialization
       // (#18718). clear the action after either result so subsequent calls
@@ -418,6 +505,15 @@ void ensureDeserialized()
          LOG_ERROR(error);
 
       s_deferredDeserializationAction.clear();
+
+      // normally the marker is cleared as soon as the state has loaded (see
+      // deferredRestoreSuspendedSession); an R error that escaped the restore
+      // skips that, but the process survived it, so clear the marker here too
+      if (!s_restoringStatePath.isEmpty())
+      {
+         state::restoreFinished(s_restoringStatePath);
+         s_restoringStatePath = FilePath();
+      }
    }
 
    // mark session as deserialized

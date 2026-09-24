@@ -16,6 +16,7 @@
 #include "RGraphicsPlotManager.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/function.hpp>
@@ -47,6 +48,10 @@ namespace session {
 namespace graphics {
 
 namespace {
+
+// The most pixels a saved bitmap may have (about 400 MB as RGBA); a large size
+// at a high resolution could otherwise exhaust the session's memory.
+const double kMaxBitmapPixels = 100e6;
 
 double pixelsToInches(int pixels)
 {
@@ -260,11 +265,12 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    const std::string& format,
                                    int widthPx,
                                    int heightPx,
-                                   bool useDevicePixelRatio)
+                                   bool useDevicePixelRatio,
+                                   bool recordResolution)
 {
    double pixelRatio = useDevicePixelRatio ?
                          r::session::graphics::device::devicePixelRatio() : 1;
-   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio);
+   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
 }
 
 
@@ -272,14 +278,15 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    const std::string& format,
                                    int widthPx,
                                    int heightPx,
-                                   double pixelRatio)
+                                   double pixelRatio,
+                                   bool recordResolution)
 {
    if (format == kPngFormat ||
        format == kBmpFormat ||
        format == kJpegFormat ||
        format == kTiffFormat)
    {
-      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio);
+      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
    }
    else if (format == kSvgFormat)
    {
@@ -303,15 +310,27 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                         const std::string& bitmapFileType,
                                         int width,
                                         int height,
-                                        double pixelRatio)
+                                        double pixelRatio,
+                                        bool recordResolution)
 {
    // default res
    int res = 96;
 
    // adjust for device pixel ratio
-   width = gsl::narrow_cast<int>(width * pixelRatio);
-   height = gsl::narrow_cast<int>(height * pixelRatio);
-   res = gsl::narrow_cast<int>(res * pixelRatio);
+   double scaledWidth = width * pixelRatio;
+   double scaledHeight = height * pixelRatio;
+   if (scaledWidth * scaledHeight > kMaxBitmapPixels)
+   {
+      boost::format fmt("The image would be %1% x %2% pixels; reduce its size or resolution");
+      std::string description = boost::str(fmt %
+                                           static_cast<long long>(scaledWidth) %
+                                           static_cast<long long>(scaledHeight));
+      return systemError(boost::system::errc::value_too_large, description, ERROR_LOCATION);
+   }
+
+   width = gsl::narrow_cast<int>(scaledWidth);
+   height = gsl::narrow_cast<int>(scaledHeight);
+   res = gsl::narrow_cast<int>(std::lround(res * pixelRatio));
    
    // handle ragg specially
    std::string backend = getDefaultBackend();
@@ -383,7 +402,16 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                                extraParams);
 
    // save the file
-   return savePlotAsFile(deviceCreationCode);
+   Error error = savePlotAsFile(deviceCreationCode);
+   if (error || !recordResolution || !usesQuartzBitmapDevice())
+      return error;
+
+   // the image is usable without the resolution, so don't fail the save
+   error = ensureImageResolution(targetPath, res);
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
 }
 
 Error PlotManager::savePlotAsPdf(const FilePath& filePath, 
@@ -556,7 +584,8 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
                              r::session::graphics::device::getWidth(),
                              r::session::graphics::device::getHeight(),
                              activePlotIndex(), 
-                             plotCount());
+                             plotCount(),
+                             r::session::graphics::device::hasFixedSize());
    outputFunction(currentState);
 }
    

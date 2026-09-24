@@ -26,11 +26,13 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
+import org.rstudio.studio.client.workbench.views.plots.model.FixedPlotSizeUtils;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 
@@ -55,6 +57,10 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       public abstract void onClearPlots();
       @Handler
       public abstract void onZoomPlot();
+      @Handler
+      public abstract void onFitPlotToPane();
+      @Handler
+      public abstract void onUseFixedPlotSize();
       @Handler
       public abstract void onSavePlotAsImage();
       @Handler
@@ -96,7 +102,8 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
                    EventBus events,
                    Binder binder,
                    Commands commands,
-                   PlotsServerOperations server)
+                   PlotsServerOperations server,
+                   UserState userState)
    {
       super(constants_.plotsTitle(), shim);
       binder.bind(commands, shim);
@@ -117,6 +124,10 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.clearPlots().setEnabled(false);
       commands_.refreshPlot().setEnabled(false);
       commands_.showManipulator().setEnabled(false);
+
+      // the size commands are always available, and show the current mode
+      userState.fixedPlotSize().bind(size ->
+         FixedPlotSizeUtils.syncCommands(commands_, size));
    }
 
    public HandlerRegistration addResizeHandler(ResizeHandler handler)

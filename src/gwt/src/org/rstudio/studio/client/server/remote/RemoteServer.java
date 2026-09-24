@@ -2170,6 +2170,7 @@ public class RemoteServer implements Server
                           int height,
                           boolean overwrite,
                           boolean useDevicePixelRatio,
+                          int resolution,
                           ServerRequestCallback<Bool> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -2179,6 +2180,7 @@ public class RemoteServer implements Server
       params.set(3, new JSONNumber(height));
       params.set(4, JSONBoolean.getInstance(overwrite));
       params.set(5, JSONBoolean.getInstance(useDevicePixelRatio));
+      params.set(6, new JSONNumber(resolution));
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
 
