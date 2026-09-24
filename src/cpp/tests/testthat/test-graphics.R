@@ -152,7 +152,10 @@ test_that("saving a plot image refuses sizes that would exhaust memory", {
 
    file <- tempfile(fileext = ".png")
    on.exit(unlink(file), add = TRUE)
-   .rs.api.savePlotAsImage(file, "png", 20000, 20000)
+   expect_error(
+      .rs.api.savePlotAsImage(file, "png", 20000, 20000),
+      "20000 x 20000 pixels"
+   )
    expect_false(file.exists(file))
 })
 
@@ -178,4 +181,16 @@ test_that("a plot with a fixed size is published to RPubs at that size (#4422)",
 
    expect_equal(pngDimensions(file.path(dir, "plot-small.png")), c(384, 288))
    expect_equal(pngDimensions(file.path(dir, "plot-full.png")), c(768, 576))
+
+   # a plot larger than the standard 1024 x 768 size keeps its layout, but is
+   # drawn with fewer pixels so the page stays a reasonable size
+   writeFixedPlotSize(TRUE, width = 30, height = 30, units = "in")
+   expect_equal(dev.size("in"), c(30, 30))
+
+   largeTarget <- .rs.invokeRpc("plots_create_rpubs_html", "Plot", "", 400L, 350L)
+   largeDir <- dirname(path.expand(largeTarget))
+   on.exit(unlink(largeDir, recursive = TRUE), add = TRUE)
+
+   expect_equal(pngDimensions(file.path(largeDir, "plot-small.png")), c(768, 768))
+   expect_equal(pngDimensions(file.path(largeDir, "plot-full.png")), c(1536, 1536))
 })

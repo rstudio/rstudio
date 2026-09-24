@@ -189,8 +189,12 @@ Error ensureImageResolution(const FilePath& imagePath, int dpi)
    };
    const void* values[] = { dpiNumber, dpiNumber, qualityNumber };
    CFDictionaryRef options = ::CFDictionaryCreate(
-            kCFAllocatorDefault, keys, values, 3,
-            &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+            kCFAllocatorDefault,
+            keys,
+            values,
+            3,
+            &kCFTypeDictionaryKeyCallBacks,
+            &kCFTypeDictionaryValueCallBacks);
    CFRefScope optionsScope(options);
 
    ::CGImageDestinationAddImageFromSource(destination, source, 0, options);

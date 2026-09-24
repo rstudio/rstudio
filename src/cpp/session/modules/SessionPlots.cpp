@@ -325,14 +325,18 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // a plot with a fixed size is published at that size, like other exports;
-   // otherwise the full plot is a standard size
+   // the full plot is a standard size, drawn at twice the small plot's pixel
+   // ratio. A plot with a fixed size keeps that size (and so its layout), like
+   // other exports, but is drawn at a lower pixel ratio when it's larger than
+   // the standard size, so the page doesn't embed huge images
    int fullWidth = 1024;
    int fullHeight = 768;
+   double smallRatio = 1.0;
    if (r::session::graphics::device::hasFixedSize())
    {
       width = fullWidth = r::session::graphics::device::getWidth();
       height = fullHeight = r::session::graphics::device::getHeight();
+      smallRatio = std::min(1.0, std::min(1024.0 / width, 768.0 / height));
    }
 
    // create a temp directory to work in
@@ -345,7 +349,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
    FilePath smallPlotPath = tempPath.completeChildPath("plot-small.png");
-   error = display.savePlotAsImage(smallPlotPath, "png", width, height, false);
+   error = display.savePlotAsImage(smallPlotPath, "png", width, height, smallRatio);
    if (error)
    {
        LOG_ERROR(error);
@@ -354,7 +358,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
 
    // save full plot
    FilePath fullPlotPath = tempPath.completeChildPath("plot-full.png");
-   error = display.savePlotAsImage(fullPlotPath, "png", fullWidth, fullHeight, 2.0);
+   error = display.savePlotAsImage(fullPlotPath, "png", fullWidth, fullHeight, 2 * smallRatio);
    if (error)
    {
        LOG_ERROR(error);
@@ -561,28 +565,34 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    // the image fills the window, unless the plot has a fixed size: then it
    // keeps its aspect ratio, and is rendered at the pixel ratio it's shown at
    // when scaled to fit the window, so it stays sharp when enlarged and isn't
-   // over-rendered when shrunk
-   std::string imageAttributes = "width=\"100%\" height=\"100%\"";
-   std::string imageUrl = boost::str(boost::format("plot_zoom_png?width=%1%&height=%2%") %
-                                     width % height);
+   // over-rendered when shrunk. The window's pixel ratio can differ from the
+   // main window's (the one the session knows) when the two are on different
+   // displays, so the page works it out itself
+   std::string imageAttributes = boost::str(
+      boost::format("width=\"100%%\" height=\"100%%\" src=\"plot_zoom_png?width=%1%&height=%2%\"") %
+      width % height);
+   std::string imageScript;
    bool stretchOnResize = scale == 1;
    if (graphics::device::hasFixedSize())
    {
       int fixedWidth = graphics::device::getWidth();
       int fixedHeight = graphics::device::getHeight();
 
-      double fit = std::min(
-         static_cast<double>(width) / fixedWidth,
-         static_cast<double>(height) / fixedHeight);
-      double ratio = graphics::device::devicePixelRatio() * fit;
-
-      boost::format fmt(
+      boost::format attributesFmt(
          "style=\"position: absolute; inset: 0; margin: auto; "
          "width: min(100vw, calc(100vh * %1% / %2%)); "
          "height: min(100vh, calc(100vw * %2% / %1%));\"");
-      imageAttributes = boost::str(fmt % fixedWidth % fixedHeight);
-      imageUrl = boost::str(boost::format("plot_zoom_png?width=%1%&height=%2%&ratio=%3%") %
-                            fixedWidth % fixedHeight % ratio);
+      imageAttributes = boost::str(attributesFmt % fixedWidth % fixedHeight);
+
+      boost::format scriptFmt(
+         "<script type=\"text/javascript\">"
+            "(function() {"
+               "var fit = Math.min(document.body.clientWidth / %1%, document.body.clientHeight / %2%);"
+               "document.getElementById('plot').src = "
+                  "'plot_zoom_png?width=%1%&height=%2%&ratio=' + (window.devicePixelRatio * fit);"
+            "})();"
+         "</script>");
+      imageScript = boost::str(scriptFmt % fixedWidth % fixedHeight);
       stretchOnResize = false;
    }
 
@@ -616,18 +626,17 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
             "</script>"
          "</head>"
          "<body style=\"margin: 0; overflow: hidden\">"
-            "<img id=\"plot\" #!attributes# src=\"#src#\"/>"
+            "<img id=\"plot\" #!attributes#/>"
+            "#!script#"
          "</body>"
       "</html>";
 
    // define variables
    std::map<std::string,std::string> variables;
-   variables["width"] = safe_convert::numberToString(width);
-   variables["height"] = safe_convert::numberToString(height);
    variables["scale"] = safe_convert::numberToString(scale);
    variables["stretch"] = stretchOnResize ? "true" : "false";
    variables["attributes"] = imageAttributes;
-   variables["src"] = imageUrl;
+   variables["script"] = imageScript;
    text::TemplateFilter filter(variables);
 
    pResponse->setNoCacheHeaders();
@@ -1005,14 +1014,31 @@ SEXP rs_savePlotAsImage(SEXP fileSEXP,
                         SEXP widthSEXP,
                         SEXP heightSEXP)
 {
-   FilePath filePath(r::sexp::safeAsString(fileSEXP));
-   std::string format = r::sexp::safeAsString(formatSEXP);
-   int width = r::sexp::asInteger(widthSEXP);
-   int height = r::sexp::asInteger(heightSEXP);
+   try
+   {
+      FilePath filePath(r::sexp::safeAsString(fileSEXP));
+      std::string format = r::sexp::safeAsString(formatSEXP);
+      int width = r::sexp::asInteger(widthSEXP);
+      int height = r::sexp::asInteger(heightSEXP);
 
-   r::session::graphics::Display& display = r::session::graphics::display();
-   if (display.hasOutput())
-      display.savePlotAsImage(filePath, format, width, height, false, /*recordResolution=*/true);
+      r::session::graphics::Display& display = r::session::graphics::display();
+      if (display.hasOutput())
+      {
+         Error error = display.savePlotAsImage(filePath, format, width, height, false, /*recordResolution=*/true);
+         if (error)
+         {
+            // the description, when there is one, says what the caller can
+            // change (e.g. an image too large to draw)
+            std::string description = error.getProperty("description");
+            throw r::exec::RErrorException(description.empty() ? error.getMessage() : description);
+         }
+      }
+   }
+   catch (r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
 
    return R_NilValue;
 }

@@ -67,20 +67,16 @@ async function fixedPlotImageBox(page: Page, aspect: number) {
 }
 
 // Whether the zoom window shows a plot of the given width, rendered with as
-// many pixels as it's displayed at: no more, and no fewer. The session
-// renders for the main window's pixel ratio, which the popup's viewport
-// emulation can report differently.
-async function zoomRenderedAsShown(
-  popup: Page,
-  plotWidth: number,
-  pixelRatio: number,
-): Promise<boolean> {
-  return popup.evaluate(({ plotWidth, pixelRatio }) => {
+// many pixels as it's displayed at: no more, and no fewer. The window works
+// out the pixel ratio from its own devicePixelRatio (which can differ from
+// the main window's on a mixed-DPI setup).
+async function zoomRenderedAsShown(popup: Page, plotWidth: number): Promise<boolean> {
+  return popup.evaluate((plotWidth) => {
     const img = document.getElementById('plot') as HTMLImageElement | null;
     if (!img || !img.complete || !img.naturalWidth || !img.src.includes(`width=${plotWidth}&`))
       return false;
-    return Math.abs(img.naturalWidth - img.clientWidth * pixelRatio) <= 2;
-  }, { plotWidth, pixelRatio }).catch(() => false);
+    return Math.abs(img.naturalWidth - img.clientWidth * window.devicePixelRatio) <= 2;
+  }, plotWidth).catch(() => false);
 }
 
 test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
@@ -90,7 +86,13 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
     await consoleActions.executeInConsole(RESET_FIXED_SIZE);
   });
 
-  test.afterEach(async () => {
+  test.afterEach(async ({ rstudioPage: page }) => {
+    // a locator() test that fails mid-click leaves R waiting for a click,
+    // and the console reset below would wait for a prompt that never comes
+    const finish = page.getByRole('button', { name: 'Finish' });
+    if (await finish.isVisible())
+      await finish.click();
+
     await consoleActions.executeInConsole(RESET_FIXED_SIZE);
     await consoleActions.executeInConsole('try(while (dev.cur() > 1) dev.off(), silent = TRUE)');
   });
@@ -282,18 +284,17 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
         plotsPane.zoomPlotBtn.click(),
       ]);
       await expect(popup.locator('#plot')).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      const pixelRatio = await page.evaluate(() => window.devicePixelRatio);
 
       // resizing reloads the window at its new size, which is smaller than
       // the 1440 x 1920 px plot
       await popup.setViewportSize({ width: 480, height: 640 });
-      await expect.poll(() => zoomRenderedAsShown(popup, 15 * 96, pixelRatio), {
+      await expect.poll(() => zoomRenderedAsShown(popup, 15 * 96), {
         timeout: TIMEOUTS.fileOpen,
       }).toBe(true);
 
       // a smaller plot is enlarged to fit the window, and rendered sharp
       await consoleActions.executeInConsole(writeFixedSize(true, 1.5, 2));
-      await expect.poll(() => zoomRenderedAsShown(popup, 1.5 * 96, pixelRatio), {
+      await expect.poll(() => zoomRenderedAsShown(popup, 1.5 * 96), {
         timeout: TIMEOUTS.fileOpen,
       }).toBe(true);
 

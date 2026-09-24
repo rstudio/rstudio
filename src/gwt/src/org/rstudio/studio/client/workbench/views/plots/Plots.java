@@ -117,7 +117,9 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       zoomWindow_ = null;
       zoomWindowDefaultSize_ = null;
 
-      locator_ = new Locator(view.getPlotsParent());
+      // clicks beside a centered plot are dropped by the locator itself, so
+      // a point here is always on the plot
+      locator_ = new Locator(view.getPlotsParent(), p -> toPlotPoint(p.getX(), p.getY()));
       locator_.addSelectionHandler(new SelectionHandler<Point>()
       {
          public void onSelection(SelectionEvent<Point> e)
@@ -125,16 +127,9 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
             org.rstudio.studio.client.workbench.views.plots.model.Point p = null;
             if (e.getSelectedItem() != null)
             {
-               // R keeps waiting for a click on the plot
-               Point plotPoint = toPlotPoint(
-                     e.getSelectedItem().getX(),
-                     e.getSelectedItem().getY());
-               if (plotPoint == null)
-                  return;
-
                p = org.rstudio.studio.client.workbench.views.plots.model.Point.create(
-                     plotPoint.getX(),
-                     plotPoint.getY()
+                     e.getSelectedItem().getX(),
+                     e.getSelectedItem().getY()
                );
             }
 

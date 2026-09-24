@@ -403,7 +403,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
 
    // save the file
    Error error = savePlotAsFile(deviceCreationCode);
-   if (error || !recordResolution)
+   if (error || !recordResolution || !usesQuartzBitmapDevice())
       return error;
 
    // the image is usable without the resolution, so don't fail the save

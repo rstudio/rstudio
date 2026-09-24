@@ -149,19 +149,19 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getAccessibility() /*-{
-         return this && this.accessibility || false;
+         return this && typeof this.accessibility === "boolean" ? this.accessibility : false;
       }-*/;
 
       public final native boolean getDisableRendererAccessibility() /*-{
-         return this && this.disableRendererAccessibility || false;
+         return this && typeof this.disableRendererAccessibility === "boolean" ? this.disableRendererAccessibility : false;
       }-*/;
 
       public final native boolean getEnableSplashScreen() /*-{
-         return this && this.enableSplashScreen || true;
+         return this && typeof this.enableSplashScreen === "boolean" ? this.enableSplashScreen : true;
       }-*/;
 
       public final native boolean getShowWhatsNew() /*-{
-         return this && this.showWhatsNew || true;
+         return this && typeof this.showWhatsNew === "boolean" ? this.showWhatsNew : true;
       }-*/;
 
    }
@@ -187,11 +187,11 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getUseGpuExclusionList() /*-{
-         return this && this.useGpuExclusionList || true;
+         return this && typeof this.useGpuExclusionList === "boolean" ? this.useGpuExclusionList : true;
       }-*/;
 
       public final native boolean getUseGpuDriverBugWorkarounds() /*-{
-         return this && this.useGpuDriverBugWorkarounds || true;
+         return this && typeof this.useGpuDriverBugWorkarounds === "boolean" ? this.useGpuDriverBugWorkarounds : true;
       }-*/;
 
    }
@@ -267,7 +267,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getIsDark() /*-{
-         return this && this.isDark || false;
+         return this && typeof this.isDark === "boolean" ? this.isDark : false;
       }-*/;
 
    }
@@ -325,19 +325,19 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getKeepRatio() /*-{
-         return this && this.keepRatio || false;
+         return this && typeof this.keepRatio === "boolean" ? this.keepRatio : false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this && this.viewAfterSave || false;
+         return this && typeof this.viewAfterSave === "boolean" ? this.viewAfterSave : false;
       }-*/;
 
       public final native boolean getCopyAsMetafile() /*-{
-         return this && this.copyAsMetafile || false;
+         return this && typeof this.copyAsMetafile === "boolean" ? this.copyAsMetafile : false;
       }-*/;
 
       public final native boolean getUseDevicePixelRatio() /*-{
-         return this && this.useDevicePixelRatio || true;
+         return this && typeof this.useDevicePixelRatio === "boolean" ? this.useDevicePixelRatio : true;
       }-*/;
 
       public final native int getResolution() /*-{
@@ -375,15 +375,15 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getKeepRatio() /*-{
-         return this && this.keepRatio || false;
+         return this && typeof this.keepRatio === "boolean" ? this.keepRatio : false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this && this.viewAfterSave || false;
+         return this && typeof this.viewAfterSave === "boolean" ? this.viewAfterSave : false;
       }-*/;
 
       public final native boolean getCopyAsMetafile() /*-{
-         return this && this.copyAsMetafile || false;
+         return this && typeof this.copyAsMetafile === "boolean" ? this.copyAsMetafile : false;
       }-*/;
 
    }
@@ -413,15 +413,15 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getPortrait() /*-{
-         return this && this.portrait || false;
+         return this && typeof this.portrait === "boolean" ? this.portrait : false;
       }-*/;
 
       public final native boolean getCairoPdf() /*-{
-         return this && this.cairo_pdf || false;
+         return this && typeof this.cairo_pdf === "boolean" ? this.cairo_pdf : false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this && this.viewAfterSave || false;
+         return this && typeof this.viewAfterSave === "boolean" ? this.viewAfterSave : false;
       }-*/;
 
    }
@@ -443,7 +443,7 @@ public class UserStateAccessor extends Prefs
       protected FixedPlotSize() {} 
 
       public final native boolean getEnabled() /*-{
-         return this && this.enabled || false;
+         return this && typeof this.enabled === "boolean" ? this.enabled : false;
       }-*/;
 
       public final native double getWidth() /*-{

@@ -288,9 +288,13 @@ public class ExportPlotSizeEditor extends Composite
                                         0, Unit.PX, 
                                         gripper_.getImageHeight(), Unit.PX);
      
-      // constrain dimensions
-      initialWidth = constrainWidth(initialWidth);
-      initialHeight = constrainHeight(initialHeight);
+      // constrain dimensions: only the minimum applies to the initial size,
+      // since a plot with a fixed size is exported at that size even when it's
+      // too large to preview (the preview is hidden then, see
+      // setPreviewPanelSize), rather than clamped to the screen with its
+      // aspect ratio lost
+      initialWidth = Math.max(initialWidth, MIN_SIZE);
+      initialHeight = Math.max(initialHeight, MIN_SIZE);
             
       // initialize text boxes
       setWidthTextBox(initialWidth);
