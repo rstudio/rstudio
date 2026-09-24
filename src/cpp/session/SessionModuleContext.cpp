@@ -2177,8 +2177,16 @@ r_util::ActiveSession& activeSession()
       {
          // if no scope was specified, we are in singleton session mode
          // check to see if there is an existing active session, and use that
+         std::vector<boost::shared_ptr<r_util::ActiveSession>> invalidSessions;
          std::vector<boost::shared_ptr<r_util::ActiveSession> > sessions =
-               activeSessions().list(true);
+               activeSessions().list(true, &invalidSessions);
+
+         // no session can resume an invalid one (e.g. one left behind by a
+         // crash while its properties were being written), but each is
+         // validated again on every start, so remove those long abandoned
+         constexpr std::time_t kInvalidSessionMaxAgeSeconds = 60 * 60 * 24;
+         activeSessions().removeStaleInvalidSessions(invalidSessions, kInvalidSessionMaxAgeSeconds);
+
          if (sessions.size() > 0)
          {
             // there is more than one session but no session id was passed in. This is OS server or pro with server-multiple-sessions=0

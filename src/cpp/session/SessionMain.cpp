@@ -44,6 +44,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/program_options.hpp>
 
 #include <core/AnsiEscapes.hpp>
 #include <core/BoostSignals.hpp>
@@ -951,6 +952,106 @@ void notifyIfWorkingDirectoryTooLong()
       console_output::OutputTypeWarning);
 }
 
+// Set during startup when the user data directory can't be written and a
+// temporary directory is used in its place. Like the warning above, it's held
+// until the console is available.
+std::string s_temporaryDataDirWarning;
+
+// Set during startup when the working directory the session was to start in
+// couldn't be entered and another was used in its place. Held until the
+// console is available, like the warnings above.
+std::string s_workingDirectoryWarning;
+
+// Whether the session was given a scope on the command line, as rserver does
+// for the sessions it manages (e.g. with multiple sessions or the Launcher).
+// Checked before the options are read, since they depend on the data
+// directory, so the option is parsed here the way Options::read parses it,
+// accepting every spelling it does (-s ID, -sID, --scope ID, --scope=ID and
+// unambiguous prefixes of --scope).
+bool hasSessionScopeArgument(int argc, char * const argv[])
+{
+   using namespace boost::program_options;
+
+   options_description scopeOption;
+   scopeOption.add_options()
+      (kScopeSessionOption "," kScopeSessionOptionShort, value<std::string>(), "");
+
+   try
+   {
+      command_line_parser parser(argc, const_cast<char**>(argv));
+      parser.options(scopeOption).allow_unregistered();
+
+      variables_map vm;
+      store(parser.run(), vm);
+      return vm.count(kScopeSessionOption) > 0;
+   }
+   catch (const boost::program_options::error&)
+   {
+      // Options::read reports the problem
+      return false;
+   }
+}
+
+void reportUnwritableUserDataDir(const FilePath& dataDir,
+                                 const Error& dataDirError,
+                                 const FilePath& temporaryDir,
+                                 const Error& temporaryDirError)
+{
+   if (temporaryDir.isEmpty())
+   {
+      // startup carries on with the unwritable directory, and will likely fail
+      ELOGF("Unable to write to user data directory {}: {}",
+            dataDir.getAbsolutePath(),
+            dataDirError.asString());
+      ELOGF("Unable to use a temporary directory in its place: {}",
+            temporaryDirError.asString());
+      return;
+   }
+
+   WLOGF("Unable to write to user data directory {}; using temporary directory {} instead: {}",
+         dataDir.getAbsolutePath(),
+         temporaryDir.getAbsolutePath(),
+         dataDirError.asString());
+
+   s_temporaryDataDirWarning = fmt::format(
+      "WARNING: RStudio can't write to its data directory, so this session is "
+      "keeping its state in a temporary directory instead.\n"
+      "\n"
+      "    Data directory:      {} ({})\n"
+      "    Temporary directory: {}\n"
+      "\n"
+      "State kept in the temporary directory, including unsaved documents, may "
+      "be deleted by the system, and it will not be moved back once the data "
+      "directory is fixed. To fix it, make sure the data directory is owned by "
+      "you and writable; this can happen if RStudio was previously run as "
+      "another user, e.g. with sudo.",
+      dataDir.getAbsolutePath(),
+      dataDirError.getMessage(),
+      temporaryDir.getAbsolutePath());
+}
+
+void notifyIfUserDataDirTemporary()
+{
+   if (s_temporaryDataDirWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_temporaryDataDirWarning,
+      console_output::OutputTypeWarning);
+}
+
+void notifyIfWorkingDirectoryReplaced()
+{
+   if (s_workingDirectoryWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_workingDirectoryWarning,
+      console_output::OutputTypeWarning);
+}
+
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -989,6 +1090,12 @@ void rSessionInitHook(bool newSession)
 
    // notify the user if the working directory is too long to launch children from
    notifyIfWorkingDirectoryTooLong();
+
+   // notify the user if session state is being kept in a temporary directory
+   notifyIfUserDataDirTemporary();
+
+   // notify the user if the session started somewhere other than its working directory
+   notifyIfWorkingDirectoryReplaced();
 
    // synchronize session info
    json::Object dataJson;
@@ -2397,6 +2504,24 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       }
 #endif
       
+#ifndef _WIN32
+      // the log and all session state live in the user data directory; if it
+      // can't be written, switch to a temporary directory before either is used.
+      // a session with a scope is left alone: other processes, possibly on
+      // other hosts, look for its state (e.g. a suspended session) in the data
+      // directory, and a temporary directory would hide it from them
+      FilePath originalDataDir = core::system::xdg::userDataDir();
+      FilePath temporaryDataDir;
+      Error temporaryDataDirError;
+      Error dataDirError;
+      if (!hasSessionScopeArgument(argc, argv))
+      {
+         dataDirError = core::system::xdg::redirectUnwritableUserDataDir(
+            &temporaryDataDir,
+            &temporaryDataDirError);
+      }
+#endif
+
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
@@ -2408,6 +2533,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                   core::system::xdg::userLogDir(),
                                   true); // force log dir to be under user's home directory
       core::startup_timing::checkpoint("log-initialized");
+
+#ifndef _WIN32
+      if (dataDirError)
+      {
+         reportUnwritableUserDataDir(
+            originalDataDir,
+            dataDirError,
+            temporaryDataDir,
+            temporaryDataDirError);
+      }
+#endif
 
       // report any failure from initHook(), which ran before logging was up
 #ifdef _WIN32
@@ -2808,12 +2944,48 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // set working directory
       FilePath workingDir = dirs::getInitialWorkingDirectory();
 
+      // the saved working directory can exist yet be impossible to enter (e.g.
+      // its permissions changed); exiting here would leave it saved and fail
+      // every later start the same way, so fall back to the default working
+      // directory and then the home directory. the log alone wouldn't explain
+      // why a project appears to have opened somewhere else, so the console
+      // says so too once it's up
+      Error workingDirError = workingDir.makeCurrentPath();
+      if (workingDirError)
+      {
+         LOG_ERROR(workingDirError);
+
+         FilePath fallbackDir = dirs::getDefaultWorkingDirectory();
+         error = fallbackDir.makeCurrentPath();
+         if (error)
+         {
+            LOG_ERROR(error);
+            fallbackDir = options.userHomePath();
+            error = fallbackDir.makeCurrentPath();
+         }
+         if (error)
+            return sessionExitFailure(error, ERROR_LOCATION);
+
+         s_workingDirectoryWarning = fmt::format(
+            "WARNING: RStudio could not start this session in {} ({}), so it "
+            "started in {} instead. Check that the directory exists and that "
+            "you have permission to enter it.",
+            workingDir.getAbsolutePath(),
+            workingDirError.getMessage(),
+            fallbackDir.getAbsolutePath());
+         workingDir = fallbackDir;
+
+         // the client and .RData handling ask for the initial working
+         // directory later, and should get the one the session is in
+         dirs::setInitialWorkingDirectory(workingDir);
+      }
+
 #ifdef _WIN32
       // Long path awareness (see the longPathAware entry in rsession.exe.manifest)
       // does not extend to the current directory: per the SetCurrentDirectory docs,
       // "Setting a current directory longer than MAX_PATH causes CreateProcessW to
       // fail", which would take out git, terminals, builds and R CMD. Before we
-      // declared long path awareness this call simply failed; now it succeeds and the
+      // declared long path awareness makeCurrentPath() simply failed; now it succeeds and the
       // damage shows up later with no obvious cause, so say so up front. See #12806.
       //
       // Measure in UTF-16 units, which is what MAX_PATH counts and what the wide APIs
@@ -2835,10 +3007,6 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          LOG_WARNING_MESSAGE(s_workingDirWarning);
       }
 #endif
-
-      error = workingDir.makeCurrentPath();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
 
       // override the active session's working directory
       // it is created with the default value of ~, so if our session options
