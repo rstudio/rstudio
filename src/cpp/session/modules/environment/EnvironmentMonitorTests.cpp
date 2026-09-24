@@ -23,6 +23,7 @@
 
 #include "../../SessionClientEventQueue.hpp"
 #include "EnvironmentMonitor.hpp"
+#include "EnvironmentUtils.hpp"
 
 namespace rstudio {
 namespace session {
@@ -33,17 +34,24 @@ namespace {
 const char kHiddenName[] = ".rsEnvironmentMonitorTestHidden";
 const char kVisibleName[] = "rsEnvironmentMonitorTestVisible";
 const char kCreatedName[] = "rsEnvironmentMonitorTestCreated";
+const char kDeletedName[] = "rsEnvironmentMonitorTestDeleted";
 
-void assignGlobal(const std::string& name)
+// where ClearVisibleObjects stashes the global environment's visible objects
+const char kSavedObjectsName[] = ".rsEnvironmentMonitorTestSaved";
+
+core::Error evaluate(const std::string& code)
 {
-   core::Error error = r::exec::executeString(
-      "assign('" + name + "', 1, envir = globalenv())");
-   ASSERT_FALSE(error);
+   return r::exec::executeString(code);
 }
 
-void removeGlobal(const std::string& name)
+core::Error assignGlobal(const std::string& name, const std::string& value = "1")
 {
-   r::exec::executeString(
+   return evaluate("assign('" + name + "', " + value + ", envir = globalenv())");
+}
+
+core::Error removeGlobal(const std::string& name)
+{
+   return evaluate(
       "if (exists('" + name + "', envir = globalenv(), inherits = FALSE)) "
       "rm(list = '" + name + "', envir = globalenv())");
 }
@@ -78,8 +86,9 @@ protected:
    void SetUp() override
    {
       savedShowHidden_ = prefs::userPrefs().showHiddenObjects();
-      assignGlobal(kHiddenName);
-      assignGlobal(kVisibleName);
+      savedShowLastValue_ = prefs::userPrefs().showLastDotValue();
+      ASSERT_FALSE(assignGlobal(kHiddenName));
+      ASSERT_FALSE(assignGlobal(kVisibleName));
 
       connection_ = module_context::events().onEnvironmentVariablesChanged.connect(
          [this](const module_context::EnvironmentVariablesChangedEvent& event)
@@ -90,16 +99,29 @@ protected:
 
    void TearDown() override
    {
-      removeGlobal(kHiddenName);
-      removeGlobal(kVisibleName);
-      removeGlobal(kCreatedName);
+      EXPECT_FALSE(evaluate(
+         "if (exists('" + std::string(kSavedObjectsName) + "', envir = globalenv())) "
+         "{ list2env(" + kSavedObjectsName + ", envir = globalenv()); "
+         "rm(list = '" + kSavedObjectsName + "', envir = globalenv()) }"));
+      EXPECT_FALSE(removeGlobal(kHiddenName));
+      EXPECT_FALSE(removeGlobal(kVisibleName));
+      EXPECT_FALSE(removeGlobal(kCreatedName));
+      EXPECT_FALSE(removeGlobal(kDeletedName));
       prefs::userPrefs().setShowHiddenObjects(savedShowHidden_);
+      prefs::userPrefs().setShowLastDotValue(savedShowLastValue_);
    }
 
    void startMonitoring(bool showHidden)
    {
       prefs::userPrefs().setShowHiddenObjects(showHidden);
+      prefs::userPrefs().setShowLastDotValue(false);
       monitor_.setMonitoredEnvironment(R_GlobalEnv);
+      clearPending();
+   }
+
+   // discards events and signals emitted so far
+   void clearPending()
+   {
       clientEventQueue().clear();
       signals_.clear();
    }
@@ -116,10 +138,21 @@ protected:
       return false;
    }
 
+   bool signalResets()
+   {
+      return std::any_of(
+         signals_.begin(), signals_.end(),
+         [](const module_context::EnvironmentVariablesChangedEvent& signal)
+         {
+            return signal.reset;
+         });
+   }
+
    EnvironmentMonitor monitor_;
    std::vector<module_context::EnvironmentVariablesChangedEvent> signals_;
    RSTUDIO_BOOST_SCOPED_CONNECTION connection_;
    bool savedShowHidden_ = false;
+   bool savedShowLastValue_ = false;
 };
 
 TEST_F(GlobalEnvironmentMonitorTest, ShowingHiddenObjectsReportsNoChanges)
@@ -127,10 +160,11 @@ TEST_F(GlobalEnvironmentMonitorTest, ShowingHiddenObjectsReportsNoChanges)
    startMonitoring(false);
 
    prefs::userPrefs().setShowHiddenObjects(true);
-   monitor_.resetBaseline();
    monitor_.checkForChanges();
 
-   EXPECT_FALSE(contains(drainEnvironmentEventNames(), kHiddenName));
+   std::vector<std::string> eventNames = drainEnvironmentEventNames();
+   EXPECT_FALSE(contains(eventNames, kHiddenName));
+   EXPECT_FALSE(contains(eventNames, kVisibleName));
    EXPECT_TRUE(signals_.empty());
 }
 
@@ -139,69 +173,76 @@ TEST_F(GlobalEnvironmentMonitorTest, HidingHiddenObjectsReportsNoChanges)
    startMonitoring(true);
 
    prefs::userPrefs().setShowHiddenObjects(false);
-   monitor_.resetBaseline();
    monitor_.checkForChanges();
 
-   EXPECT_FALSE(contains(drainEnvironmentEventNames(), kHiddenName));
+   std::vector<std::string> eventNames = drainEnvironmentEventNames();
+   EXPECT_FALSE(contains(eventNames, kHiddenName));
+   EXPECT_FALSE(contains(eventNames, kVisibleName));
    EXPECT_TRUE(signals_.empty());
 }
 
 TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingChanges)
 {
+   ASSERT_FALSE(assignGlobal(kDeletedName));
    startMonitoring(false);
 
-   // R code can modify an object and change the pref in one evaluation,
-   // before the monitor has checked for changes
-   r::exec::executeString("assign('" + std::string(kVisibleName) + "', 2, envir = globalenv())");
+   // R code can change objects and the pref in one evaluation, before the
+   // monitor has checked for changes
+   ASSERT_FALSE(assignGlobal(kVisibleName, "2"));
+   ASSERT_FALSE(assignGlobal(kCreatedName));
+   ASSERT_FALSE(removeGlobal(kDeletedName));
    prefs::userPrefs().setShowHiddenObjects(true);
-   monitor_.resetBaseline();
    monitor_.checkForChanges();
 
    std::vector<std::string> eventNames = drainEnvironmentEventNames();
    EXPECT_TRUE(contains(eventNames, kVisibleName));
-   EXPECT_FALSE(contains(eventNames, kHiddenName));
+   EXPECT_TRUE(contains(eventNames, kCreatedName));
+   EXPECT_TRUE(contains(eventNames, kDeletedName));
    EXPECT_TRUE(signalMentions(kVisibleName));
-}
-
-TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingCreation)
-{
-   startMonitoring(false);
-
-   assignGlobal(kCreatedName);
-   prefs::userPrefs().setShowHiddenObjects(true);
-   monitor_.resetBaseline();
-   monitor_.checkForChanges();
-
-   EXPECT_TRUE(contains(drainEnvironmentEventNames(), kCreatedName));
    EXPECT_TRUE(signalMentions(kCreatedName));
-}
-
-TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingDeletion)
-{
-   startMonitoring(false);
-
-   removeGlobal(kVisibleName);
-   prefs::userPrefs().setShowHiddenObjects(true);
-   monitor_.resetBaseline();
-   monitor_.checkForChanges();
-
-   EXPECT_TRUE(contains(drainEnvironmentEventNames(), kVisibleName));
-   EXPECT_TRUE(signalMentions(kVisibleName));
+   EXPECT_TRUE(signalMentions(kDeletedName));
 }
 
 TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingPromiseEvaluation)
 {
-   r::exec::executeString(
-      "delayedAssign('" + std::string(kVisibleName) + "', 3, assign.env = globalenv())");
+   ASSERT_FALSE(evaluate(
+      "delayedAssign('" + std::string(kVisibleName) + "', 3, assign.env = globalenv())"));
    startMonitoring(false);
 
-   r::exec::executeString("force(" + std::string(kVisibleName) + ")");
+   ASSERT_FALSE(evaluate("force(" + std::string(kVisibleName) + ")"));
    prefs::userPrefs().setShowHiddenObjects(true);
-   monitor_.resetBaseline();
    monitor_.checkForChanges();
 
    EXPECT_TRUE(contains(drainEnvironmentEventNames(), kVisibleName));
    EXPECT_TRUE(signalMentions(kVisibleName));
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, HiddenObjectsUpdatePaneOnlyWhenShown)
+{
+   startMonitoring(false);
+
+   ASSERT_FALSE(assignGlobal(kHiddenName, "2"));
+   monitor_.checkForChanges();
+   EXPECT_FALSE(contains(drainEnvironmentEventNames(), kHiddenName));
+
+   prefs::userPrefs().setShowHiddenObjects(true);
+   ASSERT_FALSE(assignGlobal(kHiddenName, "3"));
+   monitor_.checkForChanges();
+   EXPECT_TRUE(contains(drainEnvironmentEventNames(), kHiddenName));
+
+   // the assistant never hears about hidden objects
+   EXPECT_FALSE(signalMentions(kHiddenName));
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, HiddenChangeMadeBeforeShowingIsReported)
+{
+   startMonitoring(false);
+
+   ASSERT_FALSE(assignGlobal(kHiddenName, "2"));
+   prefs::userPrefs().setShowHiddenObjects(true);
+   monitor_.checkForChanges();
+
+   EXPECT_TRUE(contains(drainEnvironmentEventNames(), kHiddenName));
 }
 
 TEST_F(GlobalEnvironmentMonitorTest, AssistantSignalOmitsHiddenObjects)
@@ -209,8 +250,8 @@ TEST_F(GlobalEnvironmentMonitorTest, AssistantSignalOmitsHiddenObjects)
    startMonitoring(true);
 
    // modify both objects so each is reported as changed
-   r::exec::executeString("assign('" + std::string(kHiddenName) + "', 2, envir = globalenv())");
-   r::exec::executeString("assign('" + std::string(kVisibleName) + "', 2, envir = globalenv())");
+   ASSERT_FALSE(assignGlobal(kHiddenName, "2"));
+   ASSERT_FALSE(assignGlobal(kVisibleName, "2"));
    monitor_.checkForChanges();
 
    // the pane lists both, but the assistant only hears about the visible one
@@ -219,6 +260,79 @@ TEST_F(GlobalEnvironmentMonitorTest, AssistantSignalOmitsHiddenObjects)
    EXPECT_TRUE(contains(eventNames, kVisibleName));
    EXPECT_TRUE(signalMentions(kVisibleName));
    EXPECT_FALSE(signalMentions(kHiddenName));
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, FirstVisibleObjectIsReportedToAssistant)
+{
+   // https://github.com/rstudio/rstudio/issues/18929
+   startMonitoring(false);
+
+   // with no visible objects left, the monitor takes its single-refresh path
+   ASSERT_FALSE(evaluate(
+      std::string(kSavedObjectsName) + " <- as.list(globalenv()); "
+      "rm(list = ls(globalenv()), envir = globalenv())"));
+   monitor_.checkForChanges();
+   EXPECT_TRUE(signalResets());
+   clearPending();
+
+   ASSERT_FALSE(assignGlobal(kCreatedName));
+   monitor_.checkForChanges();
+
+   ASSERT_EQ(signals_.size(), 1u);
+   EXPECT_FALSE(signals_[0].reset);
+   EXPECT_TRUE(contains(signals_[0].created, kCreatedName));
+}
+
+TEST(EnvironmentListingPrefsTest, PaneListsNamesPerPrefs)
+{
+   bool savedShowHidden = prefs::userPrefs().showHiddenObjects();
+   bool savedShowLastValue = prefs::userPrefs().showLastDotValue();
+
+   prefs::userPrefs().setShowHiddenObjects(false);
+   prefs::userPrefs().setShowLastDotValue(false);
+   EXPECT_TRUE(isListedInPane("x"));
+   EXPECT_FALSE(isListedInPane(".x"));
+   EXPECT_FALSE(isListedInPane(".Last.value"));
+
+   // .Last.value follows its own pref, not the hidden objects one
+   prefs::userPrefs().setShowHiddenObjects(true);
+   EXPECT_TRUE(isListedInPane(".x"));
+   EXPECT_FALSE(isListedInPane(".Last.value"));
+
+   prefs::userPrefs().setShowHiddenObjects(false);
+   prefs::userPrefs().setShowLastDotValue(true);
+   EXPECT_FALSE(isListedInPane(".x"));
+   EXPECT_TRUE(isListedInPane(".Last.value"));
+
+   prefs::userPrefs().setShowHiddenObjects(savedShowHidden);
+   prefs::userPrefs().setShowLastDotValue(savedShowLastValue);
+}
+
+TEST(EnvironmentListingPrefsTest, LastValueIsListedByItsOwnPrefAlone)
+{
+   bool savedShowHidden = prefs::userPrefs().showHiddenObjects();
+   bool savedShowLastValue = prefs::userPrefs().showLastDotValue();
+
+   // .Last.value is a binding of baseenv itself, so listing all names there
+   // would include it as a hidden object
+   std::vector<std::string> names;
+   prefs::userPrefs().setShowHiddenObjects(true);
+   prefs::userPrefs().setShowLastDotValue(false);
+   listEnvironmentForPane(R_BaseEnv, &names);
+   EXPECT_FALSE(contains(names, ".Last.value"));
+
+   prefs::userPrefs().setShowLastDotValue(true);
+   listEnvironmentForPane(R_BaseEnv, &names);
+   EXPECT_EQ(std::count(names.begin(), names.end(), ".Last.value"), 1);
+
+   // the monitor tracks it whatever the prefs say
+   prefs::userPrefs().setShowHiddenObjects(false);
+   prefs::userPrefs().setShowLastDotValue(false);
+   listEnvironmentForMonitor(R_GlobalEnv, &names);
+   EXPECT_TRUE(contains(names, ".Last.value"));
+
+   prefs::userPrefs().setShowHiddenObjects(savedShowHidden);
+   prefs::userPrefs().setShowLastDotValue(savedShowLastValue);
 }
 
 } // anonymous namespace

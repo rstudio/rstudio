@@ -97,20 +97,59 @@ bool bindsFunctionDots(SEXP env)
    return TYPEOF(r::sexp::getBindingIdentity("...", env, bt)) == DOTSXP;
 }
 
-} // anonymous namespace
-
-void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames)
+// lists env's names, applying the pane's rules on top of ls()
+void listEnvironmentNames(SEXP env,
+                          bool includeHidden,
+                          bool includeLastDotValue,
+                          std::vector<std::string>* pNames)
 {
-   r::sexp::listEnvironment(env,
-                            prefs::userPrefs().showHiddenObjects(),
-                            prefs::userPrefs().showLastDotValue(),
-                            pNames);
+   r::sexp::listEnvironment(env, includeHidden, includeLastDotValue, pNames);
+
+   // .Last.value is listed by its own pref alone, even where it's a binding
+   // of the environment itself (baseenv)
+   if (!includeLastDotValue)
+   {
+      auto lastValue = std::find(pNames->begin(), pNames->end(), ".Last.value");
+      if (lastValue != pNames->end())
+         pNames->erase(lastValue);
+   }
 
    // a function's '...' isn't a user-assigned object, and the pane's
    // describe/size code isn't built to inspect it safely
    auto dots = std::find(pNames->begin(), pNames->end(), "...");
    if (dots != pNames->end() && bindsFunctionDots(env))
       pNames->erase(dots);
+}
+
+} // anonymous namespace
+
+bool isHiddenName(const std::string& name)
+{
+   return !name.empty() && name[0] == '.';
+}
+
+void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames)
+{
+   listEnvironmentNames(env,
+                        prefs::userPrefs().showHiddenObjects(),
+                        prefs::userPrefs().showLastDotValue(),
+                        pNames);
+}
+
+void listEnvironmentForMonitor(SEXP env, std::vector<std::string>* pNames)
+{
+   listEnvironmentNames(env, true, true, pNames);
+}
+
+bool isListedInPane(const std::string& name)
+{
+   if (name == ".Last.value")
+      return prefs::userPrefs().showLastDotValue();
+
+   if (isHiddenName(name))
+      return prefs::userPrefs().showHiddenObjects();
+
+   return true;
 }
 
 bool isUnevaluatedPromise(const std::string& name, SEXP env)

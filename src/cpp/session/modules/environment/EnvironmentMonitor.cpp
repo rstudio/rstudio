@@ -15,7 +15,7 @@
 
 #include "EnvironmentMonitor.hpp"
 
-#include <set>
+#include <algorithm>
 
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
@@ -39,13 +39,13 @@ bool compareSnapshotName(const BindingSnapshot& a, const BindingSnapshot& b)
    return a.name < b.name;
 }
 
-// Names starting with a dot are the only ones whose listing depends on the
-// show_hidden_objects / show_last_dot_value prefs. They're also the names the
-// assistant's full variable listing (ls()) omits, so its incremental updates
-// skip them no matter which names the pane is set to show.
-bool isHiddenName(const std::string& name)
+// whether the snapshot holds any name that ls() would list; hidden names
+// sort first, so this stops at the first visible one
+bool hasVisibleNames(const std::vector<BindingSnapshot>& env)
 {
-   return !name.empty() && name[0] == '.';
+   return std::any_of(
+      env.begin(), env.end(),
+      [](const BindingSnapshot& snap) { return !isHiddenName(snap.name); });
 }
 
 void enqueRefreshEvent()
@@ -113,7 +113,7 @@ void EnvironmentMonitor::listEnv(std::vector<std::string>* pNames)
    if (!hasEnvironment())
       return;
 
-   listEnvironmentForPane(getMonitoredEnvironment(), pNames);
+   listEnvironmentForMonitor(getMonitoredEnvironment(), pNames);
 }
 
 void EnvironmentMonitor::snapshotBindings(
@@ -157,44 +157,13 @@ void EnvironmentMonitor::snapshotEnvironment(std::vector<BindingSnapshot>* pEnv,
    std::sort(pPromises->begin(), pPromises->end());
 }
 
-void EnvironmentMonitor::resetBaseline()
-{
-   std::vector<BindingSnapshot> currentEnv;
-   std::vector<std::string> currentPromises;
-   snapshotEnvironment(&currentEnv, &currentPromises);
-
-   // only dot-prefixed names depend on the listing prefs, so only they take
-   // their current state; other names keep their prior snapshots (or absence)
-   // so that changes made since the last check, including creations and
-   // deletions, are still reported
-   std::vector<BindingSnapshot> baseline;
-   for (const auto& snap : lastEnv_)
-   {
-      if (!isHiddenName(snap.name))
-         baseline.push_back(snap);
-   }
-   for (const auto& snap : currentEnv)
-   {
-      if (isHiddenName(snap.name))
-         baseline.push_back(snap);
-   }
-   std::sort(baseline.begin(), baseline.end());
-
-   lastEnv_ = baseline;
-
-   // a promise forced since the last check still shows up as a change: its
-   // kept snapshot has a promise binding type and its current one doesn't
-   unevaledPromises_ = currentPromises;
-}
-
+// The assistant's full variable listing uses ls(), so its incremental updates
+// skip hidden names no matter which names the pane is set to show.
 void EnvironmentMonitor::emitVariablesChanged(bool refreshEnqueued,
-                                              const std::vector<BindingSnapshot>& currentEnv,
+                                              bool hasVisibleVars,
                                               const std::vector<BindingSnapshot>& addedVars,
                                               const std::vector<BindingSnapshot>& removedVars)
 {
-   bool hasVisibleVars = std::any_of(
-      currentEnv.begin(), currentEnv.end(),
-      [](const BindingSnapshot& snap) { return !isHiddenName(snap.name); });
    if (refreshEnqueued && !hasVisibleVars)
    {
       // Environment was cleared - emit reset signal
@@ -204,20 +173,18 @@ void EnvironmentMonitor::emitVariablesChanged(bool refreshEnqueued,
       return;
    }
 
-   // Build a set of names from lastEnv_ for O(1) lookup to distinguish create vs modify
-   std::set<std::string> lastEnvNames;
-   for (const auto& snap : lastEnv_)
-      lastEnvNames.insert(snap.name);
-
    module_context::EnvironmentVariablesChangedEvent event;
    event.reset = false;
 
-   // Classify addedVars into created vs modified
+   // Classify addedVars into created vs modified; lastEnv_ is sorted by name
    for (const auto& snap : addedVars)
    {
       if (isHiddenName(snap.name))
          continue;
-      if (lastEnvNames.count(snap.name) > 0)
+
+      bool existed = std::binary_search(
+         lastEnv_.begin(), lastEnv_.end(), snap, compareSnapshotName);
+      if (existed)
          event.modified.push_back(snap.name);
       else
          event.created.push_back(snap.name);
@@ -268,11 +235,13 @@ void EnvironmentMonitor::checkForChanges()
 
    snapshotEnvironment(&currentEnv, &currentPromises);
 
+   bool isGlobalEnv = getMonitoredEnvironment() == R_GlobalEnv;
+   bool hasVisibleVars = hasVisibleNames(currentEnv);
+
    bool refreshEnqueued = false;
    if (!initialized_)
    {
-      if (refreshOnInit_ ||
-          getMonitoredEnvironment() == R_GlobalEnv)
+      if (refreshOnInit_ || isGlobalEnv)
       {
          enqueRefreshEvent();
          refreshEnqueued = true;
@@ -284,50 +253,58 @@ void EnvironmentMonitor::checkForChanges()
    {
       if (currentEnv != lastEnv_)
       {
-         // optimize for empty currentEnv (user reset workspace) or empty
-         // lastEnv_ (startup) by just sending a single refresh event
-         // only do this for the global environment--while debugging local
-         // environments, the environment object list is sent down as part of
-         // the context depth event.
-         if ((currentEnv.empty() || lastEnv_.empty())
-             && getMonitoredEnvironment() == R_GlobalEnv)
+         // optimize for a global environment with no visible objects either
+         // now (user reset workspace) or before (startup) by sending a single
+         // refresh event instead of one event per object. Only do this for
+         // the global environment--while debugging local environments, the
+         // environment object list is sent down as part of the context depth
+         // event. Hidden names (.Random.seed, .Last.value) don't count: they
+         // stay behind when the workspace is cleared, and are present before
+         // the user has created anything.
+         if (isGlobalEnv && (!hasVisibleVars || !hasVisibleNames(lastEnv_)))
          {
             enqueRefreshEvent();
             refreshEnqueued = true;
          }
-         else
+
+         // safe: R binding names are unique per environment, so the
+         // name-only comparator is consistent with operator< here
+         std::set_difference(lastEnv_.begin(), lastEnv_.end(),
+                             currentEnv.begin(), currentEnv.end(),
+                             std::back_inserter(removedVars),
+                             compareSnapshotName);
+
+         // fire removed event for deletes; if a refresh is scheduled there's
+         // no need to emit them one by one
+         if (!refreshEnqueued)
          {
-            // safe: R binding names are unique per environment, so the
-            // name-only comparator is consistent with operator< here
-            std::set_difference(lastEnv_.begin(), lastEnv_.end(),
-                                currentEnv.begin(), currentEnv.end(),
-                                std::back_inserter(removedVars),
-                                compareSnapshotName);
-
-            // fire removed event for deletes
             for (const auto& snap : removedVars)
-               enqueRemovedEvent(snap.name);
-
-            // remove deleted objects from the list of uneval'ed promises
-            std::for_each(removedVars.begin(),
-                          removedVars.end(),
-                          boost::bind(removeNameFromList, &unevaledPromises_, _1));
-
-            // find adds & assigns (all snapshots in the current environment
-            // but NOT in the previous environment -- detects both new names
-            // and changed SEXP pointers)
-            std::set_difference(currentEnv.begin(), currentEnv.end(),
-                                lastEnv_.begin(), lastEnv_.end(),
-                                std::back_inserter(addedVars));
-
-            // remove assigned objects from the list of uneval'ed promises
-            // (otherwise, we double-assign in the case where a promise SEXP
-            // is simultaneously forced/evaluated and assigned a new value)
-            std::for_each(addedVars.begin(),
-                          addedVars.end(),
-                          boost::bind(removeNameFromList, &unevaledPromises_, _1));
+            {
+               if (isListedInPane(snap.name))
+                  enqueRemovedEvent(snap.name);
+            }
          }
+
+         // remove deleted objects from the list of uneval'ed promises
+         std::for_each(removedVars.begin(),
+                       removedVars.end(),
+                       boost::bind(removeNameFromList, &unevaledPromises_, _1));
+
+         // find adds & assigns (all snapshots in the current environment
+         // but NOT in the previous environment -- detects both new names
+         // and changed SEXP pointers)
+         std::set_difference(currentEnv.begin(), currentEnv.end(),
+                             lastEnv_.begin(), lastEnv_.end(),
+                             std::back_inserter(addedVars));
+
+         // remove assigned objects from the list of uneval'ed promises
+         // (otherwise, we double-assign in the case where a promise SEXP
+         // is simultaneously forced/evaluated and assigned a new value)
+         std::for_each(addedVars.begin(),
+                       addedVars.end(),
+                       boost::bind(removeNameFromList, &unevaledPromises_, _1));
       }
+
       // if a refresh is scheduled there's no need to emit add events one by one
       if (!refreshEnqueued)
       {
@@ -335,14 +312,17 @@ void EnvironmentMonitor::checkForChanges()
 
          // fire assigned event for adds, assigns, and promise evaluations
          for (const auto& snap : addedVars)
-            enqueAssignedEvent(snap.name);
+         {
+            if (isListedInPane(snap.name))
+               enqueAssignedEvent(snap.name);
+         }
       }
    }
 
    // Emit environment variables changed signal for AI assistant integration
    // Only emit for global environment changes
-   if (getMonitoredEnvironment() == R_GlobalEnv)
-      emitVariablesChanged(refreshEnqueued, currentEnv, addedVars, removedVars);
+   if (isGlobalEnv)
+      emitVariablesChanged(refreshEnqueued, hasVisibleVars, addedVars, removedVars);
 
    unevaledPromises_ = currentPromises;
    lastEnv_ = currentEnv;

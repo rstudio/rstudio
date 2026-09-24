@@ -26,6 +26,11 @@ namespace environment {
 
 // EnvironmentMonitor listens for changes to objects in the given environment
 // context, and emits object add/remove events.
+//
+// Every name is tracked, whatever the pane's listing preferences; the
+// preferences are applied when events are emitted. A preference change thus
+// needs no re-baselining, and a change to a hidden object made before the
+// object was shown is still reported.
 class EnvironmentMonitor : boost::noncopyable
 {
 public:
@@ -34,11 +39,6 @@ public:
    SEXP getMonitoredEnvironment();
    bool hasEnvironment();
    void checkForChanges();
-
-   // re-snapshot the environment without reporting changes; used when the
-   // set of listed names changes for a reason other than R code (e.g. a
-   // listing preference)
-   void resetBaseline();
 
    // opaque snapshot of a binding for change detection
    struct BindingSnapshot
@@ -75,7 +75,7 @@ public:
    void addEvaluatedPromises(const std::vector<std::string>& currentPromises,
                              std::vector<BindingSnapshot>* pAddedVars);
    void emitVariablesChanged(bool refreshEnqueued,
-                             const std::vector<BindingSnapshot>& currentEnv,
+                             bool hasVisibleVars,
                              const std::vector<BindingSnapshot>& addedVars,
                              const std::vector<BindingSnapshot>& removedVars);
    void snapshotBindings(SEXP env,
