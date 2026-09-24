@@ -30,6 +30,7 @@ import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
+import org.rstudio.studio.client.rmarkdown.model.RmdEditorMode;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -129,7 +130,9 @@ public class QuartoCommands
                   
                   if (visualEditor && !QuartoCommandConstants.EDITOR_VISUAL.equals(config.project_editor.mode))
                      lines.add("editor: " + QuartoCommandConstants.EDITOR_VISUAL); //$NON-NLS-1$
-                  
+                  else if (!visualEditor && newDocDefaultsToVisual())
+                     lines.add("editor: " + QuartoCommandConstants.EDITOR_SOURCE); //$NON-NLS-1$
+
                   if (result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_SHINY))
                      lines.add("server: shiny"); //$NON-NLS-1$
                   else if (!interactive && result.getEngine().equals(QuartoCommandConstants.ENGINE_JUPYTER))
@@ -192,6 +195,16 @@ public class QuartoCommands
          }); 
    }
    
+   // Mirrors SourceColumn.applyDocPropertyDefaults: without an editor field in the
+   // YAML, a new document opens in the project's editor mode, else the user default.
+   private boolean newDocDefaultsToVisual()
+   {
+      String projectMode = RmdEditorMode.getProjectEditorMode(null, sessionInfo_);
+      if (projectMode != null)
+         return projectMode.equals(RmdEditorMode.VISUAL);
+      return RStudioGinjector.INSTANCE.getUserPrefs().visualMarkdownEditingIsDefault().getValue();
+   }
+
    private String removeVisualEditorLine(String input)
    {
       input = input.replaceFirst("\\n.*?\\[visual markdown editor\\].*?\\n", "");
