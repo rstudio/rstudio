@@ -24,7 +24,6 @@ import { cloneTreeHardlinks } from './r-libs-setup';
 // Mirrors chat::constants in src/cpp/session/modules/chat/ChatConstants.cpp.
 const VERSIONS_DIR_NAME = 'versions';
 const SELECTOR_FILE_NAME = 'selected.json';
-const LOCKS_DIR_NAME = 'locks';
 const SLOT_MANIFEST_FILE_NAME = '.slot-manifest.json';
 const PACKAGE_JSON_FILE_NAME = 'package.json';
 const PROTOCOL_FILE_NAME = 'protocol.json';
@@ -243,13 +242,12 @@ export function inspectSeed(seedRoot: string): {
  * The slot is copied to `versions/<version>`, its manifest is rewritten, and
  * it is selected for the protocol it declares. The manifest is recorded from
  * the copied files rather than trusted, so the sandbox slot verifies against
- * exactly what was copied. The seed's other slots and its `selected.json` are not copied, so the build
- * under test is the only one there. Nor is `bin`: RStudio never reads it, so
- * copying it would only add 18 MB per sandbox and make a resolver regression
- * harder to notice. Nor is `locks`: a real `pai` carries its machine's live
- * in-use lock entries, which would make installs in the sandbox refuse.
- * Everything else (`ai-logs`, `manifest-check.json`, ...) is shared state
- * that lives beside the slots and is copied as-is.
+ * exactly what was copied. The seed's other slots and its `selected.json` are
+ * not copied, so the build under test is the only one there. Nor is `bin`:
+ * RStudio never reads it, so copying it would only add 18 MB per sandbox and
+ * make a resolver regression harder to notice. Everything else (`ai-logs`,
+ * `manifest-check.json`, ...) is shared state that lives beside the slots and
+ * is copied as-is.
  *
  * @returns the version that was seeded.
  */
@@ -261,8 +259,7 @@ export function seedPaiSlot(seedRoot: string, storageDir: string): string {
     if (
       entry === VERSIONS_DIR_NAME ||
       entry === SELECTOR_FILE_NAME ||
-      entry === LEGACY_PACKAGE_DIR ||
-      entry === LOCKS_DIR_NAME
+      entry === LEGACY_PACKAGE_DIR
     ) {
       continue;
     }

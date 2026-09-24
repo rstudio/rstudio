@@ -21,7 +21,6 @@
 #include "chat/ChatTypes.hpp"
 #include "chat/ChatLogging.hpp"
 #include "chat/ChatInstallation.hpp"
-#include "chat/ChatInstallLock.hpp"
 #include "chat/ChatIntegrity.hpp"
 #include "chat/ChatSelector.hpp"
 #include "chat/ChatSlots.hpp"
@@ -279,7 +278,6 @@ using chat_constants::kMaxQueueSize;
 using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
 using chat_constants::kMaxRestartAttempts;
-using chat_constants::kPositAiStorageDirName;
 using chat_constants::kLegacyInstallDirName;
 using chat_constants::kServerScriptPath;
 
@@ -4987,17 +4985,8 @@ void onBackendStderr(core::system::ProcessOperations& ops, const std::string& ou
         assistant::agentStderrTail(output, assistant::kAgentStderrMaxBytes));
 }
 
-void onBackendExit(int exitCode, uint64_t generation, uint64_t lockToken)
+void onBackendExit(int exitCode, uint64_t generation)
 {
-   // Sole release point for the backend's in-use lock component once the
-   // process has launched (pre-launch failures release the just-acquired
-   // token in startChatBackend): the supervisor reap callback fires on
-   // every stop path (graceful, force terminate, crash), and only here do
-   // we know the process is gone. Stale or zero tokens no-op inside the
-   // helper.
-   installLock().releaseInUse(
-      install_lock::InstallLock::Component::ChatBackend, lockToken);
-
    // A late reap callback from a previous backend process (force-terminated,
    // then restarted) must not stomp the state of the current backend.
    if (generation != s_chatBackendGeneration)
@@ -5140,7 +5129,7 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace");
    args.push_back(workspacePath.getAbsolutePath());
 
-   // RStudio's own state (manifest-check.json, install locks) lives in pai/.
+   // RStudio's own state (manifest-check.json, version slots) lives in pai/.
    // The assistant keeps its storage and settings under ~/.posit/assistant.
    error = positAiStorageDir().ensureDirectory();
    if (error)
@@ -5203,37 +5192,11 @@ Error startChatBackend(bool resumeConversation)
    core::system::setHomeToUserProfile(&environment);
 #endif
 
-   // Hold this session's in-use lock while the backend runs, and refuse to
-   // start while another session is installing. Vestigial now that installs
-   // only create directories -- there is no swap to be caught mid-flight --
-   // and removed with the rest of the locking in the follow-up PR. Only the
-   // administrator's legacy directory skips it, as before; every other
-   // source over-locks, which costs at most a retryable refusal.
    uint64_t generation = ++s_chatBackendGeneration;
 
    // A stale flag from a previous unreaped generation must not classify a
    // later crash of this backend as an expected shutdown.
    s_expectedShutdown = false;
-
-   uint64_t lockToken = 0;
-   bool systemInstall =
-      (positAiPath == xdg::systemConfigDir()
-                         .completePath(kPositAiStorageDirName)
-                         .completeChildPath(kLegacyInstallDirName));
-   if (!systemInstall)
-   {
-      std::string lockMessage;
-      error = installLock().acquireInUseForStart(
-         install_lock::InstallLock::Component::ChatBackend,
-         &lockToken,
-         &lockMessage);
-      if (error)
-      {
-         error.addProperty("description", lockMessage);
-         clearChatBackendPort();
-         return error;
-      }
-   }
 
    // Set up callbacks
    core::system::ProcessCallbacks callbacks;
@@ -5244,9 +5207,9 @@ Error startChatBackend(bool resumeConversation)
    };
    callbacks.onStdout = onBackendStdout;
    callbacks.onStderr = onBackendStderr;
-   callbacks.onExit = [generation, lockToken](int exitCode)
+   callbacks.onExit = [generation](int exitCode)
    {
-      onBackendExit(exitCode, generation, lockToken);
+      onBackendExit(exitCode, generation);
    };
 
    // Process options
@@ -5280,9 +5243,6 @@ Error startChatBackend(bool resumeConversation)
 
    if (error)
    {
-      // launch failed, so no exit callback will ever fire to release the lock
-      installLock().releaseInUse(
-         install_lock::InstallLock::Component::ChatBackend, lockToken);
       error.addProperty("description",
          "Failed to launch chat backend: node=" +
          nodePath.getAbsolutePath() + ", workingDir=" +
@@ -5292,8 +5252,8 @@ Error startChatBackend(bool resumeConversation)
    }
 
    // Publish only once the backend is running, so a failed start never
-   // announces its port and token (the lock and launch failures above do
-   // reset both, via clearChatBackendPort()). The static file handler serves
+   // announces its port and token (the launch failure above resets both,
+   // via clearChatBackendPort()). The static file handler serves
    // from the same resolved installation the backend was just launched from.
 
    // Share the port with the static file handler for CSP connect-src
@@ -5659,8 +5619,7 @@ Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
 
 // Stops the chat backend so it can be restarted on a newly installed version:
 // graceful shutdown request, bounded wait, force terminate, then a bounded wait
-// for the process to actually exit. The in-use lock component is released by
-// onBackendExit once the process is reaped.
+// for the process to actually exit.
 void stopChatBackendForInstall(const std::string& reason)
 {
    if (s_chatBackendPid == -1)
@@ -5838,18 +5797,6 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
 
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
-
-   // Serialize with other rsession processes and refuse while any other
-   // session is running Posit Assistant. Vestigial after this change -- an
-   // install creates a slot and touches nothing another session could be
-   // executing from -- and removed with the rest of the locking in the
-   // follow-up PR. The scope releases the mutation lock on every exit below.
-   install_lock::MutationScope mutationScope(installLock());
-   if (mutationScope.error())
-   {
-      failInstall(mutationScope.userMessage(), cont);
-      return;
-   }
 
    // A version already on disk in a verifying slot needs no download: the
    // install is a selector update. This is what makes the manifest-driven
@@ -6236,42 +6183,10 @@ void onShutdown(bool terminatedNormally)
    }
 }
 
-// The owner id names this session's lock file and must be unique per
-// process (see ChatInstallLock.hpp): the session id alone is stable
-// across a session relaunch, so an orphaned predecessor process that
-// outlives the relaunch (#18572) holds a live lock under the
-// replacement's own name, and every chat_start_backend in the
-// replacement then fails with a spurious "update in progress" (#18571).
-// The session id is kept as a prefix so lock files remain attributable
-// (it can be empty for dev/automation-launched sessions); the uuid
-// supplies the per-process uniqueness. Leftover files from dead
-// processes are stale-cleaned by the next mutator.
-std::string makeInstallLockOwnerId()
-{
-   std::string sessionId = module_context::activeSession().id();
-   std::string uuid = core::system::generateUuid(false);
-   return sessionId.empty() ? uuid : sessionId + "-" + uuid;
-}
-
 } // end anonymous namespace
 
 // ============================================================================
 // Public API
-
-install_lock::InstallLock& installLock()
-{
-   // Constructed lazily so xdg paths and activeSession() are initialized
-   // (FileLock::initialize() has also run by first use; the helper creates
-   // its FileLock instances per-operation, not at construction). The owner
-   // id is passed straight to the constructor rather than held in its own
-   // `static const std::string`: MSVC in C++20 mode initializes such a
-   // static to an empty string when its initializer is a conditional
-   // expression, which named every session's lock file ".lock" (#18787).
-   static install_lock::InstallLock instance(
-      xdg::userDataDir().completePath(chat_constants::kPositAiLocksDirName),
-      makeInstallLockOwnerId());
-   return instance;
-}
 // ============================================================================
 
 bool isSuspendable()
