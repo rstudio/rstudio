@@ -115,7 +115,20 @@ void ensureContextId()
    if (!userState().contextId().empty())
       return;
 
-   Error error = userState().setContextId(core::system::generateShortenedUuid());
+   std::string contextId = core::system::generateShortenedUuid();
+   Error error = userState().setContextId(contextId);
+   if (!error)
+      return;
+
+   // the state file can't be written (e.g. it was left owned by root by a sudo
+   // run), so the ID wasn't kept. keep it for this session anyway: project
+   // state is stored under it, and with an empty ID it would land in the
+   // project's .Rproj.user directory itself
+   LOG_ERROR(error);
+
+   json::Object computed;
+   computed[kContextId] = contextId;
+   error = userState().writeLayer(STATE_LAYER_COMPUTED, computed);
    if (error)
       LOG_ERROR(error);
 }

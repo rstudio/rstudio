@@ -410,13 +410,18 @@ void verifyUserDirs(
 
 namespace {
 
-bool s_userDataDirTemporary = false;
+// the temporary directory standing in for the user data directory, if any
+FilePath s_temporaryUserDataDir;
 
 } // anonymous namespace
 
 bool isUserDataDirTemporary()
 {
-   return s_userDataDirTemporary;
+   // the redirect points the user data directory at the temporary one through
+   // RSTUDIO_DATA_HOME, so it lasts as long as that does (e.g. a test
+   // restoring the environment ends it)
+   return !s_temporaryUserDataDir.isEmpty() &&
+          userDataDir().getAbsolutePath() == s_temporaryUserDataDir.getAbsolutePath();
 }
 
 #ifndef _WIN32
@@ -511,7 +516,7 @@ Error redirectUnwritableUserDataDir(FilePath* pTemporaryDir, Error* pTemporaryDi
    }
 
    setenv("RSTUDIO_DATA_HOME", temporaryDir.getAbsolutePath());
-   s_userDataDirTemporary = true;
+   s_temporaryUserDataDir = temporaryDir;
 
    *pTemporaryDir = temporaryDir;
    return dataDirError;

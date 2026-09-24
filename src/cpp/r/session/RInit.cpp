@@ -13,8 +13,12 @@
  *
  */
 
+#include <string>
+#include <vector>
+
 #include <boost/bind/bind.hpp>
 
+#include <core/Log.hpp>
 #include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 
@@ -68,8 +72,8 @@ boost::function<void()> s_deferredDeserializationAction;
 // the saved state whose deferred restore hasn't run yet
 FilePath s_restoringStatePath;
 
-// explains any saved state set aside by setAsideUnfinishedRestores()
-std::string s_setAsideStateWarning;
+// where setAsideUnfinishedRestores() moved any saved state it set aside
+std::vector<FilePath> s_setAsideStatePaths;
    
 void reportDeferredDeserializationError(const Error& error)
 {
@@ -123,6 +127,15 @@ void deferredRestoreSuspendedSession(
    Error error = deferredRestoreAction();
    if (error)
       reportDeferredDeserializationError(error);
+
+   // the saved state has loaded without taking the process down; what follows
+   // is initialization unrelated to it, so a crash there mustn't count
+   // against the state (see ensureDeserialized)
+   if (!s_restoringStatePath.isEmpty())
+   {
+      state::restoreFinished(s_restoringStatePath);
+      s_restoringStatePath = FilePath();
+   }
 
    // complete deferred init
    completeDeferredSessionInit(false);
@@ -226,13 +239,24 @@ void restoreSession(const FilePath& suspendedSessionPath,
      s_afterResumeCallback();
 }
 
+void setAsideUnfinishedRestore(const FilePath& statePath)
+{
+   if (statePath.isEmpty() || !statePath.exists())
+      return;
+
+   FilePath setAsidePath = state::setAsideUnfinishedRestore(statePath);
+   if (!setAsidePath.isEmpty())
+      s_setAsideStatePaths.push_back(setAsidePath);
+}
+
 void setAsideUnfinishedRestores()
 {
-   for (const FilePath& statePath : { restartContext().sessionStatePath(), suspendedSessionPath() })
-   {
-      if (!statePath.isEmpty() && statePath.exists())
-         s_setAsideStateWarning += state::setAsideUnfinishedRestore(statePath);
-   }
+   setAsideUnfinishedRestore(restartContext().sessionStatePath());
+   setAsideUnfinishedRestore(suspendedSessionPath());
+
+   // state set aside long enough ago has had its chance to be recovered
+   state::removeExpiredSetAsideState(restartContext().contextsPath());
+   state::removeExpiredSetAsideState(suspendedSessionPath().getParent());
 }
 
 // one-time per session initialization
@@ -324,9 +348,30 @@ Error initialize()
                                   utils::projectClientStatePath());
       
    // explain any saved state that wasn't restored because an earlier
-   // restore of it never finished
-   if (!s_setAsideStateWarning.empty())
-      REprintf("%s", s_setAsideStateWarning.c_str());
+   // restore of it never finished, and what happens in its place (other
+   // saved state, if there is any, is still restored below)
+   if (!s_setAsideStatePaths.empty())
+   {
+      bool otherStateExists = restartContext().hasSessionState() || suspendedSessionPath().exists();
+
+      std::string setAsidePaths;
+      for (const FilePath& setAsidePath : s_setAsideStatePaths)
+         setAsidePaths += "    " + setAsidePath.getAbsolutePath() + "\n";
+
+      std::string warning = fmt::format(
+         "Warning: RStudio did not restore your previous R session, because an "
+         "earlier attempt to restore it did not finish (R may have crashed or run "
+         "out of memory while loading it, or the session was closed before it "
+         "finished loading). {} The saved session was kept in:\n"
+         "\n"
+         "{}"
+         "\n"
+         "It will be removed after {} days.\n",
+         otherStateExists ? "Another saved session was restored instead." : "A new R session was started instead.",
+         setAsidePaths,
+         state::kSetAsideStateMaxAgeDays);
+      REprintf("%s", warning.c_str());
+   }
 
    // restore suspended session if we have one
    bool wasResumed = false;
@@ -461,8 +506,9 @@ void ensureDeserialized()
 
       s_deferredDeserializationAction.clear();
 
-      // the restore has run its course (even if it reported errors) without
-      // taking the process down with it
+      // normally the marker is cleared as soon as the state has loaded (see
+      // deferredRestoreSuspendedSession); an R error that escaped the restore
+      // skips that, but the process survived it, so clear the marker here too
       if (!s_restoringStatePath.isEmpty())
       {
          state::restoreFinished(s_restoringStatePath);

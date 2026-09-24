@@ -19,8 +19,11 @@
 # include <fmt/xchar.h>
 #endif
 
+#include <ctime>
 #include <unordered_set>
+#include <vector>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/function.hpp>
 
 #include <shared_core/Error.hpp>
@@ -30,6 +33,7 @@
 #include <core/Version.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileUtils.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -71,6 +75,7 @@ const char * const kGlobalEnvironment = "global_environment";
 const char * const kAfterRestartCommand = "after_restart_command";
 const char * const kBuiltPackagePath = "built_package_path";
 const char * const kRestoreStartedFile = "restore_started";
+const char * const kSetAsideSuffix = "-unrestored";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -1137,40 +1142,70 @@ void restoreFinished(const FilePath& statePath)
       LOG_ERROR(error);
 }
 
-std::string setAsideUnfinishedRestore(const FilePath& statePath)
+FilePath setAsideUnfinishedRestore(const FilePath& statePath)
 {
    if (!statePath.completePath(kRestoreStartedFile).exists())
-      return std::string();
+      return FilePath();
 
    // keep the state rather than deleting it, so what it holds (e.g. the
    // environment) can still be recovered by hand; each set-aside gets its own
    // directory, so a later one can't replace what an earlier one kept
-   FilePath parentPath = statePath.getParent();
-   std::string setAsideName = statePath.getFilename() + "-unrestored";
-   FilePath setAsidePath = parentPath.completePath(setAsideName);
-   for (int i = 2; setAsidePath.exists(); ++i)
-      setAsidePath = parentPath.completePath(setAsideName + "-" + std::to_string(i));
+   FilePath setAsidePath = file_utils::firstUnusedPath(
+      statePath.getParent().completePath(statePath.getFilename() + kSetAsideSuffix));
 
    Error error = statePath.move(setAsidePath);
    if (error)
    {
       LOG_ERROR(error);
-      return std::string();
+      return FilePath();
    }
 
    WLOGF("An earlier restore of the session state in {} did not finish; moved it to {}",
          statePath.getAbsolutePath(),
          setAsidePath.getAbsolutePath());
 
-   return fmt::format(
-      "Warning: RStudio did not restore your previous R session, because an "
-      "earlier attempt to restore it did not finish (R may have crashed or run "
-      "out of memory while loading it, or the session was closed before it "
-      "finished loading). A new R session was started instead. The saved "
-      "session was kept in:\n"
-      "\n"
-      "    {}\n",
-      setAsidePath.getAbsolutePath());
+   return setAsidePath;
+}
+
+void removeExpiredSetAsideState(const FilePath& parentPath)
+{
+   if (!parentPath.exists())
+      return;
+
+   std::vector<FilePath> children;
+   Error error = parentPath.getChildren(children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // moving a directory aside doesn't change its time, so a set-aside
+   // directory's time is that of the restore that never finished
+   std::time_t cutoff = std::time(nullptr) - kSetAsideStateMaxAgeDays * 24 * 60 * 60;
+   for (const FilePath& child : children)
+   {
+      if (!boost::algorithm::contains(child.getFilename(), kSetAsideSuffix))
+         continue;
+
+      std::time_t lastWriteTime = 0;
+      error = child.getLastWriteTime(lastWriteTime);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      if (lastWriteTime >= cutoff)
+         continue;
+
+      ILOGF("Removing session state set aside more than {} days ago: {}",
+            kSetAsideStateMaxAgeDays,
+            child.getAbsolutePath());
+      error = child.remove();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 SessionStateInfo getSessionStateInfo()

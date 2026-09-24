@@ -114,6 +114,10 @@ TEST_F(SessionTrustTest, GrantReplacesUnparseableTrustFile)
    std::string backup;
    EXPECT_FALSE(readStringFromFile(dataHome_.completePath("trust.json.invalid"), &backup));
    EXPECT_EQ(invalid, backup);
+
+   // the rewritten file needs no further copies
+   EXPECT_FALSE(grantTrust(project_));
+   EXPECT_FALSE(dataHome_.completePath("trust.json.invalid-2").exists());
 }
 
 TEST_F(SessionTrustTest, SuccessiveRecoveriesKeepEarlierCopies)

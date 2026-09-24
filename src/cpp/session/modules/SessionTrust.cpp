@@ -21,6 +21,7 @@
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileUtils.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Xdg.hpp>
@@ -143,16 +144,14 @@ Error readTrustFileForUpdate(std::vector<std::string>* pTrusted,
    if (!error)
       return Success();
 
-   // keep a copy of the contents being replaced (e.g. a hand edit with a typo),
-   // so they can be recovered by hand, without replacing a copy kept earlier;
-   // if that isn't possible, fail rather than lose them
-   FilePath parentPath = filePath.getParent();
-   std::string backupName = filePath.getFilename() + ".invalid";
-   FilePath backupPath = parentPath.completeChildPath(backupName);
-   for (int i = 2; backupPath.exists(); ++i)
-      backupPath = parentPath.completeChildPath(backupName + "-" + std::to_string(i));
-
-   Error backupError = writeStringToFile(backupPath, contents);
+   // keep the contents being replaced (e.g. a hand edit with a typo), so they
+   // can be recovered by hand, without replacing a copy kept earlier; if that
+   // isn't possible, fail rather than lose them. the file is moved rather than
+   // copied: should the rewrite then fail, there is nothing left to keep again
+   // next time, so the copies can't pile up
+   FilePath backupPath = file_utils::firstUnusedPath(
+      filePath.getParent().completeChildPath(filePath.getFilename() + ".invalid"));
+   Error backupError = filePath.move(backupPath);
    if (backupError)
    {
       LOG_ERROR(backupError);

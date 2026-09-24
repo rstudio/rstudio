@@ -45,6 +45,9 @@ public:
 
    core::FilePath sessionStatePath() const;
 
+   // the directory holding the session state of every restart context
+   core::FilePath contextsPath() const;
+
    void removeSessionState();
 
    static core::FilePath createSessionStatePath(
@@ -52,6 +55,7 @@ public:
                                             const std::string& contextId);
 
 private:
+   core::FilePath contextsPath_;
    core::FilePath sessionStatePath_;
 };
 

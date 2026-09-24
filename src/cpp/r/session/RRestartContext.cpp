@@ -59,8 +59,8 @@ RestartContext::RestartContext()
 void RestartContext::initialize(const FilePath& scopePath,
                                 const std::string& contextId)
 {
-   FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.completePath(kContext + contextId);
+   contextsPath_ = restartContextsPath(scopePath);
+   FilePath statePath = contextsPath_.completePath(kContext + contextId);
    if (statePath.exists())
       sessionStatePath_ = statePath;
 }
@@ -86,6 +86,11 @@ bool RestartContext::rProfileOnRestore() const
 FilePath RestartContext::sessionStatePath() const
 {
    return sessionStatePath_;
+}
+
+FilePath RestartContext::contextsPath() const
+{
+   return contextsPath_;
 }
 
 void RestartContext::removeSessionState()

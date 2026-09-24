@@ -301,27 +301,34 @@ TEST(XdgTest, RedirectUnwritableUserDataDir)
    FilePath dataDir = testDir.path().completePath("data");
    ASSERT_FALSE(dataDir.ensureDirectory());
    EnvironmentScope tmpScope("TMPDIR", testDir.path().getAbsolutePath().c_str());
-   EnvironmentScope dataScope("RSTUDIO_DATA_HOME", dataDir.getAbsolutePath().c_str());
 
-   // a writable data directory is left alone
-   FilePath temporaryDir;
-   Error temporaryDirError;
-   EXPECT_FALSE(redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError));
-   EXPECT_TRUE(temporaryDir.isEmpty());
-   EXPECT_EQ(dataDir.getAbsolutePath(), userDataDir().getAbsolutePath());
+   {
+      EnvironmentScope dataScope("RSTUDIO_DATA_HOME", dataDir.getAbsolutePath().c_str());
 
-   // an unwritable one is replaced by the temporary directory. note that this
-   // leaves isUserDataDirTemporary() set for the rest of the test process
-   ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0555));
-   Error error = redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError);
-   ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0755));
+      // a writable data directory is left alone
+      FilePath temporaryDir;
+      Error temporaryDirError;
+      EXPECT_FALSE(redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError));
+      EXPECT_TRUE(temporaryDir.isEmpty());
+      EXPECT_EQ(dataDir.getAbsolutePath(), userDataDir().getAbsolutePath());
+      EXPECT_FALSE(isUserDataDirTemporary());
 
-   EXPECT_TRUE(error);
-   EXPECT_FALSE(temporaryDirError);
-   FilePath expected = testDir.path().completePath("rstudio-data-" + username());
-   EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
-   EXPECT_EQ(expected.getAbsolutePath(), userDataDir().getAbsolutePath());
-   EXPECT_TRUE(isUserDataDirTemporary());
+      // an unwritable one is replaced by the temporary directory
+      ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0555));
+      Error error = redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError);
+      ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0755));
+
+      EXPECT_TRUE(error);
+      EXPECT_FALSE(temporaryDirError);
+      FilePath expected = testDir.path().completePath("rstudio-data-" + username());
+      EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
+      EXPECT_EQ(expected.getAbsolutePath(), userDataDir().getAbsolutePath());
+      EXPECT_TRUE(isUserDataDirTemporary());
+   }
+
+   // the redirect ends with the environment that carried it, so it doesn't
+   // outlive this test
+   EXPECT_FALSE(isUserDataDirTemporary());
 }
 
 } // namespace tests

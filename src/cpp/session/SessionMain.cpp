@@ -44,6 +44,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/program_options.hpp>
 
 #include <core/AnsiEscapes.hpp>
 #include <core/BoostSignals.hpp>
@@ -956,23 +957,39 @@ void notifyIfWorkingDirectoryTooLong()
 // until the console is available.
 std::string s_temporaryDataDirWarning;
 
+// Set during startup when the working directory the session was to start in
+// couldn't be entered and another was used in its place. Held until the
+// console is available, like the warnings above.
+std::string s_workingDirectoryWarning;
+
 // Whether the session was given a scope on the command line, as rserver does
 // for the sessions it manages (e.g. with multiple sessions or the Launcher).
-// Checked before the options are read, since they depend on the data directory.
+// Checked before the options are read, since they depend on the data
+// directory, so the option is parsed here the way Options::read parses it,
+// accepting every spelling it does (-s ID, -sID, --scope ID, --scope=ID and
+// unambiguous prefixes of --scope).
 bool hasSessionScopeArgument(int argc, char * const argv[])
 {
-   for (int i = 1; i < argc; i++)
-   {
-      std::string arg = argv[i];
-      if (arg == "-" kScopeSessionOptionShort ||
-          arg == "--" kScopeSessionOption ||
-          boost::algorithm::starts_with(arg, "--" kScopeSessionOption "="))
-      {
-         return true;
-      }
-   }
+   using namespace boost::program_options;
 
-   return false;
+   options_description scopeOption;
+   scopeOption.add_options()
+      (kScopeSessionOption "," kScopeSessionOptionShort, value<std::string>(), "");
+
+   try
+   {
+      command_line_parser parser(argc, const_cast<char**>(argv));
+      parser.options(scopeOption).allow_unregistered();
+
+      variables_map vm;
+      store(parser.run(), vm);
+      return vm.count(kScopeSessionOption) > 0;
+   }
+   catch (const boost::program_options::error&)
+   {
+      // Options::read reports the problem
+      return false;
+   }
 }
 
 void reportUnwritableUserDataDir(const FilePath& dataDir,
@@ -1024,6 +1041,17 @@ void notifyIfUserDataDirTemporary()
       console_output::OutputTypeWarning);
 }
 
+void notifyIfWorkingDirectoryReplaced()
+{
+   if (s_workingDirectoryWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_workingDirectoryWarning,
+      console_output::OutputTypeWarning);
+}
+
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -1065,6 +1093,9 @@ void rSessionInitHook(bool newSession)
 
    // notify the user if session state is being kept in a temporary directory
    notifyIfUserDataDirTemporary();
+
+   // notify the user if the session started somewhere other than its working directory
+   notifyIfWorkingDirectoryReplaced();
 
    // synchronize session info
    json::Object dataJson;
@@ -2916,22 +2947,34 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // the saved working directory can exist yet be impossible to enter (e.g.
       // its permissions changed); exiting here would leave it saved and fail
       // every later start the same way, so fall back to the default working
-      // directory and then the home directory
-      error = workingDir.makeCurrentPath();
-      if (error)
+      // directory and then the home directory. the log alone wouldn't explain
+      // why a project appears to have opened somewhere else, so the console
+      // says so too once it's up
+      Error workingDirError = workingDir.makeCurrentPath();
+      if (workingDirError)
       {
-         LOG_ERROR(error);
-         workingDir = dirs::getDefaultWorkingDirectory();
-         error = workingDir.makeCurrentPath();
+         LOG_ERROR(workingDirError);
+
+         FilePath fallbackDir = dirs::getDefaultWorkingDirectory();
+         error = fallbackDir.makeCurrentPath();
+         if (error)
+         {
+            LOG_ERROR(error);
+            fallbackDir = options.userHomePath();
+            error = fallbackDir.makeCurrentPath();
+         }
+         if (error)
+            return sessionExitFailure(error, ERROR_LOCATION);
+
+         s_workingDirectoryWarning = fmt::format(
+            "WARNING: RStudio could not start this session in {} ({}), so it "
+            "started in {} instead. Check that the directory exists and that "
+            "you have permission to enter it.",
+            workingDir.getAbsolutePath(),
+            workingDirError.getMessage(),
+            fallbackDir.getAbsolutePath());
+         workingDir = fallbackDir;
       }
-      if (error)
-      {
-         LOG_ERROR(error);
-         workingDir = options.userHomePath();
-         error = workingDir.makeCurrentPath();
-      }
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
 
 #ifdef _WIN32
       // Long path awareness (see the longPathAware entry in rsession.exe.manifest)

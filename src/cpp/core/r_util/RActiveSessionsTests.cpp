@@ -144,7 +144,9 @@ TEST_F(ActiveSessionsTest, KeepsInvalidSessionsWithSuspendedWorkspace)
    ASSERT_FALSE(suspended.completeChildPath("suspended-session-data").ensureDirectory());
    setModified(suspended, old);
 
-   // one whose suspended data was set aside after it failed to restore
+   // one whose suspended data was set aside after it failed to restore is
+   // only kept as long as the rest of the session (a live session keeps its
+   // own for a while; see r::session::state::setAsideUnfinishedRestore)
    FilePath setAside = createInvalidSession("ffffffff");
    ASSERT_FALSE(setAside.completeChildPath("suspended-session-data-unrestored").ensureDirectory());
    setModified(setAside, old);
@@ -152,7 +154,7 @@ TEST_F(ActiveSessionsTest, KeepsInvalidSessionsWithSuspendedWorkspace)
    sessions_->removeStaleInvalidSessions(listInvalid(), kMaxAgeSeconds);
 
    EXPECT_TRUE(suspended.exists());
-   EXPECT_TRUE(setAside.exists());
+   EXPECT_FALSE(setAside.exists());
 }
 
 #ifndef _WIN32

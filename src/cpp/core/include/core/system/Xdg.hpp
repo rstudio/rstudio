@@ -93,7 +93,7 @@ void verifyUserDirs(const boost::optional<std::string>& user = boost::none,
                     const boost::optional<FilePath>& homeDir = boost::none);
 
 // Whether redirectUnwritableUserDataDir() has replaced the user data directory with a
-// temporary one in this process.
+// temporary one in this process, and the user data directory still points there.
 bool isUserDataDirTemporary();
 
 #ifndef _WIN32

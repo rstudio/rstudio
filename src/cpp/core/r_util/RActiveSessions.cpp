@@ -242,21 +242,37 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(bool validat
 
 namespace {
 
-// Whether anything in the session's directory has changed since the given time.
+// Whether anything in the session's directory has changed since the given
+// time. If that can't be told (e.g. an entry can't be read), assume it has.
 bool isModifiedSince(const FilePath& scratchPath, std::time_t since)
 {
-   if (scratchPath.getLastWriteTime() >= since)
+   std::time_t lastWriteTime = 0;
+   Error error = scratchPath.getLastWriteTime(lastWriteTime);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   if (lastWriteTime >= since)
       return true;
 
    bool modified = false;
-   Error error = scratchPath.getChildrenRecursive(
+   error = scratchPath.getChildrenRecursive(
       [&](int, const FilePath& child)
       {
-         modified = child.getLastWriteTime() >= since;
+         Error childError = child.getLastWriteTime(lastWriteTime);
+         if (childError)
+         {
+            LOG_ERROR(childError);
+            modified = true;
+         }
+         else
+         {
+            modified = lastWriteTime >= since;
+         }
          return !modified;
       });
-
-   // if we can't tell, assume it's in use
    if (error)
    {
       LOG_ERROR(error);
@@ -266,8 +282,10 @@ bool isModifiedSince(const FilePath& scratchPath, std::time_t since)
    return modified;
 }
 
-// Whether the session's directory holds suspended session data, including any
-// set aside after it failed to restore (suspended-session-data-unrestored).
+// Whether the session's directory holds a suspended workspace. One set aside
+// after its restore crashed (suspended-session-data-unrestored) doesn't count:
+// a session keeps its own for a while, but nothing else in an abandoned
+// session is worth more than that.
 bool hasSuspendedWorkspace(const FilePath& scratchPath)
 {
    std::vector<FilePath> children;
@@ -282,7 +300,7 @@ bool hasSuspendedWorkspace(const FilePath& scratchPath)
 
    for (const FilePath& child : children)
    {
-      if (boost::algorithm::starts_with(child.getFilename(), "suspended-session-data"))
+      if (child.getFilename() == "suspended-session-data")
          return true;
    }
 
@@ -295,10 +313,15 @@ void ActiveSessions::removeStaleInvalidSessions(
    const std::vector<boost::shared_ptr<ActiveSession>>& invalidSessions,
    std::time_t maxAgeSeconds) const
 {
+   // only sessions kept entirely in files can be judged by their files; the
+   // directory of a session whose properties live elsewhere (e.g. in a
+   // database, via RpcActiveSessionsStorage) says nothing about its age
+   if (!std::dynamic_pointer_cast<FileActiveSessionsStorage>(storage_))
+      return;
+
    std::time_t cutoff = std::time(nullptr) - maxAgeSeconds;
    for (const boost::shared_ptr<ActiveSession>& session : invalidSessions)
    {
-      // only file-based sessions have a directory we can inspect
       const FilePath& scratchPath = session->scratchPath();
       if (scratchPath.isEmpty() || !scratchPath.exists())
          continue;
