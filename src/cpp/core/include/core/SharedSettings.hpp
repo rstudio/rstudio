@@ -68,7 +68,7 @@ public:
    {
       using namespace rstudio::core;
       FilePath writePath = settingsPath.completePath(settingName);
-      Error error = core::writeStringToFile(writePath, value);
+      Error error = core::writeStringToFileAtomic(writePath, value);
       if (error)
          LOG_ERROR(error);
    }

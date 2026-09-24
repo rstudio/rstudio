@@ -94,60 +94,6 @@ public class VirtualConsole
       }
    }
    
-   private static class HyperlinkMatch
-   {
-      public static HyperlinkMatch create(String data, int offset)
-      {
-         String params;
-         String contents;
-         int endIndex;
-         
-         // ESC ']' '8' ';' <params> ';' <url> ST, where ST is BEL or ESC '\'.
-         // As in xterm, any other ESC also ends the string, but is left in
-         // place to be parsed as the start of the next escape sequence.
-         TextCursor cursor = new TextCursor(data, offset);
-         if (!cursor.consume("\u001b]8;"))
-            return null;
-         
-         int paramsStart = cursor.getIndex();
-         if (!cursor.consumeUntilRegex("[;\\u0007\\u001b]"))
-            return null;
-         
-         int paramsEnd = cursor.getIndex();
-         params = StringUtil.substring(data, paramsStart, paramsEnd);
-         
-         if (!cursor.consume(';'))
-            return null;
-         
-         int contentsStart = cursor.getIndex();
-         if (!cursor.consumeUntilRegex("[\\u0007\\u001b]"))
-            return null;
-         
-         int contentsEnd = cursor.getIndex();
-         contents = StringUtil.substring(data, contentsStart, contentsEnd);
-         if (cursor.peek() == '\u0007')
-            cursor.advance(1);
-         else if (cursor.peek(1) == '\\')
-            cursor.advance(2);
-         endIndex = cursor.getIndex();
-         
-         return new HyperlinkMatch(params, contents, endIndex);
-      }
-      
-      private HyperlinkMatch(String params,
-                             String contents,
-                             int endIndex)
-      {
-         params_ = params;
-         contents_ = contents;
-         endIndex_ = endIndex;
-      }
-      
-      public final String params_;
-      public final String contents_;
-      public final int endIndex_;
-   }
-
    @Inject
    public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
@@ -312,6 +258,44 @@ public class VirtualConsole
    private void clearPartialAnsiCode()
    {
       partialAnsiCode_ = null;
+      partialAnsiCodeClazz_ = null;
+   }
+
+   private void holdPartialAnsiCode(String data, String clazz)
+   {
+      partialAnsiCode_ = data;
+      partialAnsiCodeClazz_ = clazz;
+   }
+
+   /**
+    * Stop waiting for the rest of an escape sequence cut off by the end of
+    * the last submit, and show what was held back as malformed: the
+    * introducer is dropped and the rest is shown as text. Call this when no
+    * more output can follow, e.g. before a prompt.
+    */
+   public void flushPartialAnsiCode()
+   {
+      if (partialAnsiCode_ == null)
+         return;
+
+      String data = partialAnsiCode_;
+      String clazz = partialAnsiCodeClazz_;
+      clearPartialAnsiCode();
+
+      // don't let the flush consume a pending new-range request
+      boolean forceNewRange = forceNewRange_;
+      forceNewRange_ = false;
+
+      flushingPartialAnsiCode_ = true;
+      try
+      {
+         submit(data, clazz, false, false);
+      }
+      finally
+      {
+         flushingPartialAnsiCode_ = false;
+         forceNewRange_ = forceNewRange_ || forceNewRange;
+      }
    }
 
    /**
@@ -660,10 +644,9 @@ public class VirtualConsole
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
 
-      if (hyperlink_ != null || range.hyperlink_ != null || !StringUtil.equals(range.clazz, clazz))
+      if (!sameHyperlink(hyperlink_, range.hyperlink_) || !StringUtil.equals(range.clazz, clazz))
       {
-         // force if this needs to display an hyperlink
-         // or if the previous range was an hyperlink
+         // force if a hyperlink starts, ends, or changes target
          // or the classes differ (change of colour)
          forceNewRange = true;
       }
@@ -750,7 +733,9 @@ public class VirtualConsole
          ClassRange overlap = entry.getValue();
          int l = entry.getKey();
          int r = l + overlap.length;
-         boolean matches = StringUtil.equals(range.clazz, overlap.clazz);
+         boolean matches =
+               StringUtil.equals(range.clazz, overlap.clazz) &&
+               sameHyperlink(range.hyperlink_, overlap.hyperlink_);
          if (start >= l && start < r && end >= r)
          {
             // overlapping on the left side of the new range
@@ -1030,6 +1015,12 @@ public class VirtualConsole
     */
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
+      // output of another class (e.g. stderr after stdout) can't complete an
+      // escape sequence held back from the previous submit; show it as
+      // malformed first, with its own class
+      if (partialAnsiCode_ != null && !flushingPartialAnsiCode_ && !StringUtil.equals(clazz, partialAnsiCodeClazz_))
+         flushPartialAnsiCode();
+
       // If we're submitting new console output, but the previous submit request
       // asked us to force a new range, respect that.
       forceNewRange = forceNewRange || forceNewRange_;
@@ -1050,7 +1041,7 @@ public class VirtualConsole
       if (partialAnsiCode_ != null)
       {
          data = partialAnsiCode_ + data;
-         partialAnsiCode_ = null;
+         clearPartialAnsiCode();
       }
 
       String currentClazz = clazz;
@@ -1122,6 +1113,9 @@ public class VirtualConsole
                formfeed();
                break;
                
+            case '\007': // BEL
+               break;
+               
             case '\033': // \x1b
             case '\233': // \x9b
 
@@ -1131,47 +1125,62 @@ public class VirtualConsole
                // submit calls.
                
                // If the only character we've seen so far is the escape code,
-               // just buffer it and try again with next input.
+               // just buffer it and try again with next input (or discard it,
+               // when giving up on held-back input).
                if (head == data.length() - 1)
                {
-                  partialAnsiCode_ = StringUtil.substring(data, head);
+                  if (flushingPartialAnsiCode_)
+                     break;
+
+                  holdPartialAnsiCode(StringUtil.substring(data, head), clazz);
                   return;
                }
                
-               // match hyperlink, either start or end (if [url] is empty
-               // <ESC> ] 8 ; [params] ; [url] ST
-               HyperlinkMatch hyperlinkMatch = HyperlinkMatch.create(data, head);
-               if (hyperlinkMatch != null)
+               // String sequences: ESC <introducer> <payload> ST, where ST is BEL or
+               // ESC '\'. As in xterm, any other ESC also ends the string, but is
+               // left in place to be parsed as the start of the next escape sequence.
+               // Only an OSC (ESC ']') payload is acted on; the others are discarded.
+               if (data.charAt(head) == '\033' && STRING_INTRODUCERS.indexOf(data.charAt(head + 1)) != -1)
                {
-                  String params = hyperlinkMatch.params_;
-                  String url = hyperlinkMatch.contents_;
+                  Match stringEnd = STRING_END.match(data, head + 2);
 
-                  // toggle hyperlink_
-                  if (!StringUtil.equals(url, ""))
+                  // the rest of the string may arrive with later submits, so hold
+                  // it back, up to a limit. A stray introducer that never ends
+                  // can't hold back much: a console control character shows the
+                  // string to be malformed, as does output of another class, and
+                  // the console flushes held-back input before each prompt.
+                  if (stringEnd == null && !flushingPartialAnsiCode_ && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
                   {
-                     hyperlink_ = new HyperlinkInfo(url, params);
-                  }
-                  else
-                  {
-                     hyperlink_ = null;   
+                     holdPartialAnsiCode(StringUtil.substring(data, head), clazz);
+                     return;
                   }
 
-                  tail = hyperlinkMatch.endIndex_;
+                  char stringEndChar = stringEnd == null ? '\0' : data.charAt(stringEnd.getIndex());
+                  if (stringEndChar == '\007' || stringEndChar == '\033')
+                  {
+                     if (data.charAt(head + 1) == ']')
+                        processOsc(StringUtil.substring(data, head + 2, stringEnd.getIndex()));
+
+                     tail = stringEnd.getIndex();
+                     if (stringEndChar == '\007')
+                        tail += 1;
+                     else if (tail + 1 < data.length() && data.charAt(tail + 1) == '\\')
+                        tail += 2;
+                     break;
+                  }
+
+                  // a console control character, or no end in sight, means this
+                  // string is malformed; drop the introducer and show the rest
+                  tail = head + 2;
                   break;
                }
-               
-               // skip string end escapes
-               if (data.substring(head, head + 2) == AnsiCode.ST)
-               {
-                  tail += 1;
-                  break;
-               }
-               
+
+               String rest = data.substring(head);
+
                // check for an escape forcing a new span
                if (parent_ != null)
                {
-                  Pattern groupStartPattern = Pattern.create("^\\033G(\\d+);", "");
-                  Match groupStartMatch = groupStartPattern.match(data.substring(head), 0);
+                  Match groupStartMatch = GROUP_START_PATTERN.match(rest, 0);
                   if (groupStartMatch != null)
                   {
                      String type = groupStartMatch.getGroup(1);
@@ -1230,8 +1239,7 @@ public class VirtualConsole
                      break;
                   }
                   
-                  Pattern groupEndPattern = Pattern.create("^\\033g", "");
-                  Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
+                  Match groupEndMatch = GROUP_END_PATTERN.match(rest, 0);
                   if (groupEndMatch != null)
                   {
                      if (parent_.hasClassName(RES.styles().group()))
@@ -1246,8 +1254,7 @@ public class VirtualConsole
                }
                
                // check for embedded custom highlight rules
-               Pattern highlightStartPattern = Pattern.create("^\\033H(\\d+);", "");
-               Match highlightStartMatch = highlightStartPattern.match(data.substring(head), 0);
+               Match highlightStartMatch = HIGHLIGHT_START_PATTERN.match(rest, 0);
                if (highlightStartMatch != null)
                {
                   String type = highlightStartMatch.getGroup(1);
@@ -1257,8 +1264,7 @@ public class VirtualConsole
                   break;
                }
                
-               Pattern highlightEndPattern = Pattern.create("^\\033h", "");
-               Match highlightEndMatch = highlightEndPattern.match(data.substring(head), 0);
+               Match highlightEndMatch = HIGHLIGHT_END_PATTERN.match(rest, 0);
                if (highlightEndMatch != null)
                {
                   currentClazz = savedClazz_;
@@ -1267,9 +1273,8 @@ public class VirtualConsole
                   break;
                }
                
-               // match complete CSI codes
-               Pattern csiPattern = Pattern.create("^" + AnsiCode.CSI_REGEX, "");
-               Match csiMatch = csiPattern.match(data.substring(head), 0);
+               // match complete CSI codes with numeric parameters
+               Match csiMatch = AnsiCode.NUMERIC_CSI_PATTERN.match(rest, 0);
                if (csiMatch != null)
                {
                   String command = csiMatch.getGroup(2);
@@ -1277,49 +1282,45 @@ public class VirtualConsole
                   // handle SGR codes up-front
                   if (command == "m")
                   {
-                     // process the SGR code
-                     ansiCodeStyles_ = ansi_.processCode(csiMatch.getValue());
+                     ansiCodeStyles_ = ansi_.processSgrParameters(csiMatch.getGroup(1));
                      currentClazz = setCurrentClazz(clazz);
                      tail = head + csiMatch.getValue().length();
                      break;
                   }
                   
-                  // handle other supported commands
+                  // handle other supported commands; for cursor movement, a
+                  // missing or zero count means 1, as in xterm
+                  int n = Math.max(1, StringUtil.parseInt(csiMatch.getGroup(1), 1));
                   if (command == "A")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorUp(n);
                   }
                   else if (command == "B")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorDown(n);
                   }
                   else if (command == "C")
                   {
-                     // CUF: move right, but not past the end of the current line
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
-                     cursor_ = Math.min(currentLineEnd(), cursor_ + n);
+                     // CUF: move right, but not past the end of the current line;
+                     // clamp before adding, so that a huge count can't overflow
+                     // under Java int semantics
+                     cursor_ += Math.min(n, currentLineEnd() - cursor_);
                   }
                   else if (command == "D")
                   {
                      // CUB: move left, but not past the start of the current line
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                      cursor_ = Math.max(currentLineStart(), cursor_ - n);
                   }
                   else if (command == "E")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorNextLine(n);
                   }
                   else if (command == "F")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorPreviousLine(n);
                   }
                   else if (command == "G")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorToColumn(n);
                   }
                   else if (command == "K")
@@ -1332,27 +1333,34 @@ public class VirtualConsole
                   break;
                }
                
-               // check for incomplete CSI escapes, and continue parsing those
-               Pattern csiPrefixPattern = Pattern.create("^" + AnsiCode.CSI_PREFIX_REGEX, "");
-               Match csiPrefixMatch = csiPrefixPattern.match(data.substring(head), 0);
-               if (csiPrefixMatch != null)
+               // discard other complete CSI sequences, e.g. private modes (ESC[?25l)
+               // and intermediate bytes (ESC[2 q)
+               Match unsupportedCsiMatch = AnsiCode.CSI_PATTERN.match(rest, 0);
+               if (unsupportedCsiMatch != null)
                {
-                  partialAnsiCode_ = StringUtil.substring(data, head);
-                  return;
-               }
-               
-               // handle all other kinds of unsupported ANSI escapes and discard them
-               Pattern ansiPattern = Pattern.create("^" + AnsiCode.ANSI_REGEX, "");
-               Match ansiMatch = ansiPattern.match(data.substring(head), 0);
-               if (ansiMatch != null)
-               {
-                  tail = head + ansiMatch.getValue().length();
+                  tail = head + unsupportedCsiMatch.getValue().length();
                   break;
                }
-               
-               // if we get here, we didn't know what to do with the escape character
-               // just discard it and perform regular parsing from here on
-               tail++;
+
+               // if the input ends partway through an escape sequence, buffer it
+               // and try again with the next input
+               if (!flushingPartialAnsiCode_ && AnsiCode.PARTIAL_ESCAPE_PATTERN.test(rest))
+               {
+                  holdPartialAnsiCode(rest, clazz);
+                  return;
+               }
+
+               // discard other escape sequences, e.g. ESC '(' 'B'; a malformed one
+               // ends at the unexpected character, which is then parsed as usual
+               Match escapeMatch = AnsiCode.ESCAPE_PATTERN.match(rest, 0);
+               if (escapeMatch != null)
+               {
+                  tail = head + escapeMatch.getValue().length();
+                  break;
+               }
+
+               // if we get here, this is an 8-bit CSI we didn't recognize; just
+               // discard it and perform regular parsing from here on
                break;
                
             default:
@@ -1372,6 +1380,34 @@ public class VirtualConsole
       return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
          ? CONTROL.match(data, offset)
          : AnsiCode.CONTROL_PATTERN.match(data, offset);
+   }
+
+   /**
+    * Acts on the payload of an Operating System Command. Only hyperlinks
+    * (OSC 8) are supported; other commands are discarded.
+    */
+   private void processOsc(String payload)
+   {
+      // 8 ; [params] ; [url], where an empty url ends the hyperlink
+      if (!payload.startsWith("8;"))
+         return;
+
+      int urlStart = payload.indexOf(';', 2) + 1;
+      if (urlStart == 0)
+         return;
+
+      String params = StringUtil.substring(payload, 2, urlStart - 1);
+      String url = StringUtil.substring(payload, urlStart);
+      hyperlink_ = url.isEmpty() ? null : new HyperlinkInfo(url, params);
+   }
+
+   private static boolean sameHyperlink(HyperlinkInfo lhs, HyperlinkInfo rhs)
+   {
+      if (lhs == null || rhs == null)
+         return lhs == rhs;
+
+      return StringUtil.equals(lhs.url_, rhs.url_) &&
+             StringUtil.equals(lhs.params_, rhs.params_);
    }
    
    public void normalizePreviousOutput()
@@ -1640,7 +1676,31 @@ public class VirtualConsole
       public String params_;
    }
    
-   private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
+   // Control characters handled by the console when ANSI escapes are ignored
+   private static final Pattern CONTROL =
+         Pattern.create("[" + AnsiCode.CONSOLE_CONTROL_CHARS + "]");
+
+   // RStudio's own escapes, which open and close output groups and highlights
+   private static final Pattern GROUP_START_PATTERN = Pattern.create("^\033G(\\d+);", "");
+   private static final Pattern GROUP_END_PATTERN = Pattern.create("^\033g", "");
+   private static final Pattern HIGHLIGHT_START_PATTERN = Pattern.create("^\033H(\\d+);", "");
+   private static final Pattern HIGHLIGHT_END_PATTERN = Pattern.create("^\033h", "");
+
+   // Characters that follow ESC to begin a string sequence: OSC, DCS, SOS,
+   // PM, APC, and the GNU screen / tmux window title (ESC 'k'). This matches
+   // the set the backend strips in AnsiCodeParser.cpp.
+   private static final String STRING_INTRODUCERS = "]PX^_k";
+
+   // Characters that end a string sequence: BEL or ESC terminate it, while
+   // the console's other control characters mean it's malformed
+   private static final Pattern STRING_END =
+         Pattern.create("[" + AnsiCode.CONSOLE_CONTROL_CHARS + "\u001b]");
+
+   // How much of an unterminated string sequence to hold back, waiting for
+   // its terminator to arrive with a later submit; a longer one is shown as
+   // malformed. Large enough for the payloads of OSC 52 (clipboard) and
+   // OSC 1337 (inline images).
+   static final int MAX_PARTIAL_STRING_LENGTH = 1 << 20;
 
    // allows &entity_name; entities like &amp;
    private boolean preserveHTML_ = false;
@@ -1653,7 +1713,15 @@ public class VirtualConsole
    private int cursor_ = 0;
    private AnsiCode ansi_ = new AnsiCode();
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
+
+   // an escape sequence cut off by the end of the last submit, and the
+   // class it was submitted with
    private String partialAnsiCode_;
+   private String partialAnsiCodeClazz_;
+
+   // whether flushPartialAnsiCode() is showing a held-back sequence as
+   // malformed, in which case nothing is held back again
+   private boolean flushingPartialAnsiCode_ = false;
    private HyperlinkInfo hyperlink_;
    private String savedClazz_ = "";
 

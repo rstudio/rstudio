@@ -400,6 +400,22 @@ void setSearchPathsForTesting(const boost::optional<InstallSearchPaths>& paths)
    s_resolvedPath = core::FilePath();
 }
 
+bool runsUserSlot()
+{
+   core::FilePath installDir = locatePositAssistantInstallation();
+   if (installDir.isEmpty())
+      return false;
+
+   core::FilePath userSlotsDir;
+   {
+      std::lock_guard<std::mutex> lock(s_resolutionMutex);
+      userSlotsDir = slots::versionsDir(s_searchPathsOverride
+         ? s_searchPathsOverride->userStorageDir
+         : positAssistantSearchPaths().userStorageDir);
+   }
+   return installDir.getParent() == userSlotsDir;
+}
+
 bool userInstallWouldBeSelected(const InstallSearchPaths& paths, const std::string& version)
 {
    if (!paths.userInstallEnabled)

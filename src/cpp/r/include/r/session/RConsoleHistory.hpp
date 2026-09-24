@@ -84,7 +84,8 @@ public:
    void asJson(core::json::Array* pHistoryArray) const;
    
    core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);
-   core::Error saveToFile(const core::FilePath& filePath) const;
+   // atomic should be false for files that belong to the user, like .Rhistory
+   core::Error saveToFile(const core::FilePath& filePath, bool atomic) const;
    
    RSTUDIO_BOOST_CONNECTION connectOnAdd(const AddSignal::slot_function_type& slot)
    {

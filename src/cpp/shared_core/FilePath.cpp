@@ -1712,10 +1712,13 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
    try
    {
 #ifdef _WIN32
+      // FILE_SHARE_DELETE lets another process rename a new file over this
+      // one while we read it (the POSIX-semantics rename atomic writes use
+      // requires it); we keep reading the old contents
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
                                    GENERIC_READ,
-                                   FILE_SHARE_READ,
+                                   FILE_SHARE_READ | FILE_SHARE_DELETE,
                                    nullptr,
                                    OPEN_EXISTING,
                                    0,

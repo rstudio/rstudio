@@ -659,7 +659,9 @@ FilePath monitoredParentPath()
 
 bool monitoredScratchFilter(const FileInfo& fileInfo)
 {
-   return true;
+   // atomic writes pass through a temporary file, which the owning module
+   // would otherwise see appear and disappear
+   return !isAtomicWriteTempFile(FilePath(fileInfo.absolutePath()));
 }
 
 

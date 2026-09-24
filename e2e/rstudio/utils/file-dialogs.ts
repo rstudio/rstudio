@@ -6,6 +6,37 @@ import { executeCommand } from '@utils/commands';
 
 export const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
 
+// The RPC the GWT file dialogs list their directory with.
+export const LIST_FILES_RPC = /\/rpc\/list_files(?:\?|$)/;
+
+// Holds every list_files RPC until release() is called, so a dialog can be
+// driven before its directory listing arrives. cleanup() releases anything
+// still held and removes the route; call it from a finally block.
+export async function holdListFiles(page: Page) {
+  let release = () => {};
+  const released = new Promise<void>((resolve) => (release = resolve));
+  let held = 0;
+  const continued: Promise<void>[] = [];
+  await page.route(LIST_FILES_RPC, async (route) => {
+    held++;
+    const request = released.then(() => route.continue());
+    continued.push(request);
+    await request;
+  });
+
+  return {
+    held: () => held,
+    release,
+    cleanup: async () => {
+      // let held requests through before removing the route, so an unroute
+      // doesn't continue them a second time
+      release();
+      await Promise.allSettled(continued);
+      await page.unroute(LIST_FILES_RPC);
+    },
+  };
+}
+
 // Open the Open File dialog and navigate it to ~. The dialog opens in the
 // directory of the last dialog-opened file (WorkbenchContext.
 // getDefaultFileDialogDir), falling back to the working directory --
