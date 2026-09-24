@@ -26,8 +26,8 @@ namespace constants {
 // Installation paths
 // The Posit Assistant storage root, in the user data directory and in the
 // system config directory alike: it holds the version slots and the selector,
-// and for the user also the backend's own state (paconfig.json,
-// manifest-check.json). Passed to the backend as --storage.
+// and for the user also manifest-check.json. The assistant's own storage is
+// under ~/.posit/assistant, not here.
 const char* const kPositAiStorageDirName = "pai";
 // The unversioned install beneath the storage root. Only the administrator's
 // is read from here now; the per-user pai/bin an older RStudio installed is

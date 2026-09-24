@@ -85,7 +85,6 @@
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionUrlPorts.hpp>
-#include <session/SessionScopes.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -5141,31 +5140,11 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace");
    args.push_back(workspacePath.getAbsolutePath());
 
-   // Create storage base path: {XDG_DATA_HOME}/pai/
-   FilePath storagePath = positAiStorageDir();
-   error = storagePath.ensureDirectory();
+   // RStudio's own state (manifest-check.json, install locks) lives in pai/.
+   // The assistant keeps its storage and settings under ~/.posit/assistant.
+   error = positAiStorageDir().ensureDirectory();
    if (error)
-      return(error);
-
-   args.push_back("--storage");
-   args.push_back(storagePath.getAbsolutePath());
-
-   // Pass config file path (config is in pai/, which is not the working
-   // directory -- that is the resolved installation)
-   FilePath configPath = storagePath.completePath("paconfig.json");
-   args.push_back("--config");
-   args.push_back(configPath.getAbsolutePath());
-
-   // Generate a persistent ID for this workspace directory
-   std::string workspacePathStr = workspacePath.getAbsolutePath();
-   std::string workspaceId = session::projectToProjectId(
-       module_context::userScratchPath(),
-       FilePath(),  // No shared storage - use per-user workspace IDs
-       workspacePathStr
-   ).id();
-
-   args.push_back("--workspace-id");
-   args.push_back(workspaceId);
+      return error;
 
    // In server mode, disable embedded origin lockdown since rserver's
    // proxy authentication and port-token cookies prevent CSWSH.

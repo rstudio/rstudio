@@ -79,13 +79,15 @@ public:
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
-                                       bool useDevicePixelRatio = false);
+                                       bool useDevicePixelRatio = false,
+                                       bool recordResolution = false);
 
    virtual core::Error savePlotAsImage(const core::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
-                                       double devicePixelRatio);
+                                       double devicePixelRatio,
+                                       bool recordResolution = false);
 
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
@@ -161,7 +163,8 @@ private:
                                     const std::string& bitmapFileType,
                                     int width,
                                     int height,
-                                    double pixelRatio);
+                                    double pixelRatio,
+                                    bool recordResolution);
 
    core::Error savePlotAsSvg(const core::FilePath& targetPath,
                              int width,
