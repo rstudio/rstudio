@@ -26,7 +26,10 @@ class UserStateComputedLayer: public PrefLayer
 {
 public:
    UserStateComputedLayer();
-   core::Error readPrefs();
+   core::Error readPrefs() override;
+
+   // holds the values in memory only
+   core::Error writePrefs(const core::json::Object& prefs) override;
 };
 
 } // namespace prefs

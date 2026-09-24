@@ -722,11 +722,11 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native boolean getConsoleLeftOnTop() /*-{
-         return this && this.console_left_on_top || false;
+         return this && typeof this.console_left_on_top === "boolean" ? this.console_left_on_top : false;
       }-*/;
 
       public final native boolean getConsoleRightOnTop() /*-{
-         return this && this.console_right_on_top || true;
+         return this && typeof this.console_right_on_top === "boolean" ? this.console_right_on_top : true;
       }-*/;
 
       public final native int getAdditionalSourceColumns() /*-{
@@ -734,7 +734,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native boolean getSidebarVisible() /*-{
-         return this && this.sidebar_visible || false;
+         return this && typeof this.sidebar_visible === "boolean" ? this.sidebar_visible : false;
       }-*/;
 
       public final native String getSidebarLocation() /*-{

@@ -58,21 +58,30 @@ Error PersistentState::initialize()
    // the session without reloading the client page
    desktopClientId_ = "33e600bb-c1b1-46bf-b562-ab5cba070b0e";
 
+   // failures below are logged rather than returned: this state is not
+   // essential, and an unreadable file (e.g. one left behind by a session run
+   // as root) would otherwise prevent every future session from starting.
+   // the settings start out empty and later writes report their own errors
+
    // scoped/project settings
    FilePath scratchPath = module_context::scopedScratchPath();
    FilePath statePath = scratchPath.completePath("persistent-state");
    Error error = settings_.initialize(statePath);
    if (error)
-      return error;
+      LOG_ERROR(error);
 
    // session settings
    scratchPath = module_context::sessionScratchPath();
    // May need to create this if not using session file storage
    error = scratchPath.ensureDirectory();
    if (error)
-      return error;
+      LOG_ERROR(error);
    statePath = scratchPath.completePath("session-persistent-state");
-   return sessionSettings_.initialize(statePath);
+   error = sessionSettings_.initialize(statePath);
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
 }
 
 std::string PersistentState::activeClientId()

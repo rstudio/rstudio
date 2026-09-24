@@ -40,10 +40,13 @@ core::Error initialize(
           const core::FilePath& graphicsPath,
           const boost::function<bool(double*,double*)>& locatorFunction);
    
-// device size
+// device size; the device follows the size set here (the size of the Plots
+// pane) unless a fixed size has been set
 void setSize(int width, int height, double devicePixelRatio);
 int getWidth();
 int getHeight();
+int getClientWidth();
+int getClientHeight();
 double devicePixelRatio();
 
 // NOTE: should not be called directly!

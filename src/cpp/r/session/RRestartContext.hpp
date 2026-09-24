@@ -28,6 +28,10 @@ namespace session {
 class RestartContext;
 RestartContext& restartContext();
 
+// the session state of a restart context is named with this prefix
+// followed by the context ID
+constexpr const char* kRestartContextPrefix = "ctx-";
+
 class RestartContext : boost::noncopyable
 {
 private:
@@ -45,6 +49,9 @@ public:
 
    core::FilePath sessionStatePath() const;
 
+   // the directory holding the session state of every restart context
+   core::FilePath contextsPath() const;
+
    void removeSessionState();
 
    static core::FilePath createSessionStatePath(
@@ -52,6 +59,7 @@ public:
                                             const std::string& contextId);
 
 private:
+   core::FilePath contextsPath_;
    core::FilePath sessionStatePath_;
 };
 

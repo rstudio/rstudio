@@ -504,7 +504,11 @@ core::Error initialize()
       // This error is non-fatal (we'll just start with clean prefs if we cannot migrate)
       LOG_ERROR(error);
    }
-   
+
+   // a migration replaces the user state layer, which may have dropped the
+   // context ID assigned during startup
+   ensureContextId();
+
    // Register handlers for session suspend/shutdown
    events().onShutdown.connect(onShutdown);
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
@@ -520,10 +524,6 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_writeProjectPref);
    RS_REGISTER_CALL_METHOD(rs_allPrefs);
    RS_REGISTER_CALL_METHOD(rs_removePref);
-
-   // Ensure we have a context ID
-   if (userState().contextId().empty())
-      userState().setContextId(core::system::generateShortenedUuid());
 
    using boost::bind;
 

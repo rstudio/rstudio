@@ -56,6 +56,7 @@ public class UserStateAccessor extends Prefs
    public static final String EXPORT_PLOT_OPTIONS = "export_plot_options";
    public static final String EXPORT_VIEWER_OPTIONS = "export_viewer_options";
    public static final String SAVE_PLOT_AS_PDF_OPTIONS = "save_plot_as_pdf_options";
+   public static final String FIXED_PLOT_SIZE = "fixed_plot_size";
    public static final String COMPILE_R_NOTEBOOK_PREFS = "compile_r_notebook_prefs";
    public static final String COMPILE_R_MARKDOWN_NOTEBOOK_PREFS = "compile_r_markdown_notebook_prefs";
    public static final String SHOW_PUBLISH_UI = "show_publish_ui";
@@ -148,19 +149,19 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getAccessibility() /*-{
-         return this && this.accessibility || false;
+         return this && typeof this.accessibility === "boolean" ? this.accessibility : false;
       }-*/;
 
       public final native boolean getDisableRendererAccessibility() /*-{
-         return this && this.disableRendererAccessibility || false;
+         return this && typeof this.disableRendererAccessibility === "boolean" ? this.disableRendererAccessibility : false;
       }-*/;
 
       public final native boolean getEnableSplashScreen() /*-{
-         return this && this.enableSplashScreen || true;
+         return this && typeof this.enableSplashScreen === "boolean" ? this.enableSplashScreen : true;
       }-*/;
 
       public final native boolean getShowWhatsNew() /*-{
-         return this && this.showWhatsNew || true;
+         return this && typeof this.showWhatsNew === "boolean" ? this.showWhatsNew : true;
       }-*/;
 
    }
@@ -186,11 +187,11 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getUseGpuExclusionList() /*-{
-         return this && this.useGpuExclusionList || true;
+         return this && typeof this.useGpuExclusionList === "boolean" ? this.useGpuExclusionList : true;
       }-*/;
 
       public final native boolean getUseGpuDriverBugWorkarounds() /*-{
-         return this && this.useGpuDriverBugWorkarounds || true;
+         return this && typeof this.useGpuDriverBugWorkarounds === "boolean" ? this.useGpuDriverBugWorkarounds : true;
       }-*/;
 
    }
@@ -266,7 +267,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getIsDark() /*-{
-         return this && this.isDark || false;
+         return this && typeof this.isDark === "boolean" ? this.isDark : false;
       }-*/;
 
    }
@@ -324,19 +325,23 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getKeepRatio() /*-{
-         return this && this.keepRatio || false;
+         return this && typeof this.keepRatio === "boolean" ? this.keepRatio : false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this && this.viewAfterSave || false;
+         return this && typeof this.viewAfterSave === "boolean" ? this.viewAfterSave : false;
       }-*/;
 
       public final native boolean getCopyAsMetafile() /*-{
-         return this && this.copyAsMetafile || false;
+         return this && typeof this.copyAsMetafile === "boolean" ? this.copyAsMetafile : false;
       }-*/;
 
       public final native boolean getUseDevicePixelRatio() /*-{
-         return this && this.useDevicePixelRatio || true;
+         return this && typeof this.useDevicePixelRatio === "boolean" ? this.useDevicePixelRatio : true;
+      }-*/;
+
+      public final native int getResolution() /*-{
+         return this && this.resolution || 0;
       }-*/;
 
    }
@@ -370,15 +375,15 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getKeepRatio() /*-{
-         return this && this.keepRatio || false;
+         return this && typeof this.keepRatio === "boolean" ? this.keepRatio : false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this && this.viewAfterSave || false;
+         return this && typeof this.viewAfterSave === "boolean" ? this.viewAfterSave : false;
       }-*/;
 
       public final native boolean getCopyAsMetafile() /*-{
-         return this && this.copyAsMetafile || false;
+         return this && typeof this.copyAsMetafile === "boolean" ? this.copyAsMetafile : false;
       }-*/;
 
    }
@@ -408,15 +413,49 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native boolean getPortrait() /*-{
-         return this && this.portrait || false;
+         return this && typeof this.portrait === "boolean" ? this.portrait : false;
       }-*/;
 
       public final native boolean getCairoPdf() /*-{
-         return this && this.cairo_pdf || false;
+         return this && typeof this.cairo_pdf === "boolean" ? this.cairo_pdf : false;
       }-*/;
 
       public final native boolean getViewAfterSave() /*-{
-         return this && this.viewAfterSave || false;
+         return this && typeof this.viewAfterSave === "boolean" ? this.viewAfterSave : false;
+      }-*/;
+
+   }
+
+   /**
+    * Whether plots in the Plots pane are drawn at a fixed size rather than the size of the pane, and that size.
+    */
+   public PrefValue<FixedPlotSize> fixedPlotSize()
+   {
+      return object(
+         "fixed_plot_size",
+         _constants.fixedPlotSizeTitle(), 
+         _constants.fixedPlotSizeDescription(), 
+         null);
+   }
+
+   public static class FixedPlotSize extends JavaScriptObject
+   {
+      protected FixedPlotSize() {} 
+
+      public final native boolean getEnabled() /*-{
+         return this && typeof this.enabled === "boolean" ? this.enabled : false;
+      }-*/;
+
+      public final native double getWidth() /*-{
+         return this && this.width || 7;
+      }-*/;
+
+      public final native double getHeight() /*-{
+         return this && this.height || 5;
+      }-*/;
+
+      public final native String getUnits() /*-{
+         return this && this.units || "in";
       }-*/;
 
    }
@@ -753,6 +792,8 @@ public class UserStateAccessor extends Prefs
          exportViewerOptions().setValue(layer, source.getObject("export_viewer_options"));
       if (source.hasKey("save_plot_as_pdf_options"))
          savePlotAsPdfOptions().setValue(layer, source.getObject("save_plot_as_pdf_options"));
+      if (source.hasKey("fixed_plot_size"))
+         fixedPlotSize().setValue(layer, source.getObject("fixed_plot_size"));
       if (source.hasKey("compile_r_notebook_prefs"))
          compileRNotebookPrefs().setValue(layer, source.getObject("compile_r_notebook_prefs"));
       if (source.hasKey("compile_r_markdown_notebook_prefs"))
@@ -806,6 +847,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(exportPlotOptions());
       prefs.add(exportViewerOptions());
       prefs.add(savePlotAsPdfOptions());
+      prefs.add(fixedPlotSize());
       prefs.add(compileRNotebookPrefs());
       prefs.add(compileRMarkdownNotebookPrefs());
       prefs.add(showPublishUi());

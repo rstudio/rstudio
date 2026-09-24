@@ -393,6 +393,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <separator/>
          <cmd refid="zoomPlot"/>
          <separator/>
+         <cmd refid="fitPlotToPane"/>
+         <cmd refid="useFixedPlotSize"/>
+         <separator/>
          <cmd refid="savePlotAsImage"/>
          <cmd refid="savePlotAsPdf"/>
          <separator/>
@@ -3110,6 +3113,18 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel="Zoom"
         desc="View a larger version of the plot in a new window"
         rebindable="false"/>
+
+   <cmd id="fitPlotToPane"
+        label="Fit Plots to Pane"
+        menuLabel="_Fit to Pane"
+        desc="Draw plots at the size of the Plots pane"
+        radio="true"/>
+
+   <cmd id="useFixedPlotSize"
+        label="Use Fixed Plot Size..."
+        menuLabel="Fi_xed Size..."
+        desc="Draw plots at a fixed size, scaled down to fit the Plots pane"
+        radio="true"/>
 
    <cmd id="removePlot"
         label="Remove Current Plot..."
