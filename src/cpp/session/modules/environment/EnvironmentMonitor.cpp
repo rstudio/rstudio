@@ -39,9 +39,10 @@ bool compareSnapshotName(const BindingSnapshot& a, const BindingSnapshot& b)
    return a.name < b.name;
 }
 
-// The assistant's full variable listing uses ls(), which omits names starting
-// with a dot; keep its incremental updates consistent with that no matter
-// which names the pane is set to show.
+// Names starting with a dot are the only ones whose listing depends on the
+// show_hidden_objects / show_last_dot_value prefs. They're also the names the
+// assistant's full variable listing (ls()) omits, so its incremental updates
+// skip them no matter which names the pane is set to show.
 bool isHiddenName(const std::string& name)
 {
    return !name.empty() && name[0] == '.';
@@ -162,21 +163,21 @@ void EnvironmentMonitor::resetBaseline()
    std::vector<std::string> currentPromises;
    snapshotEnvironment(&currentEnv, &currentPromises);
 
-   // names listed both before and after keep their prior snapshots, so that
-   // changes made since the last check are still reported; only names the
-   // listing change added take on their current state
+   // only dot-prefixed names depend on the listing prefs, so only they take
+   // their current state; other names keep their prior snapshots (or absence)
+   // so that changes made since the last check, including creations and
+   // deletions, are still reported
    std::vector<BindingSnapshot> baseline;
-   std::set_intersection(lastEnv_.begin(), lastEnv_.end(),
-                         currentEnv.begin(), currentEnv.end(),
-                         std::back_inserter(baseline),
-                         compareSnapshotName);
-
-   std::vector<BindingSnapshot> addedByListing;
-   std::set_difference(currentEnv.begin(), currentEnv.end(),
-                       lastEnv_.begin(), lastEnv_.end(),
-                       std::back_inserter(addedByListing),
-                       compareSnapshotName);
-   baseline.insert(baseline.end(), addedByListing.begin(), addedByListing.end());
+   for (const auto& snap : lastEnv_)
+   {
+      if (!isHiddenName(snap.name))
+         baseline.push_back(snap);
+   }
+   for (const auto& snap : currentEnv)
+   {
+      if (isHiddenName(snap.name))
+         baseline.push_back(snap);
+   }
    std::sort(baseline.begin(), baseline.end());
 
    lastEnv_ = baseline;

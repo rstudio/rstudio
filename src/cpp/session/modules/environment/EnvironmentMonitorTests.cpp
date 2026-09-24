@@ -32,6 +32,7 @@ namespace {
 
 const char kHiddenName[] = ".rsEnvironmentMonitorTestHidden";
 const char kVisibleName[] = "rsEnvironmentMonitorTestVisible";
+const char kCreatedName[] = "rsEnvironmentMonitorTestCreated";
 
 void assignGlobal(const std::string& name)
 {
@@ -91,6 +92,7 @@ protected:
    {
       removeGlobal(kHiddenName);
       removeGlobal(kVisibleName);
+      removeGlobal(kCreatedName);
       prefs::userPrefs().setShowHiddenObjects(savedShowHidden_);
    }
 
@@ -158,6 +160,32 @@ TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingChanges)
    std::vector<std::string> eventNames = drainEnvironmentEventNames();
    EXPECT_TRUE(contains(eventNames, kVisibleName));
    EXPECT_FALSE(contains(eventNames, kHiddenName));
+   EXPECT_TRUE(signalMentions(kVisibleName));
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingCreation)
+{
+   startMonitoring(false);
+
+   assignGlobal(kCreatedName);
+   prefs::userPrefs().setShowHiddenObjects(true);
+   monitor_.resetBaseline();
+   monitor_.checkForChanges();
+
+   EXPECT_TRUE(contains(drainEnvironmentEventNames(), kCreatedName));
+   EXPECT_TRUE(signalMentions(kCreatedName));
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingDeletion)
+{
+   startMonitoring(false);
+
+   removeGlobal(kVisibleName);
+   prefs::userPrefs().setShowHiddenObjects(true);
+   monitor_.resetBaseline();
+   monitor_.checkForChanges();
+
+   EXPECT_TRUE(contains(drainEnvironmentEventNames(), kVisibleName));
    EXPECT_TRUE(signalMentions(kVisibleName));
 }
 
