@@ -310,14 +310,14 @@ TEST(FileSerializerTest, RemovesStaleAtomicWriteTempFiles)
    stale.setLastWriteTime(twoHoursAgo);
    data.setLastWriteTime(twoHoursAgo);
 
-   EXPECT_TRUE(removeStaleAtomicWriteTempFiles(dir, 60 * 60));
+   removeStaleAtomicWriteTempFiles(dir, 60 * 60);
 
    EXPECT_FALSE(stale.exists());
    EXPECT_TRUE(recent.exists());
    EXPECT_TRUE(data.exists());
 
-   // a missing directory is not an error, but is reported as not swept
-   EXPECT_FALSE(removeStaleAtomicWriteTempFiles(dir.completePath("missing")));
+   // a missing directory is not an error
+   removeStaleAtomicWriteTempFiles(dir.completePath("missing"));
 
    dir.remove();
 }
@@ -340,6 +340,29 @@ TEST(FileSerializerTest, WriteStringAtomicRemovesStaleTempFiles)
    EXPECT_TRUE(recent.exists());
 
    dir.remove();
+}
+
+// A write into a directory that doesn't exist yet must not count as having
+// swept it: the sweep happens once the directory is there.
+TEST(FileSerializerTest, WriteStringAtomicSweepsDirectoryCreatedLater)
+{
+   FilePath dir = scratchDir().completePath("later");
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_TRUE(writeStringToFileAtomic(filePath, "{}"));
+
+   ASSERT_FALSE(dir.ensureDirectory());
+   FilePath stale = dir.completePath(".rstudio-tmp-stale");
+   ASSERT_FALSE(writeStringToFile(stale, "stale"));
+   stale.setLastWriteTime(std::time(nullptr) - 2 * 60 * 60);
+
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "{}"));
+
+   EXPECT_FALSE(stale.exists());
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("{}", readback);
+
+   dir.getParent().remove();
 }
 
 // A failure names the file being written, not the temporary file, since that

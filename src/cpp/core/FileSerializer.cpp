@@ -456,25 +456,30 @@ Error atomicWriteError(int code,
 
 #ifdef _WIN32
 
-// Create a temporary file next to targetPath and write contents to it. On
-// failure the temporary file is removed, so the caller has nothing to clean up.
-// *pTempCreated reports whether the temporary file could be created at all,
-// which is the only failure the caller may fall back from.
-Error writeTempFile(const FilePath& targetPath,
-                    const std::string& contents,
-                    const AtomicWriteOptions& options,
-                    FilePath* pTempPath,
-                    bool* pTempCreated)
+// The temporary file an atomic write goes through, from its creation until it
+// is renamed over the target.
+struct TempFile
 {
-   *pTempCreated = false;
+   FilePath path;
+   HANDLE handle = INVALID_HANDLE_VALUE;
+};
 
-   Error error = atomicWriteTempPath(targetPath, pTempPath);
+// Create a temporary file next to targetPath. Nothing exists yet when this
+// fails, so it is the only step of an atomic write the caller may fall back
+// from.
+Error createTempFile(const FilePath& targetPath,
+                     const AtomicWriteOptions& options,
+                     TempFile* pTemp)
+{
+   (void) options;
+
+   Error error = atomicWriteTempPath(targetPath, &pTemp->path);
    if (error)
       return error;
 
    // CREATE_NEW, so that we never write through a file someone else put there
-   HANDLE hFile = ::CreateFileW(
-      pTempPath->getAbsolutePathW().c_str(),
+   pTemp->handle = ::CreateFileW(
+      pTemp->path.getAbsolutePathW().c_str(),
       GENERIC_WRITE,
       0,
       nullptr,
@@ -482,27 +487,35 @@ Error writeTempFile(const FilePath& targetPath,
       FILE_ATTRIBUTE_NORMAL,
       nullptr);
 
-   if (hFile == INVALID_HANDLE_VALUE)
-      return atomicWriteError(::GetLastError(), targetPath, *pTempPath, ERROR_LOCATION);
+   if (pTemp->handle == INVALID_HANDLE_VALUE)
+      return atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
 
-   *pTempCreated = true;
+   return Success();
+}
 
-   error = writeAll(hFile, contents, targetPath);
-   if (!error && options.durable && !::FlushFileBuffers(hFile))
-      error = atomicWriteError(::GetLastError(), targetPath, *pTempPath, ERROR_LOCATION);
+// Write contents to the temporary file and close it. On failure the temporary
+// file is removed, so the caller has nothing to clean up.
+Error writeTempFile(TempFile* pTemp,
+                    const FilePath& targetPath,
+                    const std::string& contents,
+                    const AtomicWriteOptions& options)
+{
+   Error error = writeAll(pTemp->handle, contents, targetPath);
+   if (!error && options.durable && !::FlushFileBuffers(pTemp->handle))
+      error = atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
 
    if (error)
    {
-      error.addOrUpdateProperty("temp-path", pTempPath->getAbsolutePath());
-      (void) ::CloseHandle(hFile);
-      pTempPath->removeIfExists();
+      error.addOrUpdateProperty("temp-path", pTemp->path.getAbsolutePath());
+      (void) ::CloseHandle(pTemp->handle);
+      pTemp->path.removeIfExists();
       return error;
    }
 
-   if (!::CloseHandle(hFile))
+   if (!::CloseHandle(pTemp->handle))
    {
-      error = atomicWriteError(::GetLastError(), targetPath, *pTempPath, ERROR_LOCATION);
-      pTempPath->removeIfExists();
+      error = atomicWriteError(::GetLastError(), targetPath, pTemp->path, ERROR_LOCATION);
+      pTemp->path.removeIfExists();
       return error;
    }
 
@@ -611,45 +624,64 @@ Error replaceFile(const FilePath& tempPath,
 
 #else
 
-// Create a temporary file next to targetPath and write contents to it. On
-// failure the temporary file is removed, so the caller has nothing to clean up.
-// *pTempCreated reports whether the temporary file could be created at all,
-// which is the only failure the caller may fall back from.
-Error writeTempFile(const FilePath& targetPath,
-                    const std::string& contents,
-                    const AtomicWriteOptions& options,
-                    FilePath* pTempPath,
-                    bool* pTempCreated)
+// The temporary file an atomic write goes through, from its creation until it
+// is renamed over the target.
+struct TempFile
 {
-   *pTempCreated = false;
+   FilePath path;
+   int fd = -1;
 
-   // when replacing a file, the new one takes over its owner, group and mode
-   struct stat targetStat;
-   bool replacing = ::stat(targetPath.getAbsolutePath().c_str(), &targetStat) == 0;
+   // the file being replaced, if any; the new file takes over its owner,
+   // group and mode
+   bool replacing = false;
+   struct stat targetStat = {};
+};
 
-   Error error = atomicWriteTempPath(targetPath, pTempPath);
+// Create a temporary file next to targetPath. Nothing exists yet when this
+// fails, so it is the only step of an atomic write the caller may fall back
+// from.
+Error createTempFile(const FilePath& targetPath,
+                     const AtomicWriteOptions& options,
+                     TempFile* pTemp)
+{
+   pTemp->replacing = ::stat(targetPath.getAbsolutePath().c_str(), &pTemp->targetStat) == 0;
+
+   Error error = atomicWriteTempPath(targetPath, &pTemp->path);
    if (error)
       return error;
 
    // O_EXCL, so that we never write through a file or link someone else put
-   // there. When the mode is set explicitly below, start out private so the
-   // file is never more widely readable than the one it replaces.
-   mode_t createMode = (replacing || options.ownerOnly) ? 0600 : 0666;
-   int fd = -1;
+   // there. When the mode is set explicitly by writeTempFile, start out
+   // private so the file is never more widely readable than the one it
+   // replaces.
+   mode_t createMode = (pTemp->replacing || options.ownerOnly) ? 0600 : 0666;
    do
    {
-      fd = ::open(pTempPath->getAbsolutePath().c_str(),
-                  O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC,
-                  createMode);
+      pTemp->fd = ::open(pTemp->path.getAbsolutePath().c_str(),
+                         O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC,
+                         createMode);
    }
-   while (fd == -1 && errno == EINTR);
+   while (pTemp->fd == -1 && errno == EINTR);
 
-   if (fd == -1)
-      return atomicWriteError(errno, targetPath, *pTempPath, ERROR_LOCATION);
+   if (pTemp->fd == -1)
+      return atomicWriteError(errno, targetPath, pTemp->path, ERROR_LOCATION);
 
-   *pTempCreated = true;
+   return Success();
+}
 
-   if (replacing)
+// Set the temporary file's owner and mode, write contents to it and close it.
+// On failure the temporary file is removed, so the caller has nothing to clean
+// up.
+Error writeTempFile(TempFile* pTemp,
+                    const FilePath& targetPath,
+                    const std::string& contents,
+                    const AtomicWriteOptions& options)
+{
+   int fd = pTemp->fd;
+   const struct stat& targetStat = pTemp->targetStat;
+
+   Error error;
+   if (pTemp->replacing)
    {
       // Only root can give a file to another user, and other users can only
       // set a group they belong to, so this is best-effort. When it fails the
@@ -665,7 +697,7 @@ Error writeTempFile(const FilePath& targetPath,
 
    // setuid, setgid and sticky bits are deliberately not carried over, since
    // the new file may have a different owner
-   if (replacing || options.ownerOnly)
+   if (pTemp->replacing || options.ownerOnly)
    {
       mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
       if (::fchmod(fd, mode) == -1)
@@ -684,8 +716,8 @@ Error writeTempFile(const FilePath& targetPath,
 
    if (error)
    {
-      error.addOrUpdateProperty("temp-path", pTempPath->getAbsolutePath());
-      pTempPath->removeIfExists();
+      error.addOrUpdateProperty("temp-path", pTemp->path.getAbsolutePath());
+      pTemp->path.removeIfExists();
    }
 
    return error;
@@ -721,29 +753,23 @@ boost::mutex& s_sweptDirectoriesMutex = make_leaked<boost::mutex>();
 // Sweep dir the first time this process writes into it. That covers every
 // directory written atomically without each writer having to remember to,
 // and the earlier write that left a file behind is what crashed, so a fresh
-// process is the right one to clean up after it. A directory that can't be
-// listed yet (it may not exist until the write below creates it) is swept
-// on a later write instead. Two threads may race to sweep the same directory,
-// which is harmless.
+// process is the right one to clean up after it. A directory that doesn't
+// exist yet (the write may be what creates it) is swept on a later write
+// instead; one that exists but can't be listed is given up on, so the error
+// is logged once rather than on every write.
 void removeStaleAtomicWriteTempFilesOnce(const FilePath& dir)
 {
-   std::string key = dir.getAbsolutePath();
-
-   LOCK_MUTEX(s_sweptDirectoriesMutex)
-   {
-      if (s_sweptDirectories.count(key) != 0)
-         return;
-   }
-   END_LOCK_MUTEX
-
-   if (!removeStaleAtomicWriteTempFiles(dir))
+   if (!dir.isDirectory())
       return;
 
    LOCK_MUTEX(s_sweptDirectoriesMutex)
    {
-      s_sweptDirectories.insert(key);
+      if (!s_sweptDirectories.insert(dir.getAbsolutePath()).second)
+         return;
    }
    END_LOCK_MUTEX
+
+   removeStaleAtomicWriteTempFiles(dir);
 }
 
 } // anonymous namespace
@@ -896,26 +922,29 @@ Error writeStringToFileAtomic(const FilePath& filePath,
 
    removeStaleAtomicWriteTempFilesOnce(targetPath.getParent());
 
-   FilePath tempPath;
-   bool tempCreated = false;
-   error = writeTempFile(targetPath, contents, options, &tempPath, &tempCreated);
+   // No file could be created next to the target, e.g. because its directory
+   // isn't writable even though the file itself is. Only this failure falls
+   // back to an in-place write: once the temporary file exists, a failed step
+   // is reported as is, since rewriting in place would truncate the target
+   // before finding out whether the write can succeed.
+   TempFile temp;
+   error = createTempFile(targetPath, options, &temp);
    if (error)
    {
-      // No file could be created next to the target, e.g. because its
-      // directory isn't writable even though the file itself is. A failure
-      // after that point (setting the mode, writing, flushing) is reported as
-      // is: rewriting in place would truncate the target before finding out
-      // whether the write can succeed.
-      if (!tempCreated && options.allowInPlaceFallback && isPermissionError(error))
+      if (options.allowInPlaceFallback && isPermissionError(error))
          return writeInPlace(targetPath, contents, options);
 
       return error;
    }
 
-   error = replaceFile(tempPath, targetPath, options);
+   error = writeTempFile(&temp, targetPath, contents, options);
+   if (error)
+      return error;
+
+   error = replaceFile(temp.path, targetPath, options);
    if (error)
    {
-      tempPath.removeIfExists();
+      temp.path.removeIfExists();
       return error;
    }
 
@@ -927,17 +956,17 @@ bool isAtomicWriteTempFile(const FilePath& filePath)
    return boost::algorithm::starts_with(filePath.getFilename(), kAtomicWriteTempPrefix);
 }
 
-bool removeStaleAtomicWriteTempFiles(const FilePath& dir, std::time_t maxAgeSeconds)
+void removeStaleAtomicWriteTempFiles(const FilePath& dir, std::time_t maxAgeSeconds)
 {
    if (!dir.isDirectory())
-      return false;
+      return;
 
    std::vector<FilePath> children;
    Error error = dir.getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
-      return false;
+      return;
    }
 
    std::time_t now = std::time(nullptr);
@@ -953,8 +982,6 @@ bool removeStaleAtomicWriteTempFiles(const FilePath& dir, std::time_t maxAgeSeco
       if (error)
          LOG_ERROR(error);
    }
-
-   return true;
 }
 
 Error readStringFromFile(const FilePath& filePath,
