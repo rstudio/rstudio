@@ -172,12 +172,13 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    }
 }
    
-Error ConsoleHistory::saveToFile(const FilePath& filePath) const
+Error ConsoleHistory::saveToFile(const FilePath& filePath, bool atomic) const
 {
    return core::writeCollectionToFile<boost::circular_buffer<std::string> >(
                                                       filePath,
                                                       historyBuffer_,
-                                                      core::stringifyString);
+                                                      core::stringifyString,
+                                                      atomic);
 }
 
 void ConsoleHistory::safeRemove(int index)

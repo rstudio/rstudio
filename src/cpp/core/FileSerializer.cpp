@@ -83,6 +83,34 @@ Error fileError(int code, const FilePath& filePath, const ErrorLocation& locatio
 // write to survive a crash (the great majority) leave it off.
 #ifdef _WIN32
 
+// Write all of contents to hFile, looping in case WriteFile performs a partial
+// write. The handle is left open.
+Error writeAll(HANDLE hFile, const std::string& contents, const FilePath& filePath)
+{
+   const char* data = contents.data();
+   std::size_t remaining = contents.size();
+   while (remaining > 0)
+   {
+      // WriteFile takes a DWORD count; cap each call well within its range
+      const std::size_t kMaxWrite = 0x7fffffff;
+      DWORD toWrite = (remaining > kMaxWrite) ? static_cast<DWORD>(kMaxWrite)
+                                              : static_cast<DWORD>(remaining);
+
+      DWORD written = 0;
+      if (!::WriteFile(hFile, data, toWrite, &written, nullptr))
+      {
+         Error error = LAST_SYSTEM_ERROR();
+         error.addProperty("path", filePath.getAbsolutePath());
+         return error;
+      }
+
+      data += written;
+      remaining -= written;
+   }
+
+   return Success();
+}
+
 Error writeContentsToFile(const FilePath& filePath,
                           const std::string& contents,
                           bool truncate,
@@ -121,27 +149,11 @@ Error writeContentsToFile(const FilePath& filePath,
       }
    }
 
-   // write all of the bytes, looping in case WriteFile performs a partial write
-   const char* data = contents.data();
-   std::size_t remaining = contents.size();
-   while (remaining > 0)
+   Error error = writeAll(hFile, contents, filePath);
+   if (error)
    {
-      // WriteFile takes a DWORD count; cap each call well within its range
-      const std::size_t kMaxWrite = 0x7fffffff;
-      DWORD toWrite = (remaining > kMaxWrite) ? static_cast<DWORD>(kMaxWrite)
-                                              : static_cast<DWORD>(remaining);
-
-      DWORD written = 0;
-      if (!::WriteFile(hFile, data, toWrite, &written, nullptr))
-      {
-         Error error = LAST_SYSTEM_ERROR();
-         (void) ::CloseHandle(hFile);
-         error.addProperty("path", filePath.getAbsolutePath());
-         return error;
-      }
-
-      data += written;
-      remaining -= written;
+      (void) ::CloseHandle(hFile);
+      return error;
    }
 
    // when durability is requested, flush to physical storage; this is the point
@@ -166,6 +178,76 @@ Error writeContentsToFile(const FilePath& filePath,
 
 #else
 
+// Write all of contents to fd, handling partial writes and EINTR. The
+// descriptor is left open.
+Error writeAll(int fd, const std::string& contents, const FilePath& filePath)
+{
+   const char* data = contents.data();
+   std::size_t remaining = contents.size();
+   while (remaining > 0)
+   {
+      ssize_t written = ::write(fd, data, remaining);
+      if (written < 0)
+      {
+         if (errno == EINTR)
+            continue;
+
+         return fileError(errno, filePath, ERROR_LOCATION);
+      }
+
+      data += written;
+      remaining -= static_cast<std::size_t>(written);
+   }
+
+   return Success();
+}
+
+// Flush fd to physical storage. On macOS plain fsync() does not push data to
+// the physical platter, so we prefer F_FULLFSYNC and fall back to fsync() when
+// the filesystem does not support it.
+Error syncFile(int fd, const FilePath& filePath)
+{
+   int rc = -1;
+#ifdef __APPLE__
+   do
+   {
+      rc = ::fcntl(fd, F_FULLFSYNC, 0);
+   }
+   while (rc == -1 && errno == EINTR);
+
+   if (rc == -1 && (errno == ENOTSUP || errno == ENOTTY || errno == EINVAL))
+   {
+      do
+      {
+         rc = ::fsync(fd);
+      }
+      while (rc == -1 && errno == EINTR);
+   }
+#else
+   do
+   {
+      rc = ::fsync(fd);
+   }
+   while (rc == -1 && errno == EINTR);
+#endif
+
+   if (rc == -1)
+      return fileError(errno, filePath, ERROR_LOCATION);
+
+   return Success();
+}
+
+// A close() that returns EINTR has still closed the descriptor on Linux, so we
+// must not retry it (that could close an unrelated fd that was opened in the
+// meantime).
+Error closeFile(int fd, const FilePath& filePath)
+{
+   if (::close(fd) == -1 && errno != EINTR)
+      return fileError(errno, filePath, ERROR_LOCATION);
+
+   return Success();
+}
+
 Error writeContentsToFile(const FilePath& filePath,
                           const std::string& contents,
                           bool truncate,
@@ -184,71 +266,19 @@ Error writeContentsToFile(const FilePath& filePath,
    if (fd == -1)
       return fileError(errno, filePath, ERROR_LOCATION);
 
-   // write all of the bytes, handling partial writes and EINTR
-   const char* data = contents.data();
-   std::size_t remaining = contents.size();
-   while (remaining > 0)
-   {
-      ssize_t written = ::write(fd, data, remaining);
-      if (written < 0)
-      {
-         if (errno == EINTR)
-            continue;
-
-         int code = errno;
-         (void) ::close(fd);
-         return fileError(code, filePath, ERROR_LOCATION);
-      }
-
-      data += written;
-      remaining -= static_cast<std::size_t>(written);
-   }
-
    // when durability is requested, flush to physical storage; this is the point
-   // at which a full disk or an exceeded quota is reliably reported. On macOS
-   // plain fsync() does not push data to the physical platter, so we prefer
-   // F_FULLFSYNC and fall back to fsync() when the filesystem does not support it.
-   if (durable)
+   // at which a full disk or an exceeded quota is reliably reported
+   Error error = writeAll(fd, contents, filePath);
+   if (!error && durable)
+      error = syncFile(fd, filePath);
+
+   if (error)
    {
-      int rc = -1;
-#ifdef __APPLE__
-      do
-      {
-         rc = ::fcntl(fd, F_FULLFSYNC, 0);
-      }
-      while (rc == -1 && errno == EINTR);
-
-      if (rc == -1 && (errno == ENOTSUP || errno == ENOTTY || errno == EINVAL))
-      {
-         do
-         {
-            rc = ::fsync(fd);
-         }
-         while (rc == -1 && errno == EINTR);
-      }
-#else
-      do
-      {
-         rc = ::fsync(fd);
-      }
-      while (rc == -1 && errno == EINTR);
-#endif
-
-      if (rc == -1)
-      {
-         int code = errno;
-         (void) ::close(fd);
-         return fileError(code, filePath, ERROR_LOCATION);
-      }
+      (void) ::close(fd);
+      return error;
    }
 
-   // close the file; a close() that returns EINTR has still closed the
-   // descriptor on Linux, so we must not retry it (that could close an
-   // unrelated fd that was opened in the meantime)
-   if (::close(fd) == -1 && errno != EINTR)
-      return fileError(errno, filePath, ERROR_LOCATION);
-
-   return Success();
+   return closeFile(fd, filePath);
 }
 
 #endif
@@ -327,6 +357,282 @@ void syncDirectory(const FilePath& dirPath)
 
    (void) ::close(fd);
 }
+#endif
+
+// A dot prefix keeps these out of the Files pane and out of watchers that
+// filter hidden files.
+const char* const kAtomicWriteTempPrefix = ".rstudio-tmp-";
+
+bool isPermissionError(const Error& error)
+{
+   if (!error || error.getName() != boost::system::system_category().name())
+      return false;
+
+#ifdef _WIN32
+   return error.getCode() == ERROR_ACCESS_DENIED;
+#else
+   return error.getCode() == EACCES || error.getCode() == EPERM;
+#endif
+}
+
+// Follow filePath through any symlinks to the file they point to (which need
+// not exist yet), so that we replace that file rather than the link.
+Error resolveSymlinks(const FilePath& filePath, FilePath* pResolved)
+{
+   // the same limit as Linux's MAXSYMLINKS
+   const int kMaxSymlinks = 40;
+
+   FilePath resolved = filePath;
+   for (int i = 0; resolved.isSymlink(); i++)
+   {
+      if (i == kMaxSymlinks)
+      {
+         Error error = systemError(boost::system::errc::too_many_symbolic_link_levels, ERROR_LOCATION);
+         error.addProperty("path", filePath.getAbsolutePath());
+         return error;
+      }
+
+      std::string target;
+      Error error = resolved.readSymlink(target);
+      if (error)
+         return error;
+
+      // a relative target is relative to the directory holding the link
+      resolved = resolved.getParent().completePath(target);
+   }
+
+   *pResolved = resolved;
+   return Success();
+}
+
+Error atomicWriteTempPath(const FilePath& targetPath, FilePath* pTempPath)
+{
+   FilePath uniquePath;
+   Error error = FilePath::uniqueFilePath(targetPath.getParent().getAbsolutePath(), uniquePath);
+   if (error)
+      return error;
+
+   *pTempPath = targetPath.getParent().completePath(kAtomicWriteTempPrefix + uniquePath.getFilename());
+   return Success();
+}
+
+Error writeInPlace(const FilePath& targetPath,
+                   const std::string& contents,
+                   const AtomicWriteOptions& options)
+{
+#ifndef _WIN32
+   // restrict the file before the new contents land in it; the file must
+   // already exist for an in-place write to succeed here
+   if (options.ownerOnly && ::chmod(targetPath.getAbsolutePath().c_str(), 0600) == -1)
+   {
+      int code = errno;
+      DLOGF("Couldn't restrict permissions on '{}' (errno {})", targetPath.getAbsolutePath(), code);
+   }
+#endif
+
+   return writeContentsToFileWithRetry(targetPath,
+                                       contents,
+                                       true /* truncate */,
+                                       options.maxRetrySeconds,
+                                       options.durable);
+}
+
+#ifdef _WIN32
+
+// Create a temporary file next to targetPath and write contents to it.
+// *pCreated reports whether the file was created, i.e. whether the caller
+// needs to remove it after a failure.
+Error writeTempFile(const FilePath& targetPath,
+                    const std::string& contents,
+                    const AtomicWriteOptions& options,
+                    FilePath* pTempPath,
+                    bool* pCreated)
+{
+   *pCreated = false;
+
+   Error error = atomicWriteTempPath(targetPath, pTempPath);
+   if (error)
+      return error;
+
+   // CREATE_NEW, so that we never write through a file someone else put there
+   HANDLE hFile = ::CreateFileW(
+      pTempPath->getAbsolutePathW().c_str(),
+      GENERIC_WRITE,
+      0,
+      nullptr,
+      CREATE_NEW,
+      FILE_ATTRIBUTE_NORMAL,
+      nullptr);
+
+   if (hFile == INVALID_HANDLE_VALUE)
+   {
+      error = LAST_SYSTEM_ERROR();
+      error.addProperty("path", pTempPath->getAbsolutePath());
+      return error;
+   }
+
+   *pCreated = true;
+
+   error = writeAll(hFile, contents, *pTempPath);
+   if (!error && options.durable && !::FlushFileBuffers(hFile))
+   {
+      error = LAST_SYSTEM_ERROR();
+      error.addProperty("path", pTempPath->getAbsolutePath());
+   }
+
+   if (error)
+   {
+      (void) ::CloseHandle(hFile);
+      return error;
+   }
+
+   if (!::CloseHandle(hFile))
+   {
+      error = LAST_SYSTEM_ERROR();
+      error.addProperty("path", pTempPath->getAbsolutePath());
+      return error;
+   }
+
+   return Success();
+}
+
+Error replaceFile(const FilePath& tempPath,
+                  const FilePath& targetPath,
+                  const AtomicWriteOptions& options)
+{
+   using namespace boost::posix_time;
+
+   DWORD flags = MOVEFILE_REPLACE_EXISTING;
+   if (options.durable)
+      flags |= MOVEFILE_WRITE_THROUGH;
+
+   // Windows won't replace a file that another process has open, which
+   // indexers, antivirus and backup software do briefly; retry for a while
+   ptime deadline = microsec_clock::universal_time() + seconds(std::max(options.maxRetrySeconds, 0));
+   while (true)
+   {
+      if (::MoveFileExW(tempPath.getAbsolutePathW().c_str(),
+                        targetPath.getAbsolutePathW().c_str(),
+                        flags))
+      {
+         return Success();
+      }
+
+      DWORD code = ::GetLastError();
+      bool inUse = code == ERROR_ACCESS_DENIED ||
+                   code == ERROR_SHARING_VIOLATION ||
+                   code == ERROR_LOCK_VIOLATION;
+
+      if (!inUse || microsec_clock::universal_time() >= deadline)
+      {
+         Error error = systemError(static_cast<int>(code), ERROR_LOCATION);
+         error.addProperty("path", targetPath.getAbsolutePath());
+         error.addProperty("temp-path", tempPath.getAbsolutePath());
+         return error;
+      }
+
+      boost::this_thread::sleep(milliseconds(50));
+   }
+}
+
+#else
+
+// Create a temporary file next to targetPath and write contents to it.
+// *pCreated reports whether the file was created, i.e. whether the caller
+// needs to remove it after a failure.
+Error writeTempFile(const FilePath& targetPath,
+                    const std::string& contents,
+                    const AtomicWriteOptions& options,
+                    FilePath* pTempPath,
+                    bool* pCreated)
+{
+   *pCreated = false;
+
+   // when replacing a file, the new one takes over its owner, group and mode
+   struct stat targetStat;
+   bool replacing = ::stat(targetPath.getAbsolutePath().c_str(), &targetStat) == 0;
+
+   Error error = atomicWriteTempPath(targetPath, pTempPath);
+   if (error)
+      return error;
+
+   // O_EXCL, so that we never write through a file or link someone else put
+   // there. When the mode is set explicitly below, start out private so the
+   // file is never more widely readable than the one it replaces.
+   mode_t createMode = (replacing || options.ownerOnly) ? 0600 : 0666;
+   int fd = -1;
+   do
+   {
+      fd = ::open(pTempPath->getAbsolutePath().c_str(),
+                  O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC,
+                  createMode);
+   }
+   while (fd == -1 && errno == EINTR);
+
+   if (fd == -1)
+      return fileError(errno, *pTempPath, ERROR_LOCATION);
+
+   *pCreated = true;
+
+   if (replacing)
+   {
+      // Only root can give a file to another user, and other users can only
+      // set a group they belong to, so this is best-effort. When it fails the
+      // new file is ours, which is also what repairs a state file that an
+      // earlier 'sudo rstudio' left owned by root.
+      uid_t uid = (::geteuid() == 0) ? targetStat.st_uid : static_cast<uid_t>(-1);
+      if (::fchown(fd, uid, targetStat.st_gid) == -1)
+      {
+         int code = errno;
+         DLOGF("Couldn't carry the owner of '{}' over to its replacement (errno {})", targetPath.getAbsolutePath(), code);
+      }
+   }
+
+   // setuid, setgid and sticky bits are deliberately not carried over, since
+   // the new file may have a different owner
+   if (replacing || options.ownerOnly)
+   {
+      mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
+      if (::fchmod(fd, mode) == -1)
+      {
+         error = fileError(errno, *pTempPath, ERROR_LOCATION);
+         (void) ::close(fd);
+         return error;
+      }
+   }
+
+   error = writeAll(fd, contents, *pTempPath);
+   if (!error && options.durable)
+      error = syncFile(fd, *pTempPath);
+
+   if (error)
+   {
+      (void) ::close(fd);
+      return error;
+   }
+
+   return closeFile(fd, *pTempPath);
+}
+
+Error replaceFile(const FilePath& tempPath,
+                  const FilePath& targetPath,
+                  const AtomicWriteOptions& options)
+{
+   if (::rename(tempPath.getAbsolutePath().c_str(), targetPath.getAbsolutePath().c_str()) == -1)
+   {
+      Error error = fileError(errno, targetPath, ERROR_LOCATION);
+      error.addProperty("temp-path", tempPath.getAbsolutePath());
+      return error;
+   }
+
+   // the file's contents were flushed before the rename; flush the directory
+   // as well, so that the rename itself survives a crash
+   if (options.durable)
+      syncDirectory(targetPath.getParent());
+
+   return Success();
+}
+
 #endif
 
 } // anonymous namespace
@@ -467,68 +773,76 @@ bool isDiskSpaceError(const Error& error)
 Error writeStringToFileAtomic(const FilePath& filePath,
                               const std::string& str,
                               string_utils::LineEnding lineEnding,
-                              bool preservePermissions)
+                              const AtomicWriteOptions& options)
 {
-   // generate a unique temporary file in the same directory
-   FilePath tmpFile;
-   Error error = FilePath::uniqueFilePath(filePath.getParent().getAbsolutePath(), tmpFile);
+   std::string contents = str;
+   string_utils::convertLineEndings(&contents, lineEnding);
+
+   FilePath targetPath;
+   Error error = resolveSymlinks(filePath, &targetPath);
    if (error)
       return error;
 
-   // write to the temporary file, flushing it to physical storage so the
-   // contents are durable before we rename it into place
-   error = writeStringToFile(tmpFile,
-                             str,
-                             lineEnding,
-                             true /* truncate */,
-                             0 /* maxOpenRetrySeconds */,
-                             true /* logError */,
-                             true /* durable */);
+   FilePath tempPath;
+   bool created = false;
+   error = writeTempFile(targetPath, contents, options, &tempPath, &created);
    if (error)
    {
-      tmpFile.removeIfExists();
-      return error;
-   }
-
-   // when replacing an existing file, carry its permission bits over to the
-   // temporary file so the rename does not reset the mode to the temporary
-   // file's defaults (no-op on Windows, which manages permissions differently)
-#ifndef _WIN32
-   if (preservePermissions && filePath.exists())
-   {
-      struct stat st;
-      if (::stat(filePath.getAbsolutePath().c_str(), &st) != 0)
+      if (created)
       {
-         error = fileError(errno, filePath, ERROR_LOCATION);
-         tmpFile.removeIfExists();
+         tempPath.removeIfExists();
          return error;
       }
 
-      if (::chmod(tmpFile.getAbsolutePath().c_str(), st.st_mode & 07777) != 0)
-      {
-         error = fileError(errno, tmpFile, ERROR_LOCATION);
-         tmpFile.removeIfExists();
-         return error;
-      }
-   }
-#endif
+      // no file could be created next to the target, e.g. because its
+      // directory isn't writable even though the file itself is
+      if (isPermissionError(error))
+         return writeInPlace(targetPath, contents, options);
 
-   // atomically rename into place
-   error = tmpFile.move(filePath, FilePath::MoveDirect);
-   if (error)
-   {
-      tmpFile.removeIfExists();
       return error;
    }
 
-   // the temporary file's contents were already flushed to disk by
-   // writeStringToFile; flush the parent directory as well so that the rename
-   // itself is durable across a crash (best-effort, POSIX only)
-#ifndef _WIN32
-   syncDirectory(filePath.getParent());
-#endif
+   error = replaceFile(tempPath, targetPath, options);
+   if (error)
+   {
+      tempPath.removeIfExists();
+      return error;
+   }
 
    return Success();
+}
+
+bool isAtomicWriteTempFile(const FilePath& filePath)
+{
+   return boost::algorithm::starts_with(filePath.getFilename(), kAtomicWriteTempPrefix);
+}
+
+void removeStaleAtomicWriteTempFiles(const FilePath& dir, std::time_t maxAgeSeconds)
+{
+   if (!dir.isDirectory())
+      return;
+
+   std::vector<FilePath> children;
+   Error error = dir.getChildren(children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   std::time_t now = std::time(nullptr);
+   for (const FilePath& child : children)
+   {
+      if (!isAtomicWriteTempFile(child) || child.isDirectory())
+         continue;
+
+      if (now - child.getLastWriteTime() < maxAgeSeconds)
+         continue;
+
+      error = child.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 Error readStringFromFile(const FilePath& filePath,

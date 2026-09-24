@@ -57,11 +57,19 @@ Error MruList::initialize()
       return error;
 
 #ifndef _WIN32
-   // ensure we have write access to the file
+   // ensure we can save the list; since the file is replaced atomically, a
+   // writable directory is enough even if the file itself isn't writable
    bool writeable = false;
    error = file_.isWriteable(writeable);
    if (error)
       return error;
+
+   if (!writeable)
+   {
+      error = file_.getParent().isWriteable(writeable);
+      if (error)
+         return error;
+   }
 
    if (!writeable)
       return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);

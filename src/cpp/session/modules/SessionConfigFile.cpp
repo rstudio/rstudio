@@ -88,7 +88,7 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
    }
    
    // Write the new configuration data.
-   error = writeStringToFile(filePath, object.writeFormatted());
+   error = writeStringToFileAtomic(filePath, object.writeFormatted());
    if (error)
    {
       LOG_ERROR(error);

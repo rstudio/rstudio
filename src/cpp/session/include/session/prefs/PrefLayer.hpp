@@ -132,7 +132,9 @@ protected:
                                 const core::FilePath& schemaFile,
                                 core::json::Object* pOutPrefs);
    core::Error loadPrefsFromSchema(const core::FilePath& schemaFile);
-   core::Error writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile);
+   core::Error writePrefsToFile(const core::json::Object& prefs,
+                                const core::FilePath& prefsFile,
+                                bool ownerOnly = false);
 
    // File registration for automatic update
    void monitorPrefsFile(const core::FilePath& prefsFile);

@@ -98,7 +98,7 @@ Error writeProjectScratchPath(const json::Object& configJson)
    if (error)
       return error;
 
-   error = core::writeStringToFile(scratchPathFile, scratchPath);
+   error = core::writeStringToFileAtomic(scratchPathFile, scratchPath);
    if (error)
       return error;
    

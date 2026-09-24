@@ -580,16 +580,15 @@ private:
          }
          inputStream_.reset();
 
-         // Write the replacement atomically: writeStringToFileAtomic writes to a
-         // temporary file in the same directory, flushes it durably (so a full
-         // disk or exceeded quota surfaces as an error rather than a silently
-         // truncated write), preserves the original file's permissions, and only
-         // then renames it into place. On failure the original file is left
-         // untouched.
+         // Write the replacement atomically, and durably so that a full disk
+         // or exceeded quota surfaces as an error rather than a silently
+         // truncated write. On failure the original file is left untouched.
+         AtomicWriteOptions options;
+         options.durable = true;
          error = writeStringToFileAtomic(FilePath(currentFile_),
                                          outputContents_,
                                          string_utils::LineEndingPassthrough,
-                                         true /* preservePermissions */);
+                                         options);
          outputContents_.clear();
          currentFile_.clear();
 

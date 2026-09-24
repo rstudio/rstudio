@@ -16,6 +16,8 @@
 #include <r/session/RClientState.hpp>
 
 #include <algorithm>
+#include <set>
+#include <vector>
 
 #include <boost/function.hpp>
 #include <boost/bind/bind.hpp>
@@ -93,7 +95,8 @@ void mergeState(const json::Object& sourceState,
 
 void commitState(const json::Object& stateContainer,
                  const std::string& fileExt,
-                 const core::FilePath& stateDir)
+                 const core::FilePath& stateDir,
+                 std::set<FilePath>* pCommittedFiles)
 {
    for (const json::Object::Member& member : stateContainer)
    {
@@ -101,9 +104,11 @@ void commitState(const json::Object& stateContainer,
       std::ostringstream ostr;
       member.getValue().writeFormatted(ostr);
       
-      // write to file
+      // write to file; if this fails, the previous state for this scope is
+      // left in place, so it still counts as committed
       FilePath stateFile = stateDir.completePath(member.getName() + fileExt);
-      Error error = writeStringToFile(stateFile, ostr.str());
+      pCommittedFiles->insert(stateFile);
+      Error error = writeStringToFileAtomic(stateFile, ostr.str());
       if (error)
          LOG_ERROR(error);
    }
@@ -133,12 +138,30 @@ void restoreState(const core::FilePath& stateFilePath,
    pStateContainer->insert(stateFilePath.getStem(), value);
 }
 
-Error removeAndRecreateStateDir(const FilePath& stateDir)
+// Remove the state files in stateDir that the latest commit didn't write,
+// e.g. temporary state after a commit of only the persistent state.
+void removeUncommittedStateFiles(const FilePath& stateDir,
+                                 const std::set<FilePath>& committedFiles)
 {
-   Error error = stateDir.removeIfExists();
+   removeStaleAtomicWriteTempFiles(stateDir);
+
+   std::vector<FilePath> children;
+   Error error = stateDir.getChildren(children);
    if (error)
-      return error;
-   return stateDir.ensureDirectory();
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   for (const FilePath& child : children)
+   {
+      if (committedFiles.count(child) || isAtomicWriteTempFile(child))
+         continue;
+
+      error = child.remove();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 Error restoreStateFiles(const FilePath& sourceDir,
@@ -291,23 +314,30 @@ Error ClientState::commit(ClientStateCommitType commitType,
                           const core::FilePath& stateDir,
                           const core::FilePath& projectStateDir)
 {
-   // remove and re-create the stateDirs
-   Error error = removeAndRecreateStateDir(stateDir);
+   Error error = stateDir.ensureDirectory();
    if (error)
       return error;
-   error = removeAndRecreateStateDir(projectStateDir);
+   error = projectStateDir.ensureDirectory();
    if (error)
       return error;
 
+   // Each file is replaced atomically, and the files that are no longer part
+   // of the state are removed afterwards, so that a crash part way through
+   // leaves the previous state rather than none at all.
+   std::set<FilePath> committedFiles;
+
    // always commit persistent state
-   commitState(persistentState_, kPersistentExt, stateDir);
-   commitState(projectPersistentState_, kProjPersistentExt, projectStateDir);
+   commitState(persistentState_, kPersistentExt, stateDir, &committedFiles);
+   commitState(projectPersistentState_, kProjPersistentExt, projectStateDir, &committedFiles);
   
    // commit all state if requested
    if (commitType == ClientStateCommitAll)
-      commitState(temporaryState_, kTemporaryExt, stateDir);
+      commitState(temporaryState_, kTemporaryExt, stateDir, &committedFiles);
    else
       temporaryState_.clear();
+
+   removeUncommittedStateFiles(stateDir, committedFiles);
+   removeUncommittedStateFiles(projectStateDir, committedFiles);
    
    return Success();
 }

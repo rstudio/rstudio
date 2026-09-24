@@ -16,6 +16,7 @@
 #ifndef CORE_FILE_SERIALIZER_HPP
 #define CORE_FILE_SERIALIZER_HPP
 
+#include <ctime>
 #include <string>
 #include <map>
 #include <iterator>
@@ -37,46 +38,121 @@
 namespace rstudio {
 namespace core {
 
+// lineEnding is the type of line ending you want to end up on disk
+//
+// maxOpenRetrySeconds indicates whether or not we should retry attempts to open the file
+// when it is in use by another process (common when using backup software), and if so
+// how many seconds of elapsed time should we wait for the file to become available
+// note: this only has an effect on Windows
+//
+// durable, when true, flushes the contents all the way to physical storage
+// (fsync / FlushFileBuffers) before returning. This is required to reliably
+// detect a full disk (ENOSPC) or an exceeded quota (EDQUOT) -- with delayed
+// allocation a write into the page cache succeeds even on a full disk, and the
+// failure only surfaces when the pages are flushed -- but it is relatively
+// expensive, so it defaults off. Enable it on paths where a silently dropped
+// write would lose user data (e.g. saving an editor document).
+Error writeStringToFile(const core::FilePath& filePath,
+                        const std::string& str,
+                        string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
+                        bool truncate = true,
+                        int maxOpenRetrySeconds = 0,
+                        bool logError = true,
+                        bool durable = false);
+
+struct AtomicWriteOptions
+{
+   // Flush the new contents and the rename to physical storage before
+   // returning, so that the write survives a power loss and a full disk is
+   // reliably reported. This is expensive (especially on network filesystems),
+   // so it is only worth it for files that are rarely written.
+   bool durable = false;
+
+   // Give the file mode 0600, whatever the mode of the file it replaces.
+   // Ignored on Windows.
+   bool ownerOnly = false;
+
+   // How long to keep retrying when the file can't be replaced because another
+   // process has it open (e.g. an indexer or antivirus scanner). Only applies
+   // on Windows.
+   int maxRetrySeconds = 1;
+};
+
+// Writes a string to a file atomically: the contents are written to a
+// temporary file in the same directory, which is then renamed over the file.
+// If the process crashes or the write fails, the old contents stay in place;
+// the file is never left empty or truncated.
+//
+// When the file already exists, its permission bits (and, where the process
+// is allowed to set them, its owner and group) are carried over to the new
+// file. ACLs and extended attributes are not. If filePath is a symlink, the
+// file it points to is replaced and the link is kept.
+//
+// If a temporary file can't be created next to the file (e.g. the directory
+// isn't writable), the file is written in place instead.
+//
+// Use this for state files RStudio owns. Files that belong to the user
+// (documents, .Rhistory) should normally be written in place with
+// writeStringToFile(), which keeps the file's identity (inode, hard links,
+// ACLs, other programs' file watches).
+Error writeStringToFileAtomic(const core::FilePath& filePath,
+                              const std::string& str,
+                              string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
+                              const AtomicWriteOptions& options = AtomicWriteOptions());
+
+// Returns true if filePath names a temporary file created by
+// writeStringToFileAtomic(). Code that treats every file in a directory as
+// data should skip these.
+bool isAtomicWriteTempFile(const core::FilePath& filePath);
+
+// Removes temporary files left in dir by an interrupted
+// writeStringToFileAtomic() (e.g. after a crash). Only files older than
+// maxAgeSeconds are removed, so that a write in progress in another process
+// is left alone. Not recursive.
+void removeStaleAtomicWriteTempFiles(const core::FilePath& dir,
+                                     std::time_t maxAgeSeconds = 3600);
+
+// Writes one line per element of the collection. The file is replaced
+// atomically (see writeStringToFileAtomic()) unless atomic is false, which
+// rewrites it in place; use that for files that belong to the user.
 template <typename CollectionType>
 Error writeCollectionToFile(
-         const core::FilePath& filePath, 
+         const core::FilePath& filePath,
          const CollectionType& collection,
          boost::function<std::string(
                                  const typename CollectionType::value_type&)>
-                         stringifyFunction)
+                         stringifyFunction,
+         bool atomic = true)
 {
-   using namespace boost::system::errc;
-   
-   // open the file stream
-   std::shared_ptr<std::ostream> pOfs;
-   Error error = filePath.openForWrite(pOfs, true);
-   if (error)
-      return error;
-
-   try
+   // build the whole file first, so that write errors are reported by the
+   // write itself rather than lost in a stream's destructor
+   std::string contents;
+   for (typename CollectionType::const_iterator
+         it = collection.begin();
+         it != collection.end();
+         ++it)
    {
-      // write each line
-      for (typename CollectionType::const_iterator
-            it = collection.begin();
-            it != collection.end();
-            ++it)
-      {
-         *pOfs << stringifyFunction(*it) << std::endl;
-
-        if (pOfs->fail())
-             return systemError(io_error, ERROR_LOCATION);
-      }
-   }
-   catch(const std::exception& e)
-   {
-      Error error = systemError(boost::system::errc::io_error,
-                                ERROR_LOCATION);
-      error.addProperty("what", e.what());
-      error.addProperty("path", filePath.getAbsolutePath());
-      return error;
+      contents.append(stringifyFunction(*it));
+      contents.push_back('\n');
    }
 
-   return Success();
+   if (atomic)
+   {
+      return writeStringToFileAtomic(filePath,
+                                     contents,
+                                     string_utils::LineEndingPassthrough,
+                                     AtomicWriteOptions());
+   }
+   else
+   {
+      return writeStringToFile(filePath,
+                               contents,
+                               string_utils::LineEndingPassthrough,
+                               true /* truncate */,
+                               0 /* maxOpenRetrySeconds */,
+                               false /* logError */,
+                               false /* durable */);
+   }
 }
 
 enum ReadCollectionAction
@@ -308,41 +384,6 @@ Error writeStringVectorToFile(const core::FilePath& filePath,
 Error readStringVectorFromFile(const core::FilePath& filePath,
                                std::vector<std::string>* pVector,
                                bool trimAndIgnoreBlankLines=true);
-
-// lineEnding is the type of line ending you want to end up on disk
-//
-// maxOpenRetrySeconds indicates whether or not we should retry attempts to open the file
-// when it is in use by another process (common when using backup software), and if so
-// how many seconds of elapsed time should we wait for the file to become available
-// note: this only has an effect on Windows
-//
-// durable, when true, flushes the contents all the way to physical storage
-// (fsync / FlushFileBuffers) before returning. This is required to reliably
-// detect a full disk (ENOSPC) or an exceeded quota (EDQUOT) -- with delayed
-// allocation a write into the page cache succeeds even on a full disk, and the
-// failure only surfaces when the pages are flushed -- but it is relatively
-// expensive, so it defaults off. Enable it on paths where a silently dropped
-// write would lose user data (e.g. saving an editor document).
-Error writeStringToFile(const core::FilePath& filePath,
-                        const std::string& str,
-                        string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
-                        bool truncate = true,
-                        int maxOpenRetrySeconds = 0,
-                        bool logError = true,
-                        bool durable = false);
-
-// Writes a string to a file atomically by first writing to a temporary file
-// in the same directory and then renaming it into place.
-//
-// preservePermissions, when true and filePath already exists, copies the
-// existing file's permission bits onto the temporary file before renaming so
-// that an atomic overwrite does not silently reset the file's mode to the
-// temporary file's defaults. No-op on Windows. Defaults off so existing
-// callers (which create new files) are unaffected.
-Error writeStringToFileAtomic(const core::FilePath& filePath,
-                              const std::string& str,
-                              string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
-                              bool preservePermissions = false);
 
 // Returns true if the given error indicates that a write failed because the
 // disk is full (ENOSPC) or a disk quota was exceeded (EDQUOT), including the

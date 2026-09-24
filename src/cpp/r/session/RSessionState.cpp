@@ -19,6 +19,7 @@
 # include <fmt/xchar.h>
 #endif
 
+#include <map>
 #include <unordered_set>
 
 #include <boost/function.hpp>
@@ -191,55 +192,37 @@ bool isRLocationVariable(const std::string& name)
 
 Error saveRVersion(const FilePath& filePath)
 {
-   Error error;
-   
-   // remove pre-existing file
-   error = filePath.removeIfExists();
-   if (error)
-      return error;
-   
    // ask R for the current version
    std::string version;
-   error = RFunction(".rs.rVersionString").call(&version);
+   Error error = RFunction(".rs.rVersionString").call(&version);
    if (error)
+   {
+      // don't leave the version from an earlier save behind
+      filePath.removeIfExists();
       return error;
+   }
    
-   // write to file
-   error = core::writeStringToFile(filePath, version);
-   if (error)
-      return error;
-   
-   // success!
-   return Success();
+   return core::writeStringToFileAtomic(filePath, version);
 }
 
 Error saveEnvironmentVars(const FilePath& envFile, const std::string& ephemeralEnvVars)
 {
-   // remove then create settings file
-   Error error = envFile.removeIfExists();
-   if (error)
-      return error;
-   core::Settings envSettings;
-   error = envSettings.initialize(envFile);
-   if (error)
-      return error;
-
    // build set of excluded environment variables
    std::vector<std::string> envEphemeral(core::algorithm::split(ephemeralEnvVars, ":"));
    std::unordered_set<std::string> ephemeral(envEphemeral.begin(), envEphemeral.end());
 
-   // get environment and write it to the file
+   // get environment and write it to the file, replacing the variables from
+   // any earlier save (read back with core::Settings)
    core::system::Options env;
    core::system::environment(&env);
-   envSettings.beginUpdate();
+   std::map<std::string, std::string> vars;
    for (const core::system::Option& var : env)
    {
       if (ephemeral.count(var.first) == 0)
-         envSettings.set(var.first, var.second);
+         vars[var.first] = var.second;
    }
-   envSettings.endUpdate();
 
-   return Success();
+   return core::writeStringMapToFile(envFile, vars);
 }
 
 void setEnvVar(const std::string& name, const std::string& value)
@@ -527,7 +510,7 @@ void saveWorkingContext(const FilePath& statePath,
 {
    // save history
    FilePath historyPath = statePath.completePath(kHistoryFile);
-   Error error = consoleHistory().saveToFile(historyPath);
+   Error error = consoleHistory().saveToFile(historyPath, true /* atomic */);
    if (error)
    {
       reportError(kSaving, kHistoryFile, error, ERROR_LOCATION);
@@ -556,13 +539,13 @@ void saveWorkingContext(const FilePath& statePath,
 Error saveAfterRestartCommand(const FilePath& afterRestartCommandPath,
                               const std::string& afterRestartCommand)
 {
-   return core::writeStringToFile(afterRestartCommandPath, afterRestartCommand);
+   return core::writeStringToFileAtomic(afterRestartCommandPath, afterRestartCommand);
 }
 
 Error saveBuiltPackagePath(const FilePath& builtPackagePathPath,
                            const std::string& builtPackagePath)
 {
-   return core::writeStringToFile(builtPackagePathPath, builtPackagePath);
+   return core::writeStringToFileAtomic(builtPackagePathPath, builtPackagePath);
 }
 
 

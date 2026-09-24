@@ -90,6 +90,8 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionConstants.hpp>
+#include <session/RVersionSettings.hpp>
+#include <session/projects/ProjectsSettings.hpp>
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionQuarto.hpp>
 
@@ -659,7 +661,9 @@ FilePath monitoredParentPath()
 
 bool monitoredScratchFilter(const FileInfo& fileInfo)
 {
-   return true;
+   // atomic writes pass through a temporary file, which the owning module
+   // would otherwise see appear and disappear
+   return !isAtomicWriteTempFile(FilePath(fileInfo.absolutePath()));
 }
 
 
@@ -774,6 +778,30 @@ void initializeMonitoredUserScratchDir()
                                     monitoredScratchFilter,
                                     cb);
 #endif
+}
+
+// Remove the temporary files of atomic writes that a crash interrupted, from
+// the directories holding RStudio's state files.
+void removeStaleStateTempFiles(bool)
+{
+   FilePath dataDir = userScratchPath();
+   FilePath configDir = core::system::xdg::userConfigDir();
+
+   std::vector<FilePath> dirs = {
+      dataDir,
+      dataDir.completePath(kProjectsSettings),
+      dataDir.completePath(kRVersionSettings),
+      configDir,
+      configDir.completePath("keybindings"),
+      configDir.completePath("snippets"),
+      scopedScratchPath()
+   };
+
+   for (const auto& monitoredPath : s_monitoredScratchPaths)
+      dirs.push_back(monitoredPath.first);
+
+   for (const FilePath& dir : dirs)
+      removeStaleAtomicWriteTempFiles(dir);
 }
 
 
@@ -3563,6 +3591,8 @@ Error initialize()
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
+
+   events().onDeferredInit.connect(removeStaleStateTempFiles);
 
    // source the ModuleTools.R file
    FilePath modulesPath = session::options().modulesRSourcePath();

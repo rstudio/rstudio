@@ -190,6 +190,8 @@ Error enumerateSessionDirs(const FilePath& sourceRoot, std::vector<FilePath>* pS
 void attemptToMoveSourceDbFiles(const FilePath& fromPath,
                                 const FilePath& toPath)
 {
+   removeStaleAtomicWriteTempFiles(fromPath);
+
    // enumerate the from path
    std::vector<FilePath> children;
    Error error = fromPath.getChildren(children);
@@ -204,6 +206,10 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       // stores -- these directories correspond to the persistent docs
       // of particular long-running sessions)
       if (filePath.isDirectory())
+         continue;
+
+      // a recent temporary file may belong to a write still in progress
+      if (isAtomicWriteTempFile(filePath))
          continue;
 
       // if the target path already exists then skip it and log

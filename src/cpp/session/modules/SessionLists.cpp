@@ -64,14 +64,14 @@ FilePath s_suppressNextChange;
 typedef std::map<std::string, std::size_t> Lists;
 Lists s_lists;
 
-// lookup list size
+// lookup list size (0 for an unknown list)
 std::size_t listSize(const char* const name)
 {
    Lists::const_iterator pos = s_lists.find(name);
    if (pos != s_lists.end())
       return pos->second;
    else
-      return -1;
+      return 0;
 }
 
 
@@ -85,7 +85,7 @@ Error readList(const std::string& name,
 {
    // lookup list size (also serves as a validation of list name)
    std::size_t size = listSize(name.c_str());
-   if (size <= 0)
+   if (size == 0)
    {
       Error error = systemError(boost::system::errc::invalid_argument,
                                 ERROR_LOCATION);
@@ -242,19 +242,12 @@ Error normalizeProjectMru()
 
    LOG_INFO_MESSAGE("Normalizing project MRU list to canonical (absolute) paths");
 
-   // Serialize and write atomically: writeCollectionToFile truncates on
-   // open, so a crash mid-write would leave the MRU empty. Build the
-   // payload in memory and use the atomic helper instead.
-   std::ostringstream out;
-   for (const std::string& entry : normalized)
-      out << stringifyString(entry) << "\n";
-
    // Suppress the kListChanged event that would otherwise fire from the
    // monitor as a result of this rewrite; the contents we'd send are
    // identical to what the client receives via allListsAsJson() on init.
    s_suppressNextChange = mruPath;
 
-   error = writeStringToFileAtomic(mruPath, out.str());
+   error = writeCollectionToFile<std::list<std::string>>(mruPath, normalized, stringifyString);
    if (error)
    {
       // clear the suppression flag so a subsequent legitimate change
