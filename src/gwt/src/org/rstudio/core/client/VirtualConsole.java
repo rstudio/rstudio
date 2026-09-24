@@ -1089,26 +1089,29 @@ public class VirtualConsole
                   return;
                }
                
-               // Operating System Command: ESC ']' <payload> ST, where ST is BEL or
+               // String sequences: ESC <introducer> <payload> ST, where ST is BEL or
                // ESC '\'. As in xterm, any other ESC also ends the string, but is
                // left in place to be parsed as the start of the next escape sequence.
-               if (data.charAt(head) == '\033' && data.charAt(head + 1) == ']')
+               // Only an OSC (ESC ']') payload is acted on; the others are discarded.
+               if (data.charAt(head) == '\033' && STRING_INTRODUCERS.indexOf(data.charAt(head + 1)) != -1)
                {
-                  Match oscEnd = OSC_END.match(data, head + 2);
+                  Match stringEnd = STRING_END.match(data, head + 2);
 
                   // the rest of the string may arrive with the next submit
-                  if (oscEnd == null && data.length() - head <= MAX_PARTIAL_OSC_LENGTH)
+                  if (stringEnd == null && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
                   {
                      partialAnsiCode_ = StringUtil.substring(data, head);
                      return;
                   }
 
-                  char oscEndChar = oscEnd == null ? '\0' : data.charAt(oscEnd.getIndex());
-                  if (oscEndChar == '\007' || oscEndChar == '\033')
+                  char stringEndChar = stringEnd == null ? '\0' : data.charAt(stringEnd.getIndex());
+                  if (stringEndChar == '\007' || stringEndChar == '\033')
                   {
-                     processOsc(StringUtil.substring(data, head + 2, oscEnd.getIndex()));
-                     tail = oscEnd.getIndex();
-                     if (oscEndChar == '\007')
+                     if (data.charAt(head + 1) == ']')
+                        processOsc(StringUtil.substring(data, head + 2, stringEnd.getIndex()));
+
+                     tail = stringEnd.getIndex();
+                     if (stringEndChar == '\007')
                         tail += 1;
                      else if (tail + 1 < data.length() && data.charAt(tail + 1) == '\\')
                         tail += 2;
@@ -1648,13 +1651,18 @@ public class VirtualConsole
    
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
-   // Characters that end an OSC string: BEL or ESC terminate it, while the
-   // console's own control characters mean it's malformed
-   private static final Pattern OSC_END = Pattern.create("[\u0007\u001b\r\n\b\f]");
+   // Characters that follow ESC to begin a string sequence: OSC, DCS, SOS,
+   // PM, APC, and the GNU screen / tmux window title (ESC 'k'). This matches
+   // the set the backend strips in AnsiCodeParser.cpp.
+   private static final String STRING_INTRODUCERS = "]PX^_k";
 
-   // How much of an unterminated OSC string to hold back, waiting for its
-   // terminator to arrive with the next submit
-   private static final int MAX_PARTIAL_OSC_LENGTH = 4096;
+   // Characters that end a string sequence: BEL or ESC terminate it, while
+   // the console's own control characters mean it's malformed
+   private static final Pattern STRING_END = Pattern.create("[\u0007\u001b\r\n\b\f]");
+
+   // How much of an unterminated string sequence to hold back, waiting for
+   // its terminator to arrive with the next submit
+   private static final int MAX_PARTIAL_STRING_LENGTH = 4096;
 
    // allows &entity_name; entities like &amp;
    private boolean preserveHTML_ = false;

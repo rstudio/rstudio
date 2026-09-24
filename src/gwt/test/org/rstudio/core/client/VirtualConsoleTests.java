@@ -1374,6 +1374,15 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("ab", ele.getInnerText());
    }
 
+   public void testOtherStringSequencesDiscarded()
+   {
+      // DCS, SOS, PM, APC, and the screen window title carry payloads, like OSC
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033P1$r\033\\b\033Xsos\033\\c\033^pm\007d\033_apc\033\\e\033ktitle\033\\f");
+      Assert.assertEquals("abcdef", ele.getInnerText());
+   }
+
    public void testOscSplitAcrossSubmits()
    {
       PreElement ele = Document.get().createPreElement();
