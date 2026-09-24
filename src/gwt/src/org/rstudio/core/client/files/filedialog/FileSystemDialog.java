@@ -81,7 +81,10 @@ public abstract class FileSystemDialog extends ModalDialogBase
             public void onCompleted()
             {
                progress.onCompleted();
-               context_.cd(input);
+
+               // navigate through the browser so an accept during the new
+               // folder's listing is deferred like any other
+               browser_.cd(input);
             }
 
             public void onError(String message)
