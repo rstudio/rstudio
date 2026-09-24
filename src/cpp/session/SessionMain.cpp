@@ -2974,6 +2974,10 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
             workingDirError.getMessage(),
             fallbackDir.getAbsolutePath());
          workingDir = fallbackDir;
+
+         // the client and .RData handling ask for the initial working
+         // directory later, and should get the one the session is in
+         dirs::setInitialWorkingDirectory(workingDir);
       }
 
 #ifdef _WIN32
