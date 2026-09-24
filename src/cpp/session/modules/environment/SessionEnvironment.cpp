@@ -993,7 +993,7 @@ void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
 {
    // refresh from here rather than from the client so the listing is fetched
    // only after the new value has reached the session
-   if (pref == kShowHiddenObjects)
+   if (pref == kShowHiddenObjects || pref == kShowLastDotValue)
    {
       ClientEvent event(client_events::kEnvironmentRefresh);
       module_context::enqueClientEvent(event);
