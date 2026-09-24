@@ -1235,6 +1235,39 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\".*\">text</a>"));
    }
 
+   public void testHyperlinkStringTerminator()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b\\link\u001b]8;;\u001b\\\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+   }
+
+   public void testHyperlinkStringTerminatorSplitAcrossSubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b");
+      vc.submit("\\link\u001b]8;;\u001b\\\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+   }
+
+   public void testHyperlinkEndedByOtherEscape()
+   {
+      // ESC ')' is not ST, but still ends the string; the ESC ')' is then
+      // parsed (and discarded) as an escape sequence of its own
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b\\link\u001b]8;;\u001b)\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+
+      // here, ESC ')' 'l' is a character set designation, consuming the 'l'
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b)link\u001b]8;;\u001b)\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">ink</a><span>\n</span>$"));
+   }
+
    public void testIssue9846()
    {
       PreElement ele = Document.get().createPreElement();
