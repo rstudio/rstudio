@@ -76,6 +76,13 @@ struct AtomicWriteOptions
    // process has it open (e.g. an indexer or antivirus scanner). Only applies
    // on Windows.
    int maxRetrySeconds = 1;
+
+   // When no temporary file can be created next to the file (the directory
+   // isn't writable), truncate and rewrite the file in place instead of
+   // failing. Turn this off for files whose contents must survive a failed
+   // write, since an in-place write that fails partway leaves the file
+   // truncated.
+   bool allowInPlaceFallback = true;
 };
 
 // Writes a string to a file atomically: the contents are written to a
@@ -89,7 +96,9 @@ struct AtomicWriteOptions
 // file it points to is replaced and the link is kept.
 //
 // If a temporary file can't be created next to the file (e.g. the directory
-// isn't writable), the file is written in place instead.
+// isn't writable), the file is written in place instead, unless
+// AtomicWriteOptions::allowInPlaceFallback is off. A failure after the
+// temporary file was created never touches the file.
 //
 // The first time a process writes into a directory this way, temporary files
 // that an earlier, interrupted write left there are removed (see

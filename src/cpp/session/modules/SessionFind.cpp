@@ -582,9 +582,11 @@ private:
 
          // Write the replacement atomically, and durably so that a full disk
          // or exceeded quota surfaces as an error rather than a silently
-         // truncated write. On failure the original file is left untouched.
+         // truncated write. On failure the original file is left untouched,
+         // so never fall back to truncating it in place.
          AtomicWriteOptions options;
          options.durable = true;
+         options.allowInPlaceFallback = false;
          error = writeStringToFileAtomic(FilePath(currentFile_),
                                          outputContents_,
                                          string_utils::LineEndingPassthrough,

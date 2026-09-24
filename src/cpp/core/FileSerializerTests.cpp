@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 
 #include <ctime>
+#include <istream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -450,6 +452,34 @@ TEST(FileSerializerTest, WriteStringAtomicFallsBackToInPlace)
    dir.remove();
 }
 
+// A caller that needs the original to survive a failed write (Replace All)
+// turns the in-place fallback off: the write fails and nothing is truncated.
+TEST(FileSerializerTest, WriteStringAtomicWithoutFallbackKeepsOriginal)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root ignores directory permissions";
+
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("source.R");
+   ASSERT_FALSE(writeStringToFile(filePath, "original\n"));
+   ASSERT_EQ(0, ::chmod(dir.getAbsolutePath().c_str(), 0500));
+
+   AtomicWriteOptions options;
+   options.allowInPlaceFallback = false;
+   Error error = writeStringToFileAtomic(filePath, "replaced\n", string_utils::LineEndingPassthrough, options);
+   ASSERT_EQ(0, ::chmod(dir.getAbsolutePath().c_str(), 0700));
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EACCES, error.getCode());
+   EXPECT_EQ(filePath.getAbsolutePath(), error.getProperty("path"));
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("original\n", readback);
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
+
+   dir.remove();
+}
+
 // Writing through a symlink (e.g. a dotfile manager's link to
 // rstudio-prefs.json) replaces the file it points to and keeps the link.
 TEST(FileSerializerTest, WriteStringAtomicFollowsSymlinks)
@@ -557,6 +587,38 @@ TEST(FileSerializerTest, WriteStringReportsFailedWrite)
 }
 
 // isDiskSpaceError must recognize the full-disk / over-quota error codes (so a
+#ifdef _WIN32
+
+// Our readers open with FILE_SHARE_DELETE, and the replacement uses the
+// POSIX-semantics rename, so a file another part of RStudio is reading can
+// still be replaced; that reader keeps seeing the old contents.
+TEST(FileSerializerTest, WriteStringAtomicReplacesFileHeldOpenForRead)
+{
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "old\n"));
+
+   std::shared_ptr<std::istream> pOldReader;
+   ASSERT_FALSE(filePath.openForRead(pOldReader));
+
+   Error error = writeStringToFileAtomic(filePath, "new\n");
+   EXPECT_FALSE(error) << error.asString();
+
+   std::string oldContents;
+   std::getline(*pOldReader, oldContents);
+   EXPECT_EQ("old", oldContents);
+   pOldReader.reset();
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("new\n", readback);
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
+
+   dir.remove();
+}
+
+#endif
+
 // raw write failure can be turned into a recovery-oriented message) and must
 // not misclassify unrelated errors or success.
 TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)

@@ -427,13 +427,11 @@ Error writeInPlace(const FilePath& targetPath,
                    const AtomicWriteOptions& options)
 {
 #ifndef _WIN32
-   // restrict the file before the new contents land in it; the file must
-   // already exist for an in-place write to succeed here
+   // restrict the file before the new contents land in it, rather than
+   // writing private contents into a file we can't make private; the file
+   // must already exist for an in-place write to succeed here
    if (options.ownerOnly && ::chmod(targetPath.getAbsolutePath().c_str(), 0600) == -1)
-   {
-      int code = errno;
-      DLOGF("Couldn't restrict permissions on '{}' (errno {})", targetPath.getAbsolutePath(), code);
-   }
+      return fileError(errno, targetPath, ERROR_LOCATION);
 #endif
 
    return writeContentsToFileWithRetry(targetPath,
@@ -460,11 +458,16 @@ Error atomicWriteError(int code,
 
 // Create a temporary file next to targetPath and write contents to it. On
 // failure the temporary file is removed, so the caller has nothing to clean up.
+// *pTempCreated reports whether the temporary file could be created at all,
+// which is the only failure the caller may fall back from.
 Error writeTempFile(const FilePath& targetPath,
                     const std::string& contents,
                     const AtomicWriteOptions& options,
-                    FilePath* pTempPath)
+                    FilePath* pTempPath,
+                    bool* pTempCreated)
 {
+   *pTempCreated = false;
+
    Error error = atomicWriteTempPath(targetPath, pTempPath);
    if (error)
       return error;
@@ -481,6 +484,8 @@ Error writeTempFile(const FilePath& targetPath,
 
    if (hFile == INVALID_HANDLE_VALUE)
       return atomicWriteError(::GetLastError(), targetPath, *pTempPath, ERROR_LOCATION);
+
+   *pTempCreated = true;
 
    error = writeAll(hFile, contents, targetPath);
    if (!error && options.durable && !::FlushFileBuffers(hFile))
@@ -608,11 +613,16 @@ Error replaceFile(const FilePath& tempPath,
 
 // Create a temporary file next to targetPath and write contents to it. On
 // failure the temporary file is removed, so the caller has nothing to clean up.
+// *pTempCreated reports whether the temporary file could be created at all,
+// which is the only failure the caller may fall back from.
 Error writeTempFile(const FilePath& targetPath,
                     const std::string& contents,
                     const AtomicWriteOptions& options,
-                    FilePath* pTempPath)
+                    FilePath* pTempPath,
+                    bool* pTempCreated)
 {
+   *pTempCreated = false;
+
    // when replacing a file, the new one takes over its owner, group and mode
    struct stat targetStat;
    bool replacing = ::stat(targetPath.getAbsolutePath().c_str(), &targetStat) == 0;
@@ -636,6 +646,8 @@ Error writeTempFile(const FilePath& targetPath,
 
    if (fd == -1)
       return atomicWriteError(errno, targetPath, *pTempPath, ERROR_LOCATION);
+
+   *pTempCreated = true;
 
    if (replacing)
    {
@@ -873,12 +885,16 @@ Error writeStringToFileAtomic(const FilePath& filePath,
    removeStaleAtomicWriteTempFilesOnce(targetPath.getParent());
 
    FilePath tempPath;
-   error = writeTempFile(targetPath, contents, options, &tempPath);
+   bool tempCreated = false;
+   error = writeTempFile(targetPath, contents, options, &tempPath, &tempCreated);
    if (error)
    {
-      // no file could be created next to the target, e.g. because its
-      // directory isn't writable even though the file itself is
-      if (isPermissionError(error))
+      // No file could be created next to the target, e.g. because its
+      // directory isn't writable even though the file itself is. A failure
+      // after that point (setting the mode, writing, flushing) is reported as
+      // is: rewriting in place would truncate the target before finding out
+      // whether the write can succeed.
+      if (!tempCreated && options.allowInPlaceFallback && isPermissionError(error))
          return writeInPlace(targetPath, contents, options);
 
       return error;

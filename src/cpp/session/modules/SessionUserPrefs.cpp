@@ -161,7 +161,8 @@ json::Value coerceNumber(const json::Value& value, json::Type expectedType)
    }
    else if (expectedType == json::Type::REAL && value.getType() == json::Type::INTEGER)
    {
-      return json::Value(static_cast<double>(value.getInt()));
+      // getDouble() accepts every integer width; getInt() would not
+      return json::Value(value.getDouble());
    }
 
    return value;
