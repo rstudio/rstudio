@@ -78,10 +78,10 @@ struct AtomicWriteOptions
    int maxRetrySeconds = 1;
 
    // When no temporary file can be created next to the file (the directory
-   // isn't writable), truncate and rewrite the file in place instead of
-   // failing. Turn this off for files whose contents must survive a failed
-   // write, since an in-place write that fails partway leaves the file
-   // truncated.
+   // isn't writable), or the file can't be replaced because it is a mount
+   // point, truncate and rewrite the file in place instead of failing. Turn
+   // this off for files whose contents must survive a failed write, since an
+   // in-place write that fails partway leaves the file truncated.
    bool allowInPlaceFallback = true;
 };
 
@@ -96,9 +96,10 @@ struct AtomicWriteOptions
 // file it points to is replaced and the link is kept.
 //
 // If a temporary file can't be created next to the file (e.g. the directory
-// isn't writable), the file is written in place instead, unless
-// AtomicWriteOptions::allowInPlaceFallback is off. A failure after the
-// temporary file was created never touches the file.
+// isn't writable), or the file can't be renamed over because it is itself a
+// mount point (a single file bind-mounted into a container), the file is
+// written in place instead, unless AtomicWriteOptions::allowInPlaceFallback
+// is off. No other failure touches the file.
 //
 // The first time a process writes into a directory this way, temporary files
 // that an earlier, interrupted write left there are removed (see

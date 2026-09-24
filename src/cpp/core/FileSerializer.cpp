@@ -381,6 +381,21 @@ bool isPermissionError(const Error& error)
 #endif
 }
 
+// True when a rename failed because the target is itself a mount point: a
+// single file bind-mounted into a container (a Docker '-v' of one file, a
+// Kubernetes subPath mount). Only a POSIX rename reports that.
+bool isMountPointError(const Error& error)
+{
+#ifdef _WIN32
+   return false;
+#else
+   if (!error || error.getName() != boost::system::system_category().name())
+      return false;
+
+   return error.getCode() == EBUSY || error.getCode() == EXDEV;
+#endif
+}
+
 // Follow filePath through any symlinks to the file they point to (which need
 // not exist yet), so that we replace that file rather than the link.
 Error resolveSymlinks(const FilePath& filePath, FilePath* pResolved)
@@ -945,6 +960,13 @@ Error writeStringToFileAtomic(const FilePath& filePath,
    if (error)
    {
       temp.path.removeIfExists();
+
+      // A bind-mounted file can't be renamed over, though it can be written.
+      // The target hasn't been touched yet, so this is as safe as falling
+      // back when no temporary file could be created.
+      if (options.allowInPlaceFallback && isMountPointError(error))
+         return writeInPlace(targetPath, contents, options);
+
       return error;
    }
 
