@@ -739,9 +739,11 @@ public class AnsiCode
    // Match ANSI escape sequences
    public static final Pattern ANSI_ESCAPE_PATTERN = Pattern.create(ANSI_REGEX);
 
-   // Control characters handled by R console (BEL is discarded), plus
-   // leading character of ANSI escape sequences
-   public static final String CONTROL_REGEX = "[\r\b\f\n\u0007\u001b\u009b]";
+   // Control characters handled by R console (BEL is discarded)
+   public static final String CONSOLE_CONTROL_CHARS = "\r\b\f\n\u0007";
+
+   // Those control characters, plus leading character of ANSI escape sequences
+   public static final String CONTROL_REGEX = "[" + CONSOLE_CONTROL_CHARS + "\u001b\u009b]";
 
    // Match control characters and start of ANSI sequences
    public static final Pattern CONTROL_PATTERN = Pattern.create(CONTROL_REGEX);

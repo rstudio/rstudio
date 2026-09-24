@@ -1447,6 +1447,43 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
    }
 
+   public void testOscAfterHeldBackEscape()
+   {
+      // a lone ESC held back from the previous submit doesn't use up the one
+      // hold-back an unterminated OSC string gets
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033");
+      vc.submit("]8;;https://example.com");
+      vc.submit("\007link\033]8;;\007\n");
+      Assert.assertEquals("alink\n", ele.getInnerText());
+      Assert.assertEquals("link", anchorText(ele));
+   }
+
+   public void testHyperlinkTextSplitAcrossSubmits()
+   {
+      // the two halves of the link text share one anchor
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://example.com\007li");
+      vc.submit("nk\033]8;;\007\n");
+
+      NodeList<Element> anchors = ele.getElementsByTagName("a");
+      Assert.assertEquals(1, anchors.getLength());
+      Assert.assertEquals("link", anchors.getItem(0).getInnerText());
+      Assert.assertEquals("link\n", ele.getInnerText());
+   }
+
+   public void testHyperlinkParamWithoutValue()
+   {
+      // a parameter without '=' is skipped rather than failing the submit
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;id;https://example.com\007link\033]8;;\007 after\n");
+      Assert.assertEquals("link after\n", ele.getInnerText());
+      Assert.assertEquals("link", anchorText(ele));
+   }
+
    public void testUnterminatedOscShown()
    {
       // no output is lost to an OSC string that never ends

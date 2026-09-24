@@ -258,6 +258,7 @@ public class VirtualConsole
    private void clearPartialAnsiCode()
    {
       partialAnsiCode_ = null;
+      heldBackString_ = false;
    }
 
    /**
@@ -606,10 +607,9 @@ public class VirtualConsole
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
 
-      if (hyperlink_ != null || range.hyperlink_ != null || !StringUtil.equals(range.clazz, clazz))
+      if (!sameHyperlink(hyperlink_, range.hyperlink_) || !StringUtil.equals(range.clazz, clazz))
       {
-         // force if this needs to display an hyperlink
-         // or if the previous range was an hyperlink
+         // force if a hyperlink starts, ends, or changes target
          // or the classes differ (change of colour)
          forceNewRange = true;
       }
@@ -995,8 +995,9 @@ public class VirtualConsole
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
       // ANSI code.
-      boolean retryingPartialCode = partialAnsiCode_ != null;
-      if (retryingPartialCode)
+      boolean retryingHeldBackString = heldBackString_;
+      heldBackString_ = false;
+      if (partialAnsiCode_ != null)
       {
          data = partialAnsiCode_ + data;
          partialAnsiCode_ = null;
@@ -1101,11 +1102,13 @@ public class VirtualConsole
                   // the rest of the string may arrive with the next submit, so hold
                   // it back once; if that submit doesn't end it either, treat it as
                   // malformed rather than let it swallow the output (and prompt)
-                  // that follows
-                  boolean alreadyHeldBack = retryingPartialCode && head == 0;
+                  // that follows. Only a held-back string counts: a lone ESC held
+                  // back from the previous submit doesn't use up the string's turn.
+                  boolean alreadyHeldBack = retryingHeldBackString && head == 0;
                   if (stringEnd == null && !alreadyHeldBack && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
                   {
                      partialAnsiCode_ = StringUtil.substring(data, head);
+                     heldBackString_ = true;
                      return;
                   }
 
@@ -1637,7 +1640,8 @@ public class VirtualConsole
    }
    
    // Control characters handled by the console when ANSI escapes are ignored
-   private static final Pattern CONTROL = Pattern.create("[\r\b\f\n\u0007]");
+   private static final Pattern CONTROL =
+         Pattern.create("[" + AnsiCode.CONSOLE_CONTROL_CHARS + "]");
 
    // RStudio's own escapes, which open and close output groups and highlights
    private static final Pattern GROUP_START_PATTERN = Pattern.create("^\033G(\\d+);", "");
@@ -1651,8 +1655,9 @@ public class VirtualConsole
    private static final String STRING_INTRODUCERS = "]PX^_k";
 
    // Characters that end a string sequence: BEL or ESC terminate it, while
-   // the console's own control characters mean it's malformed
-   private static final Pattern STRING_END = Pattern.create("[\u0007\u001b\r\n\b\f]");
+   // the console's other control characters mean it's malformed
+   private static final Pattern STRING_END =
+         Pattern.create("[" + AnsiCode.CONSOLE_CONTROL_CHARS + "\u001b]");
 
    // How much of an unterminated string sequence to hold back, waiting for
    // its terminator to arrive with the next submit
@@ -1670,6 +1675,10 @@ public class VirtualConsole
    private AnsiCode ansi_ = new AnsiCode();
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
    private String partialAnsiCode_;
+
+   // whether partialAnsiCode_ is an unterminated string sequence that has
+   // already been held back once
+   private boolean heldBackString_ = false;
    private HyperlinkInfo hyperlink_;
    private String savedClazz_ = "";
 
