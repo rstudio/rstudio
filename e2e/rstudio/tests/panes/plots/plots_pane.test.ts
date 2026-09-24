@@ -205,9 +205,11 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
 
       // cancelling the chooser returns to the format dialog; a deferred accept
       // would issue the save as soon as the client handles the listing
-      // response, and dismissing that dialog is ordered after it
+      // response, so wait for that response to reach the client before
+      // dismissing the dialog and counting saves
+      const listed = page.waitForResponse(LIST_FILES_RPC);
       listing.release();
-      await listing.settled();
+      await listed;
       await expect(plotsPane.saveAsImageDialog).toBeVisible();
       await page.locator(CANCEL_BTN).click();
       await expect(plotsPane.saveAsImageDialog).toBeHidden();
