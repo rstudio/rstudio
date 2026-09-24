@@ -175,11 +175,21 @@ public abstract class FileSystemDialog extends ModalDialogBase
    }
 
    /**
-    * Accept if validation passes
+    * Accept if validation passes. While a directory listing is in flight
+    * (the dialog just opened, or a cd() is pending) the accept is deferred
+    * until the listing arrives, since the input can only be resolved against
+    * the listed directory: accepting against a missing listing produced a
+    * null item, which callers treat as a cancel (#18922).
     */
    @Override
    public final void maybeAccept()
    {
+      if (browser_.isNavigating())
+      {
+         acceptOnNavigated_ = true;
+         return;
+      }
+
       if (shouldAccept())
          accept();
    }
@@ -228,10 +238,20 @@ public abstract class FileSystemDialog extends ModalDialogBase
          initialFilename_ = filename;
    }
 
+   /**
+    * Subclasses that adjust the filename on navigation must do so BEFORE
+    * calling super.onNavigated(), which may run a deferred accept.
+    */
    @Override
    public void onNavigated()
    {
       browser_.onNavigated();
+
+      if (acceptOnNavigated_)
+      {
+         acceptOnNavigated_ = false;
+         maybeAccept();
+      }
    }
 
    @Override
@@ -276,9 +296,22 @@ public abstract class FileSystemDialog extends ModalDialogBase
       progress_.onCompleted();
    }
 
+   /**
+    * Reports a failed navigation (from the context callbacks) or a failed
+    * operation (as the ProgressIndicator passed to it).
+    */
    @Override
    public void onError(String errorMessage)
    {
+      // a failed navigation leaves the browser in the directory it was already
+      // showing: drop any deferred accept and end its loading state, so the
+      // dialog stays usable
+      if (browser_.isNavigating())
+      {
+         acceptOnNavigated_ = false;
+         onNavigated();
+      }
+
       progress_.onError(errorMessage);
    }
 
@@ -388,6 +421,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    private boolean invokeOperationEvenOnCancel_;
    private final ProgressIndicator progress_;
    protected FileBrowserWidget browser_;
+   protected boolean acceptOnNavigated_ = false;
    private String initialFilename_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

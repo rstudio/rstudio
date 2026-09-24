@@ -4,13 +4,18 @@ import { PlotsPane } from '@pages/plots_pane.page';
 import { CONFIRM_BTN, CANCEL_BTN, YES_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
-import type { Page } from 'playwright';
+import type { Page, Request } from 'playwright';
 
 // GWT file-chooser accept button. base-prefs.jsonc sets native_file_dialogs=false
 // suite-wide, so export flows always use the GWT file chooser (never a native OS
 // dialog). The two-step save flow is: OK on the format dialog, then this button
 // on the file chooser to accept the default path.
 const FILE_ACCEPT_SAVE = '#rstudio_file_accept_save';
+
+// The RPC the GWT file chooser lists its directory with, and the one that
+// saves the plot once the chooser is accepted.
+const LIST_FILES_RPC = /\/rpc\/list_files(?:\?|$)/;
+const SAVE_PLOT_RPC = /\/rpc\/save_plot_as(?:\?|$)/;
 
 // Sandbox working directory for file-export tests so saved files are cleaned
 // up by globalTeardown automatically.
@@ -117,6 +122,64 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
       ),
       { timeout: TIMEOUTS.fileOpen },
     ).toBe(true);
+  });
+
+  test('file chooser accepted before its listing arrives saves once it does', async ({ rstudioPage: page }) => {
+    await createPlot(page);
+    await consoleActions.executeInConsole('.pngs_before <- list.files(getwd(), pattern = "Rplot.*\\\\.png$")');
+
+    // Hold the chooser's directory listing so the accept click is guaranteed
+    // to land before it arrives (#18922: the click used to close the chooser
+    // without saving).
+    let releaseListing = () => {};
+    const listingHeld = new Promise<void>((resolve) => (releaseListing = resolve));
+    let listings = 0;
+    const heldListings: Promise<void>[] = [];
+    await page.route(LIST_FILES_RPC, async (route) => {
+      listings++;
+      const continued = listingHeld.then(() => route.continue());
+      heldListings.push(continued);
+      await continued;
+    });
+    let saves = 0;
+    const countSaves = (request: Request) => {
+      if (SAVE_PLOT_RPC.test(request.url()))
+        saves++;
+    };
+    page.on('request', countSaves);
+
+    try {
+      await plotsPane.exportMenu.click();
+      await plotsPane.saveAsImageItem.click();
+      await expect(plotsPane.saveAsImageDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await page.locator(CONFIRM_BTN).click();
+      const acceptButton = page.locator(FILE_ACCEPT_SAVE);
+      await acceptButton.click();
+
+      // the chooser stays open with the accept pending, and nothing is saved
+      await expect.poll(() => listings, { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
+      await expect(acceptButton).toBeVisible();
+      expect(saves).toBe(0);
+
+      // the pending accept saves the plot by itself once the listing arrives
+      releaseListing();
+      await expect(acceptButton).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+      await expect(plotsPane.saveAsImageDialog).toBeHidden();
+      expect(saves).toBe(1);
+      await expect.poll(
+        () => consoleActions.evalRLogical(
+          'length(setdiff(list.files(getwd(), pattern = "Rplot.*\\\\.png$"), .pngs_before)) == 1',
+        ),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
+    } finally {
+      page.off('request', countSaves);
+      // let held requests through before removing the route, so an unroute
+      // doesn't continue them a second time
+      releaseListing();
+      await Promise.allSettled(heldListings);
+      await page.unroute(LIST_FILES_RPC);
+    }
   });
 
   test('save plot as PDF dialog opens and accepts the save', async ({ rstudioPage: page }) => {
