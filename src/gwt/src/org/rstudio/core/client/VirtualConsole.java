@@ -102,13 +102,15 @@ public class VirtualConsole
          String contents;
          int endIndex;
          
-         // ESC ']' '8' ';' <params> ';' <url> ( BEL | ESC ')')
+         // ESC ']' '8' ';' <params> ';' <url> ST, where ST is BEL or ESC '\'.
+         // As in xterm, any other ESC also ends the string, but is left in
+         // place to be parsed as the start of the next escape sequence.
          TextCursor cursor = new TextCursor(data, offset);
          if (!cursor.consume("\u001b]8;"))
             return null;
          
          int paramsStart = cursor.getIndex();
-         if (!cursor.consumeUntil(';'))
+         if (!cursor.consumeUntilRegex("[;\\u0007\\u001b]"))
             return null;
          
          int paramsEnd = cursor.getIndex();
@@ -118,12 +120,15 @@ public class VirtualConsole
             return null;
          
          int contentsStart = cursor.getIndex();
-         if (!cursor.consumeUntilRegex("(?:\\u0007|\\u001b\\))"))
+         if (!cursor.consumeUntilRegex("[\\u0007\\u001b]"))
             return null;
          
          int contentsEnd = cursor.getIndex();
          contents = StringUtil.substring(data, contentsStart, contentsEnd);
-         cursor.advance(cursor.peek() == '\u0007' ? 1 : 2);
+         if (cursor.peek() == '\u0007')
+            cursor.advance(1);
+         else if (cursor.peek(1) == '\\')
+            cursor.advance(2);
          endIndex = cursor.getIndex();
          
          return new HyperlinkMatch(params, contents, endIndex);
@@ -1134,7 +1139,7 @@ public class VirtualConsole
                }
                
                // match hyperlink, either start or end (if [url] is empty
-               // <ESC> ] 8 ; [params] ; [url] \7
+               // <ESC> ] 8 ; [params] ; [url] ST
                HyperlinkMatch hyperlinkMatch = HyperlinkMatch.create(data, head);
                if (hyperlinkMatch != null)
                {
