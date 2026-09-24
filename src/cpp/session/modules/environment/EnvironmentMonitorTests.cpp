@@ -102,6 +102,18 @@ protected:
       signals_.clear();
    }
 
+   bool signalMentions(const std::string& name)
+   {
+      for (const auto& signal : signals_)
+      {
+         if (contains(signal.created, name) ||
+             contains(signal.modified, name) ||
+             contains(signal.deleted, name))
+            return true;
+      }
+      return false;
+   }
+
    EnvironmentMonitor monitor_;
    std::vector<module_context::EnvironmentVariablesChangedEvent> signals_;
    RSTUDIO_BOOST_SCOPED_CONNECTION connection_;
@@ -130,6 +142,23 @@ TEST_F(GlobalEnvironmentMonitorTest, HidingHiddenObjectsReportsNoChanges)
 
    EXPECT_FALSE(contains(drainEnvironmentEventNames(), kHiddenName));
    EXPECT_TRUE(signals_.empty());
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, AssistantSignalOmitsHiddenObjects)
+{
+   startMonitoring(true);
+
+   // modify both objects so each is reported as changed
+   r::exec::executeString("assign('" + std::string(kHiddenName) + "', 2, envir = globalenv())");
+   r::exec::executeString("assign('" + std::string(kVisibleName) + "', 2, envir = globalenv())");
+   monitor_.checkForChanges();
+
+   // the pane lists both, but the assistant only hears about the visible one
+   std::vector<std::string> eventNames = drainEnvironmentEventNames();
+   EXPECT_TRUE(contains(eventNames, kHiddenName));
+   EXPECT_TRUE(contains(eventNames, kVisibleName));
+   EXPECT_TRUE(signalMentions(kVisibleName));
+   EXPECT_FALSE(signalMentions(kHiddenName));
 }
 
 } // anonymous namespace

@@ -39,6 +39,14 @@ bool compareSnapshotName(const BindingSnapshot& a, const BindingSnapshot& b)
    return a.name < b.name;
 }
 
+// The assistant's full variable listing uses ls(), which omits names starting
+// with a dot; keep its incremental updates consistent with that no matter
+// which names the pane is set to show.
+bool isHiddenName(const std::string& name)
+{
+   return !name.empty() && name[0] == '.';
+}
+
 void enqueRefreshEvent()
 {
    ClientEvent refreshEvent(client_events::kEnvironmentRefresh);
@@ -158,7 +166,10 @@ void EnvironmentMonitor::emitVariablesChanged(bool refreshEnqueued,
                                               const std::vector<BindingSnapshot>& addedVars,
                                               const std::vector<BindingSnapshot>& removedVars)
 {
-   if (refreshEnqueued && currentEnv.empty())
+   bool hasVisibleVars = std::any_of(
+      currentEnv.begin(), currentEnv.end(),
+      [](const BindingSnapshot& snap) { return !isHiddenName(snap.name); });
+   if (refreshEnqueued && !hasVisibleVars)
    {
       // Environment was cleared - emit reset signal
       module_context::EnvironmentVariablesChangedEvent event;
@@ -178,6 +189,8 @@ void EnvironmentMonitor::emitVariablesChanged(bool refreshEnqueued,
    // Classify addedVars into created vs modified
    for (const auto& snap : addedVars)
    {
+      if (isHiddenName(snap.name))
+         continue;
       if (lastEnvNames.count(snap.name) > 0)
          event.modified.push_back(snap.name);
       else
@@ -186,7 +199,10 @@ void EnvironmentMonitor::emitVariablesChanged(bool refreshEnqueued,
 
    // Extract names from removedVars
    for (const auto& snap : removedVars)
-      event.deleted.push_back(snap.name);
+   {
+      if (!isHiddenName(snap.name))
+         event.deleted.push_back(snap.name);
+   }
 
    if (event.created.empty() && event.modified.empty() && event.deleted.empty())
       return;
