@@ -1376,6 +1376,58 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("ab", ele.getInnerText());
    }
 
+   public void testPartialCsiWithIntermediateOrPrivateMarker()
+   {
+      // split after an intermediate byte
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033[2 ");
+      vc.submit("qb");
+      Assert.assertEquals("ab", ele.getInnerText());
+
+      // split after a private marker and its parameters
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[>4");
+      vc.submit(";2mb");
+      Assert.assertEquals("ab", ele.getInnerText());
+
+      // split right after the private marker
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[>");
+      vc.submit("4;2mb");
+      Assert.assertEquals("ab", ele.getInnerText());
+   }
+
+   public void testSplitEightBitCsi()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u009b3");
+      vc.submit("1mred");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span>", ele.getInnerHTML());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\u009b");
+      vc.submit("31mred");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span>", ele.getInnerHTML());
+   }
+
+   public void testLongUnterminatedOscNotHeldBack()
+   {
+      // an unterminated OSC longer than the hold-back limit is shown at once
+      StringBuilder payload = new StringBuilder();
+      for (int i = 0; i < 5000; i++)
+         payload.append('x');
+
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]" + payload);
+      Assert.assertEquals(payload.toString(), ele.getInnerText());
+   }
+
    public void testUnterminatedOscAcrossSubmits()
    {
       // an OSC string is held back for one submit only
@@ -1947,6 +1999,25 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = getVC(ele);
       vc.submit("abc\r\033[Cx\033[Dy");
       Assert.assertEquals("ayc", vc.toString());
+   }
+
+   public void testCsiCursorMovementZeroCountMeansOne()
+   {
+      // as in xterm, an explicit count of 0 moves by 1
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\r\033[0Cx\033[0Dy");
+      Assert.assertEquals("ayc", vc.toString());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("abc\033[0Gx");
+      Assert.assertEquals("xbc", vc.toString());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("abc\ndef\033[0A\rx");
+      Assert.assertEquals("xbc\ndef", vc.toString());
    }
 
    public void testCsiCursorForwardHugeCount()

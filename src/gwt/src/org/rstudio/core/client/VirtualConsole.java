@@ -1239,22 +1239,21 @@ public class VirtualConsole
                   // handle SGR codes up-front
                   if (command == "m")
                   {
-                     // process the SGR code, spelling an 8-bit CSI as ESC '['
-                     ansiCodeStyles_ = ansi_.processCode(AnsiCode.CSI + csiMatch.getGroup(1) + command);
+                     ansiCodeStyles_ = ansi_.processSgrParameters(csiMatch.getGroup(1));
                      currentClazz = setCurrentClazz(clazz);
                      tail = head + csiMatch.getValue().length();
                      break;
                   }
                   
-                  // handle other supported commands
+                  // handle other supported commands; for cursor movement, a
+                  // missing or zero count means 1, as in xterm
+                  int n = Math.max(1, StringUtil.parseInt(csiMatch.getGroup(1), 1));
                   if (command == "A")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorUp(n);
                   }
                   else if (command == "B")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorDown(n);
                   }
                   else if (command == "C")
@@ -1262,28 +1261,23 @@ public class VirtualConsole
                      // CUF: move right, but not past the end of the current line;
                      // clamp before adding, so that a huge count can't overflow
                      // under Java int semantics
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursor_ += Math.min(n, currentLineEnd() - cursor_);
                   }
                   else if (command == "D")
                   {
                      // CUB: move left, but not past the start of the current line
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursor_ = Math.max(currentLineStart(), cursor_ - n);
                   }
                   else if (command == "E")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorNextLine(n);
                   }
                   else if (command == "F")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorPreviousLine(n);
                   }
                   else if (command == "G")
                   {
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursorToColumn(n);
                   }
                   else if (command == "K")

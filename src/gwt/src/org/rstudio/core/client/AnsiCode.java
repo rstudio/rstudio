@@ -27,7 +27,6 @@ public class AnsiCode
 {
    // ANSI command constants
    public static final String CSI = "\033\133";   // Control Sequence Introducer
-   public static final String ST  = "\033\134";   // String Terminator
    public static final String OSC = "\033\135";   // Operating System Command
    
    // the terminator for SGR codes
@@ -298,6 +297,17 @@ public class AnsiCode
       if (code.charAt(0) != '\033' || code.charAt(code.length() - 1) != 'm')
          return null;
 
+      return processSgrParameters(StringUtil.substring(code, 2, code.length() - 1));
+   }
+
+   /**
+    * Process the parameters of an SGR sequence (the bytes between CSI and 'm').
+    *
+    * @param parameters The parameter string, e.g. "1;31".
+    * @return The current styles.
+    */
+   public AnsiClazzes processSgrParameters(String parameters)
+   {
       int extendedColor = 0;
       boolean extendedMarkerSeen = false;
       boolean extendedRGBMarkerSeen = false;
@@ -305,7 +315,7 @@ public class AnsiCode
 
       // an empty parameter means 0 (reset), so CSI m and CSI ; 1 m both reset;
       // a parameter with sub-parameters (4:3) is unsupported and skipped
-      String[] tokens = StringUtil.substring(code, 2, code.length() - 1).split(";", -1);
+      String[] tokens = parameters.split(";", -1);
       for (String token : tokens)
       {
          int codeVal = token.isEmpty() ? RESET : StringUtil.parseInt(token,  -1);
@@ -693,6 +703,10 @@ public class AnsiCode
       clazzes_.remove(INVERSE_BG_STYLE);
    }
    
+   /**
+    * Remove escape sequences from a string, mirroring what the console would
+    * discard from it when rendered (see VirtualConsole).
+    */
    public static String strip(String input)
    {
       return input
@@ -703,11 +717,21 @@ public class AnsiCode
             // Custom RStudio escape (highlight)
             .replaceAll("\\033H\\d*;([^]*?)\\033h", "$1")
             
-            // Operating System Command (OSC), terminated by BEL or ESC '\'
-            .replaceAll("\\033\\135[^\\007\\033]*(?:\\007|\\033\\134)", "")
+            // String sequences (OSC, DCS, SOS, PM, APC and ESC 'k'), ended by
+            // BEL, ESC '\\', or another ESC which is left in place. A console
+            // control character means the string is malformed; only its
+            // introducer is then removed, below.
+            .replaceAll("\\033[\\]PX^_k][^" + CONSOLE_CONTROL_CHARS + "\\033]*(?:\\007|\\033\\\\|(?=\\033))", "")
             
-            // Control Sequence Introducer (CSI)
-            .replaceAll("\\033\\133[^a-zA-Z]*[a-zA-Z]", "");
+            // Control Sequence Introducer (CSI): parameter bytes, intermediate
+            // bytes, final byte
+            .replaceAll("(?:\\033\\[|\u009b)[0-?]*[ -/]*[@-~]", "")
+            
+            // Other escape sequences: intermediate bytes, final byte
+            .replaceAll("\\033[ -/]*[0-~]?", "")
+            
+            // BEL
+            .replace("\u0007", "");
    }
 
    public static String prettyPrint(String input)
@@ -768,13 +792,14 @@ public class AnsiCode
          Pattern.create("^\u001b[ -/]*[0-~]?", "");
 
    // An escape sequence cut off by the end of the input, which the next
-   // output may complete: a CSI sequence with numeric parameters (or the
-   // private '?' of ESC[?25l), or ESC with intermediate bytes. A CSI sequence
-   // with other parameter or intermediate bytes is not held back, since the
-   // console prompts ('> ' and '+ ') consist of such bytes, and a dangling
-   // ESC '[' must not swallow them.
+   // output may complete: a CSI sequence with a private marker (ESC[?25l,
+   // ESC[>4;2m) and/or numeric parameters, optionally followed by intermediate
+   // bytes (ESC[2 q), or ESC with intermediate bytes. Intermediate bytes are
+   // held back only after a digit, and a private marker only while nothing
+   // but digits follow it, since the console prompts ('> ' and '+ ') consist
+   // of such bytes, and a dangling ESC '[' must not swallow them.
    public static final Pattern PARTIAL_ESCAPE_PATTERN =
-         Pattern.create("^(?:(?:\u001b\\[|\u009b)\\??[0-9;:]*|\u001b[ -/]*)$", "");
+         Pattern.create("^(?:(?:\u001b\\[|\u009b)[<=>?]?[0-9;:]*(?:\\d[ -/]*)?|\u001b[ -/]*)$", "");
 
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
