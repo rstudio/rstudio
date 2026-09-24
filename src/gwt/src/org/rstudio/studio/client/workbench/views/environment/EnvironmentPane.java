@@ -165,6 +165,8 @@ public class EnvironmentPane extends WorkbenchPane
       menu.addSeparator();
       menu.addItem(new UserPrefMenuItem<>(
             prefs_.showHiddenObjects(), true, constants_.showHiddenObjects(), prefs_));
+      menu.addItem(new UserPrefMenuItem<>(
+            prefs_.showLastDotValue(), true, constants_.showLastDotValue(), prefs_));
       viewButton_ = new ToolbarMenuButton(
             nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             ToolbarButton.NoTitle,
