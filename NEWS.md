@@ -57,15 +57,17 @@
 - ([#18794](https://github.com/rstudio/rstudio/issues/18794)): Python interpreter discovery (Global Options > Python > Select...) now bounds each interpreter probe, so a hung Python or conda executable no longer leaves the dialog stuck at "Finding interpreters...".
 - ([#18831](https://github.com/rstudio/rstudio/issues/18831)): Fixed an issue where updating Posit Assistant from the chat pane left the new version being served under the previous version's Content-Security-Policy until RStudio was restarted, which could break the chat pane.
 - ([#18777](https://github.com/rstudio/rstudio/issues/18777)): Fixed an issue where each session restart added another copy of the Git and SVN directories to the `PATH` of restored terminals.
+- ([#18896](https://github.com/rstudio/rstudio/issues/18896)): Removed spurious warning: `getLastCryptoError called with no pending error`.
 - ([#18882](https://github.com/rstudio/rstudio/issues/18882)): Fixed an issue where the background job that installs a feature's required R packages reported success, and claimed the packages were installed, even when the installation had failed.
 - ([#18903](https://github.com/rstudio/rstudio/issues/18903)): Fixed an issue where Python function argument completions and their help were missing with Python 3.11 and newer, and for functions with keyword-only arguments or annotations.
 - ([#9179](https://github.com/rstudio/rstudio/issues/9179)): Fixed an issue where `rstudioapi::writeRStudioPreference()` failed with "Type mismatch" when writing a whole number such as `14` (rather than `14L`) to an integer preference, or any value to a numeric preference like `font_size_points` after it had been set to a whole number in Global Options. `rstudioapi::readRStudioPreference()` now also returns numeric preferences as numbers, rather than as integers when their value is whole.
+- ([#18914](https://github.com/rstudio/rstudio/issues/18914)): Fixed an issue where console hyperlinks terminated with `ESC \` (as emitted by cli with `R_CLI_HYPERLINK_MODE=posix`) were displayed as raw escape text instead of links.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
 
 ### Dependencies
 - Copilot Language Server 1.544.0
-- Electron 43.7.3
+- Electron 43.7.5
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)
 
