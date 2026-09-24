@@ -161,6 +161,9 @@ Error FileActiveSessionStorage::readProperties(std::map<std::string, std::string
       return Success();
 
    for(FilePath file : files) {
+      if (isAtomicWriteTempFile(file))
+         continue;
+
       std::string value = "";
       Error error = core::readStringFromFile(file, &value);
 
@@ -192,14 +195,16 @@ Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std:
       if (prop.first == ActiveSession::kSuspendSize)
          continue; // Suspend-size is computed, not saved for file storage so ignore this in the off chance we get here
       FilePath writePath = getPropertyFile(prop.first);
-      Error error = core::writeStringToFile(writePath, prop.second, string_utils::LineEndingPassthrough, true, 0, false);
+      Error error = core::writeStringToFileAtomic(writePath, prop.second);
 
       if (error)
       {
          if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
             ensurePropertyDir();
-            error = core::writeStringToFile(writePath, prop.second);
+            error = core::writeStringToFileAtomic(writePath, prop.second);
+            if (error)
+               LOG_ERROR(error);
          }
          if (error)
             failedFiles.push_back(writePath);

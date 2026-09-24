@@ -421,20 +421,24 @@ TEST_F(ChatSelector, ReadOnlyResolveStillHonoursTheSelection)
 TEST_F(ChatSelector, StillResolvesWhenTheStorageDirectoryCannotBeWritten)
 {
    // Repair is best effort: a read-only storage directory costs the repair,
-   // not the resolve. POSIX only, because directory permissions do not stop
-   // file creation on Windows, and skipped for root, whom they do not stop
-   // either.
+   // not the resolve. The selector file is made read-only too, since a
+   // writable file is rewritten in place when its directory can't be written.
+   // POSIX only, because directory permissions do not stop file creation on
+   // Windows, and skipped for root, whom they do not stop either.
    if (::geteuid() == 0)
       GTEST_SKIP() << "root is not subject to directory permissions";
 
    makeSlot("1.1.0", "1.1.0", "11.0");
    writeSelectorFile("{\"selected\":{\"11.0\":\"9.9.9\"}}");
+   FilePath selectorFile = storageDir_.completeChildPath("selected.json");
+   ASSERT_FALSE(selectorFile.changeFileMode("444"));
    ASSERT_FALSE(storageDir_.changeFileMode("555"));
 
    FilePath resolved = resolveSlot(storageDir_, "11.0", SelectorRepair::Enabled);
 
    // Restore before asserting so a failure does not strand the directory.
    ASSERT_FALSE(storageDir_.changeFileMode("755"));
+   ASSERT_FALSE(selectorFile.changeFileMode("644"));
 
    EXPECT_TRUE(resolved.isEquivalentTo(slot("1.1.0")));
    EXPECT_EQ(readSelections(storageDir_)["11.0"], "9.9.9");

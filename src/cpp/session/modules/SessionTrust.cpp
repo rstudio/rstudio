@@ -183,7 +183,9 @@ Error writeTrustFile(const std::vector<std::string>& trusted,
 
    std::ostringstream os;
    obj.writeFormatted(os);
-   return writeStringToFileAtomic(trustFilePath(), os.str());
+   AtomicWriteOptions options;
+   options.durable = true;
+   return writeStringToFileAtomic(trustFilePath(), os.str(), string_utils::LineEndingPassthrough, options);
 }
 
 bool isInDirectoryList(const std::string& path,
