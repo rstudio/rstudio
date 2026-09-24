@@ -995,6 +995,10 @@ void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
    // only after the new value has reached the session
    if (pref == kShowHiddenObjects || pref == kShowLastDotValue)
    {
+      // without a new baseline, the monitor's next check would report the
+      // names this pref adds or drops as assigned or removed
+      s_pEnvironmentMonitor->resetBaseline();
+
       ClientEvent event(client_events::kEnvironmentRefresh);
       module_context::enqueClientEvent(event);
    }

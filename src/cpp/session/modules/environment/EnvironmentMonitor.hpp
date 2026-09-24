@@ -35,6 +35,11 @@ public:
    bool hasEnvironment();
    void checkForChanges();
 
+   // re-snapshot the environment without reporting changes; used when the
+   // set of listed names changes for a reason other than R code (e.g. a
+   // listing preference)
+   void resetBaseline();
+
    // opaque snapshot of a binding for change detection
    struct BindingSnapshot
    {
@@ -65,6 +70,14 @@ public:
    };
 
    void listEnv(std::vector<std::string>* pNames);
+   void snapshotEnvironment(std::vector<BindingSnapshot>* pEnv,
+                            std::vector<std::string>* pPromises);
+   void addEvaluatedPromises(const std::vector<std::string>& currentPromises,
+                             std::vector<BindingSnapshot>* pAddedVars);
+   void emitVariablesChanged(bool refreshEnqueued,
+                             const std::vector<BindingSnapshot>& currentEnv,
+                             const std::vector<BindingSnapshot>& addedVars,
+                             const std::vector<BindingSnapshot>& removedVars);
    void snapshotBindings(SEXP env,
                          const std::vector<std::string>& names,
                          std::vector<BindingSnapshot>* pSnapshot);

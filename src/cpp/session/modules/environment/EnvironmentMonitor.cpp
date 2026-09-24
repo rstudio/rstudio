@@ -122,10 +122,100 @@ void EnvironmentMonitor::snapshotBindings(
    }
 }
 
+void EnvironmentMonitor::snapshotEnvironment(std::vector<BindingSnapshot>* pEnv,
+                                             std::vector<std::string>* pPromises)
+{
+   // get the set of variable names in the current environment
+   std::vector<std::string> names;
+   listEnv(&names);
+
+   // build snapshots with opaque SEXP pointers for change detection
+   SEXP monitoredEnv = getMonitoredEnvironment();
+   snapshotBindings(monitoredEnv, names, pEnv);
+
+   // sort into canonical order for set_difference;
+   // operator< compares (name, type, token) so both the name-only
+   // removal diff and the full-tuple addition diff are well-defined
+   std::sort(pEnv->begin(), pEnv->end());
+
+   // collect unevaluated promises (sorted for set_difference)
+   pPromises->clear();
+   for (const auto& name : names)
+   {
+      if (isUnevaluatedPromise(name, monitoredEnv))
+         pPromises->push_back(name);
+   }
+   std::sort(pPromises->begin(), pPromises->end());
+}
+
+void EnvironmentMonitor::resetBaseline()
+{
+   snapshotEnvironment(&lastEnv_, &unevaledPromises_);
+}
+
+void EnvironmentMonitor::emitVariablesChanged(bool refreshEnqueued,
+                                              const std::vector<BindingSnapshot>& currentEnv,
+                                              const std::vector<BindingSnapshot>& addedVars,
+                                              const std::vector<BindingSnapshot>& removedVars)
+{
+   if (refreshEnqueued && currentEnv.empty())
+   {
+      // Environment was cleared - emit reset signal
+      module_context::EnvironmentVariablesChangedEvent event;
+      event.reset = true;
+      module_context::events().onEnvironmentVariablesChanged(event);
+      return;
+   }
+
+   // Build a set of names from lastEnv_ for O(1) lookup to distinguish create vs modify
+   std::set<std::string> lastEnvNames;
+   for (const auto& snap : lastEnv_)
+      lastEnvNames.insert(snap.name);
+
+   module_context::EnvironmentVariablesChangedEvent event;
+   event.reset = false;
+
+   // Classify addedVars into created vs modified
+   for (const auto& snap : addedVars)
+   {
+      if (lastEnvNames.count(snap.name) > 0)
+         event.modified.push_back(snap.name);
+      else
+         event.created.push_back(snap.name);
+   }
+
+   // Extract names from removedVars
+   for (const auto& snap : removedVars)
+      event.deleted.push_back(snap.name);
+
+   if (event.created.empty() && event.modified.empty() && event.deleted.empty())
+      return;
+
+   module_context::events().onEnvironmentVariablesChanged(event);
+}
+
+void EnvironmentMonitor::addEvaluatedPromises(const std::vector<std::string>& currentPromises,
+                                              std::vector<BindingSnapshot>* pAddedVars)
+{
+   // have any promises been evaluated since we last checked?
+   if (currentPromises == unevaledPromises_)
+      return;
+
+   // for each promise that is in the set of promises we are monitoring
+   // for evaluation but not in the set of currently tracked promises,
+   // we assume this to be an eval--process as an assign
+   std::vector<std::string> evaluatedPromises;
+   std::set_difference(unevaledPromises_.begin(), unevaledPromises_.end(),
+                       currentPromises.begin(), currentPromises.end(),
+                       std::back_inserter(evaluatedPromises));
+
+   for (const auto& name : evaluatedPromises)
+      pAddedVars->push_back({name, r::sexp::BindingType::Normal, R_NilValue});
+}
+
 void EnvironmentMonitor::checkForChanges()
 {
    // information about the current environment
-   std::vector<std::string> currentNames;
    std::vector<BindingSnapshot> currentEnv;
    std::vector<std::string> currentPromises;
 
@@ -134,25 +224,7 @@ void EnvironmentMonitor::checkForChanges()
    std::vector<BindingSnapshot> addedVars;
    std::vector<BindingSnapshot> removedVars;
 
-   // get the set of variable names in the current environment
-   listEnv(&currentNames);
-
-   // build snapshots with opaque SEXP pointers for change detection
-   SEXP monitoredEnv = getMonitoredEnvironment();
-   snapshotBindings(monitoredEnv, currentNames, &currentEnv);
-
-   // sort into canonical order for set_difference;
-   // operator< compares (name, type, token) so both the name-only
-   // removal diff and the full-tuple addition diff are well-defined
-   std::sort(currentEnv.begin(), currentEnv.end());
-
-   // collect unevaluated promises (sorted for set_difference below)
-   for (const auto& name : currentNames)
-   {
-      if (isUnevaluatedPromise(name, monitoredEnv))
-         currentPromises.push_back(name);
-   }
-   std::sort(currentPromises.begin(), currentPromises.end());
+   snapshotEnvironment(&currentEnv, &currentPromises);
 
    bool refreshEnqueued = false;
    if (!initialized_)
@@ -217,20 +289,7 @@ void EnvironmentMonitor::checkForChanges()
       // if a refresh is scheduled there's no need to emit add events one by one
       if (!refreshEnqueued)
       {
-         // have any promises been evaluated since we last checked?
-         if (currentPromises != unevaledPromises_)
-         {
-            // for each promise that is in the set of promises we are monitoring
-            // for evaluation but not in the set of currently tracked promises,
-            // we assume this to be an eval--process as an assign
-            std::vector<std::string> evaluatedPromises;
-            std::set_difference(unevaledPromises_.begin(), unevaledPromises_.end(),
-                                currentPromises.begin(), currentPromises.end(),
-                                std::back_inserter(evaluatedPromises));
-
-            for (const auto& name : evaluatedPromises)
-               addedVars.push_back({name, r::sexp::BindingType::Normal, R_NilValue});
-         }
+         addEvaluatedPromises(currentPromises, &addedVars);
 
          // fire assigned event for adds, assigns, and promise evaluations
          for (const auto& snap : addedVars)
@@ -241,41 +300,7 @@ void EnvironmentMonitor::checkForChanges()
    // Emit environment variables changed signal for AI assistant integration
    // Only emit for global environment changes
    if (getMonitoredEnvironment() == R_GlobalEnv)
-   {
-      if (refreshEnqueued && currentEnv.empty())
-      {
-         // Environment was cleared - emit reset signal
-         module_context::EnvironmentVariablesChangedEvent event;
-         event.reset = true;
-         module_context::events().onEnvironmentVariablesChanged(event);
-      }
-      else if (!addedVars.empty() || !removedVars.empty())
-      {
-         // Build a set of names from lastEnv_ for O(1) lookup to distinguish create vs modify
-         std::set<std::string> lastEnvNames;
-         for (const auto& snap : lastEnv_)
-            lastEnvNames.insert(snap.name);
-
-         module_context::EnvironmentVariablesChangedEvent event;
-         event.reset = false;
-
-         // Classify addedVars into created vs modified
-         for (const auto& snap : addedVars)
-         {
-            if (lastEnvNames.count(snap.name) > 0)
-               event.modified.push_back(snap.name);
-            else
-               event.created.push_back(snap.name);
-         }
-
-         // Extract names from removedVars
-         for (const auto& snap : removedVars)
-            event.deleted.push_back(snap.name);
-
-         // Emit the signal
-         module_context::events().onEnvironmentVariablesChanged(event);
-      }
-   }
+      emitVariablesChanged(refreshEnqueued, currentEnv, addedVars, removedVars);
 
    unevaledPromises_ = currentPromises;
    lastEnv_ = currentEnv;
