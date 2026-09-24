@@ -144,6 +144,38 @@ TEST_F(GlobalEnvironmentMonitorTest, HidingHiddenObjectsReportsNoChanges)
    EXPECT_TRUE(signals_.empty());
 }
 
+TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingChanges)
+{
+   startMonitoring(false);
+
+   // R code can modify an object and change the pref in one evaluation,
+   // before the monitor has checked for changes
+   r::exec::executeString("assign('" + std::string(kVisibleName) + "', 2, envir = globalenv())");
+   prefs::userPrefs().setShowHiddenObjects(true);
+   monitor_.resetBaseline();
+   monitor_.checkForChanges();
+
+   std::vector<std::string> eventNames = drainEnvironmentEventNames();
+   EXPECT_TRUE(contains(eventNames, kVisibleName));
+   EXPECT_FALSE(contains(eventNames, kHiddenName));
+   EXPECT_TRUE(signalMentions(kVisibleName));
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, PrefChangeKeepsPendingPromiseEvaluation)
+{
+   r::exec::executeString(
+      "delayedAssign('" + std::string(kVisibleName) + "', 3, assign.env = globalenv())");
+   startMonitoring(false);
+
+   r::exec::executeString("force(" + std::string(kVisibleName) + ")");
+   prefs::userPrefs().setShowHiddenObjects(true);
+   monitor_.resetBaseline();
+   monitor_.checkForChanges();
+
+   EXPECT_TRUE(contains(drainEnvironmentEventNames(), kVisibleName));
+   EXPECT_TRUE(signalMentions(kVisibleName));
+}
+
 TEST_F(GlobalEnvironmentMonitorTest, AssistantSignalOmitsHiddenObjects)
 {
    startMonitoring(true);

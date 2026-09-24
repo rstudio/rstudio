@@ -158,7 +158,32 @@ void EnvironmentMonitor::snapshotEnvironment(std::vector<BindingSnapshot>* pEnv,
 
 void EnvironmentMonitor::resetBaseline()
 {
-   snapshotEnvironment(&lastEnv_, &unevaledPromises_);
+   std::vector<BindingSnapshot> currentEnv;
+   std::vector<std::string> currentPromises;
+   snapshotEnvironment(&currentEnv, &currentPromises);
+
+   // names listed both before and after keep their prior snapshots, so that
+   // changes made since the last check are still reported; only names the
+   // listing change added take on their current state
+   std::vector<BindingSnapshot> baseline;
+   std::set_intersection(lastEnv_.begin(), lastEnv_.end(),
+                         currentEnv.begin(), currentEnv.end(),
+                         std::back_inserter(baseline),
+                         compareSnapshotName);
+
+   std::vector<BindingSnapshot> addedByListing;
+   std::set_difference(currentEnv.begin(), currentEnv.end(),
+                       lastEnv_.begin(), lastEnv_.end(),
+                       std::back_inserter(addedByListing),
+                       compareSnapshotName);
+   baseline.insert(baseline.end(), addedByListing.begin(), addedByListing.end());
+   std::sort(baseline.begin(), baseline.end());
+
+   lastEnv_ = baseline;
+
+   // a promise forced since the last check still shows up as a change: its
+   // kept snapshot has a promise binding type and its current one doesn't
+   unevaledPromises_ = currentPromises;
 }
 
 void EnvironmentMonitor::emitVariablesChanged(bool refreshEnqueued,
