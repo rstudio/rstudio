@@ -73,7 +73,7 @@ Error setState(const json::JsonRpcRequest& request,
 
    error = userState().writeLayer(STATE_LAYER_USER, val.getObject());
    if (error)
-      LOG_ERROR(error);
+      return error;
 
    module_context::events().onPreferencesSaved();
 
