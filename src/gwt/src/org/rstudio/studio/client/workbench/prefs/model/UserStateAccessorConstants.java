@@ -128,6 +128,14 @@ public interface UserStateAccessorConstants extends Constants {
    String savePlotAsPdfOptionsDescription();
 
    /**
+    * Whether plots in the Plots pane are drawn at a fixed size rather than the size of the pane, and that size.
+    */
+   @DefaultStringValue("")
+   String fixedPlotSizeTitle();
+   @DefaultStringValue("Whether plots in the Plots pane are drawn at a fixed size rather than the size of the pane, and that size.")
+   String fixedPlotSizeDescription();
+
+   /**
     * Most recently used settings for compiling a notebook from an R script.
     */
    @DefaultStringValue("")

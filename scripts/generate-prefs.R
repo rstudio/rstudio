@@ -393,15 +393,24 @@ generate <- function(schemaPath, className) {
                proptype <- "double"
                default <- default %||% " || 0"
             } else if (identical(proptype, "boolean")) {
-               default <- default %||% " || false"
+               # '||' would turn a stored false into the default when that is
+               # true, so booleans check for a stored value instead
+               default <- gsub("^ [|][|] ", "", default %||% " || false")
             } else {
                default <- ""
             }
             
-            java <- paste0(java,
-              "      public final native ", proptype, " get",  propname, "() /*-{\n",
-              "         return this && this.", prop, default, ";\n",
-              "      }-*/;\n\n")
+            if (identical(proptype, "boolean")) {
+               java <- paste0(java,
+                 "      public final native boolean get",  propname, "() /*-{\n",
+                 "         return this && typeof this.", prop, " === \"boolean\" ? this.", prop, " : ", default, ";\n",
+                 "      }-*/;\n\n")
+            } else {
+               java <- paste0(java,
+                 "      public final native ", proptype, " get",  propname, "() /*-{\n",
+                 "         return this && this.", prop, default, ";\n",
+                 "      }-*/;\n\n")
+            }
             cppstrings <- paste0(cppstrings,
                                  "#define k", capitalize(camel), propname, " \"", prop, "\"\n")
          }

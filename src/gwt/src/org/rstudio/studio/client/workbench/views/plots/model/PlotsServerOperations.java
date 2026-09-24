@@ -68,6 +68,7 @@ public interface PlotsServerOperations
                    int height,
                    boolean overwrite,
                    boolean useDevicePixelRatio,
+                   int resolution,
                    ServerRequestCallback<Bool> requestCallback);
    
    void savePlotAsPdf(FileSystemItem file,

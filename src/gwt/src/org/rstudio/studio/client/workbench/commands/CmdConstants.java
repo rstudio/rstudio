@@ -2656,6 +2656,22 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("View a larger version of the plot in a new window") // $NON-NLS-1$
     String zoomPlotDesc();
     
+    // fitPlotToPane
+    @DefaultStringValue("Fit Plots to Pane") // $NON-NLS-1$
+    String fitPlotToPaneLabel();
+    @DefaultStringValue("_Fit to Pane") // $NON-NLS-1$
+    String fitPlotToPaneMenuLabel();
+    @DefaultStringValue("Draw plots at the size of the Plots pane") // $NON-NLS-1$
+    String fitPlotToPaneDesc();
+    
+    // useFixedPlotSize
+    @DefaultStringValue("Use Fixed Plot Size...") // $NON-NLS-1$
+    String useFixedPlotSizeLabel();
+    @DefaultStringValue("Fi_xed Size...") // $NON-NLS-1$
+    String useFixedPlotSizeMenuLabel();
+    @DefaultStringValue("Draw plots at a fixed size, scaled down to fit the Plots pane") // $NON-NLS-1$
+    String useFixedPlotSizeDesc();
+    
     // removePlot
     @DefaultStringValue("Remove Current Plot...") // $NON-NLS-1$
     String removePlotLabel();

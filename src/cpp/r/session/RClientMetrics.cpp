@@ -45,8 +45,9 @@ RClientMetrics get()
    RClientMetrics metrics;
    metrics.consoleWidth = r::options::getOptionWidth();
    metrics.buildConsoleWidth = r::options::getBuildOptionWidth();
-   metrics.graphicsWidth = graphics::device::getWidth();
-   metrics.graphicsHeight = graphics::device::getHeight();
+   // the client's size rather than the device's, which may be fixed
+   metrics.graphicsWidth = graphics::device::getClientWidth();
+   metrics.graphicsHeight = graphics::device::getClientHeight();
    metrics.devicePixelRatio = graphics::device::devicePixelRatio();
    return metrics;
 }
