@@ -808,7 +808,7 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit(AnsiCode.CSI + "?25lBuilding sites \342\200\246 " +
-                AnsiCode.CSI + "?25h\r" + AnsiCode.CSI + "[K");
+                AnsiCode.CSI + "?25h" + AnsiCode.CSI + "K");
       Assert.assertEquals("<span>Building sites \342\200\246 </span>", ele.getInnerHTML());
       Assert.assertEquals("Building sites \342\200\246 ", vc.toString());
    }
@@ -819,7 +819,7 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("We are " + AnsiCode.CSI + "?25lbuilding sites \342\200\246" +
-                AnsiCode.CSI + "?25h\r" + AnsiCode.CSI + "[K");
+                AnsiCode.CSI + "?25h" + AnsiCode.CSI + "K");
       Assert.assertEquals("<span>We are building sites \342\200\246</span>", ele.getInnerHTML());
       Assert.assertEquals("We are building sites \342\200\246", vc.toString());
    }
@@ -1326,19 +1326,65 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("abc", ele.getInnerText());
    }
 
-   public void testLinuxConsoleEscape()
+   public void testCsiWithBracketFinalByte()
    {
-      // ESC '[' '[' swallows the next character, even from the next submit
+      // as in xterm, ESC '[' '[' is a CSI sequence ending in '[', whether or
+      // not the input is split after it
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("a\033[[Ab");
-      Assert.assertEquals("ab", ele.getInnerText());
+      Assert.assertEquals("aAb", ele.getInnerText());
 
       ele = Document.get().createPreElement();
       vc = getVC(ele);
       vc.submit("a\033[[");
       vc.submit("Ab");
+      Assert.assertEquals("aAb", ele.getInnerText());
+   }
+
+   public void testSgrWithSubParameters()
+   {
+      // the supported parameters still apply when one has sub-parameters
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[1;31;4:3mtext");
+      Assert.assertEquals("<span class=\"xtermBold xtermColor1\">text</span>", ele.getInnerHTML());
+   }
+
+   public void testDanglingCsiDoesNotSwallowPrompt()
+   {
+      // the prompts are made of CSI parameter and intermediate bytes, so a
+      // dangling ESC '[' must not hold them back waiting for a final byte
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[");
+      vc.submit("> ");
+      vc.submit("hello\n");
+      Assert.assertEquals("> hello\n", ele.getInnerText());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033[");
+      vc.submit("+ ");
+      Assert.assertEquals("+ ", ele.getInnerText());
+
+      // whereas a split private mode sequence is completed
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[?2");
+      vc.submit("5lb");
       Assert.assertEquals("ab", ele.getInnerText());
+   }
+
+   public void testUnterminatedOscAcrossSubmits()
+   {
+      // an OSC string is held back for one submit only
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]oops");
+      Assert.assertEquals("", ele.getInnerText());
+      vc.submit("> ");
+      Assert.assertEquals("oops> ", ele.getInnerText());
    }
 
    public void testEscapeBeforeControlCharacter()
@@ -1364,6 +1410,14 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("a\007b");
       Assert.assertEquals("ab", ele.getInnerText());
       Assert.assertEquals("ab", vc.toString());
+
+      // also when ANSI escapes are ignored
+      ele = Document.get().createPreElement();
+      FakePrefs prefs = new FakePrefs();
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
+      vc = new VirtualConsole(ele, prefs);
+      vc.submit("a\007b");
+      Assert.assertEquals("ab", ele.getInnerText());
    }
 
    public void testOtherOscDiscarded()
@@ -1848,6 +1902,14 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = getVC(ele);
       vc.submit("abc\ndef\033[1A\033[9CX");
       Assert.assertEquals("abcX\ndef", vc.toString());
+   }
+
+   public void testCsiCursorMovementDefaultsToOne()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\r\033[Cx\033[Dy");
+      Assert.assertEquals("ayc", vc.toString());
    }
 
    public void testCsiCursorForwardHugeCount()

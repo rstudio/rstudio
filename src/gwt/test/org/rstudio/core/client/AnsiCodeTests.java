@@ -202,6 +202,23 @@ public class AnsiCodeTests extends GWTTestCase
       AnsiCode.AnsiClazzes clazzes = ansi.processCode("\033[38;3m");
       Assert.assertNotNull(clazzes);
       Assert.assertNull(clazzes.inlineClazzes);
+
+      // the reset also ends inverse mode, so the next color is a foreground
+      ansi.processCode("\033[7m");
+      ansi.processCode("\033[38;3m");
+      Assert.assertEquals("xtermColor1", ansi.processCode("\033[31m").inlineClazzes);
+   }
+
+   public void testSubParametersSkipped()
+   {
+      AnsiCode ansi = new AnsiCode();
+      String expected = ansi.processCode("\033[1;31m").inlineClazzes;
+
+      ansi = new AnsiCode();
+      Assert.assertEquals(expected, ansi.processCode("\033[1;31;4:3m").inlineClazzes);
+
+      ansi = new AnsiCode();
+      Assert.assertNull(ansi.processCode("\033[38:2::255:0:0m").inlineClazzes);
    }
 
    public void testStripHyperlinks()

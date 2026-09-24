@@ -995,7 +995,8 @@ public class VirtualConsole
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
       // ANSI code.
-      if (partialAnsiCode_ != null)
+      boolean retryingPartialCode = partialAnsiCode_ != null;
+      if (retryingPartialCode)
       {
          data = partialAnsiCode_ + data;
          partialAnsiCode_ = null;
@@ -1097,8 +1098,12 @@ public class VirtualConsole
                {
                   Match stringEnd = STRING_END.match(data, head + 2);
 
-                  // the rest of the string may arrive with the next submit
-                  if (stringEnd == null && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
+                  // the rest of the string may arrive with the next submit, so hold
+                  // it back once; if that submit doesn't end it either, treat it as
+                  // malformed rather than let it swallow the output (and prompt)
+                  // that follows
+                  boolean alreadyHeldBack = retryingPartialCode && head == 0;
+                  if (stringEnd == null && !alreadyHeldBack && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
                   {
                      partialAnsiCode_ = StringUtil.substring(data, head);
                      return;
@@ -1124,11 +1129,12 @@ public class VirtualConsole
                   break;
                }
 
+               String rest = data.substring(head);
+
                // check for an escape forcing a new span
                if (parent_ != null)
                {
-                  Pattern groupStartPattern = Pattern.create("^\\033G(\\d+);", "");
-                  Match groupStartMatch = groupStartPattern.match(data.substring(head), 0);
+                  Match groupStartMatch = GROUP_START_PATTERN.match(rest, 0);
                   if (groupStartMatch != null)
                   {
                      String type = groupStartMatch.getGroup(1);
@@ -1187,8 +1193,7 @@ public class VirtualConsole
                      break;
                   }
                   
-                  Pattern groupEndPattern = Pattern.create("^\\033g", "");
-                  Match groupEndMatch = groupEndPattern.match(data.substring(head), 0);
+                  Match groupEndMatch = GROUP_END_PATTERN.match(rest, 0);
                   if (groupEndMatch != null)
                   {
                      if (parent_.hasClassName(RES.styles().group()))
@@ -1203,8 +1208,7 @@ public class VirtualConsole
                }
                
                // check for embedded custom highlight rules
-               Pattern highlightStartPattern = Pattern.create("^\\033H(\\d+);", "");
-               Match highlightStartMatch = highlightStartPattern.match(data.substring(head), 0);
+               Match highlightStartMatch = HIGHLIGHT_START_PATTERN.match(rest, 0);
                if (highlightStartMatch != null)
                {
                   String type = highlightStartMatch.getGroup(1);
@@ -1214,8 +1218,7 @@ public class VirtualConsole
                   break;
                }
                
-               Pattern highlightEndPattern = Pattern.create("^\\033h", "");
-               Match highlightEndMatch = highlightEndPattern.match(data.substring(head), 0);
+               Match highlightEndMatch = HIGHLIGHT_END_PATTERN.match(rest, 0);
                if (highlightEndMatch != null)
                {
                   currentClazz = savedClazz_;
@@ -1224,22 +1227,6 @@ public class VirtualConsole
                   break;
                }
                
-               // the Linux console's ESC '[' '[' <char>; if the input ends before
-               // <char>, buffer the prefix rather than parse it as a CSI sequence
-               String rest = data.substring(head);
-               if (rest.equals(AnsiCode.LINUX_CONSOLE_ESCAPE_PREFIX))
-               {
-                  partialAnsiCode_ = rest;
-                  return;
-               }
-
-               Match linuxMatch = AnsiCode.LINUX_CONSOLE_ESCAPE_PATTERN.match(rest, 0);
-               if (linuxMatch != null)
-               {
-                  tail = head + linuxMatch.getValue().length();
-                  break;
-               }
-
                // match complete CSI codes with numeric parameters
                Match csiMatch = AnsiCode.NUMERIC_CSI_PATTERN.match(rest, 0);
                if (csiMatch != null)
@@ -1272,13 +1259,13 @@ public class VirtualConsole
                      // CUF: move right, but not past the end of the current line;
                      // clamp before adding, so that a huge count can't overflow
                      // under Java int semantics
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursor_ += Math.min(n, currentLineEnd() - cursor_);
                   }
                   else if (command == "D")
                   {
                      // CUB: move left, but not past the start of the current line
-                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
+                     int n = StringUtil.parseInt(csiMatch.getGroup(1), 1);
                      cursor_ = Math.max(currentLineStart(), cursor_ - n);
                   }
                   else if (command == "E")
@@ -1307,7 +1294,7 @@ public class VirtualConsole
                }
                
                // discard other complete CSI sequences, e.g. private modes (ESC[?25l)
-               // and sub-parameters (ESC[4:3m)
+               // and intermediate bytes (ESC[2 q)
                Match unsupportedCsiMatch = AnsiCode.CSI_PATTERN.match(rest, 0);
                if (unsupportedCsiMatch != null)
                {
@@ -1649,7 +1636,14 @@ public class VirtualConsole
       public String params_;
    }
    
-   private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
+   // Control characters handled by the console when ANSI escapes are ignored
+   private static final Pattern CONTROL = Pattern.create("[\r\b\f\n\u0007]");
+
+   // RStudio's own escapes, which open and close output groups and highlights
+   private static final Pattern GROUP_START_PATTERN = Pattern.create("^\033G(\\d+);", "");
+   private static final Pattern GROUP_END_PATTERN = Pattern.create("^\033g", "");
+   private static final Pattern HIGHLIGHT_START_PATTERN = Pattern.create("^\033H(\\d+);", "");
+   private static final Pattern HIGHLIGHT_END_PATTERN = Pattern.create("^\033h", "");
 
    // Characters that follow ESC to begin a string sequence: OSC, DCS, SOS,
    // PM, APC, and the GNU screen / tmux window title (ESC 'k'). This matches

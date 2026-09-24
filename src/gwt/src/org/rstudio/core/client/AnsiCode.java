@@ -303,7 +303,8 @@ public class AnsiCode
       boolean extendedRGBMarkerSeen = false;
       int extendedRGBColorsSeen = 0;
 
-      // an empty parameter means 0 (reset), so CSI m and CSI ; 1 m both reset
+      // an empty parameter means 0 (reset), so CSI m and CSI ; 1 m both reset;
+      // a parameter with sub-parameters (4:3) is unsupported and skipped
       String[] tokens = StringUtil.substring(code, 2, code.length() - 1).split(";", -1);
       for (String token : tokens)
       {
@@ -329,8 +330,7 @@ public class AnsiCode
                {
                   // unknown extended color format; hard to recover so
                   // just reset back to defaults and return
-                  clazzes_.clear();
-                  blockClazzes_.clear();
+                  reset();
                   return getStyles();
                }
             }
@@ -376,11 +376,7 @@ public class AnsiCode
          }
          else if (codeVal == RESET)
          {
-            inverted_ = false;
-            currentColor_.reset();
-            currentBgColor_.reset();
-            clazzes_.clear();
-            blockClazzes_.clear();
+            reset();
          }
          else if (codeVal == BOLD)
          {
@@ -670,6 +666,15 @@ public class AnsiCode
       }
    }
 
+   private void reset()
+   {
+      inverted_ = false;
+      currentColor_.reset();
+      currentBgColor_.reset();
+      clazzes_.clear();
+      blockClazzes_.clear();
+   }
+
    private void resetForeground()
    {
       for (int i = 0; i < 256; i++)
@@ -744,10 +749,11 @@ public class AnsiCode
    // The patterns below are anchored, and follow the ECMA-48 structure of
    // escape sequences. The 8-bit CSI (0x9b) is equivalent to ESC '['.
 
-   // A CSI sequence with plain numeric parameters, the only kind the console
-   // acts on (group 1: parameters, group 2: final byte)
+   // A CSI sequence with numeric parameters, the only kind the console acts
+   // on (group 1: parameters, group 2: final byte). Sub-parameters (4:3) are
+   // matched so that the other parameters of an SGR sequence still apply.
    public static final Pattern NUMERIC_CSI_PATTERN =
-         Pattern.create("^(?:\u001b\\[|\u009b)([0-9;]*)([@-~])", "");
+         Pattern.create("^(?:\u001b\\[|\u009b)([0-9;:]*)([@-~])", "");
 
    // Any complete CSI sequence: parameter bytes, then intermediate bytes,
    // then a final byte
@@ -760,17 +766,13 @@ public class AnsiCode
          Pattern.create("^\u001b[ -/]*[0-~]?", "");
 
    // An escape sequence cut off by the end of the input, which the next
-   // output may complete
+   // output may complete: a CSI sequence with numeric parameters (or the
+   // private '?' of ESC[?25l), or ESC with intermediate bytes. A CSI sequence
+   // with other parameter or intermediate bytes is not held back, since the
+   // console prompts ('> ' and '+ ') consist of such bytes, and a dangling
+   // ESC '[' must not swallow them.
    public static final Pattern PARTIAL_ESCAPE_PATTERN =
-         Pattern.create("^(?:(?:\u001b\\[|\u009b)[0-?]*|\u001b)[ -/]*$", "");
-
-   // The Linux console treats ESC '[' '[' as a prefix that swallows one more
-   // character, rather than as a CSI sequence ending in '['
-   public static final Pattern LINUX_CONSOLE_ESCAPE_PATTERN =
-         Pattern.create("^\u001b\\[\\[[\\s\\S]", "");
-
-   // That prefix, without the character it swallows
-   public static final String LINUX_CONSOLE_ESCAPE_PREFIX = "\u001b[[";
+         Pattern.create("^(?:(?:\u001b\\[|\u009b)\\??[0-9;:]*|\u001b[ -/]*)$", "");
 
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
