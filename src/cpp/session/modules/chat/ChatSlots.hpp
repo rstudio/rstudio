@@ -102,15 +102,22 @@ bool isUsableSlotName(const std::string& name);
 bool verifySlot(const core::FilePath& slotDir, SlotInfo* pInfo = nullptr);
 
 /**
- * Every slot under `slotsDir` that verifies, in unspecified order.
+ * Every slot under `slotsDir` for `protocol` that verifies, in unspecified
+ * order.
  *
- * Staging directories and other hidden entries are skipped. A versions
+ * Entries that could not be recorded and read back as a selection -- staging
+ * directories, other dot-prefixed bookkeeping, and any name isUsableSlotName()
+ * rejects -- are skipped, as is any slot declaring another protocol. That
+ * check follows the link and directory checks and precedes the manifest walk,
+ * so slots left by earlier protocols cost one small read each. A versions
  * directory that does not exist yields no slots rather than an error.
  *
  * @param slotsDir The directory holding the slots.
- * @return The verifying slots.
+ * @param protocol The protocol the slots must declare.
+ * @return The verifying slots for that protocol.
  */
-std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir);
+std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir,
+                                    const std::string& protocol);
 
 /**
  * Create an empty staging directory to extract a package into.
@@ -175,6 +182,10 @@ enum class SlotPolicy
  * protocol as the staged package; a name alone is never taken as evidence of
  * what a directory holds. On adoption the staged directory is removed, since
  * nothing else can be using a directory named for this host and process.
+ *
+ * A rename that fails while its target name is still free is retried briefly
+ * before being reported: on Windows, antivirus or the search indexer can hold
+ * a handle inside a freshly extracted tree for a moment.
  *
  * @param stagingDir The staged package, as returned by prepareStagingDir().
  *                   Must be a child of the versions directory.

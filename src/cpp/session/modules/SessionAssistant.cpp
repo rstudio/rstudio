@@ -1227,7 +1227,7 @@ void onError(ProcessOperations& operations, const Error& error, uint64_t generat
    // terminate-the-child behavior applies only when no onError callback is
    // set (see ProcessCallbacks::onError). Treating this as an exit —
    // clearing tracking state or releasing the lock token — would leave a
-   // live agent untracked while it still runs from the shared installation.
+   // live agent running untracked.
    // Record the error and terminate: on POSIX operations.terminate()
    // signals the detached process group (we set detachSession), unlike
    // terminateProcess; on Windows it can only terminate the tracked
@@ -1373,16 +1373,15 @@ Error startAgent(const std::string& assistantType = "")
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
-   // When the agent may run from the shared per-user install (pai/bin),
-   // hold this session's in-use lock while it runs and refuse to start
-   // while another session is mutating that installation. For the managed
-   // install, decide from the configured assistant type, not a path
-   // lookup — mid-swap the path can read as missing and then reappear,
-   // which must not skip the lock. The
-   // RSTUDIO_AGENT_PATH override is pinned once here: the direct launch
-   // branch reuses the pinned path rather than re-reading the environment,
-   // so an override that disappears cannot silently fall back to a
-   // different source mid-start.
+   // When the agent may run from a Posit Assistant installation, hold this
+   // session's in-use lock while it runs and refuse to start while another
+   // session is installing. Vestigial now that installs only create
+   // directories, and removed with the rest of the locking in the follow-up
+   // PR. Whether to lock is decided from the configured assistant type, not
+   // a path lookup. The RSTUDIO_AGENT_PATH override is pinned once here: the
+   // direct launch branch reuses the pinned path rather than re-reading the
+   // environment, so an override that disappears cannot silently fall back
+   // to a different source mid-start.
    bool positHelperConfigured =
       !session::options().positAssistantHelper().isEmpty();
    FilePath agentPathOverride;
@@ -1403,8 +1402,9 @@ Error startAgent(const std::string& assistantType = "")
    // failures, platform path semantics), and over-locking is always safe:
    // it costs at most a retryable refusal while an update runs, and an
    // update refused because a dev agent is running is the conservative
-   // outcome. Copilot without an override never launches from pai/bin and
-   // never locks (lockToken stays 0, which release treats as a no-op).
+   // outcome. Copilot without an override never launches from a Posit
+   // Assistant installation and never locks (lockToken stays 0, which
+   // release treats as a no-op).
    bool helperBranchSelected =
       (assistant == kAssistantPosit && positHelperConfigured) ||
       (assistant == kAssistantCopilot &&

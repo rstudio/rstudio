@@ -24,8 +24,16 @@ namespace chat {
 namespace constants {
 
 // Installation paths
-const char* const kPositAiDirName = "pai/bin";
-const char* const kPositAiBackupDirName = "ai.prev";
+// The Posit Assistant storage root, in the user data directory and in the
+// system config directory alike: it holds the version slots and the selector,
+// and for the user also manifest-check.json. The assistant's own storage is
+// under ~/.posit/assistant, not here.
+const char* const kPositAiStorageDirName = "pai";
+// The unversioned install beneath the storage root. Only the administrator's
+// is read from here now; the per-user pai/bin an older RStudio installed is
+// left alone entirely -- not read, not written, not deleted -- so that
+// release keeps working while this one installs into pai/versions.
+const char* const kLegacyInstallDirName = "bin";
 // Copy shipped with RStudio, installed beside the session binary (or next to
 // bin/ in the macOS app bundle); absent from open-source builds
 const char* const kBundledPositAiDirName = "posit-assistant";
@@ -50,7 +58,10 @@ const char* const kSlotManifestFileName = ".slot-manifest.json";
 // rename that publishes a slot is never a cross-device copy.
 const char* const kStagingDirPrefix = ".tmp-";
 
-// Protocol Version (SUPPORTED_PROTOCOL_VERSION)
+// Protocol Version (SUPPORTED_PROTOCOL_VERSION in the assistant). Published
+// and matched as an exact string, and always of the form <major>.0; the
+// manifest lookup, the selector and the install identity check all rely on
+// that. ChatConstantsTests pins the form.
 const char* const kProtocolVersion = "11.0";
 
 // The one capability that varies by mode; see negotiatedCapabilities().

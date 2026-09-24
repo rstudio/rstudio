@@ -284,8 +284,8 @@ VcsContext vcsContext(const FilePath& workingDir)
    using namespace session::modules;
    using namespace session::modules::source_control;
 
-   // inspect current vcs state (underlying functions execute child
-   // processes so we want to be sure to only call them once)
+   // inspect current vcs state (these can launch git or svn, so call each
+   // only once)
    bool gitInstalled = isGitInstalled();
    bool isGitDirectory = gitInstalled && git::isGitDirectory(workingDir);
    bool svnInstalled = isSvnInstalled();

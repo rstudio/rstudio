@@ -703,8 +703,8 @@ public class AnsiCode
             // Custom RStudio escape (highlight)
             .replaceAll("\\033H\\d*;([^]*?)\\033h", "$1")
             
-            // Operating System Command (OSC)
-            .replaceAll("\\033\\135[^\\033]*\\033\\134", "")
+            // Operating System Command (OSC), terminated by BEL or ESC '\'
+            .replaceAll("\\033\\135[^\\007\\033]*(?:\\007|\\033\\134)", "")
             
             // Control Sequence Introducer (CSI)
             .replaceAll("\\033\\133[^a-zA-Z]*[a-zA-Z]", "");

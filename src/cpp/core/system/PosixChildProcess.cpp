@@ -508,6 +508,20 @@ Error ChildProcess::run()
       runAsUser = user.getUserId();
    }
 
+   // in the non-threadSafe mode the child switches user itself; resolve that
+   // user before the fork, as the lookups involved are not safe in the child
+   // (see ResolvedUser)
+   boost::optional<ResolvedUser> resolvedRunAsUser;
+   if (!options_.threadSafe && !options_.runAsUser.empty() && options_.runAsUser != "root")
+   {
+      ResolvedUser resolved;
+      error = resolveUser(options_.runAsUser, &resolved);
+      if (error)
+         return error;
+
+      resolvedRunAsUser = resolved;
+   }
+
    if (options_.threadSafe && options_.pseudoterminal)
    {
       return systemError(boost::system::errc::operation_not_supported,
@@ -609,10 +623,10 @@ Error ChildProcess::run()
                LOG_ERROR(error);
 
 
-            if (options_.runAsUser != "root")
+            if (resolvedRunAsUser)
             {
                // switch user if not root
-               error = core::system::permanentlyDropPriv(options_.runAsUser);
+               error = core::system::permanentlyDropPrivAfterFork(*resolvedRunAsUser);
                if (error)
                   LOG_ERROR(error);
             }

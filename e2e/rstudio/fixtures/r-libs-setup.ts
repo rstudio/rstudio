@@ -316,7 +316,7 @@ export async function prepareRLibs(): Promise<string | null> {
  * template to guarantee that. Symlinks in the tree (rare in an R library) are
  * recreated as symlinks rather than hardlinked.
  */
-function cloneTreeHardlinks(src: string, dst: string): void {
+export function cloneTreeHardlinks(src: string, dst: string): void {
   fs.mkdirSync(dst, { recursive: true });
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     const s = path.join(src, entry.name);

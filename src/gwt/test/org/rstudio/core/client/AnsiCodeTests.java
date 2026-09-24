@@ -180,4 +180,13 @@ public class AnsiCodeTests extends GWTTestCase
       Assert.assertNull(newClazz.blockClazzes);
       Assert.assertNull(newClazz.inlineClazzes);
     } 
+
+   public void testStripHyperlinks()
+   {
+      String belLink = "\033]8;;https://example.com\007link\033]8;;\007";
+      Assert.assertEquals("link", AnsiCode.strip(belLink));
+
+      String stLink = "\033]8;;https://example.com\033\\link\033]8;;\033\\";
+      Assert.assertEquals("link", AnsiCode.strip(stLink));
+   }
 }

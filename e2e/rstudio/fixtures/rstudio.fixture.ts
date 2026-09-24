@@ -18,6 +18,7 @@ import { withDeadline, DeadlineError } from '../utils/deadline';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
+import { selectedPaiInstalls } from './pai-seed';
 
 type Mode = 'desktop' | 'server';
 
@@ -216,24 +217,22 @@ async function verifyTestManifestIfRequested(session: DesktopSession): Promise<v
  */
 async function logPositAssistantVersionIfInstalled(session: DesktopSession): Promise<void> {
   if (!session.requestedTestManifest) return;
-  const packageJsonPath = path.join(session.dataHome, 'pai', 'bin', 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
+  const storageDir = path.join(session.dataHome, 'pai');
+  const installs = selectedPaiInstalls(session.dataHome);
+  if (installs.length === 0) {
     console.warn(
-      `WARNING: this run requested the Posit Assistant test manifest, but no install exists at ` +
-      `${packageJsonPath} -- this worker exercised no Assistant build.`,
+      `WARNING: this run requested the Posit Assistant test manifest, but no install is selected ` +
+      `under ${storageDir} -- this worker exercised no Assistant build.`,
     );
     return;
   }
-  try {
-    const { version } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-    if (!version) {
-      console.warn(`WARNING: no version field in ${packageJsonPath}.`);
-      return;
-    }
-    logCiNotice(`Posit Assistant version under test: ${version}`);
-  } catch (err) {
-    console.warn(`WARNING: could not read Posit Assistant version from ${packageJsonPath}: ${err}`);
-  }
+  // Normally one. More than one means a seeded build did not satisfy the IDE
+  // and it installed another, so naming a single build here would name the
+  // wrong one -- which protocol the session ran is not readable from disk.
+  logCiNotice(
+    `Posit Assistant version under test: ` +
+    installs.map(i => `${i.version} (protocol ${i.protocol})`).join(', '),
+  );
 }
 
 /**

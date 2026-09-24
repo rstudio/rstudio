@@ -25,6 +25,9 @@
 
 ### Fixed
 - ([#4422](https://github.com/rstudio/rstudio/issues/4422)): On macOS, plot images saved from the Plots pane or copied to the clipboard now record their resolution, so applications such as Word insert them at the intended size. R's Quartz graphics devices leave it out ([PR#19076](https://bugs.r-project.org/show_bug.cgi?id=19076)).
+- ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Posit Assistant now installs each version into its own directory under `pai/versions`, selected through `pai/selected.json`, instead of replacing `pai/bin`. An update no longer modifies the installation a running session uses, and RStudio releases sharing a home directory no longer compete for one install. An administrator can provide the same layout under the system configuration directory. An existing `pai/bin` is left in place for older releases; this release downloads its own copy once, even of a version already installed there.
+- ([#18318](https://github.com/rstudio/rstudio/issues/18318)): Fixed a potential crash at exit when background threads were still running while the R session shut down, including when the session exited after losing its parent RStudio Desktop process.
+- ([#18899](https://github.com/rstudio/rstudio/issues/18899)): Fixed an issue on RStudio Server where restarting R, or otherwise relaunching a session, could occasionally stall for about a minute with "Unable to connect to service" errors before the session came back.
 - ([#18870](https://github.com/rstudio/rstudio/issues/18870)): Fixed an issue where a Restart R that took more than about ten seconds to come back left the console without focus and its prompt unrefreshed, and kept showing the previous R version after a restart into a different R.
 - ([#18864](https://github.com/rstudio/rstudio/issues/18864)): Fixed an RStudio Server crash (segfault) when downloading or exporting a file the user has no read permission on. The download now fails gracefully with an HTTP error instead of streaming from a file stream that never opened.
 - ([#18744](https://github.com/rstudio/rstudio/issues/18744)): RStudio now checks both file-lock types before recovering source documents and reports an error instead of reusing a source database held by another session.
@@ -32,6 +35,7 @@
 - ([#18799](https://github.com/rstudio/rstudio/issues/18799)): Closing a Quarto document's source tab no longer cancels an in-progress render when the preview option is set to "(No Preview)".
 - ([#18842](https://github.com/rstudio/rstudio/issues/18842)): Fixed an issue where `View()` failed on data frames with integer columns when a package masking R's summary functions (e.g. mosaic or mobilizr) was attached before RStudio's own tools environment, as an `.Rprofile` `library()` call leaves it.
 - ([#18843](https://github.com/rstudio/rstudio/issues/18843)): Fixed an issue where `View()` failed with "invalid multibyte string" on data frames holding text that is not valid in the session's encoding.
+- ([#18874](https://github.com/rstudio/rstudio/issues/18874)): Inline data frame and `paged_table()` chunk output now uses the IDE's proportional font instead of its own font stack, which rendered every cell in bold on Windows machines whose only "Lucida Sans" face is the Demibold one.
 - ([#18818](https://github.com/rstudio/rstudio/issues/18818)): Fixed an issue on RStudio Desktop where cancelling the quit prompted by closing the main window left every later close of that window exiting immediately, without prompting to save open documents or the workspace. The window's position and size are now also saved from the close that actually happens, rather than from a close that was cancelled.
 - ([#13292](https://github.com/rstudio/rstudio/issues/13292)): Fixed inline HTML tables produced by `knitr::kable()` retaining dark text when using a dark editor theme.
 - ([#18784](https://github.com/rstudio/rstudio/issues/18784)): Fixed an issue where quitting, closing a project, or switching projects shortly after a session restart prompted to save the workspace image even when Save workspace was set to Never.
@@ -54,14 +58,17 @@
 - ([#18794](https://github.com/rstudio/rstudio/issues/18794)): Python interpreter discovery (Global Options > Python > Select...) now bounds each interpreter probe, so a hung Python or conda executable no longer leaves the dialog stuck at "Finding interpreters...".
 - ([#18831](https://github.com/rstudio/rstudio/issues/18831)): Fixed an issue where updating Posit Assistant from the chat pane left the new version being served under the previous version's Content-Security-Policy until RStudio was restarted, which could break the chat pane.
 - ([#18777](https://github.com/rstudio/rstudio/issues/18777)): Fixed an issue where each session restart added another copy of the Git and SVN directories to the `PATH` of restored terminals.
+- ([#18896](https://github.com/rstudio/rstudio/issues/18896)): Removed spurious warning: `getLastCryptoError called with no pending error`.
 - ([#18882](https://github.com/rstudio/rstudio/issues/18882)): Fixed an issue where the background job that installs a feature's required R packages reported success, and claimed the packages were installed, even when the installation had failed.
 - ([#18921](https://github.com/rstudio/rstudio/issues/18921)): Fixed an issue where View > Panes > Console on Right placed the Console in the top-right quadrant after it had been placed bottom-right in the Pane Layout options, and where other options that default to on (such as "Use device pixel ratio" in Save Plot as Image) could not be saved as off.
+- ([#18903](https://github.com/rstudio/rstudio/issues/18903)): Fixed an issue where Python function argument completions and their help were missing with Python 3.11 and newer, and for functions with keyword-only arguments or annotations.
+- ([#18914](https://github.com/rstudio/rstudio/issues/18914)): Fixed an issue where console hyperlinks terminated with `ESC \` (as emitted by cli with `R_CLI_HYPERLINK_MODE=posix`) were displayed as raw escape text instead of links.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
 
 ### Dependencies
 - Copilot Language Server 1.544.0
-- Electron 43.7.3
+- Electron 43.7.5
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)
 

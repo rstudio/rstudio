@@ -110,10 +110,9 @@ ShellArgs gitArgs()
 // is already in the path then this will be empty
 std::vector<std::string> s_branches;
 std::string s_gitExePath;
-uint64_t s_gitVersion;
-const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
-                           ((uint64_t)7 << 32) |
-                           ((uint64_t)2 << 16);
+
+// whether 'git --version' last succeeded; see isGitInstalled()
+bool s_gitInstalled = false;
 
 core::system::ProcessOptions procOptions()
 {
@@ -3174,6 +3173,47 @@ FilePath whichGitExe()
    return module_context::findProgram("git");
 }
 
+// Points s_gitExePath at the git named in the prefs, else (on Windows) at a
+// detected one. Empty means git is run from the PATH.
+Error resolveGitExePath()
+{
+   s_gitExePath.clear();
+   if (session::options().allowVcsExecutableEdit())
+      s_gitExePath = prefs::userPrefs().gitExePath();
+
+#ifdef _WIN32
+   if (s_gitExePath.empty())
+      return detectAndSaveGitExePath();
+#endif
+
+   return Success();
+}
+
+bool probeGit()
+{
+   // without an explicit binary, look for git again: it may have been
+   // installed, or the PATH changed, since the last look. on Windows that is
+   // the full discovery, since a new install lands in a standard location and
+   // the Start menu rather than on this process's PATH; with no git installed
+   // it's only a few file lookups, as the shortcut is read only if one exists
+#ifdef _WIN32
+   if (s_gitExePath.empty())
+   {
+      Error error = detectAndSaveGitExePath();
+      if (error)
+         return false;
+   }
+#else
+   if (s_gitExePath.empty() && whichGitExe().isEmpty())
+      return false;
+#endif
+
+   // a failure to launch git is the answer 'no' rather than a problem to report
+   core::system::ProcessResult result;
+   Error error = gitExec(gitArgs() << "--version", &result);
+   return !error && result.exitStatus == EXIT_SUCCESS;
+}
+
 } // anonymous namespace
 
 bool isGitInstalled()
@@ -3181,17 +3221,13 @@ bool isGitInstalled()
    if (!prefs::userPrefs().vcsEnabled())
       return false;
 
-   core::system::ProcessResult result;
-   Error error = gitExec(gitArgs() << "--version", &result);
-   if (error)
-      return false;
-   
-#ifdef __APPLE__
-   if (result.exitStatus != EXIT_SUCCESS)
-      module_context::checkXcodeLicense();
-#endif
-   
-   return result.exitStatus == EXIT_SUCCESS;
+   // a working git is remembered, so client inits don't each launch one; a
+   // missing or failing git is probed again, so installing it (or accepting
+   // the Xcode license) mid-session is still picked up
+   if (!s_gitInstalled)
+      s_gitInstalled = probeGit();
+
+   return s_gitInstalled;
 }
 
 bool isGitEnabled()
@@ -3249,25 +3285,13 @@ std::string nonPathGitBinDir()
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref == kGitExePath)
-   {
-      FilePath gitExePath(prefs::userPrefs().gitExePath());
-      if (session::options().allowVcsExecutableEdit() && !gitExePath.isEmpty())
-      {
-         // if there is an explicit value then set it
-         s_gitExePath = gitExePath.getAbsolutePath();
-      }
-      else
-      {
-         // if we are relying on an auto-detected value then scan on windows
-         // and reset to empty on posix
-#ifdef _WIN32
-         detectAndSaveGitExePath();
-#else
-         s_gitExePath = "";
-#endif
-      }
-   }
+   if (pref != kGitExePath)
+      return;
+
+   // switch to the new git now, but leave running it to the next
+   // isGitInstalled(), so a slow or hanging git can't block saving prefs
+   resolveGitExePath();
+   s_gitInstalled = false;
 }
 
 void reaugmentGitIgnore()
@@ -3339,55 +3363,6 @@ void onSuspend(core::Settings*)
 void onResume(const core::Settings&)
 {
    enqueueRefreshEvent();
-}
-
-bool initGitBin()
-{
-   Error error;
-
-   // get the git bin dir from settings if it is there
-   if (session::options().allowVcsExecutableEdit())
-      s_gitExePath = prefs::userPrefs().gitExePath();
-
-   // if it wasn't provided in settings then make sure we can detect it
-   if (s_gitExePath.empty())
-   {
-#ifdef _WIN32
-      error = detectAndSaveGitExePath();
-      if (error)
-      {
-         // log it: otherwise Git support simply disappears with nothing to go on
-         LOG_ERROR(error);
-         return false; // no Git install detected
-      }
-#else
-      FilePath gitExeFilePath = whichGitExe();
-      if (gitExeFilePath.isEmpty())
-         return false; // no Git install detected
-#endif
-   }
-
-   // Save version
-   s_gitVersion = GIT_1_7_2;
-   core::system::ProcessResult result;
-   error = gitExec(gitArgs() << "--version", &result);
-   if (error)
-      LOG_ERROR(error);
-   else
-   {
-      if (result.exitStatus == 0)
-      {
-         boost::smatch matches;
-         if (regex_utils::search(result.stdOut,
-                                 matches,
-                                 boost::regex("\\d+(\\.\\d+)+")))
-         {
-            string_utils::parseVersion(matches[0], &s_gitVersion);
-         }
-      }
-   }
-
-   return true;
 }
 
 bool isGitDirectory(const core::FilePath& workingDir)
@@ -3464,7 +3439,11 @@ core::Error initialize()
 
    module_context::events().onShutdown.connect(onShutdown);
 
-   initGitBin();
+   // git itself is first run by isGitInstalled(). log a failed detection:
+   // otherwise Git support simply disappears with nothing to go on
+   error = resolveGitExePath();
+   if (error)
+      LOG_ERROR(error);
 
    bool interceptAskPass;
 

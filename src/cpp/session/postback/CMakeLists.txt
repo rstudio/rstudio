@@ -50,14 +50,10 @@ endif()
 add_stripped_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FILES})
 
 # set link dependencies
-target_link_libraries(rpostback
-   rstudio-core
-)
-
 if (RSTUDIO_SERVER)
-    target_link_libraries(rpostback
-       rstudio-server-core
-    )
+   target_link_libraries(rpostback rstudio-server-core)
+else()
+   target_link_libraries(rpostback rstudio-core)
 endif()
 
 # configure postback scripts

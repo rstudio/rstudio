@@ -137,6 +137,10 @@ public:
    {
       s_liveOwnerGraceMultiplier = multiplier;
    }
+   // Logs to 'logFile' directly, bypassing the logger (and its locks) even
+   // when the write fails. Process-wide, with no reset: call it only from a
+   // process that will not run any other tests, such as a forked child.
+   static void setLogFileForTesting(const FilePath& logFile);
 #endif
    static bool isNoLockAvailable(const Error& error)
    {
@@ -150,6 +154,7 @@ protected:
    static boost::posix_time::seconds s_refreshRate;
    static int s_liveOwnerGraceMultiplier;
    static bool s_loggingEnabled;
+   static bool s_loggerBypassed;
    static bool s_isLoadBalanced;
    static FilePath& s_logFile;
 };
