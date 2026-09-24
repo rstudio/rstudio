@@ -273,6 +273,11 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
    FilePath filePath(fileChange.fileInfo().absolutePath());
    std::string name = filePath.getFilename();
 
+   // ignore files that aren't registered lists (e.g. .DS_Store, or a list
+   // known only to another version of RStudio)
+   if (listSize(name.c_str()) == 0)
+      return;
+
    // swallow the single change event triggered by normalizeProjectMru()
    if (!s_suppressNextChange.isEmpty() && filePath == s_suppressNextChange)
    {

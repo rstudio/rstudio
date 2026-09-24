@@ -737,12 +737,28 @@ Error writeTempFile(TempFile* pTemp,
       // Only root can give a file to another user, and other users can only
       // set a group they belong to, so this is best-effort. When it fails the
       // new file is ours, which is also what repairs a state file that an
-      // earlier 'sudo rstudio' left owned by root.
-      uid_t uid = (::geteuid() == 0) ? targetStat.st_uid : static_cast<uid_t>(-1);
-      if (::fchown(fd, uid, targetStat.st_gid) == -1)
+      // earlier 'sudo rstudio' left owned by root. Skip the call when nothing
+      // would change, so a file in a group we don't belong to doesn't fail
+      // (and log) on every write.
+      struct stat tempStat;
+      if (::fstat(fd, &tempStat) == -1)
+         tempStat = targetStat;
+
+      uid_t uid = static_cast<uid_t>(-1);
+      if (::geteuid() == 0 && targetStat.st_uid != tempStat.st_uid)
+         uid = targetStat.st_uid;
+
+      gid_t gid = static_cast<gid_t>(-1);
+      if (targetStat.st_gid != tempStat.st_gid)
+         gid = targetStat.st_gid;
+
+      if (uid != static_cast<uid_t>(-1) || gid != static_cast<gid_t>(-1))
       {
-         int code = errno;
-         DLOGF("Couldn't carry the owner of '{}' over to its replacement (errno {})", targetPath.getAbsolutePath(), code);
+         if (::fchown(fd, uid, gid) == -1)
+         {
+            int code = errno;
+            DLOGF("Couldn't carry the owner of '{}' over to its replacement (errno {})", targetPath.getAbsolutePath(), code);
+         }
       }
    }
 
@@ -889,11 +905,13 @@ std::string stringifyString(const std::string& str)
    
    
 Error writeStringVectorToFile(const core::FilePath& filePath,
-                              const std::vector<std::string>& vector)
+                              const std::vector<std::string>& vector,
+                              bool atomic)
 {  
    return writeCollectionToFile<std::vector<std::string> >(filePath,
                                                            vector,
-                                                           stringifyString);
+                                                           stringifyString,
+                                                           atomic);
    
 }
    

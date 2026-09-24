@@ -408,7 +408,8 @@ Error readStringMapFromFile(const core::FilePath& filePath,
                             std::map<std::string,std::string>* pMap);
    
 Error writeStringVectorToFile(const core::FilePath& filePath,
-                              const std::vector<std::string>& vector);
+                              const std::vector<std::string>& vector,
+                              bool atomic = true);
    
 Error readStringVectorFromFile(const core::FilePath& filePath,
                                std::vector<std::string>* pVector,
