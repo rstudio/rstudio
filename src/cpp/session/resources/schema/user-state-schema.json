@@ -189,6 +189,10 @@
                 },
                 "useDevicePixelRatio": {
                     "type": "boolean"
+                },
+                "resolution": {
+                    "type": "integer",
+                    "description": "The resolution of saved images in DPI; 0 (or unset) uses the display's."
                 }
             },
             "default": {
@@ -248,6 +252,31 @@
             },
             "default": {},
             "description": "The most recently used options for saving a plot as a PDF."
+        },
+        "fixed_plot_size": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "width": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                },
+                "units": {
+                    "type": "string",
+                    "enum": ["in", "cm", "px"]
+                }
+            },
+            "default": {
+                "enabled": false,
+                "width": 7,
+                "height": 5,
+                "units": "in"
+            },
+            "description": "Whether plots in the Plots pane are drawn at a fixed size rather than the size of the pane, and that size."
         },
         "compile_r_notebook_prefs": {
             "type": "object",

@@ -15,6 +15,9 @@
 
 #include "SessionPlots.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 #include <boost/format.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
@@ -42,6 +45,7 @@
 #include <r/session/RGraphics.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include "../SessionConsoleInput.hpp"
 
@@ -56,6 +60,11 @@ namespace plots {
 namespace {
 
 #define MAX_FIG_SIZE 3840*2
+
+// Bounds for a fixed plot size, in pixels at 96 DPI (1 to 30 inches). The Fixed
+// Plot Size dialog enforces the same range.
+const int kMinFixedPlotSize = 96;
+const int kMaxFixedPlotSize = 2880;
 
 // locations
 #define kGraphics "/graphics"
@@ -135,7 +144,7 @@ Error savePlotAs(const json::JsonRpcRequest& request,
 {
    // get args
    std::string path, format;
-   int width, height;
+   int width, height, resolution;
    bool overwrite, useDevicePixelRatio;
    Error error = json::readParams(request.params,
                                   &path,
@@ -143,7 +152,8 @@ Error savePlotAs(const json::JsonRpcRequest& request,
                                   &width,
                                   &height,
                                   &overwrite,
-                                  &useDevicePixelRatio);
+                                  &useDevicePixelRatio,
+                                  &resolution);
    if (error)
       return error;
 
@@ -160,11 +170,30 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // save plot
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsImage(plotPath, format, width, height, useDevicePixelRatio);
+   if (resolution > 0)
+   {
+      // the width and height are in pixels at 96 DPI; draw at the requested
+      // resolution instead
+      double pixelRatio = resolution / 96.0;
+      error = display.savePlotAsImage(plotPath, format, width, height, pixelRatio, /*recordResolution=*/true);
+   }
+   else
+   {
+      error = display.savePlotAsImage(plotPath, format, width, height, useDevicePixelRatio, /*recordResolution=*/true);
+   }
    if (error)
    {
-       LOG_ERROR(error);
-       return error;
+      LOG_ERROR(error);
+
+      // the description, when there is one, says what the user can change
+      // (e.g. an image too large to draw); the client shows it in place of
+      // the error's summary
+      std::string description = error.getProperty("description");
+      if (description.empty())
+         return error;
+
+      pResponse->setError(error, json::Value(description));
+      return Success();
    }
 
    // set success result
@@ -269,7 +298,7 @@ Error copyPlotToCocoaPasteboard(const json::JsonRpcRequest& request,
    // save as png
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   error = display.savePlotAsImage(targetFile, "png", width, height, true);
+   error = display.savePlotAsImage(targetFile, "png", width, height, true, /*recordResolution=*/true);
    if (error)
       return error;
 
@@ -305,6 +334,20 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // the full plot is a standard size, drawn at twice the small plot's pixel
+   // ratio. A plot with a fixed size keeps that size (and so its layout), like
+   // other exports, but is drawn at a lower pixel ratio when it's larger than
+   // the standard size, so the page doesn't embed huge images
+   int fullWidth = 1024;
+   int fullHeight = 768;
+   double smallRatio = 1.0;
+   if (r::session::graphics::device::hasFixedSize())
+   {
+      width = fullWidth = r::session::graphics::device::getWidth();
+      height = fullHeight = r::session::graphics::device::getHeight();
+      smallRatio = std::min(1.0, std::min(1024.0 / width, 768.0 / height));
+   }
+
    // create a temp directory to work in
    FilePath tempPath = module_context::tempFile("plots-rpubs", "dir");
    error = tempPath.ensureDirectory();
@@ -315,7 +358,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
    FilePath smallPlotPath = tempPath.completeChildPath("plot-small.png");
-   error = display.savePlotAsImage(smallPlotPath, "png", width, height, false);
+   error = display.savePlotAsImage(smallPlotPath, "png", width, height, smallRatio);
    if (error)
    {
        LOG_ERROR(error);
@@ -324,7 +367,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
 
    // save full plot
    FilePath fullPlotPath = tempPath.completeChildPath("plot-full.png");
-   error = display.savePlotAsImage(fullPlotPath, "png", 1024, 768, 2.0);
+   error = display.savePlotAsImage(fullPlotPath, "png", fullWidth, fullHeight, 2 * smallRatio);
    if (error)
    {
        LOG_ERROR(error);
@@ -528,6 +571,40 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    // get the scale parameter
    int scale = request.queryParamValue("scale", 1);
 
+   // the image fills the window, unless the plot has a fixed size: then it
+   // keeps its aspect ratio, and is rendered at the pixel ratio it's shown at
+   // when scaled to fit the window, so it stays sharp when enlarged and isn't
+   // over-rendered when shrunk. The window's pixel ratio can differ from the
+   // main window's (the one the session knows) when the two are on different
+   // displays, so the page works it out itself
+   std::string imageAttributes = boost::str(
+      boost::format("width=\"100%%\" height=\"100%%\" src=\"plot_zoom_png?width=%1%&height=%2%\"") %
+      width % height);
+   std::string imageScript;
+   bool stretchOnResize = scale == 1;
+   if (graphics::device::hasFixedSize())
+   {
+      int fixedWidth = graphics::device::getWidth();
+      int fixedHeight = graphics::device::getHeight();
+
+      boost::format attributesFmt(
+         "style=\"position: absolute; inset: 0; margin: auto; "
+         "width: min(100vw, calc(100vh * %1% / %2%)); "
+         "height: min(100vh, calc(100vw * %2% / %1%));\"");
+      imageAttributes = boost::str(attributesFmt % fixedWidth % fixedHeight);
+
+      boost::format scriptFmt(
+         "<script type=\"text/javascript\">"
+            "(function() {"
+               "var fit = Math.min(document.body.clientWidth / %1%, document.body.clientHeight / %2%);"
+               "document.getElementById('plot').src = "
+                  "'plot_zoom_png?width=%1%&height=%2%&ratio=' + (window.devicePixelRatio * fit);"
+            "})();"
+         "</script>");
+      imageScript = boost::str(scriptFmt % fixedWidth % fixedHeight);
+      stretchOnResize = false;
+   }
+
    // define template
    std::stringstream templateStream;
    templateStream <<
@@ -539,7 +616,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
                "window.onresize = function() {"
 
                   "var plotEl = document.getElementById('plot');"
-                  "if (plotEl && (#scale#==1) ) {"
+                  "if (plotEl && #stretch#) {"
                      "plotEl.style.width='100%';"
                      "plotEl.style.height='100%';"
                   "}"
@@ -558,15 +635,17 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
             "</script>"
          "</head>"
          "<body style=\"margin: 0; overflow: hidden\">"
-            "<img id=\"plot\" width=\"100%\" height=\"100%\" src=\"plot_zoom_png?width=#width#&height=#height#\"/>"
+            "<img id=\"plot\" #!attributes#/>"
+            "#!script#"
          "</body>"
       "</html>";
 
    // define variables
    std::map<std::string,std::string> variables;
-   variables["width"] = safe_convert::numberToString(width);
-   variables["height"] = safe_convert::numberToString(height);
-   variables["scale"] = safe_convert::numberToString(scale);;
+   variables["scale"] = safe_convert::numberToString(scale);
+   variables["stretch"] = stretchOnResize ? "true" : "false";
+   variables["attributes"] = imageAttributes;
+   variables["script"] = imageScript;
    text::TemplateFilter filter(variables);
 
    pResponse->setNoCacheHeaders();
@@ -581,17 +660,21 @@ void handleZoomPngRequest(const http::Request& request,
 
    // get the width and height parameters
    int width, height;
-   if (!extractSizeParams(request, 100, MAX_FIG_SIZE, &width, &height, pResponse))
+   if (!extractSizeParams(request, kMinFixedPlotSize, MAX_FIG_SIZE, &width, &height, pResponse))
      return;
+
+   // an explicit pixel ratio is requested for plots with a fixed size; clamp
+   // it here, since the URL can be hand-built
+   double ratio = request.queryParamValue("ratio", 0.0);
+   if (ratio > 0)
+      ratio = std::min(ratio, static_cast<double>(MAX_FIG_SIZE) / std::max(width, height));
 
    // generate the file
    using namespace rstudio::r::session::graphics;
    FilePath imagePath = module_context::tempFile("plot", "png");
-   Error saveError = graphics::display().savePlotAsImage(imagePath,
-                                                         kPngFormat,
-                                                         width,
-                                                         height,
-                                                         true);
+   Error saveError = (ratio > 0)
+      ? graphics::display().savePlotAsImage(imagePath, kPngFormat, width, height, ratio)
+      : graphics::display().savePlotAsImage(imagePath, kPngFormat, width, height, true);
    if (saveError)
    {
       pResponse->setError(http::status::InternalServerError, 
@@ -714,6 +797,7 @@ void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
    jsonPlotsState["height"] = displayState.height;
    jsonPlotsState["plotIndex"] = displayState.activePlotIndex;
    jsonPlotsState["plotCount"] = displayState.plotCount;
+   jsonPlotsState["fixedSize"] = displayState.fixedSize;
    jsonPlotsState["activatePlots"] = activatePlots &&
                                      (displayState.plotCount > 0);
    jsonPlotsState["showManipulator"] = showManipulator;
@@ -863,6 +947,59 @@ Error manipulatorPlotClicked(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// Pixels per unit of a fixed plot size, at the 96 DPI the device draws at.
+double pixelsPerUnit(const std::string& units)
+{
+   if (units == "cm")
+      return 96.0 / 2.54;
+   else if (units == "px")
+      return 1.0;
+   else
+      return 96.0;
+}
+
+int fixedPlotSizeInPixels(double value, const std::string& units)
+{
+   // clamp before converting, since the saved size may be out of int range
+   double pixels = std::round(value * pixelsPerUnit(units));
+   pixels = std::max<double>(kMinFixedPlotSize, std::min<double>(pixels, kMaxFixedPlotSize));
+   return static_cast<int>(pixels);
+}
+
+void syncFixedPlotSize()
+{
+   boost::optional<bool> enabled;
+   boost::optional<double> width, height;
+   boost::optional<std::string> units;
+   Error error = json::readObject(prefs::userState().fixedPlotSize(),
+                                  kFixedPlotSizeEnabled, enabled,
+                                  kFixedPlotSizeWidth, width,
+                                  kFixedPlotSizeHeight, height,
+                                  kFixedPlotSizeUnits, units);
+   if (error)
+      LOG_ERROR(error);
+
+   using namespace rstudio::r::session;
+   if (!error && enabled.get_value_or(false) && width && height)
+   {
+      std::string unitsValue = units.get_value_or("in");
+      graphics::device::setFixedSize(
+         fixedPlotSizeInPixels(*width, unitsValue),
+         fixedPlotSizeInPixels(*height, unitsValue));
+   }
+   else
+   {
+      graphics::device::setFixedSize(0, 0);
+   }
+}
+
+void onUserStateChanged(const std::string& /* layerName */,
+                        const std::string& name)
+{
+   if (name == kFixedPlotSize)
+      syncFixedPlotSize();
+}
+
 SEXP rs_emitBeforeNewPlot()
 {
    events().onBeforeNewPlot();
@@ -886,14 +1023,31 @@ SEXP rs_savePlotAsImage(SEXP fileSEXP,
                         SEXP widthSEXP,
                         SEXP heightSEXP)
 {
-   FilePath filePath(r::sexp::safeAsString(fileSEXP));
-   std::string format = r::sexp::safeAsString(formatSEXP);
-   int width = r::sexp::asInteger(widthSEXP);
-   int height = r::sexp::asInteger(heightSEXP);
+   try
+   {
+      FilePath filePath(r::sexp::safeAsString(fileSEXP));
+      std::string format = r::sexp::safeAsString(formatSEXP);
+      int width = r::sexp::asInteger(widthSEXP);
+      int height = r::sexp::asInteger(heightSEXP);
 
-   r::session::graphics::Display& display = r::session::graphics::display();
-   if (display.hasOutput())
-      display.savePlotAsImage(filePath, format, width, height, false);
+      r::session::graphics::Display& display = r::session::graphics::display();
+      if (display.hasOutput())
+      {
+         Error error = display.savePlotAsImage(filePath, format, width, height, false, /*recordResolution=*/true);
+         if (error)
+         {
+            // the description, when there is one, says what the caller can
+            // change (e.g. an image too large to draw)
+            std::string description = error.getProperty("description");
+            throw r::exec::RErrorException(description.empty() ? error.getMessage() : description);
+         }
+      }
+   }
+   catch (r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
 
    return R_NilValue;
 }
@@ -937,6 +1091,9 @@ Error initialize()
    module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
    module_context::events().onBeforeExecute.connect(bind(onBeforeExecute));
    module_context::events().onBackgroundProcessing.connect(onBackgroundProcessing);
+   prefs::userState().onChanged.connect(onUserStateChanged);
+
+   syncFixedPlotSize();
 
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewPlot, 0);
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewGridPage, 0);
