@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <core/FileSerializer.hpp>
+#include <core/tests/ScratchDir.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
@@ -33,6 +34,8 @@
 
 namespace rstudio {
 namespace core {
+
+using tests::scratchDir;
 
 TEST(FileSerializerTest, WriteStringRoundTrips)
 {
@@ -208,15 +211,6 @@ TEST(FileSerializerTest, WriteStringAtomicRoundTrips)
 
 namespace {
 
-// An empty directory to write test files into.
-FilePath scratchDir()
-{
-   FilePath dir;
-   EXPECT_FALSE(FilePath::tempFilePath(dir));
-   EXPECT_FALSE(dir.ensureDirectory());
-   return dir;
-}
-
 int countAtomicWriteTempFiles(const FilePath& dir)
 {
    std::vector<FilePath> children;
@@ -322,6 +316,41 @@ TEST(FileSerializerTest, RemovesStaleAtomicWriteTempFiles)
 
    // a missing directory is not an error
    removeStaleAtomicWriteTempFiles(dir.completePath("missing"));
+
+   dir.remove();
+}
+
+// The first write into a directory cleans up after an earlier write that a
+// crash interrupted, without the writer having to know about it.
+TEST(FileSerializerTest, WriteStringAtomicRemovesStaleTempFiles)
+{
+   FilePath dir = scratchDir();
+
+   FilePath stale = dir.completePath(".rstudio-tmp-stale");
+   FilePath recent = dir.completePath(".rstudio-tmp-recent");
+   ASSERT_FALSE(writeStringToFile(stale, "stale"));
+   ASSERT_FALSE(writeStringToFile(recent, "recent"));
+   stale.setLastWriteTime(std::time(nullptr) - 2 * 60 * 60);
+
+   ASSERT_FALSE(writeStringToFileAtomic(dir.completePath("state.json"), "{}"));
+
+   EXPECT_FALSE(stale.exists());
+   EXPECT_TRUE(recent.exists());
+
+   dir.remove();
+}
+
+// A failure names the file being written, not the temporary file, since that
+// is what the caller reports to the user.
+TEST(FileSerializerTest, WriteStringAtomicErrorNamesTarget)
+{
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("missing").completePath("state.json");
+
+   Error error = writeStringToFileAtomic(filePath, "{}");
+   ASSERT_TRUE(error);
+   EXPECT_EQ(filePath.getAbsolutePath(), error.getProperty("path"));
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
 
    dir.remove();
 }

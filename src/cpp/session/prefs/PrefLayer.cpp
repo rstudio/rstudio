@@ -242,14 +242,10 @@ Error PrefLayer::writePrefsToFile(const core::json::Object& prefs,
    // this file, the next time they write it).
    AtomicWriteOptions options;
    options.ownerOnly = ownerOnly;
-   error = writeStringToFileAtomic(prefsFile,
-                                   prefs.writeFormatted(),
-                                   string_utils::LineEndingPassthrough,
-                                   options);
-   if (error)
-      LOG_ERROR(error);
-
-   return error;
+   return writeStringToFileAtomic(prefsFile,
+                                  prefs.writeFormatted(),
+                                  string_utils::LineEndingPassthrough,
+                                  options);
 }
 
 boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)

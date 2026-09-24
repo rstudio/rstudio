@@ -140,10 +140,7 @@ Error putProperties(const std::string& path, const json::Object& properties)
    FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
    error = writeStringToFileAtomic(propertiesFilePath, properties.writeFormatted());
    if (error)
-   {
-      LOG_ERROR(error);
       return error;
-   }
 
    // update the index if necessary
    if (updateIndex)
@@ -652,10 +649,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, 
                                             string_utils::LineEndingPassthrough,
                                             options);
       if (error)
-      {
-         LOG_ERROR(error);
          return error;
-      }
    }
    
    // get document properties as json
@@ -663,14 +657,10 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, 
    writeToJson(&jsonProperties, false);
    
    // write properties to file
-   Error error = writeStringToFileAtomic(filePath,
-                                         jsonProperties.writeFormatted(),
-                                         string_utils::LineEndingPassthrough,
-                                         options);
-   if (error)
-      LOG_ERROR(error);
-
-   return error;
+   return writeStringToFileAtomic(filePath,
+                                  jsonProperties.writeFormatted(),
+                                  string_utils::LineEndingPassthrough,
+                                  options);
 }
 
 void SourceDocument::editProperty(const json::Object::Member& property)

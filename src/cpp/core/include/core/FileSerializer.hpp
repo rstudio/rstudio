@@ -91,6 +91,13 @@ struct AtomicWriteOptions
 // If a temporary file can't be created next to the file (e.g. the directory
 // isn't writable), the file is written in place instead.
 //
+// The first time a process writes into a directory this way, temporary files
+// that an earlier, interrupted write left there are removed (see
+// removeStaleAtomicWriteTempFiles()).
+//
+// A failure names the file in the error's "path" property; the temporary file
+// involved, if any, is in "temp-path".
+//
 // Use this for state files RStudio owns. Files that belong to the user
 // (documents, .Rhistory) should normally be written in place with
 // writeStringToFile(), which keeps the file's identity (inode, hard links,
@@ -108,7 +115,9 @@ bool isAtomicWriteTempFile(const core::FilePath& filePath);
 // Removes temporary files left in dir by an interrupted
 // writeStringToFileAtomic() (e.g. after a crash). Only files older than
 // maxAgeSeconds are removed, so that a write in progress in another process
-// is left alone. Not recursive.
+// is left alone. Not recursive. writeStringToFileAtomic() does this itself
+// on its first write into a directory, so this is only needed for a
+// directory that is read without being written.
 void removeStaleAtomicWriteTempFiles(const core::FilePath& dir,
                                      std::time_t maxAgeSeconds = 3600);
 

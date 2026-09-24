@@ -143,8 +143,6 @@ void restoreState(const core::FilePath& stateFilePath,
 void removeUncommittedStateFiles(const FilePath& stateDir,
                                  const std::set<FilePath>& committedFiles)
 {
-   removeStaleAtomicWriteTempFiles(stateDir);
-
    std::vector<FilePath> children;
    Error error = stateDir.getChildren(children);
    if (error)
@@ -155,6 +153,8 @@ void removeUncommittedStateFiles(const FilePath& stateDir,
 
    for (const FilePath& child : children)
    {
+      // a temporary file may belong to a write another session is making;
+      // the writes above sweep the stale ones
       if (committedFiles.count(child) || isAtomicWriteTempFile(child))
          continue;
 

@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <algorithm>
 #include <gsl/gsl-lite.hpp>
@@ -27,6 +28,9 @@
 #include <boost/thread.hpp>
 
 #ifdef _WIN32
+# include <cstddef>
+# include <cstring>
+# include <vector>
 # include <windows.h>
 #else
 # include <cerrno>
@@ -36,9 +40,11 @@
 #endif
 
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <core/DateTime.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Thread.hpp>
 
 namespace rstudio {
 namespace core {
@@ -437,19 +443,28 @@ Error writeInPlace(const FilePath& targetPath,
                                        options.durable);
 }
 
+// The error for a failed step of an atomic write. It names the file being
+// written, which is what the caller and the user know about; the temporary
+// file is recorded separately.
+Error atomicWriteError(int code,
+                       const FilePath& targetPath,
+                       const FilePath& tempPath,
+                       const ErrorLocation& location)
+{
+   Error error = fileError(code, targetPath, location);
+   error.addProperty("temp-path", tempPath.getAbsolutePath());
+   return error;
+}
+
 #ifdef _WIN32
 
-// Create a temporary file next to targetPath and write contents to it.
-// *pCreated reports whether the file was created, i.e. whether the caller
-// needs to remove it after a failure.
+// Create a temporary file next to targetPath and write contents to it. On
+// failure the temporary file is removed, so the caller has nothing to clean up.
 Error writeTempFile(const FilePath& targetPath,
                     const std::string& contents,
                     const AtomicWriteOptions& options,
-                    FilePath* pTempPath,
-                    bool* pCreated)
+                    FilePath* pTempPath)
 {
-   *pCreated = false;
-
    Error error = atomicWriteTempPath(targetPath, pTempPath);
    if (error)
       return error;
@@ -465,35 +480,75 @@ Error writeTempFile(const FilePath& targetPath,
       nullptr);
 
    if (hFile == INVALID_HANDLE_VALUE)
-   {
-      error = LAST_SYSTEM_ERROR();
-      error.addProperty("path", pTempPath->getAbsolutePath());
-      return error;
-   }
+      return atomicWriteError(::GetLastError(), targetPath, *pTempPath, ERROR_LOCATION);
 
-   *pCreated = true;
-
-   error = writeAll(hFile, contents, *pTempPath);
+   error = writeAll(hFile, contents, targetPath);
    if (!error && options.durable && !::FlushFileBuffers(hFile))
-   {
-      error = LAST_SYSTEM_ERROR();
-      error.addProperty("path", pTempPath->getAbsolutePath());
-   }
+      error = atomicWriteError(::GetLastError(), targetPath, *pTempPath, ERROR_LOCATION);
 
    if (error)
    {
+      error.addOrUpdateProperty("temp-path", pTempPath->getAbsolutePath());
       (void) ::CloseHandle(hFile);
+      pTempPath->removeIfExists();
       return error;
    }
 
    if (!::CloseHandle(hFile))
    {
-      error = LAST_SYSTEM_ERROR();
-      error.addProperty("path", pTempPath->getAbsolutePath());
+      error = atomicWriteError(::GetLastError(), targetPath, *pTempPath, ERROR_LOCATION);
+      pTempPath->removeIfExists();
       return error;
    }
 
    return Success();
+}
+
+// Rename tempPath over targetPath with POSIX semantics, which (unlike the
+// legacy rename) supersedes a target that another process has open with
+// FILE_SHARE_DELETE, as our readers do; they keep reading the old contents.
+// Needs Windows 10 1607+ and a filesystem that supports it (NTFS): elsewhere
+// it fails with ERROR_INVALID_PARAMETER or ERROR_NOT_SUPPORTED.
+bool posixRename(const FilePath& tempPath, const FilePath& targetPath, DWORD* pCode)
+{
+   HANDLE hFile = ::CreateFileW(
+      tempPath.getAbsolutePathW().c_str(),
+      DELETE,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL,
+      nullptr);
+
+   if (hFile == INVALID_HANDLE_VALUE)
+   {
+      *pCode = ::GetLastError();
+      return false;
+   }
+
+   // the kernel parses the new name as an NT path, which wants backslashes
+   std::wstring newName = targetPath.getAbsolutePathW();
+   std::replace(newName.begin(), newName.end(), L'/', L'\\');
+
+   std::size_t nameBytes = newName.size() * sizeof(WCHAR);
+   std::vector<char> buffer(offsetof(FILE_RENAME_INFO, FileName) + nameBytes + sizeof(WCHAR), 0);
+   FILE_RENAME_INFO* pInfo = reinterpret_cast<FILE_RENAME_INFO*>(buffer.data());
+   pInfo->Flags = FILE_RENAME_FLAG_REPLACE_IF_EXISTS | FILE_RENAME_FLAG_POSIX_SEMANTICS;
+   pInfo->RootDirectory = nullptr;
+   pInfo->FileNameLength = static_cast<DWORD>(nameBytes);
+   std::memcpy(pInfo->FileName, newName.data(), nameBytes);
+
+   BOOL renamed = ::SetFileInformationByHandle(hFile, FileRenameInfoEx, pInfo, static_cast<DWORD>(buffer.size()));
+   *pCode = renamed ? ERROR_SUCCESS : ::GetLastError();
+   (void) ::CloseHandle(hFile);
+
+   return renamed != FALSE;
+}
+
+bool isReadOnly(const FilePath& filePath)
+{
+   DWORD attributes = ::GetFileAttributesW(filePath.getAbsolutePathW().c_str());
+   return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_READONLY) != 0;
 }
 
 Error replaceFile(const FilePath& tempPath,
@@ -502,34 +557,48 @@ Error replaceFile(const FilePath& tempPath,
 {
    using namespace boost::posix_time;
 
+   // the contents were flushed before the rename when durable was requested,
+   // and NTFS journals the rename itself; the legacy rename can also be asked
+   // to write through
    DWORD flags = MOVEFILE_REPLACE_EXISTING;
    if (options.durable)
       flags |= MOVEFILE_WRITE_THROUGH;
 
-   // Windows won't replace a file that another process has open, which
-   // indexers, antivirus and backup software do briefly; retry for a while
+   // A target that another process holds open without FILE_SHARE_DELETE
+   // (indexers, antivirus and backup software do so briefly) can't be replaced
+   // until it's closed; retry for a while.
+   bool posixSupported = true;
    ptime deadline = microsec_clock::universal_time() + seconds(std::max(options.maxRetrySeconds, 0));
    while (true)
    {
-      if (::MoveFileExW(tempPath.getAbsolutePathW().c_str(),
-                        targetPath.getAbsolutePathW().c_str(),
-                        flags))
+      DWORD code = ERROR_SUCCESS;
+      bool renamed = false;
+      if (posixSupported)
       {
-         return Success();
+         renamed = posixRename(tempPath, targetPath, &code);
+         posixSupported = renamed || (code != ERROR_INVALID_PARAMETER && code != ERROR_NOT_SUPPORTED);
       }
 
-      DWORD code = ::GetLastError();
-      bool inUse = code == ERROR_ACCESS_DENIED ||
-                   code == ERROR_SHARING_VIOLATION ||
-                   code == ERROR_LOCK_VIOLATION;
+      if (!renamed && !posixSupported)
+      {
+         renamed = ::MoveFileExW(tempPath.getAbsolutePathW().c_str(),
+                                 targetPath.getAbsolutePathW().c_str(),
+                                 flags) != FALSE;
+         if (!renamed)
+            code = ::GetLastError();
+      }
+
+      if (renamed)
+         return Success();
+
+      // the legacy rename reports a target in use as ERROR_ACCESS_DENIED, but
+      // that is also the (permanent) answer for a read-only target
+      bool inUse = code == ERROR_SHARING_VIOLATION ||
+                   code == ERROR_LOCK_VIOLATION ||
+                   (code == ERROR_ACCESS_DENIED && !isReadOnly(targetPath));
 
       if (!inUse || microsec_clock::universal_time() >= deadline)
-      {
-         Error error = systemError(static_cast<int>(code), ERROR_LOCATION);
-         error.addProperty("path", targetPath.getAbsolutePath());
-         error.addProperty("temp-path", tempPath.getAbsolutePath());
-         return error;
-      }
+         return atomicWriteError(static_cast<int>(code), targetPath, tempPath, ERROR_LOCATION);
 
       boost::this_thread::sleep(milliseconds(50));
    }
@@ -537,17 +606,13 @@ Error replaceFile(const FilePath& tempPath,
 
 #else
 
-// Create a temporary file next to targetPath and write contents to it.
-// *pCreated reports whether the file was created, i.e. whether the caller
-// needs to remove it after a failure.
+// Create a temporary file next to targetPath and write contents to it. On
+// failure the temporary file is removed, so the caller has nothing to clean up.
 Error writeTempFile(const FilePath& targetPath,
                     const std::string& contents,
                     const AtomicWriteOptions& options,
-                    FilePath* pTempPath,
-                    bool* pCreated)
+                    FilePath* pTempPath)
 {
-   *pCreated = false;
-
    // when replacing a file, the new one takes over its owner, group and mode
    struct stat targetStat;
    bool replacing = ::stat(targetPath.getAbsolutePath().c_str(), &targetStat) == 0;
@@ -570,9 +635,7 @@ Error writeTempFile(const FilePath& targetPath,
    while (fd == -1 && errno == EINTR);
 
    if (fd == -1)
-      return fileError(errno, *pTempPath, ERROR_LOCATION);
-
-   *pCreated = true;
+      return atomicWriteError(errno, targetPath, *pTempPath, ERROR_LOCATION);
 
    if (replacing)
    {
@@ -594,24 +657,26 @@ Error writeTempFile(const FilePath& targetPath,
    {
       mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
       if (::fchmod(fd, mode) == -1)
-      {
-         error = fileError(errno, *pTempPath, ERROR_LOCATION);
-         (void) ::close(fd);
-         return error;
-      }
+         error = fileError(errno, targetPath, ERROR_LOCATION);
    }
 
-   error = writeAll(fd, contents, *pTempPath);
+   if (!error)
+      error = writeAll(fd, contents, targetPath);
    if (!error && options.durable)
-      error = syncFile(fd, *pTempPath);
+      error = syncFile(fd, targetPath);
+
+   if (error)
+      (void) ::close(fd);
+   else
+      error = closeFile(fd, targetPath);
 
    if (error)
    {
-      (void) ::close(fd);
-      return error;
+      error.addOrUpdateProperty("temp-path", pTempPath->getAbsolutePath());
+      pTempPath->removeIfExists();
    }
 
-   return closeFile(fd, *pTempPath);
+   return error;
 }
 
 Error replaceFile(const FilePath& tempPath,
@@ -634,6 +699,28 @@ Error replaceFile(const FilePath& tempPath,
 }
 
 #endif
+
+// The directories this process has already swept for the temporary files of
+// interrupted writes. Leaked, as writes may still be in flight during static
+// teardown.
+std::set<std::string>& s_sweptDirectories = make_leaked<std::set<std::string>>();
+boost::mutex& s_sweptDirectoriesMutex = make_leaked<boost::mutex>();
+
+// Sweep dir the first time this process writes into it. That covers every
+// directory written atomically without each writer having to remember to,
+// and the earlier write that left a file behind is what crashed, so a fresh
+// process is the right one to clean up after it.
+void removeStaleAtomicWriteTempFilesOnce(const FilePath& dir)
+{
+   LOCK_MUTEX(s_sweptDirectoriesMutex)
+   {
+      if (!s_sweptDirectories.insert(dir.getAbsolutePath()).second)
+         return;
+   }
+   END_LOCK_MUTEX
+
+   removeStaleAtomicWriteTempFiles(dir);
+}
 
 } // anonymous namespace
 
@@ -783,17 +870,12 @@ Error writeStringToFileAtomic(const FilePath& filePath,
    if (error)
       return error;
 
+   removeStaleAtomicWriteTempFilesOnce(targetPath.getParent());
+
    FilePath tempPath;
-   bool created = false;
-   error = writeTempFile(targetPath, contents, options, &tempPath, &created);
+   error = writeTempFile(targetPath, contents, options, &tempPath);
    if (error)
    {
-      if (created)
-      {
-         tempPath.removeIfExists();
-         return error;
-      }
-
       // no file could be created next to the target, e.g. because its
       // directory isn't writable even though the file itself is
       if (isPermissionError(error))

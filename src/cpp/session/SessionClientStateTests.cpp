@@ -22,25 +22,15 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/tests/ScratchDir.hpp>
 
 using namespace rstudio::core;
+using rstudio::core::tests::scratchDir;
 
 namespace rstudio {
 namespace r {
 namespace session {
 namespace tests {
-
-namespace {
-
-FilePath scratchDir()
-{
-   FilePath dir;
-   EXPECT_FALSE(FilePath::tempFilePath(dir));
-   EXPECT_FALSE(dir.ensureDirectory());
-   return dir;
-}
-
-} // anonymous namespace
 
 // Each commit replaces the state files in place of wiping the directories
 // first, then removes the files that are no longer part of the state.
