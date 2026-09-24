@@ -220,6 +220,27 @@ test_that("function frames list hidden arguments but not dots", {
    expect_equal(contents[[which(names == ".data")]][["type"]], "promise")
    expect_false("..." %in% names)
    expect_false(forced)
+
+   # with no arguments passed through, '...' is bound to the missing marker
+   contents <- listFrame(1)
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_false("..." %in% names)
+})
+
+test_that("a user-assigned object named '...' is listed", {
+   # https://github.com/rstudio/rstudio/issues/9755
+   hiddenValue <- .rs.api.readRStudioPreference("show_hidden_objects")
+   on.exit(.rs.api.writeRStudioPreference("show_hidden_objects", hiddenValue), add = TRUE)
+   .rs.api.writeRStudioPreference("show_hidden_objects", TRUE)
+
+   assign("...", 1, envir = globalenv())
+   on.exit(rm("...", envir = globalenv()), add = TRUE)
+
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+   contents <- .rs.invokeRpc("list_environment")
+
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_true("..." %in% names)
 })
 
 test_that("flag must be specified when removing objects", {

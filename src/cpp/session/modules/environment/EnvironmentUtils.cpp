@@ -85,6 +85,18 @@ json::Value descriptionOfVar(const std::string& name, SEXP env)
    return json::Value(value);
 }
 
+// whether env binds '...' as a function's arguments: a DOTSXP of the caller's
+// unevaluated arguments, or the missing-argument marker when none were passed
+bool bindsFunctionDots(SEXP env)
+{
+   r::sexp::BindingType bt = r::sexp::getBindingType("...", env);
+   if (bt == r::sexp::BindingType::Missing)
+      return true;
+   if (bt != r::sexp::BindingType::Normal)
+      return false;
+   return TYPEOF(r::sexp::getBindingIdentity("...", env, bt)) == DOTSXP;
+}
+
 } // anonymous namespace
 
 void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames)
@@ -94,10 +106,11 @@ void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames)
                             prefs::userPrefs().showLastDotValue(),
                             pNames);
 
-   // '...' in a function frame holds the caller's unevaluated arguments; it
-   // isn't a user-assigned object and the pane's describe/size code isn't
-   // built to inspect it safely
-   pNames->erase(std::remove(pNames->begin(), pNames->end(), "..."), pNames->end());
+   // a function's '...' isn't a user-assigned object, and the pane's
+   // describe/size code isn't built to inspect it safely
+   auto dots = std::find(pNames->begin(), pNames->end(), "...");
+   if (dots != pNames->end() && bindsFunctionDots(env))
+      pNames->erase(dots);
 }
 
 bool isUnevaluatedPromise(const std::string& name, SEXP env)
