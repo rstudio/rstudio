@@ -237,6 +237,18 @@ core::FilePath locatePositAssistantInstallation();
 void clearPinnedInstallation();
 
 /**
+ * Whether the installation this session runs is one of the user's own slots,
+ * rather than a copy the administrator or RStudio provides.
+ *
+ * Reinstall is offered only then: it replaces bits the user installed, and a
+ * fresh user slot beside a read-only copy of the same version would shadow
+ * that copy rather than repair it.
+ *
+ * @return true if the held resolution is a slot under the user's versions/
+ */
+bool runsUserSlot();
+
+/**
  * Whether an installation of the given version, written by this session to
  * its own slots, would then be the one locatePositAssistantInstallation()
  * resolves.

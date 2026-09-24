@@ -781,6 +781,50 @@ TEST_F(ChatInstallationHeld, ReportsNothingForALegacyInstallWithoutProtocol)
    EXPECT_TRUE(getInstalledVersion().empty());
 }
 
+TEST_F(ChatInstallationHeld, RunsUserSlotWhenTheUsersSlotIsHeld)
+{
+   makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
+   stageInstallation(paths_.bundledPath, "1.0.0");
+
+   EXPECT_TRUE(runsUserSlot());
+}
+
+TEST_F(ChatInstallationHeld, DoesNotRunUserSlotForReadOnlyCopies)
+{
+   // Each read-only source in turn, with the same version in no user slot:
+   // a reinstall would add a user copy rather than repair this one.
+   FilePath systemSlot = makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0");
+   EXPECT_FALSE(runsUserSlot());
+
+   ASSERT_FALSE(systemSlot.remove());
+   stageInstallation(legacySystemDir(), "1.0.0");
+   applyPaths();
+   EXPECT_FALSE(runsUserSlot());
+
+   ASSERT_FALSE(legacySystemDir().remove());
+   stageInstallation(paths_.bundledPath, "1.0.0");
+   applyPaths();
+   EXPECT_FALSE(runsUserSlot());
+
+   stageInstallation(pinnedDir(), "1.0.0");
+   paths_.pinnedPath = pinnedDir();
+   applyPaths();
+   EXPECT_FALSE(runsUserSlot());
+}
+
+TEST_F(ChatInstallationHeld, DoesNotRunUserSlotWhenAReadOnlyCopyOutranksIt)
+{
+   makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
+   stageInstallation(paths_.bundledPath, "2.0.0");
+
+   EXPECT_FALSE(runsUserSlot());
+}
+
+TEST_F(ChatInstallationHeld, DoesNotRunUserSlotWhenNothingIsInstalled)
+{
+   EXPECT_FALSE(runsUserSlot());
+}
+
 TEST_F(ChatInstallationHeld, ChangingTheSourcesDiscardsTheHeldResolution)
 {
    FilePath slot = makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");

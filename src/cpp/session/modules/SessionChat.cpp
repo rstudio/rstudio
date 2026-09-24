@@ -299,6 +299,7 @@ using chat_installation::clearPinnedInstallation;
 using chat_installation::positAiStorageDir;
 using chat_installation::positAssistantSearchPaths;
 using chat_installation::InstallSearchPaths;
+using chat_installation::runsUserSlot;
 using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyDeclaredIdentity;
 using chat_installation::getInstalledVersion;
@@ -4663,11 +4664,13 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
            installedVersion, packageVersion);
 
       // Reinstall recovers from corruption verification cannot see, so it is
-      // offered only for a usable install, and only when the fresh copy would
-      // be what runs -- the same gate as the update offer.
+      // offered only for a usable install of the user's own, and only when
+      // the fresh copy would be what runs -- the same gate as the update
+      // offer, which a read-only copy installed since this session started
+      // can close.
       if (installedVersion == packageVersion &&
           !unsupportedInstalledVersion && !unsupportedProtocol &&
-          userInstallWouldBeSelected(packageVersion))
+          runsUserSlot() && userInstallWouldBeSelected(packageVersion))
       {
          reinstallAvailable = true;
          newVersion = packageVersion;
