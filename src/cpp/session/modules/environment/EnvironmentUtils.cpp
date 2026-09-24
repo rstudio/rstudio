@@ -15,12 +15,15 @@
 
 #include "EnvironmentUtils.hpp"
 
+#include <algorithm>
+
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/RVersionInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #define MAX_ALTREP_LEN   65535   // maximum width/length for altrep inspection
 #define MAX_ALTREP_DEPTH 5       // maximum depth for altrep inspection
@@ -83,6 +86,19 @@ json::Value descriptionOfVar(const std::string& name, SEXP env)
 }
 
 } // anonymous namespace
+
+void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames)
+{
+   r::sexp::listEnvironment(env,
+                            prefs::userPrefs().showHiddenObjects(),
+                            prefs::userPrefs().showLastDotValue(),
+                            pNames);
+
+   // '...' in a function frame holds the caller's unevaluated arguments; it
+   // isn't a user-assigned object and the pane's describe/size code isn't
+   // built to inspect it safely
+   pNames->erase(std::remove(pNames->begin(), pNames->end(), "..."), pNames->end());
+}
 
 bool isUnevaluatedPromise(const std::string& name, SEXP env)
 {

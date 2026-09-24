@@ -24,6 +24,7 @@ namespace session {
 namespace modules {
 namespace environment {
 
+void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames);
 core::json::Value varToJson(const std::string& name, SEXP env);
 bool isUnevaluatedPromise(const std::string& name, SEXP env);
 bool functionDiffersFromSource(SEXP srcRef, const std::string& functionCode);

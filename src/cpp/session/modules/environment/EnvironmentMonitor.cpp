@@ -20,7 +20,6 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/prefs/UserPrefs.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -105,10 +104,7 @@ void EnvironmentMonitor::listEnv(std::vector<std::string>* pNames)
    if (!hasEnvironment())
       return;
 
-   r::sexp::listEnvironment(getMonitoredEnvironment(),
-                            false,
-                            prefs::userPrefs().showLastDotValue(),
-                            pNames);
+   listEnvironmentForPane(getMonitoredEnvironment(), pNames);
 }
 
 void EnvironmentMonitor::snapshotBindings(

@@ -496,17 +496,13 @@ CallFrameResult callFramesFromR(int depth,
 
 json::Array environmentListAsJson()
 {
-    using namespace rstudio::r::sexp;
     std::vector<std::string> names;
     json::Array listJson;
 
     if (s_pEnvironmentMonitor->hasEnvironment())
     {
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
-       listEnvironment(env,
-                       false,
-                       prefs::userPrefs().showLastDotValue(),
-                       &names);
+       listEnvironmentForPane(env, &names);
 
        // get object details and transform to json
        std::transform(names.begin(),
