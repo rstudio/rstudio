@@ -27,7 +27,8 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
                                                        String format,
                                                        boolean viewAfterSave,
                                                        boolean useDevicePixelRatio,
-                                                       boolean copyAsMetafile) 
+                                                       boolean copyAsMetafile,
+                                                       int resolution)
    /*-{
       var options = new Object();
       options.width = width;
@@ -37,6 +38,7 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
       options.viewAfterSave = viewAfterSave;
       options.useDevicePixelRatio = useDevicePixelRatio;
       options.copyAsMetafile = copyAsMetafile;
+      options.resolution = resolution;
       return options;
    }-*/;
    
@@ -49,7 +51,8 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
                                       options.getFormat(),
                                       options.getViewAfterSave(),
                                       options.getUseDevicePixelRatio(),
-                                      options.getCopyAsMetafile());
+                                      options.getCopyAsMetafile(),
+                                      options.getResolution());
    }
 
    public static native boolean areEqual(ExportPlotOptions a, ExportPlotOptions b) /*-{
@@ -63,6 +66,7 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
              a.keepRatio === b.keepRatio &&
              a.viewAfterSave === b.viewAfterSave &&
              a.useDevicePixelRatio === b.useDevicePixelRatio &&
-             a.copyAsMetafile === b.copyAsMetafile;
+             a.copyAsMetafile === b.copyAsMetafile &&
+             a.resolution === b.resolution;
    }-*/;
 }

@@ -43,6 +43,17 @@ Error UserStateComputedLayer::readPrefs()
    return Success();
 }
 
+Error UserStateComputedLayer::writePrefs(const json::Object& prefs)
+{
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      *cache_ = prefs;
+   }
+   END_LOCK_MUTEX
+
+   return Success();
+}
+
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

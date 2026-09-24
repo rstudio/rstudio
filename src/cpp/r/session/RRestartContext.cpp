@@ -32,8 +32,6 @@ namespace session {
 
 namespace {
 
-const char * const kContext = "ctx-";
-
 FilePath restartContextsPath(const FilePath& scopePath)
 {
    FilePath contextsPath = scopePath.completePath("ctx");
@@ -59,15 +57,17 @@ RestartContext::RestartContext()
 void RestartContext::initialize(const FilePath& scopePath,
                                 const std::string& contextId)
 {
-   FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.completePath(kContext + contextId);
+   contextsPath_ = restartContextsPath(scopePath);
+   FilePath statePath = contextsPath_.completePath(kRestartContextPrefix + contextId);
    if (statePath.exists())
       sessionStatePath_ = statePath;
 }
 
 bool RestartContext::hasSessionState() const
 {
-   return !sessionStatePath().isEmpty();
+   // the state may have been moved aside since initialize()
+   // (see state::setAsideUnfinishedRestore)
+   return !sessionStatePath().isEmpty() && sessionStatePath().exists();
 }
 
 bool RestartContext::rProfileOnRestore() const
@@ -86,6 +86,11 @@ FilePath RestartContext::sessionStatePath() const
    return sessionStatePath_;
 }
 
+FilePath RestartContext::contextsPath() const
+{
+   return contextsPath_;
+}
+
 void RestartContext::removeSessionState()
 {
    r::session::state::destroy(sessionStatePath_);
@@ -95,7 +100,7 @@ FilePath RestartContext::createSessionStatePath(const FilePath& scopePath,
                                                 const std::string& contextId)
 {
    FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.completePath(kContext + contextId);
+   FilePath statePath = contextsPath.completePath(kRestartContextPrefix + contextId);
 
    Error error = statePath.ensureDirectory();
    if (error)

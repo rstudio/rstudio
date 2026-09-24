@@ -21,6 +21,7 @@
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileUtils.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Xdg.hpp>
@@ -87,18 +88,11 @@ std::vector<std::string> extractStringArray(const json::Object& obj,
    return result;
 }
 
-Error readTrustFile(std::vector<std::string>* pTrusted,
-                    std::vector<std::string>* pUntrusted)
+Error parseTrustFile(const FilePath& filePath,
+                     const std::string& contents,
+                     std::vector<std::string>* pTrusted,
+                     std::vector<std::string>* pUntrusted)
 {
-   FilePath filePath = trustFilePath();
-   if (!filePath.exists())
-      return Success();
-
-   std::string contents;
-   Error error = readStringFromFile(filePath, &contents);
-   if (error)
-      return error;
-
    json::Value value;
    if (value.parse(contents))
       return systemError(boost::system::errc::invalid_argument,
@@ -112,6 +106,65 @@ Error readTrustFile(std::vector<std::string>* pTrusted,
    *pTrusted = extractStringArray(obj, "trustedDirectories");
    *pUntrusted = extractStringArray(obj, "untrustedDirectories");
 
+   return Success();
+}
+
+Error readTrustFile(std::vector<std::string>* pTrusted,
+                    std::vector<std::string>* pUntrusted)
+{
+   FilePath filePath = trustFilePath();
+   if (!filePath.exists())
+      return Success();
+
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   return parseTrustFile(filePath, contents, pTrusted, pUntrusted);
+}
+
+// Reads the trust lists ahead of changing them. Unlike readTrustFile, contents
+// that can't be parsed are discarded rather than returned as an error: their
+// entries are already being ignored, and the update rewrites the file, which
+// would otherwise have to be repaired by hand before trust could be granted.
+Error readTrustFileForUpdate(std::vector<std::string>* pTrusted,
+                             std::vector<std::string>* pUntrusted)
+{
+   FilePath filePath = trustFilePath();
+   if (!filePath.exists())
+      return Success();
+
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   error = parseTrustFile(filePath, contents, pTrusted, pUntrusted);
+   if (!error)
+      return Success();
+
+   // keep the contents being replaced (e.g. a hand edit with a typo), so they
+   // can be recovered by hand, without replacing a copy kept earlier; if that
+   // isn't possible, fail rather than lose them. the file is moved rather than
+   // copied: should the rewrite then fail, there is nothing left to keep again
+   // next time, so the copies can't pile up
+   FilePath backupPath = file_utils::firstUnusedPath(
+      filePath.getParent().completeChildPath(filePath.getFilename() + ".invalid"));
+   Error backupError = filePath.move(backupPath);
+   if (backupError)
+   {
+      LOG_ERROR(backupError);
+      return error;
+   }
+
+   WLOGF("Replacing invalid trust settings in {} (previous contents kept in {}): {}",
+         filePath.getAbsolutePath(),
+         backupPath.getAbsolutePath(),
+         error.asString());
+
+   pTrusted->clear();
+   pUntrusted->clear();
    return Success();
 }
 
@@ -282,7 +335,7 @@ Error grantTrust(const FilePath& directory)
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
-   Error error = readTrustFile(&trustedDirs, &untrustedDirs);
+   Error error = readTrustFileForUpdate(&trustedDirs, &untrustedDirs);
    if (error)
       return error;
 
@@ -307,7 +360,7 @@ Error revokeTrust(const FilePath& directory)
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
-   Error error = readTrustFile(&trustedDirs, &untrustedDirs);
+   Error error = readTrustFileForUpdate(&trustedDirs, &untrustedDirs);
    if (error)
       return error;
 
@@ -332,7 +385,7 @@ Error resetTrust(const FilePath& directory)
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
-   Error error = readTrustFile(&trustedDirs, &untrustedDirs);
+   Error error = readTrustFileForUpdate(&trustedDirs, &untrustedDirs);
    if (error)
       return error;
 

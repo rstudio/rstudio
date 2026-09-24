@@ -86,6 +86,14 @@ DeviceType s_deviceType = DeviceTypeUnknown;
 int s_width = 0;
 int s_height = 0;
 double s_devicePixelRatio = 1.0;
+
+// size of the Plots pane, as reported by the client
+int s_clientWidth = 0;
+int s_clientHeight = 0;
+
+// fixed size requested by the user; zero when the device follows the pane
+int s_fixedWidth = 0;
+int s_fixedHeight = 0;
    
 // provide GraphicsDeviceEvents for plot manager
 GraphicsDeviceEvents s_graphicsDeviceEvents;
@@ -895,30 +903,71 @@ Error initialize(
 }
 
 
-void setSize(int width, int height, double devicePixelRatio)
+namespace {
+
+void updateSize(double devicePixelRatio, bool force)
 {
-   // only set if the values have changed (prevents unnecessary plot 
+   int width = hasFixedSize() ? s_fixedWidth : s_clientWidth;
+   int height = hasFixedSize() ? s_fixedHeight : s_clientHeight;
+
+   // only set if the values have changed (prevents unnecessary plot
    // invalidations from occurring)
-   if (width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
+   if (force || width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
    {
       s_width = width;
       s_height = height;
       s_devicePixelRatio = devicePixelRatio;
-      
+
       // if there is a device active sync its size
       if (s_pGEDevDesc != nullptr)
          resizeGraphicsDevice();
    }
 }
-   
+
+} // anonymous namespace
+
+void setSize(int width, int height, double devicePixelRatio)
+{
+   s_clientWidth = width;
+   s_clientHeight = height;
+   updateSize(devicePixelRatio, false);
+}
+
+void setFixedSize(int width, int height)
+{
+   bool wasFixed = hasFixedSize();
+   bool fixed = width > 0 && height > 0;
+   s_fixedWidth = fixed ? width : 0;
+   s_fixedHeight = fixed ? height : 0;
+
+   // the client lays out a fixed size plot differently, so it needs a new
+   // plot state when the mode changes, even if the size doesn't
+   updateSize(s_devicePixelRatio, fixed != wasFixed);
+}
+
+bool hasFixedSize()
+{
+   return s_fixedWidth > 0 && s_fixedHeight > 0;
+}
+
 int getWidth()
 {
    return s_width;
 }
-   
+
 int getHeight()
 {
    return s_height;
+}
+
+int getClientWidth()
+{
+   return s_clientWidth;
+}
+
+int getClientHeight()
+{
+   return s_clientHeight;
 }
 
 DeviceType activeDeviceType()
