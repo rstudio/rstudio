@@ -292,12 +292,10 @@ public class AnsiCode
     */
    public AnsiClazzes processCode(String code)
    {
-      if (code == null || code.length() < 2)
-         return null;
-      if (code.charAt(0) != '\033' || code.charAt(code.length() - 1) != 'm')
+      if (code == null || !code.startsWith(CSI) || !code.endsWith(SGR))
          return null;
 
-      return processSgrParameters(StringUtil.substring(code, 2, code.length() - 1));
+      return processSgrParameters(StringUtil.substring(code, CSI.length(), code.length() - SGR.length()));
    }
 
    /**
@@ -723,12 +721,10 @@ public class AnsiCode
             // introducer is then removed, below.
             .replaceAll("\\033[\\]PX^_k][^" + CONSOLE_CONTROL_CHARS + "\\033]*(?:\\007|\\033\\\\|(?=\\033))", "")
             
-            // Control Sequence Introducer (CSI): parameter bytes, intermediate
-            // bytes, final byte
-            .replaceAll("(?:\\033\\[|\u009b)[0-?]*[ -/]*[@-~]", "")
-            
-            // Other escape sequences: intermediate bytes, final byte
-            .replaceAll("\\033[ -/]*[0-~]?", "")
+            // Control Sequence Introducer (CSI) and other escape sequences,
+            // as the console parses them
+            .replaceAll(CSI_SEQUENCE, "")
+            .replaceAll(ESCAPE_SEQUENCE, "")
             
             // BEL
             .replace("\u0007", "");
@@ -783,13 +779,13 @@ public class AnsiCode
 
    // Any complete CSI sequence: parameter bytes, then intermediate bytes,
    // then a final byte
-   public static final Pattern CSI_PATTERN =
-         Pattern.create("^(?:\u001b\\[|\u009b)[0-?]*[ -/]*[@-~]", "");
+   private static final String CSI_SEQUENCE = "(?:\u001b\\[|\u009b)[0-?]*[ -/]*[@-~]";
+   public static final Pattern CSI_PATTERN = Pattern.create("^" + CSI_SEQUENCE, "");
 
    // Any other escape sequence: intermediate bytes, then a final byte. If the
    // final byte is missing, the match stops before the unexpected character.
-   public static final Pattern ESCAPE_PATTERN =
-         Pattern.create("^\u001b[ -/]*[0-~]?", "");
+   private static final String ESCAPE_SEQUENCE = "\u001b[ -/]*[0-~]?";
+   public static final Pattern ESCAPE_PATTERN = Pattern.create("^" + ESCAPE_SEQUENCE, "");
 
    // An escape sequence cut off by the end of the input, which the next
    // output may complete: a CSI sequence with a private marker (ESC[?25l,
