@@ -27,7 +27,6 @@ public class AnsiCode
 {
    // ANSI command constants
    public static final String CSI = "\033\133";   // Control Sequence Introducer
-   public static final String ST  = "\033\134";   // String Terminator
    public static final String OSC = "\033\135";   // Operating System Command
    
    // the terminator for SGR codes
@@ -293,26 +292,31 @@ public class AnsiCode
     */
    public AnsiClazzes processCode(String code)
    {
-      if (code == null || code.length() < 2)
+      if (code == null || !code.startsWith(CSI) || !code.endsWith(SGR))
          return null;
-      if (code.charAt(0) != '\033' && code.charAt(code.length() - 1) != 'm')
-         return null;
-      if (code.length() == 2)
-      {
-         clazzes_.clear(); // CSIm is equivalent to CSI0m, which is 'reset'
-         blockClazzes_.clear();
-         return null;
-      }
 
+      return processSgrParameters(StringUtil.substring(code, CSI.length(), code.length() - SGR.length()));
+   }
+
+   /**
+    * Process the parameters of an SGR sequence (the bytes between CSI and 'm').
+    *
+    * @param parameters The parameter string, e.g. "1;31".
+    * @return The current styles.
+    */
+   public AnsiClazzes processSgrParameters(String parameters)
+   {
       int extendedColor = 0;
       boolean extendedMarkerSeen = false;
       boolean extendedRGBMarkerSeen = false;
       int extendedRGBColorsSeen = 0;
 
-      String[] tokens = StringUtil.substring(code, 2, code.length() - 1).split(";");
+      // an empty parameter means 0 (reset), so CSI m and CSI ; 1 m both reset;
+      // a parameter with sub-parameters (4:3) is unsupported and skipped
+      String[] tokens = parameters.split(";", -1);
       for (String token : tokens)
       {
-         int codeVal = StringUtil.parseInt(token,  -1);
+         int codeVal = token.isEmpty() ? RESET : StringUtil.parseInt(token,  -1);
          if (codeVal == -1)
             continue;
 
@@ -334,9 +338,8 @@ public class AnsiCode
                {
                   // unknown extended color format; hard to recover so
                   // just reset back to defaults and return
-                  clazzes_.clear();
-                  blockClazzes_.clear();
-                  return null;
+                  reset();
+                  return getStyles();
                }
             }
             else
@@ -381,11 +384,7 @@ public class AnsiCode
          }
          else if (codeVal == RESET)
          {
-            inverted_ = false;
-            currentColor_.reset();
-            currentBgColor_.reset();
-            clazzes_.clear();
-            blockClazzes_.clear();
+            reset();
          }
          else if (codeVal == BOLD)
          {
@@ -675,6 +674,15 @@ public class AnsiCode
       }
    }
 
+   private void reset()
+   {
+      inverted_ = false;
+      currentColor_.reset();
+      currentBgColor_.reset();
+      clazzes_.clear();
+      blockClazzes_.clear();
+   }
+
    private void resetForeground()
    {
       for (int i = 0; i < 256; i++)
@@ -693,6 +701,10 @@ public class AnsiCode
       clazzes_.remove(INVERSE_BG_STYLE);
    }
    
+   /**
+    * Remove escape sequences from a string, mirroring what the console would
+    * discard from it when rendered (see VirtualConsole).
+    */
    public static String strip(String input)
    {
       return input
@@ -703,11 +715,19 @@ public class AnsiCode
             // Custom RStudio escape (highlight)
             .replaceAll("\\033H\\d*;([^]*?)\\033h", "$1")
             
-            // Operating System Command (OSC), terminated by BEL or ESC '\'
-            .replaceAll("\\033\\135[^\\007\\033]*(?:\\007|\\033\\134)", "")
+            // String sequences (OSC, DCS, SOS, PM, APC and ESC 'k'), ended by
+            // BEL, ESC '\\', or another ESC which is left in place. A console
+            // control character means the string is malformed; only its
+            // introducer is then removed, below.
+            .replaceAll("\\033[\\]PX^_k][^" + CONSOLE_CONTROL_CHARS + "\\033]*(?:\\007|\\033\\\\|(?=\\033))", "")
             
-            // Control Sequence Introducer (CSI)
-            .replaceAll("\\033\\133[^a-zA-Z]*[a-zA-Z]", "");
+            // Control Sequence Introducer (CSI) and other escape sequences,
+            // as the console parses them
+            .replaceAll(CSI_SEQUENCE, "")
+            .replaceAll(ESCAPE_SEQUENCE, "")
+            
+            // BEL
+            .replace("\u0007", "");
    }
 
    public static String prettyPrint(String input)
@@ -739,27 +759,44 @@ public class AnsiCode
    // Match ANSI escape sequences
    public static final Pattern ANSI_ESCAPE_PATTERN = Pattern.create(ANSI_REGEX);
 
-   // Control characters handled by R console, plus leading character of
-   // ANSI escape sequences
-   public static final String CONTROL_REGEX = "[\r\b\f\n\u001b\u009b]";
+   // Control characters handled by R console (BEL is discarded)
+   public static final String CONSOLE_CONTROL_CHARS = "\r\b\f\n\u0007";
+
+   // Those control characters, plus leading character of ANSI escape sequences
+   public static final String CONTROL_REGEX = "[" + CONSOLE_CONTROL_CHARS + "\u001b\u009b]";
 
    // Match control characters and start of ANSI sequences
    public static final Pattern CONTROL_PATTERN = Pattern.create(CONTROL_REGEX);
 
-   // RegEx to match complete CSI codes (only a small subset)
-   public static final String CSI_REGEX =
-         "[\u001b\u009b]\\[([0-9]{1,4}(?:;[0-9]{0,4})*)?([a-zA-Z])";
-   
-   // Match ANSI SGR escape sequences
-   public static final Pattern CSI_PATTERN = Pattern.create(CSI_REGEX);
-   
-   // RegEx to match incomplete CSI codes (only a small subset)
-   public static final String CSI_PREFIX_REGEX =
-         "[\u001b\u009b]\\[(?:\\d|$)";
-   
-   // Match ANSI SGR escape sequences
-   public static final Pattern CSI_PREFIX_PATTERN = Pattern.create(CSI_PREFIX_REGEX);
-   
+   // The patterns below are anchored, and follow the ECMA-48 structure of
+   // escape sequences. The 8-bit CSI (0x9b) is equivalent to ESC '['.
+
+   // A CSI sequence with numeric parameters, the only kind the console acts
+   // on (group 1: parameters, group 2: final byte). Sub-parameters (4:3) are
+   // matched so that the other parameters of an SGR sequence still apply.
+   public static final Pattern NUMERIC_CSI_PATTERN =
+         Pattern.create("^(?:\u001b\\[|\u009b)([0-9;:]*)([@-~])", "");
+
+   // Any complete CSI sequence: parameter bytes, then intermediate bytes,
+   // then a final byte
+   private static final String CSI_SEQUENCE = "(?:\u001b\\[|\u009b)[0-?]*[ -/]*[@-~]";
+   public static final Pattern CSI_PATTERN = Pattern.create("^" + CSI_SEQUENCE, "");
+
+   // Any other escape sequence: intermediate bytes, then a final byte. If the
+   // final byte is missing, the match stops before the unexpected character.
+   private static final String ESCAPE_SEQUENCE = "\u001b[ -/]*[0-~]?";
+   public static final Pattern ESCAPE_PATTERN = Pattern.create("^" + ESCAPE_SEQUENCE, "");
+
+   // An escape sequence cut off by the end of the input, which the next
+   // output may complete: a CSI sequence with a private marker (ESC[?25l,
+   // ESC[>4;2m) and/or numeric parameters, optionally followed by intermediate
+   // bytes (ESC[2 q), or ESC with intermediate bytes. Intermediate bytes are
+   // held back only after a digit, and a private marker only while nothing
+   // but digits follow it, since the console prompts ('> ' and '+ ') consist
+   // of such bytes, and a dangling ESC '[' must not swallow them.
+   public static final Pattern PARTIAL_ESCAPE_PATTERN =
+         Pattern.create("^(?:(?:\u001b\\[|\u009b)[<=>?]?[0-9;:]*(?:\\d[ -/]*)?|\u001b[ -/]*)$", "");
+
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
    private boolean inverted_ = false;

@@ -181,6 +181,46 @@ public class AnsiCodeTests extends GWTTestCase
       Assert.assertNull(newClazz.inlineClazzes);
     } 
 
+   public void testEmptyParameterResets()
+   {
+      AnsiCode ansi = new AnsiCode();
+
+      ansi.processCode("\033[1;31m");
+      Assert.assertNull(ansi.processCode("\033[m").inlineClazzes);
+
+      ansi.processCode("\033[31m");
+      Assert.assertEquals("xtermBold", ansi.processCode("\033[;1m").inlineClazzes);
+
+      ansi.processCode("\033[31m");
+      Assert.assertNull(ansi.processCode("\033[1;m").inlineClazzes);
+   }
+
+   public void testUnknownExtendedColorFormat()
+   {
+      AnsiCode ansi = new AnsiCode();
+      ansi.processCode("\033[31m");
+      AnsiCode.AnsiClazzes clazzes = ansi.processCode("\033[38;3m");
+      Assert.assertNotNull(clazzes);
+      Assert.assertNull(clazzes.inlineClazzes);
+
+      // the reset also ends inverse mode, so the next color is a foreground
+      ansi.processCode("\033[7m");
+      ansi.processCode("\033[38;3m");
+      Assert.assertEquals("xtermColor1", ansi.processCode("\033[31m").inlineClazzes);
+   }
+
+   public void testSubParametersSkipped()
+   {
+      AnsiCode ansi = new AnsiCode();
+      String expected = ansi.processCode("\033[1;31m").inlineClazzes;
+
+      ansi = new AnsiCode();
+      Assert.assertEquals(expected, ansi.processCode("\033[1;31;4:3m").inlineClazzes);
+
+      ansi = new AnsiCode();
+      Assert.assertNull(ansi.processCode("\033[38:2::255:0:0m").inlineClazzes);
+   }
+
    public void testStripHyperlinks()
    {
       String belLink = "\033]8;;https://example.com\007link\033]8;;\007";
@@ -188,5 +228,25 @@ public class AnsiCodeTests extends GWTTestCase
 
       String stLink = "\033]8;;https://example.com\033\\link\033]8;;\033\\";
       Assert.assertEquals("link", AnsiCode.strip(stLink));
+   }
+
+   public void testStripMatchesConsoleParsing()
+   {
+      // CSI sequences end at their final byte, which may be '['
+      Assert.assertEquals("Ab", AnsiCode.strip("\033[[Ab"));
+      Assert.assertEquals("ab", AnsiCode.strip("a\033[4:3mb"));
+      Assert.assertEquals("ab", AnsiCode.strip("a\033[2 qb"));
+      Assert.assertEquals("ab", AnsiCode.strip("a\u009b31mb"));
+
+      // other escape sequences, BEL, and other string sequences
+      Assert.assertEquals("ab", AnsiCode.strip("a\033(Bb"));
+      Assert.assertEquals("ab", AnsiCode.strip("a\007b"));
+      Assert.assertEquals("ab", AnsiCode.strip("a\033P1$rq\033\\b"));
+      Assert.assertEquals("ab", AnsiCode.strip("a\033]0;title\007b"));
+
+      // a string ended by another escape sequence, and a malformed one
+      Assert.assertEquals("ab", AnsiCode.strip("a\033]0;title\033[31mb"));
+      Assert.assertEquals("0;title\nnext", AnsiCode.strip("\033]0;title\nnext"));
+      Assert.assertEquals("a\nb", AnsiCode.strip("a\033\nb"));
    }
 }
