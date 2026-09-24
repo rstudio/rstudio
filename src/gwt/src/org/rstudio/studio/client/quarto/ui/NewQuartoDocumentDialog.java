@@ -479,7 +479,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       rowFmt.setVisible(ROW_ENGINE, !interactive);
       rowFmt.setVisible(ROW_KERNEL, !interactive &&
                                     engineSelect_.getSelectedValue().equals(QuartoCommandConstants.ENGINE_JUPYTER));
-      rowFmt.setVisible(ROW_EDITOR, !interactive);
    }
    
    private Label createLabel(String caption)

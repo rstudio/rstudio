@@ -16,8 +16,6 @@
 #ifndef RSTUDIO_SESSION_MODULES_CHAT_HPP
 #define RSTUDIO_SESSION_MODULES_CHAT_HPP
 
-#include "chat/ChatInstallLock.hpp"
-
 namespace rstudio {
 namespace core {
 class Error;
@@ -30,11 +28,6 @@ namespace modules {
 namespace chat {
 
 core::Error initialize();
-
-// Process-wide lock coordinating the shared per-user Posit Assistant
-// installation with other rsession processes (see ChatInstallLock.hpp).
-// Also used by SessionAssistant for the NES agent component.
-install_lock::InstallLock& installLock();
 
 // Returns true if session can suspend (i.e., chat backend is NOT busy)
 bool isSuspendable();
