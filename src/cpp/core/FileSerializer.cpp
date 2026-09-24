@@ -405,6 +405,9 @@ int renameForAtomicWrite(const char* from, const char* to)
 
 #endif
 
+// True when a file couldn't be created because of where it would go: the
+// directory forbids it, or (EROFS) is on a read-only filesystem, as with a
+// writable file mounted into a read-only container image.
 bool isPermissionError(const Error& error)
 {
    if (!error || error.getName() != boost::system::system_category().name())
@@ -413,7 +416,8 @@ bool isPermissionError(const Error& error)
 #ifdef _WIN32
    return error.getCode() == ERROR_ACCESS_DENIED;
 #else
-   return error.getCode() == EACCES || error.getCode() == EPERM;
+   int code = error.getCode();
+   return code == EACCES || code == EPERM || code == EROFS;
 #endif
 }
 
@@ -977,12 +981,14 @@ Error writeStringToFileAtomic(const FilePath& filePath,
    // isn't writable even though the file itself is. Only this failure falls
    // back to an in-place write: once the temporary file exists, a failed step
    // is reported as is, since rewriting in place would truncate the target
-   // before finding out whether the write can succeed.
+   // before finding out whether the write can succeed. When the target doesn't
+   // exist either, writing in place can't create it any more than we could
+   // the temporary file, so the original error is the one to report.
    TempFile temp;
    error = createTempFile(targetPath, options, &temp);
    if (error)
    {
-      if (options.allowInPlaceFallback && isPermissionError(error))
+      if (options.allowInPlaceFallback && isPermissionError(error) && targetPath.exists())
          return writeInPlace(targetPath, contents, options);
 
       return error;

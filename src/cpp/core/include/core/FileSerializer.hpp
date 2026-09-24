@@ -96,10 +96,11 @@ struct AtomicWriteOptions
 // file it points to is replaced and the link is kept.
 //
 // If a temporary file can't be created next to the file (e.g. the directory
-// isn't writable), or the file can't be renamed over because it is itself a
-// mount point (a single file bind-mounted into a container), the file is
-// written in place instead, unless AtomicWriteOptions::allowInPlaceFallback
-// is off. No other failure touches the file.
+// isn't writable, or is on a read-only filesystem), or the file can't be
+// renamed over because it is itself a mount point (a single file bind-mounted
+// into a container), the file is written in place instead, unless
+// AtomicWriteOptions::allowInPlaceFallback is off. No other failure touches
+// the file.
 //
 // The first time a process writes into a directory this way, temporary files
 // that an earlier, interrupted write left there are removed (see

@@ -475,6 +475,30 @@ TEST(FileSerializerTest, WriteStringAtomicFallsBackToInPlace)
    dir.remove();
 }
 
+// When neither the temporary file nor the target can be created, the error is
+// the one from creating the temporary file, not a misleading ENOENT from
+// trying to prepare a target that isn't there.
+TEST(FileSerializerTest, WriteStringAtomicMissingTargetInUnwritableDirReportsPermission)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root ignores directory permissions";
+
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_EQ(0, ::chmod(dir.getAbsolutePath().c_str(), 0500));
+
+   AtomicWriteOptions options;
+   options.ownerOnly = true;
+   Error error = writeStringToFileAtomic(filePath, "{}", string_utils::LineEndingPassthrough, options);
+   ASSERT_EQ(0, ::chmod(dir.getAbsolutePath().c_str(), 0700));
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EACCES, error.getCode());
+   EXPECT_EQ(filePath.getAbsolutePath(), error.getProperty("path"));
+   EXPECT_FALSE(filePath.exists());
+
+   dir.remove();
+}
+
 // A caller that needs the original to survive a failed write (Replace All)
 // turns the in-place fallback off: the write fails and nothing is truncated.
 TEST(FileSerializerTest, WriteStringAtomicWithoutFallbackKeepsOriginal)
