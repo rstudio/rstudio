@@ -126,8 +126,9 @@ bool isAtomicWriteTempFile(const core::FilePath& filePath);
 // maxAgeSeconds are removed, so that a write in progress in another process
 // is left alone. Not recursive. writeStringToFileAtomic() does this itself
 // on its first write into a directory, so this is only needed for a
-// directory that is read without being written.
-void removeStaleAtomicWriteTempFiles(const core::FilePath& dir,
+// directory that is read without being written. Returns false when dir
+// couldn't be listed (including when it doesn't exist).
+bool removeStaleAtomicWriteTempFiles(const core::FilePath& dir,
                                      std::time_t maxAgeSeconds = 3600);
 
 // Writes one line per element of the collection. The file is replaced

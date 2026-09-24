@@ -721,17 +721,29 @@ boost::mutex& s_sweptDirectoriesMutex = make_leaked<boost::mutex>();
 // Sweep dir the first time this process writes into it. That covers every
 // directory written atomically without each writer having to remember to,
 // and the earlier write that left a file behind is what crashed, so a fresh
-// process is the right one to clean up after it.
+// process is the right one to clean up after it. A directory that can't be
+// listed yet (it may not exist until the write below creates it) is swept
+// on a later write instead. Two threads may race to sweep the same directory,
+// which is harmless.
 void removeStaleAtomicWriteTempFilesOnce(const FilePath& dir)
 {
+   std::string key = dir.getAbsolutePath();
+
    LOCK_MUTEX(s_sweptDirectoriesMutex)
    {
-      if (!s_sweptDirectories.insert(dir.getAbsolutePath()).second)
+      if (s_sweptDirectories.count(key) != 0)
          return;
    }
    END_LOCK_MUTEX
 
-   removeStaleAtomicWriteTempFiles(dir);
+   if (!removeStaleAtomicWriteTempFiles(dir))
+      return;
+
+   LOCK_MUTEX(s_sweptDirectoriesMutex)
+   {
+      s_sweptDirectories.insert(key);
+   }
+   END_LOCK_MUTEX
 }
 
 } // anonymous namespace
@@ -915,17 +927,17 @@ bool isAtomicWriteTempFile(const FilePath& filePath)
    return boost::algorithm::starts_with(filePath.getFilename(), kAtomicWriteTempPrefix);
 }
 
-void removeStaleAtomicWriteTempFiles(const FilePath& dir, std::time_t maxAgeSeconds)
+bool removeStaleAtomicWriteTempFiles(const FilePath& dir, std::time_t maxAgeSeconds)
 {
    if (!dir.isDirectory())
-      return;
+      return false;
 
    std::vector<FilePath> children;
    Error error = dir.getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
-      return;
+      return false;
    }
 
    std::time_t now = std::time(nullptr);
@@ -941,6 +953,8 @@ void removeStaleAtomicWriteTempFiles(const FilePath& dir, std::time_t maxAgeSeco
       if (error)
          LOG_ERROR(error);
    }
+
+   return true;
 }
 
 Error readStringFromFile(const FilePath& filePath,

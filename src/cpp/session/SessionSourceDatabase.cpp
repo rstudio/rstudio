@@ -635,7 +635,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, 
    // with older formats for the source database
    
    // these files can hold the only copy of unsaved changes, so replace them
-   // atomically rather than risk a crash leaving them truncated
+   // atomically rather than risk a process crash leaving them truncated
    AtomicWriteOptions options;
    if (retryRewrite)
       options.maxRetrySeconds = session::prefs::userPrefs().saveRetryTimeout();

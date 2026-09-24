@@ -310,14 +310,14 @@ TEST(FileSerializerTest, RemovesStaleAtomicWriteTempFiles)
    stale.setLastWriteTime(twoHoursAgo);
    data.setLastWriteTime(twoHoursAgo);
 
-   removeStaleAtomicWriteTempFiles(dir, 60 * 60);
+   EXPECT_TRUE(removeStaleAtomicWriteTempFiles(dir, 60 * 60));
 
    EXPECT_FALSE(stale.exists());
    EXPECT_TRUE(recent.exists());
    EXPECT_TRUE(data.exists());
 
-   // a missing directory is not an error
-   removeStaleAtomicWriteTempFiles(dir.completePath("missing"));
+   // a missing directory is not an error, but is reported as not swept
+   EXPECT_FALSE(removeStaleAtomicWriteTempFiles(dir.completePath("missing")));
 
    dir.remove();
 }
