@@ -586,7 +586,6 @@ TEST(FileSerializerTest, WriteStringReportsFailedWrite)
    EXPECT_TRUE(error);
 }
 
-// isDiskSpaceError must recognize the full-disk / over-quota error codes (so a
 #ifdef _WIN32
 
 // Our readers open with FILE_SHARE_DELETE, and the replacement uses the
@@ -619,6 +618,7 @@ TEST(FileSerializerTest, WriteStringAtomicReplacesFileHeldOpenForRead)
 
 #endif
 
+// isDiskSpaceError must recognize the full-disk / over-quota error codes (so a
 // raw write failure can be turned into a recovery-oriented message) and must
 // not misclassify unrelated errors or success.
 TEST(FileSerializerTest, IsDiskSpaceErrorClassifies)
