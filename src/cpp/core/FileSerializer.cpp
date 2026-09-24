@@ -369,6 +369,42 @@ void syncDirectory(const FilePath& dirPath)
 // filter hidden files.
 const char* const kAtomicWriteTempPrefix = ".rstudio-tmp-";
 
+#ifndef _WIN32
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+int s_atomicWriteChmodErrno = 0;
+int s_atomicWriteRenameErrno = 0;
+#endif
+
+// The syscalls tests can make fail (see the *ForTesting setters).
+int fchmodForAtomicWrite(int fd, mode_t mode)
+{
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_atomicWriteChmodErrno != 0)
+   {
+      errno = s_atomicWriteChmodErrno;
+      return -1;
+   }
+#endif
+
+   return ::fchmod(fd, mode);
+}
+
+int renameForAtomicWrite(const char* from, const char* to)
+{
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_atomicWriteRenameErrno != 0)
+   {
+      errno = s_atomicWriteRenameErrno;
+      return -1;
+   }
+#endif
+
+   return ::rename(from, to);
+}
+
+#endif
+
 bool isPermissionError(const Error& error)
 {
    if (!error || error.getName() != boost::system::system_category().name())
@@ -715,7 +751,7 @@ Error writeTempFile(TempFile* pTemp,
    if (pTemp->replacing || options.ownerOnly)
    {
       mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
-      if (::fchmod(fd, mode) == -1)
+      if (fchmodForAtomicWrite(fd, mode) == -1)
          error = fileError(errno, targetPath, ERROR_LOCATION);
    }
 
@@ -742,7 +778,7 @@ Error replaceFile(const FilePath& tempPath,
                   const FilePath& targetPath,
                   const AtomicWriteOptions& options)
 {
-   if (::rename(tempPath.getAbsolutePath().c_str(), targetPath.getAbsolutePath().c_str()) == -1)
+   if (renameForAtomicWrite(tempPath.getAbsolutePath().c_str(), targetPath.getAbsolutePath().c_str()) == -1)
    {
       Error error = fileError(errno, targetPath, ERROR_LOCATION);
       error.addProperty("temp-path", tempPath.getAbsolutePath());
@@ -972,6 +1008,20 @@ Error writeStringToFileAtomic(const FilePath& filePath,
 
    return Success();
 }
+
+#if defined(RSTUDIO_UNIT_TESTS_ENABLED) && !defined(_WIN32)
+
+void setAtomicWriteChmodFailureForTesting(int errnoValue)
+{
+   s_atomicWriteChmodErrno = errnoValue;
+}
+
+void setAtomicWriteRenameFailureForTesting(int errnoValue)
+{
+   s_atomicWriteRenameErrno = errnoValue;
+}
+
+#endif
 
 bool isAtomicWriteTempFile(const FilePath& filePath)
 {

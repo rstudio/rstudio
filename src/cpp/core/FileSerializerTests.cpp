@@ -503,6 +503,78 @@ TEST(FileSerializerTest, WriteStringAtomicWithoutFallbackKeepsOriginal)
    dir.remove();
 }
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+
+namespace {
+
+// Turns the injected failures off again however the test ends.
+struct AtomicWriteFailureReset
+{
+   ~AtomicWriteFailureReset()
+   {
+      setAtomicWriteChmodFailureForTesting(0);
+      setAtomicWriteRenameFailureForTesting(0);
+   }
+};
+
+} // anonymous namespace
+
+// Once the temporary file exists, a failure (here setting its mode) is
+// reported rather than falling back to truncating the target in place.
+TEST(FileSerializerTest, WriteStringAtomicFailureAfterTempCreationKeepsOriginal)
+{
+   AtomicWriteFailureReset reset;
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_FALSE(writeStringToFile(filePath, "original\n"));
+
+   setAtomicWriteChmodFailureForTesting(EPERM);
+   Error error = writeStringToFileAtomic(filePath, "replaced\n");
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EPERM, error.getCode());
+   EXPECT_EQ(filePath.getAbsolutePath(), error.getProperty("path"));
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("original\n", readback);
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
+
+   dir.remove();
+}
+
+// A target that can be written but not renamed over (a bind-mounted file) is
+// written in place, unless the caller has turned the fallback off.
+TEST(FileSerializerTest, WriteStringAtomicRenameFailureFallsBackToInPlace)
+{
+   AtomicWriteFailureReset reset;
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("rstudio-prefs.json");
+   ASSERT_FALSE(writeStringToFile(filePath, "original\n"));
+
+   setAtomicWriteRenameFailureForTesting(EBUSY);
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "replaced\n"));
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("replaced\n", readback);
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
+
+   AtomicWriteOptions options;
+   options.allowInPlaceFallback = false;
+   Error error = writeStringToFileAtomic(filePath, "again\n", string_utils::LineEndingPassthrough, options);
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EBUSY, error.getCode());
+   EXPECT_EQ(filePath.getAbsolutePath(), error.getProperty("path"));
+
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("replaced\n", readback);
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
+
+   dir.remove();
+}
+
+#endif // RSTUDIO_UNIT_TESTS_ENABLED
+
 // Writing through a symlink (e.g. a dotfile manager's link to
 // rstudio-prefs.json) replaces the file it points to and keeps the link.
 TEST(FileSerializerTest, WriteStringAtomicFollowsSymlinks)

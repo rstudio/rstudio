@@ -117,6 +117,15 @@ Error writeStringToFileAtomic(const core::FilePath& filePath,
                               string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
                               const AtomicWriteOptions& options = AtomicWriteOptions());
 
+#if defined(RSTUDIO_UNIT_TESTS_ENABLED) && !defined(_WIN32)
+// Make the next steps of writeStringToFileAtomic() fail with the given errno,
+// to test the paths that a real filesystem can't be made to take: setting the
+// temporary file's mode (a failure after the file exists) and renaming it over
+// the target (a bind-mounted target). 0 turns the failure off.
+void setAtomicWriteChmodFailureForTesting(int errnoValue);
+void setAtomicWriteRenameFailureForTesting(int errnoValue);
+#endif
+
 // Returns true if filePath names a temporary file created by
 // writeStringToFileAtomic(). Code that treats every file in a directory as
 // data should skip these.
