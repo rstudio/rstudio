@@ -989,6 +989,17 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    return Success();
 }
 
+void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
+{
+   // refresh from here rather than from the client so the listing is fetched
+   // only after the new value has reached the session
+   if (pref == kShowHiddenObjects)
+   {
+      ClientEvent event(client_events::kEnvironmentRefresh);
+      module_context::enqueClientEvent(event);
+   }
+}
+
 void onDetectChanges(module_context::ChangeSource /* source */)
 {
    // Prevent recursive calls to this function
@@ -1915,6 +1926,7 @@ Error initialize()
    events().onConsoleOutput.connect(bind(onConsoleOutput,
                                          pLineDebugState,
                                          pCapturingDebugOutput, _1, _2));
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);

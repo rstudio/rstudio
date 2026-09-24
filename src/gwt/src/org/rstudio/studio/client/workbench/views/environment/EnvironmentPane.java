@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
@@ -161,6 +162,9 @@ public class EnvironmentPane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
+      menu.addSeparator();
+      menu.addItem(new UserPrefMenuItem<>(
+            prefs_.showHiddenObjects(), true, constants_.showHiddenObjects(), prefs_));
       viewButton_ = new ToolbarMenuButton(
             nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             ToolbarButton.NoTitle,
