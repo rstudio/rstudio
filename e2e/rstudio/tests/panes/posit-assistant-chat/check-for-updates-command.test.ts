@@ -29,8 +29,8 @@ import type { Page } from 'playwright';
  * suite): set the override, invoke the command, and the next
  * chat_check_for_updates returns it verbatim.
  *
- * The install itself (Yes on the confirm dialog) needs a real download + inter-
- * session lock and is covered below the UI by the C++ suites, so these tests
+ * The install itself (Yes on the confirm dialog) needs a real download and is
+ * covered below the UI by the C++ suites, so these tests
  * assert up to and including the confirmation dialog, then dismiss with Cancel.
  */
 
