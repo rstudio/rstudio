@@ -205,6 +205,10 @@ public class PathBreadcrumbWidget
       return link;
    }
 
+   /**
+    * Navigation is requested through the selection-commit event, as for the
+    * crumbs, so the host can track the listing it starts.
+    */
    private void browse()
    {
       if (!Desktop.isUsingWebFileDialogs())
@@ -223,7 +227,7 @@ public class PathBreadcrumbWidget
                   {
                      if (input == null)
                         return;
-                     context_.cd(input.getPath());
+                     SelectionCommitEvent.fire(PathBreadcrumbWidget.this, input);
                      indicator.onCompleted();
                   }
                });
@@ -242,7 +246,8 @@ public class PathBreadcrumbWidget
                      if (input == null)
                         return;
 
-                     context_.cd(input);
+                     SelectionCommitEvent.fire(PathBreadcrumbWidget.this,
+                                               FileSystemItem.createDir(input));
                   }
 
                });

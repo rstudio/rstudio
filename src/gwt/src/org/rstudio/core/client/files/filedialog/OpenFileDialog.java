@@ -65,8 +65,12 @@ public class OpenFileDialog extends FileDialog
    @Override
    public void onNavigated()
    {
+      // discard stale input on arrival, unless a deferred accept is about to
+      // consume it: a typed 'sub/file.R' stages 'file.R' before its cd('sub')
+      if (!acceptOnNavigated_)
+         browser_.setFilename("");
+
       super.onNavigated();
-      browser_.setFilename("");
    }
 
    @Override

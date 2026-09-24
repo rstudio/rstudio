@@ -114,7 +114,7 @@ public abstract class FileDialog extends FileSystemDialog
 
          browser_.setFilename(file);
          browser_.setFilenameEnabled(false);
-         attemptAcceptOnNextNavigate_ = true;
+         acceptOnNavigated_ = true;
          cd(dir);
          return false;
       }
@@ -213,14 +213,17 @@ public abstract class FileDialog extends FileSystemDialog
    @Override
    public void onNavigated()
    {
-      super.onNavigated();
-
+      // re-enable before the deferred accept, which may cd() and disable again
       browser_.setFilenameEnabled(true);
-      if (attemptAcceptOnNextNavigate_)
-      {
-         attemptAcceptOnNextNavigate_ = false;
-         maybeAccept();
-      }
+      super.onNavigated();
+   }
+
+   @Override
+   public void onError(String errorMessage)
+   {
+      // a failed cd() does not reach onNavigated()
+      browser_.setFilenameEnabled(true);
+      super.onError(errorMessage);
    }
 
    @Override
@@ -240,15 +243,7 @@ public abstract class FileDialog extends FileSystemDialog
          browser_.setFilename(item.getName());
    }
 
-   @Override
-   public void onError(String errorMessage)
-   {
-      attemptAcceptOnNextNavigate_ = false;
-      super.onError(errorMessage);
-   }
-
    protected boolean promptOnOverwrite_;
    protected boolean allowNonexistentFile_;
-   private boolean attemptAcceptOnNextNavigate_ = false;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
