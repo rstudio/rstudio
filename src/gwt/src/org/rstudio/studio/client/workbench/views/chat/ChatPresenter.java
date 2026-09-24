@@ -622,13 +622,17 @@ public class ChatPresenter extends BasePresenter
          installManager_.checkForUpdates(true, new PositAiInstallManager.UpdateCheckCallback()
          {
             @Override
-            public void onNoUpdateAvailable()
+            public void onNoUpdateAvailable(String currentVersion,
+                                            boolean reinstallAvailable)
             {
                finishUpdateCheck(dismissProgress);
-               globalDisplay_.showMessage(
-                  GlobalDisplay.MSG_INFO,
-                  constants_.chatCheckForUpdatesCaption(),
-                  constants_.chatNoUpdateAvailableMessage());
+               if (reinstallAvailable)
+                  promptToReinstall(currentVersion);
+               else
+                  globalDisplay_.showMessage(
+                     GlobalDisplay.MSG_INFO,
+                     constants_.chatCheckForUpdatesCaption(),
+                     constants_.chatNoUpdateAvailableMessage());
             }
 
             @Override
@@ -829,6 +833,39 @@ public class ChatPresenter extends BasePresenter
          confirmLabel,
          constants_.chatCancelButton(),
          true);                          // confirm is the default button
+   }
+
+   // The installed version is current. Reinstalling is the recovery for an
+   // install that verifies but misbehaves, so it is offered here, beside the
+   // up-to-date report, rather than as its own command. The backend refuses
+   // the install unless Posit Assistant is selected, so only the report is
+   // shown then. (Managed installations never get here: dispatchUpdateCheck
+   // routes them to onInstallationManaged.)
+   private void promptToReinstall(String currentVersion)
+   {
+      if (!paiUtil_.isPositAssistantWanted())
+      {
+         globalDisplay_.showMessage(
+            GlobalDisplay.MSG_INFO,
+            constants_.chatCheckForUpdatesCaption(),
+            constants_.chatNoUpdateAvailableMessage());
+         return;
+      }
+
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_INFO,
+         constants_.chatCheckForUpdatesCaption(),
+         constants_.chatNoUpdateReinstallMessage(currentVersion),
+         false,                          // no separate Cancel; OK is the decline
+         () -> {                         // yes: reinstall
+            onActivateChat();
+            installUpdate(true);
+         },
+         () -> {},                       // OK: dismiss
+         null,                           // cancel operation (unused)
+         constants_.chatReinstallButton(),
+         constants_.chatOkButton(),
+         false);                         // OK is the default button
    }
 
    // A newer Posit Assistant needs a newer RStudio (protocol mismatch or no
@@ -1151,7 +1188,8 @@ public class ChatPresenter extends BasePresenter
       installManager_.checkForUpdates(forceRecheck, new PositAiInstallManager.UpdateCheckCallback()
       {
          @Override
-         public void onNoUpdateAvailable()
+         public void onNoUpdateAvailable(String currentVersion,
+                                         boolean reinstallAvailable)
          {
             // No update available - start backend normally
             startBackend();
@@ -1273,7 +1311,12 @@ public class ChatPresenter extends BasePresenter
 
    private void installUpdate()
    {
-      installManager_.installUpdate(new PositAiInstallManager.InstallCallback()
+      installUpdate(false);
+   }
+
+   private void installUpdate(boolean reinstall)
+   {
+      installManager_.installUpdate(reinstall, new PositAiInstallManager.InstallCallback()
       {
          @Override
          public void onInstallStarted()
