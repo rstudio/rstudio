@@ -398,7 +398,6 @@ jobs:
         shard: [1, 2]
     runs-on: macos-14
     timeout-minutes: 120
-    environment: e2e-playwright
     env:
       # os-e2e-deps installs the harness's required packages here and exports
       # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
