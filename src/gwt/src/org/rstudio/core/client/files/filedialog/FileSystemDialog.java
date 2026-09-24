@@ -254,6 +254,18 @@ public abstract class FileSystemDialog extends ModalDialogBase
       }
    }
 
+   /**
+    * Closing the dialog (Cancel, Escape) does not detach it from the context,
+    * so a listing that arrives afterwards still reaches onNavigated(). Drop
+    * any deferred accept so it cannot run the operation from a closed dialog.
+    */
+   @Override
+   protected void onUnload()
+   {
+      acceptOnNavigated_ = false;
+      super.onUnload();
+   }
+
    @Override
    public void onDirectoryCreated(FileSystemItem directory)
    {

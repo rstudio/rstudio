@@ -4,13 +4,14 @@ import { PlotsPane } from '@pages/plots_pane.page';
 import { CONFIRM_BTN, CANCEL_BTN, YES_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
-import type { Page, Request } from 'playwright';
+import type { Locator, Page, Request } from 'playwright';
 
 // GWT file-chooser accept button. base-prefs.jsonc sets native_file_dialogs=false
 // suite-wide, so export flows always use the GWT file chooser (never a native OS
 // dialog). The two-step save flow is: OK on the format dialog, then this button
 // on the file chooser to accept the default path.
 const FILE_ACCEPT_SAVE = '#rstudio_file_accept_save';
+const FILE_CANCEL_SAVE = '#rstudio_file_cancel_save';
 
 // The RPC the GWT file chooser lists its directory with, and the one that
 // saves the plot once the chooser is accepted.
@@ -23,6 +24,59 @@ useSuiteSandbox();
 
 let consoleActions: ConsolePaneActions;
 let plotsPane: PlotsPane;
+
+// Opens Plots > Export > Save as Image, confirms the format dialog, and returns
+// the GWT file chooser's accept button.
+async function openSaveAsImageChooser(page: Page): Promise<Locator> {
+  await plotsPane.exportMenu.click();
+  await plotsPane.saveAsImageItem.click();
+  await expect(plotsPane.saveAsImageDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  await page.locator(CONFIRM_BTN).click();
+  return page.locator(FILE_ACCEPT_SAVE);
+}
+
+// Holds every list_files RPC until release() is called, so a chooser can be
+// driven before its directory listing arrives. cleanup() releases anything
+// still held and removes the route; call it from a finally block.
+async function holdListFiles(page: Page) {
+  let release = () => {};
+  const released = new Promise<void>((resolve) => (release = resolve));
+  let held = 0;
+  const continued: Promise<void>[] = [];
+  await page.route(LIST_FILES_RPC, async (route) => {
+    held++;
+    const request = released.then(() => route.continue());
+    continued.push(request);
+    await request;
+  });
+
+  return {
+    held: () => held,
+    release,
+    settled: () => Promise.allSettled(continued),
+    cleanup: async () => {
+      // let held requests through before removing the route, so an unroute
+      // doesn't continue them a second time
+      release();
+      await Promise.allSettled(continued);
+      await page.unroute(LIST_FILES_RPC);
+    },
+  };
+}
+
+// Counts save_plot_as RPCs issued from now until stop() is called.
+function countSaves(page: Page) {
+  let count = 0;
+  const onRequest = (request: Request) => {
+    if (SAVE_PLOT_RPC.test(request.url()))
+      count++;
+  };
+  page.on('request', onRequest);
+  return {
+    count: () => count,
+    stop: () => page.off('request', onRequest),
+  };
+}
 
 // Creates a minimal base-graphics plot and waits for the Plots pane to show it.
 async function createPlot(page: Page): Promise<void> {
@@ -131,41 +185,23 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
     // Hold the chooser's directory listing so the accept click is guaranteed
     // to land before it arrives (#18922: the click used to close the chooser
     // without saving).
-    let releaseListing = () => {};
-    const listingHeld = new Promise<void>((resolve) => (releaseListing = resolve));
-    let listings = 0;
-    const heldListings: Promise<void>[] = [];
-    await page.route(LIST_FILES_RPC, async (route) => {
-      listings++;
-      const continued = listingHeld.then(() => route.continue());
-      heldListings.push(continued);
-      await continued;
-    });
-    let saves = 0;
-    const countSaves = (request: Request) => {
-      if (SAVE_PLOT_RPC.test(request.url()))
-        saves++;
-    };
-    page.on('request', countSaves);
+    const listing = await holdListFiles(page);
+    const saves = countSaves(page);
 
     try {
-      await plotsPane.exportMenu.click();
-      await plotsPane.saveAsImageItem.click();
-      await expect(plotsPane.saveAsImageDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-      await page.locator(CONFIRM_BTN).click();
-      const acceptButton = page.locator(FILE_ACCEPT_SAVE);
+      const acceptButton = await openSaveAsImageChooser(page);
       await acceptButton.click();
 
       // the chooser stays open with the accept pending, and nothing is saved
-      await expect.poll(() => listings, { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
+      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
       await expect(acceptButton).toBeVisible();
-      expect(saves).toBe(0);
+      expect(saves.count()).toBe(0);
 
       // the pending accept saves the plot by itself once the listing arrives
-      releaseListing();
+      listing.release();
       await expect(acceptButton).toBeHidden({ timeout: TIMEOUTS.fileOpen });
       await expect(plotsPane.saveAsImageDialog).toBeHidden();
-      expect(saves).toBe(1);
+      expect(saves.count()).toBe(1);
       await expect.poll(
         () => consoleActions.evalRLogical(
           'length(setdiff(list.files(getwd(), pattern = "Rplot.*\\\\.png$"), .pngs_before)) == 1',
@@ -173,12 +209,45 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
         { timeout: TIMEOUTS.fileOpen },
       ).toBe(true);
     } finally {
-      page.off('request', countSaves);
-      // let held requests through before removing the route, so an unroute
-      // doesn't continue them a second time
-      releaseListing();
-      await Promise.allSettled(heldListings);
-      await page.unroute(LIST_FILES_RPC);
+      saves.stop();
+      await listing.cleanup();
+    }
+  });
+
+  test('file chooser cancelled with an accept pending does not save', async ({ rstudioPage: page }) => {
+    await createPlot(page);
+    await consoleActions.executeInConsole('.pngs_before <- list.files(getwd(), pattern = "Rplot.*\\\\.png$")');
+
+    // Accept while the listing is held, then cancel: the listing still reaches
+    // the closed chooser, and the deferred accept must not run from it.
+    const listing = await holdListFiles(page);
+    const saves = countSaves(page);
+
+    try {
+      const acceptButton = await openSaveAsImageChooser(page);
+      await acceptButton.click();
+      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
+      await expect(acceptButton).toBeVisible();
+      await page.locator(FILE_CANCEL_SAVE).click();
+      await expect(acceptButton).toBeHidden();
+
+      // cancelling the chooser returns to the format dialog; a deferred accept
+      // would issue the save as soon as the client handles the listing
+      // response, and dismissing that dialog is ordered after it
+      listing.release();
+      await listing.settled();
+      await expect(plotsPane.saveAsImageDialog).toBeVisible();
+      await page.locator(CANCEL_BTN).click();
+      await expect(plotsPane.saveAsImageDialog).toBeHidden();
+      expect(saves.count()).toBe(0);
+      expect(
+        await consoleActions.evalRLogical(
+          'length(setdiff(list.files(getwd(), pattern = "Rplot.*\\\\.png$"), .pngs_before)) == 0',
+        ),
+      ).toBe(true);
+    } finally {
+      saves.stop();
+      await listing.cleanup();
     }
   });
 
