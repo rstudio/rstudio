@@ -28,6 +28,10 @@ namespace session {
 class RestartContext;
 RestartContext& restartContext();
 
+// the session state of a restart context is named with this prefix
+// followed by the context ID
+constexpr const char* kRestartContextPrefix = "ctx-";
+
 class RestartContext : boost::noncopyable
 {
 private:

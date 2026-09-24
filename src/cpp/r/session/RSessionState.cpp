@@ -1167,7 +1167,8 @@ FilePath setAsideUnfinishedRestore(const FilePath& statePath)
    return setAsidePath;
 }
 
-void removeExpiredSetAsideState(const FilePath& parentPath)
+void removeExpiredSetAsideState(const FilePath& parentPath,
+                                const std::string& statePrefix)
 {
    if (!parentPath.exists())
       return;
@@ -1185,8 +1186,12 @@ void removeExpiredSetAsideState(const FilePath& parentPath)
    std::time_t cutoff = std::time(nullptr) - kSetAsideStateMaxAgeDays * 24 * 60 * 60;
    for (const FilePath& child : children)
    {
-      if (!boost::algorithm::contains(child.getFilename(), kSetAsideSuffix))
+      const std::string& name = child.getFilename();
+      if (!boost::algorithm::starts_with(name, statePrefix) ||
+          !boost::algorithm::contains(name, kSetAsideSuffix))
+      {
          continue;
+      }
 
       std::time_t lastWriteTime = 0;
       error = child.getLastWriteTime(lastWriteTime);

@@ -91,8 +91,10 @@ const int kSetAsideStateMaxAgeDays = 30;
 
 // Removes state that setAsideUnfinishedRestore() set aside under parentPath
 // (the directory holding the state path) more than kSetAsideStateMaxAgeDays
-// ago.
-void removeExpiredSetAsideState(const core::FilePath& parentPath);
+// ago. Only entries named after state with the given prefix are considered,
+// since the directory may hold other things.
+void removeExpiredSetAsideState(const core::FilePath& parentPath,
+                                const std::string& statePrefix);
 
 SessionStateInfo getSessionStateInfo();
      

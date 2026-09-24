@@ -255,8 +255,8 @@ void setAsideUnfinishedRestores()
    setAsideUnfinishedRestore(suspendedSessionPath());
 
    // state set aside long enough ago has had its chance to be recovered
-   state::removeExpiredSetAsideState(restartContext().contextsPath());
-   state::removeExpiredSetAsideState(suspendedSessionPath().getParent());
+   state::removeExpiredSetAsideState(restartContext().contextsPath(), kRestartContextPrefix);
+   state::removeExpiredSetAsideState(suspendedSessionPath().getParent(), suspendedSessionPath().getFilename());
 }
 
 // one-time per session initialization

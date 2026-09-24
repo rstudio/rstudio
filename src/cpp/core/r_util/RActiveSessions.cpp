@@ -344,7 +344,7 @@ void ActiveSessions::removeStaleInvalidSessions(
       if (isModifiedSince(scratchPath, cutoff))
          continue;
 
-      LOG_INFO_MESSAGE("Removing invalid session " + session->id() + " at " + scratchPath.getAbsolutePath());
+      ILOGF("Removing invalid session {} at {}", session->id(), scratchPath.getAbsolutePath());
       error = session->destroy();
       if (error)
          LOG_ERROR(error);

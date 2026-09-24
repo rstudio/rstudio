@@ -135,10 +135,16 @@ TEST_F(StateRestoreTest, ExpiredSetAsideStateIsRemoved)
    writeState("third");
    statePath_.setLastWriteTime(now - 2 * state::kSetAsideStateMaxAgeDays * kDay);
 
-   state::removeExpiredSetAsideState(root_);
+   // as is anything else in the directory, whatever its name
+   FilePath other = root_.completeChildPath("other-unrestored");
+   ASSERT_FALSE(writeStringToFile(other, "other"));
+   other.setLastWriteTime(now - 2 * state::kSetAsideStateMaxAgeDays * kDay);
+
+   state::removeExpiredSetAsideState(root_, statePath_.getFilename());
 
    EXPECT_FALSE(expired.exists());
    EXPECT_TRUE(recent.exists());
+   EXPECT_TRUE(other.exists());
    EXPECT_EQ("third", readContents(statePath_));
 }
 

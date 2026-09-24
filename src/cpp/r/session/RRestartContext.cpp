@@ -32,8 +32,6 @@ namespace session {
 
 namespace {
 
-const char * const kContext = "ctx-";
-
 FilePath restartContextsPath(const FilePath& scopePath)
 {
    FilePath contextsPath = scopePath.completePath("ctx");
@@ -60,7 +58,7 @@ void RestartContext::initialize(const FilePath& scopePath,
                                 const std::string& contextId)
 {
    contextsPath_ = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath_.completePath(kContext + contextId);
+   FilePath statePath = contextsPath_.completePath(kRestartContextPrefix + contextId);
    if (statePath.exists())
       sessionStatePath_ = statePath;
 }
@@ -102,7 +100,7 @@ FilePath RestartContext::createSessionStatePath(const FilePath& scopePath,
                                                 const std::string& contextId)
 {
    FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.completePath(kContext + contextId);
+   FilePath statePath = contextsPath.completePath(kRestartContextPrefix + contextId);
 
    Error error = statePath.ensureDirectory();
    if (error)

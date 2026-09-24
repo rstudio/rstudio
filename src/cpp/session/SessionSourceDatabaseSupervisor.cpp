@@ -430,6 +430,24 @@ Error reclaimOrphanedSession(
       if (sessionSuspendFilePath(sessionDir).exists())
          continue;
 
+      // Leave alone directories we can't write to (e.g. one left behind by a
+      // session run as root). We couldn't lock one after adopting it, and as
+      // adopting renames it after this session, each later start would adopt
+      // it and fail again. Checked before the restart file, which we
+      // couldn't remove either.
+      bool writeable = false;
+      Error writeableError = sessionDir.isWriteable(writeable);
+      if (writeableError)
+      {
+         LOG_ERROR(writeableError);
+         continue;
+      }
+      if (!writeable)
+      {
+         WLOGF("Not recovering source database {}: directory is not writable", sessionDir.getAbsolutePath());
+         continue;
+      }
+
       FilePath restartFile = sessionRestartFilePath(sessionDir);
       if (restartFile.exists())
       {
@@ -448,23 +466,6 @@ Error reclaimOrphanedSession(
             // it alone
             continue;
          }
-      }
-
-      // Leave alone directories we can't write to (e.g. one left behind by a
-      // session run as root). We couldn't lock one after adopting it, and as
-      // adopting renames it after this session, each later start would adopt
-      // it and fail again.
-      bool writeable = false;
-      Error writeableError = sessionDir.isWriteable(writeable);
-      if (writeableError)
-      {
-         LOG_ERROR(writeableError);
-         continue;
-      }
-      if (!writeable)
-      {
-         WLOGF("Not recovering source database {}: directory is not writable", sessionDir.getAbsolutePath());
-         continue;
       }
 
       // Adopt only a session dir we can confirm is unlocked. isLocked() fails
