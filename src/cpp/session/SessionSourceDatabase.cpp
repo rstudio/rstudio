@@ -637,8 +637,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, 
    // these files can hold the only copy of unsaved changes, so replace them
    // atomically rather than risk a process crash leaving them truncated
    AtomicWriteOptions options;
-   if (retryRewrite)
-      options.maxRetrySeconds = session::prefs::userPrefs().saveRetryTimeout();
+   options.maxRetrySeconds = retryRewrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
 
    // write contents to file
    if (writeContents)
