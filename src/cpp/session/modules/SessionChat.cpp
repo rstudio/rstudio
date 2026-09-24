@@ -3717,14 +3717,18 @@ void onBackgroundProcessing(bool isIdle)
 
 // Structure to hold update check state.
 //
-// The pending-update fields (updateAvailable, isDowngrade, newVersion,
-// downloadUrl, expectedSha256) mirror throttle::PendingUpdate, which carries
+// The pending-update fields (updateAvailable, reinstallAvailable, isDowngrade,
+// newVersion, downloadUrl, expectedSha256) mirror throttle::PendingUpdate, which carries
 // them across a throttled skip in resolveWithoutManifestFetch(). Keep the two
 // field sets in sync: a field added here that isn't carried there would be
 // silently dropped on a skip (the regression #18014 fixed).
 struct UpdateState
 {
    bool updateAvailable;
+   // The installed version is the one the manifest offers, and a fresh copy of
+   // it would be what this session runs. newVersion, downloadUrl and
+   // expectedSha256 then describe the installed version.
+   bool reinstallAvailable;
    bool isDowngrade;
    bool noCompatibleVersion;
    bool unsupportedInstalledVersion;
@@ -3754,6 +3758,7 @@ struct UpdateState
 
    UpdateState()
       : updateAvailable(false),
+        reinstallAvailable(false),
         isDowngrade(false),
         noCompatibleVersion(false),
         unsupportedInstalledVersion(false),
@@ -4369,7 +4374,9 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 // extracted into a staging directory no other session can name, and reaches a
 // slot name only once allocateSlot() has recorded its manifest and verified
 // the result, so a torn install never exists under a resolvable name.
-Error installPackage(const FilePath& packagePath, const std::string& expectedVersion)
+Error installPackage(const FilePath& packagePath,
+                     const std::string& expectedVersion,
+                     chat_slots::SlotPolicy policy)
 {
    FilePath storageDir = positAiStorageDir();
    FilePath slotsDir = chat_slots::versionsDir(storageDir);
@@ -4425,8 +4432,7 @@ Error installPackage(const FilePath& packagePath, const std::string& expectedVer
       return discardStaging(error);
 
    FilePath slotDir;
-   error = chat_slots::allocateSlot(
-      stagingDir, chat_slots::SlotPolicy::AdoptExisting, &slotDir);
+   error = chat_slots::allocateSlot(stagingDir, policy, &slotDir);
    if (error)
    {
       WLOG("Failed to publish install slot: {}", error.getMessage());
@@ -4435,7 +4441,7 @@ Error installPackage(const FilePath& packagePath, const std::string& expectedVer
 
    // The published slot declares what the staged package did: on a lost rename
    // race allocateSlot() adopts an existing slot only when its version and
-   // protocol match the staged one.
+   // protocol match the staged one, and only when the policy allows it.
    error = chat_selector::selectSlot(storageDir, kProtocolVersion, slotDir.getFilename());
    if (error)
    {
@@ -4474,6 +4480,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    bool noCompatibleVersion = false;
    bool additionalProvidersAvailable = false;
    bool updateAvailable = false;
+   bool reinstallAvailable = false;
    bool isDowngrade = false;
    std::string newVersion;
    std::string downloadUrl;
@@ -4496,6 +4503,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
          s_updateState.noCompatibleVersion = noCompatibleVersion;
          s_updateState.additionalProvidersAvailable = additionalProvidersAvailable;
          s_updateState.updateAvailable = updateAvailable;
+         s_updateState.reinstallAvailable = reinstallAvailable;
          s_updateState.isDowngrade = isDowngrade;
          s_updateState.newVersion = newVersion;
          s_updateState.downloadUrl = downloadUrl;
@@ -4653,6 +4661,19 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    {
       DLOG("No update needed (installed: {}, available: {})",
            installedVersion, packageVersion);
+
+      // Reinstall recovers from corruption verification cannot see, so it is
+      // offered only for a usable install, and only when the fresh copy would
+      // be what runs -- the same gate as the update offer.
+      if (installedVersion == packageVersion &&
+          !unsupportedInstalledVersion && !unsupportedProtocol &&
+          userInstallWouldBeSelected(packageVersion))
+      {
+         reinstallAvailable = true;
+         newVersion = packageVersion;
+         downloadUrl = pkgDownloadUrl;
+         expectedSha256 = sha256;
+      }
    }
 
    finish();
@@ -4752,6 +4773,7 @@ void resolveWithoutManifestFetch()
       // stale target or downgrade classification behind.
       PendingUpdate prior;
       prior.updateAvailable = s_updateState.updateAvailable;
+      prior.reinstallAvailable = s_updateState.reinstallAvailable;
       prior.isDowngrade = s_updateState.isDowngrade;
       prior.newVersion = s_updateState.newVersion;
       prior.downloadUrl = s_updateState.downloadUrl;
@@ -4759,9 +4781,10 @@ void resolveWithoutManifestFetch()
       PendingUpdate carried = throttle::carryPendingUpdateThroughSkip(
          prior, s_updateState.currentVersion, installedVersion);
 
-      if (prior.updateAvailable)
-         DLOG("Throttled skip: pending update {} (installed {}, last checked {})",
-              carried.updateAvailable ? "carried" : "cleared",
+      if (prior.updateAvailable || prior.reinstallAvailable)
+         DLOG("Throttled skip: pending {} {} (installed {}, last checked {})",
+              prior.updateAvailable ? "update" : "reinstall",
+              (carried.updateAvailable || carried.reinstallAvailable) ? "carried" : "cleared",
               installedVersion, s_updateState.currentVersion);
 
       s_updateState.currentVersion = installedVersion;
@@ -4772,6 +4795,7 @@ void resolveWithoutManifestFetch()
       s_updateState.noCompatibleVersion = false;
       s_updateState.additionalProvidersAvailable = false;
       s_updateState.updateAvailable = carried.updateAvailable;
+      s_updateState.reinstallAvailable = carried.reinstallAvailable;
       s_updateState.isDowngrade = carried.isDowngrade;
       s_updateState.newVersion = carried.newVersion;
       s_updateState.downloadUrl = carried.downloadUrl;
@@ -5484,6 +5508,7 @@ void buildUpdateStateResult(json::Object* pResult)
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
    (*pResult)["updateAvailable"] = s_updateState.updateAvailable;
+   (*pResult)["reinstallAvailable"] = s_updateState.reinstallAvailable;
    (*pResult)["isDowngrade"] = s_updateState.isDowngrade;
    (*pResult)["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
    (*pResult)["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
@@ -5755,17 +5780,26 @@ void finishInstall(const std::string& version,
 // chat_get_update_status for progress); only the preceding update check is
 // async, so this is unchanged from the previous behavior apart from resolving a
 // continuation instead of returning a response.
-void performInstall(const json::JsonRpcFunctionContinuation& cont)
+//
+// A reinstall installs the version this session already runs, as a new slot
+// even when an intact-looking one exists: it is the recovery for corruption
+// verification cannot see, so it never skips the download or adopts a slot it
+// did not write. The slot it replaces as the selection is left in place, since
+// another session may be running from it.
+void performInstall(bool reinstall, const json::JsonRpcFunctionContinuation& cont)
 {
    json::JsonRpcResponse response;
 
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   // Check if update is available
-   if (!s_updateState.updateAvailable)
+   bool available = reinstall ? s_updateState.reinstallAvailable
+                              : s_updateState.updateAvailable;
+   if (!available)
    {
       setErrorResponse(systemError(boost::system::errc::operation_not_permitted,
-                                   "No update available", ERROR_LOCATION),
+                                   reinstall ? "No reinstall available"
+                                             : "No update available",
+                                   ERROR_LOCATION),
                        &response);
       lock.unlock();  // don't hold the state lock across the continuation
       cont(Success(), &response);
@@ -5804,7 +5838,8 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
    // returned to is normally still installed, and what lets a session still
    // running an older slot after another session installed the offered one
    // just re-select it.
-   if (chat_selector::selectInstalledVersion(
+   if (!reinstall &&
+       chat_selector::selectInstalledVersion(
           positAiStorageDir(), kProtocolVersion, newVersion))
    {
       DLOG("Posit Assistant {} is already installed; selected it without downloading",
@@ -5870,7 +5905,9 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
       s_updateState.installMessage = "Installing update...";
    }
 
-   error = installPackage(tempPackage, newVersion);
+   error = installPackage(tempPackage, newVersion,
+                          reinstall ? chat_slots::SlotPolicy::AlwaysFresh
+                                    : chat_slots::SlotPolicy::AdoptExisting);
 
    // Always clean up temp file (do this before error handling)
    Error cleanupError = tempPackage.removeIfExists();
@@ -5897,20 +5934,35 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
 // finishInstall() waits on the same poll, which is a no-op when re-entered:
 // the agent would never be reaped within the wait and the install would fail
 // for nothing. Scheduled work runs after the poll has returned.
-void performInstallAfterPoll(const json::JsonRpcFunctionContinuation& cont)
+void performInstallAfterPoll(bool reinstall,
+                             const json::JsonRpcFunctionContinuation& cont)
 {
    module_context::scheduleDelayedWork(boost::posix_time::milliseconds(1),
-                                       boost::bind(performInstall, cont),
+                                       boost::bind(performInstall, reinstall, cont),
                                        false);
 }
 
-// Async RPC. Installs the available update; if the update state hasn't been
+// Async RPC. Installs the available update, or with the optional reinstall
+// flag reinstalls the current version; if the update state hasn't been
 // populated yet (e.g. user selected Posit Assistant after startup), run an async
 // check first, then install. The install body itself is unchanged and the
 // client still polls chat_get_update_status for progress.
 void chatInstallUpdate(const json::JsonRpcRequest& request,
                        const json::JsonRpcFunctionContinuation& cont)
 {
+   bool reinstall = false;
+   if (request.params.getSize() > 0)
+   {
+      Error error = json::readParam(request.params, 0, &reinstall);
+      if (error)
+      {
+         json::JsonRpcResponse response;
+         setErrorResponse(error, &response);
+         cont(Success(), &response);
+         return;
+      }
+   }
+
    if (isInstallationManaged())
    {
       json::JsonRpcResponse response;
@@ -5943,12 +5995,12 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
 
    if (haveState && !s_checkInProgress)
    {
-      performInstall(cont);
+      performInstall(reinstall, cont);
    }
    else
    {
       DLOG("Update state not populated, performing async check before install");
-      startUpdateCheck(true, boost::bind(performInstallAfterPoll, cont));
+      startUpdateCheck(true, boost::bind(performInstallAfterPoll, reinstall, cont));
    }
 }
 
