@@ -182,6 +182,7 @@
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionRCompletions.hpp"
 #include "modules/SessionRenv.hpp"
+#include "modules/SessionRig.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionRHooks.hpp"
 #include "modules/SessionRSConnect.hpp"
@@ -754,6 +755,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rsconnect::initialize)
       (modules::packrat::initialize)
       (modules::renv::initialize)
+      (modules::rig::initialize)
       (modules::rhooks::initialize)
       (modules::r_packages::initialize)
       (modules::diagnostics::initialize)

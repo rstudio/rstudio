@@ -33,9 +33,11 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ImageButton;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.AriaLiveService;
@@ -69,6 +71,7 @@ public class WarningBar extends Composite
       String center();
       String warningIcon();
       String label();
+      String action();
       String dismiss();
 
       String warning();
@@ -87,6 +90,7 @@ public class WarningBar extends Composite
       dismiss_.addClickHandler(event -> CloseEvent.fire(WarningBar.this, WarningBar.this));
       moreButton_.setVisible(false);
       moreButton_.setText(constants_.manageLicenseText());
+      actionLink_.setVisible(false);
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
       A11y.setARIAHidden(label_);
       if (!ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
@@ -99,6 +103,23 @@ public class WarningBar extends Composite
 
       // Give screen reader time to process page to improve chance it will notice the live region
       Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setInnerText(value));
+   }
+
+   /**
+    * Show an action link after the message, or hide it when the label is null.
+    */
+   public void setAction(String label, Command command)
+   {
+      if (label == null || command == null)
+      {
+         actionLink_.setVisible(false);
+         actionLink_.setClickHandler(null);
+         return;
+      }
+
+      actionLink_.setText(label);
+      actionLink_.setClickHandler(command);
+      actionLink_.setVisible(true);
    }
 
    public void showLicenseButton(boolean show)
@@ -146,6 +167,8 @@ public class WarningBar extends Composite
    DivElement live_;
    @UiField
    Button moreButton_;
+   @UiField
+   HyperlinkLabel actionLink_;
    @UiField
    ImageButton dismiss_;
 

@@ -35,7 +35,8 @@ import { buildInfo } from './build-info';
 import { PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
-import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { ElectronDesktopOptions, fixWindowsRExecutablePath } from './preferences/electron-desktop-options';
+import { prepareEnvironment } from './detect-r';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, findRepoRoot, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
@@ -628,6 +629,9 @@ export class SessionLauncher {
       this.mainWindow.workbenchInitialized = false;
     }
 
+    // switch to another R if the session asked for one before it quit
+    this.applyPendingRVersion();
+
     // build a new launch context -- re-use the same port if we aren't reloading
     const launchContext = await this.buildLaunchContext(!reload);
 
@@ -657,6 +661,31 @@ export class SessionLauncher {
     }
 
     return success();
+  }
+
+  /**
+   * Prepare the environment for the R executable a pending restart asked
+   * for, and remember it as the R to launch with from now on. The current
+   * R is kept when the requested one cannot be queried.
+   */
+  applyPendingRVersion(): void {
+    const pending = this.mainWindow?.collectPendingRVersion();
+    if (!pending) {
+      return;
+    }
+
+    // sessions launched from bin\R.exe fail to load on Windows; use the
+    // architecture-specific executable as the Choose R dialog does
+    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(pending) : pending;
+
+    logger().logInfo(`Switching to R: ${rPath}`);
+    const error = prepareEnvironment(rPath);
+    if (error) {
+      logger().logError(error);
+      return;
+    }
+
+    ElectronDesktopOptions().setRExecutablePath(rPath);
   }
 
   onReloadFrameForNextSession(): void {

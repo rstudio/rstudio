@@ -234,6 +234,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CONSOLE_SUSPEND_BLOCKED_NOTICE_DELAY = "console_suspend_blocked_notice_delay";
    public static final String NEW_PROJ_GIT_INIT = "new_proj_git_init";
    public static final String NEW_PROJ_USE_RENV = "new_proj_use_renv";
+   public static final String CHECK_PROJECT_R_VERSION = "check_project_r_version";
    public static final String ROOT_DOCUMENT = "root_document";
    public static final String SHOW_USER_HOME_PAGE = "show_user_home_page";
    public static final String REUSE_SESSIONS_FOR_PROJECT_LINKS = "reuse_sessions_for_project_links";
@@ -3031,6 +3032,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   public PrefValue<Boolean> checkProjectRVersion()
+   {
+      return bool(
+         "check_project_r_version",
+         _constants.checkProjectRVersionTitle(), 
+         _constants.checkProjectRVersionDescription(), 
+         true);
+   }
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    public PrefValue<String> rootDocument()
@@ -5116,6 +5129,8 @@ public class UserPrefsAccessor extends Prefs
          newProjGitInit().setValue(layer, source.getBool("new_proj_git_init"));
       if (source.hasKey("new_proj_use_renv"))
          newProjUseRenv().setValue(layer, source.getBool("new_proj_use_renv"));
+      if (source.hasKey("check_project_r_version"))
+         checkProjectRVersion().setValue(layer, source.getBool("check_project_r_version"));
       if (source.hasKey("root_document"))
          rootDocument().setValue(layer, source.getString("root_document"));
       if (source.hasKey("show_user_home_page"))
@@ -5548,6 +5563,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(consoleSuspendBlockedNoticeDelay());
       prefs.add(newProjGitInit());
       prefs.add(newProjUseRenv());
+      prefs.add(checkProjectRVersion());
       prefs.add(rootDocument());
       prefs.add(showUserHomePage());
       prefs.add(reuseSessionsForProjectLinks());

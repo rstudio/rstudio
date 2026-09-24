@@ -403,6 +403,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
+    setPendingRVersion: (rExecutablePath: string) => {
+      ipcRenderer.send('desktop_set_pending_r_version', rExecutablePath);
+    },
+
     setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
       ipcRenderer
         .invoke('desktop_set_pending_quit', pendingQuit)

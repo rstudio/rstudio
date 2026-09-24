@@ -249,6 +249,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRenv.cpp
+   modules/SessionRig.cpp
    modules/SessionReticulate.cpp
    modules/SessionRHooks.cpp
    modules/SessionRParser.cpp

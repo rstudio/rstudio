@@ -301,11 +301,12 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
   const rExecutable = rExecutableFor(rPath);
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
 
+  const query = rQueryCommand(rExecutable.getAbsolutePath());
   const [spawned, spawnError] = expect(() => {
-    return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
+    return spawnSync(query.command, ['--vanilla', '-s'], {
       encoding: 'utf-8',
       input: rQueryScript(),
-      env: rQueryEnvironment(),
+      env: query.env,
     });
   });
   if (spawnError) {
@@ -336,11 +337,12 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
   const rExecutable = rExecutableFor(rPath);
   logger().logDebug(`Querying information about R executable at path: ${rExecutable} (in background)`);
 
+  const query = rQueryCommand(rExecutable.getAbsolutePath());
   const result = await new Promise<RQueryResult>((resolve) => {
     let stdout = '';
     let stderr = '';
-    const child = spawn(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
-      env: rQueryEnvironment(),
+    const child = spawn(query.command, ['--vanilla', '-s'], {
+      env: query.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     child.stdout.on('data', (data) => (stdout += data));
@@ -390,6 +392,33 @@ writeLines(sep = "\x1F", c(
   Sys.getenv("${kLdLibraryPathVariable}"),
   Sys.getenv("R_PLATFORM")
 ))`;
+}
+
+// A versioned install inside the macOS R framework. Its bin/R launcher script
+// hard-codes the framework's "Current" default as R_HOME, so querying such an
+// install through the script reports the default R rather than the version
+// asked for; the install's real executable, run with its own R_HOME, does
+// not. The framework's default path (Resources/bin/R under R.framework
+// itself) is left to the script.
+const kFrameworkVersionPattern = /^(.*\/R\.framework\/Versions\/[^/]+\/Resources)\/bin\/R$/;
+
+export function frameworkVersionHome(rExecutable: string): string | null {
+  const match = kFrameworkVersionPattern.exec(rExecutable);
+  return match ? match[1] : null;
+}
+
+/** The executable and environment to query the given R with. */
+export function rQueryCommand(rExecutable: string): { command: string; env: NodeJS.ProcessEnv } {
+  const env = rQueryEnvironment();
+
+  const home = frameworkVersionHome(rExecutable);
+  if (home === null) {
+    return { command: rExecutable, env };
+  }
+
+  env['R_HOME'] = home;
+  env[kLdLibraryPathVariable] = `${home}/lib`;
+  return { command: `${home}/bin/exec/R`, env };
 }
 
 function rQueryEnvironment(): NodeJS.ProcessEnv {
@@ -535,7 +564,30 @@ function rOnPathLinux(): string | null {
   return null;
 }
 
+// The R executable stored in the desktop options, when it still works.
+// The stored path is dropped silently when it no longer runs (e.g. that R
+// was uninstalled) so startup falls back to scanning.
+function storedRPosix(): string | null {
+  const stored = ElectronDesktopOptions().rExecutablePath();
+  if (!stored) {
+    return null;
+  }
+
+  if (isValidBinary(stored)) {
+    return stored;
+  }
+
+  logger().logDebug(`Ignoring stored R executable that failed validation: ${stored}`);
+  return null;
+}
+
 function scanForRPosix(): Expected<string> {
+  const stored = storedRPosix();
+  if (stored) {
+    logger().logDebug(`Using ${stored} (stored in RStudio Desktop options)`);
+    return ok(stored);
+  }
+
   if (process.platform !== 'darwin') {
     const rLocation = rOnPathLinux();
     if (rLocation) {
@@ -578,6 +630,11 @@ function rCandidates(): string[] {
     if (rLocation) {
       candidates.unshift(rLocation);
     }
+  }
+
+  const stored = ElectronDesktopOptions().rExecutablePath();
+  if (stored) {
+    candidates.unshift(stored);
   }
   return candidates;
 }

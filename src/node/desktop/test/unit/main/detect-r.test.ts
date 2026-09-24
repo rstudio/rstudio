@@ -21,9 +21,11 @@ import { join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 import {
   detectREnvironment,
+  frameworkVersionHome,
   parseRQueryResult,
   promptUserForR,
   rDetectionReady,
+  rQueryCommand,
   startRDetection,
 } from '../../../src/main/detect-r';
 
@@ -60,6 +62,24 @@ describe('DetectR', () => {
     assert.equal(environment.envVars.R_SHARE_DIR, '/opt/R/share');
     assert.equal(environment.envVars.R_PLATFORM, 'aarch64-apple-darwin23');
     assert.isTrue(environment.ldLibraryPath.endsWith('/opt/R/lib'));
+  });
+
+  it('queries a versioned macOS framework install through its own executable', () => {
+    const home = '/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources';
+    const query = rQueryCommand(`${home}/bin/R`);
+
+    assert.equal(query.command, `${home}/bin/exec/R`);
+    assert.equal(query.env.R_HOME, home);
+    assert.equal(query.env[process.platform === 'darwin' ? 'DYLD_FALLBACK_LIBRARY_PATH' : 'LD_LIBRARY_PATH'], `${home}/lib`);
+  });
+
+  it('queries other R installations through their launcher without R_HOME', () => {
+    for (const path of ['/Library/Frameworks/R.framework/Resources/bin/R', '/opt/R/4.4.1/bin/R', '/usr/bin/R']) {
+      const query = rQueryCommand(path);
+      assert.equal(query.command, path);
+      assert.isUndefined(query.env.R_HOME);
+    }
+    assert.isNull(frameworkVersionHome('/Library/Frameworks/R.framework/Resources/bin/R'));
   });
 
   it('rejects query output without the marker', () => {

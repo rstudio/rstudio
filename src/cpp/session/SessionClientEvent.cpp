@@ -220,6 +220,9 @@ const int kChatBackendExit = 203;
 const int kShowMessage = 204;
 const int kNotebookRenderCompleted = 205;
 const int kConsoleReadCompleted = 206;
+const int kProjectRVersionMismatch = 211;
+const int kRInstallCompleted = 212;
+const int kRenvRestorePrompt = 213;
 const int kRStudioAPIShowMenu = 207;
 const int kPackageVulnerabilitiesReady = 208;
 const int kFilesChanged = 209;
@@ -622,6 +625,12 @@ std::string ClientEvent::typeName() const
          return "notebook_render_completed";
       case client_events::kConsoleReadCompleted:
          return "console_read_completed";
+      case client_events::kProjectRVersionMismatch:
+         return "project_r_version_mismatch";
+      case client_events::kRInstallCompleted:
+         return "r_install_completed";
+      case client_events::kRenvRestorePrompt:
+         return "renv_restore_prompt";
       case client_events::kRStudioAPIShowMenu:
          return "rstudioapi_show_menu";
       case client_events::kPackageVulnerabilitiesReady:

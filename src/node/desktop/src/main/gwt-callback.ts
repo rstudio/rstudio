@@ -99,6 +99,10 @@ export class GwtCallback extends EventEmitter {
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
 
+  // the R executable to launch the next session with (set alongside a
+  // pending restart when the user switches R versions)
+  pendingRVersion = '';
+
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
 
@@ -779,6 +783,10 @@ export class GwtCallback extends EventEmitter {
       this.pendingQuit = pendingQuit;
     });
 
+    ipcMain.on('desktop_set_pending_r_version', (event, rExecutablePath: string) => {
+      this.pendingRVersion = rExecutablePath;
+    });
+
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
       this.mainWindow.launchRStudio({
         projectFilePath: resolveAliasedPath(projectFilePath),
@@ -1290,6 +1298,12 @@ export class GwtCallback extends EventEmitter {
     } else {
       void appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(dialogOptions));
     }
+  }
+
+  collectPendingRVersion(): string {
+    const pending = this.pendingRVersion;
+    this.pendingRVersion = '';
+    return pending;
   }
 
   collectPendingQuitRequest(): PendingQuit {

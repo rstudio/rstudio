@@ -54,6 +54,19 @@ describe('DesktopCallback', () => {
     assert.isNotEmpty(callback);
   });
 
+  describe('desktop_set_pending_r_version', () => {
+    it('records the R executable and hands it over once', () => {
+      ipcMain.emit('desktop_set_pending_r_version', {}, '/opt/R/4.4.1/bin/R');
+
+      assert.equal(callback.collectPendingRVersion(), '/opt/R/4.4.1/bin/R');
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('has nothing pending by default', () => {
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+  });
+
   describe('dialogParentWindow', () => {
     // a parentless native dialog activates the app on macOS, so automation
     // runs must always get a parent even though the app is never focused

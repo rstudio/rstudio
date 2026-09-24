@@ -26,6 +26,9 @@ import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { MainWindow } from '../../../src/main/main-window';
+import * as DetectR from '../../../src/main/detect-r';
+import * as DesktopOptions from '../../../src/main/preferences/electron-desktop-options';
+import { DesktopOptionsImpl } from '../../../src/main/preferences/electron-desktop-options';
 
 function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch(), null);
@@ -93,11 +96,13 @@ describe('SessionLauncher', () => {
 
   describe('launchNextSession', () => {
     // A minimal stand-in for MainWindow: launchNextSession only touches
-    // setSessionProcess and (on reload) workbenchInitialized.
+    // setSessionProcess, the pending R version, and (on reload)
+    // workbenchInitialized.
     function fakeMainWindow(): MainWindow {
       return {
         workbenchInitialized: true,
         setSessionProcess: () => {},
+        collectPendingRVersion: () => '',
       } as unknown as MainWindow;
     }
 
@@ -131,6 +136,61 @@ describe('SessionLauncher', () => {
 
       assert.isNotNull(error);
       assert.isTrue(mainWindow.workbenchInitialized);
+    });
+  });
+
+  describe('applyPendingRVersion', () => {
+    // The R a restart asked for is prepared and remembered; the current R
+    // stays in place when nothing is pending or the requested R fails to run.
+    function launcherWithPendingR(pending: string): {
+      launcher: SessionLauncher;
+      setRExecutablePath: sinon.SinonStub;
+    } {
+      const launcher = getNewLauncher();
+      launcher.mainWindow = {
+        collectPendingRVersion: () => pending,
+      } as unknown as MainWindow;
+
+      const setRExecutablePath = sinon.stub();
+      sinon.stub(DesktopOptions, 'ElectronDesktopOptions').returns({
+        setRExecutablePath,
+      } as unknown as DesktopOptionsImpl);
+
+      return { launcher, setRExecutablePath };
+    }
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('does nothing when no R version is pending', () => {
+      const prepare = sinon.stub(DetectR, 'prepareEnvironment');
+      const { launcher, setRExecutablePath } = launcherWithPendingR('');
+
+      launcher.applyPendingRVersion();
+
+      assert.isFalse(prepare.called);
+      assert.isFalse(setRExecutablePath.called);
+    });
+
+    it('prepares the environment for the pending R and stores it', () => {
+      const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, setRExecutablePath } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+
+      launcher.applyPendingRVersion();
+
+      assert.isTrue(prepare.calledOnceWithExactly('/opt/R/4.4.1/bin/R'));
+      assert.isTrue(setRExecutablePath.calledOnceWithExactly('/opt/R/4.4.1/bin/R'));
+    });
+
+    it('keeps the current R when the pending one cannot be prepared', () => {
+      const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(new Error('no such R'));
+      const { launcher, setRExecutablePath } = launcherWithPendingR('/opt/R/missing/bin/R');
+
+      launcher.applyPendingRVersion();
+
+      assert.isTrue(prepare.calledOnce);
+      assert.isFalse(setRExecutablePath.called);
     });
   });
 });
