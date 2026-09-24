@@ -76,8 +76,7 @@ public class QuartoCommands
                      (result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_SHINY) ||
                       result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_OJS));
                   
-                  final boolean visualEditor = result.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL) &&
-                                               !interactive;
+                  final boolean visualEditor = result.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL);
                  
                   // select appropriate template
                   format = result.getFormat();
