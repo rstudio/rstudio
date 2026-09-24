@@ -17,6 +17,9 @@
 #include "SessionApiPrefs.hpp"
 #include "SessionUserPrefsMigration.hpp"
 
+#include <cmath>
+#include <limits>
+
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
@@ -127,6 +130,41 @@ Error viewPreferences(const json::JsonRpcRequest&,
     return r::exec::executeString("View(.rs.allPrefs())");
 }
 
+// The value a preference must be written as. Its type comes from the schema's
+// default where there is one, because the stored value may have lost it: the
+// client writes a whole number such as 12.0 as the JSON integer 12.
+boost::optional<json::Value> expectedPrefValue(Preferences& prefs, const std::string& pref)
+{
+   // (the user state's default layer has the same name)
+   boost::optional<json::Value> defaultValue = prefs.readValue(kUserPrefsDefaultLayer, pref);
+   if (defaultValue)
+      return defaultValue;
+
+   return prefs.readValue(pref);
+}
+
+// R numbers are doubles unless written like 14L, so convert a number to the
+// numeric type the preference expects when that doesn't change its value.
+json::Value coerceNumber(const json::Value& value, json::Type expectedType)
+{
+   if (expectedType == json::Type::INTEGER && value.getType() == json::Type::REAL)
+   {
+      double number = value.getDouble();
+      if (std::trunc(number) == number &&
+          number >= std::numeric_limits<int>::min() &&
+          number <= std::numeric_limits<int>::max())
+      {
+         return json::Value(static_cast<int>(number));
+      }
+   }
+   else if (expectedType == json::Type::REAL && value.getType() == json::Type::INTEGER)
+   {
+      return json::Value(static_cast<double>(value.getInt()));
+   }
+
+   return value;
+}
+
 bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
 {
    json::Value prefValue = json::Value();
@@ -146,9 +184,10 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
 
    // if this corresponds to an existing preference, ensure that we're not 
    // changing its data type
-   boost::optional<json::Value> previous = prefs.readValue(pref);
+   boost::optional<json::Value> previous = expectedPrefValue(prefs, pref);
    if (previous)
    {
+      prefValue = coerceNumber(prefValue, (*previous).getType());
       if ((*previous).getType() != prefValue.getType())
       {
          r::exec::error("Type mismatch: expected " + 
@@ -202,6 +241,11 @@ SEXP rs_readPref(Preferences& prefs, SEXP prefName)
    auto prefValue = prefs.readValue(pref);
    if (prefValue)
    {
+      // report a number as the type the schema declares, however it was stored
+      boost::optional<json::Value> defaultValue = prefs.readValue(kUserPrefsDefaultLayer, pref);
+      if (defaultValue)
+         prefValue = coerceNumber(*prefValue, (*defaultValue).getType());
+
       // convert to SEXP and return
       return r::sexp::create(*prefValue, &protect);
    }
@@ -304,9 +348,10 @@ SEXP rs_writeProjectPref(SEXP prefName, SEXP value)
    }
 
    // if this corresponds to an existing preference, ensure type consistency
-   boost::optional<json::Value> previous = userPrefs().readValue(pref);
+   boost::optional<json::Value> previous = expectedPrefValue(userPrefs(), pref);
    if (previous)
    {
+      prefValue = coerceNumber(prefValue, (*previous).getType());
       if ((*previous).getType() != prefValue.getType())
       {
          r::exec::error("Type mismatch: expected " +
