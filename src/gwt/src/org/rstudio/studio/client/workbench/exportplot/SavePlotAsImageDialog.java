@@ -218,11 +218,20 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       double scale = getResolution() == 0
             ? BrowseCap.devicePixelRatio()
             : getResolution() / 96.0;
-      sizeText_.setText(constants_.exportSizeText(
-            widthInches,
-            heightInches,
-            Integer.toString((int) (width * scale)),
-            Integer.toString((int) (height * scale))));
+      int widthPixels = (int) (width * scale);
+      int heightPixels = (int) (height * scale);
+      boolean tooLarge = (double) widthPixels * heightPixels > MAX_BITMAP_PIXELS;
+      sizeText_.setText(tooLarge
+            ? constants_.exportSizeTooLargeText(
+                  widthInches,
+                  heightInches,
+                  Integer.toString(widthPixels),
+                  Integer.toString(heightPixels))
+            : constants_.exportSizeText(
+                  widthInches,
+                  heightInches,
+                  Integer.toString(widthPixels),
+                  Integer.toString(heightPixels)));
    }
 
    @Override
@@ -298,6 +307,10 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    private Label sizeText_;
 
    private static final int[] RESOLUTIONS = { 96, 150, 300, 600 };
+
+   // the session refuses to draw bitmaps larger than this (kMaxBitmapPixels
+   // in RGraphicsPlotManager.cpp); the save then fails with the same advice
+   private static final double MAX_BITMAP_PIXELS = 100e6;
 
    private final FileSystemContext fileSystemContext_ =
       RStudioGinjector.INSTANCE.getRemoteFileSystemContext();

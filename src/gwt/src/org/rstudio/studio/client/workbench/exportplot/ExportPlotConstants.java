@@ -43,4 +43,5 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
     String resolutionText(String dpi);
     String exportSizeText(String widthInches, String heightInches, String widthPixels, String heightPixels);
     String exportSizeInchesText(String widthInches, String heightInches);
+    String exportSizeTooLargeText(String widthInches, String heightInches, String widthPixels, String heightPixels);
 }

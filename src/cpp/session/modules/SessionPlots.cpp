@@ -183,8 +183,17 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    }
    if (error)
    {
-       LOG_ERROR(error);
-       return error;
+      LOG_ERROR(error);
+
+      // the description, when there is one, says what the user can change
+      // (e.g. an image too large to draw); the client shows it in place of
+      // the error's summary
+      std::string description = error.getProperty("description");
+      if (description.empty())
+         return error;
+
+      pResponse->setError(error, json::Value(description));
+      return Success();
    }
 
    // set success result

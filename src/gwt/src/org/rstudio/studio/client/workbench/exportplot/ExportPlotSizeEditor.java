@@ -288,13 +288,19 @@ public class ExportPlotSizeEditor extends Composite
                                         0, Unit.PX, 
                                         gripper_.getImageHeight(), Unit.PX);
      
-      // constrain dimensions: only the minimum applies to the initial size,
-      // since a plot with a fixed size is exported at that size even when it's
-      // too large to preview (the preview is hidden then, see
-      // setPreviewPanelSize), rather than clamped to the screen with its
-      // aspect ratio lost
+      // constrain dimensions. The copy dialogs copy from the preview, so
+      // their size is limited to the screen; Save as Image keeps a fixed
+      // plot size that's too large to preview (the preview is hidden then,
+      // see setPreviewPanelSize) rather than clamping it and losing its
+      // aspect ratio.
       initialWidth = Math.max(initialWidth, MIN_SIZE);
       initialHeight = Math.max(initialHeight, MIN_SIZE);
+      if (previewer_.getLimitToScreen())
+      {
+         Size maxSize = getMaxSize();
+         initialWidth = Math.min(initialWidth, maxSize.width);
+         initialHeight = Math.min(initialHeight, maxSize.height);
+      }
             
       // initialize text boxes
       setWidthTextBox(initialWidth);

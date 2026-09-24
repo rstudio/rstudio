@@ -42,6 +42,15 @@ async function deviceSizeIs(width: number, height: number): Promise<boolean | nu
   );
 }
 
+// Accepts the GWT file chooser at its default path. The chooser lists its
+// directory asynchronously, and accepting before the listing arrives closes
+// it without saving anything, so wait for its breadcrumb first.
+async function acceptSaveFileDialog(page: Page): Promise<void> {
+  const currentDirectory = page.locator('.gwt-DialogBox [aria-current="location"]');
+  await expect(currentDirectory).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  await page.locator(FILE_ACCEPT_SAVE).click();
+}
+
 async function openFixedSizeDialog(page: Page): Promise<void> {
   // the size menu is on the Plots pane's toolbar, visible only when it's selected
   await plotsPane.tab.click();
@@ -206,21 +215,62 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
   test('exporting defaults to the fixed size', async ({ rstudioPage: page }) => {
     await createPlot(page);
     await openFixedSizeDialog(page);
-    // The export dialog caps its size at the window's client height minus
-    // 200px; the 645px test window leaves only 380px on Windows, where the
-    // title and menu bars sit inside the window. Stay under that.
-    await plotsPane.fixedSizeWidth.fill('5');
-    await plotsPane.fixedSizeHeight.fill('3.5');
+    // larger than the test window, which the export dialogs used to clamp to
+    await plotsPane.fixedSizeWidth.fill('15');
+    await plotsPane.fixedSizeHeight.fill('20');
     await page.locator(CONFIRM_BTN).click();
-    await expect.poll(() => deviceSizeIs(5, 3.5), { timeout: TIMEOUTS.fileOpen }).toBe(true);
+    await expect.poll(() => deviceSizeIs(15, 20), { timeout: TIMEOUTS.fileOpen }).toBe(true);
 
+    // Save as Image keeps the fixed size, and hides the preview it can't show
     await plotsPane.exportMenu.click();
     await plotsPane.saveAsImageItem.click();
     await expect(plotsPane.saveAsImageDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-    await expect(plotsPane.saveAsImageDialog.getByLabel('Width')).toHaveValue('480');
-    await expect(plotsPane.saveAsImageDialog.getByLabel('Height')).toHaveValue('336');
+    await expect(plotsPane.saveAsImageDialog.getByLabel('Width')).toHaveValue('1440');
+    await expect(plotsPane.saveAsImageDialog.getByLabel('Height')).toHaveValue('1920');
+    await expect(plotsPane.saveAsImageDialog.locator('iframe')).toBeHidden();
+
+    // the dialog warns when the image would be over the session's 100
+    // megapixel limit, which 15 x 20 in reaches at 600 DPI
+    const sizeText = plotsPane.saveAsImageDialog.locator('#rstudio_export_plot_size_text');
+    await plotsPane.saveAsImageDialog.locator('#rstudio_export_plot_resolution').selectOption('600');
+    await expect(sizeText).toHaveText(
+      '15 x 20 in, 9000 x 12000 pixels (too large to save; reduce the size or resolution)',
+    );
+
+    // saving anyway fails with the session's advice, not a system error code
+    await page.locator(CONFIRM_BTN).click();
+    await acceptSaveFileDialog(page);
+    const errorDialog = page.locator('.gwt-DialogBox[aria-label="Error"]');
+    await expect(errorDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(errorDialog).toContainText(
+      'The image would be 9000 x 12000 pixels; reduce its size or resolution',
+    );
+    await errorDialog.getByRole('button', { name: 'OK' }).click();
+    await expect(errorDialog).toBeHidden();
+
+    await plotsPane.saveAsImageDialog.locator('#rstudio_export_plot_resolution').selectOption('300');
+    await expect(sizeText).toHaveText('15 x 20 in, 4500 x 6000 pixels');
     await page.locator(CANCEL_BTN).click();
     await expect(plotsPane.saveAsImageDialog).toBeHidden();
+
+    // Copy to Clipboard copies from its preview, so its size is limited to
+    // the window (see ExportPlotSizeEditor.getMaxSize)
+    const maxSize = await page.evaluate(() => ({
+      width: document.documentElement.clientWidth - 100,
+      height: document.documentElement.clientHeight - 200,
+    }));
+    await plotsPane.exportMenu.click();
+    await plotsPane.copyToClipboardItem.click();
+    await expect(plotsPane.copyToClipboardDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    const width = Number(await plotsPane.copyToClipboardDialog.getByLabel('Width').inputValue());
+    const height = Number(await plotsPane.copyToClipboardDialog.getByLabel('Height').inputValue());
+    expect(width).toBeLessThan(1440);
+    expect(width).toBeLessThanOrEqual(maxSize.width);
+    expect(height).toBeLessThan(1920);
+    expect(height).toBeLessThanOrEqual(maxSize.height);
+    await expect(plotsPane.copyToClipboardDialog.locator('iframe')).toBeVisible();
+    await page.locator(CANCEL_BTN).click();
+    await expect(plotsPane.copyToClipboardDialog).toBeHidden();
   });
 
   // The plots in these tests are portrait, which the pane isn't, so that
@@ -329,7 +379,7 @@ test.describe.serial('Fixed plot size', { tag: ['@serial'] }, () => {
     await expect(resolution).toBeEnabled();
 
     await page.locator(CONFIRM_BTN).click();
-    await page.locator(FILE_ACCEPT_SAVE).click();
+    await acceptSaveFileDialog(page);
     await expect(dialog).toBeHidden();
 
     // the newest saved PNG is 1200 x 900 pixels and records 300 DPI, so it
