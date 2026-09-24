@@ -1419,7 +1419,7 @@ public class VirtualConsoleTests extends GWTTestCase
    {
       // an unterminated OSC longer than the hold-back limit is shown at once
       StringBuilder payload = new StringBuilder();
-      for (int i = 0; i < 5000; i++)
+      for (int i = 0; i <= VirtualConsole.MAX_PARTIAL_STRING_LENGTH; i++)
          payload.append('x');
 
       PreElement ele = Document.get().createPreElement();
@@ -1430,13 +1430,83 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testUnterminatedOscAcrossSubmits()
    {
-      // an OSC string is held back for one submit only
+      // an unterminated string is held back until a console control
+      // character shows it to be malformed; then only its introducer is lost
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("\033]oops");
       Assert.assertEquals("", ele.getInnerText());
-      vc.submit("> ");
-      Assert.assertEquals("oops> ", ele.getInnerText());
+      vc.submit(" more");
+      Assert.assertEquals("", ele.getInnerText());
+      vc.submit("\nnext\n");
+      Assert.assertEquals("oops more\nnext\n", ele.getInnerText());
+   }
+
+   public void testOscSplitAcrossManySubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://a");
+      vc.submit("bcd");
+      vc.submit("\033\\link\033]8;;\033\\\n");
+      Assert.assertEquals("link\n", ele.getInnerText());
+      Assert.assertEquals("link", anchorText(ele));
+
+      // a long payload arriving in many pieces is discarded whole
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033]1337;File=inline=1:");
+      for (int i = 0; i < 200; i++)
+         vc.submit("QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=");
+      Assert.assertEquals("a", ele.getInnerText());
+      vc.submit("\007b\n");
+      Assert.assertEquals("ab\n", ele.getInnerText());
+   }
+
+   public void testFlushPartialAnsiCode()
+   {
+      // a held-back string is shown as malformed
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033]oops");
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("aoops", ele.getInnerText());
+      vc.submit("b");
+      Assert.assertEquals("aoopsb", ele.getInnerText());
+
+      // so is a held-back CSI sequence, while a lone ESC is dropped
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[3");
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("a3", ele.getInnerText());
+      vc.submit("\033");
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("a3", ele.getInnerText());
+
+      // nothing held back, nothing to do
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("a3", ele.getInnerText());
+   }
+
+   public void testHeldBackStringShownOnClassChange()
+   {
+      // output of another class can't complete the string, and the held-back
+      // text keeps its own class
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]oops", "one");
+      vc.submit("x", "two");
+      Assert.assertEquals(
+            "<span class=\"one\">oops</span><span class=\"two\">x</span>",
+            ele.getInnerHTML());
+
+      // whereas the same class continues the string
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033]8;;https://example.com", "one");
+      vc.submit("\007link\033]8;;\007", "one");
+      Assert.assertEquals("link", anchorText(ele));
    }
 
    public void testEscapeBeforeControlCharacter()
@@ -1501,8 +1571,7 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testOscAfterHeldBackEscape()
    {
-      // a lone ESC held back from the previous submit doesn't use up the one
-      // hold-back an unterminated OSC string gets
+      // a lone ESC held back from the previous submit starts the string
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("a\033");

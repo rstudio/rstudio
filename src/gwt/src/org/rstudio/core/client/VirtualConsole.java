@@ -258,7 +258,44 @@ public class VirtualConsole
    private void clearPartialAnsiCode()
    {
       partialAnsiCode_ = null;
-      heldBackString_ = false;
+      partialAnsiCodeClazz_ = null;
+   }
+
+   private void holdPartialAnsiCode(String data, String clazz)
+   {
+      partialAnsiCode_ = data;
+      partialAnsiCodeClazz_ = clazz;
+   }
+
+   /**
+    * Stop waiting for the rest of an escape sequence cut off by the end of
+    * the last submit, and show what was held back as malformed: the
+    * introducer is dropped and the rest is shown as text. Call this when no
+    * more output can follow, e.g. before a prompt.
+    */
+   public void flushPartialAnsiCode()
+   {
+      if (partialAnsiCode_ == null)
+         return;
+
+      String data = partialAnsiCode_;
+      String clazz = partialAnsiCodeClazz_;
+      clearPartialAnsiCode();
+
+      // don't let the flush consume a pending new-range request
+      boolean forceNewRange = forceNewRange_;
+      forceNewRange_ = false;
+
+      flushingPartialAnsiCode_ = true;
+      try
+      {
+         submit(data, clazz, false, false);
+      }
+      finally
+      {
+         flushingPartialAnsiCode_ = false;
+         forceNewRange_ = forceNewRange_ || forceNewRange;
+      }
    }
 
    /**
@@ -978,6 +1015,12 @@ public class VirtualConsole
     */
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
+      // output of another class (e.g. stderr after stdout) can't complete an
+      // escape sequence held back from the previous submit; show it as
+      // malformed first, with its own class
+      if (partialAnsiCode_ != null && !flushingPartialAnsiCode_ && !StringUtil.equals(clazz, partialAnsiCodeClazz_))
+         flushPartialAnsiCode();
+
       // If we're submitting new console output, but the previous submit request
       // asked us to force a new range, respect that.
       forceNewRange = forceNewRange || forceNewRange_;
@@ -995,12 +1038,10 @@ public class VirtualConsole
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
       // ANSI code.
-      boolean retryingHeldBackString = heldBackString_;
-      heldBackString_ = false;
       if (partialAnsiCode_ != null)
       {
          data = partialAnsiCode_ + data;
-         partialAnsiCode_ = null;
+         clearPartialAnsiCode();
       }
 
       String currentClazz = clazz;
@@ -1084,10 +1125,14 @@ public class VirtualConsole
                // submit calls.
                
                // If the only character we've seen so far is the escape code,
-               // just buffer it and try again with next input.
+               // just buffer it and try again with next input (or discard it,
+               // when giving up on held-back input).
                if (head == data.length() - 1)
                {
-                  partialAnsiCode_ = StringUtil.substring(data, head);
+                  if (flushingPartialAnsiCode_)
+                     break;
+
+                  holdPartialAnsiCode(StringUtil.substring(data, head), clazz);
                   return;
                }
                
@@ -1099,16 +1144,14 @@ public class VirtualConsole
                {
                   Match stringEnd = STRING_END.match(data, head + 2);
 
-                  // the rest of the string may arrive with the next submit, so hold
-                  // it back once; if that submit doesn't end it either, treat it as
-                  // malformed rather than let it swallow the output (and prompt)
-                  // that follows. Only a held-back string counts: a lone ESC held
-                  // back from the previous submit doesn't use up the string's turn.
-                  boolean alreadyHeldBack = retryingHeldBackString && head == 0;
-                  if (stringEnd == null && !alreadyHeldBack && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
+                  // the rest of the string may arrive with later submits, so hold
+                  // it back, up to a limit. A stray introducer that never ends
+                  // can't hold back much: a console control character shows the
+                  // string to be malformed, as does output of another class, and
+                  // the console flushes held-back input before each prompt.
+                  if (stringEnd == null && !flushingPartialAnsiCode_ && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
                   {
-                     partialAnsiCode_ = StringUtil.substring(data, head);
-                     heldBackString_ = true;
+                     holdPartialAnsiCode(StringUtil.substring(data, head), clazz);
                      return;
                   }
 
@@ -1301,9 +1344,9 @@ public class VirtualConsole
 
                // if the input ends partway through an escape sequence, buffer it
                // and try again with the next input
-               if (AnsiCode.PARTIAL_ESCAPE_PATTERN.test(rest))
+               if (!flushingPartialAnsiCode_ && AnsiCode.PARTIAL_ESCAPE_PATTERN.test(rest))
                {
-                  partialAnsiCode_ = rest;
+                  holdPartialAnsiCode(rest, clazz);
                   return;
                }
 
@@ -1654,8 +1697,10 @@ public class VirtualConsole
          Pattern.create("[" + AnsiCode.CONSOLE_CONTROL_CHARS + "\u001b]");
 
    // How much of an unterminated string sequence to hold back, waiting for
-   // its terminator to arrive with the next submit
-   private static final int MAX_PARTIAL_STRING_LENGTH = 4096;
+   // its terminator to arrive with a later submit; a longer one is shown as
+   // malformed. Large enough for the payloads of OSC 52 (clipboard) and
+   // OSC 1337 (inline images).
+   static final int MAX_PARTIAL_STRING_LENGTH = 1 << 20;
 
    // allows &entity_name; entities like &amp;
    private boolean preserveHTML_ = false;
@@ -1668,11 +1713,15 @@ public class VirtualConsole
    private int cursor_ = 0;
    private AnsiCode ansi_ = new AnsiCode();
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
-   private String partialAnsiCode_;
 
-   // whether partialAnsiCode_ is an unterminated string sequence that has
-   // already been held back once
-   private boolean heldBackString_ = false;
+   // an escape sequence cut off by the end of the last submit, and the
+   // class it was submitted with
+   private String partialAnsiCode_;
+   private String partialAnsiCodeClazz_;
+
+   // whether flushPartialAnsiCode() is showing a held-back sequence as
+   // malformed, in which case nothing is held back again
+   private boolean flushingPartialAnsiCode_ = false;
    private HyperlinkInfo hyperlink_;
    private String savedClazz_ = "";
 
