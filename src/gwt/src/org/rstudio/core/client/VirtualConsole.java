@@ -94,60 +94,6 @@ public class VirtualConsole
       }
    }
    
-   private static class HyperlinkMatch
-   {
-      public static HyperlinkMatch create(String data, int offset)
-      {
-         String params;
-         String contents;
-         int endIndex;
-         
-         // ESC ']' '8' ';' <params> ';' <url> ST, where ST is BEL or ESC '\'.
-         // As in xterm, any other ESC also ends the string, but is left in
-         // place to be parsed as the start of the next escape sequence.
-         TextCursor cursor = new TextCursor(data, offset);
-         if (!cursor.consume("\u001b]8;"))
-            return null;
-         
-         int paramsStart = cursor.getIndex();
-         if (!cursor.consumeUntilRegex("[;\\u0007\\u001b]"))
-            return null;
-         
-         int paramsEnd = cursor.getIndex();
-         params = StringUtil.substring(data, paramsStart, paramsEnd);
-         
-         if (!cursor.consume(';'))
-            return null;
-         
-         int contentsStart = cursor.getIndex();
-         if (!cursor.consumeUntilRegex("[\\u0007\\u001b]"))
-            return null;
-         
-         int contentsEnd = cursor.getIndex();
-         contents = StringUtil.substring(data, contentsStart, contentsEnd);
-         if (cursor.peek() == '\u0007')
-            cursor.advance(1);
-         else if (cursor.peek(1) == '\\')
-            cursor.advance(2);
-         endIndex = cursor.getIndex();
-         
-         return new HyperlinkMatch(params, contents, endIndex);
-      }
-      
-      private HyperlinkMatch(String params,
-                             String contents,
-                             int endIndex)
-      {
-         params_ = params;
-         contents_ = contents;
-         endIndex_ = endIndex;
-      }
-      
-      public final String params_;
-      public final String contents_;
-      public final int endIndex_;
-   }
-
    @Inject
    public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
@@ -750,7 +696,9 @@ public class VirtualConsole
          ClassRange overlap = entry.getValue();
          int l = entry.getKey();
          int r = l + overlap.length;
-         boolean matches = StringUtil.equals(range.clazz, overlap.clazz);
+         boolean matches =
+               StringUtil.equals(range.clazz, overlap.clazz) &&
+               sameHyperlink(range.hyperlink_, overlap.hyperlink_);
          if (start >= l && start < r && end >= r)
          {
             // overlapping on the left side of the new range
@@ -1122,6 +1070,9 @@ public class VirtualConsole
                formfeed();
                break;
                
+            case '\007': // BEL
+               break;
+               
             case '\033': // \x1b
             case '\233': // \x9b
 
@@ -1138,35 +1089,38 @@ public class VirtualConsole
                   return;
                }
                
-               // match hyperlink, either start or end (if [url] is empty
-               // <ESC> ] 8 ; [params] ; [url] ST
-               HyperlinkMatch hyperlinkMatch = HyperlinkMatch.create(data, head);
-               if (hyperlinkMatch != null)
+               // Operating System Command: ESC ']' <payload> ST, where ST is BEL or
+               // ESC '\'. As in xterm, any other ESC also ends the string, but is
+               // left in place to be parsed as the start of the next escape sequence.
+               if (data.charAt(head) == '\033' && data.charAt(head + 1) == ']')
                {
-                  String params = hyperlinkMatch.params_;
-                  String url = hyperlinkMatch.contents_;
+                  Match oscEnd = OSC_END.match(data, head + 2);
 
-                  // toggle hyperlink_
-                  if (!StringUtil.equals(url, ""))
+                  // the rest of the string may arrive with the next submit
+                  if (oscEnd == null && data.length() - head <= MAX_PARTIAL_OSC_LENGTH)
                   {
-                     hyperlink_ = new HyperlinkInfo(url, params);
-                  }
-                  else
-                  {
-                     hyperlink_ = null;   
+                     partialAnsiCode_ = StringUtil.substring(data, head);
+                     return;
                   }
 
-                  tail = hyperlinkMatch.endIndex_;
+                  char oscEndChar = oscEnd == null ? '\0' : data.charAt(oscEnd.getIndex());
+                  if (oscEndChar == '\007' || oscEndChar == '\033')
+                  {
+                     processOsc(StringUtil.substring(data, head + 2, oscEnd.getIndex()));
+                     tail = oscEnd.getIndex();
+                     if (oscEndChar == '\007')
+                        tail += 1;
+                     else if (tail + 1 < data.length() && data.charAt(tail + 1) == '\\')
+                        tail += 2;
+                     break;
+                  }
+
+                  // a console control character, or no end in sight, means this
+                  // string is malformed; drop the introducer and show the rest
+                  tail = head + 2;
                   break;
                }
-               
-               // skip string end escapes
-               if (data.substring(head, head + 2) == AnsiCode.ST)
-               {
-                  tail += 1;
-                  break;
-               }
-               
+
                // check for an escape forcing a new span
                if (parent_ != null)
                {
@@ -1267,9 +1221,17 @@ public class VirtualConsole
                   break;
                }
                
-               // match complete CSI codes
-               Pattern csiPattern = Pattern.create("^" + AnsiCode.CSI_REGEX, "");
-               Match csiMatch = csiPattern.match(data.substring(head), 0);
+               // the Linux console's ESC '[' '[' <char>
+               String rest = data.substring(head);
+               Match linuxMatch = AnsiCode.LINUX_CONSOLE_ESCAPE_PATTERN.match(rest, 0);
+               if (linuxMatch != null)
+               {
+                  tail = head + linuxMatch.getValue().length();
+                  break;
+               }
+
+               // match complete CSI codes with numeric parameters
+               Match csiMatch = AnsiCode.NUMERIC_CSI_PATTERN.match(rest, 0);
                if (csiMatch != null)
                {
                   String command = csiMatch.getGroup(2);
@@ -1277,8 +1239,8 @@ public class VirtualConsole
                   // handle SGR codes up-front
                   if (command == "m")
                   {
-                     // process the SGR code
-                     ansiCodeStyles_ = ansi_.processCode(csiMatch.getValue());
+                     // process the SGR code, spelling an 8-bit CSI as ESC '['
+                     ansiCodeStyles_ = ansi_.processCode(AnsiCode.CSI + csiMatch.getGroup(1) + command);
                      currentClazz = setCurrentClazz(clazz);
                      tail = head + csiMatch.getValue().length();
                      break;
@@ -1332,27 +1294,34 @@ public class VirtualConsole
                   break;
                }
                
-               // check for incomplete CSI escapes, and continue parsing those
-               Pattern csiPrefixPattern = Pattern.create("^" + AnsiCode.CSI_PREFIX_REGEX, "");
-               Match csiPrefixMatch = csiPrefixPattern.match(data.substring(head), 0);
-               if (csiPrefixMatch != null)
+               // discard other complete CSI sequences, e.g. private modes (ESC[?25l)
+               // and sub-parameters (ESC[4:3m)
+               Match unsupportedCsiMatch = AnsiCode.CSI_PATTERN.match(rest, 0);
+               if (unsupportedCsiMatch != null)
                {
-                  partialAnsiCode_ = StringUtil.substring(data, head);
-                  return;
-               }
-               
-               // handle all other kinds of unsupported ANSI escapes and discard them
-               Pattern ansiPattern = Pattern.create("^" + AnsiCode.ANSI_REGEX, "");
-               Match ansiMatch = ansiPattern.match(data.substring(head), 0);
-               if (ansiMatch != null)
-               {
-                  tail = head + ansiMatch.getValue().length();
+                  tail = head + unsupportedCsiMatch.getValue().length();
                   break;
                }
-               
-               // if we get here, we didn't know what to do with the escape character
-               // just discard it and perform regular parsing from here on
-               tail++;
+
+               // if the input ends partway through an escape sequence, buffer it
+               // and try again with the next input
+               if (AnsiCode.PARTIAL_ESCAPE_PATTERN.test(rest))
+               {
+                  partialAnsiCode_ = rest;
+                  return;
+               }
+
+               // discard other escape sequences, e.g. ESC '(' 'B'; a malformed one
+               // ends at the unexpected character, which is then parsed as usual
+               Match escapeMatch = AnsiCode.ESCAPE_PATTERN.match(rest, 0);
+               if (escapeMatch != null)
+               {
+                  tail = head + escapeMatch.getValue().length();
+                  break;
+               }
+
+               // if we get here, this is an 8-bit CSI we didn't recognize; just
+               // discard it and perform regular parsing from here on
                break;
                
             default:
@@ -1372,6 +1341,34 @@ public class VirtualConsole
       return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
          ? CONTROL.match(data, offset)
          : AnsiCode.CONTROL_PATTERN.match(data, offset);
+   }
+
+   /**
+    * Acts on the payload of an Operating System Command. Only hyperlinks
+    * (OSC 8) are supported; other commands are discarded.
+    */
+   private void processOsc(String payload)
+   {
+      // 8 ; [params] ; [url], where an empty url ends the hyperlink
+      if (!payload.startsWith("8;"))
+         return;
+
+      int urlStart = payload.indexOf(';', 2) + 1;
+      if (urlStart == 0)
+         return;
+
+      String params = StringUtil.substring(payload, 2, urlStart - 1);
+      String url = StringUtil.substring(payload, urlStart);
+      hyperlink_ = url.isEmpty() ? null : new HyperlinkInfo(url, params);
+   }
+
+   private static boolean sameHyperlink(HyperlinkInfo lhs, HyperlinkInfo rhs)
+   {
+      if (lhs == null || rhs == null)
+         return lhs == rhs;
+
+      return StringUtil.equals(lhs.url_, rhs.url_) &&
+             StringUtil.equals(lhs.params_, rhs.params_);
    }
    
    public void normalizePreviousOutput()
@@ -1641,6 +1638,14 @@ public class VirtualConsole
    }
    
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
+
+   // Characters that end an OSC string: BEL or ESC terminate it, while the
+   // console's own control characters mean it's malformed
+   private static final Pattern OSC_END = Pattern.create("[\u0007\u001b\r\n\b\f]");
+
+   // How much of an unterminated OSC string to hold back, waiting for its
+   // terminator to arrive with the next submit
+   private static final int MAX_PARTIAL_OSC_LENGTH = 4096;
 
    // allows &entity_name; entities like &amp;
    private boolean preserveHTML_ = false;

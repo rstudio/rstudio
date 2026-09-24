@@ -18,6 +18,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -1266,6 +1267,158 @@ public class VirtualConsoleTests extends GWTTestCase
       vc = getVC(ele);
       vc.submit("\u001b]8;;https://example.com\u001b)link\u001b]8;;\u001b)\n");
       Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">ink</a><span>\n</span>$"));
+   }
+
+   public void testEmptySgrParameterResets()
+   {
+      // CSI m, as emitted by git and grep
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[31mred\033[mplain");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span>plain</span>", ele.getInnerHTML());
+
+      // tput sgr0
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033[31mred\033(B\033[mplain");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span>plain</span>", ele.getInnerHTML());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033[31mred\033[;1mbold");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span class=\"xtermBold\">bold</span>", ele.getInnerHTML());
+   }
+
+   public void testUnknownExtendedColorFormat()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[31mred\033[38;3mplain");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span>plain</span>", ele.getInnerHTML());
+   }
+
+   public void testUnsupportedCsiDoesNotHoldBackOutput()
+   {
+      String[] sequences = {
+         "\033[4:3m",              // sub-parameters (curly underline)
+         "\033[38:2::255:0:0m",    // sub-parameters (RGB color)
+         "\033[12345m",            // long parameter
+         "\033[2 q",               // intermediate byte (cursor style)
+      };
+
+      for (String sequence : sequences)
+      {
+         PreElement ele = Document.get().createPreElement();
+         VirtualConsole vc = getVC(ele);
+         vc.submit("a" + sequence + "b\n");
+         vc.submit("next\n");
+         Assert.assertEquals(AnsiCode.prettyPrint(sequence), "ab\nnext\n", ele.getInnerText());
+      }
+   }
+
+   public void testPartialEscapeSplitAcrossSubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033[4:3");
+      vc.submit("mb\033(");
+      vc.submit("Bc");
+      Assert.assertEquals("abc", ele.getInnerText());
+   }
+
+   public void testEscapeBeforeControlCharacter()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033\nb\033(\rc");
+      Assert.assertEquals("a\nc", ele.getInnerText());
+   }
+
+   public void testEightBitCsi()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u009b31mred\u009b?25l");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span>", ele.getInnerHTML());
+   }
+
+   public void testBelDiscarded()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\007b");
+      Assert.assertEquals("ab", ele.getInnerText());
+      Assert.assertEquals("ab", vc.toString());
+   }
+
+   public void testOtherOscDiscarded()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]0;title\007a\033]7;file://host/home\033\\b");
+      Assert.assertEquals("ab", ele.getInnerText());
+   }
+
+   public void testOscSplitAcrossSubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://exa");
+      vc.submit("mple.com\007link\033]");
+      vc.submit("8;;\007\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+   }
+
+   public void testUnterminatedOscShown()
+   {
+      // no output is lost to an OSC string that never ends
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]0;title\nnext");
+      Assert.assertEquals("0;title\nnext", ele.getInnerText());
+   }
+
+   public void testPlainTextOverwritesHyperlink()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://example.com\007link\033]8;;\007\r");
+      vc.submit("text");
+      Assert.assertEquals("text", ele.getInnerText());
+      Assert.assertEquals("", anchorText(ele));
+   }
+
+   public void testHyperlinkOverwritesPlainText()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abcdef\r");
+      vc.submit("\033]8;;https://example.com\007ab\033]8;;\007");
+      Assert.assertEquals("abcdef", ele.getInnerText());
+      Assert.assertEquals("ab", anchorText(ele));
+   }
+
+   public void testHyperlinkOverwritesHyperlink()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://a.com\007aaaa\033]8;;\007 tail\r");
+      vc.submit("\033]8;;https://b.com\007bb\033]8;;\007");
+      Assert.assertEquals("bbaa tail", ele.getInnerText());
+
+      NodeList<Element> anchors = ele.getElementsByTagName("a");
+      Assert.assertEquals(2, anchors.getLength());
+      Assert.assertEquals("bb", anchors.getItem(0).getInnerText());
+      Assert.assertEquals("aa", anchors.getItem(1).getInnerText());
+   }
+
+   private static String anchorText(Element ele)
+   {
+      StringBuilder text = new StringBuilder();
+      NodeList<Element> anchors = ele.getElementsByTagName("a");
+      for (int i = 0; i < anchors.getLength(); i++)
+         text.append(anchors.getItem(i).getInnerText());
+      return text.toString();
    }
 
    public void testIssue9846()

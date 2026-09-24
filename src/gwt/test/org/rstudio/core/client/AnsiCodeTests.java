@@ -181,6 +181,29 @@ public class AnsiCodeTests extends GWTTestCase
       Assert.assertNull(newClazz.inlineClazzes);
     } 
 
+   public void testEmptyParameterResets()
+   {
+      AnsiCode ansi = new AnsiCode();
+
+      ansi.processCode("\033[1;31m");
+      Assert.assertNull(ansi.processCode("\033[m").inlineClazzes);
+
+      ansi.processCode("\033[31m");
+      Assert.assertEquals("xtermBold", ansi.processCode("\033[;1m").inlineClazzes);
+
+      ansi.processCode("\033[31m");
+      Assert.assertNull(ansi.processCode("\033[1;m").inlineClazzes);
+   }
+
+   public void testUnknownExtendedColorFormat()
+   {
+      AnsiCode ansi = new AnsiCode();
+      ansi.processCode("\033[31m");
+      AnsiCode.AnsiClazzes clazzes = ansi.processCode("\033[38;3m");
+      Assert.assertNotNull(clazzes);
+      Assert.assertNull(clazzes.inlineClazzes);
+   }
+
    public void testStripHyperlinks()
    {
       String belLink = "\033]8;;https://example.com\007link\033]8;;\007";

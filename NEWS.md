@@ -59,6 +59,7 @@
 - ([#18882](https://github.com/rstudio/rstudio/issues/18882)): Fixed an issue where the background job that installs a feature's required R packages reported success, and claimed the packages were installed, even when the installation had failed.
 - ([#18903](https://github.com/rstudio/rstudio/issues/18903)): Fixed an issue where Python function argument completions and their help were missing with Python 3.11 and newer, and for functions with keyword-only arguments or annotations.
 - ([#18914](https://github.com/rstudio/rstudio/issues/18914)): Fixed an issue where console hyperlinks terminated with `ESC \` (as emitted by cli with `R_CLI_HYPERLINK_MODE=posix`) were displayed as raw escape text instead of links.
+- ([#18916](https://github.com/rstudio/rstudio/issues/18916)): Fixed several issues with ANSI escape sequences in console output: `ESC[m` now resets colors, uncommon sequences (e.g. `ESC[4:3m`) no longer cause the rest of the output to go missing, other terminal sequences (e.g. window titles) are no longer shown as text, and hyperlinks are kept intact when a line is rewritten.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).

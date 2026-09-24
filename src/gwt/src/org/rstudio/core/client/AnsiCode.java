@@ -295,24 +295,19 @@ public class AnsiCode
    {
       if (code == null || code.length() < 2)
          return null;
-      if (code.charAt(0) != '\033' && code.charAt(code.length() - 1) != 'm')
+      if (code.charAt(0) != '\033' || code.charAt(code.length() - 1) != 'm')
          return null;
-      if (code.length() == 2)
-      {
-         clazzes_.clear(); // CSIm is equivalent to CSI0m, which is 'reset'
-         blockClazzes_.clear();
-         return null;
-      }
 
       int extendedColor = 0;
       boolean extendedMarkerSeen = false;
       boolean extendedRGBMarkerSeen = false;
       int extendedRGBColorsSeen = 0;
 
-      String[] tokens = StringUtil.substring(code, 2, code.length() - 1).split(";");
+      // an empty parameter means 0 (reset), so CSI m and CSI ; 1 m both reset
+      String[] tokens = StringUtil.substring(code, 2, code.length() - 1).split(";", -1);
       for (String token : tokens)
       {
-         int codeVal = StringUtil.parseInt(token,  -1);
+         int codeVal = token.isEmpty() ? RESET : StringUtil.parseInt(token,  -1);
          if (codeVal == -1)
             continue;
 
@@ -336,7 +331,7 @@ public class AnsiCode
                   // just reset back to defaults and return
                   clazzes_.clear();
                   blockClazzes_.clear();
-                  return null;
+                  return getStyles();
                }
             }
             else
@@ -739,27 +734,41 @@ public class AnsiCode
    // Match ANSI escape sequences
    public static final Pattern ANSI_ESCAPE_PATTERN = Pattern.create(ANSI_REGEX);
 
-   // Control characters handled by R console, plus leading character of
-   // ANSI escape sequences
-   public static final String CONTROL_REGEX = "[\r\b\f\n\u001b\u009b]";
+   // Control characters handled by R console (BEL is discarded), plus
+   // leading character of ANSI escape sequences
+   public static final String CONTROL_REGEX = "[\r\b\f\n\u0007\u001b\u009b]";
 
    // Match control characters and start of ANSI sequences
    public static final Pattern CONTROL_PATTERN = Pattern.create(CONTROL_REGEX);
 
-   // RegEx to match complete CSI codes (only a small subset)
-   public static final String CSI_REGEX =
-         "[\u001b\u009b]\\[([0-9]{1,4}(?:;[0-9]{0,4})*)?([a-zA-Z])";
-   
-   // Match ANSI SGR escape sequences
-   public static final Pattern CSI_PATTERN = Pattern.create(CSI_REGEX);
-   
-   // RegEx to match incomplete CSI codes (only a small subset)
-   public static final String CSI_PREFIX_REGEX =
-         "[\u001b\u009b]\\[(?:\\d|$)";
-   
-   // Match ANSI SGR escape sequences
-   public static final Pattern CSI_PREFIX_PATTERN = Pattern.create(CSI_PREFIX_REGEX);
-   
+   // The patterns below are anchored, and follow the ECMA-48 structure of
+   // escape sequences. The 8-bit CSI (0x9b) is equivalent to ESC '['.
+
+   // A CSI sequence with plain numeric parameters, the only kind the console
+   // acts on (group 1: parameters, group 2: final byte)
+   public static final Pattern NUMERIC_CSI_PATTERN =
+         Pattern.create("^(?:\u001b\\[|\u009b)([0-9;]*)([@-~])", "");
+
+   // Any complete CSI sequence: parameter bytes, then intermediate bytes,
+   // then a final byte
+   public static final Pattern CSI_PATTERN =
+         Pattern.create("^(?:\u001b\\[|\u009b)[0-?]*[ -/]*[@-~]", "");
+
+   // Any other escape sequence: intermediate bytes, then a final byte. If the
+   // final byte is missing, the match stops before the unexpected character.
+   public static final Pattern ESCAPE_PATTERN =
+         Pattern.create("^\u001b[ -/]*[0-~]?", "");
+
+   // An escape sequence cut off by the end of the input, which the next
+   // output may complete
+   public static final Pattern PARTIAL_ESCAPE_PATTERN =
+         Pattern.create("^(?:(?:\u001b\\[|\u009b)[0-?]*|\u001b)[ -/]*$", "");
+
+   // The Linux console treats ESC '[' '[' as a prefix that swallows one more
+   // character, rather than as a CSI sequence ending in '['
+   public static final Pattern LINUX_CONSOLE_ESCAPE_PATTERN =
+         Pattern.create("^\u001b\\[\\[[\\s\\S]", "");
+
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
    private boolean inverted_ = false;
