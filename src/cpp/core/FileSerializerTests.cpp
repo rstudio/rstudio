@@ -536,15 +536,16 @@ struct AtomicWriteFailureReset
 {
    ~AtomicWriteFailureReset()
    {
-      setAtomicWriteChmodFailureForTesting(0);
+      setAtomicWriteWriteFailureForTesting(0);
       setAtomicWriteRenameFailureForTesting(0);
    }
 };
 
 } // anonymous namespace
 
-// Once the temporary file exists, a failure (here setting its mode) is
-// reported rather than falling back to truncating the target in place.
+// Once the temporary file exists, a failure (here writing its contents, as
+// on a full disk) is reported rather than falling back to truncating the
+// target in place.
 TEST(FileSerializerTest, WriteStringAtomicFailureAfterTempCreationKeepsOriginal)
 {
    AtomicWriteFailureReset reset;
@@ -552,10 +553,10 @@ TEST(FileSerializerTest, WriteStringAtomicFailureAfterTempCreationKeepsOriginal)
    FilePath filePath = dir.completePath("state.json");
    ASSERT_FALSE(writeStringToFile(filePath, "original\n"));
 
-   setAtomicWriteChmodFailureForTesting(EPERM);
+   setAtomicWriteWriteFailureForTesting(ENOSPC);
    Error error = writeStringToFileAtomic(filePath, "replaced\n");
    ASSERT_TRUE(error);
-   EXPECT_EQ(EPERM, error.getCode());
+   EXPECT_EQ(ENOSPC, error.getCode());
    EXPECT_EQ(filePath.getAbsolutePath(), error.getProperty("path"));
 
    std::string readback;

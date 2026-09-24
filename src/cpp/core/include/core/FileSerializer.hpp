@@ -120,10 +120,10 @@ Error writeStringToFileAtomic(const core::FilePath& filePath,
 
 #if defined(RSTUDIO_UNIT_TESTS_ENABLED) && !defined(_WIN32)
 // Make the next steps of writeStringToFileAtomic() fail with the given errno,
-// to test the paths that a real filesystem can't be made to take: setting the
-// temporary file's mode (a failure after the file exists) and renaming it over
-// the target (a bind-mounted target). 0 turns the failure off.
-void setAtomicWriteChmodFailureForTesting(int errnoValue);
+// to test the paths that a real filesystem can't be made to take: writing the
+// temporary file's contents (a failure after the file exists) and renaming it
+// over the target (a bind-mounted target). 0 turns the failure off.
+void setAtomicWriteWriteFailureForTesting(int errnoValue);
 void setAtomicWriteRenameFailureForTesting(int errnoValue);
 #endif
 

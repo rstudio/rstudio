@@ -372,22 +372,19 @@ const char* const kAtomicWriteTempPrefix = ".rstudio-tmp-";
 #ifndef _WIN32
 
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
-int s_atomicWriteChmodErrno = 0;
+int s_atomicWriteWriteErrno = 0;
 int s_atomicWriteRenameErrno = 0;
 #endif
 
-// The syscalls tests can make fail (see the *ForTesting setters).
-int fchmodForAtomicWrite(int fd, mode_t mode)
+// The steps tests can make fail (see the *ForTesting setters).
+Error writeAllForAtomicWrite(int fd, const std::string& contents, const FilePath& filePath)
 {
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
-   if (s_atomicWriteChmodErrno != 0)
-   {
-      errno = s_atomicWriteChmodErrno;
-      return -1;
-   }
+   if (s_atomicWriteWriteErrno != 0)
+      return fileError(s_atomicWriteWriteErrno, filePath, ERROR_LOCATION);
 #endif
 
-   return ::fchmod(fd, mode);
+   return writeAll(fd, contents, filePath);
 }
 
 int renameForAtomicWrite(const char* from, const char* to)
@@ -735,7 +732,6 @@ Error writeTempFile(TempFile* pTemp,
    int fd = pTemp->fd;
    const struct stat& targetStat = pTemp->targetStat;
 
-   Error error;
    if (pTemp->replacing)
    {
       // Only root can give a file to another user, and other users can only
@@ -750,17 +746,23 @@ Error writeTempFile(TempFile* pTemp,
       }
    }
 
-   // setuid, setgid and sticky bits are deliberately not carried over, since
-   // the new file may have a different owner
+   // Best-effort as well: a filesystem that can't set modes (some FUSE
+   // filesystems) presents the same synthesized mode on the old file and on
+   // its replacement, and the file was created 0600 above, so a failure here
+   // never leaves it more widely readable than intended. The setuid, setgid
+   // and sticky bits are deliberately not carried over, since the new file
+   // may have a different owner.
    if (pTemp->replacing || options.ownerOnly)
    {
       mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
-      if (fchmodForAtomicWrite(fd, mode) == -1)
-         error = fileError(errno, targetPath, ERROR_LOCATION);
+      if (::fchmod(fd, mode) == -1)
+      {
+         int code = errno;
+         DLOGF("Couldn't set the mode of the replacement for '{}' (errno {})", targetPath.getAbsolutePath(), code);
+      }
    }
 
-   if (!error)
-      error = writeAll(fd, contents, targetPath);
+   Error error = writeAllForAtomicWrite(fd, contents, targetPath);
    if (!error && options.durable)
       error = syncFile(fd, targetPath);
 
@@ -783,11 +785,7 @@ Error replaceFile(const FilePath& tempPath,
                   const AtomicWriteOptions& options)
 {
    if (renameForAtomicWrite(tempPath.getAbsolutePath().c_str(), targetPath.getAbsolutePath().c_str()) == -1)
-   {
-      Error error = fileError(errno, targetPath, ERROR_LOCATION);
-      error.addProperty("temp-path", tempPath.getAbsolutePath());
-      return error;
-   }
+      return atomicWriteError(errno, targetPath, tempPath, ERROR_LOCATION);
 
    // the file's contents were flushed before the rename; flush the directory
    // as well, so that the rename itself survives a crash
@@ -1017,9 +1015,9 @@ Error writeStringToFileAtomic(const FilePath& filePath,
 
 #if defined(RSTUDIO_UNIT_TESTS_ENABLED) && !defined(_WIN32)
 
-void setAtomicWriteChmodFailureForTesting(int errnoValue)
+void setAtomicWriteWriteFailureForTesting(int errnoValue)
 {
-   s_atomicWriteChmodErrno = errnoValue;
+   s_atomicWriteWriteErrno = errnoValue;
 }
 
 void setAtomicWriteRenameFailureForTesting(int errnoValue)
