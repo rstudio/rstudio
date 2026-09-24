@@ -19,18 +19,30 @@ import * as path from 'path';
  * Pure filesystem work -- no IDE, no seeded assistant needed.
  */
 
-/** A minimal stand-in for a `npm run deploy:rstudio` tree. */
-function writeFakeSeed(root: string, version: string, protocol = '11.0'): string {
-  const bin = path.join(root, 'bin');
-  fs.mkdirSync(path.join(bin, 'dist', 'server'), { recursive: true });
-  fs.mkdirSync(path.join(bin, 'dist', 'client'), { recursive: true });
-  fs.writeFileSync(path.join(bin, 'dist', 'server', 'main.js'), "console.log('hi');");
-  fs.writeFileSync(path.join(bin, 'dist', 'client', 'index.html'), '<html></html>');
-  fs.writeFileSync(path.join(bin, 'package.json'), JSON.stringify({ version }));
-  fs.writeFileSync(path.join(bin, 'protocol.json'), JSON.stringify({ protocol }));
+/**
+ * A minimal stand-in for a `npm run deploy:rstudio` tree: one slot, selected
+ * for its protocol. The slot's manifest is left empty, so a seeder that
+ * trusted it instead of recording its own would produce a slot that fails to
+ * verify.
+ */
+function writeFakeSeed(root: string, version: string, protocol = '11.0', slotName = version): string {
+  const slot = path.join(root, 'versions', slotName);
+  fs.mkdirSync(path.join(slot, 'dist', 'server'), { recursive: true });
+  fs.mkdirSync(path.join(slot, 'dist', 'client'), { recursive: true });
+  fs.writeFileSync(path.join(slot, 'dist', 'server', 'main.js'), "console.log('hi');");
+  fs.writeFileSync(path.join(slot, 'dist', 'client', 'index.html'), '<html></html>');
+  fs.writeFileSync(path.join(slot, 'package.json'), JSON.stringify({ version }));
+  fs.writeFileSync(path.join(slot, 'protocol.json'), JSON.stringify({ protocol }));
+  fs.writeFileSync(path.join(slot, '.slot-manifest.json'), JSON.stringify({ files: {} }));
+  fs.writeFileSync(path.join(root, 'selected.json'), JSON.stringify({ selected: { [protocol]: slotName } }));
   // Shared backend state that lives beside the slots, not inside one.
   fs.writeFileSync(path.join(root, 'manifest-check.json'), '{}');
+  fs.mkdirSync(path.join(root, 'ai-logs'));
   return root;
+}
+
+function writeSelector(seed: string, selected: unknown): void {
+  fs.writeFileSync(path.join(seed, 'selected.json'), JSON.stringify({ selected }));
 }
 
 test.describe('PW_SEED_PAI slot provisioning', () => {
@@ -57,10 +69,9 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     expect(JSON.parse(fs.readFileSync(path.join(storage, 'selected.json'), 'utf-8')))
       .toEqual({ selected: { '11.0': '1.2.2' } });
 
-    // Shared state travels; the unversioned install does not, because a
-    // versioned-aware RStudio never reads it.
+    // Shared state travels with it.
     expect(fs.existsSync(path.join(storage, 'manifest-check.json'))).toBe(true);
-    expect(fs.existsSync(path.join(storage, 'bin'))).toBe(false);
+    expect(fs.existsSync(path.join(storage, 'ai-logs'))).toBe(true);
 
     expect(selectedPaiInstalls(dataHome)).toEqual([{ protocol: '11.0', version: '1.2.2' }]);
   });
@@ -90,13 +101,14 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     }
   });
 
-  test('leaves the seed machine\'s own slots, selector and locks behind', () => {
-    // A real ~/.local/share/rstudio/pai on a machine running this RStudio
-    // already holds versions/ and selected.json; the build under test is the
-    // one deploy:rstudio wrote to bin/, not whatever that machine installed.
+  test('seeds only the selected slot', () => {
+    // A slot the selector does not name is not the build under test, and
+    // neither is a legacy bin/ left beside the slots. The seed machine's
+    // live lock entries would make sandbox installs refuse.
     const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
     fs.mkdirSync(path.join(seed, 'versions', '9.9.9'), { recursive: true });
-    fs.writeFileSync(path.join(seed, 'selected.json'), JSON.stringify({ selected: { '11.0': '9.9.9' } }));
+    fs.mkdirSync(path.join(seed, 'bin'));
+    fs.writeFileSync(path.join(seed, 'bin', 'package.json'), JSON.stringify({ version: '0.9.0' }));
     fs.mkdirSync(path.join(seed, 'locks'));
     fs.writeFileSync(path.join(seed, 'locks', 'install.lock'), '');
     const storage = path.join(root, 'data-home', 'pai');
@@ -104,9 +116,19 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     seedPaiSlot(seed, storage);
 
     expect(fs.readdirSync(path.join(storage, 'versions'))).toEqual(['1.2.2']);
-    expect(JSON.parse(fs.readFileSync(path.join(storage, 'selected.json'), 'utf-8')))
-      .toEqual({ selected: { '11.0': '1.2.2' } });
+    expect(fs.existsSync(path.join(storage, 'bin'))).toBe(false);
     expect(fs.existsSync(path.join(storage, 'locks'))).toBe(false);
+  });
+
+  test('names the sandbox slot by its package version, not the seed\'s slot name', () => {
+    // Slot names carry no meaning: a reinstall of 1.2.2 is named 1.2.2-2.
+    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2', '11.0', '1.2.2-2');
+    const dataHome = path.join(root, 'data-home');
+
+    expect(seedPaiSlot(seed, path.join(dataHome, 'pai'))).toBe('1.2.2');
+
+    expect(fs.readdirSync(path.join(dataHome, 'pai', 'versions'))).toEqual(['1.2.2']);
+    expect(selectedPaiInstalls(dataHome)).toEqual([{ protocol: '11.0', version: '1.2.2' }]);
   });
 
   test('refuses a version that cannot name a slot', () => {
@@ -119,19 +141,68 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     expect(fs.existsSync(path.join(root, 'data-home', 'escaped'))).toBe(false);
   });
 
-  test('refuses a tree that is not a Posit Assistant install', () => {
-    const seed = path.join(root, 'empty');
-    fs.mkdirSync(seed, { recursive: true });
+  test('refuses a legacy bin-only tree', () => {
+    // What deploy:rstudio:legacy, or an assistant checkout older than the
+    // slot deploy, produces. RStudio never reads bin/, so neither does the
+    // seeder.
+    const seed = path.join(root, 'legacy');
+    fs.mkdirSync(path.join(seed, 'bin'), { recursive: true });
+    fs.writeFileSync(path.join(seed, 'bin', 'package.json'), JSON.stringify({ version: '1.2.2' }));
 
     expect(() => seedPaiSlot(seed, path.join(root, 'data-home', 'pai')))
-      .toThrow(/does not look like a Posit Assistant install/);
+      .toThrow(/does not look like a Posit Assistant install \(missing selected\.json\)/);
+  });
+
+  test('refuses a selector that cannot be read', () => {
+    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
+    const storage = path.join(root, 'data-home', 'pai');
+
+    fs.writeFileSync(path.join(seed, 'selected.json'), '{ not json');
+    expect(() => seedPaiSlot(seed, storage)).toThrow(/Could not parse .*selected\.json/);
+
+    fs.writeFileSync(path.join(seed, 'selected.json'), JSON.stringify({ selected: ['1.2.2'] }));
+    expect(() => seedPaiSlot(seed, storage)).toThrow(/has no "selected" object/);
+
+    expect(fs.existsSync(storage)).toBe(false);
+  });
+
+  test('refuses a selector that does not name exactly one protocol', () => {
+    // More than one entry means RStudio has installed into the tree since it
+    // was deployed; picking one would pick a build nobody deployed.
+    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
+    const storage = path.join(root, 'data-home', 'pai');
+
+    writeSelector(seed, { '11.0': '1.2.2', '12.0': '2.0.0' });
+    expect(() => seedPaiSlot(seed, storage)).toThrow(/selects 2 protocols/);
+
+    writeSelector(seed, {});
+    expect(() => seedPaiSlot(seed, storage)).toThrow(/selects 0 protocols/);
+  });
+
+  test('refuses a selection that is not a slot name', () => {
+    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
+    const storage = path.join(root, 'data-home', 'pai');
+
+    writeSelector(seed, { '11.0': '../1.2.2' });
+    expect(() => seedPaiSlot(seed, storage)).toThrow(/cannot name an install slot/);
+
+    writeSelector(seed, { '11.0': 7 });
+    expect(() => seedPaiSlot(seed, storage)).toThrow(/cannot name an install slot/);
+  });
+
+  test('refuses a selection naming a slot that does not exist', () => {
+    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
+    writeSelector(seed, { '11.0': '1.3.0' });
+
+    expect(() => seedPaiSlot(seed, path.join(root, 'data-home', 'pai')))
+      .toThrow(/selects slot "1\.3\.0", but versions\/1\.3\.0\/package\.json does not exist/);
   });
 
   test('refuses a build missing a file RStudio requires', () => {
     // RStudio's verifyInstallDir() would reject the slot, and the seeded run
     // would then download the official package without saying so.
     const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
-    fs.rmSync(path.join(seed, 'bin', 'dist', 'server', 'main.js'));
+    fs.rmSync(path.join(seed, 'versions', '1.2.2', 'dist', 'server', 'main.js'));
     const storage = path.join(root, 'data-home', 'pai');
 
     expect(() => seedPaiSlot(seed, storage)).toThrow(/not a complete Posit Assistant build/);
@@ -142,7 +213,7 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     // A truncated build leaves zero-byte files in place; existence alone is
     // not what RStudio checks.
     const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
-    fs.writeFileSync(path.join(seed, 'bin', 'dist', 'client', 'index.html'), '');
+    fs.writeFileSync(path.join(seed, 'versions', '1.2.2', 'dist', 'client', 'index.html'), '');
 
     expect(() => seedPaiSlot(seed, path.join(root, 'data-home', 'pai')))
       .toThrow(/not a complete Posit Assistant build/);

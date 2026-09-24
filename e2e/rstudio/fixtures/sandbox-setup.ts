@@ -34,9 +34,11 @@ import { provisionDatabases } from '../utils/db-provision';
  *                                  slot, from which each per-spec data home
  *                                  is provisioned, so tests run against that
  *                                  local build instead of downloading the
- *                                  official package. Only the install shape
- *                                  (bin/package.json and bin/protocol.json
- *                                  present and well formed) is validated
+ *                                  official package. The build is the slot
+ *                                  the seed's selected.json names. Only the
+ *                                  install shape (a single selection naming
+ *                                  a slot with a well-formed package.json
+ *                                  and protocol.json) is validated
  *                                  here; version/protocol compatibility is
  *                                  enforced by the IDE at runtime, which
  *                                  treats an incompatible seeded build as
