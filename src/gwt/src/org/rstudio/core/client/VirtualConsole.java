@@ -1221,8 +1221,15 @@ public class VirtualConsole
                   break;
                }
                
-               // the Linux console's ESC '[' '[' <char>
+               // the Linux console's ESC '[' '[' <char>; if the input ends before
+               // <char>, buffer the prefix rather than parse it as a CSI sequence
                String rest = data.substring(head);
+               if (rest.equals(AnsiCode.LINUX_CONSOLE_ESCAPE_PREFIX))
+               {
+                  partialAnsiCode_ = rest;
+                  return;
+               }
+
                Match linuxMatch = AnsiCode.LINUX_CONSOLE_ESCAPE_PATTERN.match(rest, 0);
                if (linuxMatch != null)
                {
@@ -1259,9 +1266,11 @@ public class VirtualConsole
                   }
                   else if (command == "C")
                   {
-                     // CUF: move right, but not past the end of the current line
+                     // CUF: move right, but not past the end of the current line;
+                     // clamp before adding, so that a huge count can't overflow
+                     // under Java int semantics
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
-                     cursor_ = Math.min(currentLineEnd(), cursor_ + n);
+                     cursor_ += Math.min(n, currentLineEnd() - cursor_);
                   }
                   else if (command == "D")
                   {

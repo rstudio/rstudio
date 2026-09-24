@@ -769,6 +769,9 @@ public class AnsiCode
    public static final Pattern LINUX_CONSOLE_ESCAPE_PATTERN =
          Pattern.create("^\u001b\\[\\[[\\s\\S]", "");
 
+   // That prefix, without the character it swallows
+   public static final String LINUX_CONSOLE_ESCAPE_PREFIX = "\u001b[[";
+
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
    private boolean inverted_ = false;

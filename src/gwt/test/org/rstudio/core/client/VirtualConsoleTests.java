@@ -1326,6 +1326,21 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("abc", ele.getInnerText());
    }
 
+   public void testLinuxConsoleEscape()
+   {
+      // ESC '[' '[' swallows the next character, even from the next submit
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033[[Ab");
+      Assert.assertEquals("ab", ele.getInnerText());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[[");
+      vc.submit("Ab");
+      Assert.assertEquals("ab", ele.getInnerText());
+   }
+
    public void testEscapeBeforeControlCharacter()
    {
       PreElement ele = Document.get().createPreElement();
@@ -1823,6 +1838,16 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("abc\ndef\033[1A\033[9CX");
+      Assert.assertEquals("abcX\ndef", vc.toString());
+   }
+
+   public void testCsiCursorForwardHugeCount()
+   {
+      // a count of Integer.MAX_VALUE, from a cursor past column 0, still stops
+      // at the end of the line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[2147483647CX");
       Assert.assertEquals("abcX\ndef", vc.toString());
    }
 
