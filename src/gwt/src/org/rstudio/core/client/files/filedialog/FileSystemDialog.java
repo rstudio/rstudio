@@ -317,11 +317,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       // a failed navigation leaves the browser in the directory it was already
       // showing: drop any deferred accept and end its loading state, so the
-      // dialog stays usable
+      // dialog stays usable. This bypasses the subclass onNavigated() hooks,
+      // which react to arriving somewhere (e.g. by discarding typed input).
       if (browser_.isNavigating())
       {
          acceptOnNavigated_ = false;
-         onNavigated();
+         browser_.onNavigated();
       }
 
       progress_.onError(errorMessage);

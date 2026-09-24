@@ -219,6 +219,14 @@ public abstract class FileDialog extends FileSystemDialog
    }
 
    @Override
+   public void onError(String errorMessage)
+   {
+      // a failed cd() does not reach onNavigated()
+      browser_.setFilenameEnabled(true);
+      super.onError(errorMessage);
+   }
+
+   @Override
    protected void focusInitialControl()
    {
       browser_.setFilenameFocus(true);
