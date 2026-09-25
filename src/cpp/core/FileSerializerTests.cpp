@@ -483,8 +483,11 @@ TEST(FileSerializerTest, WriteStringAtomicForeignGroupGetsOtherAccess)
    ASSERT_EQ(count, ::getgroups(count, groups.data()));
    groups.push_back(::getegid());
 
+   // the replacement is created in the directory, so it must not inherit
+   // the foreign group too (as it would with TMPDIR=/tmp)
    FilePath dir = scratchDir();
    FilePath filePath = dir.completePath("state.json");
+   ASSERT_EQ(0, ::chown(dir.getAbsolutePath().c_str(), static_cast<uid_t>(-1), ::getegid()));
 
    bool foreign = std::find(groups.begin(), groups.end(), foreignGroup) == groups.end();
    if (!foreign || ::rename(foreignPath, filePath.getAbsolutePath().c_str()) == -1)
