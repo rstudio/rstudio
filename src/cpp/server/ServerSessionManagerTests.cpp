@@ -23,6 +23,8 @@
 #include <thread>
 #include <vector>
 
+#include <signal.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <boost/asio/io_context.hpp>
@@ -31,7 +33,11 @@
 #include <boost/thread/barrier.hpp>
 #include <boost/thread/thread.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
+#include <core/system/PosixSystem.hpp>
+
+#include <shared_core/system/User.hpp>
 
 #include <gtest/gtest.h>
 
@@ -214,6 +220,8 @@ protected:
    SessionManager manager_;
 };
 
+// While a session is starting, more requests wait for it rather than start
+// a second copy; once it connects, a later request can start it again.
 TEST_F(SessionManagerTest, PendingLaunchSuppressesRelaunch)
 {
    r_util::SessionContext context("user");
@@ -233,6 +241,8 @@ TEST_F(SessionManagerTest, PendingLaunchSuppressesRelaunch)
    EXPECT_EQ(2, launchCount_);
 }
 
+// If a starting session's process dies, the next request starts a new one;
+// an unrelated process exiting changes nothing.
 TEST_F(SessionManagerTest, DeadLaunchProcessClearsPendingLaunch)
 {
    r_util::SessionContext context("user");
@@ -256,6 +266,8 @@ TEST_F(SessionManagerTest, DeadLaunchProcessClearsPendingLaunch)
    EXPECT_EQ(2, launchCount_);
 }
 
+// When we don't know which process a starting session is (custom launchers),
+// a process exiting doesn't make us start it again.
 TEST_F(SessionManagerTest, ExitNotificationWithoutRecordedPidIsIgnored)
 {
    // a pending launch whose pid was never recorded (custom session
@@ -269,6 +281,8 @@ TEST_F(SessionManagerTest, ExitNotificationWithoutRecordedPidIsIgnored)
    EXPECT_EQ(1, launchCount_);
 }
 
+// A failed request doesn't make us forget a session that is still starting
+// and running, so we don't start a duplicate.
 TEST_F(SessionManagerTest, RequestErrorKeepsPendingLaunchOfLiveProcess)
 {
    // an RPC in flight to an exiting session dies with EOF right as its
@@ -293,6 +307,8 @@ TEST_F(SessionManagerTest, RequestErrorKeepsPendingLaunchOfLiveProcess)
    EXPECT_EQ(2, launchCount_);
 }
 
+// A failed request does let us start again once the starting session's
+// process has died.
 TEST_F(SessionManagerTest, RequestErrorClearsPendingLaunchOfDeadProcess)
 {
    // the liveness guard must not keep entries for processes that are gone
@@ -307,6 +323,8 @@ TEST_F(SessionManagerTest, RequestErrorClearsPendingLaunchOfDeadProcess)
    EXPECT_EQ(2, launchCount_);
 }
 
+// With the real "is this process running?" check, a failed request keeps a
+// running session (this test's own process stands in for it).
 TEST_F(SessionManagerTest, DefaultProcessProbeSeesLiveProcess)
 {
    std::unique_ptr<SessionManager> manager = defaultManager();
@@ -321,6 +339,8 @@ TEST_F(SessionManagerTest, DefaultProcessProbeSeesLiveProcess)
    EXPECT_EQ(1, launchCount_);
 }
 
+// Same, for a session owned by another user (as on a multi-user server): it
+// must still count as running.
 TEST_F(SessionManagerTest, DefaultProcessProbeSeesOtherUserProcess)
 {
    // in a root-launched multi-user deployment rserver's request-handling
@@ -341,6 +361,8 @@ TEST_F(SessionManagerTest, DefaultProcessProbeSeesOtherUserProcess)
    EXPECT_EQ(1, launchCount_);
 }
 
+// When we don't know which process is starting, a failed request lets the
+// next request start the session again.
 TEST_F(SessionManagerTest, RequestErrorClearsPendingLaunchWithoutRecordedPid)
 {
    // custom session launchers never record a pid, and have no exit tracker
@@ -355,6 +377,8 @@ TEST_F(SessionManagerTest, RequestErrorClearsPendingLaunchWithoutRecordedPid)
    EXPECT_EQ(2, launchCount_);
 }
 
+// A session that is running but slow to start gets 3 minutes before we
+// start another.
 TEST_F(SessionManagerTest, SlowLaunchOfLiveProcessIsNotRelaunched)
 {
    ptime start = now_;
@@ -375,6 +399,8 @@ TEST_F(SessionManagerTest, SlowLaunchOfLiveProcessIsNotRelaunched)
    EXPECT_EQ(2, launchCount_);
 }
 
+// A starting session we can't check on gets 1 minute before a new request
+// starts another.
 TEST_F(SessionManagerTest, LaunchWindowEndsAfterOneMinute)
 {
    ptime start = now_;
@@ -390,6 +416,8 @@ TEST_F(SessionManagerTest, LaunchWindowEndsAfterOneMinute)
    EXPECT_EQ(2, launchCount_);
 }
 
+// A failed request during a slow start still doesn't cause a duplicate
+// while the session is running.
 TEST_F(SessionManagerTest, RequestErrorKeepsSlowLaunchOfLiveProcess)
 {
    r_util::SessionContext context("user");
@@ -404,6 +432,8 @@ TEST_F(SessionManagerTest, RequestErrorKeepsSlowLaunchOfLiveProcess)
    EXPECT_EQ(1, launchCount_);
 }
 
+// After we give up on a stuck session and start a replacement, the old one
+// exiting doesn't make us forget the replacement.
 TEST_F(SessionManagerTest, OldProcessExitDoesNotClearRelaunch)
 {
    r_util::SessionContext context("user");
@@ -427,6 +457,8 @@ TEST_F(SessionManagerTest, OldProcessExitDoesNotClearRelaunch)
    EXPECT_EQ(2, launchCount_);
 }
 
+// If starting a session fails outright, nothing is left behind and the next
+// request tries again.
 TEST_F(SessionManagerTest, LaunchErrorClearsPendingLaunch)
 {
    r_util::SessionContext context("user");
@@ -442,6 +474,8 @@ TEST_F(SessionManagerTest, LaunchErrorClearsPendingLaunch)
    EXPECT_EQ(2, launchCount_);
 }
 
+// Two sessions of the same user are tracked separately; finishing one
+// doesn't affect the other.
 TEST_F(SessionManagerTest, SessionsOfOneUserHaveSeparatePendingLaunches)
 {
    r_util::SessionContext first("user", r_util::SessionScope::projectNone("aaaa1111"));
@@ -459,6 +493,8 @@ TEST_F(SessionManagerTest, SessionsOfOneUserHaveSeparatePendingLaunches)
    EXPECT_EQ(3, launchCount_);
 }
 
+// Clearing a starting session by user and session ID only affects that
+// session.
 TEST_F(SessionManagerTest, RemovePendingSessionLaunchClearsOnlyMatchingSession)
 {
    r_util::SessionContext context("user", r_util::SessionScope::projectNone("aaaa1111"));
@@ -478,6 +514,7 @@ TEST_F(SessionManagerTest, RemovePendingSessionLaunchClearsOnlyMatchingSession)
    EXPECT_EQ(2, launchCount_);
 }
 
+// A starting session we can't check on is started again after a minute.
 TEST_F(SessionManagerTest, AgedLaunchWithoutRecordedPidIsRelaunched)
 {
    r_util::SessionContext context("user");
@@ -488,6 +525,7 @@ TEST_F(SessionManagerTest, AgedLaunchWithoutRecordedPidIsRelaunched)
    EXPECT_EQ(2, launchCount_);
 }
 
+// A starting session whose process is gone is started again after a minute.
 TEST_F(SessionManagerTest, AgedLaunchOfDeadProcessIsRelaunched)
 {
    r_util::SessionContext context("user");
@@ -499,6 +537,8 @@ TEST_F(SessionManagerTest, AgedLaunchOfDeadProcessIsRelaunched)
    EXPECT_EQ(2, launchCount_);
 }
 
+// Starting any session also forgets other sessions that have been starting
+// for over 3 minutes, even if still running.
 TEST_F(SessionManagerTest, LaunchSweepsStaleEntriesOfOtherContexts)
 {
    // the sweep caps every entry at the stale age, even one whose process is
@@ -516,6 +556,8 @@ TEST_F(SessionManagerTest, LaunchSweepsStaleEntriesOfOtherContexts)
    EXPECT_EQ(1u, pendingLaunchCount(manager_));
 }
 
+// That cleanup leaves alone sessions that have been starting for under
+// 3 minutes.
 TEST_F(SessionManagerTest, SweepKeepsEntriesInsideStaleAge)
 {
    r_util::SessionContext first("user", r_util::SessionScope::projectNone("aaaa1111"));
@@ -528,6 +570,8 @@ TEST_F(SessionManagerTest, SweepKeepsEntriesInsideStaleAge)
    EXPECT_EQ(2u, pendingLaunchCount(manager_));
 }
 
+// Hooks that customize how a session starts run in order, before the
+// session is started.
 TEST_F(SessionManagerTest, ProfileFiltersApplyBeforeLaunch)
 {
    manager_.addSessionLaunchProfileFilter([](r_util::SessionLaunchProfile* pProfile)
@@ -553,6 +597,8 @@ TEST_F(SessionManagerTest, ProfileFiltersApplyBeforeLaunch)
    EXPECT_EQ(core::system::Option("--second", "/filtered/rsession"), args[args.size() - 1]);
 }
 
+// The "restore workspace" and "run .Rprofile" choices from the first page
+// load are passed to the new session; other requests don't pass them.
 TEST_F(SessionManagerTest, ClientInitArgsReachProfile)
 {
    std::string body = R"({"method": "client_init", "params": [], "kwparams": {"restore_workspace": 0, "run_rprofile": 1}})";
@@ -583,6 +629,7 @@ TEST_F(SessionManagerTest, ClientInitArgsReachProfile)
    EXPECT_FALSE(hasArgNamed(profiles[1].config.args, "--r-run-rprofile"));
 }
 
+// Many simultaneous requests for the same session start it exactly once.
 TEST_F(SessionManagerTest, ConcurrentLaunchesOfOneContextLaunchOnce)
 {
    // the entry is inserted under the mutex before the launcher runs, so the
@@ -610,6 +657,7 @@ TEST_F(SessionManagerTest, ConcurrentLaunchesOfOneContextLaunchOnce)
    EXPECT_EQ(1u, pendingLaunchCount(manager_));
 }
 
+// Simultaneous requests for different sessions each start their own session.
 TEST_F(SessionManagerTest, ConcurrentLaunchesOfDistinctContextsEachLaunch)
 {
    launchDelay_ = milliseconds(20);
@@ -635,6 +683,8 @@ TEST_F(SessionManagerTest, ConcurrentLaunchesOfDistinctContextsEachLaunch)
    EXPECT_EQ(std::size_t(kThreads), pendingLaunchCount(manager_));
 }
 
+// Starting, tracking, and clearing sessions from many threads at once
+// doesn't crash or leave bad data behind.
 TEST_F(SessionManagerTest, ConcurrentRemoveNoteAndLaunchStayConsistent)
 {
    // a weak end-state check: this test mainly gives the thread sanitizer
@@ -694,6 +744,286 @@ TEST_F(SessionManagerTest, ConcurrentRemoveNoteAndLaunchStayConsistent)
          EXPECT_EQ(1u, notedPids.count(*pid)) << "unexpected pid " << *pid;
    }
    EXPECT_LE(pendingLaunchCount(manager_), contexts.size());
+}
+
+// launches real child processes through the default launcher, with a profile
+// filter swapping rsession for a /bin/sh stub that runs script_. the stub must
+// be a system binary: on macOS the launcher sets DYLD_INSERT_LIBRARIES, which
+// dyld drops only for SIP-protected executables
+class SessionManagerProcessTest : public SessionManagerTest
+{
+protected:
+   void SetUp() override
+   {
+      core::system::User user;
+      Error error = core::system::User::getCurrentUser(user);
+      ASSERT_FALSE(error);
+      username_ = user.getUsername();
+   }
+
+   void TearDown() override
+   {
+      // stub children get their own process group and outlive this binary;
+      // kill any the test left running. a pid the tracker already reaped
+      // reports ECHILD and is skipped, since it may have been reused
+      for (PidType pid : spawnedPids_)
+      {
+         int status = 0;
+         if (::waitpid(pid, &status, WNOHANG) == 0)
+         {
+            ::kill(pid, SIGKILL);
+            ::waitpid(pid, &status, 0);
+         }
+      }
+   }
+
+   std::unique_ptr<SessionManager> makeProcessManager()
+   {
+      SessionManager::Config config;
+      config.now = [this] { return now_; };
+
+      std::unique_ptr<SessionManager> manager = makeManager(config);
+      manager->addSessionLaunchProfileFilter([this](r_util::SessionLaunchProfile* pProfile)
+      {
+         core::system::Options args = { { "-c", script_ } };
+         if (forwardSessionArgs_)
+         {
+            // sh -c <script> <$0> <$1...>: the session args become "$@"
+            args.push_back({ "stub", "" });
+            args.insert(args.end(), pProfile->config.args.begin(), pProfile->config.args.end());
+         }
+
+         pProfile->executablePath = executablePath_;
+         pProfile->config.args = args;
+      });
+      return manager;
+   }
+
+   // launches the stub and records its pid for teardown; -1 when the child
+   // exited and was reaped by the tracker before the launch returned
+   PidType launchChild(SessionManager& manager, const r_util::SessionContext& context)
+   {
+      bool launched = false;
+      Error error = launch(manager, context, &launched);
+      EXPECT_FALSE(error);
+      EXPECT_TRUE(launched);
+
+      boost::optional<PidType> pid = pendingLaunchPid(manager, context);
+      if (!pid)
+         return -1;
+
+      if (*pid > 0)
+         spawnedPids_.push_back(*pid);
+      return *pid;
+   }
+
+   // stands in for rserver's SIGCHLD thread, which the test binary lacks
+   bool waitForReap(SessionManager& manager,
+                    const r_util::SessionContext& context,
+                    time_duration timeout = seconds(5))
+   {
+      ptime deadline = microsec_clock::universal_time() + timeout;
+      while (pendingLaunchPid(manager, context))
+      {
+         if (microsec_clock::universal_time() > deadline)
+            return false;
+
+         manager.notifySIGCHLD();
+         boost::this_thread::sleep(milliseconds(10));
+      }
+      return true;
+   }
+
+   // SIGKILL a child and wait for the tracker to reap it (and so run its
+   // exit handler), whatever becomes of the context's pending launch
+   bool killAndReap(SessionManager& manager, PidType pid, time_duration timeout = seconds(5))
+   {
+      if (::kill(pid, SIGKILL) == -1)
+         return false;
+
+      ptime deadline = microsec_clock::universal_time() + timeout;
+      while (core::system::isProcessRunning(pid))
+      {
+         if (microsec_clock::universal_time() > deadline)
+            return false;
+
+         manager.notifySIGCHLD();
+         boost::this_thread::sleep(milliseconds(10));
+      }
+      return true;
+   }
+
+   std::string username_;
+   std::string executablePath_ = "/bin/sh";
+   std::string script_ = "exec sleep 30";
+   bool forwardSessionArgs_ = false;
+   std::vector<PidType> spawnedPids_;
+};
+
+// Starting a real process records which process it is, and it is running.
+TEST_F(SessionManagerProcessTest, RealLaunchRecordsChildPid)
+{
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_);
+
+   PidType pid = launchChild(*manager, context);
+   EXPECT_GT(pid, 0);
+   EXPECT_NE(::getpid(), pid);
+   EXPECT_TRUE(core::system::isProcessRunning(pid));
+}
+
+// When a real session process exits right away, we notice and can start it
+// again.
+TEST_F(SessionManagerProcessTest, ChildExitClearsPendingLaunch)
+{
+   // a fast exit can be reaped by addProcess's probe before the launch
+   // returns, so the entry may already be gone here
+   script_ = "exit 3";
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_);
+
+   launchChild(*manager, context);
+   EXPECT_TRUE(waitForReap(*manager, context));
+   EXPECT_FALSE(pendingLaunchPid(*manager, context));
+
+   launchChild(*manager, context);
+   EXPECT_TRUE(waitForReap(*manager, context));
+}
+
+// If the session program can't run at all, that shows up as the process
+// exiting, so we don't wait on it.
+TEST_F(SessionManagerProcessTest, ExecFailureSurfacesAsChildExit)
+{
+   // the forked child _exits when execve fails, so the launch itself succeeds
+   executablePath_ = "/nonexistent/rsession";
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_);
+
+   launchChild(*manager, context);
+   EXPECT_TRUE(waitForReap(*manager, context));
+}
+
+// With a real running process, a failed request doesn't cause a duplicate
+// session; once it is killed, we can start again.
+TEST_F(SessionManagerProcessTest, RequestErrorKeepsLiveChild)
+{
+   // #18572: a request error must not clear the pending launch of a live
+   // session process, or the next recovery pass launches a second one
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_);
+
+   PidType pid = launchChild(*manager, context);
+   ASSERT_GT(pid, 0);
+
+   manager->removePendingLaunch(context, false, "request error");
+   EXPECT_EQ(pid, pendingLaunchPid(*manager, context));
+   EXPECT_FALSE(attemptLaunch(*manager, context));
+
+   ASSERT_EQ(0, ::kill(pid, SIGKILL));
+   EXPECT_TRUE(waitForReap(*manager, context));
+   EXPECT_GT(launchChild(*manager, context), 0);
+}
+
+// With real processes: after giving up on a stuck session and starting a
+// replacement, the stuck one exiting doesn't make us forget the replacement.
+TEST_F(SessionManagerProcessTest, StaleChildExitDoesNotClearReplacement)
+{
+   ptime start = now_;
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_);
+
+   PidType first = launchChild(*manager, context);
+   ASSERT_GT(first, 0);
+
+   now_ = start + seconds(61);
+   EXPECT_FALSE(attemptLaunch(*manager, context));
+   EXPECT_EQ(first, pendingLaunchPid(*manager, context));
+
+   // past the stale age the live first child no longer holds off a relaunch,
+   // leaving two live children for one context
+   now_ = start + minutes(3);
+   PidType second = launchChild(*manager, context);
+   ASSERT_GT(second, 0);
+   EXPECT_NE(first, second);
+   EXPECT_TRUE(core::system::isProcessRunning(first));
+
+   EXPECT_TRUE(killAndReap(*manager, first));
+   EXPECT_EQ(second, pendingLaunchPid(*manager, context));
+
+   EXPECT_TRUE(killAndReap(*manager, second));
+   EXPECT_FALSE(pendingLaunchPid(*manager, context));
+}
+
+// A session that connected and later exits doesn't make us forget a newer
+// session that is still starting.
+TEST_F(SessionManagerProcessTest, SessionExitAfterConnectKeepsRelaunch)
+{
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_);
+
+   PidType first = launchChild(*manager, context);
+   ASSERT_GT(first, 0);
+
+   // connection made: the entry clears while the session keeps running
+   manager->removePendingLaunch(context);
+   EXPECT_FALSE(pendingLaunchPid(*manager, context));
+   EXPECT_TRUE(core::system::isProcessRunning(first));
+
+   PidType second = launchChild(*manager, context);
+   ASSERT_GT(second, 0);
+   EXPECT_NE(first, second);
+
+   // the connected session's eventual exit leaves its replacement's entry
+   EXPECT_TRUE(killAndReap(*manager, first));
+   EXPECT_EQ(second, pendingLaunchPid(*manager, context));
+}
+
+// A process that has exited but not yet been cleaned up still looks running
+// until the cleanup happens.
+TEST_F(SessionManagerProcessTest, ZombieChildCountsAsLive)
+{
+   // kill(pid, 0) succeeds on an unreaped zombie, so the liveness guard
+   // relies on prompt SIGCHLD reaping to let go of a dead launch
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_);
+
+   PidType pid = launchChild(*manager, context);
+   ASSERT_GT(pid, 0);
+
+   ASSERT_EQ(0, ::kill(pid, SIGKILL));
+   siginfo_t info;
+   ASSERT_EQ(0, ::waitid(P_PID, pid, &info, WEXITED | WNOWAIT));
+
+   manager->removePendingLaunch(context, false, "request error");
+   EXPECT_EQ(pid, pendingLaunchPid(*manager, context));
+
+   manager->notifySIGCHLD();
+   EXPECT_FALSE(pendingLaunchPid(*manager, context));
+}
+
+// The started process receives the expected user, login token, and session
+// ID.
+TEST_F(SessionManagerProcessTest, StubReceivesSessionArgsAndEnv)
+{
+   FilePath outputPath;
+   ASSERT_FALSE(FilePath::tempFilePath(outputPath));
+   std::string output = outputPath.getAbsolutePath();
+
+   forwardSessionArgs_ = true;
+   script_ = "printf '%s\\n' \"$@\" > '" + output + "'; env >> '" + output + "'";
+   std::unique_ptr<SessionManager> manager = makeProcessManager();
+   r_util::SessionContext context(username_, r_util::SessionScope::projectNone("aaaa1111"));
+
+   launchChild(*manager, context);
+   ASSERT_TRUE(waitForReap(*manager, context));
+
+   std::string contents;
+   ASSERT_FALSE(core::readStringFromFile(outputPath, &contents));
+   EXPECT_NE(std::string::npos, contents.find("-u\n" + username_ + "\n"));
+   EXPECT_NE(std::string::npos, contents.find("--launcher-token\n"));
+   EXPECT_NE(std::string::npos, contents.find("\nRSTUDIO_SESSION_SCOPE_ID=aaaa1111\n"));
+
+   outputPath.remove();
 }
 
 } // namespace tests
