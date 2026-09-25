@@ -493,6 +493,13 @@ public class TextEditingTarget implements
                view_.getSourceOnSave().setValue(false, true);
             }
          }
+         else if (file_ != null)
+         {
+            // A first save gives the document a path, which enables commands
+            // such as Rename even when the file type is unchanged; the source
+            // columns refresh their commands on this event.
+            events_.fireEvent(new FileTypeChangedEvent());
+         }
 
          if (executeOnSuccess_ != null)
             executeOnSuccess_.execute();

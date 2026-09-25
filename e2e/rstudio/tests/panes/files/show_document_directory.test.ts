@@ -146,6 +146,25 @@ test.describe("Show Document's Directory (#6781)", () => {
     expect(await isCommandEnabled(page, COMMAND_ID)).toBe(true);
   });
 
+  test('saving an untitled document enables the command', async ({ rstudioPage: page }) => {
+    await resetSourcePaneState(page);
+    expect(await isCommandEnabled(page, COMMAND_ID)).toBe(false);
+
+    // An Untitled R script saved as .R keeps its file type, so this doesn't
+    // depend on the refresh that a file type change triggers.
+    await executeCommand(page, 'saveSourceDoc');
+    const fileName = page.locator('#file_dialog_name_prompt');
+    await expect(fileName).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await fileName.fill(`${sandbox.dir}/showdir_saved.R`);
+    await page.locator('#rstudio_file_accept_save').click();
+    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('showdir_saved.R', {
+      timeout: TIMEOUTS.fileOpen,
+    });
+
+    await expect.poll(() => isCommandEnabled(page, COMMAND_ID)).toBe(true);
+    expect(await isCommandEnabled(page, 'renameSourceDoc')).toBe(true);
+  });
+
   test('works for a document in an extra source column', async ({ rstudioPage: page }) => {
     const name = 'showdir_column';
     const docPath = await seedDocument(page, sandbox.dir, name);
