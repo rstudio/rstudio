@@ -71,7 +71,6 @@ import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChange
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FilesPaneNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -95,7 +94,6 @@ public class Files
       implements FileChangeEvent.Handler,
                  OpenFileInBrowserEvent.Handler,
                  DirectoryNavigateEvent.Handler,
-                 FilesPaneNavigateEvent.Handler,
                  RenameSourceFileEvent.Handler,
                  RStudioApiRequestEvent.Handler,
                  WorkingDirChangedEvent.Handler
@@ -996,14 +994,6 @@ public class Files
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
    {
       navigateToDirectory(event.getDirectory());
-      if (event.getActivate())
-         view_.bringToFront();
-   }
-
-   @Override
-   public void onFilesPaneNavigate(FilesPaneNavigateEvent event)
-   {
-      navigateToDirectory(FileSystemItem.createDir(event.getDirectory()));
       if (event.getActivate())
          view_.bringToFront();
    }

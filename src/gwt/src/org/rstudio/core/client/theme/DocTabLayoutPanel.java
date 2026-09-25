@@ -48,7 +48,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FilesPaneNavigateEvent;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
@@ -246,11 +246,11 @@ public class DocTabLayoutPanel
                {
                   events_.fireEvent(new SendToConsoleEvent(
                      "setwd(" + RUtil.asStringLiteral(dirPath) + ")", true));
-                  events_.fireEvent(new FilesPaneNavigateEvent(dirPath, false));
+                  events_.fireEvent(new DirectoryNavigateEvent(FileSystemItem.createDir(dirPath), false));
                }));
                menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(constants_.showDocumentDirectoryMenuItem(), () ->
                {
-                  events_.fireEvent(new FilesPaneNavigateEvent(dirPath, true));
+                  events_.fireEvent(new DirectoryNavigateEvent(FileSystemItem.createDir(dirPath), true));
                }));
                menu.addSeparator();
             }

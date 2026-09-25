@@ -152,8 +152,8 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FilesPaneNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
@@ -4801,8 +4801,8 @@ public class TextEditingTarget implements
    @Handler
    void onShowActiveDocDirInFiles()
    {
-      String dir = FileSystemItem.createFile(docUpdateSentinel_.getPath()).getParentPathString();
-      events_.fireEvent(new FilesPaneNavigateEvent(dir, true));
+      FileSystemItem dir = FileSystemItem.createFile(docUpdateSentinel_.getPath()).getParentPath();
+      events_.fireEvent(new DirectoryNavigateEvent(dir, true));
    }
 
    @Handler
