@@ -242,16 +242,19 @@ public class DocTabLayoutPanel
                {
                   events_.fireEvent(new CopySourcePathEvent(filePath));
                }));
-               menu.addItem(ElementIds.TAB_SET_WORKING_DIR, new MenuItem(constants_.setWorkingDirMenuItem(), () ->
+               if (dir != null)
                {
-                  events_.fireEvent(new SendToConsoleEvent(
-                     "setwd(" + RUtil.asStringLiteral(dir.getPath()) + ")", true));
-                  events_.fireEvent(new DirectoryNavigateEvent(dir, false));
-               }));
-               menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(commands_.showActiveDocDirInFiles().getMenuLabel(false), () ->
-               {
-                  events_.fireEvent(new DirectoryNavigateEvent(dir, true));
-               }));
+                  menu.addItem(ElementIds.TAB_SET_WORKING_DIR, new MenuItem(constants_.setWorkingDirMenuItem(), () ->
+                  {
+                     events_.fireEvent(new SendToConsoleEvent(
+                        "setwd(" + RUtil.asStringLiteral(dir.getPath()) + ")", true));
+                     events_.fireEvent(new DirectoryNavigateEvent(dir, false));
+                  }));
+                  menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(commands_.showActiveDocDirInFiles().getMenuLabel(false), () ->
+                  {
+                     events_.fireEvent(new DirectoryNavigateEvent(dir, true));
+                  }));
+               }
                menu.addSeparator();
             }
 
