@@ -412,6 +412,53 @@ TEST(FileSerializerTest, WriteStringAtomicPreservesPermissions)
    dir.remove();
 }
 
+#ifndef _WIN32
+
+// The replacement keeps the target's group when we belong to it (the temporary
+// file starts out in the directory's group or our primary one).
+TEST(FileSerializerTest, WriteStringAtomicPreservesGroup)
+{
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_FALSE(writeStringToFile(filePath, "original\n"));
+
+   struct stat st;
+   ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
+   gid_t fileGroup = st.st_gid;
+
+   int count = ::getgroups(0, nullptr);
+   ASSERT_GT(count, 0);
+   std::vector<gid_t> groups(count);
+   ASSERT_EQ(count, ::getgroups(count, groups.data()));
+
+   gid_t otherGroup = fileGroup;
+   for (gid_t gid : groups)
+   {
+      if (gid != fileGroup)
+      {
+         otherGroup = gid;
+         break;
+      }
+   }
+
+   if (otherGroup == fileGroup)
+      GTEST_SKIP() << "the process belongs to no other group";
+
+   ASSERT_EQ(0, ::chown(filePath.getAbsolutePath().c_str(), static_cast<uid_t>(-1), otherGroup));
+
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "replaced\n"));
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("replaced\n", readback);
+   ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
+   EXPECT_EQ(otherGroup, st.st_gid);
+
+   dir.remove();
+}
+
+#endif // !_WIN32
+
 TEST(FileSerializerTest, WriteStringAtomicOwnerOnly)
 {
    FilePath dir = scratchDir();
