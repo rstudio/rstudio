@@ -24,6 +24,9 @@
 #include <core/system/System.hpp>
 #include <core/system/PosixUser.hpp>
 
+#include <boost/asio/error.hpp>
+#include <boost/optional.hpp>
+
 #include <core/http/LocalStreamSocketUtils.hpp>
 
 #include "SessionHttpConnectionListenerImpl.hpp"
@@ -63,13 +66,44 @@ private:
       http::SocketAcceptorService<boost::asio::local::stream_protocol>*
                                                                   pAcceptor)
    {
-      Error error = writePidFile();
+      // A live session may already be serving this path (a duplicate launch
+      // of the same session; see #18572). Binding over its socket would make
+      // that session unreachable, and removing the path on the way out would
+      // then lock the user out of it (#18941). Report the path as in use
+      // instead, so startup retries briefly and then exits.
+      bool inUse = false;
+      Error error = http::isLocalStreamInUse(localStreamPath_, &inUse);
       if (error)
          return error;
 
-      return http::initLocalStreamAcceptor(*pAcceptor,
-                                           localStreamPath_,
-                                           streamFileMode_);
+      if (inUse)
+      {
+         error = Error(boost::asio::error::make_error_code(boost::asio::error::address_in_use),
+                       ERROR_LOCATION);
+         error.addProperty("description", "Another session is listening on this stream");
+         error.addProperty("stream", localStreamPath_);
+         return error;
+      }
+
+      // remove a stale stream left behind by a session that did not exit cleanly
+      error = localStreamPath_.removeIfExists();
+      if (error)
+         return error;
+
+      error = http::initLocalStreamAcceptor(*pAcceptor,
+                                            localStreamPath_,
+                                            streamFileMode_);
+      if (error)
+         return error;
+
+      // remember which socket is ours (see cleanup)
+      http::LocalStreamIdentity identity;
+      error = http::getLocalStreamIdentity(localStreamPath_, &identity);
+      if (error)
+         return error;
+      boundStream_ = identity;
+
+      return writePidFile();
    }
 
    virtual bool validateConnection(
@@ -116,7 +150,29 @@ private:
 
    virtual Error cleanup()
    {
-      Error error = cleanupPidFile();
+      // only remove what this process bound: if the path now leads to a
+      // socket that a later session bound in our place, that session's
+      // socket and pid file must survive our exit (#18941)
+      if (!boundStream_)
+         return Success();
+      http::LocalStreamIdentity bound = *boundStream_;
+      boundStream_.reset();
+
+      http::LocalStreamIdentity current;
+      Error error = http::getLocalStreamIdentity(localStreamPath_, &current);
+      if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+         return Success();
+      else if (error)
+         return error;
+
+      if (current != bound)
+      {
+         LOG_DEBUG_MESSAGE("Leaving stream bound by another session in place: " +
+                           localStreamPath_.getAbsolutePath());
+         return Success();
+      }
+
+      error = cleanupPidFile();
       if (error)
          LOG_ERROR(error);
 
@@ -162,6 +218,9 @@ private:
 private:
    core::FilePath localStreamPath_;
    core::FileMode streamFileMode_;
+
+   // identity of the socket this listener bound, until cleanup releases it
+   boost::optional<http::LocalStreamIdentity> boundStream_;
 
    // desktop shared secret
    std::string secret_;

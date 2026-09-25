@@ -321,6 +321,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
 
    // launch the session
    Error error = sessionLaunchFunction_(ioContext, profile, request, onLaunch, onError);
+   finishPendingLaunch(context);
    if (error)
    {
       removePendingLaunch(context, false, "error during launch: " + error.asString());
@@ -329,6 +330,17 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
 
    launched = true;
    return Success();
+}
+
+void SessionManager::finishPendingLaunch(const r_util::SessionContext& context)
+{
+   LOCK_MUTEX(launchesMutex_)
+   {
+      LaunchMap::iterator it = pendingLaunches_.find(context);
+      if (it != pendingLaunches_.end())
+         it->second.launching = false;
+   }
+   END_LOCK_MUTEX
 }
 
 namespace {
@@ -446,6 +458,7 @@ void SessionManager::addSessionLaunchProfileFilter(
 void SessionManager::removePendingLaunch(const r_util::SessionContext& context, const bool success, const std::string& errorMsg)
 {
    bool removed = false;
+   bool kept = false;
    PidType keptPid = -1;
    boost::posix_time::ptime startTime;
    LOCK_MUTEX(launchesMutex_)
@@ -464,11 +477,18 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
          // becomes reachable, the exit tracker clears it when it dies and
          // launchSession's one-minute window expires it otherwise. custom
          // session launchers never record a pid, so they keep the old
-         // clear-on-error behavior.
-         if (!success &&
-             it->second.pid != -1 &&
-             core::system::isProcessRunning(it->second.pid))
+         // clear-on-error behavior. the entry is also kept while the launch
+         // function is still running: no pid is recorded yet, and an error
+         // landing in that window launched a second session (#18941).
+         if (!success && it->second.launching)
          {
+            kept = true;
+         }
+         else if (!success &&
+                  it->second.pid != -1 &&
+                  core::system::isProcessRunning(it->second.pid))
+         {
+            kept = true;
             keptPid = it->second.pid;
          }
          else
@@ -481,10 +501,14 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
    }
    END_LOCK_MUTEX
 
-   if (keptPid != -1)
+   if (kept)
    {
-      DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
-            keptPid, context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
+      if (keptPid != -1)
+         DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
+               keptPid, context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
+      else
+         DLOGF("Keeping pending launch still in flight for user {} (id: {}) despite request error: {}",
+               context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
       return;
    }
 

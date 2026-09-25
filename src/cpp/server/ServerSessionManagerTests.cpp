@@ -47,6 +47,20 @@ Error countingLaunchFunction(boost::asio::io_context&,
    return Success();
 }
 
+// a launch function that reports a request error for the context from inside
+// the launch, as an RPC to the exiting predecessor dying with EOF does while
+// the replacement is being spawned (#18941)
+Error errorDuringLaunchFunction(boost::asio::io_context&,
+                                const r_util::SessionLaunchProfile& profile,
+                                const http::Request&,
+                                const http::ResponseHandler&,
+                                const http::ErrorHandler&)
+{
+   s_launchCount++;
+   sessionManager().removePendingLaunch(profile.context, false, "request error");
+   return Success();
+}
+
 bool attemptLaunch(const r_util::SessionContext& context)
 {
    boost::asio::io_context ioContext;
@@ -189,6 +203,28 @@ TEST(SessionManagerTest, RequestErrorClearsPendingLaunchOfDeadProcess)
    sessionManager().notePendingLaunchPid(
       context, std::numeric_limits<PidType>::max());
 
+   sessionManager().removePendingLaunch(context, false, "request error");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, RequestErrorDuringLaunchKeepsPendingLaunch)
+{
+   sessionManager().setSessionLaunchFunction(errorDuringLaunchFunction);
+   s_launchCount = 0;
+
+   // no pid is recorded while the launch function runs, so the liveness
+   // check cannot protect the entry; the in-flight flag must
+   r_util::SessionContext context("pending-launch-error-in-flight-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   // once the launch has returned, an error clears it as before (no pid)
    sessionManager().removePendingLaunch(context, false, "request error");
    EXPECT_TRUE(attemptLaunch(context));
    EXPECT_EQ(2, s_launchCount);

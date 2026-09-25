@@ -16,6 +16,15 @@
 #ifndef CORE_HTTP_LOCAL_STREAM_SOCKET_UTILS_HPP
 #define CORE_HTTP_LOCAL_STREAM_SOCKET_UTILS_HPP
 
+#include <cerrno>
+#include <cstring>
+
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <unistd.h>
+
 #include <boost/asio/local/stream_protocol.hpp>
 
 #include <shared_core/Error.hpp>
@@ -26,7 +35,7 @@
 
 namespace rstudio {
 namespace core {
-namespace http {  
+namespace http {
 
 inline Error initializeStreamDir(const FilePath& streamDir)
 {
@@ -35,7 +44,7 @@ inline Error initializeStreamDir(const FilePath& streamDir)
       Error error = streamDir.ensureDirectory();
       if (error)
          return error;
-      
+
       return streamDir.changeFileMode(FileMode::ALL_READ_WRITE_EXECUTE, true);
    }
    else
@@ -43,7 +52,7 @@ inline Error initializeStreamDir(const FilePath& streamDir)
       return Success();
    }
 }
-   
+
 inline Error initLocalStreamAcceptor(
    SocketAcceptorService<boost::asio::local::stream_protocol>& acceptorService,
    const core::FilePath& localStreamPath,
@@ -52,10 +61,10 @@ inline Error initLocalStreamAcceptor(
    // initialize endpoint
    using boost::asio::local::stream_protocol;
    stream_protocol::endpoint endpoint(localStreamPath.getAbsolutePath());
-   
+
    // get acceptor
    stream_protocol::acceptor& acceptor = acceptorService.acceptor();
-   
+
    // open
    boost::system::error_code ec;
    acceptor.open(endpoint.protocol(), ec);
@@ -65,7 +74,7 @@ inline Error initLocalStreamAcceptor(
       error.addProperty("stream", localStreamPath);
       return error;
    }
-   
+
    // bind
    acceptor.bind(endpoint, ec);
    if (ec)
@@ -74,17 +83,95 @@ inline Error initLocalStreamAcceptor(
       error.addProperty("stream", localStreamPath);
       return error;
    }
-   
+
    // chmod on the stream file
    Error error = localStreamPath.changeFileMode(fileMode);
    if (error)
       return error;
-   
+
    // listen
    acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   
+
+   return Success();
+}
+
+// Reports whether some process is accepting connections at localStreamPath.
+// A path that is missing, is not a socket, or whose listener has gone away
+// (the connection is refused) is not in use. Fails only when a probe socket
+// could not be created.
+inline Error isLocalStreamInUse(const FilePath& localStreamPath, bool* pInUse)
+{
+   *pInUse = false;
+
+   // a path too long for a socket address cannot have a listener bound to it
+   sockaddr_un address;
+   std::string path = localStreamPath.getAbsolutePath();
+   if (path.size() >= sizeof(address.sun_path))
+      return Success();
+
+   int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+   if (fd == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   // probe without blocking: a live listener whose backlog is full answers
+   // EAGAIN rather than stalling the probe until it gets around to accepting
+   int flags = ::fcntl(fd, F_GETFL, 0);
+   if (flags == -1 || ::fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      ::close(fd);
+      return error;
+   }
+
+   std::memset(&address, 0, sizeof(address));
+   address.sun_family = AF_UNIX;
+   std::memcpy(address.sun_path, path.c_str(), path.size());
+
+   int result = ::connect(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address));
+   int connectErrno = errno;
+   ::close(fd);
+
+   *pInUse = result == 0 ||
+             connectErrno == EAGAIN ||
+             connectErrno == EWOULDBLOCK ||
+             connectErrno == EINPROGRESS;
+
+   return Success();
+}
+
+// The filesystem identity of a local stream. A listener records it after
+// binding, so that on exit it can tell its own socket apart from one that a
+// later process bound at the same path.
+struct LocalStreamIdentity
+{
+   dev_t device = 0;
+   ino_t inode = 0;
+};
+
+inline bool operator==(const LocalStreamIdentity& lhs, const LocalStreamIdentity& rhs)
+{
+   return lhs.device == rhs.device && lhs.inode == rhs.inode;
+}
+
+inline bool operator!=(const LocalStreamIdentity& lhs, const LocalStreamIdentity& rhs)
+{
+   return !(lhs == rhs);
+}
+
+inline Error getLocalStreamIdentity(const FilePath& localStreamPath, LocalStreamIdentity* pIdentity)
+{
+   struct stat st;
+   if (::lstat(localStreamPath.getAbsolutePath().c_str(), &st) != 0)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("stream", localStreamPath);
+      return error;
+   }
+
+   pIdentity->device = st.st_dev;
+   pIdentity->inode = st.st_ino;
    return Success();
 }
 
