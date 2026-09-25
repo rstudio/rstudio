@@ -492,6 +492,8 @@ Error writeInPlace(const FilePath& targetPath,
       struct stat st;
       if (::stat(targetPath.getAbsolutePath().c_str(), &st) == -1 || (st.st_mode & 077) != 0)
          return fileError(code, targetPath, ERROR_LOCATION);
+
+      DLOGF("Couldn't chmod '{}' (errno {}); writing it in place since it's already private to uid {}", targetPath.getAbsolutePath(), code, st.st_uid);
    }
 #endif
 
@@ -794,17 +796,17 @@ Error writeTempFile(TempFile* pTemp,
       // new file is ours, which is also what repairs a state file that an
       // earlier 'sudo rstudio' left owned by root. Skip the call when nothing
       // would change; a group we can't carry over then fails only once, since
-      // the replacement is in one of ours.
+      // the next temporary file starts out in the same group as this one. An
+      // owner and group we can't read are treated as different.
       struct stat tempStat;
-      if (::fstat(fd, &tempStat) == -1)
-         tempStat = targetStat;
+      bool haveTempStat = ::fstat(fd, &tempStat) == 0;
 
       uid_t uid = static_cast<uid_t>(-1);
-      if (::geteuid() == 0 && targetStat.st_uid != tempStat.st_uid)
+      if (::geteuid() == 0 && (!haveTempStat || targetStat.st_uid != tempStat.st_uid))
          uid = targetStat.st_uid;
 
       gid_t gid = static_cast<gid_t>(-1);
-      if (targetStat.st_gid != tempStat.st_gid)
+      if (!haveTempStat || targetStat.st_gid != tempStat.st_gid)
          gid = targetStat.st_gid;
 
       if (uid != static_cast<uid_t>(-1) || gid != static_cast<gid_t>(-1))
@@ -831,10 +833,11 @@ Error writeTempFile(TempFile* pTemp,
       mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
 
       // The target's group access was granted to its group, not to the one
-      // the new file ended up in, so that group gets no more than everyone
-      // else does.
+      // the new file ended up in, so that group gets what everyone else does:
+      // no more, and no less either, since the group's bits are checked
+      // instead of the other bits for its members.
       if (!keptGroup)
-         mode = (mode & 0707) | (mode & ((mode & 07) << 3));
+         mode = (mode & 0707) | ((mode & 07) << 3);
 
       if (::fchmod(fd, mode) == -1)
       {
