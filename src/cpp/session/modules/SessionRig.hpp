@@ -31,13 +31,10 @@ namespace session {
 namespace modules {
 namespace rig {
 
-// Whether a rig binary is available (found on the PATH, in a standard
-// location, or previously downloaded by RStudio).
-bool isRigAvailable();
-
-// Find an installed R matching the requested version (same major.minor).
-// On success, *pInstalled is an object with 'version', 'path' and 'binary';
-// when nothing matches it is null.
+// Find an installed R matching the requested version (same major.minor),
+// among those rig reports and those in the platform's standard locations.
+// On success, *pInstalled is an object with 'version', 'path', 'binary' and
+// 'home'; when nothing matches it is null.
 core::Error findInstalledRVersion(const std::string& version,
                                   core::json::Value* pInstalled);
 

@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -62,12 +63,15 @@ public class RenvRVersionManager
       events_.addHandler(RenvRestorePromptEvent.TYPE, this);
    }
 
+   // The warning bar renders its message as HTML, and the versions and errors
+   // shown in it come from project files and processes, so everything
+   // substituted into a message is escaped.
    @Override
    public void onProjectRVersionMismatch(ProjectRVersionMismatchEvent event)
    {
       ProjectRVersionMismatchEvent.Data data = event.getData();
-      String requested = data.requested_version;
-      String current = data.current_version;
+      String requested = escape(data.requested_version);
+      String current = escape(data.current_version);
 
       String message = StringUtil.equals(data.source, "project")
             ? constants_.projectRVersionMismatch(requested, current)
@@ -101,8 +105,8 @@ public class RenvRVersionManager
          globalDisplay_.showWarningBar(
                false,
                message,
-               constants_.installRVersion(requested),
-               () -> installR(requested));
+               constants_.installRVersion(data.requested_version),
+               () -> installR(data.requested_version));
       }
       else
       {
@@ -125,9 +129,10 @@ public class RenvRVersionManager
       }
       else
       {
+         String version = escape(data.version);
          String error = StringUtil.isNullOrEmpty(data.error)
-               ? constants_.rInstallFailed(data.version)
-               : constants_.rInstallFailedWithError(data.version, data.error);
+               ? constants_.rInstallFailed(version)
+               : constants_.rInstallFailedWithError(version, escape(data.error));
          globalDisplay_.showWarningBar(true, error);
       }
    }
@@ -150,26 +155,33 @@ public class RenvRVersionManager
    {
       globalDisplay_.hideWarningBar();
 
+      // the job can finish (e.g. fail to start) before the response arrives,
+      // so be ready for its completion event before asking
+      pendingInstall_ = version;
+
       server_.rigInstallRVersion(version, new ServerRequestCallback<String>()
       {
          @Override
          public void onResponseReceived(String jobId)
          {
-            pendingInstall_ = version;
-            globalDisplay_.showWarningBar(false, constants_.rInstallInProgress(version));
+            if (StringUtil.equals(pendingInstall_, version))
+               globalDisplay_.showWarningBar(false, constants_.rInstallInProgress(escape(version)));
          }
 
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showWarningBar(true, constants_.rInstallFailedWithError(version, error.getUserMessage()));
+            pendingInstall_ = null;
+            globalDisplay_.showWarningBar(
+                  true,
+                  constants_.rInstallFailedWithError(escape(version), escape(error.getUserMessage())));
          }
       });
    }
 
-   // Restart the session with the given R. The desktop is told which R to
-   // launch only once the quit is going ahead, so a cancelled quit leaves
-   // no pending switch behind.
+   // Restart the session with the given R. Once the quit is going ahead, the
+   // desktop checks that the R runs and holds on to it for the relaunch; a
+   // quit that then fails clears it again.
    private void switchToR(RVersionInstall installed)
    {
       globalDisplay_.hideWarningBar();
@@ -179,14 +191,29 @@ public class RenvRVersionManager
 
       quit_.prepareForQuit(constants_.switchRVersionCaption(), saveChanges ->
       {
-         Desktop.getFrame().setPendingRVersion(installed.binary);
-         quit_.performQuit(
-               null,
-               constants_.switchingRVersionProgress(installed.version),
-               saveChanges,
-               projectFile,
-               spec);
+         Desktop.getFrame().setPendingRVersion(installed.binary, error ->
+         {
+            if (!StringUtil.isNullOrEmpty(error))
+            {
+               globalDisplay_.showWarningBar(
+                     true,
+                     constants_.rSwitchFailed(escape(installed.version), escape(error)));
+               return;
+            }
+
+            quit_.performQuit(
+                  null,
+                  constants_.switchingRVersionProgress(installed.version),
+                  saveChanges,
+                  projectFile,
+                  spec);
+         });
       });
+   }
+
+   private static String escape(String text)
+   {
+      return SafeHtmlUtils.htmlEscape(StringUtil.notNull(text));
    }
 
    private String pendingInstall_ = null;

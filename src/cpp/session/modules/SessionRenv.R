@@ -191,34 +191,81 @@
    renv::init()
 })
 
-#' The path to the project's renv lockfile, honoring RENV_PATHS_LOCKFILE.
+#' The name of the project's active renv profile, or "" for the default.
+.rs.addFunction("renv.activeProfile", function(project)
+{
+   profile <- Sys.getenv("RENV_PROFILE", unset = "")
+   if (!nzchar(profile))
+   {
+      # renv's activate script reads the profile from this file when the
+      # environment doesn't name one
+      file <- file.path(project, "renv", "profile")
+      contents <- if (file.exists(file))
+         .rs.tryCatch(readLines(file, n = 1L, warn = FALSE))
+
+      if (is.character(contents) && length(contents) == 1L)
+         profile <- trimws(contents)
+   }
+
+   if (identical(profile, "default")) "" else profile
+})
+
+#' The path to the project's renv lockfile, found as renv finds it: an
+#' RENV_PATHS_LOCKFILE override (a trailing slash names a directory holding
+#' renv.lock), else the lockfile of the active profile.
 .rs.addFunction("renv.lockfilePath", function(project)
 {
-   lockfile <- Sys.getenv("RENV_PATHS_LOCKFILE", unset = "renv.lock")
+   lockfile <- Sys.getenv("RENV_PATHS_LOCKFILE", unset = "")
+   if (nzchar(lockfile))
+   {
+      if (grepl("[/\\\\]$", lockfile))
+         lockfile <- paste0(lockfile, "renv.lock")
+   }
+   else
+   {
+      profile <- .rs.renv.activeProfile(project)
+      lockfile <- if (nzchar(profile))
+         file.path("renv", "profiles", profile, "renv.lock")
+      else
+         "renv.lock"
+   }
+
    if (!.rs.isAbsolutePath(lockfile))
       lockfile <- file.path(project, lockfile)
-   
+
    lockfile
 })
 
-#' The version of R recorded in the project's renv lockfile, or "" when
-#' there is no lockfile or it records no version.
-.rs.addFunction("renv.lockfileRVersion", function(project)
+#' The project's renv lockfile, parsed; NULL when it is missing or malformed.
+.rs.addFunction("renv.readLockfile", function(project)
 {
    path <- .rs.renv.lockfilePath(project)
-   if (!file.exists(path))
-      return("")
-   
-   contents <- paste(readLines(path, warn = FALSE), collapse = "\n")
+   if (!utils::file_test("-f", path))
+      return(NULL)
+
+   contents <- .rs.tryCatch(paste(readLines(path, warn = FALSE), collapse = "\n"))
+   if (inherits(contents, "error"))
+      return(NULL)
+
    lockfile <- .rs.tryCatch(.rs.fromJSON(contents))
-   if (inherits(lockfile, "error"))
-      return("")
-   
+   if (inherits(lockfile, "error") || !is.list(lockfile))
+      return(NULL)
+
+   lockfile
+})
+
+#' The version of R recorded in a parsed lockfile, or "" when it records
+#' none (or something other than a version number).
+.rs.addFunction("renv.lockfileRVersion", function(lockfile)
+{
    version <- lockfile[["R"]][["Version"]]
-   if (!is.character(version) || length(version) != 1L || is.na(version))
-      return("")
-   
-   version
+   if (.rs.rVersionIsValid(version)) version else ""
+})
+
+#' Whether a parsed lockfile records any packages to restore.
+.rs.addFunction("renv.lockfileHasPackages", function(lockfile)
+{
+   length(lockfile[["Packages"]]) > 0L
 })
 
 #' Whether the project's renv library contains no packages (other than renv
@@ -228,53 +275,71 @@
    library <- .rs.tryCatch(renv:::renv_paths_library(project = project))
    if (inherits(library, "error") || !dir.exists(library))
       return(TRUE)
-   
+
    packages <- setdiff(list.files(library), "renv")
    length(packages) == 0L
 })
 
-#' Compare a requested version of R with the running one.
+#' Compare the version of R a project asks for with the running one.
 #'
-#' @param requested The version of R the project asks for.
-#' @param minimum,maximum The range of R versions this build of RStudio supports.
+#' @param project The project directory.
+#' @param projectVersion The version of R set in the project file, or "".
+#'   It takes precedence over the version in the renv lockfile.
+#' @param minimum The oldest version of R this build of RStudio supports.
+#' @param renvActive Whether renv is active in the project.
+#' @param findInstalled Whether to look for an installed R matching a
+#'   mismatched request (only useful where the session can switch R).
 #' @param current The version of R in use.
 #'
-#' @return A list with the 'requested' and 'current' versions, whether the
-#'   two share a major.minor ('matches'), and whether the requested version
-#'   lies within the supported range ('supported').
-.rs.addFunction("rVersionStatus", function(requested, minimum, maximum, current = getRversion())
+#' @return A list whose 'type' says what to tell the user: "none"; "restore"
+#'   when the versions match but the renv library is empty; or "mismatch",
+#'   with the 'requested' and 'current' versions, where the request came from
+#'   ('source'), whether that R could run ('supported'), and the matching
+#'   installation of R, if any ('installed').
+.rs.addFunction("projectRVersionCheck", function(project,
+                                                 projectVersion,
+                                                 minimum,
+                                                 renvActive,
+                                                 findInstalled,
+                                                 current = getRversion())
 {
-   parsed <- .rs.tryCatch(package_version(requested))
-   supported <- !inherits(parsed, "error") &&
-      parsed >= package_version(minimum) &&
-      parsed <= package_version(maximum)
-   
+   lockfile <- NULL
+   if (nzchar(projectVersion))
+   {
+      source <- "project"
+      requested <- if (.rs.rVersionIsValid(projectVersion)) projectVersion else ""
+   }
+   else
+   {
+      source <- "lockfile"
+      lockfile <- .rs.renv.readLockfile(project)
+      requested <- .rs.renv.lockfileRVersion(lockfile)
+   }
+
+   if (!nzchar(requested))
+      return(list(type = .rs.scalar("none")))
+
+   current <- as.character(current)
+   if (.rs.rVersionMatches(requested, current))
+   {
+      restore <- identical(source, "lockfile") &&
+         renvActive &&
+         .rs.renv.lockfileHasPackages(lockfile) &&
+         .rs.renv.projectLibraryIsEmpty(project)
+
+      return(list(type = .rs.scalar(if (restore) "restore" else "none")))
+   }
+
+   # an installed match is what would run, so its version decides support
+   installed <- if (findInstalled) .rs.findInstalledRVersion(requested)
+   version <- if (is.null(installed)) requested else as.character(installed$version)
+
    list(
-      requested = .rs.scalar(as.character(requested)),
-      current   = .rs.scalar(as.character(current)),
-      matches   = .rs.scalar(.rs.rVersionMatches(requested, as.character(current))),
-      supported = .rs.scalar(supported)
+      type      = .rs.scalar("mismatch"),
+      requested = .rs.scalar(requested),
+      current   = .rs.scalar(current),
+      source    = .rs.scalar(source),
+      supported = .rs.scalar(.rs.rVersionSupported(version, minimum)),
+      installed = installed
    )
-})
-
-#' Whether the project's lockfile records any packages to restore.
-.rs.addFunction("renv.lockfileHasPackages", function(project)
-{
-   path <- .rs.renv.lockfilePath(project)
-   if (!file.exists(path))
-      return(FALSE)
-   
-   contents <- paste(readLines(path, warn = FALSE), collapse = "\n")
-   lockfile <- .rs.tryCatch(.rs.fromJSON(contents))
-   if (inherits(lockfile, "error"))
-      return(FALSE)
-   
-   length(lockfile[["Packages"]]) > 0L
-})
-
-#' Whether to offer restoring the project library: the lockfile records
-#' packages, but none are installed in the library.
-.rs.addFunction("renv.shouldPromptRestore", function(project)
-{
-   .rs.renv.lockfileHasPackages(project) && .rs.renv.projectLibraryIsEmpty(project)
 })

@@ -120,10 +120,7 @@
                     "rBinDir": "",
                     "preferR64": true,
                     "rExecutablePath": ""
-                },
-                "unix": {
-                    "rExecutablePath": ""
-                }
+                  }
             }
         },
         "context_id": {

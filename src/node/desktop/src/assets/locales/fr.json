@@ -110,7 +110,9 @@
   },
   "gwtCallbackTs": {
     "unimplemented": "Non implémenté",
-    "callbackNyiLowercase": "{{ipcName}} pas encore implémenté"
+    "callbackNyiLowercase": "{{ipcName}} pas encore implémenté",
+    "rExecutableMissing": "{{path}} n'existe pas",
+    "rExecutableFailed": "{{path}} n'a pas pu être exécuté : {{error}}"
   },
   "mainTs": {
     "unhandledException": "Exception non gérée"

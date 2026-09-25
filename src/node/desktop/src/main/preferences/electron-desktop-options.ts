@@ -59,7 +59,6 @@ const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds
 const kUseDefault32BitR = 'platform.windows.useDefault32BitR';
 const kUseDefault64BitR = 'platform.windows.useDefault64BitR';
 const kRExecutablePath = 'platform.windows.rExecutablePath';
-const kUnixRExecutablePath = 'platform.unix.rExecutablePath';
 const kPreferR64 = 'platform.windows.preferR64';
 
 const userStateSchema = generateSchema<RStudioUserState>(properties);
@@ -312,21 +311,19 @@ export class DesktopOptionsImpl implements DesktopOptions {
     this.safeSet(kUseDefault64BitR, useDefault);
   }
 
-  // The R executable to launch sessions with. On Windows this is what the
-  // Choose R dialog stores; elsewhere it is set when a session is switched
-  // to another version of R (e.g. one requested by an renv project).
+  // Windows-only option
   public setRExecutablePath(rExecutablePath: string): void {
     if (process.platform !== 'win32') {
-      this.safeSet(kUnixRExecutablePath, rExecutablePath);
       return;
     }
 
     this.safeSet(kRExecutablePath, normalizeSeparatorsNative(rExecutablePath));
   }
 
+  // Windows-only option
   public rExecutablePath(): string {
     if (process.platform !== 'win32') {
-      return this.config.get(kUnixRExecutablePath, properties.platform.default.unix.rExecutablePath);
+      return '';
     }
 
     const rExecutablePath: string = this.config.get(

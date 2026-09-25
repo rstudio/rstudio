@@ -17,6 +17,7 @@
 
 #include <deque>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/regex.hpp>
@@ -24,13 +25,17 @@
 #include <shared_core/Error.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Crypto.hpp>
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
 
+#include <session/SessionConstants.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionOptions.hpp>
 #include <session/jobs/JobsApi.hpp>
 
 using namespace rstudio::core;
@@ -77,8 +82,7 @@ public:
 
 private:
    explicit RInstallJob(const std::string& version)
-      : version_(version),
-        pOperations_(nullptr)
+      : version_(version)
    {
    }
 
@@ -86,8 +90,16 @@ private:
    {
       std::string name = "Install R " + version_;
 
+      // the job outlives this object (jobs are never discarded), so its stop
+      // action must not keep this object alive
+      boost::weak_ptr<RInstallJob> pWeakThis = shared_from_this();
+
       jobs::JobActions actions;
-      actions.push_back(std::make_pair("stop", boost::bind(&RInstallJob::onStop, shared_from_this(), _1)));
+      actions.push_back(std::make_pair("stop", [pWeakThis](const std::string&)
+      {
+         if (boost::shared_ptr<RInstallJob> pThis = pWeakThis.lock())
+            pThis->onStop();
+      }));
 
       pJob_ = jobs::addJob(
                name,
@@ -107,6 +119,7 @@ private:
       runNextStep();
    }
 
+   // the steps are owned by this object, so they can refer to it directly
    void queueSteps()
    {
       Error error = r::exec::RFunction(".rs.rig.find").call(&rigPath_);
@@ -115,15 +128,21 @@ private:
 
       if (rigPath_.empty())
       {
-         steps_.push_back({ "Downloading rig", boost::bind(&RInstallJob::downloadRig, shared_from_this(), _1) });
-         steps_.push_back({ "Installing rig", boost::bind(&RInstallJob::installRig, shared_from_this(), _1) });
+         steps_.push_back({ "Downloading rig", boost::bind(&RInstallJob::downloadRig, this, _1) });
+         steps_.push_back({ "Installing rig", boost::bind(&RInstallJob::installRig, this, _1) });
       }
 
-      steps_.push_back({ "Installing R " + version_, boost::bind(&RInstallJob::installR, shared_from_this(), _1) });
+      steps_.push_back({ "Installing R " + version_, boost::bind(&RInstallJob::installR, this, _1) });
    }
 
    void runNextStep()
    {
+      if (stopped_)
+      {
+         finish(false, "cancelled");
+         return;
+      }
+
       if (steps_.empty())
       {
          finish(true, "");
@@ -151,44 +170,79 @@ private:
    // the download happens in R and blocks the session briefly.
    void downloadRig(StepCallback callback)
    {
-      std::string url, curl;
-      Error error = r::exec::RFunction(".rs.rig.downloadUrl").call(&url);
-      if (!error)
-         error = r::exec::RFunction(".rs.rig.curlPath").call(&curl);
-
+      Error error = r::exec::RFunction(".rs.rig.downloadUrl").call(&url_);
       if (error)
       {
          callback(false, error.getSummary());
          return;
       }
 
-      log(url + "\n");
+      log(url_ + "\n");
 
-      if (curl.empty())
+      FilePath curl = module_context::findProgram("curl");
+      if (curl.isEmpty())
       {
          error = r::exec::RFunction(".rs.rig.downloadArchive")
-               .addParam("url", url)
+               .addParam("url", url_)
                .call(&archivePath_);
          callback(!error, error ? error.getSummary() : "");
          return;
       }
 
-      archivePath_ = module_context::tempFile("rig-", url.find(".zip") != std::string::npos ? "zip" : "tar.gz").getAbsolutePath();
-      std::vector<std::string> args = { "-fSL", "--retry", "3", "-o", archivePath_, url };
-      runProgram(curl, args, callback);
+      archivePath_ = module_context::tempFile("rig-", url_.find(".zip") != std::string::npos ? "zip" : "tar.gz").getAbsolutePath();
+      std::vector<std::string> args = { "-fSL", "--retry", "3", "-o", archivePath_, url_ };
+      runProgram(curl.getAbsolutePath(), args, callback);
    }
 
-   // Step: extract the downloaded archive into RStudio's data directory.
+   // Step: check the downloaded archive against the digest published for
+   // it, then extract it into RStudio's data directory.
    void installRig(StepCallback callback)
    {
-      Error error = r::exec::RFunction(".rs.rig.installArchive")
-            .addParam("archive", archivePath_)
-            .call(&rigPath_);
+      FilePath archive(archivePath_);
+      Error error = verifyArchive(archive);
+      if (!error)
+      {
+         error = r::exec::RFunction(".rs.rig.installArchive")
+               .addParam("archive", archivePath_)
+               .call(&rigPath_);
+      }
+
+      Error removeError = archive.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
 
       if (!error)
          log("rig installed to " + rigPath_ + "\n");
 
       callback(!error, error ? error.getSummary() : "");
+   }
+
+   Error verifyArchive(const FilePath& archive)
+   {
+      std::string expected;
+      Error error = r::exec::RFunction(".rs.rig.archiveChecksum")
+            .addParam("url", url_)
+            .call(&expected);
+      if (error)
+         return error;
+
+      if (expected.empty())
+         return systemError(boost::system::errc::operation_not_permitted, "no checksum is known for " + url_, ERROR_LOCATION);
+
+      std::string contents, actual;
+      error = readStringFromFile(archive, &contents);
+      if (!error)
+         error = core::system::crypto::sha256Hex(contents, &actual);
+      if (error)
+         return error;
+
+      if (!boost::algorithm::iequals(actual, expected))
+      {
+         log("SHA-256 mismatch: expected " + expected + ", got " + actual + "\n");
+         return systemError(boost::system::errc::illegal_byte_sequence, "the downloaded rig archive failed verification", ERROR_LOCATION);
+      }
+
+      return Success();
    }
 
    // Step: have rig install the requested version of R.
@@ -218,10 +272,12 @@ private:
 
       boost::shared_ptr<RInstallJob> self = shared_from_this();
 
+      // a stop is honored at the next poll, which also covers a stop that
+      // arrives before the process has been polled for the first time
       core::system::ProcessCallbacks callbacks;
-      callbacks.onStarted = [self](core::system::ProcessOperations& operations)
+      callbacks.onContinue = [self](core::system::ProcessOperations&)
       {
-         self->pOperations_ = &operations;
+         return !self->stopped_;
       };
       callbacks.onStdout = [self](core::system::ProcessOperations&, const std::string& output)
       {
@@ -233,7 +289,7 @@ private:
       };
       callbacks.onExit = [self, callback](int status)
       {
-         self->pOperations_ = nullptr;
+         self->processRunning_ = false;
          if (self->stopped_)
             self->finish(false, "cancelled");
          else if (status == EXIT_SUCCESS)
@@ -248,22 +304,22 @@ private:
 
       Error error = module_context::processSupervisor().runProgram(program, args, options, callbacks);
       if (error)
+      {
          callback(false, error.getSummary());
+         return;
+      }
+
+      processRunning_ = true;
    }
 
-   void onStop(const std::string&)
+   void onStop()
    {
       stopped_ = true;
-      if (pOperations_ != nullptr)
-      {
-         Error error = pOperations_->terminate();
-         if (error)
-            LOG_ERROR(error);
-      }
-      else
-      {
+
+      // a running program is terminated by its next poll, and the job
+      // finishes when it exits
+      if (!processRunning_)
          finish(false, "cancelled");
-      }
    }
 
    void finish(bool ok, const std::string& error)
@@ -278,7 +334,7 @@ private:
          if (lookupError)
             LOG_ERROR(lookupError);
 
-         if (installed.isNull())
+         if (!installed.isObject())
          {
             ok = false;
             log("R " + version_ + " was not found after installation\n");
@@ -304,7 +360,7 @@ private:
       data["version"] = version_;
       data["success"] = ok;
       data["error"] = error;
-      data["installed"] = installed;
+      data["installed"] = installed.isObject() ? installed : json::Value();
       module_context::enqueClientEvent(ClientEvent(client_events::kRInstallCompleted, data));
    }
 
@@ -315,11 +371,12 @@ private:
 
 private:
    std::string version_;
+   std::string url_;
    std::string rigPath_;
    std::string archivePath_;
    std::deque<Step> steps_;
    boost::shared_ptr<jobs::Job> pJob_;
-   core::system::ProcessOperations* pOperations_;
+   bool processRunning_ = false;
    bool stopped_ = false;
 };
 
@@ -329,6 +386,11 @@ boost::shared_ptr<RInstallJob> s_pInstallJob;
 Error rigInstallRVersion(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
+   // server installations of R are managed by administrators; only the
+   // desktop, which can relaunch the session with another R, installs it
+   if (options().programMode() != kSessionProgramModeDesktop)
+      return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
+
    std::string version;
    Error error = json::readParams(request.params, &version);
    if (error)
@@ -345,36 +407,11 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error rigListRVersions(const json::JsonRpcRequest&,
-                       json::JsonRpcResponse* pResponse)
-{
-   json::Value versions;
-   Error error = r::exec::RFunction(".rs.rig.listAsJson").call(&versions);
-   if (error)
-      return error;
-
-   pResponse->setResult(versions);
-   return Success();
-}
-
 } // anonymous namespace
-
-bool isRigAvailable()
-{
-   std::string path;
-   Error error = r::exec::RFunction(".rs.rig.find").call(&path);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-
-   return !path.empty();
-}
 
 Error findInstalledRVersion(const std::string& version, json::Value* pInstalled)
 {
-   return r::exec::RFunction(".rs.rig.findRVersion")
+   return r::exec::RFunction(".rs.findInstalledRVersion")
          .addParam("version", version)
          .call(pInstalled);
 }
@@ -387,7 +424,6 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "rig_install_r_version", rigInstallRVersion))
-      (bind(registerRpcMethod, "rig_list_r_versions", rigListRVersions))
       (bind(sourceModuleRFile, "SessionRig.R"));
 
    return initBlock.execute();

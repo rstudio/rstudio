@@ -14,7 +14,6 @@
  */
 
 #include "SessionRenv.hpp"
-#include "SessionRig.hpp"
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -113,54 +112,10 @@ void onConsolePrompt(const std::string& /* prompt */)
       LOG_ERROR(error);
 }
 
-// The version of R a project asks for: an explicit version in the project
-// file wins, otherwise the version recorded in the renv lockfile.
-std::string requestedRVersion(const FilePath& projectDir, std::string* pSource)
-{
-   const r_util::RVersionInfo& projectVersion = projects::projectContext().config().rVersion;
-   if (!projectVersion.isDefault() && !projectVersion.number.empty())
-   {
-      *pSource = "project";
-      return projectVersion.number;
-   }
-
-   std::string version;
-   Error error = r::exec::RFunction(".rs.renv.lockfileRVersion")
-         .addParam("project", projectDir.getAbsolutePath())
-         .call(&version);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return std::string();
-   }
-
-   *pSource = "lockfile";
-   return version;
-}
-
-// Offer to restore the project library when the lockfile's R version is in
-// use but the library is empty, e.g. right after switching to that R.
-void promptForRestoreIfLibraryEmpty(const FilePath& projectDir)
-{
-   if (!module_context::isRenvActive())
-      return;
-
-   bool prompt = false;
-   Error error = r::exec::RFunction(".rs.renv.shouldPromptRestore")
-         .addParam("project", projectDir.getAbsolutePath())
-         .call(&prompt);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   if (prompt)
-      module_context::enqueClientEvent(ClientEvent(client_events::kRenvRestorePrompt, json::Object()));
-}
-
-// Compare the version of R the project asks for with the running one, and
-// tell the client when they differ so it can offer to switch.
+// Compare the version of R the project asks for with the running one. The
+// client is told when they differ, so it can offer to switch, or when they
+// match but the renv library is empty (as it is right after a switch), so
+// it can offer to restore it.
 void checkProjectRVersion()
 {
    if (!prefs::userPrefs().checkProjectRVersion())
@@ -169,30 +124,59 @@ void checkProjectRVersion()
    if (!projects::projectContext().hasProject())
       return;
 
-   const FilePath& projectDir = projects::projectContext().directory();
+   // an explicit version in the project file wins over the lockfile's
+   std::string projectVersion;
+   const r_util::RVersionInfo& rVersion = projects::projectContext().config().rVersion;
+   if (!rVersion.isDefault())
+      projectVersion = rVersion.number;
 
-   std::string source;
-   std::string requested = requestedRVersion(projectDir, &source);
-   if (requested.empty())
-      return;
+   // switching (and installing) R is only possible on the desktop, where the
+   // session can be relaunched with a different R; server installations are
+   // managed by administrators, so there is no need to look for one there
+   bool desktop = options().programMode() == kSessionProgramModeDesktop;
 
-   json::Object status;
-   Error error = r::exec::RFunction(".rs.rVersionStatus")
-         .addParam("requested", requested)
+   json::Value resultJson;
+   Error error = r::exec::RFunction(".rs.projectRVersionCheck")
+         .addParam("project", projects::projectContext().directory().getAbsolutePath())
+         .addParam("projectVersion", projectVersion)
          .addParam("minimum", RSTUDIO_R_VERSION_REQUIRED)
-         .addParam("maximum", RSTUDIO_R_VERSION_MAXIMUM)
-         .call(&status);
+         .addParam("renvActive", module_context::isRenvActive())
+         .addParam("findInstalled", desktop)
+         .call(&resultJson);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
 
-   bool matches = false, supported = false;
-   std::string current;
-   error = json::readObject(status,
+   if (!resultJson.isObject())
+      return;
+
+   json::Object result = resultJson.getObject();
+
+   std::string type;
+   error = json::readObject(result, "type", type);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (type == "restore")
+   {
+      module_context::enqueClientEvent(ClientEvent(client_events::kRenvRestorePrompt, json::Object()));
+      return;
+   }
+
+   if (type != "mismatch")
+      return;
+
+   std::string requested, current, source;
+   bool supported = false;
+   error = json::readObject(result,
+                            "requested", requested,
                             "current", current,
-                            "matches", matches,
+                            "source", source,
                             "supported", supported);
    if (error)
    {
@@ -200,36 +184,30 @@ void checkProjectRVersion()
       return;
    }
 
-   if (matches)
-   {
-      if (source == "lockfile")
-         promptForRestoreIfLibraryEmpty(projectDir);
-      return;
-   }
-
-   json::Value installed;
-   error = modules::rig::findInstalledRVersion(requested, &installed);
-   if (error)
-      LOG_ERROR(error);
-
-   // installing R is only offered on the desktop, where the session can be
-   // relaunched with a different R; server installations are managed by
-   // administrators
-   bool desktop = options().programMode() == kSessionProgramModeDesktop;
+   json::Value installed = result["installed"];
 
    json::Object data;
    data["requested_version"] = requested;
    data["current_version"] = current;
    data["source"] = source;
    data["supported"] = supported;
-   data["installed"] = installed;
+   data["installed"] = installed.isObject() ? installed : json::Value();
    data["can_install"] = desktop && supported;
    module_context::enqueClientEvent(ClientEvent(client_events::kProjectRVersionMismatch, data));
 }
 
-void onDeferredInit(bool)
+void onDeferredInit(bool newSession)
 {
-   checkProjectRVersion();
+   // a resumed session already told its client
+   if (!newSession)
+      return;
+
+   // looking for installed versions of R runs rig, which takes a moment, so
+   // do it once the session is idle rather than holding up its startup
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(1),
+            checkProjectRVersion,
+            true);
 }
 
 } // end anonymous namespace

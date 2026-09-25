@@ -1,11 +1,10 @@
 import { test, expect } from "@fixtures/rstudio.fixture";
-import { executeInConsole, CONSOLE_OUTPUT, waitForConsoleIdle } from "@pages/console_pane.page";
+import { executeInConsole, waitForConsoleIdle } from "@pages/console_pane.page";
 import { waitForSessionRestart } from "@utils/project";
-import { openProject } from "@utils/commands";
+import { getVersion, openProject } from "@utils/commands";
 import { useSuiteSandbox } from "@utils/sandbox";
 import { rStringLiteral } from "@utils/r";
 import { execFileSync } from "child_process";
-import type { Page } from "playwright";
 
 const PROJECT_MENU = "#rstudio_project_menubutton_toolbar";
 
@@ -25,7 +24,8 @@ function installedRVersions(): InstalledR[] {
         stdio: ["ignore", "pipe", "ignore"],
       });
       for (const entry of JSON.parse(output) as InstalledR[]) {
-        if (entry.version && entry.binary) versions.push(entry);
+        if (entry.version && entry.binary)
+          versions.push(entry);
       }
     } catch {
       // rig missing, or this mode has nothing to list
@@ -43,34 +43,10 @@ function compareVersions(a: string, b: string): number {
   const pb = b.split(".").map(Number);
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
     const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
-    if (diff !== 0) return diff;
+    if (diff !== 0)
+      return diff;
   }
   return 0;
-}
-
-async function captureResult(page: Page, rExpression: string): Promise<string> {
-  const marker = `__RV_${Date.now()}__`;
-  await executeInConsole(
-    page,
-    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
-    {
-      wait: true,
-    },
-  );
-
-  const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, "s");
-  let match: RegExpMatchArray | null = null;
-  await expect
-    .poll(
-      async () => {
-        const output = await page.locator(CONSOLE_OUTPUT).innerText();
-        match = output.match(pattern);
-        return match !== null;
-      },
-      { timeout: 15000 },
-    )
-    .toBe(true);
-  return match![1].trim();
 }
 
 // A project whose renv lockfile records a different (installed) version of R
@@ -87,7 +63,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     test.setTimeout(180000);
 
     // the newest installed R from another major.minor series
-    const current = await captureResult(page, "format(getRversion())");
+    const current = (await getVersion(page)).r;
     const target = installedRVersions()
       .filter((entry) => majorMinor(entry.version) !== majorMinor(current))
       .sort((a, b) => compareVersions(b.version, a.version))[0];
@@ -124,8 +100,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
 
     // the project is still open, now under the requested R
     await expect(page.locator(PROJECT_MENU)).toContainText("renv-r-switch", { timeout: 30000 });
-    const switched = await captureResult(page, "format(getRversion())");
-    expect(switched).toBe(target!.version);
+    await expect.poll(async () => (await getVersion(page)).r).toBe(target!.version);
 
     // no mismatch is reported once the versions agree
     await expect(page.getByText(`Switch to R`)).toHaveCount(0);

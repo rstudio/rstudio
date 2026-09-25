@@ -110,7 +110,9 @@
   },
   "gwtCallbackTs": {
     "unimplemented": "Unimplemented",
-    "callbackNyiLowercase": "{{ipcName}} callback NYI"
+    "callbackNyiLowercase": "{{ipcName}} callback NYI",
+    "rExecutableMissing": "{{path}} does not exist",
+    "rExecutableFailed": "{{path}} could not be run: {{error}}"
   },
   "mainTs": {
     "unhandledException": "Unhandled Exception"

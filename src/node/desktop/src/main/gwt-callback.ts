@@ -42,11 +42,15 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
-import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
+import { detectREnvironment, findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
-import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import {
+  defaultFonts,
+  ElectronDesktopOptions,
+  fixWindowsRExecutablePath,
+} from './preferences/electron-desktop-options';
 import {
   parseFilter,
   findRepoRoot,
@@ -780,11 +784,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
-      this.pendingQuit = pendingQuit;
+      this.setPendingQuit(pendingQuit);
     });
 
-    ipcMain.on('desktop_set_pending_r_version', (event, rExecutablePath: string) => {
-      this.pendingRVersion = rExecutablePath;
+    ipcMain.handle('desktop_set_pending_r_version', (event, rExecutablePath: string) => {
+      return this.setPendingRVersion(rExecutablePath);
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
@@ -1298,6 +1302,48 @@ export class GwtCallback extends EventEmitter {
     } else {
       void appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(dialogOptions));
     }
+  }
+
+  setPendingQuit(pendingQuit: number): void {
+    this.pendingQuit = pendingQuit;
+
+    // a quit that was abandoned (e.g. the session refused it) leaves no R
+    // switch behind for some later, unrelated restart
+    if (pendingQuit === PendingQuit.PendingQuitNone) {
+      this.pendingRVersion = '';
+    }
+  }
+
+  /**
+   * Hold on to the R executable the next session should use, after checking
+   * that it runs. Returns an error message when it doesn't, and '' otherwise.
+   */
+  setPendingRVersion(rExecutablePath: string): string {
+    // sessions launched from bin\R.exe fail to load on Windows; use the
+    // architecture-specific executable as the Choose R dialog does
+    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+
+    // the client escapes the message for display itself
+    const interpolation = { escapeValue: false };
+
+    let message: string | null = null;
+    if (!existsSync(rPath)) {
+      message = i18next.t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation });
+    } else {
+      const [, error] = detectREnvironment(rPath);
+      if (error) {
+        logger().logError(error);
+        message = i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation });
+      }
+    }
+
+    // '' tells the client the R is ready, so a failure always says something
+    if (message !== null) {
+      return message || rPath;
+    }
+
+    this.pendingRVersion = rPath;
+    return '';
   }
 
   collectPendingRVersion(): string {

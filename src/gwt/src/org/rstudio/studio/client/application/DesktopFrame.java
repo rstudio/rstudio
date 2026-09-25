@@ -156,8 +156,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setPendingQuit(int pendingQuit, CommandWithArg<Void> callback);
    void setPendingProject(String projectFilePath);
 
-   // the R executable the next session (a pending restart) should use
-   void setPendingRVersion(String rExecutablePath);
+   // the R executable the next session (a pending restart) should use; the
+   // callback receives an error message when that R can't be used, and ""
+   // once it is ready for the restart
+   void setPendingRVersion(String rExecutablePath, CommandWithArg<String> callback);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);

@@ -267,21 +267,6 @@ describe('Font tests', () => {
     assert.strictEqual(testDesktopOptions.rBinDir(), process.platform === 'win32' ? testRBinDir : '');
   });
 
-  it('stores the R executable path on macOS and Linux', function () {
-    if (process.platform === 'win32') {
-      this.skip();
-    }
-
-    const options = ElectronDesktopOptions(kTestingConfigDirectory);
-    assert.equal(options.rExecutablePath(), '');
-
-    options.setRExecutablePath('/opt/R/4.4.1/bin/R');
-    assert.equal(options.rExecutablePath(), '/opt/R/4.4.1/bin/R');
-
-    // the Windows-only derived option stays empty
-    assert.equal(options.rBinDir(), '');
-  });
-
   it('set rBinDir overrides the legacy rBinDir (Windows)', () => {
     const testRBinDir = 'C:/R/bin/x64';
     const testRExecPath = 'C:/R/bin/x64/R.exe';

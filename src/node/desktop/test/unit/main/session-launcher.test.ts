@@ -16,6 +16,9 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
+import { mkdtempSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 
 import { FilePath } from '../../../src/core/file-path';
@@ -140,23 +143,25 @@ describe('SessionLauncher', () => {
   });
 
   describe('applyPendingRVersion', () => {
-    // The R a restart asked for is prepared and remembered; the current R
-    // stays in place when nothing is pending or the requested R fails to run.
+    // The R a restart asked for is prepared for the next session; the current
+    // R stays in place when nothing is pending or the requested R fails.
     function launcherWithPendingR(pending: string): {
       launcher: SessionLauncher;
-      setRExecutablePath: sinon.SinonStub;
+      options: Record<string, sinon.SinonStub>;
     } {
       const launcher = getNewLauncher();
       launcher.mainWindow = {
         collectPendingRVersion: () => pending,
       } as unknown as MainWindow;
 
-      const setRExecutablePath = sinon.stub();
-      sinon.stub(DesktopOptions, 'ElectronDesktopOptions').returns({
-        setRExecutablePath,
-      } as unknown as DesktopOptionsImpl);
+      const options = {
+        setRExecutablePath: sinon.stub(),
+        setUseDefault32BitR: sinon.stub(),
+        setUseDefault64BitR: sinon.stub(),
+      };
+      sinon.stub(DesktopOptions, 'ElectronDesktopOptions').returns(options as unknown as DesktopOptionsImpl);
 
-      return { launcher, setRExecutablePath };
+      return { launcher, options };
     }
 
     afterEach(() => {
@@ -165,32 +170,101 @@ describe('SessionLauncher', () => {
 
     it('does nothing when no R version is pending', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment');
-      const { launcher, setRExecutablePath } = launcherWithPendingR('');
+      const { launcher, options } = launcherWithPendingR('');
 
       launcher.applyPendingRVersion();
 
       assert.isFalse(prepare.called);
-      assert.isFalse(setRExecutablePath.called);
+      assert.isFalse(options.setRExecutablePath.called);
     });
 
-    it('prepares the environment for the pending R and stores it', () => {
+    it('prepares the environment for the pending R', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(null);
-      const { launcher, setRExecutablePath } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+      const { launcher } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
 
       launcher.applyPendingRVersion();
 
       assert.isTrue(prepare.calledOnceWithExactly('/opt/R/4.4.1/bin/R'));
-      assert.isTrue(setRExecutablePath.calledOnceWithExactly('/opt/R/4.4.1/bin/R'));
+    });
+
+    it('keeps the switch to this run of RStudio on macOS and Linux', function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, options } = launcherWithPendingR('/opt/R/4.4.1/bin/R');
+
+      launcher.applyPendingRVersion();
+
+      assert.isFalse(options.setRExecutablePath.called);
+    });
+
+    it('stores the switch as the chosen R on Windows', function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+
+      sinon.stub(DetectR, 'prepareEnvironment').returns(null);
+      const { launcher, options } = launcherWithPendingR('C:/R/R-4.4.1/bin/x64/R.exe');
+
+      launcher.applyPendingRVersion();
+
+      // the default installations would otherwise win over the stored path
+      assert.isTrue(options.setUseDefault32BitR.calledOnceWithExactly(false));
+      assert.isTrue(options.setUseDefault64BitR.calledOnceWithExactly(false));
+      assert.isTrue(options.setRExecutablePath.calledOnceWithExactly('C:/R/R-4.4.1/bin/x64/R.exe'));
     });
 
     it('keeps the current R when the pending one cannot be prepared', () => {
       const prepare = sinon.stub(DetectR, 'prepareEnvironment').returns(new Error('no such R'));
-      const { launcher, setRExecutablePath } = launcherWithPendingR('/opt/R/missing/bin/R');
+      const { launcher, options } = launcherWithPendingR('/opt/R/missing/bin/R');
 
       launcher.applyPendingRVersion();
 
       assert.isTrue(prepare.calledOnce);
-      assert.isFalse(setRExecutablePath.called);
+      assert.isFalse(options.setRExecutablePath.called);
+    });
+  });
+
+  describe('sessionBinaryForR', () => {
+    const vars: Record<string, string> = {
+      R_RUNTIME: '',
+      R_ARCH: '',
+    };
+
+    beforeEach(() => {
+      saveAndClear(vars);
+    });
+
+    afterEach(() => {
+      restore(vars);
+    });
+
+    it('picks the build for the R in use on every launch', function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+
+      const dir = mkdtempSync(join(tmpdir(), 'rsession-'));
+      writeFileSync(join(dir, 'rsession.exe'), '');
+      writeFileSync(join(dir, 'rsession-utf8.exe'), '');
+
+      const launcher = new SessionLauncher(
+        new FilePath(join(dir, 'rsession.exe')),
+        new FilePath(),
+        new FilePath(),
+        new ApplicationLaunch(),
+        null,
+      );
+
+      // a UCRT R needs the UTF-8 build, and switching back to an older R
+      // returns to the regular one
+      process.env.R_RUNTIME = 'ucrt';
+      assert.equal(launcher.sessionBinaryForR().getFilename(), 'rsession-utf8.exe');
+
+      process.env.R_RUNTIME = '';
+      assert.equal(launcher.sessionBinaryForR().getFilename(), 'rsession.exe');
     });
   });
 });

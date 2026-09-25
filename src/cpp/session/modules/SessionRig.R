@@ -14,10 +14,22 @@
 #
 
 # Support for rig (https://github.com/r-lib/rig), the R installation manager
-# RStudio uses to discover and install versions of R.
+# RStudio uses to discover and install versions of R, and for finding the
+# versions of R installed on this machine.
 
 # The rig release RStudio downloads when no rig installation can be found.
 .rs.setVar("rig.pinnedVersion", "0.10.0")
+
+# The SHA-256 digests of the pinned release's archives (as published with the
+# GitHub release); a download is only installed when its digest matches.
+.rs.setVar("rig.archiveChecksums", c(
+   "rig-macos-arm64-0.10.0.tar.gz"   = "a9cca738585eb132818a6750f9edcfc647ca87af781309d3296827a1a851cc4b",
+   "rig-macos-x86_64-0.10.0.tar.gz"  = "6906f42e3fab8161b7187291dc69c48726ac48f91a37d9b49bfbb4f8bf94e47b",
+   "rig-linux-x86_64-0.10.0.tar.gz"  = "a3ac2dd9c675247c8d5de1c8d650090df9c99e0e28e449e0546e3a54c80107cd",
+   "rig-linux-aarch64-0.10.0.tar.gz" = "46cd85e5dcbe3748c0a13e19c67333ccc9c52b07e0642a07c00cb8e7d9e6824c",
+   "rig-windows-x86_64-0.10.0.zip"   = "fdab4e576d51d54f01cc3bea3854f529f7c9b10a17c4a428ad3fb16661620356",
+   "rig-windows-arm64-0.10.0.zip"    = "88f30df2fa2bf40b71ac82f5fe02ea7c6c07d7947794b44ebdee313fe99c4f7a"
+))
 
 .rs.addFunction("rig.exeName", function()
 {
@@ -102,21 +114,19 @@
    sprintf("https://github.com/r-lib/rig/releases/download/v%s/%s", version, file)
 })
 
-#' Download the rig release archive to a temporary file. Prefers the curl
-#' binary as it honors the system's proxy configuration and certificate
-#' store; falls back to download.file() otherwise.
+#' The expected SHA-256 digest of the rig archive at the given URL, or "" for
+#' an archive RStudio has no digest for.
+.rs.addFunction("rig.archiveChecksum", function(url, checksums = .rs.rig.archiveChecksums)
+{
+   checksum <- checksums[basename(url)]
+   if (is.na(checksum)) "" else unname(checksum)
+})
+
+#' Download the rig release archive to a temporary file. Used only when no
+#' curl binary is available to download it in the background.
 .rs.addFunction("rig.downloadArchive", function(url = .rs.rig.downloadUrl())
 {
    destfile <- tempfile("rig-", fileext = if (grepl("[.]zip$", url)) ".zip" else ".tar.gz")
-
-   curl <- Sys.which("curl")
-   if (nzchar(curl))
-   {
-      args <- c("-fsSL", "--retry", "3", "-o", shQuote(destfile), shQuote(url))
-      status <- system2(curl, args, stdout = FALSE, stderr = FALSE)
-      if (status == 0L && file.exists(destfile))
-         return(destfile)
-   }
 
    # large downloads can exceed R's default 60 second timeout
    timeout <- getOption("timeout")
@@ -160,14 +170,6 @@
    normalizePath(rig, winslash = "/")
 })
 
-#' Download and install RStudio's own copy of rig, returning its path.
-.rs.addFunction("rig.install", function()
-{
-   archive <- .rs.rig.downloadArchive()
-   on.exit(unlink(archive), add = TRUE)
-   .rs.rig.installArchive(archive)
-})
-
 #' Run rig with the given arguments, returning its parsed JSON output.
 .rs.addFunction("rig.json", function(rig, args)
 {
@@ -182,21 +184,26 @@
    .rs.fromJSON(paste(output, collapse = "\n"))
 })
 
-#' The R versions rig knows about, as a data frame with columns 'version',
-#' 'path' and 'binary'. rig only reports the installations belonging to the
-#' mode it runs in, so both admin-mode and user-mode installations are
-#' collected.
-.rs.addFunction("rig.list", function(rig = .rs.rig.find())
+#' An empty table of R installations.
+.rs.addFunction("rInstallations.empty", function()
 {
-   empty <- data.frame(
+   data.frame(
       version = character(),
       path    = character(),
       binary  = character(),
+      home    = character(),
       stringsAsFactors = FALSE
    )
+})
 
+#' The R versions rig knows about, as a data frame with columns 'version',
+#' 'path', 'binary' and 'home'. rig only reports the installations belonging
+#' to the mode it runs in, so both admin-mode and user-mode installations are
+#' collected.
+.rs.addFunction("rig.list", function(rig = .rs.rig.find())
+{
    if (!nzchar(rig))
-      return(empty)
+      return(.rs.rInstallations.empty())
 
    entries <- list()
    for (mode in c("--admin", "--user"))
@@ -210,26 +217,206 @@
       if (is.null(entry$version) || is.null(entry$binary))
          return(NULL)
 
+      path <- if (is.null(entry$path)) "" else as.character(entry$path)
       data.frame(
          version = as.character(entry$version),
-         path    = as.character(entry$path),
+         path    = path,
          binary  = as.character(entry$binary),
+         home    = .rs.rInstallations.homeFromPath(path),
          stringsAsFactors = FALSE
       )
    })
 
+   .rs.rInstallations.bind(rows)
+})
+
+.rs.addFunction("rInstallations.bind", function(rows)
+{
    rows <- Filter(Negate(is.null), rows)
    if (length(rows) == 0L)
-      return(empty)
+      return(.rs.rInstallations.empty())
 
    installed <- do.call(rbind, rows)
    installed[!duplicated(installed$binary), , drop = FALSE]
 })
 
+#' Whether a directory is the home of an R installation.
+.rs.addFunction("rInstallations.isHome", function(dir)
+{
+   nzchar(dir) && dir.exists(file.path(dir, "library", "base"))
+})
+
+#' The home of the R installation rig reports at 'path' (the installation's
+#' root: a framework version on macOS, a prefix such as /opt/R/4.4.1 on Linux,
+#' the install directory on Windows), or "" when it can't be told from the
+#' layout.
+.rs.addFunction("rInstallations.homeFromPath", function(path)
+{
+   if (!nzchar(path))
+      return("")
+
+   candidates <- file.path(path, c("Resources", "lib/R", "lib64/R", "."))
+   for (candidate in candidates)
+      if (.rs.rInstallations.isHome(candidate))
+         return(normalizePath(candidate, winslash = "/", mustWork = FALSE))
+
+   ""
+})
+
+#' The version of the R installation at 'home', read from its headers, or ""
+#' when they are missing.
+.rs.addFunction("rInstallations.versionFromHome", function(home)
+{
+   header <- file.path(home, "include", "Rversion.h")
+   if (!file.exists(header))
+      return("")
+
+   contents <- .rs.tryCatch(readLines(header, warn = FALSE))
+   if (inherits(contents, "error"))
+      return("")
+
+   version <- paste(
+      .rs.rInstallations.headerField(contents, "R_MAJOR"),
+      .rs.rInstallations.headerField(contents, "R_MINOR"),
+      sep = "."
+   )
+
+   if (.rs.rVersionIsValid(version)) version else ""
+})
+
+#' The value of a string #define in the lines of a C header, or "".
+.rs.addFunction("rInstallations.headerField", function(contents, name)
+{
+   line <- grep(sprintf("^#define %s\\s", name), contents, value = TRUE)
+   if (length(line) == 0L)
+      return("")
+
+   sub(".*\"(.*)\".*", "\\1", line[[1L]])
+})
+
+#' The R installations found in the platform's standard locations, in the
+#' same form as rig.list(). This finds R installed without rig (e.g. by the
+#' CRAN installers, or under /opt/R).
+.rs.addFunction("rInstallations.scan", function()
+{
+   # each entry: the home directory, and the executable launching it
+   entries <- if (.rs.platform.isWindows)
+   {
+      roots <- c(
+         file.path(Sys.getenv("ProgramFiles", unset = "C:/Program Files"), "R"),
+         file.path(Sys.getenv("LOCALAPPDATA", unset = ""), "Programs", "R"),
+         "C:/R"
+      )
+      homes <- list.files(roots[nzchar(roots)], pattern = "^R-", full.names = TRUE)
+      lapply(homes, function(home) c(home, file.path(home, "bin", "R.exe")))
+   }
+   else if (.rs.platform.isMacos)
+   {
+      versions <- list.files("/Library/Frameworks/R.framework/Versions", full.names = TRUE)
+      versions <- versions[basename(versions) != "Current"]
+      lapply(versions, function(version) {
+         home <- file.path(version, "Resources")
+         c(home, file.path(home, "bin", "R"))
+      })
+   }
+   else
+   {
+      prefixes <- list.files("/opt/R", full.names = TRUE)
+      c(
+         lapply(prefixes, function(prefix) c(file.path(prefix, "lib", "R"), file.path(prefix, "bin", "R"))),
+         list(
+            c("/usr/lib/R", "/usr/bin/R"),
+            c("/usr/lib64/R", "/usr/bin/R"),
+            c("/usr/local/lib/R", "/usr/local/bin/R")
+         )
+      )
+   }
+
+   rows <- lapply(entries, function(entry) {
+      home <- entry[[1L]]
+      binary <- entry[[2L]]
+      if (!.rs.rInstallations.isHome(home) || !file.exists(binary))
+         return(NULL)
+
+      version <- .rs.rInstallations.versionFromHome(home)
+      if (!nzchar(version))
+         return(NULL)
+
+      data.frame(
+         version = version,
+         path    = home,
+         binary  = binary,
+         home    = normalizePath(home, winslash = "/", mustWork = FALSE),
+         stringsAsFactors = FALSE
+      )
+   })
+
+   .rs.rInstallations.bind(rows)
+})
+
+#' The R installations on this machine: those rig reports, plus those found
+#' in the standard locations, so that R installed without rig is found even
+#' when rig is unavailable.
+.rs.addFunction("rInstallations.list", function(rig = .rs.rig.find())
+{
+   installed <- rbind(.rs.rig.list(rig), .rs.rInstallations.scan())
+   key <- ifelse(nzchar(installed$home), installed$home, installed$binary)
+   installed[!duplicated(key), , drop = FALSE]
+})
+
+#' The architectures a macOS R installation's libR.dylib was built for
+#' ("arm64", "x86_64"), read from its Mach-O header; empty when unreadable.
+.rs.addFunction("rInstallations.architectures", function(home)
+{
+   lib <- file.path(home, "lib", "libR.dylib")
+   con <- .rs.tryCatch(file(lib, open = "rb"))
+   if (inherits(con, "error"))
+      return(character())
+   on.exit(close(con), add = TRUE)
+
+   header <- readBin(con, "raw", n = 8L)
+   if (length(header) < 8L)
+      return(character())
+
+   magic <- paste(as.character(header[1:4]), collapse = "")
+
+   # a thin 64-bit image: its CPU type follows the magic (little-endian)
+   cpuTypes <- if (identical(magic, "cffaedfe"))
+   {
+      readBin(header[5:8], "integer", size = 4L, endian = "little")
+   }
+   else if (magic %in% c("cafebabe", "cafebabf"))
+   {
+      # a universal image: a big-endian table of the images it contains
+      count <- readBin(header[5:8], "integer", size = 4L, endian = "big")
+      entrySize <- if (identical(magic, "cafebabe")) 20L else 32L
+      entries <- readBin(con, "raw", n = min(count, 16L) * entrySize)
+      offsets <- seq.int(1L, length(entries) - 3L, by = entrySize)
+      vapply(offsets, function(offset) {
+         readBin(entries[offset:(offset + 3L)], "integer", size = 4L, endian = "big")
+      }, integer(1))
+   }
+
+   known <- c("16777228" = "arm64", "16777223" = "x86_64")
+   architectures <- known[as.character(cpuTypes)]
+   unname(architectures[!is.na(architectures)])
+})
+
+#' The architecture an installation of R should be built for to run
+#' natively here, when that is a choice: on Apple silicon Macs, where x86_64
+#' builds also run (emulated). NULL otherwise.
+.rs.addFunction("rInstallations.preferredArchitecture", function(machine = Sys.info()[["machine"]])
+{
+   if (.rs.platform.isMacos && identical(machine, "arm64")) "arm64"
+})
+
 #' Find an installed R matching the requested version. Versions sharing the
 #' requested major.minor are considered a match; an exact match is preferred,
-#' then the newest patch release. Returns NULL when nothing matches.
-.rs.addFunction("rig.findRVersion", function(version, installed = .rs.rig.list())
+#' then the newest patch release. A build for the preferred architecture is
+#' chosen over others. Returns NULL when nothing matches.
+.rs.addFunction("findInstalledRVersion", function(version,
+                                                  installed = .rs.rInstallations.list(),
+                                                  architecture = .rs.rInstallations.preferredArchitecture())
 {
    if (nrow(installed) == 0L)
       return(NULL)
@@ -242,6 +429,17 @@
    if (nrow(candidates) == 0L)
       return(NULL)
 
+   # an emulated R would need an emulated session as well
+   if (!is.null(architecture))
+   {
+      native <- vapply(candidates$home, function(home) {
+         architecture %in% .rs.rInstallations.architectures(home)
+      }, logical(1), USE.NAMES = FALSE)
+
+      if (any(native))
+         candidates <- candidates[native, , drop = FALSE]
+   }
+
    exact <- candidates[candidates$version == as.character(requested), , drop = FALSE]
    match <- if (nrow(exact) > 0L)
       exact[1L, ]
@@ -249,7 +447,9 @@
       candidates[which.max(package_version(candidates$version)), ]
 
    match <- as.list(match)
-   match$home <- .rs.rig.rHome(match$binary)
+   if (!nzchar(match$home))
+      match$home <- .rs.rig.rHome(match$binary)
+
    lapply(match, .rs.scalar)
 })
 
@@ -277,6 +477,17 @@
    home[[length(home)]]
 })
 
+#' Whether a string is an R version number (major.minor, optionally with a
+#' patch level). Versions come from project files, so anything else is
+#' ignored rather than shown to the user.
+.rs.addFunction("rVersionIsValid", function(version)
+{
+   is.character(version) &&
+      length(version) == 1L &&
+      !is.na(version) &&
+      grepl("^[0-9]+[.][0-9]+([.][0-9]+)?$", version)
+})
+
 #' Whether each of 'versions' shares the major.minor of 'version'.
 .rs.addFunction("rVersionMatches", function(version, versions)
 {
@@ -292,6 +503,15 @@
       requested[[c(1L, 1L)]] == candidate[[c(1L, 1L)]] &&
          requested[[c(1L, 2L)]] == candidate[[c(1L, 2L)]]
    }, FUN.VALUE = logical(1), USE.NAMES = FALSE)
+})
+
+#' Whether this build of RStudio can run the given version of R. Only the
+#' minimum is enforced: newer versions than RStudio was tested with still
+#' run (the session merely logs a warning).
+.rs.addFunction("rVersionSupported", function(version, minimum)
+{
+   parsed <- .rs.tryCatch(package_version(version))
+   !inherits(parsed, "error") && parsed >= package_version(minimum)
 })
 
 #' The mode flag to install R with. User mode installs into the home
@@ -311,19 +531,4 @@
       return(character())
 
    "--user"
-})
-
-#' Whether curl is available for downloading rig in a background job.
-.rs.addFunction("rig.curlPath", function()
-{
-   unname(Sys.which("curl"))
-})
-
-#' The installed R versions as a list of records, for the client.
-.rs.addFunction("rig.listAsJson", function()
-{
-   installed <- .rs.rig.list()
-   lapply(seq_len(nrow(installed)), function(i) {
-      lapply(as.list(installed[i, ]), .rs.scalar)
-   })
 })

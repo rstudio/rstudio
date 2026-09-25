@@ -403,8 +403,11 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
-    setPendingRVersion: (rExecutablePath: string) => {
-      ipcRenderer.send('desktop_set_pending_r_version', rExecutablePath);
+    setPendingRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_set_pending_r_version', rExecutablePath)
+        .then((error) => callback(error))
+        .catch((error) => reportIpcError('setPendingRVersion', error));
     },
 
     setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {

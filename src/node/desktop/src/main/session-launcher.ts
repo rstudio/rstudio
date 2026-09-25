@@ -35,11 +35,17 @@ import { buildInfo } from './build-info';
 import { PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
-import { ElectronDesktopOptions, fixWindowsRExecutablePath } from './preferences/electron-desktop-options';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { prepareEnvironment } from './detect-r';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
-import { createStandaloneErrorDialog, findRepoRoot, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
+import {
+  createStandaloneErrorDialog,
+  findRepoRoot,
+  getCurrentlyUniqueFolderName,
+  isAutomated,
+  userLogPath,
+} from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
 import { startupCheckpoint } from './startup-timing';
@@ -224,6 +230,13 @@ export class SessionLauncher {
   private splashDelay: number;
   private splashLinger: number;
 
+  // the session binary each launch starts from; the build matching the R in
+  // use is picked from it per launch, as switching R can call for another
+  private readonly baseSessionPath: FilePath;
+
+  // names this instance's development copies of the session binary
+  private devSessionTag = '';
+
   constructor(
     private sessionPath: FilePath,
     private confPath: FilePath,
@@ -231,6 +244,7 @@ export class SessionLauncher {
     private appLaunch: ApplicationLaunch,
     private windowAllClosedHandler: (() => void) | null,
   ) {
+    this.baseSessionPath = sessionPath;
     this.splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 100;
     this.splashLinger = process.env.RS_SPLASH_LINGER ? parseInt(process.env.RS_SPLASH_LINGER) : 1300;
     if (process.env.RS_NO_SPLASH) {
@@ -286,7 +300,7 @@ export class SessionLauncher {
 
     // launch the process
     try {
-      this.sessionProcess = this.launchSession(launchContext.argList, true);
+      this.sessionProcess = this.launchSession(launchContext.argList);
     } catch (err: unknown) {
       return safeError(err);
     }
@@ -637,7 +651,7 @@ export class SessionLauncher {
 
     // launch the process
     try {
-      this.sessionProcess = this.launchSession(launchContext.argList, false);
+      this.sessionProcess = this.launchSession(launchContext.argList);
     } catch (err: unknown) {
       return safeError(err);
     }
@@ -665,18 +679,19 @@ export class SessionLauncher {
 
   /**
    * Prepare the environment for the R executable a pending restart asked
-   * for, and remember it as the R to launch with from now on. The current
-   * R is kept when the requested one cannot be queried.
+   * for (already checked to run when it was requested). The current R is
+   * kept if preparing fails anyway.
+   *
+   * On Windows, the choice is also stored as the Choose R dialog stores one,
+   * so it holds for later launches too, and can be changed back the same
+   * way. Elsewhere, RStudio has no stored choice of R to change back, so the
+   * switch lasts until RStudio quits.
    */
   applyPendingRVersion(): void {
-    const pending = this.mainWindow?.collectPendingRVersion();
-    if (!pending) {
+    const rPath = this.mainWindow?.collectPendingRVersion();
+    if (!rPath) {
       return;
     }
-
-    // sessions launched from bin\R.exe fail to load on Windows; use the
-    // architecture-specific executable as the Choose R dialog does
-    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(pending) : pending;
 
     logger().logInfo(`Switching to R: ${rPath}`);
     const error = prepareEnvironment(rPath);
@@ -685,7 +700,13 @@ export class SessionLauncher {
       return;
     }
 
-    ElectronDesktopOptions().setRExecutablePath(rPath);
+    if (process.platform === 'win32') {
+      // the default installations take precedence over a stored path
+      const options = ElectronDesktopOptions();
+      options.setUseDefault32BitR(false);
+      options.setUseDefault64BitR(false);
+      options.setRExecutablePath(rPath);
+    }
   }
 
   onReloadFrameForNextSession(): void {
@@ -753,7 +774,91 @@ export class SessionLauncher {
     }
   }
 
-  private launchSession(argList: string[], isFirstSession: boolean): ChildProcess {
+  /**
+   * The session binary built for the R in the environment: on Windows, the
+   * UCRT (rsession-utf8) or 32-bit build when the R needs one; on Apple
+   * silicon, the arm64 build for an arm64 R (an x86_64 R runs the x86_64
+   * build under Rosetta).
+   */
+  sessionBinaryForR(): FilePath {
+    let sessionPath = this.baseSessionPath;
+
+    if (process.platform === 'win32') {
+      // on Windows, if we're using a UCRT build of R, we'll need to use
+      // our rsession-utf8.exe executable (if available)
+      const runtime = getenv('R_RUNTIME');
+      if (runtime === 'ucrt') {
+        const utf8SessionPath = sessionPath.getParent().completeChildPath('rsession-utf8.exe');
+        if (utf8SessionPath.existsSync()) {
+          sessionPath = utf8SessionPath;
+          logger().logDebug(`R is UCRT; using ${sessionPath}`);
+        }
+      }
+
+      // similarly, if we're using a 32-bit version of R,
+      // we'll need to use the 32-bit copy of our session executable
+      const arch = getenv('R_ARCH');
+      if (arch === 'i386') {
+        const x86SessionPath = sessionPath.getParent().completeChildPath('x86/rsession.exe');
+        if (x86SessionPath.existsSync()) {
+          sessionPath = x86SessionPath;
+          logger().logDebug(`R is 32-bit; using ${sessionPath}`);
+        } else {
+          logger().logWarning('R is 32-bit, but no 32-bit rsession.exe was found');
+        }
+      }
+    }
+
+    // on macOS, we need to look at R and figure out if we should be trying to run
+    // with the arm64 session binary (rsession-arm64) or with the x64 session binary (rsession)
+    if (app.isPackaged && process.platform === 'darwin' && process.arch === 'arm64') {
+      const rHome = getenv('R_HOME');
+      const rLib = new FilePath(rHome).completePath('lib/libR.dylib');
+      if (libRArchitectures(rLib).includes('arm64')) {
+        sessionPath = sessionPath.getParent().completeChildPath('rsession-arm64');
+        logger().logDebug(`R is arm64; using ${sessionPath}`);
+      } else {
+        logger().logDebug(`R is x86_64; using ${sessionPath}`);
+      }
+    }
+
+    return sessionPath;
+  }
+
+  // A copy of the given session binary for a Windows development build to
+  // run, made once per instance, so the binary itself can be rebuilt while
+  // a session runs.
+  private developmentSessionCopy(sessionPath: FilePath): FilePath {
+    if (!this.devSessionTag) {
+      this.devSessionTag = generateShortenedUuid();
+    }
+
+    const source = sessionPath.getAbsolutePath();
+    const devSessionPath = path.join(
+      path.dirname(source),
+      `development.${this.devSessionTag}.${path.basename(source)}`,
+    );
+    if (fs.existsSync(devSessionPath)) {
+      return new FilePath(devSessionPath);
+    }
+
+    logger().logDebug(`Using development session: ${source} => ${devSessionPath}`);
+    fs.copyFileSync(source, devSessionPath);
+    app.on('quit', async (_event) => {
+      for (let i = 0; i < 3; i++) {
+        try {
+          rmSync(devSessionPath);
+          return;
+        } catch (_e: unknown) {
+          await sleepPromise(1);
+        }
+      }
+    });
+
+    return new FilePath(devSessionPath);
+  }
+
+  private launchSession(argList: string[]): ChildProcess {
     // always remove the abend log path before launching
     const error = abendLogPath().removeIfExistsSync();
     if (error) {
@@ -770,44 +875,7 @@ export class SessionLauncher {
       setenv('RSTUDIO_SESSION_EXIT_ON_STARTUP', appState().sessionEarlyExitCode.toString());
     }
 
-    if (isFirstSession && process.platform === 'win32') {
-      // on Windows, if we're using a UCRT build of R, we'll need to use
-      // our rsession-utf8.exe executable (if available)
-      const runtime = getenv('R_RUNTIME');
-      if (runtime === 'ucrt') {
-        const utf8SessionPath = this.sessionPath.getParent().completeChildPath('rsession-utf8.exe');
-        if (utf8SessionPath.existsSync()) {
-          this.sessionPath = utf8SessionPath;
-          logger().logDebug(`R is UCRT; using ${this.sessionPath}`);
-        }
-      }
-
-      // similarly, if we're using a 32-bit version of R,
-      // we'll need to use the 32-bit copy of our session executable
-      const arch = getenv('R_ARCH');
-      if (arch === 'i386') {
-        const x86SessionPath = this.sessionPath.getParent().completeChildPath('x86/rsession.exe');
-        if (x86SessionPath.existsSync()) {
-          this.sessionPath = x86SessionPath;
-          logger().logDebug(`R is 32-bit; using ${this.sessionPath}`);
-        } else {
-          logger().logWarning('R is 32-bit, but no 32-bit rsession.exe was found');
-        }
-      }
-    }
-
-    // on macOS, we need to look at R and figure out if we should be trying to run
-    // with the arm64 session binary (rsession-arm64) or with the x64 session binary (rsession)
-    if (app.isPackaged && process.platform === 'darwin' && process.arch === 'arm64') {
-      const rHome = getenv('R_HOME');
-      const rLib = new FilePath(rHome).completePath('lib/libR.dylib');
-      if (libRArchitectures(rLib).includes('arm64')) {
-        this.sessionPath = this.sessionPath.getParent().completeChildPath('rsession-arm64');
-        logger().logDebug(`R is arm64; using ${this.sessionPath}`);
-      } else {
-        logger().logDebug(`R is x86_64; using ${this.sessionPath}`);
-      }
-    }
+    this.sessionPath = this.sessionBinaryForR();
 
     // if we're an automation agent, forward that to the R session
     if (isAutomated()) {
@@ -823,35 +891,7 @@ export class SessionLauncher {
     // to a separate location, so we can more easily build and restart
     // with an "active" rsession executable.
     if (!app.isPackaged && process.platform == 'win32') {
-      // Get the session path.
-      const sessionPath = this.sessionPath.getAbsolutePath();
-      const sessionDir = path.dirname(sessionPath);
-
-      // Create a new session name for the development session.
-      let sessionName = path.basename(sessionPath);
-      let devSessionName: string;
-      if (isFirstSession) {
-        devSessionName = `development.${generateShortenedUuid()}.${sessionName}`;
-      } else {
-        devSessionName = sessionName;
-        sessionName = devSessionName.substring(devSessionName.indexOf('rsession'));
-      }
-
-      logger().logDebug(`Using development session: ${sessionName} => ${devSessionName}`);
-      const devSessionPath = path.join(sessionDir, devSessionName);
-      fs.copyFileSync(sessionPath, devSessionPath);
-      app.on('quit', async (_event) => {
-        for (let i = 0; i < 3; i++) {
-          try {
-            rmSync(devSessionPath);
-            return;
-          } catch (_e: unknown) {
-            await sleepPromise(1);
-          }
-        }
-      });
-
-      this.sessionPath = new FilePath(devSessionPath);
+      this.sessionPath = this.developmentSessionCopy(this.sessionPath);
     }
 
     const sessionProc = launchProcess(this.sessionPath, argList);

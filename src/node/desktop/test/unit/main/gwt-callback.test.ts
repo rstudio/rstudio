@@ -19,7 +19,8 @@ import sinon from 'sinon';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
 
-import { GwtCallback } from '../../../src/main/gwt-callback';
+import { GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
+import * as DetectR from '../../../src/main/detect-r';
 import { MainWindow } from '../../../src/main/main-window';
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
@@ -54,15 +55,43 @@ describe('DesktopCallback', () => {
     assert.isNotEmpty(callback);
   });
 
-  describe('desktop_set_pending_r_version', () => {
-    it('records the R executable and hands it over once', () => {
-      ipcMain.emit('desktop_set_pending_r_version', {}, '/opt/R/4.4.1/bin/R');
+  describe('setPendingRVersion', () => {
+    // a stand-in R that exists on disk; querying it is stubbed
+    const rPath = process.execPath;
 
-      assert.equal(callback.collectPendingRVersion(), '/opt/R/4.4.1/bin/R');
+    afterEach(() => {
+      callback.collectPendingRVersion();
+      callback.setPendingQuit(PendingQuit.PendingQuitNone);
+    });
+
+    it('records an R that runs and hands it over once', () => {
+      sinon.stub(DetectR, 'detectREnvironment').returns([{} as never, null]);
+
+      assert.equal(callback.setPendingRVersion(rPath), '');
+      assert.equal(callback.collectPendingRVersion(), rPath);
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
     it('has nothing pending by default', () => {
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('refuses an R that is missing or fails to run', () => {
+      const detect = sinon.stub(DetectR, 'detectREnvironment').returns([null as never, new Error('boom')]);
+
+      assert.isNotEmpty(callback.setPendingRVersion(rPath));
+      assert.isNotEmpty(callback.setPendingRVersion('/no/such/R'));
+      assert.isTrue(detect.calledOnce);
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('forgets the R when the quit it was meant for is abandoned', () => {
+      sinon.stub(DetectR, 'detectREnvironment').returns([{} as never, null]);
+
+      callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload);
+      assert.equal(callback.setPendingRVersion(rPath), '');
+
+      callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
     });
   });

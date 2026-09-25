@@ -40,6 +40,7 @@ public interface RenvConstants extends Messages {
     String rInstallFailedWithError(String version, String error);
     String switchRVersionCaption();
     String switchingRVersionProgress(String version);
+    String rSwitchFailed(String version, String error);
     String renvLibraryEmpty();
     String renvRestoreAction();
 }

@@ -91,6 +91,12 @@ public class WarningBar extends Composite
       moreButton_.setVisible(false);
       moreButton_.setText(constants_.manageLicenseText());
       actionLink_.setVisible(false);
+      // registered once, as each setClickHandler call adds another handler
+      actionLink_.setClickHandler(() ->
+      {
+         if (action_ != null)
+            action_.execute();
+      });
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
       A11y.setARIAHidden(label_);
       if (!ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
@@ -112,13 +118,13 @@ public class WarningBar extends Composite
    {
       if (label == null || command == null)
       {
+         action_ = null;
          actionLink_.setVisible(false);
-         actionLink_.setClickHandler(null);
          return;
       }
 
+      action_ = command;
       actionLink_.setText(label);
-      actionLink_.setClickHandler(command);
       actionLink_.setVisible(true);
    }
 
@@ -171,6 +177,8 @@ public class WarningBar extends Composite
    HyperlinkLabel actionLink_;
    @UiField
    ImageButton dismiss_;
+
+   private Command action_;
 
    private static final Styles styles_ =
          ((Resources) GWT.create(Resources.class)).styles();
