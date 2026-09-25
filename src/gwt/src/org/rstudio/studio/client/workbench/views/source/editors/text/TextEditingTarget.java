@@ -427,6 +427,7 @@ public class TextEditingTarget implements
          suppressFileLockError_ = suppressFileLockError;
          executeOnSuccess_ = executeOnSuccess;
          executeOnSilentFailure_ = executeOnSilentFailure;
+         hadPath_ = docUpdateSentinel_.getPath() != null;
       }
 
       public void onProgress(String message)
@@ -493,7 +494,7 @@ public class TextEditingTarget implements
                view_.getSourceOnSave().setValue(false, true);
             }
          }
-         else if (file_ != null)
+         else if (file_ != null && !hadPath_)
          {
             // A first save gives the document a path, which enables commands
             // such as Rename even when the file type is unchanged; the source
@@ -588,6 +589,7 @@ public class TextEditingTarget implements
       private final boolean suppressFileLockError_;
       private final Command executeOnSuccess_;
       private final Command executeOnSilentFailure_;
+      private final boolean hadPath_;
    }
 
    @Inject
