@@ -497,10 +497,9 @@ public class TextEditingTarget implements
          else if (file_ != null && !hadPath_)
          {
             // A first save gives the document a path, which enables commands
-            // such as Rename even when the file type is unchanged. Refresh via
-            // the manager, which manages the active column last so inactive
-            // columns can't hide commands it shows.
-            RStudioGinjector.INSTANCE.getSourceColumnManager().manageCommands(false);
+            // such as Rename even when the file type is unchanged; this event
+            // makes the source columns refresh their commands.
+            events_.fireEvent(new FileTypeChangedEvent());
          }
 
          if (executeOnSuccess_ != null)
