@@ -15,7 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'fs';
+import { mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, statSync, symlinkSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -110,6 +110,9 @@ describe('RFramework', () => {
       // a framework to link packages against, inside the version's directory
       assert.equal(readlinkSync(join(version.dir, 'R.framework', 'R')), '../R');
       assert.equal(readlinkSync(join(version.dir, 'R.framework', 'Libraries')), '../Resources/lib');
+
+      // writable by the admin group, like the framework's own directories
+      assert.equal(statSync(join(version.dir, 'R.framework')).mode & 0o777, 0o775);
 
       // nothing is left to do the second time
       const again = orthogonalEdits(version);

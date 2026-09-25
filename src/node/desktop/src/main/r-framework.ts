@@ -25,6 +25,7 @@
 import { execFile } from 'child_process';
 import {
   accessSync,
+  chmodSync,
   constants,
   existsSync,
   lstatSync,
@@ -61,6 +62,11 @@ const kFrameworkLinks: [string, string][] = [
 
 /** The user declined to authorize the change. */
 export class AuthorizationCancelledError extends Error {}
+
+// The CRAN installer leaves the framework's directories writable by the
+// admin group (the group new entries inherit from their parent); the
+// directory holding the links follows suit, whoever creates it.
+const kLinkDirMode = 0o775;
 
 /** A version of R in the framework. */
 export interface FrameworkVersion {
@@ -203,7 +209,10 @@ function applyEdits(edits: OrthogonalEdits): void {
   }
 
   if (edits.links.length > 0) {
-    mkdirSync(edits.linkDir, { recursive: true });
+    if (!existsSync(edits.linkDir)) {
+      mkdirSync(edits.linkDir, { recursive: true });
+      chmodSync(edits.linkDir, kLinkDirMode);
+    }
     for (const link of edits.links) {
       symlinkSync(link.target, link.path);
     }
@@ -240,7 +249,10 @@ async function applyEditsAsAdministrator(edits: OrthogonalEdits, authorizationPr
     });
 
     if (edits.links.length > 0) {
-      commands.push(`/bin/mkdir -p ${shellPath(edits.linkDir)}`);
+      if (!existsSync(edits.linkDir)) {
+        const mode = kLinkDirMode.toString(8);
+        commands.push(`/bin/mkdir -p ${shellPath(edits.linkDir)}`, `/bin/chmod ${mode} ${shellPath(edits.linkDir)}`);
+      }
       for (const link of edits.links) {
         commands.push(`/bin/ln -s ${shellPath(link.target)} ${shellPath(link.path)}`);
       }
