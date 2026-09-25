@@ -25,6 +25,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FilesPaneNavigateEvent;
 
 public class FilesTab extends DelayLoadWorkbenchTab<Files>
 {
@@ -32,7 +33,8 @@ public class FilesTab extends DelayLoadWorkbenchTab<Files>
 
    public abstract static class Shim
          extends DelayLoadTabShim<Files, FilesTab>
-         implements OpenFileInBrowserEvent.Handler, DirectoryNavigateEvent.Handler, RenameSourceFileEvent.Handler
+         implements OpenFileInBrowserEvent.Handler, DirectoryNavigateEvent.Handler,
+                    FilesPaneNavigateEvent.Handler, RenameSourceFileEvent.Handler
    {
       @Handler
       public abstract void onUploadFile();
@@ -54,6 +56,7 @@ public class FilesTab extends DelayLoadWorkbenchTab<Files>
       binder.bind(commands, shim);
       events.addHandler(OpenFileInBrowserEvent.TYPE, shim);
       events.addHandler(DirectoryNavigateEvent.TYPE, shim);
+      events.addHandler(FilesPaneNavigateEvent.TYPE, shim);
       events.addHandler(RenameSourceFileEvent.TYPE, shim);
    }
    private static final FilesConstants constants_ = GWT.create(FilesConstants.class);

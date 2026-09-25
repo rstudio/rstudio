@@ -48,7 +48,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FilesPaneNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
@@ -232,6 +232,7 @@ public class DocTabLayoutPanel
             if (target != null && target.getExtendedFileType() != null && target.getPath() != null)
             {
                final String filePath = target.getPath();
+               final String dirPath = FileSystemItem.createFile(filePath).getParentPathString();
                menu.addItem(ElementIds.TAB_RENAME_FILE, new MenuItem(constants_.renameMenuItem(), () ->
                {
                   events_.fireEvent(new RenameSourceFileEvent(filePath));
@@ -242,10 +243,9 @@ public class DocTabLayoutPanel
                }));
                menu.addItem(ElementIds.TAB_SET_WORKING_DIR, new MenuItem(constants_.setWorkingDirMenuItem(), () ->
                {
-                  FileSystemItem targetPath = FileSystemItem.createFile(filePath);
                   events_.fireEvent(new SendToConsoleEvent(
-                     "setwd(" + RUtil.asStringLiteral(targetPath.getParentPathString()) + ")", true));
-                  events_.fireEvent(new DirectoryNavigateEvent(targetPath.getParentPath(), false));
+                     "setwd(" + RUtil.asStringLiteral(dirPath) + ")", true));
+                  events_.fireEvent(new FilesPaneNavigateEvent(dirPath, false));
                }));
                menu.addSeparator();
             }
