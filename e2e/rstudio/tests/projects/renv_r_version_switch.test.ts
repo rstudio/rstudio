@@ -1,7 +1,7 @@
 import { test, expect } from "@fixtures/rstudio.fixture";
 import { executeInConsole, waitForConsoleIdle } from "@pages/console_pane.page";
 import { NO_BTN, YES_BTN } from "@pages/modals.page";
-import { closeProjectIfOpen, waitForSessionRestart } from "@utils/project";
+import { closeProjectIfOpen, restartSessionWithSentinel, waitForSessionRestart } from "@utils/project";
 import { getVersion, openProject } from "@utils/commands";
 import { useSuiteSandbox } from "@utils/sandbox";
 import { rStringLiteral } from "@utils/r";
@@ -235,5 +235,38 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     expect(isOrthogonal(target!.binary)).toBe(true);
     await expect.poll(async () => (await getVersion(page)).r).toBe(target!.version);
     expect(await captureResult(page, CHILD_R_VERSION)).toBe(target!.version);
+  });
+});
+
+// The check runs again when R restarts (as renv's own check does), so a
+// dismissed warning comes back; it only needs a version other than the
+// current one, not an installation of it, and runs on either edition.
+test.describe("renv lockfile R version after a restart", () => {
+  const sandbox = useSuiteSandbox();
+
+  test.afterAll(async ({ rstudioPage: page }) => {
+    try {
+      await closeProjectIfOpen(page);
+    } catch (err) {
+      console.warn("[renv_r_version_switch] afterAll closeProjectIfOpen failed:", err);
+    }
+  });
+
+  test("warns again after Restart R", async ({ rstudioPage: page }) => {
+    test.setTimeout(180000);
+
+    const current = (await getVersion(page)).r;
+    const requested = majorMinor(current) === "4.1" ? "4.0.5" : "4.1.3";
+
+    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-restart`, requested);
+
+    const warning = page.getByText(`created with R ${requested}, but R ${current} is in use`);
+    await expect(warning).toBeVisible({ timeout: 60000 });
+
+    await page.getByRole("button", { name: "Dismiss Warning Bar" }).click();
+    await expect(warning).toBeHidden();
+
+    await restartSessionWithSentinel(page);
+    await expect(warning).toBeVisible({ timeout: 60000 });
   });
 });

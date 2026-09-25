@@ -581,6 +581,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // save state we need to reference later
    suspend::setSessionResumed(rInitInfo.resumed);
+   suspend::setSessionResumedForRestart(rInitInfo.resumedForRestart);
 
    // a fresh R session is starting (or restarting) -- the deferred init hook
    // has not yet run for this R session

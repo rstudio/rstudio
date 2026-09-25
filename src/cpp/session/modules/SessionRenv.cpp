@@ -23,6 +23,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionSuspend.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -198,8 +199,11 @@ void checkProjectRVersion()
 
 void onDeferredInit(bool newSession)
 {
-   // a resumed session already told its client
-   if (!newSession)
+   // check again when resumed from a suspend for restart (renv's own check
+   // runs again then, and the project may have changed), but not after an
+   // ordinary suspend (e.g. for inactivity): nothing changed, and the client
+   // was already told
+   if (!newSession && !suspend::sessionResumedForRestart())
       return;
 
    // looking for installed versions of R runs rig, which takes a moment, so
