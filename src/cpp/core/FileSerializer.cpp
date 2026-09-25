@@ -702,7 +702,11 @@ Error replaceFile(const FilePath& tempPath,
          posixSupported = renamed || isInUseCode(code) || code == ERROR_ACCESS_DENIED;
       }
 
-      if (!renamed && !posixSupported)
+      // Some filter drivers refuse the POSIX rename with ERROR_ACCESS_DENIED
+      // too, so that answer is put to the legacy rename as well; a target we
+      // may not replace is denied again. The POSIX rename stays the first
+      // choice, since only it replaces a target our readers have open.
+      if (!renamed && (!posixSupported || code == ERROR_ACCESS_DENIED))
       {
          renamed = ::MoveFileExW(tempPath.getAbsolutePathW().c_str(),
                                  targetPath.getAbsolutePathW().c_str(),
