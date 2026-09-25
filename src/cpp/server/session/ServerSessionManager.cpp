@@ -264,6 +264,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
 {
    int numRemoved = 0;
    using namespace boost::posix_time;
+   ptime launchTime = microsec_clock::universal_time();
    LOCK_MUTEX(launchesMutex_)
    {
       // check whether we already have a launch pending
@@ -291,7 +292,10 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
          }
       }
 
-      pendingLaunches_[context] = PendingLaunch{ microsec_clock::universal_time() };
+      PendingLaunch pendingLaunch;
+      pendingLaunch.launchTime = launchTime;
+      pendingLaunch.launching = true;
+      pendingLaunches_[context] = pendingLaunch;
 
       numRemoved = cleanStalePendingLaunches();
    }
@@ -321,7 +325,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
 
    // launch the session
    Error error = sessionLaunchFunction_(ioContext, profile, request, onLaunch, onError);
-   finishPendingLaunch(context);
+   endLaunching(context, launchTime);
    if (error)
    {
       removePendingLaunch(context, false, "error during launch: " + error.asString());
@@ -330,17 +334,6 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
 
    launched = true;
    return Success();
-}
-
-void SessionManager::finishPendingLaunch(const r_util::SessionContext& context)
-{
-   LOCK_MUTEX(launchesMutex_)
-   {
-      LaunchMap::iterator it = pendingLaunches_.find(context);
-      if (it != pendingLaunches_.end())
-         it->second.launching = false;
-   }
-   END_LOCK_MUTEX
 }
 
 namespace {
@@ -458,7 +451,7 @@ void SessionManager::addSessionLaunchProfileFilter(
 void SessionManager::removePendingLaunch(const r_util::SessionContext& context, const bool success, const std::string& errorMsg)
 {
    bool removed = false;
-   bool kept = false;
+   bool keptLaunching = false;
    PidType keptPid = -1;
    boost::posix_time::ptime startTime;
    LOCK_MUTEX(launchesMutex_)
@@ -466,6 +459,18 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
       LaunchMap::const_iterator it = pendingLaunches_.find(context);
       if (it != pendingLaunches_.cend())
       {
+         // a request for this context that ends while the launch is still
+         // being made says nothing about it: the launched process isn't
+         // listening yet, so the request was answered by, or failed on,
+         // whatever came before (e.g. the session a restart is replacing).
+         // clearing the entry here let a retrying request launch a second
+         // session, which then locked the user out of the first (#18941).
+         // the guard below can't cover this window, since the pid isn't
+         // recorded until the process exists.
+         if (it->second.launching)
+         {
+            keptLaunching = true;
+         }
          // a request failing for this context says nothing about the health
          // of a separately launched, still-booting session process: an RPC
          // in flight to an exiting session dies with EOF right as the
@@ -477,18 +482,11 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
          // becomes reachable, the exit tracker clears it when it dies and
          // launchSession's one-minute window expires it otherwise. custom
          // session launchers never record a pid, so they keep the old
-         // clear-on-error behavior. the entry is also kept while the launch
-         // function is still running: no pid is recorded yet, and an error
-         // landing in that window launched a second session (#18941).
-         if (!success && it->second.launching)
-         {
-            kept = true;
-         }
+         // clear-on-error behavior.
          else if (!success &&
                   it->second.pid != -1 &&
                   core::system::isProcessRunning(it->second.pid))
          {
-            kept = true;
             keptPid = it->second.pid;
          }
          else
@@ -501,14 +499,18 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
    }
    END_LOCK_MUTEX
 
-   if (kept)
+   if (keptLaunching)
    {
-      if (keptPid != -1)
-         DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
-               keptPid, context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
-      else
-         DLOGF("Keeping pending launch still in flight for user {} (id: {}) despite request error: {}",
-               context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
+      DLOGF("Keeping pending launch still being made for user {} (id: {}) despite request {}: {}",
+            context.username, context.scope.id(), success ? "success" : "error",
+            errorMsg.empty() ? "(none)" : errorMsg);
+      return;
+   }
+
+   if (keptPid != -1)
+   {
+      DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
+            keptPid, context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
       return;
    }
 
@@ -566,6 +568,20 @@ void SessionManager::removePendingSessionLaunch(const std::string& username, con
                            " in " + std::to_string(startDuration.total_seconds()) + "." +
                                     std::to_string(startDuration.total_milliseconds() % 1000) + "s error: " + errorMsg);
    }
+}
+
+void SessionManager::endLaunching(const r_util::SessionContext& context,
+                                  const boost::posix_time::ptime& launchTime)
+{
+   LOCK_MUTEX(launchesMutex_)
+   {
+      // the entry may have been cleared (e.g. its process died at once) and
+      // replaced by another launch's in the meantime; leave that one be
+      LaunchMap::iterator it = pendingLaunches_.find(context);
+      if (it != pendingLaunches_.end() && it->second.launchTime == launchTime)
+         it->second.launching = false;
+   }
+   END_LOCK_MUTEX
 }
 
 void SessionManager::notePendingLaunchPid(const r_util::SessionContext& context, PidType pid)

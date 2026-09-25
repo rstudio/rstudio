@@ -113,19 +113,23 @@ private:
 
    int cleanStalePendingLaunches();
 
-   // clear the in-flight flag once the launch function has returned
-   void finishPendingLaunch(const core::r_util::SessionContext& context);
-
 private:
    // pending launches; pid is -1 until the launched process is known (custom
-   // session launchers may never report one). launching is set while the
-   // launch function runs, before any pid can have been recorded
+   // session launchers may never report one)
    struct PendingLaunch
    {
       boost::posix_time::ptime launchTime;
       PidType pid = -1;
-      bool launching = true;
+
+      // set while the session launch function runs: a request for the
+      // context that ends meanwhile was answered (or failed) without this
+      // launch's process, which isn't listening yet
+      bool launching = false;
    };
+
+   // the launch function made at launchTime has returned
+   void endLaunching(const core::r_util::SessionContext& context,
+                     const boost::posix_time::ptime& launchTime);
 
    boost::mutex launchesMutex_;
    typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;

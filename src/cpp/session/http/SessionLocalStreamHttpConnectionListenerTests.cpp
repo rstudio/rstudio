@@ -59,12 +59,12 @@ protected:
                                                      -1));
    }
 
-   bool inUse()
+   bool listening()
    {
-      bool inUse = true;
-      Error error = http::isLocalStreamInUse(streamPath_, &inUse);
+      bool listening = true;
+      Error error = http::isLocalStreamListening(streamPath_, &listening);
       EXPECT_FALSE(error) << error.asString();
-      return inUse;
+      return listening;
    }
 
    http::LocalStreamIdentity identity()
@@ -94,11 +94,36 @@ TEST_F(LocalStreamHttpConnectionListenerTest, StartBindsAndStopReleasesTheStream
 {
    auto listener = newListener();
    ASSERT_FALSE(listener->start());
-   EXPECT_TRUE(inUse());
+   EXPECT_TRUE(listening());
 
    std::string pid;
    ASSERT_FALSE(readStringFromFile(pidPath_, &pid));
    EXPECT_EQ(pid, std::to_string(core::system::currentProcessId()));
+
+   listener->stop();
+   EXPECT_FALSE(streamPath_.exists());
+   EXPECT_FALSE(pidPath_.exists());
+}
+
+TEST_F(LocalStreamHttpConnectionListenerTest, BindEndpointClaimsTheStreamBeforeStart)
+{
+   // startup claims the stream first thing, long before the listener starts;
+   // from then on the path is held (connections wait in the backlog) and a
+   // duplicate is refused
+   auto listener = newListener();
+   ASSERT_FALSE(listener->bindEndpoint());
+   EXPECT_TRUE(listening());
+   http::LocalStreamIdentity claimed = identity();
+
+   auto duplicate = newListener();
+   Error error = duplicate->start();
+   ASSERT_TRUE(error);
+   EXPECT_EQ(error, boost::asio::error::make_error_code(boost::asio::error::address_in_use))
+         << error.asString();
+
+   // start() keeps the socket it already bound rather than rebinding
+   ASSERT_FALSE(listener->start());
+   EXPECT_EQ(identity(), claimed);
 
    listener->stop();
    EXPECT_FALSE(streamPath_.exists());
@@ -114,11 +139,11 @@ TEST_F(LocalStreamHttpConnectionListenerTest, ReplacesStaleStream)
    stale.closeAcceptor(ec);
    ASSERT_FALSE(ec);
    ASSERT_TRUE(streamPath_.exists());
-   ASSERT_FALSE(inUse());
+   ASSERT_FALSE(listening());
 
    auto listener = newListener();
    ASSERT_FALSE(listener->start());
-   EXPECT_TRUE(inUse());
+   EXPECT_TRUE(listening());
 
    std::string pid;
    ASSERT_FALSE(readStringFromFile(pidPath_, &pid));
@@ -144,7 +169,7 @@ TEST_F(LocalStreamHttpConnectionListenerTest, RefusesToSupplantLiveListener)
          << error.asString();
 
    // the first listener is untouched, and its pid file still names this process
-   EXPECT_TRUE(inUse());
+   EXPECT_TRUE(listening());
    EXPECT_EQ(identity(), firstIdentity);
    std::string pid;
    ASSERT_FALSE(readStringFromFile(pidPath_, &pid));
@@ -171,7 +196,7 @@ TEST_F(LocalStreamHttpConnectionListenerTest, SupplantedListenerLeavesSuccessorI
    listener->stop();
    ASSERT_TRUE(streamPath_.exists());
    EXPECT_EQ(identity(), successorIdentity);
-   EXPECT_TRUE(inUse());
+   EXPECT_TRUE(listening());
 
    std::string pid;
    ASSERT_FALSE(readStringFromFile(pidPath_, &pid));

@@ -47,18 +47,28 @@ Error countingLaunchFunction(boost::asio::io_context&,
    return Success();
 }
 
-// a launch function that reports a request error for the context from inside
-// the launch, as an RPC to the exiting predecessor dying with EOF does while
-// the replacement is being spawned (#18941)
-Error errorDuringLaunchFunction(boost::asio::io_context&,
-                                const r_util::SessionLaunchProfile& profile,
-                                const http::Request&,
-                                const http::ResponseHandler&,
-                                const http::ErrorHandler&)
+// while it runs, other request threads report outcomes for the context: an
+// error (e.g. an EOF from the exiting session a restart replaces) and a
+// success (a last response from that same session)
+Error requestsEndDuringLaunchFunction(boost::asio::io_context& ioContext,
+                                      const r_util::SessionLaunchProfile& profile,
+                                      const http::Request& request,
+                                      const http::ResponseHandler& onLaunch,
+                                      const http::ErrorHandler& onError)
+{
+   sessionManager().removePendingLaunch(profile.context, false, "request error");
+   sessionManager().removePendingLaunch(profile.context);
+   return countingLaunchFunction(ioContext, profile, request, onLaunch, onError);
+}
+
+Error failingLaunchFunction(boost::asio::io_context&,
+                            const r_util::SessionLaunchProfile&,
+                            const http::Request&,
+                            const http::ResponseHandler&,
+                            const http::ErrorHandler&)
 {
    s_launchCount++;
-   sessionManager().removePendingLaunch(profile.context, false, "request error");
-   return Success();
+   return systemError(boost::system::errc::resource_unavailable_try_again, ERROR_LOCATION);
 }
 
 bool attemptLaunch(const r_util::SessionContext& context)
@@ -210,28 +220,6 @@ TEST(SessionManagerTest, RequestErrorClearsPendingLaunchOfDeadProcess)
    sessionManager().removePendingLaunch(context);
 }
 
-TEST(SessionManagerTest, RequestErrorDuringLaunchKeepsPendingLaunch)
-{
-   sessionManager().setSessionLaunchFunction(errorDuringLaunchFunction);
-   s_launchCount = 0;
-
-   // no pid is recorded while the launch function runs, so the liveness
-   // check cannot protect the entry; the in-flight flag must
-   r_util::SessionContext context("pending-launch-error-in-flight-user");
-   EXPECT_TRUE(attemptLaunch(context));
-   EXPECT_EQ(1, s_launchCount);
-
-   EXPECT_FALSE(attemptLaunch(context));
-   EXPECT_EQ(1, s_launchCount);
-
-   // once the launch has returned, an error clears it as before (no pid)
-   sessionManager().removePendingLaunch(context, false, "request error");
-   EXPECT_TRUE(attemptLaunch(context));
-   EXPECT_EQ(2, s_launchCount);
-
-   sessionManager().removePendingLaunch(context);
-}
-
 TEST(SessionManagerTest, RequestErrorClearsPendingLaunchWithoutRecordedPid)
 {
    sessionManager().setSessionLaunchFunction(countingLaunchFunction);
@@ -244,6 +232,50 @@ TEST(SessionManagerTest, RequestErrorClearsPendingLaunchWithoutRecordedPid)
    EXPECT_EQ(1, s_launchCount);
 
    sessionManager().removePendingLaunch(context, false, "request error");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, RequestsEndingDuringLaunchKeepPendingLaunch)
+{
+   sessionManager().setSessionLaunchFunction(requestsEndDuringLaunchFunction);
+   s_launchCount = 0;
+
+   // requests that end before the launched process even exists can't be
+   // about it; clearing its entry then let a retrying request launch a
+   // second session for the context, which locked the user out (#18941)
+   r_util::SessionContext context("pending-launch-requests-during-launch-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   // once the launch has been made, request outcomes count again
+   sessionManager().removePendingLaunch(context);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, FailedLaunchClearsPendingLaunch)
+{
+   sessionManager().setSessionLaunchFunction(failingLaunchFunction);
+   s_launchCount = 0;
+
+   // a launch that fails is over: nothing may be left waiting on it
+   r_util::SessionContext context("pending-launch-failed-launch-user");
+   boost::asio::io_context ioContext;
+   http::Request request;
+   bool launched = false;
+   Error error = sessionManager().launchSession(
+            ioContext, context, request, launched, core::system::Options());
+   EXPECT_TRUE(error);
+   EXPECT_FALSE(launched);
+
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
    EXPECT_TRUE(attemptLaunch(context));
    EXPECT_EQ(2, s_launchCount);
 

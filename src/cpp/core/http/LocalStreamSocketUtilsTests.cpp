@@ -44,12 +44,12 @@ protected:
       streamPath_.removeIfExists();
    }
 
-   bool inUse()
+   bool listening()
    {
-      bool inUse = true;
-      Error error = isLocalStreamInUse(streamPath_, &inUse);
+      bool listening = true;
+      Error error = isLocalStreamListening(streamPath_, &listening);
       EXPECT_FALSE(error) << error.asString();
-      return inUse;
+      return listening;
    }
 
    FilePath streamPath_;
@@ -57,25 +57,25 @@ protected:
 
 } // anonymous namespace
 
-TEST_F(LocalStreamSocketUtilsTest, MissingPathIsNotInUse)
+TEST_F(LocalStreamSocketUtilsTest, MissingPathIsNotListening)
 {
-   EXPECT_FALSE(inUse());
+   EXPECT_FALSE(listening());
 }
 
-TEST_F(LocalStreamSocketUtilsTest, RegularFileIsNotInUse)
+TEST_F(LocalStreamSocketUtilsTest, RegularFileIsNotListening)
 {
    ASSERT_FALSE(writeStringToFile(streamPath_, "not a socket"));
-   EXPECT_FALSE(inUse());
+   EXPECT_FALSE(listening());
 }
 
-TEST_F(LocalStreamSocketUtilsTest, ListeningSocketIsInUse)
+TEST_F(LocalStreamSocketUtilsTest, BoundSocketIsListening)
 {
    SocketAcceptorService<stream_protocol> service;
    ASSERT_FALSE(initLocalStreamAcceptor(service, streamPath_, FileMode::USER_READ_WRITE));
-   EXPECT_TRUE(inUse());
+   EXPECT_TRUE(listening());
 }
 
-TEST_F(LocalStreamSocketUtilsTest, SocketLeftByClosedListenerIsNotInUse)
+TEST_F(LocalStreamSocketUtilsTest, SocketLeftByClosedListenerIsNotListening)
 {
    SocketAcceptorService<stream_protocol> service;
    ASSERT_FALSE(initLocalStreamAcceptor(service, streamPath_, FileMode::USER_READ_WRITE));
@@ -87,7 +87,7 @@ TEST_F(LocalStreamSocketUtilsTest, SocketLeftByClosedListenerIsNotInUse)
    ASSERT_FALSE(ec);
    ASSERT_TRUE(streamPath_.exists());
 
-   EXPECT_FALSE(inUse());
+   EXPECT_FALSE(listening());
 }
 
 TEST_F(LocalStreamSocketUtilsTest, IdentityDistinguishesReboundSockets)
@@ -115,6 +115,55 @@ TEST_F(LocalStreamSocketUtilsTest, IdentityDistinguishesReboundSockets)
    LocalStreamIdentity secondIdentity;
    ASSERT_FALSE(getLocalStreamIdentity(streamPath_, &secondIdentity));
    EXPECT_NE(firstIdentity, secondIdentity);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimBindsMissingPath)
+{
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   ASSERT_FALSE(claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity));
+
+   EXPECT_TRUE(listening());
+   LocalStreamIdentity current;
+   ASSERT_FALSE(getLocalStreamIdentity(streamPath_, &current));
+   EXPECT_EQ(current, identity);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimRefusesLiveListener)
+{
+   SocketAcceptorService<stream_protocol> live;
+   LocalStreamIdentity liveIdentity;
+   ASSERT_FALSE(claimLocalStream(live, streamPath_, FileMode::USER_READ_WRITE, &liveIdentity));
+
+   SocketAcceptorService<stream_protocol> duplicate;
+   LocalStreamIdentity duplicateIdentity;
+   Error error = claimLocalStream(duplicate, streamPath_, FileMode::USER_READ_WRITE, &duplicateIdentity);
+   ASSERT_TRUE(error);
+   EXPECT_EQ(error, boost::asio::error::make_error_code(boost::asio::error::address_in_use))
+         << error.asString();
+
+   // the live listener's socket is untouched
+   EXPECT_TRUE(listening());
+   LocalStreamIdentity current;
+   ASSERT_FALSE(getLocalStreamIdentity(streamPath_, &current));
+   EXPECT_EQ(current, liveIdentity);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimReplacesStaleSocket)
+{
+   SocketAcceptorService<stream_protocol> stale;
+   LocalStreamIdentity staleIdentity;
+   ASSERT_FALSE(claimLocalStream(stale, streamPath_, FileMode::USER_READ_WRITE, &staleIdentity));
+   boost::system::error_code ec;
+   stale.closeAcceptor(ec);
+   ASSERT_FALSE(ec);
+   ASSERT_TRUE(streamPath_.exists());
+
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   ASSERT_FALSE(claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity));
+   EXPECT_TRUE(listening());
+   EXPECT_NE(identity, staleIdentity);
 }
 
 TEST_F(LocalStreamSocketUtilsTest, IdentityOfMissingPathIsAnError)

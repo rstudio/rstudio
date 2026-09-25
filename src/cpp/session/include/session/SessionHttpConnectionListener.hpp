@@ -83,6 +83,13 @@ namespace session {
 // implements the protocol appropriate for our current configuration)
 void initializeHttpConnectionListener();
 
+// Binds a server session's local stream (its socket) ahead of the listener's
+// start. Called first thing in startup, so that a second process launched for
+// a session that's already running fails here, with address_in_use, before
+// touching anything it would share with the running one. A no-op for other
+// listeners.
+core::Error claimSessionStream();
+
 // singleton
 class HttpConnectionListener;
 HttpConnectionListener& httpConnectionListener();
