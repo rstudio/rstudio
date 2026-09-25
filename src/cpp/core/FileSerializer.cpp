@@ -693,20 +693,16 @@ Error replaceFile(const FilePath& tempPath,
       if (posixSupported)
       {
          renamed = posixRename(tempPath, targetPath, &code);
-
-         // A target in use, or one we may not replace, is a verdict on the
-         // target; anything else means the rename itself isn't available here
-         // (ERROR_INVALID_PARAMETER and ERROR_NOT_SUPPORTED, but network
-         // redirectors and filter drivers have codes of their own), so try the
-         // legacy rename instead.
-         posixSupported = renamed || isInUseCode(code) || code == ERROR_ACCESS_DENIED;
+         posixSupported = renamed || (code != ERROR_INVALID_PARAMETER && code != ERROR_NOT_SUPPORTED);
       }
 
-      // Some filter drivers refuse the POSIX rename with ERROR_ACCESS_DENIED
-      // too, so that answer is put to the legacy rename as well; a target we
-      // may not replace is denied again. The POSIX rename stays the first
-      // choice, since only it replaces a target our readers have open.
-      if (!renamed && (!posixSupported || code == ERROR_ACCESS_DENIED))
+      // Any failure other than a target in use gets the legacy rename as well:
+      // network redirectors and filter drivers refuse the POSIX rename with
+      // codes of their own (ERROR_ACCESS_DENIED among them), and a target we
+      // may not replace is refused again. Where it's supported, the POSIX
+      // rename is still tried first on the next attempt, since only it
+      // replaces a target our readers have open.
+      if (!renamed && !isInUseCode(code))
       {
          renamed = ::MoveFileExW(tempPath.getAbsolutePathW().c_str(),
                                  targetPath.getAbsolutePathW().c_str(),

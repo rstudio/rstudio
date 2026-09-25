@@ -837,6 +837,37 @@ TEST(FileSerializerTest, WriteStringAtomicReplacesFileHeldOpenForRead)
    dir.remove();
 }
 
+// Neither rename replaces a read-only file, and both answer
+// ERROR_ACCESS_DENIED as they may for a file in use; the attribute tells them
+// apart, so the write fails at once rather than retrying until the deadline.
+TEST(FileSerializerTest, WriteStringAtomicReadOnlyTargetFailsWithoutRetrying)
+{
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "original\n"));
+
+   std::wstring path = filePath.getAbsolutePathW();
+   ASSERT_NE(FALSE, ::SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_READONLY));
+
+   AtomicWriteOptions options;
+   options.maxRetrySeconds = 10;
+
+   std::time_t start = std::time(nullptr);
+   Error error = writeStringToFileAtomic(filePath, "replaced\n", string_utils::LineEndingPassthrough, options);
+   std::time_t elapsed = std::time(nullptr) - start;
+
+   EXPECT_TRUE(error);
+   EXPECT_LT(elapsed, 5);
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("original\n", readback);
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
+
+   (void) ::SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_NORMAL);
+   dir.remove();
+}
+
 #endif
 
 // isDiskSpaceError must recognize the full-disk / over-quota error codes (so a
