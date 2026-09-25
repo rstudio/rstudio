@@ -81,7 +81,10 @@ public abstract class FileSystemDialog extends ModalDialogBase
             public void onCompleted()
             {
                progress.onCompleted();
-               context_.cd(input);
+
+               // navigate through the browser so an accept during the new
+               // folder's listing is deferred like any other
+               browser_.cd(input);
             }
 
             public void onError(String message)
@@ -175,11 +178,21 @@ public abstract class FileSystemDialog extends ModalDialogBase
    }
 
    /**
-    * Accept if validation passes
+    * Accept if validation passes. While a directory listing is in flight
+    * (the dialog just opened, or a cd() is pending) the accept is deferred
+    * until the listing arrives, since the input can only be resolved against
+    * the listed directory: accepting against a missing listing produced a
+    * null item, which callers treat as a cancel (#18922).
     */
    @Override
    public final void maybeAccept()
    {
+      if (browser_.isNavigating())
+      {
+         acceptOnNavigated_ = true;
+         return;
+      }
+
       if (shouldAccept())
          accept();
    }
@@ -228,10 +241,32 @@ public abstract class FileSystemDialog extends ModalDialogBase
          initialFilename_ = filename;
    }
 
+   /**
+    * Subclasses that adjust the filename on navigation must do so BEFORE
+    * calling super.onNavigated(), which may run a deferred accept.
+    */
    @Override
    public void onNavigated()
    {
       browser_.onNavigated();
+
+      if (acceptOnNavigated_)
+      {
+         acceptOnNavigated_ = false;
+         maybeAccept();
+      }
+   }
+
+   /**
+    * Closing the dialog (Cancel, Escape) does not detach it from the context,
+    * so a listing that arrives afterwards still reaches onNavigated(). Drop
+    * any deferred accept so it cannot run the operation from a closed dialog.
+    */
+   @Override
+   protected void onUnload()
+   {
+      acceptOnNavigated_ = false;
+      super.onUnload();
    }
 
    @Override
@@ -276,9 +311,23 @@ public abstract class FileSystemDialog extends ModalDialogBase
       progress_.onCompleted();
    }
 
+   /**
+    * Reports a failed navigation (from the context callbacks) or a failed
+    * operation (as the ProgressIndicator passed to it).
+    */
    @Override
    public void onError(String errorMessage)
    {
+      // a failed navigation leaves the browser in the directory it was already
+      // showing: drop any deferred accept and end its loading state, so the
+      // dialog stays usable. This bypasses the subclass onNavigated() hooks,
+      // which react to arriving somewhere (e.g. by discarding typed input).
+      if (browser_.isNavigating())
+      {
+         acceptOnNavigated_ = false;
+         browser_.onNavigated();
+      }
+
       progress_.onError(errorMessage);
    }
 
@@ -388,6 +437,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    private boolean invokeOperationEvenOnCancel_;
    private final ProgressIndicator progress_;
    protected FileBrowserWidget browser_;
+   protected boolean acceptOnNavigated_ = false;
    private String initialFilename_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

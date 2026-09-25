@@ -746,7 +746,6 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-11-arm
     timeout-minutes: 120
-    environment: e2e-playwright
     defaults:
       run:
         shell: pwsh

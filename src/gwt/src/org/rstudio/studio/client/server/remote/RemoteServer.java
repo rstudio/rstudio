@@ -2170,6 +2170,7 @@ public class RemoteServer implements Server
                           int height,
                           boolean overwrite,
                           boolean useDevicePixelRatio,
+                          int resolution,
                           ServerRequestCallback<Bool> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -2179,6 +2180,7 @@ public class RemoteServer implements Server
       params.set(3, new JSONNumber(height));
       params.set(4, JSONBoolean.getInstance(overwrite));
       params.set(5, JSONBoolean.getInstance(useDevicePixelRatio));
+      params.set(6, new JSONNumber(resolution));
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
 
@@ -7151,9 +7153,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback)
+   public void chatInstallUpdate(boolean reinstall,
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(reinstall)
+            .get();
+      sendRequest(RPC_SCOPE, "chat_install_update", params, requestCallback);
    }
 
    @Override

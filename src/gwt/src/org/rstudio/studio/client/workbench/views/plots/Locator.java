@@ -23,6 +23,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 
+import java.util.function.Function;
+
 public class Locator implements HasSelectionHandlers<Point>
 {
    public interface Display extends HasSelectionHandlers<Point>
@@ -32,9 +34,11 @@ public class Locator implements HasSelectionHandlers<Point>
       boolean isVisible();
    }
 
-   public Locator(Plots.Parent parent)
+   // toPlotPoint maps a click to the plot's coordinates (see LocatorPanel)
+   public Locator(Plots.Parent parent, Function<Point, Point> toPlotPoint)
    {
       parent_ = parent;
+      toPlotPoint_ = toPlotPoint;
    }
 
    public HandlerRegistration addSelectionHandler(
@@ -61,7 +65,7 @@ public class Locator implements HasSelectionHandlers<Point>
       {
          clearDisplay();
 
-         display_ = new LocatorPanel();
+         display_ = new LocatorPanel(toPlotPoint_);
          hreg_ = display_.addSelectionHandler(new SelectionHandler<Point>()
          {
             public void onSelection(SelectionEvent<Point> event)
@@ -96,6 +100,7 @@ public class Locator implements HasSelectionHandlers<Point>
    private HandlerRegistration hreg_;
    private Display display_;
    private final Plots.Parent parent_;
+   private final Function<Point, Point> toPlotPoint_;
    private String currentUrl_;
    private Size currentSize_;
    private final HandlerManager handlers_ = new HandlerManager(null);

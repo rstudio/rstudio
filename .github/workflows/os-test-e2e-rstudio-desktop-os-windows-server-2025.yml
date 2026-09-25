@@ -742,7 +742,6 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-2025
     timeout-minutes: 120
-    environment: e2e-playwright
     defaults:
       run:
         shell: pwsh

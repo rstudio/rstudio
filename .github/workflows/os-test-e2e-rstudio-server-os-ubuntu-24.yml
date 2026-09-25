@@ -376,7 +376,6 @@ jobs:
         shard: [1, 2]
     runs-on: ubuntu-24.04
     timeout-minutes: 120
-    environment: e2e-playwright
     env:
       # os-e2e-deps installs the harness's required packages here (and exports
       # PW_RSTUDIO_R_LIBS_USER for globalSetup); the "Provision test user R

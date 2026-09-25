@@ -16,7 +16,8 @@ import type { Page } from 'playwright';
  * "Check for Posit Assistant updates" command -- rstudio/rstudio#18253
  *
  * The command runs a forced update check and ALWAYS reports the result in a
- * modal dialog: up to date, an update/install is available (offer to install),
+ * modal dialog: up to date (offering to reinstall when the backend allows it,
+ * rstudio/rstudio#18658), an update/install is available (offer to install),
  * a newer Posit Assistant requires a newer RStudio (OK only), or an error.
  * Accepting an available update reuses the existing install engine, which is
  * refused unless Posit Assistant is selected as the chat provider or assistant.
@@ -29,8 +30,8 @@ import type { Page } from 'playwright';
  * suite): set the override, invoke the command, and the next
  * chat_check_for_updates returns it verbatim.
  *
- * The install itself (Yes on the confirm dialog) needs a real download + inter-
- * session lock and is covered below the UI by the C++ suites, so these tests
+ * The install itself (Yes on the confirm dialog, or Reinstall) needs a real download and is
+ * covered below the UI by the C++ suites, so these tests
  * assert up to and including the confirmation dialog, then dismiss with Cancel.
  */
 
@@ -42,6 +43,7 @@ const DIALOG = '.gwt-DialogBox';
 // rsession's override has every field the response schema expects.
 const DEFAULT_CHECK_RESPONSE = {
   updateAvailable: false,
+  reinstallAvailable: false,
   isDowngrade: false,
   noCompatibleVersion: false,
   unsupportedInstalledVersion: false,
@@ -118,6 +120,28 @@ test.describe.serial('Check for Posit Assistant updates -- #18253', { tag: ['@ai
     await expect(page.locator(YES_BTN)).toHaveCount(0);
 
     await page.locator(CONFIRM_BTN).click();
+    await expect(dialog).toBeHidden();
+  });
+
+  // -------------------------------------------------------------------------
+  // Test 1b: Up to date and reinstallable -> offer Reinstall, OK is the default
+  // -------------------------------------------------------------------------
+  test('offers to reinstall when Posit Assistant is up to date', async ({ rstudioPage: page }) => {
+    await runCheckExpectingDialog(page, {
+      ...DEFAULT_CHECK_RESPONSE,
+      reinstallAvailable: true,
+      currentVersion: '1.0.0',
+      newVersion: '1.0.0',
+    });
+
+    const dialog = page.locator(DIALOG);
+    await expect(dialog).toContainText('latest version of Posit Assistant (1.0.0)');
+    await expect(dialog).toContainText('you can reinstall it');
+    await expect(page.locator(YES_BTN)).toHaveText('Reinstall');
+    await expect(page.locator(NO_BTN)).toHaveText('OK');
+
+    // Dismiss with OK -- Reinstall would start a real download/install.
+    await page.locator(NO_BTN).click();
     await expect(dialog).toBeHidden();
   });
 

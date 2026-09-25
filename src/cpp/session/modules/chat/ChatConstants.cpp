@@ -37,8 +37,6 @@ const char* const kLegacyInstallDirName = "bin";
 // Copy shipped with RStudio, installed beside the session binary (or next to
 // bin/ in the macOS app bundle); absent from open-source builds
 const char* const kBundledPositAiDirName = "posit-assistant";
-// Cross-process lock files; outside pai/bin so it survives install mutations
-const char* const kPositAiLocksDirName = "pai/locks";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";

@@ -185,7 +185,9 @@ Error writeSelections(const FilePath& storageDir, const Selections& selections)
    json::Object root;
    root[kSelectedKey] = selected;
 
-   return writeStringToFileAtomic(selectorPath(storageDir), root.write());
+   AtomicWriteOptions options;
+   options.durable = true;
+   return writeStringToFileAtomic(selectorPath(storageDir), root.write(), string_utils::LineEndingPassthrough, options);
 }
 
 Error selectSlot(const FilePath& storageDir,

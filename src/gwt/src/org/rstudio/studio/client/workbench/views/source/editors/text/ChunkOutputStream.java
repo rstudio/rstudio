@@ -395,7 +395,10 @@ public class ChunkOutputStream extends FlowPanel
       
       // normalize outputs
       if (vconsole_ != null)
+      {
+         vconsole_.flushPartialAnsiCode();
          vconsole_.normalizePreviousOutput();
+      }
       
       // reset last output types
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
@@ -717,7 +720,10 @@ public class ChunkOutputStream extends FlowPanel
       {
          // if switching from textual input, clear the text accumulator
          if (vconsole_ != null)
+         {
+            vconsole_.flushPartialAnsiCode();
             vconsole_.clear();
+         }
          console_ = null;
       }
       

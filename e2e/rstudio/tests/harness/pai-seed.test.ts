@@ -103,21 +103,17 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
 
   test('seeds only the selected slot', () => {
     // A slot the selector does not name is not the build under test, and
-    // neither is a legacy bin/ left beside the slots. The seed machine's
-    // live lock entries would make sandbox installs refuse.
+    // neither is a legacy bin/ left beside the slots.
     const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
     fs.mkdirSync(path.join(seed, 'versions', '9.9.9'), { recursive: true });
     fs.mkdirSync(path.join(seed, 'bin'));
     fs.writeFileSync(path.join(seed, 'bin', 'package.json'), JSON.stringify({ version: '0.9.0' }));
-    fs.mkdirSync(path.join(seed, 'locks'));
-    fs.writeFileSync(path.join(seed, 'locks', 'install.lock'), '');
     const storage = path.join(root, 'data-home', 'pai');
 
     seedPaiSlot(seed, storage);
 
     expect(fs.readdirSync(path.join(storage, 'versions'))).toEqual(['1.2.2']);
     expect(fs.existsSync(path.join(storage, 'bin'))).toBe(false);
-    expect(fs.existsSync(path.join(storage, 'locks'))).toBe(false);
   });
 
   test('names the sandbox slot by its package version, not the seed\'s slot name', () => {

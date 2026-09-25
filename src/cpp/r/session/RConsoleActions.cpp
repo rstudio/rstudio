@@ -349,7 +349,7 @@ Error ConsoleActions::saveToFile(const core::FilePath& filePath)
    }
 
    // write to file
-   return writeStringToFile(filePath, contents);
+   return writeStringToFileAtomic(filePath, contents);
 }
 
 std::vector<std::string> ConsoleActions::getConsoleLines(int limit,

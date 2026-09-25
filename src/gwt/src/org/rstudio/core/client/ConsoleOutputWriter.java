@@ -167,6 +167,9 @@ public class ConsoleOutputWriter
    {
       if (virtualConsole_ != null)
       {
+         // no more output will reach this console, so show anything it was
+         // still waiting on
+         virtualConsole_.flushPartialAnsiCode();
          virtualConsole_.ensureStartingOnNewLine();
 
          // clear the virtual console so we start with a fresh slate

@@ -19,8 +19,12 @@
 # include <fmt/xchar.h>
 #endif
 
+#include <ctime>
+#include <map>
 #include <unordered_set>
+#include <vector>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/function.hpp>
 
 #include <shared_core/Error.hpp>
@@ -30,6 +34,7 @@
 #include <core/Version.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileUtils.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -70,6 +75,8 @@ const char * const kSearchPath = "search_path";
 const char * const kGlobalEnvironment = "global_environment";
 const char * const kAfterRestartCommand = "after_restart_command";
 const char * const kBuiltPackagePath = "built_package_path";
+const char * const kRestoreStartedFile = "restore_started";
+const char * const kSetAsideSuffix = "-unrestored";
 
 // settings
 const char * const kWorkingDirectory = "working_directory";
@@ -191,55 +198,37 @@ bool isRLocationVariable(const std::string& name)
 
 Error saveRVersion(const FilePath& filePath)
 {
-   Error error;
-   
-   // remove pre-existing file
-   error = filePath.removeIfExists();
-   if (error)
-      return error;
-   
    // ask R for the current version
    std::string version;
-   error = RFunction(".rs.rVersionString").call(&version);
+   Error error = RFunction(".rs.rVersionString").call(&version);
    if (error)
+   {
+      // don't leave the version from an earlier save behind
+      filePath.removeIfExists();
       return error;
+   }
    
-   // write to file
-   error = core::writeStringToFile(filePath, version);
-   if (error)
-      return error;
-   
-   // success!
-   return Success();
+   return core::writeStringToFileAtomic(filePath, version);
 }
 
 Error saveEnvironmentVars(const FilePath& envFile, const std::string& ephemeralEnvVars)
 {
-   // remove then create settings file
-   Error error = envFile.removeIfExists();
-   if (error)
-      return error;
-   core::Settings envSettings;
-   error = envSettings.initialize(envFile);
-   if (error)
-      return error;
-
    // build set of excluded environment variables
    std::vector<std::string> envEphemeral(core::algorithm::split(ephemeralEnvVars, ":"));
    std::unordered_set<std::string> ephemeral(envEphemeral.begin(), envEphemeral.end());
 
-   // get environment and write it to the file
+   // get environment and write it to the file, replacing the variables from
+   // any earlier save (read back with core::Settings)
    core::system::Options env;
    core::system::environment(&env);
-   envSettings.beginUpdate();
+   std::map<std::string, std::string> vars;
    for (const core::system::Option& var : env)
    {
       if (ephemeral.count(var.first) == 0)
-         envSettings.set(var.first, var.second);
+         vars[var.first] = var.second;
    }
-   envSettings.endUpdate();
 
-   return Success();
+   return core::writeStringMapToFile(envFile, vars);
 }
 
 void setEnvVar(const std::string& name, const std::string& value)
@@ -512,6 +501,10 @@ void initSaveContext(const FilePath& statePath,
       *pSaved = false;
    }
 
+   // the state is about to be replaced, so an earlier restore of it no
+   // longer matters (and mustn't cause the new state to be set aside)
+   restoreFinished(statePath);
+
    // init session settings
    error = pSettings->initialize(statePath.completePath(kSettingsFile));
    if (error)
@@ -527,7 +520,7 @@ void saveWorkingContext(const FilePath& statePath,
 {
    // save history
    FilePath historyPath = statePath.completePath(kHistoryFile);
-   Error error = consoleHistory().saveToFile(historyPath);
+   Error error = consoleHistory().saveToFile(historyPath, true /* atomic */);
    if (error)
    {
       reportError(kSaving, kHistoryFile, error, ERROR_LOCATION);
@@ -556,13 +549,13 @@ void saveWorkingContext(const FilePath& statePath,
 Error saveAfterRestartCommand(const FilePath& afterRestartCommandPath,
                               const std::string& afterRestartCommand)
 {
-   return core::writeStringToFile(afterRestartCommandPath, afterRestartCommand);
+   return core::writeStringToFileAtomic(afterRestartCommandPath, afterRestartCommand);
 }
 
 Error saveBuiltPackagePath(const FilePath& builtPackagePathPath,
                            const std::string& builtPackagePath)
 {
-   return core::writeStringToFile(builtPackagePathPath, builtPackagePath);
+   return core::writeStringToFileAtomic(builtPackagePathPath, builtPackagePath);
 }
 
 
@@ -1114,6 +1107,92 @@ bool destroy(const FilePath& statePath)
    else
    {
       return true;
+   }
+}
+
+void restoreStarted(const FilePath& statePath)
+{
+   // if this fails the restore goes ahead, just without the protection
+   Error error = statePath.completePath(kRestoreStartedFile).ensureFile();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void restoreFinished(const FilePath& statePath)
+{
+   Error error = statePath.completePath(kRestoreStartedFile).removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+}
+
+FilePath setAsideUnfinishedRestore(const FilePath& statePath)
+{
+   if (!statePath.completePath(kRestoreStartedFile).exists())
+      return FilePath();
+
+   // keep the state rather than deleting it, so what it holds (e.g. the
+   // environment) can still be recovered by hand; each set-aside gets its own
+   // directory, so a later one can't replace what an earlier one kept
+   FilePath setAsidePath = file_utils::firstUnusedPath(
+      statePath.getParent().completePath(statePath.getFilename() + kSetAsideSuffix));
+
+   Error error = statePath.move(setAsidePath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   WLOGF("An earlier restore of the session state in {} did not finish; moved it to {}",
+         statePath.getAbsolutePath(),
+         setAsidePath.getAbsolutePath());
+
+   return setAsidePath;
+}
+
+void removeExpiredSetAsideState(const FilePath& parentPath,
+                                const std::string& statePrefix)
+{
+   if (!parentPath.exists())
+      return;
+
+   std::vector<FilePath> children;
+   Error error = parentPath.getChildren(children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // moving a directory aside doesn't change its time, so a set-aside
+   // directory's time is that of the restore that never finished
+   std::time_t cutoff = std::time(nullptr) - kSetAsideStateMaxAgeDays * 24 * 60 * 60;
+   for (const FilePath& child : children)
+   {
+      const std::string& name = child.getFilename();
+      if (!boost::algorithm::starts_with(name, statePrefix) ||
+          !boost::algorithm::contains(name, kSetAsideSuffix))
+      {
+         continue;
+      }
+
+      std::time_t lastWriteTime = 0;
+      error = child.getLastWriteTime(lastWriteTime);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      if (lastWriteTime >= cutoff)
+         continue;
+
+      ILOGF("Removing session state set aside more than {} days ago: {}",
+            kSetAsideStateMaxAgeDays,
+            child.getAbsolutePath());
+      error = child.remove();
+      if (error)
+         LOG_ERROR(error);
    }
 }
 

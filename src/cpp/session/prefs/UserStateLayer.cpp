@@ -74,18 +74,9 @@ core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
       return fileNotFoundError(ERROR_LOCATION);
    }
 
-   // ensure state file can only be read/written by this user
-#ifndef _WIN32
-   if (stateFile_.exists())
-   {
-      Error error = stateFile_.changeFileMode(FileMode::USER_READ_WRITE);
-      if (error)
-         LOG_ERROR(error);
-   }
-#endif
-
-   // Write to disk first; only update in-memory state on success
-   Error error = writePrefsToFile(prefs, stateFile_);
+   // Write to disk first; only update in-memory state on success. The state
+   // file must only be readable by this user.
+   Error error = writePrefsToFile(prefs, stateFile_, true /* ownerOnly */);
    if (error)
       return error;
 

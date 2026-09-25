@@ -135,7 +135,12 @@ public abstract class Hyperlink implements HelpPageShower
         {
             for (String param: paramsTxt.split(":"))
             {
+                // a parameter without a value is malformed; skip it rather
+                // than fail on the missing half
                 String[] bits = param.split("=");
+                if (bits.length < 2)
+                    continue;
+
                 String key = bits[0].trim();
                 String value = bits[1].trim();
                 params.put(key, value);

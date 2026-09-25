@@ -72,6 +72,30 @@ bool restore(const core::FilePath& statePath,
    
 bool destroy(const core::FilePath& statePath);
 
+// Mark the state at statePath as being restored, until restoreFinished() is
+// called. If the process ends in between (e.g. R crashes or runs out of memory
+// while loading the state, or the session is closed first),
+// setAsideUnfinishedRestore() finds the mark on the next start.
+void restoreStarted(const core::FilePath& statePath);
+void restoreFinished(const core::FilePath& statePath);
+
+// If an earlier restore of the state at statePath never finished, moves the
+// state aside so it isn't restored again (restoring it would likely fail the
+// same way), and returns where it was moved to, next to statePath. Returns an
+// empty path otherwise.
+core::FilePath setAsideUnfinishedRestore(const core::FilePath& statePath);
+
+// State set aside by setAsideUnfinishedRestore() is kept this long, so that
+// what it holds (e.g. the environment) can be recovered by hand.
+const int kSetAsideStateMaxAgeDays = 30;
+
+// Removes state that setAsideUnfinishedRestore() set aside under parentPath
+// (the directory holding the state path) more than kSetAsideStateMaxAgeDays
+// ago. Only entries named after state with the given prefix are considered,
+// since the directory may hold other things.
+void removeExpiredSetAsideState(const core::FilePath& parentPath,
+                                const std::string& statePrefix);
+
 SessionStateInfo getSessionStateInfo();
      
 } // namespace state

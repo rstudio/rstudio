@@ -29,6 +29,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import org.rstudio.studio.client.workbench.views.plots.PlotsConstants;
 
 public class SavePlotAsHandler
@@ -94,8 +96,7 @@ public class SavePlotAsHandler
                @Override
                public void onError(ServerError error)
                {
-                  progressIndicator_.onError(error.getUserMessage());
-
+                  progressIndicator_.onError(userMessage(error));
                }
 
                @Override
@@ -143,7 +144,7 @@ public class SavePlotAsHandler
                         window.close();
 
                         globalDisplay_.showErrorMessage(constants_.errorSavingPlotCaption(),
-                              error.getUserMessage());
+                              userMessage(error));
                      }
 
                      @Override
@@ -216,6 +217,22 @@ public class SavePlotAsHandler
                }
 
             });
+   }
+
+   // The session sends what the user can change (e.g. an image too large
+   // to draw) as the error's client info; otherwise, the message is a
+   // generic system error.
+   private static String userMessage(ServerError error)
+   {
+      JSONValue clientInfo = error.getClientInfo();
+      if (clientInfo != null)
+      {
+         JSONString message = clientInfo.isString();
+         if (message != null)
+            return message.stringValue();
+      }
+
+      return error.getUserMessage();
    }
 
    private final GlobalDisplay globalDisplay_;

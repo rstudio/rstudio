@@ -119,6 +119,15 @@ std::string longPathName(const std::string& path)
 
 }
 
+FilePath firstUnusedPath(const FilePath& path)
+{
+   FilePath candidate = path;
+   for (int i = 2; candidate.exists(); ++i)
+      candidate = path.getParent().completeChildPath(path.getFilename() + "-" + std::to_string(i));
+
+   return candidate;
+}
+
 FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix, const std::string& extension)
 {
    // try up to 100 times then fallback to a uuid

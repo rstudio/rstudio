@@ -95,6 +95,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    public void onCompileCompleted()
    {
       state_ = PanelState.OK;
+      console_.flushPartialAnsiCode();
       if (savedOutput_.isEmpty())
          return;
       

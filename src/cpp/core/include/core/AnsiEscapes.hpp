@@ -23,7 +23,7 @@
 #define __ESC__ "\x1b"
 #define __CSI__ "\x1b\x5b"
 #define __ST__  "\x1b\x5c"
-#define __OSC__ "\x1b\x5c"
+#define __OSC__ "\x1b\x5d"
 
 // We provide these alternatives to be used for regular expressions,
 // mainly to avoid the need to escape certain characters in some contexts.

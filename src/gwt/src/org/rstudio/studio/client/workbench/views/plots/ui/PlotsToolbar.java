@@ -48,6 +48,13 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       removeAllWidgets();
       installStandardUI();
    }
+
+   public void setSizeLabel(String label)
+   {
+      sizeLabel_ = label;
+      if (sizeButton_ != null)
+         sizeButton_.setText(label);
+   }
    
    private void installStandardUI()
    {
@@ -58,6 +65,19 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       
       // popout current plot
       addLeftWidget(commands_.zoomPlot().createToolbarButton());
+      addLeftSeparator();
+
+      // plot size
+      ToolbarPopupMenu sizeMenu = new ToolbarPopupMenu();
+      sizeMenu.addItem(commands_.fitPlotToPane().createMenuItem(false));
+      sizeMenu.addItem(commands_.useFixedPlotSize().createMenuItem(false));
+
+      // the empty icon lines the label up with the labels of buttons with icons
+      sizeButton_ = new ToolbarMenuButton(
+            sizeLabel_, constants_.plotSizeTitle(), StandardIcons.INSTANCE.empty_command(), sizeMenu);
+      ElementIds.assignElementId(sizeButton_, ElementIds.MB_PLOTS_SIZE);
+
+      addLeftWidget(sizeButton_);
       addLeftSeparator();
       
       // export commands
@@ -95,5 +115,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
    
    private final Commands commands_;   
    private final RSConnectPublishButton publishButton_;
+   private ToolbarMenuButton sizeButton_;
+   private String sizeLabel_ = constants_.fitToPaneLabel();
    private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }
