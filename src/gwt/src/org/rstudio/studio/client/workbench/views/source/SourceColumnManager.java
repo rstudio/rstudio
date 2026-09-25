@@ -2119,7 +2119,41 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void vimEditFile(String path)
    {
-      editFile(path, new ResultCallback<EditingTarget, ServerError>() {});
+      // the backend keeps a document's path as given, so resolve the path
+      // against R's working directory before opening it
+      server_.ensureFileExists(path, new ErrorLoggingServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean success)
+         {
+            if (!success)
+               return;
+
+            server_.createAliasedPath(path, new ErrorLoggingServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String aliasedPath)
+               {
+                  if (!StringUtil.isNullOrEmpty(aliasedPath))
+                     openFile(FileSystemItem.createFile(aliasedPath));
+               }
+            });
+         }
+      });
+   }
+
+   private void vimNewSourceDoc()
+   {
+      newDoc(FileTypeRegistry.R, null);
+   }
+
+   private void vimOpenAdjacentFile(boolean forward)
+   {
+      // Source implements these commands
+      if (forward)
+         commands_.openNextFileOnFilesystem().execute();
+      else
+         commands_.openPreviousFileOnFilesystem().execute();
    }
 
    public void openProjectDocs(final Session session, boolean mainColumn)

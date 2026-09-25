@@ -120,11 +120,11 @@ public class SourceVimCommands
          // Handle other editing targets
          else if (params.args) {
             if (params.args.length === 1) {
-               source.getColumnManager()().@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimEditFile(Ljava/lang/String;)(params.args[0]);
+               source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimEditFile(Ljava/lang/String;)(params.args[0]);
             }
             // TODO: on error?
          } else {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onNewSourceDoc()();
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimNewSourceDoc()();
          }
       });
       
@@ -296,7 +296,7 @@ public class SourceVimCommands
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       var callback = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::onOpenNextFileOnFilesystem()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimOpenAdjacentFile(Z)(true);
       });
       
       Vim.defineAction("openNextFile", callback);
@@ -320,7 +320,7 @@ public class SourceVimCommands
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       var callback = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::onOpenPreviousFileOnFilesystem()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimOpenAdjacentFile(Z)(false);
       });
       
       Vim.defineAction("openPreviousFile", callback);
