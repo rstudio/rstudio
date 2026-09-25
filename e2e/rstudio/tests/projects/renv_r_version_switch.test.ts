@@ -238,10 +238,11 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
   });
 });
 
-// The check runs again when R restarts (as renv's own check does), so a
-// dismissed warning comes back; it only needs a version other than the
-// current one, not an installation of it, and runs on either edition.
-test.describe("renv lockfile R version after a restart", () => {
+// The check runs again when R restarts (as renv's own check does) and when a
+// page reconnects to the session, so a dismissed warning comes back. These
+// only need a version other than the current one, not an installation of it,
+// and run on either edition.
+test.describe("renv lockfile R version after a restart or refresh", () => {
   const sandbox = useSuiteSandbox();
 
   test.afterAll(async ({ rstudioPage: page }) => {
@@ -267,6 +268,25 @@ test.describe("renv lockfile R version after a restart", () => {
     await expect(warning).toBeHidden();
 
     await restartSessionWithSentinel(page);
+    await expect(warning).toBeVisible({ timeout: 60000 });
+  });
+
+  test("warns again after a browser refresh", async ({ rstudioPage: page }) => {
+    test.setTimeout(180000);
+
+    const current = (await getVersion(page)).r;
+    const requested = majorMinor(current) === "4.1" ? "4.0.5" : "4.1.3";
+
+    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-refresh`, requested);
+
+    const warning = page.getByText(`created with R ${requested}, but R ${current} is in use`);
+    await expect(warning).toBeVisible({ timeout: 60000 });
+
+    await page.getByRole("button", { name: "Dismiss Warning Bar" }).click();
+    await expect(warning).toBeHidden();
+
+    await page.reload();
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 60000, polling: 100 });
     await expect(warning).toBeVisible({ timeout: 60000 });
   });
 });

@@ -80,6 +80,11 @@ public:
       return pJob_ ? pJob_->id() : std::string();
    }
 
+   const std::string& version() const
+   {
+      return version_;
+   }
+
 private:
    explicit RInstallJob(const std::string& version)
       : version_(version)
@@ -414,6 +419,11 @@ Error findInstalledRVersion(const std::string& version, json::Value* pInstalled)
    return r::exec::RFunction(".rs.findInstalledRVersion")
          .addParam("version", version)
          .call(pInstalled);
+}
+
+std::string installInProgress()
+{
+   return s_pInstallJob && s_pInstallJob->running() ? s_pInstallJob->version() : std::string();
 }
 
 Error initialize()

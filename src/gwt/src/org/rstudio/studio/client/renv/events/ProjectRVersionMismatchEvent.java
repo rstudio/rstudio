@@ -45,6 +45,9 @@ public class ProjectRVersionMismatchEvent extends GwtEvent<ProjectRVersionMismat
 
       // whether RStudio can install the requested version here
       public boolean can_install;
+
+      // the version of R being installed, or "" when no installation runs
+      public String installing_version;
    }
 
    public interface Handler extends EventHandler

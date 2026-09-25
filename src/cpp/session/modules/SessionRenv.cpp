@@ -14,6 +14,7 @@
  */
 
 #include "SessionRenv.hpp"
+#include "SessionRig.hpp"
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -194,11 +195,44 @@ void checkProjectRVersion()
    data["supported"] = supported;
    data["installed"] = installed.isObject() ? installed : json::Value();
    data["can_install"] = desktop && supported;
+
+   // lets a client that connects while R installs (e.g. after a refresh)
+   // pick up where the one that started the installation left off
+   data["installing_version"] = modules::rig::installInProgress();
    module_context::enqueClientEvent(ClientEvent(client_events::kProjectRVersionMismatch, data));
+}
+
+// whether the session has finished starting; a client initializing after
+// that is one reconnecting to it (e.g. after a browser refresh)
+bool s_sessionStarted = false;
+
+// whether a check is waiting to run
+bool s_checkScheduled = false;
+
+void runScheduledCheck()
+{
+   s_checkScheduled = false;
+   checkProjectRVersion();
+}
+
+// Looking for installed versions of R runs rig, which takes a moment, so the
+// check runs once the session is idle rather than holding anything up.
+void scheduleProjectRVersionCheck()
+{
+   if (s_checkScheduled)
+      return;
+
+   s_checkScheduled = true;
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(1),
+            runScheduledCheck,
+            true);
 }
 
 void onDeferredInit(bool newSession)
 {
+   s_sessionStarted = true;
+
    // check again when resumed from a suspend for restart (renv's own check
    // runs again then, and the project may have changed), but not after an
    // ordinary suspend (e.g. for inactivity): nothing changed, and the client
@@ -206,12 +240,15 @@ void onDeferredInit(bool newSession)
    if (!newSession && !suspend::sessionResumedForRestart())
       return;
 
-   // looking for installed versions of R runs rig, which takes a moment, so
-   // do it once the session is idle rather than holding up its startup
-   module_context::scheduleDelayedWork(
-            boost::posix_time::seconds(1),
-            checkProjectRVersion,
-            true);
+   scheduleProjectRVersionCheck();
+}
+
+// A reconnecting client (e.g. after a browser refresh) starts without the
+// warning the previous page showed.
+void onClientInit()
+{
+   if (s_sessionStarted)
+      scheduleProjectRVersionCheck();
 }
 
 } // end anonymous namespace
@@ -224,6 +261,7 @@ Error initialize()
    // all other RStudio startup code runs first)
    events().onConsolePrompt.connect(onConsolePrompt);
    events().onDeferredInit.connect(onDeferredInit);
+   events().onClientInit.connect(onClientInit);
 
    using boost::bind;
    ExecBlock initBlock;

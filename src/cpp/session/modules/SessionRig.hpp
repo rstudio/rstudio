@@ -38,6 +38,9 @@ namespace rig {
 core::Error findInstalledRVersion(const std::string& version,
                                   core::json::Value* pInstalled);
 
+// The version of R being installed, or "" when no installation is running.
+std::string installInProgress();
+
 core::Error initialize();
 
 } // namespace rig

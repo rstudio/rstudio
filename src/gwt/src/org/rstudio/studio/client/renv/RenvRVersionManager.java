@@ -100,6 +100,13 @@ public class RenvRVersionManager
                constants_.switchToRVersion(installed.version),
                () -> switchToR(installed));
       }
+      else if (StringUtil.equals(data.installing_version, data.requested_version))
+      {
+         // this page was loaded while R installs (e.g. after a refresh), so
+         // it takes over waiting for the installation to finish
+         pendingInstall_ = data.requested_version;
+         globalDisplay_.showWarningBar(false, constants_.rInstallInProgress(requested));
+      }
       else if (data.can_install)
       {
          globalDisplay_.showWarningBar(
