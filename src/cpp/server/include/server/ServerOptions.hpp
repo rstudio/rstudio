@@ -90,9 +90,10 @@ public:
    bool checkConfigMode() const { return checkConfigMode_; }
    bool setupDbMode() const { return setupDbMode_; }
 
-   std::string getOverlayOption(const std::string& name)
+   std::string getOverlayOption(const std::string& name) const
    {
-      return overlayOptions_[name];
+      auto it = overlayOptions_.find(name);
+      return it != overlayOptions_.end() ? it->second : std::string();
    }
 
 private:
