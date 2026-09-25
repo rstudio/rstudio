@@ -727,15 +727,12 @@ public class ChatPane
       }
       else
       {
-         String secondParagraph = constants_.chatNotInstalledDescription2();
-
-         // The manifest can advertise additional providers for this build; when
-         // it does, extend the provider paragraph with a sentence about that
-         // support. Only the open-source (Posit AI) description is extended; the
-         // Workbench variant describes the organization's own provider and is
-         // left as-is.
-         if (additionalProvidersAvailable)
-            secondParagraph += " " + constants_.chatNotInstalledAdditionalProviders();
+         // The manifest can advertise additional providers for this build; only
+         // then does the provider paragraph mention connecting to them directly.
+         // The Workbench variant describes the organization's own provider instead.
+         String secondParagraph = additionalProvidersAvailable
+            ? constants_.chatNotInstalledDescription2WithProviders()
+            : constants_.chatNotInstalledDescription2();
 
          descriptionHtml =
             "<p class='detail'>" + constants_.chatNotInstalledDescription() + "</p>" +
