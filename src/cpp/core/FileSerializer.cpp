@@ -20,6 +20,7 @@
 #include <set>
 #include <sstream>
 #include <algorithm>
+#include <vector>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/trim.hpp>
@@ -30,7 +31,6 @@
 #ifdef _WIN32
 # include <cstddef>
 # include <cstring>
-# include <vector>
 # include <windows.h>
 #else
 # include <cerrno>
@@ -485,12 +485,12 @@ Error writeInPlace(const FilePath& targetPath,
    // write is what a file owned by another user gets (bind-mounted into a
    // container, or in a directory we can't write), and chmod fails on such a
    // file even when it's already private, so that failure is only an error
-   // when there was something to fix.
+   // when the file grants group or other access.
    if (options.ownerOnly && ::chmod(targetPath.getAbsolutePath().c_str(), 0600) == -1)
    {
       int code = errno;
       struct stat st;
-      if (::stat(targetPath.getAbsolutePath().c_str(), &st) == -1 || (st.st_mode & 0777) != 0600)
+      if (::stat(targetPath.getAbsolutePath().c_str(), &st) == -1 || (st.st_mode & 077) != 0)
          return fileError(code, targetPath, ERROR_LOCATION);
    }
 #endif
@@ -638,7 +638,10 @@ bool isInUseCode(DWORD code)
 // what renaming it takes, so the attribute is checked first. Opening the
 // target for DELETE with full sharing then tells the rest apart: a sharing
 // violation (or success, when the other handle has since been closed) means
-// it was in use, and ERROR_ACCESS_DENIED means we may not replace it.
+// it was in use, and ERROR_ACCESS_DENIED means we may not replace it. This is
+// a heuristic: a delete-pending target also answers ERROR_ACCESS_DENIED (and
+// fails at once), and a denial that wasn't about the target retries until the
+// deadline.
 bool isAccessDeniedTransient(const FilePath& targetPath)
 {
    std::wstring path = targetPath.getAbsolutePathW();
