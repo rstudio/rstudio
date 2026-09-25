@@ -222,6 +222,22 @@ public class FileSystemItem extends JavaScriptObject
          return "";
    }
 
+   // Like getParentPath(), but a file directly under a root yields that root
+   // ("/" or "C:/") instead of null or a bare drive letter, which names the
+   // drive's current directory. Null for the root itself or a relative name.
+   public final FileSystemItem getContainingDir()
+   {
+      String path = getPath();
+      int lastSlash = path.lastIndexOf('/');
+      if (lastSlash < 0 || path.equals("/"))
+         return null;
+
+      String parent = StringUtil.substring(path, 0, lastSlash);
+      if (parent.isEmpty() || parent.matches("^[A-Za-z]:$"))
+         parent += "/";
+      return FileSystemItem.createDir(parent);
+   }
+
    public final String completePath(String name)
    {
       String path = getPath();

@@ -232,7 +232,7 @@ public class DocTabLayoutPanel
             if (target != null && target.getExtendedFileType() != null && target.getPath() != null)
             {
                final String filePath = target.getPath();
-               final String dirPath = FileSystemItem.createFile(filePath).getParentPathString();
+               final FileSystemItem dir = FileSystemItem.createFile(filePath).getContainingDir();
                menu.addItem(ElementIds.TAB_RENAME_FILE, new MenuItem(constants_.renameMenuItem(), () ->
                {
                   events_.fireEvent(new RenameSourceFileEvent(filePath));
@@ -245,12 +245,12 @@ public class DocTabLayoutPanel
                menu.addItem(ElementIds.TAB_SET_WORKING_DIR, new MenuItem(constants_.setWorkingDirMenuItem(), () ->
                {
                   events_.fireEvent(new SendToConsoleEvent(
-                     "setwd(" + RUtil.asStringLiteral(dirPath) + ")", true));
-                  events_.fireEvent(new DirectoryNavigateEvent(FileSystemItem.createDir(dirPath), false));
+                     "setwd(" + RUtil.asStringLiteral(dir.getPath()) + ")", true));
+                  events_.fireEvent(new DirectoryNavigateEvent(dir, false));
                }));
                menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(constants_.showDocumentDirectoryMenuItem(), () ->
                {
-                  events_.fireEvent(new DirectoryNavigateEvent(FileSystemItem.createDir(dirPath), true));
+                  events_.fireEvent(new DirectoryNavigateEvent(dir, true));
                }));
                menu.addSeparator();
             }

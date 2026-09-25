@@ -4801,7 +4801,7 @@ public class TextEditingTarget implements
    @Handler
    void onShowActiveDocDirInFiles()
    {
-      FileSystemItem dir = FileSystemItem.createFile(docUpdateSentinel_.getPath()).getParentPath();
+      FileSystemItem dir = FileSystemItem.createFile(docUpdateSentinel_.getPath()).getContainingDir();
       events_.fireEvent(new DirectoryNavigateEvent(dir, true));
    }
 

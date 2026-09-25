@@ -220,4 +220,39 @@ public class FileSystemItemTests extends GWTTestCase
       assertEquals("/home/user/dir", resolved.getPath());
       assertTrue(resolved.isDirectory());
    }
+
+   public void testContainingDirOfNestedFile()
+   {
+      FileSystemItem dir = FileSystemItem.createFile("/home/user/file.R").getContainingDir();
+      assertEquals("/home/user", dir.getPath());
+      assertTrue(dir.isDirectory());
+   }
+
+   public void testContainingDirOfHomeAliasedFile()
+   {
+      assertEquals("~", FileSystemItem.createFile("~/file.R").getContainingDir().getPath());
+   }
+
+   public void testContainingDirOfFileAtRoot()
+   {
+      // getParentPath() gives null here; the containing directory is "/"
+      assertNull(FileSystemItem.createFile("/file.R").getParentPath());
+      assertEquals("/", FileSystemItem.createFile("/file.R").getContainingDir().getPath());
+   }
+
+   public void testContainingDirOfFileAtDriveRoot()
+   {
+      // "C:" alone names the drive's current directory, not its root
+      assertEquals("C:/", FileSystemItem.createFile("C:/file.R").getContainingDir().getPath());
+   }
+
+   public void testContainingDirOfRootIsNull()
+   {
+      assertNull(FileSystemItem.createDir("/").getContainingDir());
+   }
+
+   public void testContainingDirOfRelativeNameIsNull()
+   {
+      assertNull(FileSystemItem.createFile("file.R").getContainingDir());
+   }
 }
