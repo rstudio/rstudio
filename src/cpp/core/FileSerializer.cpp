@@ -641,7 +641,9 @@ bool isInUseCode(DWORD code)
 // it was in use, and ERROR_ACCESS_DENIED means we may not replace it. This is
 // a heuristic: a delete-pending target also answers ERROR_ACCESS_DENIED (and
 // fails at once), and a denial that wasn't about the target retries until the
-// deadline.
+// deadline. That includes a target that doesn't exist yet, deliberately: we
+// just created the temporary file in the same directory, so the denial is
+// most likely a scanner holding that file.
 bool isAccessDeniedTransient(const FilePath& targetPath)
 {
    std::wstring path = targetPath.getAbsolutePathW();
