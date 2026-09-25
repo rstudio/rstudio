@@ -270,11 +270,26 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
       LaunchMap::const_iterator pos = pendingLaunches_.find(context);
       if (pos != pendingLaunches_.end())
       {
-         // if the launch is less than one minute old then return success
-         if ( (pos->second.launchTime + boost::posix_time::minutes(1))
-               > microsec_clock::universal_time() )
+         // if the launch is still within its window, or its process is still
+         // alive (a slow-starting session: a duplicate would rebind the same
+         // session socket and fail on the first session's source database
+         // locks), then return success
+         ptime now = microsec_clock::universal_time();
+         if ( (pos->second.launchTime + pendingLaunchWindow_) > now )
          {
-            LOG_DEBUG_MESSAGE("Found existing recent launch < 1 min for: " + context.username + " id: " + context.scope.id());
+            LOG_DEBUG_MESSAGE("Found existing recent launch < " + std::to_string(pendingLaunchWindow_.total_seconds()) +
+                              " secs for: " + context.username + " id: " + context.scope.id());
+
+            launched = false;
+            return Success();
+         }
+         else if (pos->second.pid != -1 &&
+                  (pos->second.launchTime + stalePendingLaunchAge_) > now &&
+                  core::system::isProcessRunning(pos->second.pid))
+         {
+            DLOGF("Found pending launch of live session process {} started {} secs ago for user {} (id: {}) - not relaunching",
+                  pos->second.pid, (now - pos->second.launchTime).total_seconds(),
+                  context.username, context.scope.id());
 
             launched = false;
             return Success();
@@ -431,6 +446,17 @@ Error SessionManager::launchAndTrackSession(
    return Success();
 }
 
+void SessionManager::setPendingLaunchTimeouts(const boost::posix_time::time_duration& launchWindow,
+                                              const boost::posix_time::time_duration& staleAge)
+{
+   LOCK_MUTEX(launchesMutex_)
+   {
+      pendingLaunchWindow_ = launchWindow;
+      stalePendingLaunchAge_ = staleAge;
+   }
+   END_LOCK_MUTEX
+}
+
 void SessionManager::setSessionLaunchFunction(
                            const SessionLaunchFunction& launchFunction)
 {
@@ -462,7 +488,7 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
          // forever, still holding the project and Posit Assistant locks
          // (#18572). keep the entry while its process is alive; if it never
          // becomes reachable, the exit tracker clears it when it dies and
-         // launchSession's one-minute window expires it otherwise. custom
+         // launchSession's stale pending launch age expires it otherwise. custom
          // session launchers never record a pid, so they keep the old
          // clear-on-error behavior.
          if (!success &&
@@ -588,7 +614,7 @@ int SessionManager::cleanStalePendingLaunches()
    int numRemoved = 0;
    while (it != pendingLaunches_.cend())
    {
-      if (now > (it->second.launchTime + boost::posix_time::minutes(3)))
+      if (now > (it->second.launchTime + stalePendingLaunchAge_))
       {
          pendingLaunches_.erase(it++);
          numRemoved++;

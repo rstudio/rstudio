@@ -82,6 +82,9 @@ public:
    // launch was recorded for a different process
    void removePendingLaunchForPid(const core::r_util::SessionContext& context, PidType pid, int exitStatus);
 
+   void setPendingLaunchTimeouts(const boost::posix_time::time_duration& launchWindow,
+                                 const boost::posix_time::time_duration& staleAge);
+
    // set a custom session launcher
    typedef boost::function<core::Error(
                            boost::asio::io_context&,
@@ -125,6 +128,8 @@ private:
    boost::mutex launchesMutex_;
    typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;
    LaunchMap pendingLaunches_;
+   boost::posix_time::time_duration pendingLaunchWindow_ = boost::posix_time::minutes(1);
+   boost::posix_time::time_duration stalePendingLaunchAge_ = boost::posix_time::minutes(3);
 
    // session launch function
    SessionLaunchFunction sessionLaunchFunction_;

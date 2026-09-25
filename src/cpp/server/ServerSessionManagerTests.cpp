@@ -214,6 +214,49 @@ TEST(SessionManagerTest, RequestErrorClearsPendingLaunchWithoutRecordedPid)
    sessionManager().removePendingLaunch(context);
 }
 
+TEST(SessionManagerTest, AgedPendingLaunchIsNotRelaunchedWhileInFlight)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   r_util::SessionContext liveContext("pending-launch-slow-live-process-user");
+   EXPECT_TRUE(attemptLaunch(liveContext));
+   sessionManager().notePendingLaunchPid(liveContext, ::getpid());
+
+   r_util::SessionContext noPidContext("pending-launch-slow-no-pid-user");
+   EXPECT_TRUE(attemptLaunch(noPidContext));
+
+   r_util::SessionContext deadContext("pending-launch-slow-dead-pid-user");
+   EXPECT_TRUE(attemptLaunch(deadContext));
+   sessionManager().notePendingLaunchPid(
+      deadContext, std::numeric_limits<PidType>::max());
+   EXPECT_EQ(3, s_launchCount);
+
+   sessionManager().setPendingLaunchTimeouts(boost::posix_time::seconds(0),
+                                             boost::posix_time::hours(1));
+
+   EXPECT_FALSE(attemptLaunch(liveContext));
+   EXPECT_EQ(3, s_launchCount);
+
+   EXPECT_TRUE(attemptLaunch(noPidContext));
+   EXPECT_EQ(4, s_launchCount);
+
+   EXPECT_TRUE(attemptLaunch(deadContext));
+   EXPECT_EQ(5, s_launchCount);
+
+   sessionManager().setPendingLaunchTimeouts(boost::posix_time::seconds(0),
+                                             boost::posix_time::seconds(0));
+
+   EXPECT_TRUE(attemptLaunch(liveContext));
+   EXPECT_EQ(6, s_launchCount);
+
+   sessionManager().setPendingLaunchTimeouts(boost::posix_time::minutes(1),
+                                             boost::posix_time::minutes(3));
+   sessionManager().removePendingLaunch(liveContext);
+   sessionManager().removePendingLaunch(noPidContext);
+   sessionManager().removePendingLaunch(deadContext);
+}
+
 } // namespace tests
 } // namespace server
 } // namespace rstudio
