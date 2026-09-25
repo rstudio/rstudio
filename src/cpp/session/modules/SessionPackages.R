@@ -1280,8 +1280,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    dlls <- normalizePath(dlls, mustWork = FALSE)
 
    # name package DLLs (<lib>/<pkg>/libs/<dll>.so) by their package; anything
-   # else (e.g. a Python extension loaded through reticulate) keeps its path
-   isPackage <- images %in% dlls
+   # else (e.g. a Python extension loaded through reticulate, or a library
+   # dyn.load()ed directly, as Rcpp::sourceCpp() does) keeps its path
+   isPackage <- images %in% dlls & basename(dirname(images)) == "libs"
    labels <- users$image
    labels[isPackage] <- basename(dirname(dirname(images[isPackage])))
 

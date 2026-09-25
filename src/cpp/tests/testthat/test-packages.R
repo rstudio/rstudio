@@ -339,6 +339,17 @@ test_that(".rs.formatOpenMPRuntimeWarning keeps a long reinstall call on one lin
    expect_true(expected %in% strsplit(text, "\n", fixed = TRUE)[[1]])
 })
 
+test_that(".rs.formatOpenMPRuntimeWarning doesn't treat a dyn.load()ed library as a package", {
+   runtimes <- c("/opt/homebrew/opt/libomp/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
+   image <- "/rtmp/sourceCpp-aarch64-apple-darwin20-1.0.14/sourcecpp_1a2b/sourceCpp_2.so"
+   users <- list(image = image, runtime = runtimes[[1]])
+
+   # getLoadedDLLs() lists it, but it isn't under <lib>/<pkg>/libs/
+   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = image)
+   expect_match(text, paste("linked by:", image), fixed = TRUE)
+   expect_false(grepl("install.packages(", text, fixed = TRUE))
+})
+
 test_that(".rs.formatOpenMPRuntimeWarning gives generic advice when no package links the extra copy", {
    runtimes <- c("/py/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
    users <- list(image = "/py/lib/libtorch_cpu.dylib", runtime = "/py/lib/libomp.dylib")
