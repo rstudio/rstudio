@@ -30,6 +30,7 @@
 
 #include <boost/regex.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <dirent.h>
@@ -443,8 +444,7 @@ public:
    // In container mode the cgroup is shared by every session in the launcher
    // container, so the cgroup usage is a container-wide aggregate, not this
    // session's footprint. In meminfo mode the cgroup usage is deliberately
-   // avoided because it can include reclaimable file cache that doesn't reflect
-   // actual session use. In both of those modes, return this session's own
+   // avoided at the admin's request. In both of those modes, return this session's own
    // process-tree RSS (procfs) so the IDE gauge / "Session memory used" figure
    // reflects the individual session's real usage. getTotalMemoryUsed() reports
    // the container-wide cgroup usage via getCgroupMemoryUsed() so the
@@ -471,26 +471,38 @@ public:
    }
 
    // Reads the cgroup's memory usage (container-wide in container mode,
-   // session-scoped otherwise). Returns an error if the cgroup memory controller
-   // isn't available; callers choose an appropriate fallback (process-tree RSS
-   // for the per-session figure, node /proc/meminfo for the container-wide one).
+   // session-scoped otherwise), excluding reclaimable page cache. Returns an
+   // error if the cgroup memory controller isn't available; callers choose an
+   // appropriate fallback (process-tree RSS for the per-session figure, node
+   // /proc/meminfo for the container-wide one).
+   //
+   // The raw memory.current (v2) / memory.usage_in_bytes (v1) includes page
+   // cache charged to the cgroup. The kernel doesn't reclaim that cache until
+   // the cgroup nears memory.high, so an I/O-heavy session (e.g. grepping a
+   // large NFS tree) will sit at its limit even though its processes use very
+   // little memory. We subtract the file LRU pages so the figure reflects what
+   // the kernel can't reclaim. If memory.stat can't be read, fall back to the
+   // raw usage.
    Error getCgroupMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      Error error;
-      if (!isV2_)
-      {
-         error = getCgroupMemoryStat("memory.usage_in_bytes", pUsedKb);
-      }
-      else
-      {
-         error = getCgroupMemoryStat("memory.current", pUsedKb);
-      }
+      long currentKb = 0;
+      Error error = getCgroupMemoryStat(isV2_ ? "memory.current" : "memory.usage_in_bytes", &currentKb);
+      if (error)
+         return error;
+
+      std::string memoryStat;
+      error = readStringFromFile(path_.completePath("memory.stat"), &memoryStat);
       if (!error)
+         error = computeCgroupMemoryUsedKb(currentKb, memoryStat, isV2_, pUsedKb);
+      if (error)
       {
-         *pProvider = MemoryProviderLinuxCgroups;
+         LOG_DEBUG_MESSAGE("Unable to exclude page cache from cgroup memory usage, using raw usage: " +
+                           error.asString());
+         *pUsedKb = currentKb;
       }
 
-      return error;
+      *pProvider = MemoryProviderLinuxCgroups;
+      return Success();
    }
 
    virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
@@ -1044,6 +1056,43 @@ Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
 void setMemoryUsageMode(MemoryUsageMode mode)
 {
    s_memoryUsageMode = mode;
+}
+
+Error computeCgroupMemoryUsedKb(long currentKb, const std::string& memoryStat, bool isV2, long *pUsedKb)
+{
+   // memory.stat lines look like "active_file 9056256", with values in bytes.
+   // v1 prefixes the hierarchical (self + descendants) totals with "total_",
+   // which is what matches memory.usage_in_bytes.
+   //
+   // Shmem/tmpfs pages are swap-backed and live on the anon LRU, so they're not
+   // in active_file/inactive_file and stay counted. Mlocked file pages are on
+   // the unevictable LRU and also stay counted.
+   const std::string activeKey = isV2 ? "active_file" : "total_active_file";
+   const std::string inactiveKey = isV2 ? "inactive_file" : "total_inactive_file";
+
+   boost::optional<long> activeFile, inactiveFile;
+   std::istringstream stream(memoryStat);
+   std::string key;
+   long value;
+   while (stream >> key >> value)
+   {
+      if (key == activeKey)
+         activeFile = value;
+      else if (key == inactiveKey)
+         inactiveFile = value;
+   }
+
+   if (!activeFile || !inactiveFile)
+   {
+      return systemError(boost::system::errc::protocol_error,
+                         "Missing " + activeKey + " or " + inactiveKey + " in cgroup memory.stat",
+                         ERROR_LOCATION);
+   }
+
+   // memory.current and memory.stat aren't read atomically, so clamp.
+   long reclaimableKb = (*activeFile + *inactiveFile) / 1024;
+   *pUsedKb = std::max(0L, currentKb - reclaimableKb);
+   return Success();
 }
 
 Error setProcessMemoryLimit(long highMemKb, long maxMemKb, uid_t uid, MemoryProvider *pProvider)
