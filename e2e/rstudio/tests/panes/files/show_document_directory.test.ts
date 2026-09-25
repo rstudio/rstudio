@@ -166,6 +166,32 @@ test.describe("Show Document's Directory (#6781)", () => {
     expect(await isCommandEnabled(page, 'renameSourceDoc')).toBe(true);
   });
 
+  test('a first save with an extra column keeps the active column commands', async ({ rstudioPage: page }) => {
+    // Every column refreshes after a first save. An inactive column that
+    // refreshes after the active one hides commands only the active column
+    // shows, such as Publish for a saved R Markdown document.
+    await executeCommand(page, 'newSourceColumn');
+    await expect(page.locator(`${EXTRA_COLUMNS} .ace_editor`)).toHaveCount(1);
+    await page.locator(`#rstudio_Source_pane ${SELECTED_DOC_TAB}`).click();
+    await new ConsolePaneActions(page).executeInConsole(
+      '.rs.api.documentNew(type = "rmarkdown", code = "---\\ntitle: t\\n---\\n")',
+    );
+    await expect(page.locator(`#rstudio_Source_pane ${SELECTED_DOC_TAB}`)).toContainText('Untitled');
+
+    await executeCommand(page, 'saveSourceDoc');
+    const fileName = page.locator('#file_dialog_name_prompt');
+    await expect(fileName).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await fileName.fill(`${sandbox.dir}/showdir_publish.Rmd`);
+    await page.locator('#rstudio_file_accept_save').click();
+    await expect(page.locator(`#rstudio_Source_pane ${SELECTED_DOC_TAB}`)).toContainText(
+      'showdir_publish.Rmd',
+      { timeout: TIMEOUTS.fileOpen },
+    );
+
+    await expect.poll(() => isCommandEnabled(page, COMMAND_ID)).toBe(true);
+    expect(await page.evaluate(() => window.rstudio!.commands.rsconnectDeploy.isVisible())).toBe(true);
+  });
+
   test('works for a document in an extra source column', async ({ rstudioPage: page }) => {
     const name = 'showdir_column';
     const docPath = await seedDocument(page, sandbox.dir, name);
