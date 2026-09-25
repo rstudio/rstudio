@@ -68,7 +68,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String renameMenuItem();
     String copyPathMenuItem();
     String setWorkingDirMenuItem();
-    String showDocumentDirectoryMenuItem();
     String closeMenuItem();
     String closeAllMenuItem();
     String closeOthersMenuItem();

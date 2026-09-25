@@ -248,7 +248,7 @@ public class DocTabLayoutPanel
                      "setwd(" + RUtil.asStringLiteral(dir.getPath()) + ")", true));
                   events_.fireEvent(new DirectoryNavigateEvent(dir, false));
                }));
-               menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(constants_.showDocumentDirectoryMenuItem(), () ->
+               menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(commands_.showActiveDocDirInFiles().getMenuLabel(false), () ->
                {
                   events_.fireEvent(new DirectoryNavigateEvent(dir, true));
                }));

@@ -116,6 +116,7 @@ test.describe("Show Document's Directory (#6781)", () => {
       'rstudio_tab_close_all',
       'rstudio_tab_close_others',
     ]);
+    await expect(page.locator(MENU_SHOW_DIR)).toHaveText("Show Document's Directory");
     await page.locator(MENU_SHOW_DIR).click();
 
     await expectFilesPaneShows(page, name);
