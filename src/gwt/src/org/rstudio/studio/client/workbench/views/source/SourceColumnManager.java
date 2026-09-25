@@ -1358,8 +1358,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // set the extended type of the specified source file
 
       EditingTarget target = findEditor(e.getDocId());
-      if (target != null)
-         target.adaptToExtendedFileType(e.getExtendedType());
+      if (target == null)
+         return;
+
+      String previousType = target.getExtendedFileType();
+      target.adaptToExtendedFileType(e.getExtendedType());
+
+      // The extended type decides some commands (e.g. Publish). It is detected
+      // after every save, so refresh only when it changed.
+      if (!StringUtil.equals(previousType, target.getExtendedFileType()))
+         manageCommands(false);
    }
 
    @Override

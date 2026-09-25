@@ -6,6 +6,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { YES_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
 import { openFile, seedSandboxFile } from '@utils/files';
@@ -213,6 +214,28 @@ test.describe("Show Document's Directory (#6781)", () => {
     await expect(mainTab).toContainText('showdir_retype.qmd', { timeout: TIMEOUTS.fileOpen });
 
     expect(await page.evaluate(() => window.rstudio!.commands.rsconnectDeploy.isVisible())).toBe(true);
+  });
+
+  test('saving an untitled R script as R Markdown offers Publish (#18949)', async ({ rstudioPage: page }) => {
+    // The R Markdown extended type that enables Publish arrives from the
+    // session after the save; the columns must refresh their commands then.
+    await resetSourcePaneState(page);
+    // After the reset closes an extra column (earlier tests), Save stays
+    // disabled for the kept Untitled until its tab is activated.
+    await page.locator(SELECTED_DOC_TAB).click();
+    await executeCommand(page, 'saveSourceDoc');
+    const fileName = page.locator('#file_dialog_name_prompt');
+    await expect(fileName).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await fileName.fill(`${sandbox.dir}/showdir_script.Rmd`);
+    await page.locator('#rstudio_file_accept_save').click();
+    // Confirm Change File Type: R script to R Markdown
+    await page.locator(YES_BTN).click();
+    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('showdir_script.Rmd', {
+      timeout: TIMEOUTS.fileOpen,
+    });
+
+    await expect.poll(() => page.evaluate(() => window.rstudio!.commands.rsconnectDeploy.isVisible()))
+      .toBe(true);
   });
 
   test('works for a document in an extra source column', async ({ rstudioPage: page }) => {
