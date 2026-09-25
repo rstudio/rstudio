@@ -77,6 +77,15 @@ function otherR(current: string, orthogonal: boolean): InstalledR | undefined {
     .sort((a, b) => compareVersions(b.version, a.version))[0];
 }
 
+// The version of R that an R process started by the session runs (as R CMD
+// INSTALL or renv::restore() would start one).
+const CHILD_R_VERSION =
+  'tail(system2(file.path(R.home("bin"), if (.Platform$OS.type == "windows") "R.exe" else "R"), ' +
+  'c("--vanilla", "-s", "-e", shQuote("cat(format(getRversion()))")), stdout = TRUE), 1L)';
+
+// The R executable the session runs, to switch back to afterward.
+const SESSION_R = 'file.path(R.home("bin"), if (.Platform$OS.type == "windows") "R.exe" else "R")';
+
 // Open a new project whose renv lockfile asks for the given version of R.
 async function openProjectRequestingR(page: Page, dir: string, version: string): Promise<void> {
   const rprojPath = `${dir}/${dir.split("/").pop()}.Rproj`;
@@ -151,10 +160,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     const switchLink = page.getByText(`Switch to R ${target!.version}`, { exact: true });
     await expect(switchLink).toBeVisible();
 
-    originalR = await captureResult(
-      page,
-      'file.path(R.home("bin"), if (.Platform$OS.type == "windows") "R.exe" else "R")',
-    );
+    originalR ||= await captureResult(page, SESSION_R);
 
     await switchLink.click();
     await waitForSessionRestart(page);
@@ -167,6 +173,9 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     // check itself runs in the background, with no signal when it's done)
     const check = await captureResult(page, '.rs.projectRVersionCheck(getwd(), "", "3.6.0", FALSE, FALSE)$type');
     expect(check).toBe("none");
+
+    // R processes the session starts run that R as well
+    expect(await captureResult(page, CHILD_R_VERSION)).toBe(target!.version);
   });
 
   test("asks before updating an R that would run the default version", async ({
@@ -194,5 +203,37 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     await expect(switchLink).toBeVisible();
     expect(isOrthogonal(target!.binary)).toBe(false);
     expect((await getVersion(page)).r).toBe(current);
+  });
+
+  // Updating an installation changes it for every user of the machine, so
+  // this runs only when asked to.
+  test("updates an R that would run the default version when asked, then switches", async ({
+    rstudioPage: page,
+  }) => {
+    test.setTimeout(180000);
+    test.skip(
+      !process.env.PW_ALLOW_R_FRAMEWORK_UPDATE,
+      "updates a system-wide installation of R; set PW_ALLOW_R_FRAMEWORK_UPDATE=1 to allow",
+    );
+
+    const current = (await getVersion(page)).r;
+    const target = otherR(current, false);
+    test.skip(!target, "needs a second macOS framework version of R that isn't orthogonal");
+
+    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-orthogonal`, target!.version);
+
+    const switchLink = page.getByText(`Switch to R ${target!.version}`, { exact: true });
+    await expect(switchLink).toBeVisible({ timeout: 60000 });
+
+    originalR ||= await captureResult(page, SESSION_R);
+
+    await switchLink.click();
+    await page.locator(YES_BTN).click();
+    await waitForSessionRestart(page);
+
+    // the installation now runs as itself, in the session and its children
+    expect(isOrthogonal(target!.binary)).toBe(true);
+    await expect.poll(async () => (await getVersion(page)).r).toBe(target!.version);
+    expect(await captureResult(page, CHILD_R_VERSION)).toBe(target!.version);
   });
 });
