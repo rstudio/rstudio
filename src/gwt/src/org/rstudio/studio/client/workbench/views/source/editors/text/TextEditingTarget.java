@@ -187,6 +187,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Comm
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FilePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
@@ -427,7 +428,7 @@ public class TextEditingTarget implements
          suppressFileLockError_ = suppressFileLockError;
          executeOnSuccess_ = executeOnSuccess;
          executeOnSilentFailure_ = executeOnSilentFailure;
-         hadPath_ = docUpdateSentinel_.getPath() != null;
+         previousPath_ = docUpdateSentinel_.getPath();
       }
 
       public void onProgress(String message)
@@ -494,12 +495,11 @@ public class TextEditingTarget implements
                view_.getSourceOnSave().setValue(false, true);
             }
          }
-         else if (file_ != null && !hadPath_)
+         else if (file_ != null && !StringUtil.equals(previousPath_, file_.getPath()))
          {
-            // A first save gives the document a path, which enables commands
-            // such as Rename even when the file type is unchanged; this event
-            // makes the source columns refresh their commands.
-            events_.fireEvent(new FileTypeChangedEvent());
+            // A new path can change the commands (Rename needs a path; the
+            // VCS commands need it inside the project) when the type doesn't.
+            events_.fireEvent(new FilePathChangedEvent());
          }
 
          if (executeOnSuccess_ != null)
@@ -589,7 +589,7 @@ public class TextEditingTarget implements
       private final boolean suppressFileLockError_;
       private final Command executeOnSuccess_;
       private final Command executeOnSilentFailure_;
-      private final boolean hadPath_;
+      private final String previousPath_;
    }
 
    @Inject

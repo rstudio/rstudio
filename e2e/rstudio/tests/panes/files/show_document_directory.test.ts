@@ -15,9 +15,12 @@ import {
   clearPref,
   executeCommand,
   isCommandEnabled,
+  openProject,
   resetSourcePaneState,
   setPref,
 } from '@utils/commands';
+import { heredoc } from '@utils/heredoc';
+import { closeProjectIfOpen } from '@utils/project';
 
 const FILES_TAB = '#rstudio_workbench_tab_files';
 const FILES_PANEL = '#rstudio_workbench_panel_files';
@@ -318,5 +321,55 @@ test.describe("Show Document's Directory (#6781)", () => {
       await satellite?.close().catch(() => {});
       await clearPref(page, 'sync_files_pane_working_dir');
     }
+  });
+});
+
+test.describe.serial("Show Document's Directory: Save As into a project", () => {
+  const sandbox = useSuiteSandbox();
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    await closeProjectIfOpen(page);
+  });
+
+  test.afterAll(async ({ rstudioPage: page }) => {
+    await resetSourcePaneState(page).catch(() => {});
+    await closeProjectIfOpen(page).catch((err) => {
+      console.warn(`[show_document_directory] project close failed: ${(err as Error).message}`);
+    });
+  });
+
+  test('Save As into a version-controlled project enables the VCS commands', async ({ rstudioPage: page }) => {
+    // The VCS commands depend on whether the path is inside the project, so a
+    // Save As that keeps the file type must still refresh the commands.
+    test.setTimeout(180_000);
+    const projectDir = `${sandbox.dir}/showdir_vcs`.replace(/\\/g, '/');
+    const rprojPath = `${projectDir}/showdir_vcs.Rproj`;
+    const consoleActions = new ConsolePaneActions(page);
+    // The repo must exist before the project opens; RStudio decides whether a
+    // project is version controlled at session start.
+    await consoleActions.executeInConsole(heredoc`
+      {
+        stopifnot(dir.create(${rPathLiteral(projectDir)}, recursive = TRUE))
+        writeLines("Version: 1.0", ${rPathLiteral(rprojPath)})
+        stopifnot(system2("git", c("-C", shQuote(${rPathLiteral(projectDir)}), "init", "--quiet")) == 0)
+      }
+    `);
+    await openProject(page, rprojPath);
+
+    const outside = await seedSandboxFile(page, sandbox.dir, 'showdir_outside.R', 'x <- 1\n');
+    await openFile(page, outside);
+    await expect.poll(() => isCommandEnabled(page, 'saveSourceDocAs')).toBe(true);
+    expect(await isCommandEnabled(page, 'vcsFileLog')).toBe(false);
+
+    await executeCommand(page, 'saveSourceDocAs');
+    const fileName = page.locator('#file_dialog_name_prompt');
+    await expect(fileName).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await fileName.fill(`${projectDir}/showdir_inside.R`);
+    await page.locator('#rstudio_file_accept_save').click();
+    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('showdir_inside.R', {
+      timeout: TIMEOUTS.fileOpen,
+    });
+
+    await expect.poll(() => isCommandEnabled(page, 'vcsFileLog')).toBe(true);
   });
 });
