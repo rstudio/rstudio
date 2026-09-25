@@ -189,7 +189,8 @@ private:
          return;
       }
 
-      archivePath_ = module_context::tempFile("rig-", url_.find(".zip") != std::string::npos ? "zip" : "tar.gz").getAbsolutePath();
+      std::string extension = url_.find(".zip") != std::string::npos ? "zip" : "tar.gz";
+      archivePath_ = module_context::tempFile("rig-", extension).getAbsolutePath();
       std::vector<std::string> args = { "-fSL", "--retry", "3", "-o", archivePath_, url_ };
       runProgram(curl.getAbsolutePath(), args, callback);
    }
@@ -227,7 +228,12 @@ private:
          return error;
 
       if (expected.empty())
-         return systemError(boost::system::errc::operation_not_permitted, "no checksum is known for " + url_, ERROR_LOCATION);
+      {
+         return systemError(
+                  boost::system::errc::operation_not_permitted,
+                  "no checksum is known for " + url_,
+                  ERROR_LOCATION);
+      }
 
       std::string contents, actual;
       error = readStringFromFile(archive, &contents);
@@ -239,28 +245,22 @@ private:
       if (!boost::algorithm::iequals(actual, expected))
       {
          log("SHA-256 mismatch: expected " + expected + ", got " + actual + "\n");
-         return systemError(boost::system::errc::illegal_byte_sequence, "the downloaded rig archive failed verification", ERROR_LOCATION);
+         return systemError(
+                  boost::system::errc::illegal_byte_sequence,
+                  "the downloaded rig archive failed verification",
+                  ERROR_LOCATION);
       }
 
       return Success();
    }
 
-   // Step: have rig install the requested version of R.
+   // Step: have rig install the requested version of R. Installing in
+   // admin mode needs sudo, which can't be answered from here, so R is
+   // always installed in user mode (into the home directory), even when rig
+   // itself is configured for admin mode.
    void installR(StepCallback callback)
    {
-      std::vector<std::string> modeArgs;
-      Error error = r::exec::RFunction(".rs.rig.modeArgs")
-            .addParam("rig", rigPath_)
-            .call(&modeArgs);
-
-      if (error)
-      {
-         callback(false, error.getSummary());
-         return;
-      }
-
-      std::vector<std::string> args = { "add", version_ };
-      args.insert(args.end(), modeArgs.begin(), modeArgs.end());
+      std::vector<std::string> args = { "add", version_, "--user" };
       runProgram(rigPath_, args, callback);
    }
 

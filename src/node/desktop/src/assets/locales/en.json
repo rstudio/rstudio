@@ -112,7 +112,11 @@
     "unimplemented": "Unimplemented",
     "callbackNyiLowercase": "{{ipcName}} callback NYI",
     "rExecutableMissing": "{{path}} does not exist",
-    "rExecutableFailed": "{{path}} could not be run: {{error}}"
+    "rExecutableFailed": "{{path}} could not be run: {{error}}",
+    "rExecutableNotOrthogonal": "{{path}} is set up to run the default version of R rather than itself",
+    "rUpdatePrompt": "RStudio wants to update R {{version}} so it can run alongside other versions of R.",
+    "rUpdateCancelled": "the update of R was cancelled",
+    "rUpdateFailed": "unable to update {{path}}: {{error}}"
   },
   "mainTs": {
     "unhandledException": "Unhandled Exception"

@@ -32,7 +32,7 @@ import { DesktopActivation } from './activation-overlay';
 import { appState } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { buildInfo } from './build-info';
-import { PendingQuit } from './gwt-callback';
+import { GwtCallback, PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -236,6 +236,9 @@ export class SessionLauncher {
 
   // names this instance's development copies of the session binary
   private devSessionTag = '';
+
+  // an R switched to on Windows, stored once a session has started with it
+  private switchedRToStore = '';
 
   constructor(
     private sessionPath: FilePath,
@@ -684,7 +687,9 @@ export class SessionLauncher {
    *
    * On Windows, the choice is also stored as the Choose R dialog stores one,
    * so it holds for later launches too, and can be changed back the same
-   * way. Elsewhere, RStudio has no stored choice of R to change back, so the
+   * way. It is stored only once a session has started with it: an R that
+   * runs but can't host a session would otherwise fail every later launch.
+   * Elsewhere, RStudio has no stored choice of R to change back, so the
    * switch lasts until RStudio quits.
    */
   applyPendingRVersion(): void {
@@ -701,12 +706,23 @@ export class SessionLauncher {
     }
 
     if (process.platform === 'win32') {
-      // the default installations take precedence over a stored path
-      const options = ElectronDesktopOptions();
-      options.setUseDefault32BitR(false);
-      options.setUseDefault64BitR(false);
-      options.setRExecutablePath(rPath);
+      this.switchedRToStore = rPath;
+      appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => this.storeSwitchedR(rPath));
     }
+  }
+
+  private storeSwitchedR(rPath: string): void {
+    // a later switch supersedes this one
+    if (this.switchedRToStore !== rPath) {
+      return;
+    }
+    this.switchedRToStore = '';
+
+    // the default installations take precedence over a stored path
+    const options = ElectronDesktopOptions();
+    options.setUseDefault32BitR(false);
+    options.setUseDefault64BitR(false);
+    options.setRExecutablePath(rPath);
   }
 
   onReloadFrameForNextSession(): void {

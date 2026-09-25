@@ -91,6 +91,7 @@ public class WarningBar extends Composite
       moreButton_.setVisible(false);
       moreButton_.setText(constants_.manageLicenseText());
       actionLink_.setVisible(false);
+      actionLink_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       // registered once, as each setClickHandler call adds another handler
       actionLink_.setClickHandler(() ->
       {

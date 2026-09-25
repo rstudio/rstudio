@@ -125,7 +125,15 @@ public class RenvRVersionManager
 
       if (data.success && data.installed != null)
       {
-         switchToR(data.installed);
+         // the offer stays up should the switch not go ahead
+         RVersionInstall installed = data.installed;
+         globalDisplay_.showWarningBar(
+               false,
+               constants_.rInstalled(escape(installed.version)),
+               constants_.switchToRVersion(installed.version),
+               () -> switchToR(installed));
+
+         switchToR(installed);
       }
       else
       {
@@ -179,13 +187,40 @@ public class RenvRVersionManager
       });
    }
 
-   // Restart the session with the given R. Once the quit is going ahead, the
-   // desktop checks that the R runs and holds on to it for the relaunch; a
-   // quit that then fails clears it again.
+   // Restart the session with the given R. A macOS framework version that
+   // would run the default version of R instead of itself is updated first,
+   // with the user's consent.
    private void switchToR(RVersionInstall installed)
    {
-      globalDisplay_.hideWarningBar();
+      if (installed.orthogonal)
+      {
+         restartWithR(installed);
+         return;
+      }
 
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION,
+            constants_.updateRCaption(),
+            constants_.updateRMessage(installed.version),
+            () ->
+            {
+               Desktop.getFrame().makeROrthogonal(installed.home, error ->
+               {
+                  if (StringUtil.isNullOrEmpty(error))
+                     restartWithR(installed);
+                  else
+                     onSwitchFailed(installed, error);
+               });
+            },
+            true);
+   }
+
+   // Once the quit is going ahead, the desktop checks that the R runs and
+   // holds on to it for the relaunch; a quit that then fails clears it again.
+   // The warning bar (and its offer) stays up until then, as the user can
+   // still back out of the quit.
+   private void restartWithR(RVersionInstall installed)
+   {
       String projectFile = session_.getSessionInfo().getActiveProjectFile();
       RVersionSpec spec = RVersionSpec.create(installed.version, installed.home, "");
 
@@ -195,12 +230,11 @@ public class RenvRVersionManager
          {
             if (!StringUtil.isNullOrEmpty(error))
             {
-               globalDisplay_.showWarningBar(
-                     true,
-                     constants_.rSwitchFailed(escape(installed.version), escape(error)));
+               onSwitchFailed(installed, error);
                return;
             }
 
+            globalDisplay_.hideWarningBar();
             quit_.performQuit(
                   null,
                   constants_.switchingRVersionProgress(installed.version),
@@ -209,6 +243,15 @@ public class RenvRVersionManager
                   spec);
          });
       });
+   }
+
+   private void onSwitchFailed(RVersionInstall installed, String error)
+   {
+      globalDisplay_.showWarningBar(
+            true,
+            constants_.rSwitchFailed(escape(installed.version), escape(error)),
+            constants_.switchToRVersion(installed.version),
+            () -> switchToR(installed));
    }
 
    private static String escape(String text)

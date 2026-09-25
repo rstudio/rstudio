@@ -116,6 +116,11 @@ test_that("the architectures of an R build are read from libR", {
    expect_identical(.rs.rInstallations.architectures(file.path(root, "x86_64")), "x86_64")
    expect_identical(.rs.rInstallations.architectures(file.path(root, "universal")), c("x86_64", "arm64"))
    expect_identical(.rs.rInstallations.architectures(file.path(root, "text")), character())
+
+   # a universal image whose table is cut short
+   dir.create(file.path(root, "truncated", "lib"), recursive = TRUE)
+   writeBin(headers$universal[1:10], file.path(root, "truncated", "lib", "libR.dylib"))
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "truncated")), character())
    expect_identical(.rs.rInstallations.architectures(file.path(root, "missing")), character())
 
    # a build for the preferred architecture wins over an emulated one
@@ -294,4 +299,60 @@ test_that("the home of a macOS framework install is derived from its path", {
    # a missing binary elsewhere has no known home
    expect_identical(.rs.rig.rHome("/opt/R/none/bin/R"), "")
    
+})
+
+test_that("macOS framework versions that run the default R are recognized", {
+
+   root <- tempfile("r-framework-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   home <- file.path(root, "R.framework", "Versions", "4.4-arm64", "Resources")
+   dir.create(file.path(home, "bin"), recursive = TRUE)
+
+   # as installed by CRAN: the launcher names the framework's shared home
+   writeLines(
+      c("#!/bin/sh", "R_HOME_DIR=/Library/Frameworks/R.framework/Resources"),
+      file.path(home, "bin", "R")
+   )
+   expect_false(.rs.rInstallations.isOrthogonal(home))
+
+   # as rewritten by 'rig system make-orthogonal'
+   writeLines(
+      c("#!/bin/sh", "R_HOME_DIR=/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources"),
+      file.path(home, "bin", "R")
+   )
+   expect_true(.rs.rInstallations.isOrthogonal(home))
+
+   # other installations are unaffected
+   expect_true(.rs.rInstallations.isOrthogonal("/opt/R/4.4.1/lib/R"))
+
+})
+
+test_that("rig older than the pinned release is passed over", {
+
+   skip_on_os("windows")
+
+   dir <- tempfile("rig-bin-")
+   dir.create(dir)
+   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+   rig <- file.path(dir, "rig")
+   writeLines(c("#!/bin/sh", "echo 'RIG -- The R Installation Manager 0.9.1'"), rig)
+   Sys.chmod(rig, "0755")
+   expect_equal(.rs.rig.version(rig), package_version("0.9.1"))
+
+   writeLines(c("#!/bin/sh", "echo 'RIG -- The R Installation Manager 0.10.2'"), rig)
+   expect_equal(.rs.rig.version(rig), package_version("0.10.2"))
+
+   writeLines(c("#!/bin/sh", "echo 'not rig'"), rig)
+   expect_null(.rs.rig.version(rig))
+
+})
+
+test_that("the machine architecture is reported as is where it can't differ", {
+
+   expect_identical(.rs.rig.machine("arm64"), "arm64")
+   if (!.rs.platform.isMacos)
+      expect_identical(.rs.rig.machine("x86_64"), "x86_64")
+
 })

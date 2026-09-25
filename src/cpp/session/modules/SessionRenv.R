@@ -258,7 +258,11 @@
 #' none (or something other than a version number).
 .rs.addFunction("renv.lockfileRVersion", function(lockfile)
 {
-   version <- lockfile[["R"]][["Version"]]
+   r <- lockfile[["R"]]
+   if (!is.list(r))
+      return("")
+
+   version <- r[["Version"]]
    if (.rs.rVersionIsValid(version)) version else ""
 })
 
@@ -330,8 +334,23 @@
       return(list(type = .rs.scalar(if (restore) "restore" else "none")))
    }
 
-   # an installed match is what would run, so its version decides support
-   installed <- if (findInstalled) .rs.findInstalledRVersion(requested)
+   # an installed match is what would run, so its version decides support;
+   # failing to look for one still leaves the mismatch worth reporting
+   installed <- NULL
+   if (findInstalled)
+   {
+      installed <- .rs.tryCatch(.rs.findInstalledRVersion(requested))
+      if (inherits(installed, "error"))
+      {
+         .rs.logWarningMessage(
+            "error looking for an installation of R %s: %s",
+            requested,
+            conditionMessage(installed)
+         )
+         installed <- NULL
+      }
+   }
+
    version <- if (is.null(installed)) requested else as.character(installed$version)
 
    list(

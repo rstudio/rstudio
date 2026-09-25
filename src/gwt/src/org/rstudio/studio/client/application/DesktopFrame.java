@@ -160,6 +160,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    // callback receives an error message when that R can't be used, and ""
    // once it is ready for the restart
    void setPendingRVersion(String rExecutablePath, CommandWithArg<String> callback);
+
+   // make the macOS framework version of R with the given home run as itself
+   // rather than as the framework's default version; the callback receives an
+   // error message on failure, and "" otherwise
+   void makeROrthogonal(String rHome, CommandWithArg<String> callback);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);

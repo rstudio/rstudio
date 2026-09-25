@@ -42,9 +42,16 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
-import { detectREnvironment, findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
+import {
+  detectREnvironmentAsync,
+  findDefault32Bit,
+  findDefault64Bit,
+  findRInstallationsWin32,
+  frameworkVersionHome,
+} from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
+import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
 import {
   defaultFonts,
@@ -787,8 +794,12 @@ export class GwtCallback extends EventEmitter {
       this.setPendingQuit(pendingQuit);
     });
 
-    ipcMain.handle('desktop_set_pending_r_version', (event, rExecutablePath: string) => {
+    ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
       return this.setPendingRVersion(rExecutablePath);
+    });
+
+    ipcMain.handle('desktop_make_r_orthogonal', async (event, rHome: string) => {
+      return this.makeROrthogonal(rHome);
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
@@ -1316,9 +1327,11 @@ export class GwtCallback extends EventEmitter {
 
   /**
    * Hold on to the R executable the next session should use, after checking
-   * that it runs. Returns an error message when it doesn't, and '' otherwise.
+   * that it runs as itself. Resolves to an error message when it doesn't,
+   * and '' otherwise; '' tells the client the R is ready, so a failure
+   * always says something.
    */
-  setPendingRVersion(rExecutablePath: string): string {
+  async setPendingRVersion(rExecutablePath: string): Promise<string> {
     // sessions launched from bin\R.exe fail to load on Windows; use the
     // architecture-specific executable as the Choose R dialog does
     const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
@@ -1326,24 +1339,64 @@ export class GwtCallback extends EventEmitter {
     // the client escapes the message for display itself
     const interpolation = { escapeValue: false };
 
-    let message: string | null = null;
-    if (!existsSync(rPath)) {
-      message = i18next.t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation });
-    } else {
-      const [, error] = detectREnvironment(rPath);
+    try {
+      if (!existsSync(rPath)) {
+        return i18next.t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation }) || rPath;
+      }
+
+      // a framework version that isn't orthogonal would run the default R
+      const home = frameworkVersionHome(rPath);
+      const version = home === null ? null : frameworkVersion(home);
+      if (version !== null && !isOrthogonal(version)) {
+        return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
+      }
+
+      // queried in the background: R can take seconds to start
+      const [, error] = await detectREnvironmentAsync(rPath);
       if (error) {
         logger().logError(error);
-        message = i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation });
+        return (
+          i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
+        );
       }
-    }
-
-    // '' tells the client the R is ready, so a failure always says something
-    if (message !== null) {
-      return message || rPath;
+    } catch (error: unknown) {
+      logger().logError(error);
+      return safeError(error).message || rPath;
     }
 
     this.pendingRVersion = rPath;
     return '';
+  }
+
+  /**
+   * Make the macOS framework version of R with the given home orthogonal, so
+   * that it runs as itself rather than as the framework's default version.
+   * Resolves to an error message on failure, and '' otherwise.
+   */
+  async makeROrthogonal(rHome: string): Promise<string> {
+    const interpolation = { escapeValue: false };
+
+    const version = frameworkVersion(rHome);
+    if (version === null) {
+      return (
+        i18next.t('gwtCallbackTs.rUpdateFailed', { path: rHome, error: 'not a framework version', interpolation }) ||
+        rHome
+      );
+    }
+
+    try {
+      const prompt = i18next.t('gwtCallbackTs.rUpdatePrompt', { version: version.name, interpolation });
+      await makeOrthogonal(version, prompt);
+      return '';
+    } catch (error: unknown) {
+      if (error instanceof AuthorizationCancelledError) {
+        return i18next.t('gwtCallbackTs.rUpdateCancelled') || error.message;
+      }
+
+      logger().logError(error);
+      const message = safeError(error).message;
+      return i18next.t('gwtCallbackTs.rUpdateFailed', { path: rHome, error: message, interpolation }) || message;
+    }
   }
 
   collectPendingRVersion(): string {

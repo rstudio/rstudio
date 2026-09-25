@@ -1,10 +1,14 @@
 import { test, expect } from "@fixtures/rstudio.fixture";
 import { executeInConsole, waitForConsoleIdle } from "@pages/console_pane.page";
-import { waitForSessionRestart } from "@utils/project";
+import { NO_BTN, YES_BTN } from "@pages/modals.page";
+import { closeProjectIfOpen, waitForSessionRestart } from "@utils/project";
 import { getVersion, openProject } from "@utils/commands";
 import { useSuiteSandbox } from "@utils/sandbox";
 import { rStringLiteral } from "@utils/r";
+import { captureResult } from "@utils/terminal";
 import { execFileSync } from "child_process";
+import { readFileSync } from "fs";
+import type { Page } from "playwright";
 
 const PROJECT_MENU = "#rstudio_project_menubutton_toolbar";
 
@@ -49,42 +53,94 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+// Whether an installation runs as itself when it isn't the default: false for
+// a macOS framework version whose launcher still names the framework's shared
+// home (see src/node/desktop/src/main/r-framework.ts), which RStudio offers
+// to update before switching to it.
+function isOrthogonal(binary: string): boolean {
+  if (!/\/R\.framework\/Versions\/[^/]+\/Resources\/bin\/R$/.test(binary))
+    return true;
+
+  try {
+    return !readFileSync(binary, "utf-8").includes("R.framework/Resources");
+  } catch {
+    return true;
+  }
+}
+
+// The newest installed R from a major.minor series other than the current
+// one, among those that do (or don't) run as themselves.
+function otherR(current: string, orthogonal: boolean): InstalledR | undefined {
+  return installedRVersions()
+    .filter((entry) => majorMinor(entry.version) !== majorMinor(current))
+    .filter((entry) => isOrthogonal(entry.binary) === orthogonal)
+    .sort((a, b) => compareVersions(b.version, a.version))[0];
+}
+
+// Open a new project whose renv lockfile asks for the given version of R.
+async function openProjectRequestingR(page: Page, dir: string, version: string): Promise<void> {
+  const rprojPath = `${dir}/${dir.split("/").pop()}.Rproj`;
+  const lockfile = JSON.stringify({
+    R: { Version: version, Repositories: [] },
+    Packages: {},
+  });
+  await executeInConsole(
+    page,
+    `{ dir.create(${rStringLiteral(dir)}); ` +
+      `writeLines(c("Version: 1.0", "", "RestoreWorkspace: Default", "SaveWorkspace: Default"), ${rStringLiteral(rprojPath)}); ` +
+      `writeLines(${rStringLiteral(lockfile)}, ${rStringLiteral(`${dir}/renv.lock`)}) }`,
+  );
+  await waitForConsoleIdle(page);
+
+  await openProject(page, rprojPath);
+}
+
 // A project whose renv lockfile records a different (installed) version of R
 // gets a warning bar offering to switch; taking the offer restarts the
-// session with that R. Needs rig and a second R on the machine, so the test
-// skips elsewhere. Desktop only: switching R relaunches the session process,
+// session with that R. Needs rig and a second R on the machine, so the tests
+// skip elsewhere. Desktop only: switching R relaunches the session process,
 // which only the desktop can do.
 test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
   const sandbox = useSuiteSandbox();
+
+  // the R this worker's RStudio started with, once a test has switched away
+  let originalR = "";
+
+  // The RStudio instance is shared by later tests in the worker, and a
+  // switch lasts until it quits; switch back as the project closes.
+  test.afterAll(async ({ rstudioPage: page }) => {
+    if (originalR) {
+      const error = await page.evaluate(
+        (rPath) =>
+          new Promise<string>((resolve) => {
+            const desktop = (window as unknown as {
+              desktop: { setPendingRVersion(rPath: string, callback: (error: string) => void): void };
+            }).desktop;
+            desktop.setPendingRVersion(rPath, resolve);
+          }),
+        originalR,
+      );
+      if (error)
+        console.warn(`[renv_r_version_switch] unable to switch back to ${originalR}: ${error}`);
+    }
+
+    try {
+      await closeProjectIfOpen(page);
+    } catch (err) {
+      console.warn("[renv_r_version_switch] afterAll closeProjectIfOpen failed:", err);
+    }
+  });
 
   test("offers to switch to the R version recorded in the lockfile", async ({
     rstudioPage: page,
   }) => {
     test.setTimeout(180000);
 
-    // the newest installed R from another major.minor series
     const current = (await getVersion(page)).r;
-    const target = installedRVersions()
-      .filter((entry) => majorMinor(entry.version) !== majorMinor(current))
-      .sort((a, b) => compareVersions(b.version, a.version))[0];
-    test.skip(!target, "needs rig and a second installed R version");
+    const target = otherR(current, true);
+    test.skip(!target, "needs rig and a second installed R version that runs as itself");
 
-    // set up a project with a lockfile asking for the other R
-    const projectDir = `${sandbox.dir.replace(/\\/g, "/")}/renv-r-switch`;
-    const rprojPath = `${projectDir}/renv-r-switch.Rproj`;
-    const lockfile = JSON.stringify({
-      R: { Version: target!.version, Repositories: [] },
-      Packages: {},
-    });
-    await executeInConsole(
-      page,
-      `{ dir.create(${rStringLiteral(projectDir)}); ` +
-        `writeLines(c("Version: 1.0", "", "RestoreWorkspace: Default", "SaveWorkspace: Default"), ${rStringLiteral(rprojPath)}); ` +
-        `writeLines(${rStringLiteral(lockfile)}, ${rStringLiteral(`${projectDir}/renv.lock`)}) }`,
-    );
-    await waitForConsoleIdle(page);
-
-    await openProject(page, rprojPath);
+    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-switch`, target!.version);
 
     // the warning bar names both versions and offers the switch
     await expect(
@@ -95,6 +151,11 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     const switchLink = page.getByText(`Switch to R ${target!.version}`, { exact: true });
     await expect(switchLink).toBeVisible();
 
+    originalR = await captureResult(
+      page,
+      'file.path(R.home("bin"), if (.Platform$OS.type == "windows") "R.exe" else "R")',
+    );
+
     await switchLink.click();
     await waitForSessionRestart(page);
 
@@ -102,7 +163,36 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     await expect(page.locator(PROJECT_MENU)).toContainText("renv-r-switch", { timeout: 30000 });
     await expect.poll(async () => (await getVersion(page)).r).toBe(target!.version);
 
-    // no mismatch is reported once the versions agree
-    await expect(page.getByText(`Switch to R`)).toHaveCount(0);
+    // and the session finds nothing more to report (asked directly: the
+    // check itself runs in the background, with no signal when it's done)
+    const check = await captureResult(page, '.rs.projectRVersionCheck(getwd(), "", "3.6.0", FALSE, FALSE)$type');
+    expect(check).toBe("none");
+  });
+
+  test("asks before updating an R that would run the default version", async ({
+    rstudioPage: page,
+  }) => {
+    test.setTimeout(180000);
+
+    const current = (await getVersion(page)).r;
+    const target = otherR(current, false);
+    test.skip(!target, "needs a second macOS framework version of R that isn't orthogonal");
+
+    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-update`, target!.version);
+
+    const switchLink = page.getByText(`Switch to R ${target!.version}`, { exact: true });
+    await expect(switchLink).toBeVisible({ timeout: 60000 });
+    await switchLink.click();
+
+    // the update is explained, and declining it leaves the installation and
+    // the session as they were, with the offer still up
+    await expect(page.getByText("This changes the installation for all users of this Mac", { exact: false })).toBeVisible();
+    await expect(page.locator(YES_BTN)).toBeVisible();
+    await page.locator(NO_BTN).click();
+
+    await expect(page.locator(NO_BTN)).toHaveCount(0);
+    await expect(switchLink).toBeVisible();
+    expect(isOrthogonal(target!.binary)).toBe(false);
+    expect((await getVersion(page)).r).toBe(current);
   });
 });

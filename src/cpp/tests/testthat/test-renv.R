@@ -66,6 +66,10 @@ test_that("the R version is read from the project's lockfile", {
    writeLines('{"R": {"Version": "<img src=x onerror=alert(1)>"}, "Packages": {}}', lockfile)
    expect_identical(.rs.renv.lockfileRVersion(.rs.renv.readLockfile(project)), "")
    
+   # an R entry that isn't an object
+   writeLines('{"R": "4.4.1", "Packages": {}}', lockfile)
+   expect_identical(.rs.renv.lockfileRVersion(.rs.renv.readLockfile(project)), "")
+   
    # a malformed lockfile
    writeLines('{"R": {"Version": ', lockfile)
    expect_null(.rs.renv.readLockfile(project))

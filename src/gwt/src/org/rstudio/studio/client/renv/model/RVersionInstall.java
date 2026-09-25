@@ -33,4 +33,8 @@ public class RVersionInstall
 
    // R's home directory (as reported by 'R RHOME')
    public String home;
+
+   // false for a macOS framework version that would run the framework's
+   // default version of R instead of itself (see r-framework.ts)
+   public boolean orthogonal;
 }

@@ -16,6 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
+import { EventEmitter } from 'events';
 import { mkdtempSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -29,6 +30,7 @@ import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { MainWindow } from '../../../src/main/main-window';
+import { GwtCallback } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
 import * as DesktopOptions from '../../../src/main/preferences/electron-desktop-options';
 import { DesktopOptionsImpl } from '../../../src/main/preferences/electron-desktop-options';
@@ -200,15 +202,21 @@ describe('SessionLauncher', () => {
       assert.isFalse(options.setRExecutablePath.called);
     });
 
-    it('stores the switch as the chosen R on Windows', function () {
+    it('stores the switch as the chosen R on Windows once a session starts with it', function () {
       if (process.platform !== 'win32') {
         this.skip();
       }
+
+      const gwtCallback = new EventEmitter();
+      appState().gwtCallback = gwtCallback as unknown as GwtCallback;
 
       sinon.stub(DetectR, 'prepareEnvironment').returns(null);
       const { launcher, options } = launcherWithPendingR('C:/R/R-4.4.1/bin/x64/R.exe');
 
       launcher.applyPendingRVersion();
+      assert.isFalse(options.setRExecutablePath.called);
+
+      gwtCallback.emit(GwtCallback.WORKBENCH_INITIALIZED);
 
       // the default installations would otherwise win over the stored path
       assert.isTrue(options.setUseDefault32BitR.calledOnceWithExactly(false));

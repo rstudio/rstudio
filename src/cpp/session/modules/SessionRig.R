@@ -77,20 +77,64 @@
    paths[nzchar(paths)]
 })
 
-#' Locate a rig binary, or return "" if none is available.
+#' Locate a rig binary, or return "" if none is available. A rig older than
+#' the pinned release may lack the commands and flags RStudio uses, so it is
+#' passed over (in favor of the copy RStudio downloads).
 .rs.addFunction("rig.find", function()
 {
    for (path in .rs.rig.candidatePaths())
-      if (file.exists(path))
+   {
+      if (!file.exists(path))
+         next
+
+      version <- .rs.rig.version(path)
+      if (!is.null(version) && version >= package_version(.rs.rig.pinnedVersion))
          return(normalizePath(path, winslash = "/"))
+   }
 
    ""
+})
+
+#' The version of the rig binary at 'path', or NULL when it can't be told.
+.rs.addFunction("rig.version", function(path)
+{
+   # e.g. "RIG -- The R Installation Manager 0.10.0"
+   output <- .rs.tryCatch(suppressWarnings(
+      system2(path, "--version", stdout = TRUE, stderr = FALSE)
+   ))
+
+   if (inherits(output, "error") || length(output) == 0L)
+      return(NULL)
+
+   match <- regmatches(output[[1L]], regexpr("[0-9]+[.][0-9]+[.][0-9]+", output[[1L]]))
+   if (length(match) == 0L)
+      return(NULL)
+
+   package_version(match)
+})
+
+#' The architecture of this machine. On macOS, an x86_64 build of R running
+#' on Apple silicon (under Rosetta) reports the emulated architecture, so the
+#' hardware is asked instead.
+.rs.addFunction("rig.machine", function(machine = Sys.info()[["machine"]])
+{
+   if (!.rs.platform.isMacos || identical(machine, "arm64"))
+      return(machine)
+
+   arm64 <- .rs.tryCatch(suppressWarnings(
+      system2("/usr/sbin/sysctl", c("-n", "hw.optional.arm64"), stdout = TRUE, stderr = FALSE)
+   ))
+
+   if (is.character(arm64) && identical(trimws(arm64[1L]), "1"))
+      return("arm64")
+
+   machine
 })
 
 #' The URL of the rig release archive for this platform.
 .rs.addFunction("rig.downloadUrl", function(version = .rs.rig.pinnedVersion,
                                             sysname = Sys.info()[["sysname"]],
-                                            machine = Sys.info()[["machine"]],
+                                            machine = .rs.rig.machine(),
                                             processorArch = Sys.getenv("PROCESSOR_ARCHITECTURE"))
 {
    isArm <- tolower(machine) %in% c("arm64", "aarch64")
@@ -390,8 +434,8 @@
       # a universal image: a big-endian table of the images it contains
       count <- readBin(header[5:8], "integer", size = 4L, endian = "big")
       entrySize <- if (identical(magic, "cafebabe")) 20L else 32L
-      entries <- readBin(con, "raw", n = min(count, 16L) * entrySize)
-      offsets <- seq.int(1L, length(entries) - 3L, by = entrySize)
+      entries <- readBin(con, "raw", n = max(0L, min(count, 16L)) * entrySize)
+      offsets <- (seq_len(length(entries) %/% entrySize) - 1L) * entrySize + 1L
       vapply(offsets, function(offset) {
          readBin(entries[offset:(offset + 3L)], "integer", size = 4L, endian = "big")
       }, integer(1))
@@ -405,9 +449,29 @@
 #' The architecture an installation of R should be built for to run
 #' natively here, when that is a choice: on Apple silicon Macs, where x86_64
 #' builds also run (emulated). NULL otherwise.
-.rs.addFunction("rInstallations.preferredArchitecture", function(machine = Sys.info()[["machine"]])
+.rs.addFunction("rInstallations.preferredArchitecture", function(machine = .rs.rig.machine())
 {
    if (.rs.platform.isMacos && identical(machine, "arm64")) "arm64"
+})
+
+#' Whether an installation of R runs as itself when it isn't the default.
+#' Every version in the macOS R framework comes with a launcher script (and
+#' other files) naming the framework's shared Resources directory, which
+#' follows whichever version is the framework's current one: launching such
+#' a version, or any R process it starts, runs the current version instead.
+#' rig makes a version "orthogonal" by rewriting those paths to its own
+#' directory (see 'rig system make-orthogonal'); the launcher script tells
+#' whether that happened. Other installations are always orthogonal.
+.rs.addFunction("rInstallations.isOrthogonal", function(home)
+{
+   if (!grepl("/R[.]framework/Versions/[^/]+/Resources$", home))
+      return(TRUE)
+
+   launcher <- .rs.tryCatch(readLines(file.path(home, "bin", "R"), warn = FALSE))
+   if (inherits(launcher, "error"))
+      return(TRUE)
+
+   !any(grepl("R.framework/Resources", launcher, fixed = TRUE))
 })
 
 #' Find an installed R matching the requested version. Versions sharing the
@@ -449,6 +513,8 @@
    match <- as.list(match)
    if (!nzchar(match$home))
       match$home <- .rs.rig.rHome(match$binary)
+
+   match$orthogonal <- .rs.rInstallations.isOrthogonal(match$home)
 
    lapply(match, .rs.scalar)
 })
@@ -512,23 +578,4 @@
 {
    parsed <- .rs.tryCatch(package_version(version))
    !inherits(parsed, "error") && parsed >= package_version(minimum)
-})
-
-#' The mode flag to install R with. User mode installs into the home
-#' directory without needing administrator rights, so it is the default; a
-#' mode the user configured for rig themselves is respected instead.
-.rs.addFunction("rig.modeArgs", function(rig)
-{
-   if (nzchar(Sys.getenv("RIG_MODE")))
-      return(character())
-
-   configured <- suppressWarnings(
-      system2(rig, c("config", "get", "mode"), stdout = TRUE, stderr = FALSE)
-   )
-
-   status <- attr(configured, "status", exact = TRUE)
-   if (is.null(status) && any(nzchar(configured)))
-      return(character())
-
-   "--user"
 })
