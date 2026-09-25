@@ -247,7 +247,18 @@ SessionManager& sessionManager()
 }
 
 SessionManager::SessionManager()
+   : SessionManager(Config())
 {
+}
+
+SessionManager::SessionManager(const Config& config)
+   : config_(config)
+{
+   if (!config_.now)
+      config_.now = [] { return boost::posix_time::microsec_clock::universal_time(); };
+   if (!config_.isProcessRunning)
+      config_.isProcessRunning = [](PidType pid) { return core::system::isProcessRunning(pid); };
+
    // set default session launcher
    sessionLaunchFunction_ = boost::bind(&SessionManager::launchAndTrackSession,
                                            this, _1, _2);
@@ -266,6 +277,8 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
    using namespace boost::posix_time;
    LOCK_MUTEX(launchesMutex_)
    {
+      ptime now = config_.now();
+
       // check whether we already have a launch pending
       LaunchMap::const_iterator pos = pendingLaunches_.find(context);
       if (pos != pendingLaunches_.end())
@@ -274,18 +287,17 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
          // alive (a slow-starting session: a duplicate would rebind the same
          // session socket and fail on the first session's source database
          // locks), then return success
-         ptime now = microsec_clock::universal_time();
-         if ( (pos->second.launchTime + pendingLaunchWindow_) > now )
+         if ( (pos->second.launchTime + config_.launchWindow) > now )
          {
-            LOG_DEBUG_MESSAGE("Found existing recent launch < " + std::to_string(pendingLaunchWindow_.total_seconds()) +
+            LOG_DEBUG_MESSAGE("Found existing recent launch < " + std::to_string(config_.launchWindow.total_seconds()) +
                               " secs for: " + context.username + " id: " + context.scope.id());
 
             launched = false;
             return Success();
          }
          else if (pos->second.pid != -1 &&
-                  (pos->second.launchTime + stalePendingLaunchAge_) > now &&
-                  core::system::isProcessRunning(pos->second.pid))
+                  (pos->second.launchTime + config_.stalePendingLaunchAge) > now &&
+                  config_.isProcessRunning(pos->second.pid))
          {
             DLOGF("Found pending launch of live session process {} started {} secs ago for user {} (id: {}) - not relaunching",
                   pos->second.pid, (now - pos->second.launchTime).total_seconds(),
@@ -306,14 +318,15 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
          }
       }
 
-      pendingLaunches_[context] = PendingLaunch{ microsec_clock::universal_time() };
+      pendingLaunches_[context] = PendingLaunch{ now };
 
       numRemoved = cleanStalePendingLaunches();
    }
    END_LOCK_MUTEX
 
    if (numRemoved > 0)
-      LOG_DEBUG_MESSAGE("Found " + std::to_string(numRemoved) + " sessions launched, but not connected to from this server in 3 minutes");
+      LOG_DEBUG_MESSAGE("Found " + std::to_string(numRemoved) + " sessions launched, but not connected to from this server in " +
+                        std::to_string(config_.stalePendingLaunchAge.total_seconds()) + " secs");
 
    std::string processName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench();
    LOG_DEBUG_MESSAGE("Launching " + processName + " session for: " + context.username + " id: " + context.scope.id());
@@ -446,17 +459,6 @@ Error SessionManager::launchAndTrackSession(
    return Success();
 }
 
-void SessionManager::setPendingLaunchTimeouts(const boost::posix_time::time_duration& launchWindow,
-                                              const boost::posix_time::time_duration& staleAge)
-{
-   LOCK_MUTEX(launchesMutex_)
-   {
-      pendingLaunchWindow_ = launchWindow;
-      stalePendingLaunchAge_ = staleAge;
-   }
-   END_LOCK_MUTEX
-}
-
 void SessionManager::setSessionLaunchFunction(
                            const SessionLaunchFunction& launchFunction)
 {
@@ -493,7 +495,7 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
          // clear-on-error behavior.
          if (!success &&
              it->second.pid != -1 &&
-             core::system::isProcessRunning(it->second.pid))
+             config_.isProcessRunning(it->second.pid))
          {
             keptPid = it->second.pid;
          }
@@ -516,7 +518,7 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
 
    if (removed)
    {
-      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - startTime;
+      boost::posix_time::time_duration startDuration = config_.now() - startTime;
       std::string progName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench() + " session(" + context.scope.id() + ")";
       if (success)
       {
@@ -558,7 +560,7 @@ void SessionManager::removePendingSessionLaunch(const std::string& username, con
 
    if (removed)
    {
-      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - startTime;
+      boost::posix_time::time_duration startDuration = config_.now() - startTime;
       if (success)
          LOG_DEBUG_MESSAGE("Session started and connection made by: " + username + ":" + sessionId +
                            " in " + std::to_string(startDuration.total_seconds()) + "." +
@@ -610,11 +612,11 @@ void SessionManager::removePendingLaunchForPid(const r_util::SessionContext& con
 int SessionManager::cleanStalePendingLaunches()
 {
    auto it = pendingLaunches_.cbegin();
-   auto now = boost::posix_time::microsec_clock::universal_time();
+   auto now = config_.now();
    int numRemoved = 0;
    while (it != pendingLaunches_.cend())
    {
-      if (now > (it->second.launchTime + stalePendingLaunchAge_))
+      if (now > (it->second.launchTime + config_.stalePendingLaunchAge))
       {
          pendingLaunches_.erase(it++);
          numRemoved++;
