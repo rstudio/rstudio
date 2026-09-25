@@ -771,25 +771,6 @@ Error createTempFile(const FilePath& targetPath,
    return Success();
 }
 
-// Whether the process may give a file to the given group: root may use any
-// group, other users only one they belong to.
-bool canSetGroup(gid_t gid)
-{
-   if (::geteuid() == 0 || gid == ::getegid())
-      return true;
-
-   int count = ::getgroups(0, nullptr);
-   if (count <= 0)
-      return false;
-
-   std::vector<gid_t> groups(count);
-   count = ::getgroups(count, groups.data());
-   if (count <= 0)
-      return false;
-
-   return std::find(groups.begin(), groups.begin() + count, gid) != groups.begin() + count;
-}
-
 // Set the temporary file's owner and mode, write contents to it and close it.
 // On failure the temporary file is removed, so the caller has nothing to clean
 // up.
@@ -807,11 +788,11 @@ Error writeTempFile(TempFile* pTemp,
    if (pTemp->replacing)
    {
       // Only root can give a file to another user, and other users can only
-      // set a group they belong to, so the new file keeps our owner (and
-      // group, for one we aren't in): that is what repairs a state file that
-      // an earlier 'sudo rstudio' left owned by root. Changes the process
-      // can't make aren't attempted, so such a file doesn't fail (and log)
-      // on every write; a filesystem may still refuse, which is best-effort.
+      // set a group they belong to, so this is best-effort. When it fails the
+      // new file is ours, which is also what repairs a state file that an
+      // earlier 'sudo rstudio' left owned by root. Skip the call when nothing
+      // would change; a group we can't carry over then fails only once, since
+      // the replacement is in one of ours.
       struct stat tempStat;
       if (::fstat(fd, &tempStat) == -1)
          tempStat = targetStat;
@@ -822,12 +803,7 @@ Error writeTempFile(TempFile* pTemp,
 
       gid_t gid = static_cast<gid_t>(-1);
       if (targetStat.st_gid != tempStat.st_gid)
-      {
-         if (canSetGroup(targetStat.st_gid))
-            gid = targetStat.st_gid;
-         else
-            keptGroup = false;
-      }
+         gid = targetStat.st_gid;
 
       if (uid != static_cast<uid_t>(-1) || gid != static_cast<gid_t>(-1))
       {
