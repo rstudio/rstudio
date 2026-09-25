@@ -65,6 +65,7 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    @Override
    protected void onBrowserNavigated()
    {
+      super.onBrowserNavigated();
       browser_.setFilename(context_.pwd());
    }
 

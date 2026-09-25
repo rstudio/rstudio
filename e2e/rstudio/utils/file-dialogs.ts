@@ -1,7 +1,8 @@
-// Helpers for driving the web (GWT) file dialogs, which are used in server
-// mode; Desktop shows native dialogs.
+// Helpers for driving the web (GWT) file dialogs. Server mode always uses
+// them, and base-prefs.jsonc sets native_file_dialogs=false, so Desktop does
+// too.
 
-import { Locator, Page, expect } from '@playwright/test';
+import { Locator, Page, Request, expect } from '@playwright/test';
 import { executeCommand } from '@utils/commands';
 
 export const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
@@ -9,68 +10,44 @@ export const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
 // The RPC the GWT file dialogs list their directory with.
 export const LIST_FILES_RPC = /\/rpc\/list_files(?:\?|$)/;
 
-interface ListFilesHold {
-  released: Promise<void>;
-  held: number;
-  continued: Promise<void>[];
-}
-
-interface ListFilesRoute {
-  hold: ListFilesHold | null;
-}
-
-const listFilesRoutes = new WeakMap<Page, ListFilesRoute>();
-
-// The page's list_files route, installed on first use and never removed.
-// Removing a page's last route turns Playwright's request interception off,
-// and a request paused during that switch is never continued. That request
-// is usually RStudio's get_events long-poll, so the client would stop
-// receiving events (console prompts included) for the rest of the page's
-// life.
-async function listFilesRoute(page: Page): Promise<ListFilesRoute> {
-  const existing = listFilesRoutes.get(page);
-  if (existing)
-    return existing;
-
-  const state: ListFilesRoute = { hold: null };
-  await page.route(LIST_FILES_RPC, async (route) => {
-    const hold = state.hold;
-    if (!hold) {
-      await route.fallback();
-      return;
-    }
-
-    hold.held++;
-    const request = hold.released.then(() => route.fallback());
-    hold.continued.push(request);
-    await request;
-  });
-  listFilesRoutes.set(page, state);
-  return state;
+// The directory a list_files request asks for ('' if unreadable). Never
+// throws: a throw in a route handler would leave the request hanging.
+function listFilesPath(request: Request): string {
+  try {
+    return String(request.postDataJSON()?.params?.[0] ?? '');
+  } catch {
+    return '';
+  }
 }
 
 // Holds every list_files RPC until release() is called, so a dialog can be
 // driven before its directory listing arrives. cleanup() releases anything
-// still held and ends the hold; call it from a finally block.
+// still held and removes the route; call it from a finally block.
+//
+// The hold covers the whole page, so held() also counts other panes'
+// listings; heldPaths() says which directories the held requests list.
 export async function holdListFiles(page: Page) {
-  const state = await listFilesRoute(page);
-
   let release = () => {};
-  const hold: ListFilesHold = {
-    released: new Promise<void>((resolve) => (release = resolve)),
-    held: 0,
-    continued: [],
-  };
-  state.hold = hold;
+  const released = new Promise<void>((resolve) => (release = resolve));
+  const paths: string[] = [];
+  const continued: Promise<void>[] = [];
+  await page.route(LIST_FILES_RPC, async (route) => {
+    paths.push(listFilesPath(route.request()));
+    const request = released.then(() => route.continue());
+    continued.push(request);
+    await request;
+  });
 
   return {
-    held: () => hold.held,
+    held: () => paths.length,
+    heldPaths: () => [...paths],
     release,
     cleanup: async () => {
+      // let held requests through before removing the route, so an unroute
+      // doesn't continue them a second time
       release();
-      await Promise.allSettled(hold.continued);
-      if (state.hold === hold)
-        state.hold = null;
+      await Promise.allSettled(continued);
+      await page.unroute(LIST_FILES_RPC);
     },
   };
 }
@@ -89,7 +66,7 @@ export async function openFileDialogAtHome(page: Page): Promise<Locator> {
   const filename = dialog.locator('input[type="text"]');
   await filename.fill('~');
   await dialog.getByRole('button', { name: 'Open' }).click();
-  // navigating clears the filename box (OpenFileDialog.onNavigated)
+  // navigating clears the filename box (OpenFileDialog.onBrowserNavigated)
   await expect(filename).toHaveValue('', { timeout: 15000 });
   return dialog;
 }

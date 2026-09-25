@@ -14,6 +14,7 @@ import { workerRLibsUser } from './r-libs-setup';
 import { provisionPaiDataHome } from './pai-seed';
 import { trackForReaping } from './process-reaper';
 import { captureOutputTail, describeLaunchState } from './launch-diagnostics';
+import { keepRequestInterceptionOn } from './request-interception';
 import { isDebugMode } from '../utils/debug';
 import { userHomeForAuthState } from '../utils/auth';
 
@@ -859,6 +860,8 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     );
     logLaunchStep('console input not busy');
     console.log('RStudio console is ready');
+
+    await keepRequestInterceptionOn(page.context());
 
     // rsession logs land in RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp).
     const logDir = path.join(tempConfig.dataHome, 'log');

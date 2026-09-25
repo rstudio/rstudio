@@ -12,6 +12,7 @@ import { setPref, documentCloseAllNoSave } from '../utils/commands';
 import { withDeadline } from '../utils/deadline';
 import { rLibsUserTemplate, workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
+import { keepRequestInterceptionOn } from './request-interception';
 import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
@@ -482,6 +483,8 @@ export async function launchServer(): Promise<ServerSession> {
   await page.keyboard.press('Control+l');
   await sleep(500);
   console.log('Console cleared');
+
+  await keepRequestInterceptionOn(context);
 
   return { page, browser, rserverProcess, rserverCleanupDirs };
 }

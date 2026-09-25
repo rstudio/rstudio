@@ -8,6 +8,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { dismissBlockingModals } from '@pages/modals.page';
 import { executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { holdListFiles } from '@utils/file-dialogs';
@@ -23,6 +24,7 @@ const CHOOSER = '.gwt-DialogBox[aria-label="Choose Directory"]';
 const CHOOSE_BTN = '#rstudio_file_accept_choose';
 const NEW_FOLDER_BTN = '#rstudio_file_new_folder';
 const TEXT_ENTRY = '#rstudio_text_entry';
+const CURRENT_LOCATION = '[aria-current="location"]';
 
 const BASE_NAME = `pw-choose-folder-${Date.now()}`;
 const SUBFOLDER = 'target';
@@ -30,7 +32,8 @@ const SUBFOLDER = 'target';
 // Opens Find in Files and its directory chooser, then takes the chooser to
 // `dir` with the breadcrumb's Go To Folder prompt: the chooser starts in the
 // dialog's last search scope, which depends on earlier specs. `dir` is fresh
-// to this spec, so its subfolder showing means that navigation has landed.
+// to this spec, so the breadcrumb showing it as the current location means
+// that navigation has landed.
 async function openChooserAt(page: Page, dir: string): Promise<Locator> {
   await executeCommand(page, 'findInFiles');
   await expect(page.locator(FIND_DIALOG)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
@@ -44,7 +47,9 @@ async function openChooserAt(page: Page, dir: string): Promise<Locator> {
   await prompt.locator(TEXT_ENTRY).fill(dir);
   // by role: the Find in Files dialog already owns the OK id
   await prompt.getByRole('button', { name: 'OK' }).click();
-  await expect(chooser.getByText(SUBFOLDER, { exact: true })).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  const leaf = dir.split(/[\\/]/).pop() ?? dir;
+  await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(leaf, { timeout: TIMEOUTS.fileOpen });
+  await expect(chooser.getByText(SUBFOLDER, { exact: true })).toBeVisible();
   return chooser;
 }
 
@@ -61,6 +66,11 @@ test.describe('Choose Directory dialog', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
+    // after a failure the chooser, or a prompt over it, can still be up, and
+    // its glass would block the Cancel click below
+    if (await page.locator(CHOOSER).isVisible())
+      await dismissBlockingModals(page);
+
     const findDialog = page.locator(FIND_DIALOG);
     if (await findDialog.isVisible()) {
       await page.locator(FIND_CANCEL_BTN).click();
@@ -71,7 +81,7 @@ test.describe('Choose Directory dialog', () => {
   test('choosing after navigating into a folder returns that folder', async ({ rstudioPage: page }) => {
     const chooser = await openChooserAt(page, base);
     await chooser.getByText(SUBFOLDER, { exact: true }).dblclick();
-    await expect(chooser.locator('[aria-current="location"]')).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
+    await expect(chooser.locator(CURRENT_LOCATION)).toHaveText(SUBFOLDER, { timeout: TIMEOUTS.fileOpen });
 
     await chooser.locator(CHOOSE_BTN).click();
     await expect(chooser).toBeHidden();
@@ -82,8 +92,7 @@ test.describe('Choose Directory dialog', () => {
     const folder = `new-${Date.now()}`;
     const chooser = await openChooserAt(page, base);
 
-    // only the new folder's listing is held, so the New Folder prompt and its
-    // mkdir run normally
+    // holds list_files only; the New Folder prompt and its mkdir run normally
     const listing = await holdListFiles(page);
 
     try {
@@ -93,8 +102,12 @@ test.describe('Choose Directory dialog', () => {
       await prompt.locator(TEXT_ENTRY).fill(folder);
       await prompt.getByRole('button', { name: 'OK' }).click();
 
-      // the chooser navigates into the new folder; Choose waits for its listing
-      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
+      // the chooser navigates into the new folder; Choose waits for that
+      // listing (other panes' listings may be held too, so match its path)
+      await expect.poll(
+        () => listing.heldPaths().some((p) => p.endsWith(`/${folder}`)),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
       await chooser.locator(CHOOSE_BTN).click();
       await expect(chooser).toBeVisible();
 
