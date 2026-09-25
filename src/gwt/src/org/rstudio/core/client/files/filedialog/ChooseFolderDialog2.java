@@ -63,10 +63,9 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    }
 
    @Override
-   public void onNavigated()
+   protected void onBrowserNavigated()
    {
       browser_.setFilename(context_.pwd());
-      super.onNavigated();
    }
 
    @Override
@@ -82,7 +81,10 @@ public class ChooseFolderDialog2 extends FileSystemDialog
       }
       else
       {
-         browser_.setFilename("");
+         // the selection is cleared whenever the listing is redrawn, including
+         // after a failed navigation (which skips onBrowserNavigated()); with
+         // nothing selected, the choice is the directory being shown (#18938)
+         browser_.setFilename(context_.pwd());
       }
    }
 

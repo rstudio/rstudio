@@ -242,19 +242,30 @@ public abstract class FileSystemDialog extends ModalDialogBase
    }
 
    /**
-    * Subclasses that adjust the filename on navigation must do so BEFORE
-    * calling super.onNavigated(), which may run a deferred accept.
+    * Final so that subclass arrival logic runs in onBrowserNavigated(),
+    * between the browser's refresh and a deferred accept: the refresh clears
+    * the listing's selection, so a filename set before it could be wiped
+    * (#18938), and one set after the accept would come too late.
     */
    @Override
-   public void onNavigated()
+   public final void onNavigated()
    {
       browser_.onNavigated();
+      onBrowserNavigated();
 
       if (acceptOnNavigated_)
       {
          acceptOnNavigated_ = false;
          maybeAccept();
       }
+   }
+
+   /**
+    * Called when a directory listing arrives, after the browser shows it and
+    * before any deferred accept runs. Not called for a failed navigation.
+    */
+   protected void onBrowserNavigated()
+   {
    }
 
    /**
@@ -320,8 +331,8 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       // a failed navigation leaves the browser in the directory it was already
       // showing: drop any deferred accept and end its loading state, so the
-      // dialog stays usable. This bypasses the subclass onNavigated() hooks,
-      // which react to arriving somewhere (e.g. by discarding typed input).
+      // dialog stays usable. This bypasses onBrowserNavigated(), whose
+      // overrides react to arriving somewhere (e.g. by discarding typed input).
       if (browser_.isNavigating())
       {
          acceptOnNavigated_ = false;
