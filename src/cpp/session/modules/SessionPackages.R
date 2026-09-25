@@ -1240,15 +1240,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (length(runtimes) < 2L)
       return(invisible(FALSE))
 
-   # report each distinct set of runtimes once per session
-   key <- paste(runtimes, collapse = "\n")
+   users <- .Call("rs_openMPRuntimeUsers", PACKAGE = "(embedding)")
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, .rs.loadedPackageDLLs())
+
+   # warn once per set of runtimes, and again when another package linking the
+   # extra copy loads, so that the reinstall advice stays complete
+   key <- paste(c(runtimes, sort(report$packages)), collapse = "\n")
    if (key %in% .rs.reportedOpenMPRuntimes)
       return(invisible(FALSE))
-   .rs.setVar("reportedOpenMPRuntimes", c(.rs.reportedOpenMPRuntimes, key))
-
-   users <- .Call("rs_openMPRuntimeUsers", PACKAGE = "(embedding)")
-   dlls <- vapply(getLoadedDLLs(), function(dll) dll[["path"]], "")
-   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls)
 
    .rs.logWarningMessage(
       "Multiple OpenMP runtimes loaded (after loading '%s'): %s",
@@ -1258,10 +1257,31 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    # stderr rather than message(): a suppressed message (suppressMessages(), a
    # notebook chunk with message = FALSE) would leave no warning before the
-   # crash, with the key already recorded; the option above is the opt-out
-   writeLines(text, con = stderr())
+   # crash; the option above is the opt-out
+   writeLines(report$text, con = stderr())
+
+   # recorded only once written, so a failure above leaves the next load to retry
+   .rs.setVar("reportedOpenMPRuntimes", c(.rs.reportedOpenMPRuntimes, key))
 
    invisible(TRUE)
+})
+
+#' Loaded package DLLs
+#'
+#' @return The paths of the DLLs registered by each loaded namespace, named by
+#'   package.
+.rs.addFunction("loadedPackageDLLs", function()
+{
+   # .getNamespaceInfo() rather than getNamespaceInfo(), which errors for a
+   # namespace with no DLLs entry at all (and for base)
+   dlls <- character()
+   for (pkg in setdiff(loadedNamespaces(), "base"))
+   {
+      for (dll in .getNamespaceInfo(asNamespace(pkg), "DLLs"))
+         dlls <- c(dlls, structure(dll[["path"]], names = pkg))
+   }
+
+   dlls
 })
 
 #' Format the duplicate OpenMP runtime warning
@@ -1270,21 +1290,28 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 #' @param users A list with parallel 'image' and 'runtime' entries: each loaded
 #'   image linking an OpenMP runtime, and the runtime path it links (which may
 #'   be an @rpath reference that can't be tied to a loaded copy).
-#' @param dlls Paths of the loaded package DLLs, as reported by getLoadedDLLs().
-.rs.addFunction("formatOpenMPRuntimeWarning", function(runtimes, users, dlls)
+#' @param dlls Paths of the loaded package DLLs, named by package, as returned
+#'   by .rs.loadedPackageDLLs().
+#' @param binaries Whether this build of R can install binary packages.
+#' @return A list with the warning 'text', and the 'packages' linking a copy
+#'   not bundled with R.
+.rs.addFunction("formatOpenMPRuntimeWarning", function(runtimes,
+                                                       users,
+                                                       dlls,
+                                                       binaries = .Platform$pkgType != "source")
 {
    rlib <- normalizePath(R.home("lib"), mustWork = FALSE)
    paths <- normalizePath(runtimes, mustWork = FALSE)
    images <- normalizePath(users$image, mustWork = FALSE)
    linked <- normalizePath(users$runtime, mustWork = FALSE)
-   dlls <- normalizePath(dlls, mustWork = FALSE)
 
-   # name package DLLs (<lib>/<pkg>/libs/<dll>.so) by their package; anything
-   # else (e.g. a Python extension loaded through reticulate, or a library
-   # dyn.load()ed directly, as Rcpp::sourceCpp() does) keeps its path
-   isPackage <- images %in% dlls & basename(dirname(images)) == "libs"
+   # name package DLLs by their package; anything else (e.g. a Python extension
+   # loaded through reticulate, or a library dyn.load()ed directly, as
+   # Rcpp::sourceCpp() does) keeps its path
+   index <- match(images, normalizePath(dlls, mustWork = FALSE))
+   isPackage <- !is.na(index)
    labels <- users$image
-   labels[isPackage] <- basename(dirname(dirname(images[isPackage])))
+   labels[isPackage] <- names(dlls)[index[isPackage]]
 
    bundled <- startsWith(paths, rlib)
    lines <- character()
@@ -1309,7 +1336,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # the packages to reinstall are those linking a copy other than R's
    extra <- linked %in% paths[!bundled]
    fix <- unique(labels[isPackage & extra])
-   if (length(fix))
+   if (!binaries)
+   {
+      # an R that can't install binaries (e.g. Homebrew's or conda's) bundles no
+      # copy of its own, so the packages have to agree on one
+      remedy <- c(
+         "To fix this, reinstall the packages listed above from source so that they all",
+         "link the same copy, e.g. by using the same OpenMP flags (-fopenmp, -lomp) in",
+         "~/.R/Makevars for every package."
+      )
+   }
+   else if (length(fix))
    {
       remedy <- c(
          "To fix this, reinstall the packages linked to the copy not bundled with R as binaries:",
@@ -1329,7 +1366,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       )
    }
 
-   paste(
+   text <- paste(
       c(
          "More than one copy of the OpenMP runtime (libomp) is now loaded in this R session:",
          "",
@@ -1342,6 +1379,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       ),
       collapse = "\n"
    )
+
+   list(text = text, packages = fix)
 })
 
 .rs.addFunction("notifyPackageUnloaded", function(pkgname, ...)

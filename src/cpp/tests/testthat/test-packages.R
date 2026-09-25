@@ -309,15 +309,17 @@ test_that(".rs.formatOpenMPRuntimeWarning names the packages linking each runtim
    )
    dlls <- c(
       xfun = "/lib/xfun/libs/xfun.so",
-      data_table = "/lib/data.table/libs/data_table.so"
+      data.table = "/lib/data.table/libs/data_table.so"
    )
 
-   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls)
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls, binaries = TRUE)
+   text <- report$text
    expect_match(text, "libomp.dylib (bundled with R)", fixed = TRUE)
    expect_match(text, "linked by: xfun", fixed = TRUE)
    expect_match(text, "linked by: data.table", fixed = TRUE)
 
    # only packages linking the non-bundled copy are proposed for reinstall
+   expect_equal(report$packages, "xfun")
    expect_match(text, 'install.packages("xfun", type = "binary")', fixed = TRUE)
    expect_false(grepl("data.table\"", text, fixed = TRUE))
 
@@ -331,33 +333,54 @@ test_that(".rs.formatOpenMPRuntimeWarning keeps a long reinstall call on one lin
    images <- sprintf("/lib/%s/libs/%s.so", pkgs, pkgs)
    users <- list(image = images, runtime = rep(runtimes[[1]], length(pkgs)))
 
-   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = images)
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = setNames(images, pkgs), binaries = TRUE)
    expected <- sprintf(
       "  install.packages(c(%s), type = \"binary\")",
       paste0("\"", pkgs, "\"", collapse = ", ")
    )
-   expect_true(expected %in% strsplit(text, "\n", fixed = TRUE)[[1]])
+   expect_true(expected %in% strsplit(report$text, "\n", fixed = TRUE)[[1]])
 })
 
-test_that(".rs.formatOpenMPRuntimeWarning doesn't treat a dyn.load()ed library as a package", {
+test_that(".rs.formatOpenMPRuntimeWarning only names package DLLs by their package", {
    runtimes <- c("/opt/homebrew/opt/libomp/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
    image <- "/rtmp/sourceCpp-aarch64-apple-darwin20-1.0.14/sourcecpp_1a2b/sourceCpp_2.so"
    users <- list(image = image, runtime = runtimes[[1]])
 
-   # getLoadedDLLs() lists it, but it isn't under <lib>/<pkg>/libs/
-   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = image)
-   expect_match(text, paste("linked by:", image), fixed = TRUE)
-   expect_false(grepl("install.packages(", text, fixed = TRUE))
+   # a dyn.load()ed library, as Rcpp::sourceCpp() builds, belongs to no namespace
+   dlls <- c(Rcpp = "/lib/Rcpp/libs/Rcpp.so")
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls, binaries = TRUE)
+   expect_match(report$text, paste("linked by:", image), fixed = TRUE)
+   expect_false(grepl("install.packages(", report$text, fixed = TRUE))
+   expect_length(report$packages, 0L)
 })
 
 test_that(".rs.formatOpenMPRuntimeWarning gives generic advice when no package links the extra copy", {
    runtimes <- c("/py/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
    users <- list(image = "/py/lib/libtorch_cpu.dylib", runtime = "/py/lib/libomp.dylib")
 
-   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = character())
+   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = character(), binaries = TRUE)$text
    expect_match(text, "linked by: /py/lib/libtorch_cpu.dylib", fixed = TRUE)
    expect_false(grepl("install.packages(", text, fixed = TRUE))
    expect_match(text, "reinstall that package as a", fixed = TRUE)
+})
+
+test_that(".rs.formatOpenMPRuntimeWarning doesn't suggest binaries when R can't install them", {
+   runtimes <- c("/opt/homebrew/opt/libomp/lib/libomp.dylib", "/opt/conda/lib/libomp.dylib")
+   users <- list(
+      image = c("/lib/xfun/libs/xfun.so", "/lib/data.table/libs/data_table.so"),
+      runtime = runtimes
+   )
+   dlls <- c(xfun = "/lib/xfun/libs/xfun.so", data.table = "/lib/data.table/libs/data_table.so")
+
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls, binaries = FALSE)
+   expect_false(grepl("binary", report$text, fixed = TRUE))
+   expect_match(report$text, "reinstall the packages listed above from source", fixed = TRUE)
+   expect_setequal(report$packages, c("xfun", "data.table"))
+})
+
+test_that(".rs.loadedPackageDLLs names each loaded DLL by its package", {
+   dlls <- .rs.loadedPackageDLLs()
+   expect_equal(basename(dlls[["stats"]]), paste0("stats", .Platform$dynlib.ext))
 })
 
 test_that(".rs.checkOpenMPRuntimes is quiet when disabled", {
