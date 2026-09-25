@@ -95,9 +95,7 @@ public abstract class ProjectPreferencesPane
    @Override
    public void setTabPanelSize(DialogTabLayoutPanel panel)
    {
-      int width = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_WIDTH
-            - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
-            - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
+      int width = PreferencesDialogConstants.PROJECT_PANE_CONTENT_WIDTH;
       int height = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_HEIGHT;
       panel.setSize(width + "px", height + "px");
    }
