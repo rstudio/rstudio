@@ -237,6 +237,7 @@ public class DocTabLayoutPanel
                {
                   events_.fireEvent(new RenameSourceFileEvent(filePath));
                }));
+               menu.addSeparator();
                menu.addItem(ElementIds.TAB_COPY_PATH, new MenuItem(constants_.copyPathMenuItem(), () ->
                {
                   events_.fireEvent(new CopySourcePathEvent(filePath));
@@ -246,6 +247,10 @@ public class DocTabLayoutPanel
                   events_.fireEvent(new SendToConsoleEvent(
                      "setwd(" + RUtil.asStringLiteral(dirPath) + ")", true));
                   events_.fireEvent(new FilesPaneNavigateEvent(dirPath, false));
+               }));
+               menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(constants_.showDocumentDirectoryMenuItem(), () ->
+               {
+                  events_.fireEvent(new FilesPaneNavigateEvent(dirPath, true));
                }));
                menu.addSeparator();
             }

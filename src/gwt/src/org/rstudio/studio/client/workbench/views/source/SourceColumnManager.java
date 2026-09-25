@@ -2613,6 +2613,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
       dynamicCommands_.add(commands_.sendFilenameToTerminal());
       dynamicCommands_.add(commands_.renameSourceDoc());
+      dynamicCommands_.add(commands_.showActiveDocDirInFiles());
       dynamicCommands_.add(commands_.sourceAsWorkbenchJob());
       dynamicCommands_.add(commands_.sourceAsJob());
       dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());

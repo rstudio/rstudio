@@ -153,6 +153,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTr
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FilesPaneNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
@@ -2894,10 +2895,11 @@ public class TextEditingTarget implements
       // start with the set of commands supported by the file type
       HashSet<AppCommand> commands = fileType_.getSupportedCommands(commands_);
 
-      // if the file has a path, it can also be renamed
+      // if the file has a path, it can also be renamed or shown in the Files pane
       if (getPath() != null)
       {
          commands.add(commands_.renameSourceDoc());
+         commands.add(commands_.showActiveDocDirInFiles());
       }
       
       return commands;
@@ -4794,6 +4796,13 @@ public class TextEditingTarget implements
    void onCopySourceDocPath()
    {
       events_.fireEvent(new CopySourcePathEvent(docUpdateSentinel_.getPath()));
+   }
+
+   @Handler
+   void onShowActiveDocDirInFiles()
+   {
+      String dir = FileSystemItem.createFile(docUpdateSentinel_.getPath()).getParentPathString();
+      events_.fireEvent(new FilesPaneNavigateEvent(dir, true));
    }
 
    @Handler
