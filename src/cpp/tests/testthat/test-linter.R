@@ -48,6 +48,48 @@ test_that("R source files do not contain non-ASCII characters", {
 
 })
 
+test_that("R source files pass PACKAGE = \"(embedding)\" to .Call()", {
+
+   # without PACKAGE, .Call() searches every loaded DLL for the routine
+   # rather than resolving it against those registered by rsession
+   root <- normalizePath("../..", mustWork = TRUE)
+
+   rFiles <- list.files(
+      root,
+      pattern = "[.]R$",
+      full.names = TRUE,
+      recursive = TRUE
+   )
+
+   offenders <- character()
+   for (rFile in rFiles) {
+
+      parseData <- getParseData(parse(rFile, keep.source = TRUE))
+
+      # a '.Call' token's parent is the function expression, whose parent
+      # is the whole call, including any multi-line arguments
+      isCall <- parseData$token == "SYMBOL_FUNCTION_CALL" & parseData$text == ".Call"
+      fnIds <- parseData$parent[isCall]
+      callIds <- parseData$parent[match(fnIds, parseData$id)]
+
+      for (callId in callIds) {
+         call <- str2lang(getParseText(parseData, callId))
+         if (!identical(call[["PACKAGE"]], "(embedding)")) {
+            line <- parseData$line1[parseData$id == callId]
+            path <- sub(paste0(root, "/"), "", rFile, fixed = TRUE)
+            offenders <- c(offenders, paste0(path, ":", line))
+         }
+      }
+
+   }
+
+   expect(
+      length(offenders) == 0,
+      paste(c(".Call() sites without PACKAGE = \"(embedding)\":", offenders), collapse = "\n")
+   )
+
+})
+
 test_that("RStudio .R files can be linted", {
    
    rFiles <- list.files(
