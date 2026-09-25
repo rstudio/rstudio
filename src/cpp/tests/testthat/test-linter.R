@@ -18,25 +18,25 @@ library(testthat)
 context("diagnostics")
 setwd("../../session/modules")
 
+# every .R file under src/cpp
+root <- normalizePath("../..", mustWork = TRUE)
+rSourceFiles <- list.files(
+   root,
+   pattern = "[.]R$",
+   full.names = TRUE,
+   recursive = TRUE
+)
+
 lint <- function(x) {
    invisible(.rs.lintRFile(x))
 }
 
 test_that("R source files do not contain non-ASCII characters", {
 
-   root <- normalizePath("../..", mustWork = TRUE)
-
-   rFiles <- list.files(
-      root,
-      pattern = "[.]R$",
-      full.names = TRUE,
-      recursive = TRUE
-   )
-
    nonAsciiFiles <- Filter(function(path) {
       bytes <- readBin(path, what = "raw", n = file.info(path)$size)
       any(bytes > as.raw(0x7f))
-   }, rFiles)
+   }, rSourceFiles)
 
    nonAsciiFiles <- sub(paste0(root, "/"), "", nonAsciiFiles, fixed = TRUE)
 
@@ -52,17 +52,8 @@ test_that("R source files pass PACKAGE = \"(embedding)\" to .Call()", {
 
    # without PACKAGE, .Call() searches every loaded DLL for the routine
    # rather than resolving it against those registered by rsession
-   root <- normalizePath("../..", mustWork = TRUE)
-
-   rFiles <- list.files(
-      root,
-      pattern = "[.]R$",
-      full.names = TRUE,
-      recursive = TRUE
-   )
-
    offenders <- character()
-   for (rFile in rFiles) {
+   for (rFile in rSourceFiles) {
 
       parseData <- getParseData(parse(rFile, keep.source = TRUE))
 
@@ -83,10 +74,12 @@ test_that("R source files pass PACKAGE = \"(embedding)\" to .Call()", {
 
    }
 
-   expect(
-      length(offenders) == 0,
-      paste(c(".Call() sites without PACKAGE = \"(embedding)\":", offenders), collapse = "\n")
+   failureMessage <- paste(
+      c(".Call() sites without PACKAGE = \"(embedding)\":", offenders),
+      collapse = "\n"
    )
+
+   expect(length(offenders) == 0, failureMessage)
 
 })
 
