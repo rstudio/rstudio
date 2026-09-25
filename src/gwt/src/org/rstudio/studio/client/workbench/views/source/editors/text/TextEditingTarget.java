@@ -4811,6 +4811,8 @@ public class TextEditingTarget implements
    void onShowActiveDocDirInFiles()
    {
       FileSystemItem dir = FileSystemItem.createFile(docUpdateSentinel_.getPath()).getContainingDir();
+      if (dir == null)
+         return;
       events_.fireEvent(new DirectoryNavigateEvent(dir, true));
    }
 
