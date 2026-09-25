@@ -1255,7 +1255,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       pkgname,
       paste(runtimes, collapse = ", ")
    )
-   message(text)
+
+   # stderr rather than message(): a suppressed message (suppressMessages(), a
+   # notebook chunk with message = FALSE) would leave no warning before the
+   # crash, with the key already recorded; the option above is the opt-out
+   writeLines(text, con = stderr())
 
    invisible(TRUE)
 })
@@ -1309,7 +1313,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       remedy <- c(
          "To fix this, reinstall the packages linked to the copy not bundled with R as binaries:",
          "",
-         sprintf("  install.packages(%s, type = \"binary\")", deparse(fix)),
+         sprintf("  install.packages(%s, type = \"binary\")", .rs.deparse(fix)),
          "",
          "and remove OpenMP flags (-fopenmp, -lomp) from ~/.R/Makevars, so that packages",
          "built from source use the copy bundled with R."

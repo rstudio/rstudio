@@ -325,6 +325,20 @@ test_that(".rs.formatOpenMPRuntimeWarning names the packages linking each runtim
    expect_match(text, "/py/torch/lib/libtorch_cpu.dylib (@rpath/libomp.dylib)", fixed = TRUE)
 })
 
+test_that(".rs.formatOpenMPRuntimeWarning keeps a long reinstall call on one line", {
+   runtimes <- c("/opt/homebrew/opt/libomp/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
+   pkgs <- c("xfun", "data.table", "fst", "qs", "ranger", "igraph", "xgboost")
+   images <- sprintf("/lib/%s/libs/%s.so", pkgs, pkgs)
+   users <- list(image = images, runtime = rep(runtimes[[1]], length(pkgs)))
+
+   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = images)
+   expected <- sprintf(
+      "  install.packages(c(%s), type = \"binary\")",
+      paste0("\"", pkgs, "\"", collapse = ", ")
+   )
+   expect_true(expected %in% strsplit(text, "\n", fixed = TRUE)[[1]])
+})
+
 test_that(".rs.formatOpenMPRuntimeWarning gives generic advice when no package links the extra copy", {
    runtimes <- c("/py/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
    users <- list(image = "/py/lib/libtorch_cpu.dylib", runtime = "/py/lib/libomp.dylib")
