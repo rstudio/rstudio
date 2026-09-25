@@ -1211,17 +1211,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("notifyPackageLoaded", function(pkgname, ...)
 {
+   # first, so that an error below can't skip it; and a failure here must never
+   # turn into an error from library()
+   tryCatch(
+      .rs.checkOpenMPRuntimes(pkgname),
+      error = function(e) .rs.logWarningMessage(e)
+   )
+
    .Call("rs_packageLoaded", pkgname, PACKAGE = "(embedding)")
 
    # when a package is loaded, it can register S3 methods which replace overrides we've
    # attached manually; take this opportunity to reattach them.
    .rs.reattachS3Overrides()
-
-   # a failure here must never turn into an error from library()
-   tryCatch(
-      .rs.checkOpenMPRuntimes(pkgname),
-      error = function(e) .rs.logWarningMessage(e)
-   )
 })
 
 # On macOS, R's bundled OpenMP runtime (libomp.dylib) and other builds of it
@@ -1233,6 +1234,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 # brought it in and how to get rid of it before the crash happens.
 .rs.addFunction("checkOpenMPRuntimes", function(pkgname)
 {
+   if (!.rs.platform.isMacos)
+      return(invisible(FALSE))
+
    if (!isTRUE(getOption("rstudio.openmp.checkRuntimes", TRUE)))
       return(invisible(FALSE))
 
@@ -1313,11 +1317,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    labels <- users$image
    labels[isPackage] <- names(dlls)[index[isPackage]]
 
-   bundled <- startsWith(paths, rlib)
+   # directly in R's lib directory; a package can ship its own copy under the
+   # neighboring .../Resources/library
+   bundled <- dirname(paths) == rlib
    lines <- character()
    for (i in seq_along(runtimes))
    {
-      note <- if (bundled[[i]]) " (bundled with R)" else ""
+      note <- if (bundled[[i]])
+         " (bundled with R)"
+      else
+         ""
       lines <- c(lines, paste0("  ", runtimes[[i]], note))
 
       who <- unique(labels[linked == paths[[i]]])

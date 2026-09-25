@@ -327,6 +327,18 @@ test_that(".rs.formatOpenMPRuntimeWarning names the packages linking each runtim
    expect_match(text, "/py/torch/lib/libtorch_cpu.dylib (@rpath/libomp.dylib)", fixed = TRUE)
 })
 
+test_that(".rs.formatOpenMPRuntimeWarning doesn't count a package's own copy as R's", {
+   # a package library next to R's lib directory shares its path prefix
+   rlib <- normalizePath(R.home("lib"), mustWork = FALSE)
+   shipped <- file.path(dirname(rlib), "library", "torch", "lib", "libomp.dylib")
+   runtimes <- c(shipped, file.path(rlib, "libomp.dylib"))
+   users <- list(image = "/lib/torch/libs/torch.so", runtime = shipped)
+
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, c(torch = "/lib/torch/libs/torch.so"), binaries = TRUE)
+   expect_false(grepl(paste(shipped, "(bundled with R)"), report$text, fixed = TRUE))
+   expect_equal(report$packages, "torch")
+})
+
 test_that(".rs.formatOpenMPRuntimeWarning keeps a long reinstall call on one line", {
    runtimes <- c("/opt/homebrew/opt/libomp/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
    pkgs <- c("xfun", "data.table", "fst", "qs", "ranger", "igraph", "xgboost")

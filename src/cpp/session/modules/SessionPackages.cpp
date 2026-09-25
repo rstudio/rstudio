@@ -608,9 +608,8 @@ void onDetectChanges(module_context::ChangeSource source)
 // package brings it in.
 bool isOpenMPRuntime(const std::string& path)
 {
-   std::string name = FilePath(path).getFilename();
-   return boost::algorithm::starts_with(name, "libomp") &&
-          boost::algorithm::ends_with(name, ".dylib");
+   // an exact match: LLVM's libomptarget.dylib and libompd.dylib aren't runtimes
+   return FilePath(path).getFilename() == "libomp.dylib";
 }
 
 // the dylibs an image links against, as recorded in its load commands
@@ -647,7 +646,7 @@ std::vector<std::string> linkedLibraries(const struct mach_header* pHeader)
 
 #endif
 
-// paths of the OpenMP runtimes (libomp*.dylib) currently loaded, in load order
+// paths of the OpenMP runtimes (libomp.dylib) currently loaded, in load order
 SEXP rs_loadedOpenMPRuntimes()
 {
    std::vector<std::string> runtimes;
