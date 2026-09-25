@@ -15,6 +15,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <ctime>
 #include <istream>
 #include <memory>
@@ -30,6 +31,7 @@
 # include <windows.h>
 #else
 # include <cerrno>
+# include <cstdlib>
 # include <sys/stat.h>
 # include <unistd.h>
 #endif
@@ -453,6 +455,55 @@ TEST(FileSerializerTest, WriteStringAtomicPreservesGroup)
    EXPECT_EQ("replaced\n", readback);
    ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
    EXPECT_EQ(otherGroup, st.st_gid);
+
+   dir.remove();
+}
+
+// A target in a group we don't belong to (as an earlier 'sudo rstudio' can
+// leave behind) is replaced by a file in one of ours, whose group gets no more
+// access than everyone else. Without being root, such a file comes from a
+// directory whose group new files inherit, like /tmp on macOS.
+TEST(FileSerializerTest, WriteStringAtomicForeignGroupGetsOtherAccess)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root may use any group";
+
+   char foreignPath[] = "/tmp/rstudio-foreign-group-XXXXXX";
+   int fd = ::mkstemp(foreignPath);
+   ASSERT_NE(-1, fd);
+   ::close(fd);
+
+   struct stat st;
+   ASSERT_EQ(0, ::stat(foreignPath, &st));
+   gid_t foreignGroup = st.st_gid;
+
+   int count = ::getgroups(0, nullptr);
+   ASSERT_GE(count, 0);
+   std::vector<gid_t> groups(count);
+   ASSERT_EQ(count, ::getgroups(count, groups.data()));
+   groups.push_back(::getegid());
+
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+
+   bool foreign = std::find(groups.begin(), groups.end(), foreignGroup) == groups.end();
+   if (!foreign || ::rename(foreignPath, filePath.getAbsolutePath().c_str()) == -1)
+   {
+      ::unlink(foreignPath);
+      dir.remove();
+      GTEST_SKIP() << "no file in a group the process doesn't belong to";
+   }
+
+   ASSERT_EQ(0, ::chmod(filePath.getAbsolutePath().c_str(), 0664));
+
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "replaced\n"));
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("replaced\n", readback);
+   ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
+   EXPECT_NE(foreignGroup, st.st_gid);
+   EXPECT_EQ(0644, st.st_mode & 0777);
 
    dir.remove();
 }

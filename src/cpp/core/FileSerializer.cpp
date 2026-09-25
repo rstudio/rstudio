@@ -801,6 +801,9 @@ Error writeTempFile(TempFile* pTemp,
    int fd = pTemp->fd;
    const struct stat& targetStat = pTemp->targetStat;
 
+   // whether the new file ends up in the group the target's mode was set for
+   bool keptGroup = true;
+
    if (pTemp->replacing)
    {
       // Only root can give a file to another user, and other users can only
@@ -818,8 +821,13 @@ Error writeTempFile(TempFile* pTemp,
          uid = targetStat.st_uid;
 
       gid_t gid = static_cast<gid_t>(-1);
-      if (targetStat.st_gid != tempStat.st_gid && canSetGroup(targetStat.st_gid))
-         gid = targetStat.st_gid;
+      if (targetStat.st_gid != tempStat.st_gid)
+      {
+         if (canSetGroup(targetStat.st_gid))
+            gid = targetStat.st_gid;
+         else
+            keptGroup = false;
+      }
 
       if (uid != static_cast<uid_t>(-1) || gid != static_cast<gid_t>(-1))
       {
@@ -827,6 +835,9 @@ Error writeTempFile(TempFile* pTemp,
          {
             int code = errno;
             DLOGF("Couldn't carry the owner of '{}' over to its replacement (errno {})", targetPath.getAbsolutePath(), code);
+
+            if (gid != static_cast<gid_t>(-1))
+               keptGroup = false;
          }
       }
    }
@@ -840,6 +851,13 @@ Error writeTempFile(TempFile* pTemp,
    if (pTemp->replacing || options.ownerOnly)
    {
       mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
+
+      // The target's group access was granted to its group, not to the one
+      // the new file ended up in, so that group gets no more than everyone
+      // else does.
+      if (!keptGroup)
+         mode = (mode & 0707) | (mode & ((mode & 07) << 3));
+
       if (::fchmod(fd, mode) == -1)
       {
          int code = errno;
