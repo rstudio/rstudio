@@ -61,6 +61,14 @@ async function expectFilesPaneShows(page: Page, fileName: string): Promise<void>
 }
 
 // The context menu's entries in order, with '---' for each separator.
+// Leave the source pane on a single Untitled document with its commands current.
+// After the reset closes an extra column, Save stays disabled for the kept
+// Untitled until its tab is activated (#18951).
+async function resetToUntitled(page: Page): Promise<void> {
+  await resetSourcePaneState(page);
+  await page.locator(SELECTED_DOC_TAB).click();
+}
+
 async function contextMenuLayout(page: Page): Promise<string[]> {
   return page.locator(MENU_RENAME).evaluate((item) => {
     const menu = item.closest('table');
@@ -136,7 +144,7 @@ test.describe("Show Document's Directory (#6781)", () => {
   test('unsaved documents do not offer the item or the command', async ({ rstudioPage: page }) => {
     // resetSourcePaneState (run after every test, and by the fixture) leaves
     // one Untitled document active.
-    await resetSourcePaneState(page);
+    await resetToUntitled(page);
     expect(await isCommandEnabled(page, COMMAND_ID)).toBe(false);
 
     await page.locator(SELECTED_DOC_TAB).click({ button: 'right' });
@@ -149,7 +157,7 @@ test.describe("Show Document's Directory (#6781)", () => {
   });
 
   test('saving an untitled document enables the command', async ({ rstudioPage: page }) => {
-    await resetSourcePaneState(page);
+    await resetToUntitled(page);
     expect(await isCommandEnabled(page, COMMAND_ID)).toBe(false);
 
     // An Untitled R script saved as .R keeps its file type, so this doesn't
@@ -189,8 +197,9 @@ test.describe("Show Document's Directory (#6781)", () => {
       { timeout: TIMEOUTS.fileOpen },
     );
 
-    await expect.poll(() => isCommandEnabled(page, COMMAND_ID)).toBe(true);
-    expect(await page.evaluate(() => window.rstudio!.commands.rsconnectDeploy.isVisible())).toBe(true);
+    // The R Markdown extended type that enables Publish arrives after the save.
+    await expect.poll(() => page.evaluate(() => window.rstudio!.commands.rsconnectDeploy.isVisible()))
+      .toBe(true);
   });
 
   test('a file type change with an extra column keeps the active column commands', async ({ rstudioPage: page }) => {
@@ -213,16 +222,15 @@ test.describe("Show Document's Directory (#6781)", () => {
     await page.locator('#rstudio_file_accept_save').click();
     await expect(mainTab).toContainText('showdir_retype.qmd', { timeout: TIMEOUTS.fileOpen });
 
+    // The tab is renamed in the same task that fires the file type change
+    // refresh, so a single read here comes after that refresh.
     expect(await page.evaluate(() => window.rstudio!.commands.rsconnectDeploy.isVisible())).toBe(true);
   });
 
   test('saving an untitled R script as R Markdown offers Publish (#18949)', async ({ rstudioPage: page }) => {
     // The R Markdown extended type that enables Publish arrives from the
     // session after the save; the columns must refresh their commands then.
-    await resetSourcePaneState(page);
-    // After the reset closes an extra column (earlier tests), Save stays
-    // disabled for the kept Untitled until its tab is activated.
-    await page.locator(SELECTED_DOC_TAB).click();
+    await resetToUntitled(page);
     await executeCommand(page, 'saveSourceDoc');
     const fileName = page.locator('#file_dialog_name_prompt');
     await expect(fileName).toBeVisible({ timeout: TIMEOUTS.fileOpen });
