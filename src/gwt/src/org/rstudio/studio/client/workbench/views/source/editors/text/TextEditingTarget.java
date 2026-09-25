@@ -7411,7 +7411,7 @@ public class TextEditingTarget implements
       if (activeDocPath != null)
       {
          FileSystemItem wdPath =
-            FileSystemItem.createFile(activeDocPath).getParentPath();
+            FileSystemItem.createFile(activeDocPath).getContainingDir();
          consoleDispatcher_.executeSetWd(wdPath, true);
       }
       else

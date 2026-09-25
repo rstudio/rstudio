@@ -242,13 +242,17 @@ public class FileSystemItemTests extends GWTTestCase
 
    public void testContainingDirOfFileAtDriveRoot()
    {
-      // "C:" alone names the drive's current directory, not its root
       assertEquals("C:/", FileSystemItem.createFile("C:/file.R").getContainingDir().getPath());
    }
 
    public void testContainingDirOfRootIsNull()
    {
       assertNull(FileSystemItem.createDir("/").getContainingDir());
+   }
+
+   public void testContainingDirOfDriveRootIsNull()
+   {
+      assertNull(FileSystemItem.createDir("C:/").getContainingDir());
    }
 
    public void testContainingDirOfRelativeNameIsNull()
