@@ -18,6 +18,13 @@
 #include <winsock2.h>
 #endif
 
+#ifdef __APPLE__
+// dyld.h's DYLD_BOOL enum redefines R's TRUE / FALSE; this is its opt-out
+#define ENUM_DYLD_BOOL
+#include <mach-o/dyld.h>
+#include <mach-o/loader.h>
+#endif
+
 #include "SessionPackages.hpp"
 
 #include <boost/format.hpp>
@@ -591,6 +598,108 @@ void onDetectChanges(module_context::ChangeSource source)
    }
 }
 
+#ifdef __APPLE__
+
+// R's bundled OpenMP runtime (libomp.dylib) and other builds of it export the
+// same weak C++ template symbols, which dyld coalesces across images: with two
+// copies loaded, one copy's internal calls land in the other, and a copy that
+// was never initialized crashes the session on the first OpenMP region
+// (#18937). These routines let the R side spot a second copy the moment a
+// package brings it in.
+bool isOpenMPRuntime(const std::string& path)
+{
+   std::string name = FilePath(path).getFilename();
+   return boost::algorithm::starts_with(name, "libomp") &&
+          boost::algorithm::ends_with(name, ".dylib");
+}
+
+// the dylibs an image links against, as recorded in its load commands
+std::vector<std::string> linkedLibraries(const struct mach_header* pHeader)
+{
+   std::vector<std::string> libraries;
+   if (pHeader->magic != MH_MAGIC_64)
+      return libraries;
+
+   const char* pCommand = reinterpret_cast<const char*>(pHeader) + sizeof(struct mach_header_64);
+   for (uint32_t i = 0; i < pHeader->ncmds; i++)
+   {
+      const struct load_command* pLoad = reinterpret_cast<const struct load_command*>(pCommand);
+      switch (pLoad->cmd)
+      {
+      case LC_LOAD_DYLIB:
+      case LC_LOAD_WEAK_DYLIB:
+      case LC_REEXPORT_DYLIB:
+      case LC_LOAD_UPWARD_DYLIB:
+      {
+         const struct dylib_command* pDylib = reinterpret_cast<const struct dylib_command*>(pLoad);
+         libraries.push_back(pCommand + pDylib->dylib.name.offset);
+         break;
+      }
+      default:
+         break;
+      }
+
+      pCommand += pLoad->cmdsize;
+   }
+
+   return libraries;
+}
+
+#endif
+
+// paths of the OpenMP runtimes (libomp*.dylib) currently loaded, in load order
+SEXP rs_loadedOpenMPRuntimes()
+{
+   std::vector<std::string> runtimes;
+
+#ifdef __APPLE__
+   uint32_t count = _dyld_image_count();
+   for (uint32_t i = 0; i < count; i++)
+   {
+      const char* pName = _dyld_get_image_name(i);
+      if (pName != nullptr && isOpenMPRuntime(pName))
+         runtimes.push_back(pName);
+   }
+#endif
+
+   r::sexp::Protect protect;
+   return r::sexp::create(runtimes, &protect);
+}
+
+// each loaded image that links an OpenMP runtime, paired with the runtime path
+// from its load commands (which may be an @rpath reference)
+SEXP rs_openMPRuntimeUsers()
+{
+   std::vector<std::string> images;
+   std::vector<std::string> runtimes;
+
+#ifdef __APPLE__
+   uint32_t count = _dyld_image_count();
+   for (uint32_t i = 0; i < count; i++)
+   {
+      const char* pName = _dyld_get_image_name(i);
+      const struct mach_header* pHeader = _dyld_get_image_header(i);
+      if (pName == nullptr || pHeader == nullptr)
+         continue;
+
+      for (const std::string& library : linkedLibraries(pHeader))
+      {
+         if (isOpenMPRuntime(library))
+         {
+            images.push_back(pName);
+            runtimes.push_back(library);
+         }
+      }
+   }
+#endif
+
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("image", images);
+   builder.add("runtime", runtimes);
+   return r::sexp::create(builder, &protect);
+}
+
 void onInitComplete()
 {
    s_reposSEXP.set(r::options::getOption("repos"));
@@ -679,6 +788,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_getCachedAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_downloadAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_updatePackageEvents);
+   RS_REGISTER_CALL_METHOD(rs_loadedOpenMPRuntimes);
+   RS_REGISTER_CALL_METHOD(rs_openMPRuntimeUsers);
 
    using boost::bind;
    using namespace module_context;

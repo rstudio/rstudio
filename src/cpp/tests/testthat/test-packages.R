@@ -292,3 +292,51 @@ test_that("the watchdog abandons a scan that does not complete in time", {
       info = "timed out waiting for the post-abandonment scan to hook the fake package"
    )
 })
+
+test_that(".rs.formatOpenMPRuntimeWarning names the packages linking each runtime", {
+   rlib <- normalizePath(R.home("lib"), mustWork = FALSE)
+   runtimes <- c(
+      "/opt/homebrew/opt/libomp/lib/libomp.dylib",
+      file.path(rlib, "libomp.dylib")
+   )
+   users <- list(
+      image = c(
+         "/lib/xfun/libs/xfun.so",
+         "/lib/data.table/libs/data_table.so",
+         "/py/torch/lib/libtorch_cpu.dylib"
+      ),
+      runtime = c(runtimes[[1]], runtimes[[2]], "@rpath/libomp.dylib")
+   )
+   dlls <- c(
+      xfun = "/lib/xfun/libs/xfun.so",
+      data_table = "/lib/data.table/libs/data_table.so"
+   )
+
+   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls)
+   expect_match(text, "libomp.dylib (bundled with R)", fixed = TRUE)
+   expect_match(text, "linked by: xfun", fixed = TRUE)
+   expect_match(text, "linked by: data.table", fixed = TRUE)
+
+   # only packages linking the non-bundled copy are proposed for reinstall
+   expect_match(text, 'install.packages("xfun", type = "binary")', fixed = TRUE)
+   expect_false(grepl("data.table\"", text, fixed = TRUE))
+
+   # an @rpath reference can't be tied to a copy, so it is listed separately
+   expect_match(text, "/py/torch/lib/libtorch_cpu.dylib (@rpath/libomp.dylib)", fixed = TRUE)
+})
+
+test_that(".rs.formatOpenMPRuntimeWarning gives generic advice when no package links the extra copy", {
+   runtimes <- c("/py/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
+   users <- list(image = "/py/lib/libtorch_cpu.dylib", runtime = "/py/lib/libomp.dylib")
+
+   text <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls = character())
+   expect_match(text, "linked by: /py/lib/libtorch_cpu.dylib", fixed = TRUE)
+   expect_false(grepl("install.packages(", text, fixed = TRUE))
+   expect_match(text, "reinstall that package as a", fixed = TRUE)
+})
+
+test_that(".rs.checkOpenMPRuntimes is quiet when disabled", {
+   op <- options(rstudio.openmp.checkRuntimes = FALSE)
+   on.exit(options(op), add = TRUE)
+   expect_silent(expect_false(.rs.checkOpenMPRuntimes("data.table")))
+})
