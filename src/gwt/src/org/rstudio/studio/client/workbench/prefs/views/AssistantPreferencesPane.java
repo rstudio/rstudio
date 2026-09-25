@@ -1174,7 +1174,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       installManager_.checkForUpdates(new PositAiInstallManager.UpdateCheckCallback()
       {
          @Override
-         public void onNoUpdateAvailable()
+         public void onNoUpdateAvailable(String currentVersion,
+                                         boolean reinstallAvailable)
          {
             endPositAiCheck();
 
@@ -1401,7 +1402,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       final com.google.gwt.user.client.Command dismissProgress =
          globalDisplay_.showProgress(constants_.positAssistantInstallingMessage());
 
-      installManager_.installUpdate(new PositAiInstallManager.InstallCallback()
+      installManager_.installUpdate(false, new PositAiInstallManager.InstallCallback()
       {
          @Override
          public void onInstallStarted()

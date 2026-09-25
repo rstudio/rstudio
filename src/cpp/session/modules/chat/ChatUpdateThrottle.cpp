@@ -239,8 +239,9 @@ PendingUpdate carryPendingUpdateThroughSkip(const PendingUpdate& prior,
                                             const std::string& priorInstalledVersion,
                                             const std::string& installedVersion)
 {
-   // No pending update from the last completed check -> nothing to carry.
-   if (!prior.updateAvailable)
+   // No pending update or reinstall from the last completed check -> nothing
+   // to carry.
+   if (!prior.updateAvailable && !prior.reinstallAvailable)
       return PendingUpdate();
 
    // The installed version changed since the check that computed this pending
