@@ -631,16 +631,24 @@ bool isInUseCode(DWORD code)
    return code == ERROR_SHARING_VIOLATION || code == ERROR_LOCK_VIOLATION;
 }
 
-// The legacy rename reports a target held open by another process as
-// ERROR_ACCESS_DENIED, which is also its (permanent) answer for a read-only
-// target or one whose ACL denies deleting it. Opening the target for DELETE
-// with full sharing tells them apart: a sharing violation (or success, when
-// the other handle has since been closed) means it was in use, and
-// ERROR_ACCESS_DENIED means we may not replace it.
+// A rename may report a target held open by another process as
+// ERROR_ACCESS_DENIED (the legacy rename does for any open handle), which is
+// also its (permanent) answer for a read-only target or one whose ACL denies
+// deleting it. A read-only file can still be opened for DELETE, since that is
+// what renaming it takes, so the attribute is checked first. Opening the
+// target for DELETE with full sharing then tells the rest apart: a sharing
+// violation (or success, when the other handle has since been closed) means
+// it was in use, and ERROR_ACCESS_DENIED means we may not replace it.
 bool isAccessDeniedTransient(const FilePath& targetPath)
 {
+   std::wstring path = targetPath.getAbsolutePathW();
+
+   DWORD attributes = ::GetFileAttributesW(path.c_str());
+   if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_READONLY) != 0)
+      return false;
+
    HANDLE hFile = ::CreateFileW(
-      targetPath.getAbsolutePathW().c_str(),
+      path.c_str(),
       DELETE,
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
       nullptr,
@@ -703,10 +711,8 @@ Error replaceFile(const FilePath& tempPath,
       if (renamed)
          return Success();
 
-      // only the legacy rename reports a target in use as ERROR_ACCESS_DENIED;
-      // from the POSIX rename it is permanent
       bool inUse = isInUseCode(code) ||
-                   (!posixSupported && code == ERROR_ACCESS_DENIED && isAccessDeniedTransient(targetPath));
+                   (code == ERROR_ACCESS_DENIED && isAccessDeniedTransient(targetPath));
 
       if (!inUse || microsec_clock::universal_time() >= deadline)
          return atomicWriteError(static_cast<int>(code), targetPath, tempPath, ERROR_LOCATION);

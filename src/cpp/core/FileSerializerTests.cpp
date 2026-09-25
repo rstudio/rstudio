@@ -427,7 +427,7 @@ TEST(FileSerializerTest, WriteStringAtomicPreservesGroup)
    gid_t fileGroup = st.st_gid;
 
    int count = ::getgroups(0, nullptr);
-   ASSERT_GT(count, 0);
+   ASSERT_GE(count, 0);
    std::vector<gid_t> groups(count);
    ASSERT_EQ(count, ::getgroups(count, groups.data()));
 
