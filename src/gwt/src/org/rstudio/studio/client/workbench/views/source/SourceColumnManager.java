@@ -2120,7 +2120,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private void vimEditFile(String path)
    {
       // the backend keeps a document's path as given, so resolve the path
-      // against R's working directory before opening it
+      // against R's working directory before opening it; as with
+      // rstudioapi::documentOpen(), a symlink opens under its target's path
       server_.ensureFileExists(path, new ErrorLoggingServerRequestCallback<Boolean>()
       {
          @Override
