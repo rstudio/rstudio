@@ -79,7 +79,7 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    
    shortcuts <- unlist(lapply(shortcuts, .rs.normalizeKeyboardShortcut))
    .rs.userCommands[[name]] <- fn
-   .Call("rs_registerUserCommand", .rs.scalar(name), shortcuts)
+   .Call("rs_registerUserCommand", .rs.scalar(name), shortcuts, PACKAGE = "(embedding)")
    
    TRUE
 })

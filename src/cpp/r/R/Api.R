@@ -580,11 +580,11 @@
 })
 
 .rs.addApiFunction("setPersistentValue", function(name, value) {
-   invisible(.Call("rs_setPersistentValue", name, value))
+   invisible(.Call("rs_setPersistentValue", name, value, PACKAGE = "(embedding)"))
 })
 
 .rs.addApiFunction("getPersistentValue", function(name) {
-   .Call("rs_getPersistentValue", name)
+   .Call("rs_getPersistentValue", name, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("documentId", function(allowConsole = TRUE) {
@@ -771,7 +771,7 @@
    if (is.null(id) || !is.character(id) || length(id) != 1)
       stop("'id' must be a character vector of length one")
 
-  .Call("rs_terminalSend", id, text)
+  .Call("rs_terminalSend", id, text, PACKAGE = "(embedding)")
    invisible(NULL)
 })
 
@@ -779,7 +779,7 @@
    if (is.null(id) || !is.character(id) || length(id) != 1)
       stop("'id' must be a character vector of length one")
 
-  .Call("rs_terminalClear", id)
+  .Call("rs_terminalClear", id, PACKAGE = "(embedding)")
   invisible(NULL)
 })
 
@@ -801,32 +801,32 @@
    if (!validShellType)
       stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', 'ps-core', 'bash', 'zsh', or 'custom'.") 
 
-   .Call("rs_terminalCreate", caption, show, shellType)
+   .Call("rs_terminalCreate", caption, show, shellType, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalBusy", function(id) {
    if (is.null(id) || !is.character(id))
       stop("'id' must be a character vector")
 
-   .Call("rs_terminalBusy", id)
+   .Call("rs_terminalBusy", id, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalRunning", function(id) {
    if (is.null(id) || !is.character(id))
       stop("'id' must be a character vector")
 
-   .Call("rs_terminalRunning", id)
+   .Call("rs_terminalRunning", id, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalList", function() {
-   .Call("rs_terminalList")
+   .Call("rs_terminalList", PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalContext", function(id) {
    if (is.null(id) || !is.character(id) || (length(id) != 1))
       stop("'id' must be a single element character vector")
 
-   .Call("rs_terminalContext", id)
+   .Call("rs_terminalContext", id, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalActivate", function(id = NULL, show = TRUE) {
@@ -836,7 +836,7 @@
    if (!is.logical(show))
      stop("'show' must be TRUE or FALSE")
 
-   .Call("rs_terminalActivate", id, show)
+   .Call("rs_terminalActivate", id, show, PACKAGE = "(embedding)")
    invisible(NULL)
 })
 
@@ -847,19 +847,19 @@
    if (is.null(stripAnsi) || !is.logical(stripAnsi))
       stop("'stripAnsi' must be a logical vector")
 
-   .Call("rs_terminalBuffer", id, stripAnsi)
+   .Call("rs_terminalBuffer", id, stripAnsi, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalKill", function(id) {
    if (is.null(id) || !is.character(id))
       stop("'id' must be a character vector")
 
-   .Call("rs_terminalKill", id)
+   .Call("rs_terminalKill", id, PACKAGE = "(embedding)")
    invisible(NULL)
 })
 
 .rs.addApiFunction("terminalVisible", function() {
-   .Call("rs_terminalVisible")
+   .Call("rs_terminalVisible", PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("terminalExecute", function(command,

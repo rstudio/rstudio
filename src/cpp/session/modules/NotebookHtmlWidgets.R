@@ -19,7 +19,7 @@
       classes = class(x),
       isKable = .rs.scalar(isTRUE(attr(x, "rstudio_kable"))),
       sizingPolicy = if (is.list(x)) x$sizingPolicy else list()
-   ))
+   ), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("rnb.setHtmlCaptureContext", function(...)
@@ -101,7 +101,7 @@
          file.copy(path, dest, copy.mode = FALSE)
       }
       dest
-   }, ""))
+   }, ""), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("rnbHooks.print.htmlwidget", function(x, ...) {

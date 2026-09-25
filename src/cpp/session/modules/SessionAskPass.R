@@ -15,6 +15,6 @@
 
 .rs.addFunction( "askForPassword", function(prompt)
 {
-    .Call("rs_askForPassword", prompt)
+    .Call("rs_askForPassword", prompt, PACKAGE = "(embedding)")
 })
 

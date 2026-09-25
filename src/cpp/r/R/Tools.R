@@ -490,7 +490,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addGlobalFunction("RStudioGD", function()
 {
-   .Call("rs_createGD")
+   .Call("rs_createGD", PACKAGE = "(embedding)")
 })
 
 # set our graphics device as the default and cause it to be created/set
@@ -502,7 +502,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("activateGraphicsDevice", function()
 {
-   invisible(.Call("rs_activateGD"))
+   invisible(.Call("rs_activateGD", PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("newDesktopGraphicsDevice", function()
@@ -537,7 +537,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("GEplayDisplayList", function()
 {
    tryCatch(
-      .Call("rs_GEplayDisplayList"),
+      .Call("rs_GEplayDisplayList", PACKAGE = "(embedding)"),
       error = function(e) warning(e)
    )
 })
@@ -545,7 +545,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("GEcopyDisplayList", function(fromDevice)
 {
    tryCatch(
-      .Call("rs_GEcopyDisplayList", fromDevice),
+      .Call("rs_GEcopyDisplayList", fromDevice, PACKAGE = "(embedding)"),
       error = function(e) warning(e)
    )
 })
@@ -638,7 +638,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # generate a uuid
 .rs.addFunction("createUUID", function()
 {
-  .Call("rs_createUUID")
+  .Call("rs_createUUID", PACKAGE = "(embedding)")
 })
 
 # check the current R architecture
@@ -656,7 +656,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       else
          fileTitle <- header[[i]]
 
-      .Call("rs_showFile", fileTitle, files[[i]], delete.file)
+      .Call("rs_showFile", fileTitle, files[[i]], delete.file, PACKAGE = "(embedding)")
    }
 })
 
