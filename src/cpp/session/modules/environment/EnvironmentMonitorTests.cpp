@@ -61,20 +61,31 @@ bool contains(const std::vector<std::string>& names, const std::string& name)
    return std::find(names.begin(), names.end(), name) != names.end();
 }
 
-// drains the client event queue, returning the names in assigned/removed events
-std::vector<std::string> drainEnvironmentEventNames()
+// drains the client event queue into the names in assigned/removed events,
+// returning whether it also held a refresh event
+bool drainEnvironmentEvents(std::vector<std::string>* pNames)
 {
    std::vector<ClientEvent> events;
    clientEventQueue().remove(&events);
 
-   std::vector<std::string> names;
+   bool refresh = false;
+   pNames->clear();
    for (const ClientEvent& event : events)
    {
-      if (event.type() == client_events::kEnvironmentRemoved)
-         names.push_back(event.data().getString());
+      if (event.type() == client_events::kEnvironmentRefresh)
+         refresh = true;
+      else if (event.type() == client_events::kEnvironmentRemoved)
+         pNames->push_back(event.data().getString());
       else if (event.type() == client_events::kEnvironmentAssigned)
-         names.push_back(event.data().getObject()["name"].getString());
+         pNames->push_back(event.data().getObject()["name"].getString());
    }
+   return refresh;
+}
+
+std::vector<std::string> drainEnvironmentEventNames()
+{
+   std::vector<std::string> names;
+   drainEnvironmentEvents(&names);
    return names;
 }
 
@@ -281,6 +292,33 @@ TEST_F(GlobalEnvironmentMonitorTest, FirstVisibleObjectIsReportedToAssistant)
    ASSERT_EQ(signals_.size(), 1u);
    EXPECT_FALSE(signals_[0].reset);
    EXPECT_TRUE(contains(signals_[0].created, kCreatedName));
+}
+
+TEST_F(GlobalEnvironmentMonitorTest, LastValueChangeInEmptyWorkspaceIsNotReported)
+{
+   startMonitoring(false);
+
+   // clear the workspace so that only hidden names remain
+   ASSERT_FALSE(evaluate(
+      std::string(kSavedObjectsName) + " <- as.list(globalenv()); "
+      "rm(list = ls(globalenv()), envir = globalenv())"));
+   monitor_.checkForChanges();
+   clearPending();
+
+   // every top-level console command rebinds .Last.value; executeString
+   // doesn't, so rebind it by hand
+   ASSERT_FALSE(evaluate(
+      "local({ unlockBinding('.Last.value', baseenv()); "
+      "assign('.Last.value', 42, envir = baseenv()); "
+      "lockBinding('.Last.value', baseenv()) })"));
+   monitor_.checkForChanges();
+
+   // no visible object appeared or disappeared, so neither the pane nor the
+   // assistant should be told to start over
+   std::vector<std::string> eventNames;
+   EXPECT_FALSE(drainEnvironmentEvents(&eventNames));
+   EXPECT_TRUE(eventNames.empty());
+   EXPECT_TRUE(signals_.empty());
 }
 
 TEST(EnvironmentListingPrefsTest, PaneListsNamesPerPrefs)

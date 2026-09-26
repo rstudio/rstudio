@@ -39,8 +39,7 @@ bool compareSnapshotName(const BindingSnapshot& a, const BindingSnapshot& b)
    return a.name < b.name;
 }
 
-// whether the snapshot holds any name that ls() would list; hidden names
-// sort first, so this stops at the first visible one
+// whether the snapshot holds any name that ls() would list
 bool hasVisibleNames(const std::vector<BindingSnapshot>& env)
 {
    return std::any_of(
@@ -253,15 +252,17 @@ void EnvironmentMonitor::checkForChanges()
    {
       if (currentEnv != lastEnv_)
       {
-         // optimize for a global environment with no visible objects either
-         // now (user reset workspace) or before (startup) by sending a single
-         // refresh event instead of one event per object. Only do this for
-         // the global environment--while debugging local environments, the
-         // environment object list is sent down as part of the context depth
-         // event. Hidden names (.Random.seed, .Last.value) don't count: they
-         // stay behind when the workspace is cleared, and are present before
-         // the user has created anything.
-         if (isGlobalEnv && (!hasVisibleVars || !hasVisibleNames(lastEnv_)))
+         // optimize for a global environment whose visible objects have all
+         // just gone (user reset workspace) or just appeared (startup) by
+         // sending a single refresh event instead of one event per object.
+         // Only do this for the global environment--while debugging local
+         // environments, the environment object list is sent down as part of
+         // the context depth event. Hidden names (.Random.seed, .Last.value)
+         // don't count: they stay behind when the workspace is cleared, are
+         // present before the user has created anything, and .Last.value
+         // changes after every command. A change to them alone takes the
+         // per-object path, where the listing prefs decide what the pane sees.
+         if (isGlobalEnv && hasVisibleVars != hasVisibleNames(lastEnv_))
          {
             enqueRefreshEvent();
             refreshEnqueued = true;
