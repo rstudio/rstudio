@@ -41,6 +41,11 @@ async function openChooserAt(page: Page, dir: string): Promise<Locator> {
   const chooser = page.locator(CHOOSER);
   await expect(chooser).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
+  // the breadcrumb marks a current location once the initial listing lands;
+  // navigating before then would race it, and whichever listing arrived last
+  // would decide where the chooser ends up
+  await expect(chooser.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
   await chooser.getByRole('button', { name: 'Go to directory' }).click();
   const prompt = page.getByRole('dialog', { name: 'Go To Folder' });
   await expect(prompt).toBeVisible();

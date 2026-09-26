@@ -63,13 +63,6 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    }
 
    @Override
-   protected void onBrowserNavigated()
-   {
-      super.onBrowserNavigated();
-      browser_.setFilename(context_.pwd());
-   }
-
-   @Override
    public void onSelection(SelectionEvent<FileSystemItem> event)
    {
       super.onSelection(event);
@@ -80,11 +73,13 @@ public class ChooseFolderDialog2 extends FileSystemDialog
          // for its target; choosing it must yield the target directory
          browser_.setFilename(item.resolveAliasTarget().getPath());
       }
-      else
+      else if (!browser_.isNavigating())
       {
-         // the selection is cleared whenever the listing is redrawn, including
-         // after a failed navigation (which skips onBrowserNavigated()); with
-         // nothing selected, the choice is the directory being shown (#18938)
+         // every redraw of the listing clears the selection, whether a listing
+         // arrived or a navigation failed; with nothing selected, the choice
+         // is the directory being shown (#18938). A clear while a listing
+         // loads (the progress view) is skipped: pwd() is still the directory
+         // being left, and a deferred Choose waits for the listing anyway.
          browser_.setFilename(context_.pwd());
       }
    }

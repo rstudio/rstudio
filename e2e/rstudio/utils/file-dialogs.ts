@@ -2,7 +2,7 @@
 // them, and base-prefs.jsonc sets native_file_dialogs=false, so Desktop does
 // too.
 
-import { Locator, Page, Request, expect } from '@playwright/test';
+import { Locator, Page, Request, Route, expect } from '@playwright/test';
 import { executeCommand } from '@utils/commands';
 
 export const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
@@ -26,17 +26,28 @@ function listFilesPath(request: Request): string {
 //
 // The hold covers the whole page, so held() also counts other panes'
 // listings; heldPaths() says which directories the held requests list.
+// Requests made after release() pass through and are not counted.
 export async function holdListFiles(page: Page) {
-  let release = () => {};
-  const released = new Promise<void>((resolve) => (release = resolve));
+  let holding = true;
+  let unblock = () => {};
+  const released = new Promise<void>((resolve) => (unblock = resolve));
+  const release = () => {
+    holding = false;
+    unblock();
+  };
+
   const paths: string[] = [];
   const continued: Promise<void>[] = [];
-  await page.route(LIST_FILES_RPC, async (route) => {
+  const handler = async (route: Route) => {
+    if (!holding)
+      return route.fallback();
+
     paths.push(listFilesPath(route.request()));
     const request = released.then(() => route.continue());
     continued.push(request);
     await request;
-  });
+  };
+  await page.route(LIST_FILES_RPC, handler);
 
   return {
     held: () => paths.length,
@@ -47,7 +58,8 @@ export async function holdListFiles(page: Page) {
       // doesn't continue them a second time
       release();
       await Promise.allSettled(continued);
-      await page.unroute(LIST_FILES_RPC);
+      // by handler: another route on LIST_FILES_RPC stays installed
+      await page.unroute(LIST_FILES_RPC, handler);
     },
   };
 }
