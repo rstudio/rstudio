@@ -1231,8 +1231,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 # the two copies: whichever copy loaded second calls into the first, and if the
 # first was never initialized the session crashes on the next OpenMP region
 # (#18937). A copy can't be unloaded once it's in, but we can say which package
-# brought it in and how to get rid of it before the crash happens.
-.rs.addFunction("checkOpenMPRuntimes", function(pkgname)
+# brought it in and how to get rid of it before the crash happens. 'pkgname' is
+# the package whose load triggered the check, if any.
+.rs.addFunction("checkOpenMPRuntimes", function(pkgname = NULL)
 {
    if (!.rs.platform.isMacos)
       return(invisible(FALSE))
@@ -1253,9 +1254,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (key %in% .rs.reportedOpenMPRuntimes)
       return(invisible(FALSE))
 
+   trigger <- if (is.null(pkgname))
+      ""
+   else
+      sprintf(" (after loading '%s')", pkgname)
+
    .rs.logWarningMessage(
-      "Multiple OpenMP runtimes loaded (after loading '%s'): %s",
-      pkgname,
+      "Multiple OpenMP runtimes loaded%s: %s",
+      trigger,
       paste(runtimes, collapse = ", ")
    )
 
@@ -1297,22 +1303,23 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 #' @param dlls Paths of the loaded package DLLs, named by package, as returned
 #'   by .rs.loadedPackageDLLs().
 #' @param binaries Whether this build of R can install binary packages.
-#' @return A list with the warning 'text', and the 'packages' linking a copy
-#'   not bundled with R.
+#' @return A list with the warning 'text', and the 'packages' it proposes to
+#'   reinstall as binaries (those linking a copy not bundled with R).
 .rs.addFunction("formatOpenMPRuntimeWarning", function(runtimes,
                                                        users,
                                                        dlls,
                                                        binaries = .Platform$pkgType != "source")
 {
-   rlib <- normalizePath(R.home("lib"), mustWork = FALSE)
-   paths <- normalizePath(runtimes, mustWork = FALSE)
-   images <- normalizePath(users$image, mustWork = FALSE)
-   linked <- normalizePath(users$runtime, mustWork = FALSE)
+   # winslash = "/" so that these compare equal to dirname()'s output on Windows
+   rlib <- normalizePath(R.home("lib"), winslash = "/", mustWork = FALSE)
+   paths <- normalizePath(runtimes, winslash = "/", mustWork = FALSE)
+   images <- normalizePath(users$image, winslash = "/", mustWork = FALSE)
+   linked <- normalizePath(users$runtime, winslash = "/", mustWork = FALSE)
 
    # name package DLLs by their package; anything else (e.g. a Python extension
    # loaded through reticulate, or a library dyn.load()ed directly, as
    # Rcpp::sourceCpp() does) keeps its path
-   index <- match(images, normalizePath(dlls, mustWork = FALSE))
+   index <- match(images, normalizePath(dlls, winslash = "/", mustWork = FALSE))
    isPackage <- !is.na(index)
    labels <- users$image
    labels[isPackage] <- names(dlls)[index[isPackage]]
@@ -1348,7 +1355,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (!binaries)
    {
       # an R that can't install binaries (e.g. Homebrew's or conda's) bundles no
-      # copy of its own, so the packages have to agree on one
+      # copy of its own, so the packages have to agree on one. this advice names
+      # no packages, so return none: otherwise each further OpenMP package load
+      # would change the re-warn key and repeat the same warning
+      fix <- character()
       remedy <- c(
          "To fix this, reinstall the packages listed above from source so that they all",
          "link the same copy, e.g. by using the same OpenMP flags (-fopenmp, -lomp) in",
@@ -1422,6 +1432,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # and produce duplicate package_status_changed events
       .rs.setVar("hookedPackages", c(.rs.hookedPackages, packageName))
    }
+
+   # packages loaded before their hooks were registered (e.g. from .Rprofile,
+   # while the first scan was still running) never ran the OpenMP runtime check
+   tryCatch(
+      .rs.checkOpenMPRuntimes(),
+      error = function(e) .rs.logWarningMessage(e)
+   )
 
    # a package loaded between the scan being scheduled and these hooks being
    # registered may have clobbered our S3 overrides without the onLoad hook

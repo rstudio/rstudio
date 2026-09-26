@@ -608,8 +608,11 @@ void onDetectChanges(module_context::ChangeSource source)
 // package brings it in.
 bool isOpenMPRuntime(const std::string& path)
 {
-   // an exact match: LLVM's libomptarget.dylib and libompd.dylib aren't runtimes
-   return FilePath(path).getFilename() == "libomp.dylib";
+   // an exact match: LLVM's libomptarget.dylib and libompd.dylib aren't runtimes,
+   // while Intel's libiomp5.dylib (e.g. MKL builds of Python packages) shares
+   // libomp's code base and its coalesced symbols
+   std::string filename = FilePath(path).getFilename();
+   return filename == "libomp.dylib" || filename == "libiomp5.dylib";
 }
 
 // the dylibs an image links against, as recorded in its load commands
@@ -646,7 +649,7 @@ std::vector<std::string> linkedLibraries(const struct mach_header* pHeader)
 
 #endif
 
-// paths of the OpenMP runtimes (libomp.dylib) currently loaded, in load order
+// paths of the OpenMP runtimes currently loaded, in load order
 SEXP rs_loadedOpenMPRuntimes()
 {
    std::vector<std::string> runtimes;
