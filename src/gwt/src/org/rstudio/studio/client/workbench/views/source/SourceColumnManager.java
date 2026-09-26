@@ -103,6 +103,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FilePathChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocSelectionChangedEvent;
@@ -250,6 +252,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       initDynamicCommands();
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
+      // Handled here rather than per column so the active column is managed
+      // last; an inactive column managed after it can hide its commands.
+      events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
+      events_.addHandler(FilePathChangedEvent.TYPE, event -> manageCommands(false));
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
       events_.addHandler(DocumentCloseEvent.TYPE, this);
@@ -1354,8 +1360,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // set the extended type of the specified source file
 
       EditingTarget target = findEditor(e.getDocId());
-      if (target != null)
-         target.adaptToExtendedFileType(e.getExtendedType());
+      if (target == null)
+         return;
+
+      String previousType = target.getExtendedFileType();
+      target.adaptToExtendedFileType(e.getExtendedType());
+
+      // The extended type decides some commands (e.g. Publish). It is detected
+      // after every save, so refresh only when it changed.
+      if (!StringUtil.equals(previousType, target.getExtendedFileType()))
+         manageCommands(false);
    }
 
    @Override
@@ -2613,6 +2627,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
       dynamicCommands_.add(commands_.sendFilenameToTerminal());
       dynamicCommands_.add(commands_.renameSourceDoc());
+      dynamicCommands_.add(commands_.showActiveDocDirInFiles());
       dynamicCommands_.add(commands_.sourceAsWorkbenchJob());
       dynamicCommands_.add(commands_.sourceAsJob());
       dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());
