@@ -20,6 +20,9 @@
 #include <vector>
 #include <map>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/function.hpp>
+
 #include <boost/asio/io_context.hpp>
 
 #include <core/BoostSignals.hpp>
@@ -42,6 +45,10 @@ namespace core {
 namespace rstudio {
 namespace server {
 
+namespace tests {
+class SessionManagerTest;
+}
+
 // singleton
 class SessionManager;
 SessionManager& sessionManager();
@@ -53,10 +60,21 @@ SessionManager& sessionManager();
 // of session child processes
 class SessionManager
 {
+public:
+   struct Config
+   {
+      boost::posix_time::time_duration launchWindow = boost::posix_time::minutes(1);
+      boost::posix_time::time_duration stalePendingLaunchAge = boost::posix_time::minutes(3);
+      boost::function<boost::posix_time::ptime()> now;
+      boost::function<bool(PidType)> isProcessRunning;
+   };
+
 private:
    // singleton
    SessionManager();
+   explicit SessionManager(const Config& config);
    friend SessionManager& sessionManager();
+   friend class tests::SessionManagerTest;
 
 public:
    // launching
@@ -125,6 +143,8 @@ private:
    boost::mutex launchesMutex_;
    typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;
    LaunchMap pendingLaunches_;
+
+   Config config_;
 
    // session launch function
    SessionLaunchFunction sessionLaunchFunction_;
