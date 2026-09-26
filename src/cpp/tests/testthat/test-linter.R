@@ -55,7 +55,12 @@ test_that("R source files pass PACKAGE = \"(embedding)\" to .Call()", {
    offenders <- character()
    for (rFile in rSourceFiles) {
 
-      parseData <- getParseData(parse(rFile, keep.source = TRUE))
+      # a file R can't parse can't run a .Call() either
+      exprs <- tryCatch(parse(rFile, keep.source = TRUE), error = function(e) NULL)
+      if (is.null(exprs))
+         next
+
+      parseData <- getParseData(exprs)
 
       # a '.Call' token's parent is the function expression, whose parent
       # is the whole call, including any multi-line arguments
@@ -64,7 +69,20 @@ test_that("R source files pass PACKAGE = \"(embedding)\" to .Call()", {
       callIds <- parseData$parent[match(fnIds, parseData$id)]
 
       for (callId in callIds) {
+
          call <- str2lang(getParseText(parseData, callId))
+
+         # leave alone calls that target another DLL: a routine name that
+         # isn't one of ours (all are 'rs_*'), or a native symbol object
+         # from another package's namespace (e.g. grDevices:::C_foo)
+         routine <- call[[2L]]
+         if (is.character(routine) && !startsWith(routine, "rs_"))
+            next
+         if (is.call(routine) && identical(routine[[1L]], as.name(":::")))
+            next
+         if (is.call(routine) && identical(routine[[1L]], as.name("::")))
+            next
+
          if (!identical(call[["PACKAGE"]], "(embedding)")) {
             line <- parseData$line1[parseData$id == callId]
             path <- sub(paste0(root, "/"), "", rFile, fixed = TRUE)
