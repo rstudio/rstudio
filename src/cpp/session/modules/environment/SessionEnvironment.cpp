@@ -67,11 +67,6 @@ EnvironmentMonitor* s_pEnvironmentMonitor = nullptr;
 // which Python module is currently being monitored, if any?
 std::string s_monitoredPythonModule;
 
-// the listing prefs as last applied, so that a pref write that doesn't
-// change the effective value doesn't refresh the pane
-bool s_showHiddenObjects = false;
-bool s_showLastDotValue = false;
-
 // the environment being browsed (set by onConsolePrompt when entering debug).
 // this is needed because during promise forcing, the browser's environment
 // may differ from any sys.frame() visible from R.
@@ -999,25 +994,15 @@ void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
    if (pref != kShowHiddenObjects && pref != kShowLastDotValue)
       return;
 
-   // onChanged also fires for writes that leave the effective value alone: a
-   // write of the current value, or a user-layer write under a project override
-   bool showHiddenObjects = prefs::userPrefs().showHiddenObjects();
-   bool showLastDotValue = prefs::userPrefs().showLastDotValue();
-   if (showHiddenObjects == s_showHiddenObjects &&
-       showLastDotValue == s_showLastDotValue)
-   {
-      return;
-   }
-   s_showHiddenObjects = showHiddenObjects;
-   s_showLastDotValue = showLastDotValue;
-
    // the prefs only affect R listings; the pane re-lists on its own when
    // switched back to R
    if (s_environmentLanguage != kEnvironmentLanguageR)
       return;
 
    // refresh from here rather than from the client so the listing is fetched
-   // only after the new value has reached the session
+   // only after the new value has reached the session. A write that leaves
+   // the effective value alone (a user-layer write under a project override)
+   // costs one redundant listing, which is harmless.
    ClientEvent event(client_events::kEnvironmentRefresh);
    module_context::enqueClientEvent(event);
 }
@@ -1905,9 +1890,6 @@ Error initialize()
    // don't end up releasing the underlying environment SEXP after
    // R has already shut down / deinitialized)
    s_pEnvironmentMonitor = new EnvironmentMonitor();
-
-   s_showHiddenObjects = prefs::userPrefs().showHiddenObjects();
-   s_showLastDotValue = prefs::userPrefs().showLastDotValue();
 
    boost::shared_ptr<int> pContextDepth =
          boost::make_shared<int>(0);
