@@ -348,6 +348,7 @@ TEST(EnvironmentTest, IsValidEnvironmentVariableName)
    EXPECT_TRUE(isValidEnvironmentVariableName("_FOO"));
    EXPECT_TRUE(isValidEnvironmentVariableName("f"));
    EXPECT_TRUE(isValidEnvironmentVariableName("_"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("PWB_GLOBAL_OVER_GROUP"));
    EXPECT_TRUE(isValidEnvironmentVariableName("FOO_BAR_BAZ"));
    EXPECT_TRUE(isValidEnvironmentVariableName("A1_b2"));
 
