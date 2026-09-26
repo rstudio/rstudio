@@ -1231,6 +1231,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel=""
         desc="Copy current document path"/>
 
+   <cmd id="showActiveDocDirInFiles"
+        label="Show Current Document's Directory in Files Pane"
+        menuLabel="Show Document's Directory"
+        buttonLabel=""
+        desc="Show the directory containing the current document in the Files pane"/>
+
    <cmd id="saveSourceDocAs"
         label="Save Current Document As..."
         menuLabel="Save _As..."

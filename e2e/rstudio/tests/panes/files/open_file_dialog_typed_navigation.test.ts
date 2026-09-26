@@ -10,7 +10,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, resetSourcePaneState } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { OPEN_FILE_DIALOG, holdListFiles, openFileDialogAtHome } from '@utils/file-dialogs';
 
@@ -35,7 +35,11 @@ test.describe('Open File dialog typed directory navigation @server_only', () => 
     );
   });
 
-  test.afterAll(async () => {
+  test.afterAll(async ({ rstudioPage: page }) => {
+    // Close the marker document before deleting it. An open document whose
+    // file disappears raises a modal "File Deleted" prompt, and the next
+    // spec's beforeAll runs before the per-test reset that would dismiss it.
+    await resetSourcePaneState(page);
     await consoleActions.executeInConsole(
       `unlink(file.path(path.expand("~"), "${dirName}"), recursive = TRUE)`,
       { wait: true },
