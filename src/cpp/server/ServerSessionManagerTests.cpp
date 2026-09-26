@@ -22,6 +22,7 @@
 #include <boost/asio/io_context.hpp>
 
 #include <core/http/Request.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <gtest/gtest.h>
 
@@ -39,6 +40,7 @@ int s_launchCount = 0;
 
 Error countingLaunchFunction(boost::asio::io_context&,
                              const r_util::SessionLaunchProfile&,
+                             const json::JsonRpcRequest&,
                              const http::Request&,
                              const http::ResponseHandler&,
                              const http::ErrorHandler&)
@@ -52,17 +54,19 @@ Error countingLaunchFunction(boost::asio::io_context&,
 // success (a last response from that same session)
 Error requestsEndDuringLaunchFunction(boost::asio::io_context& ioContext,
                                       const r_util::SessionLaunchProfile& profile,
+                                      const json::JsonRpcRequest& jsonRequest,
                                       const http::Request& request,
                                       const http::ResponseHandler& onLaunch,
                                       const http::ErrorHandler& onError)
 {
    sessionManager().removePendingLaunch(profile.context, false, "request error");
    sessionManager().removePendingLaunch(profile.context);
-   return countingLaunchFunction(ioContext, profile, request, onLaunch, onError);
+   return countingLaunchFunction(ioContext, profile, jsonRequest, request, onLaunch, onError);
 }
 
 Error failingLaunchFunction(boost::asio::io_context&,
                             const r_util::SessionLaunchProfile&,
+                            const json::JsonRpcRequest&,
                             const http::Request&,
                             const http::ResponseHandler&,
                             const http::ErrorHandler&)
@@ -74,11 +78,12 @@ Error failingLaunchFunction(boost::asio::io_context&,
 bool attemptLaunch(const r_util::SessionContext& context)
 {
    boost::asio::io_context ioContext;
+   json::JsonRpcRequest jsonRequest;
    http::Request request;
    bool launched = false;
 
    Error error = sessionManager().launchSession(
-            ioContext, context, request, launched, core::system::Options());
+            ioContext, context, jsonRequest, request, launched, core::system::Options());
    EXPECT_FALSE(error);
 
    return launched;
@@ -268,10 +273,11 @@ TEST(SessionManagerTest, FailedLaunchClearsPendingLaunch)
    // a launch that fails is over: nothing may be left waiting on it
    r_util::SessionContext context("pending-launch-failed-launch-user");
    boost::asio::io_context ioContext;
+   json::JsonRpcRequest jsonRequest;
    http::Request request;
    bool launched = false;
    Error error = sessionManager().launchSession(
-            ioContext, context, request, launched, core::system::Options());
+            ioContext, context, jsonRequest, request, launched, core::system::Options());
    EXPECT_TRUE(error);
    EXPECT_FALSE(launched);
 

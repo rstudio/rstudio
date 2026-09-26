@@ -81,7 +81,7 @@ namespace session {
 
 // global initialization (allows instantiation of listener which
 // implements the protocol appropriate for our current configuration)
-void initializeHttpConnectionListener();
+core::Error initializeHttpConnectionListener();
 
 // Binds a server session's local stream (its socket) ahead of the listener's
 // start. Called first thing in startup, so that a second process launched for

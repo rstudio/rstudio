@@ -234,9 +234,11 @@ bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
 
 Error startHttpConnectionListener()
 {
-   initializeHttpConnectionListener();
+   Error error = initializeHttpConnectionListener();
+   if (error)
+      return error;
 
-   Error error = httpConnectionListener().start();
+   error = httpConnectionListener().start();
    if (error)
       return error;
 
