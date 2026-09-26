@@ -20,6 +20,36 @@ import com.google.gwt.user.client.Command;
 
 public class SourceVimCommands
 {
+   // Removes Vim's backslash escapes from a file name given to an ex command.
+   // Returns null if the name uses an unescaped '%' (current file) or '#'
+   // (alternate file), which Vim would expand. Other backslashes are kept,
+   // since they may be Windows path separators.
+   public static String parseFileName(String fileName)
+   {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < fileName.length(); i++)
+      {
+         char ch = fileName.charAt(i);
+         if (ch == '%' || ch == '#')
+            return null;
+
+         boolean escaped =
+            ch == '\\' &&
+            i + 1 < fileName.length() &&
+            " %#".indexOf(fileName.charAt(i + 1)) != -1;
+
+         if (escaped)
+         {
+            i++;
+            ch = fileName.charAt(i);
+         }
+
+         builder.append(ch);
+      }
+
+      return builder.toString();
+   }
+
    public final native void save(SourceColumnManager source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
          $entry(function(cm, params) {
@@ -113,19 +143,21 @@ public class SourceVimCommands
    
       var callback = $entry(function(cm, params) {
          
-         // Handle 'e!'
-         if (params.argString && params.argString === "!")
+         // 'e!' with no file reverts the current document; with a file, the
+         // file opens as with 'e'. The file name is the whole argument, since
+         // it may contain (escaped) spaces.
+         var argString = params.argString || "";
+         var bang = argString.charAt(0) === "!";
+         if (bang)
+            argString = argString.substring(1);
+         argString = argString.trim();
+         
+         if (argString.length > 0)
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimEditFile(Ljava/lang/String;)(argString);
+         else if (bang)
             source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::revertActiveDocument()();
-            
-         // Handle other editing targets
-         else if (params.args) {
-            if (params.args.length === 1) {
-               source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimEditFile(Ljava/lang/String;)(params.args[0]);
-            }
-            // TODO: on error?
-         } else {
+         else
             source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimNewSourceDoc()();
-         }
       });
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);

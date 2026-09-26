@@ -2117,28 +2117,43 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       });
    }
 
-   private void vimEditFile(String path)
+   private void vimEditFile(String fileName)
    {
+      String path = SourceVimCommands.parseFileName(fileName);
+      if (path == null)
+      {
+         globalDisplay_.showErrorMessage(
+            constants_.errorWhileOpeningFile(),
+            constants_.vimFileNameNotSupported(fileName));
+         return;
+      }
+
       // the backend keeps a document's path as given, so resolve the path
-      // against R's working directory before opening it; as with
-      // rstudioapi::documentOpen(), a symlink opens under its target's path
-      server_.ensureFileExists(path, new ErrorLoggingServerRequestCallback<Boolean>()
+      // against R's working directory before opening it
+      server_.ensureEditableFile(path, new SimpleRequestCallback<JsObject>(constants_.errorWhileOpeningFile())
       {
          @Override
-         public void onResponseReceived(Boolean success)
+         public void onResponseReceived(JsObject result)
          {
-            if (!success)
-               return;
+            String resolvedPath = result.getString("path");
+            String error = result.getString("error");
 
-            server_.createAliasedPath(path, new ErrorLoggingServerRequestCallback<String>()
+            if (error.equals("is_folder"))
             {
-               @Override
-               public void onResponseReceived(String aliasedPath)
-               {
-                  if (!StringUtil.isNullOrEmpty(aliasedPath))
-                     openFile(FileSystemItem.createFile(aliasedPath));
-               }
-            });
+               globalDisplay_.showErrorMessage(
+                  constants_.errorWhileOpeningFile(),
+                  constants_.vimEditFileIsFolder(resolvedPath));
+            }
+            else if (error.equals("not_created"))
+            {
+               globalDisplay_.showErrorMessage(
+                  constants_.errorWhileOpeningFile(),
+                  constants_.vimEditFileNotCreated(resolvedPath));
+            }
+            else
+            {
+               openFile(FileSystemItem.createFile(resolvedPath));
+            }
          }
       });
    }
