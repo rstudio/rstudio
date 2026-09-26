@@ -10,11 +10,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { executeInConsole } from '@pages/console_pane.page';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { clearPref, documentOpen, executeCommand, setPref, waitForActiveDocument } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { seedSandboxFile } from '@utils/files';
+import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 
 type ActiveDocument = { id: string; path: string | null };
@@ -143,8 +145,10 @@ test.describe('Vim commands that open documents', () => {
       path.join('vim_link_target', 'target.R'),
       '# target\n',
     );
+    // link from R: on Linux Server the sandbox belongs to the rsession user,
+    // so a symlink created by the test runner fails with EACCES
     const link = path.join(sandbox.dir, 'vim_link.R');
-    fs.symlinkSync(target, link);
+    await executeInConsole(page, `stopifnot(file.symlink(${rPathLiteral(target)}, ${rPathLiteral(link)}))`);
     await openNewScript(page);
 
     await runExCommand(page, 'e vim_link.R');
