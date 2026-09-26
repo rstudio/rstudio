@@ -22,6 +22,8 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     String multipleObjects(int numObjects);
     String confirmObjectRemove(String objects);
     String includeHiddenObjects();
+    String showHiddenObjects();
+    String showLastDotValue();
     String environmentCapitalized();
     String environmentTab();
     String refreshNow();

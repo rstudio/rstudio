@@ -496,17 +496,13 @@ CallFrameResult callFramesFromR(int depth,
 
 json::Array environmentListAsJson()
 {
-    using namespace rstudio::r::sexp;
     std::vector<std::string> names;
     json::Array listJson;
 
     if (s_pEnvironmentMonitor->hasEnvironment())
     {
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
-       listEnvironment(env,
-                       false,
-                       prefs::userPrefs().showLastDotValue(),
-                       &names);
+       listEnvironmentForPane(env, &names);
 
        // get object details and transform to json
        std::transform(names.begin(),
@@ -991,6 +987,24 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    
    pResponse->setResult(jsonState);
    return Success();
+}
+
+void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
+{
+   if (pref != kShowHiddenObjects && pref != kShowLastDotValue)
+      return;
+
+   // the prefs only affect R listings; the pane re-lists on its own when
+   // switched back to R
+   if (s_environmentLanguage != kEnvironmentLanguageR)
+      return;
+
+   // refresh from here rather than from the client so the listing is fetched
+   // only after the new value has reached the session. A write that leaves
+   // the effective value alone (a user-layer write under a project override)
+   // costs one redundant listing, which is harmless.
+   ClientEvent event(client_events::kEnvironmentRefresh);
+   module_context::enqueClientEvent(event);
 }
 
 void onDetectChanges(module_context::ChangeSource /* source */)
@@ -1919,6 +1933,7 @@ Error initialize()
    events().onConsoleOutput.connect(bind(onConsoleOutput,
                                          pLineDebugState,
                                          pCapturingDebugOutput, _1, _2));
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);

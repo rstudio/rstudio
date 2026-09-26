@@ -17,6 +17,7 @@
 #define RSTUDIO_DEBUG_LABEL "rsexp"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
+#include <algorithm>
 #include <cctype>
 
 #include <gsl/gsl-lite.hpp>
@@ -411,10 +412,20 @@ void listEnvironment(SEXP env,
       return;
    }
 
-   // add in .Last.value if it exists
-   if (!includeAll && includeLastDotValue)
+   // .Last.value is listed by includeLastDotValue alone. R stores it in
+   // baseenv (SET_SYMVALUE on R_LastvalueSymbol), so ls() lists it itself
+   // only when env is baseenv and includeAll is set.
+   auto lastValue = pNames->end();
+   if (includeAll)
+      lastValue = std::find(pNames->begin(), pNames->end(), ".Last.value");
+
+   if (lastValue != pNames->end())
    {
-      // R stores .Last.value in baseenv (SET_SYMVALUE on R_LastvalueSymbol).
+      if (!includeLastDotValue)
+         pNames->erase(lastValue);
+   }
+   else if (includeLastDotValue)
+   {
       // Use a chain walk so we only surface it for environments where it's
       // actually reachable -- i.e. envs that inherit from baseenv (globalenv,
       // package envs, function frames). Custom envs whose chain bypasses

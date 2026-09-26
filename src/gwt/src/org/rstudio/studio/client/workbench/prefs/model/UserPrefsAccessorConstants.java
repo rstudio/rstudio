@@ -104,6 +104,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showLastDotValueDescription();
 
    /**
+    * Whether to show objects whose names begin with a dot in the Environment pane.
+    */
+   @DefaultStringValue("Show hidden objects in Environment pane")
+   String showHiddenObjectsTitle();
+   @DefaultStringValue("Whether to show objects whose names begin with a dot in the Environment pane.")
+   String showHiddenObjectsDescription();
+
+   /**
     * The line ending format to use when saving files.
     */
    @DefaultStringValue("Line ending format")
