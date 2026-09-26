@@ -292,3 +292,140 @@ test_that("the watchdog abandons a scan that does not complete in time", {
       info = "timed out waiting for the post-abandonment scan to hook the fake package"
    )
 })
+
+test_that(".rs.formatOpenMPRuntimeWarning names the packages linking each runtime", {
+   rlib <- normalizePath(R.home("lib"), mustWork = FALSE)
+   runtimes <- c(
+      "/opt/homebrew/opt/libomp/lib/libomp.dylib",
+      file.path(rlib, "libomp.dylib")
+   )
+   users <- list(
+      image = c(
+         "/lib/xfun/libs/xfun.so",
+         "/lib/data.table/libs/data_table.so",
+         "/py/torch/lib/libtorch_cpu.dylib"
+      ),
+      runtime = c(runtimes[[1]], runtimes[[2]], "@rpath/libomp.dylib")
+   )
+   dlls <- c(
+      xfun = "/lib/xfun/libs/xfun.so",
+      data.table = "/lib/data.table/libs/data_table.so"
+   )
+
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls, binaries = TRUE)
+   text <- report$text
+   expect_match(text, "libomp.dylib (bundled with R)", fixed = TRUE)
+   expect_match(text, "linked by: xfun", fixed = TRUE)
+   expect_match(text, "linked by: data.table", fixed = TRUE)
+
+   # only packages linking the non-bundled copy are proposed for reinstall
+   expect_equal(report$packages, "xfun")
+   expect_match(text, 'install.packages("xfun", type = "binary")', fixed = TRUE)
+   expect_false(grepl("data.table\"", text, fixed = TRUE))
+
+   # an @rpath reference can't be tied to a copy, so it is listed separately
+   expect_match(text, "/py/torch/lib/libtorch_cpu.dylib (@rpath/libomp.dylib)", fixed = TRUE)
+})
+
+test_that(".rs.formatOpenMPRuntimeWarning doesn't count a package's own copy as R's", {
+   # a package library next to R's lib directory shares its path prefix
+   rlib <- normalizePath(R.home("lib"), mustWork = FALSE)
+   shipped <- file.path(dirname(rlib), "library", "torch", "lib", "libomp.dylib")
+   runtimes <- c(shipped, file.path(rlib, "libomp.dylib"))
+   users <- list(image = "/lib/torch/libs/torch.so", runtime = shipped)
+
+   report <- .rs.formatOpenMPRuntimeWarning(
+      runtimes,
+      users,
+      dlls = c(torch = "/lib/torch/libs/torch.so"),
+      binaries = TRUE
+   )
+   expect_false(grepl(paste(shipped, "(bundled with R)"), report$text, fixed = TRUE))
+   expect_equal(report$packages, "torch")
+})
+
+test_that(".rs.formatOpenMPRuntimeWarning keeps a long reinstall call on one line", {
+   runtimes <- c(
+      "/opt/homebrew/opt/libomp/lib/libomp.dylib",
+      file.path(R.home("lib"), "libomp.dylib")
+   )
+   pkgs <- c("xfun", "data.table", "fst", "qs", "ranger", "igraph", "xgboost")
+   images <- sprintf("/lib/%s/libs/%s.so", pkgs, pkgs)
+   users <- list(image = images, runtime = rep(runtimes[[1]], length(pkgs)))
+
+   report <- .rs.formatOpenMPRuntimeWarning(
+      runtimes,
+      users,
+      dlls = setNames(images, pkgs),
+      binaries = TRUE
+   )
+   expected <- sprintf(
+      "  install.packages(c(%s), type = \"binary\")",
+      paste0("\"", pkgs, "\"", collapse = ", ")
+   )
+   expect_true(expected %in% strsplit(report$text, "\n", fixed = TRUE)[[1]])
+})
+
+test_that(".rs.formatOpenMPRuntimeWarning only names package DLLs by their package", {
+   runtimes <- c(
+      "/opt/homebrew/opt/libomp/lib/libomp.dylib",
+      file.path(R.home("lib"), "libomp.dylib")
+   )
+   image <- "/rtmp/sourceCpp-aarch64-apple-darwin20-1.0.14/sourcecpp_1a2b/sourceCpp_2.so"
+   users <- list(image = image, runtime = runtimes[[1]])
+
+   # a dyn.load()ed library, as Rcpp::sourceCpp() builds, belongs to no namespace
+   dlls <- c(Rcpp = "/lib/Rcpp/libs/Rcpp.so")
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls, binaries = TRUE)
+   expect_match(report$text, paste("linked by:", image), fixed = TRUE)
+   expect_false(grepl("install.packages(", report$text, fixed = TRUE))
+   expect_length(report$packages, 0L)
+})
+
+test_that(".rs.formatOpenMPRuntimeWarning gives generic advice when no package links the extra copy", {
+   runtimes <- c("/py/lib/libomp.dylib", file.path(R.home("lib"), "libomp.dylib"))
+   users <- list(image = "/py/lib/libtorch_cpu.dylib", runtime = "/py/lib/libomp.dylib")
+
+   report <- .rs.formatOpenMPRuntimeWarning(
+      runtimes,
+      users,
+      dlls = character(),
+      binaries = TRUE
+   )
+   text <- report$text
+   expect_match(text, "linked by: /py/lib/libtorch_cpu.dylib", fixed = TRUE)
+   expect_false(grepl("install.packages(", text, fixed = TRUE))
+   expect_match(text, "reinstall that package as a", fixed = TRUE)
+})
+
+test_that(".rs.formatOpenMPRuntimeWarning doesn't suggest binaries when R can't install them", {
+   runtimes <- c("/opt/homebrew/opt/libomp/lib/libomp.dylib", "/opt/conda/lib/libomp.dylib")
+   users <- list(
+      image = c("/lib/xfun/libs/xfun.so", "/lib/data.table/libs/data_table.so"),
+      runtime = runtimes
+   )
+   dlls <- c(
+      xfun = "/lib/xfun/libs/xfun.so",
+      data.table = "/lib/data.table/libs/data_table.so"
+   )
+
+   report <- .rs.formatOpenMPRuntimeWarning(runtimes, users, dlls, binaries = FALSE)
+   expect_false(grepl("binary", report$text, fixed = TRUE))
+   expect_match(report$text, "reinstall the packages listed above from source", fixed = TRUE)
+   expect_match(report$text, "linked by: xfun", fixed = TRUE)
+
+   # the advice names no packages, so none go into the re-warn key: another
+   # OpenMP package loading later mustn't repeat the same warning
+   expect_length(report$packages, 0L)
+})
+
+test_that(".rs.loadedPackageDLLs names each loaded DLL by its package", {
+   dlls <- .rs.loadedPackageDLLs()
+   expect_equal(basename(dlls[["stats"]]), paste0("stats", .Platform$dynlib.ext))
+})
+
+test_that(".rs.checkOpenMPRuntimes is quiet when disabled", {
+   op <- options(rstudio.openmp.checkRuntimes = FALSE)
+   on.exit(options(op), add = TRUE)
+   expect_silent(expect_false(.rs.checkOpenMPRuntimes("data.table")))
+})
