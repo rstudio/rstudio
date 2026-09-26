@@ -327,6 +327,7 @@ namespace prefs {
 #define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
 #define kNewProjGitInit "new_proj_git_init"
 #define kNewProjUseRenv "new_proj_use_renv"
+#define kCheckProjectRVersion "check_project_r_version"
 #define kRootDocument "root_document"
 #define kShowUserHomePage "show_user_home_page"
 #define kShowUserHomePageAlways "always"
@@ -1661,6 +1662,12 @@ public:
     */
    bool newProjUseRenv();
    core::Error setNewProjUseRenv(bool val);
+
+   /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   bool checkProjectRVersion();
+   core::Error setCheckProjectRVersion(bool val);
 
    /**
     * The root document to use when compiling PDF documents.

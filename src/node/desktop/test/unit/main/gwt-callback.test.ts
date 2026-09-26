@@ -19,7 +19,8 @@ import sinon from 'sinon';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
 
-import { GwtCallback } from '../../../src/main/gwt-callback';
+import { GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
+import * as DetectR from '../../../src/main/detect-r';
 import { MainWindow } from '../../../src/main/main-window';
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
@@ -52,6 +53,61 @@ describe('DesktopCallback', () => {
 
   it('can be constructed', () => {
     assert.isNotEmpty(callback);
+  });
+
+  describe('setPendingRVersion', () => {
+    // a stand-in R that exists on disk; querying it is stubbed
+    const rPath = process.execPath;
+
+    afterEach(() => {
+      callback.collectPendingRVersion();
+      callback.setPendingQuit(PendingQuit.PendingQuitNone);
+    });
+
+    it('records an R that runs and hands it over once', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+
+      assert.equal(await callback.setPendingRVersion(rPath), '');
+      assert.equal(callback.collectPendingRVersion(), rPath);
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('has nothing pending by default', () => {
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('refuses an R that is missing or fails to run', async () => {
+      const detect = sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([null as never, new Error('boom')]);
+
+      assert.isNotEmpty(await callback.setPendingRVersion(rPath));
+      assert.isNotEmpty(await callback.setPendingRVersion('/no/such/R'));
+      assert.isTrue(detect.calledOnce);
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('answers with an error rather than failing', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').rejects(new Error('boom'));
+
+      assert.include(await callback.setPendingRVersion(rPath), 'boom');
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('forgets the R when the quit it was meant for is abandoned', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+
+      callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload);
+      assert.equal(await callback.setPendingRVersion(rPath), '');
+
+      callback.setPendingQuit(PendingQuit.PendingQuitNone);
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+  });
+
+  describe('makeROrthogonal', () => {
+    it('only touches versions in the R framework', async () => {
+      assert.isNotEmpty(await callback.makeROrthogonal('/opt/R/4.4.1/lib/R'));
+      assert.isNotEmpty(await callback.makeROrthogonal('/Library/Frameworks/R.framework/Versions/Current/Resources'));
+    });
   });
 
   describe('dialogParentWindow', () => {

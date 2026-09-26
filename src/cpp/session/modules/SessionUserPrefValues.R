@@ -1791,6 +1791,16 @@
    clear = function() { .rs.clearUserPref("new_proj_use_renv") }
 )
 
+# Warn when a project requests a different version of R
+#
+# Whether to warn, and offer to switch, when the version of R recorded in a
+# project's renv lockfile or project file differs from the version of R in use.
+.rs.uiPrefs$checkProjectRVersion <- list(
+   get = function() { .rs.getUserPref("check_project_r_version") },
+   set = function(value) { .rs.setUserPref("check_project_r_version", value) },
+   clear = function() { .rs.clearUserPref("check_project_r_version") }
+)
+
 # Root document for PDF compilation
 #
 # The root document to use when compiling PDF documents.

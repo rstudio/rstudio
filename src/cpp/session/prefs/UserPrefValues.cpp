@@ -2494,6 +2494,19 @@ core::Error UserPrefValues::setNewProjUseRenv(bool val)
 }
 
 /**
+ * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+ */
+bool UserPrefValues::checkProjectRVersion()
+{
+   return readPref<bool>("check_project_r_version");
+}
+
+core::Error UserPrefValues::setCheckProjectRVersion(bool val)
+{
+   return writePref("check_project_r_version", val);
+}
+
+/**
  * The root document to use when compiling PDF documents.
  */
 std::string UserPrefValues::rootDocument()
@@ -4233,6 +4246,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleSuspendBlockedNoticeDelay,
       kNewProjGitInit,
       kNewProjUseRenv,
+      kCheckProjectRVersion,
       kRootDocument,
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,

@@ -374,6 +374,10 @@ export class MainWindow extends GwtWindow {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
 
+  collectPendingRVersion(): string {
+    return appState().gwtCallback?.collectPendingRVersion() ?? '';
+  }
+
   onActivated(): void {
     // intentionally left blank
   }

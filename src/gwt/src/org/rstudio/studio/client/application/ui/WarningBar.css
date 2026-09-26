@@ -38,6 +38,14 @@
    position: relative;
 }
 
+.action {
+   display: inline-block;
+   position: relative;
+   margin-left: 8px;
+   margin-right: 12px;
+   font-weight: bold;
+}
+
 .dismiss {
    right: 0;
    width: 9px;

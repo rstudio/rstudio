@@ -6270,6 +6270,17 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void rigInstallRVersion(String version,
+                                  ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(version)
+            .get();
+
+      sendRequest(RPC_SCOPE, RIG_INSTALL_R_VERSION, params, requestCallback);
+   }
+
+   @Override
    public void markersTabClosed(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
@@ -7700,6 +7711,7 @@ public class RemoteServer implements Server
 
    private static final String RENV_INIT = "renv_init";
    private static final String RENV_ACTIONS = "renv_actions";
+   private static final String RIG_INSTALL_R_VERSION = "rig_install_r_version";
 
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";

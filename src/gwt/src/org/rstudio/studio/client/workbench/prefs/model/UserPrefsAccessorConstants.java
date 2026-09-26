@@ -1600,6 +1600,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String newProjUseRenvDescription();
 
    /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   @DefaultStringValue("Warn when a project requests a different version of R")
+   String checkProjectRVersionTitle();
+   @DefaultStringValue("Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.")
+   String checkProjectRVersionDescription();
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    @DefaultStringValue("Root document for PDF compilation")

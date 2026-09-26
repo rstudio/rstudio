@@ -1312,6 +1312,12 @@
             "title": "Create an renv environment in new projects",
             "description": "Whether an renv environment should be created inside new projects by default."
         },
+        "check_project_r_version": {
+            "type": "boolean",
+            "default": true,
+            "title": "Warn when a project requests a different version of R",
+            "description": "Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use."
+        },
         "root_document": {
             "type": "string",
             "default": "",

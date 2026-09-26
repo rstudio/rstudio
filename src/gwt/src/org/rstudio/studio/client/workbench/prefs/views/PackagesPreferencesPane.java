@@ -151,6 +151,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       spaced(useSecurePackageDownload_);
       useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
 
+      management.add(checkboxPref(uiPrefs.checkProjectRVersion()));
+
       management.add(spacedBefore(new HelpLink(constants_.managePackagesTitle(), "managing_packages")));
 
       // -------- Development

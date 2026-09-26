@@ -1,6 +1,9 @@
 ## RStudio 2026.10.0 "Blue Mistflower" Release Notes
 
 ### New
+- ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed is installed first, via [rig](https://github.com/r-lib/rig), in a background job; rig itself is downloaded when it is not already available. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
+- ([#18803](https://github.com/rstudio/rstudio/issues/18803)): RStudio Desktop now logs detailed renderer, GPU, and utility process failures to help diagnose crashes.
+- ([#18692](https://github.com/rstudio/rstudio/issues/18692)): The active document tab now has a bold label and a blue overline to make it easier to identify. This is enabled by default and can be disabled in Global Options > General > Basic > Other.
 - ([#4422](https://github.com/rstudio/rstudio/issues/4422)): Plots can now be drawn at a fixed size instead of the size of the Plots pane (Plots > Fixed Size..., or the size menu in the Plots pane toolbar). The plot is scaled down to fit the pane without being redrawn when the pane is resized, and exported plots default to the same size. Save Plot as Image can also save bitmaps at a chosen resolution (up to 600 DPI) without changing the plot's layout, and shows the image's size in inches and pixels.
 - ([#17787](https://github.com/rstudio/rstudio/issues/17787)): Columns in the data viewer can now be hidden and shown from the summary panel, individually or all at once.
 - ([#18692](https://github.com/rstudio/rstudio/issues/18692)): The active document tab now has a bold label and a blue overline to make it easier to identify. This is enabled by default and can be disabled in Global Options > General > Basic > Other.
