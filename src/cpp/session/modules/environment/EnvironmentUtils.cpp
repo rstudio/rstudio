@@ -105,15 +105,6 @@ void listEnvironmentNames(SEXP env,
 {
    r::sexp::listEnvironment(env, includeHidden, includeLastDotValue, pNames);
 
-   // .Last.value is listed by its own pref alone, even where it's a binding
-   // of the environment itself (baseenv)
-   if (!includeLastDotValue)
-   {
-      auto lastValue = std::find(pNames->begin(), pNames->end(), ".Last.value");
-      if (lastValue != pNames->end())
-         pNames->erase(lastValue);
-   }
-
    // a function's '...' isn't a user-assigned object, and the pane's
    // describe/size code isn't built to inspect it safely
    auto dots = std::find(pNames->begin(), pNames->end(), "...");
