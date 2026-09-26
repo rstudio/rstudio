@@ -136,11 +136,11 @@ void releaseSessionStream()
       s_pSessionStreamListener->releaseEndpoint();
 }
 
-void initializeHttpConnectionListener()
+Error initializeHttpConnectionListener()
 {
    // keep the listener that claimed the session stream: it holds the socket
    if (s_pSessionStreamListener)
-      return;
+      return Success();
 
    // alias options
    session::Options& options = session::options();
@@ -188,6 +188,8 @@ void initializeHttpConnectionListener()
          s_pHttpConnectionListener = createSessionStreamListener();
       }
    }
+
+   return Success();
 }
 
 HttpConnectionListener& httpConnectionListener()

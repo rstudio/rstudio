@@ -255,12 +255,14 @@ SessionManager::SessionManager()
 
 Error SessionManager::launchSession(boost::asio::io_context& ioContext,
                                     const r_util::SessionContext& context,
+                                    const json::JsonRpcRequest& jsonRequest,
                                     const http::Request& request,
                                     bool &launched,
                                     const core::system::Options environment,
                                     const http::ResponseHandler& onLaunch,
                                     const http::ErrorHandler& onError,
-                                    const std::string& openFile)
+                                    const std::string& openFile,
+                                    const core::system::Options extraArgs)
 {
    int numRemoved = 0;
    using namespace boost::posix_time;
@@ -309,6 +311,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
 
    // translate querystring arguments into extra session args 
    core::system::Options args;
+   std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
    readRequestArgs(request, &args);
 
    // determine launch options
@@ -324,7 +327,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
    }
 
    // launch the session
-   Error error = sessionLaunchFunction_(ioContext, profile, request, onLaunch, onError);
+   Error error = sessionLaunchFunction_(ioContext, profile, jsonRequest, request, onLaunch, onError);
    endLaunching(context, launchTime);
    if (error)
    {
