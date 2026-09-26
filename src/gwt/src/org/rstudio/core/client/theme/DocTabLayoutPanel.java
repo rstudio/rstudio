@@ -232,21 +232,29 @@ public class DocTabLayoutPanel
             if (target != null && target.getExtendedFileType() != null && target.getPath() != null)
             {
                final String filePath = target.getPath();
+               final FileSystemItem dir = FileSystemItem.createFile(filePath).getContainingDir();
                menu.addItem(ElementIds.TAB_RENAME_FILE, new MenuItem(constants_.renameMenuItem(), () ->
                {
                   events_.fireEvent(new RenameSourceFileEvent(filePath));
                }));
+               menu.addSeparator();
                menu.addItem(ElementIds.TAB_COPY_PATH, new MenuItem(constants_.copyPathMenuItem(), () ->
                {
                   events_.fireEvent(new CopySourcePathEvent(filePath));
                }));
-               menu.addItem(ElementIds.TAB_SET_WORKING_DIR, new MenuItem(constants_.setWorkingDirMenuItem(), () ->
+               if (dir != null)
                {
-                  FileSystemItem targetPath = FileSystemItem.createFile(filePath);
-                  events_.fireEvent(new SendToConsoleEvent(
-                     "setwd(" + RUtil.asStringLiteral(targetPath.getParentPathString()) + ")", true));
-                  events_.fireEvent(new DirectoryNavigateEvent(targetPath.getParentPath(), false));
-               }));
+                  menu.addItem(ElementIds.TAB_SET_WORKING_DIR, new MenuItem(constants_.setWorkingDirMenuItem(), () ->
+                  {
+                     events_.fireEvent(new SendToConsoleEvent(
+                        "setwd(" + RUtil.asStringLiteral(dir.getPath()) + ")", true));
+                     events_.fireEvent(new DirectoryNavigateEvent(dir, false));
+                  }));
+                  menu.addItem(ElementIds.TAB_SET_FILES_PANE, new MenuItem(commands_.showActiveDocDirInFiles().getMenuLabel(false), () ->
+                  {
+                     events_.fireEvent(new DirectoryNavigateEvent(dir, true));
+                  }));
+               }
                menu.addSeparator();
             }
 
