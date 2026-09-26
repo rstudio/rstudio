@@ -251,11 +251,11 @@ test_that(".rs.isSerializable() works as expected", {
    expect_true(.rs.isSerializable(envir))
    
    # external pointers can't be serialized
-   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", FALSE)))
-   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", TRUE)))
+   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")))
+   expect_false(.rs.isSerializable(.Call("rs_newTestExternalPointer", TRUE, PACKAGE = "(embedding)")))
 
    # put the extptr into an environment; no longer serializable
-   envir$extptr <- .Call("rs_newTestExternalPointer", FALSE)
+   envir$extptr <- .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")
    expect_false(.rs.isSerializable(envir))
    
    # test that promises are not evaluated
@@ -341,7 +341,7 @@ test_that("object size computations are correct", {
       expect_equal_size(body(foo))
       expect_equal_size(foo)
       
-      bytecode <- .Call("rs_functionBody", foo)
+      bytecode <- .Call("rs_functionBody", foo, PACKAGE = "(embedding)")
       expect_equal_size(bytecode)
    }
    

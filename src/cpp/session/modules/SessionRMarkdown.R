@@ -133,7 +133,7 @@
 {
   pkgDir <- find.package("rmarkdown")
   .rs.forceUnloadPackage("rmarkdown")
-  .Call("rs_installPackage",  archive, dirname(pkgDir))
+  .Call("rs_installPackage",  archive, dirname(pkgDir), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getRmdRuntime", function(file) {
@@ -225,7 +225,7 @@
 
    # determine location of output file, accounting for possibility of a website project which
    # puts the output in a different location than the source file
-   outputDir <- .Call("rs_getWebsiteOutputDir")
+   outputDir <- .Call("rs_getWebsiteOutputDir", PACKAGE = "(embedding)")
    if (is.null(outputDir))
       outputDir <- dirname(target)
    outputPath <- file.path(outputDir, outputFile)
@@ -429,7 +429,7 @@
                                  evaluate = FALSE)) > 0) {
       
       # allocate temp file to hold parameter values
-      paramsFile <- .Call("rs_paramsFileForRmd", file)
+      paramsFile <- .Call("rs_paramsFileForRmd", file, PACKAGE = "(embedding)")
      
       # read any existing parameters contained therin
       params <- list()
@@ -446,7 +446,8 @@
                      "Knit with Parameters",
                      url,
                      600,
-                     600)
+                     600,
+                     PACKAGE = "(embedding)")
             },
             quiet = TRUE),
          save_caption = "Knit",

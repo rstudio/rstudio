@@ -220,7 +220,8 @@ for (binding in bindings)
          as.character(path),
          as.character(pattern),
          as.logical(asRelativePath),
-         as.integer(maxCount))
+         as.integer(maxCount),
+         PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("readLines", function(filePath)

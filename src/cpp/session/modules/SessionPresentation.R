@@ -18,8 +18,9 @@
    if (!is.character(file))
       stop("file must be of type character")
 
-   invisible(.Call(getNativeSymbolInfo("rs_showPresentation", PACKAGE=""),
-                   .rs.normalizePath(path.expand(file))))
+   invisible(.Call("rs_showPresentation",
+                   .rs.normalizePath(path.expand(file)),
+                   PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction( "showPresentationHelpDoc", function(doc) {
@@ -27,8 +28,9 @@
   if (!is.character(doc))
     stop("doc must be of type character")
 
-  invisible(.Call(getNativeSymbolInfo("rs_showPresentationHelpDoc", PACKAGE=""),
-                  doc))
+  invisible(.Call("rs_showPresentationHelpDoc",
+                  doc,
+                  PACKAGE = "(embedding)"))
 })
 
 

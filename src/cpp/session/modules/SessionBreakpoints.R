@@ -587,7 +587,7 @@
    # source-equivalent function.
 
    # convert filename to UTF-8 before proceeding 
-   invisible(.Call("rs_debugSourceFile", enc2utf8(fileName), encoding, local))
+   invisible(.Call("rs_debugSourceFile", enc2utf8(fileName), encoding, local, PACKAGE = "(embedding)"))
 })
 
 # Parameters expected to be in environment:
@@ -607,7 +607,7 @@
    params$fun <- fun
 
    # Register the function with RStudio (may set breakpoints)
-   .Call("rs_registerShinyFunction", params)
+   .Call("rs_registerShinyFunction", params, PACKAGE = "(embedding)")
 })
 
 .rs.addJsonRpcHandler("get_function_steps", function(

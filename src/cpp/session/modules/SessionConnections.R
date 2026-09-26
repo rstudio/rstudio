@@ -353,7 +353,7 @@ options(
 .rs.addFunction("connectionOdbcInstallerPath", function() {
    normalizePath(
       file.path(
-         .Call("rs_connectionOdbcInstallPath"),
+         .Call("rs_connectionOdbcInstallPath", PACKAGE = "(embedding)"),
          "odbc",
          "installers"),
       mustWork = FALSE
@@ -413,7 +413,7 @@ options(
             type = .rs.scalar("Snippet"),
             snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL),
-            iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName)),
+            iconData = .rs.scalar(.Call("rs_connectionIcon", snippetName, PACKAGE = "(embedding)")),
             licensed = .rs.scalar(FALSE),
             source = .rs.scalar("Snippet"),
             hasInstaller = .rs.scalar(FALSE)
@@ -429,7 +429,7 @@ options(
 {
    normalizePath(
       file.path(
-         .Call("rs_connectionOdbcInstallPath"),
+         .Call("rs_connectionOdbcInstallPath", PACKAGE = "(embedding)"),
          "odbc",
          "drivers"),
       mustWork = FALSE
@@ -477,7 +477,7 @@ options(
             type = .rs.scalar("Install"),
             subtype = .rs.scalar("Odbc"),
             help = .rs.scalar(NULL),
-            iconData = .rs.scalar(.Call("rs_connectionIcon", installerName)),
+            iconData = .rs.scalar(.Call("rs_connectionIcon", installerName, PACKAGE = "(embedding)")),
             licensed = .rs.scalar("Licensed" %in% colnames(installer)),
             source = .rs.scalar("Snippet"),
             snippet = .rs.scalar(""),
@@ -561,9 +561,9 @@ options(
 
       licenseFile <- file.path(dirname(currentDriver), "license.lock")
 
-      iconData <- .Call("rs_connectionIcon", driverId)
+      iconData <- .Call("rs_connectionIcon", driverId, PACKAGE = "(embedding)")
       if (nchar(iconData) == 0)
-         iconData <- .Call("rs_connectionIcon", "ODBC")
+         iconData <- .Call("rs_connectionIcon", "ODBC", PACKAGE = "(embedding)")
 
       hasInstaller <- identical(driverInstaller, "RStudio")
       warningMessage <- NULL
@@ -620,7 +620,7 @@ options(
 })
 
 .rs.addFunction("connectionReadPackages", function() {
-   rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
+   rawConnections <- .rs.fromJSON(.Call("rs_availableConnections", PACKAGE = "(embedding)"))
 
    pacakgeConnections <- lapply(rawConnections, function(con) {
       tryCatch({
@@ -656,7 +656,7 @@ options(
             }
          }
          else {
-            .Call("rs_connectionIcon", con$name)
+            .Call("rs_connectionIcon", con$name, PACKAGE = "(embedding)")
          }
 
          list(
@@ -708,9 +708,9 @@ options(
                "}\", timeout = 10)",
                sep = "")
 
-            iconData <- .Call("rs_connectionIcon", dataSource$name)
+            iconData <- .Call("rs_connectionIcon", dataSource$name, PACKAGE = "(embedding)")
             if (nchar(iconData) == 0)
-               iconData <- .Call("rs_connectionIcon", "ODBC")
+               iconData <- .Call("rs_connectionIcon", "ODBC", PACKAGE = "(embedding)")
 
             list(
                package = .rs.scalar(NULL),
@@ -739,7 +739,7 @@ options(
    }, .rs.connectionSupportedPackages())
 
    lapply(supportedNotInstsalled, function(supportedPackage) {
-      iconData <- .Call("rs_connectionIcon", supportedPackage$name)
+      iconData <- .Call("rs_connectionIcon", supportedPackage$name, PACKAGE = "(embedding)")
       list(
          package = .rs.scalar(supportedPackage$package),
          version = .rs.scalar(supportedPackage$version),
@@ -855,7 +855,7 @@ options(
 
 .rs.addFunction("embeddedViewer", function(url)
 {
-   .Call("rs_embeddedViewer", url)
+   .Call("rs_embeddedViewer", url, PACKAGE = "(embedding)")
 })
 
 .rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package, name)
@@ -931,7 +931,7 @@ options(
 
 .rs.addJsonRpcHandler("connection_add_package", function(package) {
    extensionPath <- system.file("rstudio/connections.dcf", package = package)
-   invisible(.Call("rs_connectionAddPackage", package, extensionPath))
+   invisible(.Call("rs_connectionAddPackage", package, extensionPath, PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("connectionInstallerCommand", function(driverName, installationPath) {

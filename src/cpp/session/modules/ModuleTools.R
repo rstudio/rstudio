@@ -422,7 +422,7 @@ assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.tools
 })
 
 .rs.addGlobalFunction("rstudioDiagnosticsReport", function() {
-  invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
+  invisible(.Call("rs_sourceDiagnostics", PACKAGE = "(embedding)"))
 })
 
 
