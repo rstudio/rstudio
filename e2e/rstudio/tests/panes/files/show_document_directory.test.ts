@@ -63,7 +63,6 @@ async function expectFilesPaneShows(page: Page, fileName: string): Promise<void>
   await expect(filesRow(page, `${fileName}.R`)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 }
 
-// The context menu's entries in order, with '---' for each separator.
 // Leave the source pane on a single Untitled document with its commands current.
 // After the reset closes an extra column, Save stays disabled for the kept
 // Untitled until its tab is activated (#18951).
@@ -72,6 +71,7 @@ async function resetToUntitled(page: Page): Promise<void> {
   await page.locator(SELECTED_DOC_TAB).click();
 }
 
+// The context menu's entries in order, with '---' for each separator.
 async function contextMenuLayout(page: Page): Promise<string[]> {
   return page.locator(MENU_RENAME).evaluate((item) => {
     const menu = item.closest('table');
