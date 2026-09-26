@@ -113,10 +113,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    {
       ModuleList(String width)
       {
-         this(width, SCROLL_PANEL_HEIGHT);
+         this(width, TAB_LIST_HEIGHT);
       }
 
-      ModuleList(String width, int height)
+      ModuleList(String width, String height)
       {
          checkBoxes_ = new ArrayList<>();
          moduleIds_ = new ArrayList<>();
@@ -138,7 +138,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          ScrollPanel scrollPanel = new ScrollPanelWithClick();
          scrollPanel.setStyleName(res_.styles().paneLayoutTable());
          scrollPanel.setWidth(width);
-         scrollPanel.setHeight(height + "px");
+
+         // Set the height directly: GWT's setHeight() has a legacy IE assertion
+         // that cannot parse CSS expressions such as min() and calc().
+         scrollPanel.getElement().getStyle().setProperty("height", height);
          scrollPanel.add(flowPanel);
          initWidget(scrollPanel);
       }
@@ -353,7 +356,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       hiddenTabSetModuleList_ = new ModuleList(defaultPaneWidth);
       hiddenTabSetModuleList_.setValue(toArrayList(
                userPrefs.panes().getGlobalValue().getHiddenTabSet()));
-      sidebarModuleList_ = new ModuleList(defaultPaneWidth, TABLE_HEIGHT * 2 - 55);
+      sidebarModuleList_ = new ModuleList(defaultPaneWidth, SIDEBAR_LIST_HEIGHT);
       sidebarModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getSidebar()));
 
       // Get current config for initializing sidebar preferences
@@ -596,7 +599,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.setCellSpacing(GRID_CELL_SPACING);
          grid_.setCellPadding(GRID_CELL_PADDING);
          grid_.setWidth(TABLE_WIDTH + "px");
-         grid_.setHeight(TABLE_HEIGHT + "px");
          Roles.getGridRole().setAriaLabelProperty(grid_.getElement(), constants_.createGridLabel());
 
          int topColumn = 0;
@@ -744,7 +746,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       // ensure grid maintains proper dimensions
       grid_.setWidth(TABLE_WIDTH + "px");
-      grid_.setHeight(TABLE_HEIGHT + "px");
 
       // Position toolbar to align with source columns or first quadrant
       if (columnToolbar_ != null)
@@ -1063,9 +1064,28 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final static int GRID_CELL_PADDING = 6;
    private final static int MAX_COLUMN_WIDTH = 50 + GRID_CELL_PADDING + GRID_CELL_SPACING;
 
-   private final static int TABLE_HEIGHT = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 375;
-   private final static int TABLE_WIDTH = PreferencesDialogConstants.PANE_CONTAINER_WIDTH - 8;
-   private final static int SCROLL_PANEL_HEIGHT = TABLE_HEIGHT - 40;
+   // The grid stacks two rows, each a pane dropdown above a list of tabs,
+   // under the pane's other rows (description, column toolbar, reset link),
+   // which take about NON_GRID_HEIGHT. Each row gets half of the height that
+   // leaves in the dialog, capped by the window height as the dialog is, so
+   // the pane fits short windows too.
+   private final static int NON_GRID_HEIGHT = 150;
+   private final static int ROW_CHROME_HEIGHT = 40;
+
+   // Grid cells are at least 160px tall (.paneLayoutTable in PreferencesDialog.css),
+   // which a 128px tab list fills. Below that the lists stop shrinking, and
+   // the pane scrolls instead.
+   private final static int MIN_TAB_LIST_HEIGHT = 128;
+   private final static String ROW_HEIGHT =
+         "max(" + (MIN_TAB_LIST_HEIGHT + ROW_CHROME_HEIGHT) + "px, calc(" +
+         PreferencesDialogConstants.panelContainerHeight(NON_GRID_HEIGHT) + " / 2))";
+   private final static String TAB_LIST_HEIGHT =
+         "calc(" + ROW_HEIGHT + " - " + ROW_CHROME_HEIGHT + "px)";
+
+   // The sidebar's list spans both rows, less its location dropdown.
+   private final static String SIDEBAR_LIST_HEIGHT = "calc(2 * " + ROW_HEIGHT + " - 55px)";
+
+   private final static int TABLE_WIDTH = PreferencesDialogConstants.PANE_CONTENT_WIDTH;
 
    private final static int GRID_PANE_COUNT = 2;
    private final static int GRID_SELECT_PADDING = 10; // must match CSS file

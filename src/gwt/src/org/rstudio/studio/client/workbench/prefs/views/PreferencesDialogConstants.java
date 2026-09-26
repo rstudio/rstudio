@@ -23,10 +23,14 @@ package org.rstudio.studio.client.workbench.prefs.views;
 public class PreferencesDialogConstants
 {
    public static final int PANEL_CONTAINER_WIDTH  = 640;
-   public static final int PANEL_CONTAINER_HEIGHT = 600;
+   public static final int PANEL_CONTAINER_HEIGHT = 630;
    public static final int SECTION_CHOOSER_WIDTH = 132;
    public static final int SECTION_CHOOSER_PADDING = 10;
-   public static final int PANE_CONTAINER_WIDTH = PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH;
+
+   // The width left for a pane beside the section chooser, once the pane
+   // container pads its left edge by SECTION_CHOOSER_PADDING.
+   public static final int PANE_CONTENT_WIDTH =
+         PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH - SECTION_CHOOSER_PADDING;
 
    // Allow 100px for the caption, footer, borders, and padding, plus the
    // 30px bottom margin used by ModalDialogBase's overflow fallback.
@@ -34,8 +38,10 @@ public class PreferencesDialogConstants
    private static final int DIALOG_VERTICAL_RESERVE = 100 + 30;
 
    // Width of the panel container when the section chooser is not shown, e.g.
-   // Help / Accessibility / Acccessibility Options...
-   public static final int PANEL_CONTAINER_WIDTH_NO_CHOOSER = 516;
+   // Help / Accessibility / Accessibility Options... Panes keep the width
+   // they have beside the chooser, with its padding on either side.
+   public static final int PANEL_CONTAINER_WIDTH_NO_CHOOSER =
+         PANE_CONTENT_WIDTH + 2 * SECTION_CHOOSER_PADDING;
 
    public static final String panelContainerWidth()
    {
@@ -61,8 +67,10 @@ public class PreferencesDialogConstants
    // Project preferences dialog dimensions
    public static final int PROJECT_PANEL_CONTAINER_WIDTH  = 555;
    public static final int PROJECT_PANEL_CONTAINER_HEIGHT = 445;
+   public static final int PROJECT_PANE_CONTENT_WIDTH =
+         PROJECT_PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH - SECTION_CHOOSER_PADDING;
    public static final int PROJECT_PANEL_CONTAINER_WIDTH_NO_CHOOSER =
-         PROJECT_PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH + SECTION_CHOOSER_PADDING;
+         PROJECT_PANE_CONTENT_WIDTH + 2 * SECTION_CHOOSER_PADDING;
 
    public static final String projectPanelContainerWidth()
    {
