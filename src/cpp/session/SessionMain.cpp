@@ -2691,6 +2691,14 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION);
       }
 
+      // a session that fails to start mustn't leave its socket and a pid file
+      // naming a dead process behind (on success, R exits the process)
+      BOOST_SCOPE_EXIT(void)
+      {
+         releaseSessionStream();
+      }
+      BOOST_SCOPE_EXIT_END
+
       // initialize monitor but stop its thread on exit
       initMonitorClient();
       BOOST_SCOPE_EXIT(void)

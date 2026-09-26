@@ -130,6 +130,18 @@ TEST_F(LocalStreamHttpConnectionListenerTest, BindEndpointClaimsTheStreamBeforeS
    EXPECT_FALSE(pidPath_.exists());
 }
 
+TEST_F(LocalStreamHttpConnectionListenerTest, ReleaseRemovesAStreamClaimedButNotStarted)
+{
+   // a session that claims its stream and then fails to start
+   auto listener = newListener();
+   ASSERT_FALSE(listener->bindEndpoint());
+   ASSERT_TRUE(pidPath_.exists());
+
+   listener->releaseEndpoint();
+   EXPECT_FALSE(streamPath_.exists());
+   EXPECT_FALSE(pidPath_.exists());
+}
+
 TEST_F(LocalStreamHttpConnectionListenerTest, ReplacesStaleStream)
 {
    // a socket file left behind by a listener that went away without unlinking
@@ -161,7 +173,7 @@ TEST_F(LocalStreamHttpConnectionListenerTest, RefusesToSupplantLiveListener)
    http::LocalStreamIdentity firstIdentity = identity();
 
    // a duplicate session reports the stream as in use, so that its startup
-   // retries and then gives up, instead of taking the stream over
+   // gives up instead of taking the stream over
    auto second = newListener();
    Error error = second->start();
    ASSERT_TRUE(error);

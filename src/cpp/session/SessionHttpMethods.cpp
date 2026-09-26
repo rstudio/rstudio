@@ -30,7 +30,6 @@
 
 #include <atomic>
 
-#include <boost/asio/error.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <shared_core/json/Json.hpp>
@@ -985,14 +984,11 @@ WaitResult startHttpConnectionListenerWithTimeout()
 {
    Error error = startHttpConnectionListener();
 
-   // When the rsession restarts, it may take a few ms for the port (or the
-   // local stream a predecessor is still releasing) to become available;
-   // therefore, retry connection, but only for address_in_use error. Compare
-   // against asio's code: bind failures and the local stream listener's
-   // in-use check both report it in the system category.
+   // When the rsession restarts, it may take a few ms for the port to become
+   // available; therefore, retry connection, but only for address_in_use error
    if (!error)
        return WaitResult(WaitSuccess, Success());
-   else if (error != boost::asio::error::make_error_code(boost::asio::error::address_in_use))
+   else if (error != boost::system::error_code(boost::system::errc::address_in_use, boost::system::generic_category()))
       return WaitResult(WaitError, error);
    else
       return WaitResult(WaitContinue, error);

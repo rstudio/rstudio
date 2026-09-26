@@ -101,18 +101,25 @@ public:
       if (bound_)
          return core::Success();
 
-      // cleanup any existing networking state
-      core::Error error = cleanup();
-      if (error)
-         return error;
-
-      // initialize acceptor
-      error = initializeAcceptor(&acceptorService_);
+      core::Error error = initializeAcceptor(&acceptorService_);
       if (error)
          return error;
 
       bound_ = true;
       return core::Success();
+   }
+
+   // Removes what bindEndpoint() put in place (e.g. a local stream's socket
+   // and pid file) without stopping, for a process exiting without stop(),
+   // such as a session that fails to start after claiming its stream
+   void releaseEndpoint()
+   {
+      if (!bound_)
+         return;
+
+      core::Error error = cleanup();
+      if (error)
+         LOG_ERROR(error);
    }
 
    virtual core::Error start()

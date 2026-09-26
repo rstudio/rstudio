@@ -90,6 +90,11 @@ void initializeHttpConnectionListener();
 // listeners.
 core::Error claimSessionStream();
 
+// Removes the socket and pid file of a stream that claimSessionStream bound,
+// for a session exiting without stopping its listener (e.g. one that fails to
+// start). Leaves a stream that another process has replaced alone.
+void releaseSessionStream();
+
 // singleton
 class HttpConnectionListener;
 HttpConnectionListener& httpConnectionListener();

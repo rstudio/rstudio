@@ -48,6 +48,11 @@ Error claimSessionStream()
    return Success();
 }
 
+void releaseSessionStream()
+{
+   // nothing claimed (see claimSessionStream)
+}
+
 void initializeHttpConnectionListener()
 {
    session::Options& options = session::options();

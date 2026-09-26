@@ -186,7 +186,13 @@ inline Error claimLocalStream(
    boost::system::error_code ec;
    acceptor.open(endpoint.protocol(), ec);
    if (!ec)
+   {
+      // a child that inherited the socket (e.g. one R started with system())
+      // would keep it listening after we exit, so that the next process to
+      // claim the path would take this dead session for a running one
+      ::fcntl(acceptor.native_handle(), F_SETFD, FD_CLOEXEC);
       acceptor.bind(endpoint, ec);
+   }
 
    if (ec == boost::asio::error::address_in_use)
    {

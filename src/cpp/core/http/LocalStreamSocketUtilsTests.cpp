@@ -17,6 +17,8 @@
 
 #include <core/http/LocalStreamSocketUtils.hpp>
 
+#include <unistd.h>
+
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
@@ -37,11 +39,23 @@ protected:
    {
       ASSERT_FALSE(FilePath::tempFilePath(streamPath_));
       ASSERT_FALSE(streamPath_.removeIfExists());
+      pinPath_ = FilePath(streamPath_.getAbsolutePath() + ".pin");
    }
 
    void TearDown() override
    {
       streamPath_.removeIfExists();
+      pinPath_.removeIfExists();
+   }
+
+   // Linux hands a freed inode number straight to the next file created, so
+   // a socket bound after the old one is unlinked can get the old identity.
+   // A hard link keeps the old socket's inode allocated, as a live listener's
+   // open socket does in practice.
+   void pinInode()
+   {
+      int result = ::link(streamPath_.getAbsolutePath().c_str(), pinPath_.getAbsolutePath().c_str());
+      ASSERT_EQ(result, 0) << "link() failed: errno " << errno;
    }
 
    bool listening()
@@ -53,6 +67,7 @@ protected:
    }
 
    FilePath streamPath_;
+   FilePath pinPath_;
 };
 
 } // anonymous namespace
@@ -108,6 +123,7 @@ TEST_F(LocalStreamSocketUtilsTest, IdentityDistinguishesReboundSockets)
    EXPECT_EQ(firstIdentity, closedIdentity);
 
    // a socket bound at the same path by someone else is a different object
+   ASSERT_NO_FATAL_FAILURE(pinInode());
    ASSERT_FALSE(streamPath_.remove());
    SocketAcceptorService<stream_protocol> second;
    ASSERT_FALSE(initLocalStreamAcceptor(second, streamPath_, FileMode::USER_READ_WRITE));
@@ -158,12 +174,24 @@ TEST_F(LocalStreamSocketUtilsTest, ClaimReplacesStaleSocket)
    stale.closeAcceptor(ec);
    ASSERT_FALSE(ec);
    ASSERT_TRUE(streamPath_.exists());
+   ASSERT_NO_FATAL_FAILURE(pinInode());
 
    SocketAcceptorService<stream_protocol> service;
    LocalStreamIdentity identity;
    ASSERT_FALSE(claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity));
    EXPECT_TRUE(listening());
    EXPECT_NE(identity, staleIdentity);
+}
+
+TEST_F(LocalStreamSocketUtilsTest, ClaimedSocketIsNotInherited)
+{
+   SocketAcceptorService<stream_protocol> service;
+   LocalStreamIdentity identity;
+   ASSERT_FALSE(claimLocalStream(service, streamPath_, FileMode::USER_READ_WRITE, &identity));
+
+   int flags = ::fcntl(service.acceptor().native_handle(), F_GETFD);
+   ASSERT_NE(flags, -1);
+   EXPECT_TRUE(flags & FD_CLOEXEC);
 }
 
 TEST_F(LocalStreamSocketUtilsTest, IdentityOfMissingPathIsAnError)

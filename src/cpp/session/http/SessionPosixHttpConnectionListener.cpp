@@ -130,6 +130,12 @@ Error claimSessionStream()
    return Success();
 }
 
+void releaseSessionStream()
+{
+   if (s_pSessionStreamListener)
+      s_pSessionStreamListener->releaseEndpoint();
+}
+
 void initializeHttpConnectionListener()
 {
    // keep the listener that claimed the session stream: it holds the socket
