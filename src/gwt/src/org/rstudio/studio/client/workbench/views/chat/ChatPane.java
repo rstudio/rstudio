@@ -727,15 +727,12 @@ public class ChatPane
       }
       else
       {
-         String secondParagraph = constants_.chatNotInstalledDescription2();
-
-         // The manifest can advertise additional providers for this build; when
-         // it does, extend the provider paragraph with a sentence about that
-         // support. Only the open-source (Posit AI) description is extended; the
-         // Workbench variant describes the organization's own provider and is
-         // left as-is.
-         if (additionalProvidersAvailable)
-            secondParagraph += " " + constants_.chatNotInstalledAdditionalProviders();
+         // The manifest can advertise additional providers for this build; only
+         // then does the provider paragraph mention connecting to them directly.
+         // The Workbench variant describes the organization's own provider instead.
+         String secondParagraph = additionalProvidersAvailable
+            ? constants_.chatNotInstalledDescription2WithProviders()
+            : constants_.chatNotInstalledDescription2();
 
          descriptionHtml =
             "<p class='detail'>" + constants_.chatNotInstalledDescription() + "</p>" +
@@ -747,13 +744,9 @@ public class ChatPane
          "<p>" + constants_.chatNotInstalledWithVersionMessage(newVersion) + "</p>" +
          "<hr>" +
          descriptionHtml +
-         "<p class='detail'>" +
-         "<a href='https://www.rstudio.org/links/posit-assistant-learn-more' target='_blank' rel='noopener noreferrer'>" +
-         constants_.chatLearnMore() + "</a></p>" +
          "<hr>" +
          "<button id='install-btn' class='chatIframeButton'>" +
-         constants_.chatInstallButton() + "</button>" +
-         "<p class='detail'>" + constants_.chatInstallTermsOfUse() + "</p>";
+         constants_.chatInstallButton() + "</button>";
 
       String script =
          "document.getElementById('install-btn').addEventListener('click', function() {" +

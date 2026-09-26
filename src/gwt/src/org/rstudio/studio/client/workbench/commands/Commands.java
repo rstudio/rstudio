@@ -63,6 +63,7 @@ public abstract class
    public abstract AppCommand saveAllSourceDocs();
    public abstract AppCommand renameSourceDoc();
    public abstract AppCommand copySourceDocPath();
+   public abstract AppCommand showActiveDocDirInFiles();
    public abstract AppCommand closeSourceDoc();
    public abstract AppCommand closeOtherSourceDocs();
    public abstract AppCommand closeAllSourceDocs();

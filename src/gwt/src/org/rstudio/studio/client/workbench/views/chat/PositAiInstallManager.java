@@ -45,8 +45,12 @@ public class PositAiInstallManager
    {
       /**
        * Called when no update is available (Posit Assistant is already installed and up-to-date).
+       *
+       * @param currentVersion The currently installed version
+       * @param reinstallAvailable True if a fresh copy of the installed version can be
+       *                    installed with {@link #installUpdate(boolean, InstallCallback)}
        */
-      void onNoUpdateAvailable();
+      void onNoUpdateAvailable(String currentVersion, boolean reinstallAvailable);
 
       /**
        * Called when an update or initial install is available.
@@ -234,6 +238,8 @@ public class PositAiInstallManager
          flag(result, "additionalProvidersAvailable");
       boolean additionalProvidersAvailable =
          additionalProvidersFlag != null && additionalProvidersFlag;
+      Boolean reinstallFlag = flag(result, "reinstallAvailable");
+      boolean reinstallAvailable = reinstallFlag != null && reinstallFlag;
       Boolean installationManagedFlag = flag(result, "installationManaged");
       boolean installationManaged =
          installationManagedFlag != null && installationManagedFlag;
@@ -297,7 +303,8 @@ public class PositAiInstallManager
       }
       else
       {
-         callback.onNoUpdateAvailable();
+         callback.onNoUpdateAvailable(result.getString("currentVersion"),
+                                      reinstallAvailable);
       }
    }
 
@@ -320,13 +327,15 @@ public class PositAiInstallManager
    /**
     * Starts the installation or update of Posit Assistant.
     *
+    * @param reinstall True to install a fresh copy of the installed version
+    *                  rather than the available update
     * @param callback The callback to receive progress and completion status
     */
-   public void installUpdate(InstallCallback callback)
+   public void installUpdate(boolean reinstall, InstallCallback callback)
    {
       callback.onInstallStarted();
 
-      chatServer_.chatInstallUpdate(new ServerRequestCallback<VoidResponse>()
+      chatServer_.chatInstallUpdate(reinstall, new ServerRequestCallback<VoidResponse>()
       {
          @Override
          public void onResponseReceived(VoidResponse result)

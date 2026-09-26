@@ -7164,9 +7164,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback)
+   public void chatInstallUpdate(boolean reinstall,
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(reinstall)
+            .get();
+      sendRequest(RPC_SCOPE, "chat_install_update", params, requestCallback);
    }
 
    @Override
