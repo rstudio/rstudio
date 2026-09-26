@@ -15,6 +15,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <ctime>
 #include <istream>
 #include <memory>
@@ -30,6 +31,7 @@
 # include <windows.h>
 #else
 # include <cerrno>
+# include <cstdlib>
 # include <sys/stat.h>
 # include <unistd.h>
 #endif
@@ -391,6 +393,16 @@ mode_t fileMode(const FilePath& filePath)
    return st.st_mode & 07777;
 }
 
+// The groups the process can give a file it owns: its supplementary groups
+// and its effective group.
+std::vector<gid_t> processGroups()
+{
+   std::vector<gid_t> groups(std::max(::getgroups(0, nullptr), 0));
+   EXPECT_EQ(static_cast<int>(groups.size()), ::getgroups(static_cast<int>(groups.size()), groups.data()));
+   groups.push_back(::getegid());
+   return groups;
+}
+
 } // anonymous namespace
 
 // Replacing a file must not reset its mode to the temporary file's default.
@@ -408,6 +420,98 @@ TEST(FileSerializerTest, WriteStringAtomicPreservesPermissions)
    EXPECT_FALSE(readStringFromFile(filePath, &readback));
    EXPECT_EQ("replaced\n", readback);
    EXPECT_EQ(0640u, fileMode(filePath));
+
+   dir.remove();
+}
+
+// The replacement keeps the target's group when we belong to it (the temporary
+// file starts out in the directory's group or our primary one).
+TEST(FileSerializerTest, WriteStringAtomicPreservesGroup)
+{
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_FALSE(writeStringToFile(filePath, "original\n"));
+
+   struct stat st;
+   ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
+   gid_t fileGroup = st.st_gid;
+
+   // not every group we're in can be given to a file: in a user namespace,
+   // unmapped groups show up as the overflow group and chown refuses them
+   gid_t otherGroup = fileGroup;
+   for (gid_t gid : processGroups())
+   {
+      if (gid != fileGroup && ::chown(filePath.getAbsolutePath().c_str(), static_cast<uid_t>(-1), gid) == 0)
+      {
+         otherGroup = gid;
+         break;
+      }
+   }
+
+   if (otherGroup == fileGroup)
+   {
+      dir.remove();
+      GTEST_SKIP() << "the file can't be put in another group";
+   }
+
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "replaced\n"));
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("replaced\n", readback);
+   ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
+   EXPECT_EQ(otherGroup, st.st_gid);
+
+   dir.remove();
+}
+
+// A target in a group we don't belong to (as an earlier 'sudo rstudio' can
+// leave behind) is replaced by a file in one of ours, whose group gets no more
+// access than everyone else. Without being root, such a file comes from a
+// directory whose group new files inherit, like /tmp on macOS.
+TEST(FileSerializerTest, WriteStringAtomicForeignGroupGetsOtherAccess)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root may use any group";
+
+   std::vector<gid_t> groups = processGroups();
+
+   // the replacement is created in the directory, so it must not inherit
+   // the foreign group too (as it would with TMPDIR=/tmp)
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_EQ(0, ::chown(dir.getAbsolutePath().c_str(), static_cast<uid_t>(-1), ::getegid()));
+
+   // nothing between creating this file and moving it into the scratch
+   // directory may return early, so that it never outlives the test
+   char foreignPath[] = "/tmp/rstudio-foreign-group-XXXXXX";
+   int fd = ::mkstemp(foreignPath);
+   ASSERT_NE(-1, fd);
+
+   struct stat st = {};
+   bool foreign = ::fstat(fd, &st) == 0 && std::find(groups.begin(), groups.end(), st.st_gid) == groups.end();
+   gid_t foreignGroup = st.st_gid;
+   ::close(fd);
+
+   if (!foreign || ::rename(foreignPath, filePath.getAbsolutePath().c_str()) == -1)
+   {
+      ::unlink(foreignPath);
+      dir.remove();
+      GTEST_SKIP() << "no file in a group the process doesn't belong to";
+   }
+
+   // the group loses the write access that other lacks, and gains the read
+   // access that other has
+   ASSERT_EQ(0, ::chmod(filePath.getAbsolutePath().c_str(), 0624));
+
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "replaced\n"));
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("replaced\n", readback);
+   ASSERT_EQ(0, ::stat(filePath.getAbsolutePath().c_str(), &st));
+   EXPECT_NE(foreignGroup, st.st_gid);
+   EXPECT_EQ(0644u, fileMode(filePath));
 
    dir.remove();
 }
@@ -733,6 +837,37 @@ TEST(FileSerializerTest, WriteStringAtomicReplacesFileHeldOpenForRead)
    EXPECT_EQ("new\n", readback);
    EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
 
+   dir.remove();
+}
+
+// Neither rename replaces a read-only file, and both answer
+// ERROR_ACCESS_DENIED as they may for a file in use; the attribute tells them
+// apart, so the write fails at once rather than retrying until the deadline.
+TEST(FileSerializerTest, WriteStringAtomicReadOnlyTargetFailsWithoutRetrying)
+{
+   FilePath dir = scratchDir();
+   FilePath filePath = dir.completePath("state.json");
+   ASSERT_FALSE(writeStringToFileAtomic(filePath, "original\n"));
+
+   std::wstring path = filePath.getAbsolutePathW();
+   ASSERT_NE(FALSE, ::SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_READONLY));
+
+   AtomicWriteOptions options;
+   options.maxRetrySeconds = 10;
+
+   std::time_t start = std::time(nullptr);
+   Error error = writeStringToFileAtomic(filePath, "replaced\n", string_utils::LineEndingPassthrough, options);
+   std::time_t elapsed = std::time(nullptr) - start;
+
+   EXPECT_TRUE(error);
+   EXPECT_LT(elapsed, 5);
+
+   std::string readback;
+   EXPECT_FALSE(readStringFromFile(filePath, &readback));
+   EXPECT_EQ("original\n", readback);
+   EXPECT_EQ(0, countAtomicWriteTempFiles(dir));
+
+   (void) ::SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_NORMAL);
    dir.remove();
 }
 

@@ -20,6 +20,7 @@
 #include <set>
 #include <sstream>
 #include <algorithm>
+#include <vector>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/trim.hpp>
@@ -30,7 +31,6 @@
 #ifdef _WIN32
 # include <cstddef>
 # include <cstring>
-# include <vector>
 # include <windows.h>
 #else
 # include <cerrno>
@@ -479,11 +479,22 @@ Error writeInPlace(const FilePath& targetPath,
                    const AtomicWriteOptions& options)
 {
 #ifndef _WIN32
-   // restrict the file before the new contents land in it, rather than
+   // Restrict the file before the new contents land in it, rather than
    // writing private contents into a file we can't make private; the file
-   // must already exist for an in-place write to succeed here
+   // must already exist for an in-place write to succeed here. An in-place
+   // write is what a file owned by another user gets (bind-mounted into a
+   // container, or in a directory we can't write), and chmod fails on such a
+   // file even when it's already private, so that failure is only an error
+   // when the file grants group or other access.
    if (options.ownerOnly && ::chmod(targetPath.getAbsolutePath().c_str(), 0600) == -1)
-      return fileError(errno, targetPath, ERROR_LOCATION);
+   {
+      int code = errno;
+      struct stat st;
+      if (::stat(targetPath.getAbsolutePath().c_str(), &st) == -1 || (st.st_mode & 077) != 0)
+         return fileError(code, targetPath, ERROR_LOCATION);
+
+      DLOGF("Couldn't chmod '{}' (errno {}); writing it in place since it's already private to uid {}", targetPath.getAbsolutePath(), code, st.st_uid);
+   }
 #endif
 
    return writeContentsToFileWithRetry(targetPath,
@@ -615,10 +626,50 @@ bool posixRename(const FilePath& tempPath, const FilePath& targetPath, DWORD* pC
    return renamed != FALSE;
 }
 
-bool isReadOnly(const FilePath& filePath)
+// True when a rename failed because another process holds the target open
+// without FILE_SHARE_DELETE, or has it locked; that clears once it's closed.
+bool isInUseCode(DWORD code)
 {
-   DWORD attributes = ::GetFileAttributesW(filePath.getAbsolutePathW().c_str());
-   return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_READONLY) != 0;
+   return code == ERROR_SHARING_VIOLATION || code == ERROR_LOCK_VIOLATION;
+}
+
+// A rename may report a target held open by another process as
+// ERROR_ACCESS_DENIED (the legacy rename does for any open handle), which is
+// also its (permanent) answer for a read-only target or one whose ACL denies
+// deleting it. A read-only file can still be opened for DELETE, since that is
+// what renaming it takes, so the attribute is checked first. Opening the
+// target for DELETE with full sharing then tells the rest apart: a sharing
+// violation (or success, when the other handle has since been closed) means
+// it was in use, and ERROR_ACCESS_DENIED means we may not replace it. This is
+// a heuristic: a delete-pending target also answers ERROR_ACCESS_DENIED (and
+// fails at once), and a denial that wasn't about the target retries until the
+// deadline. That includes a target that doesn't exist yet, deliberately: we
+// just created the temporary file in the same directory, so the denial is
+// most likely a scanner holding that file.
+bool isAccessDeniedTransient(const FilePath& targetPath)
+{
+   std::wstring path = targetPath.getAbsolutePathW();
+
+   DWORD attributes = ::GetFileAttributesW(path.c_str());
+   if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_READONLY) != 0)
+      return false;
+
+   HANDLE hFile = ::CreateFileW(
+      path.c_str(),
+      DELETE,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL,
+      nullptr);
+
+   if (hFile != INVALID_HANDLE_VALUE)
+   {
+      (void) ::CloseHandle(hFile);
+      return true;
+   }
+
+   return ::GetLastError() != ERROR_ACCESS_DENIED;
 }
 
 Error replaceFile(const FilePath& tempPath,
@@ -649,7 +700,13 @@ Error replaceFile(const FilePath& tempPath,
          posixSupported = renamed || (code != ERROR_INVALID_PARAMETER && code != ERROR_NOT_SUPPORTED);
       }
 
-      if (!renamed && !posixSupported)
+      // Any failure other than a target in use gets the legacy rename as well:
+      // network redirectors and filter drivers refuse the POSIX rename with
+      // codes of their own (ERROR_ACCESS_DENIED among them), and a target we
+      // may not replace is refused again. Where it's supported, the POSIX
+      // rename is still tried first on the next attempt, since only it
+      // replaces a target our readers have open.
+      if (!renamed && !isInUseCode(code))
       {
          renamed = ::MoveFileExW(tempPath.getAbsolutePathW().c_str(),
                                  targetPath.getAbsolutePathW().c_str(),
@@ -661,11 +718,8 @@ Error replaceFile(const FilePath& tempPath,
       if (renamed)
          return Success();
 
-      // the legacy rename reports a target in use as ERROR_ACCESS_DENIED, but
-      // that is also the (permanent) answer for a read-only target
-      bool inUse = code == ERROR_SHARING_VIOLATION ||
-                   code == ERROR_LOCK_VIOLATION ||
-                   (code == ERROR_ACCESS_DENIED && !isReadOnly(targetPath));
+      bool inUse = isInUseCode(code) ||
+                   (code == ERROR_ACCESS_DENIED && isAccessDeniedTransient(targetPath));
 
       if (!inUse || microsec_clock::universal_time() >= deadline)
          return atomicWriteError(static_cast<int>(code), targetPath, tempPath, ERROR_LOCATION);
@@ -732,24 +786,27 @@ Error writeTempFile(TempFile* pTemp,
    int fd = pTemp->fd;
    const struct stat& targetStat = pTemp->targetStat;
 
+   // whether the new file ends up in the group the target's mode was set for
+   bool keptGroup = true;
+
    if (pTemp->replacing)
    {
       // Only root can give a file to another user, and other users can only
       // set a group they belong to, so this is best-effort. When it fails the
       // new file is ours, which is also what repairs a state file that an
       // earlier 'sudo rstudio' left owned by root. Skip the call when nothing
-      // would change, so a file in a group we don't belong to doesn't fail
-      // (and log) on every write.
+      // would change; a group we can't carry over then fails only once, since
+      // the next temporary file starts out in the same group as this one. An
+      // owner and group we can't read are treated as different.
       struct stat tempStat;
-      if (::fstat(fd, &tempStat) == -1)
-         tempStat = targetStat;
+      bool haveTempStat = ::fstat(fd, &tempStat) == 0;
 
       uid_t uid = static_cast<uid_t>(-1);
-      if (::geteuid() == 0 && targetStat.st_uid != tempStat.st_uid)
+      if (::geteuid() == 0 && (!haveTempStat || targetStat.st_uid != tempStat.st_uid))
          uid = targetStat.st_uid;
 
       gid_t gid = static_cast<gid_t>(-1);
-      if (targetStat.st_gid != tempStat.st_gid)
+      if (!haveTempStat || targetStat.st_gid != tempStat.st_gid)
          gid = targetStat.st_gid;
 
       if (uid != static_cast<uid_t>(-1) || gid != static_cast<gid_t>(-1))
@@ -758,6 +815,9 @@ Error writeTempFile(TempFile* pTemp,
          {
             int code = errno;
             DLOGF("Couldn't carry the owner of '{}' over to its replacement (errno {})", targetPath.getAbsolutePath(), code);
+
+            if (gid != static_cast<gid_t>(-1))
+               keptGroup = false;
          }
       }
    }
@@ -771,6 +831,14 @@ Error writeTempFile(TempFile* pTemp,
    if (pTemp->replacing || options.ownerOnly)
    {
       mode_t mode = options.ownerOnly ? 0600 : (targetStat.st_mode & 0777);
+
+      // The target's group access was granted to its group, not to the one
+      // the new file ended up in, so that group gets what everyone else does:
+      // no more, and no less either, since the group's bits are checked
+      // instead of the other bits for its members.
+      if (!keptGroup)
+         mode = (mode & 0707) | ((mode & 07) << 3);
+
       if (::fchmod(fd, mode) == -1)
       {
          int code = errno;
