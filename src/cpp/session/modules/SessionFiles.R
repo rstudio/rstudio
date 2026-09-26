@@ -38,6 +38,33 @@ for (binding in bindings)
    .rs.scalar(identical(file.info(path)$isdir, FALSE))
 })
 
+.rs.addJsonRpcHandler("ensure_editable_file", function(path)
+{
+   # resolve the folder against the working directory, but keep the file's own
+   # name, so a symlinked file opens under the same path as it does from the
+   # Files pane or file.edit(), rather than as a second copy under its target
+   path <- path.expand(path)
+   parent <- dirname(path)
+   if (dir.exists(parent))
+   {
+      parent <- normalizePath(parent, winslash = "/", mustWork = TRUE)
+      path <- paste(sub("/$", "", parent), basename(path), sep = "/")
+   }
+
+   # file.create() doesn't create missing folders; report that rather than
+   # creating a folder from what may be a typo
+   error <- ""
+   if (dir.exists(path))
+      error <- "is_folder"
+   else if (!file.exists(path) && !file.create(path, showWarnings = FALSE))
+      error <- "not_created"
+
+   list(
+      path  = .rs.scalar(.rs.createAliasedPath(path)),
+      error = .rs.scalar(error)
+   )
+})
+
 .rs.addJsonRpcHandler("create_aliased_path", function(path)
 {
    if (!file.exists(path))

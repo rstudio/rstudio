@@ -2131,9 +2131,59 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       });
    }
 
-   private void vimEditFile(String path)
+   private void vimEditFile(String fileName)
    {
-      editFile(path, new ResultCallback<EditingTarget, ServerError>() {});
+      String path = SourceVimCommands.parseFileName(fileName);
+      if (path == null)
+      {
+         globalDisplay_.showErrorMessage(
+            constants_.errorWhileOpeningFile(),
+            constants_.vimFileNameNotSupported(fileName));
+         return;
+      }
+
+      // the backend keeps a document's path as given, so resolve the path
+      // against R's working directory before opening it
+      server_.ensureEditableFile(path, new SimpleRequestCallback<JsObject>(constants_.errorWhileOpeningFile())
+      {
+         @Override
+         public void onResponseReceived(JsObject result)
+         {
+            String resolvedPath = result.getString("path");
+            String error = result.getString("error");
+
+            if (error.equals("is_folder"))
+            {
+               globalDisplay_.showErrorMessage(
+                  constants_.errorWhileOpeningFile(),
+                  constants_.vimEditFileIsFolder(resolvedPath));
+            }
+            else if (error.equals("not_created"))
+            {
+               globalDisplay_.showErrorMessage(
+                  constants_.errorWhileOpeningFile(),
+                  constants_.vimEditFileNotCreated(resolvedPath));
+            }
+            else
+            {
+               openFile(FileSystemItem.createFile(resolvedPath));
+            }
+         }
+      });
+   }
+
+   private void vimNewSourceDoc()
+   {
+      newDoc(FileTypeRegistry.R, null);
+   }
+
+   private void vimOpenAdjacentFile(boolean forward)
+   {
+      // Source implements these commands
+      if (forward)
+         commands_.openNextFileOnFilesystem().execute();
+      else
+         commands_.openPreviousFileOnFilesystem().execute();
    }
 
    public void openProjectDocs(final Session session, boolean mainColumn)
