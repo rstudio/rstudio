@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/optional.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/http/AsyncConnection.hpp>
@@ -28,6 +29,30 @@ namespace rstudio {
 namespace core {
 namespace http {
 
+// Content-Length below which a proxied response is not worth streaming: peak
+// memory is already bounded by the response itself, while streaming would give
+// up the things only a held response can do -- failing over to another node,
+// rewriting a body, synthesizing a clean error after a mid-body upstream
+// failure. Sized to FixedBufferProxy's own outbound buffer, so a
+// below-threshold response is one this proxy would never have had to split.
+constexpr uint64_t kStreamingContentLengthThreshold = 1024 * 1024; // 1MB
+
+// True when `response` should be held whole rather than streamed, purely on
+// size grounds. Each proxy site ORs this with its own header-observable
+// always-buffer cases to form its named buffering policy (see
+// shouldBufferLocalhostResponse, shouldBufferLauncherResponse,
+// shouldBufferNodeResponse) and hands that policy to setBufferPredicate().
+//
+// An absent or unparseable Content-Length returns false: those are exactly the
+// chunked and EOF-delimited bodies with no declared upper bound, and they are
+// what streaming exists for. A response carrying Transfer-Encoding also
+// returns false regardless of any Content-Length present alongside it -- per
+// RFC 7230 3.3.3 rule 3, Transfer-Encoding takes precedence and the body is
+// unbounded, so a small or stale Content-Length must not be trusted.
+bool isBelowStreamingThreshold(
+   const Response& response,
+   uint64_t threshold = kStreamingContentLengthThreshold);
+
 class FixedBufferProxy : public boost::enable_shared_from_this<FixedBufferProxy>,
                           boost::noncopyable
 {
@@ -35,7 +60,18 @@ public:
    FixedBufferProxy(const boost::shared_ptr<AsyncConnection>& pClientConnection,
                      uint64_t maxBufferSize = defaultMaxBufferSize);
 
-   void proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection);
+   // preservedCookiesOverride, when supplied, replaces the automatic
+   // "snapshot every Set-Cookie already on the client connection's response"
+   // behavior described at preservedCookies_ below. A caller whose delivery
+   // requires the same scope-based filtering on the streamed path as it
+   // applies on its own buffered path (e.g. the launcher/remote-session
+   // proxy's launcherCookieCarryOver()) computes that filtered set itself --
+   // from the same client-connection response this class would otherwise read
+   // unfiltered -- and passes it here so both delivery strategies end up with
+   // identical cookies on the wire. Absent (the default) keeps the original
+   // blind-copy behavior for every other caller.
+   void proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection,
+             const boost::optional<Headers>& preservedCookiesOverride = boost::none);
 
 private:
    // AsyncClient::breakChunks() (AsyncClient.hpp) caps each upstream piece at
@@ -115,7 +151,8 @@ private:
    // Set-Cookie headers already stamped on the client connection's response
    // when we were handed the upstream request -- refreshed auth cookies, in
    // practice. Snapshotted in proxy(), the one point where that response is
-   // still ours alone to read; see there.
+   // still ours alone to read; see there. Set from proxy()'s
+   // preservedCookiesOverride instead, verbatim, when the caller supplies one.
    http::Headers preservedCookies_;
 
    uint64_t maxBufferSize_;
