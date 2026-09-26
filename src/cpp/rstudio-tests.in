@@ -50,7 +50,25 @@ setupSessionTestEnvironment() {
    # Prevent startup from migrating the user's legacy RStudio state here.
    mkdir -p "${RSTUDIO_DATA_HOME}/client-state" "${RSTUDIO_CONFIG_HOME}" ||
       error "Unable to initialize temporary session test directory"
+
+   # The session binds its socket in RS_SESSION_TMP_DIR, and won't take over
+   # one that another process is listening on, so concurrent test runs each
+   # need their own. Kept short, as socket paths are limited to ~100 bytes
+   # (macOS's TMPDIR alone is ~50).
+   RS_SESSION_TMP_DIR=$(mktemp -d /tmp/rstudio-tests-XXXXXX) ||
+      error "Unable to create temporary session stream directory"
+   export RS_SESSION_TMP_DIR
+   SESSION_TMP_DIRS+=("${RS_SESSION_TMP_DIR}")
 }
+
+# session stream directories created by setupSessionTestEnvironment
+SESSION_TMP_DIRS=()
+removeSessionTmpDirs() {
+   if [ "${#SESSION_TMP_DIRS[@]}" -gt 0 ]; then
+      rm -rf "${SESSION_TMP_DIRS[@]}"
+   fi
+}
+trap removeSessionTmpDirs EXIT
 
 checkRUnitTestFailure() {
    FAILURES=$(cat "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log")

@@ -120,7 +120,16 @@ private:
    {
       boost::posix_time::ptime launchTime;
       PidType pid = -1;
+
+      // set while the session launch function runs: a request for the
+      // context that ends meanwhile was answered (or failed) without this
+      // launch's process, which isn't listening yet
+      bool launching = false;
    };
+
+   // the launch function made at launchTime has returned
+   void endLaunching(const core::r_util::SessionContext& context,
+                     const boost::posix_time::ptime& launchTime);
 
    boost::mutex launchesMutex_;
    typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;

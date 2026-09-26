@@ -63,13 +63,17 @@ private:
       http::SocketAcceptorService<boost::asio::local::stream_protocol>*
                                                                   pAcceptor)
    {
-      Error error = writePidFile();
+      // fails, leaving the stream and its pid file alone, when another
+      // process is serving this session already (#18941)
+      Error error = http::claimLocalStream(*pAcceptor,
+                                           localStreamPath_,
+                                           streamFileMode_,
+                                           &streamIdentity_);
       if (error)
          return error;
 
-      return http::initLocalStreamAcceptor(*pAcceptor,
-                                           localStreamPath_,
-                                           streamFileMode_);
+      streamClaimed_ = true;
+      return writePidFile();
    }
 
    virtual bool validateConnection(
@@ -116,7 +120,26 @@ private:
 
    virtual Error cleanup()
    {
-      Error error = cleanupPidFile();
+      // the stream and its pid file are ours to remove only while the path
+      // still leads to the socket we bound: another session process may
+      // have replaced it since (and cleanup also runs, on the listener
+      // thread, for /rpc/abort, so it mustn't change our state)
+      if (!streamClaimed_)
+         return Success();
+
+      http::LocalStreamIdentity identity;
+      Error error = http::getLocalStreamIdentity(localStreamPath_, &identity);
+      if (error)
+         return isFileNotFoundError(error) ? Success() : error;
+
+      if (identity != streamIdentity_)
+      {
+         LOG_DEBUG_MESSAGE("Leaving local stream bound by another process: " +
+                           localStreamPath_.getAbsolutePath());
+         return Success();
+      }
+
+      error = cleanupPidFile();
       if (error)
          LOG_ERROR(error);
 
@@ -162,6 +185,10 @@ private:
 private:
    core::FilePath localStreamPath_;
    core::FileMode streamFileMode_;
+
+   // the socket bound at localStreamPath_, once we've claimed it
+   bool streamClaimed_ = false;
+   http::LocalStreamIdentity streamIdentity_;
 
    // desktop shared secret
    std::string secret_;

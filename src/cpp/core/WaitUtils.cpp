@@ -40,6 +40,7 @@ Error waitWithTimeout(const boost::function<WaitResult()>& waitFunction,
    // every 10ms until a timeout occurs -- we use a low granularity
    // here because expect our initial guess of 30ms to be pretty close
    // to the total launch time
+   Error lastError;
    boost::system_time timeoutTime = boost::get_system_time() + seconds(maxWaitSec);
    while(boost::get_system_time() < timeoutTime)
    {
@@ -50,6 +51,7 @@ Error waitWithTimeout(const boost::function<WaitResult()>& waitFunction,
       if (result.type == WaitContinue)
       {
          // try again after waiting a short while
+         lastError = result.error;
          boost::this_thread::sleep(milliseconds(incrementWaitMs));
          continue;
       }
@@ -60,6 +62,9 @@ Error waitWithTimeout(const boost::function<WaitResult()>& waitFunction,
       }
    }
 
+   // report what kept us waiting, not just that we gave up
+   if (lastError)
+      return systemError(boost::system::errc::timed_out, lastError, ERROR_LOCATION);
    return systemError(boost::system::errc::timed_out, ERROR_LOCATION);
 }
 

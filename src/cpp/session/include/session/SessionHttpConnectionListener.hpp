@@ -83,6 +83,18 @@ namespace session {
 // implements the protocol appropriate for our current configuration)
 void initializeHttpConnectionListener();
 
+// Binds a server session's local stream (its socket) ahead of the listener's
+// start. Called first thing in startup, so that a second process launched for
+// a session that's already running fails here, with address_in_use, before
+// touching anything it would share with the running one. A no-op for other
+// listeners.
+core::Error claimSessionStream();
+
+// Removes the socket and pid file of a stream that claimSessionStream bound,
+// for a session exiting without stopping its listener (e.g. one that fails to
+// start). Leaves a stream that another process has replaced alone.
+void releaseSessionStream();
+
 // singleton
 class HttpConnectionListener;
 HttpConnectionListener& httpConnectionListener();

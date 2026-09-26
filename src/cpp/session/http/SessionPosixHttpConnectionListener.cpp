@@ -38,6 +38,33 @@ namespace {
 // pointer to global connection listener singleton
 HttpConnectionListener* s_pHttpConnectionListener = nullptr;
 
+// the session stream's listener, once claimSessionStream has bound it
+LocalStreamHttpConnectionListener* s_pSessionStreamListener = nullptr;
+
+bool usesSessionStream()
+{
+   session::Options& options = session::options();
+   return options.programMode() != kSessionProgramModeDesktop &&
+          !options.standalone();
+}
+
+LocalStreamHttpConnectionListener* createSessionStreamListener()
+{
+   session::Options& options = session::options();
+
+   r_util::SessionContext context = options.sessionContext();
+   std::string streamFile = r_util::sessionContextFile(context);
+   FilePath localStreamPath = local_streams::streamPath(streamFile);
+
+   LOG_DEBUG_MESSAGE("Initializing local stream listener for : " + localStreamPath.getAbsolutePath() + " limited to UID: " + std::to_string(options.limitRpcClientUid()));
+
+   return new LocalStreamHttpConnectionListener(
+            localStreamPath,
+            core::FileMode::ALL_READ_WRITE,
+            "", // no shared secret
+            options.limitRpcClientUid());
+}
+
 void initTcpHttpConnectionListener(const std::string& wwwAddress,
                                    const std::string& bindPort,
                                    session::Options& options,
@@ -88,8 +115,33 @@ void initTcpHttpConnectionListener(const std::string& wwwAddress,
 }  // anonymous namespace
 
 
+Error claimSessionStream()
+{
+   if (!usesSessionStream())
+      return Success();
+
+   LocalStreamHttpConnectionListener* pListener = createSessionStreamListener();
+   Error error = pListener->bindEndpoint();
+   if (error)
+      return error;
+
+   s_pSessionStreamListener = pListener;
+   s_pHttpConnectionListener = pListener;
+   return Success();
+}
+
+void releaseSessionStream()
+{
+   if (s_pSessionStreamListener)
+      s_pSessionStreamListener->releaseEndpoint();
+}
+
 void initializeHttpConnectionListener()
 {
+   // keep the listener that claimed the session stream: it holds the socket
+   if (s_pSessionStreamListener)
+      return;
+
    // alias options
    session::Options& options = session::options();
 
@@ -133,18 +185,7 @@ void initializeHttpConnectionListener()
       }
       else
       {
-         // create listener based on options
-         r_util::SessionContext context = options.sessionContext();
-         std::string streamFile = r_util::sessionContextFile(context);
-         FilePath localStreamPath = local_streams::streamPath(streamFile);
-
-         LOG_DEBUG_MESSAGE("Initializing local stream listener for : " + localStreamPath.getAbsolutePath() + " limited to UID: " + std::to_string(options.limitRpcClientUid()));
-
-         s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
-                                          localStreamPath,
-                                          core::FileMode::ALL_READ_WRITE,
-                                          "", // no shared secret
-                                          options.limitRpcClientUid());
+         s_pHttpConnectionListener = createSessionStreamListener();
       }
    }
 }
