@@ -77,6 +77,12 @@ function otherR(current: string, orthogonal: boolean): InstalledR | undefined {
     .sort((a, b) => compareVersions(b.version, a.version))[0];
 }
 
+// The warning bar repeats its message in a screen-reader live region, so
+// match the visible label alone.
+function warningBarMessage(page: Page, text: string) {
+  return page.getByText(text).and(page.locator("span[aria-hidden='true']"));
+}
+
 // The version of R that an R process started by the session runs (as R CMD
 // INSTALL or renv::restore() would start one).
 const CHILD_R_VERSION =
@@ -153,7 +159,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
 
     // the warning bar names both versions and offers the switch
     await expect(
-      page.getByText(`created with R ${target!.version}, but R ${current} is in use`),
+      warningBarMessage(page, `created with R ${target!.version}, but R ${current} is in use`),
     ).toBeVisible({
       timeout: 60000,
     });
@@ -261,7 +267,7 @@ test.describe("renv lockfile R version after a restart or refresh", () => {
 
     await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-restart`, requested);
 
-    const warning = page.getByText(`created with R ${requested}, but R ${current} is in use`);
+    const warning = warningBarMessage(page, `created with R ${requested}, but R ${current} is in use`);
     await expect(warning).toBeVisible({ timeout: 60000 });
 
     await page.getByRole("button", { name: "Dismiss Warning Bar" }).click();
@@ -279,7 +285,7 @@ test.describe("renv lockfile R version after a restart or refresh", () => {
 
     await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-refresh`, requested);
 
-    const warning = page.getByText(`created with R ${requested}, but R ${current} is in use`);
+    const warning = warningBarMessage(page, `created with R ${requested}, but R ${current} is in use`);
     await expect(warning).toBeVisible({ timeout: 60000 });
 
     await page.getByRole("button", { name: "Dismiss Warning Bar" }).click();
