@@ -258,8 +258,9 @@ Error launchSessionRecovery(
    bool launched;
 
    core::system::Options environment;
+   core::json::JsonRpcRequest jsonRequest;
    return sessionManager().launchSession(ptrConnection->ioContext(),
-         context, request, launched, environment);
+         context, jsonRequest, request, launched, environment);
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(

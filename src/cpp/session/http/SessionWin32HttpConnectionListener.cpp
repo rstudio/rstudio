@@ -53,7 +53,7 @@ void releaseSessionStream()
    // nothing claimed (see claimSessionStream)
 }
 
-void initializeHttpConnectionListener()
+Error initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
 
@@ -83,6 +83,7 @@ void initializeHttpConnectionListener()
                                       options.wwwPort(),
                                       options.sharedSecret());
 
+   return Success();
 }
 
 HttpConnectionListener& httpConnectionListener()
