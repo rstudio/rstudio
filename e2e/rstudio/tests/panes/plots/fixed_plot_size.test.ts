@@ -57,6 +57,10 @@ async function openFixedSizeDialog(page: Page): Promise<void> {
   await plotsPane.sizeMenu.click();
   await plotsPane.fixedSizeItem.click();
   await expect(plotsPane.fixedSizeDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  // the dialog focuses its first field 100ms after it shows (ModalDialogBase);
+  // a fill() of the height field that races that lands its text in the width
+  // field instead
+  await expect(plotsPane.fixedSizeWidth).toBeFocused();
 }
 
 // Bounding box of the plot image inside the Plots pane's iframe.

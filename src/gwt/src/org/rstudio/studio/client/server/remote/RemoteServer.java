@@ -2872,6 +2872,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_ALIASED_PATH, params, requestCallback);
    }
 
+   public void ensureEditableFile(String path,
+                                  ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, ENSURE_EDITABLE_FILE, params, requestCallback);
+   }
+
    public void recoverPackageSource(String path,
                                     ServerRequestCallback<String> requestCallback)
    {
@@ -7451,6 +7459,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String CREATE_ALIASED_PATH = "create_aliased_path";
+   private static final String ENSURE_EDITABLE_FILE = "ensure_editable_file";
    private static final String RECOVER_PACKAGE_SOURCE = "recover_package_source";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
 

@@ -154,6 +154,19 @@ core::Error UserPrefValues::setShowLastDotValue(bool val)
 }
 
 /**
+ * Whether to show objects whose names begin with a dot in the Environment pane.
+ */
+bool UserPrefValues::showHiddenObjects()
+{
+   return readPref<bool>("show_hidden_objects");
+}
+
+core::Error UserPrefValues::setShowHiddenObjects(bool val)
+{
+   return writePref("show_hidden_objects", val);
+}
+
+/**
  * The line ending format to use when saving files.
  */
 std::string UserPrefValues::lineEndingConversion()
@@ -4053,6 +4066,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAlwaysSaveHistory,
       kRemoveHistoryDuplicates,
       kShowLastDotValue,
+      kShowHiddenObjects,
       kLineEndingConversion,
       kUseNewlinesInMakefiles,
       kWindowsTerminalShell,

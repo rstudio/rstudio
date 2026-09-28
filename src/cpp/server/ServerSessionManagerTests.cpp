@@ -35,6 +35,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/system/PosixSystem.hpp>
 
 #include <shared_core/system/User.hpp>
@@ -72,10 +73,14 @@ protected:
    {
       return [this](boost::asio::io_context&,
                     const r_util::SessionLaunchProfile& profile,
+                    const json::JsonRpcRequest&,
                     const http::Request&,
                     const http::ResponseHandler&,
                     const http::ErrorHandler&)
       {
+         if (midLaunch_)
+            midLaunch_(profile.context);
+
          if (!launchDelay_.is_zero())
             boost::this_thread::sleep(launchDelay_);
 
@@ -182,8 +187,9 @@ protected:
                 bool* pLaunched)
    {
       boost::asio::io_context ioContext;
+      json::JsonRpcRequest jsonRequest;
       return manager.launchSession(
-               ioContext, context, request, *pLaunched, core::system::Options());
+               ioContext, context, jsonRequest, request, *pLaunched, core::system::Options());
    }
 
    Error launch(SessionManager& manager, const r_util::SessionContext& context, bool* pLaunched)
@@ -217,6 +223,7 @@ protected:
    std::atomic<int> launchCount_{0};
    time_duration launchDelay_ = time_duration();
    Error launchError_;
+   boost::function<void(const r_util::SessionContext&)> midLaunch_;
    SessionManager manager_;
 };
 
@@ -1024,6 +1031,31 @@ TEST_F(SessionManagerProcessTest, StubReceivesSessionArgsAndEnv)
    EXPECT_NE(std::string::npos, contents.find("\nRSTUDIO_SESSION_SCOPE_ID=aaaa1111\n"));
 
    outputPath.remove();
+}
+
+// A request for a context that ends while its launch is still being made
+// (e.g. an EOF from the exiting session a restart replaces) says nothing
+// about the replacement being launched: clearing its entry then let a
+// retrying request launch a second session, locking the user out (#18941).
+TEST_F(SessionManagerTest, RequestsEndingDuringLaunchKeepPendingLaunch)
+{
+   r_util::SessionContext context("user");
+   midLaunch_ = [this](const r_util::SessionContext& context)
+   {
+      manager_.removePendingLaunch(context, false, "request error");
+      manager_.removePendingLaunch(context);
+   };
+
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+
+   // once the launch has been made, request outcomes count again
+   midLaunch_.clear();
+   manager_.removePendingLaunch(context);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, launchCount_);
 }
 
 } // namespace tests

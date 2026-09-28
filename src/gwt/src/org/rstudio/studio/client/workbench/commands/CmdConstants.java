@@ -282,6 +282,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Copy current document path") // $NON-NLS-1$
     String copySourceDocPathDesc();
     
+    // showActiveDocDirInFiles
+    @DefaultStringValue("Show Current Document's Directory in Files Pane") // $NON-NLS-1$
+    String showActiveDocDirInFilesLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String showActiveDocDirInFilesButtonLabel();
+    @DefaultStringValue("Show Document's Directory") // $NON-NLS-1$
+    String showActiveDocDirInFilesMenuLabel();
+    @DefaultStringValue("Show the directory containing the current document in the Files pane") // $NON-NLS-1$
+    String showActiveDocDirInFilesDesc();
+    
     // saveSourceDocAs
     @DefaultStringValue("Save Current Document As...") // $NON-NLS-1$
     String saveSourceDocAsLabel();

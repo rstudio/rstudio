@@ -20,6 +20,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
 
 #include "SessionTcpIpHttpConnectionListener.hpp"
@@ -41,7 +42,18 @@ HttpConnectionListener* s_pHttpConnectionListener = nullptr;
 }  // anonymous namespace
 
 
-void initializeHttpConnectionListener()
+Error claimSessionStream()
+{
+   // sessions on Windows listen on tcp, never on a local stream
+   return Success();
+}
+
+void releaseSessionStream()
+{
+   // nothing claimed (see claimSessionStream)
+}
+
+Error initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
 
@@ -71,6 +83,7 @@ void initializeHttpConnectionListener()
                                       options.wwwPort(),
                                       options.sharedSecret());
 
+   return Success();
 }
 
 HttpConnectionListener& httpConnectionListener()

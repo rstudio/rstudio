@@ -280,6 +280,65 @@ TEST(ResourcesTest, CongruentMemoryMetrics)
    }
 }
 
+#ifdef __linux__
+
+TEST(ResourcesTest, CgroupV2MemoryExcludesPageCache)
+{
+   // Figures from a cgroup v2 session that had grepped a large NFS tree
+   long currentKb = 70922240 / 1024;
+   std::string memoryStat =
+         "anon 8019968\n"
+         "file 61698048\n"
+         "kernel 1036288\n"
+         "shmem 12288\n"
+         "file_mapped 40960\n"
+         "inactive_anon 2547712\n"
+         "active_anon 5484544\n"
+         "inactive_file 52629504\n"
+         "active_file 9056256\n"
+         "unevictable 0\n";
+
+   long usedKb = 0;
+   Error error = computeCgroupMemoryUsedKb(currentKb, memoryStat, true, &usedKb);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(currentKb - (52629504 + 9056256) / 1024, usedKb);
+
+   // Anon memory is never reclaimable page cache, so it must remain counted
+   EXPECT_GE(usedKb, 8019968 / 1024);
+   EXPECT_LT(usedKb, currentKb);
+}
+
+TEST(ResourcesTest, CgroupV1MemoryUsesHierarchicalTotals)
+{
+   long currentKb = 100 * 1024;
+   std::string memoryStat =
+         "cache 1048576\n"
+         "active_file 1048576\n"
+         "inactive_file 0\n"
+         "total_cache 62914560\n"
+         "total_active_file 20971520\n"
+         "total_inactive_file 41943040\n";
+
+   long usedKb = 0;
+   Error error = computeCgroupMemoryUsedKb(currentKb, memoryStat, false, &usedKb);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(40 * 1024, usedKb);
+}
+
+TEST(ResourcesTest, CgroupMemoryClampsAndRejectsIncompleteStats)
+{
+   // memory.stat read after memory.current may report more cache than usage
+   long usedKb = -1;
+   Error error = computeCgroupMemoryUsedKb(1024, "active_file 1048576\ninactive_file 1048576\n", true, &usedKb);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(0, usedKb);
+
+   error = computeCgroupMemoryUsedKb(1024, "anon 1048576\ninactive_file 1048576\n", true, &usedKb);
+   EXPECT_TRUE(error);
+}
+
+#endif
+
 #ifndef _WIN32
 
 TEST(EnvironmentTest, IsValidEnvironmentVariableName)

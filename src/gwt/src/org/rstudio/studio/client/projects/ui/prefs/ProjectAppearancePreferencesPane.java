@@ -57,9 +57,7 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
       themes_ = themes;
       userPrefs_ = userPrefs;
 
-      int paneWidth = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_WIDTH
-            - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
-            - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
+      int paneWidth = PreferencesDialogConstants.PROJECT_PANE_CONTENT_WIDTH;
       int paneHeight = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_HEIGHT;
 
       // When the user is globally ignoring project appearance settings, reserve
@@ -236,7 +234,7 @@ public class ProjectAppearancePreferencesPane extends ProjectPreferencesPane
    private static final int THEME_LABEL_HEIGHT = 24;
    // Vertical space (px) reserved for the "settings ignored" note when the user
    // is globally ignoring project appearance settings. The pane is ~413px wide
-   // (PROJECT_PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH - padding), where the
+   // (PROJECT_PANE_CONTENT_WIDTH), where the
    // note wraps to ~2 lines in English but more in longer locales (French is
    // ~30% longer). Budget ~4 lines at the info font (~16px each) plus the 8px
    // bottom margin so the note never overlaps the theme controls below it.

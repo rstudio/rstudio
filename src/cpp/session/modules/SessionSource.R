@@ -37,14 +37,14 @@
    if (sweave)
    {
       op <- function() {
-         .Call("rs_rnwTangle", activeRStudioDoc, "UTF-8", rnwWeave)
+         .Call("rs_rnwTangle", activeRStudioDoc, "UTF-8", rnwWeave, PACKAGE = "(embedding)")
          file.remove(activeRStudioDoc)
          file.rename(paste(activeRStudioDoc, ".R", sep=""), activeRStudioDoc)
       }
       capture.output(op())
    }
 
-   .Call("rs_ensureFileHidden", activeRStudioDoc)
+   .Call("rs_ensureFileHidden", activeRStudioDoc, PACKAGE = "(embedding)")
 
    return()
 })
@@ -349,7 +349,7 @@
       return(NULL)
 
    path <- normalizePath(path, winslash = "/", mustWork = TRUE)
-   .Call("rs_getDocumentProperties", path, includeContents)
+   .Call("rs_getDocumentProperties", path, includeContents, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("generateStylerFormatDocumentScript", function(documentPath,

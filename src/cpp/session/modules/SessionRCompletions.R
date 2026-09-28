@@ -1353,7 +1353,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getSourceIndexCompletions", function(token)
 {
-   .Call("rs_getSourceIndexCompletions", token)
+   .Call("rs_getSourceIndexCompletions", token, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
@@ -2325,7 +2325,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getNAMESPACEImportedSymbols", function(documentId)
 {
-   .Call("rs_getNAMESPACEImportedSymbols", documentId)
+   .Call("rs_getNAMESPACEImportedSymbols", documentId, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getCompletionsNAMESPACE", function(token, documentId)
@@ -2569,7 +2569,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getKnitParamsForDocument", function(documentId)
 {
-   .Call("rs_getKnitParamsForDocument", documentId)
+   .Call("rs_getKnitParamsForDocument", documentId, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("knitParams", function(content)
@@ -3000,7 +3000,7 @@ assign(x = ".rs.acCompletionTypes",
       # with the knitr root.dir option)
       if (isNotebook)
       {
-         path <- .Call("rs_getNotebookWorkingDir", filePath, documentId)
+         path <- .Call("rs_getNotebookWorkingDir", filePath, documentId, PACKAGE = "(embedding)")
       }
       
       if (is.null(path) && isNotebook)
@@ -4291,7 +4291,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("listInferredPackages", function(documentId)
 {
-   .Call("rs_listInferredPackages", documentId)
+   .Call("rs_listInferredPackages", documentId, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getInferredCompletions", function(packages = character(),

@@ -96,6 +96,12 @@
             "title": "Show .Last.value in Environment pane",
             "description": "Show the result of the last expression (.Last.value) in the Environment pane."
         },
+        "show_hidden_objects": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show hidden objects in Environment pane",
+            "description": "Whether to show objects whose names begin with a dot in the Environment pane."
+        },
         "line_ending_conversion": {
             "type": "string",
             "enum": ["default", "windows", "posix", "native", "passthrough"],

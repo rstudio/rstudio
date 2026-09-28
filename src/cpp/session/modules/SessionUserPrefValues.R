@@ -108,6 +108,15 @@
    clear = function() { .rs.clearUserPref("show_last_dot_value") }
 )
 
+# Show hidden objects in Environment pane
+#
+# Whether to show objects whose names begin with a dot in the Environment pane.
+.rs.uiPrefs$showHiddenObjects <- list(
+   get = function() { .rs.getUserPref("show_hidden_objects") },
+   set = function(value) { .rs.setUserPref("show_hidden_objects", value) },
+   clear = function() { .rs.clearUserPref("show_hidden_objects") }
+)
+
 # Line ending format
 #
 # The line ending format to use when saving files.

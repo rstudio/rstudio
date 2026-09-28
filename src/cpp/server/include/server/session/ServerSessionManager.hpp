@@ -29,6 +29,7 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/Request.hpp>
 #include <core/Thread.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixChildProcessTracker.hpp>
@@ -80,12 +81,14 @@ public:
    // launching
    core::Error launchSession(boost::asio::io_context& ioContext,
                              const core::r_util::SessionContext& context,
+                             const core::json::JsonRpcRequest& jsonRequest,
                              const core::http::Request& request,
                              bool &launched,
                              core::system::Options environment,
                              const core::http::ResponseHandler& onLaunch = core::http::ResponseHandler(),
                              const core::http::ErrorHandler& onError = core::http::ErrorHandler(),
-                             const std::string& openFile = "");
+                             const std::string& openFile = "",
+                             const core::system::Options extraArgs = core::system::Options());
    void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string());
 
    void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string());
@@ -104,6 +107,7 @@ public:
    typedef boost::function<core::Error(
                            boost::asio::io_context&,
                            const core::r_util::SessionLaunchProfile&,
+                           const core::json::JsonRpcRequest& jsonRequest,
                            const core::http::Request&,
                            const core::http::ResponseHandler& onLaunch,
                            const core::http::ErrorHandler& onError)>
@@ -138,7 +142,16 @@ private:
    {
       boost::posix_time::ptime launchTime;
       PidType pid = -1;
+
+      // set while the session launch function runs: a request for the
+      // context that ends meanwhile was answered (or failed) without this
+      // launch's process, which isn't listening yet
+      bool launching = false;
    };
+
+   // the launch function made at launchTime has returned
+   void endLaunching(const core::r_util::SessionContext& context,
+                     const boost::posix_time::ptime& launchTime);
 
    boost::mutex launchesMutex_;
    typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;

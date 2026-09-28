@@ -14,6 +14,7 @@ import type { Locator, Page, Request } from 'playwright';
 const FILE_ACCEPT_SAVE = '#rstudio_file_accept_save';
 const FILE_CANCEL_SAVE = '#rstudio_file_cancel_save';
 const FILE_NEW_FOLDER = '#rstudio_file_new_folder';
+const FILE_NAME_PROMPT = '#file_dialog_name_prompt';
 const TEXT_ENTRY = '#rstudio_text_entry';
 
 // The RPC that saves the plot once the chooser is accepted.
@@ -21,7 +22,7 @@ const SAVE_PLOT_RPC = /\/rpc\/save_plot_as(?:\?|$)/;
 
 // Sandbox working directory for file-export tests so saved files are cleaned
 // up by globalTeardown automatically.
-useSuiteSandbox();
+const sandbox = useSuiteSandbox();
 
 let consoleActions: ConsolePaneActions;
 let plotsPane: PlotsPane;
@@ -51,10 +52,13 @@ function countSaves(page: Page) {
 }
 
 // Creates a minimal base-graphics plot and waits for the Plots pane to show it.
+// The plot arrives after the console prompt returns, and the pane's iframe is
+// visible even while it is empty, so wait on the toolbar: its buttons enable
+// together with the export menu items when the plot is shown.
 async function createPlot(page: Page): Promise<void> {
   await consoleActions.executeInConsole('plot(1, 1)');
   await plotsPane.tab.click();
-  await expect(plotsPane.plotImage).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  await expect(plotsPane.removePlotBtn).toBeEnabled({ timeout: TIMEOUTS.fileOpen });
 }
 
 test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
@@ -133,9 +137,14 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
     await plotsPane.exportMenu.click();
     await plotsPane.saveAsImageItem.click();
     await expect(plotsPane.saveAsImageDialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-    // Two-step save: OK confirms format/size, then the GWT file chooser appears
-    // and FILE_ACCEPT_SAVE accepts the default path.
+    // Two-step save: OK confirms format/size, then the GWT file chooser appears.
     await page.locator(CONFIRM_BTN).click();
+    // The chooser opens in the directory of the last export, which an earlier
+    // spec in this worker (fixed_plot_size) makes in its own sandbox, so name
+    // the file by its full path. This save then makes the working directory
+    // the remembered one for the rest of the suite, whose choosers must open
+    // there: they accept the default path, and check getwd() for the result.
+    await page.locator(FILE_NAME_PROMPT).fill(`${sandbox.dir}/Rplot.png`);
     await page.locator(FILE_ACCEPT_SAVE).click();
     await expect(plotsPane.saveAsImageDialog).toBeHidden();
 

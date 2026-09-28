@@ -83,7 +83,7 @@ class HttpConnectionListenerImpl : public HttpConnectionListener,
                                    boost::noncopyable
 {  
 protected:
-   HttpConnectionListenerImpl() : started_(false) {}
+   HttpConnectionListenerImpl() : bound_(false), started_(false) {}
 
    void setSslContext(boost::shared_ptr<boost::asio::ssl::context> context)
    {
@@ -93,15 +93,38 @@ protected:
    // COPYING: boost::noncopyable
    
 public:
-   virtual core::Error start()
+   // Binds the endpoint without accepting connections yet: a client that
+   // connects meanwhile waits in the socket's backlog until start(). start()
+   // binds the endpoint itself if this hasn't been called.
+   core::Error bindEndpoint()
    {
-      // cleanup any existing networking state
-      core::Error error = cleanup();
+      if (bound_)
+         return core::Success();
+
+      core::Error error = initializeAcceptor(&acceptorService_);
       if (error)
          return error;
 
-      // initialize acceptor
-      error = initializeAcceptor(&acceptorService_);
+      bound_ = true;
+      return core::Success();
+   }
+
+   // Removes what bindEndpoint() put in place (e.g. a local stream's socket
+   // and pid file) without stopping, for a process exiting without stop(),
+   // such as a session that fails to start after claiming its stream
+   void releaseEndpoint()
+   {
+      if (!bound_)
+         return;
+
+      core::Error error = cleanup();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   virtual core::Error start()
+   {
+      core::Error error = bindEndpoint();
       if (error)
          return error;
 
@@ -161,6 +184,13 @@ public:
          return;
       }
 
+      // allow subclass specific cleanup. do this while still listening: once
+      // we stop, another process may claim the endpoint, and cleanup must
+      // not remove what that process has put in place
+      core::Error error = cleanup();
+      if (error)
+         LOG_ERROR(error);
+
       // close acceptor
       boost::system::error_code ec;
       acceptorService_.closeAcceptor(ec);
@@ -180,11 +210,6 @@ public:
             staticAssetThread_,
             "Static asset thread",
             true);
-
-      // allow subclass specific cleanup
-      core::Error error = cleanup();
-      if (error)
-         LOG_ERROR(error);
    }
 
    // connection queues
@@ -501,6 +526,9 @@ private:
 
    // static asset thread (desktop and standalone modes only)
    boost::thread staticAssetThread_;
+
+   // flag indicating the endpoint is bound (see bindEndpoint)
+   bool bound_;
 
    // flag indicating we've started
    std::atomic<bool> started_;

@@ -1062,8 +1062,9 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
 
       for (const std::string& name : names)
       {
-         // Skip hidden variables (starting with '.')
-         if (!name.empty() && name[0] == '.')
+         // Skip hidden variables (starting with '.'), as ls() does; the
+         // environment monitor's incremental updates skip the same names
+         if (environment::isHiddenName(name))
             continue;
 
          // Skip promises, active bindings, and functions; use getBindingType

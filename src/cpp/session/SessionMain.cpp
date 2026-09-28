@@ -44,6 +44,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/program_options.hpp>
 
 #include <core/AnsiEscapes.hpp>
@@ -2666,6 +2668,36 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                                      core::system::generateShortenedUuid(),
                                                      log::LogLevel::WARN,
                                                      log::LogMessageFormatType::PRETTY)));
+
+      // claim the session's socket before touching anything a second
+      // process for the same session would share with it (its project
+      // settings, source database, etc.), so that a duplicate launch of a
+      // session that's already running stops here (#18941)
+      error = claimSessionStream();
+      if (error == boost::asio::error::make_error_code(boost::asio::error::address_in_use))
+      {
+         std::string pid;
+         FilePath pidFile(error.getProperty("stream") + ".pid");
+         if (readStringFromFile(pidFile, &pid))
+            pid.clear();
+
+         WLOGF("Not starting: this session is already running{} [stream={}]",
+               pid.empty() ? "" : " in process " + boost::algorithm::trim_copy(pid),
+               error.getProperty("stream"));
+         return EXIT_FAILURE;
+      }
+      else if (error)
+      {
+         return sessionExitFailure(error, ERROR_LOCATION);
+      }
+
+      // a session that fails to start mustn't leave its socket and a pid file
+      // naming a dead process behind (on success, R exits the process)
+      BOOST_SCOPE_EXIT(void)
+      {
+         releaseSessionStream();
+      }
+      BOOST_SCOPE_EXIT_END
 
       // initialize monitor but stop its thread on exit
       initMonitorClient();

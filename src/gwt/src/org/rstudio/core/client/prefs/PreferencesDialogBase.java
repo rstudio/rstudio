@@ -40,6 +40,7 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
 
 public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
@@ -78,7 +79,8 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.setStyleName(panelContainerStyle_);
       container_ = new FlowPanel();
-      container_.getElement().getStyle().setPaddingLeft(10, Unit.PX);
+      container_.getElement().getStyle().setPaddingLeft(
+            PreferencesDialogConstants.SECTION_CHOOSER_PADDING, Unit.PX);
       container_.getElement().getStyle().setOverflow(Overflow.AUTO);
 
       addStyleName(res.styles().preferencesDialog());

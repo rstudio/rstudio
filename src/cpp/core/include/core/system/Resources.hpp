@@ -94,14 +94,20 @@ enum MemoryUsageMode {
    // Force memory usage to be read from the cgroup.
    MemoryUsageModeCgroup,
 
-   // Force memory usage to be read from the node's /proc/meminfo. Useful when
-   // cgroup memory includes file cache that does not reflect actual session use.
+   // Force memory usage to be read from the node's /proc/meminfo instead of
+   // the cgroup.
    MemoryUsageModeMemInfo
 };
 
 // Sets the mode used to compute and report memory usage. Call once at startup,
 // before the memory providers are first used.
 void setMemoryUsageMode(MemoryUsageMode mode);
+
+// Computes cgroup memory usage excluding reclaimable page cache: currentKb
+// (memory.current on v2, memory.usage_in_bytes on v1) minus the active and
+// inactive file LRU pages from the contents of the cgroup's memory.stat.
+// Returns an error if memory.stat doesn't contain the needed keys.
+Error computeCgroupMemoryUsedKb(long currentKb, const std::string& memoryStat, bool isV2, long *pUsedKb);
 
 // Sets the memory limit. Must have privileges and provide the uid of the ultimate process owner
 Error setProcessMemoryLimit(long memHighKb, long memMaxKb, uid_t uid, MemoryProvider *pProvider);

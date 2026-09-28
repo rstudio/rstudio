@@ -744,13 +744,9 @@ public class ChatPane
          "<p>" + constants_.chatNotInstalledWithVersionMessage(newVersion) + "</p>" +
          "<hr>" +
          descriptionHtml +
-         "<p class='detail'>" +
-         "<a href='https://www.rstudio.org/links/posit-assistant-learn-more' target='_blank' rel='noopener noreferrer'>" +
-         constants_.chatLearnMore() + "</a></p>" +
          "<hr>" +
          "<button id='install-btn' class='chatIframeButton'>" +
-         constants_.chatInstallButton() + "</button>" +
-         "<p class='detail'>" + constants_.chatInstallTermsOfUse() + "</p>";
+         constants_.chatInstallButton() + "</button>";
 
       String script =
          "document.getElementById('install-btn').addEventListener('click', function() {" +
