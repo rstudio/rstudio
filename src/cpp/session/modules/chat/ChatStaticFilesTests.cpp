@@ -230,7 +230,7 @@ Error requestApp(http::Response* pResponse)
 }
 
 // The handler serves from the installation the session resolved, so each
-// test drives that resolution through the pinned-path source: a single
+// test drives that resolution through posit-assistant-path as a single
 // unversioned directory, which is the simplest thing the resolver accepts.
 // The backend port is cleared, and then the session's own sources restored,
 // after each test so a later test sees the state of a session whose chat
@@ -253,7 +253,7 @@ protected:
    void serve(const FilePath& install)
    {
       InstallSearchPaths paths;
-      paths.pinnedPath = install;
+      paths.adminDir = install;
       paths.userInstallEnabled = false;
       setSearchPathsForTesting(paths);
    }
@@ -283,7 +283,7 @@ TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
    FilePath second = stageInstallationServingApp("// second build");
 
    InstallSearchPaths paths;
-   paths.pinnedPath = first;
+   paths.adminDir = first;
    paths.userInstallEnabled = false;
    setSearchPathsForTesting(paths);
 
@@ -291,9 +291,9 @@ TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
    requestApp(&response);
    ASSERT_EQ(response.body(), "// first build");
 
-   // Replacing the tree the pinned path names is what a third party does to
-   // an unversioned directory; the held resolution keeps serving the same
-   // path, and the page it loaded keeps getting the same installation.
+   // Replacing the tree posit-assistant-path names is what a third party
+   // does to an unversioned directory; the held resolution keeps serving the
+   // same path, and the page it loaded keeps getting the same installation.
    ASSERT_FALSE(first.remove());
    ASSERT_FALSE(second.move(first, FilePath::MoveDirect));
 
