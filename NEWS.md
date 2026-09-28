@@ -76,6 +76,7 @@
 - ([#18896](https://github.com/rstudio/rstudio/issues/18896)): Removed a spurious `getLastCryptoError called with no pending error` warning from the logs.
 - ([#18949](https://github.com/rstudio/rstudio/issues/18949)): Fixed an issue where the Publish command could be hidden after a save changed a document's type, such as saving a new R script as R Markdown, or saving an R Markdown document as Quarto while more than one source column was open.
 - ([#18956](https://github.com/rstudio/rstudio/issues/18956)): Fixed an issue where the editor's Git commands were not updated after using Save As to move a file into or out of a project, until switching tabs.
+- ([#18955](https://github.com/rstudio/rstudio/issues/18955)): Fixed an issue where saving or closing a document in another source column could hide or disable commands for the active document, such as File > Publish.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).

@@ -714,7 +714,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    private void manageCommands(boolean forceSync)
    {
-      manageCommands(forceSync, manager_.getActive());
+      // An inactive column writes some shared commands (e.g. hiding Publish),
+      // so its own refresh goes through the manager, which manages the active
+      // column last (#18955).
+      SourceColumn activeColumn = manager_.getActive();
+      if (activeColumn != null && activeColumn != this)
+         manager_.manageCommands(forceSync);
+      else
+         manageCommands(forceSync, activeColumn);
    }
 
    // this should only be called internally or by SourceColumnManager
@@ -1026,8 +1033,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
 
       boolean cmdEnabled = active && synctexAvailable;
-      getSourceCommand(commands_.synctexSearch()).setVisible(false);
-      getSourceCommand(commands_.synctexSearch()).setEnabled(false);
       getSourceCommand(commands_.synctexSearch()).setVisible(active, cmdEnabled, synctexAvailable);
       getSourceCommand(commands_.synctexSearch()).setEnabled(active, cmdEnabled, synctexAvailable);
    }
