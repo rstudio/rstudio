@@ -45,6 +45,9 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
 
    void processInterrupt(String handle,
                          ServerRequestCallback<VoidResponse> requestCallback);
+
+   void processTerminate(String handle,
+                         ServerRequestCallback<VoidResponse> requestCallback);
    
    void processReap(String handle,
                     ServerRequestCallback<VoidResponse> requestCallback);

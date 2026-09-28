@@ -324,6 +324,11 @@ Error initializeStderrLog(const std::string& programIdentity,
       s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kStdErr, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
+      // drop the destinations a previous initialization created, so that
+      // initializing again (as a desktop session does once its options are
+      // known) replaces them rather than logging every line twice (#18976)
+      log::removeReloadableLogDestinations();
+
       Error error = initLog();
       if (error)
          return error;
@@ -352,6 +357,11 @@ Error initializeLog(const std::string& programIdentity,
       options.setForceDirectory(forceLogDir);
       s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
+
+      // drop the destinations a previous initialization created, so that
+      // initializing again (as a desktop session does once its options are
+      // known) replaces them rather than logging every line twice (#18976)
+      log::removeReloadableLogDestinations();
 
       Error error = initLog();
       if (error)

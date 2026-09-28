@@ -306,7 +306,7 @@ SEXP rs_terminalKill(SEXP terminalsSEXP)
       if (proc != nullptr)
       {
          handle = proc->handle();
-         proc->interrupt();
+         proc->terminate();
          reapConsoleProcess(*proc);
       }
    }
@@ -591,6 +591,28 @@ Error procInterrupt(const json::JsonRpcRequest& request,
    {
       return systemError(boost::system::errc::invalid_argument,
                          "Error interrupting consoleProc",
+                         ERROR_LOCATION);
+   }
+}
+
+Error procTerminate(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* /*pResponse*/)
+{
+   std::string handle;
+   Error error = json::readParams(request.params, &handle);
+   if (error)
+      return error;
+
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != nullptr)
+   {
+      proc->terminate();
+      return Success();
+   }
+   else
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Error terminating consoleProc",
                          ERROR_LOCATION);
    }
 }
@@ -1037,6 +1059,7 @@ Error initializeApi()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
+      (bind(registerRpcMethod, "process_terminate", procTerminate))
       (bind(registerRpcMethod, "process_reap", procReap))
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
       (bind(registerRpcMethod, "process_set_size", procSetSize))
