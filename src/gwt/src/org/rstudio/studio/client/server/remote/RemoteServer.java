@@ -1003,6 +1003,13 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void processTerminate(String handle,
+                                ServerRequestCallback<VoidResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_TERMINATE, handle, requestCallback);
+   }
+
+   @Override
    public void processReap(String handle,
                            ServerRequestCallback<VoidResponse> requestCallback)
    {
@@ -7321,6 +7328,7 @@ public class RemoteServer implements Server
 
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";
+   private static final String PROCESS_TERMINATE = "process_terminate";
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
    private static final String PROCESS_SET_SIZE = "process_set_size";
