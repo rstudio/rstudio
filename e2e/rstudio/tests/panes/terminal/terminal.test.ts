@@ -118,6 +118,33 @@ test.describe.serial('Terminal pane', () => {
     expect(box!.height, 'xterm height').toBeGreaterThan(0);
   });
 
+  test('closing a terminal terminates its shell process', async ({ rstudioPage: page }) => {
+    await killAllTerminals(page);
+    await openTerminal(page);
+
+    const pid = Number(
+      await captureResult(page, 'rstudioapi::terminalContext(rstudioapi::terminalList()[[1]])$pid'),
+    );
+    expect(pid, 'shell pid').toBeGreaterThan(0);
+
+    // "Close current terminal session", the pane's toolbar button
+    await executeCommand(page, 'closeTerminal');
+    await expect(page.locator(XTERM_SELECTOR)).toHaveCount(0, { timeout: TIMEOUTS.consoleReady });
+
+    // Closing used to merely interrupt the shell, which an interactive shell
+    // ignores: it lived on under the session, and the prompt it redrew was
+    // logged as errors (#18976). Ask the OS whether the pid still exists:
+    // signal 0 probes without killing on POSIX; tasklist filters by pid on
+    // Windows.
+    const isRunning =
+      `{ pid <- ${pid}; if (.Platform$OS.type == "windows") ` +
+      `any(grepl(sprintf('"%d"', pid), system2("tasklist", c("/FI", shQuote(sprintf("PID eq %d", pid)), "/NH", "/FO", "CSV"), stdout = TRUE), fixed = TRUE)) ` +
+      `else tools::pskill(pid, 0) }`;
+    await expect
+      .poll(() => captureResult(page, isRunning), { timeout: TIMEOUTS.consoleReady })
+      .toBe('FALSE');
+  });
+
   test('we can run commands in the terminal', async ({ rstudioPage: page }) => {
     await killAllTerminals(page);
     await openTerminal(page);
