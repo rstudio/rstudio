@@ -35,8 +35,8 @@ namespace installation {
 //
 // What any directory holding an extracted Posit Assistant package looks like,
 // independent of how it got there. The slot machinery in ChatSlots builds its
-// stronger, manifest-backed verification on top of these, so there is one
-// definition of "could be run" and one reader for each identity file.
+// verification on top of these, so there is one definition of "could be run"
+// and one reader for each identity file.
 
 /**
  * Check that a directory holds a package the backend could be launched from.
