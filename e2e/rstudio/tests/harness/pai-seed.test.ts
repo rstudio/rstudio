@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { provisionPaiDataHome, seedPaiSlot, selectedPaiInstalls } from '@fixtures/pai-seed';
-import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -8,22 +7,18 @@ import * as path from 'path';
 /**
  * Harness self-test for the PW_SEED_PAI provisioning in fixtures/pai-seed.ts.
  *
- * The seeder writes a version slot, its install manifest and the selector in
- * TypeScript, because there is no way to call RStudio's install path from the
- * test side. Nothing else fails when it drifts: RStudio simply resolves no
- * install and downloads the official package, and the @ai suite passes green
- * having exercised a build nobody asked for. The C++ side pins the shape it
- * accepts (ChatSlots.VerifiesASlotWhoseManifestWasWrittenExternally); this
- * pins the shape produced.
+ * The seeder writes a version slot and the selector in TypeScript, because
+ * there is no way to call RStudio's install path from the test side. Nothing
+ * else fails when it drifts: RStudio simply resolves no install and downloads
+ * the official package, and the @ai suite passes green having exercised a
+ * build nobody asked for. This pins the shape produced.
  *
  * Pure filesystem work -- no IDE, no seeded assistant needed.
  */
 
 /**
  * A minimal stand-in for a `npm run deploy:rstudio` tree: one slot, selected
- * for its protocol. The slot's manifest is left empty, so a seeder that
- * trusted it instead of recording its own would produce a slot that fails to
- * verify.
+ * for its protocol.
  */
 function writeFakeSeed(root: string, version: string, protocol = '11.0', slotName = version): string {
   const slot = path.join(root, 'versions', slotName);
@@ -33,7 +28,6 @@ function writeFakeSeed(root: string, version: string, protocol = '11.0', slotNam
   fs.writeFileSync(path.join(slot, 'dist', 'client', 'index.html'), '<html></html>');
   fs.writeFileSync(path.join(slot, 'package.json'), JSON.stringify({ version }));
   fs.writeFileSync(path.join(slot, 'protocol.json'), JSON.stringify({ protocol }));
-  fs.writeFileSync(path.join(slot, '.slot-manifest.json'), JSON.stringify({ files: {} }));
   fs.writeFileSync(path.join(root, 'selected.json'), JSON.stringify({ selected: { [protocol]: slotName } }));
   // Shared backend state that lives beside the slots, not inside one.
   fs.writeFileSync(path.join(root, 'manifest-check.json'), '{}');
@@ -74,31 +68,6 @@ test.describe('PW_SEED_PAI slot provisioning', () => {
     expect(fs.existsSync(path.join(storage, 'ai-logs'))).toBe(true);
 
     expect(selectedPaiInstalls(dataHome)).toEqual([{ protocol: '11.0', version: '1.2.2' }]);
-  });
-
-  test('records every file at its real size and hash', () => {
-    const seed = writeFakeSeed(path.join(root, 'seed'), '1.2.2');
-    const storage = path.join(root, 'data-home', 'pai');
-    seedPaiSlot(seed, storage);
-
-    const slot = path.join(storage, 'versions', '1.2.2');
-    const { files } = JSON.parse(fs.readFileSync(path.join(slot, '.slot-manifest.json'), 'utf-8'));
-
-    // Every file in the slot except the manifest itself, keyed by a
-    // '/'-separated relative path -- the form matchesSlotManifest() reads.
-    expect(Object.keys(files).sort()).toEqual([
-      'dist/client/index.html',
-      'dist/server/main.js',
-      'package.json',
-      'protocol.json',
-    ]);
-
-    for (const [relative, entry] of Object.entries(files) as [string, { size: number; sha256: string }][]) {
-      const contents = fs.readFileSync(path.join(slot, relative));
-      expect(entry.size, `size recorded for ${relative}`).toBe(contents.length);
-      expect(entry.sha256, `hash recorded for ${relative}`)
-        .toBe(crypto.createHash('sha256').update(contents).digest('hex'));
-    }
   });
 
   test('seeds only the selected slot', () => {

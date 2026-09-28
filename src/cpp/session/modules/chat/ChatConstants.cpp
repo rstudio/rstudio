@@ -49,9 +49,6 @@ const char* const kPackageJsonFileName = "package.json";
 // slot for each protocol.
 const char* const kVersionsDirName = "versions";
 const char* const kSelectorFileName = "selected.json";
-// Written inside a slot, so it is renamed into place along with the tree it
-// describes. Dot-prefixed so it sorts away from the package's own files.
-const char* const kSlotManifestFileName = ".slot-manifest.json";
 // Extraction staging directories are siblings of the slots they become, so the
 // rename that publishes a slot is never a cross-device copy.
 const char* const kStagingDirPrefix = ".tmp-";

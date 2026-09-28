@@ -16,7 +16,6 @@
 #include "ChatInstallation.hpp"
 #include "ChatConstants.hpp"
 #include "ChatSelector.hpp"
-#include "ChatSlotManifest.hpp"
 #include "ChatSlots.hpp"
 
 #include <gtest/gtest.h>
@@ -29,7 +28,6 @@ using namespace rstudio::session::modules::chat::constants;
 
 namespace selector = rstudio::session::modules::chat::selector;
 namespace slots = rstudio::session::modules::chat::slots;
-using rstudio::session::modules::chat::slot_manifest::writeSlotManifest;
 
 namespace {
 
@@ -67,8 +65,8 @@ void stageVersionlessInstallation(const FilePath& dir)
 }
 
 // A slot exactly as an install leaves it under a storage directory: the
-// tree, its manifest, and -- unless a test wants to arrange the selector
-// itself -- a selection for the protocol it serves.
+// tree and -- unless a test wants to arrange the selector itself -- a
+// selection for the protocol it serves.
 FilePath makeSlot(const FilePath& storageDir,
                   const std::string& name,
                   const std::string& version,
@@ -77,7 +75,6 @@ FilePath makeSlot(const FilePath& storageDir,
 {
    FilePath slotDir = slots::versionsDir(storageDir).completeChildPath(name);
    stageInstallation(slotDir, version, protocol);
-   EXPECT_FALSE(writeSlotManifest(slotDir));
    if (select)
       EXPECT_FALSE(selector::selectSlot(storageDir, protocol, name));
    return slotDir;
