@@ -54,6 +54,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ALWAYS_SAVE_HISTORY = "always_save_history";
    public static final String REMOVE_HISTORY_DUPLICATES = "remove_history_duplicates";
    public static final String SHOW_LAST_DOT_VALUE = "show_last_dot_value";
+   public static final String SHOW_HIDDEN_OBJECTS = "show_hidden_objects";
    public static final String LINE_ENDING_CONVERSION = "line_ending_conversion";
    public static final String USE_NEWLINES_IN_MAKEFILES = "use_newlines_in_makefiles";
    public static final String WINDOWS_TERMINAL_SHELL = "windows_terminal_shell";
@@ -510,6 +511,18 @@ public class UserPrefsAccessor extends Prefs
          "show_last_dot_value",
          _constants.showLastDotValueTitle(), 
          _constants.showLastDotValueDescription(), 
+         false);
+   }
+
+   /**
+    * Whether to show objects whose names begin with a dot in the Environment pane.
+    */
+   public PrefValue<Boolean> showHiddenObjects()
+   {
+      return bool(
+         "show_hidden_objects",
+         _constants.showHiddenObjectsTitle(), 
+         _constants.showHiddenObjectsDescription(), 
          false);
    }
 
@@ -4756,6 +4769,8 @@ public class UserPrefsAccessor extends Prefs
          removeHistoryDuplicates().setValue(layer, source.getBool("remove_history_duplicates"));
       if (source.hasKey("show_last_dot_value"))
          showLastDotValue().setValue(layer, source.getBool("show_last_dot_value"));
+      if (source.hasKey("show_hidden_objects"))
+         showHiddenObjects().setValue(layer, source.getBool("show_hidden_objects"));
       if (source.hasKey("line_ending_conversion"))
          lineEndingConversion().setValue(layer, source.getString("line_ending_conversion"));
       if (source.hasKey("use_newlines_in_makefiles"))
@@ -5368,6 +5383,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(alwaysSaveHistory());
       prefs.add(removeHistoryDuplicates());
       prefs.add(showLastDotValue());
+      prefs.add(showHiddenObjects());
       prefs.add(lineEndingConversion());
       prefs.add(useNewlinesInMakefiles());
       prefs.add(windowsTerminalShell());

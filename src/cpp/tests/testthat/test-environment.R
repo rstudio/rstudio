@@ -160,6 +160,89 @@ test_that(".Last.value is hidden when preference is disabled", {
    expect_false(".Last.value" %in% names)
 })
 
+test_that("hidden objects are listed only when preference is enabled", {
+   # https://github.com/rstudio/rstudio/issues/9755
+   hiddenValue <- .rs.api.readRStudioPreference("show_hidden_objects")
+   on.exit(.rs.api.writeRStudioPreference("show_hidden_objects", hiddenValue), add = TRUE)
+
+   assign(".hiddenObj", 1, envir = globalenv())
+   on.exit(rm(".hiddenObj", envir = globalenv()), add = TRUE)
+
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+
+   .rs.api.writeRStudioPreference("show_hidden_objects", FALSE)
+   contents <- .rs.invokeRpc("list_environment")
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_false(".hiddenObj" %in% names)
+
+   .rs.api.writeRStudioPreference("show_hidden_objects", TRUE)
+   contents <- .rs.invokeRpc("list_environment")
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_true(".hiddenObj" %in% names)
+   expect_equal(contents[[which(names == ".hiddenObj")]][["value"]], "1")
+})
+
+test_that(".Last.value is listed when hidden objects are also shown", {
+   # https://github.com/rstudio/rstudio/issues/9755
+   # .Last.value lives in baseenv, so listing globalenv with all names does
+   # not pick it up on its own.
+   hiddenValue <- .rs.api.readRStudioPreference("show_hidden_objects")
+   on.exit(.rs.api.writeRStudioPreference("show_hidden_objects", hiddenValue), add = TRUE)
+   lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
+   on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue), add = TRUE)
+   .rs.api.writeRStudioPreference("show_hidden_objects", TRUE)
+   .rs.api.writeRStudioPreference("show_last_dot_value", TRUE)
+
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+   contents <- .rs.invokeRpc("list_environment")
+
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_equal(sum(names == ".Last.value"), 1)
+})
+
+test_that("function frames list hidden arguments but not dots", {
+   # https://github.com/rstudio/rstudio/issues/9755
+   hiddenValue <- .rs.api.readRStudioPreference("show_hidden_objects")
+   on.exit(.rs.api.writeRStudioPreference("show_hidden_objects", hiddenValue), add = TRUE)
+   .rs.api.writeRStudioPreference("show_hidden_objects", TRUE)
+   on.exit(.rs.invokeRpc("set_environment", "R_GlobalEnv"), add = TRUE)
+
+   forced <- FALSE
+   listFrame <- function(.data, ...)
+   {
+      .rs.invokeRpc("set_environment_frame", sys.nframe())
+      .rs.invokeRpc("list_environment")
+   }
+   contents <- listFrame({ forced <<- TRUE; 1 }, extra = { forced <<- TRUE; 2 })
+
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_true(".data" %in% names)
+   expect_equal(contents[[which(names == ".data")]][["type"]], "promise")
+   expect_false("..." %in% names)
+   expect_false(forced)
+
+   # with no arguments passed through, '...' is bound to the missing marker
+   contents <- listFrame(1)
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_false("..." %in% names)
+})
+
+test_that("a user-assigned object named '...' is listed", {
+   # https://github.com/rstudio/rstudio/issues/9755
+   hiddenValue <- .rs.api.readRStudioPreference("show_hidden_objects")
+   on.exit(.rs.api.writeRStudioPreference("show_hidden_objects", hiddenValue), add = TRUE)
+   .rs.api.writeRStudioPreference("show_hidden_objects", TRUE)
+
+   assign("...", 1, envir = globalenv())
+   on.exit(rm("...", envir = globalenv()), add = TRUE)
+
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+   contents <- .rs.invokeRpc("list_environment")
+
+   names <- vapply(contents, function(x) x[["name"]], character(1))
+   expect_true("..." %in% names)
+})
+
 test_that("flag must be specified when removing objects", {
    expect_error(.rs.invokeRpc("remove_all_objects"))
 })
