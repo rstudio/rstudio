@@ -365,8 +365,8 @@ const WEDGE_PROBE_MS = 30_000;
  * discard this worker and run the remaining tests in a fresh one, so the
  * shard survives with its report intact.
  *
- * The screenshot follows the test's `screenshot` option like Playwright's own
- * failure screenshots, so a spec that turns them off gets none here either.
+ * Skipped when the test's `screenshot` option is 'off'; any other mode takes
+ * it, since a wedge always fails the test.
  */
 async function attachWedgeDiagnostics(
   page: Page,
@@ -376,10 +376,11 @@ async function attachWedgeDiagnostics(
 ): Promise<Error> {
   const url = page.url();
 
-  const screenshotMode = typeof screenshot === 'string' ? screenshot : screenshot.mode;
+  const screenshotMode = !screenshot ? 'off'
+    : typeof screenshot === 'string' ? screenshot : screenshot.mode;
   let screenshotNote = 'screenshot unavailable';
   if (screenshotMode === 'off') {
-    screenshotNote = "screenshot skipped (screenshot: 'off')";
+    screenshotNote = "screenshot skipped: screenshot option is 'off'";
   } else {
     try {
       const shot = await page.screenshot({ timeout: 5000 });
