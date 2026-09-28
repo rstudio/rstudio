@@ -225,9 +225,11 @@ bool isPositAssistantEnabledByAdmin();
 // Deliberately not an allow-* option: those are OR'd with allowOverlay(), which
 // open-source builds define as always true, and this must work in open-source
 // RStudio Server.
-// When false the session ignores the user's own installation, runs only the one
-// configured with posit-assistant-path or else the copy bundled with RStudio,
-// and makes no manifest requests. Independent of isPositAssistantEnabledByAdmin():
+// When false the session ignores the user's own installation and makes no
+// manifest requests. It runs only the installation configured with
+// posit-assistant-path, or the copy bundled with RStudio when that option is
+// unset; a posit-assistant-path holding no installation leaves nothing to run
+// rather than falling back to the bundled copy. Independent of isPositAssistantEnabledByAdmin():
 // a session with Posit Assistant disabled outright never reaches these gates.
 bool isPositAssistantInstallationEnabledByAdmin();
 

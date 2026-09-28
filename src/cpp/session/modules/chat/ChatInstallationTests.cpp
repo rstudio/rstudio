@@ -468,6 +468,7 @@ TEST_F(ChatInstallationSearch, NeverReadsTheSystemConfigDirectory)
    stageInstallation(systemDir.completeChildPath(kLegacyDirName), "1.0.0");
 
    InstallSearchPaths paths = positAssistantSearchPaths();
+   ASSERT_TRUE(paths.userStorageDir.isWithin(root_));
    ASSERT_TRUE(paths.adminDir.isEmpty());
    paths.bundledPath = paths_.bundledPath;
 
