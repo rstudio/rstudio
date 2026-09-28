@@ -1149,6 +1149,46 @@ TEST(LoggingTest, NoNewlinesInJsonLogLine)
    ASSERT_EQ(logFileContents.size() - 1, logFileContents.find("\n"));
 }
 
+TEST(LoggingTest, ReinitializingLogReplacesPreviousDestinations)
+{
+   FilePath tmpConfPath;
+   ASSERT_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+   std::string confFileContents =
+         "[*]\n"
+         "logger-type=file\n"
+         "log-level=warn\n"
+         "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+   ASSERT_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+   clearLogEnvVars();
+   core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+   // a desktop session initializes logging before its options are read and
+   // again afterwards; each message must still reach the log exactly once
+   std::string id = core::system::generateShortenedUuid();
+   ASSERT_FALSE(core::system::initializeLog("logging-tests-" + id, log::LogLevel::WARN, true));
+   ASSERT_FALSE(core::system::initializeLog("logging-tests-" + id, log::LogLevel::WARN, true));
+
+   LOG_WARNING_MESSAGE("Logged once");
+
+   FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+   ASSERT_TRUE(logFile.exists());
+
+   std::vector<std::string> logLines;
+   ASSERT_FALSE(core::readStringVectorFromFile(logFile, &logLines));
+
+   int occurrences = 0;
+   for (const std::string& line : logLines)
+   {
+      if (line.find("Logged once") != std::string::npos)
+         occurrences++;
+   }
+
+   ASSERT_EQ(1, occurrences);
+}
+
 } // namespace unit_tests
 } // namespace core
 } // namespace rstudio
