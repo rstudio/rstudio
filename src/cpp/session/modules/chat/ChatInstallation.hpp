@@ -46,10 +46,10 @@ namespace installation {
  * zero-byte main.js that an existence-only check accepted.
  *
  * This is a structural check only. It says nothing about which version or
- * protocol the directory holds, and nothing about whether the tree is intact
- * beyond those three paths -- slots::verifySlot() adds both. It is what the
+ * protocol the directory holds -- slots::verifySlot() adds that -- and nothing
+ * about whether the tree is intact beyond those three paths. It is all the
  * unversioned sources (posit-assistant-path, the administrator's legacy
- * directory, the bundled copy) get, since they carry no manifest.
+ * directory, the bundled copy) get, since they are not slots.
  *
  * @param installDir The directory holding an extracted package.
  * @return true if the directory could be run.

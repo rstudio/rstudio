@@ -197,9 +197,10 @@ export function inspectSeed(seedRoot: string): {
  * Lay out the slot `seedRoot` selects as the only slot in `storageDir`.
  *
  * The slot is copied to `versions/<version>` and selected for the protocol it
- * declares. The seed's other slots and its `selected.json` are not copied, so the build under test is the only one there. Nor is `bin`:
- * RStudio never reads it, so copying it would only add 18 MB per sandbox and
- * make a resolver regression harder to notice. Everything else (`ai-logs`,
+ * declares. The seed's other slots and its `selected.json` are not copied, so
+ * the build under test is the only one there. Nor is `bin`: RStudio never
+ * reads it, so copying it would only add 18 MB per sandbox and make a resolver
+ * regression harder to notice. Everything else (`ai-logs`,
  * `manifest-check.json`, ...) is shared state that lives beside the slots and
  * is copied as-is.
  *
