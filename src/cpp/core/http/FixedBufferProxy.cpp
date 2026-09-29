@@ -83,6 +83,25 @@ namespace rstudio {
 namespace core {
 namespace http {
 
+bool isBelowStreamingThreshold(const Response& response, uint64_t threshold)
+{
+   // RFC 7230 3.3.3 rule 3: when both Transfer-Encoding and Content-Length are
+   // present, Transfer-Encoding takes precedence and Content-Length must be
+   // disregarded -- an upstream can attach a small, stale, or malicious
+   // Content-Length to a chunked (or otherwise unbounded) body. Ask the same
+   // shared parser decideFraming() uses for this, rather than re-deriving it
+   // from the raw header here.
+   if (util::parseTransferEncoding(response.headers()).present)
+      return false;
+
+   boost::optional<uintmax_t> contentLength =
+      safe_convert::stringTo<uintmax_t>(response.headerValue("Content-Length"));
+   if (!contentLength)
+      return false;
+
+   return *contentLength < threshold;
+}
+
 FixedBufferProxy::FixedBufferProxy(const boost::shared_ptr<AsyncConnection>& pClientConnection,
                                     uint64_t maxBufferSize) :
    pClientConnection_(pClientConnection),
@@ -93,25 +112,39 @@ FixedBufferProxy::FixedBufferProxy(const boost::shared_ptr<AsyncConnection>& pCl
 {
 }
 
-void FixedBufferProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection)
+void FixedBufferProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection,
+                             const boost::optional<Headers>& preservedCookiesOverride)
 {
-   // Snapshot the Set-Cookie headers already on the client connection's
-   // response -- refreshed auth cookies, stamped during authentication before
-   // the request reached the handler that built us (see
-   // ServerSecureUriHandler's refreshAuthCookies call, which runs before it
-   // dispatches). writeHeaders() carries them over onto the proxied response,
-   // which would otherwise replace them wholesale.
-   //
-   // Read here rather than there because here is the one point where that
-   // response is still ours alone: we are on the client connection's own
-   // request-handling path, before the upstream request is executed, so no
-   // other writer exists yet. By header-assembly time an upstream error
-   // handler on another context may be mutating that same response on its way
-   // to its own response claim, and this iteration would be racing it.
-   for (const http::Header& header : pClientConnection_->response().headers())
+   if (preservedCookiesOverride)
    {
-      if (boost::iequals(header.name, "Set-Cookie"))
-         preservedCookies_.push_back(header);
+      // The caller has already computed the exact Set-Cookie headers it wants
+      // carried over -- e.g. the launcher proxy's launcherCookieCarryOver(),
+      // applying the same scope-based filtering its buffered delivery path
+      // applies -- so use that verbatim instead of the blind snapshot below.
+      // Read from the same client-connection response the automatic path
+      // would have used, so this is exactly as timing-safe as that snapshot.
+      preservedCookies_ = *preservedCookiesOverride;
+   }
+   else
+   {
+      // Snapshot the Set-Cookie headers already on the client connection's
+      // response -- refreshed auth cookies, stamped during authentication before
+      // the request reached the handler that built us (see
+      // ServerSecureUriHandler's refreshAuthCookies call, which runs before it
+      // dispatches). writeHeaders() carries them over onto the proxied response,
+      // which would otherwise replace them wholesale.
+      //
+      // Read here rather than there because here is the one point where that
+      // response is still ours alone: we are on the client connection's own
+      // request-handling path, before the upstream request is executed, so no
+      // other writer exists yet. By header-assembly time an upstream error
+      // handler on another context may be mutating that same response on its way
+      // to its own response claim, and this iteration would be racing it.
+      for (const http::Header& header : pClientConnection_->response().headers())
+      {
+         if (boost::iequals(header.name, "Set-Cookie"))
+            preservedCookies_.push_back(header);
+      }
    }
 
    pServerConnection_ = pServerConnection;
@@ -461,18 +494,6 @@ void FixedBufferProxy::assembleAndWriteHeaders()
    // cookies re-added afterward. resp is the upstream response and nothing
    // else at this point -- queueChunk() copied it and no client-side header
    // has been merged in yet.
-   //
-   // TODO(rstudio-pro-11740 follow-on): if the /s/ path is later opted into
-   // streaming (see plan Resolved Questions, "Streaming /s/ and launcher"),
-   // its auth-cookie stamping (getAuthCookies(), ServerSessionProxy.cpp:267,
-   // 1003) will need to move from handleProxyResponse's single post-completion
-   // writeResponse(response, true, authCookies) call into *this* header-write
-   // path -- headers are flushed here, off the first queueChunk, before any
-   // body bytes are streamed, so cookies can no longer be added at response
-   // completion time the way the buffered path does today. preservedCookies_
-   // is the intended seam: the future streaming-enabled /s/ wiring should
-   // stamp refreshed auth cookies onto the client connection's response before
-   // FixedBufferProxy::proxy() snapshots it, not at completion time.
    //
    // This connection to the client is not the same connection, nor
    // subject to the same per-hop semantics, as the one to the upstream
