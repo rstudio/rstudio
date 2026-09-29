@@ -53,13 +53,26 @@ UserIdentity currentUserIdentity()
 
 #if defined(HAVE_SO_PEERCRED)
 
+namespace {
+
+Error socketPeerCredentials(int socket, struct ucred* pCred)
+{
+   socklen_t length = sizeof(struct ucred);
+   if (::getsockopt(socket, SOL_SOCKET, SO_PEERCRED, pCred, &length) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   return Success();
+}
+
+} // anonymous namespace
+
 Error socketPeerIdentity(int socket, UserIdentity* pIdentity)
 {
    struct ucred cred;
-   socklen_t length = sizeof(struct ucred);
-   if (::getsockopt(socket, SOL_SOCKET, SO_PEERCRED, &cred, &length) < 0)
-      return systemError(errno, ERROR_LOCATION);
-      
+   Error error = socketPeerCredentials(socket, &cred);
+   if (error)
+      return error;
+
    pIdentity->userId = cred.uid;
    pIdentity->groupId = cred.gid;
    return Success();
@@ -88,9 +101,9 @@ Error socketPeerIdentity(int socket, UserIdentity* pIdentity)
 Error socketPeerPid(int socket, pid_t* pPid)
 {
    struct ucred cred;
-   socklen_t length = sizeof(struct ucred);
-   if (::getsockopt(socket, SOL_SOCKET, SO_PEERCRED, &cred, &length) < 0)
-      return systemError(errno, ERROR_LOCATION);
+   Error error = socketPeerCredentials(socket, &cred);
+   if (error)
+      return error;
 
    *pPid = cred.pid;
    return Success();
