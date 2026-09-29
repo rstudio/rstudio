@@ -62,7 +62,6 @@
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/Util.hpp>
-#include <core/LogOptions.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -278,7 +277,6 @@ using chat_constants::kMaxQueueSize;
 using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
 using chat_constants::kMaxRestartAttempts;
-using chat_constants::kLegacyInstallDirName;
 using chat_constants::kServerScriptPath;
 
 // Types used throughout
@@ -298,7 +296,6 @@ using chat_installation::locatePositAssistantInstallation;
 using chat_installation::clearPinnedInstallation;
 using chat_installation::positAiStorageDir;
 using chat_installation::positAssistantSearchPaths;
-using chat_installation::InstallSearchPaths;
 using chat_installation::runsUserSlot;
 using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyDeclaredIdentity;
@@ -4642,9 +4639,10 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       }
       else if (!userInstallWouldBeSelected(packageVersion))
       {
-         // The install would land in the user data directory, but a read-only
-         // copy (system-wide or bundled) would still outrank it, so the offer
-         // could never be satisfied: the prompt would return on every check.
+         // The install would land in the user data directory, but the
+         // installation under posit-assistant-path, or a newer bundled copy,
+         // would still be selected over it, so the offer could never be
+         // satisfied: the prompt would return on every check.
          DLOG("Not offering {}: a read-only installation would still be "
               "selected over it", packageVersion);
       }
@@ -5072,6 +5070,36 @@ void onBackendExit(int exitCode, uint64_t generation)
    ));
 }
 
+// Why nothing resolved, for a session about to start the backend. Naming the
+// user directory would point at a location only an in-product install can
+// populate -- and, when installation is managed, one the session ignores and
+// refuses to install into -- so the only path ever named is the one an
+// administrator configured.
+std::string installationNotFoundMessage()
+{
+   FilePath adminDir = positAssistantSearchPaths().adminDir;
+   if (isInstallationManaged())
+   {
+      if (adminDir.isEmpty())
+         return "Posit Assistant installation not found. Installation is managed by "
+                "your administrator, and none has been configured.";
+
+      return fmt::format(
+         "Posit Assistant installation not found. Installation is managed by "
+         "your administrator; expected: {}",
+         adminDir.getAbsolutePath());
+   }
+
+   if (adminDir.isEmpty())
+      return "Posit Assistant installation not found. Install it from the "
+             "Posit Assistant pane.";
+
+   return fmt::format(
+      "Posit Assistant installation not found. Install it from the "
+      "Posit Assistant pane, or have an administrator install it at: {}",
+      adminDir.getAbsolutePath());
+}
+
 Error startChatBackend(bool resumeConversation)
 {
    // Check if already running
@@ -5082,35 +5110,8 @@ Error startChatBackend(bool resumeConversation)
    FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
-      // Without a pinned path, the one system location an administrator can
-      // populate by hand is the legacy bin directory; versioned slots need the
-      // manifest only an install writes.
-      InstallSearchPaths paths = positAssistantSearchPaths();
-      std::string systemPath = paths.pinnedPath.isEmpty()
-         ? paths.systemStorageDir.completeChildPath(kLegacyInstallDirName).getAbsolutePath()
-         : paths.pinnedPath.getAbsolutePath();
-
-      // Naming the user directory in managed mode would point the user at the
-      // one location the session ignores and refuses to install into.
-      std::string errorMsg;
-      if (isInstallationManaged())
-      {
-         errorMsg = fmt::format(
-            "Posit Assistant installation not found. Installation is managed by "
-            "your administrator; expected: {}",
-            systemPath);
-      }
-      else
-      {
-         // Only an in-product install produces a slot RStudio will use, so
-         // there is no user directory to tell the user to copy files into.
-         errorMsg = fmt::format(
-            "Posit Assistant installation not found. Install it from the "
-            "Posit Assistant pane, or have an administrator install it at: {}",
-            systemPath);
-      }
       return systemError(boost::system::errc::no_such_file_or_directory,
-                        errorMsg,
+                        installationNotFoundMessage(),
                         ERROR_LOCATION);
    }
 
@@ -5150,7 +5151,9 @@ Error startChatBackend(bool resumeConversation)
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
    args.push_back("--json"); // Enable JSON-RPC mode
    args.push_back("--logger-type=file"); // Log to file instead of using rstudio logging
-   args.push_back("--log-dir=" + log::LogOptions::defaultLogDirectory().getAbsolutePath());
+   // Use rsession's own log directory; in Workbench the server default log
+   // directory is owned by rstudio-server and isn't writable by the session user.
+   args.push_back("--log-dir=" + core::system::xdg::userLogDir().getAbsolutePath());
 
    // Add workspace path argument
    FilePath workspacePath = dirs::getInitialWorkingDirectory();
