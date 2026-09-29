@@ -259,6 +259,12 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          {
             if (StringUtil.equals(id, params.getId()))
             {
+               // leave the app alone if it has moved out of this window (to
+               // the Viewer pane, say); stopOnNextClose_ doesn't cover that
+               // once the window's own report of the close has been handled
+               if (!StringUtil.equals(params.getViewerType(), UserPrefs.SHINY_VIEWER_TYPE_WINDOW))
+                  break;
+
                params.setState(ShinyApplicationParams.STATE_STOPPING);
                notifyShinyAppClosed(params);
                break;

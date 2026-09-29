@@ -4,16 +4,25 @@
 // closed, and the main window then interrupts R to stop the API. When that
 // notification was lost, the API kept running (and the console stayed busy)
 // after its window was gone.
+//
+// On Desktop, Electron reports the closed window as well. The second test
+// covers a window closed because its API moved to the Viewer pane, where
+// neither report may stop the API.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ensureConsoleIdle, INTERRUPT_R_BTN } from '@pages/console_pane.page';
-import { clearPref, setPref } from '@utils/commands';
+import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { seedSandboxFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
+import {
+  delayDesktopCloseReport,
+  restoreDesktopCloseReport,
+  waitForDesktopCloseReport,
+} from '@utils/satellite';
 
 const API_FILE = 'plumber-api-window-close.R';
 const API_FRAME = 'iframe[title="Plumber API Panel"]';
@@ -68,6 +77,8 @@ test.describe.serial('plumber api window close (#18987)', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
+    await restoreDesktopCloseReport(page);
+
     // A failing run leaves the API serving; free the console for the next spec.
     await ensureConsoleIdle(page);
     for (const satellite of page.context().pages()) {
@@ -94,5 +105,52 @@ test.describe.serial('plumber api window close (#18987)', () => {
     // The main window confirms the window is really gone before it stops
     // the API, so allow for that on top of the interrupt itself.
     await expect(page.locator(INTERRUPT_R_BTN)).toBeHidden({ timeout: 15000 });
+  });
+
+  test('API keeps running when it is moved to the Viewer pane', { tag: ['@desktop_only'] }, async ({
+    rstudioPage: page,
+  }) => {
+    test.skip(!plumberAvailable, 'required R package not available: plumber');
+
+    const consoleActions = new ConsolePaneActions(page);
+    const satellitePage = await launchApiInWindow(page, consoleActions, apiPath);
+    await expect(page.locator(INTERRUPT_R_BTN)).toBeVisible();
+
+    // Electron's report normally arrives within a few milliseconds of the
+    // window's own. Hold it back until the main window is done with the
+    // window's report, by which point it no longer expects this close.
+    await delayDesktopCloseReport(page, 1000);
+
+    const isInterruptRequest = (request: { url(): string }) =>
+      request.url().endsWith('/rpc/interrupt');
+    let interruptRequested = false;
+    const onRequest = (request: { url(): string }) => {
+      if (isInterruptRequest(request))
+        interruptRequested = true;
+    };
+    page.on('request', onRequest);
+
+    try {
+      const closePromise = satellitePage.waitForEvent('close', { timeout: 15000 });
+      await executeCommand(page, 'plumberRunInPane');
+      await closePromise;
+
+      await waitForDesktopCloseReport(page);
+
+      // the main window acts on a report within 250ms, so an interrupt would
+      // be requested well inside this window
+      await page.waitForRequest(isInterruptRequest, { timeout: 2000 }).catch(() => {});
+      expect(interruptRequested).toBe(false);
+      await expect(page.locator(INTERRUPT_R_BTN)).toBeVisible();
+    } finally {
+      page.off('request', onRequest);
+
+      // the API is still running in the pane, and the command above changed
+      // the preference the other test relies on
+      if (await page.locator(INTERRUPT_R_BTN).isVisible())
+        await executeCommand(page, 'interruptR').catch(() => {});
+      await page.locator(INTERRUPT_R_BTN).waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {});
+      await setPref(page, 'plumber_viewer_type', 'window');
+    }
   });
 });
