@@ -108,6 +108,8 @@
 - ([#16594](https://github.com/rstudio/rstudio/issues/16594)): Fixed an issue where setting `--ozone-platform` in `electron-flags.conf` could cause RStudio Desktop to open with a blank window on Linux. Thanks to [@victorwon2001](https://github.com/victorwon2001).
 - ([#19005](https://github.com/rstudio/rstudio/issues/19005)): Fixed an error being logged when Refresh was clicked in the Find in Files pane before any search had been run.
 - ([#19003](https://github.com/rstudio/rstudio/issues/19003)): Fixed an issue where installing a connection package that provides no connection extension, such as odbc, from the New Connection dialog logged a `No such file or directory` error in the session log.
+- (rstudio-pro#12202): Fixed an issue where code diagnostics sometimes failed to render properly.
+- (rstudio-pro#12203): Fixed an issue where the autocompletion help preview could render data values incorrectly.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).

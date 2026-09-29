@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
@@ -57,6 +58,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       setWidget(outer);
       setVisible(false);
       setStylePrimaryName(RES.styles().helpPopup());
+      ElementIds.assignElementId(this, ElementIds.POPUP_COMPLETIONS_HELP);
       
       if (RStudioThemes.usesScrollbars())
          addStyleName("rstudio-themes-scrollbars");

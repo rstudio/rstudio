@@ -14,16 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint.model;
 
+import org.rstudio.core.client.AnsiCode;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
 public class LintItem extends JavaScriptObject
 {
    protected LintItem() {}
-   
+
    public static final native LintItem create(int row, String className)
    /*-{
       return {
@@ -69,7 +70,7 @@ public class LintItem extends JavaScriptObject
          "type": type
       };
    }-*/;
-   
+
    public final native int getStartRow() /*-{
       return this["start.row"];
    }-*/;
@@ -81,7 +82,7 @@ public class LintItem extends JavaScriptObject
    public final native int getStartColumn() /*-{
       return this["start.column"];
    }-*/;
-   
+
    public final native int getEndRow() /*-{
       return this["end.row"];
    }-*/;
@@ -93,7 +94,7 @@ public class LintItem extends JavaScriptObject
    public final native int getEndColumn() /*-{
       return this["end.column"];
    }-*/;
-   
+
    public final native String getText() /*-{
       return this["text"];
    }-*/;
@@ -101,7 +102,7 @@ public class LintItem extends JavaScriptObject
    public final native void setText(String text) /*-{
       this["text"] = text;
    }-*/;
-   
+
    public final native String getHtml() /*-{
       return this["html"];
    }-*/;
@@ -109,7 +110,7 @@ public class LintItem extends JavaScriptObject
    public final native void setHtml(String html) /*-{
       this["html"] = html;
    }-*/;
-   
+
    public final native String getType() /*-{
       return this["type"];
    }-*/;
@@ -125,55 +126,27 @@ public class LintItem extends JavaScriptObject
    public final native String getTooltip() /*-{
       return this.tooltip;
    }-*/;
-   
+
    public final Range asRange()
    {
       return Range.fromPoints(
             Position.create(getStartRow(), getStartColumn()),
             Position.create(getEndRow(), getEndColumn()));
    }
-   
+
    public final AceAnnotation asAceAnnotation()
    {
+      String text = getText();
+      if (text != null)
+         text = AnsiCode.strip(StringUtil.normalizeNewLines(text));
+
       return AceAnnotation.create(
             getStartRow(),
             getStartColumn(),
             getHtml(),
-            getText(),
+            text,
             getType(),
             getClassName(),
             getTooltip());
    }
-   
-   public static final native JsArray<AceAnnotation> asAceAnnotations(JsArray<LintItem> items)
-   /*-{
-      
-      var aceAnnotations = [];
-      
-      for (var key in items)
-      {
-         var item = items[key];
-         var type = item["type"];
-         if (type !== "error" && type !== "warning") {
-            type = "info";
-         }
-
-         // 'text' must be set; Ace's gutter tooltip pipes it through createTextNode and would otherwise show 'html' as literal markup.
-         var annotation = {
-            row: item["start.row"],
-            column: item["start.column"],
-            type: type,
-            text: item["text"],
-            html: item["html"],
-            className: item.className,
-            tooltip: item.tooltip
-         };
-
-         aceAnnotations.push(annotation);
-      }
-      
-      return aceAnnotations;
-         
-   }-*/;
-   
 }
