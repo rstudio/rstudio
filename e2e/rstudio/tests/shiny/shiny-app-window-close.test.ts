@@ -1,7 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ensureConsoleIdle } from '@pages/console_pane.page';
-import { setPref, stopForegroundShinyApp } from '@utils/commands';
+import { clearPref, setPref, stopForegroundShinyApp } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
 import type { Page } from '@playwright/test';
 
@@ -140,6 +140,8 @@ test.describe.serial('shiny app window close', () => {
           `[shiny-app-window-close] cleanup unlink failed (R may be stuck): ${(err as Error).message}`,
         );
       });
+
+    await clearPref(page, 'shiny_viewer_type');
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {

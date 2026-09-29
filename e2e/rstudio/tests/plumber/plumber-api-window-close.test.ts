@@ -9,7 +9,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ensureConsoleIdle, INTERRUPT_R_BTN } from '@pages/console_pane.page';
-import { setPref } from '@utils/commands';
+import { clearPref, setPref } from '@utils/commands';
 import { seedSandboxFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { rPathLiteral } from '@utils/r';
@@ -61,6 +61,10 @@ test.describe.serial('plumber api window close (#18987)', () => {
 
     await setPref(page, 'plumber_viewer_type', 'window');
     apiPath = await seedSandboxFile(page, sandbox.dir, API_FILE, API_SOURCE);
+  });
+
+  test.afterAll(async ({ rstudioPage: page }) => {
+    await clearPref(page, 'plumber_viewer_type');
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
