@@ -34,7 +34,10 @@
 #include <server/session/ServerSessionProxy.hpp>
 
 using namespace rstudio::core;
-using namespace rstudio::server;
+
+namespace rstudio {
+namespace server {
+namespace tests {
 
 namespace {
 
@@ -102,7 +105,7 @@ bool attemptLaunch(const r_util::SessionContext& context)
    bool launched = false;
 
    Error error = sessionManager().launchSession(
-      ioContext, context, jsonRequest, request, launched, system::Options());
+      ioContext, context, jsonRequest, request, launched, core::system::Options());
    EXPECT_FALSE(error);
 
    return launched;
@@ -287,3 +290,7 @@ TEST(ProxyPendingLaunchTests, ContentErrorIsAttributedToItsPeerProcess)
    expectErrorAttributedToPeer(session_proxy::handleContentErrorForTest,
                                "proxy-content-error-peer-pid-user");
 }
+
+} // namespace tests
+} // namespace server
+} // namespace rstudio
