@@ -277,7 +277,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
 {
    int numRemoved = 0;
    using namespace boost::posix_time;
-   ptime launchTime = microsec_clock::universal_time();
+   ptime launchTime = config_.now();
    LOCK_MUTEX(launchesMutex_)
    {
       ptime now = config_.now();
