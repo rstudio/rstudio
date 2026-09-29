@@ -31,9 +31,10 @@
 #include <boost/regex.hpp>
 
 #include <algorithm>
-#include <iostream>
-#include <fstream>
+#include <sstream>
 #include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <sys/sysinfo.h>
 
@@ -58,83 +59,46 @@ MemoryUsageMode effectiveMemoryUsageMode()
    return s_memoryUsageMode;
 }
 
-// Parses /proc/meminfo to look up specific memory stats.
+// Reads a procfs file in full. This uses read(2) rather than a stream so that
+// a failed read is reported with its cause, and can't be mistaken for a file
+// that has more to give.
+Error readProcFile(const std::string& procPath, std::string* pContents)
+{
+   int fd = posix::posixCall<int>([&]() { return ::open(procPath.c_str(), O_RDONLY | O_CLOEXEC); });
+   if (fd == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", procPath);
+      return error;
+   }
+
+   Error error = readProcFileDescriptor(fd, pContents);
+   ::close(fd);
+
+   if (error)
+      error.addProperty("path", procPath);
+   return error;
+}
+
+// Reads /proc/meminfo or /proc/<pid>/status to look up specific memory stats.
 Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
 {
-   // /proc/meminfo and /proc/<pid>/status contains lines that look like this:
-   //
-   // MemTotal: 8124360 kB
-
-   // Open the file and prepare to read it
-   FilePath memInfoFile(procPath);
-   std::shared_ptr<std::istream> pMemStream;
-   Error error = memInfoFile.openForRead(pMemStream);
-   if (error)
-   {
-      return error;
-   }
-   std::size_t numFound = 0;
-
-   // Read one line at a time, looking for each key
-   while (!pMemStream->eof())
-   {
-      std::string memLine;
-      try
-      {
-         std::getline(*pMemStream, memLine);
-      }
-      catch(const std::exception& e)
-      {
-         Error error = systemError(boost::system::errc::io_error,
-                                   ERROR_LOCATION);
-         error.addProperty("what", e.what());
-         error.addProperty("path", procPath);
-         return error;
-      }
-
-      for (std::size_t i = 0; i < keys.size(); i++)
-      {
-         const std::string& key = keys[i];
-         if (string_utils::isPrefixOf(memLine, keys[i] + ":"))
-         {
-            // This is the key we're looking for; read the value from the remainder of the line.
-            try
-            {
-               std::stringstream lineStream(string_utils::substring(
-                        memLine, key.size() + 1));
-               long nextValue;
-               lineStream >> nextValue;
-               (*pValues)[i] = nextValue;
-               numFound++;
-            }
-            catch (...)
-            {
-               error = systemError(boost::system::errc::protocol_error,
-                     "Could not read proc path value "
-                     "'" + key + "'"
-                     " from " + procPath + " line "
-                     "'" + memLine + "'",
-                     ERROR_LOCATION);
-            }
-
-            // We found the key
-            break;
-         }
-      }
-      if (error || numFound == keys.size())
-         break;
-   }
+   std::string contents;
+   Error error = readProcFile(procPath, &contents);
    if (error)
       return error;
 
-   if (numFound != keys.size())
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         "Proc stat file: " + procPath + " missing value - found only: " + std::to_string(numFound) + " of: " +
-                         std::to_string(keys.size()) + " keys",
-                         ERROR_LOCATION);
-   }
-   return Success();
+   error = parseProcFileKeys(contents, keys, pValues);
+   if (error)
+      error.addProperty("path", procPath);
+   return error;
+}
+
+// Whether a procfs read failed because the process has since exited: ENOENT
+// if it was gone before the open, ESRCH if it was reaped before the read.
+bool isProcessGone(const Error& error)
+{
+   return error.getCode() == ENOENT || error.getCode() == ESRCH;
 }
 
 // Returns the RSS + swap for the specified process.
@@ -143,8 +107,6 @@ Error readProcFileKeys(const std::string& procPath, const std::vector<std::strin
 // that overflow main memory continue are measured based on their complete size.
 long getProcessSize(PidType pid)
 {
-   std::string statmPath = "/proc/" + std::to_string(pid) + "/statm";
-
    std::vector<std::string> keys = {"VmRSS", "VmSwap"};
    std::vector<long> values = {0, 0};
 
@@ -180,6 +142,7 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
    DIR *pDir = nullptr;
    long childRssSize = 0;
    std::map<PidType, PidType> childToParentMap;
+   std::map<PidType, long> processSizes;
 
    try
    {
@@ -207,24 +170,34 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
          if (error || fileUid != userId)
             continue;
 
+         // Take the parent and the size from a single read of the status
+         // file. Processes come and go while /proc is scanned, so one that
+         // has exited since it was listed is expected, and is left out.
          std::string statusPath = "/proc/" + std::string(pDirEnt->d_name) + "/status";
-         std::ifstream statusFile(statusPath);
-         if (statusFile.is_open())
+         std::string status;
+         error = readProcFile(statusPath, &status);
+         if (error)
          {
-            std::string line;
-            while (std::getline(statusFile, line)) {
-               if (line.find("PPid:") == 0) {
-                  std::istringstream iss(line.substr(5));
-                  PidType ppid;
-                  iss >> ppid;
-                  // Sanity check that the child is not already a parent of this new parent
-                  // to avoid cycles in the childToParentMap
-                  if (!isChildOfParent(childToParentMap, pid, ppid))
-                     childToParentMap[pid] = ppid;
-                  break;
-                }
-            }
-            statusFile.close();
+            if (!isProcessGone(error))
+               DLOGF("Could not read {}: {}", statusPath, error.asString());
+            continue;
+         }
+
+         PidType ppid = -1;
+         long sizeKb = 0;
+         error = parseProcessStatus(status, &ppid, &sizeKb);
+         if (error)
+         {
+            DLOGF("Could not parse {}: {}", statusPath, error.asString());
+            continue;
+         }
+
+         // Sanity check that the child is not already a parent of this new parent
+         // to avoid cycles in the childToParentMap
+         if (!isChildOfParent(childToParentMap, pid, ppid))
+         {
+            childToParentMap[pid] = ppid;
+            processSizes[pid] = sizeKb;
          }
       }
       ::closedir(pDir);
@@ -236,16 +209,13 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
          ::closedir(pDir);
       return 0;
    }
-   int numChildren = 0;
+
    for (const auto& entry : childToParentMap)
    {
       PidType pid = entry.first;
       PidType childParent = entry.second;
       if (childParent == parentPid || isChildOfParent(childToParentMap, parentPid, childParent))
-      {
-         childRssSize += getProcessSize(pid);
-         numChildren++;
-      }
+         childRssSize += processSizes[pid];
    }
    return childRssSize;
 }
@@ -854,8 +824,8 @@ std::string getMemoryCgroup(uid_t uid)
       return std::string();
    }
 
-   std::shared_ptr<std::istream> pCgroupStream;
-   Error error = cgroup.openForRead(pCgroupStream);
+   std::string contents;
+   Error error = readProcFile(cgroup.getAbsolutePath(), &contents);
    if (error)
    {
       // Can't read cgroup file (unexpected)
@@ -874,10 +844,10 @@ std::string getMemoryCgroup(uid_t uid)
       std::string pattern = R"(^/system\.slice/[^/]+\.service$)";
       boost::regex systemRegex(pattern);
 
-      while (!pCgroupStream->eof())
+      std::istringstream stream(contents);
+      std::string line;
+      while (std::getline(stream, line))
       {
-         std::string line;
-         std::getline(*pCgroupStream, line);
          std::vector<std::string> entries = core::algorithm::split(line, ":");
 
          // We expect 3 entries; from the example above they'd be:
@@ -1056,6 +1026,84 @@ Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
 void setMemoryUsageMode(MemoryUsageMode mode)
 {
    s_memoryUsageMode = mode;
+}
+
+Error readProcFileDescriptor(int fd, std::string* pContents)
+{
+   pContents->clear();
+
+   char buffer[4096];
+   while (true)
+   {
+      ssize_t bytesRead = posix::posixCall<ssize_t>([&]() { return ::read(fd, buffer, sizeof(buffer)); });
+      if (bytesRead == -1)
+         return systemError(errno, ERROR_LOCATION);
+
+      if (bytesRead == 0)
+         return Success();
+
+      pContents->append(buffer, static_cast<std::size_t>(bytesRead));
+   }
+}
+
+Error parseProcFileKeys(const std::string& contents, const std::vector<std::string>& keys, std::vector<long>* pValues)
+{
+   // /proc/meminfo and /proc/<pid>/status contain lines that look like this:
+   //
+   // MemTotal: 8124360 kB
+   std::size_t numFound = 0;
+   std::istringstream stream(contents);
+   std::string line;
+   while (numFound < keys.size() && std::getline(stream, line))
+   {
+      for (std::size_t i = 0; i < keys.size(); i++)
+      {
+         const std::string& key = keys[i];
+         if (!string_utils::isPrefixOf(line, key + ":"))
+            continue;
+
+         // This is the key we're looking for; read the value from the remainder of the line.
+         std::istringstream lineStream(line.substr(key.size() + 1));
+         long value = 0;
+         if (!(lineStream >> value))
+         {
+            return systemError(boost::system::errc::protocol_error,
+                               "Could not read proc value '" + key + "' from line '" + line + "'",
+                               ERROR_LOCATION);
+         }
+
+         (*pValues)[i] = value;
+         numFound++;
+         break;
+      }
+   }
+
+   if (numFound != keys.size())
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Proc file missing value - found only: " + std::to_string(numFound) + " of: " + std::to_string(keys.size()) + " keys",
+                         ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+Error parseProcessStatus(const std::string& contents, pid_t* pParentPid, long* pSizeKb)
+{
+   std::vector<long> parent = {0};
+   Error error = parseProcFileKeys(contents, {"PPid"}, &parent);
+   if (error)
+      return error;
+
+   // A process without an address space has no memory lines
+   std::vector<long> sizes = {0, 0};
+   error = parseProcFileKeys(contents, {"VmRSS", "VmSwap"}, &sizes);
+   if (error)
+      sizes = {0, 0};
+
+   *pParentPid = static_cast<pid_t>(parent[0]);
+   *pSizeKb = sizes[0] + sizes[1];
+   return Success();
 }
 
 Error computeCgroupMemoryUsedKb(long currentKb, const std::string& memoryStat, bool isV2, long *pUsedKb)

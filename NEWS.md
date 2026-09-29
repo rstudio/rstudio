@@ -81,6 +81,7 @@
 - ([#18955](https://github.com/rstudio/rstudio/issues/18955)): Fixed an issue where saving or closing a document in another source column could hide or disable commands for the active document, such as File > Publish.
 - ([#18976](https://github.com/rstudio/rstudio/issues/18976)): Closing a terminal now terminates its shell. Previously the shell was only interrupted, so it kept running in the background, and the prompt it redrew was logged as `Unknown handle` errors in the session log.
 - ([#18976](https://github.com/rstudio/rstudio/issues/18976)): Fixed an issue where RStudio Desktop wrote every line of the session log (`rsession-<user>.log`) twice.
+- ([#18991](https://github.com/rstudio/rstudio/issues/18991)): Fixed an issue on Linux where the R session could become unresponsive, using all of a CPU core, when a process started by the session (for example, a parallel worker) exited while RStudio was computing memory usage.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).

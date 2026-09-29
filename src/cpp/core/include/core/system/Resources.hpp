@@ -17,6 +17,7 @@
 #define CORE_SYSTEM_RESOURCES_HPP
 
 #include <string>
+#include <vector>
 #include <sys/types.h>
 
 namespace rstudio {
@@ -108,6 +109,20 @@ void setMemoryUsageMode(MemoryUsageMode mode);
 // inactive file LRU pages from the contents of the cgroup's memory.stat.
 // Returns an error if memory.stat doesn't contain the needed keys.
 Error computeCgroupMemoryUsedKb(long currentKb, const std::string& memoryStat, bool isV2, long *pUsedKb);
+
+// Reads what remains of a procfs file from an open descriptor. The kernel
+// generates these files as they are read, so a read can fail after the open
+// succeeded: /proc/<pid>/status fails with ESRCH once the process is reaped.
+Error readProcFileDescriptor(int fd, std::string* pContents);
+
+// Looks up the values of "Key: value" lines, as found in /proc/meminfo and
+// /proc/<pid>/status. Returns an error unless every key is found.
+Error parseProcFileKeys(const std::string& contents, const std::vector<std::string>& keys, std::vector<long>* pValues);
+
+// Parses the parent and the size (RSS + swap, in kB) of a process from the
+// contents of its /proc/<pid>/status. Processes without an address space
+// (zombies, kernel threads) report no memory and have a size of 0.
+Error parseProcessStatus(const std::string& contents, pid_t* pParentPid, long* pSizeKb);
 
 // Sets the memory limit. Must have privileges and provide the uid of the ultimate process owner
 Error setProcessMemoryLimit(long memHighKb, long memMaxKb, uid_t uid, MemoryProvider *pProvider);
