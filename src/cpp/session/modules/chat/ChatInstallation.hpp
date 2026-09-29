@@ -35,8 +35,8 @@ namespace installation {
 //
 // What any directory holding an extracted Posit Assistant package looks like,
 // independent of how it got there. The slot machinery in ChatSlots builds its
-// stronger, manifest-backed verification on top of these, so there is one
-// definition of "could be run" and one reader for each identity file.
+// verification on top of these, so there is one definition of "could be run"
+// and one reader for each identity file.
 
 /**
  * Check that a directory holds a package the backend could be launched from.
@@ -46,10 +46,10 @@ namespace installation {
  * zero-byte main.js that an existence-only check accepted.
  *
  * This is a structural check only. It says nothing about which version or
- * protocol the directory holds, and nothing about whether the tree is intact
- * beyond those three paths -- slots::verifySlot() adds both. It is what the
+ * protocol the directory holds -- slots::verifySlot() adds that -- and nothing
+ * about whether the tree is intact beyond those three paths. It is all the
  * unversioned sources (posit-assistant-path as a single installation
- * directory, the bundled copy) get, since they carry no manifest.
+ * directory, the bundled copy) get, since they are not slots.
  *
  * @param installDir The directory holding an extracted package.
  * @return true if the directory could be run.

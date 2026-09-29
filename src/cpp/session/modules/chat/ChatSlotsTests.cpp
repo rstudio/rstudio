@@ -26,14 +26,11 @@
 
 #include <gtest/gtest.h>
 
-#include "ChatSlotManifest.hpp"
-
 #include <core/FileSerializer.hpp>
 #include <shared_core/FilePath.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::slots;
-using rstudio::session::modules::chat::slot_manifest::writeSlotManifest;
 
 namespace {
 
@@ -92,13 +89,11 @@ protected:
       return escaped;
    }
 
-   // The tree a Posit Assistant package extracts to, in miniature. Tests that
-   // want a damaged slot call this, break something, and only then record the
-   // manifest -- so the manifest agrees with what is on disk and exactly one
-   // check is left to fail.
-   void writeSlotFiles(const FilePath& dir,
-                       const std::string& version,
-                       const std::string& protocol)
+   // A slot exactly as an install leaves it: the tree a Posit Assistant
+   // package extracts to, in miniature.
+   void makeSlot(const FilePath& dir,
+                 const std::string& version,
+                 const std::string& protocol)
    {
       writeFile(dir.completeChildPath(kServerScript), "console.log('hi');");
       writeFile(dir.completeChildPath(kIndexHtml), "<html></html>");
@@ -108,13 +103,13 @@ protected:
                 "{\"protocol\":\"" + jsonEscaped(protocol) + "\"}");
    }
 
-   // A slot exactly as an install leaves it.
-   void makeSlot(const FilePath& dir,
-                 const std::string& version,
-                 const std::string& protocol)
+   // A slot that will not verify: its server script is gone.
+   void makeDamagedSlot(const FilePath& dir,
+                        const std::string& version,
+                        const std::string& protocol)
    {
-      writeSlotFiles(dir, version, protocol);
-      ASSERT_FALSE(writeSlotManifest(dir));
+      makeSlot(dir, version, protocol);
+      ASSERT_FALSE(dir.completeChildPath(kServerScript).remove());
    }
 
    FilePath slot(const std::string& name)
@@ -165,9 +160,8 @@ TEST_F(ChatSlots, RejectsAnAbsentSlot)
 TEST_F(ChatSlots, RejectsAMissingServerScript)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    ASSERT_FALSE(dir.completeChildPath(kServerScript).remove());
-   ASSERT_FALSE(writeSlotManifest(dir));
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -177,9 +171,8 @@ TEST_F(ChatSlots, RejectsAnEmptyServerScript)
    // The check this replaces tested only for existence, so a truncated
    // download left a zero-byte main.js that passed.
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    writeFile(dir.completeChildPath(kServerScript), "");
-   ASSERT_FALSE(writeSlotManifest(dir));
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -187,9 +180,8 @@ TEST_F(ChatSlots, RejectsAnEmptyServerScript)
 TEST_F(ChatSlots, RejectsAnEmptyIndexHtml)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    writeFile(dir.completeChildPath(kIndexHtml), "");
-   ASSERT_FALSE(writeSlotManifest(dir));
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -197,9 +189,8 @@ TEST_F(ChatSlots, RejectsAnEmptyIndexHtml)
 TEST_F(ChatSlots, RejectsAMissingClientDirectory)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    ASSERT_FALSE(dir.completeChildPath("dist/client").remove());
-   ASSERT_FALSE(writeSlotManifest(dir));
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -207,9 +198,8 @@ TEST_F(ChatSlots, RejectsAMissingClientDirectory)
 TEST_F(ChatSlots, RejectsAnUnparseablePackageJson)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    writeFile(dir.completeChildPath("package.json"), "{ not json");
-   ASSERT_FALSE(writeSlotManifest(dir));
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -217,9 +207,8 @@ TEST_F(ChatSlots, RejectsAnUnparseablePackageJson)
 TEST_F(ChatSlots, RejectsAPackageJsonWithoutAVersion)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    writeFile(dir.completeChildPath("package.json"), "{\"name\":\"assistant\"}");
-   ASSERT_FALSE(writeSlotManifest(dir));
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -227,8 +216,7 @@ TEST_F(ChatSlots, RejectsAPackageJsonWithoutAVersion)
 TEST_F(ChatSlots, RejectsAnEmptyVersion)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "", "11.0");
-   ASSERT_FALSE(writeSlotManifest(dir));
+   makeSlot(dir, "", "11.0");
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -236,9 +224,8 @@ TEST_F(ChatSlots, RejectsAnEmptyVersion)
 TEST_F(ChatSlots, RejectsAnUnparseableProtocolJson)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    writeFile(dir.completeChildPath("protocol.json"), "[]");
-   ASSERT_FALSE(writeSlotManifest(dir));
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -246,19 +233,8 @@ TEST_F(ChatSlots, RejectsAnUnparseableProtocolJson)
 TEST_F(ChatSlots, RejectsAProtocolJsonWithoutAProtocol)
 {
    FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
+   makeSlot(dir, "1.1.0", "11.0");
    writeFile(dir.completeChildPath("protocol.json"), "{\"version\":\"11.0\"}");
-   ASSERT_FALSE(writeSlotManifest(dir));
-
-   EXPECT_FALSE(verifySlot(dir));
-}
-
-TEST_F(ChatSlots, RejectsASlotWithNoManifest)
-{
-   // Every slot this module publishes gets a manifest, so a directory without
-   // one was not left behind by an install that finished.
-   FilePath dir = slot("1.1.0");
-   writeSlotFiles(dir, "1.1.0", "11.0");
 
    EXPECT_FALSE(verifySlot(dir));
 }
@@ -267,8 +243,8 @@ TEST_F(ChatSlots, RejectsASlotWithNoManifest)
 
 TEST_F(ChatSlots, RejectsASlotThatIsALink)
 {
-   // Everything about a slot, its manifest included, would be read from a tree
-   // the slot does not contain and cannot promise stays put.
+   // Everything about the slot would be read from a tree the slot does not
+   // contain and cannot promise stays put.
    FilePath elsewhere = storageDir_.getParent().completeChildPath("elsewhere");
    makeSlot(elsewhere, "1.1.0", "11.0");
    ASSERT_TRUE(verifySlot(elsewhere));
@@ -283,15 +259,6 @@ TEST_F(ChatSlots, RejectsASlotThatIsALink)
 
 #endif // !_WIN32
 
-TEST_F(ChatSlots, RejectsASlotThatChangedAfterInstall)
-{
-   FilePath dir = slot("1.1.0");
-   makeSlot(dir, "1.1.0", "11.0");
-   writeFile(dir.completeChildPath(kServerScript), "console.log('tampered');");
-
-   EXPECT_FALSE(verifySlot(dir));
-}
-
 // ============================================================================
 // verifiedSlots
 // ============================================================================
@@ -300,7 +267,7 @@ TEST_F(ChatSlots, ListsOnlyVerifyingSlots)
 {
    makeSlot(slot("1.1.0"), "1.1.0", "11.0");
    makeSlot(slot("1.0.4"), "1.0.4", "11.0");
-   writeSlotFiles(slot("0.9.0"), "0.9.0", "11.0"); // no manifest
+   makeDamagedSlot(slot("0.9.0"), "0.9.0", "11.0");
 
    std::vector<SlotInfo> found = verifiedSlots(versionsDir_, "11.0");
    ASSERT_EQ(found.size(), 2u);
@@ -317,7 +284,7 @@ TEST_F(ChatSlots, ListsOnlySlotsForTheRequestedProtocol)
 {
    makeSlot(slot("1.1.0"), "1.1.0", "11.0");
    makeSlot(slot("1.0.4"), "1.0.4", "10.0");
-   writeSlotFiles(slot("1.0.3"), "1.0.3", "10.0"); // no manifest
+   makeDamagedSlot(slot("1.0.3"), "1.0.3", "10.0");
 
    std::vector<SlotInfo> found = verifiedSlots(versionsDir_, "10.0");
    ASSERT_EQ(found.size(), 1u);
@@ -388,12 +355,10 @@ TEST_F(ChatSlots, AStagedInstallIsNotResolvableBeforeItIsPublished)
 TEST_F(ChatSlots, DoesNotDisturbAnotherSessionsStagedInstall)
 {
    // Two sessions sharing an NFS home once computed the same staging path, so
-   // the second one's prepare deleted the first one's half-extracted tree. The
-   // first then recorded a manifest describing the damage -- self-consistent,
-   // so the truncated slot verified and could be published for good.
+   // the second one's prepare deleted the first one's half-extracted tree.
    FilePath first;
    ASSERT_FALSE(prepareStagingDir(versionsDir_, &first));
-   writeSlotFiles(first, "1.1.0", "11.0");
+   makeSlot(first, "1.1.0", "11.0");
 
    FilePath second;
    ASSERT_FALSE(prepareStagingDir(versionsDir_, &second));
@@ -454,7 +419,7 @@ TEST_F(ChatSlots, AdoptsAnExistingVerifyingSlot)
 TEST_F(ChatSlots, BumpsPastAnExistingSlotThatDoesNotVerify)
 {
    FilePath damaged = slot("1.1.0");
-   writeSlotFiles(damaged, "1.1.0", "11.0"); // no manifest
+   makeDamagedSlot(damaged, "1.1.0", "11.0");
    FilePath stagingDir = staging("session-b");
    makeSlot(stagingDir, "1.1.0", "11.0");
 
@@ -470,7 +435,7 @@ TEST_F(ChatSlots, BumpsPastAnExistingSlotThatDoesNotVerify)
 
 TEST_F(ChatSlots, AdoptsALaterOrdinalWhenTheFirstIsDamaged)
 {
-   writeSlotFiles(slot("1.1.0"), "1.1.0", "11.0"); // no manifest
+   makeDamagedSlot(slot("1.1.0"), "1.1.0", "11.0");
    makeSlot(slot("1.1.0-2"), "1.1.0", "11.0");
    FilePath stagingDir = staging("session-c");
    makeSlot(stagingDir, "1.1.0", "11.0");
@@ -611,29 +576,12 @@ TEST_F(ChatSlots, RejectsAVersionThatCannotNameADirectory)
    }
 }
 
-TEST_F(ChatSlots, RecordsTheManifestItselfSoCallersCannotForgetTo)
-{
-   // The caller extracts and nothing else; if the manifest were the caller's
-   // job, omitting it would fail every install with "not a complete Posit
-   // Assistant installation" despite a perfect extraction.
-   FilePath stagingDir;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
-   writeSlotFiles(stagingDir, "1.1.0", "11.0");
-
-   FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir,
-                             SlotPolicy::AdoptExisting, &slotDir));
-
-   EXPECT_EQ(slotDir.getFilename(), "1.1.0");
-   EXPECT_TRUE(verifySlot(slotDir));
-}
-
 TEST_F(ChatSlots, RejectsAStagedInstallThatDoesNotVerify)
 {
    // Publishing happens only after the staged tree is checked, so a torn
    // install can never appear under a name a session might resolve.
    FilePath stagingDir = staging("session-a");
-   writeSlotFiles(stagingDir, "1.1.0", "11.0");
+   makeSlot(stagingDir, "1.1.0", "11.0");
    ASSERT_FALSE(stagingDir.completeChildPath(kServerScript).remove());
 
    FilePath slotDir;

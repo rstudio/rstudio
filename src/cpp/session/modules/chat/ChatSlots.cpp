@@ -18,7 +18,6 @@
 #include "ChatConstants.hpp"
 #include "ChatInstallation.hpp"
 #include "ChatLogging.hpp"
-#include "ChatSlotManifest.hpp"
 
 #include <cctype>
 #include <chrono>
@@ -91,7 +90,7 @@ const std::string::size_type kMaxHostnameLength = 32;
 
 // Names a staging directory. The nonce is what makes it private: no other
 // session can compute this name, so nothing else can write into the tree we
-// are about to record a manifest for. Host and pid carry no correctness weight
+// are extracting. Host and pid carry no correctness weight
 // here -- they are in the name so a later cleanup pass can tell whose
 // abandoned extraction it is looking at.
 std::string stagingDirName()
@@ -191,7 +190,7 @@ FilePath versionsDir(const FilePath& storageDir)
 
 namespace {
 
-// verifySlot(), optionally stopping before the manifest walk when the slot
+// verifySlot(), optionally stopping before the file checks when the slot
 // declares a protocol other than the one the caller is collecting. The link
 // and directory checks come first either way, and the protocol is read once,
 // so the slot returned is the one that was checked.
@@ -202,10 +201,10 @@ bool verifySlotForProtocol(const FilePath& slotDir,
    if (!slotDir.isDirectory())
       return false;
 
-   // A slot replaced by a link is not a slot: everything in it, manifest
-   // included, would be read from a tree the slot does not contain and cannot
-   // promise is immutable. Junctions count, being how Windows redirects a
-   // directory without is_symlink() reporting it.
+   // A slot replaced by a link is not a slot: everything in it would be read
+   // from a tree the slot does not contain and cannot promise is immutable.
+   // Junctions count, being how Windows redirects a directory without
+   // is_symlink() reporting it.
    if (slotDir.isSymlink() || slotDir.isJunction())
    {
       DLOG("Slot {} is a link, not a directory", slotDir.getAbsolutePath());
@@ -236,9 +235,6 @@ bool verifySlotForProtocol(const FilePath& slotDir,
       DLOG("Slot {} declares no package version", slotDir.getAbsolutePath());
       return false;
    }
-
-   if (!slot_manifest::matchesSlotManifest(slotDir))
-      return false;
 
    if (pInfo != nullptr)
    {
@@ -309,15 +305,9 @@ Error allocateSlot(const FilePath& stagingDir,
                    SlotPolicy policy,
                    FilePath* pSlotDir)
 {
-   // Record the manifest and verify here rather than trusting the caller, so
-   // that "a slot only reaches a final name once it has been checked" is a
-   // property of the layout instead of a rule every install path has to
-   // remember. The staging directory is private to this call, so the tree
-   // being recorded is the one that was just extracted.
-   Error error = slot_manifest::writeSlotManifest(stagingDir);
-   if (error)
-      return error;
-
+   // Verify here rather than trusting the caller, so that "a slot only reaches
+   // a final name once it has been checked" is a property of the layout
+   // instead of a rule every install path has to remember.
    SlotInfo staged;
    if (!verifySlot(stagingDir, &staged))
    {
