@@ -208,6 +208,14 @@ var renderEnd = 0;
 // spacer even when the row window itself is unchanged.
 var renderOverscroll = 0;
 
+// The scrollTop each pane was last given by the code that mirrors the other
+// pane onto it, or -1 when the pane has moved on its own since. A scroll event
+// does not say who scrolled, and the one for a programmatic write can arrive a
+// frame after the write; these are how the two scroll handlers recognise the
+// echo of their own mirroring. See syncPinnedScrollTop.
+var pinnedMirroredTop = -1;
+var viewportMirroredTop = -1;
+
 // Incremental row recycling state
 var renderedRowElements = new Map(); // rowIndex -> <tr> element
 var topSpacerRow = null;
@@ -4513,20 +4521,52 @@ var debouncedInfoBar = debounce(TIMING.infoBarDebounce, updateInfoBar);
 // scroll event -- it's a single property write -- so the panes never lag a
 // frame apart. Horizontal scroll never touches the pinned pane (it has no
 // horizontal overflow).
+//
+// Each pane mirrors the other, so each one's write comes back as a scroll
+// event on the pane it wrote to. Comparing the two panes' positions is not
+// enough to tell that echo from a scroll of the pane's own: Chrome 154
+// delivers the event for a programmatic write in the frame after the write,
+// and while a scroll is in progress the pane that is being scrolled has moved
+// on by then. The echo read as a scroll to the previous frame's position and
+// was mirrored back, pulling the scrolling pane back a frame's travel on every
+// frame -- a wheel gesture covered about half its distance, a scrollbar drag
+// flickered, and either could finish short of where it was sent, which at the
+// bottom left the last row out of reach (#18988). Earlier versions deliver the
+// event within the same frame, where the positions still agree.
+//
+// So each handler remembers the position it gave the other pane, and the other
+// pane's handler ignores a scroll event that finds the pane still there.
 var syncPinnedScrollTop = function() {
-   if (domPinnedPane && domViewport)
-      domPinnedPane.scrollTop = domViewport.scrollTop;
+   if (!domPinnedPane || !domViewport) return;
+
+   // The echo of onPinnedScroll's write: the frozen pane is the one being
+   // scrolled, and is already ahead of this.
+   var top = domViewport.scrollTop;
+   if (top === viewportMirroredTop) return;
+   viewportMirroredTop = -1;
+
+   if (domPinnedPane.scrollTop === top) return;
+
+   // Read back rather than assumed, since the write is clamped to the pane's
+   // scroll range.
+   domPinnedPane.scrollTop = top;
+   pinnedMirroredTop = domPinnedPane.scrollTop;
 };
 
 // The frozen pane is itself vertically scrollable (so wheel / middle-click over
 // it work), but the unpinned pane is the master that drives rendering and holds
 // the visible scrollbar. Mirror the frozen pane's scroll onto the master, which
-// re-renders and mirrors back via onScroll -> syncPinnedScrollTop. The equality
-// guards make this converge without an event ping-pong (setting scrollTop to
-// its current value fires no scroll event).
+// re-renders via onScroll; syncPinnedScrollTop recognises the echo and leaves
+// the frozen pane alone.
 var onPinnedScroll = function() {
    if (!domPinnedPane || !domViewport) return;
-   if (domViewport.scrollTop === domPinnedPane.scrollTop) return;
+
+   // The echo of syncPinnedScrollTop's write; see there.
+   var top = domPinnedPane.scrollTop;
+   if (top === pinnedMirroredTop) return;
+   pinnedMirroredTop = -1;
+
+   if (domViewport.scrollTop === top) return;
    // syncPinnedPaneGutter gives both panes the same scroll range, but the
    // gutter it mirrors is a whole-pixel measurement of a fractional layout,
    // so the frozen pane can still clamp a fraction of a pixel short of the
@@ -4539,12 +4579,14 @@ var onPinnedScroll = function() {
    // max of 682. An exact >= took that as "not clamped" and yanked the
    // viewport back under the horizontal scrollbar on every wheel tick at the
    // bottom (#18620). The scrollHeight read is reached only in this
-   // descending/bottom case, not on the common synced-echo path above.
-   if (domViewport.scrollTop > domPinnedPane.scrollTop) {
+   // descending/bottom case, not on the common echo path above.
+   if (domViewport.scrollTop > top) {
       var pinnedMax = domPinnedPane.scrollHeight - domPinnedPane.clientHeight;
-      if (domPinnedPane.scrollTop >= pinnedMax - 1) return;
+      if (top >= pinnedMax - 1) return;
    }
-   domViewport.scrollTop = domPinnedPane.scrollTop;
+
+   domViewport.scrollTop = top;
+   viewportMirroredTop = domViewport.scrollTop;
 };
 
 // The frozen pane has no horizontal scroll of its own (its table is exactly the
@@ -7666,6 +7708,8 @@ var resetGridState = function() {
    // refresh.
    lastScrollTop = 0;
    lastScrollLeft = 0;
+   pinnedMirroredTop = -1;
+   viewportMirroredTop = -1;
 
    // Data
    cols = null;

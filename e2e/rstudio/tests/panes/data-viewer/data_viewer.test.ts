@@ -2174,6 +2174,69 @@ test.describe('Data Viewer', () => {
 
   // https://github.com/rstudio/rstudio/issues/18988
   //
+  // The grid and its frozen row-number pane each mirror the other's scrollTop,
+  // so each one's write comes back as a scroll event on the pane written to.
+  // Chrome 154 delivers that event a frame after the write; while a scroll is
+  // in progress the scrolled pane has moved on by then, and the handlers took
+  // the echo for a scroll back to the previous frame's position and mirrored
+  // it -- pulling the pane back on every frame, so a wheel gesture covered
+  // about half its distance and could not reach the last row. The browsers
+  // this suite runs on still deliver the echo within the frame, so it is
+  // replayed here by hand: move the pane on, then dispatch the scroll event on
+  // the other pane while it is still where the last mirror left it.
+  test('a late scroll echo does not pull the scrolled pane back (#18988)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.echo_df <- as.data.frame(matrix(seq_len(500 * 6), nrow = 500)); View(.rs.echo_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      const pinnedPane = dataViewer.frame.locator('#pinnedPane');
+      const tops = () => dataViewer.viewport.evaluate((el: HTMLElement) => ({
+        viewport: el.scrollTop,
+        pinned: (el.ownerDocument.getElementById('pinnedPane') as HTMLElement).scrollTop,
+      }));
+
+      // Scrolling the grid: the frozen pane follows, then its echo arrives late.
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 1000; });
+      await expect.poll(tops).toEqual({ viewport: 1000, pinned: 1000 });
+      const afterGridEcho = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        const pinned = el.ownerDocument.getElementById('pinnedPane') as HTMLElement;
+        el.scrollTop = 1200;
+        pinned.dispatchEvent(new Event('scroll'));
+        return el.scrollTop;
+      });
+      expect(afterGridEcho).toBe(1200);
+      await expect.poll(tops).toEqual({ viewport: 1200, pinned: 1200 });
+
+      // Scrolling the frozen pane, as the wheel does over the row numbers: the
+      // grid follows, then its echo arrives late.
+      await pinnedPane.evaluate((el: HTMLElement) => { el.scrollTop = 2000; });
+      await expect.poll(tops).toEqual({ viewport: 2000, pinned: 2000 });
+      const afterPinnedEcho = await pinnedPane.evaluate((el: HTMLElement) => {
+        const viewport = el.ownerDocument.getElementById('gridViewport') as HTMLElement;
+        el.scrollTop = 2200;
+        viewport.dispatchEvent(new Event('scroll'));
+        return el.scrollTop;
+      });
+      expect(afterPinnedEcho).toBe(2200);
+      await expect.poll(tops).toEqual({ viewport: 2200, pinned: 2200 });
+
+      // Either pane can still be scrolled back to where a mirror last left it.
+      await pinnedPane.evaluate((el: HTMLElement) => { el.scrollTop = 2000; });
+      await expect.poll(tops).toEqual({ viewport: 2000, pinned: 2000 });
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 2200; });
+      await expect.poll(tops).toEqual({ viewport: 2200, pinned: 2200 });
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 2000; });
+      await expect.poll(tops).toEqual({ viewport: 2000, pinned: 2000 });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.echo_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18988
+  //
   // The report: the grid reaches the bottom and is pulled back, and the last
   // row stays cut off however it is scrolled to. The distances are the height
   // of the rows a render recycles off the top -- four for a wheel notch, one
