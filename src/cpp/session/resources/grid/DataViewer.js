@@ -4260,12 +4260,30 @@ var updateSpacerRowHeight = function(spacerTr, heightPx) {
    }
 };
 
+// The height last written by updateSpacerRowHeight. Read back from the inline
+// style rather than recomputed from renderStart / renderEnd: a full rebuild
+// that stopped at a row missing from the cache folds the unrendered remainder
+// into the bottom spacer, so that spacer can be taller than renderEnd implies.
+var spacerRowHeight = function(spacerTr) {
+   if (!spacerTr || !spacerTr.firstChild) return 0;
+   return parseFloat(spacerTr.firstChild.style.height) || 0;
+};
+
 // Render rows visible in the current scroll window. Two paths:
 //   - Incremental (default): patch the existing DOM, adding/removing only
 //     rows that crossed the window edge. Fast; used for normal scroll.
 //   - Full rebuild (forceRebuild=true): wipe and re-render the whole window.
 //     Required after fetches, sort/filter, sidebar toggle, resize, etc. --
 //     anything that invalidates row content or window layout.
+//
+// Neither path may leave the scroll content shorter, even for a moment, than
+// it is once the render completes. The browser clamps scrollTop to the content
+// it has laid out, so a layout pass that lands between "rows recycled off the
+// top" and "top spacer grown to cover them" pulls a view near the bottom back
+// up by the height of the recycled rows -- four rows for a wheel notch, one for
+// an arrow key -- and the last row can then never be reached (#18988). Nothing
+// here forces such a pass, but the grid does not get to decide when the
+// browser lays out, so both paths are ordered to be safe if one does.
 var renderVisibleRows = function(forceRebuild) {
    var viewport = domViewport;
    var tbody = domTbody;
@@ -4369,19 +4387,19 @@ var renderVisibleRows = function(forceRebuild) {
       fragU.appendChild(bottomSpacerRow.unpinned);
       fragP.appendChild(bottomSpacerRow.pinned);
 
-      tbody.innerHTML = "";
-      tbody.appendChild(fragU);
-      if (pinnedTbody) {
-         pinnedTbody.innerHTML = "";
-         pinnedTbody.appendChild(fragP);
-      }
-
+      // Size the spacers while they are still detached, then swap each pane's
+      // rows in a single step, so the content goes straight from the old
+      // window's height to the new one's with no empty state in between.
       var topH = newStart * ROW_HEIGHT;
       var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT + overscroll;
       updateSpacerRowHeight(topSpacerRow.unpinned, topH);
       updateSpacerRowHeight(topSpacerRow.pinned, topH);
       updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
       updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
+
+      tbody.replaceChildren(fragU);
+      if (pinnedTbody)
+         pinnedTbody.replaceChildren(fragP);
 
       renderStart = newStart;
       renderEnd = newEnd;
@@ -4390,6 +4408,21 @@ var renderVisibleRows = function(forceRebuild) {
    }
 
    // --- Incremental update (both panes in lockstep) ---
+
+   // Grow before shrinking: a spacer that ends up taller is resized now, ahead
+   // of the rows it replaces being removed, and one that ends up shorter keeps
+   // its height until the rows that replace it are in. The content is then
+   // never shorter than its final height while the window is being patched.
+   var topH = newStart * ROW_HEIGHT;
+   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT + overscroll;
+   if (topH > spacerRowHeight(topSpacerRow.unpinned)) {
+      updateSpacerRowHeight(topSpacerRow.unpinned, topH);
+      updateSpacerRowHeight(topSpacerRow.pinned, topH);
+   }
+   if (botH > spacerRowHeight(bottomSpacerRow.unpinned)) {
+      updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
+      updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
+   }
 
    // Remove rows that are no longer in the window
    // Scrolling down: remove from top (renderStart .. newStart-1)
@@ -4457,9 +4490,8 @@ var renderVisibleRows = function(forceRebuild) {
       return;
    }
 
-   // Update spacer heights (both panes stay aligned)
-   var topH = newStart * ROW_HEIGHT;
-   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT + overscroll;
+   // Settle the spacers at their final heights (both panes stay aligned); this
+   // is where the ones that were held back above shrink.
    updateSpacerRowHeight(topSpacerRow.unpinned, topH);
    updateSpacerRowHeight(topSpacerRow.pinned, topH);
    updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
@@ -5766,24 +5798,35 @@ var renderSidebarWindow = function(force) {
    // space past its end (matching the old overflow-only overscroll padding).
    var overscroll = (n * H > clientH) ? Math.max(0, clientH - H) : 0;
    var tail = (last < 0) ? n : (n - 1 - last);
-   sidebarRenderTop.style.height = (first * H) + "px";
-   sidebarRenderBottom.style.height = (Math.max(0, tail) * H + overscroll) + "px";
+   var topH = first * H;
+   var botH = Math.max(0, tail) * H + overscroll;
+
+   // As in renderVisibleRows, the list must never be shorter mid-render than
+   // it ends up, or a layout pass landing here clamps a scrollTop near the
+   // bottom. A spacer that ends up taller grows now; one that ends up shorter
+   // waits until the new entries are in.
+   if (topH > (parseFloat(sidebarRenderTop.style.height) || 0))
+      sidebarRenderTop.style.height = topH + "px";
+   if (botH > (parseFloat(sidebarRenderBottom.style.height) || 0))
+      sidebarRenderBottom.style.height = botH + "px";
 
    // Drop sparklines queued for the entries we're about to destroy; the rebuilt
    // entries re-queue their own (otherwise renderPendingSparklines could draw
    // into a now-detached slot).
    pendingSparklines_ = [];
 
-   sidebarRenderMid.innerHTML = "";
-   if (last >= first) {
-      var frag = document.createDocumentFragment();
-      for (var i = first; i <= last; i++) {
-         var col = sidebarListCols[i];
-         var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
-         frag.appendChild(buildSidebarEntry(col, absIdx, i));
-      }
-      sidebarRenderMid.appendChild(frag);
+   // Swapped in a single step rather than emptied and refilled, which left the
+   // list a window's height short in between.
+   var frag = document.createDocumentFragment();
+   for (var i = first; i <= last; i++) {
+      var col = sidebarListCols[i];
+      var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
+      frag.appendChild(buildSidebarEntry(col, absIdx, i));
    }
+   sidebarRenderMid.replaceChildren(frag);
+
+   sidebarRenderTop.style.height = topH + "px";
+   sidebarRenderBottom.style.height = botH + "px";
 
    // Draw the seeded sparklines and fetch any summaries the new entries queued
    // -- but only while the panel is shown. A collapsed panel can still have a
