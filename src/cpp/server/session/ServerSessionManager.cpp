@@ -480,7 +480,7 @@ SessionManager::PendingLaunchResolution SessionManager::resolvePendingLaunch(Lau
    // recorded until the process exists.
    if (launch.launching)
    {
-      resolution.keptLaunching = true;
+      resolution.outcome = PendingLaunchOutcome::KeptLaunching;
    }
    // an outcome from some other process says nothing about the launched
    // one either. after the launch has returned, the session being replaced
@@ -490,7 +490,8 @@ SessionManager::PendingLaunchResolution SessionManager::resolvePendingLaunch(Lau
    // peer credentials identify the process that produced the outcome.
    else if (peerPid != -1 && launch.pid != -1 && peerPid != launch.pid)
    {
-      resolution.keptForOtherPid = peerPid;
+      resolution.outcome = PendingLaunchOutcome::KeptOtherPid;
+      resolution.pid = peerPid;
    }
    // an outcome that can't be attributed to a process (no connection was
    // made, or the session is reached over TCP) falls back to liveness: a
@@ -510,11 +511,12 @@ SessionManager::PendingLaunchResolution SessionManager::resolvePendingLaunch(Lau
             launch.pid != -1 &&
             core::system::isProcessRunning(launch.pid))
    {
-      resolution.keptLivePid = launch.pid;
+      resolution.outcome = PendingLaunchOutcome::KeptLivePid;
+      resolution.pid = launch.pid;
    }
    else
    {
-      resolution.removed = true;
+      resolution.outcome = PendingLaunchOutcome::Removed;
       resolution.launchTime = launch.launchTime;
       pendingLaunches_.erase(it);
    }
@@ -522,7 +524,7 @@ SessionManager::PendingLaunchResolution SessionManager::resolvePendingLaunch(Lau
    return resolution;
 }
 
-bool SessionManager::logKeptPendingLaunch(const PendingLaunchResolution& resolution,
+void SessionManager::logKeptPendingLaunch(const PendingLaunchResolution& resolution,
                                           const std::string& username,
                                           const std::string& sessionId,
                                           bool success,
@@ -531,37 +533,37 @@ bool SessionManager::logKeptPendingLaunch(const PendingLaunchResolution& resolut
    const char* outcome = success ? "success" : "error";
    const std::string& detail = errorMsg.empty() ? "(none)" : errorMsg;
 
-   if (resolution.keptLaunching)
+   switch (resolution.outcome)
    {
+   case PendingLaunchOutcome::KeptLaunching:
       DLOGF("Keeping pending launch still being made for user {} (id: {}) despite request {}: {}",
             username,
             sessionId,
             outcome,
             detail);
-   }
-   else if (resolution.keptForOtherPid != -1)
-   {
+      break;
+
+   case PendingLaunchOutcome::KeptOtherPid:
       DLOGF("Keeping pending launch for user {} (id: {}): request {} came from process {}, not the launched one: {}",
             username,
             sessionId,
             outcome,
-            resolution.keptForOtherPid,
+            resolution.pid,
             detail);
-   }
-   else if (resolution.keptLivePid != -1)
-   {
+      break;
+
+   case PendingLaunchOutcome::KeptLivePid:
       DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
-            resolution.keptLivePid,
+            resolution.pid,
             username,
             sessionId,
             detail);
-   }
-   else
-   {
-      return false;
-   }
+      break;
 
-   return true;
+   case PendingLaunchOutcome::NotFound:
+   case PendingLaunchOutcome::Removed:
+      break;
+   }
 }
 
 void SessionManager::removePendingLaunch(const r_util::SessionContext& context, const bool success, const std::string& errorMsg, PidType peerPid)
@@ -575,10 +577,9 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
    }
    END_LOCK_MUTEX
 
-   if (logKeptPendingLaunch(resolution, context.username, context.scope.id(), success, errorMsg))
-      return;
+   logKeptPendingLaunch(resolution, context.username, context.scope.id(), success, errorMsg);
 
-   if (resolution.removed)
+   if (resolution.outcome == PendingLaunchOutcome::Removed)
    {
       boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - resolution.launchTime;
       std::string progName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench() + " session(" + context.scope.id() + ")";
@@ -614,10 +615,9 @@ void SessionManager::removePendingSessionLaunch(const std::string& username, con
    }
    END_LOCK_MUTEX
 
-   if (logKeptPendingLaunch(resolution, username, sessionId, success, errorMsg))
-      return;
+   logKeptPendingLaunch(resolution, username, sessionId, success, errorMsg);
 
-   if (resolution.removed)
+   if (resolution.outcome == PendingLaunchOutcome::Removed)
    {
       boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - resolution.launchTime;
       if (success)

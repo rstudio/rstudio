@@ -138,14 +138,25 @@ private:
    void endLaunching(const core::r_util::SessionContext& context,
                      const boost::posix_time::ptime& launchTime);
 
-   // what a request outcome did to a pending launch: removed it, or left it
-   // in place for one of the reasons below
+   // what a request outcome did to a pending launch
+   enum class PendingLaunchOutcome
+   {
+      NotFound,      // the context had no pending launch
+      Removed,       // the outcome ended the launch
+      KeptLaunching, // kept: the launch is still being made
+      KeptOtherPid,  // kept: a process other than the launched one produced it
+      KeptLivePid    // kept: unattributed error, and the launched process is alive
+   };
+
    struct PendingLaunchResolution
    {
-      bool removed = false;
-      bool keptLaunching = false;
-      PidType keptLivePid = -1;
-      PidType keptForOtherPid = -1;
+      PendingLaunchOutcome outcome = PendingLaunchOutcome::NotFound;
+
+      // the process that produced the outcome (KeptOtherPid) or the launched
+      // process (KeptLivePid)
+      PidType pid = -1;
+
+      // when the launch was made (Removed)
       boost::posix_time::ptime launchTime;
    };
 
@@ -157,8 +168,8 @@ private:
                                                 bool success,
                                                 PidType peerPid);
 
-   // logs why an outcome left a pending launch in place; false if it didn't
-   bool logKeptPendingLaunch(const PendingLaunchResolution& resolution,
+   // logs why an outcome left a pending launch in place, if it did
+   void logKeptPendingLaunch(const PendingLaunchResolution& resolution,
                              const std::string& username,
                              const std::string& sessionId,
                              bool success,
