@@ -84,7 +84,7 @@
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
-- ([#18973](https://github.com/rstudio/rstudio/issues/18973)): RStudio no longer uses the `posit-assistant-path` session option; a session that sets it logs a warning and ignores it. RStudio also no longer reads a Posit Assistant from `pai` in the system configuration directory. RStudio Server administrators who installed one in either location should move it to `versions/<version>` in `/usr/lib/rstudio-server/bin/posit-assistant`, and RStudio Desktop runs only the Posit Assistant the user installs.
+- ([#18973](https://github.com/rstudio/rstudio/issues/18973)): RStudio no longer uses the `posit-assistant-path` session option; a session that sets it logs a warning and ignores it. RStudio also no longer reads a Posit Assistant from `pai` in the system configuration directory. RStudio Server administrators who installed one in either location should move it to `versions/<version>` in `/usr/lib/rstudio-server/bin/posit-assistant`.
 
 ### Dependencies
 - Copilot Language Server 1.544.0

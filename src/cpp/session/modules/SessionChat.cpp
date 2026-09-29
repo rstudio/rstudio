@@ -5082,7 +5082,7 @@ std::string installationNotFoundMessage()
       return fmt::format(
          "Posit Assistant installation not found. Installation is managed by "
          "your administrator; expected under: {}",
-         systemStorageDir().getAbsolutePath());
+         chat_slots::versionsDir(systemStorageDir()).getAbsolutePath());
    }
 
    return "Posit Assistant installation not found. Install it from the "

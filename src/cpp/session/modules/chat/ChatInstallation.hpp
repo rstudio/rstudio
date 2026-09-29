@@ -107,21 +107,16 @@ core::FilePath positAiStorageDir();
  * The directory is itself the copy shipped with RStudio, whose files the
  * package replaces on each upgrade. Administrator-installed versions sit
  * inside it in the layout of the user's storage directory: slots under
- * versions/, and a selected.json naming the slot to run per protocol. The
- * package owns neither, so an upgrade leaves them in place. RStudio reads the
- * directory and never writes it; the administrator's tooling owns versions/
- * and the selector.
+ * versions/, and a selected.json naming the slot to run per protocol. Linux
+ * package upgrades replace only the package's own files, which include
+ * neither. RStudio reads the directory and never writes it; the
+ * administrator's tooling owns versions/ and the selector.
  *
- * Installed beside the session binary, except in the macOS app bundle where
- * it sits next to bin/ rather than inside it. The bin location is returned
- * unless it holds nothing this build could run -- no bundled copy and no
- * administrator's slot for this build's protocol -- and the other location
- * does, so a partial directory at either one does not mask a usable one at
- * the other. When neither holds anything the bin location is returned, as
- * where the directory is expected. Only Workbench ships a bundled copy.
+ * Installed beside the session binary. Only Workbench ships a bundled copy;
+ * elsewhere the directory holds only what an administrator puts there.
  *
  * @param resourcePath Root to resolve against (the session resource path)
- * @return FilePath to the system storage directory
+ * @return <resourcePath>/bin/posit-assistant. Not guaranteed to exist.
  */
 core::FilePath systemStorageDir(const core::FilePath& resourcePath);
 

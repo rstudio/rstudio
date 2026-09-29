@@ -32,9 +32,9 @@ namespace constants {
 // pai/versions.
 const char* const kPositAiStorageDirName = "pai";
 // The storage root RStudio provides for all users, installed beside the
-// session binary (or next to bin/ in the macOS app bundle). It is itself the
-// copy shipped with RStudio, absent from open-source builds, and also holds
-// the administrator's slots and selector in the layout of pai.
+// session binary. It is itself the copy shipped with RStudio, absent from
+// open-source builds, and also holds the administrator's slots and selector
+// in the layout of pai.
 const char* const kSystemPositAiDirName = "posit-assistant";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
