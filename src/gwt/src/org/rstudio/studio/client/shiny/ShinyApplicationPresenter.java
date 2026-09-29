@@ -132,12 +132,15 @@ public class ShinyApplicationPresenter implements
    private native void initializeEvents() /*-{  
       var thiz = this;
 
-      // we observed that sometimes (with RStudio Server) the 'unload' event was
-      // not fired on window closing, and yet 'beforeunload' was not fired with
-      // RStudio Desktop. to be safe, attach to both events and just properly handle
-      // the close request there
-      $wnd.addEventListener(
-            "unload",
+      // 'beforeunload' has not always been fired on RStudio Desktop, so
+      // listen for the window going away as well; onClose() handles being
+      // called twice.
+      //
+      // listen on this module's frame ('window') rather than the top-level
+      // window ('$wnd'); see the note in Satellite.initializeNative()
+      // https://github.com/rstudio/rstudio/issues/18987
+      window.addEventListener(
+            "pagehide",
             $entry(function() {
                thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onClose()();
             }),
@@ -193,7 +196,8 @@ public class ShinyApplicationPresenter implements
    }-*/;
    
    private final native void notifyShinyAppClosed(JavaScriptObject params) /*-{
-      $wnd.opener.notifyShinyAppClosed(params);
+      if ($wnd.opener)
+         $wnd.opener.notifyShinyAppClosed(params);
    }-*/;
 
    private final native void notifyShinyAppDisconnected(JavaScriptObject params) /*-{

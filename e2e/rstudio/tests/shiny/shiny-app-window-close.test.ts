@@ -8,8 +8,12 @@ import type { Page } from '@playwright/test';
 // Regression tests for https://github.com/rstudio/rstudio/issues/17439:
 // with "Run in Window", the Shiny app window could become impossible to
 // close (and permanently orphaned) when the app's page registered a
-// 'beforeunload' handler that prevents unload. Desktop-only: the fix lives
-// in the Electron main process; on Server the browser handles beforeunload.
+// 'beforeunload' handler that prevents unload. That test is Desktop-only:
+// the fix lives in the Electron main process; on Server the browser handles
+// beforeunload.
+//
+// The other tests also cover Server, where the window itself has to tell the
+// main window that it was closed (#18987).
 
 const APP_DIR = 'shiny-app-17439';
 const APP_MARKER = 'hello shiny 17439';
@@ -61,7 +65,7 @@ async function waitForShinyIdle(satellitePage: Page) {
     .toBeGreaterThanOrEqual(5);
 }
 
-test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () => {
+test.describe.serial('shiny app window close', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     // a preceding spec can hand off the worker with a main-window reload
     // still in flight (e.g. a project open/close); let it settle first
@@ -135,7 +139,7 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
     await expect(page.locator("[id^='rstudio_tb_interruptr']")).toBeHidden({ timeout: 15000 });
   });
 
-  test('window closes despite a beforeunload handler in the app', async ({
+  test('window closes despite a beforeunload handler in the app', { tag: ['@desktop_only'] }, async ({
     rstudioPage: page,
   }) => {
     const consoleActions = new ConsolePaneActions(page);
