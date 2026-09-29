@@ -33,6 +33,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
@@ -307,13 +308,32 @@ bool sessionContextForRequest(
    }
 }
 
+// the pid of the session process a proxied request reached, so the session
+// manager can tell an outcome produced by the session a restart is replacing
+// from one produced by its replacement (#18963); -1 when no connection was
+// made. the client is captured weakly: it owns the handlers this is called
+// from, and a strong reference would keep it alive forever.
+PidType peerPidOf(const boost::weak_ptr<http::LocalStreamAsyncClient>& weakClient)
+{
+   boost::shared_ptr<http::LocalStreamAsyncClient> pClient = weakClient.lock();
+   return pClient ? pClient->peerPid() : -1;
+}
+
+// errors reach their handlers without the client; the client stamps the pid
+// on them instead
+PidType peerPidOf(const Error& error)
+{
+   return safe_convert::stringTo<PidType>(error.getProperty(http::kLocalStreamPeerPidProperty), -1);
+}
+
 void handleProxyResponse(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const r_util::SessionContext& context,
-      const http::Response& response)
+   boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+   const r_util::SessionContext& context,
+   const boost::weak_ptr<http::LocalStreamAsyncClient>& weakClient,
+   const http::Response& response)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context);
+   sessionManager().removePendingLaunch(context, true, std::string(), peerPidOf(weakClient));
 
    // ensure authorization cookies that were automatically refreshed as part of this
    // request are stamped on the response
@@ -601,7 +621,7 @@ void handleContentError(
       const Error& error)
 {   
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context, false, std::string());
+   sessionManager().removePendingLaunch(context, false, std::string(), peerPidOf(error));
 
 
    // check for authentication error
@@ -688,7 +708,7 @@ void handleRpcError(
       const Error& error)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context, false, std::string());
+   sessionManager().removePendingLaunch(context, false, std::string(), peerPidOf(error));
 
    // check for authentication error
    if (server::isAuthenticationError(error))
@@ -879,9 +899,12 @@ void proxyRequest(
    // create client
    // if the user is available on the system pass in the uid for validation to ensure
    // that we only connect to the socket if it was created by the user
-   boost::shared_ptr<http::IAsyncClient> pClient(new http::LocalStreamAsyncClient(
-                                                    ptrConnection->ioContext(),
-                                                    streamPath, false, validateUid));
+   boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient(new http::LocalStreamAsyncClient(
+      ptrConnection->ioContext(),
+      streamPath,
+      false,
+      validateUid));
+   boost::shared_ptr<http::IAsyncClient> pClient = pStreamClient;
 
    // setup retry context
    if (!connectionRetryProfile.empty())
@@ -899,7 +922,11 @@ void proxyRequest(
       boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(
             new http::FixedBufferProxy(ptrConnection));
       fixedBufferProxy->proxy(pClient);
-      pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
+      pClient->execute(boost::bind(handleProxyResponse,
+                                   ptrConnection,
+                                   context,
+                                   boost::weak_ptr<http::LocalStreamAsyncClient>(pStreamClient),
+                                   _1),
                        errorHandler);
 
       if (clientHandler)
@@ -1001,6 +1028,22 @@ void prepareLocalhostResponseForTest(
                             ipv6,
                             response,
                             pPreparedResponse);
+}
+
+void handleRpcErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const Error& error)
+{
+   handleRpcError(ptrConnection, context, error);
+}
+
+void handleContentErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const Error& error)
+{
+   handleContentError(ptrConnection, context, error);
 }
 #endif
 
