@@ -123,9 +123,12 @@ test.describe('Inline LaTeX math previews', () => {
 
     // watch the popup's math element: rendered TeX errors must never become
     // visible (typesets happen in a hidden scratch element inside the target,
-    // and a failed render keeps the previous output). track scratch-element
-    // removals on the target as the "a re-render completed" signal.
-    await math.evaluate((container) => {
+    // and a failed render keeps the previous output). a scratch element holds
+    // the text being typeset when it is added, and is removed once that
+    // typeset is done: count the typesets of the edited text only, as a
+    // render of the original text can still be in flight (the cursor move
+    // below arms the cursor-idle monitor as well).
+    await math.evaluate((container, editedText) => {
       const el = container.parentElement!;
       (window as any).__merrorSeen = false;
       (window as any).__renderAttempts = 0;
@@ -136,22 +139,31 @@ test.describe('Inline LaTeX math previews', () => {
         if (errors.some((n) => getComputedStyle(n).visibility !== 'hidden'))
           (window as any).__merrorSeen = true;
       }).observe(el, { childList: true, subtree: true });
+
+      const scratches = new WeakSet<Node>();
       new MutationObserver((mutations) => {
         for (const m of mutations) {
-          if (m.removedNodes.length > 0)
-            (window as any).__renderAttempts += 1;
+          m.addedNodes.forEach((node) => {
+            if (node.textContent?.includes(editedText))
+              scratches.add(node);
+          });
+          m.removedNodes.forEach((node) => {
+            if (scratches.has(node))
+              (window as any).__renderAttempts += 1;
+          });
         }
       }).observe(el, { childList: true });
-    });
+    }, 'mc^2_');
 
     // type a trailing subscript, making the expression incomplete
     // ("Missing superscript or subscript argument")
     await moveCursorTo(page, 5, 24);
     await page.keyboard.type('_');
 
-    // wait for the resulting re-renders to settle (a quiet window longer than
-    // the 700ms cursor-idle delay, so the idle re-render is covered too), then
-    // verify the previous render was kept and no error output was ever shown
+    // wait for the edited text to be typeset and the re-renders to settle (a
+    // quiet window longer than the 700ms cursor-idle delay, so the idle
+    // re-render is covered too), then verify the previous render was kept and
+    // no error output was ever shown
     await expect
       .poll(
         async () =>
