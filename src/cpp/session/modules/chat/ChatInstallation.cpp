@@ -137,10 +137,12 @@ core::FilePath systemStorageDir(const core::FilePath& resourcePath)
 {
    // Mirrors the Copilot Language Server layout: the directory is installed
    // beside the session binary, except in the macOS app bundle where it sits
-   // next to bin/ rather than inside it.
+   // next to bin/ rather than inside it. The bin candidate must hold something
+   // the resolver reads, so a partial directory left there does not mask a
+   // usable one at the other location.
    core::FilePath binPath =
       resourcePath.completePath("bin").completePath(kSystemPositAiDirName);
-   if (binPath.isDirectory())
+   if (verifyInstallDir(binPath) || slots::versionsDir(binPath).isDirectory())
       return binPath;
 
    return resourcePath.completePath(kSystemPositAiDirName);
@@ -249,9 +251,8 @@ std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
    if (!systemSlot.isEmpty())
       candidates.push_back(describeInstallation(systemSlot, "administrator-installed"));
 
-   core::FilePath bundled = paths.systemStorageDir.completeChildPath(kBundledInstallDirName);
-   if (verifyInstallDir(bundled))
-      candidates.push_back(describeInstallation(bundled, "bundled"));
+   if (verifyInstallDir(paths.systemStorageDir))
+      candidates.push_back(describeInstallation(paths.systemStorageDir, "bundled"));
 
    std::stable_sort(candidates.begin(), candidates.end(), outranks);
    return candidates;
@@ -303,8 +304,7 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
            slots::versionsDir(paths.userStorageDir).getAbsolutePath());
    DLOG("  - Administrator slots: {}",
         slots::versionsDir(paths.systemStorageDir).getAbsolutePath());
-   DLOG("  - Bundled with RStudio: {}",
-        paths.systemStorageDir.completeChildPath(kBundledInstallDirName).getAbsolutePath());
+   DLOG("  - Bundled with RStudio: {}", paths.systemStorageDir.getAbsolutePath());
 
    return core::FilePath(); // Not found
 }

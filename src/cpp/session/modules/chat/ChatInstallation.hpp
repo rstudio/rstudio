@@ -104,18 +104,20 @@ core::FilePath positAiStorageDir();
 /**
  * The Posit Assistant storage directory RStudio provides for all users.
  *
- * It holds the copy shipped with RStudio under bundled/, which the package
- * replaces on each upgrade, and administrator-installed versions beside it in
- * the layout of the user's storage directory: slots under versions/, and a
- * selected.json naming the slot to run per protocol. RStudio reads it and
- * never writes it; the administrator's tooling owns versions/ and the
- * selector.
+ * The directory is itself the copy shipped with RStudio, whose files the
+ * package replaces on each upgrade. Administrator-installed versions sit
+ * inside it in the layout of the user's storage directory: slots under
+ * versions/, and a selected.json naming the slot to run per protocol. The
+ * package owns neither, so an upgrade leaves them in place. RStudio reads the
+ * directory and never writes it; the administrator's tooling owns versions/
+ * and the selector.
  *
  * Installed beside the session binary, except in the macOS app bundle where
  * it sits next to bin/ rather than inside it. The bin location is returned
- * when it exists and the other otherwise, so the returned path is where the
- * directory would be even when none is installed. Only Workbench ships a
- * bundled copy.
+ * when it holds a bundled copy or a versions/ directory, and the other
+ * otherwise -- so a stray directory there does not mask a usable one at the
+ * other location, and the returned path is where the directory would be even
+ * when none is installed. Only Workbench ships a bundled copy.
  *
  * @param resourcePath Root to resolve against (the session resource path)
  * @return FilePath to the system storage directory
@@ -149,9 +151,9 @@ struct InstallSearchPaths
    // writes. Its legacy, unversioned bin/ is never read.
    core::FilePath userStorageDir;
 
-   // systemStorageDir(): the copy shipped with RStudio under bundled/, and
-   // the administrator's slots under versions/ selected by its own
-   // selected.json. Read, never written.
+   // systemStorageDir(): itself the copy shipped with RStudio, holding the
+   // administrator's slots under versions/ selected by its own selected.json.
+   // Read, never written.
    core::FilePath systemStorageDir;
 
    // the administrator allows users to manage their own installation
@@ -185,7 +187,7 @@ InstallSearchPaths positAssistantSearchPaths();
  *    a selected slot older than the bundled copy or the user's slot loses to
  *    them, so a selection left by an earlier upgrade cannot hold back a newer
  *    RStudio release.
- * 3. The copy bundled with RStudio (systemStorageDir/bundled).
+ * 3. The copy bundled with RStudio (systemStorageDir itself).
  *
  * Both selectors are keyed by protocol, so neither slot source contributes an
  * incompatible slot; only the bundled copy can be one.

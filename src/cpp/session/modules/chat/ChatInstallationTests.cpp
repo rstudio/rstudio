@@ -264,7 +264,7 @@ TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutPackageJson)
 // System storage directory
 // ============================================================================
 
-TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectory)
+TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectoryHoldingABundle)
 {
    // Linux and Windows layout: the directory sits beside the session binary.
    FilePath resourceDir;
@@ -272,7 +272,23 @@ TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectory)
 
    FilePath binDir = resourceDir.completeChildPath("bin")
                                 .completeChildPath(kSystemPositAiDirName);
-   ASSERT_FALSE(binDir.ensureDirectory());
+   stageInstallation(binDir);
+
+   EXPECT_EQ(systemStorageDir(resourceDir), binDir);
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectoryHoldingOnlySlots)
+{
+   // Open-source builds ship no bundle, so an administrator's slots alone
+   // must be enough to select the location.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+
+   FilePath binDir = resourceDir.completeChildPath("bin")
+                                .completeChildPath(kSystemPositAiDirName);
+   ASSERT_FALSE(slots::versionsDir(binDir).ensureDirectory());
 
    EXPECT_EQ(systemStorageDir(resourceDir), binDir);
 
@@ -284,10 +300,28 @@ TEST(ChatInstallation, SystemStorageDirFallsBackToResourceRoot)
    // macOS app bundle layout: the directory sits next to bin/, not inside it.
    FilePath resourceDir;
    FilePath::tempFilePath(resourceDir);
-   ASSERT_FALSE(resourceDir.completeChildPath("bin").ensureDirectory());
+   ASSERT_FALSE(resourceDir.ensureDirectory());
 
    EXPECT_EQ(systemStorageDir(resourceDir),
              resourceDir.completeChildPath(kSystemPositAiDirName));
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, SystemStorageDirSkipsAStrayBinSubdirectory)
+{
+   // A bin candidate that exists but holds nothing the resolver reads must
+   // not mask the directory at the other location.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   ASSERT_FALSE(resourceDir.completeChildPath("bin")
+                           .completeChildPath(kSystemPositAiDirName)
+                           .ensureDirectory());
+
+   FilePath rootDir = resourceDir.completeChildPath(kSystemPositAiDirName);
+   stageInstallation(rootDir);
+
+   EXPECT_EQ(systemStorageDir(resourceDir), rootDir);
 
    resourceDir.removeIfExists();
 }
@@ -315,7 +349,7 @@ protected:
 
       paths_.userStorageDir = root_.completeChildPath("user");
       paths_.systemStorageDir = root_.completeChildPath("system");
-      bundled_ = paths_.systemStorageDir.completeChildPath(kBundledInstallDirName);
+      bundled_ = paths_.systemStorageDir;
    }
 
    void TearDown() override
@@ -324,6 +358,9 @@ protected:
    }
 
    FilePath root_;
+
+   // The system storage directory is itself the bundled copy; named apart so
+   // each test says which role it stages.
    FilePath bundled_;
    InstallSearchPaths paths_;
 };
@@ -499,15 +536,28 @@ TEST_F(ChatInstallationSearch, ResolvesTheNewestAdminSlotWithoutCreatingASelecto
    EXPECT_TRUE(selector::readSelections(paths_.systemStorageDir).empty());
 }
 
-TEST_F(ChatInstallationSearch, ReadsOnlyTheBundledCopyAndTheAdminSlots)
+TEST_F(ChatInstallationSearch, ReadsAdminInstallationsOnlyFromTheSlots)
 {
-   // The system directory itself was the bundle's layout through 2026.09,
-   // and bin/ is the unversioned layout of a storage root; neither is read.
-   stageInstallation(paths_.systemStorageDir, "9.9.9");
+   // An installation copied into the system directory rather than under
+   // versions/ is not a slot, and bin/ is the unversioned layout of a storage
+   // root; neither is read.
    stageInstallation(paths_.systemStorageDir.completeChildPath(kLegacyDirName), "9.9.9");
    stageInstallation(paths_.systemStorageDir.completeChildPath("9.9.9"), "9.9.9");
 
    EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
+}
+
+TEST_F(ChatInstallationSearch, AdminSlotsLiveInsideTheBundledCopy)
+{
+   // The package's files and the administrator's versions share the
+   // directory; each is read as its own candidate.
+   stageInstallation(bundled_, "1.0.0");
+   FilePath adminSlot = makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminSlot);
+
+   ASSERT_FALSE(adminSlot.remove());
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
 
 TEST_F(ChatInstallationSearch, NeverReadsTheSystemConfigDirectory)
