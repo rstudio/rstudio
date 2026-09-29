@@ -77,6 +77,8 @@
 - ([#18896](https://github.com/rstudio/rstudio/issues/18896)): Removed a spurious `getLastCryptoError called with no pending error` warning from the logs.
 - ([#18949](https://github.com/rstudio/rstudio/issues/18949)): Fixed an issue where the Publish command could be hidden after a save changed a document's type, such as saving a new R script as R Markdown, or saving an R Markdown document as Quarto while more than one source column was open.
 - ([#18956](https://github.com/rstudio/rstudio/issues/18956)): Fixed an issue where the editor's Git commands were not updated after using Save As to move a file into or out of a project, until switching tabs.
+- ([#18975](https://github.com/rstudio/rstudio/issues/18975)): Fixed an issue where Posit Assistant wrote no `positai.log` in Posit Workbench sessions. The log is now written to the session user's RStudio log directory, next to the `rsession` log.
+- ([#18955](https://github.com/rstudio/rstudio/issues/18955)): Fixed an issue where saving or closing a document in another source column could hide or disable commands for the active document, such as File > Publish.
 - ([#18976](https://github.com/rstudio/rstudio/issues/18976)): Closing a terminal now terminates its shell. Previously the shell was only interrupted, so it kept running in the background, and the prompt it redrew was logged as `Unknown handle` errors in the session log.
 - ([#18976](https://github.com/rstudio/rstudio/issues/18976)): Fixed an issue where RStudio Desktop wrote every line of the session log (`rsession-<user>.log`) twice.
 
