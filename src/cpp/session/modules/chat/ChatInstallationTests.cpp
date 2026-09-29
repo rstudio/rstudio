@@ -261,52 +261,33 @@ TEST_F(ChatInstallationIdentity, RejectsAPackageWithoutPackageJson)
 }
 
 // ============================================================================
-// Bundled installation
+// System storage directory
 // ============================================================================
 
-TEST(ChatInstallation, BundledPathPrefersBinSubdirectory)
+TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectory)
 {
-   // Linux and Windows layout: the bundle sits beside the session binary.
+   // Linux and Windows layout: the directory sits beside the session binary.
    FilePath resourceDir;
    FilePath::tempFilePath(resourceDir);
 
    FilePath binDir = resourceDir.completeChildPath("bin")
-                                .completeChildPath(kBundledPositAiDirName);
-   stageInstallation(binDir);
+                                .completeChildPath(kSystemPositAiDirName);
+   ASSERT_FALSE(binDir.ensureDirectory());
 
-   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), binDir);
-
-   resourceDir.removeIfExists();
-}
-
-TEST(ChatInstallation, BundledPathFallsBackToResourceRoot)
-{
-   // macOS app bundle layout: the bundle sits next to bin/, not inside it.
-   FilePath resourceDir;
-   FilePath::tempFilePath(resourceDir);
-   resourceDir.ensureDirectory();
-
-   FilePath rootDir = resourceDir.completeChildPath(kBundledPositAiDirName);
-
-   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), rootDir);
+   EXPECT_EQ(systemStorageDir(resourceDir), binDir);
 
    resourceDir.removeIfExists();
 }
 
-TEST(ChatInstallation, BundledPathSkipsIncompleteBinSubdirectory)
+TEST(ChatInstallation, SystemStorageDirFallsBackToResourceRoot)
 {
-   // A bin candidate that exists but holds no installation must not mask a
-   // bundle at the other location.
+   // macOS app bundle layout: the directory sits next to bin/, not inside it.
    FilePath resourceDir;
    FilePath::tempFilePath(resourceDir);
-   resourceDir.completeChildPath("bin")
-              .completeChildPath(kBundledPositAiDirName)
-              .ensureDirectory();
+   ASSERT_FALSE(resourceDir.completeChildPath("bin").ensureDirectory());
 
-   FilePath rootDir = resourceDir.completeChildPath(kBundledPositAiDirName);
-   stageInstallation(rootDir);
-
-   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), rootDir);
+   EXPECT_EQ(systemStorageDir(resourceDir),
+             resourceDir.completeChildPath(kSystemPositAiDirName));
 
    resourceDir.removeIfExists();
 }
@@ -322,8 +303,8 @@ namespace {
 // longer reads it anywhere.
 const char* const kLegacyDirName = "bin";
 
-// Every source under a fresh temp root, none of them staged, and
-// posit-assistant-path unset. Each test stages only the sources it needs.
+// Every source under a fresh temp root, none of them staged. Each test stages
+// only the sources it needs.
 class ChatInstallationSearch : public testing::Test
 {
 protected:
@@ -333,8 +314,8 @@ protected:
       ASSERT_FALSE(root_.ensureDirectory());
 
       paths_.userStorageDir = root_.completeChildPath("user");
-      paths_.bundledPath = root_.completeChildPath("bundled");
-      adminDir_ = root_.completeChildPath("admin");
+      paths_.systemStorageDir = root_.completeChildPath("system");
+      bundled_ = paths_.systemStorageDir.completeChildPath(kBundledInstallDirName);
    }
 
    void TearDown() override
@@ -342,35 +323,19 @@ protected:
       root_.removeIfExists();
    }
 
-   // With a user slot and a newer bundled copy on hand, sets
-   // posit-assistant-path to whatever adminDir_ holds now, which is expected
-   // to be no valid installation: the bundled copy must not stand in for it,
-   // and only the user's own slot may.
-   void expectAdminDirHoldsNothing()
-   {
-      stageInstallation(paths_.bundledPath, "9.0.0");
-      FilePath slot = makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-      paths_.adminDir = adminDir_;
-
-      EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
-
-      paths_.userInstallEnabled = false;
-      EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
-   }
-
    FilePath root_;
-   FilePath adminDir_;
+   FilePath bundled_;
    InstallSearchPaths paths_;
 };
 
 } // anonymous namespace
 
-// posit-assistant-path unset ------------------------------------------------
+// sources competing ----------------------------------------------------------
 
 TEST_F(ChatInstallationSearch, PrefersNewestInstallation)
 {
    FilePath slot = makeSlot(paths_.userStorageDir, "2.0.0", "2.0.0");
-   stageInstallation(paths_.bundledPath, "1.5.0");
+   stageInstallation(bundled_, "1.5.0");
 
    EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
 }
@@ -380,20 +345,42 @@ TEST_F(ChatInstallationSearch, PrefersNewerBundledOverStaleUserSlot)
    // A per-user install made before a newer bundle shipped must not shadow
    // it indefinitely.
    makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "1.1.0");
+   stageInstallation(bundled_, "1.1.0");
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), paths_.bundledPath);
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
+}
+
+TEST_F(ChatInstallationSearch, PrefersNewerAdminSlotOverUserSlot)
+{
+   makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
+   FilePath adminSlot = makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminSlot);
+}
+
+TEST_F(ChatInstallationSearch, PrefersNewerUserSlotOverAdminSlot)
+{
+   // The administrator's selector chooses among their own versions; it does
+   // not hold a user who installed a newer one below it.
+   FilePath userSlot = makeSlot(paths_.userStorageDir, "2.0.0", "2.0.0");
+   makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), userSlot);
 }
 
 TEST_F(ChatInstallationSearch, BreaksVersionTiesBySource)
 {
    FilePath userSlot = makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "1.0.0");
+   FilePath adminSlot = makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0");
+   stageInstallation(bundled_, "1.0.0");
 
    EXPECT_EQ(locatePositAssistantInstallation(paths_), userSlot);
 
    ASSERT_FALSE(userSlot.remove());
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), paths_.bundledPath);
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminSlot);
+
+   ASSERT_FALSE(adminSlot.remove());
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
 
 TEST_F(ChatInstallationSearch, PrefersCompatibleProtocolOverHigherVersion)
@@ -401,7 +388,17 @@ TEST_F(ChatInstallationSearch, PrefersCompatibleProtocolOverHigherVersion)
    // A newer package built for another protocol cannot be run by this build,
    // so an older compatible one outranks it.
    FilePath slot = makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "9.9.9", "99.0");
+   stageInstallation(bundled_, "9.9.9", "99.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
+}
+
+TEST_F(ChatInstallationSearch, TreatsMissingProtocolFileAsIncompatible)
+{
+   FilePath slot = makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
+   stageInstallation(bundled_);
+   writeStringToFile(bundled_.completeChildPath(kPackageJsonFileName),
+                     "{\"version\": \"9.9.9\"}");
 
    EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
 }
@@ -415,9 +412,21 @@ TEST_F(ChatInstallationSearch, UserSlotsContributeOnlyThisProtocol)
 
    EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
 
-   stageInstallation(paths_.bundledPath, "1.0.0");
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), paths_.bundledPath);
+   stageInstallation(bundled_, "1.0.0");
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
+
+TEST_F(ChatInstallationSearch, AdminSlotsContributeOnlyThisProtocol)
+{
+   // What a Workbench upgrade to a new protocol leaves behind: the
+   // administrator's versions for the old protocol, and a bundle for the new.
+   makeSlot(paths_.systemStorageDir, "9.9.9", "9.9.9", "99.0");
+   stageInstallation(bundled_, "1.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
+}
+
+// the user's selector --------------------------------------------------------
 
 TEST_F(ChatInstallationSearch, FollowsTheUserSelector)
 {
@@ -446,13 +455,67 @@ TEST_F(ChatInstallationSearch, IgnoresTheUsersLegacyDirectory)
    EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
 }
 
+// the administrator's selector -----------------------------------------------
+
+TEST_F(ChatInstallationSearch, FollowsTheAdminSelector)
+{
+   // An administrator rolling back to an older version beside a newer one.
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0");
+   FilePath selected = makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0");
+   stageInstallation(bundled_, "0.5.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), selected);
+}
+
+TEST_F(ChatInstallationSearch, AdminSelectionDoesNotHoldBackANewerBundledCopy)
+{
+   // A selection left by an upgrade made before a newer Workbench release
+   // must not keep running over that release's bundle.
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0");
+   makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0");
+   stageInstallation(bundled_, "1.5.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
+}
+
+TEST_F(ChatInstallationSearch, ResolvesAroundAStaleAdminSelectorWithoutRewritingIt)
+{
+   makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0", kProtocolVersion, false);
+   FilePath newest =
+      makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+   ASSERT_FALSE(selector::selectSlot(paths_.systemStorageDir, kProtocolVersion, "9.9.9"));
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), newest);
+   EXPECT_EQ(selector::readSelections(paths_.systemStorageDir)[kProtocolVersion], "9.9.9");
+}
+
+TEST_F(ChatInstallationSearch, ResolvesTheNewestAdminSlotWithoutCreatingASelector)
+{
+   makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0", kProtocolVersion, false);
+   FilePath newest =
+      makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), newest);
+   EXPECT_TRUE(selector::readSelections(paths_.systemStorageDir).empty());
+}
+
+TEST_F(ChatInstallationSearch, ReadsOnlyTheBundledCopyAndTheAdminSlots)
+{
+   // The system directory itself was the bundle's layout through 2026.09,
+   // and bin/ is the unversioned layout of a storage root; neither is read.
+   stageInstallation(paths_.systemStorageDir, "9.9.9");
+   stageInstallation(paths_.systemStorageDir.completeChildPath(kLegacyDirName), "9.9.9");
+   stageInstallation(paths_.systemStorageDir.completeChildPath("9.9.9"), "9.9.9");
+
+   EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
+}
+
 TEST_F(ChatInstallationSearch, NeverReadsTheSystemConfigDirectory)
 {
-   // <systemConfigDir>/pai was once searched without any configuration; an
-   // administrator-provided copy now exists only where posit-assistant-path
-   // names one. The session's own sources are resolved here, redirected into
-   // the temp root so the machine's real directories are not read or
-   // repaired.
+   // <systemConfigDir>/pai was once searched as the administrator's storage
+   // directory; the one beside the session binary replaces it. The session's
+   // own sources are resolved here, redirected into the temp root so the
+   // machine's real directories are not read or repaired.
    rstudio::core::system::EnvironmentScope config(
       "RSTUDIO_CONFIG_DIR", root_.completeChildPath("config").getAbsolutePath().c_str());
    rstudio::core::system::EnvironmentScope data(
@@ -466,17 +529,16 @@ TEST_F(ChatInstallationSearch, NeverReadsTheSystemConfigDirectory)
 
    InstallSearchPaths paths = positAssistantSearchPaths();
    ASSERT_TRUE(paths.userStorageDir.isWithin(root_));
-   ASSERT_TRUE(paths.adminDir.isEmpty());
-   paths.bundledPath = paths_.bundledPath;
+   paths.systemStorageDir = paths_.systemStorageDir;
 
    EXPECT_TRUE(locatePositAssistantInstallation(paths).isEmpty());
 }
 
 TEST_F(ChatInstallationSearch, FallsBackToBundledInstallation)
 {
-   stageInstallation(paths_.bundledPath);
+   stageInstallation(bundled_);
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), paths_.bundledPath);
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
 
 TEST_F(ChatInstallationSearch, ReturnsEmptyWhenNothingIsInstalled)
@@ -484,174 +546,42 @@ TEST_F(ChatInstallationSearch, ReturnsEmptyWhenNothingIsInstalled)
    EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
 }
 
-// posit-assistant-path set --------------------------------------------------
-
-TEST_F(ChatInstallationSearch, FollowsTheAdminSelector)
-{
-   // An administrator holding users on an older slot beside a newer one.
-   makeSlot(adminDir_, "2.0.0", "2.0.0");
-   FilePath selected = makeSlot(adminDir_, "1.0.0", "1.0.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), selected);
-}
-
-TEST_F(ChatInstallationSearch, ResolvesAroundAStaleAdminSelectorWithoutRewritingIt)
-{
-   makeSlot(adminDir_, "1.0.0", "1.0.0", kProtocolVersion, false);
-   FilePath newest = makeSlot(adminDir_, "2.0.0", "2.0.0", kProtocolVersion, false);
-   ASSERT_FALSE(selector::selectSlot(adminDir_, kProtocolVersion, "9.9.9"));
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), newest);
-   EXPECT_EQ(selector::readSelections(adminDir_)[kProtocolVersion], "9.9.9");
-}
-
-TEST_F(ChatInstallationSearch, ResolvesTheNewestAdminSlotWithoutCreatingASelector)
-{
-   makeSlot(adminDir_, "1.0.0", "1.0.0", kProtocolVersion, false);
-   FilePath newest = makeSlot(adminDir_, "2.0.0", "2.0.0", kProtocolVersion, false);
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), newest);
-   EXPECT_TRUE(selector::readSelections(adminDir_).empty());
-}
-
-TEST_F(ChatInstallationSearch, UsesAnUnversionedAdminInstallation)
-{
-   // The layout posit-assistant-path took before it read slots.
-   stageInstallation(adminDir_, "1.0.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminDir_);
-}
-
-TEST_F(ChatInstallationSearch, DoesNotReadTheAdminBinDirectory)
-{
-   stageInstallation(adminDir_.completeChildPath(kLegacyDirName), "1.0.0");
-   expectAdminDirHoldsNothing();
-}
-
-TEST_F(ChatInstallationSearch, AdminSlotAndUnversionedInstallRaceByVersion)
-{
-   makeSlot(adminDir_, "1.0.0", "1.0.0");
-   stageInstallation(adminDir_, "2.0.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminDir_);
-}
-
-TEST_F(ChatInstallationSearch, AdminSlotWinsATieWithTheUnversionedInstall)
-{
-   FilePath slot = makeSlot(adminDir_, "1.0.0", "1.0.0");
-   stageInstallation(adminDir_, "1.0.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
-}
-
-TEST_F(ChatInstallationSearch, PrefersCompatibleAdminSlotOverHigherVersionedMismatch)
-{
-   FilePath slot = makeSlot(adminDir_, "1.0.0", "1.0.0");
-   stageInstallation(adminDir_, "9.9.9", "99.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
-}
-
-TEST_F(ChatInstallationSearch, TreatsMissingProtocolFileAsIncompatible)
-{
-   FilePath slot = makeSlot(adminDir_, "1.0.0", "1.0.0");
-   stageInstallation(adminDir_);
-   writeStringToFile(adminDir_.completeChildPath(kPackageJsonFileName),
-                     "{\"version\": \"9.9.9\"}");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
-}
-
-TEST_F(ChatInstallationSearch, AdminInstallationWinsOverNewerUserSlotAndBundledCopy)
-{
-   // posit-assistant-path is the administrator's explicit choice, so it does
-   // not race the other sources by version -- including when that holds
-   // users below the version RStudio ships.
-   makeSlot(paths_.userStorageDir, "3.0.0", "3.0.0");
-   stageInstallation(paths_.bundledPath, "2.0.0");
-   FilePath slot = makeSlot(adminDir_, "1.0.0", "1.0.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
-
-   paths_.userInstallEnabled = false;
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), slot);
-}
-
-TEST_F(ChatInstallationSearch, RunsAnAdminInstallationWithAMismatchedProtocol)
-{
-   // The session reports the mismatch rather than quietly running a copy the
-   // administrator did not choose.
-   makeSlot(paths_.userStorageDir, "2.0.0", "2.0.0");
-   stageInstallation(paths_.bundledPath, "2.0.0");
-   stageInstallation(adminDir_, "1.0.0", "99.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminDir_);
-}
-
-TEST_F(ChatInstallationSearch, FallsBackOnlyToUserSlotWhenAdminDirDoesNotExist)
-{
-   expectAdminDirHoldsNothing();
-}
-
-TEST_F(ChatInstallationSearch, FallsBackOnlyToUserSlotWhenAdminDirIsEmpty)
-{
-   ASSERT_FALSE(adminDir_.ensureDirectory());
-   expectAdminDirHoldsNothing();
-}
-
-TEST_F(ChatInstallationSearch, FallsBackOnlyToUserSlotWhenAdminSlotsServeAnotherProtocol)
-{
-   makeSlot(adminDir_, "9.9.9", "9.9.9", "99.0");
-   expectAdminDirHoldsNothing();
-}
-
 // user installation disabled -------------------------------------------------
 
 TEST_F(ChatInstallationSearch, SkipsUserSlotsWhenInstallsAreManaged)
 {
    makeSlot(paths_.userStorageDir, "2.0.0", "2.0.0");
-   stageInstallation(paths_.bundledPath, "1.0.0");
+   stageInstallation(bundled_, "1.0.0");
    paths_.userInstallEnabled = false;
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), paths_.bundledPath);
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
 
 TEST_F(ChatInstallationSearch, LeavesTheUserSelectorAloneWhenInstallsAreManaged)
 {
    // Ignoring the user's directory includes not repairing its selector.
    makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0", kProtocolVersion, false);
-   stageInstallation(paths_.bundledPath, "1.0.0");
+   stageInstallation(bundled_, "1.0.0");
    paths_.userInstallEnabled = false;
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), paths_.bundledPath);
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
    EXPECT_TRUE(selector::readSelections(paths_.userStorageDir).empty());
 }
 
 TEST_F(ChatInstallationSearch, FindsBundledInstallationWhenInstallsAreManaged)
 {
-   stageInstallation(paths_.bundledPath, "1.0.0");
+   stageInstallation(bundled_, "1.0.0");
    paths_.userInstallEnabled = false;
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), paths_.bundledPath);
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
 
-TEST_F(ChatInstallationSearch, FindsAdminInstallationWhenInstallsAreManaged)
+TEST_F(ChatInstallationSearch, FindsAdminSlotWhenInstallsAreManaged)
 {
-   stageInstallation(adminDir_, "1.0.0");
-   paths_.adminDir = adminDir_;
+   FilePath adminSlot = makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0");
    paths_.userInstallEnabled = false;
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminDir_);
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), adminSlot);
 }
 
 TEST_F(ChatInstallationSearch, ReturnsEmptyWhenOnlyUserSlotExistsAndInstallsAreManaged)
@@ -683,7 +613,7 @@ TEST_F(ChatInstallationSearch, UserInstallWouldBeSelectedOverTheUserSlotItReplac
 TEST_F(ChatInstallationSearch, UserInstallWouldNotBeSelectedBelowNewerReadOnlyInstall)
 {
    makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "2.0.0");
+   stageInstallation(bundled_, "2.0.0");
 
    EXPECT_FALSE(userInstallWouldBeSelected(paths_, "1.5.0"));
 }
@@ -691,14 +621,23 @@ TEST_F(ChatInstallationSearch, UserInstallWouldNotBeSelectedBelowNewerReadOnlyIn
 TEST_F(ChatInstallationSearch, UserInstallWouldBeSelectedAboveOlderReadOnlyInstall)
 {
    makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "1.2.0");
+   stageInstallation(bundled_, "1.2.0");
 
    EXPECT_TRUE(userInstallWouldBeSelected(paths_, "1.5.0"));
 }
 
+TEST_F(ChatInstallationSearch, UserInstallRanksAgainstTheAdminSlot)
+{
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0");
+
+   EXPECT_FALSE(userInstallWouldBeSelected(paths_, "1.5.0"));
+   EXPECT_TRUE(userInstallWouldBeSelected(paths_, "2.0.0"));
+   EXPECT_TRUE(userInstallWouldBeSelected(paths_, "2.5.0"));
+}
+
 TEST_F(ChatInstallationSearch, UserInstallWouldBeSelectedOverIncompatibleReadOnlyInstall)
 {
-   stageInstallation(paths_.bundledPath, "9.9.9", "99.0");
+   stageInstallation(bundled_, "9.9.9", "99.0");
 
    EXPECT_TRUE(userInstallWouldBeSelected(paths_, "1.0.0"));
 }
@@ -707,32 +646,9 @@ TEST_F(ChatInstallationSearch, UserInstallWouldBeSelectedOverVersionlessReadOnly
 {
    // A copy that cannot say what it is must not claim to be newer than one
    // that can.
-   stageVersionlessInstallation(paths_.bundledPath);
+   stageVersionlessInstallation(bundled_);
 
    EXPECT_TRUE(userInstallWouldBeSelected(paths_, "0.0.1"));
-}
-
-TEST_F(ChatInstallationSearch, UserInstallWouldNotBeSelectedUnderValidAdminDir)
-{
-   stageInstallation(adminDir_, "0.0.1");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_FALSE(userInstallWouldBeSelected(paths_, "9.9.9"));
-
-   ASSERT_FALSE(adminDir_.remove());
-   makeSlot(adminDir_, "0.0.1", "0.0.1");
-
-   EXPECT_FALSE(userInstallWouldBeSelected(paths_, "9.9.9"));
-}
-
-TEST_F(ChatInstallationSearch, UserInstallWouldBeSelectedWhenAdminDirHoldsNothing)
-{
-   // The bundled copy is not consulted while posit-assistant-path is set, so
-   // it does not block the offer either.
-   stageInstallation(paths_.bundledPath, "9.0.0");
-   paths_.adminDir = adminDir_;
-
-   EXPECT_TRUE(userInstallWouldBeSelected(paths_, "1.0.0"));
 }
 
 TEST_F(ChatInstallationSearch, UserInstallWouldNotBeSelectedWhenInstallsAreManaged)
@@ -783,7 +699,7 @@ TEST_F(ChatInstallationHeld, HoldsTheFirstResolution)
 
    // An install made elsewhere -- here a newer copy that would outrank the
    // held one -- takes effect at the next session start, not now.
-   stageInstallation(paths_.bundledPath, "2.0.0");
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0");
 
    EXPECT_EQ(locatePositAssistantInstallation(), slot);
    EXPECT_EQ(getInstalledVersion(), "1.0.0");
@@ -805,14 +721,14 @@ TEST_F(ChatInstallationHeld, ClearingTheResolutionResolvesAgain)
 TEST_F(ChatInstallationHeld, ResolvesAgainWhenTheHeldInstallationIsGone)
 {
    FilePath slot = makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "0.5.0");
+   stageInstallation(bundled_, "0.5.0");
    ASSERT_EQ(locatePositAssistantInstallation(), slot);
 
    // Removed out of band: the answer is re-checked on each read, so the
    // requests are served by whatever other source still holds a copy.
    ASSERT_FALSE(slot.remove());
 
-   EXPECT_EQ(locatePositAssistantInstallation(), paths_.bundledPath);
+   EXPECT_EQ(locatePositAssistantInstallation(), bundled_);
 }
 
 TEST_F(ChatInstallationHeld, DoesNotHoldAnEmptyResolution)
@@ -829,8 +745,8 @@ TEST_F(ChatInstallationHeld, DoesNotHoldAnEmptyResolution)
 
 TEST_F(ChatInstallationHeld, ReportsTheHeldInstallationsProtocol)
 {
-   stageInstallation(paths_.bundledPath, "1.0.0", "99.0");
-   ASSERT_EQ(locatePositAssistantInstallation(), paths_.bundledPath);
+   stageInstallation(bundled_, "1.0.0", "99.0");
+   ASSERT_EQ(locatePositAssistantInstallation(), bundled_);
 
    EXPECT_EQ(getInstalledProtocolVersion(), "99.0");
    EXPECT_EQ(getInstalledVersion(), "1.0.0");
@@ -838,10 +754,8 @@ TEST_F(ChatInstallationHeld, ReportsTheHeldInstallationsProtocol)
 
 TEST_F(ChatInstallationHeld, ReportsNothingForALegacyInstallWithoutProtocol)
 {
-   stageInstallation(adminDir_);
-   paths_.adminDir = adminDir_;
-   applyPaths();
-   ASSERT_EQ(locatePositAssistantInstallation(), adminDir_);
+   stageInstallation(bundled_);
+   ASSERT_EQ(locatePositAssistantInstallation(), bundled_);
 
    EXPECT_TRUE(getInstalledProtocolVersion().empty());
    EXPECT_TRUE(getInstalledVersion().empty());
@@ -850,33 +764,28 @@ TEST_F(ChatInstallationHeld, ReportsNothingForALegacyInstallWithoutProtocol)
 TEST_F(ChatInstallationHeld, RunsUserSlotWhenTheUsersSlotIsHeld)
 {
    makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "1.0.0");
+   stageInstallation(bundled_, "1.0.0");
 
    EXPECT_TRUE(runsUserSlot());
 }
 
 TEST_F(ChatInstallationHeld, DoesNotRunUserSlotForReadOnlyCopies)
 {
-   // Each read-only source in turn, with the same version in no user slot:
-   // a reinstall would add a user copy rather than repair this one.
-   stageInstallation(paths_.bundledPath, "1.0.0");
+   // Each read-only source in turn, with no user slot: a reinstall would add
+   // a user copy rather than repair this one.
+   stageInstallation(bundled_, "1.0.0");
    EXPECT_FALSE(runsUserSlot());
 
-   stageInstallation(adminDir_, "1.0.0");
-   paths_.adminDir = adminDir_;
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0");
    applyPaths();
-   EXPECT_FALSE(runsUserSlot());
-
-   ASSERT_FALSE(adminDir_.remove());
-   makeSlot(adminDir_, "1.0.0", "1.0.0");
-   applyPaths();
+   ASSERT_NE(locatePositAssistantInstallation(), bundled_);
    EXPECT_FALSE(runsUserSlot());
 }
 
 TEST_F(ChatInstallationHeld, DoesNotRunUserSlotWhenAReadOnlyCopyOutranksIt)
 {
    makeSlot(paths_.userStorageDir, "1.0.0", "1.0.0");
-   stageInstallation(paths_.bundledPath, "2.0.0");
+   stageInstallation(bundled_, "2.0.0");
 
    EXPECT_FALSE(runsUserSlot());
 }

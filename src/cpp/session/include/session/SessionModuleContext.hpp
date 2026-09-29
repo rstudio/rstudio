@@ -226,10 +226,8 @@ bool isPositAssistantEnabledByAdmin();
 // open-source builds define as always true, and this must work in open-source
 // RStudio Server.
 // When false the session ignores the user's own installation and makes no
-// manifest requests. It runs only the installation configured with
-// posit-assistant-path, or the copy bundled with RStudio when that option is
-// unset; a posit-assistant-path holding no installation leaves nothing to run
-// rather than falling back to the bundled copy. Independent of isPositAssistantEnabledByAdmin():
+// manifest requests. It runs only the newer of the administrator's selected
+// version and the copy bundled with RStudio. Independent of isPositAssistantEnabledByAdmin():
 // a session with Posit Assistant disabled outright never reaches these gates.
 bool isPositAssistantInstallationEnabledByAdmin();
 

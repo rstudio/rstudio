@@ -1038,8 +1038,10 @@
          {
             "name": "posit-assistant-path",
             "type": "core::FilePath",
-            "memberName": "positAssistantPath_",
-            "description": "Specifies the absolute path of the directory holding the administrator-provided Posit Assistant: either versioned installations under its versions directory, selected by its selected.json, or a single installation directory (the one containing dist). When it holds a valid installation, that installation is always used, in preference to the user's own installation and the copy bundled with RStudio. When it is set but holds no valid installation, the bundled copy is not used."
+            "memberName": "deprecatedPositAssistantPath_",
+            "description": "No longer used. Accepted so that configuration files which set it still parse; administrator-installed Posit Assistant versions are read from the posit-assistant directory beside the session binary.",
+            "isDeprecated": true,
+            "isHidden": true
          }
       ],
       "trust": [

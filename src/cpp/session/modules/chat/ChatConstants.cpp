@@ -31,9 +31,14 @@ namespace constants {
 // not deleted -- so that release keeps working while this one installs into
 // pai/versions.
 const char* const kPositAiStorageDirName = "pai";
-// Copy shipped with RStudio, installed beside the session binary (or next to
-// bin/ in the macOS app bundle); absent from open-source builds
-const char* const kBundledPositAiDirName = "posit-assistant";
+// The storage root RStudio provides for all users, installed beside the
+// session binary (or next to bin/ in the macOS app bundle). It holds the copy
+// shipped with RStudio, absent from open-source builds, and the
+// administrator's slots and selector in the layout of pai.
+const char* const kSystemPositAiDirName = "posit-assistant";
+// The copy shipped with RStudio, under the system storage root. Not a slot:
+// the package replaces it in place on each upgrade.
+const char* const kBundledInstallDirName = "bundled";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";

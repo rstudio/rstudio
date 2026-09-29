@@ -198,13 +198,15 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
 
 namespace {
 
-// Stages the files verifyInstallDir() requires, plus one client asset. The
-// asset is a .js so the request under test skips the handler's HTML branch,
-// which reads session options and the current editor theme.
+// Stages the files verifyInstallDir() requires, plus one client asset, as the
+// bundled copy of a fresh system storage directory. The asset is a .js so the
+// request under test skips the handler's HTML branch, which reads session
+// options and the current editor theme. Remove it with removeStaged().
 FilePath stageInstallationServingApp(const std::string& assetContent)
 {
-   FilePath dir;
-   FilePath::tempFilePath(dir);
+   FilePath systemDir;
+   FilePath::tempFilePath(systemDir);
+   FilePath dir = systemDir.completeChildPath(kBundledInstallDirName);
    dir.ensureDirectory();
 
    FilePath clientDir = dir.completeChildPath(kClientDirPath);
@@ -221,6 +223,11 @@ FilePath stageInstallationServingApp(const std::string& assetContent)
    return dir;
 }
 
+void removeStaged(const FilePath& install)
+{
+   install.getParent().removeIfExists();
+}
+
 // Requests /ai-chat/app.js from whichever installation the handler serves.
 Error requestApp(http::Response* pResponse)
 {
@@ -230,8 +237,8 @@ Error requestApp(http::Response* pResponse)
 }
 
 // The handler serves from the installation the session resolved, so each
-// test drives that resolution through posit-assistant-path as a single
-// unversioned directory, which is the simplest thing the resolver accepts.
+// test drives that resolution through a bundled copy, which is the simplest
+// thing the resolver accepts.
 // The backend port is cleared, and then the session's own sources restored,
 // after each test so a later test sees the state of a session whose chat
 // backend has not started yet. Clearing the port rebuilds the CSP header from
@@ -248,12 +255,13 @@ protected:
       setSearchPathsForTesting(boost::none);
    }
 
-   // Makes `install` the installation the session resolves. Discards any
-   // held resolution, as changing the sources does.
+   // Makes `install`, as staged by stageInstallationServingApp(), the
+   // installation the session resolves. Discards any held resolution, as
+   // changing the sources does.
    void serve(const FilePath& install)
    {
       InstallSearchPaths paths;
-      paths.adminDir = install;
+      paths.systemStorageDir = install.getParent();
       paths.userInstallEnabled = false;
       setSearchPathsForTesting(paths);
    }
@@ -274,7 +282,7 @@ TEST_F(ChatStaticFilesResolution, ServesAssetsFromTheResolvedInstallation)
    EXPECT_EQ(response.body(), "// resolved build");
    EXPECT_EQ(response.contentType(), getContentType(".js"));
 
-   install.removeIfExists();
+   removeStaged(install);
 }
 
 TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
@@ -282,18 +290,15 @@ TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
    FilePath first = stageInstallationServingApp("// first build");
    FilePath second = stageInstallationServingApp("// second build");
 
-   InstallSearchPaths paths;
-   paths.adminDir = first;
-   paths.userInstallEnabled = false;
-   setSearchPathsForTesting(paths);
+   serve(first);
 
    http::Response response;
    requestApp(&response);
    ASSERT_EQ(response.body(), "// first build");
 
-   // Replacing the tree posit-assistant-path names is what a third party
-   // does to an unversioned directory; the held resolution keeps serving the
-   // same path, and the page it loaded keeps getting the same installation.
+   // Replacing the bundled tree in place is what a package upgrade does; the
+   // held resolution keeps serving the same path, and the page it loaded
+   // keeps getting the same installation.
    ASSERT_FALSE(first.remove());
    ASSERT_FALSE(second.move(first, FilePath::MoveDirect));
 
@@ -301,7 +306,8 @@ TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
    requestApp(&held);
    EXPECT_EQ(held.body(), "// second build");
 
-   first.removeIfExists();
+   removeStaged(first);
+   removeStaged(second);
 }
 
 TEST_F(ChatStaticFilesResolution, ResolvedInstallationThatIsGoneIsNotServedFrom)
@@ -344,7 +350,7 @@ TEST_F(ChatStaticFilesResolution, PartiallyExtractedInstallationIsNotServedFrom)
 
    EXPECT_EQ(after.statusCode(), http::status::NotFound);
 
-   install.removeIfExists();
+   removeStaged(install);
 }
 
 TEST_F(ChatStaticFilesResolution, ClearingTheResolutionServesTheNewInstallation)
@@ -366,8 +372,8 @@ TEST_F(ChatStaticFilesResolution, ClearingTheResolutionServesTheNewInstallation)
    requestApp(&cleared);
    EXPECT_EQ(cleared.body(), "// second build");
 
-   first.removeIfExists();
-   second.removeIfExists();
+   removeStaged(first);
+   removeStaged(second);
 }
 
 namespace {
@@ -412,7 +418,7 @@ TEST_F(ChatStaticFilesResolution, CspIsRereadWhenTheBackendPortChanges)
 
    EXPECT_NE(requestPageCsp().find("https://before.example"), std::string::npos);
 
-   // An unversioned installation replaced in place keeps its path, so only
+   // A bundled copy replaced in place keeps its path, so only
    // the contents differ. A backend restart re-reads the directives, so the
    // policy served is the one belonging to what is being served now.
    writeStringToFile(install.completeChildPath(kCspConfigPath),
@@ -423,7 +429,7 @@ TEST_F(ChatStaticFilesResolution, CspIsRereadWhenTheBackendPortChanges)
    EXPECT_NE(header.find("https://after.example"), std::string::npos);
    EXPECT_EQ(header.find("https://before.example"), std::string::npos);
 
-   install.removeIfExists();
+   removeStaged(install);
 }
 
 TEST_F(ChatStaticFilesResolution, CspIsReadFromTheInstallationBeingServed)
@@ -444,8 +450,8 @@ TEST_F(ChatStaticFilesResolution, CspIsReadFromTheInstallationBeingServed)
    EXPECT_NE(header.find("https://second.example"), std::string::npos);
    EXPECT_EQ(header.find("https://first.example"), std::string::npos);
 
-   first.removeIfExists();
-   second.removeIfExists();
+   removeStaged(first);
+   removeStaged(second);
 }
 
 TEST_F(ChatStaticFilesResolution, CspFollowsTheResolutionWithoutABackendPortChange)
@@ -467,6 +473,6 @@ TEST_F(ChatStaticFilesResolution, CspFollowsTheResolutionWithoutABackendPortChan
    EXPECT_NE(header.find("https://second.example"), std::string::npos);
    EXPECT_EQ(header.find("https://first.example"), std::string::npos);
 
-   first.removeIfExists();
-   second.removeIfExists();
+   removeStaged(first);
+   removeStaged(second);
 }
