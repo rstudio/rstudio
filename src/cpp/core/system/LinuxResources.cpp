@@ -30,6 +30,8 @@
 
 #include <boost/regex.hpp>
 
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <sstream>
 #include <dirent.h>
@@ -1068,7 +1070,7 @@ Error parseProcFileKeys(const std::string& contents, const std::vector<std::stri
          if (!(lineStream >> value))
          {
             return systemError(boost::system::errc::protocol_error,
-                               "Could not read proc value '" + key + "' from line '" + line + "'",
+                               fmt::format("Could not read proc value '{}' from line '{}'", key, line),
                                ERROR_LOCATION);
          }
 
@@ -1081,7 +1083,7 @@ Error parseProcFileKeys(const std::string& contents, const std::vector<std::stri
    if (numFound != keys.size())
    {
       return systemError(boost::system::errc::invalid_argument,
-                         "Proc file missing value - found only: " + std::to_string(numFound) + " of: " + std::to_string(keys.size()) + " keys",
+                         fmt::format("Proc file missing value - found only: {} of: {} keys", numFound, keys.size()),
                          ERROR_LOCATION);
    }
 
