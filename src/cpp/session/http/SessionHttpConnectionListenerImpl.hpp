@@ -191,18 +191,23 @@ public:
       if (error)
          LOG_ERROR(error);
 
-      // close acceptor
-      boost::system::error_code ec;
-      acceptorService_.closeAcceptor(ec);
-      if (ec)
-         LOG_ERROR(core::Error(ec, ERROR_LOCATION));
-
       // stop the server, then wait for the listener thread to finish
       ioContext().stop();
-      core::thread::joinOrAbandonThread(
+      bool joined = core::thread::joinOrAbandonThread(
             listenerThread_,
             "HttpConnectionListener thread",
             false); // released via ioContext().stop() above, not interruptible
+
+      // close the acceptor only once the listener thread is gone: that thread
+      // re-arms the accept from handleAccept, and asio acceptors are not
+      // thread-safe, so closing it concurrently can crash the listener thread
+      if (joined)
+      {
+         boost::system::error_code ec;
+         acceptorService_.closeAcceptor(ec);
+         if (ec)
+            LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+      }
 
       // wait for the static asset thread (a no-op if it was never started);
       // the interrupt releases it from its queue wait
