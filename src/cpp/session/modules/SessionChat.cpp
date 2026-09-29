@@ -2426,7 +2426,7 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+         if (isNotFoundError(error))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "File not found: " + path);
          }
@@ -2632,7 +2632,7 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
-         else if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+         else if (isNotFoundError(error))
          {
             // Parent directory doesn't exist
             FilePath filePath(path);
@@ -2911,8 +2911,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
 
       if (error)
       {
-         if (error.getCode() ==
-             boost::system::errc::no_such_file_or_directory)
+         if (isNotFoundError(error))
          {
             sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
                              "File not found: " + path);
@@ -2974,8 +2973,7 @@ void handleEditFileContent(core::system::ProcessOperations& ops,
             sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                              "Permission denied: " + path);
          }
-         else if (error.getCode() ==
-                  boost::system::errc::no_such_file_or_directory)
+         else if (isNotFoundError(error))
          {
             FilePath filePath(path);
             std::string parentDir =
