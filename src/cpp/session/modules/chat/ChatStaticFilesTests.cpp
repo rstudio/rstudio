@@ -329,6 +329,8 @@ TEST_F(ChatStaticFilesResolution, ResolvedInstallationThatIsGoneIsNotServedFrom)
 
    EXPECT_FALSE(error);
    EXPECT_EQ(after.statusCode(), http::status::NotFound);
+
+   removeStaged(install);
 }
 
 TEST_F(ChatStaticFilesResolution, PartiallyExtractedInstallationIsNotServedFrom)
