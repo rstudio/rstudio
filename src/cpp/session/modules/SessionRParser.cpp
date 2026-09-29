@@ -1980,7 +1980,8 @@ void checkRepeatedFormalArgument(const RTokenCursor& cursor,
 // handled: they take a string (often a variable), and the former is
 // almost always an availability check that expects absence.
 // 'require()' is an availability check too whenever its result is
-// used, as in 'if (!require(foo))', so only statements are flagged.
+// used, as in 'if (!require(foo))', so only statements whose value
+// is discarded are flagged.
 void checkPackageInstalled(const RTokenCursor& cursor,
                            ParseStatus& status)
 {
@@ -2021,6 +2022,21 @@ void checkPackageInstalled(const RTokenCursor& cursor,
 
       if (!isStandaloneStatement(calleeCursor, endCursor, status))
          return;
+
+      // A statement's value can still be used, when it's the value of
+      // an 'else' branch or of the function enclosing it.
+      if (calleeCursor.previousSignificantToken().contentEquals(L"else"))
+         return;
+
+      ParseStatus::ParseState state = status.currentState();
+      if (state == ParseStatus::ParseStateFunctionStatement)
+         return;
+
+      if (state == ParseStatus::ParseStateFunctionExpression &&
+          endCursor.nextSignificantToken().isType(RToken::RBRACE))
+      {
+         return;
+      }
    }
 
    // With 'character.only = TRUE', a symbol refers to a variable

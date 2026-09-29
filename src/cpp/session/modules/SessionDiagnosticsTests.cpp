@@ -585,6 +585,15 @@ TEST(DiagnosticsTest, PackageNotInstalled) {
    EXPECT_LINT_MESSAGE("f <- function() {\n  require(rstudioNoSuchPackage)\n  1\n}", "is not installed");
    EXPECT_LINT_MESSAGE("if (x) library(rstudioNoSuchPackage)", "is not installed");
 
+   // ... including as the value of a function, or of an 'else' branch
+   EXPECT_NO_LINT_MESSAGE("has_foo <- function() require(rstudioNoSuchPackage)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("ok <- if (a) TRUE else require(rstudioNoSuchPackage)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("f <- function() {\n  message('checking')\n  require(rstudioNoSuchPackage)\n}", "is not installed");
+
+   // elsewhere, a statement's value is discarded
+   EXPECT_LINT_MESSAGE("if (x) {\n  require(rstudioNoSuchPackage)\n}", "is not installed");
+   EXPECT_LINT_MESSAGE("f <- function() {\n  if (x) require(rstudioNoSuchPackage)\n  1\n}", "is not installed");
+
    // the package may live in a library that isn't on the library paths
    EXPECT_NO_LINT_MESSAGE("library(rstudioNoSuchPackage, lib.loc = '~/mylib')", "is not installed");
    EXPECT_NO_LINT_MESSAGE("require(rstudioNoSuchPackage, lib.loc = lib)", "is not installed");
