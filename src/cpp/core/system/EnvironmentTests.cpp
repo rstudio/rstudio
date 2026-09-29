@@ -376,12 +376,8 @@ TEST(ResourcesTest, ProcFileReadFailsOnceProcessIsReaped)
 
 TEST(ResourcesTest, ProcFileReadReturnsProcessStatus)
 {
-   int fd = ::open("/proc/self/status", O_RDONLY | O_CLOEXEC);
-   ASSERT_NE(-1, fd);
-
    std::string contents;
-   Error error = readProcFileDescriptor(fd, &contents);
-   ::close(fd);
+   Error error = readProcFile("/proc/self/status", &contents);
    ASSERT_FALSE(error);
 
    pid_t parent = -1;
@@ -403,13 +399,8 @@ TEST(ResourcesTest, ZombieProcessHasNoSize)
    siginfo_t info;
    ASSERT_EQ(0, ::waitid(P_PID, child, &info, WEXITED | WNOWAIT));
 
-   std::string path = "/proc/" + std::to_string(child) + "/status";
-   int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
-
    std::string contents;
-   Error error = fd == -1 ? systemError(errno, ERROR_LOCATION) : readProcFileDescriptor(fd, &contents);
-   if (fd != -1)
-      ::close(fd);
+   Error error = readProcFile("/proc/" + std::to_string(child) + "/status", &contents);
 
    int status = 0;
    ::waitpid(child, &status, 0);

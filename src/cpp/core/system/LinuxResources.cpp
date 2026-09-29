@@ -61,27 +61,6 @@ MemoryUsageMode effectiveMemoryUsageMode()
    return s_memoryUsageMode;
 }
 
-// Reads a procfs file in full. This uses read(2) rather than a stream so that
-// a failed read is reported with its cause, and can't be mistaken for a file
-// that has more to give.
-Error readProcFile(const std::string& procPath, std::string* pContents)
-{
-   int fd = posix::posixCall<int>([&]() { return ::open(procPath.c_str(), O_RDONLY | O_CLOEXEC); });
-   if (fd == -1)
-   {
-      Error error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("path", procPath);
-      return error;
-   }
-
-   Error error = readProcFileDescriptor(fd, pContents);
-   ::close(fd);
-
-   if (error)
-      error.addProperty("path", procPath);
-   return error;
-}
-
 // Reads /proc/meminfo or /proc/<pid>/status to look up specific memory stats.
 Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
 {
@@ -1028,6 +1007,24 @@ Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
 void setMemoryUsageMode(MemoryUsageMode mode)
 {
    s_memoryUsageMode = mode;
+}
+
+Error readProcFile(const std::string& procPath, std::string* pContents)
+{
+   int fd = posix::posixCall<int>([&]() { return ::open(procPath.c_str(), O_RDONLY | O_CLOEXEC); });
+   if (fd == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", procPath);
+      return error;
+   }
+
+   Error error = readProcFileDescriptor(fd, pContents);
+   ::close(fd);
+
+   if (error)
+      error.addProperty("path", procPath);
+   return error;
 }
 
 Error readProcFileDescriptor(int fd, std::string* pContents)

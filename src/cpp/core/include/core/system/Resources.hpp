@@ -110,6 +110,11 @@ void setMemoryUsageMode(MemoryUsageMode mode);
 // Returns an error if memory.stat doesn't contain the needed keys.
 Error computeCgroupMemoryUsedKb(long currentKb, const std::string& memoryStat, bool isV2, long *pUsedKb);
 
+// Reads a procfs file in full. This uses read(2) rather than a stream so that
+// a failed read is reported with its cause, and can't be mistaken for a file
+// that has more to give.
+Error readProcFile(const std::string& procPath, std::string* pContents);
+
 // Reads what remains of a procfs file from an open descriptor. The kernel
 // generates these files as they are read, so a read can fail after the open
 // succeeded: /proc/<pid>/status fails with ESRCH once the process is reaped.
