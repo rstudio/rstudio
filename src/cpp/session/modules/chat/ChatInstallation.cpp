@@ -133,19 +133,37 @@ core::FilePath positAiStorageDir()
    return core::system::xdg::userDataDir().completePath(kPositAiStorageDirName);
 }
 
+namespace {
+
+// Whether a system storage directory holds anything this build could run: a
+// bundled copy, or an administrator's slot for this build's protocol.
+bool holdsUsableInstallation(const core::FilePath& storageDir)
+{
+   return verifyInstallDir(storageDir) ||
+          !selector::resolveSlot(storageDir,
+                                 kProtocolVersion,
+                                 selector::SelectorRepair::Disabled).isEmpty();
+}
+
+} // anonymous namespace
+
 core::FilePath systemStorageDir(const core::FilePath& resourcePath)
 {
    // Mirrors the Copilot Language Server layout: the directory is installed
    // beside the session binary, except in the macOS app bundle where it sits
-   // next to bin/ rather than inside it. The bin candidate must hold something
-   // the resolver reads, so a partial directory left there does not mask a
-   // usable one at the other location.
+   // next to bin/ rather than inside it. The other location is taken only
+   // when it holds something usable and bin does not, so a partial directory
+   // at either one does not mask a usable one at the other.
    core::FilePath binPath =
       resourcePath.completePath("bin").completePath(kSystemPositAiDirName);
-   if (verifyInstallDir(binPath) || slots::versionsDir(binPath).isDirectory())
+   if (holdsUsableInstallation(binPath))
       return binPath;
 
-   return resourcePath.completePath(kSystemPositAiDirName);
+   core::FilePath rootPath = resourcePath.completePath(kSystemPositAiDirName);
+   if (holdsUsableInstallation(rootPath))
+      return rootPath;
+
+   return binPath;
 }
 
 core::FilePath systemStorageDir()

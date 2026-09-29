@@ -273,6 +273,7 @@ TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectoryHoldingABundle)
    FilePath binDir = resourceDir.completeChildPath("bin")
                                 .completeChildPath(kSystemPositAiDirName);
    stageInstallation(binDir);
+   stageInstallation(resourceDir.completeChildPath(kSystemPositAiDirName));
 
    EXPECT_EQ(systemStorageDir(resourceDir), binDir);
 
@@ -281,14 +282,15 @@ TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectoryHoldingABundle)
 
 TEST(ChatInstallation, SystemStorageDirPrefersBinSubdirectoryHoldingOnlySlots)
 {
-   // Open-source builds ship no bundle, so an administrator's slots alone
+   // Open-source builds ship no bundle, so an administrator's slot alone
    // must be enough to select the location.
    FilePath resourceDir;
    FilePath::tempFilePath(resourceDir);
 
    FilePath binDir = resourceDir.completeChildPath("bin")
                                 .completeChildPath(kSystemPositAiDirName);
-   ASSERT_FALSE(slots::versionsDir(binDir).ensureDirectory());
+   makeSlot(binDir, "1.0.0", "1.0.0");
+   stageInstallation(resourceDir.completeChildPath(kSystemPositAiDirName));
 
    EXPECT_EQ(systemStorageDir(resourceDir), binDir);
 
@@ -300,28 +302,45 @@ TEST(ChatInstallation, SystemStorageDirFallsBackToResourceRoot)
    // macOS app bundle layout: the directory sits next to bin/, not inside it.
    FilePath resourceDir;
    FilePath::tempFilePath(resourceDir);
-   ASSERT_FALSE(resourceDir.ensureDirectory());
-
-   EXPECT_EQ(systemStorageDir(resourceDir),
-             resourceDir.completeChildPath(kSystemPositAiDirName));
-
-   resourceDir.removeIfExists();
-}
-
-TEST(ChatInstallation, SystemStorageDirSkipsAStrayBinSubdirectory)
-{
-   // A bin candidate that exists but holds nothing the resolver reads must
-   // not mask the directory at the other location.
-   FilePath resourceDir;
-   FilePath::tempFilePath(resourceDir);
-   ASSERT_FALSE(resourceDir.completeChildPath("bin")
-                           .completeChildPath(kSystemPositAiDirName)
-                           .ensureDirectory());
 
    FilePath rootDir = resourceDir.completeChildPath(kSystemPositAiDirName);
    stageInstallation(rootDir);
 
    EXPECT_EQ(systemStorageDir(resourceDir), rootDir);
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, SystemStorageDirSkipsABinSubdirectoryHoldingNothingUsable)
+{
+   // A bin candidate that exists -- even with an empty versions/, or slots
+   // only for another protocol -- must not mask a usable directory at the
+   // other location.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+
+   FilePath binDir = resourceDir.completeChildPath("bin")
+                                .completeChildPath(kSystemPositAiDirName);
+   ASSERT_FALSE(slots::versionsDir(binDir).ensureDirectory());
+   makeSlot(binDir, "9.9.9", "9.9.9", "99.0");
+
+   FilePath rootDir = resourceDir.completeChildPath(kSystemPositAiDirName);
+   stageInstallation(rootDir);
+
+   EXPECT_EQ(systemStorageDir(resourceDir), rootDir);
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, SystemStorageDirDefaultsToBinSubdirectoryWhenNothingIsInstalled)
+{
+   // Where an administrator is told to install when nothing resolves.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   ASSERT_FALSE(resourceDir.completeChildPath(kSystemPositAiDirName).ensureDirectory());
+
+   EXPECT_EQ(systemStorageDir(resourceDir),
+             resourceDir.completeChildPath("bin").completeChildPath(kSystemPositAiDirName));
 
    resourceDir.removeIfExists();
 }

@@ -114,10 +114,11 @@ core::FilePath positAiStorageDir();
  *
  * Installed beside the session binary, except in the macOS app bundle where
  * it sits next to bin/ rather than inside it. The bin location is returned
- * when it holds a bundled copy or a versions/ directory, and the other
- * otherwise -- so a stray directory there does not mask a usable one at the
- * other location, and the returned path is where the directory would be even
- * when none is installed. Only Workbench ships a bundled copy.
+ * unless it holds nothing this build could run -- no bundled copy and no
+ * administrator's slot for this build's protocol -- and the other location
+ * does, so a partial directory at either one does not mask a usable one at
+ * the other. When neither holds anything the bin location is returned, as
+ * where the directory is expected. Only Workbench ships a bundled copy.
  *
  * @param resourcePath Root to resolve against (the session resource path)
  * @return FilePath to the system storage directory
