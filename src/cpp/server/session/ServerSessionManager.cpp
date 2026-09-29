@@ -326,8 +326,20 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
       f(&profile);
    }
 
-   // launch the session
-   Error error = sessionLaunchFunction_(ioContext, profile, jsonRequest, request, onLaunch, onError);
+   // launch the session. a launch function that throws is over just like
+   // one that returns an error: its entry must not stay marked as launching
+   // (no outcome could clear it until it aged out) or stay pending at all
+   Error error;
+   try
+   {
+      error = sessionLaunchFunction_(ioContext, profile, jsonRequest, request, onLaunch, onError);
+   }
+   catch (...)
+   {
+      endLaunching(context, launchTime);
+      removePendingLaunch(context, false, "exception during launch");
+      throw;
+   }
    endLaunching(context, launchTime);
    if (error)
    {
@@ -451,75 +463,124 @@ void SessionManager::addSessionLaunchProfileFilter(
    sessionLaunchProfileFilters_.push_back(filter);
 }
 
-void SessionManager::removePendingLaunch(const r_util::SessionContext& context, const bool success, const std::string& errorMsg)
+SessionManager::PendingLaunchResolution SessionManager::resolvePendingLaunch(LaunchMap::const_iterator it,
+                                                                             bool success,
+                                                                             PidType peerPid)
 {
-   bool removed = false;
-   bool keptLaunching = false;
-   PidType keptPid = -1;
-   boost::posix_time::ptime startTime;
+   PendingLaunchResolution resolution;
+   const PendingLaunch& launch = it->second;
+
+   // a request for this context that ends while the launch is still
+   // being made says nothing about it: the launched process isn't
+   // listening yet, so the request was answered by, or failed on,
+   // whatever came before (e.g. the session a restart is replacing).
+   // clearing the entry here let a retrying request launch a second
+   // session, which then locked the user out of the first (#18941).
+   // the guards below can't cover this window, since the pid isn't
+   // recorded until the process exists.
+   if (launch.launching)
+   {
+      resolution.keptLaunching = true;
+   }
+   // an outcome from some other process says nothing about the launched
+   // one either. after the launch has returned, the session being replaced
+   // can still answer (or fail) a request; erasing the replacement's entry
+   // for that let the next request that found the session unavailable
+   // launch it again (#18963). for local stream sessions the connection's
+   // peer credentials identify the process that produced the outcome.
+   else if (peerPid != -1 && launch.pid != -1 && peerPid != launch.pid)
+   {
+      resolution.keptForOtherPid = peerPid;
+   }
+   // an outcome that can't be attributed to a process (no connection was
+   // made, or the session is reached over TCP) falls back to liveness: a
+   // request failing for this context says nothing about the health of a
+   // separately launched, still-booting session process. an RPC in flight
+   // to an exiting session dies with EOF right as the replacement is
+   // spawned, and erasing the replacement's entry here let the next
+   // connection-retry recovery pass launch a second replacement -- the
+   // loser of the socket-bind race was then orphaned forever, still
+   // holding the project and Posit Assistant locks (#18572). keep the
+   // entry while its process is alive; if it never becomes reachable, the
+   // exit tracker clears it when it dies and launchSession's one-minute
+   // window expires it otherwise. custom session launchers never record a
+   // pid, so they keep the old clear-on-error behavior.
+   else if (!success &&
+            peerPid == -1 &&
+            launch.pid != -1 &&
+            core::system::isProcessRunning(launch.pid))
+   {
+      resolution.keptLivePid = launch.pid;
+   }
+   else
+   {
+      resolution.removed = true;
+      resolution.launchTime = launch.launchTime;
+      pendingLaunches_.erase(it);
+   }
+
+   return resolution;
+}
+
+bool SessionManager::logKeptPendingLaunch(const PendingLaunchResolution& resolution,
+                                          const std::string& username,
+                                          const std::string& sessionId,
+                                          bool success,
+                                          const std::string& errorMsg)
+{
+   const char* outcome = success ? "success" : "error";
+   const std::string& detail = errorMsg.empty() ? "(none)" : errorMsg;
+
+   if (resolution.keptLaunching)
+   {
+      DLOGF("Keeping pending launch still being made for user {} (id: {}) despite request {}: {}",
+            username,
+            sessionId,
+            outcome,
+            detail);
+   }
+   else if (resolution.keptForOtherPid != -1)
+   {
+      DLOGF("Keeping pending launch for user {} (id: {}): request {} came from process {}, not the launched one: {}",
+            username,
+            sessionId,
+            outcome,
+            resolution.keptForOtherPid,
+            detail);
+   }
+   else if (resolution.keptLivePid != -1)
+   {
+      DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
+            resolution.keptLivePid,
+            username,
+            sessionId,
+            detail);
+   }
+   else
+   {
+      return false;
+   }
+
+   return true;
+}
+
+void SessionManager::removePendingLaunch(const r_util::SessionContext& context, const bool success, const std::string& errorMsg, PidType peerPid)
+{
+   PendingLaunchResolution resolution;
    LOCK_MUTEX(launchesMutex_)
    {
       LaunchMap::const_iterator it = pendingLaunches_.find(context);
       if (it != pendingLaunches_.cend())
-      {
-         // a request for this context that ends while the launch is still
-         // being made says nothing about it: the launched process isn't
-         // listening yet, so the request was answered by, or failed on,
-         // whatever came before (e.g. the session a restart is replacing).
-         // clearing the entry here let a retrying request launch a second
-         // session, which then locked the user out of the first (#18941).
-         // the guard below can't cover this window, since the pid isn't
-         // recorded until the process exists.
-         if (it->second.launching)
-         {
-            keptLaunching = true;
-         }
-         // a request failing for this context says nothing about the health
-         // of a separately launched, still-booting session process: an RPC
-         // in flight to an exiting session dies with EOF right as the
-         // replacement is spawned, and erasing the replacement's entry here
-         // let the next connection-retry recovery pass launch a second
-         // replacement -- the loser of the socket-bind race was then orphaned
-         // forever, still holding the project and Posit Assistant locks
-         // (#18572). keep the entry while its process is alive; if it never
-         // becomes reachable, the exit tracker clears it when it dies and
-         // launchSession's one-minute window expires it otherwise. custom
-         // session launchers never record a pid, so they keep the old
-         // clear-on-error behavior.
-         else if (!success &&
-                  it->second.pid != -1 &&
-                  core::system::isProcessRunning(it->second.pid))
-         {
-            keptPid = it->second.pid;
-         }
-         else
-         {
-            removed = true;
-            startTime = it->second.launchTime;
-            pendingLaunches_.erase(context);
-         }
-      }
+         resolution = resolvePendingLaunch(it, success, peerPid);
    }
    END_LOCK_MUTEX
 
-   if (keptLaunching)
-   {
-      DLOGF("Keeping pending launch still being made for user {} (id: {}) despite request {}: {}",
-            context.username, context.scope.id(), success ? "success" : "error",
-            errorMsg.empty() ? "(none)" : errorMsg);
+   if (logKeptPendingLaunch(resolution, context.username, context.scope.id(), success, errorMsg))
       return;
-   }
 
-   if (keptPid != -1)
+   if (resolution.removed)
    {
-      DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
-            keptPid, context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
-      return;
-   }
-
-   if (removed)
-   {
-      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - startTime;
+      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - resolution.launchTime;
       std::string progName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench() + " session(" + context.scope.id() + ")";
       if (success)
       {
@@ -537,31 +598,28 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
    }
 }
 
-void SessionManager::removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success, const std::string& errorMsg)
+void SessionManager::removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success, const std::string& errorMsg, PidType peerPid)
 {
-   bool removed = false;
-   boost::posix_time::ptime startTime;
+   PendingLaunchResolution resolution;
    LOCK_MUTEX(launchesMutex_)
    {
-      auto it = pendingLaunches_.cbegin();
-      while (it != pendingLaunches_.cend())
+      for (LaunchMap::const_iterator it = pendingLaunches_.cbegin(); it != pendingLaunches_.cend(); ++it)
       {
          if (it->first.username == username && it->first.scope.id() == sessionId)
          {
-            removed = true;
-            startTime = it->second.launchTime;
-            pendingLaunches_.erase(it++);
+            resolution = resolvePendingLaunch(it, success, peerPid);
             break;
          }
-         else
-            ++it;
       }
    }
    END_LOCK_MUTEX
 
-   if (removed)
+   if (logKeptPendingLaunch(resolution, username, sessionId, success, errorMsg))
+      return;
+
+   if (resolution.removed)
    {
-      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - startTime;
+      boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - resolution.launchTime;
       if (success)
          LOG_DEBUG_MESSAGE("Session started and connection made by: " + username + ":" + sessionId +
                            " in " + std::to_string(startDuration.total_seconds()) + "." +

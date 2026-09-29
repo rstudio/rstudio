@@ -71,9 +71,12 @@ public:
                              const core::http::ErrorHandler& onError = core::http::ErrorHandler(),
                              const std::string& openFile = "",
                              const core::system::Options extraArgs = core::system::Options());
-   void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string());
+   // report the outcome of a request for the context. peerPid is the process
+   // that produced it (from the connection's peer credentials) or -1 when
+   // unknown, e.g. no connection was made or the session is reached over TCP
+   void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string(), PidType peerPid = -1);
 
-   void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string());
+   void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string(), PidType peerPid = -1);
 
    // associate the launched process with its pending launch so a launch whose
    // process dies before a client connection can be detected and cleared
@@ -135,8 +138,33 @@ private:
    void endLaunching(const core::r_util::SessionContext& context,
                      const boost::posix_time::ptime& launchTime);
 
-   boost::mutex launchesMutex_;
+   // what a request outcome did to a pending launch: removed it, or left it
+   // in place for one of the reasons below
+   struct PendingLaunchResolution
+   {
+      bool removed = false;
+      bool keptLaunching = false;
+      PidType keptLivePid = -1;
+      PidType keptForOtherPid = -1;
+      boost::posix_time::ptime launchTime;
+   };
+
    typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;
+
+   // applies a request outcome to the entry (caller holds launchesMutex_),
+   // erasing it when the outcome ends the launch
+   PendingLaunchResolution resolvePendingLaunch(LaunchMap::const_iterator it,
+                                                bool success,
+                                                PidType peerPid);
+
+   // logs why an outcome left a pending launch in place; false if it didn't
+   bool logKeptPendingLaunch(const PendingLaunchResolution& resolution,
+                             const std::string& username,
+                             const std::string& sessionId,
+                             bool success,
+                             const std::string& errorMsg);
+
+   boost::mutex launchesMutex_;
    LaunchMap pendingLaunches_;
 
    // session launch function
