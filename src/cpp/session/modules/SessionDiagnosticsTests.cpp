@@ -482,6 +482,18 @@ TEST(DiagnosticsTest, BareReturn) {
    // 'return' can be an ordinary variable (grid has a formal named 'return')
    EXPECT_NO_LINT_MESSAGE("f <- function(x, return = FALSE) { if (return) x }", "'return' used without");
    EXPECT_NO_LINT_MESSAGE("f <- function(x, return = FALSE) list(return = return)", "'return' used without");
+
+   // references to the function itself are not statements
+   EXPECT_NO_LINT_MESSAGE("identical(e[[1]], quote(return))", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("body(f)[[1]] == quote(return)", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("lapply(x, return)", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("ret <- return", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("f <- function(x) { identical(x, return) }", "'return' used without");
+
+   // statements within a block passed to a function still are
+   EXPECT_LINT_MESSAGE("local({ if (x) return; 1 })", "'return' used without parentheses");
+   EXPECT_LINT_MESSAGE("f <- function(x) if (x) return else 1", "'return' used without parentheses");
+   EXPECT_LINT_MESSAGE("f <- function(x) {\n  if (x) return\n  -1\n}", "'return' used without parentheses");
 }
 
 TEST(DiagnosticsTest, InvalidCharacters) {
@@ -563,6 +575,19 @@ TEST(DiagnosticsTest, PackageNotInstalled) {
    EXPECT_NO_LINT_MESSAGE("library(rstudioNoSuchPackage, character.only = TRUE)", "is not installed");
    EXPECT_NO_LINT_MESSAGE("library()", "is not installed");
    EXPECT_NO_LINT_MESSAGE("x$library(rstudioNoSuchPackage)", "is not installed");
+
+   // 'require()' is an availability check whenever its result is used
+   EXPECT_NO_LINT_MESSAGE("if (!require(rstudioNoSuchPackage)) install.packages('rstudioNoSuchPackage')", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("if (require(rstudioNoSuchPackage)) 1 else 2", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("ok <- require(rstudioNoSuchPackage)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("require(rstudioNoSuchPackage) || stop('unavailable')", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("stopifnot(require(rstudioNoSuchPackage))", "is not installed");
+   EXPECT_LINT_MESSAGE("f <- function() {\n  require(rstudioNoSuchPackage)\n  1\n}", "is not installed");
+   EXPECT_LINT_MESSAGE("if (x) library(rstudioNoSuchPackage)", "is not installed");
+
+   // the package may live in a library that isn't on the library paths
+   EXPECT_NO_LINT_MESSAGE("library(rstudioNoSuchPackage, lib.loc = '~/mylib')", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("require(rstudioNoSuchPackage, lib.loc = lib)", "is not installed");
 }
 
 TEST(DiagnosticsTest, RStudioFilesCanBeSuccessfullyLinted) {

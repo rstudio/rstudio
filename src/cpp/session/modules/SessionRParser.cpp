@@ -1546,6 +1546,23 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
 
 
 
+// Check whether the tokens from 'startCursor' to 'endCursor' form a
+// statement of their own, so that the value they produce is discarded,
+// as opposed to an operand, a condition, or an argument to a call.
+bool isStandaloneStatement(const RTokenCursor& startCursor,
+                           const RTokenCursor& endCursor,
+                           const ParseStatus& status)
+{
+   if (status.isInParentheticalScope())
+      return false;
+
+   const RToken& previous = startCursor.previousSignificantToken();
+   if (isBinaryOp(previous) || isValidAsUnaryOperator(previous))
+      return false;
+
+   return endCursor.clone().isAtEndOfStatement(false);
+}
+
 void handleIdentifier(RTokenCursor& cursor,
                       ParseStatus& status)
 {
@@ -1590,9 +1607,12 @@ void handleIdentifier(RTokenCursor& cursor,
    // A bare 'return' evaluates to the primitive itself rather than
    // returning from the enclosing function, which is essentially
    // never what was intended -- unless 'return' is a variable here
-   // (grid, for one, has a formal argument named 'return').
+   // (grid, for one, has a formal argument named 'return'). Only
+   // statements are flagged: elsewhere (e.g. 'quote(return)') the
+   // function itself is what's wanted.
    if (cursor.contentEquals(L"return") &&
        !cursor.nextSignificantToken().isType(RToken::LPAREN) &&
+       isStandaloneStatement(cursor, cursor, status) &&
        !status.node()->symbolHasDefinitionInTree("return", cursor.currentPosition()))
    {
       status.lint().bareReturn(cursor);
@@ -1959,6 +1979,8 @@ void checkRepeatedFormalArgument(const RTokenCursor& cursor,
 // 'requireNamespace()' and 'loadNamespace()' are deliberately not
 // handled: they take a string (often a variable), and the former is
 // almost always an availability check that expects absence.
+// 'require()' is an availability check too whenever its result is
+// used, as in 'if (!require(foo))', so only statements are flagged.
 void checkPackageInstalled(const RTokenCursor& cursor,
                            ParseStatus& status)
 {
@@ -1969,11 +1991,9 @@ void checkPackageInstalled(const RTokenCursor& cursor,
    if (!callee.isType(RToken::ID))
       return;
 
-   if (!callee.contentEquals(L"library") &&
-       !callee.contentEquals(L"require"))
-   {
+   bool isRequire = callee.contentEquals(L"require");
+   if (!isRequire && !callee.contentEquals(L"library"))
       return;
-   }
 
    // Only handle plain calls; 'x$library(foo)' is something else.
    if (isExtractionOperator(cursor.previousSignificantToken(2)))
@@ -1989,18 +2009,32 @@ void checkPackageInstalled(const RTokenCursor& cursor,
    if (!after.isType(RToken::COMMA) && !after.isType(RToken::RPAREN))
       return;
 
-   // With 'character.only = TRUE', a symbol refers to a variable
-   // holding the package name, so there's nothing to check.
    RTokenCursor endCursor = cursor.clone();
    if (!endCursor.fwdToMatchingToken())
       return;
 
+   if (isRequire)
+   {
+      RTokenCursor calleeCursor = cursor.clone();
+      if (!calleeCursor.moveToPreviousSignificantToken())
+         return;
+
+      if (!isStandaloneStatement(calleeCursor, endCursor, status))
+         return;
+   }
+
+   // With 'character.only = TRUE', a symbol refers to a variable
+   // holding the package name, and with 'lib.loc' the package need
+   // not be on the library paths, so there's nothing to check.
    RTokenCursor argCursor = cursor.clone();
    while (argCursor.moveToNextSignificantToken() &&
           argCursor.currentPosition() < endCursor.currentPosition())
    {
-      if (argCursor.contentEquals(L"character.only"))
+      if (argCursor.contentEquals(L"character.only") ||
+          argCursor.contentEquals(L"lib.loc"))
+      {
          return;
+      }
 
       // Skip nested calls so that their arguments aren't inspected.
       if (isLeftBracket(argCursor))
