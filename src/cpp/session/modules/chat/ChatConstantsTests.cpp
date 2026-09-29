@@ -244,6 +244,8 @@ TEST(NegotiatedCapabilities, ManagedKeepsEveryOtherCapability)
    for (const std::string& capability : rstudioCapabilities())
    {
       if (capability != "ui/checkForUpdates")
+      {
          EXPECT_TRUE(advertises(negotiated, capability)) << capability;
+      }
    }
 }
