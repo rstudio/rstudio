@@ -1029,6 +1029,22 @@ void prepareLocalhostResponseForTest(
                             response,
                             pPreparedResponse);
 }
+
+void handleRpcErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const Error& error)
+{
+   handleRpcError(ptrConnection, context, error);
+}
+
+void handleContentErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const Error& error)
+{
+   handleContentError(ptrConnection, context, error);
+}
 #endif
 
 bool applyProxyFilter(
