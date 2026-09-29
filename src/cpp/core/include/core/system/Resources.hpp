@@ -121,12 +121,14 @@ Error readProcFile(const std::string& procPath, std::string* pContents);
 Error readProcFileDescriptor(int fd, std::string* pContents);
 
 // Looks up the values of "Key: value" lines, as found in /proc/meminfo and
-// /proc/<pid>/status. Returns an error unless every key is found.
+// /proc/<pid>/status. Returns an error unless every key is found; pValues
+// then holds one value per key, in the order of the keys.
 Error parseProcFileKeys(const std::string& contents, const std::vector<std::string>& keys, std::vector<long>* pValues);
 
 // Parses the parent and the size (RSS + swap, in kB) of a process from the
-// contents of its /proc/<pid>/status. Processes without an address space
-// (zombies, kernel threads) report no memory and have a size of 0.
+// contents of its /proc/<pid>/status. A memory line that is missing counts
+// as 0: processes without an address space (zombies, kernel threads) have
+// none. Returns an error if there is no parent, or a value can't be read.
 Error parseProcessStatus(const std::string& contents, pid_t* pParentPid, long* pSizeKb);
 
 // Sets the memory limit. Must have privileges and provide the uid of the ultimate process owner

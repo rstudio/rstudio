@@ -61,7 +61,48 @@ MemoryUsageMode effectiveMemoryUsageMode()
    return s_memoryUsageMode;
 }
 
-// Reads /proc/meminfo or /proc/<pid>/status to look up specific memory stats.
+// Looks up the values of "Key: value" lines in a single pass over the
+// contents of a procfs file. A key that isn't there is left without a value.
+Error scanProcFileKeys(const std::string& contents,
+                       const std::vector<std::string>& keys,
+                       std::vector<boost::optional<long>>* pValues)
+{
+   // /proc/meminfo and /proc/<pid>/status contain lines that look like this:
+   //
+   // MemTotal: 8124360 kB
+   pValues->assign(keys.size(), boost::none);
+
+   std::size_t numFound = 0;
+   std::istringstream stream(contents);
+   std::string line;
+   while (numFound < keys.size() && std::getline(stream, line))
+   {
+      for (std::size_t i = 0; i < keys.size(); i++)
+      {
+         const std::string& key = keys[i];
+         if (!string_utils::isPrefixOf(line, key + ":"))
+            continue;
+
+         // This is the key we're looking for; read the value from the remainder of the line.
+         std::istringstream lineStream(line.substr(key.size() + 1));
+         long value = 0;
+         if (!(lineStream >> value))
+         {
+            return systemError(boost::system::errc::protocol_error,
+                               fmt::format("Could not read proc value '{}' from line '{}'", key, line),
+                               ERROR_LOCATION);
+         }
+
+         (*pValues)[i] = value;
+         numFound++;
+         break;
+      }
+   }
+
+   return Success();
+}
+
+// Reads /proc/meminfo to look up specific memory stats.
 Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
 {
    std::string contents;
@@ -75,31 +116,44 @@ Error readProcFileKeys(const std::string& procPath, const std::vector<std::strin
    return error;
 }
 
+// Reads the parent and the size of a process from its /proc/<pid>/status.
+Error readProcessStatus(const std::string& statusPath, PidType* pParentPid, long* pSizeKb)
+{
+   std::string contents;
+   Error error = readProcFile(statusPath, &contents);
+   if (error)
+      return error;
+
+   error = parseProcessStatus(contents, pParentPid, pSizeKb);
+   if (error)
+      error.addProperty("path", statusPath);
+   return error;
+}
+
 // Whether a procfs read failed because the process has since exited: ENOENT
 // if it was gone before the open, ESRCH if it was reaped before the read.
 bool isProcessGone(const Error& error)
 {
-   return error.getCode() == ENOENT || error.getCode() == ESRCH;
+   return error == systemError(ENOENT, ErrorLocation()) ||
+          error == systemError(ESRCH, ErrorLocation());
 }
 
-// Returns the RSS + swap for the specified process.
+// Returns the RSS + swap for the specified process, in kb.
 // The goal here is to choose values that are specific to a given process,
 // that are using real resources on the system. Including swap so that processes
 // that overflow main memory continue are measured based on their complete size.
 long getProcessSize(PidType pid)
 {
-   std::vector<std::string> keys = {"VmRSS", "VmSwap"};
-   std::vector<long> values = {0, 0};
-
-   Error error = readProcFileKeys("/proc/" + std::to_string(pid) + "/status", keys, &values);
+   PidType parentPid = -1;
+   long sizeKb = 0;
+   Error error = readProcessStatus("/proc/" + std::to_string(pid) + "/status", &parentPid, &sizeKb);
    if (error)
    {
       LOG_ERROR(error);
       return 0;
    }
 
-   // Return the sum of rss and swap in kb
-   return values[0] + values[1];
+   return sizeKb;
 }
 
 bool isChildOfParent(const std::map<PidType, PidType>& childToParentMap, PidType parentPid, PidType childPid)
@@ -154,22 +208,13 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
          // Take the parent and the size from a single read of the status
          // file. Processes come and go while /proc is scanned, so one that
          // has exited since it was listed is expected, and is left out.
-         std::string statusPath = "/proc/" + std::string(pDirEnt->d_name) + "/status";
-         std::string status;
-         error = readProcFile(statusPath, &status);
+         PidType ppid = -1;
+         long sizeKb = 0;
+         error = readProcessStatus("/proc/" + std::string(pDirEnt->d_name) + "/status", &ppid, &sizeKb);
          if (error)
          {
             if (!isProcessGone(error))
-               DLOGF("Could not read {}: {}", statusPath, error.asString());
-            continue;
-         }
-
-         PidType ppid = -1;
-         long sizeKb = 0;
-         error = parseProcessStatus(status, &ppid, &sizeKb);
-         if (error)
-         {
-            DLOGF("Could not parse {}: {}", statusPath, error.asString());
+               log::logErrorAsDebug(error);
             continue;
          }
 
@@ -1047,36 +1092,12 @@ Error readProcFileDescriptor(int fd, std::string* pContents)
 
 Error parseProcFileKeys(const std::string& contents, const std::vector<std::string>& keys, std::vector<long>* pValues)
 {
-   // /proc/meminfo and /proc/<pid>/status contain lines that look like this:
-   //
-   // MemTotal: 8124360 kB
-   std::size_t numFound = 0;
-   std::istringstream stream(contents);
-   std::string line;
-   while (numFound < keys.size() && std::getline(stream, line))
-   {
-      for (std::size_t i = 0; i < keys.size(); i++)
-      {
-         const std::string& key = keys[i];
-         if (!string_utils::isPrefixOf(line, key + ":"))
-            continue;
+   std::vector<boost::optional<long>> values;
+   Error error = scanProcFileKeys(contents, keys, &values);
+   if (error)
+      return error;
 
-         // This is the key we're looking for; read the value from the remainder of the line.
-         std::istringstream lineStream(line.substr(key.size() + 1));
-         long value = 0;
-         if (!(lineStream >> value))
-         {
-            return systemError(boost::system::errc::protocol_error,
-                               fmt::format("Could not read proc value '{}' from line '{}'", key, line),
-                               ERROR_LOCATION);
-         }
-
-         (*pValues)[i] = value;
-         numFound++;
-         break;
-      }
-   }
-
+   std::size_t numFound = values.size() - std::count(values.begin(), values.end(), boost::none);
    if (numFound != keys.size())
    {
       return systemError(boost::system::errc::invalid_argument,
@@ -1084,24 +1105,31 @@ Error parseProcFileKeys(const std::string& contents, const std::vector<std::stri
                          ERROR_LOCATION);
    }
 
+   pValues->clear();
+   for (const boost::optional<long>& value : values)
+      pValues->push_back(*value);
+
    return Success();
 }
 
 Error parseProcessStatus(const std::string& contents, pid_t* pParentPid, long* pSizeKb)
 {
-   std::vector<long> parent = {0};
-   Error error = parseProcFileKeys(contents, {"PPid"}, &parent);
+   std::vector<boost::optional<long>> values;
+   Error error = scanProcFileKeys(contents, {"PPid", "VmRSS", "VmSwap"}, &values);
    if (error)
       return error;
 
-   // A process without an address space has no memory lines
-   std::vector<long> sizes = {0, 0};
-   error = parseProcFileKeys(contents, {"VmRSS", "VmSwap"}, &sizes);
-   if (error)
-      sizes = {0, 0};
+   if (!values[0])
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Process status has no PPid",
+                         ERROR_LOCATION);
+   }
 
-   *pParentPid = static_cast<pid_t>(parent[0]);
-   *pSizeKb = sizes[0] + sizes[1];
+   // A memory line that is missing counts as 0. A process without an address
+   // space has neither, and gVisor's procfs reports VmRSS without VmSwap.
+   *pParentPid = static_cast<pid_t>(*values[0]);
+   *pSizeKb = values[1].get_value_or(0) + values[2].get_value_or(0);
    return Success();
 }
 
