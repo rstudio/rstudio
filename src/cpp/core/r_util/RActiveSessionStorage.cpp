@@ -199,7 +199,8 @@ Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std:
 
       if (error)
       {
-         if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+         // Windows reports a missing directory as ERROR_PATH_NOT_FOUND
+         if (isNotFoundError(error))
          {
             ensurePropertyDir();
             error = core::writeStringToFileAtomic(writePath, prop.second);

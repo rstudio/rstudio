@@ -265,7 +265,7 @@ SEXP rs_stopScriptJob(SEXP sexpId)
 {
    std::string id = r::sexp::safeAsString(sexpId);
    Error error = stopScriptJob(id);
-   if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+   if (isNotFoundError(error))
    {
       r::exec::error("The script job '" + id + "' was not found.");
    }
@@ -280,7 +280,7 @@ SEXP rs_replayScriptJob(SEXP sexpId)
 {
    std::string id = r::sexp::safeAsString(sexpId);
    Error error = replayScriptJob(id);
-   if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+   if (isNotFoundError(error))
    {
       r::exec::error("The script job '" + id + "' was not found.");
    }
