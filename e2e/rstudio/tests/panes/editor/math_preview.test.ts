@@ -31,6 +31,16 @@ test.describe('Inline LaTeX math previews', () => {
     );
   };
 
+  // Typesets render into a hidden scratch element inside their target before
+  // being swapped in, so a re-render in flight adds a second, hidden
+  // mjx-container there -- and re-renders overlap the assertions, since each
+  // preview has two triggers (document load or change, then cursor idle).
+  // Match only the math the user can see.
+  const visibleMath = (page: Page, selector: string) => page.locator(selector).filter({ visible: true });
+
+  // the popup preview typesets outside of any line widget
+  const popupMath = (page: Page) => visibleMath(page, 'mjx-container:not(.rstudio-mathjax-root mjx-container)');
+
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
@@ -86,7 +96,7 @@ test.describe('Inline LaTeX math previews', () => {
     await moveCursorTo(page, 8, 2);
 
     // the preview line widget renders typeset CHTML output
-    const widget = page.locator('.rstudio-mathjax-root mjx-container');
+    const widget = visibleMath(page, '.rstudio-mathjax-root mjx-container');
     await expect(widget).toBeVisible({ timeout: 60000 });
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
@@ -108,22 +118,20 @@ test.describe('Inline LaTeX math previews', () => {
     // place the cursor inside the inline math region
     await moveCursorTo(page, 5, 20);
 
-    // the popup preview typesets outside of any line widget
-    const popupMath = page.locator('mjx-container:not(.rstudio-mathjax-root mjx-container)');
-    await expect(popupMath).toBeVisible({ timeout: 60000 });
+    const math = popupMath(page);
+    await expect(math).toBeVisible({ timeout: 60000 });
 
     // watch the popup's math element: rendered TeX errors must never become
     // visible (typesets happen in a hidden scratch element inside the target,
     // and a failed render keeps the previous output). track scratch-element
     // removals on the target as the "a re-render completed" signal.
-    await page.evaluate(() => {
-      const container = Array.from(document.querySelectorAll('mjx-container')).find(
-        (c) => (c as HTMLElement).offsetParent != null
-      );
-      const el = container!.parentElement!;
+    await math.evaluate((container) => {
+      const el = container.parentElement!;
       (window as any).__merrorSeen = false;
       (window as any).__renderAttempts = 0;
+      (window as any).__lastRenderActivity = performance.now();
       new MutationObserver(() => {
+        (window as any).__lastRenderActivity = performance.now();
         const errors = Array.from(el.querySelectorAll('mjx-merror, [data-mjx-error]'));
         if (errors.some((n) => getComputedStyle(n).visibility !== 'hidden'))
           (window as any).__merrorSeen = true;
@@ -141,17 +149,23 @@ test.describe('Inline LaTeX math previews', () => {
     await moveCursorTo(page, 5, 24);
     await page.keyboard.type('_');
 
-    // wait for the resulting background re-render to complete, then verify
-    // the previous render was kept and no error output was ever shown
+    // wait for the resulting re-renders to settle (a quiet window longer than
+    // the 700ms cursor-idle delay, so the idle re-render is covered too), then
+    // verify the previous render was kept and no error output was ever shown
     await expect
-      .poll(async () => await page.evaluate(() => (window as any).__renderAttempts), {
-        timeout: 30000,
-      })
-      .toBeGreaterThan(0);
+      .poll(
+        async () =>
+          await page.evaluate(() => {
+            const w = window as any;
+            return w.__renderAttempts > 0 && performance.now() - w.__lastRenderActivity > 1000;
+          }),
+        { timeout: 30000 }
+      )
+      .toBe(true);
 
     expect(await page.evaluate(() => (window as any).__merrorSeen)).toBe(false);
-    await expect(popupMath).toBeVisible();
-    await expect(popupMath).not.toContainText('Missing');
+    await expect(math).toBeVisible();
+    await expect(math).not.toContainText('Missing');
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
   });
@@ -171,8 +185,8 @@ test.describe('Inline LaTeX math previews', () => {
 
     // place the cursor inside the inline math region and wait for the popup
     await moveCursorTo(page, 5, 20);
-    const popupMath = page.locator('mjx-container:not(.rstudio-mathjax-root mjx-container)');
-    await expect(popupMath).toBeVisible({ timeout: 60000 });
+    const math = popupMath(page);
+    await expect(math).toBeVisible({ timeout: 60000 });
 
     // snapshot the exception count so the assertion below sees only errors
     // raised by the Escape presses; earlier unrelated exceptions still fail
@@ -181,7 +195,7 @@ test.describe('Inline LaTeX math previews', () => {
 
     // Escape dismisses the popup
     await page.keyboard.press('Escape');
-    await expect(popupMath).toBeHidden();
+    await expect(math).toBeHidden();
 
     // each popup render used to register a second, leaked Escape preview
     // handler that swallowed every later Escape keydown app-wide and raised
@@ -223,10 +237,8 @@ test.describe('Inline LaTeX math previews', () => {
 
     // both expressions typeset into visible (non-zero-size) output; the
     // regression rendered the first at zero size and left the rest empty
-    const containers = page.locator('.ProseMirror .pm-math-mathjax mjx-container');
+    const containers = visibleMath(page, '.ProseMirror .pm-math-mathjax mjx-container');
     await expect(containers).toHaveCount(2, { timeout: 60000 });
-    await expect(containers.nth(0)).toBeVisible();
-    await expect(containers.nth(1)).toBeVisible();
 
     // the round trip back to source mode must preserve the math text
     await sourceActions.ensureSourceMode();
