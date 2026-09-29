@@ -13,7 +13,10 @@ import type { Page } from '@playwright/test';
 // beforeunload.
 //
 // The other tests also cover Server, where the window itself has to tell the
-// main window that it was closed (#18987).
+// main window that it was closed (#18987). Two of them cover ways for that
+// notification to go missing: the window being unable to send it (Desktop
+// then falls back on Electron's own report of the closed window), and a close
+// that the app's page cancelled before the window was closed for real.
 
 const APP_DIR = 'shiny-app-17439';
 const APP_MARKER = 'hello shiny 17439';
@@ -65,6 +68,40 @@ async function waitForShinyIdle(satellitePage: Page) {
     .toBeGreaterThanOrEqual(5);
 }
 
+// The app window reports its closure by calling notifyShinyAppClosed() on
+// the main window. Count those calls, and optionally swallow them to stand in
+// for a window that could not make the call.
+async function interceptCloseNotification(page: Page, options: { drop: boolean }) {
+  await page.evaluate(({ drop }) => {
+    const w = window as unknown as Record<string, any>;
+    const original = w.notifyShinyAppClosed;
+    w.__shinyCloseNotifications = 0;
+    w.__restoreShinyCloseNotification = () => {
+      w.notifyShinyAppClosed = original;
+    };
+    w.notifyShinyAppClosed = function (...args: unknown[]) {
+      w.__shinyCloseNotifications++;
+      if (!drop)
+        original.apply(this, args);
+    };
+  }, options);
+}
+
+async function closeNotificationCount(page: Page): Promise<number> {
+  return page.evaluate(
+    () => (window as unknown as Record<string, any>).__shinyCloseNotifications,
+  );
+}
+
+async function restoreCloseNotification(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as Record<string, any>;
+    if (w.__restoreShinyCloseNotification)
+      w.__restoreShinyCloseNotification();
+    delete w.__restoreShinyCloseNotification;
+  });
+}
+
 test.describe.serial('shiny app window close', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     // a preceding spec can hand off the worker with a main-window reload
@@ -103,6 +140,10 @@ test.describe.serial('shiny app window close', () => {
           `[shiny-app-window-close] cleanup unlink failed (R may be stuck): ${(err as Error).message}`,
         );
       });
+  });
+
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await restoreCloseNotification(page);
   });
 
   test('window closes when the app is stopped', async ({ rstudioPage: page }) => {
@@ -171,6 +212,73 @@ test.describe.serial('shiny app window close', () => {
     await satellitePage.evaluate(() => window.close());
     await closePromise;
 
+    await expect(page.locator("[id^='rstudio_tb_interruptr']")).toBeHidden({ timeout: 15000 });
+  });
+
+  test('app stops when the window cannot report that it closed', { tag: ['@desktop_only'] }, async ({
+    rstudioPage: page,
+  }) => {
+    const consoleActions = new ConsolePaneActions(page);
+    const satellitePage = await launchShinyAppInWindow(page, consoleActions);
+    await interceptCloseNotification(page, { drop: true });
+
+    const closePromise = satellitePage.waitForEvent('close', { timeout: 15000 });
+    await satellitePage.evaluate(() => window.close());
+    await closePromise;
+
+    // the window did try, so what stops the app is Electron's report
+    expect(await closeNotificationCount(page)).toBeGreaterThan(0);
+    await expect(page.locator("[id^='rstudio_tb_interruptr']")).toBeHidden({ timeout: 15000 });
+  });
+
+  // Server-only: the e2e harness runs Desktop with
+  // RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD=1, so a close cannot be cancelled there.
+  test('app stops when the window is closed after a cancelled close', { tag: ['@server_only'] }, async ({
+    rstudioPage: page,
+  }) => {
+    const consoleActions = new ConsolePaneActions(page);
+    const satellitePage = await launchShinyAppInWindow(page, consoleActions);
+    await interceptCloseNotification(page, { drop: false });
+
+    // an app that prompts before leaving, until told otherwise; the user
+    // gesture (click) is required for Chromium to honor the handler
+    const appBody = satellitePage.frameLocator(APP_FRAME).locator('body');
+    await appBody.click();
+    await appBody.evaluate(() => {
+      const w = window as unknown as Record<string, any>;
+      w.__promptBeforeLeaving = true;
+      window.addEventListener('beforeunload', (e) => {
+        if (!w.__promptBeforeLeaving)
+          return;
+        e.preventDefault();
+        e.returnValue = '';
+      });
+    });
+
+    // first attempt: the user chooses to stay
+    const prompt = satellitePage.waitForEvent('dialog', { timeout: 15000 });
+    await satellitePage.evaluate(() => {
+      setTimeout(() => window.close(), 0);
+    });
+    await (await prompt).dismiss();
+
+    // The window is still open, so it must not have reported a closure. A
+    // window that reports one here stops the app only if the real close
+    // happens to follow within the few seconds the main window keeps
+    // checking on it.
+    expect(satellitePage.isClosed()).toBe(false);
+    expect(await closeNotificationCount(page)).toBe(0);
+    await expect(page.locator("[id^='rstudio_tb_interruptr']")).toBeVisible();
+
+    // second attempt: close for real
+    await appBody.evaluate(() => {
+      (window as unknown as Record<string, any>).__promptBeforeLeaving = false;
+    });
+    const closePromise = satellitePage.waitForEvent('close', { timeout: 15000 });
+    await satellitePage.evaluate(() => window.close());
+    await closePromise;
+
+    expect(await closeNotificationCount(page)).toBeGreaterThan(0);
     await expect(page.locator("[id^='rstudio_tb_interruptr']")).toBeHidden({ timeout: 15000 });
   });
 });

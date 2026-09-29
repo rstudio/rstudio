@@ -132,22 +132,14 @@ public class ShinyApplicationPresenter implements
    private native void initializeEvents() /*-{  
       var thiz = this;
 
-      // 'beforeunload' has not always been fired on RStudio Desktop, so
-      // listen for the window going away as well; onClose() handles being
-      // called twice.
-      //
       // listen on this module's frame ('window') rather than the top-level
       // window ('$wnd'); see the note in Satellite.initializeNative()
+      //
+      // don't use 'beforeunload' for this: the app's page can still cancel
+      // the close at that point, leaving the window open
       // https://github.com/rstudio/rstudio/issues/18987
       window.addEventListener(
             "pagehide",
-            $entry(function() {
-               thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onClose()();
-            }),
-            true);
-
-      $wnd.addEventListener(
-            "beforeunload",
             $entry(function() {
                thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onClose()();
             }),
@@ -161,11 +153,6 @@ public class ShinyApplicationPresenter implements
       // on browsers that don't permit manual event reactivation)
       if (satellite_.isReactivatePending())
          return;
-      
-      if (closed_)
-         return;
-      
-      closed_ = true;
       
       ShinyApplicationParams params = ShinyApplicationParams.create(
             params_.getPath(), 
@@ -215,7 +202,6 @@ public class ShinyApplicationPresenter implements
    private final LoadHandler loadHandler_;
    
    private ShinyApplicationParams params_;
-   private boolean closed_ = false;
    private boolean appStopped_ = false;
    private boolean popoutToBrowser_ = false;
 }
