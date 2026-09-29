@@ -488,6 +488,10 @@ SessionManager::PendingLaunchResolution SessionManager::resolvePendingLaunch(Lau
    // for that let the next request that found the session unavailable
    // launch it again (#18963). for local stream sessions the connection's
    // peer credentials identify the process that produced the outcome.
+   // this takes the launched pid to be the process listening on the session
+   // socket: true of rsession, and of an rsession-path wrapper that execs
+   // it. a wrapper that runs rsession as a child never matches, so its
+   // entry stays until the wrapper exits or the launch window lapses.
    else if (peerPid != -1 && launch.pid != -1 && peerPid != launch.pid)
    {
       resolution.outcome = PendingLaunchOutcome::KeptOtherPid;
