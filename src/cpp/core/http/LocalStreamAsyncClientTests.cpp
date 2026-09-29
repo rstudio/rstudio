@@ -41,41 +41,45 @@ namespace {
 
 using boost::asio::local::stream_protocol;
 
-// a minimal blocking server on its own thread: accepts one connection over
-// a local stream, reads the request headers, and either answers with a
-// complete response or hangs up without one
+// a minimal server on its own thread: accepts one connection over a local
+// stream, reads the request headers, and either answers with a complete
+// response or hangs up without one
 class LocalStreamServer
 {
 public:
    LocalStreamServer(const FilePath& streamPath, bool respond)
       : acceptor_(ioc_, stream_protocol::endpoint(streamPath.getAbsolutePath())),
+        socket_(ioc_),
         respond_(respond)
    {
    }
 
    ~LocalStreamServer()
    {
+      // a client that never connected leaves the accept pending; give up on
+      // it, so that the test fails on its assertions rather than hanging here
+      ioc_.stop();
+
       if (thread_.joinable())
          thread_.join();
    }
 
    void start()
    {
-      thread_ = std::thread([this]() { run(); });
+      acceptor_.async_accept(socket_, [this](const boost::system::error_code& ec) { serve(ec); });
+      thread_ = std::thread([this]() { ioc_.run(); });
    }
 
 private:
-   void run()
+   void serve(const boost::system::error_code& acceptError)
    {
-      boost::system::error_code ec;
-
-      stream_protocol::socket socket(ioc_);
-      acceptor_.accept(socket, ec);
-      if (ec)
+      if (acceptError)
          return;
 
+      boost::system::error_code ec;
+
       boost::asio::streambuf buf;
-      boost::asio::read_until(socket, buf, "\r\n\r\n", ec);
+      boost::asio::read_until(socket_, buf, "\r\n\r\n", ec);
 
       if (respond_)
       {
@@ -85,15 +89,16 @@ private:
             "Connection: close\r\n"
             "\r\n"
             "ok";
-         boost::asio::write(socket, boost::asio::buffer(response), ec);
+         boost::asio::write(socket_, boost::asio::buffer(response), ec);
       }
 
-      socket.shutdown(stream_protocol::socket::shutdown_both, ec);
-      socket.close(ec);
+      socket_.shutdown(stream_protocol::socket::shutdown_both, ec);
+      socket_.close(ec);
    }
 
    boost::asio::io_context ioc_;
    stream_protocol::acceptor acceptor_;
+   stream_protocol::socket socket_;
    bool respond_;
    std::thread thread_;
 };
