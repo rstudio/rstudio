@@ -83,6 +83,9 @@
 - ([#18955](https://github.com/rstudio/rstudio/issues/18955)): Fixed an issue where saving or closing a document in another source column could hide or disable commands for the active document, such as File > Publish.
 - ([#18976](https://github.com/rstudio/rstudio/issues/18976)): Closing a terminal now terminates its shell. Previously the shell was only interrupted, so it kept running in the background, and the prompt it redrew was logged as `Unknown handle` errors in the session log.
 - ([#18976](https://github.com/rstudio/rstudio/issues/18976)): Fixed an issue where RStudio Desktop wrote every line of the session log (`rsession-<user>.log`) twice.
+- ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where a document or Data Viewer window opened with "Show in New Window" and then closed was reopened the next time the session was restored, so closed windows accumulated over time.
+- ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where closing the window of a Plumber API run with "Run in Window" did not stop the API.
+- ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue where a Shiny application run with "Run in Window" kept running after its window was closed, if the application's page had cancelled an earlier attempt to close the window.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
