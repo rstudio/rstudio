@@ -62,7 +62,6 @@
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/Util.hpp>
-#include <core/LogOptions.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -5152,7 +5151,9 @@ Error startChatBackend(bool resumeConversation)
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
    args.push_back("--json"); // Enable JSON-RPC mode
    args.push_back("--logger-type=file"); // Log to file instead of using rstudio logging
-   args.push_back("--log-dir=" + log::LogOptions::defaultLogDirectory().getAbsolutePath());
+   // Use rsession's own log directory; in Workbench the server default log
+   // directory is owned by rstudio-server and isn't writable by the session user.
+   args.push_back("--log-dir=" + core::system::xdg::userLogDir().getAbsolutePath());
 
    // Add workspace path argument
    FilePath workspacePath = dirs::getInitialWorkingDirectory();
