@@ -53,7 +53,7 @@ export class SatelliteWindow extends GwtWindow {
       appState().gwtCallback?.unregisterOwner(this);
 
       // also prune the main window's satellite bookkeeping. the satellite
-      // normally announces its own closure from a JS unload handler, but that
+      // normally announces its own closure from a JS pagehide handler, but that
       // notification can lose the race with window destruction, leaving a
       // zombie entry in the GWT SatelliteManager -- a subsequent open of a
       // satellite with the same name then tries to reactivate the dead window
