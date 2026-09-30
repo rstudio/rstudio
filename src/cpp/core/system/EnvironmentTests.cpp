@@ -25,6 +25,9 @@
 #include <core/system/Resources.hpp>
 
 #ifdef __linux__
+#include <shared_core/system/PosixSystem.hpp>
+
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <string.h>
@@ -364,7 +367,13 @@ TEST(ResourcesTest, ProcFileReadFailsOnceProcessIsReaped)
 
    int status = 0;
    ::kill(child, SIGKILL);
-   pid_t reaped = ::waitpid(child, &status, 0);
+   pid_t reaped = posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, 0); });
+
+   // See what the procfs makes of the read before the reader is asked to.
+   // Linux fails it with ESRCH, but an emulated procfs (gVisor) needn't.
+   char probe = 0;
+   ssize_t probed = ::read(fd, &probe, sizeof(probe));
+   int probeErrno = (probed == -1) ? errno : 0;
 
    // Close the descriptor before an assertion can end the test
    std::string contents;
@@ -374,8 +383,11 @@ TEST(ResourcesTest, ProcFileReadFailsOnceProcessIsReaped)
 
    ASSERT_NE(-1, fd);
    ASSERT_EQ(child, reaped);
+   if (probed != -1)
+      GTEST_SKIP() << "This procfs still serves the status of a process that has been reaped";
+
    ASSERT_TRUE(error);
-   EXPECT_EQ(ESRCH, error.getCode());
+   EXPECT_EQ(probeErrno, error.getCode());
    EXPECT_TRUE(contents.empty());
 
    // Nor can the file be opened, now that the process is gone
@@ -390,12 +402,20 @@ TEST(ResourcesTest, ProcFileReadReturnsProcessStatus)
    Error error = readProcFile("/proc/self/status", &contents);
    ASSERT_FALSE(error);
 
-   pid_t parent = -1;
-   long sizeKb = 0;
-   error = parseProcessStatus(contents, &parent, &sizeKb);
+   ProcessStatus status;
+   error = parseProcessStatus(contents, &status);
    ASSERT_FALSE(error);
-   EXPECT_EQ(::getppid(), parent);
-   EXPECT_GT(sizeKb, 0);
+   EXPECT_EQ(::getppid(), status.parentPid);
+   EXPECT_GT(status.sizeKb, 0);
+}
+
+TEST(ResourcesTest, ProcFileReadIsBounded)
+{
+   // /dev/zero never reaches end-of-file
+   std::string contents;
+   Error error = readProcFile("/dev/zero", &contents);
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EFBIG, error.getCode());
 }
 
 TEST(ResourcesTest, ZombieProcessHasNoSize)
@@ -407,25 +427,28 @@ TEST(ResourcesTest, ZombieProcessHasNoSize)
 
    // Wait for the child to exit, but leave it unreaped
    siginfo_t info;
-   int waited = ::waitid(P_PID, child, &info, WEXITED | WNOWAIT);
+   int waited = posix::posixCall<int>([&]() { return ::waitid(P_PID, child, &info, WEXITED | WNOWAIT); });
 
    std::string contents;
    Error error = readProcFile("/proc/" + std::to_string(child) + "/status", &contents);
 
    // Reap the child before an assertion can end the test
    int status = 0;
-   ::waitpid(child, &status, 0);
+   posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, 0); });
 
    ASSERT_EQ(0, waited);
    ASSERT_FALSE(error);
 
-   // A zombie keeps its status file, but without the memory lines
-   pid_t parent = -1;
-   long sizeKb = -1;
-   error = parseProcessStatus(contents, &parent, &sizeKb);
+   // Linux gives a zombie's status without the memory lines, but an emulated
+   // procfs (gVisor) needn't
+   if (contents.find("VmRSS:") != std::string::npos)
+      GTEST_SKIP() << "This procfs reports the memory of a zombie";
+
+   ProcessStatus zombie;
+   error = parseProcessStatus(contents, &zombie);
    ASSERT_FALSE(error);
-   EXPECT_EQ(::getpid(), parent);
-   EXPECT_EQ(0, sizeKb);
+   EXPECT_EQ(::getpid(), zombie.parentPid);
+   EXPECT_EQ(0, zombie.sizeKb);
 }
 
 TEST(ResourcesTest, ProcFileKeysAreParsed)
@@ -460,7 +483,28 @@ TEST(ResourcesTest, ProcFileKeysAreParsed)
    error = parseProcFileKeys("MemTotal: lots\n", {"MemTotal"}, &values);
    EXPECT_TRUE(error);
 
+   // A value is never taken from the next line
+   error = parseProcFileKeys("MemTotal:\n8124360 kB\n", {"MemTotal"}, &values);
+   EXPECT_TRUE(error);
+
+   error = parseProcFileKeys("MemTotal: 99999999999999999999999 kB\n", {"MemTotal"}, &values);
+   EXPECT_TRUE(error);
+
    error = parseProcFileKeys("", {"MemTotal"}, &values);
+   EXPECT_TRUE(error);
+
+   // The values are left alone by a failure
+   ASSERT_EQ(1u, values.size());
+   EXPECT_EQ(0, values[0]);
+
+   // A repeated line can't stand in for a key that is yet to be found
+   error = parseProcFileKeys("MemTotal: 1 kB\nMemTotal: 2 kB\nMemFree: 3 kB\n", {"MemTotal", "MemFree"}, &values);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(2u, values.size());
+   EXPECT_EQ(1, values[0]);
+   EXPECT_EQ(3, values[1]);
+
+   error = parseProcFileKeys("MemTotal: 1 kB\nMemTotal: 2 kB\n", {"MemTotal", "MemFree"}, &values);
    EXPECT_TRUE(error);
 }
 
@@ -475,37 +519,80 @@ TEST(ResourcesTest, ProcessStatusIsParsed)
       "VmRSS:\t   52340 kB\n"
       "VmSwap:\t     128 kB\n";
 
-   pid_t parent = -1;
-   long sizeKb = 0;
-   Error error = parseProcessStatus(contents, &parent, &sizeKb);
+   ProcessStatus status;
+   Error error = parseProcessStatus(contents, &status);
    ASSERT_FALSE(error);
-   EXPECT_EQ(4301, parent);
-   EXPECT_EQ(52340 + 128, sizeKb);
+   EXPECT_EQ(4301, status.parentPid);
+   EXPECT_EQ(52340 + 128, status.sizeKb);
 
    // Without a parent the process can't be placed in the process tree
-   error = parseProcessStatus("Name:\tR\nVmRSS:\t   52340 kB\nVmSwap:\t     128 kB\n", &parent, &sizeKb);
+   error = parseProcessStatus("Name:\tR\nVmRSS:\t   52340 kB\nVmSwap:\t     128 kB\n", &status);
    EXPECT_TRUE(error);
+   EXPECT_EQ(-1, status.parentPid);
 
    // A memory line that is missing counts as 0
-   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t   52340 kB\n", &parent, &sizeKb);
+   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t   52340 kB\n", &status);
    ASSERT_FALSE(error);
-   EXPECT_EQ(52340, sizeKb);
+   EXPECT_EQ(52340, status.sizeKb);
 
-   // One that can't be read is an error, rather than a size of 0
-   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t   lots kB\nVmSwap:\t     128 kB\n", &parent, &sizeKb);
+   // A repeated memory line doesn't keep the other one from being read
+   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t10 kB\nVmRSS:\t20 kB\nVmSwap:\t5 kB\n", &status);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(10 + 5, status.sizeKb);
+
+   // One that can't be read is an error, rather than a size of 0. The parent
+   // is still given, wherever its line is, so that the process keeps its
+   // place in the process tree.
+   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t   lots kB\nVmSwap:\t     128 kB\n", &status);
    EXPECT_TRUE(error);
+   EXPECT_EQ(4301, status.parentPid);
+   EXPECT_EQ(0, status.sizeKb);
+
+   error = parseProcessStatus("VmRSS:\t   lots kB\nVmSwap:\t     128 kB\nPPid:\t4302\n", &status);
+   EXPECT_TRUE(error);
+   EXPECT_EQ(4302, status.parentPid);
+   EXPECT_EQ(0, status.sizeKb);
+}
+
+TEST(ResourcesTest, MemoryCgroupIsParsed)
+{
+   uid_t uid = 1000;
+   std::string userCgroup = "/user.slice/user-1000.slice/user@1000.service";
+
+   // cgroups v1 has a hierarchy for each set of controllers
+   std::string contents =
+      "11:cpu,cpuacct:/\n"
+      "9:memory:" + userCgroup + "\n"
+      "1:name=systemd:/user.slice/user-1000.slice/session-3.scope\n";
+   EXPECT_EQ(userCgroup, parseMemoryCgroup(contents, uid));
+
+   // cgroups v2 has the one hierarchy
+   EXPECT_EQ(userCgroup, parseMemoryCgroup("0::" + userCgroup + "\n", uid));
+
+   // The path can contain colons of its own
+   std::string scopeCgroup = "/user.slice/user-1000.slice/app-foo:bar.scope";
+   EXPECT_EQ(scopeCgroup, parseMemoryCgroup("0::" + scopeCgroup + "\n", uid));
+   EXPECT_EQ(scopeCgroup, parseMemoryCgroup("9:memory:" + scopeCgroup + "\n", uid));
+
+   // A cgroup shared with other users isn't used
+   EXPECT_EQ("", parseMemoryCgroup("0::/system.slice/rstudio-server.service\n", uid));
+   EXPECT_EQ("", parseMemoryCgroup("0::/user.slice/user-1001.slice/session-3.scope\n", uid));
+
+   EXPECT_EQ("", parseMemoryCgroup("11:cpu,cpuacct:/\n", uid));
+   EXPECT_EQ("", parseMemoryCgroup("", uid));
 }
 
 TEST(ResourcesTest, ChildProcessSizeIsCounted)
 {
-   long baselineKb = 0;
+   long usedKb = 0;
    MemoryProvider provider = MemoryProviderUnknown;
-   Error error = getProcessMemoryUsed(&baselineKb, &provider);
+   Error error = getProcessMemoryUsed(&usedKb, &provider);
    ASSERT_FALSE(error);
    if (provider != MemoryProviderLinuxProcFs)
       GTEST_SKIP() << "Process memory usage is not computed from procfs";
 
-   // The child holds on to 64MB until it is killed
+   // The child stops once it has touched its 64MB, which it holds on to
+   // until it is killed
    const std::size_t kChildBytes = 64 * 1024 * 1024;
    const long kChildKb = 64 * 1024;
 
@@ -514,41 +601,42 @@ TEST(ResourcesTest, ChildProcessSizeIsCounted)
    if (child == 0)
    {
       void* pMemory = ::mmap(nullptr, kChildBytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-      if (pMemory != MAP_FAILED)
-         ::memset(pMemory, 1, kChildBytes);
+      if (pMemory == MAP_FAILED)
+         ::_exit(1);
 
+      ::memset(pMemory, 1, kChildBytes);
+      ::kill(::getpid(), SIGSTOP);
       ::pause();
       ::_exit(0);
    }
 
-   // Wait for the child to have touched its memory
-   std::string statusPath = "/proc/" + std::to_string(child) + "/status";
-   long childKb = 0;
-   for (int i = 0; i < 1000 && childKb < kChildKb; i++)
+   int status = 0;
+   pid_t waited = posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, WUNTRACED); });
+   bool isStopped = (waited == child) && WIFSTOPPED(status);
+   bool isReaped = (waited == child) && !WIFSTOPPED(status);
+
+   // Measure with the child, and then without it. The test's own size is
+   // then much the same in both figures, whatever the child's allocation
+   // did to it.
+   long withChildKb = 0;
+   Error withChildError = getProcessMemoryUsed(&withChildKb, &provider);
+
+   if (!isReaped)
    {
-      ::usleep(10 * 1000);
-
-      std::string contents;
-      pid_t parent = -1;
-      error = readProcFile(statusPath, &contents);
-      if (!error)
-         error = parseProcessStatus(contents, &parent, &childKb);
-
-      if (error)
-         break;
+      ::kill(child, SIGKILL);
+      posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, 0); });
    }
 
-   long usedKb = 0;
-   Error usedError = getProcessMemoryUsed(&usedKb, &provider);
+   long withoutChildKb = 0;
+   Error withoutChildError = getProcessMemoryUsed(&withoutChildKb, &provider);
 
-   int status = 0;
-   ::kill(child, SIGKILL);
-   ::waitpid(child, &status, 0);
+   ASSERT_TRUE(isStopped);
+   ASSERT_FALSE(withChildError);
+   ASSERT_FALSE(withoutChildError);
 
-   ASSERT_FALSE(error);
-   ASSERT_FALSE(usedError);
-   ASSERT_GE(childKb, kChildKb);
-   EXPECT_GE(usedKb - baselineKb, kChildKb);
+   // Half of the child's allocation is well clear of any change in the
+   // test's own size between the two figures
+   EXPECT_GE(withChildKb - withoutChildKb, kChildKb / 2);
 }
 
 #endif
