@@ -295,7 +295,7 @@ using chat_logging::rs_chatSetLogLevel;
 using chat_installation::locatePositAssistantInstallation;
 using chat_installation::clearPinnedInstallation;
 using chat_installation::positAiStorageDir;
-using chat_installation::positAssistantSearchPaths;
+using chat_installation::systemStorageDir;
 using chat_installation::runsUserSlot;
 using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyDeclaredIdentity;
@@ -4637,10 +4637,10 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       }
       else if (!userInstallWouldBeSelected(packageVersion))
       {
-         // The install would land in the user data directory, but the
-         // installation under posit-assistant-path, or a newer bundled copy,
-         // would still be selected over it, so the offer could never be
-         // satisfied: the prompt would return on every check.
+         // The install would land in the user data directory, but a newer
+         // administrator-installed or bundled copy would still be selected
+         // over it, so the offer could never be satisfied: the prompt would
+         // return on every check.
          DLOG("Not offering {}: a read-only installation would still be "
               "selected over it", packageVersion);
       }
@@ -5071,31 +5071,20 @@ void onBackendExit(int exitCode, uint64_t generation)
 // Why nothing resolved, for a session about to start the backend. Naming the
 // user directory would point at a location only an in-product install can
 // populate -- and, when installation is managed, one the session ignores and
-// refuses to install into -- so the only path ever named is the one an
-// administrator configured.
+// refuses to install into -- so only the administrator's directory is named,
+// and only when installation is theirs to provide.
 std::string installationNotFoundMessage()
 {
-   FilePath adminDir = positAssistantSearchPaths().adminDir;
    if (isInstallationManaged())
    {
-      if (adminDir.isEmpty())
-         return "Posit Assistant installation not found. Installation is managed by "
-                "your administrator, and none has been configured.";
-
       return fmt::format(
          "Posit Assistant installation not found. Installation is managed by "
-         "your administrator; expected: {}",
-         adminDir.getAbsolutePath());
+         "your administrator; expected under: {}",
+         chat_slots::versionsDir(systemStorageDir()).getAbsolutePath());
    }
 
-   if (adminDir.isEmpty())
-      return "Posit Assistant installation not found. Install it from the "
-             "Posit Assistant pane.";
-
-   return fmt::format(
-      "Posit Assistant installation not found. Install it from the "
-      "Posit Assistant pane, or have an administrator install it at: {}",
-      adminDir.getAbsolutePath());
+   return "Posit Assistant installation not found. Install it from the "
+          "Posit Assistant pane.";
 }
 
 Error startChatBackend(bool resumeConversation)

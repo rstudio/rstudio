@@ -230,8 +230,8 @@ Error requestApp(http::Response* pResponse)
 }
 
 // The handler serves from the installation the session resolved, so each
-// test drives that resolution through posit-assistant-path as a single
-// unversioned directory, which is the simplest thing the resolver accepts.
+// test drives that resolution through a bundled copy, which is the simplest
+// thing the resolver accepts.
 // The backend port is cleared, and then the session's own sources restored,
 // after each test so a later test sees the state of a session whose chat
 // backend has not started yet. Clearing the port rebuilds the CSP header from
@@ -248,12 +248,12 @@ protected:
       setSearchPathsForTesting(boost::none);
    }
 
-   // Makes `install` the installation the session resolves. Discards any
-   // held resolution, as changing the sources does.
+   // Makes `install` the installation the session resolves, as the bundled
+   // copy. Discards any held resolution, as changing the sources does.
    void serve(const FilePath& install)
    {
       InstallSearchPaths paths;
-      paths.adminDir = install;
+      paths.systemStorageDir = install;
       paths.userInstallEnabled = false;
       setSearchPathsForTesting(paths);
    }
@@ -282,18 +282,15 @@ TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
    FilePath first = stageInstallationServingApp("// first build");
    FilePath second = stageInstallationServingApp("// second build");
 
-   InstallSearchPaths paths;
-   paths.adminDir = first;
-   paths.userInstallEnabled = false;
-   setSearchPathsForTesting(paths);
+   serve(first);
 
    http::Response response;
    requestApp(&response);
    ASSERT_EQ(response.body(), "// first build");
 
-   // Replacing the tree posit-assistant-path names is what a third party
-   // does to an unversioned directory; the held resolution keeps serving the
-   // same path, and the page it loaded keeps getting the same installation.
+   // Replacing the bundled tree in place is what a package upgrade does; the
+   // held resolution keeps serving the same path, and the page it loaded
+   // keeps getting the same installation.
    ASSERT_FALSE(first.remove());
    ASSERT_FALSE(second.move(first, FilePath::MoveDirect));
 
@@ -412,8 +409,8 @@ TEST_F(ChatStaticFilesResolution, CspIsRereadWhenTheBackendPortChanges)
 
    EXPECT_NE(requestPageCsp().find("https://before.example"), std::string::npos);
 
-   // An unversioned installation replaced in place keeps its path, so only
-   // the contents differ. A backend restart re-reads the directives, so the
+   // A bundled copy replaced in place keeps its path, so only the contents
+   // differ. A backend restart re-reads the directives, so the
    // policy served is the one belonging to what is being served now.
    writeStringToFile(install.completeChildPath(kCspConfigPath),
                      "{\"connect-src\": \"https://after.example\"}");

@@ -48,8 +48,7 @@ namespace installation {
  * This is a structural check only. It says nothing about which version or
  * protocol the directory holds -- slots::verifySlot() adds that -- and nothing
  * about whether the tree is intact beyond those three paths. It is all the
- * unversioned sources (posit-assistant-path as a single installation
- * directory, the bundled copy) get, since they are not slots.
+ * bundled copy gets, since it is not a slot.
  *
  * @param installDir The directory holding an extracted package.
  * @return true if the directory could be run.
@@ -103,26 +102,31 @@ core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
 core::FilePath positAiStorageDir();
 
 /**
- * Get the directory holding the Posit Assistant copy shipped with RStudio.
+ * The Posit Assistant storage directory RStudio provides for all users.
  *
- * The bundle is installed beside the session binary, except in the macOS app
- * bundle where it sits next to bin/ rather than inside it. The first location
- * is returned when it holds a valid installation, and the second otherwise --
- * so the returned path is where the bundle would be even when none is
- * installed. Only Workbench ships one; elsewhere neither directory exists.
+ * The directory is itself the copy shipped with RStudio, whose files the
+ * package replaces on each upgrade. Administrator-installed versions sit
+ * inside it in the layout of the user's storage directory: slots under
+ * versions/, and a selected.json naming the slot to run per protocol. Linux
+ * package upgrades replace only the package's own files, which include
+ * neither. RStudio reads the directory and never writes it; the
+ * administrator's tooling owns versions/ and the selector.
+ *
+ * Installed beside the session binary. Only Workbench ships a bundled copy;
+ * elsewhere the directory holds only what an administrator puts there.
  *
  * @param resourcePath Root to resolve against (the session resource path)
- * @return FilePath to the bundled installation directory
+ * @return <resourcePath>/bin/posit-assistant. Not guaranteed to exist.
  */
-core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePath);
+core::FilePath systemStorageDir(const core::FilePath& resourcePath);
 
 /**
- * Get the directory holding the Posit Assistant copy shipped with RStudio,
+ * The Posit Assistant storage directory RStudio provides for all users,
  * resolved against this session's resource path.
  *
- * @return FilePath to the bundled installation directory
+ * @return FilePath to the system storage directory
  */
-core::FilePath bundledPositAssistantInstallPath();
+core::FilePath systemStorageDir();
 
 // ============================================================================
 // Resolution
@@ -143,15 +147,10 @@ struct InstallSearchPaths
    // writes. Its legacy, unversioned bin/ is never read.
    core::FilePath userStorageDir;
 
-   // posit-assistant-path: the administrator-provided installation, which
-   // RStudio reads but never writes. Either version slots under versions/ in
-   // the same layout as the user's, selected by its own selected.json, or a
-   // single unversioned installation directory (the one containing dist), or
-   // both. Empty when the option is unset; there is no default location.
-   core::FilePath adminDir;
-
-   // the copy shipped with RStudio; only Workbench ships one
-   core::FilePath bundledPath;
+   // systemStorageDir(): itself the copy shipped with RStudio, holding the
+   // administrator's slots under versions/ selected by its own selected.json.
+   // Read, never written.
+   core::FilePath systemStorageDir;
 
    // the administrator allows users to manage their own installation
    bool userInstallEnabled;
@@ -172,32 +171,22 @@ InstallSearchPaths positAssistantSearchPaths();
  * package.json (missing or unparsable ranks lowest). Equal candidates keep
  * the order they are listed in below.
  *
- * When posit-assistant-path is set (adminDir), it contributes up to two
- * candidates, which race each other:
- * 1. Its slots (adminDir/versions): the slot adminDir/selected.json names for
- *    this build's protocol, or the newest verifying slot for it. The
- *    selector is the administrator's, so it is never rewritten. This is how
- *    an administrator chooses which installed version a deployment runs,
- *    including holding users on an older slot beside a newer one.
- * 2. adminDir itself as a single unversioned installation, the layout the
- *    option took before it read slots. adminDir/bin is not read.
- * The best of these runs, whatever the other sources hold: it outranks the
- * user's slot and the bundled copy regardless of version, and runs even when
- * it declares another protocol, which the session then reports as a protocol
- * mismatch. When adminDir contributes no candidate, the bundled copy is not
- * consulted either -- a typo or an unmounted share must not silently run the
- * shipped version -- and only the user's slot remains.
- *
- * Otherwise these compete:
  * 1. The user's slots (userStorageDir/versions): the slot selected.json names
  *    for this build's protocol, or the newest verifying slot for it, which is
- *    then recorded. Because the selector is keyed by protocol this source
- *    never contributes an incompatible slot. Skipped entirely when
- *    userInstallEnabled is false, so an installation left there before the
- *    administrator disabled user-managed installs -- or copied there to get
- *    around the setting -- is ignored.
- * 2. The copy bundled with RStudio, as given by
- *    bundledPositAssistantInstallPath().
+ *    then recorded. Skipped entirely when userInstallEnabled is false, so an
+ *    installation left there before the administrator disabled user-managed
+ *    installs -- or copied there to get around the setting -- is ignored.
+ * 2. The administrator's slots (systemStorageDir/versions): the slot
+ *    systemStorageDir/selected.json names for this build's protocol, or the
+ *    newest verifying slot for it. The selector is the administrator's, so it
+ *    is never rewritten. It chooses among the administrator's versions only:
+ *    a selected slot older than the bundled copy or the user's slot loses to
+ *    them, so a selection left by an earlier upgrade cannot hold back a newer
+ *    RStudio release.
+ * 3. The copy bundled with RStudio (systemStorageDir itself).
+ *
+ * Both selectors are keyed by protocol, so neither slot source contributes an
+ * incompatible slot; only the bundled copy can be one.
  *
  * @param paths The sources to resolve from
  * @return FilePath to the installation directory, or empty FilePath if not found
@@ -254,11 +243,10 @@ bool runsUserSlot();
  * resolves.
  *
  * The update check offers the manifest version only when installing it
- * would change what runs. An installation under posit-assistant-path always
- * wins, so nothing is offered while it holds one; otherwise a bundled copy
- * that ranks above the offered version would keep winning, and the offer
- * could never be satisfied. The existing user slot is what the install
- * replaces as the selection, so it never competes.
+ * would change what runs: an administrator's slot or a bundled copy that
+ * ranks above the offered version would keep winning, and the offer could
+ * never be satisfied. The existing user slot is what the install replaces as
+ * the selection, so it never competes.
  *
  * @param paths The sources to resolve from
  * @param version The package version the manifest offers
