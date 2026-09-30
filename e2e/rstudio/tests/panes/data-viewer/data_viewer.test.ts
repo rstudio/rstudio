@@ -2338,6 +2338,59 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/18988
+  //
+  // What was pulling the reporter's grid back. With the browser reducing
+  // motion (Windows "Animation effects" off), the grid's stylesheet gave every
+  // element a near-zero transition-duration to shorten its fades. That starts
+  // a transition for every inline style change too, and an element whose
+  // transition has just started is laid out at its old value for that frame:
+  // the spacer a render grows to cover the rows it recycles did not grow until
+  // the frame after the rows were gone. The content was one recycled window
+  // short for a frame, both panes were clamped to it, and the last row stayed
+  // out of reach however the grid was scrolled. The preference is emulated for
+  // the whole page, so it reaches the grid's document.
+  test('the grid reaches the bottom when the browser reduces motion (#18988)', async ({ rstudioPage: page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // 500 rows to force vertical virtual scrolling, all in one fetch block so
+    // wheeling takes the incremental path (as in the mid-render layout test).
+    await consoleActions.executeInConsole(
+      '{ .rs.motion_df <- as.data.frame(matrix(seq_len(500 * 6), nrow = 500)); View(.rs.motion_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expectHorizontalOverflow(dataViewer);
+      // Without the preference in the grid's own document the test would pass
+      // on the very stylesheet it is meant to catch.
+      expect(await dataViewer.viewport.evaluate(
+        (el: HTMLElement) => el.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      )).toBe(true);
+
+      // Rows recycled several at a time, driven by the wheel.
+      await scrollGridToBottom(page, dataViewer, 499);
+      await expectBottomToSettle(page, dataViewer);
+      await expectLastRowInView(dataViewer, '499');
+
+      // A row at a time, driven by the keyboard: away from the bottom and back
+      // down onto the last row, which lands one row short if the content is a
+      // row short when the last ArrowDown scrolls.
+      await dataViewer.frame.locator('#gridBody tr[data-row="495"] td.numberCell').first().click();
+      await expect(dataViewer.frame.locator('#rsGridCell_495_1')).toHaveClass(/\bactiveCell\b/);
+      for (let i = 0; i < 60; i++) await page.keyboard.press('ArrowUp');
+      await expect(dataViewer.frame.locator('#rsGridCell_435_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      for (let i = 0; i < 64; i++) await page.keyboard.press('ArrowDown');
+      await expect(dataViewer.frame.locator('#rsGridCell_499_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expectLastRowInView(dataViewer, '499');
+    } finally {
+      await page.emulateMedia({ reducedMotion: null });
+      await consoleActions.executeInConsole(
+        'rm(".rs.motion_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // https://github.com/rstudio/rstudio/issues/17800
   //
   // The grid uses auto-hide overlay scrollbars that fade after ~1.2s of
