@@ -6,4 +6,4 @@
 
 # Temporary owner while the reviewing team is confirmed. Replace with the
 # team handle once it's known.
-/e2e/rstudio/.env.op     @ronblum
+/e2e/rstudio/.env.op     @rstudio/ent-security
