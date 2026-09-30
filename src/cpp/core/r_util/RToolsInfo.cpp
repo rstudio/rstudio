@@ -400,7 +400,7 @@ Error scanRegistryForRTools(HKEY key, std::vector<RToolsInfo>* pRTools)
                              KEY_READ | KEY_WOW64_32KEY);
    if (error)
    {
-      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+      if (!isNotFoundError(error))
          return error;
       else
          return Success();

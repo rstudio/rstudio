@@ -1,4 +1,4 @@
-import { test as base, type Page, type TestInfo } from '@playwright/test';
+import { test as base, type Page, type PlaywrightWorkerOptions, type TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from './desktop.fixture';
@@ -364,18 +364,32 @@ const WEDGE_PROBE_MS = 30_000;
  * error for the caller to throw. Failing the test fast makes Playwright
  * discard this worker and run the remaining tests in a fresh one, so the
  * shard survives with its report intact.
+ *
+ * Skipped when the test's `screenshot` option is 'off'; any other mode takes
+ * it, since a wedge always fails the test.
  */
-async function attachWedgeDiagnostics(page: Page, testInfo: TestInfo, cause: Error): Promise<Error> {
+async function attachWedgeDiagnostics(
+  page: Page,
+  testInfo: TestInfo,
+  cause: Error,
+  screenshot: PlaywrightWorkerOptions['screenshot'],
+): Promise<Error> {
   const url = page.url();
 
+  const screenshotMode = !screenshot ? 'off'
+    : typeof screenshot === 'string' ? screenshot : screenshot.mode;
   let screenshotNote = 'screenshot unavailable';
-  try {
-    const shot = await page.screenshot({ timeout: 5000 });
-    await testInfo.attach('wedged-page.png', { body: shot, contentType: 'image/png' });
-    screenshotNote = 'screenshot attached as wedged-page.png';
-  } catch {
-    // A frozen renderer can block even protocol-level capture; the URL
-    // alone still distinguishes the stuck-navigation case.
+  if (screenshotMode === 'off') {
+    screenshotNote = "screenshot skipped: screenshot option is 'off'";
+  } else {
+    try {
+      const shot = await page.screenshot({ timeout: 5000 });
+      await testInfo.attach('wedged-page.png', { body: shot, contentType: 'image/png' });
+      screenshotNote = 'screenshot attached as wedged-page.png';
+    } catch {
+      // A frozen renderer can block even protocol-level capture; the URL
+      // alone still distinguishes the stuck-navigation case.
+    }
   }
 
   console.error(`[wedged-page] ${cause.message}; page URL: ${url} (${screenshotNote})`);
@@ -471,7 +485,7 @@ export const test = base.extend<
   // hid the Environment tab (#17952). Auto fixtures are part of the test type
   // itself, so they run for every test in every file regardless of module
   // caching.
-  perTestReset: [async ({ rstudioSession, mode }, use, testInfo) => {
+  perTestReset: [async ({ rstudioSession, mode, screenshot }, use, testInfo) => {
     const page = rstudioSession.page;
 
     // Drain exceptions that arrived BEFORE this test (a previous test's
@@ -487,7 +501,7 @@ export const test = base.extend<
     } catch (err) {
       if (!(err instanceof DeadlineError))
         throw err;
-      throw await attachWedgeDiagnostics(page, testInfo, err);
+      throw await attachWedgeDiagnostics(page, testInfo, err, screenshot);
     }
     for (const e of leftovers) {
       console.warn(
@@ -541,7 +555,7 @@ export const test = base.extend<
     } catch (err) {
       if (!(err instanceof DeadlineError))
         throw err;
-      wedge = await attachWedgeDiagnostics(page, testInfo, err);
+      wedge = await attachWedgeDiagnostics(page, testInfo, err, screenshot);
     }
     const ignoreClientExceptions = ['1', 'true'].includes(
       (process.env.PW_IGNORE_CLIENT_EXCEPTIONS ?? '').toLowerCase(),

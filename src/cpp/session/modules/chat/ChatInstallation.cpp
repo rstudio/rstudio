@@ -157,9 +157,7 @@ InstallSearchPaths positAssistantSearchPaths()
 {
    InstallSearchPaths paths;
    paths.userStorageDir = positAiStorageDir();
-   paths.systemStorageDir =
-      core::system::xdg::systemConfigDir().completePath(kPositAiStorageDirName);
-   paths.pinnedPath = options().positAssistantPath();
+   paths.adminDir = options().positAssistantPath();
    paths.bundledPath = bundledPositAssistantInstallPath();
    paths.userInstallEnabled =
       module_context::isPositAssistantInstallationEnabledByAdmin();
@@ -220,29 +218,34 @@ core::FilePath userSlot(const InstallSearchPaths& paths, selector::SelectorRepai
    return selector::resolveSlot(paths.userStorageDir, kProtocolVersion, repair);
 }
 
-// The administrator's slots, chosen the same way through the administrator's
-// selected.json -- which is theirs, so a stale entry is resolved around and
-// never rewritten.
-core::FilePath systemSlot(const InstallSearchPaths& paths)
+// The installations under posit-assistant-path, best first. Ties keep the
+// order collected here: the slot the administrator's selected.json picks --
+// which is theirs, so a stale entry is resolved around and never rewritten --
+// then the directory itself as a single unversioned installation. Empty when
+// the option is unset or names nothing that holds an installation.
+std::vector<InstallCandidate> adminCandidates(const InstallSearchPaths& paths)
 {
-   return selector::resolveSlot(paths.systemStorageDir,
-                                kProtocolVersion,
-                                selector::SelectorRepair::Disabled);
+   std::vector<InstallCandidate> candidates;
+   if (paths.adminDir.isEmpty())
+      return candidates;
+
+   core::FilePath slot = selector::resolveSlot(paths.adminDir,
+                                               kProtocolVersion,
+                                               selector::SelectorRepair::Disabled);
+   if (!slot.isEmpty())
+      candidates.push_back(describeInstallation(slot, "posit-assistant-path slot"));
+
+   if (verifyInstallDir(paths.adminDir))
+      candidates.push_back(describeInstallation(paths.adminDir, "posit-assistant-path"));
+
+   std::stable_sort(candidates.begin(), candidates.end(), outranks);
+   return candidates;
 }
 
-// The administrator's unversioned directory: what deployments have today.
-core::FilePath legacySystemInstall(const InstallSearchPaths& paths)
-{
-   return paths.systemStorageDir.completeChildPath(kLegacyInstallDirName);
-}
-
-// The valid installations that compete by version, best first. Ties keep the
-// order collected here: user, then the administrator's slots, then the
-// administrator's legacy directory, then bundled. A pinned
-// posit-assistant-path never competes -- it is used outright or ends the
-// search -- so the read-only sources are left out when the path is pinned (a
-// pinned path that holds no installation must not fall back to the shipped
-// version).
+// The installations that compete by version when posit-assistant-path holds
+// none, best first. Ties keep the order collected here: user, then bundled.
+// The bundled copy is left out whenever posit-assistant-path is set: a path
+// that holds no installation must not fall back to the shipped version.
 std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
                                                bool includeUserInstall)
 {
@@ -255,22 +258,19 @@ std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
          candidates.push_back(describeInstallation(slot, "user-level"));
    }
 
-   if (paths.pinnedPath.isEmpty())
-   {
-      core::FilePath slot = systemSlot(paths);
-      if (!slot.isEmpty())
-         candidates.push_back(describeInstallation(slot, "system-wide"));
-
-      core::FilePath legacy = legacySystemInstall(paths);
-      if (verifyInstallDir(legacy))
-         candidates.push_back(describeInstallation(legacy, "system-wide (legacy)"));
-
-      if (verifyInstallDir(paths.bundledPath))
-         candidates.push_back(describeInstallation(paths.bundledPath, "bundled"));
-   }
+   if (paths.adminDir.isEmpty() && verifyInstallDir(paths.bundledPath))
+      candidates.push_back(describeInstallation(paths.bundledPath, "bundled"));
 
    std::stable_sort(candidates.begin(), candidates.end(), outranks);
    return candidates;
+}
+
+void logChosenCandidate(const InstallCandidate& candidate)
+{
+   DLOG("Using {} AI installation (version {}): {}",
+        candidate.tier,
+        candidate.versionText.empty() ? "unknown" : candidate.versionText,
+        candidate.path.getAbsolutePath());
 }
 
 } // anonymous namespace
@@ -294,34 +294,37 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
            paths.userStorageDir.getAbsolutePath());
    }
 
-   // posit-assistant-path is the administrator's explicit choice: it is used
-   // as-is, even when a newer copy exists elsewhere. A pinned path that holds
-   // no installation ends the search for read-only copies: falling through to
-   // the bundled one would answer a typo or an unmounted share with a silent
-   // downgrade to whatever version shipped with RStudio.
-   if (!paths.pinnedPath.isEmpty())
+   // posit-assistant-path is the administrator's explicit choice: its best
+   // installation runs, even when a newer copy exists elsewhere, and even
+   // when it speaks another protocol -- the session reports that mismatch
+   // rather than quietly running something else.
+   std::vector<InstallCandidate> admin = adminCandidates(paths);
+   if (!admin.empty())
    {
-      if (verifyInstallDir(paths.pinnedPath))
+      // Same silent version change as the managed-mode case above, so it
+      // gets the same once-per-session notice.
+      if (paths.userInstallEnabled &&
+          !userSlot(paths, selector::SelectorRepair::Disabled).isEmpty() && RS_ONCE())
       {
-         // Same silent version change as the managed-mode case above, so it
-         // gets the same once-per-session notice.
-         if (paths.userInstallEnabled &&
-             !userSlot(paths, selector::SelectorRepair::Disabled).isEmpty() && RS_ONCE())
-         {
-            WLOG("Ignoring user-level AI installation under {}: posit-assistant-path "
-                 "pins the installation to {}",
-                 paths.userStorageDir.getAbsolutePath(),
-                 paths.pinnedPath.getAbsolutePath());
-         }
-
-         DLOG("Using AI installation pinned by posit-assistant-path: {}",
-              paths.pinnedPath.getAbsolutePath());
-         return paths.pinnedPath;
+         WLOG("Ignoring user-level AI installation under {}: posit-assistant-path "
+              "provides the installation at {}",
+              paths.userStorageDir.getAbsolutePath(),
+              admin.front().path.getAbsolutePath());
       }
 
-      if (RS_ONCE())
-         WLOG("posit-assistant-path set but installation invalid: {}",
-              paths.pinnedPath.getAbsolutePath());
+      logChosenCandidate(admin.front());
+      return admin.front().path;
+   }
+
+   // A path that holds no installation leaves only the user's own slot:
+   // falling through to the bundled copy would answer a typo or an unmounted
+   // share with a silent switch to whatever version shipped with RStudio.
+   if (!paths.adminDir.isEmpty() && RS_ONCE())
+   {
+      WLOG("posit-assistant-path holds no valid Posit Assistant installation "
+           "for protocol {}: {}",
+           kProtocolVersion,
+           paths.adminDir.getAbsolutePath());
    }
 
    // Among the remaining sources the newest compatible installation wins, so
@@ -330,30 +333,23 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
    std::vector<InstallCandidate> candidates = rankedCandidates(paths, true);
    if (!candidates.empty())
    {
-      const InstallCandidate& best = candidates.front();
-      DLOG("Using {} AI installation (version {}): {}",
-           best.tier,
-           best.versionText.empty() ? "unknown" : best.versionText,
-           best.path.getAbsolutePath());
-      return best.path;
+      logChosenCandidate(candidates.front());
+      return candidates.front().path;
    }
 
    DLOG("No valid AI installation found (protocol {}). Checked locations:",
         kProtocolVersion);
+   if (!paths.adminDir.isEmpty())
+   {
+      DLOG("  - posit-assistant-path slots: {}",
+           slots::versionsDir(paths.adminDir).getAbsolutePath());
+      DLOG("  - posit-assistant-path: {}", paths.adminDir.getAbsolutePath());
+   }
    if (paths.userInstallEnabled)
       DLOG("  - User slots: {}",
            slots::versionsDir(paths.userStorageDir).getAbsolutePath());
-   if (paths.pinnedPath.isEmpty())
-   {
-      DLOG("  - System slots: {}",
-           slots::versionsDir(paths.systemStorageDir).getAbsolutePath());
-      DLOG("  - System install dir: {}", legacySystemInstall(paths).getAbsolutePath());
+   if (paths.adminDir.isEmpty())
       DLOG("  - Bundled with RStudio: {}", paths.bundledPath.getAbsolutePath());
-   }
-   else
-   {
-      DLOG("  - posit-assistant-path: {}", paths.pinnedPath.getAbsolutePath());
-   }
 
    return core::FilePath(); // Not found
 }
@@ -421,7 +417,9 @@ bool userInstallWouldBeSelected(const InstallSearchPaths& paths, const std::stri
    if (!paths.userInstallEnabled)
       return false;
 
-   if (!paths.pinnedPath.isEmpty() && verifyInstallDir(paths.pinnedPath))
+   // An installation under posit-assistant-path always runs, whatever the
+   // version of the user's.
+   if (!adminCandidates(paths).empty())
       return false;
 
    // The manifest only ever offers packages built for this build's protocol.

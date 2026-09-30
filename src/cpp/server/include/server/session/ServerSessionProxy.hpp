@@ -144,6 +144,18 @@ void prepareLocalhostResponseForTest(
       bool ipv6,
       const core::http::Response& response,
       core::http::Response* pPreparedResponse);
+
+// The error handlers bound to proxied rpc and content requests, which report
+// the request's outcome to the session manager (#18963).
+void handleRpcErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const core::r_util::SessionContext& context,
+      const core::Error& error);
+
+void handleContentErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const core::r_util::SessionContext& context,
+      const core::Error& error);
 #endif
 
 } // namespace session_proxy

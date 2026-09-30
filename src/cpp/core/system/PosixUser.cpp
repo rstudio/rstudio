@@ -20,6 +20,9 @@
 #include <unistd.h>
 
 #include <sys/socket.h>
+#ifdef __APPLE__
+#include <sys/un.h>
+#endif
 
 #include <iostream>
 
@@ -50,13 +53,26 @@ UserIdentity currentUserIdentity()
 
 #if defined(HAVE_SO_PEERCRED)
 
+namespace {
+
+Error socketPeerCredentials(int socket, struct ucred* pCred)
+{
+   socklen_t length = sizeof(struct ucred);
+   if (::getsockopt(socket, SOL_SOCKET, SO_PEERCRED, pCred, &length) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   return Success();
+}
+
+} // anonymous namespace
+
 Error socketPeerIdentity(int socket, UserIdentity* pIdentity)
 {
    struct ucred cred;
-   socklen_t length = sizeof(struct ucred);
-   if (::getsockopt(socket, SOL_SOCKET, SO_PEERCRED, &cred, &length) < 0)
-      return systemError(errno, ERROR_LOCATION);
-      
+   Error error = socketPeerCredentials(socket, &cred);
+   if (error)
+      return error;
+
    pIdentity->userId = cred.uid;
    pIdentity->groupId = cred.gid;
    return Success();
@@ -78,6 +94,42 @@ Error socketPeerIdentity(int socket, UserIdentity* pIdentity)
 
 #else
    #error "No way to discover socket peer identity found on this platform"
+#endif
+
+#if defined(HAVE_SO_PEERCRED)
+
+Error socketPeerPid(int socket, pid_t* pPid)
+{
+   struct ucred cred;
+   Error error = socketPeerCredentials(socket, &cred);
+   if (error)
+      return error;
+
+   *pPid = cred.pid;
+   return Success();
+}
+
+#elif defined(__APPLE__)
+
+Error socketPeerPid(int socket, pid_t* pPid)
+{
+   pid_t pid = 0;
+   socklen_t length = sizeof(pid);
+   if (::getsockopt(socket, SOL_LOCAL, LOCAL_PEERPID, &pid, &length) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   *pPid = pid;
+   return Success();
+}
+
+#else
+
+Error socketPeerPid(int, pid_t* pPid)
+{
+   *pPid = -1;
+   return Success();
+}
+
 #endif
 
 

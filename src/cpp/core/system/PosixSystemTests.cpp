@@ -16,11 +16,13 @@
 #ifndef _WIN32
 
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixUser.hpp>
 
 #include <grp.h>
 #include <limits.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -1458,6 +1460,47 @@ TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivAfterForkSetsIdsAndGroups
    int status = 0;
    ASSERT_TRUE(waitForChildExit(child, &status, kChildTimeout)) << "the child hung dropping privilege";
    EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "child status: " << status;
+}
+
+TEST(PosixTests, SocketPeerPidIdentifiesConnectedProcess)
+{
+   // both ends of a socketpair belong to this process, so each end's peer
+   // is this process; the helper is what lets rserver tell which session
+   // process answered a request over its local stream (#18963)
+   int fds[2];
+   ASSERT_EQ(0, ::socketpair(AF_UNIX, SOCK_STREAM, 0, fds));
+   BOOST_SCOPE_EXIT(&fds)
+   {
+      ::close(fds[0]);
+      ::close(fds[1]);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   PidType pid = -1;
+   Error error = user::socketPeerPid(fds[0], &pid);
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(::getpid(), pid);
+
+   pid = -1;
+   error = user::socketPeerPid(fds[1], &pid);
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_EQ(::getpid(), pid);
+}
+
+TEST(PosixTests, SocketPeerPidFailsOnNonSocket)
+{
+   int fds[2];
+   ASSERT_EQ(0, ::pipe(fds));
+   BOOST_SCOPE_EXIT(&fds)
+   {
+      ::close(fds[0]);
+      ::close(fds[1]);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   PidType pid = 42;
+   Error error = user::socketPeerPid(fds[0], &pid);
+   EXPECT_TRUE(error);
 }
 
 } // namespace tests

@@ -24,16 +24,13 @@ namespace chat {
 namespace constants {
 
 // Installation paths
-// The Posit Assistant storage root, in the user data directory and in the
-// system config directory alike: it holds the version slots and the selector,
-// and for the user also manifest-check.json. The assistant's own storage is
-// under ~/.posit/assistant, not here.
+// The Posit Assistant storage root in the user data directory: it holds the
+// version slots, the selector and manifest-check.json. The assistant's own
+// storage is under ~/.posit/assistant, not here. The unversioned pai/bin an
+// older RStudio installed is left alone entirely -- not read, not written,
+// not deleted -- so that release keeps working while this one installs into
+// pai/versions.
 const char* const kPositAiStorageDirName = "pai";
-// The unversioned install beneath the storage root. Only the administrator's
-// is read from here now; the per-user pai/bin an older RStudio installed is
-// left alone entirely -- not read, not written, not deleted -- so that
-// release keeps working while this one installs into pai/versions.
-const char* const kLegacyInstallDirName = "bin";
 // Copy shipped with RStudio, installed beside the session binary (or next to
 // bin/ in the macOS app bundle); absent from open-source builds
 const char* const kBundledPositAiDirName = "posit-assistant";
@@ -49,9 +46,6 @@ const char* const kPackageJsonFileName = "package.json";
 // slot for each protocol.
 const char* const kVersionsDirName = "versions";
 const char* const kSelectorFileName = "selected.json";
-// Written inside a slot, so it is renamed into place along with the tree it
-// describes. Dot-prefixed so it sorts away from the package's own files.
-const char* const kSlotManifestFileName = ".slot-manifest.json";
 // Extraction staging directories are siblings of the slots they become, so the
 // rename that publishes a slot is never a cross-device copy.
 const char* const kStagingDirPrefix = ".tmp-";

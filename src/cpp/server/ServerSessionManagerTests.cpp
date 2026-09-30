@@ -16,6 +16,7 @@
 #include <server/session/ServerSessionManager.hpp>
 
 #include <limits>
+#include <stdexcept>
 
 #include <unistd.h>
 
@@ -62,6 +63,31 @@ Error requestsEndDuringLaunchFunction(boost::asio::io_context& ioContext,
    sessionManager().removePendingLaunch(profile.context, false, "request error");
    sessionManager().removePendingLaunch(profile.context);
    return countingLaunchFunction(ioContext, profile, jsonRequest, request, onLaunch, onError);
+}
+
+// a launcher session RPC (Workbench) reports outcomes by username and
+// session id rather than by context; this one ends during the launch
+Error sessionRpcEndsDuringLaunchFunction(boost::asio::io_context& ioContext,
+                                         const r_util::SessionLaunchProfile& profile,
+                                         const json::JsonRpcRequest& jsonRequest,
+                                         const http::Request& request,
+                                         const http::ResponseHandler& onLaunch,
+                                         const http::ErrorHandler& onError)
+{
+   sessionManager().removePendingSessionLaunch(profile.context.username, profile.context.scope.id(), false, "request error");
+   sessionManager().removePendingSessionLaunch(profile.context.username, profile.context.scope.id());
+   return countingLaunchFunction(ioContext, profile, jsonRequest, request, onLaunch, onError);
+}
+
+Error throwingLaunchFunction(boost::asio::io_context&,
+                             const r_util::SessionLaunchProfile&,
+                             const json::JsonRpcRequest&,
+                             const http::Request&,
+                             const http::ResponseHandler&,
+                             const http::ErrorHandler&)
+{
+   s_launchCount++;
+   throw std::runtime_error("launch function threw");
 }
 
 Error failingLaunchFunction(boost::asio::io_context&,
@@ -259,6 +285,136 @@ TEST(SessionManagerTest, RequestsEndingDuringLaunchKeepPendingLaunch)
 
    // once the launch has been made, request outcomes count again
    sessionManager().removePendingLaunch(context);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, OutcomeFromAnotherProcessKeepsPendingLaunch)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // after the launch has returned, the session a restart is replacing can
+   // still answer or fail a request; attributed to that process (by the
+   // connection's peer pid), the outcome says nothing about the launched
+   // one and must not clear its entry (#18963). this test process stands
+   // in for the launched session, pid 1 for the one being replaced.
+   r_util::SessionContext context("pending-launch-other-process-outcome-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   sessionManager().notePendingLaunchPid(context, ::getpid());
+
+   sessionManager().removePendingLaunch(context, true, std::string(), 1);
+   EXPECT_FALSE(attemptLaunch(context));
+   sessionManager().removePendingLaunch(context, false, "request error", 1);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   // an outcome from the launched process itself ends the launch
+   sessionManager().removePendingLaunch(context, true, std::string(), ::getpid());
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, ErrorFromLaunchedProcessClearsPendingLaunch)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // the liveness guard is for outcomes that can't be attributed: an error
+   // the launched process itself produced means it was reached, so the
+   // launch is over even though the process is still alive
+   r_util::SessionContext context("pending-launch-own-error-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   sessionManager().notePendingLaunchPid(context, ::getpid());
+
+   sessionManager().removePendingLaunch(context, false, "request error", ::getpid());
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, OutcomeWithoutRecordedPidIgnoresPeerPid)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // with no pid recorded for the launch there is nothing to attribute the
+   // outcome against, so a success clears the entry as before
+   r_util::SessionContext context("pending-launch-peer-no-pid-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   sessionManager().removePendingLaunch(context, true, std::string(), 1);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, SessionIdOutcomeAppliesSameGuards)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // the by-session-id variant used to erase unconditionally, ignoring the
+   // guards the by-context variant applies (#18963)
+   r_util::SessionContext context("pending-launch-session-id-guards-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   sessionManager().notePendingLaunchPid(context, ::getpid());
+
+   sessionManager().removePendingSessionLaunch(context.username, context.scope.id(), false, "request error");
+   EXPECT_FALSE(attemptLaunch(context));
+   sessionManager().removePendingSessionLaunch(context.username, context.scope.id(), true, std::string(), 1);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   sessionManager().removePendingSessionLaunch(context.username, context.scope.id());
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, SessionIdOutcomesDuringLaunchKeepPendingLaunch)
+{
+   sessionManager().setSessionLaunchFunction(sessionRpcEndsDuringLaunchFunction);
+   s_launchCount = 0;
+
+   r_util::SessionContext context("pending-launch-session-id-during-launch-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, ThrowingLaunchFunctionClearsPendingLaunch)
+{
+   sessionManager().setSessionLaunchFunction(throwingLaunchFunction);
+   s_launchCount = 0;
+
+   // a launch function that throws used to leave the entry marked as
+   // launching, which no outcome could clear until it aged out
+   r_util::SessionContext context("pending-launch-throwing-launch-user");
+   boost::asio::io_context ioContext;
+   json::JsonRpcRequest jsonRequest;
+   http::Request request;
+   bool launched = false;
+   EXPECT_THROW(sessionManager().launchSession(
+                   ioContext, context, jsonRequest, request, launched, core::system::Options()),
+                std::runtime_error);
+   EXPECT_EQ(1, s_launchCount);
+
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
    EXPECT_TRUE(attemptLaunch(context));
    EXPECT_EQ(2, s_launchCount);
 

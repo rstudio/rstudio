@@ -30,7 +30,6 @@ namespace constants {
 // Installation paths
 // ============================================================================
 extern const char* const kPositAiStorageDirName;
-extern const char* const kLegacyInstallDirName;
 extern const char* const kBundledPositAiDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
@@ -44,7 +43,6 @@ extern const char* const kPackageJsonFileName;
 // ============================================================================
 extern const char* const kVersionsDirName;
 extern const char* const kSelectorFileName;
-extern const char* const kSlotManifestFileName;
 extern const char* const kStagingDirPrefix;
 
 // Sentinel value: no backend port is assigned
