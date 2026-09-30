@@ -188,10 +188,19 @@ public class Satellite implements HasCloseHandlers<Satellite>
          return $wnd.document.elementFromPoint(x - $wnd.screenX, y - $wnd.screenY) != null;
       });
 
-      $wnd.addEventListener(
-            "unload",
+      // Tell the main window when this window goes away. Listen on the frame
+      // hosting this GWT module ('window'), not on the satellite's top-level
+      // window ('$wnd'): Chromium tears down child frames before it fires
+      // pagehide / unload on the parent document, and never runs a listener
+      // owned by a detached frame, so a listener registered on $wnd from
+      // here is skipped when the window is closed.
+      // https://github.com/rstudio/rstudio/issues/18987
+      window.addEventListener(
+            "pagehide",
             $entry(function() {
-               $wnd.opener.notifyRStudioSatelliteClosed(name);
+               var opener = $wnd.opener;
+               if (opener && opener.notifyRStudioSatelliteClosed)
+                  opener.notifyRStudioSatelliteClosed(name);
             }),
             true);
 

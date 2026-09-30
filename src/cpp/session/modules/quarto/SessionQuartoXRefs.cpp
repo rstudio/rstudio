@@ -326,7 +326,7 @@ boost::optional<std::string> unsavedSrcFileContents(const FilePath& srcPath)
          LOG_ERROR(error);
       }
    }
-   else if (error != core::systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+   else if (!core::isNotFoundError(error))
    {
       LOG_ERROR(error);
    }

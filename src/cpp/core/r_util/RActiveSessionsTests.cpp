@@ -97,6 +97,17 @@ protected:
 
 } // anonymous namespace
 
+TEST_F(ActiveSessionsTest, CreateWritesPropertiesOfNewSession)
+{
+   // nothing of the session exists yet, so writing its properties is what
+   // creates its directory
+   std::string id;
+   ASSERT_FALSE(sessions_->create("~/project", "~", &id));
+
+   EXPECT_TRUE(sessionDir(id).completeChildPath("properites").isDirectory());
+   EXPECT_EQ("~/project", sessions_->get(id)->project());
+}
+
 TEST_F(ActiveSessionsTest, RemovesLongAbandonedInvalidSessions)
 {
    std::time_t old = std::time(nullptr) - 2 * kMaxAgeSeconds;
