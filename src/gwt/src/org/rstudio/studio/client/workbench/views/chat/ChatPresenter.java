@@ -493,7 +493,7 @@ public class ChatPresenter extends BasePresenter
 
       // On Chrome, the satellite window is reloaded via window.open(url,
       // name) (see WebWindowOpener.doOpenWindow) instead of reactivated
-      // in-place. The old content's unload handler fires a spurious
+      // in-place. The old content's pagehide handler fires a spurious
       // SatelliteClosedEvent even though the window is still open. Use
       // WindowCloseMonitor to poll the window and distinguish a real close
       // from a reload — the same pattern used by SourceWindowManager,

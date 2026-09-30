@@ -698,7 +698,7 @@ core::FilePath requestedFile(const std::string& wwwLocalPath,
    if (error)
    {
       // log if this isn't file not found
-      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+      if (!isNotFoundError(error))
       {
          error.addProperty("requested-path", relativePath);
          LOG_ERROR(error);

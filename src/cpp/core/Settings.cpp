@@ -43,7 +43,7 @@ Error Settings::initialize(const FilePath& filePath)
    {
       // we don't consider file-not-found and error because it is a 
       // common initialization case
-      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+      if (!isNotFoundError(error))
       {
          error.addProperty("settings-file", settingsFile_);
          return error;

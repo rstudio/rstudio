@@ -23,7 +23,6 @@
 
 #include <gtest/gtest.h>
 
-#include "ChatSlotManifest.hpp"
 #include "ChatSlots.hpp"
 
 #include <core/FileSerializer.hpp>
@@ -32,7 +31,6 @@
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::selector;
-using rstudio::session::modules::chat::slot_manifest::writeSlotManifest;
 using rstudio::session::modules::chat::slots::versionsDir;
 
 namespace {
@@ -60,8 +58,8 @@ protected:
       ASSERT_FALSE(writeStringToFile(filePath, content));
    }
 
-   // A slot as an install leaves it: the files the backend needs, the identity
-   // files resolution reads, and the manifest describing the tree.
+   // A slot as an install leaves it: the files the backend needs and the
+   // identity files resolution reads.
    void makeSlot(const std::string& name,
                  const std::string& version,
                  const std::string& protocol)
@@ -73,19 +71,13 @@ protected:
                 "{\"version\":\"" + version + "\"}");
       writeFile(dir.completeChildPath("protocol.json"),
                 "{\"protocol\":\"" + protocol + "\"}");
-      ASSERT_FALSE(writeSlotManifest(dir));
    }
 
-   // A slot that will not verify: no manifest was ever recorded for it.
+   // A slot that will not verify: its server script is gone.
    void makeDamagedSlot(const std::string& version, const std::string& protocol)
    {
-      FilePath dir = slot(version);
-      writeFile(dir.completeChildPath("dist/server/main.js"), "console.log('hi');");
-      writeFile(dir.completeChildPath("dist/client/index.html"), "<html></html>");
-      writeFile(dir.completeChildPath("package.json"),
-                "{\"version\":\"" + version + "\"}");
-      writeFile(dir.completeChildPath("protocol.json"),
-                "{\"protocol\":\"" + protocol + "\"}");
+      makeSlot(version, version, protocol);
+      ASSERT_FALSE(slot(version).completeChildPath("dist/server/main.js").remove());
    }
 
    void writeSelectorFile(const std::string& content)

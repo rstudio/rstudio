@@ -19,6 +19,7 @@
 #include <atomic>
 #include <memory>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -515,7 +516,7 @@ TEST_F(SessionManagerTest, RemovePendingSessionLaunchClearsOnlyMatchingSession)
    EXPECT_FALSE(attemptLaunch(context));
    EXPECT_EQ(1, launchCount_);
 
-   manager_.removePendingSessionLaunch("user", "aaaa1111", false, "request error");
+   manager_.removePendingSessionLaunch("user", "aaaa1111");
    EXPECT_FALSE(pendingLaunchPid(manager_, context));
    EXPECT_TRUE(attemptLaunch(context));
    EXPECT_EQ(2, launchCount_);
@@ -1056,6 +1057,116 @@ TEST_F(SessionManagerTest, RequestsEndingDuringLaunchKeepPendingLaunch)
    manager_.removePendingLaunch(context);
    EXPECT_TRUE(attemptLaunch(context));
    EXPECT_EQ(2, launchCount_);
+}
+
+// After the launch has returned, the session a restart is replacing can
+// still answer or fail a request; attributed to that process (by the
+// connection's peer pid), the outcome says nothing about the launched one
+// and must not clear its entry (#18963).
+TEST_F(SessionManagerTest, OutcomeFromAnotherProcessKeepsPendingLaunch)
+{
+   r_util::SessionContext context("user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+   manager_.notePendingLaunchPid(context, 1234);
+   markLive(1234);
+
+   manager_.removePendingLaunch(context, true, std::string(), 5678);
+   EXPECT_FALSE(attemptLaunch(context));
+   manager_.removePendingLaunch(context, false, "request error", 5678);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+
+   // an outcome from the launched process itself ends the launch
+   manager_.removePendingLaunch(context, true, std::string(), 1234);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, launchCount_);
+}
+
+// The liveness guard is for outcomes that can't be attributed: an error the
+// launched process itself produced means it was reached, so the launch is
+// over even though the process is still alive.
+TEST_F(SessionManagerTest, ErrorFromLaunchedProcessClearsPendingLaunch)
+{
+   r_util::SessionContext context("user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+   manager_.notePendingLaunchPid(context, 1234);
+   markLive(1234);
+
+   manager_.removePendingLaunch(context, false, "request error", 1234);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, launchCount_);
+}
+
+// With no pid recorded for the launch there is nothing to attribute the
+// outcome against, so a success clears the entry as before.
+TEST_F(SessionManagerTest, OutcomeWithoutRecordedPidIgnoresPeerPid)
+{
+   r_util::SessionContext context("user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+
+   manager_.removePendingLaunch(context, true, std::string(), 5678);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, launchCount_);
+}
+
+// The by-session-id variant used to erase unconditionally, ignoring the
+// guards the by-context variant applies (#18963).
+TEST_F(SessionManagerTest, SessionIdOutcomeAppliesSameGuards)
+{
+   r_util::SessionContext context("user", r_util::SessionScope::projectNone("aaaa1111"));
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+   manager_.notePendingLaunchPid(context, 1234);
+   markLive(1234);
+
+   manager_.removePendingSessionLaunch(context.username, context.scope.id(), false, "request error");
+   EXPECT_FALSE(attemptLaunch(context));
+   manager_.removePendingSessionLaunch(context.username, context.scope.id(), true, std::string(), 5678);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+
+   manager_.removePendingSessionLaunch(context.username, context.scope.id());
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, launchCount_);
+}
+
+// A launcher session RPC (Workbench) reports outcomes by username and
+// session id rather than by context; one ending during the launch keeps it.
+TEST_F(SessionManagerTest, SessionIdOutcomesDuringLaunchKeepPendingLaunch)
+{
+   r_util::SessionContext context("user", r_util::SessionScope::projectNone("aaaa1111"));
+   midLaunch_ = [this](const r_util::SessionContext& context)
+   {
+      manager_.removePendingSessionLaunch(context.username, context.scope.id(), false, "request error");
+      manager_.removePendingSessionLaunch(context.username, context.scope.id());
+   };
+
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
+}
+
+// A launch function that throws used to leave the entry marked as
+// launching, which no outcome could clear until it aged out.
+TEST_F(SessionManagerTest, ThrowingLaunchFunctionClearsPendingLaunch)
+{
+   r_util::SessionContext context("user");
+   midLaunch_ = [](const r_util::SessionContext&)
+   {
+      throw std::runtime_error("launch function threw");
+   };
+
+   bool launched = false;
+   EXPECT_THROW(launch(context, &launched), std::runtime_error);
+   EXPECT_EQ(0u, pendingLaunchCount(manager_));
+
+   midLaunch_.clear();
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, launchCount_);
 }
 
 } // namespace tests

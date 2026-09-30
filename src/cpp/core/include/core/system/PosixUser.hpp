@@ -42,7 +42,11 @@ struct UserIdentity
 UserIdentity currentUserIdentity();
    
 core::Error socketPeerIdentity(int socket, UserIdentity* pIdentity);
-   
+
+// pid of the process at the other end of a connected local (unix domain)
+// socket; -1 where the platform has no way to tell
+core::Error socketPeerPid(int socket, pid_t* pPid);
+
 } // namespace user
 } // namespace system
 } // namespace core
