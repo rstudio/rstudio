@@ -87,6 +87,9 @@
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where a document or Data Viewer window opened with "Show in New Window" and then closed was reopened the next time the session was restored, so closed windows accumulated over time.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where closing the window of a Plumber API run with "Run in Window" did not stop the API.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue where a Shiny application run with "Run in Window" kept running after its window was closed, if the application's page had cancelled an earlier attempt to close the window.
+- ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed the Zotero 10 desktop client not being available as a citation source on macOS.
+- ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed recently added Zotero 10 references not appearing in citations.
+- ([#18787](https://github.com/rstudio/rstudio/issues/18787)): Fixed an issue on Windows where Posit Assistant failed to start in a second RStudio instance with "A Posit Assistant update is in progress".
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
