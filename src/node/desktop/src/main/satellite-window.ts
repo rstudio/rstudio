@@ -109,9 +109,7 @@ export class SatelliteWindow extends GwtWindow {
           } else {
             // not ready to close, revert close stage and take care of business
             this.closeStage = 'CloseStageOpen';
-            this.executeJavaScript('window.rstudioCloseSourceWindow()').catch((error: unknown) =>
-              logger().logError(error),
-            );
+            this.executeJavaScript('window.rstudioCloseSourceWindow()').catch((error: unknown) => logger().logError(error));
           }
         })
         .catch((error: unknown) => logger().logError(error));
