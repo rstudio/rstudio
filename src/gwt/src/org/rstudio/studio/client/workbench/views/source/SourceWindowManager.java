@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
@@ -1331,24 +1332,54 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    private void closeSourceWindowDocs(String windowId)
    {
-      // when the user closes a source window, close all the source docs it
-      // contained
+      // when the user closes a source window, close the source docs it
+      // contained -- except those with unsaved changes, which move back to the
+      // main window. In web mode the window may have closed without any
+      // prompt: browsers suppress 'beforeunload' prompts in a window the user
+      // never clicked or typed in.
+      // https://github.com/rstudio/rstudio/issues/19008
       for (int i = 0; i < sourceDocs_.length(); i++)
       {
          final SourceDocument doc = sourceDocs_.get(i);
          if (doc.getSourceWindowId() == windowId)
          {
-            // change the window ID of the doc back to the main window
-            modifyDocumentProperties(doc.getId(),
-                  assignSourceDocWindowId(doc.getId(), ""),
-                  new Command()
+            // ask the server whether the doc is dirty; our own copy of it
+            // doesn't see edits made in the satellite
+            server_.getSourceDocument(doc.getId(),
+                  new ServerRequestCallback<SourceDocument>()
+            {
+               @Override
+               public void onResponseReceived(SourceDocument serverDoc)
+               {
+                  if (serverDoc.isDirty())
                   {
-                     @Override
-                     public void execute()
-                     {
-                        // close the document when finished
-                        server_.closeDocument(doc.getId(),
-                              new VoidServerRequestCallback());
+                     // adopt it here, as dropping its tab on this window would
+                     events_.fireEvent(new DocWindowChangedEvent(
+                           doc.getId(), windowId, null,
+                           doc.getCollabParams(), 0, -1));
+                     return;
+                  }
+
+                  // change the window ID of the doc back to the main window
+                  modifyDocumentProperties(doc.getId(),
+                        assignSourceDocWindowId(doc.getId(), ""),
+                        new Command()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              // close the document when finished
+                              server_.closeDocument(doc.getId(),
+                                    new VoidServerRequestCallback());
+                           }
+                        });
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // leave the doc as it is rather than risk discarding edits
+                  Debug.logError(error);
                }
             });
          }

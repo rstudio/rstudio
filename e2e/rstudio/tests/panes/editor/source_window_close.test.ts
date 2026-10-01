@@ -5,6 +5,11 @@
 // (and the document closed) once the satellite tells the main window that it
 // is going away. When that notification was lost, a window closed with its own
 // close button came back on every reload, and closed windows piled up.
+//
+// Documents with unsaved changes are not closed: they move back to the main
+// window (#19008). On RStudio Server the satellite can only ask the browser to
+// prompt, and browsers skip that prompt in a window the user never clicked or
+// typed in, so closing those documents would silently discard the edits.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from 'playwright';
@@ -15,6 +20,7 @@ import { openFile, seedSandboxFile } from '@utils/files';
 import { executeCommand, resetSourcePaneState } from '@utils/commands';
 
 const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-selected']";
+const DOC_TAB = "[class*='rstudio_source_panel'] .gwt-TabLayoutPanelTab";
 const SOURCE_WINDOW_URL = /view=source_window_/;
 
 // How long to keep checking that no source window reopens after a reload. The
@@ -114,5 +120,29 @@ test.describe('Closing a popped-out source window (#18987)', () => {
     const satellite = await popOutActiveDoc(page, fileName);
     await closeAndExpectDocumentReleased(page, satellite);
     await expectNoSourceWindowAfterReload(page);
+  });
+
+  test('unsaved changes come back to the main window (#19008)', { tag: ['@server_only'] }, async ({ rstudioPage: page }) => {
+    const fileName = 'source_window_close_unsaved.R';
+    await openFile(page, await seedSandboxFile(page, sandbox.dir, fileName, '# saved\n'));
+
+    // Edit before popping out, as a user who never touches the new window does.
+    await page.evaluate(() => window.rstudio!.documents.activeEditor()!.insert('# unsaved\n'));
+    await expect.poll(() => page.evaluate(() => window.rstudio?.documents.active()?.dirty)).toBe(true);
+
+    const satellite = await popOutActiveDoc(page, fileName);
+
+    // Leave the page if the browser asks; the edits must survive either way.
+    satellite.on('dialog', (dialog) => dialog.accept());
+    await closeLikeUser(satellite);
+
+    const returned = page.locator(DOC_TAB).filter({ hasText: fileName });
+    await expect(returned).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await returned.click();
+
+    await expect.poll(() => page.evaluate(() => ({
+      dirty: window.rstudio?.documents.active()?.dirty,
+      text: window.rstudio?.documents.activeEditor()?.getValue(),
+    }))).toEqual({ dirty: true, text: '# unsaved\n# saved\n' });
   });
 });
