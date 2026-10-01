@@ -112,28 +112,12 @@ protected:
    static boost::optional<PidType> pendingLaunchPid(SessionManager& manager,
                                                     const r_util::SessionContext& context)
    {
-      boost::optional<PidType> pid;
-      LOCK_MUTEX(manager.launchesMutex_)
-      {
-         auto it = manager.pendingLaunches_.find(context);
-         if (it != manager.pendingLaunches_.end())
-            pid = it->second.pid;
-      }
-      END_LOCK_MUTEX
-
-      return pid;
+      return manager.pendingLaunchPid(context);
    }
 
    static std::size_t pendingLaunchCount(SessionManager& manager)
    {
-      std::size_t count = 0;
-      LOCK_MUTEX(manager.launchesMutex_)
-      {
-         count = manager.pendingLaunches_.size();
-      }
-      END_LOCK_MUTEX
-
-      return count;
+      return manager.pendingLaunchCount();
    }
 
    void markLive(PidType pid)

@@ -22,6 +22,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/function.hpp>
+#include <boost/optional.hpp>
 
 #include <boost/asio/io_context.hpp>
 
@@ -46,10 +47,6 @@ namespace core {
 namespace rstudio {
 namespace server {
 
-namespace tests {
-class SessionManagerTest;
-}
-
 // singleton
 class SessionManager;
 SessionManager& sessionManager();
@@ -66,18 +63,21 @@ public:
    {
       boost::posix_time::time_duration launchWindow = boost::posix_time::minutes(1);
       boost::posix_time::time_duration stalePendingLaunchAge = boost::posix_time::minutes(3);
-      boost::function<boost::posix_time::ptime()> now;
-      boost::function<bool(PidType)> isProcessRunning;
+      boost::function<boost::posix_time::ptime()> now =
+         [] { return boost::posix_time::microsec_clock::universal_time(); };
+      boost::function<bool(PidType)> isProcessRunning =
+         [](PidType pid) { return core::system::isProcessRunning(pid); };
    };
 
 private:
    // singleton
    SessionManager();
-   explicit SessionManager(const Config& config);
    friend SessionManager& sessionManager();
-   friend class tests::SessionManagerTest;
 
 public:
+   // a standalone manager (the server uses the sessionManager() singleton)
+   explicit SessionManager(const Config& config);
+
    // launching
    core::Error launchSession(boost::asio::io_context& ioContext,
                              const core::r_util::SessionContext& context,
@@ -100,6 +100,12 @@ public:
    // process dies before a client connection can be detected and cleared
    // (rather than suppressing relaunch attempts until it ages out)
    void notePendingLaunchPid(const core::r_util::SessionContext& context, PidType pid);
+
+   // the pid recorded on the context's pending launch (-1 if none has been
+   // recorded yet), or none when the context has no pending launch
+   boost::optional<PidType> pendingLaunchPid(const core::r_util::SessionContext& context);
+
+   std::size_t pendingLaunchCount();
 
    // remove the pending launch if it still belongs to the given (now exited)
    // process; a no-op when the context has no pending launch or the pending

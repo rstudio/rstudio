@@ -254,11 +254,6 @@ SessionManager::SessionManager()
 SessionManager::SessionManager(const Config& config)
    : config_(config)
 {
-   if (!config_.now)
-      config_.now = [] { return boost::posix_time::microsec_clock::universal_time(); };
-   if (!config_.isProcessRunning)
-      config_.isProcessRunning = [](PidType pid) { return core::system::isProcessRunning(pid); };
-
    // set default session launcher
    sessionLaunchFunction_ = boost::bind(&SessionManager::launchAndTrackSession,
                                            this, _1, _2);
@@ -287,9 +282,11 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
       if (pos != pendingLaunches_.end())
       {
          // if the launch is still within its window, or its process is still
-         // alive (a slow-starting session: a duplicate would rebind the same
+         // alive and the launch is younger than the stale pending launch age
+         // (a slow-starting session: a duplicate would rebind the same
          // session socket and fail on the first session's source database
-         // locks), then return success
+         // locks), then return success. past that age a live process is
+         // taken to be hung and is relaunched anyway
          if ( (pos->second.launchTime + config_.launchWindow) > now )
          {
             LOG_DEBUG_MESSAGE("Found existing recent launch < " + std::to_string(config_.launchWindow.total_seconds()) +
@@ -519,7 +516,8 @@ SessionManager::PendingLaunchResolution SessionManager::resolvePendingLaunch(Lau
    // this takes the launched pid to be the process listening on the session
    // socket: true of rsession, and of an rsession-path wrapper that execs
    // it. a wrapper that runs rsession as a child never matches, so its
-   // entry stays until the wrapper exits or the launch window lapses.
+   // entry stays until the wrapper exits or the stale pending launch age
+   // lapses, whichever comes first.
    else if (peerPid != -1 && launch.pid != -1 && peerPid != launch.pid)
    {
       resolution.outcome = PendingLaunchOutcome::KeptOtherPid;
@@ -686,6 +684,32 @@ void SessionManager::notePendingLaunchPid(const r_util::SessionContext& context,
          it->second.pid = pid;
    }
    END_LOCK_MUTEX
+}
+
+boost::optional<PidType> SessionManager::pendingLaunchPid(const r_util::SessionContext& context)
+{
+   boost::optional<PidType> pid;
+   LOCK_MUTEX(launchesMutex_)
+   {
+      LaunchMap::const_iterator it = pendingLaunches_.find(context);
+      if (it != pendingLaunches_.cend())
+         pid = it->second.pid;
+   }
+   END_LOCK_MUTEX
+
+   return pid;
+}
+
+std::size_t SessionManager::pendingLaunchCount()
+{
+   std::size_t count = 0;
+   LOCK_MUTEX(launchesMutex_)
+   {
+      count = pendingLaunches_.size();
+   }
+   END_LOCK_MUTEX
+
+   return count;
 }
 
 void SessionManager::removePendingLaunchForPid(const r_util::SessionContext& context, PidType pid, int exitStatus)
