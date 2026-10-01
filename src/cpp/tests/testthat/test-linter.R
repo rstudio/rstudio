@@ -101,6 +101,43 @@ test_that("R source files pass PACKAGE = \"(embedding)\" to .Call()", {
 
 })
 
+test_that("R source files do not use zero-padded string formats", {
+
+   # the '0' flag is only defined for numeric conversions; with '%s',
+   # C's printf() zero-pads on some platforms and space-pads on others,
+   # so a format like '%05s' behaves differently across operating systems.
+   # use formatC(x, width = n, flag = "0") or sprintf("%05d", as.integer(x))
+   # when zero-padding is intended
+   pattern <- "%[-+ #]*0[0-9]*s"
+
+   offenders <- character()
+   for (rFile in rSourceFiles) {
+
+      exprs <- tryCatch(parse(rFile, keep.source = TRUE), error = function(e) NULL)
+      if (is.null(exprs))
+         next
+
+      # check string literals only, so that comments and symbols are ignored
+      parseData <- getParseData(exprs)
+      strings <- parseData[parseData$token == "STR_CONST", ]
+      matches <- strings[grepl(pattern, strings$text), ]
+
+      if (nrow(matches)) {
+         path <- sub(paste0(root, "/"), "", rFile, fixed = TRUE)
+         offenders <- c(offenders, paste0(path, ":", matches$line1))
+      }
+
+   }
+
+   failureMessage <- paste(
+      c("String literals using a zero-padded '%s' format:", offenders),
+      collapse = "\n"
+   )
+
+   expect(length(offenders) == 0, failureMessage)
+
+})
+
 test_that("RStudio .R files can be linted", {
    
    rFiles <- list.files(
