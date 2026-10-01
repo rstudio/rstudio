@@ -256,3 +256,20 @@ test_that("heredoc trims trailing newlines + whitespace", {
    expect_equal(actual, expected)
    
 })
+
+test_that("function information distinguishes primitives from closures without formals", {
+   
+   # neither has formals, but only the closure takes no arguments
+   primitive <- .rs.generateFunctionInformation(is.null)
+   expect_length(primitive$formal_names, 0L)
+   expect_equal(as.integer(primitive$is_primitive), 1L)
+   
+   closure <- .rs.generateFunctionInformation(function() NULL)
+   expect_length(closure$formal_names, 0L)
+   expect_equal(as.integer(closure$is_primitive), 0L)
+   
+   closure <- .rs.generateFunctionInformation(function(x, ...) x)
+   expect_equal(closure$formal_names, c("x", "..."))
+   expect_equal(as.integer(closure$is_primitive), 0L)
+   
+})
