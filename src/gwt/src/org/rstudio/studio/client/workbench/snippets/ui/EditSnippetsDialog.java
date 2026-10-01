@@ -194,7 +194,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
             {
                snippetTypes_.setSelectedIndex(i);
                globalDisplay_.showErrorMessage(
-                 constants_.applyingSnippetsError(snippets.getFileTypeLabel()),
+                 constants_.applyingSnippetsError(snippets.getName()),
                  ex.getDescription());
                return; // early return (don't close dialog)
             }  
