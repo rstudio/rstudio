@@ -125,7 +125,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
          }
       });
       snippetTypes_.addItem(new EditableSnippets("R", FileTypeRegistry.R));
-      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.CPP));
+      snippetTypes_.addItem(new EditableSnippets("C/C++", FileTypeRegistry.CPP));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.MARKDOWN));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.TEX));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.JS));
