@@ -42,10 +42,13 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceWindowUnloadingEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceWindowUnloadingEvent.UnsavedDoc;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -130,6 +133,8 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
             @Override
             public void onWindowClosing(ClosingEvent event)
             {
+               unsavedAtClose_ = null;
+
                // ignore window closure if initiated from the main window
                if (satellite_.isClosePending())
                {
@@ -173,14 +178,17 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                   // Browsers only show that prompt in a window the user has
                   // clicked or typed in since it loaded. A popped-out window
                   // the user never interacted with just closes, and the main
-                  // window then closes its documents; hand the unsaved ones
-                  // back to the main window first so the edits survive.
+                  // window then closes its documents; tell it about the
+                  // unsaved ones once the page is really going away (see
+                  // onPageHide) so the edits survive.
                   // https://github.com/rstudio/rstudio/issues/19008
                   if (!hasBeenActive())
-                     returnDocsToMainWindow(unsaved);
+                     unsavedAtClose_ = unsaved;
                }
             }
          });
+
+         addPageHideHandler();
       }
    }
 
@@ -420,17 +428,38 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                source_, null, null, quitContext);
    }
 
-   // Move documents back to the main window, as dropping their tabs there
-   // would; the main window adopts each one and removes it from this window.
-   // (The adopting window reads the event's 'pos' as its open mode.)
-   private void returnDocsToMainWindow(ArrayList<UnsavedChangesTarget> targets)
+   // Runs when the page is unloading for good (unlike beforeunload, which the
+   // user may still cancel). If the window could not warn about its unsaved
+   // documents, report them to the main window, which keeps them open should
+   // the window turn out to be closing rather than reloading. Edits the
+   // window has not yet backed up go along, as nothing async can finish now.
+   private void onPageHide()
    {
-      String windowId = SourceWindowManager.getSourceWindowId();
+      if (unsavedAtClose_ == null)
+         return;
+
+      ArrayList<UnsavedChangesTarget> targets = unsavedAtClose_;
+      unsavedAtClose_ = null;
+
+      if (!canReachMainWindow())
+         return;
+
+      JsArray<UnsavedDoc> docs = JsArray.createArray().cast();
       for (UnsavedChangesTarget target : targets)
       {
-         events_.fireEventToMainWindow(new DocWindowChangedEvent(
-               target.getId(), windowId, "", null, null, Source.OPEN_INTERACTIVE, -1));
+         String contents = null;
+         EditingTarget editor = source_.findEditor(target.getId());
+         if (editor instanceof TextEditingTarget)
+         {
+            TextEditingTarget textEditor = (TextEditingTarget) editor;
+            if (textEditor.hasPendingChanges())
+               contents = textEditor.getDocDisplay().getCode();
+         }
+
+         docs.push(UnsavedDoc.create(target.getId(), contents));
       }
+
+      events_.fireEventToMainWindow(new SourceWindowUnloadingEvent(docs));
    }
 
    private String unsavedTargetDesc(UnsavedChangesTarget item)
@@ -453,10 +482,33 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
       return activation ? !!activation.hasBeenActive : true;
    }-*/;
 
+   // Listen on the frame hosting this GWT module ('window'), not on the
+   // window itself ('$wnd'): Chromium tears down child frames before it fires
+   // pagehide on the parent document, and skips listeners owned by a detached
+   // frame (see Satellite.initializeNative).
+   private final native void addPageHideHandler() /*-{
+      var self = this;
+      window.addEventListener("pagehide", $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.source.SourceWindow::onPageHide()();
+      }), true);
+   }-*/;
+
+   // The main window may be gone, or mid-reload with its event bridge not yet
+   // installed; there is nowhere to report to then.
+   private static final native boolean canReachMainWindow() /*-{
+      var opener = $wnd.opener;
+      return !!(opener && !opener.closed && opener.fireRStudioEventExternal);
+   }-*/;
+
    private final EventBus events_;
    private final Source source_;
    private final Satellite satellite_;
    private String initialDocId_;
    private SourcePosition initialSourcePosition_;
+
+   // Unsaved documents this window could not prompt about when it began to
+   // unload; set by the beforeunload handler and consumed by pagehide.
+   private ArrayList<UnsavedChangesTarget> unsavedAtClose_;
+
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

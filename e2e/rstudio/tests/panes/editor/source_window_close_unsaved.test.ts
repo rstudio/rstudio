@@ -4,74 +4,59 @@
 // browser's beforeunload prompt. Browsers show that prompt only in a window
 // the user has clicked or typed in since it loaded; a window that was popped
 // out and then closed without ever being touched just closes, and the main
-// window would then close its documents. The window hands its unsaved
-// documents back to the main window instead. Desktop is not affected: its
-// windows close through RStudio's own Save / Don't Save prompt.
+// window would then close its documents. Such a window reports its unsaved
+// documents to the main window as it unloads, and the main window keeps them
+// open once it sees the window is really gone (and not merely reloading).
+// Desktop is not affected: its windows close through RStudio's own
+// Save / Don't Save prompt.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
 import { openFile, seedSandboxFile } from '@utils/files';
 import { executeCommand, resetSourcePaneState } from '@utils/commands';
+import { SOURCE_WINDOW_URL, closeSourceWindows, expectNoSourceWindowAfterReload } from '@utils/source-windows';
 
-// Playwright's trace snapshots evaluate in every page, and an evaluate counts
-// as a user gesture: with tracing on, the popped-out window would get the
-// prompt after all and this file would exercise the wrong path.
-test.use({ trace: 'off' });
+// Trace snapshots run scripts in every page, and a script run by Playwright
+// counts as a user gesture: with snapshots on, the popped-out window would
+// get the prompt after all and this file would exercise the wrong path. The
+// rest of the trace (actions, network, screenshots) is still worth keeping.
+test.use({ trace: { mode: 'retain-on-failure', snapshots: false } });
 
 const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-selected']";
 const DOC_TABS = "[class*='rstudio_source_panel'] [class*='PanelTab']";
-const SOURCE_WINDOW_URL = /view=source_window_/;
 
-// How long to keep checking that no source window reopens after a reload (see
-// source_window_close.test.ts).
-const REOPEN_WINDOW_MS = 3000;
+// The main window decides that an unloaded source window has reloaded rather
+// than closed once it has seen the window still open for 5 seconds
+// (WindowCloseMonitor); only then is it sure not to take the documents.
+const RELOAD_DECISION_MS = 6000;
 
-function sourceWindows(page: Page): Page[] {
-  return page.context().pages().filter((p) => SOURCE_WINDOW_URL.test(p.url()));
+// Open a file, edit it in the main window so the popped-out window is never
+// touched, and pop it out. Returns the new window once it shows the document.
+async function popOutUnsavedDoc(page: Page, sandboxDir: string, fileName: string, edit: string): Promise<Page> {
+  await openFile(page, await seedSandboxFile(page, sandboxDir, fileName, '# closed\n'));
+
+  const backedUp = page.waitForResponse((response) => response.url().includes('/rpc/save_document_diff'));
+  await new SourcePaneActions(page, new ConsolePaneActions(page)).sendText(edit);
+  await backedUp;
+  await expect(page.locator(SELECTED_DOC_TAB)).toContainText(`${fileName}*`);
+
+  const detached = page.context().waitForEvent('page');
+  await executeCommand(page, 'popoutDoc');
+  const satellite = await detached;
+  await satellite.waitForURL(SOURCE_WINDOW_URL);
+  await expectSatelliteTabs(page, satellite, `${fileName}*`);
+  return satellite;
 }
 
-test.describe('Closing a popped-out source window without a gesture (#19008)', { tag: ['@server_only'] }, () => {
-  const sandbox = useSuiteSandbox();
-
-  test.afterEach(async ({ rstudioPage: page }) => {
-    for (const satellite of sourceWindows(page))
-      await satellite.close().catch(() => {});
-    await resetSourcePaneState(page);
-  });
-
-  test('a window closed without a prompt returns its unsaved documents to the main window', async ({
-    rstudioPage: page,
-  }) => {
-    const fileName = 'source_window_close_unsaved.R';
-    const edit = '# unsaved edit';
-    await openFile(page, await seedSandboxFile(page, sandbox.dir, fileName, '# closed\n'));
-
-    // Edit in the main window, so the popped-out window is never touched.
-    const backedUp = page.waitForResponse((response) => response.url().includes('/rpc/save_document_diff'));
-    await new SourcePaneActions(page, new ConsolePaneActions(page)).sendText(edit);
-    await backedUp;
-    await expect(page.locator(SELECTED_DOC_TAB)).toContainText(`${fileName}*`);
-
-    const detached = page.context().waitForEvent('page');
-    await executeCommand(page, 'popoutDoc');
-    const satellite = await detached;
-    await satellite.waitForURL(SOURCE_WINDOW_URL);
-
-    // A prompt means the window was activated after all; record it rather
-    // than let Playwright accept it silently.
-    const dialogs: string[] = [];
-    satellite.on('dialog', (dialog) => {
-      dialogs.push(dialog.type());
-      void dialog.accept();
-    });
-
-    // Wait for the document to show up in the new window through raw CDP;
-    // Playwright's evaluate and locators would count as a user gesture.
-    const cdp = await page.context().newCDPSession(satellite);
+// Wait for the popped-out window's document tabs to include `text`, through
+// raw CDP: Playwright's evaluate and locators would count as a user gesture.
+async function expectSatelliteTabs(page: Page, satellite: Page, text: string): Promise<void> {
+  const cdp = await page.context().newCDPSession(satellite);
+  try {
     await expect
       .poll(
         async () => {
@@ -83,35 +68,91 @@ test.describe('Closing a popped-out source window without a gesture (#19008)', {
         },
         { timeout: TIMEOUTS.fileOpen },
       )
-      .toContain(`${fileName}*`);
+      .toContain(text);
+  } finally {
     await cdp.detach();
+  }
+}
 
-    // Close through the page's close path; the browser withholds the prompt.
-    const closed = satellite.waitForEvent('close');
-    await satellite.close({ runBeforeUnload: true });
-    await closed;
-    expect(dialogs).toEqual([]);
+// A prompt means the window was activated after all; record it rather than
+// let Playwright accept it silently.
+function recordDialogs(satellite: Page): string[] {
+  const dialogs: string[] = [];
+  satellite.on('dialog', (dialog) => {
+    dialogs.push(dialog.type());
+    dialog.accept().catch(() => {});
+  });
+  return dialogs;
+}
+
+// Close through the page's close path; the browser withholds the prompt from
+// a window without a gesture, and `dialogs` confirms it did.
+async function closeWithoutPrompt(satellite: Page, dialogs: string[]): Promise<void> {
+  const closed = satellite.waitForEvent('close');
+  await satellite.close({ runBeforeUnload: true });
+  await closed;
+  expect(dialogs).toEqual([]);
+}
+
+async function expectUnsavedTabInMainWindow(page: Page, fileName: string): Promise<Locator> {
+  const tab = page.locator(DOC_TABS, { hasText: fileName }).first();
+  await expect(tab).toContainText(`${fileName}*`, { timeout: TIMEOUTS.fileOpen });
+  return tab;
+}
+
+test.describe('Unloading a popped-out source window without a gesture (#19008)', { tag: ['@server_only'] }, () => {
+  const sandbox = useSuiteSandbox();
+
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await closeSourceWindows(page);
+    await resetSourcePaneState(page);
+  });
+
+  test('a window closed without a prompt returns its unsaved documents to the main window', async ({
+    rstudioPage: page,
+  }) => {
+    const fileName = 'source_window_close_unsaved.R';
+    const edit = '# unsaved edit';
+    const satellite = await popOutUnsavedDoc(page, sandbox.dir, fileName, edit);
+    const dialogs = recordDialogs(satellite);
+
+    await closeWithoutPrompt(satellite, dialogs);
 
     // The document is back in the main window, still unsaved.
-    const tab = page.locator(DOC_TABS, { hasText: fileName }).first();
-    await expect(tab).toContainText(`${fileName}*`, { timeout: TIMEOUTS.fileOpen });
+    const tab = await expectUnsavedTabInMainWindow(page, fileName);
     await tab.click();
     await expect(page.locator(SELECTED_DOC_TAB)).toContainText(fileName);
     expect(await new SourcePaneActions(page, new ConsolePaneActions(page)).getEditorContent()).toContain(edit);
 
     // And it stays there: no window to reopen, and the edit survives a reload.
-    await page.reload();
-    await page.waitForFunction(() => window.rstudio?.ready === true, null, {
-      timeout: TIMEOUTS.sessionRestart,
-      polling: 50,
-    });
-    const deadline = Date.now() + REOPEN_WINDOW_MS;
-    while (Date.now() < deadline) {
-      expect(sourceWindows(page).map((p) => p.url())).toEqual([]);
-      await page.waitForTimeout(TIMEOUTS.layoutSettle);
-    }
+    await expectNoSourceWindowAfterReload(page);
     await expect(page.locator(DOC_TABS, { hasText: fileName }).first()).toContainText(`${fileName}*`, {
       timeout: TIMEOUTS.fileOpen,
     });
+  });
+
+  test('a window reloaded without a prompt keeps its unsaved documents', async ({ rstudioPage: page }) => {
+    const fileName = 'source_window_reload_unsaved.R';
+    const satellite = await popOutUnsavedDoc(page, sandbox.dir, fileName, '# unsaved edit');
+    const dialogs = recordDialogs(satellite);
+
+    // A reload unloads the page just like a close does; the window reports
+    // its unsaved document either way, and the main window must notice that
+    // this window came back.
+    await satellite.reload();
+    await expectSatelliteTabs(page, satellite, `${fileName}*`);
+    expect(dialogs).toEqual([]);
+
+    // The document must not also show up in the main window.
+    const deadline = Date.now() + RELOAD_DECISION_MS;
+    while (Date.now() < deadline) {
+      await expect(page.locator(DOC_TABS, { hasText: fileName })).toHaveCount(0);
+      await page.waitForTimeout(TIMEOUTS.layoutSettle);
+    }
+    await expectSatelliteTabs(page, satellite, `${fileName}*`);
+
+    // Closing the reloaded window still hands the document over.
+    await closeWithoutPrompt(satellite, dialogs);
+    await expectUnsavedTabInMainWindow(page, fileName);
   });
 });
