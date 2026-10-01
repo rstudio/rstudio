@@ -29,6 +29,9 @@
 
 #include <shared_core/SafeConvert.hpp>
 
+// for RSTUDIO_PRO_BUILD
+#include "config.h"
+
 using namespace boost::placeholders;
 
 namespace rstudio {
@@ -81,6 +84,38 @@ const std::string ActiveSession::kSuspendSize = "suspend_size";
 const std::string ActiveSession::kWorkbench = "workbench";
 const std::string ActiveSession::kId = "id";
 const std::string ActiveSession::kDisplayName = "display_name";
+const std::string ActiveSession::kStatusMessage = "status_message";
+
+const std::set<std::string>& ActiveSession::defaultProperties()
+{
+   static const std::set<std::string> properties = {
+      kExecuting,
+      kInitial,
+      kLabel,
+      kLastUsed,
+      kProject,
+      kProjectId,
+      kSavePromptRequired,
+      kRunning,
+      kRVersion,
+      kRVersionHome,
+      kRVersionLabel,
+      kWorkingDir,
+      kActivityState,
+      kLastStateUpdated,
+      kEditor,
+      kLastResumed,
+      kSuspendTimestamp,
+      kBlockingSuspend,
+      kCreated,
+      kLaunchParameters,
+#ifdef RSTUDIO_PRO_BUILD
+      // the active_session_metadata schema only has this column in Workbench
+      kStatusMessage,
+#endif
+   };
+   return properties;
+}
 
 ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath) :
    storage_(storage)
