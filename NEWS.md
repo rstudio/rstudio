@@ -87,6 +87,7 @@
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where a document or Data Viewer window opened with "Show in New Window" and then closed was reopened the next time the session was restored, so closed windows accumulated over time.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where closing the window of a Plumber API run with "Run in Window" did not stop the API.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue where a Shiny application run with "Run in Window" kept running after its window was closed, if the application's page had cancelled an earlier attempt to close the window.
+- ([#19008](https://github.com/rstudio/rstudio/issues/19008)): Fixed an issue on RStudio Server where closing a popped-out editor window that had never been clicked or typed in lost its unsaved changes without a prompt, because the browser suppresses the unsaved-changes prompt in such a window; the unsaved documents now move back to the main window instead.
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed the Zotero 10 desktop client not being available as a citation source on macOS.
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed recently added Zotero 10 references not appearing in citations.
 - ([#18787](https://github.com/rstudio/rstudio/issues/18787)): Fixed an issue on Windows where Posit Assistant failed to start in a second RStudio instance with "A Posit Assistant update is in progress".

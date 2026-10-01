@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -168,6 +169,15 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                      msg += constants_.yourEditsToFilePluralHasNotBeenSaved(filesList);
                   }
                   event.setMessage(msg);
+
+                  // Browsers only show that prompt in a window the user has
+                  // clicked or typed in since it loaded. A popped-out window
+                  // the user never interacted with just closes, and the main
+                  // window then closes its documents; hand the unsaved ones
+                  // back to the main window first so the edits survive.
+                  // https://github.com/rstudio/rstudio/issues/19008
+                  if (!hasBeenActive())
+                     returnDocsToMainWindow(unsaved);
                }
             }
          });
@@ -410,6 +420,19 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                source_, null, null, quitContext);
    }
 
+   // Move documents back to the main window, as dropping their tabs there
+   // would; the main window adopts each one and removes it from this window.
+   // (The adopting window reads the event's 'pos' as its open mode.)
+   private void returnDocsToMainWindow(ArrayList<UnsavedChangesTarget> targets)
+   {
+      String windowId = SourceWindowManager.getSourceWindowId();
+      for (UnsavedChangesTarget target : targets)
+      {
+         events_.fireEventToMainWindow(new DocWindowChangedEvent(
+               target.getId(), windowId, "", null, null, Source.OPEN_INTERACTIVE, -1));
+      }
+   }
+
    private String unsavedTargetDesc(UnsavedChangesTarget item)
    {
       if (StringUtil.isNullOrEmpty(item.getPath()))
@@ -420,6 +443,14 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
 
    private final native void markReadyToClose() /*-{
       $wnd.rstudioReadyToClose = true;
+   }-*/;
+
+   // Whether the user has interacted with this window since it loaded, which
+   // is what browsers require before showing a beforeunload prompt. Assume
+   // they have where the API is unavailable.
+   private static final native boolean hasBeenActive() /*-{
+      var activation = $wnd.navigator.userActivation;
+      return activation ? !!activation.hasBeenActive : true;
    }-*/;
 
    private final EventBus events_;
