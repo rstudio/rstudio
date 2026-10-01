@@ -6,10 +6,11 @@
 // is going away. When that notification was lost, a window closed with its own
 // close button came back on every reload, and closed windows piled up.
 //
-// Documents with unsaved changes are not closed: they move back to the main
-// window (#19008). On RStudio Server the satellite can only ask the browser to
+// On RStudio Server, documents with unsaved changes are not closed: they move
+// back to the main window (#19008). The satellite can only ask the browser to
 // prompt, and browsers skip that prompt in a window the user never clicked or
 // typed in, so closing those documents would silently discard the edits.
+// RStudio Desktop asks itself before the window closes, and keeps the answer.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from 'playwright';
@@ -18,6 +19,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
 import { openFile, seedSandboxFile } from '@utils/files';
 import { executeCommand, resetSourcePaneState } from '@utils/commands';
+import { NO_BTN } from '@pages/modals.page';
 
 const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-selected']";
 const DOC_TAB = "[class*='rstudio_source_panel'] .gwt-TabLayoutPanelTab";
@@ -144,5 +146,35 @@ test.describe('Closing a popped-out source window (#18987)', () => {
       dirty: window.rstudio?.documents.active()?.dirty,
       text: window.rstudio?.documents.activeEditor()?.getValue(),
     }))).toEqual({ dirty: true, text: '# unsaved\n# saved\n' });
+  });
+
+  test('unsaved changes are discarded after "Don\'t Save" (#19008)', { tag: ['@desktop_only'] }, async ({ rstudioPage: page }) => {
+    // An untitled document stays dirty after "Don't Save" (a saved file is
+    // reverted), so it is the one that could wrongly come back.
+    const before = await page.evaluate(() => window.rstudio?.documents.active()?.id);
+    await executeCommand(page, 'newSourceDoc');
+    await expect.poll(() => page.evaluate(() => window.rstudio?.documents.active()?.id)).not.toBe(before);
+    const docId = await page.evaluate(() => window.rstudio!.documents.active()!.id);
+
+    await page.evaluate(() => window.rstudio!.documents.activeEditor()!.insert('# discard me\n'));
+    await expect.poll(() => page.evaluate(() => window.rstudio?.documents.active()?.dirty)).toBe(true);
+
+    const satellite = await popOutActiveDoc(page, 'Untitled');
+
+    const released = page.waitForResponse(
+      (response) => response.url().includes('/rpc/close_document') &&
+        (response.request().postData() ?? '').includes(docId),
+      { timeout: TIMEOUTS.consoleReady },
+    );
+    // The close button reaches RStudio through Electron's 'close' event, which
+    // a script's window.close() skips; run the handler that event calls.
+    const closed = satellite.waitForEvent('close');
+    await satellite.evaluate(() => {
+      setTimeout(() => (window as Window & { rstudioCloseSourceWindow(): void }).rstudioCloseSourceWindow(), 0);
+    });
+    await satellite.locator(NO_BTN).click({ timeout: TIMEOUTS.fileOpen });
+    await closed;
+
+    expect(await (await released).text()).not.toContain('"error"');
   });
 });
