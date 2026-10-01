@@ -99,7 +99,7 @@
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed the Zotero 10 desktop client not being available as a citation source on macOS.
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed recently added Zotero 10 references not appearing in citations.
 - ([#18787](https://github.com/rstudio/rstudio/issues/18787)): Fixed an issue on Windows where Posit Assistant failed to start in a second RStudio instance with "A Posit Assistant update is in progress".
-- ([#9075](https://github.com/rstudio/rstudio/issues/9075)): Fixed an issue where the source editor's file type menu listed both C and C++ as "C/C++", and offered no way to switch a file back to C. C and C++ source and header files now each have their own name.
+- ([#9075](https://github.com/rstudio/rstudio/issues/9075)): Fixed an issue where the source editor's file type menu listed both C and C++ as "C/C++", and offered no way to switch a file back to C. C and C++ sources, C/C++ headers (`.h`), and C++ headers (`.hpp`, `.hh`) now have distinct names.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
