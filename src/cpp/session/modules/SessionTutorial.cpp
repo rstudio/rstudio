@@ -257,20 +257,21 @@ void handleTutorialHomeRequest(const http::Request& request,
          {
             std::string title = (tutorial.title.empty())
                   ? "[Untitled tutorial]"
-                  : htmlEscape(tutorial.title);
+                  : tutorial.title;
             
-            // the data attributes feed the pane's filter box
+            // the data attributes feed the pane's filter box; the title is the
+            // one displayed, so a placeholder can be searched for as shown
             ss << "<div"
                << " class=\"rstudio-tutorials-section rstudio-tutorials-entry\""
                << " data-tutorial-package=\"" << htmlEscape(pkgName, true) << "\""
                << " data-tutorial-name=\"" << htmlEscape(tutorial.name, true) << "\""
-               << " data-tutorial-title=\"" << htmlEscape(tutorial.title, true) << "\""
+               << " data-tutorial-title=\"" << htmlEscape(title, true) << "\""
                << ">";
             
             ss << "<div class=\"rstudio-tutorials-label-container\">";
             
             ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
-               << title
+               << htmlEscape(title)
                << "</span>";
             
             ss << "<span class=\"rstudio-tutorials-run-container\">"
@@ -278,7 +279,9 @@ void handleTutorialHomeRequest(const http::Request& request,
                << "<button"
                << " class=\"rstudio-tutorials-run-button\""
                << " aria-label=\"Start tutorial '" << htmlEscape(tutorial.name, true) << "' from package '" << htmlEscape(pkgName, true) << "'\""
-               << " onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name, true) << "', '" << htmlEscape(pkgName, true) << "')\""
+               // the handler is JavaScript inside an attribute: the HTML parser
+               // decodes the attribute before JS reads it, so escape for both
+               << " onclick=\"window.parent.tutorialRun('" << htmlEscape(jsLiteralEscape(tutorial.name), true) << "', '" << htmlEscape(jsLiteralEscape(pkgName), true) << "')\""
                << ">"
                   
                << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"
