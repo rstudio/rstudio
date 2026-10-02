@@ -177,12 +177,13 @@ InstallSearchPaths positAssistantSearchPaths();
  *    installation left there before the administrator disabled user-managed
  *    installs -- or copied there to get around the setting -- is ignored.
  * 2. The administrator's slots (systemStorageDir/versions): the slot
- *    systemStorageDir/selected.json names for this build's protocol, or the
- *    newest verifying slot for it. The selector is the administrator's, so it
- *    is never rewritten. It chooses among the administrator's versions only:
- *    a selected slot older than the bundled copy or the user's slot loses to
- *    them, so a selection left by an earlier upgrade cannot hold back a newer
- *    RStudio release.
+ *    systemStorageDir/selected.json names for this build's protocol, and
+ *    nothing when it names none or one that is unusable, so removing the
+ *    protocol's entry returns sessions to the bundled copy. The selector is
+ *    the administrator's, so it is never rewritten. It chooses among the
+ *    administrator's versions only: a selected slot older than the bundled
+ *    copy or the user's slot loses to them, so a selection left by an earlier
+ *    upgrade cannot hold back a newer RStudio release.
  * 3. The copy bundled with RStudio (systemStorageDir itself).
  *
  * Both selectors are keyed by protocol, so neither slot source contributes an

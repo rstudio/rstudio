@@ -233,11 +233,11 @@ std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
          candidates.push_back(describeInstallation(slot, "user-level"));
    }
 
-   // The administrator's selector is theirs, so a stale entry is resolved
-   // around and never rewritten.
-   core::FilePath systemSlot = selector::resolveSlot(paths.systemStorageDir,
-                                                     kProtocolVersion,
-                                                     selector::SelectorRepair::Disabled);
+   // Only the administrator's own selection: a missing or stale entry falls
+   // back to the bundled copy rather than to a version they never selected,
+   // and is never rewritten.
+   core::FilePath systemSlot =
+      selector::selectedSlot(paths.systemStorageDir, kProtocolVersion);
    if (!systemSlot.isEmpty())
       candidates.push_back(describeInstallation(systemSlot, "administrator-installed"));
 
