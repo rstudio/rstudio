@@ -24,24 +24,37 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.WorktreeInfo;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.NewWorktreeDialog;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
+import org.rstudio.studio.client.workbench.views.vcs.WorktreeOpener;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
@@ -79,9 +92,13 @@ public class GitPresenter extends BaseVcsPresenter
                        Binder commandBinder,
                        GitState gitState,
                        final GlobalDisplay globalDisplay,
-                       SatelliteManager satelliteManager)
+                       SatelliteManager satelliteManager,
+                       WorktreeOpener worktreeOpener,
+                       Session session)
    {
       super(view);
+      worktreeOpener_ = worktreeOpener;
+      session_ = session;
       gitPresenterCore_ = gitCore;
       vcsFileOpener_  = vcsFileOpener;
       view_ = view;
@@ -228,6 +245,110 @@ public class GitPresenter extends BaseVcsPresenter
    void onVcsOpen()
    {
       openSelectedFiles();
+   }
+
+   @Handler
+   void onVcsNewWorktree()
+   {
+      // default to creating the worktree alongside the main worktree
+      String parentDir = null;
+      for (WorktreeInfo worktree : JsUtil.asIterable(gitState_.getBranchInfo().getWorktrees()))
+      {
+         if (worktree.isMain())
+            parentDir = FileSystemItem.createDir(worktree.getPath()).getParentPathString();
+      }
+
+      if (StringUtil.isNullOrEmpty(parentDir))
+         parentDir = session_.getSessionInfo().getActiveProjectDir().getParentPathString();
+
+      new NewWorktreeDialog(parentDir, new OperationWithInput<NewWorktreeDialog.Input>()
+      {
+         @Override
+         public void execute(NewWorktreeDialog.Input input)
+         {
+            addWorktree(input);
+         }
+      }).showModal();
+   }
+
+   private void addWorktree(final NewWorktreeDialog.Input input)
+   {
+      server_.gitAddWorktree(
+            input.getPath(),
+            input.getBranch(),
+            input.getCreateBranch(),
+            new ServerRequestCallback<ConsoleProcess>()
+            {
+               @Override
+               public void onResponseReceived(ConsoleProcess process)
+               {
+                  final ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, server_);
+                  dialog.showModal();
+                  process.addProcessExitHandler(new ProcessExitEvent.Handler()
+                  {
+                     @Override
+                     public void onProcessExit(ProcessExitEvent event)
+                     {
+                        // leave the output up on failure so the error can be read
+                        if (event.getExitCode() != 0)
+                           return;
+
+                        dialog.closeDialog();
+                        onWorktreeAdded(input);
+                     }
+                  });
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  globalDisplay_.showErrorMessage(constants_.newWorktreeCapitalized(),
+                                                  error.getUserMessage());
+               }
+            });
+   }
+
+   private void onWorktreeAdded(final NewWorktreeDialog.Input input)
+   {
+      // refresh so the branch menu picks up the new worktree, then offer to
+      // open it; the opener needs the refreshed entry for its project file.
+      // Git reports the resolved path, which can differ from the one the
+      // user typed (symlinks), so the branch is matched as well.
+      gitState_.refresh(false, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            WorktreeInfo added = null;
+            for (WorktreeInfo worktree : JsUtil.asIterable(gitState_.getBranchInfo().getWorktrees()))
+            {
+               if (StringUtil.equals(worktree.getPath(), input.getPath()) ||
+                   StringUtil.equals(worktree.getBranch(), input.getBranch()))
+               {
+                  added = worktree;
+               }
+            }
+
+            if (added == null)
+               return;
+
+            final WorktreeInfo worktree = added;
+            globalDisplay_.showYesNoMessage(
+                  MessageDialog.QUESTION,
+                  constants_.newWorktreeCapitalized(),
+                  constants_.openNewWorktree(worktree.getPath()),
+                  new Operation()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        worktreeOpener_.open(worktree, false);
+                     }
+                  },
+                  true);
+         }
+      });
    }
 
    @Override
@@ -400,6 +521,8 @@ public class GitPresenter extends BaseVcsPresenter
    private final Commands commands_;
    private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
+   private final WorktreeOpener worktreeOpener_;
+   private final Session session_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);

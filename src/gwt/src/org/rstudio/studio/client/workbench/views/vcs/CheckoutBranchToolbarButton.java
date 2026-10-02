@@ -18,6 +18,7 @@ import com.google.inject.Provider;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.WorktreeInfo;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -30,9 +31,11 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
 {
    @Inject
    public CheckoutBranchToolbarButton(final Provider<GitState> pVcsState,
-                                      final GitServerOperations server)
+                                      final GitServerOperations server,
+                                      final WorktreeOpener worktreeOpener)
    {
       super(pVcsState);
+      worktreeOpener_ = worktreeOpener;
 
       addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -65,4 +68,24 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
 
       setBranchCaption(pVcsState_.get().getBranchInfo().getActiveBranch());
    }
+
+   @Override
+   protected boolean showWorktrees()
+   {
+      return true;
+   }
+
+   @Override
+   protected boolean canOpenWorktreeInNewSession()
+   {
+      return worktreeOpener_.canOpenInNewSession();
+   }
+
+   @Override
+   protected void onWorktreeSelected(WorktreeInfo worktree, boolean newSession)
+   {
+      worktreeOpener_.open(worktree, newSession);
+   }
+
+   private final WorktreeOpener worktreeOpener_;
 }

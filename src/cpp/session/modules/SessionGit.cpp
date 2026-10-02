@@ -90,6 +90,65 @@ namespace git {
 
 const char * const kVcsId = "Git";
 
+json::Array parseWorktreeList(const std::string& output)
+{
+   json::Array worktrees;
+
+   // entries are blank-line separated blocks of 'key [value]' lines
+   json::Object worktree;
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, output, boost::algorithm::is_any_of("\n"));
+   lines.push_back(std::string());
+   for (std::string line : lines)
+   {
+      boost::algorithm::trim_right_if(line, boost::algorithm::is_any_of("\r"));
+      if (line.empty())
+      {
+         if (worktree.hasMember("path"))
+         {
+            worktree["is_main"] = worktrees.isEmpty();
+            worktrees.push_back(worktree);
+         }
+
+         worktree = json::Object();
+         continue;
+      }
+
+      std::string key = line, value;
+      std::size_t space = line.find(' ');
+      if (space != std::string::npos)
+      {
+         key = line.substr(0, space);
+         value = line.substr(space + 1);
+      }
+
+      if (key == "worktree")
+      {
+         worktree["path"] = value;
+         worktree["head"] = std::string();
+         worktree["branch"] = std::string();
+         worktree["detached"] = false;
+         worktree["bare"] = false;
+         worktree["locked"] = false;
+         worktree["prunable"] = false;
+      }
+      else if (key == "HEAD")
+      {
+         worktree["head"] = value.substr(0, 8);
+      }
+      else if (key == "branch")
+      {
+         worktree["branch"] = boost::algorithm::replace_first_copy(value, "refs/heads/", "");
+      }
+      else if (key == "detached" || key == "bare" || key == "locked" || key == "prunable")
+      {
+         worktree[key] = true;
+      }
+   }
+
+   return worktrees;
+}
+
 namespace {
 
 
@@ -744,7 +803,53 @@ public:
       s_branches = *pBranches;
       return Success();
    }
-   
+
+   // Lists the linked worktrees of this repository (including the main one),
+   // as reported by 'git worktree list --porcelain'. Each entry also carries
+   // the .Rproj file found in that worktree (if any) so that the client can
+   // open it as a project directly.
+   core::Error listWorktrees(json::Array* pWorktrees)
+   {
+      std::string output;
+      Error error = runGit(gitArgs() << "worktree" << "list" << "--porcelain", &output);
+      if (error)
+         return error;
+
+      for (json::Value value : parseWorktreeList(output))
+      {
+         json::Object worktree = value.getObject();
+         FilePath path(worktree["path"].getString());
+         worktree["path"] = module_context::createAliasedPath(path);
+         worktree["is_current"] = path.getCanonicalPath() == root_.getCanonicalPath();
+
+         FilePath projectFile = r_util::projectFromDirectory(path);
+         if (projectFile.exists())
+            worktree["project_file"] = module_context::createAliasedPath(projectFile);
+         else
+            worktree["project_file"] = std::string();
+
+         pWorktrees->push_back(worktree);
+      }
+
+      return Success();
+   }
+
+   core::Error addWorktree(const std::string& path,
+                           const std::string& branch,
+                           bool createBranch,
+                           boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      ShellArgs args = gitArgs() << "worktree" << "add";
+      if (createBranch)
+         args << "-b" << branch;
+
+      args << module_context::resolveAliasedPath(path);
+      if (!createBranch)
+         args << branch;
+
+      return createConsoleProc(args, "Git Worktree Add", ppCP);
+   }
+
    core::Error listRemotes(json::Array* pRemotes)
    {
       Error error;
@@ -1778,14 +1883,40 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
                   std::back_inserter(jsonBranches),
                   json::toJsonValue<std::string>);
 
+   // a failure to list worktrees shouldn't prevent listing branches
+   json::Array worktrees;
+   error = s_git_.listWorktrees(&worktrees);
+   if (error)
+      LOG_ERROR(error);
+
    json::Object result;
    result["branches"] = jsonBranches;
    result["activeIndex"] =
          activeIndex
             ? json::Value(static_cast<boost::uint64_t>(activeIndex.get()))
             : json::Value();
+   result["worktrees"] = worktrees;
 
    pResponse->setResult(result);
+
+   return Success();
+}
+
+Error vcsAddWorktree(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string path, branch;
+   bool createBranch = false;
+   Error error = json::readParams(request.params, &path, &branch, &createBranch);
+   if (error)
+      return error;
+
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.addWorktree(path, branch, createBranch, &pCP);
+   if (error)
+      return error;
+
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -3510,6 +3641,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_unstage", vcsUnstage))
       (bind(registerRpcMethod, "git_create_branch", vcsCreateBranch))
       (bind(registerRpcMethod, "git_list_branches", vcsListBranches))
+      (bind(registerRpcMethod, "git_add_worktree", vcsAddWorktree))
       (bind(registerRpcMethod, "git_checkout", vcsCheckout))
       (bind(registerRpcMethod, "git_checkout_remote", vcsCheckoutRemote))
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))

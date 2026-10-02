@@ -196,6 +196,8 @@ public class ElementIds
    public final static String ASSISTANT_CHAT_PREFS = "assistant_chat_prefs";
 
    public final static String NEW_PROJECT_DIRECTORY = "directory_name";
+   public final static String NEW_WORKTREE_BRANCH = "new_worktree_branch";
+   public final static String NEW_WORKTREE_DIRECTORY = "new_worktree_directory";
    public final static String NEW_PROJECT_TYPE = "project_type";
    public final static String NEW_PROJECT_GIT_REPO = "git_repo";
    public final static String NEW_PROJECT_RENV = "use_renv";
@@ -367,6 +369,7 @@ public class ElementIds
       UPLOAD_TARGET("upload_target"),
       VCS_IGNORE("vcs_ignore"),
       VCS_TERMINAL("vcs_terminal"),
+      WORKTREE_PARENT("worktree_parent"),
       CHOOSE_IMAGE("choose_image"),
       PYTHON_PATH("python_path"),
       PROJECT_SCRATCH_PATH("project_scratch_path"),
@@ -520,6 +523,7 @@ public class ElementIds
    public final static String MB_GIT_MORE = "mb_git_more";
    public static String getMbGitMore() { return getElementId(MB_GIT_MORE); }
    public final static String TB_GIT_REFRESH = "tb_git_refresh";
+   public final static String TB_GIT_BRANCH = "tb_git_branch";
    public static String getTbGitRefresh() { return getElementId(TB_GIT_REFRESH); }
 
    // FileCommandToolbar

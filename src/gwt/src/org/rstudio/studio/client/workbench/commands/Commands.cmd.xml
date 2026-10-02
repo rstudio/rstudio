@@ -2814,6 +2814,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"
         context="vcs"/>
 
+   <cmd id="vcsNewWorktree"
+        label="New Worktree"
+        menuLabel="New Worktree..."
+        buttonLabel="New Worktree"
+        desc="Check out a branch into a new git worktree"
+        context="vcs"/>
+
    <cmd id="vcsPull"
         menuLabel="_Pull Branches"
         buttonLabel="Pull"

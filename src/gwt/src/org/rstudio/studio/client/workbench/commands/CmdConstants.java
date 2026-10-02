@@ -2308,6 +2308,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Ignore the selected files or folders") // $NON-NLS-1$
     String vcsIgnoreDesc();
     
+    // vcsNewWorktree
+    @DefaultStringValue("New Worktree") // $NON-NLS-1$
+    String vcsNewWorktreeLabel();
+    @DefaultStringValue("New Worktree") // $NON-NLS-1$
+    String vcsNewWorktreeButtonLabel();
+    @DefaultStringValue("New Worktree...") // $NON-NLS-1$
+    String vcsNewWorktreeMenuLabel();
+    @DefaultStringValue("Check out a branch into a new git worktree") // $NON-NLS-1$
+    String vcsNewWorktreeDesc();
+    
     // vcsPull
     @DefaultStringValue("Pull") // $NON-NLS-1$
     String vcsPullButtonLabel();

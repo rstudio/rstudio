@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -29,6 +30,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -52,6 +54,9 @@ import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -62,6 +67,8 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.vcs.BranchesInfo;
+import org.rstudio.studio.client.common.vcs.WorktreeInfo;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.BranchCaptionChangedEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -88,6 +95,25 @@ public class BranchToolbarButton extends ToolbarMenuButton
 
       private final String branchLabel_;
       private final String branchValue_;
+   }
+
+   protected class SwitchWorktreeCommand implements Command
+   {
+      public SwitchWorktreeCommand(WorktreeInfo worktree)
+      {
+         worktree_ = worktree;
+      }
+
+      @Override
+      public void execute()
+      {
+         // set by the click preview handler when the right-hand image was hit
+         boolean newSession = openInNewSession_;
+         openInNewSession_ = false;
+         onWorktreeSelected(worktree_, newSession);
+      }
+
+      private final WorktreeInfo worktree_;
    }
 
    @Inject
@@ -119,12 +145,24 @@ public class BranchToolbarButton extends ToolbarMenuButton
          {
             if (event.isAttached())
             {
+               openInNewSession_ = false;
+               clickPreviewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+               {
+                  @Override
+                  public void onPreviewNativeEvent(NativePreviewEvent preview)
+                  {
+                     if (preview.getTypeInt() != Event.ONCLICK)
+                        return;
+
+                     Element targetEl = preview.getNativeEvent().getEventTarget().cast();
+                     if (targetEl.hasClassName(ThemeStyles.INSTANCE.menuRightImage()))
+                        openInNewSession_ = true;
+                  }
+               });
+
                // rebuild the menu if required
                if (menuRebuildRequired_)
-               {
-                  rebuildMenu();
-                  menuRebuildRequired_ = false;
-               }
+                  menuRebuildRequired_ = !rebuildMenu();
 
                // force a re-draw if necessary
                if (initialBranchMap_ != null)
@@ -151,6 +189,12 @@ public class BranchToolbarButton extends ToolbarMenuButton
                {
                   previewHandler_.removeHandler();
                   previewHandler_ = null;
+               }
+
+               if (clickPreviewHandler_ != null)
+               {
+                  clickPreviewHandler_.removeHandler();
+                  clickPreviewHandler_ = null;
                }
             }
          }
@@ -207,18 +251,66 @@ public class BranchToolbarButton extends ToolbarMenuButton
             return;
          }
       }
+
+      String worktreeKey = worktreeKey(pVcsState_.get().getBranchInfo().getWorktrees());
+      if (!StringUtil.equals(worktreeKey, worktreeKey_))
+      {
+         worktreeKey_ = worktreeKey;
+         menuRebuildRequired_ = true;
+      }
    }
 
-   private void rebuildMenu()
+   private static String worktreeKey(JsArray<WorktreeInfo> worktrees)
+   {
+      StringBuilder key = new StringBuilder();
+      for (WorktreeInfo worktree : JsUtil.asIterable(worktrees))
+      {
+         key.append(worktree.getPath())
+            .append('\t')
+            .append(worktree.getBranch())
+            .append('\t')
+            .append(worktree.getHead())
+            .append('\n');
+      }
+      return key.toString();
+   }
+
+   // Subclasses that can activate a worktree override these.
+   protected boolean showWorktrees()
+   {
+      return false;
+   }
+
+   protected boolean canOpenWorktreeInNewSession()
+   {
+      return false;
+   }
+
+   protected void onWorktreeSelected(WorktreeInfo worktree, boolean newSession)
+   {
+   }
+
+   // Returns false when branch information isn't available yet (the menu was
+   // opened before the first status refresh completed), in which case the
+   // caller should try again on the next open.
+   private boolean rebuildMenu()
    {
       menu_.clearItems();
 
-      JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
+      BranchesInfo branchInfo = pVcsState_.get().getBranchInfo();
+      if (branchInfo == null)
+      {
+         onBeforePopulateMenu(menu_);
+         populateEmptyMenu(menu_);
+         return false;
+      }
+
+      JsArrayString branches = branchInfo.getBranches();
       if (branches.length() == 0)
       {
          onBeforePopulateMenu(menu_);
          populateEmptyMenu(menu_);
-         return;
+         return true;
       }
 
       // separate branches based on remote name
@@ -245,11 +337,110 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       }
 
+      // branches checked out in another worktree can't be checked out here;
+      // remember where they live so that selecting one opens that worktree
+      worktrees_ = new ArrayList<>();
+      worktreeBranches_ = new HashMap<>();
+      if (showWorktrees())
+      {
+         for (WorktreeInfo worktree : JsUtil.asIterable(branchInfo.getWorktrees()))
+         {
+            if (worktree.isBare() || worktree.isPrunable())
+               continue;
+
+            worktrees_.add(worktree);
+            if (!worktree.isCurrent() && !StringUtil.isNullOrEmpty(worktree.getBranch()))
+               worktreeBranches_.put(worktree.getBranch(), worktree);
+         }
+
+         // the main worktree alone isn't worth a section
+         if (worktrees_.size() < 2)
+            worktrees_.clear();
+      }
+
       // record the branches used on first populate
       initialBranchMap_ = branchMap;
 
       onBeforePopulateMenu(menu_);
       populateMenu(menu_, branchMap);
+      return true;
+   }
+
+   private void populateWorktrees(final ToolbarPopupMenu menu, final String query)
+   {
+      List<WorktreeInfo> worktrees = new ArrayList<>();
+      for (WorktreeInfo worktree : worktrees_)
+      {
+         if (query.isEmpty() ||
+             worktree.getBranch().indexOf(query) != -1 ||
+             worktree.getPath().indexOf(query) != -1)
+         {
+            worktrees.add(worktree);
+         }
+      }
+
+      if (worktrees.isEmpty())
+         return;
+
+      // worktrees nested inside the main worktree read better relative to it
+      String mainPath = null;
+      for (WorktreeInfo worktree : worktrees_)
+      {
+         if (worktree.isMain())
+            mainPath = worktree.getPath();
+      }
+
+      menu.addSeparator(new CustomMenuItemSeparator()
+      {
+         @Override
+         public Element createMainElement()
+         {
+            Label label = new Label(WORKTREES);
+            label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
+            label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
+            boolean useSearch = menu_.getItemCount() == 0;
+            return useSearch ? createSearchSeparator(label) : label.getElement();
+         }
+      });
+      menu.addSeparator();
+
+      for (WorktreeInfo worktree : worktrees)
+      {
+         String name = worktree.isDetached() || StringUtil.isNullOrEmpty(worktree.getBranch())
+               ? worktree.getHead()
+               : worktree.getBranch();
+
+         String path = worktree.getPath();
+         if (mainPath != null && path.startsWith(mainPath + "/"))
+            path = path.substring(mainPath.length() + 1);
+
+         String label = SafeHtmlUtils.htmlEscape(name) +
+               " <span class=\"" + ThemeStyles.INSTANCE.menuItemSubtitle() + "\">" +
+               SafeHtmlUtils.htmlEscape(path) + "</span>";
+
+         ImageResource2x check = worktree.isCurrent()
+               ? new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x())
+               : null;
+
+         ImageResource2x newSession = !worktree.isCurrent() && canOpenWorktreeInNewSession()
+               ? new ImageResource2x(StandardIcons.INSTANCE.viewer_window2x())
+               : null;
+
+         String html = AppCommand.formatMenuLabel(
+               check,
+               label,
+               true,
+               null,
+               newSession,
+               constants_.openWorktreeInNewSession());
+
+         // the current worktree is shown for orientation only; selecting it
+         // just closes the menu
+         Command command = worktree.isCurrent()
+               ? () -> {}
+               : new SwitchWorktreeCommand(worktree);
+         menu.addItem(new MenuItem(html, true, command));
+      }
    }
 
    private void populateEmptyMenu(final ToolbarPopupMenu menu)
@@ -269,9 +460,12 @@ public class BranchToolbarButton extends ToolbarMenuButton
 
    private void populateMenu(final ToolbarPopupMenu menu, final Map<String, List<String>> branchMap)
    {
+      populateWorktrees(menu, StringUtil.notNull(lastSearchValue_).trim());
+
       if (branchMap.isEmpty())
       {
-         populateEmptyMenu(menu);
+         if (menu.getItemCount() == 0)
+            populateEmptyMenu(menu);
          return;
       }
 
@@ -345,9 +539,21 @@ public class BranchToolbarButton extends ToolbarMenuButton
                // construct branch label without remotes prefix
                final String branchLabel = branch.replaceAll("^remotes/" + caption + "/", "");
                final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
-               menu.addItem(new MenuItem(
-                     branchLabel,
-                     new SwitchBranchCommand(branchLabel, branchValue)));
+
+               // a branch checked out in another worktree opens that worktree
+               WorktreeInfo worktree = worktreeBranches_.get(branchValue);
+               if (worktree != null && caption == LOCAL_BRANCHES)
+               {
+                  menu.addItem(new MenuItem(
+                        constants_.worktreeSuffix(branchLabel),
+                        new SwitchWorktreeCommand(worktree)));
+               }
+               else
+               {
+                  menu.addItem(new MenuItem(
+                        branchLabel,
+                        new SwitchBranchCommand(branchLabel, branchValue)));
+               }
 
                // update branch count
                if (n++ > MAX_BRANCHES)
@@ -497,8 +703,13 @@ public class BranchToolbarButton extends ToolbarMenuButton
 
    private boolean menuRebuildRequired_ = true;
    private JsVectorString branches_ = JsVectorString.createVector();
+   private String worktreeKey_ = "";
+   private List<WorktreeInfo> worktrees_ = new ArrayList<>();
+   private Map<String, WorktreeInfo> worktreeBranches_ = new HashMap<>();
+   private boolean openInNewSession_ = false;
 
    private HandlerRegistration previewHandler_;
+   private HandlerRegistration clickPreviewHandler_;
 
    private String lastSearchValue_;
    private final Timer searchValueChangeTimer_;
@@ -508,6 +719,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
    private static final String NO_BRANCH = constants_.noBranchParentheses();
    private static final String NO_BRANCHES_AVAILABLE = constants_.noBranchesAvailableParentheses();
    private static final String LOCAL_BRANCHES = constants_.localBranchesParentheses();
+   private static final String WORKTREES = constants_.worktreesParentheses();
 
    private static Resources RES = GWT.create(Resources.class);
    static
