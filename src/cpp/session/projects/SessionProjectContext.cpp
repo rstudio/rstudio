@@ -1159,8 +1159,10 @@ std::string ProjectContext::worktreeDisplayName() const
       worktreeRoot = worktreeRoot.getParent();
    }
 
-   // a linked worktree's .git is a file: "gitdir: <primary>/.git/worktrees/<id>"
-   // (the primary checkout has a directory, and a submodule points at .git/modules)
+   // a linked worktree's .git is a file: "gitdir: <common dir>/worktrees/<id>",
+   // where the common dir is "<primary>/.git" or, for a bare repository, the
+   // repository itself (the primary checkout has a directory, and a submodule
+   // points at .git/modules)
    if (worktreeRoot.isEmpty() || gitPath.isDirectory())
       return std::string();
 
@@ -1181,8 +1183,19 @@ std::string ProjectContext::worktreeDisplayName() const
    if (gitDir.getParent().getFilename() != "worktrees")
       return std::string();
 
+   // a bare repository has no checkout to take a name from: use its own,
+   // without the conventional .git suffix
+   FilePath commonDir = gitDir.getParent().getParent();
+   if (commonDir.getFilename() != ".git")
+   {
+      std::string name = commonDir.getFilename();
+      if (boost::algorithm::ends_with(name, ".git"))
+         name.resize(name.size() - std::strlen(".git"));
+      return name + " [" + worktreeRoot.getFilename() + "]";
+   }
+
    // prefer the primary checkout's own project name, then its directory name
-   FilePath primary = gitDir.getParent().getParent().getParent();
+   FilePath primary = commonDir.getParent();
    std::string primaryName = primary.getFilename();
    FilePath primaryProject = r_util::projectFromDirectory(primary);
    if (primaryProject.exists())
