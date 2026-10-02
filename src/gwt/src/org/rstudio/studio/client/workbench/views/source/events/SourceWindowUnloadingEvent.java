@@ -23,11 +23,12 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-// Fired to the main window by a source window that is unloading without
-// having been able to warn about its unsaved documents (the browser withholds
-// the beforeunload prompt from a window the user never interacted with). The
-// main window keeps the listed documents open if the window turns out to be
-// closing rather than reloading.
+// Fired to the main window by a source window as it unloads, listing the
+// unsaved documents it could not warn about (the browser withholds the
+// beforeunload prompt from a window the user never interacted with). The main
+// window keeps the listed documents open if the window turns out to be
+// closing rather than reloading. The list is empty when there is nothing to
+// keep: no unsaved documents, or the user was prompted and chose to leave.
 @JavaScriptSerializable
 public class SourceWindowUnloadingEvent
              extends CrossWindowEvent<SourceWindowUnloadingEvent.Handler>

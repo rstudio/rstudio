@@ -429,15 +429,17 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
    }
 
    // Runs when the page is unloading for good (unlike beforeunload, which the
-   // user may still cancel). If the window could not warn about its unsaved
-   // documents, report them to the main window, which keeps them open should
-   // the window turn out to be closing rather than reloading. Edits the
-   // window has not yet backed up go along, as nothing async can finish now.
+   // user may still cancel). Report to the main window the unsaved documents
+   // this window could not warn about; it keeps them open should the window
+   // turn out to be closing rather than reloading. Edits the window has not
+   // yet backed up go along, as nothing async can finish now.
+   //
+   // Report even when there is nothing to hand over (no unsaved documents,
+   // or the user saw the prompt and chose to leave): the main window only
+   // learns whether an unload was a reload some seconds later, so this
+   // replaces what an earlier reload of this window may have left behind.
    private void onPageHide()
    {
-      if (unsavedAtClose_ == null)
-         return;
-
       ArrayList<UnsavedChangesTarget> targets = unsavedAtClose_;
       unsavedAtClose_ = null;
 
@@ -445,18 +447,21 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
          return;
 
       JsArray<UnsavedDoc> docs = JsArray.createArray().cast();
-      for (UnsavedChangesTarget target : targets)
+      if (targets != null)
       {
-         String contents = null;
-         EditingTarget editor = source_.findEditor(target.getId());
-         if (editor instanceof TextEditingTarget)
+         for (UnsavedChangesTarget target : targets)
          {
-            TextEditingTarget textEditor = (TextEditingTarget) editor;
-            if (textEditor.hasPendingChanges())
-               contents = textEditor.getDocDisplay().getCode();
-         }
+            String contents = null;
+            EditingTarget editor = source_.findEditor(target.getId());
+            if (editor instanceof TextEditingTarget)
+            {
+               TextEditingTarget textEditor = (TextEditingTarget) editor;
+               if (textEditor.hasPendingChanges())
+                  contents = textEditor.getDocDisplay().getCode();
+            }
 
-         docs.push(UnsavedDoc.create(target.getId(), contents));
+            docs.push(UnsavedDoc.create(target.getId(), contents));
+         }
       }
 
       events_.fireEventToMainWindow(new SourceWindowUnloadingEvent(docs));

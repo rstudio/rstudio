@@ -832,7 +832,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          return;
 
       // remember the window's unsaved documents until we learn whether it
-      // closed (keep them) or reloaded (it keeps them itself)
+      // closed (keep them) or reloaded (it keeps them itself); a window that
+      // reloaded and then unloads again within that time replaces its entry
       unsavedDocsByWindow_.put(sourceWindowId(event.originWindowName()),
                                event.getUnsavedDocs());
    }

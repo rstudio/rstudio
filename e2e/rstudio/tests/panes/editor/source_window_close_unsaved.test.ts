@@ -155,4 +155,39 @@ test.describe('Unloading a popped-out source window without a gesture (#19008)',
     await closeWithoutPrompt(satellite, dialogs);
     await expectUnsavedTabInMainWindow(page, fileName);
   });
+
+  test('a window reloaded without a prompt and then closed through the prompt discards its documents', async ({
+    rstudioPage: page,
+  }) => {
+    const fileName = 'source_window_reload_then_leave.R';
+    const satellite = await popOutUnsavedDoc(page, sandbox.dir, fileName, '# unsaved edit');
+    const dialogs = recordDialogs(satellite);
+
+    // The reload reports the unsaved document, and the main window holds on
+    // to that report until it is sure the window is gone.
+    await satellite.reload();
+    await expectSatelliteTabs(page, satellite, `${fileName}*`);
+    expect(dialogs).toEqual([]);
+
+    // Before the main window has decided, click into the window (an evaluate
+    // counts as a gesture) and close it, choosing Leave at the prompt. The
+    // report left by the reload must not make the main window keep a
+    // document the user just chose to discard.
+    await satellite.evaluate(() => {});
+    const released = page.waitForResponse((response) => response.url().includes('/rpc/close_document'), {
+      timeout: RELOAD_DECISION_MS,
+    });
+    const closed = satellite.waitForEvent('close');
+    await satellite.close({ runBeforeUnload: true });
+    await closed;
+    expect(dialogs).toEqual(['beforeunload']);
+    await released;
+
+    // The document is closed, not adopted by the main window.
+    const deadline = Date.now() + RELOAD_DECISION_MS;
+    while (Date.now() < deadline) {
+      await expect(page.locator(DOC_TABS, { hasText: fileName })).toHaveCount(0);
+      await page.waitForTimeout(TIMEOUTS.layoutSettle);
+    }
+  });
 });
