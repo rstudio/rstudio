@@ -740,6 +740,11 @@ public class DocUpdateSentinel
          sourceDoc_.setEncoding(encoding);
    }
 
+   public boolean hasPendingChanges()
+   {
+      return changesPending_;
+   }
+
    public boolean sourceOnSave()
    {
       return sourceDoc_.sourceOnSave();
