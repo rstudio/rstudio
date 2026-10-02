@@ -52,7 +52,6 @@ public class UserStateAccessor extends Prefs
    public static final String AUTO_CREATED_PROFILE = "auto_created_profile";
    public static final String THEME = "theme";
    public static final String DEFAULT_PROJECT_LOCATION = "default_project_location";
-   public static final String GIT_WORKTREE_PARENT_DIR = "git_worktree_parent_dir";
    public static final String CLEAR_HIDDEN = "clear_hidden";
    public static final String EXPORT_PLOT_OPTIONS = "export_plot_options";
    public static final String EXPORT_VIEWER_OPTIONS = "export_viewer_options";
@@ -282,18 +281,6 @@ public class UserStateAccessor extends Prefs
          "default_project_location",
          _constants.defaultProjectLocationTitle(), 
          _constants.defaultProjectLocationDescription(), 
-         "");
-   }
-
-   /**
-    * The directory under which the last git worktree was created; the default for the next one.
-    */
-   public PrefValue<String> gitWorktreeParentDir()
-   {
-      return string(
-         "git_worktree_parent_dir",
-         _constants.gitWorktreeParentDirTitle(), 
-         _constants.gitWorktreeParentDirDescription(), 
          "");
    }
 
@@ -797,8 +784,6 @@ public class UserStateAccessor extends Prefs
          theme().setValue(layer, source.getObject("theme"));
       if (source.hasKey("default_project_location"))
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
-      if (source.hasKey("git_worktree_parent_dir"))
-         gitWorktreeParentDir().setValue(layer, source.getString("git_worktree_parent_dir"));
       if (source.hasKey("clear_hidden"))
          clearHidden().setValue(layer, source.getBool("clear_hidden"));
       if (source.hasKey("export_plot_options"))
@@ -858,7 +843,6 @@ public class UserStateAccessor extends Prefs
       prefs.add(autoCreatedProfile());
       prefs.add(theme());
       prefs.add(defaultProjectLocation());
-      prefs.add(gitWorktreeParentDir());
       prefs.add(clearHidden());
       prefs.add(exportPlotOptions());
       prefs.add(exportViewerOptions());

@@ -339,7 +339,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
       for (WorktreeInfo worktree : worktrees_)
       {
          if (query.isEmpty() ||
-             worktree.getBranch().indexOf(query) != -1 ||
+             worktree.getDisplayName().indexOf(query) != -1 ||
              worktree.getPath().indexOf(query) != -1)
          {
             worktrees.add(worktree);
@@ -373,9 +373,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
 
       for (WorktreeInfo worktree : worktrees)
       {
-         String name = worktree.isDetached() || StringUtil.isNullOrEmpty(worktree.getBranch())
-               ? worktree.getHead()
-               : worktree.getBranch();
+         String name = worktree.getDisplayName();
 
          // nested worktrees read relative to the main one; others keep only
          // their last two path components, with the full path as a tooltip

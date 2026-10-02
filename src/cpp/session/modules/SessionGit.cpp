@@ -887,9 +887,11 @@ public:
                               bool force,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
    {
+      // forced once, git removes a worktree with uncommitted changes; forced
+      // twice, a locked one as well -- the user has confirmed either way
       ShellArgs args = gitArgs() << "worktree" << "remove";
       if (force)
-         args << "--force";
+         args << "--force" << "--force";
 
       args << module_context::resolveAliasedPath(path);
 
@@ -1931,7 +1933,7 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 
    // a failure to list worktrees shouldn't prevent listing branches; as this
    // runs on every status refresh, report it once rather than each time (a
-   // git older than 2.5 has no 'worktree' subcommand at all)
+   // git older than 2.7 has no 'worktree list' at all)
    static bool s_loggedWorktreeError = false;
    json::Array worktrees;
    error = s_git_.listWorktrees(&worktrees);

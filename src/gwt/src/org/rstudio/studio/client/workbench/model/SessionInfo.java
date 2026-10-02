@@ -310,6 +310,16 @@ public class SessionInfo extends JavaScriptObject
       return this.active_project_worktree_name || "";
    }-*/;
 
+   // The name the project goes by: its configured name, else the worktree
+   // label (which tells checkouts of one project apart), else empty
+   public final String getActiveProjectDisplayName()
+   {
+      String name = getActiveProjectName();
+      if (StringUtil.isNullOrEmpty(name))
+         name = getActiveProjectWorktreeName();
+      return StringUtil.notNull(name);
+   }
+
    public final FileSystemItem getActiveProjectDir()
    {
       String projFile = getActiveProjectFile();

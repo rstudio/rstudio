@@ -35,10 +35,9 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
 {
    public static class Input
    {
-      public Input(String path, String parentDir, String branch)
+      public Input(String path, String branch)
       {
          path_ = path;
-         parentDir_ = parentDir;
          branch_ = branch;
       }
 
@@ -47,18 +46,12 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
          return path_;
       }
 
-      public String getParentDir()
-      {
-         return parentDir_;
-      }
-
       public String getBranch()
       {
          return branch_;
       }
 
       private final String path_;
-      private final String parentDir_;
       private final String branch_;
    }
 
@@ -117,7 +110,7 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
       String parent = dirParent_.getText().trim();
       String name = tbDirectoryName_.getValue().trim();
       String path = FileSystemItem.createDir(parent).completePath(name);
-      return new Input(path, parent, tbBranch_.getValue().trim());
+      return new Input(path, tbBranch_.getValue().trim());
    }
 
    @Override

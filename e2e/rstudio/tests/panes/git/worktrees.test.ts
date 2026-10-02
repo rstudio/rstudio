@@ -245,7 +245,7 @@ test.describe.serial('Git pane worktrees', () => {
     await branchInput.pressSequentially(BRANCH_DIALOG_BRANCH);
 
     // the worktree option reveals the parent directory, which defaults to the
-    // directory the last worktree was created under (the sandbox, above)
+    // directory holding the repository's linked worktrees (the sandbox)
     await page.locator(NEW_BRANCH_WORKTREE_CHECKBOX).check();
     await expect(page.locator(NEW_BRANCH_WORKTREE_PARENT_INPUT)).toBeVisible();
     await page.locator(CONFIRM_BTN).click();

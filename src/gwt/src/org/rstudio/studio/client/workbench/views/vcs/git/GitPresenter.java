@@ -246,11 +246,7 @@ public class GitPresenter extends BaseVcsPresenter
          @Override
          public void execute(NewWorktreeDialog.Input input)
          {
-            worktreeActions_.create(
-                  input.getPath(),
-                  input.getParentDir(),
-                  input.getBranch(),
-                  null);
+            worktreeActions_.create(input.getPath(), input.getBranch(), null);
          }
       }).showModal();
    }

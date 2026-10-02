@@ -141,19 +141,6 @@ core::Error UserStateValues::setDefaultProjectLocation(std::string val)
 }
 
 /**
- * The directory under which the last git worktree was created; the default for the next one.
- */
-std::string UserStateValues::gitWorktreeParentDir()
-{
-   return readPref<std::string>("git_worktree_parent_dir");
-}
-
-core::Error UserStateValues::setGitWorktreeParentDir(std::string val)
-{
-   return writePref("git_worktree_parent_dir", val);
-}
-
-/**
  * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
  */
 bool UserStateValues::clearHidden()
@@ -464,7 +451,6 @@ std::vector<std::string> UserStateValues::allKeys()
       kAutoCreatedProfile,
       kTheme,
       kDefaultProjectLocation,
-      kGitWorktreeParentDir,
       kClearHidden,
       kExportPlotOptions,
       kExportViewerOptions,

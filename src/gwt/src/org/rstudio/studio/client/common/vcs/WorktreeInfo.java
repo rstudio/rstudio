@@ -16,6 +16,8 @@ package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import org.rstudio.core.client.StringUtil;
+
 // One entry of 'git worktree list', plus the directory the project lives in
 // within it (the worktree root, or the current project's subdirectory) and the
 // .Rproj file found there (if any)
@@ -34,4 +36,11 @@ public class WorktreeInfo extends JavaScriptObject
    public final native boolean isPrunable()    /*-{ return this["prunable"]; }-*/;
    public final native boolean isMain()        /*-{ return this["is_main"]; }-*/;
    public final native boolean isCurrent()     /*-{ return this["is_current"]; }-*/;
+
+   // The branch checked out in the worktree, or its commit when detached
+   public final String getDisplayName()
+   {
+      String branch = getBranch();
+      return isDetached() || StringUtil.isNullOrEmpty(branch) ? getHead() : branch;
+   }
 }

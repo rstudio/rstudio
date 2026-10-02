@@ -114,11 +114,12 @@ public class DesktopHooks
       }
       if (workbenchContext_.getActiveProjectDir() != null)
       {
-         String worktreeName = session_.getSessionInfo().getActiveProjectWorktreeName();
          if (pUIPrefs_.get().fullProjectPathInWindowTitle().getValue())
             return workbenchContext_.getActiveProjectDir().getPath();
-         else if (!StringUtil.isNullOrEmpty(worktreeName))
-            return worktreeName;
+
+         String displayName = session_.getSessionInfo().getActiveProjectDisplayName();
+         if (!StringUtil.isNullOrEmpty(displayName))
+            return displayName;
          else
             return workbenchContext_.getActiveProjectDir().getName();
       }

@@ -126,13 +126,11 @@ public class ProjectMRUList extends MRUList
    protected ArrayList<String> generateLabels(ArrayList<String> mruEntries, boolean includeExt)
    {
       // split out the paths and names so we can dedupe the paths
-      ArrayList<String> mruProjectPaths = new ArrayList<String>();
       ArrayList<String> mruPaths = new ArrayList<String>();
       ArrayList<String> mruNames = new ArrayList<String>();
       for (String entry : mruEntries)
       {
          ProjectMRUEntry mruEntry = new ProjectMRUEntry(entry);
-         mruProjectPaths.add(mruEntry.getProjectFilePath());
          mruPaths.add(mruEntry.getProjectFilePath());
          mruNames.add(StringUtil.notNull(mruEntry.getProjectName()));
       }
@@ -144,7 +142,7 @@ public class ProjectMRUList extends MRUList
       // Note that it hardcoded true for the "includeExtensions" parameter and did not use
       // the value of the "includeExt" parameter. Also have to do that here to avoid
       // https://github.com/rstudio/rstudio/issues/14107.
-      mruPaths = DuplicateHelper.getPathLabels(mruPaths, true);
+      ArrayList<String> pathLabels = DuplicateHelper.getPathLabels(mruPaths, true);
       
       // recombine paths and names for display. A worktree's "primary [directory]"
       // name already locates the project, so it stands on its own; repeating
@@ -152,11 +150,11 @@ public class ProjectMRUList extends MRUList
       ArrayList<String> result = new ArrayList<String>();
       for (int i = 0; i < mruEntries.size(); i++)
       {
-         String path = mruPaths.get(i);
+         String path = pathLabels.get(i);
          String name = mruNames.get(i);
          if (name.length() == 0)
             result.add(path);
-         else if (isWorktreeName(name, mruProjectPaths.get(i)))
+         else if (isWorktreeName(name, mruPaths.get(i)))
             result.add(name);
          else
             result.add(path + " (" + name + ")");

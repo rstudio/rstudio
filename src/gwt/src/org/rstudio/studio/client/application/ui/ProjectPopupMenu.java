@@ -69,8 +69,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       commands_ = commands;
       instance_ = instance;
       
+      sessionInfo_ = sessionInfo;
       activeProjectFile_ = sessionInfo.getActiveProjectFile();
-      worktreeName_ = sessionInfo.getActiveProjectWorktreeName();
    }
    
    @Inject
@@ -162,13 +162,13 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    {
       if (activeProjectFile_ != null)
       {
-         if (pUserPrefs_.get().projectName().getValue().length() > 0)
-            return pUserPrefs_.get().projectName().getValue();
-         else if (!StringUtil.isNullOrEmpty(worktreeName_))
-            return worktreeName_;
-         else
-            return mruList_.getQualifiedLabel(activeProjectFile_);
-
+         // the configured name is read live, so that a rename shows at once
+         String name = pUserPrefs_.get().projectName().getValue();
+         if (StringUtil.isNullOrEmpty(name))
+            name = sessionInfo_.getActiveProjectDisplayName();
+         if (StringUtil.isNullOrEmpty(name))
+            name = mruList_.getQualifiedLabel(activeProjectFile_);
+         return name;
       } else {
          return constants_.toolBarButtonText();
       }
@@ -338,8 +338,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private static final Resources RESOURCES = GWT.create(Resources.class);
    private static final int MAX_SHARED_PROJECTS = 5;
    private static final int MAX_MRU_ENTRIES = 10;
+   private final SessionInfo sessionInfo_;
    private final String activeProjectFile_;
-   private String worktreeName_;
    private ToolbarMenuButton toolbarButton_ = null;
    private HandlerRegistration projectNameHandler_;
 

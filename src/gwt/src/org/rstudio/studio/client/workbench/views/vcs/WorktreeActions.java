@@ -15,14 +15,15 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -36,7 +37,6 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 import org.rstudio.studio.client.application.Desktop;
@@ -66,8 +66,7 @@ public class WorktreeActions
                           GitServerOperations gitServer,
                           GitState gitState,
                           Session session,
-                          Satellite satellite,
-                          Provider<UserState> pUserState)
+                          Satellite satellite)
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
@@ -76,26 +75,44 @@ public class WorktreeActions
       gitState_ = gitState;
       session_ = session;
       satellite_ = satellite;
-      pUserState_ = pUserState;
 
       if (!Satellite.isCurrentWindowSatellite())
          exportOpenProjectCallback();
    }
 
-   // The directory new worktrees are created under: the last one used, else
-   // alongside the main worktree, else alongside the project, else home (a
-   // checkout at "~" or directly under "/" has no usable parent).
+   // The directory new worktrees are created under: the one holding this
+   // repository's linked worktrees (the most common one, should they be
+   // spread out), else alongside the main worktree, else alongside the
+   // project, else home (a checkout at "~" or directly under "/" has no
+   // usable parent). The worktrees themselves are the record of where this
+   // repository keeps them; a remembered directory would carry over from
+   // whichever repository was used last.
    public String defaultParentDir()
    {
-      String parentDir = pUserState_.get().gitWorktreeParentDir().getGlobalValue();
-      if (!StringUtil.isNullOrEmpty(parentDir))
-         return parentDir;
-
+      String parentDir = null;
+      String mainParentDir = null;
+      int best = 0;
+      Map<String, Integer> counts = new HashMap<>();
       for (WorktreeInfo worktree : worktrees())
       {
+         String candidate = FileSystemItem.createDir(worktree.getPath()).getParentPathString();
          if (worktree.isMain())
-            parentDir = FileSystemItem.createDir(worktree.getPath()).getParentPathString();
+         {
+            mainParentDir = candidate;
+            continue;
+         }
+
+         int count = counts.containsKey(candidate) ? counts.get(candidate) + 1 : 1;
+         counts.put(candidate, count);
+         if (count > best)
+         {
+            best = count;
+            parentDir = candidate;
+         }
       }
+
+      if (StringUtil.isNullOrEmpty(parentDir))
+         parentDir = mainParentDir;
 
       if (StringUtil.isNullOrEmpty(parentDir))
          parentDir = session_.getSessionInfo().getActiveProjectDir().getParentPathString();
@@ -106,7 +123,8 @@ public class WorktreeActions
       return parentDir;
    }
 
-   // Worktrees that can be removed: not the main one, and not the one we're in
+   // Worktrees that can be removed: not the main one, and not the one we're in.
+   // A locked one is offered too; removing it takes the force option.
    public List<WorktreeInfo> removableWorktrees()
    {
       List<WorktreeInfo> worktrees = new ArrayList<>();
@@ -122,7 +140,6 @@ public class WorktreeActions
    // `onCreated` (optional) runs first, once the worktree exists, and is
    // handed that offer to make when its own work is done.
    public void create(final String path,
-                      final String parentDir,
                       final String branch,
                       final CommandWithArg<Command> onCreated)
    {
@@ -133,7 +150,7 @@ public class WorktreeActions
          @Override
          public void onResponseReceived(BranchesInfo branchesInfo)
          {
-            addWorktree(path, parentDir, branch, !branchExists(branch, branchesInfo), onCreated);
+            addWorktree(path, branch, !branchExists(branch, branchesInfo), onCreated);
          }
 
          @Override
@@ -165,7 +182,6 @@ public class WorktreeActions
    }
 
    private void addWorktree(final String path,
-                            final String parentDir,
                             String branch,
                             boolean createBranch,
                             final CommandWithArg<Command> onCreated)
@@ -196,7 +212,6 @@ public class WorktreeActions
                            return;
 
                         dialog.closeDialog();
-                        rememberParentDir(parentDir);
 
                         Command offerToOpen = () -> onWorktreeAdded(path, existing);
                         if (onCreated != null)
@@ -215,17 +230,6 @@ public class WorktreeActions
                                                   error.getUserMessage());
                }
             });
-   }
-
-   // A parent directory becomes the default once a worktree has been created in it
-   private void rememberParentDir(String parentDir)
-   {
-      UserState userState = pUserState_.get();
-      if (StringUtil.equals(userState.gitWorktreeParentDir().getGlobalValue(), parentDir))
-         return;
-
-      userState.gitWorktreeParentDir().setGlobalValue(parentDir);
-      userState.writeState();
    }
 
    private void onWorktreeAdded(final String path, final Set<String> existing)
@@ -290,8 +294,8 @@ public class WorktreeActions
       return sameName;
    }
 
-   // Confirms, then runs 'git worktree remove' (with --force when asked, as
-   // git otherwise refuses to delete uncommitted changes)
+   // Confirms, then runs 'git worktree remove' (forced when asked, as git
+   // otherwise refuses to delete uncommitted changes or a locked worktree)
    public void remove(final WorktreeInfo worktree, final boolean force)
    {
       globalDisplay_.showYesNoMessage(
@@ -400,8 +404,17 @@ public class WorktreeActions
    {
       if (Satellite.isCurrentWindowSatellite())
       {
+         // the main window is reached through the opener; without one (or
+         // before it has created this class) there is nothing to hand over to
+         if (!callMainWindowOpenProject(projectFile, newSession))
+         {
+            Debug.log("Unable to open worktree from satellite: main window unavailable");
+            globalDisplay_.showErrorMessage(constants_.openWorktreeCaption(),
+                                            constants_.openWorktreeMainWindowUnavailable());
+            return;
+         }
+
          satellite_.focusMainWindow();
-         callMainWindowOpenProject(projectFile, newSession);
          return;
       }
 
@@ -420,10 +433,13 @@ public class WorktreeActions
       );
    }-*/;
 
-   private final native void callMainWindowOpenProject(String projectFile, boolean newSession) /*-{
+   private final native boolean callMainWindowOpenProject(String projectFile, boolean newSession) /*-{
       var opener = $wnd.opener;
-      if (opener && opener.worktreeOpenProjectFromRStudioSatellite)
-         opener.worktreeOpenProjectFromRStudioSatellite(projectFile, newSession);
+      if (!opener || !opener.worktreeOpenProjectFromRStudioSatellite)
+         return false;
+
+      opener.worktreeOpenProjectFromRStudioSatellite(projectFile, newSession);
+      return true;
    }-*/;
 
    // The known worktrees; empty until the first status refresh has completed
@@ -443,7 +459,6 @@ public class WorktreeActions
    private final GitState gitState_;
    private final Session session_;
    private final Satellite satellite_;
-   private final Provider<UserState> pUserState_;
 
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

@@ -161,15 +161,9 @@ public class Projects implements OpenProjectFileEvent.Handler,
          ProjectMRUList mruList = pMRUList_.get();
 
          // enable/disable commands
-         // a worktree's project carries a derived name so that the recent
-         // projects list can tell checkouts of the same project apart
-         String activeProjectName = sessionInfo.getActiveProjectName();
-         if (StringUtil.isNullOrEmpty(activeProjectName))
-            activeProjectName = sessionInfo.getActiveProjectWorktreeName();
-
          ProjectMRUEntry activeProject = new ProjectMRUEntry(
             sessionInfo.getActiveProjectFile(),
-            activeProjectName);
+            sessionInfo.getActiveProjectDisplayName());
          boolean hasProject = !StringUtil.isNullOrEmpty(activeProject.getProjectFilePath());
          commands.closeProject().setEnabled(hasProject);
          commands.projectOptions().setEnabled(hasProject);

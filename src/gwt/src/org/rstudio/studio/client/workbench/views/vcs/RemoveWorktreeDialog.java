@@ -67,13 +67,15 @@ public class RemoveWorktreeDialog extends ModalDialog<RemoveWorktreeDialog.Input
       ElementIds.assignElementId(lbWorktree_, ElementIds.REMOVE_WORKTREE_SELECT);
       for (WorktreeInfo worktree : worktrees)
       {
-         String branch = worktree.isDetached() ? worktree.getHead() : worktree.getBranch();
-         String label = branch + " -- " + worktree.getPath();
+         String label = worktree.getDisplayName() + " -- " + worktree.getPath();
 
          // a deleted directory leaves a stale entry behind, which removing
-         // cleans up; say so, as the branch menu doesn't list it
+         // cleans up; say so, as the branch menu doesn't list it. A lock has
+         // to be forced through, so that is worth knowing up front too.
          if (worktree.isPrunable())
             label += " " + constants_.worktreeMissing();
+         if (worktree.isLocked())
+            label += " " + constants_.worktreeLocked();
 
          lbWorktree_.addItem(label, worktree.getPath());
       }

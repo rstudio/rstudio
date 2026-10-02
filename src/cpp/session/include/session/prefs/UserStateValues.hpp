@@ -51,7 +51,6 @@ namespace prefs {
 #define kThemeUrl "url"
 #define kThemeIsDark "isDark"
 #define kDefaultProjectLocation "default_project_location"
-#define kGitWorktreeParentDir "git_worktree_parent_dir"
 #define kClearHidden "clear_hidden"
 #define kExportPlotOptions "export_plot_options"
 #define kExportPlotOptionsWidth "width"
@@ -178,12 +177,6 @@ public:
     */
    std::string defaultProjectLocation();
    core::Error setDefaultProjectLocation(std::string val);
-
-   /**
-    * The directory under which the last git worktree was created; the default for the next one.
-    */
-   std::string gitWorktreeParentDir();
-   core::Error setGitWorktreeParentDir(std::string val);
 
    /**
     * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
