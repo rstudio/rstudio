@@ -190,6 +190,82 @@ TEST_F(ChatSelector, SelectingReplacesThePreviousSlotForThatProtocol)
 }
 
 // ============================================================================
+// selectedSlot
+// ============================================================================
+
+TEST_F(ChatSelector, SelectedSlotReturnsTheSelection)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("1.0.4", "1.0.4", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"1.0.4\"}}");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEquivalentTo(slot("1.0.4")));
+}
+
+TEST_F(ChatSelector, SelectedSlotIsEmptyWithoutASelector)
+{
+   // The newest slot is not a selection: the administrator's tier contributes
+   // only what they chose.
+   makeSlot("1.1.0", "1.1.0", "11.0");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEmpty());
+   EXPECT_FALSE(storageDir_.completeChildPath("selected.json").exists());
+}
+
+TEST_F(ChatSelector, SelectedSlotIsEmptyForAMalformedSelector)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\": [");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEmpty());
+}
+
+TEST_F(ChatSelector, SelectedSlotIsEmptyWhenOnlyAnotherProtocolIsSelected)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("0.4.8", "0.4.8", "10.0");
+   writeSelectorFile("{\"selected\":{\"10.0\":\"0.4.8\"}}");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEmpty());
+}
+
+TEST_F(ChatSelector, SelectedSlotIsEmptyForAMissingSlotAndLeavesTheSelector)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"9.9.9\"}}");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEmpty());
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "9.9.9");
+}
+
+TEST_F(ChatSelector, SelectedSlotIsEmptyForACorruptSlot)
+{
+   makeDamagedSlot("1.2.0", "11.0");
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"1.2.0\"}}");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEmpty());
+}
+
+TEST_F(ChatSelector, SelectedSlotIsEmptyForAnUnusableName)
+{
+   // A traversal entry would otherwise verify the versions directory itself.
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"../../elsewhere\"}}");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEmpty());
+}
+
+TEST_F(ChatSelector, SelectedSlotIsEmptyForASlotServingAnotherProtocol)
+{
+   makeSlot("2.0.0", "2.0.0", "12.0");
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"2.0.0\"}}");
+
+   EXPECT_TRUE(selectedSlot(storageDir_, "11.0").isEmpty());
+}
+
+// ============================================================================
 // resolveSlot
 // ============================================================================
 
@@ -379,8 +455,8 @@ TEST_F(ChatSelector, ResolvesNothingWhenNoSlotServesTheProtocol)
 
 TEST_F(ChatSelector, ReadOnlyResolveFallsBackWithoutRepairingTheSelector)
 {
-   // The administrator's storage directory carries the same selector, but it
-   // is theirs: a stale entry is resolved around, never rewritten.
+   // The user's storage directory while user-managed installs are disabled:
+   // inspected, never repaired.
    makeSlot("1.1.0", "1.1.0", "11.0");
    writeSelectorFile("{\"selected\":{\"11.0\":\"9.9.9\"}}");
 
@@ -404,7 +480,6 @@ TEST_F(ChatSelector, ReadOnlyResolveStillHonoursTheSelection)
    makeSlot("1.0.4", "1.0.4", "11.0");
    writeSelectorFile("{\"selected\":{\"11.0\":\"1.0.4\"}}");
 
-   // An administrator holding users on an older slot beside a newer one.
    EXPECT_TRUE(
       resolveSlot(storageDir_, "11.0", SelectorRepair::Disabled).isEquivalentTo(slot("1.0.4")));
 }

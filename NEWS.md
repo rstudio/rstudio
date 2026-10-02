@@ -2,6 +2,7 @@
 
 ### New
 - ([#19026](https://github.com/rstudio/rstudio/issues/19026)): The Git pane's branch menu now lists the repository's worktrees. Selecting one (or a branch checked out in one) opens that worktree as a project, in this window or in a new session, and More > New Worktree... checks a branch out into a new worktree (New Branch can also create its branch in a new worktree, and More > Remove Worktree... deletes one). A project opened from a worktree is labelled with the primary checkout's name and the worktree directory, e.g. "rstudio [feature-x]".
+- ([#19027](https://github.com/rstudio/rstudio/issues/19027)): Vim key mappings can now also be loaded from `$XDG_CONFIG_HOME/vim/vimrc` (or `~/.config/vim/vimrc` when `XDG_CONFIG_HOME` is unset), which is checked after `~/.rstudio-vimrc` and `~/.vimrc`. Thanks to [@layne-cooper](https://github.com/layne-cooper).
 - ([#4422](https://github.com/rstudio/rstudio/issues/4422)): Plots can now be drawn at a fixed size instead of the size of the Plots pane (Plots > Fixed Size..., or the size menu in the Plots pane toolbar). The plot is scaled down to fit the pane without being redrawn when the pane is resized, and exported plots default to the same size. Save Plot as Image can also save bitmaps at a chosen resolution (up to 600 DPI) without changing the plot's layout, and shows the image's size in inches and pixels.
 - ([#17787](https://github.com/rstudio/rstudio/issues/17787)): Columns in the data viewer can now be hidden and shown from the summary panel, individually or all at once.
 - ([#9755](https://github.com/rstudio/rstudio/issues/9755)): Objects whose names begin with a dot (e.g. `.data` arguments while debugging) can now be shown in the Environment pane with Show Hidden Objects in the pane's List/Grid menu. The menu also offers Show .Last.value, previously only in Global Options, and the pane now refreshes as soon as either setting changes.
@@ -39,6 +40,7 @@
 - ([#18973](https://github.com/rstudio/rstudio/issues/18973)): RStudio Server reads administrator-installed Posit Assistant versions from the `posit-assistant` directory beside the session binary (`/usr/lib/rstudio-server/bin/posit-assistant` on Linux). Versions installed there go under `versions` inside the copy bundled with Workbench, selected through `selected.json` in the same layout as a user's own installation. RStudio runs the newest compatible of the selected version, the bundled copy, and the user's own installation.
 - ([#18803](https://github.com/rstudio/rstudio/issues/18803)): RStudio Desktop now logs detailed renderer, GPU, and utility process failures to help diagnose crashes.
 - ([#18937](https://github.com/rstudio/rstudio/issues/18937)): On macOS, RStudio now warns when a package loads a second copy of the OpenMP runtime (libomp) into the R session, which can crash R as soon as a package runs OpenMP code, and names the packages to reinstall to fix it.
+- ([#10173](https://github.com/rstudio/rstudio/issues/10173), [#7566](https://github.com/rstudio/rstudio/issues/7566)): The Tutorial pane now has a filter box that narrows the list of tutorials by package name, tutorial name, or title. Several words can be combined, e.g. a package name followed by a word from the tutorial title.
 
 ### Fixed
 - ([#8729](https://github.com/rstudio/rstudio/issues/8729)): Fixed several issues where the R session could fail to start because of a problem with a file in RStudio's data directory (`~/.local/share/rstudio`), such as one left unreadable or unwritable by running RStudio with `sudo`. On macOS and Linux, if the data directory itself can't be written, RStudio now keeps session state in a temporary directory and explains the problem in the console, instead of failing to start. A suspended session whose restore crashed R is no longer restored again on every start; RStudio starts a new session and keeps the saved session aside for 30 days.
@@ -97,15 +99,20 @@
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where a document or Data Viewer window opened with "Show in New Window" and then closed was reopened the next time the session was restored, so closed windows accumulated over time.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where closing the window of a Plumber API run with "Run in Window" did not stop the API.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue where a Shiny application run with "Run in Window" kept running after its window was closed, if the application's page had cancelled an earlier attempt to close the window.
+- ([#19008](https://github.com/rstudio/rstudio/issues/19008)): Fixed an issue on RStudio Server where closing a popped-out editor window that had never been clicked or typed in lost its unsaved changes without a prompt, because the browser suppresses the unsaved-changes prompt in such a window; the unsaved documents now move back to the main window instead.
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed the Zotero 10 desktop client not being available as a citation source on macOS.
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed recently added Zotero 10 references not appearing in citations.
 - ([#18787](https://github.com/rstudio/rstudio/issues/18787)): Fixed an issue on Windows where Posit Assistant failed to start in a second RStudio instance with "A Posit Assistant update is in progress".
+- ([#9075](https://github.com/rstudio/rstudio/issues/9075)): Fixed an issue where the source editor's file type menu listed both C and C++ as "C/C++", and offered no way to switch a file back to C. C and C++ sources, C/C++ headers (`.h`), and C++ headers (`.hpp`, `.hh`) now have distinct names.
+- ([#16594](https://github.com/rstudio/rstudio/issues/16594)): Fixed an issue where setting `--ozone-platform` in `electron-flags.conf` could cause RStudio Desktop to open with a blank window on Linux. Thanks to [@victorwon2001](https://github.com/victorwon2001).
+- ([#19005](https://github.com/rstudio/rstudio/issues/19005)): Fixed an error being logged when Refresh was clicked in the Find in Files pane before any search had been run.
+- ([#19003](https://github.com/rstudio/rstudio/issues/19003)): Fixed an issue where installing a connection package that provides no connection extension, such as odbc, from the New Connection dialog logged a `No such file or directory` error in the session log.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
 - ([#18973](https://github.com/rstudio/rstudio/issues/18973)): RStudio no longer uses the `posit-assistant-path` session option: sessions ignore it, and RStudio Server logs a warning at startup when `rsession.conf` sets it. RStudio also no longer reads a Posit Assistant from `pai` in the system configuration directory. RStudio Server administrators who installed one in either location should move it to `versions/<version>` in `/usr/lib/rstudio-server/bin/posit-assistant`.
 
 ### Dependencies
-- Copilot Language Server 1.544.0
+- Copilot Language Server 1.551.2
 - Electron 43.7.7
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)

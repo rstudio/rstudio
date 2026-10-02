@@ -92,6 +92,8 @@ const ASMMaps& asmMaps()
 #ifdef RSTUDIO_PRO_BUILD
          // the active_session_metadata schema only has this column in Workbench
          ActiveSession::kSuspendSize,
+         // likewise, the stored launcher end reason is a Workbench-only column
+         ActiveSession::kStatusMessage,
 #endif
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
          // only used in tests

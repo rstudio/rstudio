@@ -218,6 +218,30 @@ core::FilePath userSlot(const InstallSearchPaths& paths, selector::SelectorRepai
    return selector::resolveSlot(paths.userStorageDir, kProtocolVersion, repair);
 }
 
+// The administrator's selected slot. A missing or stale entry falls back to
+// the bundled copy rather than to a version they never selected, and is never
+// rewritten.
+core::FilePath adminSlot(const InstallSearchPaths& paths)
+{
+   core::FilePath slot = selector::selectedSlot(paths.systemStorageDir, kProtocolVersion);
+   if (!slot.isEmpty())
+      return slot;
+
+   // Clearing the selection is how an administrator returns sessions to the
+   // bundled copy, so slots left beside it are expected and not worth a
+   // warning -- but without this line a log would not show they were skipped.
+   std::vector<slots::SlotInfo> unselected =
+      slots::verifiedSlots(slots::versionsDir(paths.systemStorageDir), kProtocolVersion);
+   if (!unselected.empty())
+   {
+      DLOG("Not using administrator-installed slots for protocol {}: {} selects none",
+           kProtocolVersion,
+           paths.systemStorageDir.completeChildPath(kSelectorFileName).getAbsolutePath());
+   }
+
+   return core::FilePath();
+}
+
 // Every installation that competes for this session, best first. Ties keep
 // the order collected here: the user's slot, the administrator's slot, then
 // the bundled copy.
@@ -233,11 +257,7 @@ std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
          candidates.push_back(describeInstallation(slot, "user-level"));
    }
 
-   // The administrator's selector is theirs, so a stale entry is resolved
-   // around and never rewritten.
-   core::FilePath systemSlot = selector::resolveSlot(paths.systemStorageDir,
-                                                     kProtocolVersion,
-                                                     selector::SelectorRepair::Disabled);
+   core::FilePath systemSlot = adminSlot(paths);
    if (!systemSlot.isEmpty())
       candidates.push_back(describeInstallation(systemSlot, "administrator-installed"));
 
@@ -292,8 +312,8 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
    if (paths.userInstallEnabled)
       DLOG("  - User slots: {}",
            slots::versionsDir(paths.userStorageDir).getAbsolutePath());
-   DLOG("  - Administrator slots: {}",
-        slots::versionsDir(paths.systemStorageDir).getAbsolutePath());
+   DLOG("  - Administrator slot selected by: {}",
+        paths.systemStorageDir.completeChildPath(kSelectorFileName).getAbsolutePath());
    DLOG("  - Bundled with RStudio: {}", paths.systemStorageDir.getAbsolutePath());
 
    return core::FilePath(); // Not found

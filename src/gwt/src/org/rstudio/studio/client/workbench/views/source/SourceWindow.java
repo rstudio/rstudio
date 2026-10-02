@@ -42,9 +42,13 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceWindowUnloadingEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceWindowUnloadingEvent.UnsavedDoc;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -129,6 +133,8 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
             @Override
             public void onWindowClosing(ClosingEvent event)
             {
+               unsavedAtClose_ = null;
+
                // ignore window closure if initiated from the main window
                if (satellite_.isClosePending())
                {
@@ -168,9 +174,21 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                      msg += constants_.yourEditsToFilePluralHasNotBeenSaved(filesList);
                   }
                   event.setMessage(msg);
+
+                  // Browsers only show that prompt in a window the user has
+                  // clicked or typed in since it loaded. A popped-out window
+                  // the user never interacted with just closes, and the main
+                  // window then closes its documents; tell it about the
+                  // unsaved ones once the page is really going away (see
+                  // onPageHide) so the edits survive.
+                  // https://github.com/rstudio/rstudio/issues/19008
+                  if (!hasBeenActive())
+                     unsavedAtClose_ = unsaved;
                }
             }
          });
+
+         addPageHideHandler();
       }
    }
 
@@ -410,6 +428,45 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                source_, null, null, quitContext);
    }
 
+   // Runs when the page is unloading for good (unlike beforeunload, which the
+   // user may still cancel). Report to the main window the unsaved documents
+   // this window could not warn about; it keeps them open should the window
+   // turn out to be closing rather than reloading. Edits the window has not
+   // yet backed up go along, as nothing async can finish now.
+   //
+   // Report even when there is nothing to hand over (no unsaved documents,
+   // or the user saw the prompt and chose to leave): the main window only
+   // learns whether an unload was a reload some seconds later, so this
+   // replaces what an earlier reload of this window may have left behind.
+   private void onPageHide()
+   {
+      ArrayList<UnsavedChangesTarget> targets = unsavedAtClose_;
+      unsavedAtClose_ = null;
+
+      if (!canReachMainWindow())
+         return;
+
+      JsArray<UnsavedDoc> docs = JsArray.createArray().cast();
+      if (targets != null)
+      {
+         for (UnsavedChangesTarget target : targets)
+         {
+            String contents = null;
+            EditingTarget editor = source_.findEditor(target.getId());
+            if (editor instanceof TextEditingTarget)
+            {
+               TextEditingTarget textEditor = (TextEditingTarget) editor;
+               if (textEditor.hasPendingChanges())
+                  contents = textEditor.getDocDisplay().getCode();
+            }
+
+            docs.push(UnsavedDoc.create(target.getId(), contents));
+         }
+      }
+
+      events_.fireEventToMainWindow(new SourceWindowUnloadingEvent(docs));
+   }
+
    private String unsavedTargetDesc(UnsavedChangesTarget item)
    {
       if (StringUtil.isNullOrEmpty(item.getPath()))
@@ -422,10 +479,41 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
       $wnd.rstudioReadyToClose = true;
    }-*/;
 
+   // Whether the user has interacted with this window since it loaded, which
+   // is what browsers require before showing a beforeunload prompt. Assume
+   // they have where the API is unavailable.
+   private static final native boolean hasBeenActive() /*-{
+      var activation = $wnd.navigator.userActivation;
+      return activation ? !!activation.hasBeenActive : true;
+   }-*/;
+
+   // Listen on the frame hosting this GWT module ('window'), not on the
+   // window itself ('$wnd'): Chromium tears down child frames before it fires
+   // pagehide on the parent document, and skips listeners owned by a detached
+   // frame (see Satellite.initializeNative).
+   private final native void addPageHideHandler() /*-{
+      var self = this;
+      window.addEventListener("pagehide", $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.source.SourceWindow::onPageHide()();
+      }), true);
+   }-*/;
+
+   // The main window may be gone, or mid-reload with its event bridge not yet
+   // installed; there is nowhere to report to then.
+   private static final native boolean canReachMainWindow() /*-{
+      var opener = $wnd.opener;
+      return !!(opener && !opener.closed && opener.fireRStudioEventExternal);
+   }-*/;
+
    private final EventBus events_;
    private final Source source_;
    private final Satellite satellite_;
    private String initialDocId_;
    private SourcePosition initialSourcePosition_;
+
+   // Unsaved documents this window could not prompt about when it began to
+   // unload; set by the beforeunload handler and consumed by pagehide.
+   private ArrayList<UnsavedChangesTarget> unsavedAtClose_;
+
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

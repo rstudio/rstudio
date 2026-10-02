@@ -34,13 +34,23 @@ namespace selector {
 //
 //     {"selected": {"11.0": "1.1.0-2", "10.0": "0.4.8"}}
 //
-// It is advisory. Resolution falls back to the newest matching slot on disk
-// whenever the file disagrees with reality, so the file can be lost or damaged
-// without stranding a session. Note what that recovery is and is not: it
-// converges on the newest verifying slot for the protocol, not on whatever the
-// lost entry named. While a selection only ever records the version just
-// installed that is the same answer, but a selection made to hold a session on
-// an older slot would not survive.
+// In the user's storage directory it is advisory. resolveSlot() falls back to
+// the newest matching slot on disk whenever the file disagrees with reality,
+// so the file can be lost or damaged without stranding a session. Note what
+// that recovery is and is not: it converges on the newest verifying slot for
+// the protocol, not on whatever the lost entry named. While a selection only
+// ever records the version just installed that is the same answer, but a
+// selection made to hold a session on an older slot would not survive.
+//
+// In the administrator's storage directory it is authoritative. selectedSlot()
+// returns only what the file names, so a missing, damaged or stale entry
+// leaves the administrator's tier without a candidate and sessions run the
+// bundled copy rather than a version the administrator never selected.
+//
+// rstudio-pro's upgrade CLI (src/go/upgrade-cli/internal/assistant) writes
+// administrator slots and selected.json by these rules. A change to the
+// selected.json format, or to how the administrator's selection is resolved,
+// needs a matching change there.
 
 // Protocol version to slot directory name.
 typedef std::map<std::string, std::string> Selections;
@@ -116,21 +126,36 @@ enum class SelectorRepair
    // the user's own storage directory, which RStudio writes.
    Enabled,
 
-   // Resolve through the same fallback without writing anything. For a
-   // storage directory RStudio does not own -- the administrator's, which is
-   // typically read-only and whose selector is the administrator's to keep.
+   // Resolve through the same fallback without writing anything. For the
+   // user's storage directory while the administrator has disabled
+   // user-managed installs: it is only inspected then, never repaired.
    Disabled
 };
 
 /**
+ * The slot the recorded selection names for a protocol, with no fallback.
+ *
+ * For the administrator's storage directory, whose selection is the only way
+ * a slot there is chosen. Nothing is written.
+ *
+ * @param storageDir The Posit Assistant storage directory.
+ * @param protocol The protocol version to resolve for (e.g. "11.0").
+ * @return The selected slot directory, or an empty FilePath when selected.json
+ *         is missing or malformed, has no entry for the protocol, or names a
+ *         slot that is not a usable name, is missing, fails verification, or
+ *         serves another protocol.
+ */
+core::FilePath selectedSlot(const core::FilePath& storageDir,
+                            const std::string& protocol);
+
+/**
  * Find the slot to run for a protocol.
  *
- * Prefers the recorded selection. When that slot is missing, fails
- * verification, or turns out to serve a different protocol, falls back to the
- * newest-versioned verifying slot for the protocol; with repair enabled it
- * also records that slot, so a dropped or damaged selector heals itself. Ties
- * on version are broken by the later reinstall, then by slot name descending
- * -- arbitrary, but stable across sessions.
+ * Prefers the recorded selection, as selectedSlot() resolves it. When there is
+ * none, falls back to the newest-versioned verifying slot for the protocol;
+ * with repair enabled it also records that slot, so a dropped or damaged
+ * selector heals itself. Ties on version are broken by the later reinstall,
+ * then by slot name descending -- arbitrary, but stable across sessions.
  *
  * Repair is best effort: a slot is still returned when the storage directory
  * cannot be written.
