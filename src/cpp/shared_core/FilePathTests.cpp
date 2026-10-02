@@ -433,6 +433,49 @@ TEST(SharedCoreTest, CopyFilePathTests)
    EXPECT_TRUE(f2.getAbsolutePath() == "/a/path");
 }
 
+TEST(SharedCoreTest, NotFoundHelpersMatchFileAndPathErrors)
+{
+   Error fileError = fileNotFoundError(ERROR_LOCATION);
+   Error pathError = pathNotFoundError(ERROR_LOCATION);
+
+   EXPECT_TRUE(isFileNotFoundError(fileError));
+   EXPECT_TRUE(isFileNotFoundError(pathError));
+   EXPECT_TRUE(isPathNotFoundError(fileError));
+   EXPECT_TRUE(isPathNotFoundError(pathError));
+   EXPECT_TRUE(isNotFoundError(fileError));
+   EXPECT_TRUE(isNotFoundError(pathError));
+
+   Error otherError = fileExistsError(ERROR_LOCATION);
+   EXPECT_FALSE(isFileNotFoundError(otherError));
+   EXPECT_FALSE(isPathNotFoundError(otherError));
+   EXPECT_FALSE(isFileNotFoundError(Success()));
+   EXPECT_FALSE(isPathNotFoundError(Success()));
+}
+
+TEST(SharedCoreTest, NotFoundHelpersMatchMissingFileAndMissingParent)
+{
+   FilePath tempDir;
+   ASSERT_FALSE(FilePath::tempFilePath(tempDir));
+   ASSERT_FALSE(tempDir.ensureDirectory());
+
+   // Windows reports these two with different error codes
+   FilePath missingFile = tempDir.completeChildPath("missing.txt");
+   FilePath missingParent = tempDir.completeChildPath("missing").completeChildPath("missing.txt");
+
+   for (const FilePath& filePath : { missingFile, missingParent })
+   {
+      std::shared_ptr<std::istream> pStream;
+      Error error = filePath.openForRead(pStream);
+
+      ASSERT_TRUE(error) << filePath.getAbsolutePath();
+      EXPECT_TRUE(isFileNotFoundError(error)) << filePath.getAbsolutePath();
+      EXPECT_TRUE(isPathNotFoundError(error)) << filePath.getAbsolutePath();
+      EXPECT_TRUE(isNotFoundError(error)) << filePath.getAbsolutePath();
+   }
+
+   EXPECT_FALSE(tempDir.remove());
+}
+
 #ifdef _WIN32
 
 TEST(SharedCoreTest, WindowsFilePathIsWithin)

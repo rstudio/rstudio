@@ -86,6 +86,7 @@ public class EnvironmentObjects extends ResizeComposite
    {
       observer_ = observer;
       contextDepth_ = 0;
+      browseFrameDepth_ = 0;
       environmentName_ = EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
 
       objectDisplayType_ = OBJECT_LIST_VIEW;
@@ -122,7 +123,7 @@ public class EnvironmentObjects extends ResizeComposite
       autoSizeCallFramePanel();
    }
 
-   public void setContextDepth(int contextDepth)
+   public void setContextDepth(int contextDepth, int browseFrameDepth)
    {
       if (contextDepth > 0)
       {
@@ -135,6 +136,7 @@ public class EnvironmentObjects extends ResizeComposite
          splitPanel.setWidgetHidden(callFramePanel_, true);
       }
       contextDepth_ = contextDepth;
+      browseFrameDepth_ = browseFrameDepth;
    }
 
    public void addObject(RObject obj)
@@ -439,7 +441,10 @@ public class EnvironmentObjects extends ResizeComposite
    @Override
    public boolean enableClickableObjects()
    {
-      return contextDepth_ < 2;
+      // clicking an object runs a command in the console, which evaluates in
+      // the frame execution is halted in -- not in whatever frame the user has
+      // selected from the call stack
+      return contextDepth_ == 0 || contextDepth_ == browseFrameDepth_;
    }
 
    // we currently only set and/or get persisted state at the root context
@@ -752,6 +757,7 @@ public class EnvironmentObjects extends ResizeComposite
 
    private EnvironmentObjectsObserver observer_;
    private int contextDepth_;
+   private int browseFrameDepth_;
    private int callFramePanelHeight_;
    private int objectDisplayType_ = OBJECT_LIST_VIEW;
    private String filterText_ = "";

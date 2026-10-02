@@ -190,16 +190,35 @@ public class SessionOpener
    
    protected void waitForSessionRestart(Command onCompleted)
    {
-      sendPing(200, 50, onCompleted);
+      sendPing(200, RESTART_TIMEOUT_MS, RESTART_LATE_ANSWER_GRACE_MS, onCompleted);
    }
    
-   private void sendPing(int delayMs,
-                         final int maxRetries,
-                         final Command onCompleted)
+   /**
+    * Ping the session until it answers, then announce that the restart is done.
+    *
+    * The budget is wall-clock rather than a tick count: a ping can legitimately
+    * sit unanswered for a long time, because rserver holds an RPC aimed at a
+    * session it is still relaunching (up to rsession-proxy-max-wait-secs). A
+    * ping that fails is likewise not the end of the wait -- an early one lands
+    * while the old session is still shutting down, and it is the retry after it
+    * that reaches the new session.
+    *
+    * @param delayMs interval between ping attempts.
+    * @param timeoutMs how long to keep trying before giving up.
+    * @param lateGraceMs how long past the timeout an answered ping still
+    *    announces the restart.
+    * @param onCompleted run exactly once: on an answered ping, or on timeout.
+    */
+   // package-private so SessionOpenerTests can drive it with its own budget
+   void sendPing(int delayMs,
+                 final int timeoutMs,
+                 final int lateGraceMs,
+                 final Command onCompleted)
    {
+      final long startMs = System.currentTimeMillis();
+
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
-         private int retries_ = 0;
          private boolean completed_ = false;
          private boolean pingInFlight_ = false;
          
@@ -212,66 +231,79 @@ public class SessionOpener
                return false;
             }
             
-            // if we hit our retry count, give up -- but still signal completion
+            // if we're out of time, give up -- but still signal completion
             // so callers (e.g. the restart flow) don't get stuck waiting forever
-            if (retries_++ > maxRetries)
+            if (System.currentTimeMillis() - startMs > timeoutMs)
             {
                Debug.logWarning("Error connecting with session.");
-               completed_ = true;
-
-               if (onCompleted != null)
-                  onCompleted.execute();
-
+               complete();
                return false;
             }
             
-            if (!pingInFlight_)
+            // a ping we sent is still outstanding; wait for its response rather
+            // than piling on another request
+            if (pingInFlight_)
             {
-               pingInFlight_ = true;
-               pServer_.get().ping(new VoidServerRequestCallback()
-               {
-                  @Override
-                  protected void onSuccess()
-                  {
-                     pingInFlight_ = false;
-                     
-                     // if completion was already signaled, discard this
-                     if (completed_)
-                        return;
-
-                     completed_ = true;
-                     pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
-                     
-                     if (onCompleted != null)
-                        onCompleted.execute();
-                  }
-                  
-                  @Override
-                  protected void onFailure()
-                  {
-                     pingInFlight_ = false;
-
-                     // if completion was already signaled, discard this
-                     if (completed_)
-                        return;
-
-                     // treat a failed ping as completion as well, but mark
-                     // ourselves completed so onCompleted fires only once
-                     completed_ = true;
-
-                     if (onCompleted != null)
-                        onCompleted.execute();
-                  }
-               });
+               return true;
             }
+            
+            pingInFlight_ = true;
+            pServer_.get().ping(new VoidServerRequestCallback()
+            {
+               @Override
+               protected void onSuccess()
+               {
+                  pingInFlight_ = false;
+                  
+                  // the session answered, so the restart really is done --
+                  // announce it even if the loop above already timed out, but
+                  // not so late that refocusing the console would pull the
+                  // user away from whatever they moved on to
+                  long elapsedMs = System.currentTimeMillis() - startMs;
+                  if (elapsedMs <= timeoutMs + lateGraceMs)
+                     pEventBus_.get().fireEvent(new ConsoleRestartRCompletedEvent());
+
+                  complete();
+               }
+               
+               @Override
+               protected void onFailure()
+               {
+                  pingInFlight_ = false;
+
+                  // keep trying; the next attempt may reach the new session
+               }
+            });
             
             // keep trying until completion is signaled
             return true;
          }
          
+         private void complete()
+         {
+            if (completed_)
+               return;
+
+            completed_ = true;
+
+            if (onCompleted != null)
+               onCompleted.execute();
+         }
+         
       }, delayMs);
    }
    
+   // How long a restart has to produce a session that answers a ping. Generous
+   // on purpose: on Server the relaunch runs behind rserver's proxy, and the
+   // session still has to restore the workspace and search path before it
+   // services RPCs.
+   private static final int RESTART_TIMEOUT_MS = 60000;
+
+   // How long past the timeout an answered ping still announces the restart.
+   // Announcing refocuses the console, which is unwelcome once the restart has
+   // been given up on and the user has moved on.
+   private static final int RESTART_LATE_ANSWER_GRACE_MS = 5000;
+
    // injected
    protected final Provider<Application> pApplication_;
    protected final Provider<GlobalDisplay> pDisplay_;

@@ -54,6 +54,10 @@ public class FileBrowserWidget extends Composite
       directory_ = new DirectoryContentsWidget(context_);
       directory_.addSelectionHandler(host);
       directory_.addSelectionCommitHandler(host);
+
+      // the listing of the initial directory is already in flight when the
+      // dialog creates us; onNavigated() delivers it
+      navigating_ = true;
       directory_.showProgress(true);
 
       DockPanel dockPanel = new DockPanel();
@@ -103,6 +107,8 @@ public class FileBrowserWidget extends Composite
 
    public void onNavigated()
    {
+      navigating_ = false;
+
       String dir = context_.pwd();
 
       final FileSystemItem[] parsedDir = context_.parseDir(dir);
@@ -115,6 +121,7 @@ public class FileBrowserWidget extends Composite
 
    public void cd(String path)
    {
+      navigating_ = true;
       directory_.showProgress(true);
       context_.cd(path);
    }
@@ -172,6 +179,15 @@ public class FileBrowserWidget extends Composite
       return context_.pwdItem();
    }
 
+   /**
+    * @return true while a directory listing is in flight, i.e. from the
+    * dialog opening or a cd() until the matching onNavigated()
+    */
+   public boolean isNavigating()
+   {
+      return navigating_;
+   }
+
    // Private methods ---------------------------------------------------------
 
    private Widget createTopWidget()
@@ -203,6 +219,7 @@ public class FileBrowserWidget extends Composite
    private PathBreadcrumbWidget breadcrumb_;
    private DirectoryContentsWidget directory_;
    private TextBox filename_;
+   private boolean navigating_;
    private FileSystemContext context_;
    private String initialFilename_;
    private Host host_;

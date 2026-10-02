@@ -46,7 +46,7 @@ set (SHARED_CORE_SOURCE_FILES
 
 set (SHARED_INCLUDE_DIRS
    include
-   ${BOOST_INCLUDEDIR}
+   ${Boost_INCLUDE_DIRS}
    ${EXT_SOURCE_DIR})
 
 # UNIX specific
@@ -120,9 +120,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    )
 
    target_link_libraries(rstudio-shared-core-tests
-      rstudio-shared-core
       rstudio-core
-      ${Boost_LIBRARIES}
       gtest
    )
 

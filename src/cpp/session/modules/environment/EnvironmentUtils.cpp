@@ -15,12 +15,15 @@
 
 #include "EnvironmentUtils.hpp"
 
+#include <algorithm>
+
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/RVersionInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #define MAX_ALTREP_LEN   65535   // maximum width/length for altrep inspection
 #define MAX_ALTREP_DEPTH 5       // maximum depth for altrep inspection
@@ -82,7 +85,63 @@ json::Value descriptionOfVar(const std::string& name, SEXP env)
    return json::Value(value);
 }
 
+// whether env binds '...' as a function's arguments: a DOTSXP of the caller's
+// unevaluated arguments, or the missing-argument marker when none were passed
+bool bindsFunctionDots(SEXP env)
+{
+   r::sexp::BindingType bt = r::sexp::getBindingType("...", env);
+   if (bt == r::sexp::BindingType::Missing)
+      return true;
+   if (bt != r::sexp::BindingType::Normal)
+      return false;
+   return TYPEOF(r::sexp::getBindingIdentity("...", env, bt)) == DOTSXP;
+}
+
+// lists env's names, applying the pane's rules on top of ls()
+void listEnvironmentNames(SEXP env,
+                          bool includeHidden,
+                          bool includeLastDotValue,
+                          std::vector<std::string>* pNames)
+{
+   r::sexp::listEnvironment(env, includeHidden, includeLastDotValue, pNames);
+
+   // a function's '...' isn't a user-assigned object, and the pane's
+   // describe/size code isn't built to inspect it safely
+   auto dots = std::find(pNames->begin(), pNames->end(), "...");
+   if (dots != pNames->end() && bindsFunctionDots(env))
+      pNames->erase(dots);
+}
+
 } // anonymous namespace
+
+bool isHiddenName(const std::string& name)
+{
+   return !name.empty() && name[0] == '.';
+}
+
+void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames)
+{
+   listEnvironmentNames(env,
+                        prefs::userPrefs().showHiddenObjects(),
+                        prefs::userPrefs().showLastDotValue(),
+                        pNames);
+}
+
+void listEnvironmentForMonitor(SEXP env, std::vector<std::string>* pNames)
+{
+   listEnvironmentNames(env, true, true, pNames);
+}
+
+bool isListedInPane(const std::string& name)
+{
+   if (name == ".Last.value")
+      return prefs::userPrefs().showLastDotValue();
+
+   if (isHiddenName(name))
+      return prefs::userPrefs().showHiddenObjects();
+
+   return true;
+}
 
 bool isUnevaluatedPromise(const std::string& name, SEXP env)
 {

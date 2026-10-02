@@ -34,6 +34,10 @@ FilePath uniqueFilePath(const core::FilePath& parent,
                         const std::string& prefix = "",
                         const std::string& extension = "");
 
+// Returns path if nothing exists there; otherwise the first of path-2, path-3,
+// ... (the number is appended to the file name) where nothing exists.
+FilePath firstUnusedPath(const FilePath& path);
+
 std::string readFile(const core::FilePath& filePath);
 Error writeFile(const FilePath& filePath, const std::string& content);
 

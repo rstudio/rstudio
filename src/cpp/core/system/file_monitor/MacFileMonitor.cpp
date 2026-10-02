@@ -296,7 +296,7 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
       Error statError = readFileInfoLStat(path, &fileInfo);
       if (statError)
       {
-         if (statError == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+         if (isNotFoundError(statError))
          {
             // entry no longer exists; processFileRemoved finds it in the tree
             // by path and uses the stored FileInfo for the event payload
@@ -355,7 +355,7 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
                                           &(pContext->fileTree),
                                           pContext->callbacks.onFilesChanged);
       if (error &&
-         (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
+         !isNotFoundError(error))
       {
          LOG_ERROR(error);
       }
@@ -386,7 +386,7 @@ bool performDroppedRescan(FileEventContext* pContext)
                          pContext->callbacks.onFilesChanged);
    if (error)
    {
-      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+      if (!isNotFoundError(error))
          LOG_ERROR(error);
       return false;
    }
@@ -644,7 +644,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              &(pContext->fileTree),
                                              pContext->callbacks.onFilesChanged);
          if (error &&
-            (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
+            !isNotFoundError(error))
          {
             LOG_ERROR(error);
          }

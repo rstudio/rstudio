@@ -39,12 +39,16 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public class LocatorPanel extends LayoutPanel
    implements Locator.Display
 {
-   public LocatorPanel()
+   // toPlotPoint maps a click in the panel to the plot's own coordinates, or
+   // to null for a click beside the plot
+   public LocatorPanel(Function<Point, Point> toPlotPoint)
    {
+      toPlotPoint_ = toPlotPoint;
       setStylePrimaryName(ThemeStyles.INSTANCE.locatorPanel());
 
       feedbackImage_ = new Image(new ImageResource2x(StandardIcons.INSTANCE.click_feedback2x()));
@@ -70,8 +74,14 @@ public class LocatorPanel extends LayoutPanel
                   x - el.getAbsoluteLeft(),
                   y - el.getAbsoluteTop());
 
+            // a click beside the plot isn't reported (R keeps waiting for one
+            // on the plot), so it gets no feedback either
+            Point plotPoint = toPlotPoint_.apply(p);
+            if (plotPoint == null)
+               return;
+
             showFeedbackAt(p);
-            SelectionEvent.fire(LocatorPanel.this, p);
+            SelectionEvent.fire(LocatorPanel.this, plotPoint);
          }
       });
 
@@ -227,6 +237,7 @@ public class LocatorPanel extends LayoutPanel
    private Plots.Parent parent_;
    private Timer feedbackTimer_;
    private Animation feedbackAnimation_;
+   private final Function<Point, Point> toPlotPoint_;
    private Image feedbackImage_;
    private static final int FB_HEIGHT = 24;
    private static final int FB_WIDTH = 24;

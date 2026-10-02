@@ -215,6 +215,22 @@ std::string extraBitmapParams()
    return ", " + core::algorithm::join(params, ", ");
 }
 
+bool usesQuartzBitmapDevice()
+{
+#ifdef __APPLE__
+   // extraBitmapParams() passes an explicit backend as the device's type;
+   // otherwise the device uses R's bitmapType option, which grDevices sets to
+   // quartz when it's available
+   std::string backend = getDefaultBackend();
+   if (backend == "default")
+      backend = r::options::getOption<std::string>("bitmapType", "", false);
+
+   return backend == "quartz";
+#else
+   return false;
+#endif
+}
+
 struct RestorePreviousGraphicsDeviceScope::Impl
 {
    Impl() : pPreviousDevice(nullptr) {}

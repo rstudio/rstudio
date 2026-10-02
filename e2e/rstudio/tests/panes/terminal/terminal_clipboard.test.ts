@@ -33,25 +33,28 @@ async function runInTerminal(page: Page, command: string): Promise<void> {
   await page.keyboard.press('Enter');
 }
 
-/** Screen point at the centre of cell `column` of a rendered terminal row. */
-async function cellPoint(row: Locator, column: number): Promise<{ x: number; y: number }> {
-  // a span holds a run of same-styled cells, so locate the span covering the
-  // column and interpolate within it
-  const spans = row.locator('span');
-  const count = await spans.count();
-  let start = 0;
-  for (let i = 0; i < count; i++) {
-    const span = spans.nth(i);
-    const length = ((await span.textContent()) ?? '').length;
-    if (column < start + length) {
-      const box = await span.boundingBox();
-      if (!box) break;
-      const cellWidth = box.width / Math.max(length, 1);
-      return { x: box.x + (column - start + 0.5) * cellWidth, y: box.y + box.height / 2 };
+/** Screen point at the centre of a word in a rendered terminal row. */
+async function wordPoint(row: Locator, word: string): Promise<{ x: number; y: number } | null> {
+  // xterm replaces row spans when it redraws (including cursor updates).
+  // Read text and geometry in one browser task so a span cannot detach
+  // between textContent() and boundingBox().
+  return row.evaluate((element, word) => {
+    const index = (element.textContent ?? '').indexOf(word);
+    if (index < 0) return null;
+    const column = index + Math.floor(word.length / 2);
+    let start = 0;
+    for (const span of element.querySelectorAll('span')) {
+      const length = (span.textContent ?? '').length;
+      if (column < start + length) {
+        const box = span.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) return null;
+        const cellWidth = box.width / length;
+        return { x: box.x + (column - start + 0.5) * cellWidth, y: box.y + box.height / 2 };
+      }
+      start += length;
     }
-    start += length;
-  }
-  throw new Error(`terminal row has no cell at column ${column}`);
+    return null;
+  }, word);
 }
 
 /**
@@ -66,13 +69,16 @@ async function printAndSelectWord(page: Page): Promise<string> {
 
   const row = page.locator(XTERM_ROWS, { hasText: word });
   await expect(row).toHaveCount(1, { timeout: TIMEOUTS.consoleReady });
-  const text = (await row.textContent()) ?? '';
-  const point = await cellPoint(row, text.indexOf(word) + Math.floor(word.length / 2));
+  await expect(async () => {
+    const point = await wordPoint(row, word);
+    expect(point, `terminal word ${word} should have visible cells`).not.toBeNull();
 
-  // the raw mouse: xterm's screen element sits over the row spans, so a
-  // locator-level click fails its hit-target check
-  await page.mouse.dblclick(point.x, point.y);
-  await expect(page.locator(XTERM_SELECTION).first()).toBeVisible();
+    // The raw mouse: xterm's screen element sits over the row spans, so a
+    // locator-level click fails its hit-target check. Retry with fresh
+    // coordinates if another redraw moves the output before the click.
+    await page.mouse.dblclick(point!.x, point!.y);
+    await expect(page.locator(XTERM_SELECTION).first()).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: TIMEOUTS.consoleReady });
   return word;
 }
 

@@ -122,6 +122,17 @@ export class ChatPane extends FramePageObject {
     return await this.messageItem.count();
   }
 
+  /**
+   * The conversation's last message as rendered text, or '' when there is no
+   * message (or it detached while being read).
+   */
+  async lastMessageText(): Promise<string> {
+    if ((await this.getMessageCount()) === 0) {
+      return '';
+    }
+    return await this.messageItem.last().innerText({ timeout: 5000 }).catch(() => '');
+  }
+
   async isStopButtonVisible(): Promise<boolean> {
     return await this.stopBtn.isVisible().catch(() => false);
   }

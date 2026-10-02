@@ -14,6 +14,7 @@ import {
 import { sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { setConsoleInput } from '../utils/console';
+import { heredoc } from '../utils/heredoc';
 
 let cachedInstallRepos: string | null = null;
 
@@ -197,9 +198,25 @@ export class ConsolePaneActions {
   /**
    * Ensure an R package is available, installing it if necessary.
    * Returns true if the package is available after the check, false if installation failed.
+   *
+   * "Available" means more than loadable: the package's declared dependencies
+   * must be installed too, as the IDE sees them. A package can load while one
+   * of its Imports is missing -- plumber lists sodium in Imports without ever
+   * importing it in its NAMESPACE -- and the IDE's dependency manager, which
+   * walks DESCRIPTION files, then prompts to install the missing package
+   * mid-test (#18882). Reinstalling the package pulls in whatever it lacks.
    */
   async ensurePackage(pkg: string, timeoutMs = 60000): Promise<boolean> {
-    if ((await this.evalRLogical(`requireNamespace("${pkg}", quietly = TRUE)`)) === true) {
+    // The dependency walk is absent from builds that predate it; they don't
+    // prompt for recursive dependencies either, so loadable is enough there.
+    const availableExpr = heredoc`
+      requireNamespace("${pkg}", quietly = TRUE) && (
+        !exists(".rs.findUnsatisfiedRuntimeDependencies") ||
+        length(.rs.findUnsatisfiedRuntimeDependencies("${pkg}")) == 0
+      )
+    `;
+
+    if ((await this.evalRLogical(availableExpr)) === true) {
       return true;
     }
 
@@ -208,14 +225,18 @@ export class ConsolePaneActions {
     const repos = getInstallRepos();
     // Pick the install type at R runtime so source-only R builds (Homebrew
     // macOS, all Linux) don't error with "type 'binary' is not supported".
-    const typeExpr = `if (identical(.Platform$pkgType, "source")) "source" else "binary"`;
+    //
     // Retry from source in the same submission when the binary install leaves
     // the package missing: type = "binary" never falls back on its own, and
     // neither CRAN nor PPM publishes a full binary set for older R.
-    const installExpr =
-      `local({ t <- ${typeExpr}; install.packages("${pkg}", repos = "${repos}", type = t); ` +
-      `if (!requireNamespace("${pkg}", quietly = TRUE) && !identical(t, "source")) ` +
-      `install.packages("${pkg}", repos = "${repos}", type = "source") })`;
+    const installExpr = heredoc`
+      local({
+        type <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
+        install.packages("${pkg}", repos = "${repos}", type = type)
+        if (!requireNamespace("${pkg}", quietly = TRUE) && !identical(type, "source"))
+          install.packages("${pkg}", repos = "${repos}", type = "source")
+      })
+    `;
     // install.packages can run for a while, so submit it fire-and-forget and
     // then wait for R to go idle (with a generous timeout) rather than polling
     // output for a done-marker. Confirm R actually picked up the install
@@ -230,8 +251,7 @@ export class ConsolePaneActions {
 
     // Idle only tells us R is free again, not whether the install succeeded --
     // verify by reading the package's availability back out of the console.
-    const installed =
-      (await this.evalRLogical(`requireNamespace("${pkg}", quietly = TRUE)`)) === true;
+    const installed = (await this.evalRLogical(availableExpr)) === true;
     if (!installed) {
       console.warn(`WARNING: Failed to install package ${pkg}.`);
     }

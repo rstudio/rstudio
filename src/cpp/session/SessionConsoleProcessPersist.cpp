@@ -165,8 +165,8 @@ void saveConsoleProcesses(const std::string& metadata)
    if (!s_consoleProcPath.exists())
       return;
 
-   Error error = rstudio::core::writeStringToFile(getConsoleProcIndexPath(),
-                                                  metadata);
+   Error error = rstudio::core::writeStringToFileAtomic(getConsoleProcIndexPath(),
+                                                        metadata);
    if (error)
       LOG_ERROR(error);
 }
@@ -332,7 +332,7 @@ void saveConsoleEnvironment(const std::string& handle, const core::system::Optio
    json::Object envJson = json::Object(environment);
    std::ostringstream ostr;
    envJson.writeFormatted(ostr);
-   error = rstudio::core::writeStringToFile(log, ostr.str());
+   error = rstudio::core::writeStringToFileAtomic(log, ostr.str());
    if (error)
    {
       LOG_ERROR(error);

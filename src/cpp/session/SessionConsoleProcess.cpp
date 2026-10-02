@@ -15,6 +15,7 @@
 
 #include <sstream>
 
+#include <shared_core/Memory.hpp>
 #include <shared_core/system/EnvironmentLock.hpp>
 
 #include <core/StringUtils.hpp>
@@ -42,7 +43,9 @@ namespace console_process {
 
 namespace {
 
-ConsoleProcessSocket s_terminalSocket;
+// leaked: used from the websocket thread; destroying it would also join that
+// thread, without a timeout, in the middle of static teardown (#18318)
+ConsoleProcessSocket& s_terminalSocket = core::make_leaked<ConsoleProcessSocket>();
 
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
@@ -132,12 +135,9 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
 #ifndef _WIN32
    // put the postback scripts first so the `rstudio` helper (which opens files in
-   // this session) shadows any same-named application binary on the PATH; a
-   // restored terminal's saved PATH already starts with it, so don't stack copies
-   std::string postbackDir = module_context::rPostbackScriptsDir().getAbsolutePath();
-   std::string shellPath = core::system::getenv(shellEnv, "PATH");
-   if (shellPath != postbackDir && !boost::algorithm::starts_with(shellPath, postbackDir + ":"))
-      core::system::addToPath(&shellEnv, postbackDir, true);
+   // this session) shadows any same-named application binary on the PATH
+   core::system::addToPath(
+            &shellEnv, module_context::rPostbackScriptsDir().getAbsolutePath(), true);
 #endif
 
    // set options
@@ -496,6 +496,14 @@ void ConsoleProcess::interrupt()
    interruptCount_ += 1;
 }
 
+// Stop the process outright rather than interrupting it: an interactive
+// shell ignores SIGINT and just redraws its prompt, so a closed terminal's
+// shell would otherwise keep running under the session (#18976)
+void ConsoleProcess::terminate()
+{
+   terminate_ = true;
+}
+
 void ConsoleProcess::interruptChild()
 {
    interruptChild_ = true;
@@ -509,9 +517,10 @@ void ConsoleProcess::resize(int cols, int rows)
 
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
-   // if we've attempted to interrupt this process multiple times,
-   // but this process still appears to be running, then exit
-   if (interruptCount_ >= 3)
+   // stop if termination was requested, or if we've attempted to
+   // interrupt this process multiple times but it still appears to
+   // be running
+   if (terminate_ || interruptCount_ >= 3)
    {
       return false;
    }
@@ -686,6 +695,12 @@ bool stripRestartClearFromChunk(std::string* pChunk)
 
 void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
 {
+   // a terminated terminal has been closed and its buffer reaped; anything
+   // the dying shell still emits has no reader, and persisting it would
+   // recreate the reaped buffer file
+   if (terminate_)
+      return;
+
    if (envCaptureCmd_.output(rawOutput))
       return;
 
@@ -754,6 +769,12 @@ void ConsoleProcess::enqueOutputEvent(const std::string &rawOutput)
 
    if (procInfo_->getChannelMode() == Websocket)
    {
+      // with no client attached (it disconnected, or has not connected yet)
+      // there is nowhere to push the output; it stays in the buffer, which
+      // the client reloads when it (re)connects
+      if (!websocketConnected_)
+         return;
+
       // boundary repair above handles split characters, but a program can
       // also emit genuinely invalid UTF-8; scrub it rather than have
       // websocketpp reject (and thereby drop) the whole text frame. log at
@@ -1308,12 +1329,14 @@ void ConsoleProcess::onReceivedInput(const std::string& input)
 // websocket connection closed; called on different thread
 void ConsoleProcess::onConnectionClosed()
 {
+   websocketConnected_ = false;
    s_terminalSocket.stopListening(handle());
 }
 
 // websocket connection opened; called on different thread
 void ConsoleProcess::onConnectionOpened()
 {
+   websocketConnected_ = true;
 }
 
 void ConsoleProcess::saveEnvironment(const std::string& env)

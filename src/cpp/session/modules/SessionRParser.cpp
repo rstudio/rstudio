@@ -761,7 +761,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
          if (pNode->getParent())
             origin = pNode->getParent()->name();
 
-         FunctionInformation info(origin, name);
+         FunctionInformation info(name, origin);
          RTokenCursor clone = cursor.clone();
          if (clone.moveToPosition(pNode->position()))
          {
@@ -1546,6 +1546,23 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
 
 
 
+// Check whether the tokens from 'startCursor' to 'endCursor' form a
+// statement of their own, so that the value they produce is discarded,
+// as opposed to an operand, a condition, or an argument to a call.
+bool isStandaloneStatement(const RTokenCursor& startCursor,
+                           const RTokenCursor& endCursor,
+                           const ParseStatus& status)
+{
+   if (status.isInParentheticalScope())
+      return false;
+
+   const RToken& previous = startCursor.previousSignificantToken();
+   if (isBinaryOp(previous) || isValidAsUnaryOperator(previous))
+      return false;
+
+   return endCursor.clone().isAtEndOfStatement(false);
+}
+
 void handleIdentifier(RTokenCursor& cursor,
                       ParseStatus& status)
 {
@@ -1586,7 +1603,21 @@ void handleIdentifier(RTokenCursor& cursor,
    // Ignore pipe-bind placeholder.
    if (cursor.contentEquals(L"_"))
       return;
-   
+
+   // A bare 'return' evaluates to the primitive itself rather than
+   // returning from the enclosing function, which is essentially
+   // never what was intended -- unless 'return' is a variable here
+   // (grid, for one, has a formal argument named 'return'). Only
+   // statements are flagged: elsewhere (e.g. 'quote(return)') the
+   // function itself is what's wanted.
+   if (cursor.contentEquals(L"return") &&
+       !cursor.nextSignificantToken().isType(RToken::LPAREN) &&
+       isStandaloneStatement(cursor, cursor, status) &&
+       !status.node()->symbolHasDefinitionInTree("return", cursor.currentPosition()))
+   {
+      status.lint().bareReturn(cursor);
+   }
+
    if (cursor.isType(RToken::ID) ||
        cursor.isType(RToken::STRING))
    {
@@ -1860,6 +1891,182 @@ void checkUnexpectedEqualsAssignment(RTokenCursor& cursor,
 
    if (cursor.contentEquals(L"="))
       status.lint().unexpectedAssignmentInConditional(cursor, context);
+
+   // Catch the classic 'if (x<-1)' typo: the author almost certainly
+   // meant 'x < -1', but R parses it as an assignment. We only flag
+   // this when the operator is glued to its operands and the right-hand
+   // side is a numeric literal, since 'if (x <- foo())' is a common and
+   // legitimate idiom.
+   if (cursor.contentEquals(L"<-") &&
+       context != "for" &&
+       !isWhitespace(cursor.previousToken()) &&
+       !isWhitespace(cursor.nextToken()) &&
+       cursor.nextSignificantToken().isType(RToken::NUMBER))
+   {
+      status.lint().unexpectedAssignmentToLiteralInConditional(cursor, context);
+   }
+}
+
+// Detect assignments that can never succeed, e.g.
+//
+//    TRUE <- 1
+//    1 <- x
+//    x -> NULL
+//
+// R rejects these with 'invalid (do_set) left-hand side to assignment'.
+// Note that strings are valid assignment targets ("x" <- 1), so only
+// numbers and reserved constants are flagged.
+bool isInvalidAssignmentTarget(const RToken& token)
+{
+   if (token.isType(RToken::NUMBER))
+      return true;
+
+   if (!token.isType(RToken::ID))
+      return false;
+
+   return token.contentEquals(L"TRUE") ||
+          token.contentEquals(L"FALSE") ||
+          token.contentEquals(L"NULL") ||
+          token.contentEquals(L"Inf") ||
+          token.contentEquals(L"NaN") ||
+          isNaKeyword(token);
+}
+
+void checkInvalidAssignmentTarget(RTokenCursor& cursor,
+                                  ParseStatus& status)
+{
+   // '=' binds a named argument in a call, not an assignment;
+   // the parser doesn't route those here, but be defensive.
+   if (status.isInArgumentList() && cursor.contentEquals(L"="))
+      return;
+
+   if (isLeftAssign(cursor))
+   {
+      const RToken& target = cursor.previousSignificantToken();
+      if (isInvalidAssignmentTarget(target))
+         status.lint().invalidAssignmentTarget(target);
+   }
+   else if (isRightAssign(cursor))
+   {
+      const RToken& target = cursor.nextSignificantToken();
+      if (isInvalidAssignmentTarget(target))
+         status.lint().invalidAssignmentTarget(target);
+   }
+}
+
+// Detect repeated formals in a function definition, e.g.
+//
+//    function(x, x) {}
+//
+// which R rejects at parse time. Formals are recorded as defined
+// symbols on the function's (fresh) parse node as they're seen, so
+// a formal that already exists there is a repeat.
+void checkRepeatedFormalArgument(const RTokenCursor& cursor,
+                                 ParseStatus& status)
+{
+   if (!cursor.isType(RToken::ID))
+      return;
+
+   std::string name = token_utils::getSymbolName(cursor.currentToken());
+   if (status.node()->getDefinedSymbols().count(name))
+      status.lint().repeatedFormalArgument(cursor.currentToken());
+}
+
+// Detect calls of the form 'library(foo)' or 'require(foo)' where
+// 'foo' is not installed. The editor separately offers to install
+// missing packages on save; this provides the inline marker.
+//
+// 'requireNamespace()' and 'loadNamespace()' are deliberately not
+// handled: they take a string (often a variable), and the former is
+// almost always an availability check that expects absence.
+// 'require()' is an availability check too whenever its result is
+// used, as in 'if (!require(foo))', so only statements whose value
+// is discarded are flagged.
+void checkPackageInstalled(const RTokenCursor& cursor,
+                           ParseStatus& status)
+{
+   if (!cursor.isType(RToken::LPAREN))
+      return;
+
+   const RToken& callee = cursor.previousSignificantToken();
+   if (!callee.isType(RToken::ID))
+      return;
+
+   bool isRequire = callee.contentEquals(L"require");
+   if (!isRequire && !callee.contentEquals(L"library"))
+      return;
+
+   // Only handle plain calls; 'x$library(foo)' is something else.
+   if (isExtractionOperator(cursor.previousSignificantToken(2)))
+      return;
+
+   // The package must be a bare symbol or string forming the
+   // whole first argument.
+   const RToken& pkgToken = cursor.nextSignificantToken();
+   if (!pkgToken.isType(RToken::ID) && !pkgToken.isType(RToken::STRING))
+      return;
+
+   const RToken& after = cursor.nextSignificantToken(2);
+   if (!after.isType(RToken::COMMA) && !after.isType(RToken::RPAREN))
+      return;
+
+   RTokenCursor endCursor = cursor.clone();
+   if (!endCursor.fwdToMatchingToken())
+      return;
+
+   if (isRequire)
+   {
+      RTokenCursor calleeCursor = cursor.clone();
+      if (!calleeCursor.moveToPreviousSignificantToken())
+         return;
+
+      if (!isStandaloneStatement(calleeCursor, endCursor, status))
+         return;
+
+      // A statement's value can still be used, when it's the value of
+      // an 'else' branch or of the function enclosing it.
+      if (calleeCursor.previousSignificantToken().contentEquals(L"else"))
+         return;
+
+      ParseStatus::ParseState state = status.currentState();
+      if (state == ParseStatus::ParseStateFunctionStatement)
+         return;
+
+      if (state == ParseStatus::ParseStateFunctionExpression &&
+          endCursor.nextSignificantToken().isType(RToken::RBRACE))
+      {
+         return;
+      }
+   }
+
+   // With 'character.only = TRUE', a symbol refers to a variable
+   // holding the package name, and with 'lib.loc' the package need
+   // not be on the library paths, so there's nothing to check.
+   RTokenCursor argCursor = cursor.clone();
+   while (argCursor.moveToNextSignificantToken() &&
+          argCursor.currentPosition() < endCursor.currentPosition())
+   {
+      if (argCursor.contentEquals(L"character.only") ||
+          argCursor.contentEquals(L"lib.loc"))
+      {
+         return;
+      }
+
+      // Skip nested calls so that their arguments aren't inspected.
+      if (isLeftBracket(argCursor))
+         argCursor.fwdToMatchingToken();
+   }
+
+   std::string packageName = token_utils::getSymbolName(pkgToken);
+   if (packageName.empty())
+      return;
+
+   bool installed = true;
+   Error error = r::exec::RFunction(".rs.isPackageInstalled", packageName).call(&installed);
+   if (error)
+      LOG_ERROR(error);
+   else if (!installed)
+      status.lint().packageNotInstalled(pkgToken, packageName);
 }
 
 void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
@@ -2312,9 +2519,94 @@ void validateGlueCall(RTokenCursor cursor,
       
    }
    while (cursor.moveToNextSignificantToken());
-   
+
 }
 
+// Detect calls with an empty trailing argument, e.g.
+//
+//    c(1, 2, )
+//
+// R rejects these for builtins (every argument is evaluated, and an
+// empty one errors) and for base closures that forward '...' to one.
+// Closures in other packages are left alone, as many (tidyverse in
+// particular) deliberately accept a trailing empty argument.
+void checkEmptyTrailingArgument(const RTokenCursor& endCursor,
+                                FunctionInformation& info,
+                                ParseStatus& status)
+{
+   if (!endCursor.isType(RToken::RPAREN))
+      return;
+
+   const RToken& last = endCursor.previousSignificantToken();
+   if (!last.isType(RToken::COMMA))
+      return;
+
+   // Base closures known to forward '...' into a builtin (and so to
+   // reject an empty argument), from the R sources and by experiment.
+   static const std::set<std::string> baseClosures = {
+      "paste", "paste0", "cat", "message", "warning", "stop", "sprintf",
+      "data.frame", "rbind", "cbind", "structure", "file.path", "order",
+      "table", "stopifnot", "options", "mapply", "Map"
+   };
+
+   const Binding& binding = *info.binding();
+   bool rejectsEmptyArgument = info.isPrimitive()
+         ? info.isBuiltin()
+         : binding.origin == "namespace:base" && baseClosures.count(binding.name);
+
+   if (rejectsEmptyArgument)
+      status.lint().emptyTrailingArgument(last, binding.name);
+}
+
+// Detect named arguments that match the same formal more than once, e.g.
+//
+//    rnorm(n = 1, n = 2)
+//
+// Only exact matches against a known formal are flagged: names that
+// fall into '...' may legitimately repeat, as in 'c(a = 1, a = 2)'.
+void checkArgumentsMatchedMultipleTimes(RTokenCursor cursor,
+                                        const std::vector<std::string>& formalNames,
+                                        ParseStatus& status)
+{
+   // The cursor may sit on the callee or on the opening paren.
+   if (cursor.nextSignificantToken().isType(RToken::LPAREN))
+      if (!cursor.moveToNextSignificantToken())
+         return;
+
+   if (!cursor.isType(RToken::LPAREN))
+      return;
+
+   if (!cursor.moveToNextSignificantToken())
+      return;
+
+   std::set<std::string> seen;
+   while (!cursor.isType(RToken::RPAREN))
+   {
+      if (cursor.isLookingAtNamedArgumentInFunctionCall())
+      {
+         std::string name = getSymbolName(cursor.currentToken());
+         if (core::algorithm::contains(formalNames, name) && !seen.insert(name).second)
+            status.lint().argumentMatchedMultipleTimes(cursor.currentToken());
+      }
+
+      // Move to the comma ending this argument, skipping nested brackets.
+      do
+      {
+         if (cursor.fwdToMatchingToken())
+            continue;
+
+         if (cursor.isType(RToken::COMMA) || isRightBracket(cursor))
+            break;
+      }
+      while (cursor.moveToNextSignificantToken());
+
+      if (!cursor.isType(RToken::COMMA))
+         break;
+
+      if (!cursor.moveToNextSignificantToken())
+         break;
+   }
+}
 
 void validateFunctionCall(RTokenCursor cursor,
                           ParseStatus& status)
@@ -2333,7 +2625,15 @@ void validateFunctionCall(RTokenCursor cursor,
    
    RTokenCursor startCursor = cursor.clone();
    startCursor.moveToStartOfEvaluation();
-   
+
+   // Calls wrapped in '.Internal()' target the internal entry point,
+   // whose arguments differ from those of the R-level wrapper.
+   if (cursor.previousSignificantToken().isType(RToken::LPAREN) &&
+       cursor.previousSignificantToken(2).contentEquals(L".Internal"))
+   {
+      return;
+   }
+
    MatchedCall matched = MatchedCall::match(cursor, status);
    
    // If this is a call to 'glue()', handle it specially here.
@@ -2370,14 +2670,28 @@ void validateFunctionCall(RTokenCursor cursor,
       validateGlueCall(cursor, status, open, close, keys);
    }
    
+   // Bail if we couldn't resolve the function being called.
+   FunctionInformation& info = matched.functionInfo();
+   if (!info.binding())
+      return;
+
+   checkEmptyTrailingArgument(endCursor, info, status);
+
    // Bail if the function has no formals (e.g. certain primitives),
    // or if it contains '...'
    //
    // TODO: Wire up argument validation + full matching for '...'
-   const std::vector<std::string>& formalNames = 
-         matched.functionInfo().getFormalNames();
-   
-   if (formalNames.empty() || core::algorithm::contains(formalNames, "..."))
+   const std::vector<std::string>& formalNames = info.getFormalNames();
+
+   // Some primitives (language constructs like 'if' and 'return')
+   // don't report formals at all; a closure with no formals is a
+   // real zero-argument function, and calls to it can be checked.
+   if (formalNames.empty() && info.isPrimitive())
+      return;
+
+   checkArgumentsMatchedMultipleTimes(cursor, formalNames, status);
+
+   if (core::algorithm::contains(formalNames, "..."))
       return;
    
    // Warn on partial matches.
@@ -3182,6 +3496,7 @@ BINARY_OPERATOR:
 
       checkDottyAssignment(cursor, status);
       checkUnexpectedEqualsAssignment(cursor, status);
+      checkInvalidAssignmentTarget(cursor, status);
       checkBinaryOperatorWhitespace(cursor, status);
       if (!cursor.isAtEndOfDocument() && !canFollowBinaryOperator(cursor.nextSignificantToken()))
          status.lint().unexpectedToken(cursor.nextSignificantToken());
@@ -3200,7 +3515,8 @@ ARGUMENT_LIST:
       DEBUG("-- Begin argument list " << cursor);
       if (status.parseOptions().checkArgumentsToRFunctionCalls())
          validateFunctionCall(cursor, status);
-      
+
+      checkPackageInstalled(cursor, status);
       addExtraScopedSymbolsForCall(cursor, status);
       
       // Update the current state.
@@ -3385,7 +3701,8 @@ FUNCTION_ARGUMENT_START:
       DEBUG("** Function argument start");
       
       checkVariableAssignmentInArgumentList(cursor, status);
-      
+      checkRepeatedFormalArgument(cursor, status);
+
       if (cursor.isType(RToken::ID) &&
           (cursor.nextSignificantToken().contentEquals(L"=") ||
            cursor.nextSignificantToken().contentEquals(L"<-")))
@@ -3502,7 +3819,7 @@ REPEAT_START:
       goto START;
       
 INVALID_TOKEN:
-      
+
       status.lint().unexpectedToken(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
    }

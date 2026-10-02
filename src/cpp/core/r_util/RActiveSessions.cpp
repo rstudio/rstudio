@@ -240,6 +240,117 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(bool validat
    return sessions;
 }
 
+namespace {
+
+// Whether anything in the session's directory has changed since the given
+// time. If that can't be told (e.g. an entry can't be read), assume it has.
+bool isModifiedSince(const FilePath& scratchPath, std::time_t since)
+{
+   std::time_t lastWriteTime = 0;
+   Error error = scratchPath.getLastWriteTime(lastWriteTime);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   if (lastWriteTime >= since)
+      return true;
+
+   bool modified = false;
+   error = scratchPath.getChildrenRecursive(
+      [&](int, const FilePath& child)
+      {
+         Error childError = child.getLastWriteTime(lastWriteTime);
+         if (childError)
+         {
+            LOG_ERROR(childError);
+            modified = true;
+         }
+         else
+         {
+            modified = lastWriteTime >= since;
+         }
+         return !modified;
+      });
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   return modified;
+}
+
+// Whether the session's directory holds a suspended workspace. One set aside
+// after its restore crashed (suspended-session-data-unrestored) doesn't count:
+// a session keeps its own for a while, but nothing else in an abandoned
+// session is worth more than that.
+bool hasSuspendedWorkspace(const FilePath& scratchPath)
+{
+   std::vector<FilePath> children;
+   Error error = scratchPath.getChildren(children);
+
+   // if we can't tell, assume it does
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   for (const FilePath& child : children)
+   {
+      if (child.getFilename() == "suspended-session-data")
+         return true;
+   }
+
+   return false;
+}
+
+} // anonymous namespace
+
+void ActiveSessions::removeStaleInvalidSessions(
+   const std::vector<boost::shared_ptr<ActiveSession>>& invalidSessions,
+   std::time_t maxAgeSeconds) const
+{
+   // only sessions kept entirely in files can be judged by their files; the
+   // directory of a session whose properties live elsewhere (e.g. in a
+   // database, via RpcActiveSessionsStorage) says nothing about its age
+   if (!std::dynamic_pointer_cast<FileActiveSessionsStorage>(storage_))
+      return;
+
+   std::time_t cutoff = std::time(nullptr) - maxAgeSeconds;
+   for (const boost::shared_ptr<ActiveSession>& session : invalidSessions)
+   {
+      const FilePath& scratchPath = session->scratchPath();
+      if (scratchPath.isEmpty() || !scratchPath.exists())
+         continue;
+
+      // keep a suspended workspace, which can still be recovered by hand
+      if (hasSuspendedWorkspace(scratchPath))
+         continue;
+
+      // validation also fails when the properties it checks can't be read
+      // (e.g. a file left owned by root by a sudo run), but the session itself
+      // may be fine, so only remove it when they're readable and still invalid
+      std::map<std::string, std::string> properties;
+      Error error = session->storage_->readProperties({ ActiveSession::kEditor, ActiveSession::kProject }, &properties);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      if (isModifiedSince(scratchPath, cutoff))
+         continue;
+
+      ILOGF("Removing invalid session {} at {}", session->id(), scratchPath.getAbsolutePath());
+      error = session->destroy();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 size_t ActiveSessions::count() const
 {
    return storage_->getSessionCount();

@@ -13,10 +13,6 @@
 #
 #
 
-if(POLICY CMP0077)
-   cmake_policy(SET CMP0077 NEW)
-endif()
-
 # define package suffix
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 

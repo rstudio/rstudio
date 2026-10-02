@@ -27,7 +27,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
@@ -38,8 +37,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class ErrorManager
              implements DebugModeChangedEvent.Handler,
-                        ErrorHandlerChangedEvent.Handler,
-                        SessionInitEvent.Handler
+                        ErrorHandlerChangedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, ErrorManager> {}
@@ -60,12 +58,15 @@ public class ErrorManager
       events_ = events;
       server_ = server;
       commands_ = commands;
-      session_ = session;
       binder.bind(commands, this);
 
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(ErrorHandlerChangedEvent.TYPE, this);
-      events_.addHandler(SessionInitEvent.TYPE, this);
+      session.withSessionInfo(info ->
+      {
+         errorManagerState_ = info.getErrorState();
+         syncHandlerCommandsCheckedState();
+      });
    }
 
    // Event and command handlers ----------------------------------------------
@@ -92,13 +93,6 @@ public class ErrorManager
          errorManagerState_.setErrorHandlerType(newType);
          syncHandlerCommandsCheckedState();
       }
-   }
-
-   @Override
-   public void onSessionInit(SessionInitEvent sie)
-   {
-      errorManagerState_ = session_.getSessionInfo().getErrorState();
-      syncHandlerCommandsCheckedState();
    }
 
    @Handler
@@ -192,7 +186,6 @@ public class ErrorManager
 
    private final EventBus events_;
    private final DebuggingServerOperations server_;
-   private final Session session_;
    private final Commands commands_;
 
    private DebugHandlerState debugHandlerState_ = DebugHandlerState.None;

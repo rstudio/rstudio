@@ -1003,6 +1003,13 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void processTerminate(String handle,
+                                ServerRequestCallback<VoidResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_TERMINATE, handle, requestCallback);
+   }
+
+   @Override
    public void processReap(String handle,
                            ServerRequestCallback<VoidResponse> requestCallback)
    {
@@ -2170,6 +2177,7 @@ public class RemoteServer implements Server
                           int height,
                           boolean overwrite,
                           boolean useDevicePixelRatio,
+                          int resolution,
                           ServerRequestCallback<Bool> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -2179,6 +2187,7 @@ public class RemoteServer implements Server
       params.set(3, new JSONNumber(height));
       params.set(4, JSONBoolean.getInstance(overwrite));
       params.set(5, JSONBoolean.getInstance(useDevicePixelRatio));
+      params.set(6, new JSONNumber(resolution));
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
 
@@ -2868,6 +2877,14 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       sendRequest(RPC_SCOPE, CREATE_ALIASED_PATH, params, requestCallback);
+   }
+
+   public void ensureEditableFile(String path,
+                                  ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, ENSURE_EDITABLE_FILE, params, requestCallback);
    }
 
    public void recoverPackageSource(String path,
@@ -7151,9 +7168,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback)
+   public void chatInstallUpdate(boolean reinstall,
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(reinstall)
+            .get();
+      sendRequest(RPC_SCOPE, "chat_install_update", params, requestCallback);
    }
 
    @Override
@@ -7182,12 +7203,6 @@ public class RemoteServer implements Server
    public void chatNotifyUILoaded(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_notify_ui_loaded", requestCallback);
-   }
-
-   @Override
-   public void chatUninstallPositAssistant(ServerRequestCallback<VoidResponse> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "chat_uninstall_posit_assistant", requestCallback);
    }
 
    @Override
@@ -7313,6 +7328,7 @@ public class RemoteServer implements Server
 
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";
+   private static final String PROCESS_TERMINATE = "process_terminate";
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
    private static final String PROCESS_SET_SIZE = "process_set_size";
@@ -7451,6 +7467,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String CREATE_ALIASED_PATH = "create_aliased_path";
+   private static final String ENSURE_EDITABLE_FILE = "ensure_editable_file";
    private static final String RECOVER_PACKAGE_SOURCE = "recover_package_source";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
 

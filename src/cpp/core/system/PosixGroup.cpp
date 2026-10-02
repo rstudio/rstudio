@@ -19,6 +19,7 @@
 #include <grp.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
@@ -173,40 +174,19 @@ Error updateGroupCacheById(gid_t gid, Group* pGroup, const std::string& opName)
 
 std::vector<GidType> updateUserGroupCache(const User& user, const std::string& opName)
 {
-   // define a different gid type if we are on Mac vs Linux
-   // BSD expects int values, but Linux expects unsigned ints
-#ifndef __APPLE__
-   typedef gid_t GIDTYPE;
-#else
-   typedef int GIDTYPE;
-#endif
-
    const std::string& username = user.getUsername();
 
    LOG_DEBUG_MESSAGE(opName + " group list for user: " + username);
 
-   // get the groups for the user - we start with 100 groups which should be enough for most cases
-   // if it is not, resize the vector with the correct amount of groups and try again
-   int numGroups = 100;
-   std::vector<GIDTYPE> gids(numGroups);
-   int lastNumGroups = numGroups;
-   while (getgrouplist(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
-   {
-      if (numGroups == lastNumGroups)
-      {
-         LOG_ERROR_MESSAGE("Error retrieving groups for: " + username + " errno: " + std::to_string(errno));
-         break; // Continuing on with no groups for this user - should this return an error to the caller?
-      }
-      gids.resize(numGroups);
-      lastNumGroups = numGroups;
-   }
-
+   // a failed lookup yields no groups, and is kept out of the cache so that the
+   // next lookup tries again rather than serving a failure for the cache period
    std::vector<GidType> groupIds;
-   groupIds.reserve(numGroups);
-   for(int i = 0; i < numGroups; i++) {
-      groupIds.push_back(static_cast<GidType>(gids[i]));
+   Error error = queryUserGroupIds(user, &groupIds);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return groupIds;
    }
-
 
    UserGroupCache cacheEnt;
    cacheEnt.groupIds = groupIds;
@@ -348,6 +328,54 @@ Error groupFromId(gid_t gid, Group* pGroup)
  * @param user user to get groups for
  * @return vector containing the groupIds related to user
  */
+Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds)
+{
+   return queryUserGroupIds(user, pGroupIds, ::getgrouplist);
+}
+
+Error queryUserGroupIds(const User& user, std::vector<GidType>* pGroupIds, const GroupListLookup& lookup)
+{
+   const std::string& username = user.getUsername();
+
+   // get the groups for the user - we start with 100 groups which should be enough for most cases
+   // if it is not, resize the vector and try again: glibc reports how many groups it needs, but
+   // macOS leaves the count as it was (having filled the buffer), so there we double it ourselves,
+   // up to the most groups Linux allows a process
+   const int kMaxNumGroups = 65536;
+   int numGroups = 100;
+   std::vector<GroupListGidType> gids(numGroups);
+   int lastNumGroups = numGroups;
+   errno = 0;
+   while (lookup(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
+   {
+      if (numGroups <= lastNumGroups)
+      {
+         if (lastNumGroups >= kMaxNumGroups)
+         {
+            // a failed lookup needn't have filled anything in (nor set errno), so
+            // publish nothing: the zeroed buffer would read as membership in gid 0
+            pGroupIds->clear();
+
+            Error error = systemError(errno != 0 ? errno : ENOENT, ERROR_LOCATION);
+            error.addProperty("description", "Error retrieving groups for: " + username);
+            return error;
+         }
+
+         numGroups = std::min(lastNumGroups * 2, kMaxNumGroups);
+      }
+
+      gids.resize(numGroups);
+      lastNumGroups = numGroups;
+   }
+
+   pGroupIds->clear();
+   pGroupIds->reserve(numGroups);
+   for (int i = 0; i < numGroups; i++)
+      pGroupIds->push_back(static_cast<GidType>(gids[i]));
+
+   return Success();
+}
+
 std::vector<GidType> userGroupIds(const User& user)
 {
    const std::string& username = user.getUsername();

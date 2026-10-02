@@ -47,6 +47,7 @@ namespace prefs {
 #define kAlwaysSaveHistory "always_save_history"
 #define kRemoveHistoryDuplicates "remove_history_duplicates"
 #define kShowLastDotValue "show_last_dot_value"
+#define kShowHiddenObjects "show_hidden_objects"
 #define kLineEndingConversion "line_ending_conversion"
 #define kLineEndingConversionDefault "default"
 #define kLineEndingConversionWindows "windows"
@@ -581,6 +582,12 @@ public:
     */
    bool showLastDotValue();
    core::Error setShowLastDotValue(bool val);
+
+   /**
+    * Whether to show objects whose names begin with a dot in the Environment pane.
+    */
+   bool showHiddenObjects();
+   core::Error setShowHiddenObjects(bool val);
 
    /**
     * The line ending format to use when saving files.

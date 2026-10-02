@@ -14,12 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
-import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -39,16 +37,11 @@ public class ExportPlotDialog extends ModalDialogBase
    {
       VerticalPanel mainPanel = new VerticalPanel();
    
-      // enforce maximum initial dimensions based on screen size
-      Size maxSize = new Size(Window.getClientWidth() - 100,
-                              Window.getClientHeight() - 200);
-      
-      int width = Math.min(options_.getWidth(), maxSize.width);
-      int height = Math.min(options_.getHeight(), maxSize.height);
-       
+      // the size editor limits the initial size to the screen when the
+      // previewer asks for it
       sizeEditor_ = new ExportPlotSizeEditor(
-                                 width, 
-                                 height,
+                                 options_.getWidth(),
+                                 options_.getHeight(),
                                  options_.getKeepRatio(),
                                  createTopLeftWidget(),
                                  previewer_,
@@ -95,7 +88,8 @@ public class ExportPlotDialog extends ModalDialogBase
                                       previous.getFormat(),
                                       previous.getViewAfterSave(),
                                       previous.getUseDevicePixelRatio(),
-                                      previous.getCopyAsMetafile());    
+                                      previous.getCopyAsMetafile(),
+                                      previous.getResolution());
    }
     
   

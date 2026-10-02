@@ -2,8 +2,9 @@
 //
 // The xterm file-link provider sends every token on the hovered line to the
 // session, which resolves them against the terminal's working directory; only
-// tokens naming an existing file become links, and a link activates with the
-// platform's open-link modifier held (Cmd on macOS, Ctrl elsewhere).
+// tokens naming an existing file become links, and a link is only marked --
+// and only activates -- while the platform's open-link modifier is held (Cmd
+// on macOS, Ctrl elsewhere).
 
 import type { Locator, Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -21,6 +22,9 @@ const FILE_CONTENT = 'first <- 1\nsecond <- 2\nthird <- 3\n';
 // be located and hovered; the default renderer paints to a WebGL canvas.
 const XTERM_ROWS = '.xterm-rows > div';
 const LINK_UNDER_POINTER = '.xterm-screen.xterm-cursor-pointer';
+
+/** The modifier that turns a printed path into a link on this platform. */
+const MODIFIER = process.platform === 'darwin' ? 'Meta' : 'Control';
 
 async function runInTerminal(page: Page, command: string): Promise<void> {
   await page.keyboard.type(command);
@@ -83,7 +87,8 @@ async function locateTerminalText(page: Page, text: string): Promise<Point> {
  * Hover the terminal text `text` until xterm reports a link under the pointer,
  * and return the point to click. `text` should be the tail of the printed
  * path (the file name), which belongs to a link naming the file wherever the
- * path wraps.
+ * path wraps. The modifier is pressed first, since nothing is marked as a link
+ * without it, and is left held for the caller to release.
  *
  * The raw mouse is used throughout: xterm's screen element sits over the row
  * spans, so locator-level hover/click fail their hit-target check. Link
@@ -94,6 +99,7 @@ async function locateTerminalText(page: Page, text: string): Promise<Point> {
  */
 async function hoverFileLink(page: Page, text: string): Promise<Point> {
   let point: Point = { x: 0, y: 0 };
+  await page.keyboard.down(MODIFIER);
   await expect(async () => {
     point = await locateTerminalText(page, text);
     const rowHeight = (await page.locator(XTERM_ROWS).first().boundingBox())?.height ?? 0;
@@ -105,14 +111,12 @@ async function hoverFileLink(page: Page, text: string): Promise<Point> {
   return point;
 }
 
-/** Click a hovered link with the platform's open-link modifier held. */
+/** Click a hovered link, releasing the modifier hoverFileLink left held. */
 async function clickFileLink(page: Page, point: Point): Promise<void> {
-  const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
-  await page.keyboard.down(modifier);
   try {
     await page.mouse.click(point.x, point.y);
   } finally {
-    await page.keyboard.up(modifier);
+    await page.keyboard.up(MODIFIER);
   }
 }
 
@@ -137,6 +141,8 @@ test.describe.serial('Terminal: file paths open with Ctrl/Cmd+Click', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
+    // a test that failed mid-hover can leave the modifier held
+    await page.keyboard.up(MODIFIER).catch(() => {});
     await killAllTerminals(page).catch(() => {});
     await documentCloseAllNoSave(page).catch(() => {});
     await executeCommand(page, 'activateConsole').catch(() => {});
@@ -189,5 +195,22 @@ test.describe.serial('Terminal: file paths open with Ctrl/Cmd+Click', () => {
     await waitForActiveDocument(page, fullPath, TIMEOUTS.fileOpen);
     const editor = new AceEditor(page, '');
     await expect.poll(() => editor.getValue()).toBe(FILE_CONTENT);
+  });
+
+  test('a path is only marked as a link while the modifier is held', async ({ rstudioPage: page }) => {
+    const fullPath = await seedSandboxFile(page, sandbox.dir, 'link_modifier.R', FILE_CONTENT);
+    await focusTerminal(page);
+
+    await runInTerminal(page, `echo ${fullPath.replace(/\\/g, '/')}`);
+    await hoverFileLink(page, 'link_modifier.R');
+
+    // releasing the modifier unmarks the link without the pointer moving
+    await page.keyboard.up(MODIFIER);
+    await expect(page.locator(LINK_UNDER_POINTER)).toBeHidden();
+
+    // and pressing it again marks it once more
+    await page.keyboard.down(MODIFIER);
+    await expect(page.locator(LINK_UNDER_POINTER)).toBeVisible();
+    await page.keyboard.up(MODIFIER);
   });
 });

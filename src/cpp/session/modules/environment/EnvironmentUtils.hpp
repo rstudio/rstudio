@@ -24,6 +24,18 @@ namespace session {
 namespace modules {
 namespace environment {
 
+// whether ls() omits name: names beginning with a dot
+bool isHiddenName(const std::string& name);
+
+// the names the Environment pane lists for env, per the listing prefs
+void listEnvironmentForPane(SEXP env, std::vector<std::string>* pNames);
+
+// every name the pane could list for env, whatever the listing prefs
+void listEnvironmentForMonitor(SEXP env, std::vector<std::string>* pNames);
+
+// whether the pane lists name, per the listing prefs
+bool isListedInPane(const std::string& name);
+
 core::json::Value varToJson(const std::string& name, SEXP env);
 bool isUnevaluatedPromise(const std::string& name, SEXP env);
 bool functionDiffersFromSource(SEXP srcRef, const std::string& functionCode);

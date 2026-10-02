@@ -41,6 +41,11 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
 {
    Error error;
 
+   // Don't move old state into a temporary stand-in for the data directory,
+   // where it could be deleted; it can migrate once the real one is usable.
+   if (core::system::xdg::isUserDataDirTemporary())
+      return Success();
+
    // Check to see if state has already been migrated. The user data directory existed
    // in RStudio 1.3, but did not contain client state, so we use that as a sentry to
    // let us know if we've migrated.

@@ -88,7 +88,7 @@ Error saveSnippets(const json::JsonRpcRequest& request,
             continue;
          }
 
-         error = writeStringToFile(
+         error = writeStringToFileAtomic(
             snippetsDir.completeChildPath(mode + ".snippets"),
                                    contents);
          if (error)

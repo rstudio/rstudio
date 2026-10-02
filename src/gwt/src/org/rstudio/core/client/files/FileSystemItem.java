@@ -222,6 +222,20 @@ public class FileSystemItem extends JavaScriptObject
          return "";
    }
 
+   // Like getParentPath(), but a file directly under "/" yields "/" instead of
+   // null. Null for a root ("/" or "C:/") or a relative name. A bare "C:" parent
+   // becomes "C:/" in create().
+   public final FileSystemItem getContainingDir()
+   {
+      String path = getPath();
+      int lastSlash = path.lastIndexOf('/');
+      if (lastSlash < 0 || path.matches("^([A-Za-z]:)?/$"))
+         return null;
+
+      return FileSystemItem.createDir(
+         lastSlash == 0 ? "/" : StringUtil.substring(path, 0, lastSlash));
+   }
+
    public final String completePath(String name)
    {
       String path = getPath();

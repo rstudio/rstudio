@@ -248,8 +248,11 @@ core::Error migratePrefs(const FilePath& src)
    destPrefs[kCleanTexi2dviOutput] = settings.getBool("cleanTexi2DviOutput", true);
    destPrefs[kUseSecureDownload] = settings.getBool("securePackageDownload", true);
 
-   // Migrate state 
+   // Migrate state; without an old context ID, keep the one assigned at
+   // startup, since this session's project state is already stored under it
    std::string contextId = settings.get("contextIdentifier");
+   if (contextId.empty())
+      contextId = userState().contextId();
    if (!contextId.empty())
       destState[kContextId] = contextId;
    int handlerType = settings.getInt("errorHandlerType", 1);

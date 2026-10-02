@@ -393,6 +393,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <separator/>
          <cmd refid="zoomPlot"/>
          <separator/>
+         <cmd refid="fitPlotToPane"/>
+         <cmd refid="useFixedPlotSize"/>
+         <separator/>
          <cmd refid="savePlotAsImage"/>
          <cmd refid="savePlotAsPdf"/>
          <separator/>
@@ -625,8 +628,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="clearUserPrefs"/>
             <cmd refid="viewAllPrefs"/>
             <cmd refid="restoreDefaultPaneAndTabLayout"/>
-            <separator/>
-            <cmd refid="uninstallPositAssistant"/>
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
@@ -1229,6 +1230,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Copy Path"
         buttonLabel=""
         desc="Copy current document path"/>
+
+   <cmd id="showActiveDocDirInFiles"
+        label="Show Current Document's Directory in Files Pane"
+        menuLabel="Show Document's Directory"
+        buttonLabel=""
+        desc="Show the directory containing the current document in the Files pane"/>
 
    <cmd id="saveSourceDocAs"
         label="Save Current Document As..."
@@ -3113,6 +3120,18 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="View a larger version of the plot in a new window"
         rebindable="false"/>
 
+   <cmd id="fitPlotToPane"
+        label="Fit Plots to Pane"
+        menuLabel="_Fit to Pane"
+        desc="Draw plots at the size of the Plots pane"
+        radio="true"/>
+
+   <cmd id="useFixedPlotSize"
+        label="Use Fixed Plot Size..."
+        menuLabel="Fi_xed Size..."
+        desc="Draw plots at a fixed size, scaled down to fit the Plots pane"
+        radio="true"/>
+
    <cmd id="removePlot"
         label="Remove Current Plot..."
         buttonLabel=""
@@ -4487,12 +4506,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Return Posit Assistant to Main Window"
         buttonLabel=""
         desc="Return to main window"/>
-
-   <cmd id="uninstallPositAssistant"
-        label="Uninstall Posit Assistant"
-        menuLabel="Uninsta_ll Posit Assistant..."
-        rebindable="false"
-        windowMode="main"/>
 
    <cmd id="checkForPositAssistantUpdates"
         label="Check for Posit Assistant Updates"

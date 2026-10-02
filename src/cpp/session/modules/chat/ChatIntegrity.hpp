@@ -36,8 +36,8 @@ namespace integrity {
 /**
  * Parse manifest to get package info for current protocol version.
  *
- * Selects the highest minor version that matches the major version of the
- * given protocol version string.
+ * Selects the entry whose key equals the given protocol version string. Any
+ * other entry is ignored; one not of the form <major>.0 is also warned about.
  *
  * @param manifest The parsed JSON manifest object
  * @param protocolVersion RStudio's protocol version (e.g. "1.0")

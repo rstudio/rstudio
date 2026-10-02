@@ -504,7 +504,7 @@ void writeSourceMarkers(bool terminatedNormally)
    {
       std::ostringstream os;
       sourceMarkers().asJson().write(os);
-      Error error = writeStringToFile(sourceMarkersFilePath(), os.str());
+      Error error = writeStringToFileAtomic(sourceMarkersFilePath(), os.str());
       if (error)
          LOG_ERROR(error);
    }

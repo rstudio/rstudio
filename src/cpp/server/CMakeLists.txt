@@ -150,10 +150,8 @@ add_stripped_executable(rserver ServerMain.cpp ${SERVER_SOURCE_FILES} ${SERVER_H
 
 # set link dependencies
 target_link_libraries(rserver
-   rstudio-core
    rstudio-server-core
    rstudio-monitor
-   ${SOCI_LIBRARIES}
    ${SERVER_SYSTEM_LIBRARIES}
 )
 
@@ -318,12 +316,10 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
   )
 
   target_link_libraries(rserver-tests
-     rstudio-core
      rstudio-server-core
      rstudio-monitor
      gtest
      pthread
-     ${SOCI_LIBRARIES}
      ${SERVER_SYSTEM_LIBRARIES}
   )
   

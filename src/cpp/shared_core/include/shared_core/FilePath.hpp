@@ -960,11 +960,12 @@ Error fileExistsError(const ErrorLocation& in_location);
 Error fileExistsError(const FilePath& in_filePath, const ErrorLocation& in_location);
 
 /**
- * @brief Checks whether the provided error is a "file not found" error.
+ * @brief Checks whether the provided error is a "not found" error. Equivalent to isNotFoundError(): a path not found
+ *        error matches as well, since Windows reports a missing parent directory that way.
  *
  * @param in_error      The error to check.
  *
- * @return True if the specified error is a file not found error; false otherwise.
+ * @return True if the specified error is a file not found error or a path not found error; false otherwise.
  */
 bool isFileNotFoundError(const Error& in_error);
 
@@ -998,13 +999,14 @@ Error fileNotFoundError(const std::string& in_filePath, const ErrorLocation& in_
 Error fileNotFoundError(const FilePath& in_filePath, const ErrorLocation& in_location);
 
 /**
- * @brief Checks whether the provided error is a "file not found" error.
+ * @brief Checks whether the provided error is a "not found" error. Equivalent to isNotFoundError(): a file not found
+ *        error matches as well, since Windows reports a missing file in an existing directory that way.
  *
  * @param in_error      The error to check.
  *
- * @return True if the specified error is a file not found error; false otherwise.
+ * @return True if the specified error is a file not found error or a path not found error; false otherwise.
  */
-bool isPathNotFoundError(const Error& error);
+bool isPathNotFoundError(const Error& in_error);
 
 /**
  * @brief Error creation function to be used when a directory could not be found.

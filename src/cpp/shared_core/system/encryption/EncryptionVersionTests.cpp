@@ -300,6 +300,81 @@ TEST(SharedCoreTest, VersionedCryptoCalls)
       // verify that the decryption gives us back the original data
       ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
+
+   // Crypto can decrypt v0 data with v2 version byte using a v2-sized key section
+   {
+      // The section above uses a 16-byte key, so v2::aesDecrypt rejects it on the
+      // key-length guard before any OpenSSL call is made. Real callers (e.g. the
+      // secure-cookie key, which is required to be >= 32 bytes) get past that
+      // guard and run a full AES-256-GCM decrypt that then fails its tag check.
+      // That is the path that must fall back to v0 cleanly.
+      ASSERT_TRUE(generateKeys(crypto::v0::VERSION_BYTE));
+
+      // v0 encryption is AES-128-CBC and only consumes the first 16 bytes of the
+      // key and IV, so padding this key out to 32 bytes leaves the ciphertext
+      // (and therefore its leading v2 version byte) unchanged.
+      std::vector<unsigned char> key = {0x78, 0x84, 0x9b, 0x4c, 0x27, 0x6a, 0x07, 0x17, 0xb1, 0xbb, 0x1d, 0xd0, 0x9e, 0xc5, 0x39, 0x55,
+                                        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+      std::vector<unsigned char> iv = {0x22, 0xaf, 0xca, 0x38, 0x2d, 0xeb, 0xf8, 0xaa, 0xa0, 0xfb, 0x97, 0x40, 0xaa, 0xbb, 0x97, 0x13};
+
+      std::vector<unsigned char> encryptedData;
+      Error error = core::system::crypto::v0::aesEncrypt(g_data, key, iv, encryptedData);
+      ASSERT_FALSE(error);
+
+      ASSERT_EQ(crypto::v2::VERSION_BYTE, encryptedData[0]);
+      ASSERT_GE(key.size(), (size_t)crypto::v2::KEY_LENGTH_BYTES);
+
+      // the speculative v2 attempt must fail its tag check and fall back to v0
+      std::vector<unsigned char> decryptedData;
+      error = core::system::crypto::aesDecrypt(encryptedData, key, iv, decryptedData);
+      ASSERT_FALSE(error);
+
+      // verify that the decryption gives us back the original data
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
+   }
+
+   // A v2 buffer too short to hold its own overhead is rejected, not underflowed
+   {
+      ASSERT_TRUE(generateKeys(crypto::v2::VERSION_BYTE));
+
+      // [ version byte ][ data ][ mac ] needs at least 1 + MAC_SIZE_BYTES bytes.
+      // Anything shorter used to wrap the unsigned length arithmetic around to
+      // a huge value; it must throw the version mismatch instead so the caller
+      // falls back to an earlier version.
+      const size_t overhead = crypto::ENCRYPTION_VERSION_SIZE_BYTES + crypto::v2::MAC_SIZE_BYTES;
+      std::vector<unsigned char> decryptedData;
+
+      for (size_t len : {(size_t)1, overhead - 1})
+      {
+         std::vector<unsigned char> shortData(len, crypto::v2::VERSION_BYTE);
+         EXPECT_ANY_THROW(core::system::crypto::v2::aesDecrypt(shortData, g_key, g_iv, decryptedData));
+      }
+   }
+
+   // An empty plaintext round-trips through v2 - its ciphertext is exactly the overhead
+   {
+      ASSERT_TRUE(generateKeys(crypto::v2::VERSION_BYTE));
+
+      std::vector<unsigned char> emptyData;
+      std::vector<unsigned char> encryptedData;
+      Error error = core::system::crypto::v2::aesEncrypt(emptyData, g_key, g_iv, encryptedData);
+      ASSERT_FALSE(error);
+      ASSERT_EQ(crypto::ENCRYPTION_VERSION_SIZE_BYTES + crypto::v2::MAC_SIZE_BYTES, encryptedData.size());
+
+      std::vector<unsigned char> decryptedData(1, 'x');
+      error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
+      ASSERT_FALSE(error);
+      ASSERT_TRUE(decryptedData.empty());
+   }
+
+   // A v1 buffer with no payload after its version byte is rejected
+   {
+      ASSERT_TRUE(generateKeys(crypto::v1::VERSION_BYTE));
+
+      std::vector<unsigned char> decryptedData;
+      std::vector<unsigned char> shortData = {crypto::v1::VERSION_BYTE};
+      EXPECT_ANY_THROW(core::system::crypto::v1::aesDecrypt(shortData, g_key, g_iv, decryptedData));
+   }
 }
 
 } // end namespace tests

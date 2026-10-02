@@ -16,11 +16,16 @@ package org.rstudio.studio.client.workbench.views.files.events;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
-public class DirectoryNavigateEvent extends GwtEvent<DirectoryNavigateEvent.Handler>
+// Cross-window so a satellite (e.g. a popped-out source window) can navigate
+// the main window's Files pane. Server-raised instances are dispatched
+// locally in each window and never forwarded, so they don't navigate twice.
+@JavaScriptSerializable
+public class DirectoryNavigateEvent extends CrossWindowEvent<DirectoryNavigateEvent.Handler>
 {
    public static class Data extends JavaScriptObject
    {
@@ -44,6 +49,10 @@ public class DirectoryNavigateEvent extends GwtEvent<DirectoryNavigateEvent.Hand
       void onDirectoryNavigate(DirectoryNavigateEvent event);
    }
 
+   public DirectoryNavigateEvent()
+   {
+   }
+
    public DirectoryNavigateEvent(Data data)
    {
       this(FileSystemItem.createDir(data.getDirectory()), data.getActivate());
@@ -57,18 +66,26 @@ public class DirectoryNavigateEvent extends GwtEvent<DirectoryNavigateEvent.Hand
    public DirectoryNavigateEvent(FileSystemItem directory,
                                  boolean activate)
    {
-      directory_ = directory;
+      directory_ = directory.getPath();
       activate_ = activate;
    }
 
    public FileSystemItem getDirectory()
    {
-      return directory_;
+      return FileSystemItem.createDir(directory_);
    }
 
    public boolean getActivate()
    {
       return activate_;
+   }
+
+   // Raise the main window only when asked to show the pane; a background
+   // navigation shouldn't steal focus from the satellite.
+   @Override
+   public int focusMode()
+   {
+      return activate_ ? MODE_FOCUS : MODE_BACKGROUND;
    }
 
    @Override
@@ -83,6 +100,6 @@ public class DirectoryNavigateEvent extends GwtEvent<DirectoryNavigateEvent.Hand
       return TYPE;
    }
 
-   private final FileSystemItem directory_;
-   private final boolean activate_;
+   private String directory_;
+   private boolean activate_;
 }

@@ -41,7 +41,6 @@ add_stripped_executable(rserver-pam ${PAM_SOURCE_FILES} ${PAM_HEADER_FILES})
 
 # set link dependencies
 target_link_libraries(rserver-pam
-   rstudio-core
    rstudio-server-core
    ${PAM_LIBRARIES}
 )

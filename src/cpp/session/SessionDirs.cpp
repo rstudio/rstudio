@@ -27,6 +27,13 @@ namespace rstudio {
 namespace session {
 namespace dirs {
 
+namespace {
+
+// set by setInitialWorkingDirectory() once the session has started elsewhere
+FilePath s_initialWorkingDirectory;
+
+} // anonymous namespace
+
 FilePath getDefaultWorkingDirectory()
 {
    // see if the user has defined a default working directory in preferences
@@ -71,6 +78,10 @@ FilePath getActiveSessionInitialWorkingDirectory()
 
 FilePath getInitialWorkingDirectory()
 {
+   // the directory the session actually started in, if it wasn't this one
+   if (!s_initialWorkingDirectory.isEmpty())
+      return s_initialWorkingDirectory;
+
    // check for a project
    if (projects::projectContext().hasProject())
    {
@@ -94,6 +105,11 @@ FilePath getInitialWorkingDirectory()
    {
       return getActiveSessionInitialWorkingDirectory();
    }
+}
+
+void setInitialWorkingDirectory(const FilePath& workingDir)
+{
+   s_initialWorkingDirectory = workingDir;
 }
 
 FilePath getProjectUserDataDir(const ErrorLocation& location)
