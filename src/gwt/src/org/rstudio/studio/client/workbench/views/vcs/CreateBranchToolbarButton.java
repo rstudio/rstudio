@@ -195,10 +195,12 @@ public class CreateBranchToolbarButton extends ToolbarButton
       return input.getWorktreeParent() != null;
    }
 
-   // Creates the worktree on the branch, whether that is new or (as the user
-   // has by now agreed to) an existing local or remote one; which of the two
-   // it is gets settled on the way
-   private void onCreateWorktree(final CreateBranchDialog.Input input)
+   // Creates the worktree on the branch, which the prompts have settled is
+   // new (`createBranch`, from `startPoint` when it tracks a remote branch)
+   // or an existing local one
+   private void onCreateWorktree(final CreateBranchDialog.Input input,
+                                 boolean createBranch,
+                                 String startPoint)
    {
       String path = FileSystemItem.createDir(input.getWorktreeParent()).completePath(
             NewWorktreeDialog.directoryNameForBranch(input.getBranch()));
@@ -218,7 +220,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
          };
       }
 
-      worktreeActions_.create(path, input.getBranch(), onCreated);
+      worktreeActions_.create(path, input.getBranch(), createBranch, startPoint, onCreated);
    }
 
    private void pushBranch(final CreateBranchDialog.Input input, final Command onDone)
@@ -355,7 +357,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
    {
       if (isWorktree(input))
       {
-         onCreateWorktree(input);
+         onCreateWorktree(input, true, null);
          return;
       }
 
@@ -419,7 +421,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
    {
       if (isWorktree(input))
       {
-         onCreateWorktree(input);
+         onCreateWorktree(input, false, null);
          return;
       }
 
@@ -443,10 +445,9 @@ public class CreateBranchToolbarButton extends ToolbarButton
    
    private void onCheckoutRemote(final CreateBranchDialog.Input input)
    {
-      // 'git worktree add <path> <branch>' tracks the remote branch itself
       if (isWorktree(input))
       {
-         onCreateWorktree(input);
+         onCreateWorktree(input, true, input.getRemote() + "/" + input.getBranch());
          return;
       }
 

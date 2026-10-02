@@ -136,21 +136,49 @@ public class WorktreeActions
       return worktrees;
    }
 
-   // Runs 'git worktree add' for `path`, then offers to open the result.
-   // `onCreated` (optional) runs first, once the worktree exists, and is
-   // handed that offer to make when its own work is done.
+   // Runs 'git worktree add' for `path`, then offers to open the result. The
+   // branch is created when `createBranch` is set -- from `startPoint` (a
+   // remote branch, which it then tracks) when given, else from HEAD -- and
+   // checked out as it is otherwise. `onCreated` (optional) runs first, once
+   // the worktree exists, and is handed that offer to make when its own work
+   // is done.
+   public void create(final String path,
+                      final String branch,
+                      boolean createBranch,
+                      String startPoint,
+                      final CommandWithArg<Command> onCreated)
+   {
+      addWorktree(path, branch, createBranch, StringUtil.notNull(startPoint), onCreated);
+   }
+
+   // As above, settling for itself how the branch comes about: an existing
+   // local branch is checked out, a remote-only one is tracked (from origin
+   // when more than one remote has it -- git's own guess needs exactly one),
+   // and otherwise the branch is new.
    public void create(final String path,
                       final String branch,
                       final CommandWithArg<Command> onCreated)
    {
-      // a worktree needs a branch that isn't checked out elsewhere: reuse an
-      // existing one of this name (git tracks a remote-only one), else create it
       gitServer_.gitListBranches(new ServerRequestCallback<BranchesInfo>()
       {
          @Override
          public void onResponseReceived(BranchesInfo branchesInfo)
          {
-            addWorktree(path, branch, !branchExists(branch, branchesInfo), onCreated);
+            if (hasLocalBranch(branch, branchesInfo))
+            {
+               create(path, branch, false, null, onCreated);
+               return;
+            }
+
+            List<String> remotes = remotesWithBranch(branch, branchesInfo);
+            if (remotes.isEmpty())
+            {
+               create(path, branch, true, null, onCreated);
+               return;
+            }
+
+            String remote = remotes.contains("origin") ? "origin" : remotes.get(0);
+            create(path, branch, true, remote + "/" + branch, onCreated);
          }
 
          @Override
@@ -163,27 +191,39 @@ public class WorktreeActions
       });
    }
 
-   // Whether `branch` exists locally or on a remote ("remotes/<remote>/<branch>")
-   private static boolean branchExists(String branch, BranchesInfo branchesInfo)
+   private static boolean hasLocalBranch(String branch, BranchesInfo branchesInfo)
    {
       for (String candidate : JsUtil.asIterable(branchesInfo.getBranches()))
       {
-         if (candidate.startsWith("remotes/"))
-         {
-            int slash = candidate.indexOf('/', "remotes/".length());
-            if (slash != -1)
-               candidate = candidate.substring(slash + 1);
-         }
-
          if (StringUtil.equals(candidate, branch))
             return true;
       }
       return false;
    }
 
+   // The remotes with a branch of this name ("remotes/<remote>/<branch>")
+   private static List<String> remotesWithBranch(String branch, BranchesInfo branchesInfo)
+   {
+      List<String> remotes = new ArrayList<>();
+      for (String candidate : JsUtil.asIterable(branchesInfo.getBranches()))
+      {
+         if (!candidate.startsWith("remotes/"))
+            continue;
+
+         int slash = candidate.indexOf('/', "remotes/".length());
+         if (slash == -1)
+            continue;
+
+         if (StringUtil.equals(candidate.substring(slash + 1), branch))
+            remotes.add(candidate.substring("remotes/".length(), slash));
+      }
+      return remotes;
+   }
+
    private void addWorktree(final String path,
                             String branch,
                             boolean createBranch,
+                            String startPoint,
                             final CommandWithArg<Command> onCreated)
    {
       // the entry git adds is told apart from the ones known now
@@ -195,6 +235,7 @@ public class WorktreeActions
             path,
             branch,
             createBranch,
+            startPoint,
             new ServerRequestCallback<ConsoleProcess>()
             {
                @Override
@@ -235,8 +276,10 @@ public class WorktreeActions
    private void onWorktreeAdded(final String path, final Set<String> existing)
    {
       // refresh so the branch menu picks up the new worktree, then offer to
-      // open it; the opener needs the refreshed entry for its project file
-      gitState_.refresh(false, new Command()
+      // open it; the opener needs the refreshed entry for its project file.
+      // Should the refresh fail, the error is all the user gets to see of
+      // why no offer follows, so it is shown.
+      gitState_.refresh(true, new Command()
       {
          @Override
          public void execute()
@@ -354,6 +397,17 @@ public class WorktreeActions
 
    public void open(final WorktreeInfo worktree, final boolean newSession)
    {
+      // git keeps the branch of a worktree whose directory is gone; there is
+      // nothing to open until the stale entry has been removed
+      if (worktree.isPrunable())
+      {
+         globalDisplay_.showMessage(
+               MessageDialog.WARNING,
+               constants_.openWorktreeCaption(),
+               constants_.worktreeDirectoryMissing(worktree.getDisplayName(), worktree.getPath()));
+         return;
+      }
+
       if (!StringUtil.isNullOrEmpty(worktree.getProjectFile()))
       {
          openProject(worktree.getProjectFile(), newSession);

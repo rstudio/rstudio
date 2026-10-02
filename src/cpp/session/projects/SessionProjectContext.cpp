@@ -1146,8 +1146,11 @@ void ProjectContext::updatePackageInfo()
    }
 }
 
-std::string ProjectContext::worktreeDisplayName() const
+void ProjectContext::worktreeNames(std::string* pPrimaryName, std::string* pDirectoryName) const
 {
+   pPrimaryName->clear();
+   pDirectoryName->clear();
+
    // the worktree root is the nearest ancestor holding a .git entry
    FilePath worktreeRoot = directory_;
    FilePath gitPath;
@@ -1164,24 +1167,24 @@ std::string ProjectContext::worktreeDisplayName() const
    // repository itself (the primary checkout has a directory, and a submodule
    // points at .git/modules)
    if (worktreeRoot.isEmpty() || gitPath.isDirectory())
-      return std::string();
+      return;
 
    std::string contents;
    Error error = core::readStringFromFile(gitPath, &contents);
    if (error)
    {
       LOG_ERROR(error);
-      return std::string();
+      return;
    }
 
    boost::algorithm::trim(contents);
    if (!boost::algorithm::starts_with(contents, "gitdir:"))
-      return std::string();
+      return;
 
    FilePath gitDir = worktreeRoot.completePath(
          boost::algorithm::trim_copy(contents.substr(std::strlen("gitdir:"))));
    if (gitDir.getParent().getFilename() != "worktrees")
-      return std::string();
+      return;
 
    // a bare repository has no checkout to take a name from: use its own,
    // without the conventional .git suffix
@@ -1191,7 +1194,9 @@ std::string ProjectContext::worktreeDisplayName() const
       std::string name = commonDir.getFilename();
       if (boost::algorithm::ends_with(name, ".git"))
          name.resize(name.size() - std::strlen(".git"));
-      return name + " [" + worktreeRoot.getFilename() + "]";
+      *pPrimaryName = name;
+      *pDirectoryName = worktreeRoot.getFilename();
+      return;
    }
 
    // prefer the primary checkout's own project name, then its directory
@@ -1217,7 +1222,8 @@ std::string ProjectContext::worktreeDisplayName() const
          primaryName = config.projectName;
    }
 
-   return primaryName + " [" + worktreeRoot.getFilename() + "]";
+   *pPrimaryName = primaryName;
+   *pDirectoryName = worktreeRoot.getFilename();
 }
 
 json::Object ProjectContext::uiPrefs() const

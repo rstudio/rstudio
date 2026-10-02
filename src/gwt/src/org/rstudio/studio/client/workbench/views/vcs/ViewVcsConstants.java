@@ -164,6 +164,8 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String unversionedCapitalized();
     String worktreesParentheses();
     String worktreeSuffix(String branch);
+    String worktreeMissingSuffix(String branch);
+    String worktreeDirectoryMissing(String branch, String path);
     String openWorktreeInNewSession();
     String openWorktreeCaption();
     String worktreeHasNoProjectFile(String path);

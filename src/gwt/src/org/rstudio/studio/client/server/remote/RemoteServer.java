@@ -3164,12 +3164,14 @@ public class RemoteServer implements Server
    public void gitAddWorktree(String path,
                               String branch,
                               boolean createBranch,
+                              String startPoint,
                               ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, new JSONString(branch));
       params.set(2, JSONBoolean.getInstance(createBranch));
+      params.set(3, new JSONString(startPoint));
       sendRequest(RPC_SCOPE, GIT_ADD_WORKTREE, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }

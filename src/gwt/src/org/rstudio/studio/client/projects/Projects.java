@@ -163,7 +163,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
          // enable/disable commands
          ProjectMRUEntry activeProject = new ProjectMRUEntry(
             sessionInfo.getActiveProjectFile(),
-            sessionInfo.getActiveProjectDisplayName());
+            sessionInfo.getActiveProjectMruName());
          boolean hasProject = !StringUtil.isNullOrEmpty(activeProject.getProjectFilePath());
          commands.closeProject().setEnabled(hasProject);
          commands.projectOptions().setEnabled(hasProject);
@@ -187,6 +187,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
             commands.vcsPull().remove();
             commands.vcsPush().remove();
             commands.vcsCleanup().remove();
+            commands.vcsNewWorktree().remove();
+            commands.vcsRemoveWorktree().remove();
          }
          else
          {
@@ -199,6 +201,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
             if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
             {
                commands.vcsPush().remove();
+               commands.vcsNewWorktree().remove();
+               commands.vcsRemoveWorktree().remove();
                commands.vcsPull().setButtonLabel(constants_.updateButtonLabel());
                commands.vcsPull().setMenuLabel(constants_.updateMenuLabel());
             }

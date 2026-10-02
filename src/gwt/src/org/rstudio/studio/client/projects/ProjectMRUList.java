@@ -142,47 +142,18 @@ public class ProjectMRUList extends MRUList
       // Note that it hardcoded true for the "includeExtensions" parameter and did not use
       // the value of the "includeExt" parameter. Also have to do that here to avoid
       // https://github.com/rstudio/rstudio/issues/14107.
-      ArrayList<String> pathLabels = DuplicateHelper.getPathLabels(mruPaths, true);
+      mruPaths = DuplicateHelper.getPathLabels(mruPaths, true);
       
-      // recombine paths and names for display. A worktree's "primary [directory]"
-      // name already locates the project, so it stands on its own; repeating
-      // the directory in front of it adds nothing.
+      // recombine paths and names for display
       ArrayList<String> result = new ArrayList<String>();
       for (int i = 0; i < mruEntries.size(); i++)
       {
-         String path = pathLabels.get(i);
-         String name = mruNames.get(i);
-         if (name.length() == 0)
-            result.add(path);
-         else if (isWorktreeName(name, mruPaths.get(i)))
-            result.add(name);
+         if (mruNames.get(i).length() > 0)
+            result.add(mruPaths.get(i) + " (" + mruNames.get(i) + ")");
          else
-            result.add(path + " (" + name + ")");
+            result.add(mruPaths.get(i));
       }
       return result;
-   }
-
-   // Whether `name` is the "primary [directory]" label the session derives
-   // for a project in a linked worktree: the bracketed part is the worktree's
-   // directory, which is the project directory (`projectPath`, see
-   // transformMruEntryPath) or one of its ancestors when the project lives in
-   // a subdirectory of the repository
-   private static boolean isWorktreeName(String name, String projectPath)
-   {
-      int open = name.lastIndexOf(" [");
-      if (open < 0 || !name.endsWith("]"))
-         return false;
-
-      String directory = name.substring(open + 2, name.length() - 1);
-      FileSystemItem dir = FileSystemItem.createDir(projectPath);
-      while (dir != null)
-      {
-         if (StringUtil.equals(dir.getName(), directory))
-            return true;
-         dir = dir.getParentPath();
-      }
-
-      return false;
    }
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 

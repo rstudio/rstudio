@@ -304,19 +304,46 @@ public class SessionInfo extends JavaScriptObject
       return this.active_project_name;
    }-*/;
 
-   // "<primary project> [<worktree directory>]" when the project lives in a
-   // linked git worktree; empty otherwise
-   public final native String getActiveProjectWorktreeName() /*-{
-      return this.active_project_worktree_name || "";
+   // For a project in a linked git worktree, the primary checkout's project
+   // name and the worktree's directory name; both empty otherwise
+   public final native String getActiveProjectWorktreePrimary() /*-{
+      return this.active_project_worktree_primary || "";
    }-*/;
 
+   public final native String getActiveProjectWorktreeDirectory() /*-{
+      return this.active_project_worktree_directory || "";
+   }-*/;
+
+   // "<primary project> [<worktree directory>]" for a project in a linked
+   // git worktree, which tells checkouts of one project apart; empty otherwise
+   public final String getActiveProjectWorktreeName()
+   {
+      String primary = getActiveProjectWorktreePrimary();
+      if (StringUtil.isNullOrEmpty(primary))
+         return "";
+
+      return primary + " [" + getActiveProjectWorktreeDirectory() + "]";
+   }
+
    // The name the project goes by: its configured name, else the worktree
-   // label (which tells checkouts of one project apart), else empty
+   // label, else empty
    public final String getActiveProjectDisplayName()
    {
       String name = getActiveProjectName();
       if (StringUtil.isNullOrEmpty(name))
          name = getActiveProjectWorktreeName();
+      return StringUtil.notNull(name);
+   }
+
+   // The name recorded alongside the project in the recent projects list,
+   // which shows it next to the project's directory ("<directory> (<name>)"):
+   // the configured name, else the primary checkout's name for a project in
+   // a linked worktree, else empty
+   public final String getActiveProjectMruName()
+   {
+      String name = getActiveProjectName();
+      if (StringUtil.isNullOrEmpty(name))
+         name = getActiveProjectWorktreePrimary();
       return StringUtil.notNull(name);
    }
 

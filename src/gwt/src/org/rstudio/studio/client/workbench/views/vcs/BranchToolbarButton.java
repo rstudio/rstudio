@@ -306,18 +306,22 @@ public class BranchToolbarButton extends ToolbarMenuButton
 
       // branches checked out in another worktree can't be checked out here;
       // remember where they live so that selecting one opens that worktree
+      // (or, for a worktree whose directory is gone -- git holds its branch
+      // all the same -- says what is in the way)
       worktrees_ = new ArrayList<>();
       worktreeBranches_ = new HashMap<>();
       if (showWorktrees())
       {
          for (WorktreeInfo worktree : JsUtil.asIterable(branchInfo.getWorktrees()))
          {
-            if (worktree.isBare() || worktree.isPrunable())
+            if (worktree.isBare())
                continue;
 
-            worktrees_.add(worktree);
             if (!worktree.isCurrent() && !StringUtil.isNullOrEmpty(worktree.getBranch()))
                worktreeBranches_.put(worktree.getBranch(), worktree);
+
+            if (!worktree.isPrunable())
+               worktrees_.add(worktree);
          }
 
          // the main worktree alone isn't worth a section
@@ -436,10 +440,13 @@ public class BranchToolbarButton extends ToolbarMenuButton
    {
       populateWorktrees(menu, StringUtil.notNull(lastSearchValue_).trim());
 
+      // a search can leave worktrees alone in the menu
       if (branchMap.isEmpty())
       {
          if (menu.getItemCount() == 0)
             populateEmptyMenu(menu);
+         else
+            onMenuPopulated(menu);
          return;
       }
 
@@ -518,9 +525,10 @@ public class BranchToolbarButton extends ToolbarMenuButton
                WorktreeInfo worktree = worktreeBranches_.get(branchValue);
                if (worktree != null && caption == LOCAL_BRANCHES)
                {
-                  menu.addItem(new MenuItem(
-                        constants_.worktreeSuffix(branchLabel),
-                        new SwitchWorktreeCommand(worktree)));
+                  String label = worktree.isPrunable()
+                        ? constants_.worktreeMissingSuffix(branchLabel)
+                        : constants_.worktreeSuffix(branchLabel);
+                  menu.addItem(new MenuItem(label, new SwitchWorktreeCommand(worktree)));
                }
                else
                {
@@ -536,6 +544,13 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       });
 
+      onMenuPopulated(menu);
+   }
+
+   // Holds the width a search filter would otherwise shrink, and gives the
+   // keyboard a selection to start from
+   private void onMenuPopulated(ToolbarPopupMenu menu)
+   {
       if (menuWidth_ != 0)
       {
          Element tableEl = menu_.getMenuTableElement();

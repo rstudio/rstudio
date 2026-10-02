@@ -864,6 +864,7 @@ public:
    core::Error addWorktree(const std::string& path,
                            const std::string& branch,
                            bool createBranch,
+                           const std::string& startPoint,
                            boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       // a relative path would be resolved against the working directory --
@@ -872,13 +873,21 @@ public:
       if (!worktreePath.isAbsolute())
          return systemError(boost::system::errc::invalid_argument, "worktree path must be absolute: " + path, ERROR_LOCATION);
 
+      // a new branch starts from `startPoint` (a remote branch, which it then
+      // tracks) when given, else from HEAD; otherwise the branch is checked out
       ShellArgs args = gitArgs() << "worktree" << "add";
       if (createBranch)
+      {
+         if (!startPoint.empty())
+            args << "--track";
          args << "-b" << branch;
+      }
 
       args << worktreePath;
       if (!createBranch)
          args << branch;
+      else if (!startPoint.empty())
+         args << startPoint;
 
       return createConsoleProc(args, "Git Worktree Add", ppCP);
    }
@@ -1959,14 +1968,14 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
 Error vcsAddWorktree(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string path, branch;
+   std::string path, branch, startPoint;
    bool createBranch = false;
-   Error error = json::readParams(request.params, &path, &branch, &createBranch);
+   Error error = json::readParams(request.params, &path, &branch, &createBranch, &startPoint);
    if (error)
       return error;
 
    boost::shared_ptr<ConsoleProcess> pCP;
-   error = s_git_.addWorktree(path, branch, createBranch, &pCP);
+   error = s_git_.addWorktree(path, branch, createBranch, startPoint, &pCP);
    if (error)
       return error;
 
