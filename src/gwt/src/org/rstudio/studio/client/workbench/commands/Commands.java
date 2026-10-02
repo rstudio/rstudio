@@ -319,6 +319,7 @@ public abstract class
    public abstract AppCommand vcsOpen();
    public abstract AppCommand vcsIgnore();
    public abstract AppCommand vcsNewWorktree();
+   public abstract AppCommand vcsRemoveWorktree();
    public abstract AppCommand vcsPull();
    public abstract AppCommand vcsPullRebase();
    public abstract AppCommand vcsPush();

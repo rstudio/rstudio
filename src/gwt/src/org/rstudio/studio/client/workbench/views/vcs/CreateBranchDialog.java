@@ -19,11 +19,13 @@ import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -55,11 +57,19 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
    public static class Input
    {
-      public Input(String branch, String remote, boolean push)
+      public Input(String branch, String remote, boolean push, String worktreeParent)
       {
          branch_ = branch;
          remote_ = remote;
          push_ = push;
+         worktreeParent_ = worktreeParent;
+      }
+
+      // Directory to create a worktree for the branch in, or null to check
+      // the branch out here
+      public final String getWorktreeParent()
+      {
+         return worktreeParent_;
       }
       
       public final String getBranch()
@@ -80,6 +90,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       private final String branch_;
       private final String remote_;
       private final boolean push_;
+      private final String worktreeParent_;
    }
 
    @Override
@@ -88,11 +99,13 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       String branch = tbBranch_.getValue().trim();
       String remote = sbRemote_.getValue().trim();
       boolean push = cbPush_.isVisible() ? cbPush_.getValue() : false;
-      return new Input(branch, remote, push);
+      String worktreeParent = cbWorktree_.getValue() ? dirWorktreeParent_.getText().trim() : null;
+      return new Input(branch, remote, push, worktreeParent);
    }
    
    public CreateBranchDialog(final String caption,
                              final JsArray<RemotesInfo> remotesInfo,
+                             final String worktreeParentDir,
                              final OperationWithInput<CreateBranchDialog.Input> onCreateBranch,
                              final OperationWithInput<AddRemoteDialog.Input> onAddRemote)
    {
@@ -105,6 +118,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       container_ = new VerticalPanel();
       
       tbBranch_ = textBox();
+      ElementIds.assignElementId(tbBranch_, ElementIds.NEW_BRANCH_NAME);
       Roles.getTextboxRole().setAriaRequiredProperty(tbBranch_.getElement(), true);
       tbBranch_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -196,6 +210,21 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       container_.add(panel);
       container_.add(cbPush_);
+
+      // optionally check the new branch out into a worktree of its own, at
+      // <parent>/<branch name with separators flattened>
+      cbWorktree_ = new CheckBox(constants_.createInNewWorktree());
+      ElementIds.assignElementId(cbWorktree_, ElementIds.NEW_BRANCH_WORKTREE);
+      dirWorktreeParent_ = new DirectoryChooserTextBox(
+            constants_.createInColon(),
+            ElementIds.TextBoxButtonId.NEW_BRANCH_WORKTREE_PARENT,
+            tbBranch_);
+      dirWorktreeParent_.setText(worktreeParentDir);
+      dirWorktreeParent_.setVisible(false);
+      cbWorktree_.addValueChangeHandler(event -> dirWorktreeParent_.setVisible(event.getValue()));
+
+      container_.add(cbWorktree_);
+      container_.add(dirWorktreeParent_);
    }
    
    public void setRemotes(JsArray<RemotesInfo> remotesInfo)
@@ -264,6 +293,9 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       tbBranch_.selectAll();
    }
    
+   private final CheckBox cbWorktree_;
+   private final DirectoryChooserTextBox dirWorktreeParent_;
+
    private TextBox textBox()
    {
       TextBox textBox = new TextBox();

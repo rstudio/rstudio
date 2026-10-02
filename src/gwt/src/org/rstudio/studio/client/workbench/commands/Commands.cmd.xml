@@ -2821,6 +2821,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Check out a branch into a new git worktree"
         context="vcs"/>
 
+   <cmd id="vcsRemoveWorktree"
+        label="Remove Worktree"
+        menuLabel="Remove Worktree..."
+        buttonLabel="Remove Worktree"
+        desc="Remove a git worktree and delete its directory"
+        context="vcs"/>
+
    <cmd id="vcsPull"
         menuLabel="_Pull Branches"
         buttonLabel="Pull"

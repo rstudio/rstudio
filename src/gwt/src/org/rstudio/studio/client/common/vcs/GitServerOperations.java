@@ -84,6 +84,10 @@ public interface GitServerOperations extends VCSServerOperations
                        boolean createBranch,
                        ServerRequestCallback<ConsoleProcess> requestCallback);
 
+   void gitRemoveWorktree(String path,
+                          boolean force,
+                          ServerRequestCallback<ConsoleProcess> requestCallback);
+
    void gitCheckoutRemote(String branch,
                           String remote,
                           ServerRequestCallback<ConsoleProcess> requestCallback);

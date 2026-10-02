@@ -850,6 +850,19 @@ public:
       return createConsoleProc(args, "Git Worktree Add", ppCP);
    }
 
+   core::Error removeWorktree(const std::string& path,
+                              bool force,
+                              boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      ShellArgs args = gitArgs() << "worktree" << "remove";
+      if (force)
+         args << "--force";
+
+      args << module_context::resolveAliasedPath(path);
+
+      return createConsoleProc(args, "Git Worktree Remove", ppCP);
+   }
+
    core::Error listRemotes(json::Array* pRemotes)
    {
       Error error;
@@ -1913,6 +1926,25 @@ Error vcsAddWorktree(const json::JsonRpcRequest& request,
 
    boost::shared_ptr<ConsoleProcess> pCP;
    error = s_git_.addWorktree(path, branch, createBranch, &pCP);
+   if (error)
+      return error;
+
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
+
+   return Success();
+}
+
+Error vcsRemoveWorktree(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   bool force = false;
+   Error error = json::readParams(request.params, &path, &force);
+   if (error)
+      return error;
+
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.removeWorktree(path, force, &pCP);
    if (error)
       return error;
 
@@ -3642,6 +3674,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_create_branch", vcsCreateBranch))
       (bind(registerRpcMethod, "git_list_branches", vcsListBranches))
       (bind(registerRpcMethod, "git_add_worktree", vcsAddWorktree))
+      (bind(registerRpcMethod, "git_remove_worktree", vcsRemoveWorktree))
       (bind(registerRpcMethod, "git_checkout", vcsCheckout))
       (bind(registerRpcMethod, "git_checkout_remote", vcsCheckoutRemote))
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))

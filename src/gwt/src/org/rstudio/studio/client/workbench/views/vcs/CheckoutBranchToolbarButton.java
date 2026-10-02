@@ -32,10 +32,10 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
    @Inject
    public CheckoutBranchToolbarButton(final Provider<GitState> pVcsState,
                                       final GitServerOperations server,
-                                      final WorktreeOpener worktreeOpener)
+                                      final WorktreeActions worktreeActions)
    {
       super(pVcsState);
-      worktreeOpener_ = worktreeOpener;
+      worktreeActions_ = worktreeActions;
 
       addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -78,14 +78,14 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
    @Override
    protected boolean canOpenWorktreeInNewSession()
    {
-      return worktreeOpener_.canOpenInNewSession();
+      return worktreeActions_.canOpenInNewSession();
    }
 
    @Override
    protected void onWorktreeSelected(WorktreeInfo worktree, boolean newSession)
    {
-      worktreeOpener_.open(worktree, newSession);
+      worktreeActions_.open(worktree, newSession);
    }
 
-   private final WorktreeOpener worktreeOpener_;
+   private final WorktreeActions worktreeActions_;
 }

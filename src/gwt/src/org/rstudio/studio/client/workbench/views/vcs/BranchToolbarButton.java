@@ -410,12 +410,23 @@ public class BranchToolbarButton extends ToolbarMenuButton
                ? worktree.getHead()
                : worktree.getBranch();
 
+         // nested worktrees read relative to the main one; others keep only
+         // their last two path components, with the full path as a tooltip
          String path = worktree.getPath();
          if (mainPath != null && path.startsWith(mainPath + "/"))
+         {
             path = path.substring(mainPath.length() + 1);
+         }
+         else
+         {
+            String[] parts = path.split("/");
+            if (parts.length > 3)
+               path = "\u2026/" + parts[parts.length - 2] + "/" + parts[parts.length - 1];
+         }
 
          String label = SafeHtmlUtils.htmlEscape(name) +
-               " <span class=\"" + ThemeStyles.INSTANCE.menuItemSubtitle() + "\">" +
+               " <span class=\"" + ThemeStyles.INSTANCE.menuItemSubtitle() + "\"" +
+               " title=\"" + SafeHtmlUtils.htmlEscape(worktree.getPath()) + "\">" +
                SafeHtmlUtils.htmlEscape(path) + "</span>";
 
          ImageResource2x check = worktree.isCurrent()

@@ -25,10 +25,22 @@ const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
 const WORKTREE_BRANCH_INPUT = '#rstudio_new_worktree_branch';
 const WORKTREE_DIRECTORY_INPUT = '#rstudio_new_worktree_directory';
 
+// New Branch button and dialog (ElementIds.TB_GIT_NEW_BRANCH, NEW_BRANCH_*).
+// GWT renders a CheckBox as a span around the input, so the id lands on the span.
+const NEW_BRANCH_BUTTON = '#rstudio_tb_git_new_branch';
+const NEW_BRANCH_NAME_INPUT = '#rstudio_new_branch_name';
+const NEW_BRANCH_WORKTREE_CHECKBOX = '#rstudio_new_branch_worktree input';
+// TextBoxWithButton ids are a fixed prefix plus the TextBoxButtonId value.
+const NEW_BRANCH_WORKTREE_PARENT_INPUT = 'input[id$="_new_branch_worktree_parent"]';
+
+// Remove Worktree dialog (ElementIds.REMOVE_WORKTREE_*).
+const REMOVE_WORKTREE_SELECT = '#rstudio_remove_worktree_select';
+
 const PROJECT_NAME = 'WorktreeDemo';
 const LINKED_WORKTREE = 'WorktreeDemo-feature';
 const LINKED_BRANCH = 'feature/a';
 const NEW_BRANCH = 'feature/new-worktree';
+const BRANCH_DIALOG_BRANCH = 'feature/from-branch-dialog';
 
 /**
  * executeInConsole only confirms that R reached a new prompt, which an R error
@@ -218,6 +230,74 @@ test.describe.serial('Git pane worktrees', () => {
     const items = await openBranchMenu(page, LINKED_BRANCH);
     expect(items.some((text) => text.startsWith(NEW_BRANCH) && text.endsWith('/feature-new-worktree'))).toBe(true);
     expect(items).toContain(`${NEW_BRANCH} (worktree)`);
+    await page.keyboard.press('Escape');
+  });
+
+  test('creates a worktree from the New Branch dialog', async ({ rstudioPage: page }) => {
+    test.setTimeout(120_000);
+
+    await executeCommand(page, 'activateVcs');
+    await page.locator(NEW_BRANCH_BUTTON).click();
+    const branchInput = page.locator(NEW_BRANCH_NAME_INPUT);
+    await expect(branchInput).toBeVisible({ timeout: 10000 });
+    await branchInput.pressSequentially(BRANCH_DIALOG_BRANCH);
+
+    // the worktree option reveals the parent directory, which defaults to the
+    // directory the last worktree was created under (the sandbox, above)
+    await page.locator(NEW_BRANCH_WORKTREE_CHECKBOX).check();
+    await expect(page.locator(NEW_BRANCH_WORKTREE_PARENT_INPUT)).toBeVisible();
+    await page.locator(CONFIRM_BTN).click();
+
+    const prompt = page.getByRole('alertdialog', { name: 'New Worktree' }).filter({ hasText: 'Open it as a project' });
+    await expect(prompt).toBeVisible({ timeout: 60000 });
+    await prompt.getByRole('button', { name: 'No' }).click();
+
+    // this window is still on the linked worktree's branch; the new branch
+    // lives in its own worktree rather than having been checked out here
+    const items = await openBranchMenu(page, LINKED_BRANCH);
+    expect(items.some((text) => text.startsWith(BRANCH_DIALOG_BRANCH) && text.endsWith('/feature-from-branch-dialog'))).toBe(true);
+    expect(items).toContain(`${BRANCH_DIALOG_BRANCH} (worktree)`);
+    await page.keyboard.press('Escape');
+  });
+
+  test('removes a worktree from the dialog', async ({ rstudioPage: page }) => {
+    test.setTimeout(120_000);
+
+    await executeCommand(page, 'vcsRemoveWorktree');
+    const select = page.locator(REMOVE_WORKTREE_SELECT);
+    await expect(select).toBeVisible({ timeout: 10000 });
+
+    // options are keyed by path; pick the worktree the New Worktree dialog made
+    const value = await select.locator('option').evaluateAll(
+      (options) => (options as HTMLOptionElement[]).map((o) => o.value).find((v) => v.endsWith('/feature-new-worktree')),
+    );
+    expect(value).toBeTruthy();
+    await select.selectOption(value as string);
+    await page.locator(CONFIRM_BTN).click();
+
+    const confirm = page.getByRole('alertdialog', { name: 'Remove Worktree' });
+    await expect(confirm).toBeVisible({ timeout: 10000 });
+    await confirm.getByRole('button', { name: 'Yes' }).click();
+
+    // The progress dialog closes itself once git exits successfully. Wait for
+    // that before touching the keyboard: Escape on that dialog means Stop, and
+    // would interrupt the removal.
+    await expect(page.getByRole('dialog', { name: 'Git Worktree Remove' })).toBeHidden({ timeout: 60000 });
+
+    // the menu drops the worktree once the status refresh has run; the branch
+    // itself survives as a plain branch
+    await expect
+      .poll(
+        async () => {
+          await page.keyboard.press('Escape');
+          return openBranchMenu(page, LINKED_BRANCH);
+        },
+        { timeout: 60000 },
+      )
+      .not.toContain(`${NEW_BRANCH} (worktree)`);
+    const items = await menuItems(page).allInnerTexts();
+    expect(items.map((text) => text.replace(/\s+/g, ' ').trim())).toContain(NEW_BRANCH);
+    expect(items.some((text) => text.endsWith('/feature-new-worktree'))).toBe(false);
     await page.keyboard.press('Escape');
   });
 });

@@ -2318,6 +2318,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Check out a branch into a new git worktree") // $NON-NLS-1$
     String vcsNewWorktreeDesc();
     
+    // vcsRemoveWorktree
+    @DefaultStringValue("Remove Worktree") // $NON-NLS-1$
+    String vcsRemoveWorktreeLabel();
+    @DefaultStringValue("Remove Worktree") // $NON-NLS-1$
+    String vcsRemoveWorktreeButtonLabel();
+    @DefaultStringValue("Remove Worktree...") // $NON-NLS-1$
+    String vcsRemoveWorktreeMenuLabel();
+    @DefaultStringValue("Remove a git worktree and delete its directory") // $NON-NLS-1$
+    String vcsRemoveWorktreeDesc();
+    
     // vcsPull
     @DefaultStringValue("Pull") // $NON-NLS-1$
     String vcsPullButtonLabel();

@@ -3175,6 +3175,18 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void gitRemoveWorktree(String path,
+                                 boolean force,
+                                 ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, JSONBoolean.getInstance(force));
+      sendRequest(RPC_SCOPE, GIT_REMOVE_WORKTREE, params,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   @Override
    public void gitCheckoutRemote(String branch,
                                  String remote,
                                  ServerRequestCallback<ConsoleProcess> requestCallback)
@@ -7513,6 +7525,7 @@ public class RemoteServer implements Server
    private static final String GIT_CREATE_BRANCH = "git_create_branch";
    private static final String GIT_LIST_BRANCHES = "git_list_branches";
    private static final String GIT_ADD_WORKTREE = "git_add_worktree";
+   private static final String GIT_REMOVE_WORKTREE = "git_remove_worktree";
    private static final String GIT_LIST_REMOTES = "git_list_remotes";
    private static final String GIT_ADD_REMOTE = "git_add_remote";
    private static final String GIT_CHECKOUT = "git_checkout";

@@ -161,6 +161,11 @@
             "default": "",
             "description": "The directory path under which to place new projects by default. Shadows a uipref."
         },
+        "git_worktree_parent_dir": {
+            "type": "string",
+            "default": "",
+            "description": "The directory under which the last git worktree was created; the default for the next one."
+        },
         "clear_hidden": {
             "type": "boolean",
             "default": true,

@@ -21,6 +21,7 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -42,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialo
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class CreateBranchToolbarButton extends ToolbarButton
@@ -49,7 +51,8 @@ public class CreateBranchToolbarButton extends ToolbarButton
 {
    @Inject
    public CreateBranchToolbarButton(GlobalDisplay globalDisplay,
-                                    GitServerOperations gitServer)
+                                    GitServerOperations gitServer,
+                                    WorktreeActions worktreeActions)
    {
       super(constants_.newBranchCapitalized(),
             ToolbarButton.NoTitle,
@@ -58,6 +61,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       
       globalDisplay_ = globalDisplay;
       gitServer_ = gitServer;
+      worktreeActions_ = worktreeActions;
       
       addClickHandler(this);
    }
@@ -106,6 +110,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       createBranchDialog_ = new CreateBranchDialog(
             constants_.newBranchCapitalized(),
             remotesInfo,
+            worktreeActions_.defaultParentDir(),
             onCreateBranch,
             onAddRemote);
       
@@ -156,6 +161,14 @@ public class CreateBranchToolbarButton extends ToolbarButton
    private void onBranchInfoReceived(final CreateBranchDialog.Input input,
                                      final BranchesInfo branchesInfo)
    {
+      // A worktree needs a branch that isn't checked out elsewhere: reuse an
+      // existing local branch of this name, otherwise create it.
+      if (input.getWorktreeParent() != null)
+      {
+         onCreateWorktree(input, !hasLocalBranch(input, branchesInfo));
+         return;
+      }
+
       // If we have a local branch of this name already, prompt the user and ask
       // whether they'd like to check out a new branch (overwriting the previous
       // one) or if they'd like to just check out that branch.
@@ -173,20 +186,66 @@ public class CreateBranchToolbarButton extends ToolbarButton
       onCreate(input);
    }
    
+   private boolean hasLocalBranch(final CreateBranchDialog.Input input,
+                                  final BranchesInfo branchesInfo)
+   {
+      for (String branch : JsUtil.asIterable(branchesInfo.getBranches()))
+      {
+         if (branch == input.getBranch())
+            return true;
+      }
+      return false;
+   }
+
+   private void onCreateWorktree(final CreateBranchDialog.Input input,
+                                 boolean createBranch)
+   {
+      String path = FileSystemItem.createDir(input.getWorktreeParent()).completePath(
+            NewWorktreeDialog.directoryNameForBranch(input.getBranch()));
+
+      // the branch exists once the worktree does, so a requested push follows
+      Command onCreated = null;
+      if (input.getPush())
+      {
+         onCreated = new Command()
+         {
+            @Override
+            public void execute()
+            {
+               pushBranch(input);
+            }
+         };
+      }
+
+      worktreeActions_.create(path, input.getWorktreeParent(), input.getBranch(), createBranch, onCreated);
+   }
+
+   private void pushBranch(final CreateBranchDialog.Input input)
+   {
+      gitServer_.gitPushBranch(
+            input.getBranch(),
+            input.getRemote(),
+            new ServerRequestCallback<ConsoleProcess>()
+            {
+               @Override
+               public void onResponseReceived(ConsoleProcess process)
+               {
+                  showConsoleProcessDialog(process);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+
    private boolean promptUserRegardingLocalBranchOfSameName(
          final CreateBranchDialog.Input input,
          final BranchesInfo branchesInfo)
    {
-      boolean hasBranch = false;
-      for (String branch : JsUtil.asIterable(branchesInfo.getBranches()))
-      {
-         if (branch == input.getBranch())
-         {
-            hasBranch = true;
-            break;
-         }
-      }
-      
+      boolean hasBranch = hasLocalBranch(input, branchesInfo);
       if (hasBranch)
       {
          String message =
@@ -411,5 +470,6 @@ public class CreateBranchToolbarButton extends ToolbarButton
    
    private final GlobalDisplay globalDisplay_;
    private final GitServerOperations gitServer_;
+   private final WorktreeActions worktreeActions_;
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

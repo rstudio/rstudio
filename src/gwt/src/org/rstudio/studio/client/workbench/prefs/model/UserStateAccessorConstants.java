@@ -96,6 +96,14 @@ public interface UserStateAccessorConstants extends Constants {
    String defaultProjectLocationDescription();
 
    /**
+    * The directory under which the last git worktree was created; the default for the next one.
+    */
+   @DefaultStringValue("")
+   String gitWorktreeParentDirTitle();
+   @DefaultStringValue("The directory under which the last git worktree was created; the default for the next one.")
+   String gitWorktreeParentDirDescription();
+
+   /**
     * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
     */
    @DefaultStringValue("")

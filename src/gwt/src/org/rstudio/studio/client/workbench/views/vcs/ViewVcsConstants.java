@@ -172,4 +172,10 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String directoryNameColon();
     String createInColon();
     String openNewWorktree(String path);
+    String createInNewWorktree();
+    String removeWorktreeCapitalized();
+    String worktreeColon();
+    String forceRemoveWorktree();
+    String noWorktreesToRemove();
+    String removeWorktreeConfirm(String path);
 }
