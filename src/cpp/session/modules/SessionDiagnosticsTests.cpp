@@ -76,6 +76,32 @@ using namespace core::r_util;
       EXPECT_TRUE(results.lint().get().empty());                               \
    } while (0)
 
+bool hasLintContaining(const ParseResults& results, const std::string& needle)
+{
+   for (const LintItem& item : results.lint().get())
+      if (item.message.find(needle) != std::string::npos)
+         return true;
+   return false;
+}
+
+#define EXPECT_LINT_MESSAGE(__STRING__, __MESSAGE__)                           \
+   do                                                                          \
+   {                                                                           \
+      ParseResults results = parse(__STRING__, s_parseOptions);                \
+      if (!hasLintContaining(results, __MESSAGE__))                            \
+         results.lint().dump();                                                \
+      EXPECT_TRUE(hasLintContaining(results, __MESSAGE__));                    \
+   } while (0)
+
+#define EXPECT_NO_LINT_MESSAGE(__STRING__, __MESSAGE__)                        \
+   do                                                                          \
+   {                                                                           \
+      ParseResults results = parse(__STRING__, s_parseOptions);                \
+      if (hasLintContaining(results, __MESSAGE__))                             \
+         results.lint().dump();                                                \
+      EXPECT_FALSE(hasLintContaining(results, __MESSAGE__));                   \
+   } while (0)
+
 bool isRFile(const FileInfo& info)
 {
    std::string ext = string_utils::getExtension(info.absolutePath());
@@ -175,7 +201,8 @@ TEST(DiagnosticsTest, ValidExpressionsGenerateNoLint) {
    EXPECT_NO_ERRORS("rnorm(`n` = 1)");
    EXPECT_NO_ERRORS("rnorm('n' = 1)");
    
-   EXPECT_NO_ERRORS("c(a=function()a,)");
+   EXPECT_NO_ERRORS("c(a=function()a)");
+   EXPECT_LINT_MESSAGE("c(a=function()a,)", "empty trailing argument in call to 'c'");
    EXPECT_NO_ERRORS("function(a) a");
    EXPECT_NO_ERRORS("function(a)\nwhile (1) 1\n");
    EXPECT_NO_ERRORS("function(a)\nfor (i in 1) 1\n");
@@ -440,8 +467,186 @@ TEST(DiagnosticsTest, ZeroPaddedStringFormatsAreFlagged) {
    EXPECT_ERRORS("sprintf('%05s'");
    EXPECT_ERRORS("sprintf(");
    EXPECT_NO_ERRORS("sprintf()");
-   EXPECT_NO_ERRORS("sprintf(,)");
+   EXPECT_NO_LINT_MESSAGE("sprintf(,)", "zero-pads");
    EXPECT_NO_ERRORS("sprintf(fmt = )");
+}
+
+TEST(DiagnosticsTest, RepeatedFormalArguments) {
+   EXPECT_LINT_MESSAGE("function(x, x) {}", "repeated formal argument 'x'");
+   EXPECT_LINT_MESSAGE("function(x = 1, y, x) {}", "repeated formal argument 'x'");
+   EXPECT_LINT_MESSAGE("\\(a, b, a) a + b", "repeated formal argument 'a'");
+   EXPECT_NO_LINT_MESSAGE("function(x, y) { x <- 1; y }", "repeated formal");
+   EXPECT_NO_LINT_MESSAGE("function(x, ...) x", "repeated formal");
+
+   // formals of a nested function definition live in their own scope
+   EXPECT_NO_LINT_MESSAGE("function(x) function(x) x", "repeated formal");
+   EXPECT_NO_LINT_MESSAGE("function(x, f = function(x) x) x", "repeated formal");
+}
+
+TEST(DiagnosticsTest, ArgumentsMatchedMultipleTimes) {
+   EXPECT_LINT_MESSAGE("rnorm(n = 1, n = 2)", "formal argument 'n' matched by multiple");
+   EXPECT_LINT_MESSAGE("rnorm(1, mean = 0, mean = 1)", "formal argument 'mean' matched by multiple");
+   EXPECT_LINT_MESSAGE("paste(sep = ',', sep = ' ')", "formal argument 'sep' matched by multiple");
+   EXPECT_LINT_MESSAGE("f <- function(x, y) x; f(x = 1, x = 2)", "formal argument 'x' matched by multiple");
+   EXPECT_NO_LINT_MESSAGE("rnorm(n = 1, mean = 2)", "matched by multiple");
+
+   // names absorbed by '...' may legitimately repeat
+   EXPECT_NO_LINT_MESSAGE("c(a = 1, a = 2)", "matched by multiple");
+   EXPECT_NO_LINT_MESSAGE("list(a = 1, a = 2)", "matched by multiple");
+   EXPECT_NO_LINT_MESSAGE("paste(a = 1, a = 2)", "matched by multiple");
+
+   // nested calls are inspected on their own
+   EXPECT_NO_LINT_MESSAGE("rnorm(n = 1, mean = rnorm(n = 1))", "matched by multiple");
+}
+
+TEST(DiagnosticsTest, InvalidAssignmentTargets) {
+   EXPECT_LINT_MESSAGE("TRUE <- 1", "invalid assignment target 'TRUE'");
+   EXPECT_LINT_MESSAGE("NULL <- 1", "invalid assignment target 'NULL'");
+   EXPECT_LINT_MESSAGE("NA <- 1", "invalid assignment target 'NA'");
+   EXPECT_LINT_MESSAGE("1 <- x", "invalid assignment target '1'");
+   EXPECT_LINT_MESSAGE("2L <<- x", "invalid assignment target '2L'");
+   EXPECT_LINT_MESSAGE("x -> 1", "invalid assignment target '1'");
+   EXPECT_LINT_MESSAGE("x ->> FALSE", "invalid assignment target 'FALSE'");
+   EXPECT_LINT_MESSAGE("f <- function() { Inf = 1 }", "invalid assignment target 'Inf'");
+
+   // strings and symbols are fine, as are constants on the value side
+   EXPECT_NO_LINT_MESSAGE("\"x\" <- 1", "invalid assignment target");
+   EXPECT_NO_LINT_MESSAGE("x <- TRUE", "invalid assignment target");
+   EXPECT_NO_LINT_MESSAGE("NULL -> x", "invalid assignment target");
+   EXPECT_NO_LINT_MESSAGE("T <- 1", "invalid assignment target");
+   EXPECT_NO_LINT_MESSAGE("x[1] <- 2", "invalid assignment target");
+   EXPECT_NO_LINT_MESSAGE("f(x = 1, NA)", "invalid assignment target");
+   EXPECT_NO_LINT_MESSAGE("list(TRUE = 1)", "invalid assignment target");
+}
+
+TEST(DiagnosticsTest, BareReturn) {
+   EXPECT_LINT_MESSAGE("f <- function(x) { if (x) return; 1 }", "'return' used without parentheses");
+   EXPECT_LINT_MESSAGE("f <- function(x) {\n  return\n}", "'return' used without parentheses");
+   EXPECT_NO_LINT_MESSAGE("f <- function(x) { if (x) return() else return(1) }", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("f <- function(x) { return (x) }", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("x$return", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("base::return(1)", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("list(return = 1)", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("'return'", "'return' used without");
+
+   // 'return' can be an ordinary variable (grid has a formal named 'return')
+   EXPECT_NO_LINT_MESSAGE("f <- function(x, return = FALSE) { if (return) x }", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("f <- function(x, return = FALSE) list(return = return)", "'return' used without");
+
+   // references to the function itself are not statements
+   EXPECT_NO_LINT_MESSAGE("identical(e[[1]], quote(return))", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("body(f)[[1]] == quote(return)", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("lapply(x, return)", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("ret <- return", "'return' used without");
+   EXPECT_NO_LINT_MESSAGE("f <- function(x) { identical(x, return) }", "'return' used without");
+
+   // statements within a block passed to a function still are
+   EXPECT_LINT_MESSAGE("local({ if (x) return; 1 })", "'return' used without parentheses");
+   EXPECT_LINT_MESSAGE("f <- function(x) if (x) return else 1", "'return' used without parentheses");
+   EXPECT_LINT_MESSAGE("f <- function(x) {\n  if (x) return\n  -1\n}", "'return' used without parentheses");
+}
+
+TEST(DiagnosticsTest, InvalidCharacters) {
+   EXPECT_LINT_MESSAGE("x <- \xE2\x80\x9C" "hello" "\xE2\x80\x9D", "smart quote");
+   EXPECT_LINT_MESSAGE("x <- \xE2\x80\x98" "hello" "\xE2\x80\x99", "smart quote");
+   EXPECT_ERRORS("x <- \xE2\x80\x9C" "hello" "\xE2\x80\x9D");
+   EXPECT_NO_LINT_MESSAGE("x <- \"hello\"", "smart quote");
+   EXPECT_NO_LINT_MESSAGE("x <- 'hello'", "smart quote");
+   EXPECT_NO_LINT_MESSAGE("x <- \"\xE2\x80\x9C" "quoted" "\xE2\x80\x9D\"", "smart quote");
+   EXPECT_NO_LINT_MESSAGE("# \xE2\x80\x9C" "comment" "\xE2\x80\x9D", "smart quote");
+
+   EXPECT_LINT_MESSAGE("x %in y", "unterminated '%' operator");
+   EXPECT_LINT_MESSAGE("x <- r\"(abc)", "unterminated raw string");
+   EXPECT_LINT_MESSAGE("x <- 1 \xC2\xA7 2", "unexpected character '\xC2\xA7'");
+   EXPECT_NO_LINT_MESSAGE("x %in% y", "unterminated");
+   EXPECT_NO_LINT_MESSAGE("x <- r\"(abc)\"", "unterminated");
+}
+
+TEST(DiagnosticsTest, AssignmentToLiteralInConditional) {
+   EXPECT_LINT_MESSAGE("if (x<-1) 2", "did you mean to use '< -'");
+   EXPECT_LINT_MESSAGE("while (n<-10) n", "did you mean to use '< -'");
+   EXPECT_LINT_MESSAGE("if (x<-1.5) 2", "did you mean to use '< -'");
+   EXPECT_LINT_MESSAGE("if (y && x<-1) 2", "did you mean to use '< -'");
+
+   // spaced out, non-numeric, or outside a condition: legitimate assignments
+   EXPECT_NO_LINT_MESSAGE("if (x <- 1) 2", "did you mean to use '< -'");
+   EXPECT_NO_LINT_MESSAGE("if (x<-foo()) 2", "did you mean to use '< -'");
+   EXPECT_NO_LINT_MESSAGE("if (x < -1) 2", "did you mean to use '< -'");
+   EXPECT_NO_LINT_MESSAGE("x<-1", "did you mean to use '< -'");
+   EXPECT_NO_LINT_MESSAGE("if (any(x<-1)) 2", "did you mean to use '< -'");
+   EXPECT_NO_LINT_MESSAGE("for (i in x<-1) 2", "did you mean to use '< -'");
+}
+
+TEST(DiagnosticsTest, TooManyArgumentsToZeroArgumentFunction) {
+   EXPECT_LINT_MESSAGE("test0 <- function() {}\ntest0(1)", "too many arguments in call to 'test0'");
+   EXPECT_LINT_MESSAGE("test0 <- function() {}\ntest0(1, 2)", "too many arguments in call to 'test0'");
+   EXPECT_LINT_MESSAGE("Sys.time(1)", "too many arguments in call to 'Sys.time'");
+   EXPECT_NO_LINT_MESSAGE("test0 <- function() {}\ntest0()", "too many arguments");
+   EXPECT_NO_LINT_MESSAGE("Sys.time()", "too many arguments");
+
+   // primitives without formals (language constructs) are left alone
+   EXPECT_NO_ERRORS("f <- function(x) { return(x) }");
+   EXPECT_NO_ERRORS("f <- function(x) { on.exit(x) }");
+
+   // '.Internal()' calls target the internal entry point, not the wrapper
+   EXPECT_NO_ERRORS("grepl <- function(pattern, x) .Internal(grepl(pattern, x, FALSE, FALSE))");
+}
+
+TEST(DiagnosticsTest, EmptyTrailingArguments) {
+   EXPECT_LINT_MESSAGE("c(1,)", "empty trailing argument in call to 'c'");
+   EXPECT_LINT_MESSAGE("c(\n  1,\n  2,\n)", "empty trailing argument in call to 'c'");
+   EXPECT_LINT_MESSAGE("list(a = 1, )", "empty trailing argument in call to 'list'");
+   EXPECT_LINT_MESSAGE("sum(1, )", "empty trailing argument in call to 'sum'");
+   EXPECT_LINT_MESSAGE("paste('a', )", "empty trailing argument in call to 'paste'");
+   EXPECT_LINT_MESSAGE("data.frame(a = 1, )", "empty trailing argument in call to 'data.frame'");
+   EXPECT_LINT_MESSAGE("length(x, )", "empty trailing argument in call to 'length'");
+
+   // functions that tolerate a trailing empty argument
+   EXPECT_NO_LINT_MESSAGE("c(1, 2)", "empty trailing argument");
+   EXPECT_NO_LINT_MESSAGE("switch(x, a = 1, )", "empty trailing argument");
+   EXPECT_NO_LINT_MESSAGE("on.exit(NULL, )", "empty trailing argument");
+   EXPECT_NO_LINT_MESSAGE("mean(x, )", "empty trailing argument");
+   EXPECT_NO_LINT_MESSAGE("x[1, ]", "empty trailing argument");
+   EXPECT_NO_LINT_MESSAGE("f <- function(...) list2(...); f(1, )", "empty trailing argument");
+}
+
+TEST(DiagnosticsTest, PackageNotInstalled) {
+   EXPECT_LINT_MESSAGE("library(rstudioNoSuchPackage)", "package 'rstudioNoSuchPackage' is not installed");
+   EXPECT_LINT_MESSAGE("library('rstudioNoSuchPackage')", "package 'rstudioNoSuchPackage' is not installed");
+   EXPECT_LINT_MESSAGE("require(rstudioNoSuchPackage)", "package 'rstudioNoSuchPackage' is not installed");
+   EXPECT_LINT_MESSAGE("suppressPackageStartupMessages(library(rstudioNoSuchPackage))", "is not installed");
+
+   // availability checks and string-taking loaders are left alone
+   EXPECT_NO_LINT_MESSAGE("requireNamespace(\"rstudioNoSuchPackage\", quietly = TRUE)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("loadNamespace(pkg)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("library(stats)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("library(\"utils\")", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("pkg <- 'rstudioNoSuchPackage'; library(pkg, character.only = TRUE)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("library(rstudioNoSuchPackage, character.only = TRUE)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("library()", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("x$library(rstudioNoSuchPackage)", "is not installed");
+
+   // 'require()' is an availability check whenever its result is used
+   EXPECT_NO_LINT_MESSAGE("if (!require(rstudioNoSuchPackage)) install.packages('rstudioNoSuchPackage')", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("if (require(rstudioNoSuchPackage)) 1 else 2", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("ok <- require(rstudioNoSuchPackage)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("require(rstudioNoSuchPackage) || stop('unavailable')", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("stopifnot(require(rstudioNoSuchPackage))", "is not installed");
+   EXPECT_LINT_MESSAGE("f <- function() {\n  require(rstudioNoSuchPackage)\n  1\n}", "is not installed");
+   EXPECT_LINT_MESSAGE("if (x) library(rstudioNoSuchPackage)", "is not installed");
+
+   // ... including as the value of a function, or of an 'else' branch
+   EXPECT_NO_LINT_MESSAGE("has_foo <- function() require(rstudioNoSuchPackage)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("ok <- if (a) TRUE else require(rstudioNoSuchPackage)", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("f <- function() {\n  message('checking')\n  require(rstudioNoSuchPackage)\n}", "is not installed");
+
+   // elsewhere, a statement's value is discarded
+   EXPECT_LINT_MESSAGE("if (x) {\n  require(rstudioNoSuchPackage)\n}", "is not installed");
+   EXPECT_LINT_MESSAGE("f <- function() {\n  if (x) require(rstudioNoSuchPackage)\n  1\n}", "is not installed");
+
+   // the package may live in a library that isn't on the library paths
+   EXPECT_NO_LINT_MESSAGE("library(rstudioNoSuchPackage, lib.loc = '~/mylib')", "is not installed");
+   EXPECT_NO_LINT_MESSAGE("require(rstudioNoSuchPackage, lib.loc = lib)", "is not installed");
 }
 
 TEST(DiagnosticsTest, RStudioFilesCanBeSuccessfullyLinted) {

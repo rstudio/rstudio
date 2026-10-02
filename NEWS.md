@@ -7,6 +7,15 @@
 - ([#18692](https://github.com/rstudio/rstudio/issues/18692)): The active document tab now has a bold label and a blue overline to make it easier to identify. This is enabled by default and can be disabled in Global Options > General > Basic > Other.
 - ([#14485](https://github.com/rstudio/rstudio/issues/14485)): R diagnostics now warn about characters in code that look like ASCII but are not (e.g. a Cyrillic 'c', typographic quotes, or a no-break space), and about invisible characters such as a zero-width space. This can be disabled in Global Options > Code > Diagnostics.
 - ([#19012](https://github.com/rstudio/rstudio/issues/19012)): R diagnostics now warn when a format string passed to `sprintf()` or `gettextf()` uses the `0` flag with `%s` (e.g. `%05s`), since zero-padding strings is platform-dependent.
+- ([#18977](https://github.com/rstudio/rstudio/issues/18977)): R diagnostics now report a repeated formal argument in a function definition (`function(x, x)`).
+- ([#18977](https://github.com/rstudio/rstudio/issues/18977)): R diagnostics now report a named argument that matches the same formal more than once (`rnorm(n = 1, n = 2)`) when argument checking is enabled (Global Options > Code > Diagnostics). Names absorbed by `...`, as in `c(a = 1, a = 2)`, are still allowed.
+- ([#18978](https://github.com/rstudio/rstudio/issues/18978)): R diagnostics now report an assignment to a constant, such as `TRUE <- 1` or `1 <- x`.
+- ([#18979](https://github.com/rstudio/rstudio/issues/18979)): R diagnostics now warn about a bare `return` used without parentheses, which evaluates to the `return` function instead of returning from the enclosing one.
+- ([#18980](https://github.com/rstudio/rstudio/issues/18980)): R diagnostics now warn about `if (x<-1)` and `while (x<-1)`, which assign rather than compare, when `x < -1` was likely intended.
+- ([#9156](https://github.com/rstudio/rstudio/issues/9156)): R diagnostics now report too many arguments in a call to a function that takes none, such as `Sys.time(1)`, when argument checking is enabled.
+- ([#9157](https://github.com/rstudio/rstudio/issues/9157)): R diagnostics now report an empty trailing argument in calls that reject one, such as `c(1, 2, )` or `paste("a", )`, when argument checking is enabled. Functions that accept a trailing empty argument, including `switch()` and tidyverse functions, are not affected.
+- ([#18981](https://github.com/rstudio/rstudio/issues/18981)): R diagnostics now warn about a `library()` or `require()` call for a package that is not installed.
+- ([#18982](https://github.com/rstudio/rstudio/issues/18982)): R diagnostics now give a specific message for invalid characters, such as a pasted smart quote, an unterminated raw string, or a lone `%`, instead of "unexpected token".
 - ([#16102](https://github.com/rstudio/rstudio/issues/16102)): Added Code > Select Current Statement (Ctrl+Alt+Shift+S), which selects the whole R statement containing the cursor, including statements that span several lines.
 - ([#12223](https://github.com/rstudio/rstudio/issues/12223)): Added Edit > Change Spelling Language... (also in the Command Palette) to switch the spelling dictionary in one step. Dictionary changes now take effect immediately in open documents, without restarting RStudio.
 - ([#6781](https://github.com/rstudio/rstudio/issues/6781)): Added Show Document's Directory to the document tab context menu, and Show Current Document's Directory in Files Pane to the Command Palette, to navigate the Files pane to the folder containing a document, including one open in a separate source window. The tab menu's Set Working Directory item now also moves the Files pane when used from a separate source window.
@@ -88,15 +97,19 @@
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where a document or Data Viewer window opened with "Show in New Window" and then closed was reopened the next time the session was restored, so closed windows accumulated over time.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue on RStudio Server where closing the window of a Plumber API run with "Run in Window" did not stop the API.
 - ([#18987](https://github.com/rstudio/rstudio/issues/18987)): Fixed an issue where a Shiny application run with "Run in Window" kept running after its window was closed, if the application's page had cancelled an earlier attempt to close the window.
+- ([#19008](https://github.com/rstudio/rstudio/issues/19008)): Fixed an issue on RStudio Server where closing a popped-out editor window that had never been clicked or typed in lost its unsaved changes without a prompt, because the browser suppresses the unsaved-changes prompt in such a window; the unsaved documents now move back to the main window instead.
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed the Zotero 10 desktop client not being available as a citation source on macOS.
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed recently added Zotero 10 references not appearing in citations.
 - ([#18787](https://github.com/rstudio/rstudio/issues/18787)): Fixed an issue on Windows where Posit Assistant failed to start in a second RStudio instance with "A Posit Assistant update is in progress".
+- ([#9075](https://github.com/rstudio/rstudio/issues/9075)): Fixed an issue where the source editor's file type menu listed both C and C++ as "C/C++", and offered no way to switch a file back to C. C and C++ sources, C/C++ headers (`.h`), and C++ headers (`.hpp`, `.hh`) now have distinct names.
+- ([#19005](https://github.com/rstudio/rstudio/issues/19005)): Fixed an error being logged when Refresh was clicked in the Find in Files pane before any search had been run.
+- ([#19003](https://github.com/rstudio/rstudio/issues/19003)): Fixed an issue where installing a connection package that provides no connection extension, such as odbc, from the New Connection dialog logged a `No such file or directory` error in the session log.
 
 ### Deprecated / Removed
 - ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command. To remove a downloaded Posit Assistant, delete its `pai` directory by hand as described in the [user guide](https://docs.posit.co/ide/user/ide/guide/tools/posit-ai.html#removing-posit-assistant).
 - ([#18973](https://github.com/rstudio/rstudio/issues/18973)): RStudio no longer uses the `posit-assistant-path` session option: sessions ignore it, and RStudio Server logs a warning at startup when `rsession.conf` sets it. RStudio also no longer reads a Posit Assistant from `pai` in the system configuration directory. RStudio Server administrators who installed one in either location should move it to `versions/<version>` in `/usr/lib/rstudio-server/bin/posit-assistant`.
 
 ### Dependencies
-- Copilot Language Server 1.544.0
+- Copilot Language Server 1.551.2
 - Electron 43.7.7
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)

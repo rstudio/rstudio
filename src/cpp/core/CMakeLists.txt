@@ -106,6 +106,7 @@ set(CORE_SOURCE_FILES
    markdown/sundown/markdown.c
    markdown/sundown/stack.c
    r_util/RActiveSessions.cpp
+   r_util/RActiveSessionsOverlay.cpp
    r_util/RActiveSessionStorage.cpp
    r_util/RActiveSessionsStorage.cpp
    r_util/RPackageInfo.cpp

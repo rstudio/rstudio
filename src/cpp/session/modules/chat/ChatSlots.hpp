@@ -33,6 +33,10 @@ namespace slots {
 // and never modified afterwards. Slot names are human-readable but carry no
 // meaning -- a slot's version and protocol always come from the package.json
 // and protocol.json inside it.
+//
+// rstudio-pro's upgrade CLI (src/go/upgrade-cli/internal/assistant) writes
+// administrator slots by these rules. A change to slot names, the files a slot
+// needs, or protocol.json needs a matching change there.
 
 /**
  * What a slot says about itself.

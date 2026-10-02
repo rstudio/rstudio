@@ -2,6 +2,7 @@
 #include <server/DBActiveSessionStorage.hpp>
 #include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RActiveSessions.hpp>
 #include <boost/filesystem.hpp>
 #include <core/Result.hpp>
 #include <iostream>
@@ -689,6 +690,24 @@ TEST_F(SqliteDBActiveSessionStorageTest, DestroyRemovesSession)
    isEmpty = false;
    ASSERT_FALSE(storage->isEmpty(&isEmpty));
    ASSERT_TRUE(isEmpty);
+}
+
+// A batch read with no fields reads ActiveSession::defaultProperties(), and one property
+// this storage cannot map to a column fails the whole read, dropping the session from
+// the batch.
+TEST_F(SqliteDBActiveSessionStorageTest, DefaultPropertiesAreAllReadable)
+{
+   // GIVEN: An existing session row
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+
+   // WHEN: The default property set is read
+   std::map<std::string, std::string> props;
+   Error error = storage->readProperties(r_util::ActiveSession::defaultProperties(), &props);
+
+   // THEN: It succeeds and returns every default property
+   ASSERT_FALSE(error) << "readProperties failed: " << error.asString();
+   for (const std::string& name : r_util::ActiveSession::defaultProperties())
+      EXPECT_NE(props.find(name), props.end()) << "missing default property: " << name;
 }
 
 // PostgreSQL equivalents

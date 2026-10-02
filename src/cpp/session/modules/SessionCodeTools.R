@@ -1570,7 +1570,8 @@
    list(
       formal_names = character(),
       formal_info  = list(),
-      performs_nse = I(0L)
+      performs_nse = I(0L),
+      is_primitive = I(0L)
    )
 })
 
@@ -1667,6 +1668,15 @@
 
 .rs.addFunction("generateFunctionInformation", function(func) {
 
+  # Primitives have no formals; record them as such so that they
+  # aren't mistaken for closures which accept no arguments.
+  if (is.primitive(func))
+  {
+     info <- .rs.emptyFunctionInfo()
+     info$is_primitive <- I(1L)
+     return(info)
+  }
+
   formals <- formals(func)
   if (!length(formals))
      return(.rs.emptyFunctionInfo())
@@ -1699,7 +1709,8 @@
   list(
      formal_names = formalNames,
      formal_info  = formalInfo,
-     performs_nse = I(as.integer(performsNse))
+     performs_nse = I(as.integer(performsNse)),
+     is_primitive = I(0L)
   )
  
 })
