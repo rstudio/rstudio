@@ -83,7 +83,10 @@ describe('Utils', () => {
     // Electron on Linux sets this switch itself, so compare against what it started with
     const hadSwitch = app.commandLine.hasSwitch('ozone-platform');
     const value = app.commandLine.getSwitchValue('ozone-platform');
-    setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--ozone-platform=headless --disable-gpu');
+    setenv(
+      'RSTUDIO_CHROMIUM_ARGUMENTS',
+      '--ozone-platform=headless -ozone-platform=headless --OZONE-PLATFORM=headless --disable-gpu',
+    );
     Utils.augmentCommandLineArguments();
     assert.strictEqual(app.commandLine.hasSwitch('ozone-platform'), hadSwitch);
     assert.strictEqual(app.commandLine.getSwitchValue('ozone-platform'), value);

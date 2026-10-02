@@ -129,6 +129,39 @@ describe('Electron flags', () => {
       assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', '--', 'script.R']);
     });
 
+    it('reads the single-dash spelling on the command line, as Chromium does', () => {
+      const argv = ['/usr/lib/rstudio/rstudio', '-ozone-platform=x11'];
+      const result = plan({ argv, config: confWith('--ozone-platform=wayland') });
+
+      assert.isUndefined(result.relaunchArgs);
+      assert.include(result.message, 'the command line sets --ozone-platform');
+    });
+
+    it('relaunches past an upper-case command-line switch, which Chromium ignores', () => {
+      const argv = ['/usr/lib/rstudio/rstudio', '--OZONE-PLATFORM=x11'];
+      const result = plan({ argv, config: confWith('--ozone-platform=wayland') });
+
+      assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', '--OZONE-PLATFORM=x11']);
+    });
+
+    it('reads every spelling that app.commandLine.appendSwitch accepts', () => {
+      for (const chromiumArguments of [
+        '-ozone-platform=wayland',
+        '--OZONE-PLATFORM=wayland',
+        'ozone=no -Ozone-Platform=wayland',
+      ]) {
+        const result = plan({ chromiumArguments });
+        assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', 'project.Rproj'], chromiumArguments);
+      }
+
+      const result = plan({ config: confWith('--OZONE-PLATFORM=wayland') });
+      assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', 'project.Rproj']);
+    });
+
+    it('ignores an Ozone-like plain argument in RSTUDIO_CHROMIUM_ARGUMENTS', () => {
+      assert.deepEqual(plan({ chromiumArguments: 'ozone-platform=wayland' }), {});
+    });
+
     it('relaunches when an Ozone switch appears only after a switch terminator', () => {
       const argv = ['/usr/lib/rstudio/rstudio', '--', '--ozone-platform=x11'];
       const result = plan({ argv, config: confWith('--ozone-platform=wayland') });

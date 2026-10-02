@@ -30,7 +30,7 @@ import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
 import { appState } from './app-state';
-import { isOzonePlatformArg } from './electron-flags';
+import { isOzonePlatformChromiumArgument } from './electron-flags';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -99,7 +99,7 @@ export function augmentCommandLineArguments(): void {
   pieces.forEach((piece) => {
     // applied at startup by relaunching (see relaunchForOzonePlatform in main.ts);
     // changing it now would reach only the child processes
-    if (isOzonePlatformArg(piece)) {
+    if (isOzonePlatformChromiumArgument(piece)) {
       return;
     }
 

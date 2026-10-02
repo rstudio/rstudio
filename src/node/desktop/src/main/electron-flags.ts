@@ -91,9 +91,32 @@ export function loadElectronFlags(configDirs: readonly string[]): ElectronFlagsC
   return undefined;
 }
 
+function switchName(arg: string): string {
+  return arg.split('=', 1)[0].replace(/^--?/, '');
+}
+
+/**
+ * Whether a process argument sets the Ozone platform. Chromium reads argv
+ * switches with a '--' or '-' prefix, and on Linux matches names by case.
+ */
 export function isOzonePlatformArg(arg: string): boolean {
-  const prefix = `--${kOzonePlatformSwitch}`;
-  return arg === prefix || arg.startsWith(`${prefix}=`);
+  return arg.startsWith('-') && switchName(arg) === kOzonePlatformSwitch;
+}
+
+/**
+ * Whether app.commandLine.appendSwitch(name) sets the Ozone platform; it
+ * drops a '--' or '-' prefix and lowercases the name.
+ */
+export function isOzonePlatformSwitchName(name: string): boolean {
+  return switchName(name).toLowerCase() === kOzonePlatformSwitch;
+}
+
+/**
+ * Whether an RSTUDIO_CHROMIUM_ARGUMENTS piece sets the Ozone platform. Pieces
+ * without a leading '-' are passed as plain arguments, not switches.
+ */
+export function isOzonePlatformChromiumArgument(piece: string): boolean {
+  return piece.startsWith('-') && isOzonePlatformSwitchName(piece);
 }
 
 interface RequestedOzonePlatform {
@@ -107,13 +130,14 @@ function requestedOzonePlatform(
 ): RequestedOzonePlatform | undefined {
   // last occurrence wins, as it does for Chromium's own switch parsing; a
   // bare switch has an empty value, which is then reported as unsupported
-  const fromEnv = chromiumArguments.split(' ').filter(isOzonePlatformArg).pop();
+  const fromEnv = chromiumArguments.split(' ').filter(isOzonePlatformChromiumArgument).pop();
   if (fromEnv !== undefined) {
-    const platform = fromEnv.substring(`--${kOzonePlatformSwitch}=`.length);
+    const equalsIndex = fromEnv.indexOf('=');
+    const platform = equalsIndex === -1 ? '' : fromEnv.substring(equalsIndex + 1);
     return { platform, source: 'RSTUDIO_CHROMIUM_ARGUMENTS' };
   }
 
-  const fromConfig = config?.flags.filter((flag) => flag.name === kOzonePlatformSwitch).pop();
+  const fromConfig = config?.flags.filter((flag) => isOzonePlatformSwitchName(flag.name)).pop();
   if (config && fromConfig) {
     return { platform: fromConfig.value ?? '', source: config.path };
   }

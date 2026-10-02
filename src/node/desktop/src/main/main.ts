@@ -29,7 +29,13 @@ import { parseStatus } from './program-status';
 import { recordProcessStart, startupCheckpoint } from './startup-timing';
 import { createStandaloneErrorDialog } from './utils';
 import { Xdg } from '../core/xdg';
-import { ElectronFlagsConfig, kOzonePlatformSwitch, loadElectronFlags, planOzoneRelaunch } from './electron-flags';
+import {
+  ElectronFlagsConfig,
+  isOzonePlatformSwitchName,
+  kOzonePlatformSwitch,
+  loadElectronFlags,
+  planOzoneRelaunch,
+} from './electron-flags';
 
 interface ElectronFlagsLoad {
   config?: ElectronFlagsConfig;
@@ -78,7 +84,7 @@ class RStudioMain {
     for (const flag of config.flags) {
       // applied by relaunchForOzonePlatform(); appending it now would reach only
       // the child processes, which must use the same backend as this one
-      if (flag.name === kOzonePlatformSwitch) {
+      if (isOzonePlatformSwitchName(flag.name)) {
         continue;
       }
       const configLine = `--${flag.name}${flag.value === undefined ? '' : `=${flag.value}`}`;
