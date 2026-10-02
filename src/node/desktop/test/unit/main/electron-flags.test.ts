@@ -108,18 +108,25 @@ describe('Electron flags', () => {
       assert.deepEqual(plan({ config: confWith('--ozone-platform=x11') }), {});
     });
 
-    it('relaunches with the requested switch appended to the original arguments', () => {
+    it('relaunches with the requested switch ahead of the original arguments', () => {
       const argv = ['/usr/lib/rstudio/rstudio', '--use-gl=angle', 'project.Rproj'];
       const result = plan({ argv, config: confWith('--ozone-platform=x11\n--ozone-platform=wayland') });
 
-      assert.deepEqual(result.relaunchArgs, ['--use-gl=angle', 'project.Rproj', '--ozone-platform=wayland']);
+      assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', '--use-gl=angle', 'project.Rproj']);
       assert.include(result.message, '/home/user/.config/electron-flags.conf');
       assert.deepEqual(argv, ['/usr/lib/rstudio/rstudio', '--use-gl=angle', 'project.Rproj']);
     });
 
     it('relaunches when Chromium reports no platform', () => {
       const result = plan({ currentPlatform: undefined, config: confWith('--ozone-platform=x11') });
-      assert.deepEqual(result.relaunchArgs, ['project.Rproj', '--ozone-platform=x11']);
+      assert.deepEqual(result.relaunchArgs, ['--ozone-platform=x11', 'project.Rproj']);
+    });
+
+    it('keeps the switch ahead of a switch terminator', () => {
+      const argv = ['/usr/lib/rstudio/rstudio', '--', 'script.R'];
+      const result = plan({ argv, config: confWith('--ozone-platform=wayland') });
+
+      assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', '--', 'script.R']);
     });
 
     it('prefers RSTUDIO_CHROMIUM_ARGUMENTS over electron-flags.conf', () => {
@@ -129,7 +136,7 @@ describe('Electron flags', () => {
         config: confWith('--ozone-platform=wayland'),
       });
 
-      assert.deepEqual(result.relaunchArgs, ['project.Rproj', '--ozone-platform=x11']);
+      assert.deepEqual(result.relaunchArgs, ['--ozone-platform=x11', 'project.Rproj']);
       assert.include(result.message, 'RSTUDIO_CHROMIUM_ARGUMENTS');
     });
 
@@ -151,7 +158,7 @@ describe('Electron flags', () => {
     });
 
     it('does not relaunch again after relaunching', () => {
-      const argv = ['/usr/lib/rstudio/rstudio', 'project.Rproj', '--ozone-platform=wayland'];
+      const argv = ['/usr/lib/rstudio/rstudio', '--ozone-platform=wayland', 'project.Rproj'];
       assert.deepEqual(plan({ argv, currentPlatform: 'wayland', config: confWith('--ozone-platform=wayland') }), {});
     });
 

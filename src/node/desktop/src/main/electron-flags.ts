@@ -172,7 +172,8 @@ export function planOzoneRelaunch(inputs: OzonePlatformInputs): OzoneRelaunchPla
     };
   }
 
-  const relaunchArgs = [...inputs.argv.slice(1), switchText];
+  // first, as Chromium reads no switches after a '--' among the original arguments
+  const relaunchArgs = [switchText, ...inputs.argv.slice(1)];
   return {
     relaunchArgs,
     message:
