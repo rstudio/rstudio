@@ -55,6 +55,7 @@ import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.AppCommand;
+import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.dom.DomUtils;
@@ -281,9 +282,11 @@ public class BranchToolbarButton extends ToolbarMenuButton
       return false;
    }
 
-   protected boolean canOpenWorktreeInNewSession()
+   // The icon shown at the right of a worktree entry to open it in a new
+   // session, or null when that isn't available
+   protected ImageResource openWorktreeInNewSessionImage()
    {
-      return false;
+      return null;
    }
 
    protected void onWorktreeSelected(WorktreeInfo worktree, boolean newSession)
@@ -433,9 +436,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
                ? new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x())
                : null;
 
-         ImageResource2x newSession = !worktree.isCurrent() && canOpenWorktreeInNewSession()
-               ? new ImageResource2x(StandardIcons.INSTANCE.viewer_window2x())
-               : null;
+         ImageResource newSession = worktree.isCurrent() ? null : openWorktreeInNewSessionImage();
 
          String html = AppCommand.formatMenuLabel(
                check,
