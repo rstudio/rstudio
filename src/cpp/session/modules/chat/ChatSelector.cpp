@@ -275,7 +275,9 @@ FilePath selectedSlot(const FilePath& storageDir, const std::string& protocol)
    if (!slots::isUsableSlotName(selection->second))
    {
       WLOG("Ignoring selection '{}' for protocol {} in {}: not a slot name",
-           selection->second, protocol, storageDir.getAbsolutePath());
+           selection->second,
+           protocol,
+           storageDir.getAbsolutePath());
       return FilePath();
    }
 
@@ -285,7 +287,9 @@ FilePath selectedSlot(const FilePath& storageDir, const std::string& protocol)
    if (!slots::verifySlot(slotDir, &info) || info.protocol != protocol)
    {
       WLOG("Selected slot '{}' for protocol {} in {} is unusable",
-           selection->second, protocol, storageDir.getAbsolutePath());
+           selection->second,
+           protocol,
+           storageDir.getAbsolutePath());
       return FilePath();
    }
 
