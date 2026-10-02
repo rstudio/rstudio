@@ -531,6 +531,7 @@ public class ElementIds
    public final static String TB_GIT_REFRESH = "tb_git_refresh";
    public final static String TB_GIT_BRANCH = "tb_git_branch";
    public final static String TB_GIT_NEW_BRANCH = "tb_git_new_branch";
+   public final static String TB_GIT_REVIEW_BRANCH = "tb_git_review_branch";
    public static String getTbGitRefresh() { return getElementId(TB_GIT_REFRESH); }
 
    // FileCommandToolbar

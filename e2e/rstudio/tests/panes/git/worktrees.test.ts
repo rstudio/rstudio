@@ -15,8 +15,10 @@ import { rPathLiteral } from '@utils/r';
 
 // -- Selectors ----------------------------------------------------------------
 
-// The branch dropdown in the Git pane toolbar (ElementIds.TB_GIT_BRANCH).
+// The branch dropdown in the Git pane toolbar (ElementIds.TB_GIT_BRANCH), and
+// its twin in the Review Changes window (ElementIds.TB_GIT_REVIEW_BRANCH).
 const BRANCH_BUTTON = '#rstudio_tb_git_branch';
+const REVIEW_BRANCH_BUTTON = '#rstudio_tb_git_review_branch';
 
 // The project menu button at the top right, whose label is the project name.
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
@@ -299,5 +301,47 @@ test.describe.serial('Git pane worktrees', () => {
     expect(items.map((text) => text.replace(/\s+/g, ' ').trim())).toContain(NEW_BRANCH);
     expect(items.some((text) => text.endsWith('/feature-new-worktree'))).toBe(false);
     await page.keyboard.press('Escape');
+  });
+
+  test('opens a worktree from the Review Changes window', async ({ rstudioPage: page }) => {
+    test.setTimeout(180_000);
+
+    // The Review Changes window has the same branch menu, but only the main
+    // window can switch projects, so the satellite hands the request over to
+    // it. Still on the linked worktree here; pick the main one.
+    const satellitePromise = page.context().waitForEvent('page', { timeout: 60000 });
+    await executeCommand(page, 'vcsCommit');
+    const satellite = await satellitePromise;
+    try {
+      await satellite.waitForLoadState('domcontentloaded');
+      expect(satellite.url()).toContain('view=review_changes');
+
+      const button = satellite.locator(REVIEW_BRANCH_BUTTON);
+      await expect(button).toContainText(LINKED_BRANCH, { timeout: 60000 });
+      await button.click();
+      const mainWorktree = menuItems(satellite).filter({ hasText: new RegExp(`/${PROJECT_NAME}$`) });
+      await expect(mainWorktree).toBeVisible({ timeout: 10000 });
+      await mainWorktree.click();
+
+      // the main window switches project (see the first test for why this
+      // polls through the reload rather than waiting for readiness)
+      await expect
+        .poll(
+          () =>
+            page
+              .evaluate(() => window.rstudio?.project?.path?.() ?? null)
+              .catch(() => null),
+          { timeout: 60000 },
+        )
+        .toMatch(new RegExp(`/${PROJECT_NAME}(/|$)`));
+      await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+        timeout: 60000,
+        polling: 100,
+      });
+      await expect(page.locator(PROJECT_MENU)).toContainText(PROJECT_NAME, { timeout: 30000 });
+      await expect(page.locator(PROJECT_MENU)).not.toContainText('[');
+    } finally {
+      await satellite.close().catch(() => {});
+    }
   });
 });

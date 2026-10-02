@@ -1,7 +1,7 @@
 /*
  * WorktreeActions.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.vcs.WorktreeInfo;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
@@ -62,6 +63,7 @@ public class WorktreeActions
                           GitServerOperations gitServer,
                           GitState gitState,
                           Session session,
+                          Satellite satellite,
                           Provider<UserState> pUserState)
    {
       events_ = events;
@@ -70,7 +72,11 @@ public class WorktreeActions
       gitServer_ = gitServer;
       gitState_ = gitState;
       session_ = session;
+      satellite_ = satellite;
       pUserState_ = pUserState;
+
+      if (!Satellite.isCurrentWindowSatellite())
+         exportOpenProjectCallback();
    }
 
    // The directory new worktrees are created under: the last one used, else
@@ -85,11 +91,11 @@ public class WorktreeActions
       for (WorktreeInfo worktree : worktrees())
       {
          if (worktree.isMain())
-            parentDir = containingDir(worktree.getPath());
+            parentDir = FileSystemItem.createDir(worktree.getPath()).getParentPathString();
       }
 
       if (StringUtil.isNullOrEmpty(parentDir))
-         parentDir = containingDir(session_.getSessionInfo().getActiveProjectDir().getPath());
+         parentDir = session_.getSessionInfo().getActiveProjectDir().getParentPathString();
 
       if (StringUtil.isNullOrEmpty(parentDir))
          parentDir = FileSystemItem.HOME_PATH;
@@ -313,13 +319,37 @@ public class WorktreeActions
             });
    }
 
+   // The project events are handled in the main window only, so a satellite
+   // (Review Changes has the branch menu too) hands the request over to it
    private void openProject(String projectFile, boolean newSession)
    {
+      if (Satellite.isCurrentWindowSatellite())
+      {
+         satellite_.focusMainWindow();
+         callMainWindowOpenProject(projectFile, newSession);
+         return;
+      }
+
       if (newSession && canOpenInNewSession())
          events_.fireEvent(new OpenProjectNewWindowEvent(projectFile, null));
       else
          events_.fireEvent(new SwitchToProjectEvent(projectFile));
    }
+
+   private final native void exportOpenProjectCallback() /*-{
+      var self = this;
+      $wnd.worktreeOpenProjectFromRStudioSatellite = $entry(
+         function(projectFile, newSession) {
+            self.@org.rstudio.studio.client.workbench.views.vcs.WorktreeActions::openProject(Ljava/lang/String;Z)(projectFile, newSession);
+         }
+      );
+   }-*/;
+
+   private final native void callMainWindowOpenProject(String projectFile, boolean newSession) /*-{
+      var opener = $wnd.opener;
+      if (opener && opener.worktreeOpenProjectFromRStudioSatellite)
+         opener.worktreeOpenProjectFromRStudioSatellite(projectFile, newSession);
+   }-*/;
 
    // The known worktrees; empty until the first status refresh has completed
    private Iterable<WorktreeInfo> worktrees()
@@ -331,19 +361,13 @@ public class WorktreeActions
       return JsUtil.asIterable(branchInfo.getWorktrees());
    }
 
-   // The directory holding `path`, or "" when there is none ("~", "/")
-   private static String containingDir(String path)
-   {
-      FileSystemItem dir = FileSystemItem.createDir(path).getContainingDir();
-      return dir == null ? "" : dir.getPath();
-   }
-
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final ProjectsServerOperations projectsServer_;
    private final GitServerOperations gitServer_;
    private final GitState gitState_;
    private final Session session_;
+   private final Satellite satellite_;
    private final Provider<UserState> pUserState_;
 
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
