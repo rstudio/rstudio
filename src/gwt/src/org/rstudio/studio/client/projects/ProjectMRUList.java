@@ -144,9 +144,9 @@ public class ProjectMRUList extends MRUList
       // https://github.com/rstudio/rstudio/issues/14107.
       mruPaths = DuplicateHelper.getPathLabels(mruPaths, true);
       
-      // recombine paths and names for display. A name that already includes
-      // the directory label (as a worktree's "primary [directory]" name does)
-      // stands on its own; repeating the directory in front of it adds nothing.
+      // recombine paths and names for display. A worktree's "primary [directory]"
+      // name already ends with the directory label, so it stands on its own;
+      // repeating the directory in front of it adds nothing.
       ArrayList<String> result = new ArrayList<String>();
       for (int i = 0; i < mruEntries.size(); i++)
       {
@@ -154,7 +154,7 @@ public class ProjectMRUList extends MRUList
          String name = mruNames.get(i);
          if (name.length() == 0)
             result.add(path);
-         else if (name.contains(path))
+         else if (name.endsWith("[" + path + "]"))
             result.add(name);
          else
             result.add(path + " (" + name + ")");
