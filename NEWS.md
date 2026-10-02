@@ -106,6 +106,6 @@
 - ([#18973](https://github.com/rstudio/rstudio/issues/18973)): RStudio no longer uses the `posit-assistant-path` session option: sessions ignore it, and RStudio Server logs a warning at startup when `rsession.conf` sets it. RStudio also no longer reads a Posit Assistant from `pai` in the system configuration directory. RStudio Server administrators who installed one in either location should move it to `versions/<version>` in `/usr/lib/rstudio-server/bin/posit-assistant`.
 
 ### Dependencies
-- Copilot Language Server 1.544.0
+- Copilot Language Server 1.551.2
 - Electron 43.7.7
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)
