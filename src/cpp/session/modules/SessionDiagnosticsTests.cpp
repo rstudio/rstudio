@@ -426,6 +426,9 @@ TEST(DiagnosticsTest, ZeroPaddedStringFormatsAreFlagged) {
    EXPECT_NO_LINT("sprintf('%s', '%05s')");
    EXPECT_NO_LINT("sprintf(fmt = '%s', '%05s')");
    EXPECT_NO_LINT("sprintf(x, '%05s', fmt = '%s %s')");
+   EXPECT_NO_LINT("sprintf(fmt = f, '%05s')");
+   EXPECT_NO_LINT("sprintf('%05s', fmt = f)");
+   EXPECT_NO_LINT("sprintf(fmt = paste0('%', n, 's'), '%05s')");
    EXPECT_NO_LINT("sprintf(paste0('%0', 5, 's'), x)");
    
    // other functions are not inspected

@@ -2422,6 +2422,7 @@ void checkSprintfCall(RTokenCursor cursor,
    
    const RToken* pNamedFormat = nullptr;
    const RToken* pPositionalFormat = nullptr;
+   bool seenNamedFormat = false;
    bool seenPositional = false;
    
    while (cursor.offset() < endCursor.offset())
@@ -2438,8 +2439,12 @@ void checkSprintfCall(RTokenCursor cursor,
          if (!cursor.moveToNextSignificantToken())
             return;
          
-         if (isFormat && cursor.isType(RToken::STRING))
-            pNamedFormat = &cursor.currentToken();
+         if (isFormat)
+         {
+            seenNamedFormat = true;
+            if (cursor.isType(RToken::STRING))
+               pNamedFormat = &cursor.currentToken();
+         }
       }
       else if (!seenPositional && !cursor.isType(RToken::COMMA))
       {
@@ -2465,7 +2470,9 @@ void checkSprintfCall(RTokenCursor cursor,
          return;
    }
    
-   const RToken* pFormat = pNamedFormat ? pNamedFormat : pPositionalFormat;
+   // once 'fmt' is named, the positional arguments are all data for '...',
+   // even if the named format isn't a literal we can inspect
+   const RToken* pFormat = seenNamedFormat ? pNamedFormat : pPositionalFormat;
    if (pFormat != nullptr)
       checkZeroPaddedStringFormat(*pFormat, status);
 }
