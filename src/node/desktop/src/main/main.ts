@@ -174,8 +174,8 @@ class RStudioMain {
 }
 
 function loadAppConfig(): ElectronFlagsLoad {
-  const configDirs = [Xdg.userConfigDir().getAbsolutePath(), app.getPath('appData')];
   try {
+    const configDirs = [Xdg.userConfigDir().getAbsolutePath(), app.getPath('appData')];
     return { config: loadElectronFlags(configDirs) };
   } catch (error: unknown) {
     return { error: safeError(error) };

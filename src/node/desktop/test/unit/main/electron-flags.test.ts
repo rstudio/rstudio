@@ -133,6 +133,13 @@ describe('Electron flags', () => {
       assert.include(result.message, 'RSTUDIO_CHROMIUM_ARGUMENTS');
     });
 
+    it('treats a final bare switch in RSTUDIO_CHROMIUM_ARGUMENTS as the requested value', () => {
+      const result = plan({ chromiumArguments: '--ozone-platform=wayland --ozone-platform' });
+
+      assert.isUndefined(result.relaunchArgs);
+      assert.include(result.message, 'expected one of x11, wayland');
+    });
+
     it('keeps a platform given on the command line and says why', () => {
       const result = plan({
         argv: ['/usr/lib/rstudio/rstudio', '--ozone-platform=x11'],

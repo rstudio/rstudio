@@ -80,9 +80,13 @@ describe('Utils', () => {
     unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
   });
   it('augmentCommandLineArguments leaves the Ozone platform alone', () => {
-    setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--ozone-platform=wayland --disable-gpu');
+    // Electron on Linux sets this switch itself, so compare against what it started with
+    const hadSwitch = app.commandLine.hasSwitch('ozone-platform');
+    const value = app.commandLine.getSwitchValue('ozone-platform');
+    setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--ozone-platform=headless --disable-gpu');
     Utils.augmentCommandLineArguments();
-    assert.isFalse(app.commandLine.hasSwitch('ozone-platform'));
+    assert.strictEqual(app.commandLine.hasSwitch('ozone-platform'), hadSwitch);
+    assert.strictEqual(app.commandLine.getSwitchValue('ozone-platform'), value);
     assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
     app.commandLine.removeSwitch('disable-gpu');
     unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');

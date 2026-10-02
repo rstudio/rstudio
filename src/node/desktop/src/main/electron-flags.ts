@@ -105,14 +105,12 @@ function requestedOzonePlatform(
   chromiumArguments: string,
   config: ElectronFlagsConfig | undefined,
 ): RequestedOzonePlatform | undefined {
-  // last occurrence wins, as it does for Chromium's own switch parsing
-  const prefix = `--${kOzonePlatformSwitch}=`;
-  const fromEnv = chromiumArguments
-    .split(' ')
-    .filter((piece) => piece.startsWith(prefix))
-    .pop();
+  // last occurrence wins, as it does for Chromium's own switch parsing; a
+  // bare switch has an empty value, which is then reported as unsupported
+  const fromEnv = chromiumArguments.split(' ').filter(isOzonePlatformArg).pop();
   if (fromEnv !== undefined) {
-    return { platform: fromEnv.substring(prefix.length), source: 'RSTUDIO_CHROMIUM_ARGUMENTS' };
+    const platform = fromEnv.substring(`--${kOzonePlatformSwitch}=`.length);
+    return { platform, source: 'RSTUDIO_CHROMIUM_ARGUMENTS' };
   }
 
   const fromConfig = config?.flags.filter((flag) => flag.name === kOzonePlatformSwitch).pop();
