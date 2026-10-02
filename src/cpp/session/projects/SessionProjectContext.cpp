@@ -21,6 +21,7 @@
 
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -1143,6 +1144,86 @@ void ProjectContext::updatePackageInfo()
       if (error)
          LOG_ERROR(error);
    }
+}
+
+void ProjectContext::worktreeNames(std::string* pPrimaryName, std::string* pDirectoryName) const
+{
+   pPrimaryName->clear();
+   pDirectoryName->clear();
+
+   // the worktree root is the nearest ancestor holding a .git entry
+   FilePath worktreeRoot = directory_;
+   FilePath gitPath;
+   while (!worktreeRoot.isEmpty())
+   {
+      gitPath = worktreeRoot.completeChildPath(".git");
+      if (gitPath.exists())
+         break;
+      worktreeRoot = worktreeRoot.getParent();
+   }
+
+   // a linked worktree's .git is a file: "gitdir: <common dir>/worktrees/<id>",
+   // where the common dir is "<primary>/.git" or, for a bare repository, the
+   // repository itself (the primary checkout has a directory, and a submodule
+   // points at .git/modules)
+   if (worktreeRoot.isEmpty() || gitPath.isDirectory())
+      return;
+
+   std::string contents;
+   Error error = core::readStringFromFile(gitPath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   boost::algorithm::trim(contents);
+   if (!boost::algorithm::starts_with(contents, "gitdir:"))
+      return;
+
+   FilePath gitDir = worktreeRoot.completePath(
+         boost::algorithm::trim_copy(contents.substr(std::strlen("gitdir:"))));
+   if (gitDir.getParent().getFilename() != "worktrees")
+      return;
+
+   // a bare repository has no checkout to take a name from: use its own,
+   // without the conventional .git suffix
+   FilePath commonDir = gitDir.getParent().getParent();
+   if (commonDir.getFilename() != ".git")
+   {
+      std::string name = commonDir.getFilename();
+      if (boost::algorithm::ends_with(name, ".git"))
+         name.resize(name.size() - std::strlen(".git"));
+      *pPrimaryName = name;
+      *pDirectoryName = worktreeRoot.getFilename();
+      return;
+   }
+
+   // prefer the primary checkout's own project name, then its directory
+   // name; a project in a subdirectory of the repository is looked for at
+   // the same offset there (as the worktree menu does)
+   FilePath primary = commonDir.getParent();
+   if (directory_ != worktreeRoot)
+      primary = primary.completePath(directory_.getRelativePath(worktreeRoot));
+
+   std::string primaryName = primary.getFilename();
+   FilePath primaryProject;
+   if (primary.isDirectory())
+      primaryProject = r_util::projectFromDirectory(primary);
+
+   if (primaryProject.exists())
+   {
+      primaryName = primaryProject.getStem();
+
+      r_util::RProjectConfig config;
+      std::string userErrMsg;
+      error = r_util::readProjectFile(primaryProject, &config, &userErrMsg);
+      if (!error && !config.projectName.empty())
+         primaryName = config.projectName;
+   }
+
+   *pPrimaryName = primaryName;
+   *pDirectoryName = worktreeRoot.getFilename();
 }
 
 json::Object ProjectContext::uiPrefs() const

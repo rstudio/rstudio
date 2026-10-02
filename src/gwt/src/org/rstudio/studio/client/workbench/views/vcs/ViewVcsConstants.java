@@ -162,4 +162,25 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String missingCapitalized();
     String obstructedCapitalized();
     String unversionedCapitalized();
+    String worktreesParentheses();
+    String worktreeSuffix(String branch);
+    String worktreeMissingSuffix(String branch);
+    String worktreeDirectoryMissing(String branch, String path);
+    String openWorktreeInNewSession();
+    String openWorktreeCaption();
+    String worktreeHasNoProjectFile(String path);
+    String newWorktreeCapitalized();
+    String directoryNameColon();
+    String createInColon();
+    String openNewWorktree(String path);
+    String createInNewWorktree();
+    String removeWorktreeCapitalized();
+    String worktreeColon();
+    String forceRemoveWorktree();
+    String worktreeMissing();
+    String worktreeLocked();
+    String localBranchAlreadyExistsWorktree(String branch);
+    String openWorktreeMainWindowUnavailable();
+    String noWorktreesToRemove();
+    String removeWorktreeConfirm(String path);
 }

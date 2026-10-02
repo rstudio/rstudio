@@ -18,6 +18,9 @@ import com.google.inject.Provider;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.WorktreeInfo;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -30,9 +33,13 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
 {
    @Inject
    public CheckoutBranchToolbarButton(final Provider<GitState> pVcsState,
-                                      final GitServerOperations server)
+                                      final GitServerOperations server,
+                                      final WorktreeActions worktreeActions,
+                                      final Commands commands)
    {
       super(pVcsState);
+      worktreeActions_ = worktreeActions;
+      commands_ = commands;
 
       addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -65,4 +72,29 @@ public class CheckoutBranchToolbarButton extends BranchToolbarButton
 
       setBranchCaption(pVcsState_.get().getBranchInfo().getActiveBranch());
    }
+
+   @Override
+   protected boolean showWorktrees()
+   {
+      return true;
+   }
+
+   @Override
+   protected ImageResource openWorktreeInNewSessionImage()
+   {
+      // the same icon the project MRU menu uses for "open in new session"
+      if (!worktreeActions_.canOpenInNewSession())
+         return null;
+
+      return commands_.openHtmlExternal().getImageResource();
+   }
+
+   @Override
+   protected void onWorktreeSelected(WorktreeInfo worktree, boolean newSession)
+   {
+      worktreeActions_.open(worktree, newSession);
+   }
+
+   private final WorktreeActions worktreeActions_;
+   private final Commands commands_;
 }
