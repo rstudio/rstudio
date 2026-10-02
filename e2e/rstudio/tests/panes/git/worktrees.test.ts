@@ -175,6 +175,20 @@ test.describe.serial('Git pane worktrees', () => {
       { timeout: 30000 },
     );
 
+    // ...and the recent projects list shows that label on its own rather than
+    // prefixing it with the directory name again
+    await page.locator(PROJECT_MENU).click();
+    await expect
+      .poll(
+        async () =>
+          (await menuItems(page).allInnerTexts()).map((text) => text.replace(/\s+/g, ' ').trim()),
+        { timeout: 10000 },
+      )
+      .toContain(`${PROJECT_NAME} [${LINKED_WORKTREE}]`);
+    const projectMenuItems = await menuItems(page).allInnerTexts();
+    expect(projectMenuItems.some((text) => text.startsWith(`${LINKED_WORKTREE} (`))).toBe(false);
+    await page.keyboard.press('Escape');
+
     // from here the main worktree is the "other" one
     const itemsAfter = await openBranchMenu(page, LINKED_BRANCH);
     expect(itemsAfter.some((text) => text.startsWith('main') && text.endsWith(`/${PROJECT_NAME}`))).toBe(true);
