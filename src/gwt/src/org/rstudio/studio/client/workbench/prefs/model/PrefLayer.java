@@ -31,6 +31,10 @@ public class PrefLayer extends JavaScriptObject
    public final native JsObject getValues() /*-{
       return this.values;
    }-*/;
+
+   public final native boolean isFullLayer() /*-{
+      return this.full_layer === true;
+   }-*/;
    
    public final static String LAYER_DEFAULT = "default";
    public final static String LAYER_SYSTEM = "system";

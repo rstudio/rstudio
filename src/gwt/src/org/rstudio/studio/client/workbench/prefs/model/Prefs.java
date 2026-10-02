@@ -572,12 +572,73 @@ public abstract class Prefs
       return val;
    }
    
-   // Meant to be called when the satellite window receives the sessionInfo.
+   // Meant to be called when a window (main or satellite) receives the
+   // sessionInfo.
    protected void updatePrefs(JsArray<PrefLayer> layers)
    {
       layers_ = layers;
    }
-   
+
+   // Complete layer updates include removals, such as a project option reset
+   // to its global default. Apply the entire layer before notifying listeners.
+   protected void replaceLayerValues(String layerName, JsObject source)
+   {
+      for (PrefLayer layer : JsUtil.asIterable(layers_))
+      {
+         if (layer == null || !layerName.equals(layer.getName()))
+            continue;
+
+         HashMap<PrefValue<?>, Object> previousValues = new HashMap<>();
+         for (PrefValue<?> pref : values_.values())
+            previousValues.put(pref, pref.getValue());
+
+         JsObject target = layer.getValues();
+         for (String key : target.iterableKeys())
+         {
+            if (!source.hasKey(key))
+               target.unset(key);
+         }
+         for (String key : source.iterableKeys())
+            target.setElement(key, source.getElement(key));
+
+         for (PrefValue<?> pref : previousValues.keySet())
+            fireValueChangeIfNeeded(pref, previousValues.get(pref));
+         return;
+      }
+   }
+
+   private <T> void fireValueChangeIfNeeded(PrefValue<T> pref, Object previousValue)
+   {
+      T value = pref.getValue();
+      if (previousValue == null ? value != null : !previousValue.equals(value))
+         ValueChangeEvent.fire(pref, value);
+   }
+
+   /**
+    * Indicates whether preference layers have been loaded, up to and
+    * including the given layer. Prefs objects constructed before the session
+    * info arrives start with no layers, and every preference reads as its
+    * default until updatePrefs() supplies them.
+    *
+    * @param requiredLayer The highest layer index that must be present
+    *   (e.g. UserPrefs.LAYER_USER).
+    */
+   public boolean hasLoadedLayers(int requiredLayer)
+   {
+      // the layer array can be shorter than the fixed layer indices during
+      // startup (see SessionInfo's clamped accessors)
+      if (layers_.length() <= requiredLayer)
+         return false;
+
+      // SessionInfo synthesizes a placeholder layer ([{}]) when the session
+      // never delivered prefs; only layers the session built carry values
+      for (int i = 0; i < layers_.length(); i++)
+         if (layers_.get(i).getValues() == null)
+            return false;
+
+      return true;
+   }
+
    private JsArray<PrefLayer> layers_;
    private final HashMap<String, PrefValue<?>> values_ = new HashMap<>();
 }

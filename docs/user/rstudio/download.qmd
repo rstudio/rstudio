@@ -1,0 +1,54 @@
+---
+title: "Download RStudio"
+description: "Installers for RStudio {{< var version >}}"
+aliases:
+  - downloads.html
+  - install.html
+---
+
+Download the desktop installer for your platform. RStudio also needs an installation of [R](https://cloud.r-project.org/), which most systems do not come with; on Windows, nothing else is required.
+
+<div id="download-hero" class="download-hero" data-version="{{< var osVersion >}}">
+<h3 id="hero-title">Recommended for you</h3>
+<p id="hero-subtitle" class="hero-subtitle">Detecting your operating system&hellip;</p>
+<div id="hero-buttons"></div>
+<p class="hero-legal">RStudio Desktop is open source software, released under the <a href="https://www.gnu.org/licenses/agpl-3.0">AGPL v3</a> license.</p>
+</div>
+
+::: {.callout-tip icon=false}
+## <img src="images/positron-icon.svg" alt="" width="20" height="20" style="vertical-align: -0.2em;"> Try Positron!
+
+Move from question to insight to analysis, model, or application faster than ever before. Positron is our next-generation, free IDE made specifically for data science and analysis with Python and R. 
+
+Positron also comes out of the box with [Posit Assistant](https://assistant.posit.co/docs/getting-started/), a data science native AI agent. It connects to your live R and Python sessions, sees your data, and helps you explore, visualize, build, and debug. Try Assistant for free with [Posit AI](https://assistant.posit.co/docs/getting-started/posit-ai/)
+
+[Download Positron](https://positron.posit.co/download.html) 
+:::
+
+## RStudio Desktop {#rstudio-ide-oss-downloads}
+
+Direct download links for RStudio Desktop {{< var version >}}, the version this documentation describes. The `.deb` package targets Ubuntu 22 / 24 / 26 and Debian 13; the `.rpm` package targets RHEL 9 / 10 and Fedora.
+
+{{< include ../../_snippets/download-desktop-cards.qmd >}}
+
+## RStudio Server {#rstudio-server-oss-downloads}
+
+Direct download links for RStudio Server {{< var version >}}, the version this documentation describes:
+
+{{< include ../../_snippets/install-server-oss.qmd >}}
+
+## Commercial downloads {#direct-downloads-commercial}
+
+Direct download links for RStudio Desktop Pro {{< var version >}}, the version this documentation describes:
+
+{{< include ../../_snippets/install-desktop-pro.qmd >}}
+
+For installation and configuration of the commercial editions, see the [RStudio Desktop Pro installation guide](https://docs.posit.co/ide/desktop-pro/getting_started/installation.html) and, for RStudio inside [Posit Workbench](https://posit.co/products/enterprise/workbench/), the [Posit Workbench installation guide](https://docs.posit.co/rsw/installation/).
+
+::: {.callout-warning}
+
+### Daily Builds
+
+[RStudio Daily builds](https://dailies.rstudio.com/) are intended for testing purposes, and are not recommended for general use. For stable builds, please use one of the above links for Open Source or Commercial downloads.
+
+:::

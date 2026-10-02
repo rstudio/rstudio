@@ -41,9 +41,17 @@ function writeFileCmd(path: string, content: string): string {
 
 test.describe('Help "Run examples" for blocking examples', () => {
   let installed = false;
+  let enhancedHelp = false;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
+
+    // The "Run examples" link comes from R, not RStudio: tools::Rd2HTML emits
+    // it only as part of the enhanced HTML help introduced in R 4.2.0. On older
+    // R the link never renders, so the #17178 lockup is unreachable from the
+    // help pane and there is nothing here to exercise.
+    enhancedHelp = (await consoleActions.evalRLogical('getRversion() >= "4.2.0"')) === true;
+    if (!enhancedHelp) return;
 
     const pkgDir = `${rPath(sandbox.dir)}/${PKG}`;
 
@@ -112,6 +120,7 @@ ${MARKER_CALL}
   test('routes a Shiny-launching example to the console instead of locking up', async ({
     rstudioPage: page,
   }) => {
+    test.skip(!enhancedHelp, 'requires R >= 4.2.0 for enhanced HTML help (the "Run examples" link)');
     test.skip(!installed, `Could not install fixture package ${PKG}`);
 
     await consoleActions.clearConsole();

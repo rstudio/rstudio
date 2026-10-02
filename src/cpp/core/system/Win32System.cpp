@@ -1082,7 +1082,23 @@ Error terminateProcess(PidType pid)
    return Success();
 }
 
-std::vector<SubprocInfo> getSubprocesses(PidType pid)
+namespace {
+
+bool getProcessCreationTime(HANDLE process, FILETIME* pCreationTime)
+{
+   FILETIME exitTime, kernelTime, userTime;
+   return process && ::GetProcessTimes(process, pCreationTime,
+                                       &exitTime, &kernelTime, &userTime);
+}
+
+} // anonymous namespace
+
+namespace detail {
+
+// Accept the parent's creation time separately so tests can model pid reuse
+// without depending on Windows assigning a particular pid to a new process.
+std::vector<SubprocInfo> getSubprocesses(PidType pid,
+                                       const FILETIME* pParentCreationTime)
 {
    std::vector<SubprocInfo> subprocs;
 
@@ -1092,8 +1108,6 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
    hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
    if (hSnapShot == INVALID_HANDLE_VALUE)
    {
-      // err on the side of assuming child processes, so we don't kill
-      // a job unintentionally
       LOG_ERROR(LAST_SYSTEM_ERROR());
       return subprocs;
    }
@@ -1110,6 +1124,23 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
    {
       if (pe32.th32ParentProcessID == pid)
       {
+         if (pParentCreationTime)
+         {
+            HANDLE child = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,
+                                         FALSE, pe32.th32ProcessID);
+            CloseHandleOnExitScope closeChild(&child, ERROR_LOCATION);
+
+            // Windows retains the original parent pid after the parent exits.
+            // If that pid has been reused, the orphan predates its supposed
+            // parent. Keep pid matches when a timestamp cannot be queried.
+            FILETIME childCreationTime;
+            if (getProcessCreationTime(child, &childCreationTime) &&
+                ::CompareFileTime(&childCreationTime, pParentCreationTime) < 0)
+            {
+               continue;
+            }
+         }
+
          // Found a child process
          SubprocInfo info;
          info.pid = pe32.th32ProcessID;
@@ -1120,6 +1151,21 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
    } while (Process32Next(hSnapShot, &pe32));
 
    return subprocs;
+}
+
+} // namespace detail
+
+std::vector<SubprocInfo> getSubprocesses(PidType pid)
+{
+   // Hold the parent handle across the snapshot and enumeration so its pid
+   // cannot be recycled while we inspect candidate children.
+   HANDLE parent = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+   CloseHandleOnExitScope closeParent(&parent, ERROR_LOCATION);
+
+   FILETIME parentCreationTime;
+   bool haveParentCreationTime = getProcessCreationTime(parent, &parentCreationTime);
+   return detail::getSubprocesses(pid,
+         haveParentCreationTime ? &parentCreationTime : nullptr);
 }
 
 FilePath currentWorkingDir(PidType pid)

@@ -248,14 +248,35 @@ export function credentialPathsFor(provider: AIProvider, homeDir: string): strin
   }
 }
 
+// Remove license files
+function removeLicenseFiles(homeDir: string, remove: (target: string) => void): string | null {
+  const dir = process.platform === 'win32'
+    ? path.join(homeDir, 'AppData', 'Local', 'RStudio-Desktop')
+    : path.join(homeDir, '.rstudio-desktop');
+
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(dir);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    return `${dir}: could not list license directory: ${(err as Error).message}`;
+  }
+
+  for (const entry of entries) {
+    if (entry.toLowerCase().endsWith('.lic')) remove(path.join(dir, entry));
+  }
+
+  return null;
+}
+
 // Remove every piece of credential material from the sandbox: each provider's
-// credential paths in each user-home* (the shared template plus any per-worker
-// or per-auth-state copies). Teardown calls this before a sandbox is left on
-// disk -- preserved for inspection, or stranded by a failed whole-tree delete
-// -- so a surviving sandbox never carries real tokens. Returns the paths it
-// could not remove, each with its error (empty on full success), so the caller
-// can warn loudly that a preserved sandbox still holds credentials. Missing
-// paths are not failures.
+// credential paths, plus any license files, in each user-home* (the shared
+// template plus any per-worker or per-auth-state copies). Teardown calls this
+// before a sandbox is left on disk -- preserved for inspection, or stranded by
+// a failed whole-tree delete -- so a surviving sandbox never carries real
+// tokens. Returns the paths it could not remove, each with its error (empty on
+// full success), so the caller can warn loudly that a preserved sandbox still
+// holds credentials. Missing paths are not failures.
 export function scrubCredentials(sandbox: string): string[] {
   const failures: string[] = [];
   const remove = (target: string): void => {
@@ -289,6 +310,8 @@ export function scrubCredentials(sandbox: string): string[] {
         remove(credentialPath);
       }
     }
+    const licenseFailure = removeLicenseFiles(home, remove);
+    if (licenseFailure) failures.push(licenseFailure);
   }
 
   return failures;

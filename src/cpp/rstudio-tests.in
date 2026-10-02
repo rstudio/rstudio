@@ -24,9 +24,10 @@ fi
 read -r -d '' USAGE <<- EOF
 Run RStudio unit tests. Available flags:
 
---help    Show this help.
---scope   Run only tests with the given scope (core, rserver, rsession, r).
---filter  Run a subset of R tests, matching the requested filter.
+--help           Show this help.
+--scope          Run only tests with the given scope (core, rserver, rsession, r).
+--filter         Run a subset of R tests, matching the requested filter.
+--only-database  Restrict the rserver scope to the database-backed fixture tests.
 EOF
 
 section () {
@@ -37,6 +38,37 @@ error () {
     echo -e "\033[1;91mERROR: $1\033[0m";
     exit 1
 }
+
+setupSessionTestEnvironment() {
+   # Each session test scope needs fresh state, even when the caller already
+   # sets these variables for a running IDE or another test invocation.
+   local TEST_STATE_DIR
+   TEST_STATE_DIR=$(mktemp -d -t rstudio-tests-XXXXXXXXXX) ||
+      error "Unable to create temporary session test directory"
+   export RSTUDIO_DATA_HOME="${TEST_STATE_DIR}/data"
+   export RSTUDIO_CONFIG_HOME="${TEST_STATE_DIR}/config"
+   # Prevent startup from migrating the user's legacy RStudio state here.
+   mkdir -p "${RSTUDIO_DATA_HOME}/client-state" "${RSTUDIO_CONFIG_HOME}" ||
+      error "Unable to initialize temporary session test directory"
+
+   # The session binds its socket in RS_SESSION_TMP_DIR, and won't take over
+   # one that another process is listening on, so concurrent test runs each
+   # need their own. Kept short, as socket paths are limited to ~100 bytes
+   # (macOS's TMPDIR alone is ~50).
+   RS_SESSION_TMP_DIR=$(mktemp -d /tmp/rstudio-tests-XXXXXX) ||
+      error "Unable to create temporary session stream directory"
+   export RS_SESSION_TMP_DIR
+   SESSION_TMP_DIRS+=("${RS_SESSION_TMP_DIR}")
+}
+
+# session stream directories created by setupSessionTestEnvironment
+SESSION_TMP_DIRS=()
+removeSessionTmpDirs() {
+   if [ "${#SESSION_TMP_DIRS[@]}" -gt 0 ]; then
+      rm -rf "${SESSION_TMP_DIRS[@]}"
+   fi
+}
+trap removeSessionTmpDirs EXIT
 
 checkRUnitTestFailure() {
    FAILURES=$(cat "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log")
@@ -344,6 +376,12 @@ while [ $# -gt 0 ]; do
 
    ;;
 
+   "--only-database")
+      ONLY_DATABASE=true
+      shift
+
+   ;;
+
    "--help")
       echo "${USAGE}"
       exit 0
@@ -434,7 +472,13 @@ if has-scope "rserver"; then
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests" ]; then
       section "Running 'rserver' tests..."
       cd server
-      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests"
+      # Database-backed fixture tests (named *IntegrationTest) run alongside
+      # the rest of the suite by default; --only-database narrows to just those.
+      RSERVER_TESTS_ARGS=""
+      if [ "${ONLY_DATABASE:-false}" = "true" ]; then
+         RSERVER_TESTS_ARGS="--only-database"
+      fi
+      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests ${RSERVER_TESTS_ARGS}"
       cd ..
    fi
 
@@ -449,6 +493,7 @@ fi
 
 if has-scope "rsession"; then
 
+   setupSessionTestEnvironment
    section "Running 'rsession' tests"
    runWatchdogProcess 5m false                                    \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" \
@@ -459,6 +504,7 @@ fi
 
 if has-scope "r"; then
 
+   setupSessionTestEnvironment
    section "Running 'r' tests"
 
    # Set process-wide environment before rsession starts any worker threads.
@@ -477,12 +523,6 @@ if has-scope "r"; then
       TESTTHAT_FILTER="${TEST_FILTER}"
       export TESTTHAT_FILTER
    fi
-
-   # Establish temporary folders for user state and data; this prevents the state/config on the
-   # machine from affecting the tests
-   RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX)
-   export RSTUDIO_DATA_HOME="${RSTUDIO_FOLDER}/data"
-   export RSTUDIO_CONFIG_HOME="${RSTUDIO_FOLDER}/config"
 
    runWatchdogProcess 5m false                                                   \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \

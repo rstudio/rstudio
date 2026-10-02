@@ -14,19 +14,24 @@
  */
 
 #include "ChatInstallation.hpp"
+#include "ChatTypes.hpp"
 #include "ChatConstants.hpp"
 #include "ChatLogging.hpp"
+#include "ChatSelector.hpp"
+#include "ChatSlots.hpp"
+
+#include <algorithm>
+#include <fmt/format.h>
+#include <mutex>
+#include <vector>
 
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
-#include <core/system/Environment.hpp>
-#include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <shared_core/json/Json.hpp>
 
-// Use qualified names for core:: to avoid conflicts with system getenv
 using namespace rstudio::session::modules::chat::constants;
 using namespace rstudio::session::modules::chat::logging;
 
@@ -36,254 +41,372 @@ namespace modules {
 namespace chat {
 namespace installation {
 
-bool verifyPositAiInstallation(const core::FilePath& positAiPath)
+namespace {
+
+// Reads one string field out of a JSON file in an installation directory.
+// Absent, unparseable, wrong-typed and empty all read as an empty string:
+// every caller treats them the same way, and none can do anything about the
+// difference. Quiet by design -- verifySlot() runs this over every slot on a
+// resolve, and an unreadable file in one of them is not worth a warning each
+// time.
+std::string readJsonStringField(const core::FilePath& installDir,
+                                const char* fileName,
+                                const char* fieldName)
 {
-   if (!positAiPath.exists())
+   core::FilePath filePath = installDir.completeChildPath(fileName);
+   if (!filePath.isRegularFile())
+      return std::string();
+
+   std::string content;
+   core::Error error = core::readStringFromFile(filePath, &content);
+   if (error)
+   {
+      DLOG("Failed to read {}: {}", filePath.getAbsolutePath(), error.getMessage());
+      return std::string();
+   }
+
+   core::json::Value value;
+   if (value.parse(content) || !value.isObject())
+   {
+      DLOG("{} is not a JSON object", filePath.getAbsolutePath());
+      return std::string();
+   }
+
+   core::json::Object object = value.getObject();
+   if (!object.hasMember(fieldName) || !object[fieldName].isString())
+      return std::string();
+
+   return object[fieldName].getString();
+}
+
+bool existsAndNonEmpty(const core::FilePath& filePath)
+{
+   return filePath.isRegularFile() && filePath.getSize() > 0;
+}
+
+} // anonymous namespace
+
+bool verifyInstallDir(const core::FilePath& installDir)
+{
+   if (!installDir.isDirectory())
       return false;
 
-   core::FilePath clientDir = positAiPath.completeChildPath(kClientDirPath);
-   core::FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
-   core::FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
+   core::FilePath clientDir = installDir.completeChildPath(kClientDirPath);
+   if (!clientDir.isDirectory())
+      return false;
 
-   return clientDir.exists() && serverScript.exists() && indexHtml.exists();
+   return existsAndNonEmpty(installDir.completeChildPath(kServerScriptPath)) &&
+          existsAndNonEmpty(clientDir.completeChildPath(kIndexFileName));
 }
 
-core::FilePath systemPositAssistantInstallPath()
+std::string declaredVersion(const core::FilePath& installDir)
 {
-   // An administrator may install Posit Assistant outside the XDG config
-   // directory; when posit-assistant-path is set it replaces that location
-   // rather than adding another one to search.
-   core::FilePath configuredPath = options().positAssistantPath();
-   if (!configuredPath.isEmpty())
-      return configuredPath;
-
-   return core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
+   return readJsonStringField(installDir, kPackageJsonFileName, "version");
 }
 
-core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePath)
+std::string declaredProtocol(const core::FilePath& installDir)
 {
-   // Mirrors the Copilot Language Server layout: the directory is installed
-   // beside the session binary, except in the macOS app bundle where it sits
-   // next to bin/ rather than inside it. The bin candidate is verified rather
-   // than merely tested for existence, so a partial directory left there does
-   // not mask a usable bundle at the other location.
-   core::FilePath binPath =
-      resourcePath.completePath("bin").completePath(kBundledPositAiDirName);
-   if (verifyPositAiInstallation(binPath))
-      return binPath;
-
-   return resourcePath.completePath(kBundledPositAiDirName);
+   return readJsonStringField(installDir, kProtocolVersionFileName, "protocol");
 }
 
-core::FilePath bundledPositAssistantInstallPath()
+core::Error verifyDeclaredIdentity(const core::FilePath& installDir,
+                                   const std::string& expectedVersion,
+                                   const std::string& expectedProtocol)
 {
-   return bundledPositAssistantInstallPath(options().resourcePath());
+   // A package without protocol.json fails here too: backfilling this build's
+   // protocol would make the check pass by construction.
+   std::string version = declaredVersion(installDir);
+   std::string protocol = declaredProtocol(installDir);
+   if (version == expectedVersion && protocol == expectedProtocol)
+      return core::Success();
+
+   return core::systemError(
+      boost::system::errc::invalid_argument,
+      fmt::format("Downloaded package declares version '{}' for protocol "
+                  "'{}', but version '{}' for protocol '{}' was requested",
+                  version, protocol, expectedVersion, expectedProtocol),
+      ERROR_LOCATION);
+}
+
+core::FilePath positAiStorageDir()
+{
+   return core::system::xdg::userDataDir().completePath(kPositAiStorageDirName);
+}
+
+core::FilePath systemStorageDir(const core::FilePath& resourcePath)
+{
+   return resourcePath.completePath("bin").completePath(kSystemPositAiDirName);
+}
+
+core::FilePath systemStorageDir()
+{
+   return systemStorageDir(options().resourcePath());
 }
 
 InstallSearchPaths positAssistantSearchPaths()
 {
    InstallSearchPaths paths;
-   paths.userDataPath = core::system::xdg::userDataDir().completePath(kPositAiDirName);
-   paths.systemPath = systemPositAssistantInstallPath();
-   paths.bundledPath = bundledPositAssistantInstallPath();
-   paths.pinnedSystemPath = !options().positAssistantPath().isEmpty();
+   paths.userStorageDir = positAiStorageDir();
+   paths.systemStorageDir = systemStorageDir();
    paths.userInstallEnabled =
       module_context::isPositAssistantInstallationEnabledByAdmin();
+
+   // The option shipped in 2026.09 and is still accepted, so an rsession.conf
+   // that sets it keeps parsing; nothing reads it any more.
+   if (!options().deprecatedPositAssistantPath().isEmpty() && RS_ONCE())
+   {
+      WLOG("Ignoring the posit-assistant-path session option, which is no longer "
+           "supported: administrator-installed Posit Assistant versions are read "
+           "from {}",
+           slots::versionsDir(paths.systemStorageDir).getAbsolutePath());
+   }
+
    return paths;
 }
 
+namespace {
+
+using types::SemanticVersion;
+
+// One source's installation as the resolver ranks it.
+struct InstallCandidate
+{
+   InstallCandidate() : tier(""), compatible(false) {}
+
+   core::FilePath path;
+   const char* tier;
+
+   // protocol.json declares the protocol this build speaks; a missing file
+   // counts as incompatible, matching hasProtocolMismatch()
+   bool compatible;
+
+   // package.json's version; 0.0.0 when the file is missing or unparsable, so
+   // an install that cannot say what it is never claims to be newer
+   SemanticVersion version;
+   std::string versionText;
+};
+
+// Ranks a compatible installation above an incompatible one, and a newer
+// version above an older one. Equal candidates are not ordered, so a stable
+// sort keeps them in the source order they were collected in.
+bool outranks(const InstallCandidate& lhs, const InstallCandidate& rhs)
+{
+   if (lhs.compatible != rhs.compatible)
+      return lhs.compatible;
+   return lhs.version > rhs.version;
+}
+
+InstallCandidate describeInstallation(const core::FilePath& path, const char* tier)
+{
+   InstallCandidate candidate;
+   candidate.path = path;
+   candidate.tier = tier;
+   candidate.compatible = declaredProtocol(path) == kProtocolVersion;
+   candidate.versionText = declaredVersion(path);
+   if (!candidate.version.parse(candidate.versionText))
+   {
+      candidate.versionText.clear();
+      candidate.version = SemanticVersion();
+   }
+   return candidate;
+}
+
+// The user's slots, chosen by protocol through the user's own selected.json,
+// which a stale or missing entry repairs. The one source RStudio writes.
+core::FilePath userSlot(const InstallSearchPaths& paths, selector::SelectorRepair repair)
+{
+   return selector::resolveSlot(paths.userStorageDir, kProtocolVersion, repair);
+}
+
+// Every installation that competes for this session, best first. Ties keep
+// the order collected here: the user's slot, the administrator's slot, then
+// the bundled copy.
+std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
+                                               bool includeUserInstall)
+{
+   std::vector<InstallCandidate> candidates;
+
+   if (includeUserInstall && paths.userInstallEnabled)
+   {
+      core::FilePath slot = userSlot(paths, selector::SelectorRepair::Enabled);
+      if (!slot.isEmpty())
+         candidates.push_back(describeInstallation(slot, "user-level"));
+   }
+
+   // The administrator's selector is theirs, so a stale entry is resolved
+   // around and never rewritten.
+   core::FilePath systemSlot = selector::resolveSlot(paths.systemStorageDir,
+                                                     kProtocolVersion,
+                                                     selector::SelectorRepair::Disabled);
+   if (!systemSlot.isEmpty())
+      candidates.push_back(describeInstallation(systemSlot, "administrator-installed"));
+
+   if (verifyInstallDir(paths.systemStorageDir))
+      candidates.push_back(describeInstallation(paths.systemStorageDir, "bundled"));
+
+   std::stable_sort(candidates.begin(), candidates.end(), outranks);
+   return candidates;
+}
+
+void logChosenCandidate(const InstallCandidate& candidate)
+{
+   DLOG("Using {} AI installation (version {}): {}",
+        candidate.tier,
+        candidate.versionText.empty() ? "unknown" : candidate.versionText,
+        candidate.path.getAbsolutePath());
+}
+
+} // anonymous namespace
+
 core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
 {
-   // 1. Check user data directory (XDG-based, platform-appropriate)
-   // Linux/macOS: ~/.local/share/rstudio/pai/bin
-   // Windows: %LOCALAPPDATA%/rstudio/pai/bin
-   bool userInstallPresent = verifyPositAiInstallation(paths.userDataPath);
-   if (paths.userInstallEnabled && userInstallPresent)
-   {
-      DLOG("Using user-level AI installation: {}", paths.userDataPath.getAbsolutePath());
-      return paths.userDataPath;
-   }
-
-   // An installation left in the user data directory before the administrator
+   // An installation left in the user's slots before the administrator
    // disabled user-managed installs -- or copied there to get around the
    // setting -- is ignored, never removed. That silently changes which version
-   // runs, and can be a downgrade, so say so once per session (locate() runs
-   // on every status, verify, and chat request).
-   if (userInstallPresent && RS_ONCE())
-      WLOG("Ignoring user-level AI installation at {}: Posit Assistant "
+   // runs, and can be a downgrade, so say so once per session. Read-only:
+   // ignoring the directory includes not repairing its selector. The flag is
+   // checked first: an empty resolution is not held, so this runs on every
+   // locate until something resolves.
+   static bool s_warnedManagedIgnoresUserSlot = false;
+   if (!paths.userInstallEnabled && !s_warnedManagedIgnoresUserSlot &&
+       !userSlot(paths, selector::SelectorRepair::Disabled).isEmpty())
+   {
+      s_warnedManagedIgnoresUserSlot = true;
+      WLOG("Ignoring user-level AI installation under {}: Posit Assistant "
            "installation is managed by the administrator",
-           paths.userDataPath.getAbsolutePath());
-
-   // 2. Check the system-wide installation: posit-assistant-path when set, and
-   // otherwise the XDG config directory (/etc/rstudio/pai/bin on Linux and
-   // macOS, C:/ProgramData/rstudio/pai/bin on Windows)
-   if (verifyPositAiInstallation(paths.systemPath))
-   {
-      DLOG("Using system-wide AI installation: {}", paths.systemPath.getAbsolutePath());
-      return paths.systemPath;
+           paths.userStorageDir.getAbsolutePath());
    }
 
-   // A path the administrator pinned but that holds no installation ends the
-   // search: falling through to the bundled copy would answer a typo or an
-   // unmounted share with a silent downgrade to whatever version shipped
-   // with RStudio.
-   if (paths.pinnedSystemPath)
+   // The newest compatible installation wins, so a per-user install made
+   // before a newer bundle or administrator's version arrived does not shadow
+   // it indefinitely.
+   std::vector<InstallCandidate> candidates = rankedCandidates(paths, true);
+   if (!candidates.empty())
    {
-      // Warn once per session: locate() runs on every status, verify, and chat
-      // request, and a misconfigured path would otherwise flood the log.
-      if (RS_ONCE())
-         WLOG("posit-assistant-path set but installation invalid: {}",
-              paths.systemPath.getAbsolutePath());
-   }
-   else
-   {
-      // 3. Check the copy bundled with RStudio. It ranks last: a
-      // manifest-installed update lands in the user data directory and an
-      // administrator's own install is deliberate, so both outrank it.
-      // Open-source builds ship no bundle and always fall through here.
-      if (verifyPositAiInstallation(paths.bundledPath))
-      {
-         DLOG("Using AI installation bundled with RStudio: {}",
-              paths.bundledPath.getAbsolutePath());
-         return paths.bundledPath;
-      }
+      logChosenCandidate(candidates.front());
+      return candidates.front().path;
    }
 
-   DLOG("No valid AI installation found. Checked locations:");
+   DLOG("No valid AI installation found (protocol {}). Checked locations:",
+        kProtocolVersion);
    if (paths.userInstallEnabled)
-      DLOG("  - User data dir: {}", paths.userDataPath.getAbsolutePath());
-   DLOG("  - System install dir: {}", paths.systemPath.getAbsolutePath());
-   if (!paths.pinnedSystemPath)
-      DLOG("  - Bundled with RStudio: {}", paths.bundledPath.getAbsolutePath());
+      DLOG("  - User slots: {}",
+           slots::versionsDir(paths.userStorageDir).getAbsolutePath());
+   DLOG("  - Administrator slots: {}",
+        slots::versionsDir(paths.systemStorageDir).getAbsolutePath());
+   DLOG("  - Bundled with RStudio: {}", paths.systemStorageDir.getAbsolutePath());
 
    return core::FilePath(); // Not found
 }
 
+namespace {
+
+// The installation this session runs, once resolved; see the header for the
+// rules. Guarded because the asset handler reads it from HTTP threads while
+// the main thread resolves, installs and clears.
+std::mutex s_resolutionMutex;
+core::FilePath s_resolvedPath;
+boost::optional<InstallSearchPaths> s_searchPathsOverride;
+
+} // anonymous namespace
+
 core::FilePath locatePositAssistantInstallation()
 {
-   return locatePositAssistantInstallation(positAssistantSearchPaths());
+   std::lock_guard<std::mutex> lock(s_resolutionMutex);
+
+   if (!s_resolvedPath.isEmpty())
+   {
+      if (verifyInstallDir(s_resolvedPath))
+         return s_resolvedPath;
+
+      DLOG("Installation {} no longer holds a complete Posit Assistant; resolving again",
+           s_resolvedPath.getAbsolutePath());
+   }
+
+   s_resolvedPath = locatePositAssistantInstallation(
+      s_searchPathsOverride ? *s_searchPathsOverride : positAssistantSearchPaths());
+   return s_resolvedPath;
 }
 
-std::string getInstalledVersion(const core::FilePath& positAiPath)
+void clearPinnedInstallation()
 {
-   if (positAiPath.isEmpty())
-      return "";
+   std::lock_guard<std::mutex> lock(s_resolutionMutex);
+   s_resolvedPath = core::FilePath();
+}
 
-   core::FilePath packageJson = positAiPath.completeChildPath("package.json");
-   if (!packageJson.exists())
+void setSearchPathsForTesting(const boost::optional<InstallSearchPaths>& paths)
+{
+   std::lock_guard<std::mutex> lock(s_resolutionMutex);
+   s_searchPathsOverride = paths;
+   s_resolvedPath = core::FilePath();
+}
+
+bool runsUserSlot()
+{
+   core::FilePath installDir = locatePositAssistantInstallation();
+   if (installDir.isEmpty())
+      return false;
+
+   core::FilePath userSlotsDir;
    {
-      WLOG("package.json not found in AI installation");
-      return "";
+      std::lock_guard<std::mutex> lock(s_resolutionMutex);
+      userSlotsDir = slots::versionsDir(s_searchPathsOverride
+         ? s_searchPathsOverride->userStorageDir
+         : positAiStorageDir());
    }
+   return installDir.getParent() == userSlotsDir;
+}
 
-   // Read and parse package.json
-   std::string content;
-   core::Error error = core::readStringFromFile(packageJson, &content);
-   if (error)
-   {
-      WLOG("Failed to read package.json: {}", error.getMessage());
-      return "";
-   }
+bool userInstallWouldBeSelected(const InstallSearchPaths& paths, const std::string& version)
+{
+   if (!paths.userInstallEnabled)
+      return false;
 
-   core::json::Value packageValue;
-   if (packageValue.parse(content))
-   {
-      WLOG("Failed to parse package.json");
-      return "";
-   }
+   // The manifest only ever offers packages built for this build's protocol.
+   InstallCandidate proposed;
+   proposed.compatible = true;
+   if (!proposed.version.parse(version))
+      proposed.version = SemanticVersion();
 
-   if (!packageValue.isObject())
-   {
-      WLOG("package.json is not a JSON object");
-      return "";
-   }
+   // The user's own slot is what the install replaces as the selection, so
+   // only the read-only sources compete against the proposed version.
+   std::vector<InstallCandidate> readOnly = rankedCandidates(paths, false);
+   return readOnly.empty() || !outranks(readOnly.front(), proposed);
+}
 
-   core::json::Object packageObj = packageValue.getObject();
-   std::string version;
-   error = core::json::readObject(packageObj, "version", version);
-   if (error)
-   {
-      WLOG("package.json missing 'version' field");
-      return "";
-   }
-
-   DLOG("Installed version: {}", version);
-   return version;
+bool userInstallWouldBeSelected(const std::string& version)
+{
+   return userInstallWouldBeSelected(positAssistantSearchPaths(), version);
 }
 
 std::string getInstalledVersion()
 {
-   return getInstalledVersion(locatePositAssistantInstallation());
-}
+   core::FilePath installDir = locatePositAssistantInstallation();
+   if (installDir.isEmpty())
+      return std::string();
 
-std::string getInstalledProtocolVersion(const core::FilePath& positAiPath)
-{
-   if (positAiPath.isEmpty())
-      return "";
+   std::string version = declaredVersion(installDir);
+   if (version.empty())
+      WLOG("No package version in {}", installDir.getAbsolutePath());
+   else
+      DLOG("Installed version: {}", version);
 
-   core::FilePath protoFile =
-      positAiPath.completeChildPath(kProtocolVersionFileName);
-   if (!protoFile.exists())
-   {
-      DLOG("No protocol.json found (legacy install)");
-      return "";
-   }
-
-   std::string content;
-   core::Error error = core::readStringFromFile(protoFile, &content);
-   if (error)
-   {
-      ELOG("Failed to read protocol.json: {}", error.getMessage());
-      return "";
-   }
-
-   core::json::Value jsonValue;
-   if (jsonValue.parse(content))
-   {
-      ELOG("Failed to parse protocol.json");
-      return "";
-   }
-
-   if (!jsonValue.isObject())
-   {
-      ELOG("protocol.json is not a JSON object");
-      return "";
-   }
-
-   core::json::Object obj = jsonValue.getObject();
-   if (!obj.hasMember("protocol") ||
-       !obj["protocol"].isString())
-   {
-      ELOG("protocol.json missing \"protocol\" string field");
-      return "";
-   }
-
-   std::string version = obj["protocol"].getString();
-   DLOG("Installed protocol version: {}", version);
    return version;
 }
 
 std::string getInstalledProtocolVersion()
 {
-   return getInstalledProtocolVersion(locatePositAssistantInstallation());
-}
+   core::FilePath installDir = locatePositAssistantInstallation();
+   if (installDir.isEmpty())
+      return std::string();
 
-core::Error writeProtocolVersionFileIfMissing(const core::FilePath& positAiPath)
-{
-   core::FilePath protoFile =
-      positAiPath.completeChildPath(kProtocolVersionFileName);
+   std::string protocol = declaredProtocol(installDir);
+   if (protocol.empty())
+      DLOG("No protocol declared in {} (legacy install)", installDir.getAbsolutePath());
+   else
+      DLOG("Installed protocol version: {}", protocol);
 
-   // Newer packages bundle their own protocol.json; preserve it so we record
-   // the protocol the package actually declares rather than RStudio's default.
-   if (protoFile.exists())
-   {
-      DLOG("protocol.json already present; leaving package-provided file intact");
-      return core::Success();
-   }
-
-   core::json::Object protoJson;
-   protoJson["protocol"] = kProtocolVersion;
-   return core::writeStringToFile(protoFile, protoJson.write());
+   return protocol;
 }
 
 } // namespace installation

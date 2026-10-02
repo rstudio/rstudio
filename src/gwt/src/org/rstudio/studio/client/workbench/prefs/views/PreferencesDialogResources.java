@@ -28,6 +28,10 @@ public interface PreferencesDialogResources extends ClientBundle
       String paneLayoutTable();
       String label();
       String themeChooser();
+      String appearanceColumns();
+      String appearanceControls();
+      String editorThemeChooser();
+      String appearanceThemeButtons();
       String sshKeyWidget();
       String usingVcsHelp();
       String newSection();
@@ -38,6 +42,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String smallerText();
       String checkBoxAligned();
       String visualModeWrapSelectWidget();
+      String rVersionSelectWidget();
       String userDictEditButton();
    }
 

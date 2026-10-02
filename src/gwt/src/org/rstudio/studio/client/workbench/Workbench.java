@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.AppCommand;
@@ -271,6 +272,7 @@ public class Workbench implements BusyEvent.Handler,
 
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
+      StartupTiming.mark("deferred-init-completed");
       session_.updateSessionInfo(event.getData());
    }
 

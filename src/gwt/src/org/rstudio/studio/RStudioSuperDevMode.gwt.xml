@@ -12,6 +12,11 @@
    <inherits name="org.rstudio.studio.RStudio" />
    <set-property name="compiler.stackMode" value="native"/>
    <set-property name="user.agent" value="safari"/>
+
+   <!-- the base module uses a script-tag install (installCode=false), which
+        requires same-origin scripts; Super Dev Mode serves code from the code
+        server on another origin, so restore the default install here -->
+   <set-configuration-property name="installCode" value="true"/>
    <!-- dev language for i18n development -->
    <extend-property name="locale" values="en,fr,dev"/>
    <!--<set-property name="locale" value="dev"/>-->

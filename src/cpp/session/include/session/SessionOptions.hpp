@@ -22,6 +22,7 @@
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
 #include <core/ProgramOptions.hpp>
@@ -54,6 +55,8 @@ private:
    {
    }
    friend Options& options();
+   template <typename T, typename... Args>
+   friend T& core::make_leaked(Args&&... args);
    
    // COPYING: boost::noncopyable
 
@@ -68,7 +71,12 @@ public:
 
    std::string getOverlayOption(const std::string& name)
    {
-      return overlayOptions_[name];
+      // look up without inserting, as this is called from background threads
+      auto it = overlayOptions_.find(name);
+      if (it == overlayOptions_.end())
+         return std::string();
+
+      return it->second;
    }
 
    bool getBoolOverlayOption(const std::string& name);

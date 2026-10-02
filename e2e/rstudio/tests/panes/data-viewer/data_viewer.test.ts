@@ -135,6 +135,163 @@ async function lastRenderedRowRect(dataViewer: DataViewerPane): Promise<{
   });
 }
 
+// Scroll-range geometry of the frozen (pinned) pane against the viewport's.
+// A native horizontal scrollbar takes layout space out of the viewport's
+// clientHeight only; `gutter` is that measured height and `inset` the bottom
+// padding the grid gives the frozen pane to match it (syncPinnedPaneGutter),
+// so the two panes share one scroll range.
+async function pinnedPaneRange(dataViewer: DataViewerPane): Promise<{
+  gutter: number;
+  inset: number;
+  viewportTop: number;
+  viewportMax: number;
+  pinnedTop: number;
+  pinnedMax: number;
+}> {
+  return dataViewer.viewport.evaluate((el: HTMLElement) => {
+    const pinned = el.ownerDocument.getElementById('pinnedPane') as HTMLElement;
+    return {
+      gutter: el.offsetHeight - el.clientHeight,
+      inset: parseFloat(pinned.style.paddingBottom) || 0,
+      viewportTop: el.scrollTop,
+      viewportMax: el.scrollHeight - el.clientHeight,
+      pinnedTop: pinned.scrollTop,
+      pinnedMax: pinned.scrollHeight - pinned.clientHeight,
+    };
+  });
+}
+
+// The position must SETTLE: further wheeling at the bottom must not move it
+// back up. This is the "bounces" half of #18620, and the one assertion that
+// has to wait out an absence of movement rather than a condition. The 1px
+// tolerance is for fractional scroll offsets under display scaling; a bounce
+// moves the view by a row or more, or by the native bar's gutter.
+async function expectBottomToSettle(page: Page, dataViewer: DataViewerPane): Promise<void> {
+  const readTop = () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop);
+  const settled = await readTop();
+  for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(500);
+  expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
+}
+
+// Makes the browser lay out after every change the virtualizers make to their
+// row and sidebar-entry containers, and to the spacers around them. Layout
+// normally runs once a render has finished, so the states a render passes
+// through on the way are never measured; #18988 is what the grid does when one
+// of them is. Wrapping the DOM calls and the style write the virtualizers use,
+// and reading scrollHeight after each, reproduces that on demand. The hooks go
+// on the frame's own prototypes, so they last as long as the viewer does and
+// need no teardown.
+async function layoutAfterEveryGridMutation(dataViewer: DataViewerPane): Promise<void> {
+  await dataViewer.viewport.evaluate((el: HTMLElement) => {
+    const doc = el.ownerDocument;
+    const scrollers = [el, doc.getElementById('pinnedPane'), doc.getElementById('sidebarContent')]
+      .filter((scroller): scroller is HTMLElement => scroller !== null);
+
+    const forced = { afterMutation: 0, afterResize: 0 };
+    (window as unknown as { forcedLayouts: typeof forced }).forcedLayouts = forced;
+    const layout = (after: keyof typeof forced) => {
+      forced[after]++;
+      for (const scroller of scrollers) void scroller.scrollHeight;
+    };
+
+    // The grid's two <tbody>s, and the sidebar's entry container (the one
+    // child of #sidebarContent that is not a spacer; it has no id of its own).
+    const isContainer = (node: Node) =>
+      node.nodeName === 'TBODY' || node.parentElement?.id === 'sidebarContent';
+    const isRow = (node: Node) => node.nodeName === 'TR';
+
+    const wrap = (proto: object, name: string, affects: (node: Node) => boolean) => {
+      const methods = proto as Record<string, (...args: unknown[]) => unknown>;
+      const original = methods[name];
+      methods[name] = function (this: Node, ...args: unknown[]) {
+        const result = original.apply(this, args);
+        if (affects(this)) layout('afterMutation');
+        return result;
+      };
+    };
+    wrap(Element.prototype, 'remove', isRow);
+    wrap(Element.prototype, 'replaceChildren', isContainer);
+    wrap(Node.prototype, 'appendChild', isContainer);
+    wrap(Node.prototype, 'insertBefore', isContainer);
+
+    const html = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+    if (!html || !html.set) throw new Error('Element.prototype.innerHTML has no setter');
+    const setHtml = html.set;
+    Object.defineProperty(Element.prototype, 'innerHTML', {
+      configurable: true,
+      enumerable: html.enumerable,
+      get: html.get,
+      set(this: Element, value: string) {
+        setHtml.call(this, value);
+        if (isContainer(this)) layout('afterMutation');
+      },
+    });
+
+    // The spacers are sized through their inline style. Chromium does not
+    // expose CSS properties as accessors that could be wrapped, so a spacer's
+    // `style` is handed out behind a proxy that watches for height instead.
+    const isSpacer = (node: Element) =>
+      node.classList.contains('sidebar-virt-spacer') ||
+      (node.nodeName === 'TD' && node.parentElement?.classList.contains('spacer-row') === true);
+
+    const style = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style');
+    if (!style || !style.get) throw new Error('HTMLElement.prototype.style has no getter');
+    const getStyle = style.get;
+    Object.defineProperty(HTMLElement.prototype, 'style', {
+      configurable: true,
+      enumerable: style.enumerable,
+      set: style.set,
+      get(this: HTMLElement) {
+        const declaration = getStyle.call(this) as CSSStyleDeclaration;
+        if (!isSpacer(this)) return declaration;
+        return new Proxy(declaration, {
+          get: (target, property) => {
+            const value = Reflect.get(target, property, target);
+            return typeof value === 'function' ? value.bind(target) : value;
+          },
+          set: (target, property, value) => {
+            Reflect.set(target, property, value, target);
+            if (property === 'height') layout('afterResize');
+            return true;
+          },
+        });
+      },
+    });
+  });
+}
+
+// The hooks of layoutAfterEveryGridMutation have to have fired, after both a
+// DOM change and a spacer resize, or a test passes just because the
+// virtualizers moved to a call the hooks do not cover.
+async function expectLayoutsForced(dataViewer: DataViewerPane): Promise<void> {
+  const forced = await dataViewer.viewport.evaluate(
+    () => (window as unknown as {
+      forcedLayouts?: { afterMutation: number; afterResize: number };
+    }).forcedLayouts,
+  );
+  expect(forced?.afterMutation ?? 0).toBeGreaterThan(0);
+  expect(forced?.afterResize ?? 0).toBeGreaterThan(0);
+}
+
+// The grid is at maximum scroll, with `row` rendered last and clear of the
+// floating horizontal scrollbar.
+async function expectLastRowInView(dataViewer: DataViewerPane, row: string): Promise<void> {
+  await expect.poll(
+    () => dataViewer.viewport.evaluate(
+      (el: HTMLElement) => el.scrollHeight - el.clientHeight - el.scrollTop,
+    ),
+    { message: 'grid should be at maximum scroll', timeout: TIMEOUTS.fileOpen },
+  ).toBeLessThanOrEqual(1);
+
+  const rect = await lastRenderedRowRect(dataViewer);
+  const scrollbarTop = await dataViewer.horizontalScrollbar.evaluate(
+    (el: HTMLElement) => el.getBoundingClientRect().top,
+  );
+  expect(rect.row).toBe(row);
+  expect(rect.bottom).toBeLessThanOrEqual(scrollbarTop + 0.5);
+}
+
 test.describe('Data Viewer', () => {
   let consoleActions: ConsolePaneActions;
   let sourcePane: SourcePane;
@@ -1797,17 +1954,7 @@ test.describe('Data Viewer', () => {
       await expect(dataViewer.horizontalScrollbar).toBeAttached();
 
       await scrollGridToBottom(page, dataViewer, 499);
-
-      // The position must SETTLE: further wheeling at the bottom must not move
-      // it back up. This is the "bounces" half of the report, and the one
-      // assertion that has to wait out an absence of movement rather than a
-      // condition. The 1px tolerance is for fractional scroll offsets under
-      // display scaling; a bounce moves the view by a row or more.
-      const readTop = () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop);
-      const settled = await readTop();
-      for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
-      await page.waitForTimeout(500);
-      expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
+      await expectBottomToSettle(page, dataViewer);
 
       // The last row is rendered and its bottom edge sits exactly a bar's height
       // above the bottom of the viewport, which is where the bar floats. Before
@@ -1913,6 +2060,14 @@ test.describe('Data Viewer', () => {
       await setPref(page, 'data_viewer_use_overlay_scrollbars', false);
       await expect(dataViewer.horizontalScrollbar).toHaveCount(0);
 
+      // The switch also insets the frozen pane by the native bar's gutter, so
+      // the two panes share one vertical scroll range (0 = 0 where the
+      // platform floats native bars). Read from the same refresh as the
+      // geometry below, before any scroll input.
+      const panes = await pinnedPaneRange(dataViewer);
+      expect(panes.inset).toBe(panes.gutter);
+      expect(Math.abs(panes.pinnedMax - panes.viewportMax)).toBeLessThanOrEqual(1);
+
       // Read before any scroll input: a scroll re-renders and would repair a
       // stale tail by itself, so this is the assertion that pins the resize to
       // the switch. The scroll range loses the tail where the native bar takes
@@ -1968,6 +2123,16 @@ test.describe('Data Viewer', () => {
 
       await scrollGridToBottom(page, dataViewer, 499);
 
+      // With one shared range, maximum scroll puts both panes at the same
+      // offset, so the row labels line up with their rows. Before the fix the
+      // frozen pane's range ended a gutter short: it clamped early, a row out
+      // of step with the grid, and under display scaling that early clamp made
+      // onPinnedScroll yank the viewport back under the bar on every wheel
+      // tick -- the bounce the report describes.
+      const atBottom = await pinnedPaneRange(dataViewer);
+      expect(Math.abs(atBottom.pinnedTop - atBottom.viewportTop)).toBeLessThanOrEqual(1);
+      await expectBottomToSettle(page, dataViewer);
+
       // A bar that sits in layout is already outside clientHeight, so the last
       // row ends flush with the client box; an overlay bar needs the same tail
       // the custom one gets. The 1px tolerance is for fractional scroll offsets
@@ -1992,10 +2157,236 @@ test.describe('Data Viewer', () => {
           { message: 'overlay mode should restore the overscroll tail' },
         )
         .toBe(overlay.scrollHeight);
+      // The frozen pane's inset goes with the native gutter.
+      await expect
+        .poll(
+          () => pinnedPaneRange(dataViewer).then((r) => r.inset),
+          { message: 'overlay mode should drop the frozen pane inset' },
+        )
+        .toBe(0);
     } finally {
       await clearPref(page, 'data_viewer_use_overlay_scrollbars');
       await consoleActions.executeInConsole(
         'rm(".rs.native_edge_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18988
+  //
+  // The grid and its frozen row-number pane each mirror the other's scrollTop,
+  // so each one's write comes back as a scroll event on the pane written to.
+  // Chrome 154 delivers that event a frame after the write; while a scroll is
+  // in progress the scrolled pane has moved on by then, and the handlers took
+  // the echo for a scroll back to the previous frame's position and mirrored
+  // it -- pulling the pane back on every frame, so a wheel gesture covered
+  // about half its distance and could not reach the last row. The browsers
+  // this suite runs on still deliver the echo within the frame, so it is
+  // replayed here by hand: move the pane on, then dispatch the scroll event on
+  // the other pane while it is still where the last mirror left it.
+  test('a late scroll echo does not pull the scrolled pane back (#18988)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.echo_df <- as.data.frame(matrix(seq_len(500 * 6), nrow = 500)); View(.rs.echo_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      const pinnedPane = dataViewer.frame.locator('#pinnedPane');
+      const tops = () => dataViewer.viewport.evaluate((el: HTMLElement) => ({
+        viewport: el.scrollTop,
+        pinned: (el.ownerDocument.getElementById('pinnedPane') as HTMLElement).scrollTop,
+      }));
+
+      // Scrolling the grid: the frozen pane follows, then its echo arrives late.
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 1000; });
+      await expect.poll(tops).toEqual({ viewport: 1000, pinned: 1000 });
+      const afterGridEcho = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        const pinned = el.ownerDocument.getElementById('pinnedPane') as HTMLElement;
+        el.scrollTop = 1200;
+        pinned.dispatchEvent(new Event('scroll'));
+        return el.scrollTop;
+      });
+      expect(afterGridEcho).toBe(1200);
+      await expect.poll(tops).toEqual({ viewport: 1200, pinned: 1200 });
+
+      // Scrolling the frozen pane, as the wheel does over the row numbers: the
+      // grid follows, then its echo arrives late.
+      await pinnedPane.evaluate((el: HTMLElement) => { el.scrollTop = 2000; });
+      await expect.poll(tops).toEqual({ viewport: 2000, pinned: 2000 });
+      const afterPinnedEcho = await pinnedPane.evaluate((el: HTMLElement) => {
+        const viewport = el.ownerDocument.getElementById('gridViewport') as HTMLElement;
+        el.scrollTop = 2200;
+        viewport.dispatchEvent(new Event('scroll'));
+        return el.scrollTop;
+      });
+      expect(afterPinnedEcho).toBe(2200);
+      await expect.poll(tops).toEqual({ viewport: 2200, pinned: 2200 });
+
+      // Either pane can still be scrolled back to where a mirror last left it.
+      await pinnedPane.evaluate((el: HTMLElement) => { el.scrollTop = 2000; });
+      await expect.poll(tops).toEqual({ viewport: 2000, pinned: 2000 });
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 2200; });
+      await expect.poll(tops).toEqual({ viewport: 2200, pinned: 2200 });
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 2000; });
+      await expect.poll(tops).toEqual({ viewport: 2000, pinned: 2000 });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.echo_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18988
+  //
+  // The report: the grid reaches the bottom and is pulled back, and the last
+  // row stays cut off however it is scrolled to. The distances are the height
+  // of the rows a render recycles off the top -- four for a wheel notch, one
+  // for an arrow key -- which is what the browser does when it lays out after
+  // those rows are removed but before the top spacer has grown to cover them:
+  // the content is that much short, and scrollTop is clamped to it. The grid
+  // forces no layout at that point itself, so each render path is exercised
+  // here with one forced after every step, and has to be safe regardless.
+  test('a layout pass in the middle of a render leaves the grid at the bottom (#18988)', async ({ rstudioPage: page }) => {
+    // 500 rows to force vertical virtual scrolling. The frame is one fetch
+    // block, so every row is cached and wheeling takes the incremental path.
+    await consoleActions.executeInConsole(
+      '{ .rs.recycle_df <- as.data.frame(matrix(seq_len(500 * 6), nrow = 500)); View(.rs.recycle_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expectHorizontalOverflow(dataViewer);
+      await layoutAfterEveryGridMutation(dataViewer);
+
+      // Incremental recycling, driven by the wheel.
+      await scrollGridToBottom(page, dataViewer, 499);
+      await expectBottomToSettle(page, dataViewer);
+      await expectLastRowInView(dataViewer, '499');
+      await expectLayoutsForced(dataViewer);
+
+      // Full rebuild, which a resize triggers. The rebuilt rows are new
+      // elements, so a mark left on the current ones is gone once it has run.
+      await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        for (const row of el.ownerDocument.querySelectorAll('#gridBody tr'))
+          row.setAttribute('data-before-rebuild', '');
+        window.dispatchEvent(new Event('resize'));
+      });
+      await expect(dataViewer.frame.locator('#gridBody tr[data-before-rebuild]'))
+        .toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
+      await expectBottomToSettle(page, dataViewer);
+      await expectLastRowInView(dataViewer, '499');
+
+      // Incremental recycling a row at a time, driven by the keyboard: away
+      // from the bottom and back down onto the last row.
+      await dataViewer.frame.locator('#gridBody tr[data-row="495"] td.numberCell').first().click();
+      await expect(dataViewer.frame.locator('#rsGridCell_495_1')).toHaveClass(/\bactiveCell\b/);
+      for (let i = 0; i < 60; i++) await page.keyboard.press('ArrowUp');
+      await expect(dataViewer.frame.locator('#rsGridCell_435_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      for (let i = 0; i < 64; i++) await page.keyboard.press('ArrowDown');
+      await expect(dataViewer.frame.locator('#rsGridCell_499_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expectLastRowInView(dataViewer, '499');
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.recycle_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18988
+  //
+  // The summary sidebar is virtualized the same way and had the same gap: its
+  // entry container was emptied before the new window's entries went in.
+  test('a layout pass in the middle of a render leaves the summary sidebar at the bottom (#18988)', async ({ rstudioPage: page }) => {
+    // 600 columns make 600 sidebar entries, far more than fit the panel.
+    await consoleActions.executeInConsole(
+      '{ .rs.recycle_wide_df <- as.data.frame(matrix(1:6000, nrow = 10, ncol = 600)); View(.rs.recycle_wide_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      const content = dataViewer.frame.locator('#sidebarContent');
+      await expect(content).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await layoutAfterEveryGridMutation(dataViewer);
+
+      const box = await content.boundingBox();
+      if (!box) throw new Error('sidebar content has no bounding box');
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+      // Keep wheeling until the panel is at maximum scroll; it takes a number
+      // of gestures to cover 600 entries.
+      const remaining = () => content.evaluate(
+        (el: HTMLElement) => el.scrollHeight - el.clientHeight - el.scrollTop,
+      );
+      await expect.poll(
+        async () => {
+          await page.mouse.wheel(0, 4000);
+          return remaining();
+        },
+        { message: 'sidebar should reach maximum scroll', timeout: TIMEOUTS.fileOpen },
+      ).toBeLessThanOrEqual(1);
+      await expectLayoutsForced(dataViewer);
+
+      // It stays there, with the last column's entry built.
+      for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(500);
+      expect(await remaining()).toBeLessThanOrEqual(1);
+      await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="600"]'))
+        .toBeAttached({ timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.recycle_wide_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18988
+  //
+  // What was pulling the reporter's grid back. With the browser reducing
+  // motion (Windows "Animation effects" off), the grid's stylesheet gave every
+  // element a near-zero transition-duration to shorten its fades. That starts
+  // a transition for every inline style change too, and an element whose
+  // transition has just started is laid out at its old value for that frame:
+  // the spacer a render grows to cover the rows it recycles did not grow until
+  // the frame after the rows were gone. The content was one recycled window
+  // short for a frame, both panes were clamped to it, and the last row stayed
+  // out of reach however the grid was scrolled. The preference is emulated for
+  // the whole page, so it reaches the grid's document.
+  test('the grid reaches the bottom when the browser reduces motion (#18988)', async ({ rstudioPage: page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // 500 rows to force vertical virtual scrolling, all in one fetch block so
+    // wheeling takes the incremental path (as in the mid-render layout test).
+    await consoleActions.executeInConsole(
+      '{ .rs.motion_df <- as.data.frame(matrix(seq_len(500 * 6), nrow = 500)); View(.rs.motion_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expectHorizontalOverflow(dataViewer);
+      // Without the preference in the grid's own document the test would pass
+      // on the very stylesheet it is meant to catch.
+      expect(await dataViewer.viewport.evaluate(
+        (el: HTMLElement) => el.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      )).toBe(true);
+
+      // Rows recycled several at a time, driven by the wheel.
+      await scrollGridToBottom(page, dataViewer, 499);
+      await expectBottomToSettle(page, dataViewer);
+      await expectLastRowInView(dataViewer, '499');
+
+      // A row at a time, driven by the keyboard: away from the bottom and back
+      // down onto the last row, which lands one row short if the content is a
+      // row short when the last ArrowDown scrolls.
+      await dataViewer.frame.locator('#gridBody tr[data-row="495"] td.numberCell').first().click();
+      await expect(dataViewer.frame.locator('#rsGridCell_495_1')).toHaveClass(/\bactiveCell\b/);
+      for (let i = 0; i < 60; i++) await page.keyboard.press('ArrowUp');
+      await expect(dataViewer.frame.locator('#rsGridCell_435_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      for (let i = 0; i < 64; i++) await page.keyboard.press('ArrowDown');
+      await expect(dataViewer.frame.locator('#rsGridCell_499_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expectLastRowInView(dataViewer, '499');
+    } finally {
+      await page.emulateMedia({ reducedMotion: null });
+      await consoleActions.executeInConsole(
+        'rm(".rs.motion_df", envir = .GlobalEnv)',
       );
     }
   });

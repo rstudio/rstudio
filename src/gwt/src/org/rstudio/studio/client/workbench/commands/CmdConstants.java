@@ -282,6 +282,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Copy current document path") // $NON-NLS-1$
     String copySourceDocPathDesc();
     
+    // showActiveDocDirInFiles
+    @DefaultStringValue("Show Current Document's Directory in Files Pane") // $NON-NLS-1$
+    String showActiveDocDirInFilesLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String showActiveDocDirInFilesButtonLabel();
+    @DefaultStringValue("Show Document's Directory") // $NON-NLS-1$
+    String showActiveDocDirInFilesMenuLabel();
+    @DefaultStringValue("Show the directory containing the current document in the Files pane") // $NON-NLS-1$
+    String showActiveDocDirInFilesDesc();
+    
     // saveSourceDocAs
     @DefaultStringValue("Save Current Document As...") // $NON-NLS-1$
     String saveSourceDocAsLabel();
@@ -1216,6 +1226,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Execute the entire R statement which contains the cursor.") // $NON-NLS-1$
     String executeCurrentStatementDesc();
     
+    // selectCurrentStatement
+    @DefaultStringValue("Select Current Statement") // $NON-NLS-1$
+    String selectCurrentStatementLabel();
+    @DefaultStringValue("Select Current _Statement") // $NON-NLS-1$
+    String selectCurrentStatementMenuLabel();
+    @DefaultStringValue("Select the entire R statement which contains the cursor, even when it spans several lines.") // $NON-NLS-1$
+    String selectCurrentStatementDesc();
+    
     // executeCurrentParagraph
     @DefaultStringValue("Execute Current Paragraph") // $NON-NLS-1$
     String executeCurrentParagraphLabel();
@@ -1970,6 +1988,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Check spelling in document") // $NON-NLS-1$
     String checkSpellingDesc();
     
+    // changeSpellingLanguage
+    @DefaultStringValue("Change Spelling _Language...") // $NON-NLS-1$
+    String changeSpellingLanguageMenuLabel();
+    @DefaultStringValue("Switch the dictionary used for spell checking") // $NON-NLS-1$
+    String changeSpellingLanguageDesc();
+    
     // wordCount
     @DefaultStringValue("_Word Count") // $NON-NLS-1$
     String wordCountMenuLabel();
@@ -2641,6 +2665,22 @@ public interface CmdConstants extends Constants {
     String zoomPlotMenuLabel();
     @DefaultStringValue("View a larger version of the plot in a new window") // $NON-NLS-1$
     String zoomPlotDesc();
+    
+    // fitPlotToPane
+    @DefaultStringValue("Fit Plots to Pane") // $NON-NLS-1$
+    String fitPlotToPaneLabel();
+    @DefaultStringValue("_Fit to Pane") // $NON-NLS-1$
+    String fitPlotToPaneMenuLabel();
+    @DefaultStringValue("Draw plots at the size of the Plots pane") // $NON-NLS-1$
+    String fitPlotToPaneDesc();
+    
+    // useFixedPlotSize
+    @DefaultStringValue("Use Fixed Plot Size...") // $NON-NLS-1$
+    String useFixedPlotSizeLabel();
+    @DefaultStringValue("Fi_xed Size...") // $NON-NLS-1$
+    String useFixedPlotSizeMenuLabel();
+    @DefaultStringValue("Draw plots at a fixed size, scaled down to fit the Plots pane") // $NON-NLS-1$
+    String useFixedPlotSizeDesc();
     
     // removePlot
     @DefaultStringValue("Remove Current Plot...") // $NON-NLS-1$
@@ -4239,12 +4279,6 @@ public interface CmdConstants extends Constants {
     String returnChatToMainButtonLabel();
     @DefaultStringValue("Return to main window") // $NON-NLS-1$
     String returnChatToMainDesc();
-    
-    // uninstallPositAssistant
-    @DefaultStringValue("Uninstall Posit Assistant") // $NON-NLS-1$
-    String uninstallPositAssistantLabel();
-    @DefaultStringValue("Uninsta_ll Posit Assistant...") // $NON-NLS-1$
-    String uninstallPositAssistantMenuLabel();
     
     // checkForPositAssistantUpdates
     @DefaultStringValue("Check for Posit Assistant Updates") // $NON-NLS-1$

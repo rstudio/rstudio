@@ -31,6 +31,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/Log.hpp>
@@ -1046,8 +1047,10 @@ struct UploadState
    FilePath tmpFile;
 };
 
-boost::mutex s_uploadMutex;
-std::map<const http::Request*, boost::shared_ptr<UploadState>> s_uploadStateMap;
+// leaked: uploads are handled on the http listener thread (#18318)
+boost::mutex& s_uploadMutex = core::make_leaked<boost::mutex>();
+std::map<const http::Request*, boost::shared_ptr<UploadState>>& s_uploadStateMap =
+      core::make_leaked<std::map<const http::Request*, boost::shared_ptr<UploadState>>>();
 
 void parseContentBuffer(const std::string& buffer,
                         const boost::shared_ptr<UploadState>& pUploadState)

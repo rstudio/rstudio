@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
+import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -42,6 +44,22 @@ public class ShellPane extends ShellWidget implements Shell.Display
       // Setting file type to R changes the wrap mode to false. We want it to
       // be true so that the console input can wrap.
       editor.setUseWrapMode(true);
+
+      // Custom "Editor" keybindings (e.g. Remove Word Left) are pushed to
+      // source editors as events; apply them to the console input as well.
+      events.addHandler(SetEditorCommandBindingsEvent.TYPE, event ->
+      {
+         editor.setEditorCommandBinding(event.getId(), event.getKeySequences());
+      });
+
+      events.addHandler(ResetEditorCommandsEvent.TYPE, event ->
+      {
+         editor.resetCommands();
+
+         // resetCommands() reinstalls every Ace default, which replaces the
+         // console-specific Home / End commands set up by ShellWidget.
+         editor.useDocumentLineNavigation();
+      });
 
       uiPrefs.syntaxColorConsole().bind(new CommandWithArg<Boolean>()
       {

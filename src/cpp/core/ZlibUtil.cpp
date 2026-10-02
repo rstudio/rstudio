@@ -16,6 +16,8 @@
 #include <core/ZlibUtil.hpp>
 
 #include <cstring> // for memcpy
+#include <istream>
+#include <stdexcept>
 
 #include <core/Log.hpp>
 
@@ -264,6 +266,115 @@ Error decompressString(const std::vector<unsigned char>& compressedData,
 
    *str = destBuff.toString();
    return Success();
+}
+
+struct GzipDecompressingStreambuf::Impl
+{
+   explicit Impl(std::istream& source)
+      : source(source),
+        sourceEof(false),
+        memberComplete(false),
+        finished(false)
+   {
+      std::memset(&stream, 0, sizeof(stream));
+   }
+
+   std::istream& source;
+   z_stream stream;
+   bool sourceEof;
+   bool memberComplete;
+   bool finished;
+   char input[8192];
+   char output[8192];
+};
+
+GzipDecompressingStreambuf::GzipDecompressingStreambuf(std::istream& source)
+   : pImpl_(new Impl(source))
+{
+   // 15 is the maximum window size; adding 16 selects gzip framing (zlib
+   // then also verifies each member's trailer CRC on decompression)
+   int result = inflateInit2(&pImpl_->stream, 15 + 16);
+   if (result != Z_OK)
+      throw std::runtime_error(std::string("zlib initialization failed: ") + zError(result));
+}
+
+GzipDecompressingStreambuf::~GzipDecompressingStreambuf()
+{
+   inflateEnd(&pImpl_->stream);
+}
+
+GzipDecompressingStreambuf::int_type GzipDecompressingStreambuf::underflow()
+{
+   if (gptr() < egptr())
+      return traits_type::to_int_type(*gptr());
+
+   if (pImpl_->finished)
+      return traits_type::eof();
+
+   z_stream& stream = pImpl_->stream;
+
+   for (;;)
+   {
+      // refill the input buffer when it is empty
+      if (stream.avail_in == 0 && !pImpl_->sourceEof)
+      {
+         pImpl_->source.read(pImpl_->input, sizeof(pImpl_->input));
+         if (pImpl_->source.bad())
+            throw std::runtime_error("error reading compressed stream");
+
+         if (pImpl_->source.eof())
+            pImpl_->sourceEof = true;
+
+         stream.next_in = reinterpret_cast<Bytef*>(pImpl_->input);
+         stream.avail_in = static_cast<uInt>(pImpl_->source.gcount());
+      }
+
+      // at a member boundary, either finish (nothing follows) or expect
+      // another concatenated gzip member
+      if (pImpl_->memberComplete)
+      {
+         if (stream.avail_in == 0 && pImpl_->sourceEof)
+         {
+            pImpl_->finished = true;
+            return traits_type::eof();
+         }
+
+         int result = inflateReset(&stream);
+         if (result != Z_OK)
+            throw std::runtime_error(std::string("zlib reset failed: ") + zError(result));
+
+         pImpl_->memberComplete = false;
+      }
+
+      stream.next_out = reinterpret_cast<Bytef*>(pImpl_->output);
+      stream.avail_out = sizeof(pImpl_->output);
+
+      int result = inflate(&stream, Z_NO_FLUSH);
+      std::size_t produced = sizeof(pImpl_->output) - stream.avail_out;
+
+      if (result == Z_STREAM_END)
+      {
+         pImpl_->memberComplete = true;
+      }
+      else if (result == Z_BUF_ERROR)
+      {
+         // inflate could make no progress: recoverable by supplying more
+         // input, so with the source exhausted the stream is truncated
+         if (stream.avail_in == 0 && pImpl_->sourceEof)
+            throw std::runtime_error("gzip stream is truncated");
+      }
+      else if (result != Z_OK)
+      {
+         const char* msg = (stream.msg != nullptr) ? stream.msg : zError(result);
+         throw std::runtime_error(std::string("gzip decompression failed: ") + msg);
+      }
+
+      if (produced > 0)
+      {
+         setg(pImpl_->output, pImpl_->output, pImpl_->output + produced);
+         return traits_type::to_int_type(*gptr());
+      }
+   }
 }
 
 } // namespace zlib

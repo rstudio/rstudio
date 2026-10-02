@@ -28,6 +28,10 @@ namespace graphics {
 
 core::json::Array supportedBackends();
 
+// what the "(Default)" graphics backend preference resolves to: a backend set
+// outside of RStudio (e.g. in Rprofile.site), or "default"
+std::string defaultBackend();
+
 core::Error initialize();
 
 } // namespace graphics

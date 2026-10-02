@@ -18,6 +18,7 @@
 
 #include <boost/optional.hpp>
 
+#include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
 #include <core/system/Types.hpp>
@@ -90,6 +91,34 @@ FilePath oldUserCacheDir(
 // It should be invoked once. Any issues with these directories will be emitted to the session log.
 void verifyUserDirs(const boost::optional<std::string>& user = boost::none,
                     const boost::optional<FilePath>& homeDir = boost::none);
+
+// Whether redirectUnwritableUserDataDir() has replaced the user data directory with a
+// temporary one in this process, and the user data directory still points there.
+bool isUserDataDirTemporary();
+
+#ifndef _WIN32
+
+// Returns an error if files can't be created in the given directory, creating the directory
+// first if it doesn't exist.
+Error checkDirectoryWritable(const FilePath& dir);
+
+// Returns the directory used in place of the user data directory when that can't be written:
+// a directory under the system temporary directory, created if necessary, that is owned by
+// and private to the current user. Fails if the path is taken by something else, e.g. a
+// directory created by another user of a shared temporary directory.
+Error temporaryUserDataDir(FilePath* pDir);
+
+// Checks that the user data directory can be written. If it can't, points the user data
+// directory at temporaryUserDataDir() instead, by setting RSTUDIO_DATA_HOME so that child
+// processes agree, and so that a session can still start.
+//
+// Returns the error that made the user data directory unusable, or Success() if it is usable.
+// When an error is returned, pTemporaryDir is set to the directory now in use, or left empty
+// if the temporary directory couldn't be used either (in which case pTemporaryDirError is
+// set).
+Error redirectUnwritableUserDataDir(FilePath* pTemporaryDir, Error* pTemporaryDirError);
+
+#endif
 
 // Returns the RStudio XDG system config directory.
 //

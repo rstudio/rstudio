@@ -65,7 +65,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeUtil;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
@@ -142,7 +141,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       display_.addTabClosedHandler(this);
       display_.addTabReorderHandler(this);
 
-      events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
       events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
       events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSynctexCommands(isActive()));
 
@@ -352,10 +350,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
        // set and active editor
        activeEditor_ = target;
-       if (activeEditor_ != null)
+       if (target != null)
        {
-          activeEditor_.onActivate();
-          display_.selectTab(activeEditor_.asWidget());
+          target.onActivate();
+          if (activeEditor_ == target)
+             display_.selectTab(target.asWidget());
        }
    }
 
@@ -715,7 +714,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    private void manageCommands(boolean forceSync)
    {
-      manageCommands(forceSync, manager_.getActive());
+      // An inactive column writes some shared commands (e.g. hiding Publish),
+      // so its own refresh goes through the manager, which manages the active
+      // column last (#18955).
+      SourceColumn activeColumn = manager_.getActive();
+      if (activeColumn != null && activeColumn != this)
+         manager_.manageCommands(forceSync);
+      else
+         manageCommands(forceSync, activeColumn);
    }
 
    // this should only be called internally or by SourceColumnManager
@@ -1027,8 +1033,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
 
       boolean cmdEnabled = active && synctexAvailable;
-      getSourceCommand(commands_.synctexSearch()).setVisible(false);
-      getSourceCommand(commands_.synctexSearch()).setEnabled(false);
       getSourceCommand(commands_.synctexSearch()).setVisible(active, cmdEnabled, synctexAvailable);
       getSourceCommand(commands_.synctexSearch()).setEnabled(active, cmdEnabled, synctexAvailable);
    }
@@ -1187,6 +1191,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void onSelection(SelectionEvent<Integer> event)
    {
+      // An asynchronous document callback can outlive its destination column.
+      if (manager_.getByName(name_) != this)
+         return;
+
       if (activeEditor_ != null)
          activeEditor_.onDeactivate();
 
@@ -1194,14 +1202,22 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       if (event.getSelectedItem() >= 0)
       {
-         activeEditor_ = editors_.get(event.getSelectedItem());
-         activeEditor_.onActivate();
-         manager_.setActive(name_);
+         final EditingTarget editor = editors_.get(event.getSelectedItem());
+         activeEditor_ = editor;
+         editor.onActivate();
+
+         // Activation can synchronously select another tab or column. Do not
+         // overwrite that selection or announce the editor it superseded.
+         if (activeEditor_ != editor)
+            return;
+         manager_.setActive(this);
+         if (activeEditor_ != editor || !manager_.isActiveEditor(editor))
+            return;
 
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
-               activeEditor_.getPath(),
-               activeEditor_.getId()));
+               editor.getPath(),
+               editor.getId()));
 
          // don't send focus to the tab if we're expecting a debug selection
          // event
@@ -1219,8 +1235,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   focus = tabEvent.getFocus();
                }
 
-               if (focus && activeEditor_ != null)
-                  activeEditor_.focus();
+               if (focus && activeEditor_ == editor && manager_.isActiveEditor(editor))
+                  editor.focus();
             });
          }
          else if (isDebugSelectionPending())

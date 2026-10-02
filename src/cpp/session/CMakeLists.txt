@@ -174,6 +174,7 @@ set(SESSION_SOURCE_FILES
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
    SessionSuspend.cpp
+   SessionSuspendOverlay.cpp
    SessionSuspendFilter.cpp
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
@@ -195,9 +196,7 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatTypes.cpp
    modules/chat/ChatLogging.cpp
    modules/chat/ChatInstallation.cpp
-   modules/chat/ChatInstallLock.cpp
    modules/chat/ChatIntegrity.cpp
-   modules/chat/ChatSlotManifest.cpp
    modules/chat/ChatSlots.cpp
    modules/chat/ChatSelector.cpp
    modules/chat/ChatUpdateThrottle.cpp
@@ -593,12 +592,17 @@ elseif(APPLE)
    set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} ${MAC_APPKIT_LIBRARY})
 endif()
 
-set(SESSION_LIBRARIES
-   rstudio-core
-   rstudio-core-synctex
+# Static libraries must be linked before the libraries they depend on, so
+# rstudio-core comes after everything that uses it; otherwise it gets linked twice.
+set(SESSION_LIBRARIES)
+if(RSTUDIO_SERVER)
+   list(APPEND SESSION_LIBRARIES rstudio-server-core)
+endif()
+list(APPEND SESSION_LIBRARIES
    rstudio-monitor
    rstudio-r
    rstudio-session-workers
+   rstudio-core
    libgit2package
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS})
@@ -633,9 +637,6 @@ if(WIN32)
    target_compile_definitions(rsession-shared PRIVATE RSESSION_BUILDING_SHARED)
 
    target_link_libraries(rsession-shared ${SESSION_LIBRARIES} "${LIBR_LIBRARIES}")
-   if(RSTUDIO_SERVER)
-      target_link_libraries(rsession-shared rstudio-server-core)
-   endif()
 
    # thin launcher stub; identical code, manifest embedded via the .rc differs
    add_stripped_executable(
@@ -679,10 +680,6 @@ if(NOT WIN32)
       target_link_libraries(rsession "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/rsession.exports")
    else()
       target_link_libraries(rsession "${LIBR_LIBRARIES}")
-   endif()
-
-   if(RSTUDIO_SERVER)
-      target_link_libraries(rsession rstudio-server-core)
    endif()
 
 endif()
@@ -863,15 +860,73 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    endif()
 
    # install Copilot Language Server
+   #
+   # the copilot-language-server-js distribution bundles native binaries for
+   # every platform and architecture it supports; the binaries that can never
+   # run on the target platform account for the bulk of the distribution's
+   # size, so exclude them. revisit these patterns when updating the bundled
+   # Copilot version in case the package layout changes -- files that stop
+   # matching are installed again (larger package), never broken.
    if(RSTUDIO_ENABLE_COPILOT)
+
       if(APPLE)
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
+         set(COPILOT_EXCLUDED_PLATFORMS "linux|win32")
+      elseif(WIN32)
+         set(COPILOT_EXCLUDED_PLATFORMS "darwin|linux")
+      else()
+         set(COPILOT_EXCLUDED_PLATFORMS "darwin|win32")
+      endif()
+
+      set(COPILOT_EXCLUDES
+         REGEX "copilot-language-server-js/(bin|compiled)/(${COPILOT_EXCLUDED_PLATFORMS})$" EXCLUDE
+         REGEX "@github/copilot/sdk/prebuilds/(${COPILOT_EXCLUDED_PLATFORMS})-" EXCLUDE)
+
+      # mxc-bin mixes binaries for all platforms within its per-architecture
+      # folders, so those are excluded file-by-file; the crypt32*.node modules
+      # at the package root are Windows-only
+      if(WIN32)
+         list(APPEND COPILOT_EXCLUDES
+            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec|mxc-exec-mac)$" EXCLUDE)
+      elseif(APPLE)
+         list(APPEND COPILOT_EXCLUDES
+            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec)$" EXCLUDE
+            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
+            REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
+      else()
+         list(APPEND COPILOT_EXCLUDES
+            REGEX "@github/copilot/mxc-bin/[^/]+/mxc-exec-mac$" EXCLUDE
+            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
+            REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
+      endif()
+
+      # non-macOS packages are architecture-specific, so also exclude binaries
+      # built for the other architecture (macOS packages are universal and
+      # keep both)
+      if(NOT APPLE)
+         string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" COPILOT_TARGET_PROCESSOR)
+         if(COPILOT_TARGET_PROCESSOR MATCHES "^(x86_64|amd64)$")
+            set(COPILOT_EXCLUDED_ARCH "arm64")
+         elseif(COPILOT_TARGET_PROCESSOR MATCHES "^(aarch64|arm64)$")
+            set(COPILOT_EXCLUDED_ARCH "x64")
+         endif()
+         if(DEFINED COPILOT_EXCLUDED_ARCH)
+            list(APPEND COPILOT_EXCLUDES
+               REGEX "copilot-language-server-js/(bin|compiled)/[^/]+/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
+               REGEX "@github/copilot/sdk/prebuilds/[^/]+-${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
+               REGEX "@github/copilot/mxc-bin/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE)
+         endif()
+      endif()
+
+      if(APPLE)
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-               USE_SOURCE_PERMISSIONS)
+               USE_SOURCE_PERMISSIONS
+               ${COPILOT_EXCLUDES})
       else()
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS)
+               USE_SOURCE_PERMISSIONS
+               ${COPILOT_EXCLUDES})
       endif()
    endif()
 

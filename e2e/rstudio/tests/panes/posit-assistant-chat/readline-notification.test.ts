@@ -18,7 +18,17 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@chat
   let consoleActions: ConsolePaneActions;
   let versions: EnvironmentVersions;
 
-  const PROMPT = 'Write R code that asks the user for their name and count how many letters there are in it. Use the readline command. Run the code.';
+  // Spelled out because the assistant otherwise sometimes reasons that
+  // readline() cannot work under a tool and writes the code into a source
+  // file instead of running it, and the notification never appears.
+  const PROMPT = 'Write R code that asks the user for their name with readline() and counts how many letters are in it. Run the code now with the executeCode tool; do not create or open a file.';
+
+  // The assistant's turn does not end when readline() returns: it typically
+  // reads the console back and comments on the result first, which has taken
+  // well over 30s on CI. Give that the same settle window the rest of the
+  // suite gives a turn, and size the test to hold two turns plus the readline.
+  const POST_READLINE_TURN_BUDGET_MS = 90000;
+  const TEST_TIMEOUT_MS = 300000;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     ({ chatActions, chatPane, consoleActions, versions } = await setupPositAssistantChat(page));
@@ -29,6 +39,8 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@chat
   });
 
   test('notification appears when readline blocks, chat is unresponsive, and notification clears after input', async ({ rstudioPage: page }) => {
+    test.setTimeout(TEST_TIMEOUT_MS);
+
     // Start a fresh conversation
     await chatActions.startNewConversation();
 
@@ -82,7 +94,7 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@chat
     // isTurnIdle() rather than a raw stop-button sample: the button flickers
     // off between streaming phases, and a single hidden sample lands in that
     // gap often enough to be the flake this suite keeps hitting.
-    await expect.poll(() => chatActions.isTurnIdle(), { timeout: 30000 })
+    await expect.poll(() => chatActions.isTurnIdle(), { timeout: POST_READLINE_TURN_BUDGET_MS })
       .toBe(true);
 
     // Ask the assistant to print a Tempest quote to the console

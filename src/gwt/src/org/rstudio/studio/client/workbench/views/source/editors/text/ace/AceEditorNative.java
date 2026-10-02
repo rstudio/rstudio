@@ -417,6 +417,13 @@ public class AceEditorNative extends JavaScriptObject
    public final native void scrollToRow(int row) /*-{
       this.scrollToRow(row);
    }-*/;
+
+   public final native void scrollToRow(int row, boolean animate) /*-{
+      var scrollTop = this.renderer.scrollTop;
+      this.scrollToRow(row);
+      if (animate)
+         this.renderer.animateScrolling(scrollTop);
+   }-*/;
    
    public final native void centerSelection() /*-{
       this.centerSelection();
@@ -1046,14 +1053,19 @@ public class AceEditorNative extends JavaScriptObject
       this.session.clearSyntheticTokens();
    }-*/;
 
-   private static final native void initialize()
+   // Remove the 'Return' keybinding associated with Emacs.
+   // We attach some custom behaviors to 'Return', and we
+   // don't want Emacs to override those behaviors.
+   // E.g. the 'Continue comment on newline insertion'
+   // preference. The emacs keybindings load lazily, so this runs both at
+   // class initialization (a no-op if they have not loaded) and again once
+   // they arrive (see AceEditor.loadKeybindings).
+   public static final native void fixupEmacsKeybindings()
    /*-{
-      // Remove the 'Return' keybinding associated with Emacs.
-      // We attach some custom behaviors to 'Return', and we
-      // don't want Emacs to override those behaviors.
-      // E.g. the 'Continue comment on newline insertion'
-      // preference.
       var Emacs = $wnd.require("ace/keyboard/emacs");
+      if (Emacs == null)
+         return;
+
       var handler = Emacs.handler || {};
       var bindings = handler.commandKeyBinding || {};
       if (bindings.hasOwnProperty("return")) {
@@ -1073,7 +1085,7 @@ public class AceEditorNative extends JavaScriptObject
       this.renderer.theme = theme;
    }-*/;
 
-   static { initialize(); }
+   static { fixupEmacsKeybindings(); }
 
    private static boolean uiPrefsSynced_ = false;
 }

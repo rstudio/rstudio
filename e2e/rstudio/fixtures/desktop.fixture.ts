@@ -11,7 +11,10 @@ import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
 import { withDeadline } from '../utils/deadline';
 import { workerRLibsUser } from './r-libs-setup';
+import { provisionPaiDataHome } from './pai-seed';
 import { trackForReaping } from './process-reaper';
+import { captureOutputTail, describeLaunchState } from './launch-diagnostics';
+import { keepRequestInterceptionOn } from './request-interception';
 import { isDebugMode } from '../utils/debug';
 import { userHomeForAuthState } from '../utils/auth';
 
@@ -34,7 +37,8 @@ function sandboxRoot(): string {
 // Sandbox-level data-home: NOT used as RSTUDIO_DATA_HOME for Desktop launches
 // (each launch gets its own data home under its config root -- see
 // createTempConfig), only as the source of the seeded Posit Assistant build
-// (data-home/pai, populated by sandbox-setup.ts when PW_SEED_PAI is set).
+// (data-home/pai, laid out as a version slot by sandbox-setup.ts when
+// PW_SEED_PAI is set).
 const sandboxDataHome = () => path.join(sandboxRoot(), 'data-home');
 
 // HOME / USERPROFILE for the current worker. Single-worker runs (the default)
@@ -316,24 +320,22 @@ function createTempConfig(): TempConfig {
 }
 
 /**
- * Link the seeded Posit Assistant build (sandbox data-home/pai, populated by
- * sandbox-setup.ts when PW_SEED_PAI is set) into a per-spec data home so the
- * session under test finds it at RSTUDIO_DATA_HOME/pai. A symlink (junction
- * on Windows, which needs no elevation) avoids copying the install once per
- * spec. The uninstall flow deletes pai via boost::filesystem::remove_all,
- * which removes the link itself without following it, so an uninstall test
- * can't destroy the shared seed. Writes into pai (e.g. manifest-check.json)
- * do go through the link to the seed -- same exposure as the previous fully
- * shared data home, now scoped to pai only. No-op when nothing was seeded or
- * the link already exists (config-root reuse across a restart).
+ * Provision a per-spec data home with the seeded Posit Assistant build
+ * (sandbox data-home/pai, populated by sandbox-setup.ts when PW_SEED_PAI is
+ * set) so the session under test finds it at RSTUDIO_DATA_HOME/pai. The spec
+ * gets its own storage directory rather than a link to the seed: an install
+ * run by the session publishes a slot and rewrites selected.json where it
+ * resolves, which through a link would be the seed every other spec reads.
+ * The seed's slots are hardlink-cloned, so this costs no copy. No-op when
+ * nothing was seeded or the directory already exists (config-root reuse
+ * across a restart).
  */
 function seedPaiIntoDataHome(dataHome: string): void {
   const seed = path.join(sandboxDataHome(), 'pai');
-  const dest = path.join(dataHome, 'pai');
-  if (!fs.existsSync(seed) || fs.existsSync(dest)) {
+  if (!fs.existsSync(seed)) {
     return;
   }
-  fs.symlinkSync(seed, dest, process.platform === 'win32' ? 'junction' : 'dir');
+  provisionPaiDataHome(seed, dataHome);
 }
 
 // Cold CI runners can take longer than a developer machine to clear the
@@ -689,20 +691,29 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   // tree is detached into its own group and would otherwise survive the run.
   trackForReaping(rstudioProcess, () => killProcessTree(rstudioProcess));
   const launchTarget = DEV_MODE ? `npm run start (cwd ${DEV_DESKTOP_DIR})` : RSTUDIO_PATH;
+  // Dev mode inherits the streams to the terminal, so there is nothing to
+  // read; every other path pipes them and would otherwise discard them.
+  const outputTail = DEV_MODE ? undefined : captureOutputTail(rstudioProcess);
   let launchError: Error | undefined;
+  let cdpConnected = false;
   rstudioProcess.on('error', (err) => {
     launchError = new Error(`Failed to launch RStudio (${launchTarget}): ${err.message}`);
   });
   // `'error'` only fires on spawn-level failures (ENOENT). An exit with a
   // non-zero code -- missing npm script, webpack abort, electron-forge
   // crash -- would otherwise sit unnoticed for the full CDP-wait timeout.
-  // We only treat code !== 0 as an error; code === null means the process
-  // was killed by signal (typically our own killProcessTree during
-  // teardown), which isn't a launch failure.
+  // A signal death (code === null) is usually our own killProcessTree, but
+  // that only runs after we have already decided to fail -- so before CDP is
+  // up the signal came from outside (OOM killer, segfault), which is exactly
+  // the launch failure rstudio#18522 could never account for.
   rstudioProcess.on('exit', (code, signal) => {
     if (code !== null && code !== 0) {
       launchError = new Error(
         `RStudio process (${launchTarget}) exited prematurely with code ${code}${signal ? ` (signal ${signal})` : ''}`,
+      );
+    } else if (code === null && signal && !cdpConnected) {
+      launchError = new Error(
+        `RStudio process (${launchTarget}) was killed by ${signal} before CDP became reachable`,
       );
     }
   });
@@ -719,8 +730,12 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   let lastConnectErr: unknown;
   while (Date.now() < cdpDeadline) {
     if (launchError) {
+      // The child has exited by now; give its streams a moment to deliver the
+      // trailing output, which is the part that says why it died.
+      await outputTail?.settled();
+      const state = describeLaunchState(rstudioProcess, outputTail?.text(), cdpPortListenerPids());
       killProcessTree(rstudioProcess);
-      throw launchError;
+      throw new Error(`${launchError.message}\n${state}`);
     }
     try {
       browser = await chromium.connectOverCDP(CDP_URL, { timeout: 5000 });
@@ -731,11 +746,14 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     }
   }
   if (!browser) {
+    await outputTail?.settled();
+    const state = describeLaunchState(rstudioProcess, outputTail?.text(), cdpPortListenerPids());
     killProcessTree(rstudioProcess);
     throw new Error(
-      `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
+      `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}\n${state}`,
     );
   }
+  cdpConnected = true;
 
   attachLaunchDebug(browser);
 
@@ -843,6 +861,8 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     logLaunchStep('console input not busy');
     console.log('RStudio console is ready');
 
+    await keepRequestInterceptionOn(page.context());
+
     // rsession logs land in RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp).
     const logDir = path.join(tempConfig.dataHome, 'log');
     return {
@@ -869,13 +889,13 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
 export type RStudioProcessSnapshot = ReadonlyMap<number, string>;
 
 /**
- * Relaunch RStudio after a full quit+restart (e.g. uninstall Posit Assistant).
+ * Relaunch RStudio after a full quit+restart triggered from the IDE.
  * The doRestart() flow quits Electron entirely and opens a new window without
  * our CDP flag. We wait for the old process to exit, kill the non-CDP restart
  * instance, and launch a fresh CDP-enabled session.
  *
  * `processesBefore` must be captured with snapshotRStudioProcesses() BEFORE
- * the restart is triggered (e.g. before confirming the uninstall dialog).
+ * the restart is triggered (e.g. before confirming the dialog that restarts).
  * The restart instance is spawned by the old Electron main as part of its
  * quit sequence, so a snapshot taken here would race that spawn: on a loaded
  * runner the restart instance's main process is already running and lands in

@@ -2,6 +2,7 @@
 #include <server/DBActiveSessionStorage.hpp>
 #include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RActiveSessions.hpp>
 #include <boost/filesystem.hpp>
 #include <core/Result.hpp>
 #include <iostream>
@@ -18,6 +19,23 @@ SqliteConnectionOptions sqliteConnectionOptions()
    return SqliteConnectionOptions { tempDb.getAbsolutePath() };
 }
 
+Result<std::string> readCreateTablesScript(const std::string& fileName)
+{
+   // the build stages the db/ schema folder next to this test executable, so
+   // resolve the script against the executable rather than the working
+   // directory the tests were launched from
+   FilePath exePath;
+   if (Error error = system::executablePath(nullptr, &exePath))
+      return Unexpected(error);
+
+   FilePath createDbPath = exePath.getParent().completeChildPath("db/" + fileName);
+   std::string createDbStr;
+   if (Error error = readStringFromFile(createDbPath, &createDbStr))
+      return Unexpected(error);
+
+   return createDbStr;
+}
+
 Result<boost::shared_ptr<IConnection>> initializeSQLiteDatabase(SqliteConnectionOptions options, system::User user)
 {
    // Delete the db if it exists
@@ -31,12 +49,10 @@ Result<boost::shared_ptr<IConnection>> initializeSQLiteDatabase(SqliteConnection
       return Unexpected(error);
 
    // Execute the create db script
-   FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-   FilePath createDbPath = workingDir.completeChildPath("db/CreateTables.sqlite");
-   std::string createDbStr;
-   if (Error error = readStringFromFile(createDbPath, &createDbStr))
-      return Unexpected(error);
-   if (Error error = connection->executeStr(createDbStr))
+   Result<std::string> createDbStr = readCreateTablesScript("CreateTables.sqlite");
+   if (!createDbStr)
+      return Unexpected(createDbStr.error());
+   if (Error error = connection->executeStr(*createDbStr))
       return Unexpected(error);
 
    // Insert a user to own the sessions
@@ -79,13 +95,11 @@ Result<boost::shared_ptr<IConnection>> initializePostgresqlDatabase(PostgresqlCo
    connection->executeStr("GRANT ALL ON SCHEMA public TO public");
 
    // Execute the create db script
-   FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-   FilePath createDbPath = workingDir.completeChildPath("db/CreateTables.postgresql");
-   std::string createDbStr;
-   if (Error error = readStringFromFile(createDbPath, &createDbStr))
-      return Unexpected(error);
+   Result<std::string> createDbStr = readCreateTablesScript("CreateTables.postgresql");
+   if (!createDbStr)
+      return Unexpected(createDbStr.error());
    connection->executeStr("BEGIN TRANSACTION");
-   if (Error error = connection->executeStr(createDbStr))
+   if (Error error = connection->executeStr(*createDbStr))
       return Unexpected(error);
    connection->executeStr("COMMIT");
 
@@ -676,6 +690,24 @@ TEST_F(SqliteDBActiveSessionStorageTest, DestroyRemovesSession)
    isEmpty = false;
    ASSERT_FALSE(storage->isEmpty(&isEmpty));
    ASSERT_TRUE(isEmpty);
+}
+
+// A batch read with no fields reads ActiveSession::defaultProperties(), and one property
+// this storage cannot map to a column fails the whole read, dropping the session from
+// the batch.
+TEST_F(SqliteDBActiveSessionStorageTest, DefaultPropertiesAreAllReadable)
+{
+   // GIVEN: An existing session row
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+
+   // WHEN: The default property set is read
+   std::map<std::string, std::string> props;
+   Error error = storage->readProperties(r_util::ActiveSession::defaultProperties(), &props);
+
+   // THEN: It succeeds and returns every default property
+   ASSERT_FALSE(error) << "readProperties failed: " << error.asString();
+   for (const std::string& name : r_util::ActiveSession::defaultProperties())
+      EXPECT_NE(props.find(name), props.end()) << "missing default property: " << name;
 }
 
 // PostgreSQL equivalents

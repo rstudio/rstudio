@@ -55,6 +55,7 @@ std::string getResumedMessage();
 void initFromResume();
 
 bool suspendSession(bool force, int status = EXIT_SUCCESS);
+std::string noSaveEnvVars();
 void handleUSR1(int unused);
 void handleUSR2(int unused);
 bool suspendedFromTimeout();

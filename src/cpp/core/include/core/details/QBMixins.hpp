@@ -266,6 +266,15 @@ public:
       return std::move(*self);
    }
 
+   // As where(), but wraps the clause in `NOT (...)`
+   BUILDER&& whereNot(QBCompoundWhere&& clause)
+   {
+      auto node = clause.takeNode();
+      node->negate = true;
+      whereClauses.add(node);
+      return std::move(*self);
+   }
+
 protected:
    std::string buildWhereClause() const
    {

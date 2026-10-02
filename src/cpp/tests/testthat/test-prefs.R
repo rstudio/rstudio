@@ -64,3 +64,27 @@ test_that("rstudio API prefs are separate from IDE prefs", {
    prefVal <- .rs.api.readRStudioPreference("code_completion_delay")
    expect_equal(prefVal, oldVal)
 })
+
+test_that("whole numbers can be written to integer preferences", {
+   oldVal <- .rs.readUiPref("code_completion_delay")
+   on.exit(.rs.writeUiPref("code_completion_delay", oldVal), add = TRUE)
+
+   # R numbers are doubles unless written with an L suffix
+   .rs.writeUiPref("code_completion_delay", 300)
+   expect_identical(.rs.readUiPref("code_completion_delay"), 300L)
+
+   # a value with a fractional part is still rejected
+   expect_error(.rs.writeUiPref("code_completion_delay", 300.5), "Type mismatch")
+   expect_identical(.rs.readUiPref("code_completion_delay"), 300L)
+})
+
+test_that("integers can be written to number preferences", {
+   oldVal <- .rs.readUiPref("font_size_points")
+   on.exit(.rs.writeUiPref("font_size_points", oldVal), add = TRUE)
+
+   .rs.writeUiPref("font_size_points", 12L)
+   expect_identical(.rs.readUiPref("font_size_points"), 12)
+
+   .rs.writeUiPref("font_size_points", 12.5)
+   expect_identical(.rs.readUiPref("font_size_points"), 12.5)
+})

@@ -27,6 +27,7 @@
 #include "modules/SessionAssistant.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
+#include "modules/SessionDirty.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFind.hpp"
@@ -63,6 +64,7 @@
 #include <core/http/Cookie.hpp>
 #include <core/http/CSRFToken.hpp>
 #include <core/r_util/RSessionContext.hpp>
+#include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Locale.hpp>
 
@@ -177,6 +179,8 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
 {
+   core::startup_timing::checkpoint("client-init-begin");
+
    // notify that we're about to initialize
    module_context::events().onBeforeClientInit();
    
@@ -313,6 +317,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
+
+   // the save action a quit or project close would take right now
+   sessionInfo["save_action"] = modules::dirty::saveAction();
 
    // resumed
    sessionInfo["resumed"] = resumed;
@@ -495,6 +502,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["quarto_config"] = quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
+   sessionInfo["graphics_default_backend"] = modules::graphics::defaultBackend();
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
    sessionInfo["presentation_commands"] = options.allowPresentationCommands();
@@ -736,16 +744,19 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #endif
 
    ptrConnection->sendResponse(response);
+   core::startup_timing::checkpoint("client-init-response-sent");
 
    // complete initialization of session
    init::ensureSessionInitialized();
-   
+   core::startup_timing::checkpoint("session-initialized");
+
    // notify modules of the client init
    module_context::events().onClientInit();
-   
+
    // call the init function
    initFunction();
 
+   core::startup_timing::checkpoint("client-init-end");
    LOG_DEBUG_MESSAGE("End /rpc/client_init for client: " + clientId);
 }
 

@@ -4,6 +4,11 @@ import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
 import { executeCommand } from '../utils/commands';
+import {
+  failUnlessAiServiceGone,
+  skipForAiServiceFailure,
+  skipIfAiServiceGone,
+} from '../utils/ai-credentials';
 
 // The stop button flickers off between streaming phases -- notably in the
 // approval -> tool-execution handoff right after clicking Allow -- so a single
@@ -29,6 +34,88 @@ const PANEL_AUTO_CLOSE_TIMEOUT_MS = 1000;
 const PANEL_CLOSED_SAMPLES = 3;
 const PANEL_CLOSED_SAMPLE_INTERVAL_MS = 200;
 
+// How Posit Assistant words a request that failed on the far side of the
+// provider call (databot's formatApiError). The message is appended to the
+// reply being streamed, so it ends the reply's last line -- possibly glued to
+// partial text, hence end-anchored only.
+//
+// Service-side: the Posit AI service answered, with a failure of its own --
+// HTTP 429, 500, another 5xx, 529.
+const SERVICE_FAILURE_MESSAGES = [
+  /Too many requests\. Please wait a moment and try again\.$/,
+  /The AI service encountered an internal error\. Please try again\.$/,
+  /The AI service is temporarily unavailable \(HTTP 5\d\d\)\. Please try again\.$/,
+  /The AI model is currently overloaded\. Please try again in a few moments\.$/,
+];
+
+// Network-side: a request that failed without any HTTP status. Bare
+// "Error making request" is how databot shows a failure it can say nothing
+// more about -- in run 34994843398, retried connect timeouts to
+// gateway.posit.ai. Otherwise a detail follows, e.g. the Node network error
+// ("Error making request: read ETIMEDOUT", from the same run). An error
+// databot doesn't recognize as an API failure is shown raw instead, as "[An
+// error occurred: ...]" -- a tool crash as readily as a network error, so only
+// the network details below count. None of this proves the far side failed;
+// skipIfProviderFailed has the runner re-probe the service before skipping.
+const FAILED_REQUEST_MESSAGE = /(?:Error making request(?:: (.+))?|\[An error occurred: (.+)\])$/;
+
+const NETWORK_ERROR_DETAIL =
+  /^(?:terminated|fetch failed|socket hang up|other side closed)$|\b(?:E(?:TIMEDOUT|CONNRESET|CONNREFUSED|CONNABORTED|NOTFOUND|AI_AGAIN|NETUNREACH|HOSTUNREACH|PIPE)|UND_ERR_[A-Z_]+)\b|Cannot connect to API|Connect Timeout Error/;
+
+// A network error on a loopback address is the assistant failing to reach
+// something local -- RStudio's own endpoints -- which no outage explains.
+const LOOPBACK_DETAIL = /\b(?:127\.\d+\.\d+\.\d+|localhost)\b|\[?::1\]?:\d+/;
+
+// Anthropic's streamed overloaded_error, relayed through the Posit AI gateway
+// mid-response: an SSE error event with no HTTP status of its own.
+const SERVICE_ERROR_DETAIL = /^Overloaded$/;
+
+/**
+ * A request to Posit AI that failed, as the assistant rendered it at the end
+ * of a reply.
+ *
+ * `side` is 'service' when the service answered with a failure of its own,
+ * 'network' when the request failed without any HTTP status.
+ */
+export interface ProviderFailure {
+  message: string;
+  side: 'service' | 'network';
+}
+
+/**
+ * Recognize Posit AI reporting that a request failed on its side, from the
+ * rendered text of a chat message. Returns null for anything else --
+ * including request failures a product change could cause (an HTTP 4xx, a
+ * rejected tool schema), which stay real failures.
+ */
+export function providerFailure(messageText: string): ProviderFailure | null {
+  const lines = messageText.split('\n').map((line) => line.trim()).filter((line) => line !== '');
+  const lastLine = lines[lines.length - 1] ?? '';
+
+  if (SERVICE_FAILURE_MESSAGES.some((pattern) => pattern.test(lastLine))) {
+    return { message: lastLine, side: 'service' };
+  }
+
+  const match = FAILED_REQUEST_MESSAGE.exec(lastLine);
+  if (match === null) {
+    return null;
+  }
+
+  const detail = match[1] ?? match[2];
+  if (detail !== undefined && LOOPBACK_DETAIL.test(detail)) {
+    return null;
+  }
+  if (detail === undefined || NETWORK_ERROR_DETAIL.test(detail)) {
+    // "[An error occurred]" always carries a detail, so a bare match is the
+    // bare "Error making request".
+    return { message: match[0], side: 'network' };
+  }
+  if (SERVICE_ERROR_DETAIL.test(detail)) {
+    return { message: match[0], side: 'service' };
+  }
+  return null;
+}
+
 export class ChatPaneActions {
   readonly page: Page;
   readonly chatPane: ChatPane;
@@ -52,6 +139,19 @@ export class ChatPaneActions {
   }
 
   async dismissSetupPrompts(): Promise<void> {
+    try {
+      await this.settleSetupPrompts();
+    } catch (err) {
+      // Installing, updating, and signing in all need Posit AI's hosts; the
+      // install manifest alone comes from cdn.posit.co. When that download
+      // timed out (run 34994843398), the assistant never installed and the
+      // pane sat at "Posit Assistant Not Enabled" until waitForChatReady gave
+      // up. Called from a beforeAll, the skip covers the whole suite.
+      await failUnlessAiServiceGone('positai', err);
+    }
+  }
+
+  private async settleSetupPrompts(): Promise<void> {
     // openChatPane() only waits for the iframe element, not its contents. The
     // setup prompts (Install / Update) and the real chat app all render
     // asynchronously after a backend install-status round-trip, so a single
@@ -317,13 +417,32 @@ export class ChatPaneActions {
    * AskUser question. Without it, an unanswered question is a hard error
    * rather than a spin to the timeout: the turn cannot finish on its own, so
    * the caller must either answer or reword the prompt.
+   *
+   * A turn that ends with Posit AI reporting a failure on its side skips the
+   * test (see skipIfProviderFailed), unless that failure was already showing
+   * when the poll began: it then belongs to a turn that had ended, not to the
+   * one being waited on. It is ignored only while it is still the last
+   * message -- a caller polling right after clicking send can get here before
+   * its own message has rendered, and the turn it started is still watched. A
+   * failure that is not skipped is looked at once; isDone and the timeout
+   * decide.
+   *
+   * `watchForProviderFailure: false` turns that off, for a wait on a turn the
+   * caller did not send (see sendChatMessage).
    */
   async pollWithAllowDialogs(
     isDone: () => Promise<boolean>,
     timeout: number = 120000,
-    answerQuestion?: RegExp | string
+    answerQuestion?: RegExp | string,
+    options: { watchForProviderFailure?: boolean } = {}
   ): Promise<void> {
     const deadline = Date.now() + timeout;
+    let watchForProviderFailure = options.watchForProviderFailure ?? true;
+
+    // Count before text: a message landing between the two reads then counts
+    // as new, which errs toward watching it.
+    const initialCount = await this.chatPane.getMessageCount();
+    let staleFailure = providerFailure(await this.chatPane.lastMessageText()) !== null;
 
     while (Date.now() < deadline) {
       if (await this.chatPane.isPendingQuestionVisible()) {
@@ -363,6 +482,15 @@ export class ChatPaneActions {
         continue;
       }
 
+      // A provider failure ends the turn short of whatever isDone waits for;
+      // catch it here rather than after the full timeout.
+      if (staleFailure && (await this.chatPane.getMessageCount()) !== initialCount) {
+        staleFailure = false;
+      }
+      if (watchForProviderFailure && !staleFailure && (await this.skipIfProviderFailed())) {
+        watchForProviderFailure = false;
+      }
+
       // Check caller's condition
       if (await isDone()) {
         return;
@@ -371,7 +499,52 @@ export class ChatPaneActions {
       await sleep(1000);
     }
 
-    throw new Error(`pollWithAllowDialogs timed out after ${timeout}ms`);
+    await failUnlessAiServiceGone(
+      'positai',
+      new Error(`pollWithAllowDialogs timed out after ${timeout}ms`)
+    );
+  }
+
+  /**
+   * Skip the current test when the conversation's finished turn ends with
+   * Posit AI reporting that a request failed on its side (see
+   * providerFailure): an outage or an overloaded service is not a product
+   * bug, and letting the caller assert against "Error making request" only
+   * produces a misleading failure.
+   *
+   * A service-side failure skips outright. A network-side one skips only when
+   * the service is unreachable from the runner too: the request leaves from
+   * the assistant's backend, which RStudio launches, so a failure the runner
+   * can't reproduce may be ours. Whatever isn't skipped is logged and left to
+   * the caller's own checks -- some pass on an error reply (a message count
+   * that grew, a file a tool wrote before the failure).
+   *
+   * Only a finished turn counts: after a failed request the assistant can
+   * still run the tools that step asked for and carry on. Returns whether a
+   * failure was found and not skipped.
+   */
+  async skipIfProviderFailed(): Promise<boolean> {
+    const failure = providerFailure(await this.chatPane.lastMessageText());
+    if (failure === null || !(await this.isTurnIdle())) {
+      return false;
+    }
+
+    const quoted = JSON.stringify(failure.message);
+    let notSkipped: string;
+    if (failure.side === 'service') {
+      skipForAiServiceFailure('positai', quoted);
+      notSkipped = 'PW_AI_AUTH_STRICT is set';
+    } else {
+      await skipIfAiServiceGone('positai');
+      notSkipped = 'every Posit AI host still answers from the test runner, or PW_AI_AUTH_STRICT is set';
+    }
+
+    console.warn(
+      `Posit AI request failed: ${quoted}. Not skipped (${notSkipped}); leaving the ` +
+      "outcome to the test's own checks. If it fails, the attached positai.log has " +
+      "the assistant backend's side of the failure."
+    );
+    return true;
   }
 
   /**
@@ -429,10 +602,15 @@ export class ChatPaneActions {
     // and a turn parked on an approval stays active until it is granted.
     // Wait the turn out here, before typing: the composer re-renders when the
     // turn ends, so text buffered into it beforehand does not survive.
+    //
+    // No provider-failure watch: waitForResponse can return with its turn
+    // still running, so the turn being waited out may be a previous test's,
+    // and its failing must not skip a test that has yet to send anything.
     await this.pollWithAllowDialogs(
       () => this.isTurnIdle(),
       60000,
-      answerQuestion
+      answerQuestion,
+      { watchForProviderFailure: false }
     );
 
     const baseline = await this.chatPane.getMessageCount();
@@ -495,6 +673,7 @@ export class ChatPaneActions {
 
         const finalCount = await this.chatPane.getMessageCount();
         console.log(`Message count: ${initialCount} → ${finalCount}`);
+        await this.skipIfProviderFailed();
         return finalCount;
       }
 
@@ -504,10 +683,14 @@ export class ChatPaneActions {
     const finalCount = await this.chatPane.getMessageCount();
     if (finalCount > initialCount) {
       console.log(`Message count: ${initialCount} → ${finalCount}`);
+      await this.skipIfProviderFailed();
       return finalCount;
     }
 
-    throw new Error(`Timed out waiting for response. Message count stuck at ${finalCount} (expected > ${initialCount})`);
+    return await failUnlessAiServiceGone(
+      'positai',
+      new Error(`Timed out waiting for response. Message count stuck at ${finalCount} (expected > ${initialCount})`)
+    );
   }
 
   async getPositAssistantVersion(): Promise<string> {

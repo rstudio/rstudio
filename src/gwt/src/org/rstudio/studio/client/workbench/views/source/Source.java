@@ -575,8 +575,9 @@ public class Source implements InsertSourceEvent.Handler,
          openEditPublishedDocs();
       }
 
-      // add vim commands
-      columnManager_.initVimCommands();
+      // add vim commands once the vim keybindings load (they load lazily,
+      // requested by the first editor that uses them)
+      AceEditor.onKeybindingsLoaded(() -> columnManager_.initVimCommands());
    }
 
    private void loadFullSource()

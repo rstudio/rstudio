@@ -341,29 +341,47 @@ public class EditingTargetCodeExecution
       moveCursorAfterExecution(range, true);
    }
    
+   /**
+    * The range of the (possibly multi-line) R statement containing the
+    * cursor -- what Execute Current Statement runs, minus the comment lines
+    * it also picks up above the statement.
+    */
+   public static Range getCurrentStatementRange(DocDisplay docDisplay)
+   {
+      int[] limits = getRowLimits(docDisplay);
+      return docDisplay.getMultiLineExpr(docDisplay.getCursorPosition(), limits[0], limits[1]);
+   }
+
+   // rows a statement or paragraph may span: the whole document, or the
+   // body of the chunk containing the cursor
+   private static int[] getRowLimits(DocDisplay docDisplay)
+   {
+      int startRowLimit = 0;
+      int endRowLimit = docDisplay.getRowCount();
+
+      Scope scope = docDisplay.getCurrentChunk();
+      if (scope != null)
+      {
+         startRowLimit = scope.getBodyStart().getRow();
+         endRowLimit = scope.getEnd().getRow() - 1;
+      }
+
+      return new int[] { startRowLimit, endRowLimit };
+   }
+
    private Range getRangeFromBehavior(String executionBehavior)
    {
       Range range;
       
-      // by default the range can encompass the whole document
-      int startRowLimit = 0;
-      int endRowLimit = docDisplay_.getRowCount();
-      
-      // limit range to chunk if we're inside one
-      Scope scope = docDisplay_.getCurrentChunk();
-      if (scope != null)
-      {
-        
-         startRowLimit = scope.getBodyStart().getRow();
-         endRowLimit = scope.getEnd().getRow() - 1;
-      }
+      int[] limits = getRowLimits(docDisplay_);
+      int startRowLimit = limits[0];
+      int endRowLimit = limits[1];
   
       if (executionBehavior == UserPrefs.EXECUTION_BEHAVIOR_STATEMENT)
       {
          // no scope to guard region, check the document itself to find
          // the region to execute
-         range = docDisplay_.getMultiLineExpr(
-               docDisplay_.getCursorPosition(), startRowLimit, endRowLimit);
+         range = getCurrentStatementRange(docDisplay_);
          
          // expand to include comments (10 lines max)
          int startRow = range.getStart().getRow();

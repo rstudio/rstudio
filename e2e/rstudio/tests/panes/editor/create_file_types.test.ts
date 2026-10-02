@@ -41,9 +41,9 @@ test.describe('Create file types', () => {
   // ---- Types that need neither an R package nor a creation dialog ----
   // Original: test_creating_new_file_without_required_packages_nor_modals
   const simpleTypes: ReadonlyArray<readonly [command: string, fileType: string]> = [
-    ['newCDoc', 'C/C++'],
-    ['newCppDoc', 'C/C++'],
-    ['newHeaderDoc', 'C/C++'],
+    ['newCDoc', 'C'],
+    ['newCppDoc', 'C++'],
+    ['newHeaderDoc', 'C/C++ Header'],
     ['newCssDoc', 'CSS'],
     ['newHtmlDoc', 'HTML'],
     ['newJavaScriptDoc', 'JavaScript'],
@@ -64,7 +64,10 @@ test.describe('Create file types', () => {
     test(`create ${fileType} document via ${command}`, async ({ rstudioPage: page }) => {
       await executeCommand(page, command);
       await expect(sourceTabs(page)).toHaveCount(2, { timeout: 20000 });
-      await expect(sourceActions.sourcePane.footerTable).toContainText(fileType);
+      // Exact match, since a substring check can't tell 'C' from 'C++'.
+      await expect(
+        sourceActions.sourcePane.footerTable.getByText(fileType, { exact: true })
+      ).toBeVisible();
       await consoleActions.resetSourcePane();
     });
   }

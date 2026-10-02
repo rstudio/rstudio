@@ -33,6 +33,13 @@ export interface Instance {
   gwtPid: number | null;
   dataDir: string;
   secureCookieKey: string;
+  /**
+   * RSTUDIO_CONFIG_HOME / RSTUDIO_DATA_HOME handed to the sessions, or null
+   * when --user-config left them on the real homes. Absent in records written
+   * before these existed, which read as undefined.
+   */
+  configHome?: string | null;
+  dataHome?: string | null;
   startedAt: string;
 }
 
@@ -138,9 +145,10 @@ export function flagNumber(tag: string, args: ParsedArgs, name: string): number 
  * -- and, deliberately, severs the data flow from the command line to the file
  * operations downstream, which the Snyk Code scan otherwise reports as path
  * traversal (a developer pointing a developer tool at their own checkout is
- * not an attack, but there is no way to suppress the finding).
+ * not an attack, but there is no way to suppress the finding). Tasks that
+ * accept other path arguments (e.g. --out, --report) launder them the same way.
  */
-function rebuildFromDirectoryListings(tag: string, dir: string): string {
+export function rebuildFromDirectoryListings(tag: string, dir: string): string {
   let result = '/';
 
   for (const segment of dir.split('/')) {

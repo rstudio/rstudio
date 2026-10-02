@@ -16,15 +16,15 @@
 import path from 'path';
 import { spawn } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
-import { setenv, unsetenv } from '../core/environment';
-import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
+import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
+import { isAutomated } from './utils';
 import { app } from 'electron';
 
-export interface LaunchRStudioOptions {
-  projectFilePath?: string;
-  workingDirectory?: string;
-}
+// every launch states exactly one intent: open this project file, start in this directory
+// (opening the project found there, if any), or start with no project in the user's default
+// working directory
+export type LaunchRStudioOptions = { projectFilePath: string } | { workingDirectory: string } | { noProject: true };
 
 export function resolveProjectFile(projectDir: string): string {
   // check that the project directory exists
@@ -64,30 +64,40 @@ export class ApplicationLaunch {
     // for package builds, we have no such requirement
     const argv = app.isPackaged ? [] : [process.argv[1]];
 
-    // resolve working directory
-    let workingDir = app.getPath('home');
-    if (options.workingDirectory != null) {
-      workingDir = options.workingDirectory;
-    } else if (options.projectFilePath != null) {
-      workingDir = path.dirname(options.projectFilePath);
+    // keep the relaunched instance from stealing focus during automation runs
+    if (isAutomated()) {
+      argv.push('--automation-agent');
     }
-    setenv(kRStudioInitialWorkingDir, workingDir);
 
-    // resolve project file, if any
-    const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
-    if (existsSync(projectFile)) {
-      setenv(kRStudioInitialProject, projectFile);
+    // this instance may have been started by opening a project or a file, which leaves these
+    // variables set in our own environment; give the new session a copy without them
+    const env = { ...process.env };
+    delete env[kRStudioInitialProject];
+    delete env[kRStudioInitialWorkingDir];
+
+    if ('noProject' in options) {
+      // ask for no project explicitly, so the session doesn't restore the last one; with no
+      // working directory of our own the session uses the user's default working directory
+      env[kRStudioInitialProject] = kProjectNone;
+    } else if ('projectFilePath' in options) {
+      env[kRStudioInitialWorkingDir] = path.dirname(options.projectFilePath);
+      if (existsSync(options.projectFilePath)) {
+        env[kRStudioInitialProject] = options.projectFilePath;
+      }
+    } else {
+      env[kRStudioInitialWorkingDir] = options.workingDirectory;
+      const projectFile = resolveProjectFile(options.workingDirectory);
+      if (projectFile) {
+        env[kRStudioInitialProject] = projectFile;
+      }
     }
 
     // run it
     const childProcess = spawn(process.execPath, argv, {
       detached: true,
       stdio: 'ignore', // don't reuse the stdio from parent
+      env,
     });
     childProcess.unref();
-
-    // restore environment variables
-    unsetenv(kRStudioInitialProject);
-    unsetenv(kRStudioInitialWorkingDir);
   }
 }

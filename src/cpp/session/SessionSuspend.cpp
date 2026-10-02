@@ -22,6 +22,7 @@
 #endif
 
 #include "SessionConsoleInput.hpp"
+#include "SessionSuspendOverlay.hpp"
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionConstants.hpp>
@@ -326,6 +327,12 @@ bool suspendedForcibly()
    return s_suspendedForcibly;
 }
 
+std::string noSaveEnvVars()
+{
+   std::string noSaveVars = session::options().ephemeralEnvVars();
+   return overlay::noSaveEnvVars(noSaveVars);
+}
+
 bool suspendSession(bool force, int status)
 {
    // remember whether this is a forced suspend so later cleanup can decide
@@ -367,7 +374,7 @@ bool suspendSession(bool force, int status)
    module_context::activeSession().setSuspensionTime();
 
    // perform the suspend (does not return if successful)
-   return r::session::suspend(force, status, session::options().ephemeralEnvVars());
+   return r::session::suspend(force, status, noSaveEnvVars());
 }
 
 void checkForIdleSuspend(const boost::function<bool()>& allowSuspend)

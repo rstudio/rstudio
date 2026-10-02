@@ -20,12 +20,17 @@
 #include <vector>
 #include <map>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/function.hpp>
+#include <boost/optional.hpp>
+
 #include <boost/asio/io_context.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/http/AsyncClient.hpp>
 #include <core/http/Request.hpp>
 #include <core/Thread.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixChildProcessTracker.hpp>
@@ -53,29 +58,54 @@ SessionManager& sessionManager();
 // of session child processes
 class SessionManager
 {
+public:
+   struct Config
+   {
+      boost::posix_time::time_duration launchWindow = boost::posix_time::minutes(1);
+      boost::posix_time::time_duration stalePendingLaunchAge = boost::posix_time::minutes(3);
+      boost::function<boost::posix_time::ptime()> now =
+         [] { return boost::posix_time::microsec_clock::universal_time(); };
+      boost::function<bool(PidType)> isProcessRunning =
+         [](PidType pid) { return core::system::isProcessRunning(pid); };
+   };
+
 private:
    // singleton
    SessionManager();
    friend SessionManager& sessionManager();
 
 public:
+   // a standalone manager (the server uses the sessionManager() singleton)
+   explicit SessionManager(const Config& config);
+
    // launching
    core::Error launchSession(boost::asio::io_context& ioContext,
                              const core::r_util::SessionContext& context,
+                             const core::json::JsonRpcRequest& jsonRequest,
                              const core::http::Request& request,
                              bool &launched,
                              core::system::Options environment,
                              const core::http::ResponseHandler& onLaunch = core::http::ResponseHandler(),
                              const core::http::ErrorHandler& onError = core::http::ErrorHandler(),
-                             const std::string& openFile = "");
-   void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string());
+                             const std::string& openFile = "",
+                             const core::system::Options extraArgs = core::system::Options());
+   // report the outcome of a request for the context. peerPid is the process
+   // that produced it (from the connection's peer credentials) or -1 when
+   // unknown, e.g. no connection was made or the session is reached over TCP
+   void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string(), PidType peerPid = -1);
 
-   void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string());
+   void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string(), PidType peerPid = -1);
 
    // associate the launched process with its pending launch so a launch whose
    // process dies before a client connection can be detected and cleared
    // (rather than suppressing relaunch attempts until it ages out)
    void notePendingLaunchPid(const core::r_util::SessionContext& context, PidType pid);
+
+   // the pid recorded on the context's pending launch (-1 if none has been
+   // recorded yet), or none when the context has no pending launch
+   boost::optional<PidType> pendingLaunchPid(const core::r_util::SessionContext& context);
+
+   std::size_t pendingLaunchCount();
 
    // remove the pending launch if it still belongs to the given (now exited)
    // process; a no-op when the context has no pending launch or the pending
@@ -86,6 +116,7 @@ public:
    typedef boost::function<core::Error(
                            boost::asio::io_context&,
                            const core::r_util::SessionLaunchProfile&,
+                           const core::json::JsonRpcRequest& jsonRequest,
                            const core::http::Request&,
                            const core::http::ResponseHandler& onLaunch,
                            const core::http::ErrorHandler& onError)>
@@ -120,11 +151,58 @@ private:
    {
       boost::posix_time::ptime launchTime;
       PidType pid = -1;
+
+      // set while the session launch function runs: a request for the
+      // context that ends meanwhile was answered (or failed) without this
+      // launch's process, which isn't listening yet
+      bool launching = false;
    };
 
-   boost::mutex launchesMutex_;
+   // the launch function made at launchTime has returned
+   void endLaunching(const core::r_util::SessionContext& context,
+                     const boost::posix_time::ptime& launchTime);
+
+   // what a request outcome did to a pending launch
+   enum class PendingLaunchOutcome
+   {
+      NotFound,      // the context had no pending launch
+      Removed,       // the outcome ended the launch
+      KeptLaunching, // kept: the launch is still being made
+      KeptOtherPid,  // kept: a process other than the launched one produced it
+      KeptLivePid    // kept: unattributed error, and the launched process is alive
+   };
+
+   struct PendingLaunchResolution
+   {
+      PendingLaunchOutcome outcome = PendingLaunchOutcome::NotFound;
+
+      // the process that produced the outcome (KeptOtherPid) or the launched
+      // process (KeptLivePid)
+      PidType pid = -1;
+
+      // when the launch was made (Removed)
+      boost::posix_time::ptime launchTime;
+   };
+
    typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;
+
+   // applies a request outcome to the entry (caller holds launchesMutex_),
+   // erasing it when the outcome ends the launch
+   PendingLaunchResolution resolvePendingLaunch(LaunchMap::const_iterator it,
+                                                bool success,
+                                                PidType peerPid);
+
+   // logs why an outcome left a pending launch in place, if it did
+   void logKeptPendingLaunch(const PendingLaunchResolution& resolution,
+                             const std::string& username,
+                             const std::string& sessionId,
+                             bool success,
+                             const std::string& errorMsg);
+
+   boost::mutex launchesMutex_;
    LaunchMap pendingLaunches_;
+
+   Config config_;
 
    // session launch function
    SessionLaunchFunction sessionLaunchFunction_;

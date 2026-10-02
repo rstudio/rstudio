@@ -15,6 +15,8 @@
 
 #include <signal.h>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/Algorithm.hpp>
 
 #include "SessionConsoleInput.hpp"
@@ -58,7 +60,8 @@ std::atomic<int> s_rProcessingInput(0);
 std::atomic<int> s_sessionExecuting(0);
 
 // Controls access to s_sessionExecuting and the file system
-boost::mutex s_sessionExecutingMutex;
+// leaked: locked by the offline service thread (#18318)
+boost::mutex& s_sessionExecutingMutex = core::make_leaked<boost::mutex>();
 
 // last prompt we issued
 std::string s_lastPrompt;

@@ -19,11 +19,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -47,19 +52,26 @@ public class SpellingService implements HasChangeHandlers
 {
    @Inject
    public SpellingService(SpellingServerOperations server,
-                          UserPrefs uiPrefs)
+                          UserPrefs uiPrefs,
+                          EventBus eventBus)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
+      dictionaryLanguage_ = uiPrefs_.spellingDictionaryLanguage().getValue();
       
-      uiPrefs.spellingDictionaryLanguage().addValueChangeHandler(
-                                           new ValueChangeHandler<String>(){
-         @Override
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            invalidateCache();
-         }
+      // Local preference values can change before the server has switched
+      // dictionaries. Recheck only once the preference write is confirmed.
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, (event) ->
+      {
+         // A complete saved layer can also remove the language preference.
+         if (event.isFullLayer() ||
+             event.getValues().hasKey(uiPrefs_.spellingDictionaryLanguage().getId()))
+            onDictionaryLanguageChanged();
       });
+
+      // Project Options also removes the project value when the global default
+      // is selected, so its confirmed change may not contain a language key.
+      eventBus.addHandler(ProjectOptionsChangedEvent.TYPE, (event) -> onDictionaryLanguageChanged());
       
       uiPrefs.spellingCustomDictionaries().addValueChangeHandler(
                                     new ValueChangeHandler<JsArrayString>() {
@@ -75,6 +87,8 @@ public class SpellingService implements HasChangeHandlers
                      List<String> words, 
                      final ServerRequestCallback<SpellCheckerResult> callback)
    {
+      final int dictionaryGeneration = dictionaryGeneration_;
+
       // results to return
       final SpellCheckerResult spellCheckerResult = new SpellCheckerResult();
       
@@ -111,6 +125,14 @@ public class SpellingService implements HasChangeHandlers
          @Override
          public void onResponseReceived(JsArrayInteger result)
          {
+            // Retry against the current dictionaries before caching or returning
+            // a response requested before the dictionaries changed.
+            if (dictionaryGeneration != dictionaryGeneration_)
+            {
+               checkSpelling(words, callback);
+               return;
+            }
+
             // get misspelled indexes
             ArrayList<Integer> misspelledIndexes = new ArrayList<>();
             for (int i=0; i<result.length(); i++)
@@ -139,6 +161,12 @@ public class SpellingService implements HasChangeHandlers
          @Override
          public void onError(ServerError error)
          {
+            if (dictionaryGeneration != dictionaryGeneration_)
+            {
+               checkSpelling(words, callback);
+               return;
+            }
+
             callback.onError(error);
          }
       });
@@ -147,7 +175,33 @@ public class SpellingService implements HasChangeHandlers
    public void suggestionList(String word,
                               ServerRequestCallback<JsArrayString> callback)
    {
-      server_.suggestionList(word, callback);
+      final int dictionaryGeneration = dictionaryGeneration_;
+      server_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString response)
+         {
+            if (dictionaryGeneration != dictionaryGeneration_)
+            {
+               suggestionList(word, callback);
+               return;
+            }
+
+            callback.onResponseReceived(response);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            if (dictionaryGeneration != dictionaryGeneration_)
+            {
+               suggestionList(word, callback);
+               return;
+            }
+
+            callback.onError(error);
+         }
+      });
    }
    
    public void addCustomDictionary(
@@ -167,14 +221,40 @@ public class SpellingService implements HasChangeHandlers
    public void installAllDictionaries(
                   ServerRequestCallback<SpellingPrefsContext> requestCallback)
    {
-      server_.installAllDictionaries(requestCallback);
+      server_.installAllDictionaries(new ServerRequestCallback<SpellingPrefsContext>()
+      {
+         @Override
+         public void onResponseReceived(SpellingPrefsContext context)
+         {
+            // Newly opened language pickers read this shared context.
+            uiPrefs_.spellingPrefsContext().setValue(PrefLayer.LAYER_COMPUTED, context);
+            requestCallback.onResponseReceived(context);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            requestCallback.onError(error);
+         }
+      });
    }
    
    public void invalidateCache()
    {
+      dictionaryGeneration_++;
       previousResults_.clear();
       DomEvent.fireNativeEvent(Document.get().createChangeEvent(),
                                handlerManager_);
+   }
+
+   public void onDictionaryLanguageChanged()
+   {
+      String language = uiPrefs_.spellingDictionaryLanguage().getValue();
+      if (!StringUtil.equals(dictionaryLanguage_, language))
+      {
+         dictionaryLanguage_ = language;
+         invalidateCache();
+      }
    }
    
    @Override
@@ -226,6 +306,8 @@ public class SpellingService implements HasChangeHandlers
    private final UserPrefs uiPrefs_;
    
    private HashMap<String,Boolean> previousResults_ = new HashMap<>();
+   private int dictionaryGeneration_;
+   private String dictionaryLanguage_;
    
    HandlerManager handlerManager_ = new HandlerManager(this);
    

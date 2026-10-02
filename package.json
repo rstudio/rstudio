@@ -5,7 +5,8 @@
   "scripts": {
     "rserver-dev": "node tasks/rserver-dev.ts",
     "rserver-stop": "node tasks/rserver-stop.ts",
-    "rserver-status": "node tasks/rserver-status.ts"
+    "rserver-status": "node tasks/rserver-status.ts",
+    "startup-timing": "node tasks/startup-timing.ts"
   },
   "engines": {
     "node": ">=22.18.0"

@@ -1,17 +1,24 @@
-import { test as base, type Page, type TestInfo } from '@playwright/test';
+import { test as base, type Page, type PlaywrightWorkerOptions, type TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from './desktop.fixture';
 import { launchServer, shutdownServer, externalServerUrl } from './server.fixture';
 import { setAuthStateEnv, type AiAuthOption } from '../utils/auth';
-import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
+import { clearConsole } from '../pages/console_pane.page';
 import { ConsolePaneActions } from '../actions/console_pane.actions';
+import {
+  collectRunVersions,
+  formatRunVersions,
+  publishRunVersions,
+  runVersionsKey,
+} from '../utils/versions';
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
 import { readRemoteOdbcStatus } from '../utils/connections';
 import { withDeadline, DeadlineError } from '../utils/deadline';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
+import { selectedPaiInstalls } from './pai-seed';
 
 type Mode = 'desktop' | 'server';
 
@@ -112,10 +119,15 @@ async function disableLeakedAssistant(page: Page): Promise<void> {
   if (leakedOn(chatProvider)) await setPref(page, 'chat_provider', 'none');
 }
 
-/** Capture R/RStudio versions once per worker and log them. */
-async function logVersions(page: Page): Promise<void> {
-  const versions = await getEnvironmentVersions(page);
-  console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
+/**
+ * Capture what this worker is running against, log it, and publish it for the
+ * reporter to put in the report metadata. The merge job reads that metadata back
+ * out to write the run summary, so nothing here touches the summary directly.
+ */
+async function recordVersions(page: Page, mode: Mode): Promise<void> {
+  const versions = await collectRunVersions(page, mode);
+  console.log(`Run under test: ${runVersionsKey(versions)} · ${formatRunVersions(versions)}`);
+  publishRunVersions(versions);
   await clearConsole(page);
 }
 
@@ -205,24 +217,22 @@ async function verifyTestManifestIfRequested(session: DesktopSession): Promise<v
  */
 async function logPositAssistantVersionIfInstalled(session: DesktopSession): Promise<void> {
   if (!session.requestedTestManifest) return;
-  const packageJsonPath = path.join(session.dataHome, 'pai', 'bin', 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
+  const storageDir = path.join(session.dataHome, 'pai');
+  const installs = selectedPaiInstalls(session.dataHome);
+  if (installs.length === 0) {
     console.warn(
-      `WARNING: this run requested the Posit Assistant test manifest, but no install exists at ` +
-      `${packageJsonPath} -- this worker exercised no Assistant build.`,
+      `WARNING: this run requested the Posit Assistant test manifest, but no install is selected ` +
+      `under ${storageDir} -- this worker exercised no Assistant build.`,
     );
     return;
   }
-  try {
-    const { version } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-    if (!version) {
-      console.warn(`WARNING: no version field in ${packageJsonPath}.`);
-      return;
-    }
-    logCiNotice(`Posit Assistant version under test: ${version}`);
-  } catch (err) {
-    console.warn(`WARNING: could not read Posit Assistant version from ${packageJsonPath}: ${err}`);
-  }
+  // Normally one. More than one means a seeded build did not satisfy the IDE
+  // and it installed another, so naming a single build here would name the
+  // wrong one -- which protocol the session ran is not readable from disk.
+  logCiNotice(
+    `Posit Assistant version under test: ` +
+    installs.map(i => `${i.version} (protocol ${i.protocol})`).join(', '),
+  );
 }
 
 /**
@@ -354,18 +364,32 @@ const WEDGE_PROBE_MS = 30_000;
  * error for the caller to throw. Failing the test fast makes Playwright
  * discard this worker and run the remaining tests in a fresh one, so the
  * shard survives with its report intact.
+ *
+ * Skipped when the test's `screenshot` option is 'off'; any other mode takes
+ * it, since a wedge always fails the test.
  */
-async function attachWedgeDiagnostics(page: Page, testInfo: TestInfo, cause: Error): Promise<Error> {
+async function attachWedgeDiagnostics(
+  page: Page,
+  testInfo: TestInfo,
+  cause: Error,
+  screenshot: PlaywrightWorkerOptions['screenshot'],
+): Promise<Error> {
   const url = page.url();
 
+  const screenshotMode = !screenshot ? 'off'
+    : typeof screenshot === 'string' ? screenshot : screenshot.mode;
   let screenshotNote = 'screenshot unavailable';
-  try {
-    const shot = await page.screenshot({ timeout: 5000 });
-    await testInfo.attach('wedged-page.png', { body: shot, contentType: 'image/png' });
-    screenshotNote = 'screenshot attached as wedged-page.png';
-  } catch {
-    // A frozen renderer can block even protocol-level capture; the URL
-    // alone still distinguishes the stuck-navigation case.
+  if (screenshotMode === 'off') {
+    screenshotNote = "screenshot skipped: screenshot option is 'off'";
+  } else {
+    try {
+      const shot = await page.screenshot({ timeout: 5000 });
+      await testInfo.attach('wedged-page.png', { body: shot, contentType: 'image/png' });
+      screenshotNote = 'screenshot attached as wedged-page.png';
+    } catch {
+      // A frozen renderer can block even protocol-level capture; the URL
+      // alone still distinguishes the stuck-navigation case.
+    }
   }
 
   console.error(`[wedged-page] ${cause.message}; page URL: ${url} (${screenshotNote})`);
@@ -413,7 +437,7 @@ export const test = base.extend<
       // Server mode doesn't expose a per-session log dir (the spawned rserver
       // shares a data home across workers); see the issue's desktop-only note.
       attachConsoleCapture(session.page, consoleBuffer);
-      await logVersions(session.page);
+      await recordVersions(session.page, 'server');
       const odbcDir = serverOdbcDir();
       if (odbcDir) {
         await applyOdbcSysIni(session.page, odbcDir);
@@ -426,7 +450,7 @@ export const test = base.extend<
     } else {
       const session = await launchRStudio();
       attachConsoleCapture(session.page, consoleBuffer);
-      await logVersions(session.page);
+      await recordVersions(session.page, 'desktop');
       await verifyTestManifestIfRequested(session);
       await use({
         page: session.page,
@@ -461,7 +485,7 @@ export const test = base.extend<
   // hid the Environment tab (#17952). Auto fixtures are part of the test type
   // itself, so they run for every test in every file regardless of module
   // caching.
-  perTestReset: [async ({ rstudioSession, mode }, use, testInfo) => {
+  perTestReset: [async ({ rstudioSession, mode, screenshot }, use, testInfo) => {
     const page = rstudioSession.page;
 
     // Drain exceptions that arrived BEFORE this test (a previous test's
@@ -477,7 +501,7 @@ export const test = base.extend<
     } catch (err) {
       if (!(err instanceof DeadlineError))
         throw err;
-      throw await attachWedgeDiagnostics(page, testInfo, err);
+      throw await attachWedgeDiagnostics(page, testInfo, err, screenshot);
     }
     for (const e of leftovers) {
       console.warn(
@@ -531,7 +555,7 @@ export const test = base.extend<
     } catch (err) {
       if (!(err instanceof DeadlineError))
         throw err;
-      wedge = await attachWedgeDiagnostics(page, testInfo, err);
+      wedge = await attachWedgeDiagnostics(page, testInfo, err, screenshot);
     }
     const ignoreClientExceptions = ['1', 'true'].includes(
       (process.env.PW_IGNORE_CLIENT_EXCEPTIONS ?? '').toLowerCase(),

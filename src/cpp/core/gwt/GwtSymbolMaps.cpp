@@ -19,6 +19,7 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include <istream>
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -27,6 +28,7 @@
 
 #include <core/Thread.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/ZlibUtil.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -72,6 +74,81 @@ ReadCollectionAction parseSymbolMapLine(
    pSymbolsLeftToFind->erase(*pFirst);
 
    return ReadCollectionAddLine;
+}
+
+Error readGzippedSymbolMap(const FilePath& gzMapPath,
+                           std::map<std::string,std::string>* pMap,
+                           std::set<std::string>* pSymbolsLeftToFind)
+{
+   std::shared_ptr<std::istream> pIfs;
+   Error error = gzMapPath.openForRead(pIfs);
+   if (error)
+      return error;
+
+   // stream the decompression through the line parser, so that lookups can
+   // terminate early without inflating the whole file (as with the plain
+   // symbol map). terminating early skips the gzip trailer CRC for the
+   // unread remainder, so callers validate the payload once up front (see
+   // validateGzipFile); corruption within the consumed region still
+   // surfaces as an inflate failure, which readCollectionFromStream()
+   // reports as a stream error.
+   try
+   {
+      zlib::GzipDecompressingStreambuf streambuf(*pIfs);
+      std::istream is(&streambuf);
+
+      error = readCollectionFromStream<std::map<std::string,std::string> >(
+               is,
+               pMap,
+               boost::bind(parseSymbolMapLine, _1, _2, pSymbolsLeftToFind));
+   }
+   catch(const std::exception& e)
+   {
+      error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("what", e.what());
+   }
+
+   if (error)
+      error.addProperty("path", gzMapPath.getAbsolutePath());
+
+   return error;
+}
+
+Error validateGzipFile(const FilePath& gzPath)
+{
+   std::shared_ptr<std::istream> pIfs;
+   Error error = gzPath.openForRead(pIfs);
+   if (error)
+      return error;
+
+   // read the entire stream, discarding the output, so that zlib validates
+   // the whole payload including the trailer CRC. decompression failures
+   // (including a truncated trailer) set the stream's badbit.
+   try
+   {
+      zlib::GzipDecompressingStreambuf streambuf(*pIfs);
+      std::istream is(&streambuf);
+
+      char buffer[8192];
+      while (is.read(buffer, sizeof(buffer)))
+      {
+      }
+
+      if (is.bad())
+      {
+         error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      }
+   }
+   catch(const std::exception& e)
+   {
+      error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("what", e.what());
+   }
+
+   if (error)
+      error.addProperty("path", gzPath.getAbsolutePath());
+
+   return error;
 }
 
 class SymbolCache : boost::noncopyable
@@ -131,6 +208,41 @@ struct SymbolMaps::Impl
 {
    FilePath symbolMapsPath;
    SymbolCache symbolCache;
+   boost::mutex validationMutex;
+   std::set<std::string> validatedGzMaps;
+
+   // validate each gzipped symbol map's integrity before allowing
+   // early-terminating reads, which skip the trailer CRC (see
+   // readGzippedSymbolMap)
+   //
+   // successful validations are memoized by path for the process lifetime;
+   // this assumes the file's contents are stable, which holds in practice
+   // because the file name is the GWT permutation's strong name (a content
+   // hash). failures are deliberately not memoized, so a file that was
+   // unreadable or damaged is revalidated on the next lookup and recovers
+   // if it has been repaired or replaced.
+   bool validateGzippedSymbolMap(const FilePath& gzMapPath)
+   {
+      LOCK_MUTEX(validationMutex)
+      {
+         std::string path = gzMapPath.getAbsolutePath();
+         if (validatedGzMaps.count(path) != 0)
+            return true;
+
+         Error error = validateGzipFile(gzMapPath);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return false;
+         }
+
+         validatedGzMaps.insert(path);
+         return true;
+      }
+      END_LOCK_MUTEX
+
+      return false;
+   }
 
    std::string loadOneSymbol(const std::string& strongName,
                              const std::string& symbol)
@@ -159,8 +271,12 @@ struct SymbolMaps::Impl
       // lookup additional symbols by reading the file
       std::set<std::string> symbolsLeftToFind = requiredSymbols;
 
-      // read it from disk if it exists
+      // read it from disk if it exists; packaged builds ship the symbol map
+      // gzipped, so fall back to the compressed form when the plain file is
+      // not available
+      bool cacheMissingSymbols = true;
       FilePath mapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap");
+      FilePath gzMapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap.gz");
       if (mapPath.exists())
       {
          Error error = readCollectionFromFile
@@ -172,11 +288,45 @@ struct SymbolMaps::Impl
             LOG_ERROR(error);
 
       }
+      else if (gzMapPath.exists())
+      {
+         if (validateGzippedSymbolMap(gzMapPath))
+         {
+            // parse into a scratch map that is merged only on success, so
+            // that a read failing partway through contributes nothing
+            std::map<std::string,std::string> gzSymbols;
+            Error error = readGzippedSymbolMap(gzMapPath,
+                                               &gzSymbols,
+                                               &symbolsLeftToFind);
+            if (error)
+            {
+               LOG_ERROR(error);
+
+               // treat a failed read like a failed validation below: leave
+               // the symbols uncached so a later lookup can retry them
+               cacheMissingSymbols = false;
+            }
+            else
+            {
+               toReturn.insert(gzSymbols.begin(), gzSymbols.end());
+            }
+         }
+         else
+         {
+            // the file could not be validated or read, so leave the symbols
+            // uncached: a lookup after the file is repaired can then retry
+            // them (validation failures are not memoized either)
+            cacheMissingSymbols = false;
+         }
+      }
 
       // mark all remaining symbols as having been looked for
-      for (const std::string& symbol : symbolsLeftToFind)
+      if (cacheMissingSymbols)
       {
-         toReturn[symbol] = SYMBOL_DATA_UNKNOWN;
+         for (const std::string& symbol : symbolsLeftToFind)
+         {
+            toReturn[symbol] = SYMBOL_DATA_UNKNOWN;
+         }
       }
 
       // add the return results to the cache

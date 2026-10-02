@@ -155,6 +155,9 @@ public class RenderRmdOutputPresenter extends BusyPresenter
       }
       else if (!event.getResult().getSucceeded())
       {
+         // ensureVisible() alone does not un-minimize the console pane, and a
+         // failure is exactly when the output needs to be seen
+         commands_.activateConsolePane().execute();
          view_.ensureVisible(true);
       }
       if (!event.getResult().getSucceeded() &&

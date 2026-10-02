@@ -85,6 +85,7 @@ public class CompileOutputBuffer extends Composite
    @Override
    public void onCompileCompleted()
    {
+      virtualConsole_.flushPartialAnsiCode();
    }
 
    @Override

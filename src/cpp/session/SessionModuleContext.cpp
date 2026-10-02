@@ -15,6 +15,7 @@
 
 #include "SessionModuleContextInternal.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <vector>
 
@@ -53,6 +54,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
@@ -195,7 +197,8 @@ private:
 
 ConsoleInputService& consoleInputService()
 {
-   static ConsoleInputService instance;
+   // leaked: the service thread can be blocked in a session request at exit (#18318)
+   static ConsoleInputService& instance = core::make_leaked<ConsoleInputService>();
    return instance;
 }
 
@@ -656,7 +659,9 @@ FilePath monitoredParentPath()
 
 bool monitoredScratchFilter(const FileInfo& fileInfo)
 {
-   return true;
+   // atomic writes pass through a temporary file, which the owning module
+   // would otherwise see appear and disappear
+   return !isAtomicWriteTempFile(FilePath(fileInfo.absolutePath()));
 }
 
 
@@ -1348,7 +1353,7 @@ bool addTinytexToPathIfNecessary()
       return false;
    
    s_added = true;
-   core::system::addToSystemPath(binPath);
+   core::system::addToPath(binPath.getAbsolutePath());
    return true;
 }
 
@@ -1471,7 +1476,7 @@ bool isTextFile(const FilePath& targetPath)
 
 }
 
-void editFile(const core::FilePath& filePath, int lineNumber)
+void editFile(const core::FilePath& filePath, int lineNumber, int column)
 {
    // construct file system item (also tag with mime type) and position
    json::Object fileJson = module_context::createFileSystemItem(filePath);
@@ -1481,8 +1486,8 @@ void editFile(const core::FilePath& filePath, int lineNumber)
    if (lineNumber >= 0)
    {
       json::Object positionJson;
-      positionJson["line"] = lineNumber;
-      positionJson["column"] = 1;
+      positionJson["line"] = std::max(lineNumber, 1);
+      positionJson["column"] = std::max(column, 1);
       positionJsonValue = positionJson;
    }
 
@@ -2148,7 +2153,9 @@ std::string rVersionModule()
 
 r_util::ActiveSession& activeSession()
 {
-   static boost::shared_ptr<r_util::ActiveSession> pSession;
+   // leaked: read by the offline service thread (#18318)
+   static boost::shared_ptr<r_util::ActiveSession>& pSession =
+         core::make_leaked<boost::shared_ptr<r_util::ActiveSession>>();
    if (!pSession)
    {
       std::string id = options().sessionScope().id();
@@ -2172,8 +2179,16 @@ r_util::ActiveSession& activeSession()
       {
          // if no scope was specified, we are in singleton session mode
          // check to see if there is an existing active session, and use that
+         std::vector<boost::shared_ptr<r_util::ActiveSession>> invalidSessions;
          std::vector<boost::shared_ptr<r_util::ActiveSession> > sessions =
-               activeSessions().list(true);
+               activeSessions().list(true, &invalidSessions);
+
+         // no session can resume an invalid one (e.g. one left behind by a
+         // crash while its properties were being written), but each is
+         // validated again on every start, so remove those long abandoned
+         constexpr std::time_t kInvalidSessionMaxAgeSeconds = 60 * 60 * 24;
+         activeSessions().removeStaleInvalidSessions(invalidSessions, kInvalidSessionMaxAgeSeconds);
+
          if (sessions.size() > 0)
          {
             // there is more than one session but no session id was passed in. This is OS server or pro with server-multiple-sessions=0
@@ -2248,6 +2263,7 @@ std::string libPathsString()
 
 Error sourceModuleRFile(const std::string& rSourceFile)
 {
+   core::startup_timing::ScopedCheckpoint timing("source:" + rSourceFile);
    FilePath modulesPath = session::options().modulesRSourcePath();
    FilePath srcPath = modulesPath.completePath(rSourceFile);
    return r::sourceManager().sourceTools(srcPath);
@@ -2866,13 +2882,16 @@ FilePath shellWorkingDirectory()
 
 Events& events()
 {
-   static Events instance;
+   // leaked: signals can be fired by an abandoned offline service thread (#18318)
+   static Events& instance = core::make_leaked<Events>();
    return instance;
 }
 
 core::system::ProcessSupervisor& processSupervisor()
 {
-   static core::system::ProcessSupervisor instance;
+   // leaked: polled by the offline service thread (#18318)
+   static core::system::ProcessSupervisor& instance =
+         core::make_leaked<core::system::ProcessSupervisor>();
    return instance;
 }
 

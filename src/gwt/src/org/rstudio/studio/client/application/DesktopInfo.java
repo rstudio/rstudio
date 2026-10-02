@@ -14,12 +14,9 @@
  */
 package org.rstudio.studio.client.application;
 
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -29,14 +26,13 @@ public class DesktopInfo
 {
    @Inject
    public DesktopInfo(Session session,
-                      Commands commands,
-                      EventBus events)
+                      Commands commands)
    {
       // do no work in server mode
       if (!Desktop.hasDesktopFrame())
          return;
 
-      events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      session.withSessionInfo(info ->
       {
          // disable devtools command when unavailable
          boolean devtoolsEnabled = getChromiumDevtoolsPort() > 0;
@@ -46,7 +42,6 @@ public class DesktopInfo
          if (Satellite.isCurrentWindowSatellite())
             return;
 
-         SessionInfo info = session.getSessionInfo();
          if (info.getSumatraPdfExePath() != null)
             setSumatraPdfExePath(info.getSumatraPdfExePath());
       });

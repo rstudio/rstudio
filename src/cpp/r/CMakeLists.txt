@@ -57,6 +57,7 @@ set (R_SOURCE_FILES
    session/graphics/RGraphicsUtils.cpp
    session/graphics/RGraphicsDevDesc.cpp
    session/graphics/RGraphicsHandler.cpp
+   session/graphics/RGraphicsImageResolution.cpp
    session/graphics/RShadowPngGraphicsHandler.cpp
 )
 
@@ -98,7 +99,7 @@ define_source_file_names(rstudio-r)
 target_link_libraries(rstudio-r rstudio-core)
 
 if(APPLE)
-   target_link_libraries(rstudio-r "-undefined dynamic_lookup")
+   target_link_libraries(rstudio-r "-undefined dynamic_lookup" ${APPLICATION_SERVICES_LIBRARY})
 else()
    target_link_libraries(rstudio-r ${LIBR_LIBRARIES} ${YAML_CPP_LIBRARIES})
 endif()

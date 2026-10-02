@@ -69,7 +69,7 @@ runs:
     - name: Configure AWS credentials
       if: steps.check.outputs.proceed == 'true'
       continue-on-error: true
-      uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+      uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
       with:
         role-to-assume: ${{ inputs.role-arn }}
         aws-region: us-east-1
@@ -107,7 +107,11 @@ runs:
           exit 0
         fi
 
-        URL="https://${BUCKET}.s3.amazonaws.com/${PREFIX}/index.html"
+        # show-metadata-other opens the report with the "Run under test" line
+        # (RStudio version, release name, R version, edition) already visible at
+        # the top. Playwright renders metadata keys it doesn't recognize only
+        # behind that flag -- without it the Metadata section expands to nothing.
+        URL="https://${BUCKET}.s3.amazonaws.com/${PREFIX}/index.html#?show-metadata-other"
         echo "Published report: ${URL}"
         echo "url=${URL}" >> "$GITHUB_OUTPUT"
 

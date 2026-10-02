@@ -17,6 +17,7 @@
 #ifndef CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 #define CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 
+#include <ctime>
 #include <map>
 #include <set>
 
@@ -145,6 +146,10 @@ public:
    static const std::string kWorkbench;
    static const std::string kId;
    static const std::string kDisplayName;
+   static const std::string kStatusMessage;
+
+   // The properties read when a caller asks for none in particular
+   static const std::set<std::string>& defaultProperties();
 
    // The rsession process has exited with an exit code
    static bool isExitedState(const std::string& state)
@@ -225,35 +230,8 @@ public:
       std::map<std::string, std::string> values;
       if (!empty())
       {
-         std::set<std::string> propsToFetch;
-         if (!propertyNames.empty())
-            propsToFetch = propertyNames;
-         else
-         {
-            // If no properties are specified, read them all
-            propsToFetch = {
-               kExecuting,
-               kInitial,
-               kLabel,
-               kLastUsed,
-               kProject,
-               kProjectId,
-               kSavePromptRequired,
-               kRunning,
-               kRVersion,
-               kRVersionHome,
-               kRVersionLabel,
-               kWorkingDir,
-               kActivityState,
-               kLastStateUpdated,
-               kEditor,
-               kLastResumed,
-               kSuspendTimestamp,
-               kBlockingSuspend,
-               kCreated,
-               kLaunchParameters
-            };
-         }
+         const std::set<std::string>& propsToFetch =
+            propertyNames.empty() ? defaultProperties() : propertyNames;
 
          Error error = storage_->readProperties(propsToFetch, pValues);
          if (!error)
@@ -857,6 +835,17 @@ public:
    std::vector<boost::shared_ptr<ActiveSession> > list(bool validate,
                                                        const std::set<std::string>& propertiesToCache,
                                                        std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions = nullptr) const;
+
+   // Removes sessions that failed validation in list() and whose files haven't changed for at
+   // least maxAgeSeconds. Nothing can resume such a session, but every listing validates it
+   // again, which can involve retries. The age check leaves alone a session whose properties
+   // are still being written, e.g. one another process is creating. Sessions whose properties
+   // can't be read, or that hold a suspended workspace, are kept too. Does nothing unless the
+   // sessions are stored in files (FileActiveSessionsStorage), since only then do their files
+   // tell how old they are.
+   void removeStaleInvalidSessions(
+      const std::vector<boost::shared_ptr<ActiveSession>>& invalidSessions,
+      std::time_t maxAgeSeconds) const;
 
    size_t count() const;
 

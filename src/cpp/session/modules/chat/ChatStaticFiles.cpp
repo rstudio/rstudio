@@ -69,6 +69,20 @@ std::mutex s_authTokenMutex;
 std::string s_chatBackendAuthToken;
 
 /**
+ * The installation to serve client assets from.
+ *
+ * The one this session resolved and runs, so the page is served from the
+ * same installation as the backend it talks to -- including after that
+ * backend exits, so a page that outlives its backend can still load chunks.
+ * The resolution re-checks its answer on each read, so an installation
+ * removed out of band does not stay served just because it was resolved once.
+ */
+FilePath servedInstallationPath()
+{
+   return locatePositAssistantInstallation();
+}
+
+/**
  * Inject theme information into HTML content without inline scripts.
  *
  * Two modifications:
@@ -139,91 +153,102 @@ void injectThemeInfo(std::string* pContent)
 }
 
 /**
- * Load CSP directives from dist/csp.json in the Posit Assistant installation.
+ * Load CSP directives from dist/csp.json in the given Posit Assistant
+ * installation.
  *
- * Reads the file once and caches the result. The file is emitted by the
- * databot build and contains the same defaults that DatabotServer uses
- * in its Express middleware.
- *
- * Once loaded (or once a failure is encountered), the result is cached
- * for the lifetime of the session. A missing or broken file will not be
- * retried.
+ * The file is emitted by the databot build and contains the same defaults
+ * that DatabotServer uses in its Express middleware, so it belongs to the
+ * client it ships with. Read on every call rather than cached, because the
+ * installation being served changes underneath the session: an in-session
+ * update publishes a new slot, and the client served afterwards must be
+ * served under its own policy. Callers are the header cache below, which
+ * runs once per backend start or installation change, not once per request.
  *
  * @return Directive map (e.g., {"default-src": "'self'", ...}), or empty
  *         map if the file is missing or unparseable.
  */
-std::map<std::string, std::string> loadCspDirectives()
+std::map<std::string, std::string> loadCspDirectives(const FilePath& positAiPath)
 {
-   static const auto s_cached = []()
-   {
-      std::map<std::string, std::string> result;
+   std::map<std::string, std::string> result;
 
-      FilePath positAiPath = locatePositAssistantInstallation();
-      if (positAiPath.isEmpty())
-         return result;
-
-      FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
-      if (!cspFile.exists())
-         return result;
-
-      std::string content;
-      Error error = readStringFromFile(cspFile, &content);
-      if (error)
-      {
-         WLOG("Failed to read CSP config: {}", error.getMessage());
-         return result;
-      }
-
-      json::Value jsonValue;
-      if (jsonValue.parse(content))
-      {
-         WLOG("Failed to parse CSP config: {}",
-              cspFile.getAbsolutePath());
-         return result;
-      }
-
-      if (!jsonValue.isObject())
-      {
-         WLOG("CSP config must be a JSON object: {}",
-              cspFile.getAbsolutePath());
-         return result;
-      }
-
-      json::Object obj = jsonValue.getObject();
-      for (auto it = obj.begin(); it != obj.end(); ++it)
-      {
-         json::Value val = (*it).getValue();
-         if (val.isString())
-         {
-            result[(*it).getName()] = val.getString();
-         }
-         else
-         {
-            WLOG("Ignoring non-string CSP directive: {}",
-                 (*it).getName());
-         }
-      }
-
+   if (positAiPath.isEmpty())
       return result;
-   }();
 
-   return s_cached;
+   FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
+   if (!cspFile.exists())
+      return result;
+
+   std::string content;
+   Error error = readStringFromFile(cspFile, &content);
+   if (error)
+   {
+      WLOG("Failed to read CSP config: {}", error.getMessage());
+      return result;
+   }
+
+   json::Value jsonValue;
+   if (jsonValue.parse(content))
+   {
+      WLOG("Failed to parse CSP config: {}",
+           cspFile.getAbsolutePath());
+      return result;
+   }
+
+   if (!jsonValue.isObject())
+   {
+      WLOG("CSP config must be a JSON object: {}",
+           cspFile.getAbsolutePath());
+      return result;
+   }
+
+   json::Object obj = jsonValue.getObject();
+   for (auto it = obj.begin(); it != obj.end(); ++it)
+   {
+      json::Value val = (*it).getValue();
+      if (val.isString())
+      {
+         result[(*it).getName()] = val.getString();
+      }
+      else
+      {
+         WLOG("Ignoring non-string CSP directive: {}",
+              (*it).getName());
+      }
+   }
+
+   return result;
 }
 
-// Cached CSP header string, rebuilt when the backend port changes.
+// Cached CSP header string, rebuilt when the backend port changes or the
+// installation being served does.
 std::mutex s_cspMutex;
 std::string s_cachedCspHeader;
+FilePath s_cspInstallationPath;
 bool s_cspHeaderBuilt = false;
 
 /**
  * Rebuild the cached CSP header string from dist/csp.json directives.
  *
- * Called once lazily on the first HTML request and again whenever the
- * backend port changes via setChatBackendPort().
+ * Called on an HTML request that finds the cache empty or built for another
+ * installation, and whenever the backend port changes via
+ * setChatBackendPort(). The directives are re-read on each rebuild, so a
+ * backend restart -- which is how an in-session update takes effect -- serves
+ * the policy belonging to the installation now being served (#18831). The
+ * installation is passed in rather than resolved here so that the page and
+ * the policy come from the one resolution the request handler made, and the
+ * header built is returned under the same lock so the caller cannot read a
+ * later rebuild's result.
  */
-void rebuildCspHeaderCache()
+std::string rebuildCspHeaderCache(const FilePath& positAiPath)
 {
-   std::map<std::string, std::string> directives = loadCspDirectives();
+   // Held across the read as well as the store. Two rebuilds can overlap --
+   // the lazy one below on an HTTP handler thread, and the one a backend start
+   // makes on the main thread -- and with the read outside the lock the older
+   // installation's directives could be committed last and stick until the
+   // next restart, which is the staleness of #18831 one layer down.
+   std::lock_guard<std::mutex> lock(s_cspMutex);
+
+   std::map<std::string, std::string> directives = loadCspDirectives(positAiPath);
 
    // If csp.json was missing, use a restrictive fallback
    if (directives.empty())
@@ -283,30 +308,34 @@ void rebuildCspHeaderCache()
       header += pair.first + " " + pair.second;
    }
 
-   std::lock_guard<std::mutex> lock(s_cspMutex);
    s_cachedCspHeader = header;
+   s_cspInstallationPath = positAiPath;
    s_cspHeaderBuilt = true;
+   return header;
 }
 
 /**
  * Get the Content-Security-Policy header value.
  *
  * Returns a cached string built from dist/csp.json directives, augmented
- * with RStudio-specific additions. The cache is rebuilt lazily on first
- * call and whenever the backend port changes.
+ * with RStudio-specific additions. The cache is rebuilt when the backend
+ * port changes and when the installation being served is not the one the
+ * cached policy was read from: the policy belongs to the installation, and
+ * the resolution can change without a backend start -- an install clears it,
+ * and an installation removed out of band is resolved around -- so a policy
+ * that only followed the port would outlive the installation it came from.
  *
+ * @param positAiPath The installation the page being served comes from.
  * @return CSP header string
  */
-std::string buildCspHeader()
+std::string buildCspHeader(const FilePath& positAiPath)
 {
    {
       std::lock_guard<std::mutex> lock(s_cspMutex);
-      if (s_cspHeaderBuilt)
+      if (s_cspHeaderBuilt && s_cspInstallationPath == positAiPath)
          return s_cachedCspHeader;
    }
-   rebuildCspHeaderCache();
-   std::lock_guard<std::mutex> lock(s_cspMutex);
-   return s_cachedCspHeader;
+   return rebuildCspHeaderCache(positAiPath);
 }
 
 } // anonymous namespace
@@ -410,7 +439,7 @@ Error handleAIChatRequest(const http::Request& request,
                           http::Response* pResponse)
 {
    // Locate installation
-   FilePath positAiPath = locatePositAssistantInstallation();
+   FilePath positAiPath = servedInstallationPath();
    if (positAiPath.isEmpty())
    {
       pResponse->setStatusCode(http::status::NotFound);
@@ -511,7 +540,7 @@ Error handleAIChatRequest(const http::Request& request,
             }
          }
       }
-      pResponse->setHeader("Content-Security-Policy", buildCspHeader());
+      pResponse->setHeader("Content-Security-Policy", buildCspHeader(positAiPath));
    }
    pResponse->setContentType(getContentType(extension));
 
@@ -541,7 +570,7 @@ Error handleAIChatRequest(const http::Request& request,
 void setChatBackendPort(int port)
 {
    s_chatBackendPort = port;
-   rebuildCspHeaderCache();
+   rebuildCspHeaderCache(servedInstallationPath());
 }
 
 void setChatBackendAuthToken(const std::string& token)

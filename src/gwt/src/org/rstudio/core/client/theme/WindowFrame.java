@@ -444,10 +444,23 @@ public class WindowFrame extends Composite
           logicalState_ == WindowState.HIDE ||
           logicalState_ == WindowState.MINIMIZE)
       {
-         fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+         fireEvent(WindowStateChangeEvent.forEnsureVisible());
+      }
+      else
+      {
+         fireEvent(new EnsureVisibleEvent(event.getActivate()));
       }
 
       events_.fireEvent(new WindowEnsureVisibleEvent(this));
+   }
+
+   /**
+    * Handlers run when a tab asks to be visible and the frame is already
+    * showing, so no state change was needed to satisfy it.
+    */
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
+   {
+      return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
    public void setLogicalState(WindowState state)

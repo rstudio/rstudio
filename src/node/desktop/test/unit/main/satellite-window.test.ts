@@ -18,7 +18,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import { createSinonStubInstance, isWindowsDocker } from '../unit-utils';
 
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 
 import { SatelliteWindow } from '../../../src/main/satellite-window';
 import { MainWindow } from '../../../src/main/main-window';
@@ -41,6 +41,21 @@ if (!isWindowsDocker()) {
 
       clearApplicationSingleton();
       sinon.restore();
+    });
+
+    it('windowOpening creates the window hidden only in automation mode', () => {
+      const showOption = () => {
+        const opening = SatelliteWindow.windowOpening();
+        return opening.action === 'allow' ? opening.overrideBrowserWindowOptions?.show : undefined;
+      };
+      assert.isTrue(showOption());
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        assert.isFalse(showOption());
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
     });
 
     it('construction creates a hidden BrowserWindow', () => {

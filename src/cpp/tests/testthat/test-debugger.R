@@ -119,3 +119,113 @@ test_that("breakpoints in S7 methods for S7 generics preserve the method class",
    expect_identical(methodEnvir$s7bpclass, original)
 
 })
+
+test_that("frames whose inner call is built internally keep their call site", {
+
+   # lapply() constructs the call to FUN itself, so that call carries no
+   # source reference and the lapply() frame has no location of its own.
+   # It falls back to the source reference of the lapply() call, which is
+   # what keeps the frame navigable from the traceback.
+   file <- tempfile(pattern = "frames-", fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+
+   writeLines(c(
+      "outer_fn <- function() {",
+      "   lapply(1, function(i) inner_fn())",
+      "}",
+      "inner_fn <- function() {",
+      "   .rs.callFrames(targetDepth = 1L)",
+      "}"
+   ), file)
+
+   env <- new.env(parent = globalenv())
+   source(file, local = env, keep.source = TRUE)
+
+   # lapply() wraps its result, so unwrap before reading the frame list.
+   # Outside a debug session rs_getBrowserEnv has no environment to report,
+   # which warns on the way back through the embedding layer.
+   frames <- suppressWarnings(env$outer_fn())[[1L]]$frames
+   names <- vapply(frames, function(frame) as.character(frame$function_name), "")
+
+   # Frames run innermost first, and the test harness has lapply() frames of
+   # its own further out, so ours is the first match. The file name assertion
+   # below confirms we picked it.
+   index <- which(names == "lapply")[1L]
+   expect_false(is.na(index))
+   expect_true(as.logical(frames[[index]]$real_sourceref))
+   expect_match(as.character(frames[[index]]$file_name), basename(file), fixed = TRUE)
+
+})
+
+test_that("the frame being browsed keeps its own file location", {
+
+   # The runtime srcref can come back empty for a function that carries its
+   # own source, and no inner call need be mapped to the frame either. Such a
+   # frame still has a real position to fall back on, and dropping it would
+   # navigate to a deparsed copy of the function rather than to the file.
+   # #18754 is about functions with no source of their own, not these.
+   #
+   # The fallback has to be the function's own definition rather than the call
+   # that created the frame: the call site belongs to the caller, so with the
+   # two functions in separate files it names the wrong file entirely.
+   locatedFile <- tempfile(pattern = "located-", fileext = ".R")
+   outerFile <- tempfile(pattern = "outer-", fileext = ".R")
+   on.exit(unlink(c(locatedFile, outerFile)), add = TRUE)
+
+   writeLines(c(
+      "# padding so the definition line differs from the call site",
+      "# padding",
+      "located_fn <- function() {",
+      "   .rs.callFrames(targetDepth = 1L)",
+      "}"
+   ), locatedFile)
+
+   writeLines(c(
+      "outer_fn <- function() {",
+      "   located_fn()",
+      "}"
+   ), outerFile)
+
+   env <- new.env(parent = globalenv())
+   source(locatedFile, local = env, keep.source = TRUE)
+   source(outerFile, local = env, keep.source = TRUE)
+
+   # Outside a debug session rs_getBrowserEnv has no environment to report, so
+   # the innermost frame stands in for the one the browser would be halted in.
+   frame <- suppressWarnings(env$outer_fn())$frames[[1L]]
+
+   expect_identical(as.character(frame$function_name), "located_fn")
+   expect_true(as.logical(frame$real_sourceref))
+   expect_match(as.character(frame$file_name), basename(locatedFile), fixed = TRUE)
+   expect_identical(as.integer(frame$line_number), 3L)
+   expect_identical(as.integer(frame$end_line_number), 5L)
+
+})
+
+test_that("debugSourceRef only trusts the runtime srcref for located functions", {
+
+   runtimeRef <- c(10L, 1L, 10L, 20L, 1L, 20L)
+
+   # A function carrying its own source may use the evaluator's position.
+   located <- eval(parse(
+      text = "function(ref) .rs.debugSourceRef(1L, ref, NULL)",
+      keep.source = TRUE
+   ))
+
+   expect_equal(located(runtimeRef)$srcref, runtimeRef)
+
+   # R_GetCurrentSrcref would hand a function without source references its
+   # caller's location instead (#18754). With nothing left to simulate from,
+   # the location is reported as unknown so that the client can leave the
+   # debug highlight alone, rather than moving it to line zero.
+   unlocated <- eval(parse(
+      text = "function(ref) .rs.debugSourceRef(1L, ref, NULL)",
+      keep.source = FALSE
+   ))
+
+   expect_null(unlocated(runtimeRef))
+
+   # Depths past the end of the call stack resolve to nothing.
+   expect_null(.rs.debugSourceRef(1000L, runtimeRef, NULL))
+
+})

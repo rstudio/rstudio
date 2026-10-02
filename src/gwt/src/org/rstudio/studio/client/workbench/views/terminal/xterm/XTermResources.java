@@ -31,6 +31,9 @@ public interface XTermResources extends ClientBundle
    @Source("web-links.js")
    StaticDataResource xtermweblinksjs();
 
+   @Source("file-links.js")
+   StaticDataResource xtermfilelinksjs();
+
    @Source("webgl.js")
    StaticDataResource xtermwebgljs();
 }

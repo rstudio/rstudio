@@ -43,6 +43,11 @@ struct SemanticVersion
    bool operator!=(const SemanticVersion& other) const;
 };
 
+// Protocol versions are published as <major>.0 and compared as exact strings,
+// so this is a textual check: one or more digits, then ".0". SemanticVersion
+// is too lenient for it (it accepts "11", "v11.0" and "11.0.0").
+bool isProtocolVersionForm(const std::string& protocol);
+
 } // namespace types
 } // namespace chat
 } // namespace modules

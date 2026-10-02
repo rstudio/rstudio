@@ -195,8 +195,8 @@ bool isPdfLatexInstalled();
 // is the file a text file
 bool isTextFile(const core::FilePath& targetPath);
 
-// edit a file
-void editFile(const core::FilePath& targetPath, int lineNumber = -1);
+// edit a file (line and column are 1-based; a negative line means "no position")
+void editFile(const core::FilePath& targetPath, int lineNumber = -1, int column = 1);
 
 // find the location of the R script
 core::Error rBinDir(core::FilePath* pRBinDirPath);
@@ -220,13 +220,14 @@ bool disablePackages();
 // checks: allow-posit-assistant, posit-assistant-enabled, RSTUDIO_DISABLE_POSIT_ASSISTANT
 bool isPositAssistantEnabledByAdmin();
 
-// may the user install, update, and uninstall Posit Assistant themselves?
+// may the user install and update Posit Assistant themselves?
 // checks: posit-assistant-installation-enabled, RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION.
 // Deliberately not an allow-* option: those are OR'd with allowOverlay(), which
 // open-source builds define as always true, and this must work in open-source
 // RStudio Server.
-// When false the session uses only an administrator-managed installation and
-// makes no manifest requests. Independent of isPositAssistantEnabledByAdmin():
+// When false the session ignores the user's own installation and makes no
+// manifest requests. It runs only the newer of the administrator's selected
+// version and the copy bundled with RStudio. Independent of isPositAssistantEnabledByAdmin():
 // a session with Posit Assistant disabled outright never reaches these gates.
 bool isPositAssistantInstallationEnabledByAdmin();
 

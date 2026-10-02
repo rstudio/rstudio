@@ -693,6 +693,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.NORMAL);
          consoleWindow.onWindowStateChange(event);
       }
+      consoleWindow.clearAutoRaisedFromMinimize();
 
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only
@@ -2674,6 +2675,22 @@ public class PaneManager
       return sourceLogicalWindows_.get(0);
    }
 
+   /**
+    * Puts the console pane back into MINIMIZE without moving focus. Called
+    * when a background task that raised the pane for its own output (e.g.
+    * Render) hands control back to the console after succeeding; a failed
+    * task never gets here, so its output stays in view (#11622).
+    */
+   public void minimizeConsolePane()
+   {
+      LogicalWindow consoleWindow = getConsoleLogicalWindow();
+      if (consoleWindow.getState() == WindowState.NORMAL)
+      {
+         consoleWindow.onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.MINIMIZE, true));
+      }
+   }
+
    public LogicalWindow getConsoleLogicalWindow()
    {
       return panesByName_.get(PaneManager.CONSOLE_PANE);
@@ -3183,14 +3200,11 @@ public class PaneManager
       commands_.popOutChat().setVisible(paiEnabled);
       commands_.returnChatToMain().setVisible(paiEnabled);
 
-      // "Uninstall Posit Assistant" otherwise stays available so a previously
-      // installed Posit Assistant can still be removed. Administrator-managed
-      // installation is the carve-out: both commands are refused by the
-      // backend, and any leftover user-level copy is inert.
+      // Administrator-managed installation hides the update check: the
+      // backend refuses it, and any leftover user-level copy is inert.
       boolean installEnabled = paiUtil_.isPositAssistantInstallationEnabled();
       commands_.checkForPositAssistantUpdates().setVisible(
             paiEnabled && installEnabled);
-      commands_.uninstallPositAssistant().setVisible(installEnabled);
    }
 
    private boolean isTabHidden(Tab tab)

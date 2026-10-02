@@ -498,8 +498,14 @@ export async function resetSourcePaneState(page: Page): Promise<void> {
 
 /**
  * Wait until a resetSourcePaneState dispatch has actually settled: the active
- * document is the kept Untitled (path === null) AND exactly one source tab
- * remains across all columns.
+ * document is the kept Untitled (path === null), it is clean, AND exactly one
+ * source tab remains across all columns.
+ *
+ * The clean check matters because the kept Untitled is shared across specs: a
+ * dirty one raises a modal Save File prompt the next time anything saves all
+ * documents, blocking every later click. SourceColumnManager only reuses a
+ * clean untitled doc, so a dirty one here means the fresh replacement has not
+ * landed yet.
  *
  * resetToUntitled dispatches a GWT event whose handler reverts dirty targets,
  * then closes every tab except a kept Untitled in an async CPS chain of
@@ -519,7 +525,7 @@ export async function waitForSourcePaneReset(page: Page, timeout = 10000): Promi
   await page.waitForFunction(
     () => {
       const doc = window.rstudio?.documents.active() ?? null;
-      if (doc === null || doc.path !== null) return false;
+      if (doc === null || doc.path !== null || doc.dirty) return false;
       // Count source tabs across all source columns. The DocTabLayoutPanel
       // wrapper tags its root with class `rstudio_source_panel`, and each
       // open document renders one `[role="tab"]` child of the panel's tablist.
@@ -807,15 +813,39 @@ export async function openProject(
   // settle before polling the bridge. On Desktop this is a no-op.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
 
-  await page.waitForFunction(
-    () => window.rstudio?.ready === true,
-    null,
-    { timeout, polling: 50 },
-  );
+  // A Desktop project switch navigates the window to the new session, and
+  // GWT's bootstrap has no retry: if the main *.cache.js fails to load the
+  // window stays blank forever (run 34637770965 saw net::ERR_NO_BUFFER_SPACE
+  // on Windows, with `rstudio.nocache.js` loaded and nothing after it). So
+  // if ready has not flipped within a grace period AND the automation bridge
+  // was never installed -- window.rstudio is still the bootstrap's global
+  // function, or missing, rather than the bridge object -- reload once to
+  // refetch the bootstrap. A session that is merely slow (bridge installed,
+  // ready still false) is left alone.
+  const started = Date.now();
+  const grace = Math.min(20000, timeout);
+  const readyInGrace = await page
+    .waitForFunction(() => window.rstudio?.ready === true, null, { timeout: grace, polling: 50 })
+    .then(() => true, () => false);
+  if (!readyInGrace) {
+    const bridgeInstalled = await page
+      .evaluate(() => typeof window.rstudio === 'object' && window.rstudio !== null)
+      .catch(() => false);
+    if (!bridgeInstalled) {
+      console.log(`openProject: automation bridge missing ${grace}ms after the switch; reloading once`);
+      await page.reload({ timeout: 30000 }).catch(() => {});
+    }
+    await page.waitForFunction(
+      () => window.rstudio?.ready === true,
+      null,
+      { timeout: Math.max(timeout - (Date.now() - started), 1000), polling: 50 },
+    );
+  }
 
-  // ready=true tells us the workbench is wired up, but SessionInfo can
-  // still report the previous project's path for a beat -- and the project
-  // menu UI lags that. Poll project.path() against the requested file so
+  // Observe ready and the target path together: the ready wait above can
+  // finish in the outgoing session if its deferred initialization completes
+  // during the switch. The incoming session can then publish its project
+  // path before its own deferred initialization has completed. Poll both so
   // the helper's post-condition is "the bridge agrees this project is
   // active" rather than "ready flipped true." Case-insensitive to match
   // waitForActiveDocument's handling of HFS+ / NTFS.
@@ -831,27 +861,24 @@ export async function openProject(
     await page.waitForFunction(
       (target) => {
         const path = window.rstudio?.project?.path?.() ?? null;
-        return path !== null && path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
+        return window.rstudio?.ready === true && path !== null &&
+          path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
       },
       projectFilePath,
       { timeout, polling: 100 },
     );
   } catch (err) {
-    // ready flipped true but the active project never became the target.
-    // OpenProjectErrorEvent also sets ready=true (see ApplicationAutomation
-    // registerReadinessHandlers), so a silently-failed or lost open lands
-    // here as an opaque timeout. Surface what the bridge actually reports so
-    // the failure is "open failed / opened the wrong project" rather than a
-    // bare waitForFunction timeout.
+    // The target project never became ready. OpenProjectErrorEvent also
+    // sets ready=true, so report the active path to distinguish a failed
+    // switch from deferred initialization that has not finished.
     if (err instanceof Error && err.name === 'TimeoutError') {
       const actual = await page
         .evaluate(() => window.rstudio?.project?.path?.() ?? null)
         .catch(() => null);
       throw new Error(
-        `openProject: session became ready but the active project did not ` +
-        `become "${projectFilePath}" within ${timeout}ms (active project: ` +
-        `${actual ?? 'none'}). This usually means the project open failed ` +
-        `(OpenProjectErrorEvent) rather than that it was merely slow.`,
+        `openProject: session did not become ready with the active project ` +
+        `"${projectFilePath}" within ${timeout}ms (active project: ` +
+        `${actual ?? 'none'}).`,
       );
     }
     throw err;

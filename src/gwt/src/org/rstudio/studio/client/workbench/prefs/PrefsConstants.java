@@ -187,6 +187,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String antialiasingNoneOption();
     String antialiasingGrayOption();
     String antialiasingSubpixelOption();
+    String graphicsAntialiasingWindowsNote();
     String serverHomePageLabel();
     String serverHomePageActiveSessionsOption();
     String serverHomePageAlwaysOption();
@@ -435,6 +436,8 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String chkHardwareAccelerationLabel();
     String chkAudibleBellLabel();
     String chkWebLinksLabel();
+    String chkFileLinksLabel();
+    String chkFileLinksMacLabel();
     String helpLinkLabel();
     String miscLabel();
     String autoClosePrefLabel();
@@ -512,6 +515,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingAutoDetectIndentationDesc();
     String editingInsertMatchingLabel();
     String editingUseNativePipeOperatorLabel();
+    String editingInsertPlusInGgplotChainsLabel();
     String editingProjectOverrideInfoText();
     String editProjectPreferencesButtonLabel();
     String editingReindentOnPasteLabel();
@@ -533,6 +537,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String displayShowIndentGuidesLabel();
     String displayBlinkingCursorLabel();
     String displayScrollPastEndOfDocumentLabel();
+    String displaySmoothScrollingLabel();
     String displayEnableTextDragLabel();
     String displayFoldStyleLabel();
     String savingAutoAppendNewLineLabel();
@@ -560,6 +565,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel();
     String diagnosticsWarnIfNoSuchVariableInScopeLabel();
     String diagnosticsWarnVariableDefinedButNotUsedLabel();
+    String diagnosticsWarnConfusableCharactersLabel();
     String diagnosticsStyleDiagnosticsLabel();
     String diagnosticsAutoDiscoverPackageDependenciesLabel();
     String diagnosticsShowDiagnosticsCppLabel();

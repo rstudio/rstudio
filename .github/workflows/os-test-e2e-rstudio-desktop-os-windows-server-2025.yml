@@ -197,7 +197,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: src/node/desktop/package-lock.json
 
@@ -389,7 +389,7 @@ jobs:
         # A failed OIDC exchange degrades to the GHA backend below rather
         # than failing the build.
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
           aws-region: us-east-1
@@ -706,7 +706,7 @@ jobs:
 
       - name: Upload RStudio Desktop artifact
         if: inputs.build_only != true
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rstudio-app-windows-x64
           path: RStudio-installer.exe
@@ -742,7 +742,6 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-2025
     timeout-minutes: 120
-    environment: e2e-playwright
     defaults:
       run:
         shell: pwsh
@@ -770,7 +769,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
@@ -784,7 +783,7 @@ jobs:
       # daily-download path so RStudio lands at C:\Program Files\RStudio\.
       - name: Download RStudio Desktop artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: rstudio-app-windows-x64
           path: ${{ github.workspace }}
@@ -963,6 +962,11 @@ jobs:
           # distinguish these results) and to derive the platform+shard-unique
           # blob report file name.
           PW_PROJECT_LABEL: ${{ inputs.project }}-windows
+          # Human OS name for the "Run under test" block the harness writes to the
+          # report header and the run summary. Also the report metadata key, so it
+          # must name this engine alone: a merged multi-engine report keeps one
+          # entry per key, and engines sharing a key overwrite each other.
+          PW_OS_LABEL: Windows Server 2025 (x86_64)
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
@@ -1001,7 +1005,7 @@ jobs:
 
       - name: Upload blob report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-blob-report-win-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
@@ -1010,7 +1014,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report-shard-${{ matrix.shard }}
           path: e2e/rstudio/playwright-report/
@@ -1019,7 +1023,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: test-results-shard-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
@@ -1028,7 +1032,7 @@ jobs:
 
       - name: Upload RStudio session logs (always)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rstudio-logs-shard-${{ matrix.shard }}
           path: ${{ env.APPDATA }}\RStudio\
@@ -1055,7 +1059,7 @@ jobs:
 
       - name: Upload PW sandbox (on failure)
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pw-sandbox-shard-${{ matrix.shard }}
           path: ${{ github.workspace }}\pw-sandbox\
@@ -1066,7 +1070,7 @@ jobs:
       # aborts before the GWT-ready handshake.
       - name: Upload Windows crash dumps (on failure)
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-crash-dumps-shard-${{ matrix.shard }}
           path: ${{ env.LOCALAPPDATA }}\CrashDumps\
@@ -1092,7 +1096,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
@@ -1101,7 +1105,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: playwright-blob-report-win-*
           path: e2e/rstudio/all-blob-reports
@@ -1122,12 +1126,12 @@ jobs:
         id: summary
         if: always()
         working-directory: e2e/rstudio
-        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+        run: node scripts/summarize-merged-report.mjs
 
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report-win
           path: e2e/rstudio/playwright-report/
@@ -1195,3 +1199,16 @@ jobs:
             exit 1
           fi
           echo "::notice::Gate floor met: $PASSED test(s) passed."
+
+      # Does nothing: the name is the point. A step name can read step outputs
+      # (jobs.<id>.steps.name allows the `steps` context), so this puts the build
+      # under test in the job's step list, readable without expanding anything.
+      # The run page itself has no surface for a runtime value -- a run's title is
+      # fixed before it starts, and annotation placement is GitHub's to decide --
+      # so the summarizer also emits these as annotations, and this is the same
+      # facts one click in. Last, and if: always(), so the gate above can't
+      # suppress it. Skipped on an empty output, which is how the summarizer
+      # reports "no engine in that slot".
+      - name: ${{ steps.summary.outputs.run_under_test_1 }}
+        if: always() && steps.summary.outputs.run_under_test_1 != ''
+        run: 'true'

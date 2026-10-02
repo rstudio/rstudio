@@ -123,16 +123,18 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
       json::Array formalNamesJson;
       json::Array formalInfoJson;
       int performsNse = 0;
+      int isPrimitive = 0;
       Error error = json::readObject(valueJson.getObject(),
                                      "formal_names", formalNamesJson,
                                      "formal_info",  formalInfoJson,
-                                     "performs_nse", performsNse);
+                                     "performs_nse", performsNse,
+                                     "is_primitive", isPrimitive);
       
       if (error)
          LOG_ERROR(error);
       
       info.setPerformsNse(performsNse);
-      info.setIsPrimitive(false);
+      info.setIsPrimitive(isPrimitive);
       
       fillFormalInfo(formalNamesJson, formalInfoJson, &info);
       

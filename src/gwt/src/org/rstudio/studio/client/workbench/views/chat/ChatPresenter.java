@@ -21,7 +21,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -33,7 +32,6 @@ import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -167,8 +165,7 @@ public class ChatPresenter extends BasePresenter
       SatelliteManager satelliteManager,
       PaneManager paneManager,
       Session session,
-      GlobalDisplay globalDisplay,
-      ApplicationQuit applicationQuit)
+      GlobalDisplay globalDisplay)
    {
       super(display);
       binder.bind(commands, this);
@@ -182,9 +179,7 @@ public class ChatPresenter extends BasePresenter
       lastEffectiveChatProvider_ = paiUtil_.getConfiguredChatProvider();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
-      session_ = session;
       globalDisplay_ = globalDisplay;
-      applicationQuit_ = applicationQuit;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -498,7 +493,7 @@ public class ChatPresenter extends BasePresenter
 
       // On Chrome, the satellite window is reloaded via window.open(url,
       // name) (see WebWindowOpener.doOpenWindow) instead of reactivated
-      // in-place. The old content's unload handler fires a spurious
+      // in-place. The old content's pagehide handler fires a spurious
       // SatelliteClosedEvent even though the window is still open. Use
       // WindowCloseMonitor to poll the window and distinguish a real close
       // from a reload — the same pattern used by SourceWindowManager,
@@ -605,47 +600,6 @@ public class ChatPresenter extends BasePresenter
    }
 
    // No @Handler: bound via ChatTab.Shim so the command works before the
-   // presenter is delay-loaded.
-   void onUninstallPositAssistant()
-   {
-      globalDisplay_.showYesNoMessage(
-         GlobalDisplay.MSG_WARNING,
-         constants_.uninstallPositAssistantCaption(),
-         constants_.uninstallPositAssistantMessage(),
-         () -> performUninstall(),
-         false);
-   }
-
-   private void performUninstall()
-   {
-      server_.chatUninstallPositAssistant(new ServerRequestCallback<VoidResponse>()
-      {
-         @Override
-         public void onResponseReceived(VoidResponse response)
-         {
-            // doRestart() is cancelable (user can decline to save unsaved
-            // changes). If canceled, PAI files are already deleted but the
-            // session continues unrestarted — an acceptable edge case
-            // consistent with other RStudio restart flows.
-            applicationQuit_.doRestart(session_);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            // Backend delivers user-facing text via client_info; fall back
-            // to the generic user message when no client_info is provided.
-            String clientInfo = PositAiInstallManager.clientInfoMessage(error);
-            String message =
-               clientInfo != null ? clientInfo : error.getUserMessage();
-            globalDisplay_.showErrorMessage(
-               constants_.uninstallPositAssistantCaption(),
-               message);
-         }
-      });
-   }
-
-   // No @Handler: bound via ChatTab.Shim so the command works before the
    // presenter is delay-loaded. Also invoked when Posit Assistant sends a
    // ui/checkForUpdates JSON-RPC request (see ChatCheckForUpdatesEvent).
    //
@@ -668,13 +622,17 @@ public class ChatPresenter extends BasePresenter
          installManager_.checkForUpdates(true, new PositAiInstallManager.UpdateCheckCallback()
          {
             @Override
-            public void onNoUpdateAvailable()
+            public void onNoUpdateAvailable(String currentVersion,
+                                            boolean reinstallAvailable)
             {
                finishUpdateCheck(dismissProgress);
-               globalDisplay_.showMessage(
-                  GlobalDisplay.MSG_INFO,
-                  constants_.chatCheckForUpdatesCaption(),
-                  constants_.chatNoUpdateAvailableMessage());
+               if (reinstallAvailable)
+                  promptToReinstall(currentVersion);
+               else
+                  globalDisplay_.showMessage(
+                     GlobalDisplay.MSG_INFO,
+                     constants_.chatCheckForUpdatesCaption(),
+                     constants_.chatNoUpdateAvailableMessage());
             }
 
             @Override
@@ -825,10 +783,10 @@ public class ChatPresenter extends BasePresenter
    }
 
    // An update (or initial install) is available -- offer to install it.
-   // Accepting reuses the existing install engine, which stops the running
-   // backend under a cross-process lock (refusing if another session is using
-   // Posit Assistant) and swaps the installation; the client then restarts the
-   // backend (onInstallComplete -> initializeChat), preserving the in-progress
+   // Accepting reuses the existing install engine, which installs the new
+   // version beside the running one, then stops the backend and agent so
+   // they pick it up; the client then restarts the backend
+   // (onInstallComplete -> initializeChat), preserving the in-progress
    // conversation via the existing resume mechanism.
    private void promptToInstallUpdate(String caption, String message, String confirmLabel)
    {
@@ -875,6 +833,39 @@ public class ChatPresenter extends BasePresenter
          confirmLabel,
          constants_.chatCancelButton(),
          true);                          // confirm is the default button
+   }
+
+   // The installed version is current. Reinstalling is the recovery for an
+   // install that verifies but misbehaves, so it is offered here, beside the
+   // up-to-date report, rather than as its own command. The backend refuses
+   // the install unless Posit Assistant is selected, so only the report is
+   // shown then. (Managed installations never get here: dispatchUpdateCheck
+   // routes them to onInstallationManaged.)
+   private void promptToReinstall(String currentVersion)
+   {
+      if (!paiUtil_.isPositAssistantWanted())
+      {
+         globalDisplay_.showMessage(
+            GlobalDisplay.MSG_INFO,
+            constants_.chatCheckForUpdatesCaption(),
+            constants_.chatNoUpdateAvailableMessage());
+         return;
+      }
+
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_INFO,
+         constants_.chatCheckForUpdatesCaption(),
+         constants_.chatNoUpdateReinstallMessage(currentVersion),
+         false,                          // no separate Cancel; OK is the decline
+         () -> {                         // yes: reinstall
+            onActivateChat();
+            installUpdate(true);
+         },
+         () -> {},                       // OK: dismiss
+         null,                           // cancel operation (unused)
+         constants_.chatReinstallButton(),
+         constants_.chatOkButton(),
+         false);                         // OK is the default button
    }
 
    // A newer Posit Assistant needs a newer RStudio (protocol mismatch or no
@@ -1197,7 +1188,8 @@ public class ChatPresenter extends BasePresenter
       installManager_.checkForUpdates(forceRecheck, new PositAiInstallManager.UpdateCheckCallback()
       {
          @Override
-         public void onNoUpdateAvailable()
+         public void onNoUpdateAvailable(String currentVersion,
+                                         boolean reinstallAvailable)
          {
             // No update available - start backend normally
             startBackend();
@@ -1319,7 +1311,12 @@ public class ChatPresenter extends BasePresenter
 
    private void installUpdate()
    {
-      installManager_.installUpdate(new PositAiInstallManager.InstallCallback()
+      installUpdate(false);
+   }
+
+   private void installUpdate(boolean reinstall)
+   {
+      installManager_.installUpdate(reinstall, new PositAiInstallManager.InstallCallback()
       {
          @Override
          public void onInstallStarted()
@@ -1622,9 +1619,7 @@ public class ChatPresenter extends BasePresenter
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
    private final PaneManager paneManager_;
-   private final Session session_;
    private final GlobalDisplay globalDisplay_;
-   private final ApplicationQuit applicationQuit_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;

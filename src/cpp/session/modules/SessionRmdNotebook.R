@@ -47,7 +47,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
 {
-   .Call("rs_chunkCacheFolder", rmdPath)
+   .Call("rs_chunkCacheFolder", rmdPath, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("coalesceCsvOutput", function(chunkData) {

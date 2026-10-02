@@ -71,7 +71,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UserPrefs prefs,
                                  Session session,
                                  GlobalDisplay globalDisplay,
-                                 WorkbenchContext context)
+                                 WorkbenchContext context,
+                                 PreferencesDialogResources res)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
@@ -122,6 +123,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          rServerRVersion_ = new RVersionSelectWidget(
                                        ElementIds.SelectWidgetId.R_VER_GEN_PREF_PANE,
                                        versionsInfo.getAvailableRVersions());
+         rServerRVersion_.addStyleName(res.styles().rVersionSelectWidget());
          basic.add(tight(rServerRVersion_));
 
          rememberRVersionForProjects_ =
@@ -189,6 +191,8 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       basic.add(spacedBefore(headerLabel(constants_.otherCaption())));
 
+      basic.add(checkboxPref(prefs_.highlightActiveTabs()));
+
       basic.add(checkboxPref(
             constants_.otherWrapAroundLabel(),
             prefs_.wrapTabNavigation(),
@@ -247,6 +251,14 @@ public class GeneralPreferencesPane extends PreferencesPane
             false);
 
       graphics.add(graphicsAntialias_);
+
+      // the Windows GDI device only antialiases text, which surprises users
+      // who pick an antialiasing mode and see no change in their plots
+      graphicsAntialiasNote_ = new Label(constants_.graphicsAntialiasingWindowsNote());
+      graphicsAntialiasNote_.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
+      graphicsAntialiasNote_.setWidth("100%");
+      graphics.add(graphicsAntialiasNote_);
+      graphicsBackend_.addChangeHandler((ChangeEvent event) -> updateGraphicsAntialiasNote());
 
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
@@ -516,6 +528,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       // graphics prefs
       graphicsBackend_.setValue(prefs.graphicsBackend().getValue());
       graphicsAntialias_.setValue(prefs.graphicsAntialiasing().getValue());
+      updateGraphicsAntialiasNote();
 
       initialProjectUserDataDir_ = prefs_.projectUserDataDirectory().getGlobalValue();
       initialUiLanguage_ = prefs_.uiLanguage().getValue();
@@ -714,11 +727,40 @@ public class GeneralPreferencesPane extends PreferencesPane
                   {
                      if (!succeeded)
                      {
+                        // setValue() doesn't fire a change event
                         graphicsBackend_.setValue(UserPrefs.GRAPHICS_BACKEND_DEFAULT);
+                        updateGraphicsAntialiasNote();
                      }
                   });
          }
       });
+   }
+
+   // shown when the effective backend is the Windows GDI device: either
+   // selected explicitly, or what "(Default)" resolves to -- a backend set in
+   // an R profile, else the platform default on a session running on Windows
+   private void updateGraphicsAntialiasNote()
+   {
+      String backend = graphicsBackend_.getValue();
+      if (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_DEFAULT))
+         backend = session_.getSessionInfo().getGraphicsDefaultBackend();
+
+      boolean windowsDevice =
+            StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_WINDOWS) ||
+            (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_DEFAULT) &&
+             sessionSupportsGraphicsBackend(UserPrefs.GRAPHICS_BACKEND_WINDOWS));
+      graphicsAntialiasNote_.setVisible(windowsDevice);
+   }
+
+   private boolean sessionSupportsGraphicsBackend(String backend)
+   {
+      JsArrayString supportedBackends = session_.getSessionInfo().getGraphicsBackends();
+      for (int i = 0; i < supportedBackends.length(); i++)
+      {
+         if (StringUtil.equals(supportedBackends.get(i), backend))
+            return true;
+      }
+      return false;
    }
 
    private static final String ENGINE_AUTO        = "auto"; //$NON-NLS-1$
@@ -745,6 +787,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
    private SelectWidget graphicsBackend_;
    private SelectWidget graphicsAntialias_;
+   private Label graphicsAntialiasNote_;
 
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;

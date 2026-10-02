@@ -20,6 +20,7 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { appState } from './app-state';
 import { DesktopBrowserWindow } from './desktop-browser-window';
+import { isAutomated } from './utils';
 
 const SOURCE_WINDOW_PREFIX = '_rstudio_satellite_source_window_';
 
@@ -52,7 +53,7 @@ export class SatelliteWindow extends GwtWindow {
       appState().gwtCallback?.unregisterOwner(this);
 
       // also prune the main window's satellite bookkeeping. the satellite
-      // normally announces its own closure from a JS unload handler, but that
+      // normally announces its own closure from a JS pagehide handler, but that
       // notification can lose the race with window destruction, leaving a
       // zombie entry in the GWT SatelliteManager -- a subsequent open of a
       // satellite with the same name then tries to reactivate the dead window
@@ -129,6 +130,10 @@ export class SatelliteWindow extends GwtWindow {
       action: 'allow',
       overrideBrowserWindowOptions: {
         autoHideMenuBar: true,
+        // Electron shows window.open() windows immediately, which on macOS
+        // activates the app; Application.windowCreated() surfaces them with
+        // showInactive() instead during automation runs.
+        show: !isAutomated(),
         webPreferences: {
           additionalArguments: ['--api-keys=desktopInfo|desktop'],
           preload: DesktopBrowserWindow.getPreload(),

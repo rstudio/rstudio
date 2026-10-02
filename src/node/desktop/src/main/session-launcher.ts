@@ -13,7 +13,7 @@
  *
  */
 
-import { ChildProcess, execSync, spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { app, BrowserWindow } from 'electron';
 import fs, { rmSync } from 'fs';
 
@@ -41,6 +41,17 @@ import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, findRepoRoot, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
+import { startupCheckpoint } from './startup-timing';
+import { readMachoArchitectures } from '../core/macho';
+import {
+  cachedLoginShellPath,
+  isShellDerivedPath,
+  kSessionPathInitializedEnvVar,
+  loginShellPath,
+  loginShellPathFailed,
+  withDefaultToolPaths,
+} from './login-shell-path';
+import { probeUrl } from './url-utils';
 import { showWhatsNewWindow } from './whats-new-window';
 import {
   toReleaseSlug,
@@ -107,8 +118,8 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     // x86 or arm64 versions of the libraries in the launched rsession
     const path = absPath.getAbsolutePath();
     if (process.arch === 'arm64') {
-      const fileInfo = execSync(`/usr/bin/file "${rLib}"`, { encoding: 'utf-8' });
-      if (fileInfo.indexOf('arm64') === -1 && fileInfo.indexOf('x86_64') !== -1) {
+      const architectures = libRArchitectures(rLib);
+      if (!architectures.includes('arm64') && architectures.includes('x86_64')) {
         argList = ['-x86_64', ...dyldArgs, path, ...argList];
         absPath = new FilePath('/usr/bin/arch');
       } else {
@@ -118,6 +129,30 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     } else {
       argList = ['-x86_64', ...dyldArgs, path, ...argList];
       absPath = new FilePath('/usr/bin/arch');
+    }
+
+    // settle the PATH the session starts with (see login-shell-path.ts).
+    // a terminal launch already carries a shell's PATH -- keep it, along
+    // with any customizations (an activated conda environment, direnv) a
+    // fresh login shell would lose, exactly as the session's own
+    // initializePath() always has
+    if (isShellDerivedPath(env['PATH'] ?? '')) {
+      env[kSessionPathInitializedEnvVar] = '1';
+    } else {
+      // adopt the login shell's PATH if we have it, and say so, so rsession
+      // need not spend its own startup asking the shell
+      const shellPath = cachedLoginShellPath();
+      if (shellPath) {
+        env['PATH'] = shellPath;
+        env[kSessionPathInitializedEnvVar] = '1';
+      } else if (loginShellPathFailed()) {
+        // the desktop's bounded query failed or timed out; the session's own
+        // probe has no timeout and would hang on the same profile, so tell it
+        // to keep the inherited PATH, extended with the standard tool
+        // locations a login shell would normally contribute
+        env['PATH'] = withDefaultToolPaths(env['PATH'] ?? '');
+        env[kSessionPathInitializedEnvVar] = '1';
+      }
     }
   }
 
@@ -135,6 +170,18 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     // for diagnostics, redirect child process stdio to this process
     return spawn(absPath.getAbsolutePath(), argList, { stdio: 'inherit', env: env });
   }
+}
+
+/**
+ * Architectures of R's shared library, as `/usr/bin/file` would report them
+ * but without launching a process. A file that is not a Mach-O image yields
+ * an empty list; a file that cannot be read throws, failing the launch --
+ * the callers would otherwise each guess a (different) architecture.
+ */
+function libRArchitectures(rLib: FilePath): string[] {
+  const architectures = readMachoArchitectures(rLib.getAbsolutePath());
+  logger().logDebug(`${rLib.getAbsolutePath()}: ${architectures.join(', ') || 'not a Mach-O image'}`);
+  return architectures;
 }
 
 function abendLogPath(): FilePath {
@@ -228,12 +275,21 @@ export class SessionLauncher {
     logger().logDiagnosticEnvVar('R_USER');
     logger().logDiagnosticEnvVar('RSTUDIO_CPP_BUILD_OUTPUT');
 
+    // settle which PATH the session gets; this only waits on a first launch,
+    // and never on a terminal launch, whose PATH is kept as-is
+    // (see login-shell-path.ts)
+    if (!isShellDerivedPath(getenv('PATH'))) {
+      await loginShellPath();
+    }
+    startupCheckpoint('login-shell-path-ready');
+
     // launch the process
     try {
       this.sessionProcess = this.launchSession(launchContext.argList, true);
     } catch (err: unknown) {
       return safeError(err);
     }
+    startupCheckpoint('session-spawned');
 
     logger().logDiagnostic(`\nR session launched, attempting to connect on port ${launchContext.port}...`);
 
@@ -244,6 +300,7 @@ export class SessionLauncher {
     this.appLaunch.setActivationWindow(this.mainWindow);
 
     ElectronDesktopOptions().restoreMainWindowBounds(this.mainWindow.window);
+    startupCheckpoint('window-created');
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 
@@ -270,6 +327,7 @@ export class SessionLauncher {
       // may not be reliable, especially if the user switches focus between different
       // windows/apps while starting up.
       this.mainWindow.window.webContents.once('did-finish-load', async () => {
+        startupCheckpoint('did-finish-load');
         if (appState().startupDelayMs > 0) {
           await setTimeoutPromise(appState().startupDelayMs);
         }
@@ -281,6 +339,7 @@ export class SessionLauncher {
         } else {
           this.mainWindow?.window.show();
         }
+        startupCheckpoint('window-shown');
 
         // if the splash screen displayed, keep it visible for another brief period to
         // reduce cases where it flashes and hides without being readable
@@ -320,12 +379,55 @@ export class SessionLauncher {
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
+
+      // Show the placeholder page right away and navigate to the session only
+      // once it is listening. Navigating immediately would fail (the session
+      // needs a moment to open its port) and cost a reload cycle with a
+      // coarse retry interval on top; see MainWindow.onLoadFinished.
+      this.mainWindow.loadLoadingPage().catch((error: unknown) => logger().logError(error));
+      const listening = await this.waitForSessionListener(launchContext.url);
+      if (!listening) {
+        // the session exited before listening; onRSessionExited has shown
+        // (or will show) the launch error page
+        return success();
+      }
+
+      startupCheckpoint('load-url');
       this.mainWindow.loadUrl(launchContext.url).catch((reason) => {
         logger().logErrorMessage(`Failed to load ${launchContext.url}: ${reason}`);
       });
     }
 
     return success();
+  }
+
+  /**
+   * Polls until the session's HTTP listener answers. Resolves false if the
+   * session process exits first; after the timeout, resolves true anyway so
+   * the normal load-failure handling can take over.
+   */
+  private async waitForSessionListener(url: string): Promise<boolean> {
+    const kProbeIntervalMs = 20;
+    const kProbeTimeoutMs = 30000;
+
+    startupCheckpoint('session-probe-begin');
+    const deadline = Date.now() + kProbeTimeoutMs;
+    while (Date.now() < deadline) {
+      // exitCode stays null when the process dies from a signal, so check
+      // signalCode as well
+      const session = this.sessionProcess;
+      if (session == null || session.exitCode !== null || session.signalCode !== null) {
+        return false;
+      }
+      if (await probeUrl(url)) {
+        startupCheckpoint('session-listening');
+        return true;
+      }
+      await setTimeoutPromise(kProbeIntervalMs);
+    }
+
+    logger().logWarning(`Session did not start listening on ${url} within ${kProbeTimeoutMs}ms`);
+    return true;
   }
 
   closeAllSatellites(): void {
@@ -609,6 +711,7 @@ export class SessionLauncher {
             } else {
               this.splash.show();
             }
+            startupCheckpoint('splash-shown');
           }
         })
         .catch((err) => logger().logError(err));
@@ -668,11 +771,8 @@ export class SessionLauncher {
     // with the arm64 session binary (rsession-arm64) or with the x64 session binary (rsession)
     if (app.isPackaged && process.platform === 'darwin' && process.arch === 'arm64') {
       const rHome = getenv('R_HOME');
-      const rLibPath = `${rHome}/lib/libR.dylib`;
-      logger().logDebug(`$ /usr/bin/file "${rLibPath}"`);
-      const fileInfo = execSync(`/usr/bin/file "${rLibPath}"`, { encoding: 'utf-8' });
-      logger().logDebug(fileInfo);
-      if (fileInfo.indexOf('arm64') !== -1) {
+      const rLib = new FilePath(rHome).completePath('lib/libR.dylib');
+      if (libRArchitectures(rLib).includes('arm64')) {
         this.sessionPath = this.sessionPath.getParent().completeChildPath('rsession-arm64');
         logger().logDebug(`R is arm64; using ${this.sessionPath}`);
       } else {

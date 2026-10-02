@@ -42,6 +42,7 @@ public class PlotsPaneSaveAsImageOperation implements SavePlotAsImageOperation
                            boolean overwrite, 
                            boolean viewAfterSave,
                            boolean useDevicePixelRatio,
+                           int resolution,
                            Operation onCompleted)
    {
       // create handler
@@ -62,6 +63,7 @@ public class PlotsPaneSaveAsImageOperation implements SavePlotAsImageOperation
                                      sizeEditor.getImageHeight(), 
                                      overwrite,
                                      useDevicePixelRatio,
+                                     resolution,
                                      requestCallback);
                }
 

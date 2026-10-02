@@ -290,10 +290,10 @@ export class AceEditor extends PageObject {
     );
   }
 
-  /** Returns all Ace markers on the session, normalized to plain objects. */
-  async getMarkers(): Promise<AceMarker[]> {
-    return this.run((editor) => {
-      const markers = editor.session.getMarkers() as Record<string, AceMarker>;
+  /** Returns back markers by default, or front markers when requested. */
+  async getMarkers(inFront = false): Promise<AceMarker[]> {
+    return this.run((editor, front: boolean) => {
+      const markers = editor.session.getMarkers(front) as Record<string, AceMarker>;
       return Object.values(markers).map((m) => ({
         range: m.range
           ? {
@@ -304,7 +304,7 @@ export class AceEditor extends PageObject {
         type: m.type,
         clazz: m.clazz,
       }));
-    });
+    }, inFront);
   }
 
   async getState(row: number): Promise<string | string[]> {

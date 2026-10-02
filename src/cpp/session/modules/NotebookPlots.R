@@ -15,6 +15,62 @@
 
 .rs.setVar("notebooks.defaultPlotDpi", 96)
 
+# resolves the arguments used to create the notebook graphics device. 'extraArgs'
+# carries the RStudio graphics preferences (backend type, antialiasing) as a
+# string of R arguments; the knitr 'dev.args' chunk option ('devArgs'), when
+# set, is layered on top so that inline chunk output matches a knit.
+#
+# https://github.com/rstudio/rstudio/issues/4067
+.rs.addFunction("notebookGraphicsDeviceArgs", function(args,
+                                                       extraArgs,
+                                                       dev = "png",
+                                                       devArgs = list())
+{
+   if (nchar(extraArgs) > 0)
+   {
+      # trim leading comma from extra args if present
+      if (identical(substr(extraArgs, 1, 1), ","))
+         extraArgs <- substring(extraArgs, 2)
+      
+      # parse extra args and merge with existing args
+      extraList <- tryCatch(
+         eval(parse(text = paste("list(", extraArgs, ")"))),
+         error = function(e) NULL
+      )
+      
+      if (is.list(extraList))
+         args <- c(args, extraList)
+   }
+
+   # when the option is unset or "default", keep any backend type that
+   # arrived via extraArgs rather than clearing it
+   gdBackend <- getOption("RStudioGD.backend")
+   if (is.character(gdBackend) && !identical(gdBackend, "default"))
+   {
+     # pass along graphics device backend if set
+     # we allow this option to be temporarily set by the knitr chunk option while the notebook
+     # chunk is executing; this takes precedence over the device passed via extraArgs
+     args$type <- gdBackend
+   }
+
+   # knitr allows several devices (dev = c("png", "pdf")); inline output
+   # only renders the first
+   dev <- as.character(unlist(dev))[1L]
+   if (is.na(dev) || !nzchar(dev))
+      dev <- "png"
+
+   # knitr accepts 'dev.args' either as a flat list of arguments, or as a
+   # list of per-device argument lists keyed by device name
+   if (is.list(devArgs) && is.list(devArgs[[dev]]))
+      devArgs <- devArgs[[dev]]
+
+   # chunk-level arguments win over the RStudio defaults
+   if (is.list(devArgs) && !is.null(names(devArgs)))
+      args <- utils::modifyList(args, devArgs)
+
+   args
+})
+
 # creates the notebook graphics device 
 .rs.addFunction("createNotebookGraphicsDevice", function(filename,
                                                          width,
@@ -22,7 +78,9 @@
                                                          dpi,
                                                          units,
                                                          pixelRatio,
-                                                         extraArgs)
+                                                         extraArgs,
+                                                         dev = "png",
+                                                         devArgs = list())
 {
    dpi <- if (dpi <= 0) .rs.notebooks.defaultPlotDpi else dpi
    
@@ -42,42 +100,14 @@
       res      = dpi
    )
 
-   if (nchar(extraArgs) > 0)
-   {
-      # trim leading comma from extra args if present
-      if (identical(substr(extraArgs, 1, 1), ","))
-         extraArgs <- substring(extraArgs, 2)
-      
-      # parse extra args and merge with existing args
-      extraList <- tryCatch(
-         eval(parse(text = paste("list(", extraArgs, ")"))),
-         error = function(e) NULL
-      )
-      
-      if (is.list(extraList))
-         args <- c(args, extraList)
-   }
-
-   gdBackend <- getOption("RStudioGD.backend")
-   if (!identical(gdBackend, "default"))
-   {
-     # pass along graphics device backend if set
-     # we allow this option to be temporarily set by the knitr chunk option while the notebook
-     # chunk is executing; this takes precedence over the device passed via extraArgs
-     args$type <- gdBackend
-   }
+   args <- .rs.notebookGraphicsDeviceArgs(args, extraArgs, dev, devArgs)
    
-   # if it looks like we're using AGG, delegate to that
+   # if it looks like we're using AGG, delegate to that; keep only the
+   # arguments it accepts, so that 'dev.args' (e.g. 'background') still apply
    if (identical(args$type, "ragg"))
    {
-      device <- ragg::agg_png(
-         filename = filename,
-         width    = width,
-         height   = height,
-         units    = units,
-         res      = dpi
-      )
-      
+      aggArgs <- args[intersect(names(args), names(formals(ragg::agg_png)))]
+      device <- do.call(ragg::agg_png, aggArgs)
       return(device)
    }
    
@@ -96,11 +126,13 @@
                                                       dpi,
                                                       units,
                                                       pixelRatio,
-                                                      extraArgs)
+                                                      extraArgs,
+                                                      dev = "png",
+                                                      devArgs = list())
 {
    options(device = function()
    {
-      .rs.createNotebookGraphicsDevice(filename, width, height, dpi, units, pixelRatio, extraArgs)
+      .rs.createNotebookGraphicsDevice(filename, width, height, dpi, units, pixelRatio, extraArgs, dev, devArgs)
       dev.control(displaylist = "enable")
       # this introduces margins that makes the figure different from the actual output
       # as seen in the rendered document, so disable it
@@ -138,9 +170,14 @@
                                                 height,
                                                 pixelRatio,
                                                 persistOutput,
-                                                extraArgs)
+                                                extraArgs,
+                                                backend = "default")
 {
    require(grDevices, quietly = TRUE)
+
+   # this process doesn't inherit the session's options; restore the graphics
+   # backend, since extraArgs can't carry AGG
+   options(RStudioGD.backend = backend)
    
    # Load any required packages
    requiredPackages <- Sys.getenv("RS_NOTEBOOK_PACKAGES", unset = "")
@@ -171,7 +208,8 @@
       
       height <- if (height <= 0) width / 1.618 else height
       dpi <- .rs.nullCoalesce(chunkDef$options$dpi, .rs.notebooks.defaultPlotDpi)
-      
+
+      # use [[ rather than $ so 'dev' can't partially match 'dev.args'
       .rs.replayNotebookSnapshots(
          snapshots = snapshots,
          width = width,
@@ -179,7 +217,9 @@
          dpi = dpi,
          pixelRatio = pixelRatio,
          persistOutput = persistOutput,
-         extraArgs = extraArgs
+         extraArgs = extraArgs,
+         dev = .rs.nullCoalesce(chunkDef$options[["dev"]], "png"),
+         devArgs = .rs.nullCoalesce(chunkDef$options[["dev.args"]], list())
       )
       
    }
@@ -192,7 +232,9 @@
                                                     dpi,
                                                     pixelRatio,
                                                     persistOutput,
-                                                    extraArgs)
+                                                    extraArgs,
+                                                    dev = "png",
+                                                    devArgs = list())
 {
    lapply(snapshots, function(snapshot) {
       
@@ -217,7 +259,9 @@
          dpi = dpi,
          units = "px",
          pixelRatio = pixelRatio,
-         extraArgs = extraArgs
+         extraArgs = extraArgs,
+         dev = dev,
+         devArgs = devArgs
       )
       
       # actually replay the plot onto the device

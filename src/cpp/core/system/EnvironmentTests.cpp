@@ -24,6 +24,18 @@
 #include <core/system/Environment.hpp>
 #include <core/system/Resources.hpp>
 
+#ifdef __linux__
+#include <shared_core/system/PosixSystem.hpp>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+#endif
+
 #define kLatexStyleLineCommentRegex ("^%+\\s*")
 
 namespace rstudio {
@@ -188,6 +200,50 @@ TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
       unsetenv("RSTUDIO_ENV_HAMMER_" + std::to_string(i));
 }
 
+#ifdef _WIN32
+const std::string kSep = ";";
+#else
+const std::string kSep = ":";
+#endif
+
+TEST(EnvironmentTest, AddToPathSkipsAppendingEntryAlreadyPresent)
+{
+   // a restored terminal re-appends the git bin dir to its saved PATH, which
+   // must not gain another copy on each session restart (#18777)
+   std::string path = "/a" + kSep + "/git" + kSep + "/b";
+   addToPath(&path, "/git");
+   EXPECT_EQ("/a" + kSep + "/git" + kSep + "/b", path);
+
+   // entries match whole, not as substrings
+   addToPath(&path, "/gi");
+   EXPECT_EQ("/a" + kSep + "/git" + kSep + "/b" + kSep + "/gi", path);
+
+   Options env;
+   setenv(&env, "PATH", "/a" + kSep + "/git");
+   addToPath(&env, "/git");
+   EXPECT_EQ("/a" + kSep + "/git", getenv(env, "PATH"));
+}
+
+TEST(EnvironmentTest, AddToPathPrependsUnlessAlreadyFirst)
+{
+   std::string path = "/a" + kSep + "/b";
+   addToPath(&path, "/a", true);
+   EXPECT_EQ("/a" + kSep + "/b", path);
+
+   // an entry further down is still prepended, so it takes precedence
+   addToPath(&path, "/b", true);
+   EXPECT_EQ("/b" + kSep + "/a" + kSep + "/b", path);
+}
+
+TEST(EnvironmentTest, AddToPathAlwaysAppendsEmptyEntry)
+{
+   // TeX needs a trailing separator even when the value already has an empty
+   // entry, since the default search path is expanded at each one's position
+   std::string path = "/a" + kSep + kSep + "/b";
+   addToPath(&path, "");
+   EXPECT_EQ("/a" + kSep + kSep + "/b" + kSep, path);
+}
+
 TEST(ResourcesTest, NonzeroResourceMetrics)
 {
    // Used memory should be nonzero
@@ -235,6 +291,399 @@ TEST(ResourcesTest, CongruentMemoryMetrics)
       EXPECT_GT(used, process);
    }
 }
+
+#ifdef __linux__
+
+TEST(ResourcesTest, CgroupV2MemoryExcludesPageCache)
+{
+   // Figures from a cgroup v2 session that had grepped a large NFS tree
+   long currentKb = 70922240 / 1024;
+   std::string memoryStat =
+         "anon 8019968\n"
+         "file 61698048\n"
+         "kernel 1036288\n"
+         "shmem 12288\n"
+         "file_mapped 40960\n"
+         "inactive_anon 2547712\n"
+         "active_anon 5484544\n"
+         "inactive_file 52629504\n"
+         "active_file 9056256\n"
+         "unevictable 0\n";
+
+   long usedKb = 0;
+   Error error = computeCgroupMemoryUsedKb(currentKb, memoryStat, true, &usedKb);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(currentKb - (52629504 + 9056256) / 1024, usedKb);
+
+   // Anon memory is never reclaimable page cache, so it must remain counted
+   EXPECT_GE(usedKb, 8019968 / 1024);
+   EXPECT_LT(usedKb, currentKb);
+}
+
+TEST(ResourcesTest, CgroupV1MemoryUsesHierarchicalTotals)
+{
+   long currentKb = 100 * 1024;
+   std::string memoryStat =
+         "cache 1048576\n"
+         "active_file 1048576\n"
+         "inactive_file 0\n"
+         "total_cache 62914560\n"
+         "total_active_file 20971520\n"
+         "total_inactive_file 41943040\n";
+
+   long usedKb = 0;
+   Error error = computeCgroupMemoryUsedKb(currentKb, memoryStat, false, &usedKb);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(40 * 1024, usedKb);
+}
+
+TEST(ResourcesTest, CgroupMemoryClampsAndRejectsIncompleteStats)
+{
+   // memory.stat read after memory.current may report more cache than usage
+   long usedKb = -1;
+   Error error = computeCgroupMemoryUsedKb(1024, "active_file 1048576\ninactive_file 1048576\n", true, &usedKb);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(0, usedKb);
+
+   error = computeCgroupMemoryUsedKb(1024, "anon 1048576\ninactive_file 1048576\n", true, &usedKb);
+   EXPECT_TRUE(error);
+}
+
+TEST(ResourcesTest, ProcFileReadFailsOnceProcessIsReaped)
+{
+   // A process can exit between the open and the read of its status file.
+   // The read then fails without ever reaching end-of-file, which used to
+   // leave the session spinning on the read (#18991).
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::pause();
+      ::_exit(0);
+   }
+
+   std::string path = "/proc/" + std::to_string(child) + "/status";
+   int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
+
+   int status = 0;
+   ::kill(child, SIGKILL);
+   pid_t reaped = posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, 0); });
+
+   // See what the procfs makes of the read before the reader is asked to.
+   // Linux fails it with ESRCH, but an emulated procfs (gVisor) needn't.
+   char probe = 0;
+   ssize_t probed = ::read(fd, &probe, sizeof(probe));
+   int probeErrno = (probed == -1) ? errno : 0;
+
+   // Close the descriptor before an assertion can end the test
+   std::string contents;
+   Error error = readProcFileDescriptor(fd, &contents);
+   if (fd != -1)
+      ::close(fd);
+
+   ASSERT_NE(-1, fd);
+   ASSERT_EQ(child, reaped);
+   if (probed != -1)
+      GTEST_SKIP() << "This procfs still serves the status of a process that has been reaped";
+
+   ASSERT_TRUE(error);
+   EXPECT_EQ(probeErrno, error.getCode());
+   EXPECT_TRUE(contents.empty());
+
+   // Nor can the file be opened, now that the process is gone
+   error = readProcFile(path, &contents);
+   ASSERT_TRUE(error);
+   EXPECT_EQ(ENOENT, error.getCode());
+}
+
+TEST(ResourcesTest, ProcFileReadReturnsProcessStatus)
+{
+   std::string contents;
+   Error error = readProcFile("/proc/self/status", &contents);
+   ASSERT_FALSE(error);
+
+   ProcessStatus status;
+   error = parseProcessStatus(contents, &status);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(::getppid(), status.parentPid);
+   EXPECT_GT(status.sizeKb, 0);
+}
+
+TEST(ResourcesTest, ProcFileReadIsBounded)
+{
+   // /dev/zero never reaches end-of-file
+   std::string contents;
+   Error error = readProcFile("/dev/zero", &contents);
+   ASSERT_TRUE(error);
+   EXPECT_EQ(EFBIG, error.getCode());
+}
+
+TEST(ResourcesTest, ZombieProcessHasNoSize)
+{
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+      ::_exit(0);
+
+   // Wait for the child to exit, but leave it unreaped
+   siginfo_t info;
+   int waited = posix::posixCall<int>([&]() { return ::waitid(P_PID, child, &info, WEXITED | WNOWAIT); });
+
+   std::string contents;
+   Error error = readProcFile("/proc/" + std::to_string(child) + "/status", &contents);
+
+   // Reap the child before an assertion can end the test
+   int status = 0;
+   posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, 0); });
+
+   ASSERT_EQ(0, waited);
+   ASSERT_FALSE(error);
+
+   // Linux gives a zombie's status without the memory lines, but an emulated
+   // procfs (gVisor) needn't
+   if (contents.find("VmRSS:") != std::string::npos)
+      GTEST_SKIP() << "This procfs reports the memory of a zombie";
+
+   ProcessStatus zombie;
+   error = parseProcessStatus(contents, &zombie);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(::getpid(), zombie.parentPid);
+   EXPECT_EQ(0, zombie.sizeKb);
+}
+
+TEST(ResourcesTest, ProcFileKeysAreParsed)
+{
+   // The last line has no trailing newline
+   std::string contents =
+      "MemTotal:        8124360 kB\n"
+      "MemFree:          215432 kB\n"
+      "MemAvailable:    4210988 kB\n"
+      "SwapTotal:       2097148 kB\n"
+      "SwapFree:        1048576 kB";
+
+   // The values needn't be sized to match the keys
+   std::vector<long> values;
+   Error error = parseProcFileKeys(contents, {"SwapFree", "MemTotal", "MemAvailable"}, &values);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(3u, values.size());
+   EXPECT_EQ(1048576, values[0]);
+   EXPECT_EQ(8124360, values[1]);
+   EXPECT_EQ(4210988, values[2]);
+
+   // A key must match the whole name, not a prefix of it
+   values = {0};
+   error = parseProcFileKeys(contents, {"Mem"}, &values);
+   EXPECT_TRUE(error);
+
+   values = {0, 0};
+   error = parseProcFileKeys(contents, {"MemTotal", "Missing"}, &values);
+   EXPECT_TRUE(error);
+
+   values = {0};
+   error = parseProcFileKeys("MemTotal: lots\n", {"MemTotal"}, &values);
+   EXPECT_TRUE(error);
+
+   // A value is never taken from the next line
+   error = parseProcFileKeys("MemTotal:\n8124360 kB\n", {"MemTotal"}, &values);
+   EXPECT_TRUE(error);
+
+   error = parseProcFileKeys("MemTotal: 99999999999999999999999 kB\n", {"MemTotal"}, &values);
+   EXPECT_TRUE(error);
+
+   error = parseProcFileKeys("", {"MemTotal"}, &values);
+   EXPECT_TRUE(error);
+
+   // The values are left alone by a failure
+   ASSERT_EQ(1u, values.size());
+   EXPECT_EQ(0, values[0]);
+
+   // A repeated line can't stand in for a key that is yet to be found
+   error = parseProcFileKeys("MemTotal: 1 kB\nMemTotal: 2 kB\nMemFree: 3 kB\n", {"MemTotal", "MemFree"}, &values);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(2u, values.size());
+   EXPECT_EQ(1, values[0]);
+   EXPECT_EQ(3, values[1]);
+
+   error = parseProcFileKeys("MemTotal: 1 kB\nMemTotal: 2 kB\n", {"MemTotal", "MemFree"}, &values);
+   EXPECT_TRUE(error);
+}
+
+TEST(ResourcesTest, ProcessStatusIsParsed)
+{
+   std::string contents =
+      "Name:\tR\n"
+      "State:\tS (sleeping)\n"
+      "Pid:\t4367\n"
+      "PPid:\t4301\n"
+      "VmPeak:\t  120000 kB\n"
+      "VmRSS:\t   52340 kB\n"
+      "VmSwap:\t     128 kB\n";
+
+   ProcessStatus status;
+   Error error = parseProcessStatus(contents, &status);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(4301, status.parentPid);
+   EXPECT_EQ(52340 + 128, status.sizeKb);
+
+   // Without a parent the process can't be placed in the process tree
+   error = parseProcessStatus("Name:\tR\nVmRSS:\t   52340 kB\nVmSwap:\t     128 kB\n", &status);
+   EXPECT_TRUE(error);
+   EXPECT_EQ(-1, status.parentPid);
+
+   // A memory line that is missing counts as 0
+   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t   52340 kB\n", &status);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(52340, status.sizeKb);
+
+   // A repeated memory line doesn't keep the other one from being read
+   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t10 kB\nVmRSS:\t20 kB\nVmSwap:\t5 kB\n", &status);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(10 + 5, status.sizeKb);
+
+   // One that can't be read is an error, rather than a size of 0. The parent
+   // is still given, wherever its line is, so that the process keeps its
+   // place in the process tree.
+   error = parseProcessStatus("PPid:\t4301\nVmRSS:\t   lots kB\nVmSwap:\t     128 kB\n", &status);
+   EXPECT_TRUE(error);
+   EXPECT_EQ(4301, status.parentPid);
+   EXPECT_EQ(0, status.sizeKb);
+
+   error = parseProcessStatus("VmRSS:\t   lots kB\nVmSwap:\t     128 kB\nPPid:\t4302\n", &status);
+   EXPECT_TRUE(error);
+   EXPECT_EQ(4302, status.parentPid);
+   EXPECT_EQ(0, status.sizeKb);
+}
+
+TEST(ResourcesTest, MemoryCgroupIsParsed)
+{
+   uid_t uid = 1000;
+   std::string userCgroup = "/user.slice/user-1000.slice/user@1000.service";
+
+   // cgroups v1 has a hierarchy for each set of controllers
+   std::string contents =
+      "11:cpu,cpuacct:/\n"
+      "9:memory:" + userCgroup + "\n"
+      "1:name=systemd:/user.slice/user-1000.slice/session-3.scope\n";
+   EXPECT_EQ(userCgroup, parseMemoryCgroup(contents, uid));
+
+   // cgroups v2 has the one hierarchy
+   EXPECT_EQ(userCgroup, parseMemoryCgroup("0::" + userCgroup + "\n", uid));
+
+   // The path can contain colons of its own
+   std::string scopeCgroup = "/user.slice/user-1000.slice/app-foo:bar.scope";
+   EXPECT_EQ(scopeCgroup, parseMemoryCgroup("0::" + scopeCgroup + "\n", uid));
+   EXPECT_EQ(scopeCgroup, parseMemoryCgroup("9:memory:" + scopeCgroup + "\n", uid));
+
+   // A cgroup shared with other users isn't used
+   EXPECT_EQ("", parseMemoryCgroup("0::/system.slice/rstudio-server.service\n", uid));
+   EXPECT_EQ("", parseMemoryCgroup("0::/user.slice/user-1001.slice/session-3.scope\n", uid));
+
+   EXPECT_EQ("", parseMemoryCgroup("11:cpu,cpuacct:/\n", uid));
+   EXPECT_EQ("", parseMemoryCgroup("", uid));
+}
+
+TEST(ResourcesTest, ChildProcessSizeIsCounted)
+{
+   long usedKb = 0;
+   MemoryProvider provider = MemoryProviderUnknown;
+   Error error = getProcessMemoryUsed(&usedKb, &provider);
+   ASSERT_FALSE(error);
+   if (provider != MemoryProviderLinuxProcFs)
+      GTEST_SKIP() << "Process memory usage is not computed from procfs";
+
+   // The child stops once it has touched its 64MB, which it holds on to
+   // until it is killed
+   const std::size_t kChildBytes = 64 * 1024 * 1024;
+   const long kChildKb = 64 * 1024;
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      void* pMemory = ::mmap(nullptr, kChildBytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+      if (pMemory == MAP_FAILED)
+         ::_exit(1);
+
+      ::memset(pMemory, 1, kChildBytes);
+      ::kill(::getpid(), SIGSTOP);
+      ::pause();
+      ::_exit(0);
+   }
+
+   int status = 0;
+   pid_t waited = posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, WUNTRACED); });
+   bool isStopped = (waited == child) && WIFSTOPPED(status);
+   bool isReaped = (waited == child) && !WIFSTOPPED(status);
+
+   // Measure with the child, and then without it. The test's own size is
+   // then much the same in both figures, whatever the child's allocation
+   // did to it.
+   long withChildKb = 0;
+   Error withChildError = getProcessMemoryUsed(&withChildKb, &provider);
+
+   if (!isReaped)
+   {
+      ::kill(child, SIGKILL);
+      posix::posixCall<pid_t>([&]() { return ::waitpid(child, &status, 0); });
+   }
+
+   long withoutChildKb = 0;
+   Error withoutChildError = getProcessMemoryUsed(&withoutChildKb, &provider);
+
+   ASSERT_TRUE(isStopped);
+   ASSERT_FALSE(withChildError);
+   ASSERT_FALSE(withoutChildError);
+
+   // Half of the child's allocation is well clear of any change in the
+   // test's own size between the two figures
+   EXPECT_GE(withChildKb - withoutChildKb, kChildKb / 2);
+}
+
+#endif
+
+#ifndef _WIN32
+
+TEST(EnvironmentTest, IsValidEnvironmentVariableName)
+{
+   // Accepted
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("_FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("f"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("_"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("PWB_GLOBAL_OVER_GROUP"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO_BAR_BAZ"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("A1_b2"));
+
+   // Rejected: outside the portable shell-safe grammar, even though some of
+   // these are real, legal POSIX environment variable names (e.g. a
+   // Bash-exported function surfaces as BASH_FUNC_foo%%)
+   EXPECT_FALSE(isValidEnvironmentVariableName(""));
+   EXPECT_FALSE(isValidEnvironmentVariableName("1FOO"));       // leading digit
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO-BAR"));    // dash
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO BAR"));    // space
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO.BAR"));    // dot
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO="));       // stray '='
+   EXPECT_FALSE(isValidEnvironmentVariableName("FÖO"));        // non-ASCII
+}
+
+#else
+
+TEST(EnvironmentTest, IsValidEnvironmentVariableName)
+{
+   // Accepted: Windows imposes no character restrictions beyond the ones
+   // SetEnvironmentVariable itself enforces, so names the POSIX grammar
+   // would reject are still valid here
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("1FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("ProgramFiles(x86)"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO BAR"));
+
+   // Rejected: the only two things SetEnvironmentVariable forbids
+   EXPECT_FALSE(isValidEnvironmentVariableName(""));
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO="));
+}
+
+#endif
 
 } // namespace system
 } // namespace core
