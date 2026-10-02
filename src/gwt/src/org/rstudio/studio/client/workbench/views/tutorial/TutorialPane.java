@@ -391,6 +391,13 @@ public class TutorialPane
       return url.replaceFirst("[?#].*$", "").endsWith(TutorialPresenter.URLS_HOME);
    }
 
+   @Override
+   public boolean isHomePage()
+   {
+      Document doc = getFrameDocument();
+      return doc != null && isHomeUrl(doc.getURL());
+   }
+
    // Hides the tutorials on the home page that don't match the filter box.
    // Each term must appear somewhere in the tutorial's title, package name,
    // or tutorial name, so adding a term narrows the list. Whitespace and
@@ -421,7 +428,13 @@ public class TutorialPane
 
          boolean matches = true;
          for (String term : terms)
-            matches = matches && haystack.contains(term);
+         {
+            if (!haystack.contains(term))
+            {
+               matches = false;
+               break;
+            }
+         }
 
          if (matches)
          {
