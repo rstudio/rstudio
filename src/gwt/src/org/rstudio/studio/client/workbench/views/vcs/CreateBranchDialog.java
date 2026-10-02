@@ -32,7 +32,6 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
 
 import com.google.gwt.core.client.JsArray;
@@ -236,23 +235,6 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       enableOkButton(ok);
    }
 
-   // Enter in the branch box submits regardless of the OK button's state, so
-   // the worktree directory is checked again here
-   @Override
-   protected boolean validate(Input input)
-   {
-      if (input.getWorktreeParent() != null && input.getWorktreeParent().isEmpty())
-      {
-         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               constants_.newBranchCapitalized(),
-               constants_.worktreeParentNotSpecified(),
-               dirWorktreeParent_);
-         return false;
-      }
-
-      return !StringUtil.isNullOrEmpty(input.getBranch());
-   }
-   
    public void setRemotes(JsArray<RemotesInfo> remotesInfo)
    {
       setRemotes(null, remotesInfo);

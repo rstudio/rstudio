@@ -354,10 +354,16 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          if (DOM.eventGetType(event) == Event.ONCLICK)
          {
             Element target = DOM.eventGetTarget(event);
-            rightImageClicked_ = target.hasClassName(ThemeStyles.INSTANCE.menuRightImage());
+            onItemClicked(target.hasClassName(ThemeStyles.INSTANCE.menuRightImage()));
          }
 
          super.onBrowserEvent(event);
+      }
+
+      // Runs before a click reaches the item's command
+      protected void onItemClicked(boolean rightImage)
+      {
+         rightImageClicked_ = rightImage;
       }
 
       @Override

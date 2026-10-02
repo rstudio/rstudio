@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -31,18 +30,16 @@ import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
-import org.rstudio.studio.client.RStudioGinjector;
 
 public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
 {
    public static class Input
    {
-      public Input(String path, String parentDir, String branch, boolean createBranch)
+      public Input(String path, String parentDir, String branch)
       {
          path_ = path;
          parentDir_ = parentDir;
          branch_ = branch;
-         createBranch_ = createBranch;
       }
 
       public String getPath()
@@ -60,19 +57,14 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
          return branch_;
       }
 
-      public boolean getCreateBranch()
-      {
-         return createBranch_;
-      }
-
       private final String path_;
       private final String parentDir_;
       private final String branch_;
-      private final boolean createBranch_;
    }
 
    // The worktree is created at <parent>/<directory name>; the directory
-   // name follows the branch name until the user edits it by hand.
+   // name follows the branch name until the user edits it by hand. The branch
+   // is created unless one of that name exists already.
    public NewWorktreeDialog(String defaultParentDir,
                             OperationWithInput<Input> operation)
    {
@@ -89,9 +81,6 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
 
       // 'input' rather than a key handler, so that pasted text counts too
       DomUtils.addEventListener(tbBranch_.getElement(), "input", false, event -> onBranchChanged());
-
-      cbCreateBranch_ = new CheckBox(constants_.createNewBranch());
-      cbCreateBranch_.setValue(true);
 
       tbDirectoryName_ = new TextBox();
       tbDirectoryName_.getElement().getStyle().setProperty("minWidth", "200px");
@@ -118,7 +107,6 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
 
       container_ = new VerticalPanel();
       container_.add(grid);
-      container_.add(cbCreateBranch_);
       container_.add(new VerticalSpacer("6px"));
       container_.add(dirParent_);
    }
@@ -129,25 +117,7 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
       String parent = dirParent_.getText().trim();
       String name = tbDirectoryName_.getValue().trim();
       String path = FileSystemItem.createDir(parent).completePath(name);
-      return new Input(path, parent, tbBranch_.getValue().trim(), cbCreateBranch_.getValue());
-   }
-
-   // Enter in a text box submits regardless of the OK button's state, so this
-   // repeats its checks; a relative path would otherwise reach the server
-   @Override
-   protected boolean validate(Input input)
-   {
-      if (StringUtil.isNullOrEmpty(input.getParentDir()))
-      {
-         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               constants_.newWorktreeCapitalized(),
-               constants_.worktreeParentNotSpecified(),
-               dirParent_);
-         return false;
-      }
-
-      return !StringUtil.isNullOrEmpty(input.getBranch()) &&
-             !StringUtil.isNullOrEmpty(input.getPath());
+      return new Input(path, parent, tbBranch_.getValue().trim());
    }
 
    @Override
@@ -187,7 +157,6 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
 
    private final TextBox tbBranch_;
    private final TextBox tbDirectoryName_;
-   private final CheckBox cbCreateBranch_;
    private final DirectoryChooserTextBox dirParent_;
    private final VerticalPanel container_;
    private boolean directoryNameEdited_ = false;

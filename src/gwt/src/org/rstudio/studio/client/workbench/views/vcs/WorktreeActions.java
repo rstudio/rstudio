@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
@@ -23,6 +25,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -116,19 +119,61 @@ public class WorktreeActions
    }
 
    // Runs 'git worktree add' for `path`, then offers to open the result.
-   // `onCreated` (optional) runs first, once the worktree exists.
+   // `onCreated` (optional) runs first, once the worktree exists, and is
+   // handed that offer to make when its own work is done.
    public void create(final String path,
-                      String parentDir,
-                      String branch,
-                      boolean createBranch,
-                      final Command onCreated)
+                      final String parentDir,
+                      final String branch,
+                      final CommandWithArg<Command> onCreated)
    {
-      UserState userState = pUserState_.get();
-      if (!StringUtil.equals(userState.gitWorktreeParentDir().getGlobalValue(), parentDir))
+      // a worktree needs a branch that isn't checked out elsewhere: reuse an
+      // existing one of this name (git tracks a remote-only one), else create it
+      gitServer_.gitListBranches(new ServerRequestCallback<BranchesInfo>()
       {
-         userState.gitWorktreeParentDir().setGlobalValue(parentDir);
-         userState.writeState();
+         @Override
+         public void onResponseReceived(BranchesInfo branchesInfo)
+         {
+            addWorktree(path, parentDir, branch, !branchExists(branch, branchesInfo), onCreated);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            globalDisplay_.showErrorMessage(constants_.newWorktreeCapitalized(),
+                                            error.getUserMessage());
+         }
+      });
+   }
+
+   // Whether `branch` exists locally or on a remote ("remotes/<remote>/<branch>")
+   private static boolean branchExists(String branch, BranchesInfo branchesInfo)
+   {
+      for (String candidate : JsUtil.asIterable(branchesInfo.getBranches()))
+      {
+         if (candidate.startsWith("remotes/"))
+         {
+            int slash = candidate.indexOf('/', "remotes/".length());
+            if (slash != -1)
+               candidate = candidate.substring(slash + 1);
+         }
+
+         if (StringUtil.equals(candidate, branch))
+            return true;
       }
+      return false;
+   }
+
+   private void addWorktree(final String path,
+                            final String parentDir,
+                            String branch,
+                            boolean createBranch,
+                            final CommandWithArg<Command> onCreated)
+   {
+      // the entry git adds is told apart from the ones known now
+      final Set<String> existing = new HashSet<>();
+      for (WorktreeInfo worktree : worktrees())
+         existing.add(worktree.getPath());
 
       gitServer_.gitAddWorktree(
             path,
@@ -151,9 +196,13 @@ public class WorktreeActions
                            return;
 
                         dialog.closeDialog();
+                        rememberParentDir(parentDir);
+
+                        Command offerToOpen = () -> onWorktreeAdded(path, existing);
                         if (onCreated != null)
-                           onCreated.execute();
-                        onWorktreeAdded(path);
+                           onCreated.execute(offerToOpen);
+                        else
+                           offerToOpen.execute();
                      }
                   });
                }
@@ -168,36 +217,30 @@ public class WorktreeActions
             });
    }
 
-   private void onWorktreeAdded(final String path)
+   // A parent directory becomes the default once a worktree has been created in it
+   private void rememberParentDir(String parentDir)
+   {
+      UserState userState = pUserState_.get();
+      if (StringUtil.equals(userState.gitWorktreeParentDir().getGlobalValue(), parentDir))
+         return;
+
+      userState.gitWorktreeParentDir().setGlobalValue(parentDir);
+      userState.writeState();
+   }
+
+   private void onWorktreeAdded(final String path, final Set<String> existing)
    {
       // refresh so the branch menu picks up the new worktree, then offer to
-      // open it; the opener needs the refreshed entry for its project file.
-      // Git reports the resolved path, which can differ from the one the user
-      // typed (symlinks), so fall back to matching on the directory name --
-      // but only when no entry matches the path itself, as another worktree
-      // can share the name.
-      final String name = FileSystemItem.createDir(path).getName();
+      // open it; the opener needs the refreshed entry for its project file
       gitState_.refresh(false, new Command()
       {
          @Override
          public void execute()
          {
-            WorktreeInfo added = null;
-            WorktreeInfo sameName = null;
-            for (WorktreeInfo worktree : worktrees())
-            {
-               if (StringUtil.equals(worktree.getPath(), path))
-                  added = worktree;
-               else if (StringUtil.equals(FileSystemItem.createDir(worktree.getPath()).getName(), name))
-                  sameName = worktree;
-            }
-
-            if (added == null)
-               added = sameName;
-            if (added == null)
+            final WorktreeInfo worktree = findAddedWorktree(path, existing);
+            if (worktree == null)
                return;
 
-            final WorktreeInfo worktree = added;
             globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
                   constants_.newWorktreeCapitalized(),
@@ -213,6 +256,38 @@ public class WorktreeActions
                   true);
          }
       });
+   }
+
+   // The refreshed entry for the worktree just created at `path`. Git reports
+   // the resolved path, which can differ from the one the user typed ("~",
+   // symlinks), so when no entry matches the path itself, take the one entry
+   // that wasn't there before -- or, should several have appeared at once,
+   // the one sharing its directory name, provided that is unambiguous.
+   private WorktreeInfo findAddedWorktree(String path, Set<String> existing)
+   {
+      List<WorktreeInfo> added = new ArrayList<>();
+      for (WorktreeInfo worktree : worktrees())
+      {
+         if (StringUtil.equals(worktree.getPath(), path))
+            return worktree;
+         if (!existing.contains(worktree.getPath()))
+            added.add(worktree);
+      }
+
+      if (added.size() == 1)
+         return added.get(0);
+
+      String name = FileSystemItem.createDir(path).getName();
+      WorktreeInfo sameName = null;
+      for (WorktreeInfo worktree : added)
+      {
+         if (!StringUtil.equals(FileSystemItem.createDir(worktree.getPath()).getName(), name))
+            continue;
+         if (sameName != null)
+            return null;
+         sameName = worktree;
+      }
+      return sameName;
    }
 
    // Confirms, then runs 'git worktree remove' (with --force when asked, as

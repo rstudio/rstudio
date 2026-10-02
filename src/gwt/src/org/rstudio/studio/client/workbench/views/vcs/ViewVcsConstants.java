@@ -168,7 +168,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String openWorktreeCaption();
     String worktreeHasNoProjectFile(String path);
     String newWorktreeCapitalized();
-    String createNewBranch();
     String directoryNameColon();
     String createInColon();
     String openNewWorktree(String path);
@@ -177,7 +176,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String worktreeColon();
     String forceRemoveWorktree();
     String worktreeMissing();
-    String worktreeParentNotSpecified();
     String noWorktreesToRemove();
     String removeWorktreeConfirm(String path);
 }

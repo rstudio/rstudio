@@ -15,8 +15,8 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -230,27 +230,14 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       }
 
-      String worktreeKey = worktreeKey(pVcsState_.get().getBranchInfo().getWorktrees());
+      // every field shows in the menu or steers what selecting an entry does
+      // (a prunable one is dropped, a project file is opened), so compare whole
+      String worktreeKey = new JSONArray(pVcsState_.get().getBranchInfo().getWorktrees()).toString();
       if (!StringUtil.equals(worktreeKey, worktreeKey_))
       {
          worktreeKey_ = worktreeKey;
          menuRebuildRequired_ = true;
       }
-   }
-
-   private static String worktreeKey(JsArray<WorktreeInfo> worktrees)
-   {
-      StringBuilder key = new StringBuilder();
-      for (WorktreeInfo worktree : JsUtil.asIterable(worktrees))
-      {
-         key.append(worktree.getPath())
-            .append('\t')
-            .append(worktree.getBranch())
-            .append('\t')
-            .append(worktree.getHead())
-            .append('\n');
-      }
-      return key.toString();
    }
 
    // Subclasses that can activate a worktree override these.

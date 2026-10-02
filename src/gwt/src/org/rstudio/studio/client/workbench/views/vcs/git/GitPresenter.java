@@ -250,7 +250,6 @@ public class GitPresenter extends BaseVcsPresenter
                   input.getPath(),
                   input.getParentDir(),
                   input.getBranch(),
-                  input.getCreateBranch(),
                   null);
          }
       }).showModal();

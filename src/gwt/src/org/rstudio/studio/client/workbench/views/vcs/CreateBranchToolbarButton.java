@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
@@ -141,6 +142,13 @@ public class CreateBranchToolbarButton extends ToolbarButton
    
    private void onCreateBranch(final CreateBranchDialog.Input input)
    {
+      // a worktree settles whether the branch is new or existing itself
+      if (input.getWorktreeParent() != null)
+      {
+         onCreateWorktree(input);
+         return;
+      }
+
       gitServer_.gitListBranches(
             new ServerRequestCallback<BranchesInfo>()
             {
@@ -161,14 +169,6 @@ public class CreateBranchToolbarButton extends ToolbarButton
    private void onBranchInfoReceived(final CreateBranchDialog.Input input,
                                      final BranchesInfo branchesInfo)
    {
-      // A worktree needs a branch that isn't checked out elsewhere: reuse an
-      // existing local branch of this name, otherwise create it.
-      if (input.getWorktreeParent() != null)
-      {
-         onCreateWorktree(input, !hasLocalBranch(input, branchesInfo));
-         return;
-      }
-
       // If we have a local branch of this name already, prompt the user and ask
       // whether they'd like to check out a new branch (overwriting the previous
       // one) or if they'd like to just check out that branch.
@@ -197,30 +197,30 @@ public class CreateBranchToolbarButton extends ToolbarButton
       return false;
    }
 
-   private void onCreateWorktree(final CreateBranchDialog.Input input,
-                                 boolean createBranch)
+   private void onCreateWorktree(final CreateBranchDialog.Input input)
    {
       String path = FileSystemItem.createDir(input.getWorktreeParent()).completePath(
             NewWorktreeDialog.directoryNameForBranch(input.getBranch()));
 
-      // the branch exists once the worktree does, so a requested push follows
-      Command onCreated = null;
+      // the branch exists once the worktree does, so a requested push follows;
+      // the offer to open the worktree waits until the push dialog has closed
+      CommandWithArg<Command> onCreated = null;
       if (input.getPush())
       {
-         onCreated = new Command()
+         onCreated = new CommandWithArg<Command>()
          {
             @Override
-            public void execute()
+            public void execute(Command onPushed)
             {
-               pushBranch(input);
+               pushBranch(input, onPushed);
             }
          };
       }
 
-      worktreeActions_.create(path, input.getWorktreeParent(), input.getBranch(), createBranch, onCreated);
+      worktreeActions_.create(path, input.getWorktreeParent(), input.getBranch(), onCreated);
    }
 
-   private void pushBranch(final CreateBranchDialog.Input input)
+   private void pushBranch(final CreateBranchDialog.Input input, final Command onDone)
    {
       gitServer_.gitPushBranch(
             input.getBranch(),
@@ -230,13 +230,16 @@ public class CreateBranchToolbarButton extends ToolbarButton
                @Override
                public void onResponseReceived(ConsoleProcess process)
                {
-                  showConsoleProcessDialog(process);
+                  ConsoleProgressDialog dialog = new ConsoleProgressDialog(process, gitServer_);
+                  dialog.addCloseHandler(event -> onDone.execute());
+                  dialog.showModal();
                }
 
                @Override
                public void onError(ServerError error)
                {
                   Debug.logError(error);
+                  onDone.execute();
                }
             });
    }

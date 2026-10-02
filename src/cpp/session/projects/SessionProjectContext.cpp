@@ -1194,10 +1194,18 @@ std::string ProjectContext::worktreeDisplayName() const
       return name + " [" + worktreeRoot.getFilename() + "]";
    }
 
-   // prefer the primary checkout's own project name, then its directory name
+   // prefer the primary checkout's own project name, then its directory
+   // name; a project in a subdirectory of the repository is looked for at
+   // the same offset there (as the worktree menu does)
    FilePath primary = commonDir.getParent();
+   if (directory_ != worktreeRoot)
+      primary = primary.completePath(directory_.getRelativePath(worktreeRoot));
+
    std::string primaryName = primary.getFilename();
-   FilePath primaryProject = r_util::projectFromDirectory(primary);
+   FilePath primaryProject;
+   if (primary.isDirectory())
+      primaryProject = r_util::projectFromDirectory(primary);
+
    if (primaryProject.exists())
    {
       primaryName = primaryProject.getStem();
