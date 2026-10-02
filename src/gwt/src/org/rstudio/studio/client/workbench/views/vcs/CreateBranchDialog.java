@@ -30,7 +30,6 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
@@ -46,6 +45,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -95,7 +95,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    protected Input collectInput()
    {
       String branch = tbBranch_.getValue().trim();
-      String remote = sbRemote_.getValue().trim();
+      String remote = sbRemote_.getSelectedValue().trim();
       boolean push = cbPush_.isVisible() ? cbPush_.getValue() : false;
       String worktreeParent = cbWorktree_.getValue() ? dirWorktreeParent_.getText().trim() : null;
       return new Input(branch, remote, push, worktreeParent);
@@ -135,14 +135,16 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
-      sbRemote_ = new SelectWidget();
-      sbRemote_.getListBox().setWidth("100%");
+      // a bare ListBox, so it lines up with the branch name box in the grid
+      // (SelectWidget adds its own margins)
+      sbRemote_ = new ListBox();
+      sbRemote_.setWidth("100%");
       sbRemote_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
-            boolean isNone = sbRemote_.getValue() == REMOTE_NONE;
+            boolean isNone = sbRemote_.getSelectedValue() == REMOTE_NONE;
             cbPush_.setVisible(!isNone);
          }
       });
@@ -158,7 +160,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
             String remoteUrl = null;
             if (remotesInfo_ != null)
             {
-               final String currentRemote = sbRemote_.getValue();
+               final String currentRemote = sbRemote_.getSelectedValue();
                RemotesInfo info = Functional.find(remotesInfo_, new Predicate<RemotesInfo>()
                {
                   @Override
@@ -184,7 +186,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       addLeftButton(btnAddRemote_, ElementIds.NEW_BRANCH_ADD_REMOTE);
 
       cbPush_ = new CheckBox(constants_.syncBranchWithRemote());
-      cbPush_.setVisible(sbRemote_.getValue() != REMOTE_NONE);
+      cbPush_.setVisible(sbRemote_.getSelectedValue() != REMOTE_NONE);
       cbPush_.setValue(true);
       
       setRemotes(remotesInfo);
@@ -195,7 +197,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       grid.setWidget(0, 0, new FormLabel(constants_.branchNameColon(), tbBranch_));
       grid.setWidget(0, 1, tbBranch_);
       tbBranch_.setWidth("100%");
-      grid.setWidget(1, 0, new FormLabel(constants_.remoteColon(), sbRemote_.getListBox()));
+      grid.setWidget(1, 0, new FormLabel(constants_.remoteColon(), sbRemote_));
       grid.setWidget(1, 1, sbRemote_);
       grid.getCellFormatter().getElement(1, 1).getStyle().setPaddingTop(6, Unit.PX);
 
@@ -278,8 +280,13 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       if (activeRemote == null)
          activeRemote = choices[0];
       
-      sbRemote_.setChoices(choiceLabels, choices);
-      sbRemote_.setValue(activeRemote);
+      sbRemote_.clear();
+      for (int i = 0; i < choices.length; i++)
+      {
+         sbRemote_.addItem(choiceLabels[i], choices[i]);
+         if (choices[i] == activeRemote)
+            sbRemote_.setSelectedIndex(i);
+      }
       
       cbPush_.setVisible(choices.length > 1);
    }
@@ -312,7 +319,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    
    private final VerticalPanel container_;
    private final TextBox tbBranch_;
-   private final SelectWidget sbRemote_;
+   private final ListBox sbRemote_;
    private final ThemedButton btnAddRemote_;
    private final CheckBox cbPush_;
    
