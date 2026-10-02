@@ -224,6 +224,9 @@ const int kRStudioAPIShowMenu = 207;
 const int kPackageVulnerabilitiesReady = 208;
 const int kFilesChanged = 209;
 const int kChatCheckForUpdates = 210;
+const int kProjectRVersionMismatch = 211;
+const int kRInstallCompleted = 212;
+const int kRenvRestorePrompt = 213;
 
 }
 
@@ -628,6 +631,12 @@ std::string ClientEvent::typeName() const
          return "package_vulnerabilities_ready";
       case client_events::kFilesChanged:
          return "files_changed";
+      case client_events::kProjectRVersionMismatch:
+         return "project_r_version_mismatch";
+      case client_events::kRInstallCompleted:
+         return "r_install_completed";
+      case client_events::kRenvRestorePrompt:
+         return "renv_restore_prompt";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

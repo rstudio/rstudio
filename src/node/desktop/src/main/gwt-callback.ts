@@ -42,11 +42,22 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
-import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
+import {
+  detectREnvironmentAsync,
+  findDefault32Bit,
+  findDefault64Bit,
+  findRInstallationsWin32,
+  frameworkVersionHome,
+} from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
+import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
-import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import {
+  defaultFonts,
+  ElectronDesktopOptions,
+  fixWindowsRExecutablePath,
+} from './preferences/electron-desktop-options';
 import {
   parseFilter,
   findRepoRoot,
@@ -98,6 +109,10 @@ export class GwtCallback extends EventEmitter {
 
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
+
+  // the R executable to launch the next session with (set alongside a
+  // pending restart when the user switches R versions)
+  pendingRVersion = '';
 
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
@@ -776,7 +791,15 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
-      this.pendingQuit = pendingQuit;
+      this.setPendingQuit(pendingQuit);
+    });
+
+    ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
+      return this.setPendingRVersion(rExecutablePath);
+    });
+
+    ipcMain.handle('desktop_make_r_orthogonal', async (event, rHome: string) => {
+      return this.makeROrthogonal(rHome);
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
@@ -1290,6 +1313,96 @@ export class GwtCallback extends EventEmitter {
     } else {
       void appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(dialogOptions));
     }
+  }
+
+  setPendingQuit(pendingQuit: number): void {
+    this.pendingQuit = pendingQuit;
+
+    // a quit that was abandoned (e.g. the session refused it) leaves no R
+    // switch behind for some later, unrelated restart
+    if (pendingQuit === PendingQuit.PendingQuitNone) {
+      this.pendingRVersion = '';
+    }
+  }
+
+  /**
+   * Hold on to the R executable the next session should use, after checking
+   * that it runs as itself. Resolves to an error message when it doesn't,
+   * and '' otherwise; '' tells the client the R is ready, so a failure
+   * always says something.
+   */
+  async setPendingRVersion(rExecutablePath: string): Promise<string> {
+    // sessions launched from bin\R.exe fail to load on Windows; use the
+    // architecture-specific executable as the Choose R dialog does
+    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+
+    // the client escapes the message for display itself
+    const interpolation = { escapeValue: false };
+
+    try {
+      if (!existsSync(rPath)) {
+        return i18next.t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation }) || rPath;
+      }
+
+      // a framework version that isn't orthogonal would run the default R
+      const home = frameworkVersionHome(rPath);
+      const version = home === null ? null : frameworkVersion(home);
+      if (version !== null && !isOrthogonal(version)) {
+        return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
+      }
+
+      // queried in the background: R can take seconds to start
+      const [, error] = await detectREnvironmentAsync(rPath);
+      if (error) {
+        logger().logError(error);
+        return (
+          i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
+        );
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
+      return safeError(error).message || rPath;
+    }
+
+    this.pendingRVersion = rPath;
+    return '';
+  }
+
+  /**
+   * Make the macOS framework version of R with the given home orthogonal, so
+   * that it runs as itself rather than as the framework's default version.
+   * Resolves to an error message on failure, and '' otherwise.
+   */
+  async makeROrthogonal(rHome: string): Promise<string> {
+    const interpolation = { escapeValue: false };
+
+    const version = frameworkVersion(rHome);
+    if (version === null) {
+      return (
+        i18next.t('gwtCallbackTs.rUpdateFailed', { path: rHome, error: 'not a framework version', interpolation }) ||
+        rHome
+      );
+    }
+
+    try {
+      const prompt = i18next.t('gwtCallbackTs.rUpdatePrompt', { version: version.name, interpolation });
+      await makeOrthogonal(version, prompt);
+      return '';
+    } catch (error: unknown) {
+      if (error instanceof AuthorizationCancelledError) {
+        return i18next.t('gwtCallbackTs.rUpdateCancelled') || error.message;
+      }
+
+      logger().logError(error);
+      const message = safeError(error).message;
+      return i18next.t('gwtCallbackTs.rUpdateFailed', { path: rHome, error: message, interpolation }) || message;
+    }
+  }
+
+  collectPendingRVersion(): string {
+    const pending = this.pendingRVersion;
+    this.pendingRVersion = '';
+    return pending;
   }
 
   collectPendingQuitRequest(): PendingQuit {

@@ -30,4 +30,20 @@ public interface RenvConstants extends Messages {
     String updateAction(String packageName, String lockfileVersion, String libraryVersion);
     String restoreInstallAction(String packageName, String lockfileVersion);
     String restoreRemoveAction(String packageName, String libraryfileVersion);
+    String lockfileRVersionMismatch(String requested, String current);
+    String projectRVersionMismatch(String requested, String current);
+    String rVersionUnsupported(String requested);
+    String switchToRVersion(String version);
+    String installRVersion(String version);
+    String rInstallInProgress(String version);
+    String rInstallFailed(String version);
+    String rInstallFailedWithError(String version, String error);
+    String switchRVersionCaption();
+    String switchingRVersionProgress(String version);
+    String rSwitchFailed(String version, String error);
+    String rInstalled(String version);
+    String updateRCaption();
+    String updateRMessage(String version);
+    String renvLibraryEmpty();
+    String renvRestoreAction();
 }

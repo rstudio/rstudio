@@ -60,6 +60,9 @@ bool s_suspendedForcibly = false;
 // was the underlying r session resumed
 bool s_rSessionResumed = false;
 
+// was it resumed from a suspend for restart
+bool s_rSessionResumedForRestart = false;
+
 // Track what the suspend timeout is waiting for
 enum SuspendTimeoutState
 {
@@ -310,6 +313,16 @@ bool sessionResumed()
 void setSessionResumed(bool resumed)
 {
    s_rSessionResumed = resumed;
+}
+
+bool sessionResumedForRestart()
+{
+   return s_rSessionResumedForRestart;
+}
+
+void setSessionResumedForRestart(bool resumedForRestart)
+{
+   s_rSessionResumedForRestart = resumedForRestart;
 }
 
 bool suspendedFromTimeout()

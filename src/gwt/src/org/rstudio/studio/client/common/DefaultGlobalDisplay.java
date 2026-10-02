@@ -249,6 +249,11 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       view_.get().showWarning(severe, message);
    }
 
+   public void showWarningBar(boolean severe, String message, String actionLabel, Command action)
+   {
+      view_.get().showWarning(severe, message, actionLabel, action);
+   }
+
    public void hideWarningBar()
    {
       view_.get().hideWarning();

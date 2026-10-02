@@ -403,6 +403,28 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
+    // these answer with an error message, or '' on success; a failed call
+    // still answers, so the client never waits on it forever
+    setPendingRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_set_pending_r_version', rExecutablePath)
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('setPendingRVersion', error);
+          callback(String(error) || 'setPendingRVersion failed');
+        });
+    },
+
+    makeROrthogonal: (rHome: string, callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_make_r_orthogonal', rHome)
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('makeROrthogonal', error);
+          callback(String(error) || 'makeROrthogonal failed');
+        });
+    },
+
     setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
       ipcRenderer
         .invoke('desktop_set_pending_quit', pendingQuit)

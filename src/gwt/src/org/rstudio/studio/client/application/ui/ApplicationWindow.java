@@ -19,6 +19,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
@@ -204,6 +205,15 @@ public class ApplicationWindow extends Composite
 
    private void showWarning(boolean severe, String message, boolean showLicenseButton)
    {
+      showWarning(severe, message, showLicenseButton, null, null);
+   }
+
+   private void showWarning(boolean severe,
+                            String message,
+                            boolean showLicenseButton,
+                            String actionLabel,
+                            Command action)
+   {
       if (warningBar_ == null)
       {
          warningBar_ = pWarningBar_.get();
@@ -229,6 +239,7 @@ public class ApplicationWindow extends Composite
       warningBar_.setSeverity(severe);
       warningBar_.setText(message);
       warningBar_.showLicenseButton(showLicenseButton);
+      warningBar_.setAction(actionLabel, action);
    }
 
    @Override
@@ -242,6 +253,12 @@ public class ApplicationWindow extends Composite
    public void showWarning(boolean severe, String message)
    {
       showWarning(severe, message, false);
+   }
+
+   @Override
+   public void showWarning(boolean severe, String message, String actionLabel, Command action)
+   {
+      showWarning(severe, message, false, actionLabel, action);
    }
 
    private void updateHeaderTopBottom()
