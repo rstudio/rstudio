@@ -243,7 +243,7 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(false);
       commands_.tutorialStop().setEnabled(false);
-      filterWidget_.setVisible(false);
+      setFilterVisible(false);
 
       String url = "./tutorial/run" +
             "?package=" + tutorial.getPackageName() +
@@ -257,7 +257,7 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(true);
       commands_.tutorialStop().setEnabled(true);
-      filterWidget_.setVisible(false);
+      setFilterVisible(false);
       navigate(url, true);
    }
 
@@ -359,11 +359,20 @@ public class TutorialPane
       body.getStyle().setVisibility(Visibility.VISIBLE);
    }
 
+   // The toolbar only re-checks its separators when a command's visibility
+   // changes, so toggling the filter box has to ask for it explicitly.
+   private void setFilterVisible(boolean visible)
+   {
+      filterWidget_.setVisible(visible);
+      toolbar_.invalidateSeparators();
+   }
+
    // Hides the tutorials on the home page that don't match the filter box.
    // Each term must appear somewhere in the tutorial's title, package name,
    // or tutorial name, so adding a term narrows the list. Whitespace and
-   // punctuation both separate terms, so the "package: name" line can be
-   // copied in as shown; a fragment of a hyphenated name still matches it.
+   // ASCII punctuation separate terms, so the "package: name" line can be
+   // copied in as shown and a fragment of a hyphenated name still matches it;
+   // anything else, including non-Latin letters, stays part of its term.
    private void applyFilter()
    {
       Document doc = frame_.getWindow().getDocument();
@@ -371,7 +380,7 @@ public class TutorialPane
       if (container == null)
          return;
 
-      String[] terms = filterWidget_.getValue().toLowerCase().split("[^a-z0-9]+");
+      String[] terms = filterWidget_.getValue().toLowerCase().split(FILTER_SEPARATORS);
       NodeList<Element> entries = DomUtils.querySelectorAll(container, ".rstudio-tutorials-entry");
 
       int visibleCount = 0;
@@ -406,6 +415,7 @@ public class TutorialPane
          empty = doc.createDivElement();
          empty.setId(FILTER_EMPTY_ID);
          empty.setClassName("rstudio-tutorials-filter-empty");
+         empty.setAttribute("role", "status");
          empty.setInnerText(constants_.noMatchingTutorialsMessage());
          container.appendChild(empty);
       }
@@ -420,7 +430,7 @@ public class TutorialPane
    private void onFrameLoaded()
    {
       String url = frame_.getUrl();
-      filterWidget_.setVisible(url.endsWith(TutorialPresenter.URLS_HOME));
+      setFilterVisible(url.endsWith(TutorialPresenter.URLS_HOME));
 
       if (TutorialUtil.isShinyUrl(url))
       {
@@ -685,6 +695,9 @@ public class TutorialPane
    private final TutorialServerOperations server_;
 
    private static final String FILTER_EMPTY_ID = "rstudio_tutorials_filter_empty";
+
+   // whitespace and the ASCII punctuation ranges !-/ :-@ [-` {-~
+   private static final String FILTER_SEPARATORS = "[\\s!-/:-@\\[-`{-~]+";
 
    private static final Resources RES = GWT.create(Resources.class);
    private static final TutorialConstants constants_ = com.google.gwt.core.client.GWT.create(TutorialConstants.class);
