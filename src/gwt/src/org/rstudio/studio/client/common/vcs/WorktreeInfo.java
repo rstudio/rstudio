@@ -16,7 +16,9 @@ package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// One entry of 'git worktree list', plus the .Rproj file found in it (if any)
+// One entry of 'git worktree list', plus the directory the project lives in
+// within it (the worktree root, or the current project's subdirectory) and the
+// .Rproj file found there (if any)
 public class WorktreeInfo extends JavaScriptObject
 {
    protected WorktreeInfo() {}
@@ -24,6 +26,7 @@ public class WorktreeInfo extends JavaScriptObject
    public final native String getPath()        /*-{ return this["path"]; }-*/;
    public final native String getHead()        /*-{ return this["head"]; }-*/;
    public final native String getBranch()      /*-{ return this["branch"]; }-*/;
+   public final native String getProjectDir()  /*-{ return this["project_dir"]; }-*/;
    public final native String getProjectFile() /*-{ return this["project_file"]; }-*/;
    public final native boolean isDetached()    /*-{ return this["detached"]; }-*/;
    public final native boolean isBare()        /*-{ return this["bare"]; }-*/;

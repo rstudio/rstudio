@@ -275,16 +275,16 @@ public class WorktreeActions
                @Override
                public void execute()
                {
-                  createProjectFile(worktree.getPath(), newSession);
+                  createProjectFile(worktree.getProjectDir(), newSession);
                }
             },
             true);
    }
 
-   private void createProjectFile(String worktreePath, final boolean newSession)
+   private void createProjectFile(String projectDir, final boolean newSession)
    {
       projectsServer_.createProjectFile(
-            worktreePath,
+            projectDir,
             new ServerRequestCallback<String>()
             {
                @Override

@@ -815,6 +815,16 @@ public:
       if (error)
          return error;
 
+      std::string projectOffset;
+      FilePath currentProjectDir(projects::projectContext().directory().getCanonicalPath());
+      FilePath currentRoot(root_.getCanonicalPath());
+      if (projects::projectContext().hasProject() &&
+          currentProjectDir != currentRoot &&
+          currentProjectDir.isWithin(currentRoot))
+      {
+         projectOffset = currentProjectDir.getRelativePath(currentRoot);
+      }
+
       for (json::Value value : parseWorktreeList(output))
       {
          json::Object worktree = value.getObject();
@@ -822,7 +832,18 @@ public:
          worktree["path"] = module_context::createAliasedPath(path);
          worktree["is_current"] = path.getCanonicalPath() == root_.getCanonicalPath();
 
-         FilePath projectFile = r_util::projectFromDirectory(path);
+         // bare and prunable entries have no checkout to look in
+         FilePath projectDir = path;
+         FilePath projectFile;
+         if (!worktree["bare"].getBool() && !worktree["prunable"].getBool() && path.isDirectory())
+         {
+            if (!projectOffset.empty() && path.completePath(projectOffset).isDirectory())
+               projectDir = path.completePath(projectOffset);
+
+            projectFile = r_util::projectFromDirectory(projectDir);
+         }
+
+         worktree["project_dir"] = module_context::createAliasedPath(projectDir);
          if (projectFile.exists())
             worktree["project_file"] = module_context::createAliasedPath(projectFile);
          else
