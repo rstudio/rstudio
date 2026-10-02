@@ -20,7 +20,7 @@ import { logLevel, logger } from '../core/logger';
 import { getenv } from '../core/environment';
 import { setApplication } from './app-state';
 import { Application } from './application';
-import { kHelp, kVersion, kVersionJson } from './args-manager';
+import { kHelp, kRunDiagnosticsOption, kVersion, kVersionJson } from './args-manager';
 import { startRDetection } from './detect-r';
 import { initI18n } from './i18n-manager';
 import { startLoginShellPathQuery } from './login-shell-path';
@@ -194,9 +194,10 @@ function loadAppConfig(): ElectronFlagsLoad {
  * line. This runs before anything else starts, as the process may exit here.
  */
 function relaunchForOzonePlatform(config: ElectronFlagsConfig | undefined): OzoneRelaunchResult {
-  // the early-exit flags print to the caller's terminal, which a relaunch detaches from
-  const earlyExitArgs = [kHelp, kVersion, kVersionJson];
-  if (process.platform !== 'linux' || process.argv.some((arg) => earlyExitArgs.includes(arg))) {
+  // these report to the caller's terminal, and the relaunched process's
+  // stdout and stderr go to /dev/null; diagnostics shows no window anyway
+  const terminalArgs = [kHelp, kVersion, kVersionJson, kRunDiagnosticsOption];
+  if (process.platform !== 'linux' || process.argv.some((arg) => terminalArgs.includes(arg))) {
     return { relaunched: false };
   }
 
