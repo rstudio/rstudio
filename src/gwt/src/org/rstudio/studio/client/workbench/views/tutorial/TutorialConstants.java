@@ -26,4 +26,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
     String errorInstallingShiny();
     String errorInstallingShinyMessage();
     String installingShinyCaption();
+    String filterTutorialsLabel();
+    String noMatchingTutorialsMessage();
 }
