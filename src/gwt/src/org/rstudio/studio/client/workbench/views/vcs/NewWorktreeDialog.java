@@ -1,7 +1,7 @@
 /*
  * NewWorktreeDialog.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
+import org.rstudio.studio.client.RStudioGinjector;
 
 public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
 {
@@ -105,6 +106,7 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
             constants_.createInColon(),
             ElementIds.TextBoxButtonId.WORKTREE_PARENT,
             tbBranch_);
+      dirParent_.addValueChangeHandler(event -> updateOkButton());
       dirParent_.setText(defaultParentDir);
 
       LayoutGrid grid = new LayoutGrid(2, 2);
@@ -130,9 +132,20 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
       return new Input(path, parent, tbBranch_.getValue().trim(), cbCreateBranch_.getValue());
    }
 
+   // Enter in a text box submits regardless of the OK button's state, so this
+   // repeats its checks; a relative path would otherwise reach the server
    @Override
    protected boolean validate(Input input)
    {
+      if (StringUtil.isNullOrEmpty(input.getParentDir()))
+      {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+               constants_.newWorktreeCapitalized(),
+               constants_.worktreeParentNotSpecified(),
+               dirParent_);
+         return false;
+      }
+
       return !StringUtil.isNullOrEmpty(input.getBranch()) &&
              !StringUtil.isNullOrEmpty(input.getPath());
    }
@@ -161,7 +174,8 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
    private void updateOkButton()
    {
       boolean ok = !StringUtil.isNullOrEmpty(tbBranch_.getValue().trim()) &&
-                   !StringUtil.isNullOrEmpty(tbDirectoryName_.getValue().trim());
+                   !StringUtil.isNullOrEmpty(tbDirectoryName_.getValue().trim()) &&
+                   !StringUtil.isNullOrEmpty(dirParent_.getText().trim());
       enableOkButton(ok);
    }
 

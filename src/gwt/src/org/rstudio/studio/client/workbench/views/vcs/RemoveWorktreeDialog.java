@@ -1,7 +1,7 @@
 /*
  * RemoveWorktreeDialog.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -68,7 +68,14 @@ public class RemoveWorktreeDialog extends ModalDialog<RemoveWorktreeDialog.Input
       for (WorktreeInfo worktree : worktrees)
       {
          String branch = worktree.isDetached() ? worktree.getHead() : worktree.getBranch();
-         lbWorktree_.addItem(branch + " -- " + worktree.getPath(), worktree.getPath());
+         String label = branch + " -- " + worktree.getPath();
+
+         // a deleted directory leaves a stale entry behind, which removing
+         // cleans up; say so, as the branch menu doesn't list it
+         if (worktree.isPrunable())
+            label += " " + constants_.worktreeMissing();
+
+         lbWorktree_.addItem(label, worktree.getPath());
       }
 
       cbForce_ = new CheckBox(constants_.forceRemoveWorktree());

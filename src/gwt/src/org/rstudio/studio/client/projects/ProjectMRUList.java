@@ -126,11 +126,13 @@ public class ProjectMRUList extends MRUList
    protected ArrayList<String> generateLabels(ArrayList<String> mruEntries, boolean includeExt)
    {
       // split out the paths and names so we can dedupe the paths
+      ArrayList<String> mruProjectPaths = new ArrayList<String>();
       ArrayList<String> mruPaths = new ArrayList<String>();
       ArrayList<String> mruNames = new ArrayList<String>();
       for (String entry : mruEntries)
       {
          ProjectMRUEntry mruEntry = new ProjectMRUEntry(entry);
+         mruProjectPaths.add(mruEntry.getProjectFilePath());
          mruPaths.add(mruEntry.getProjectFilePath());
          mruNames.add(StringUtil.notNull(mruEntry.getProjectName()));
       }
@@ -145,8 +147,8 @@ public class ProjectMRUList extends MRUList
       mruPaths = DuplicateHelper.getPathLabels(mruPaths, true);
       
       // recombine paths and names for display. A worktree's "primary [directory]"
-      // name already ends with the directory label, so it stands on its own;
-      // repeating the directory in front of it adds nothing.
+      // name already locates the project, so it stands on its own; repeating
+      // the directory in front of it adds nothing.
       ArrayList<String> result = new ArrayList<String>();
       for (int i = 0; i < mruEntries.size(); i++)
       {
@@ -154,12 +156,35 @@ public class ProjectMRUList extends MRUList
          String name = mruNames.get(i);
          if (name.length() == 0)
             result.add(path);
-         else if (name.endsWith("[" + path + "]"))
+         else if (isWorktreeName(name, mruProjectPaths.get(i)))
             result.add(name);
          else
             result.add(path + " (" + name + ")");
       }
       return result;
+   }
+
+   // Whether `name` is the "primary [directory]" label the session derives
+   // for a project in a linked worktree: the bracketed part is the worktree's
+   // directory, which is the project directory (`projectPath`, see
+   // transformMruEntryPath) or one of its ancestors when the project lives in
+   // a subdirectory of the repository
+   private static boolean isWorktreeName(String name, String projectPath)
+   {
+      int open = name.lastIndexOf(" [");
+      if (open < 0 || !name.endsWith("]"))
+         return false;
+
+      String directory = name.substring(open + 2, name.length() - 1);
+      FileSystemItem dir = FileSystemItem.createDir(projectPath);
+      while (dir != null)
+      {
+         if (StringUtil.equals(dir.getName(), directory))
+            return true;
+         dir = dir.getParentPath();
+      }
+
+      return false;
    }
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 

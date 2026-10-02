@@ -26,6 +26,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -41,6 +42,7 @@ import org.rstudio.core.client.command.BaseMenuBar;
 import org.rstudio.core.client.command.CommandEvent;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
@@ -342,10 +344,27 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          super.onUnload();
       }
 
+      // Items with a right-hand image (see AppCommand.formatMenuLabel) offer
+      // a second action; record whether a click landed on it, for the item's
+      // command to consult. The command runs via scheduleFinally, after the
+      // click has been dispatched, so the flag is current by then.
+      @Override
+      public void onBrowserEvent(Event event)
+      {
+         if (DOM.eventGetType(event) == Event.ONCLICK)
+         {
+            Element target = DOM.eventGetTarget(event);
+            rightImageClicked_ = target.hasClassName(ThemeStyles.INSTANCE.menuRightImage());
+         }
+
+         super.onBrowserEvent(event);
+      }
+
       @Override
       protected void onLoad()
       {
          super.onLoad();
+         rightImageClicked_ = false;
 
          nativePreviewReg_ = Event.addNativePreviewHandler(nativePreviewEvent ->
          {
@@ -454,6 +473,14 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       }
 
       private HandlerRegistration nativePreviewReg_;
+      private boolean rightImageClicked_ = false;
+   }
+
+   // Whether the click that selected the current item landed on its
+   // right-hand image (an alternate action), rather than on the label
+   public boolean wasRightImageClicked()
+   {
+      return menuBar_.rightImageClicked_;
    }
 
    public Element getMenuTableElement()

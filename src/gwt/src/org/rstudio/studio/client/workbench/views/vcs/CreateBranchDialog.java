@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
 
 import com.google.gwt.core.client.JsArray;
@@ -128,8 +129,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
                @Override
                public void execute()
                {
-                  String text = tbBranch_.getValue();
-                  enableOkButton(!StringUtil.isNullOrEmpty(text));
+                  updateOkButton();
                }
             });
          }
@@ -216,10 +216,41 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       dirWorktreeParent_.setText(worktreeParentDir);
       dirWorktreeParent_.getElement().getStyle().setPaddingTop(4, Unit.PX);
       dirWorktreeParent_.setVisible(false);
-      cbWorktree_.addValueChangeHandler(event -> dirWorktreeParent_.setVisible(event.getValue()));
+      dirWorktreeParent_.addValueChangeHandler(event -> updateOkButton());
+      cbWorktree_.addValueChangeHandler(event ->
+      {
+         dirWorktreeParent_.setVisible(event.getValue());
+         updateOkButton();
+      });
 
       container_.add(cbWorktree_);
       container_.add(dirWorktreeParent_);
+   }
+
+   private void updateOkButton()
+   {
+      boolean ok = !StringUtil.isNullOrEmpty(tbBranch_.getValue().trim());
+      if (cbWorktree_.getValue())
+         ok = ok && !StringUtil.isNullOrEmpty(dirWorktreeParent_.getText().trim());
+
+      enableOkButton(ok);
+   }
+
+   // Enter in the branch box submits regardless of the OK button's state, so
+   // the worktree directory is checked again here
+   @Override
+   protected boolean validate(Input input)
+   {
+      if (input.getWorktreeParent() != null && input.getWorktreeParent().isEmpty())
+      {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+               constants_.newBranchCapitalized(),
+               constants_.worktreeParentNotSpecified(),
+               dirWorktreeParent_);
+         return false;
+      }
+
+      return !StringUtil.isNullOrEmpty(input.getBranch());
    }
    
    public void setRemotes(JsArray<RemotesInfo> remotesInfo)
@@ -250,45 +281,29 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       }
       
-      String[] choices = new String[remotes.size() + 1];
-      String[] choiceLabels = new String[remotes.size() + 1];
-      for (int i = 0; i < remotes.size(); i++)
-      {
-         choices[i] = remotes.get(i);
-         choiceLabels[i] = labels.get(i);
-      }
-      choices[remotes.size()] = REMOTE_NONE;
-      choiceLabels[remotes.size()] = REMOTE_NONE;
-      
+      remotes.add(REMOTE_NONE);
+      labels.add(REMOTE_NONE);
+
       // if we haven't set an active remote, try defaulting to the one called
       // 'origin' (if it exists)
-      if (activeRemote == null)
-      {
-         for (int i = 0; i < choices.length; i++)
-         {
-            if (REMOTE_ORIGIN == choices[i])
-            {
-               activeRemote = REMOTE_ORIGIN;
-               break;
-            }
-         }
-      }
-      
+      if (activeRemote == null && remotes.contains(REMOTE_ORIGIN))
+         activeRemote = REMOTE_ORIGIN;
+
       // if we still haven't found anything, just default to the first entry
       // (note that because we always add the (none) remote there will always
       // be an entry available here)
       if (activeRemote == null)
-         activeRemote = choices[0];
-      
+         activeRemote = remotes.get(0);
+
       sbRemote_.clear();
-      for (int i = 0; i < choices.length; i++)
+      for (int i = 0; i < remotes.size(); i++)
       {
-         sbRemote_.addItem(choiceLabels[i], choices[i]);
-         if (choices[i] == activeRemote)
+         sbRemote_.addItem(labels.get(i), remotes.get(i));
+         if (remotes.get(i) == activeRemote)
             sbRemote_.setSelectedIndex(i);
       }
-      
-      cbPush_.setVisible(choices.length > 1);
+
+      cbPush_.setVisible(remotes.size() > 1);
    }
 
    @Override

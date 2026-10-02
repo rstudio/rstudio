@@ -108,10 +108,8 @@ public class BranchToolbarButton extends ToolbarMenuButton
       @Override
       public void execute()
       {
-         // set by the click preview handler when the right-hand image was hit
-         boolean newSession = openInNewSession_;
-         openInNewSession_ = false;
-         onWorktreeSelected(worktree_, newSession);
+         // the right-hand image is the "open in a new session" action
+         onWorktreeSelected(worktree_, menu_.wasRightImageClicked());
       }
 
       private final WorktreeInfo worktree_;
@@ -146,21 +144,6 @@ public class BranchToolbarButton extends ToolbarMenuButton
          {
             if (event.isAttached())
             {
-               openInNewSession_ = false;
-               clickPreviewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
-               {
-                  @Override
-                  public void onPreviewNativeEvent(NativePreviewEvent preview)
-                  {
-                     if (preview.getTypeInt() != Event.ONCLICK)
-                        return;
-
-                     Element targetEl = preview.getNativeEvent().getEventTarget().cast();
-                     if (targetEl.hasClassName(ThemeStyles.INSTANCE.menuRightImage()))
-                        openInNewSession_ = true;
-                  }
-               });
-
                // rebuild the menu if required
                if (menuRebuildRequired_)
                   menuRebuildRequired_ = !rebuildMenu();
@@ -190,12 +173,6 @@ public class BranchToolbarButton extends ToolbarMenuButton
                {
                   previewHandler_.removeHandler();
                   previewHandler_ = null;
-               }
-
-               if (clickPreviewHandler_ != null)
-               {
-                  clickPreviewHandler_.removeHandler();
-                  clickPreviewHandler_ = null;
                }
             }
          }
@@ -718,10 +695,8 @@ public class BranchToolbarButton extends ToolbarMenuButton
    private String worktreeKey_ = "";
    private List<WorktreeInfo> worktrees_ = new ArrayList<>();
    private Map<String, WorktreeInfo> worktreeBranches_ = new HashMap<>();
-   private boolean openInNewSession_ = false;
 
    private HandlerRegistration previewHandler_;
-   private HandlerRegistration clickPreviewHandler_;
 
    private String lastSearchValue_;
    private final Timer searchValueChangeTimer_;

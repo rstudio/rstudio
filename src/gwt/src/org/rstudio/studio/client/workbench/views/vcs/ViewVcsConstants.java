@@ -176,6 +176,8 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String removeWorktreeCapitalized();
     String worktreeColon();
     String forceRemoveWorktree();
+    String worktreeMissing();
+    String worktreeParentNotSpecified();
     String noWorktreesToRemove();
     String removeWorktreeConfirm(String path);
 }
