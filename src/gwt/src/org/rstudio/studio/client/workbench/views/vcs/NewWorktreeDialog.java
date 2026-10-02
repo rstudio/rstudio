@@ -16,10 +16,6 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -27,6 +23,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
@@ -88,21 +85,9 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
       tbBranch_.getElement().getStyle().setProperty("minWidth", "200px");
       Roles.getTextboxRole().setAriaRequiredProperty(tbBranch_.getElement(), true);
       ElementIds.assignElementId(tbBranch_, ElementIds.NEW_WORKTREE_BRANCH);
-      tbBranch_.addKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  onBranchChanged();
-               }
-            });
-         }
-      });
+
+      // 'input' rather than a key handler, so that pasted text counts too
+      DomUtils.addEventListener(tbBranch_.getElement(), "input", false, event -> onBranchChanged());
 
       cbCreateBranch_ = new CheckBox(constants_.createNewBranch());
       cbCreateBranch_.setValue(true);
@@ -110,21 +95,10 @@ public class NewWorktreeDialog extends ModalDialog<NewWorktreeDialog.Input>
       tbDirectoryName_ = new TextBox();
       tbDirectoryName_.getElement().getStyle().setProperty("minWidth", "200px");
       ElementIds.assignElementId(tbDirectoryName_, ElementIds.NEW_WORKTREE_DIRECTORY);
-      tbDirectoryName_.addKeyDownHandler(new KeyDownHandler()
+      DomUtils.addEventListener(tbDirectoryName_.getElement(), "input", false, event ->
       {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            directoryNameEdited_ = true;
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  updateOkButton();
-               }
-            });
-         }
+         directoryNameEdited_ = true;
+         updateOkButton();
       });
 
       dirParent_ = new DirectoryChooserTextBox(
