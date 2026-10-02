@@ -57,11 +57,9 @@ namespace xdg {
 FilePath userConfigDir(const boost::optional<std::string>& user = boost::none,
                        const boost::optional<FilePath>& homeDir = boost::none);
 
-#ifndef _WIN32
-// Returns XDG_CONFIG_HOME or ~/.config (not RStudio's config dir).
-FilePath xdgUserConfigHome(const boost::optional<std::string>& user = boost::none,
-                           const boost::optional<FilePath>& homeDir = boost::none);
-#endif
+// Returns XDG_CONFIG_HOME or ~/.config (not RStudio's config dir). A relative
+// XDG_CONFIG_HOME is ignored, as the XDG spec requires.
+FilePath xdgUserConfigHome(const boost::optional<FilePath>& homeDir = boost::none);
 
 // Returns the RStudio XDG user data directory.
 //

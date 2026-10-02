@@ -105,10 +105,11 @@ TEST(XdgTest, DirectoryResolution)
 
 TEST(XdgTest, XdgUserConfigHome)
 {
+   ScopedEnvUnset unset({"XDG_CONFIG_HOME"});
    FilePath homePath(core::system::getenv("HOME"));
 
    EXPECT_EQ(homePath.completeChildPath(".config"), xdgUserConfigHome());
-   EXPECT_EQ(FilePath("/tmp/default/.config"), xdgUserConfigHome(s_defaultUser, s_defaultHome));
+   EXPECT_EQ(FilePath("/tmp/default/.config"), xdgUserConfigHome(s_defaultHome));
 
    {
       EnvironmentScope scope("XDG_CONFIG_HOME", "/tmp/custom");
@@ -123,7 +124,14 @@ TEST(XdgTest, XdgUserConfigHome)
    {
       EnvironmentScope scope("XDG_CONFIG_HOME", "~/configurations");
       EXPECT_EQ(homePath.completeChildPath("configurations"), xdgUserConfigHome());
-      EXPECT_EQ(FilePath("/tmp/default/configurations"), xdgUserConfigHome(s_defaultUser, s_defaultHome));
+      EXPECT_EQ(FilePath("/tmp/default/configurations"), xdgUserConfigHome(s_defaultHome));
+   }
+
+   // the XDG spec requires relative values to be ignored
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", ".config");
+      EXPECT_EQ(homePath.completeChildPath(".config"), xdgUserConfigHome());
+      EXPECT_EQ(FilePath("/tmp/default/.config"), xdgUserConfigHome(s_defaultHome));
    }
 }
    

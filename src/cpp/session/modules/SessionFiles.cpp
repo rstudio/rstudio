@@ -232,13 +232,12 @@ core::Error getFileContents(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   FilePath targetPath;
-#ifndef _WIN32
-   if (path == kXdgVimrcPath)
-      targetPath = core::system::xdg::xdgUserConfigHome().completePath("vim/vimrc");
-   else
-#endif
-      targetPath = module_context::resolveAliasedPath(path);
+   // resolve against the session's home so that, on Windows, the fallback
+   // ~/.config sits beside the ~/.vimrc that the client also requests
+   FilePath targetPath = (path == kXdgVimrcPath)
+      ? core::system::xdg::xdgUserConfigHome(module_context::userHomePath())
+           .completePath("vim/vimrc")
+      : module_context::resolveAliasedPath(path);
    if (!module_context::isPathViewAllowed(targetPath))
    {
       return Error(json::errc::DirectoryViewListingProhibited, ERROR_LOCATION);
