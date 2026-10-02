@@ -220,6 +220,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
             ElementIds.TextBoxButtonId.NEW_BRANCH_WORKTREE_PARENT,
             tbBranch_);
       dirWorktreeParent_.setText(worktreeParentDir);
+      dirWorktreeParent_.getElement().getStyle().setPaddingTop(4, Unit.PX);
       dirWorktreeParent_.setVisible(false);
       cbWorktree_.addValueChangeHandler(event -> dirWorktreeParent_.setVisible(event.getValue()));
 
