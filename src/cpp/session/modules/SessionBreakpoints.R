@@ -559,6 +559,8 @@
 
    # Set up the source references 
    refs <- attr(content, "srcref")
+
+   # options(keep.source = FALSE) leaves srcref NULL
    if (length(refs) == 0)
       return(fun)
    lastref <- length(refs)
