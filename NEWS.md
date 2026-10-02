@@ -100,7 +100,7 @@
 - ([#18845](https://github.com/rstudio/rstudio/issues/18845)): Fixed recently added Zotero 10 references not appearing in citations.
 - ([#18787](https://github.com/rstudio/rstudio/issues/18787)): Fixed an issue on Windows where Posit Assistant failed to start in a second RStudio instance with "A Posit Assistant update is in progress".
 - ([#9075](https://github.com/rstudio/rstudio/issues/9075)): Fixed an issue where the source editor's file type menu listed both C and C++ as "C/C++", and offered no way to switch a file back to C. C and C++ sources, C/C++ headers (`.h`), and C++ headers (`.hpp`, `.hh`) now have distinct names.
-- ([#12375](https://github.com/rstudio/rstudio/issues/12375)): `debugSource()` no longer errors when `options(keep.source = FALSE)` is set, or when the file is empty or contains only comments.
+- ([#12375](https://github.com/rstudio/rstudio/issues/12375)): `debugSource()` no longer errors when `options(keep.source = FALSE)` is set, or when the file is empty or contains only comments. Thanks to [@AzazelSensei](https://github.com/AzazelSensei).
 - ([#19005](https://github.com/rstudio/rstudio/issues/19005)): Fixed an error being logged when Refresh was clicked in the Find in Files pane before any search had been run.
 - ([#19003](https://github.com/rstudio/rstudio/issues/19003)): Fixed an issue where installing a connection package that provides no connection extension, such as odbc, from the New Connection dialog logged a `No such file or directory` error in the session log.
 
