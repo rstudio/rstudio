@@ -79,6 +79,14 @@ describe('Utils', () => {
     app.commandLine.removeSwitch('use-gl');
     unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
   });
+  it('augmentCommandLineArguments leaves the Ozone platform alone', () => {
+    setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--ozone-platform=wayland --disable-gpu');
+    Utils.augmentCommandLineArguments();
+    assert.isFalse(app.commandLine.hasSwitch('ozone-platform'));
+    assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
+    app.commandLine.removeSwitch('disable-gpu');
+    unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
+  });
   it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
     const envvar = 'RS_SHARED_SECRET';
     assert.equal(getenv(envvar).length, 0);
@@ -140,9 +148,7 @@ describe('Utils', () => {
   });
   it('parseFilter accepts a variety of delimiters between extensions', () => {
     const input = 'Images (*.png; *.xpm, *.jpg *.tiff)';
-    const expected: FileFilter[] = [
-      { name: 'Images', extensions: ['png', 'xpm', 'jpg', 'tiff'] },
-    ];
+    const expected: FileFilter[] = [{ name: 'Images', extensions: ['png', 'xpm', 'jpg', 'tiff'] }];
     const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
   });

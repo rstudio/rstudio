@@ -19,13 +19,36 @@ import os from 'os';
 import path from 'path';
 
 import {
-  buildRelaunchArgs,
-  getConfiguredOzonePlatform,
-  getOzonePlatformFromArgs,
+  ElectronFlagsConfig,
   loadElectronFlags,
+  OzonePlatformInputs,
   parseElectronFlags,
-  shouldRelaunchForOzonePlatform,
+  planOzoneRelaunch,
 } from '../../../src/main/electron-flags';
+
+function withTempDir(callback: (root: string) => void): void {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-electron-flags-'));
+  try {
+    callback(root);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function confWith(contents: string): ElectronFlagsConfig {
+  return { path: '/home/user/.config/electron-flags.conf', flags: parseElectronFlags(contents) };
+}
+
+function plan(inputs: Partial<OzonePlatformInputs>) {
+  return planOzoneRelaunch({
+    argv: ['/usr/lib/rstudio/rstudio', 'project.Rproj'],
+    currentPlatform: 'x11',
+    chromiumArguments: '',
+    config: undefined,
+    isPackaged: true,
+    ...inputs,
+  });
+}
 
 describe('Electron flags', () => {
   it('parses supported lines and preserves values after the first equals sign', () => {
@@ -38,103 +61,106 @@ describe('Electron flags', () => {
     ]);
   });
 
-  it('returns no config when no electron-flags.conf exists', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-electron-flags-'));
+  it('drops trailing whitespace from lines', () => {
+    assert.deepEqual(parseElectronFlags('--ozone-platform=wayland \t\r\n--disable-gpu  '), [
+      { name: 'ozone-platform', value: 'wayland' },
+      { name: 'disable-gpu' },
+    ]);
+  });
 
-    try {
+  it('returns no config when no electron-flags.conf exists', () => {
+    withTempDir((root) => {
       assert.isUndefined(loadElectronFlags([root]));
-    } finally {
-      fs.rmSync(root, { recursive: true, force: true });
-    }
+    });
   });
 
   it('uses the first config directory containing electron-flags.conf', () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-electron-flags-'));
-    const first = path.join(root, 'first');
-    const second = path.join(root, 'second');
-    fs.mkdirSync(first);
-    fs.mkdirSync(second);
-    fs.writeFileSync(path.join(first, 'electron-flags.conf'), '--use-gl=angle\n');
-    fs.writeFileSync(path.join(second, 'electron-flags.conf'), '--disable-gpu\n');
+    withTempDir((root) => {
+      const first = path.join(root, 'first');
+      const second = path.join(root, 'second');
+      fs.mkdirSync(first);
+      fs.mkdirSync(second);
+      fs.writeFileSync(path.join(first, 'electron-flags.conf'), '--use-gl=angle\n');
+      fs.writeFileSync(path.join(second, 'electron-flags.conf'), '--disable-gpu\n');
 
-    try {
       const config = loadElectronFlags([first, second]);
       assert.isDefined(config);
       assert.strictEqual(config.path, path.join(first, 'electron-flags.conf'));
       assert.deepEqual(config.flags, [{ name: 'use-gl', value: 'angle' }]);
-    } finally {
-      fs.rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  describe('Ozone platform', () => {
-    it('ignores unrelated flags and uses the last duplicate Ozone entry', () => {
-      assert.isUndefined(getConfiguredOzonePlatform(parseElectronFlags('--use-gl=angle')));
-      assert.strictEqual(
-        getConfiguredOzonePlatform(parseElectronFlags('--ozone-platform=x11\n--ozone-platform=wayland')),
-        'wayland',
-      );
-    });
-
-    it('distinguishes matching, differing, and absent startup values', () => {
-      assert.isFalse(shouldRelaunchForOzonePlatform(undefined, undefined));
-      assert.isFalse(shouldRelaunchForOzonePlatform('wayland', 'wayland'));
-      assert.isTrue(shouldRelaunchForOzonePlatform('x11', 'wayland'));
-      assert.isTrue(shouldRelaunchForOzonePlatform(undefined, 'wayland'));
-      assert.strictEqual(getOzonePlatformFromArgs(['rstudio', '--ozone-platform=wayland']), 'wayland');
     });
   });
 
-  describe('relaunch arguments', () => {
-    it('adds the configured switch to packaged argv and preserves user arguments', () => {
-      const processArgs = ['/usr/bin/rstudio', '--use-gl=angle', 'project.Rproj', 'script.R'];
+  it('names the file when electron-flags.conf cannot be read', () => {
+    withTempDir((root) => {
+      const configPath = path.join(root, 'electron-flags.conf');
+      fs.mkdirSync(configPath);
 
-      assert.deepEqual(buildRelaunchArgs(processArgs, 'wayland', true), [
-        '--ozone-platform=wayland',
-        '--use-gl=angle',
-        'project.Rproj',
-        'script.R',
-      ]);
+      assert.throws(() => loadElectronFlags([root]), `Unable to read Electron flags from ${configPath}`);
+    });
+  });
+
+  describe('Ozone relaunch', () => {
+    it('does nothing when no Ozone platform is requested', () => {
+      assert.deepEqual(plan({ config: confWith('--use-gl=angle') }), {});
     });
 
-    it('adds the configured switch after the app path in development argv', () => {
-      const processArgs = ['/usr/bin/electron', '/workspace/rstudio', '.', '--use-gl=angle', 'script.R'];
-
-      assert.deepEqual(buildRelaunchArgs(processArgs, 'wayland', false), [
-        '/workspace/rstudio',
-        '--ozone-platform=wayland',
-        '.',
-        '--use-gl=angle',
-        'script.R',
-      ]);
+    it('does not relaunch when the requested platform is already in use', () => {
+      assert.deepEqual(plan({ config: confWith('--ozone-platform=x11') }), {});
     });
 
-    it('replaces duplicate Ozone switches with one configured value', () => {
-      const processArgs = [
-        '/usr/bin/rstudio',
-        '--ozone-platform=x11',
-        '--use-gl=angle',
-        '--ozone-platform=wayland',
-        'project.Rproj',
-        '--ozone-platform=x11',
-        'script.R',
-      ];
+    it('relaunches with the requested switch appended to the original arguments', () => {
+      const argv = ['/usr/lib/rstudio/rstudio', '--use-gl=angle', 'project.Rproj'];
+      const result = plan({ argv, config: confWith('--ozone-platform=x11\n--ozone-platform=wayland') });
 
-      assert.deepEqual(buildRelaunchArgs(processArgs, 'wayland', true), [
-        '--ozone-platform=wayland',
-        '--use-gl=angle',
-        'project.Rproj',
-        'script.R',
-      ]);
-      assert.deepEqual(processArgs, [
-        '/usr/bin/rstudio',
-        '--ozone-platform=x11',
-        '--use-gl=angle',
-        '--ozone-platform=wayland',
-        'project.Rproj',
-        '--ozone-platform=x11',
-        'script.R',
-      ]);
+      assert.deepEqual(result.relaunchArgs, ['--use-gl=angle', 'project.Rproj', '--ozone-platform=wayland']);
+      assert.include(result.message, '/home/user/.config/electron-flags.conf');
+      assert.deepEqual(argv, ['/usr/lib/rstudio/rstudio', '--use-gl=angle', 'project.Rproj']);
+    });
+
+    it('relaunches when Chromium reports no platform', () => {
+      const result = plan({ currentPlatform: undefined, config: confWith('--ozone-platform=x11') });
+      assert.deepEqual(result.relaunchArgs, ['project.Rproj', '--ozone-platform=x11']);
+    });
+
+    it('prefers RSTUDIO_CHROMIUM_ARGUMENTS over electron-flags.conf', () => {
+      const result = plan({
+        currentPlatform: 'wayland',
+        chromiumArguments: '--disable-gpu --ozone-platform=x11',
+        config: confWith('--ozone-platform=wayland'),
+      });
+
+      assert.deepEqual(result.relaunchArgs, ['project.Rproj', '--ozone-platform=x11']);
+      assert.include(result.message, 'RSTUDIO_CHROMIUM_ARGUMENTS');
+    });
+
+    it('keeps a platform given on the command line and says why', () => {
+      const result = plan({
+        argv: ['/usr/lib/rstudio/rstudio', '--ozone-platform=x11'],
+        config: confWith('--ozone-platform=wayland'),
+      });
+
+      assert.isUndefined(result.relaunchArgs);
+      assert.include(result.message, 'the command line sets --ozone-platform');
+    });
+
+    it('does not relaunch again after relaunching', () => {
+      const argv = ['/usr/lib/rstudio/rstudio', 'project.Rproj', '--ozone-platform=wayland'];
+      assert.deepEqual(plan({ argv, currentPlatform: 'wayland', config: confWith('--ozone-platform=wayland') }), {});
+    });
+
+    it('ignores an unsupported platform instead of relaunching into it', () => {
+      for (const contents of ['--ozone-platform=waylnd', '--ozone-platform', '--ozone-platform=']) {
+        const result = plan({ config: confWith(contents) });
+        assert.isUndefined(result.relaunchArgs, contents);
+        assert.include(result.message, 'expected one of x11, wayland', contents);
+      }
+    });
+
+    it('does not relaunch a development build', () => {
+      const result = plan({ isPackaged: false, config: confWith('--ozone-platform=wayland') });
+
+      assert.isUndefined(result.relaunchArgs);
+      assert.include(result.message, 'development build');
     });
   });
 });

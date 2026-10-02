@@ -14,8 +14,13 @@
 
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
+import { safeError } from '../core/err';
 
 export const kOzonePlatformSwitch = 'ozone-platform';
+
+// Chromium aborts during Ozone initialization, before main.ts runs and so
+// without any log or error dialog, if it is asked for a backend it lacks.
+const kSupportedOzonePlatforms = ['x11', 'wayland'];
 
 export interface ElectronFlag {
   name: string;
@@ -32,12 +37,13 @@ export interface ElectronFlagsConfig {
  *
  * This intentionally preserves the existing syntax: only lines beginning
  * with '--' are recognized, and the first '=' separates a switch name from
- * its value.
+ * its value. Trailing whitespace is dropped.
  */
 export function parseElectronFlags(contents: string): ElectronFlag[] {
   const flags: ElectronFlag[] = [];
 
-  for (const line of contents.split(/\r?\n/)) {
+  for (const rawLine of contents.split(/\r?\n/)) {
+    const line = rawLine.trimEnd();
     if (!line.startsWith('--')) {
       continue;
     }
@@ -67,94 +73,112 @@ export function loadElectronFlags(configDirs: readonly string[]): ElectronFlagsC
       continue;
     }
 
-    return {
-      path: configPath,
-      flags: parseElectronFlags(readFileSync(configPath, { encoding: 'utf-8' })),
-    };
+    let contents: string;
+    try {
+      contents = readFileSync(configPath, { encoding: 'utf-8' });
+    } catch (error: unknown) {
+      // tsconfig's es2021 lib has no Error `cause` option; the message carries it instead
+      // eslint-disable-next-line preserve-caught-error
+      throw new Error(
+        `Unable to read Electron flags from ${configPath}: ${safeError(error).message}. ` +
+          'Make sure it is a readable file, or remove it.',
+      );
+    }
+
+    return { path: configPath, flags: parseElectronFlags(contents) };
   }
 
   return undefined;
 }
 
-/**
- * Return the effective configured Ozone platform. As with command-line
- * switch handling, the last occurrence wins.
- */
-export function getConfiguredOzonePlatform(flags: readonly ElectronFlag[]): string | undefined {
-  let platform: string | undefined;
-
-  for (const flag of flags) {
-    if (flag.name === kOzonePlatformSwitch) {
-      platform = flag.value;
-    }
-  }
-
-  return platform;
-}
-
-/**
- * Return the effective Ozone platform in a process argv. A bare switch is
- * represented by an empty value, matching Electron's command-line API.
- */
-export function getOzonePlatformFromArgs(args: readonly string[]): string | undefined {
-  const prefix = `--${kOzonePlatformSwitch}`;
-  let platform: string | undefined;
-
-  for (const arg of args) {
-    if (arg === prefix) {
-      platform = '';
-    } else if (arg.startsWith(`${prefix}=`)) {
-      platform = arg.substring(prefix.length + 1);
-    }
-  }
-
-  return platform;
-}
-
-export function shouldRelaunchForOzonePlatform(
-  currentPlatform: string | undefined,
-  configuredPlatform: string | undefined,
-): boolean {
-  return configuredPlatform !== undefined && currentPlatform !== configuredPlatform;
-}
-
-function isOzonePlatformArg(arg: string): boolean {
+export function isOzonePlatformArg(arg: string): boolean {
   const prefix = `--${kOzonePlatformSwitch}`;
   return arg === prefix || arg.startsWith(`${prefix}=`);
 }
 
+interface RequestedOzonePlatform {
+  platform: string;
+  source: string;
+}
+
+function requestedOzonePlatform(
+  chromiumArguments: string,
+  config: ElectronFlagsConfig | undefined,
+): RequestedOzonePlatform | undefined {
+  // last occurrence wins, as it does for Chromium's own switch parsing
+  const prefix = `--${kOzonePlatformSwitch}=`;
+  const fromEnv = chromiumArguments
+    .split(' ')
+    .filter((piece) => piece.startsWith(prefix))
+    .pop();
+  if (fromEnv !== undefined) {
+    return { platform: fromEnv.substring(prefix.length), source: 'RSTUDIO_CHROMIUM_ARGUMENTS' };
+  }
+
+  const fromConfig = config?.flags.filter((flag) => flag.name === kOzonePlatformSwitch).pop();
+  if (config && fromConfig) {
+    return { platform: fromConfig.value ?? '', source: config.path };
+  }
+
+  return undefined;
+}
+
+export interface OzonePlatformInputs {
+  /** process.argv of the current launch */
+  argv: readonly string[];
+  /** the --ozone-platform value Chromium started with, if any */
+  currentPlatform: string | undefined;
+  /** the value of RSTUDIO_CHROMIUM_ARGUMENTS */
+  chromiumArguments: string;
+  config: ElectronFlagsConfig | undefined;
+  isPackaged: boolean;
+}
+
+export interface OzoneRelaunchPlan {
+  /** arguments for app.relaunch(), when a relaunch is needed */
+  relaunchArgs?: string[];
+  /** explains the decision, when a requested value is used or ignored */
+  message?: string;
+}
+
 /**
- * Build the arguments accepted by app.relaunch({ args }). Electron expects
- * this list without the executable path. Development launches retain the
- * application path as the first argument; packaged launches do not have one.
+ * Decide whether to relaunch so that Chromium starts with the requested Ozone
+ * platform. A value on the command line takes precedence over
+ * RSTUDIO_CHROMIUM_ARGUMENTS, which takes precedence over electron-flags.conf.
  */
-export function buildRelaunchArgs(
-  processArgs: readonly string[],
-  configuredPlatform: string,
-  isPackaged: boolean,
-): string[] {
-  const ozoneArg = `--${kOzonePlatformSwitch}=${configuredPlatform}`;
-  const args: string[] = [];
-  let ozoneArgAdded = false;
-
-  for (const arg of processArgs.slice(1)) {
-    if (!isOzonePlatformArg(arg)) {
-      args.push(arg);
-      continue;
-    }
-
-    if (!ozoneArgAdded) {
-      args.push(ozoneArg);
-      ozoneArgAdded = true;
-    }
+export function planOzoneRelaunch(inputs: OzonePlatformInputs): OzoneRelaunchPlan {
+  const requested = requestedOzonePlatform(inputs.chromiumArguments, inputs.config);
+  if (!requested || requested.platform === inputs.currentPlatform) {
+    return {};
   }
 
-  if (!ozoneArgAdded) {
-    // In development mode, processArgs.slice(1)[0] is the Electron app path.
-    // Keep the switch after it so the relaunch has the same argv shape.
-    const insertionIndex = isPackaged ? 0 : Math.min(1, args.length);
-    args.splice(insertionIndex, 0, ozoneArg);
+  const { platform, source } = requested;
+  const switchText = `--${kOzonePlatformSwitch}=${platform}`;
+
+  // this also covers a process that was already relaunched by this code
+  if (inputs.argv.some(isOzonePlatformArg)) {
+    return { message: `Ignoring ${switchText} from ${source}: the command line sets --${kOzonePlatformSwitch}` };
   }
 
-  return args;
+  if (!kSupportedOzonePlatforms.includes(platform)) {
+    return {
+      message: `Ignoring ${switchText} from ${source}: expected one of ${kSupportedOzonePlatforms.join(', ')}`,
+    };
+  }
+
+  // electron-forge stops its dev server when the first process exits, which
+  // would leave the relaunched process with nothing to load
+  if (!inputs.isPackaged) {
+    return {
+      message: `Ignoring ${switchText} from ${source} in a development build; pass it on the command line instead`,
+    };
+  }
+
+  const relaunchArgs = [...inputs.argv.slice(1), switchText];
+  return {
+    relaunchArgs,
+    message:
+      `Relaunching with ${switchText} from ${source} ` +
+      `(started with ${inputs.currentPlatform ?? 'none'}): ${relaunchArgs.join(' ')}`,
+  };
 }

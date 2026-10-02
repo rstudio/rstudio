@@ -17,8 +17,10 @@ import { app } from 'electron';
 import i18next from 'i18next';
 import { safeError } from '../core/err';
 import { logLevel, logger } from '../core/logger';
+import { getenv } from '../core/environment';
 import { setApplication } from './app-state';
 import { Application } from './application';
+import { kHelp, kVersion, kVersionJson } from './args-manager';
 import { startRDetection } from './detect-r';
 import { initI18n } from './i18n-manager';
 import { startLoginShellPathQuery } from './login-shell-path';
@@ -27,20 +29,27 @@ import { parseStatus } from './program-status';
 import { recordProcessStart, startupCheckpoint } from './startup-timing';
 import { createStandaloneErrorDialog } from './utils';
 import { Xdg } from '../core/xdg';
-import {
-  buildRelaunchArgs,
-  ElectronFlagsConfig,
-  getConfiguredOzonePlatform,
-  getOzonePlatformFromArgs,
-  kOzonePlatformSwitch,
-  loadElectronFlags,
-  shouldRelaunchForOzonePlatform,
-} from './electron-flags';
+import { ElectronFlagsConfig, kOzonePlatformSwitch, loadElectronFlags, planOzoneRelaunch } from './electron-flags';
+
+interface ElectronFlagsLoad {
+  config?: ElectronFlagsConfig;
+  error?: Error;
+}
+
+interface OzoneRelaunchResult {
+  relaunched: boolean;
+  message?: string;
+}
 
 /**
  * RStudio entrypoint
  */
 class RStudioMain {
+  constructor(
+    private readonly electronFlags: ElectronFlagsLoad,
+    private readonly ozoneMessage: string | undefined,
+  ) {}
+
   async main(): Promise<void> {
     try {
       await this.startup();
@@ -56,20 +65,24 @@ class RStudioMain {
     }
   }
 
-  private initializeAppConfig(config: ElectronFlagsConfig | undefined): void {
+  private initializeAppConfig(): void {
+    const { config, error } = this.electronFlags;
+    if (error) {
+      throw error;
+    }
     if (!config) {
       return;
     }
 
     logger().logDebug(`Using Electron flags from file ${config.path}`);
     for (const flag of config.flags) {
+      // applied by relaunchForOzonePlatform(); appending it now would reach only
+      // the child processes, which must use the same backend as this one
+      if (flag.name === kOzonePlatformSwitch) {
+        continue;
+      }
       const configLine = `--${flag.name}${flag.value === undefined ? '' : `=${flag.value}`}`;
       logger().logDebug(`Appending switch: ${configLine}`);
-      // A configured Ozone switch may already be present in process.argv after
-      // a bootstrap relaunch. Remove it first so Chromium sees one value.
-      if (flag.name === kOzonePlatformSwitch) {
-        app.commandLine.removeSwitch(flag.name);
-      }
       if (flag.value === undefined) {
         app.commandLine.appendSwitch(flag.name);
       } else {
@@ -133,29 +146,6 @@ class RStudioMain {
   }
 
   private async startup(): Promise<void> {
-    const configDirs = [Xdg.userConfigDir().getAbsolutePath(), app.getPath('appData')];
-    const electronFlags = loadElectronFlags(configDirs);
-    const configuredOzonePlatform = getConfiguredOzonePlatform(electronFlags?.flags ?? []);
-    const currentOzonePlatform =
-      getOzonePlatformFromArgs(process.argv) ??
-      (app.commandLine.hasSwitch(kOzonePlatformSwitch)
-        ? app.commandLine.getSwitchValue(kOzonePlatformSwitch)
-        : undefined);
-
-    // Chromium selects the Ozone backend before app.commandLine switches are applied.
-    // Relaunch once with the configured value so the browser and its child processes agree.
-    if (
-      process.platform === 'linux' &&
-      configuredOzonePlatform !== undefined &&
-      shouldRelaunchForOzonePlatform(currentOzonePlatform, configuredOzonePlatform)
-    ) {
-      app.relaunch({
-        args: buildRelaunchArgs(process.argv, configuredOzonePlatform, app.isPackaged),
-      });
-      app.exit(0);
-      return;
-    }
-
     await this.initializeRenderingEngine();
     await this.initializeAccessibility();
     this.initializeInputFeatures();
@@ -164,7 +154,10 @@ class RStudioMain {
     rstudio.argsManager.handleLogLevel();
     setApplication(rstudio);
 
-    this.initializeAppConfig(electronFlags);
+    if (this.ozoneMessage) {
+      logger().logWarning(this.ozoneMessage);
+    }
+    this.initializeAppConfig();
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
       return;
@@ -180,17 +173,64 @@ class RStudioMain {
   }
 }
 
+function loadAppConfig(): ElectronFlagsLoad {
+  const configDirs = [Xdg.userConfigDir().getAbsolutePath(), app.getPath('appData')];
+  try {
+    return { config: loadElectronFlags(configDirs) };
+  } catch (error: unknown) {
+    return { error: safeError(error) };
+  }
+}
+
+/**
+ * Chromium picks its Ozone backend before this script runs, so a requested
+ * --ozone-platform takes effect only by relaunching with it on the command
+ * line. This runs before anything else starts, as the process may exit here.
+ */
+function relaunchForOzonePlatform(config: ElectronFlagsConfig | undefined): OzoneRelaunchResult {
+  // the early-exit flags print to the caller's terminal, which a relaunch detaches from
+  const earlyExitArgs = [kHelp, kVersion, kVersionJson];
+  if (process.platform !== 'linux' || process.argv.some((arg) => earlyExitArgs.includes(arg))) {
+    return { relaunched: false };
+  }
+
+  // Electron records the backend it picked (from XDG_SESSION_TYPE when the
+  // command line names none) as --ozone-platform, so a requested value that
+  // matches it, such as x11 in an X11 session, needs no relaunch
+  const plan = planOzoneRelaunch({
+    argv: process.argv,
+    currentPlatform: app.commandLine.hasSwitch(kOzonePlatformSwitch)
+      ? app.commandLine.getSwitchValue(kOzonePlatformSwitch)
+      : undefined,
+    chromiumArguments: getenv('RSTUDIO_CHROMIUM_ARGUMENTS'),
+    config,
+    isPackaged: app.isPackaged,
+  });
+  if (!plan.relaunchArgs) {
+    return { relaunched: false, message: plan.message };
+  }
+
+  console.log(plan.message); // logging is not set up yet, and this process is exiting
+  app.relaunch({ args: plan.relaunchArgs });
+  app.exit(0);
+  return { relaunched: true };
+}
+
 // Startup
-recordProcessStart();
-startupCheckpoint('main-entry');
+const electronFlags = loadAppConfig();
+const ozoneRelaunch = relaunchForOzonePlatform(electronFlags.config);
+if (!ozoneRelaunch.relaunched) {
+  recordProcessStart();
+  startupCheckpoint('main-entry');
 
-// the login shell is slow to answer and the session will need its PATH, so
-// ask before anything else (see login-shell-path.ts); likewise start asking
-// R about itself, which takes about as long as Electron's own startup
-startLoginShellPathQuery();
-startRDetection();
+  // the login shell is slow to answer and the session will need its PATH, so
+  // ask before anything else (see login-shell-path.ts); likewise start asking
+  // R about itself, which takes about as long as Electron's own startup
+  startLoginShellPathQuery();
+  startRDetection();
 
-initI18n();
+  initI18n();
 
-const main = new RStudioMain();
-void main.main();
+  const main = new RStudioMain(electronFlags, ozoneRelaunch.message);
+  void main.main();
+}
