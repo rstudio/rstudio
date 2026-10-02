@@ -108,7 +108,17 @@ test_that("R source files do not use zero-padded string formats", {
    # so a format like '%05s' behaves differently across operating systems.
    # use formatC(x, width = n, flag = "0") or sprintf("%05d", as.integer(x))
    # when zero-padding is intended
-   pattern <- "%[-+ #]*0[0-9]*s"
+   #
+   # the conversion may carry a positional argument ('%1$05s') and a
+   # precision ('%05.2s'); an escaped percent sign ('%%05s') is literal text
+   pattern <- "(^|[^%])(%%)*%([0-9]+\\$)?[-+ #]*0[0-9]*(\\.[0-9]*)?s"
+
+   # the offending fixtures are assembled so this file passes its own lint
+   offending <- paste0('"%', c("05s", "-010s", "05.2s", "1$05s", "%%05s"), '"')
+   expect_true(all(grepl(pattern, offending)))
+
+   allowed <- c('"%%05s"', '"%10s %05d %s"', '"%100s"', '"%.5s"')
+   expect_false(any(grepl(pattern, allowed)))
 
    offenders <- character()
    for (rFile in rSourceFiles) {
@@ -124,7 +134,7 @@ test_that("R source files do not use zero-padded string formats", {
 
       if (nrow(matches)) {
          path <- sub(paste0(root, "/"), "", rFile, fixed = TRUE)
-         offenders <- c(offenders, paste0(path, ":", matches$line1))
+         offenders <- c(offenders, unique(paste0(path, ":", matches$line1)))
       }
 
    }
