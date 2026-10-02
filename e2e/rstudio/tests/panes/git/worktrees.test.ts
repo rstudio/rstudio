@@ -18,6 +18,9 @@ import { rPathLiteral } from '@utils/r';
 // The branch dropdown in the Git pane toolbar (ElementIds.TB_GIT_BRANCH).
 const BRANCH_BUTTON = '#rstudio_tb_git_branch';
 
+// The project menu button at the top right, whose label is the project name.
+const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
+
 // New Worktree dialog inputs (ElementIds.NEW_WORKTREE_*).
 const WORKTREE_BRANCH_INPUT = '#rstudio_new_worktree_branch';
 const WORKTREE_DIRECTORY_INPUT = '#rstudio_new_worktree_directory';
@@ -166,6 +169,12 @@ test.describe.serial('Git pane worktrees', () => {
       timeout: 60000,
       polling: 100,
     });
+    // the project label keeps the primary checkout's name and adds the worktree
+    await expect(page.locator(PROJECT_MENU)).toContainText(
+      `${PROJECT_NAME} (${LINKED_WORKTREE})`,
+      { timeout: 30000 },
+    );
+
     // from here the main worktree is the "other" one
     const itemsAfter = await openBranchMenu(page, LINKED_BRANCH);
     expect(itemsAfter.some((text) => text.startsWith('main') && text.endsWith(`/${PROJECT_NAME}`))).toBe(true);

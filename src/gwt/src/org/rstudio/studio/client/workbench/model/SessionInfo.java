@@ -304,6 +304,12 @@ public class SessionInfo extends JavaScriptObject
       return this.active_project_name;
    }-*/;
 
+   // "<primary project> (<worktree directory>)" when the project lives in a
+   // linked git worktree; empty otherwise
+   public final native String getActiveProjectWorktreeName() /*-{
+      return this.active_project_worktree_name || "";
+   }-*/;
+
    public final FileSystemItem getActiveProjectDir()
    {
       String projFile = getActiveProjectFile();

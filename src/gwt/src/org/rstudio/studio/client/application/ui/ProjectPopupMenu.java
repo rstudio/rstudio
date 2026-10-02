@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -73,6 +74,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       instance_ = instance;
       
       activeProjectFile_ = sessionInfo.getActiveProjectFile();
+      worktreeName_ = sessionInfo.getActiveProjectWorktreeName();
    }
    
    @Inject
@@ -166,6 +168,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       {
          if (pUserPrefs_.get().projectName().getValue().length() > 0)
             return pUserPrefs_.get().projectName().getValue();
+         else if (!StringUtil.isNullOrEmpty(worktreeName_))
+            return worktreeName_;
          else
             return mruList_.getQualifiedLabel(activeProjectFile_);
 
@@ -342,6 +346,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private static final int MAX_SHARED_PROJECTS = 5;
    private static final int MAX_MRU_ENTRIES = 10;
    private final String activeProjectFile_;
+   private String worktreeName_;
    private ToolbarMenuButton toolbarButton_ = null;
    private HandlerRegistration projectNameHandler_;
 

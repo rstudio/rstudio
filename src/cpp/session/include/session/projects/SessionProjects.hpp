@@ -136,6 +136,11 @@ public:
    // Optional user-supplied project name
    const std::string& projectName() const { return config_.projectName; }
 
+   // For a project in a linked git worktree, a display name that keeps the
+   // primary checkout's project name: "<primary> (<worktree directory>)".
+   // Empty for the primary checkout and for projects outside git.
+   std::string worktreeDisplayName() const;
+
    // Path to the directory in which the project resides
    const core::FilePath& directory() const { return directory_; }
 

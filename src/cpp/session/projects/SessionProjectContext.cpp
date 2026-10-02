@@ -21,6 +21,7 @@
 
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -1143,6 +1144,59 @@ void ProjectContext::updatePackageInfo()
       if (error)
          LOG_ERROR(error);
    }
+}
+
+std::string ProjectContext::worktreeDisplayName() const
+{
+   // the worktree root is the nearest ancestor holding a .git entry
+   FilePath worktreeRoot = directory_;
+   FilePath gitPath;
+   while (!worktreeRoot.isEmpty())
+   {
+      gitPath = worktreeRoot.completeChildPath(".git");
+      if (gitPath.exists())
+         break;
+      worktreeRoot = worktreeRoot.getParent();
+   }
+
+   // a linked worktree's .git is a file: "gitdir: <primary>/.git/worktrees/<id>"
+   // (the primary checkout has a directory, and a submodule points at .git/modules)
+   if (worktreeRoot.isEmpty() || gitPath.isDirectory())
+      return std::string();
+
+   std::string contents;
+   Error error = core::readStringFromFile(gitPath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+
+   boost::algorithm::trim(contents);
+   if (!boost::algorithm::starts_with(contents, "gitdir:"))
+      return std::string();
+
+   FilePath gitDir = worktreeRoot.completePath(
+         boost::algorithm::trim_copy(contents.substr(std::strlen("gitdir:"))));
+   if (gitDir.getParent().getFilename() != "worktrees")
+      return std::string();
+
+   // prefer the primary checkout's own project name, then its directory name
+   FilePath primary = gitDir.getParent().getParent().getParent();
+   std::string primaryName = primary.getFilename();
+   FilePath primaryProject = r_util::projectFromDirectory(primary);
+   if (primaryProject.exists())
+   {
+      primaryName = primaryProject.getStem();
+
+      r_util::RProjectConfig config;
+      std::string userErrMsg;
+      error = r_util::readProjectFile(primaryProject, &config, &userErrMsg);
+      if (!error && !config.projectName.empty())
+         primaryName = config.projectName;
+   }
+
+   return primaryName + " (" + worktreeRoot.getFilename() + ")";
 }
 
 json::Object ProjectContext::uiPrefs() const
