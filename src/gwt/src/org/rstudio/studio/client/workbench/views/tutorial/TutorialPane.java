@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -243,7 +244,6 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(false);
       commands_.tutorialStop().setEnabled(false);
-      setFilterVisible(false);
 
       String url = "./tutorial/run" +
             "?package=" + tutorial.getPackageName() +
@@ -257,7 +257,6 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(true);
       commands_.tutorialStop().setEnabled(true);
-      setFilterVisible(false);
       navigate(url, true);
    }
 
@@ -335,16 +334,20 @@ public class TutorialPane
       }
    }
 
-   private void onPageLoaded()
+   private void onPageLoaded(Document doc)
    {
-      // initialize styles for frame
-      Document doc = frame_.getWindow().getDocument();
+      initializeStyles(doc);
+      applyFilter();
+      doc.getBody().getStyle().setVisibility(Visibility.VISIBLE);
+   }
+
+   private void initializeStyles(Document doc)
+   {
       BodyElement body = doc.getBody();
       RStudioThemes.initializeThemes(doc, body);
       body.addClassName("ace_editor_theme");
       body.addClassName(BrowseCap.operatingSystem());
 
-      // inject styles
       final String STYLES_ID = "rstudio_tutorials_home_styles";
       if (doc.getElementById(STYLES_ID) == null)
       {
@@ -354,9 +357,6 @@ public class TutorialPane
          styleEl.setInnerHTML(RES.styles().getText());
          doc.getHead().appendChild(styleEl);
       }
-
-      applyFilter();
-      body.getStyle().setVisibility(Visibility.VISIBLE);
    }
 
    // The toolbar only re-checks its separators when a command's visibility
@@ -367,6 +367,30 @@ public class TutorialPane
       toolbar_.invalidateSeparators();
    }
 
+   // The document shown in the frame, or null when there is none to work
+   // with: a cross-origin page refuses the question, and a page still
+   // loading has no body yet.
+   private Document getFrameDocument()
+   {
+      return getFrameDocument(frame_.getIFrame());
+   }
+
+   private static final native Document getFrameDocument(IFrameElementEx frame)
+   /*-{
+      try {
+         var doc = frame.contentWindow.document;
+         return (doc && doc.body) ? doc : null;
+      } catch (e) {
+         return null;
+      }
+   }-*/;
+
+   // true for the pane's own home page, whatever query or fragment it carries
+   private static boolean isHomeUrl(String url)
+   {
+      return url.replaceFirst("[?#].*$", "").endsWith(TutorialPresenter.URLS_HOME);
+   }
+
    // Hides the tutorials on the home page that don't match the filter box.
    // Each term must appear somewhere in the tutorial's title, package name,
    // or tutorial name, so adding a term narrows the list. Whitespace and
@@ -375,7 +399,10 @@ public class TutorialPane
    // anything else, including non-Latin letters, stays part of its term.
    private void applyFilter()
    {
-      Document doc = frame_.getWindow().getDocument();
+      Document doc = getFrameDocument();
+      if (doc == null)
+         return;
+
       Element container = DomUtils.querySelector(doc.getBody(), ".rstudio-tutorials-container");
       if (container == null)
          return;
@@ -429,8 +456,18 @@ public class TutorialPane
 
    private void onFrameLoaded()
    {
-      String url = frame_.getUrl();
-      setFilterVisible(url.endsWith(TutorialPresenter.URLS_HOME));
+      // The frame's src attribute lags behind navigation that happened inside
+      // the frame, so ask the document where it is. A cross-origin page is
+      // none of ours to set up, and the filter has nothing to act on there.
+      Document doc = getFrameDocument();
+      if (doc == null)
+      {
+         setFilterVisible(false);
+         return;
+      }
+
+      String url = doc.getURL();
+      setFilterVisible(isHomeUrl(url));
 
       if (TutorialUtil.isShinyUrl(url))
       {
@@ -438,7 +475,7 @@ public class TutorialPane
       }
       else
       {
-         onPageLoaded();
+         onPageLoaded(doc);
       }
    }
 
@@ -451,7 +488,11 @@ public class TutorialPane
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      onFrameLoaded();
+      // only the pages we render ourselves follow the IDE theme; a running
+      // tutorial is left alone
+      Document doc = getFrameDocument();
+      if (doc != null && !TutorialUtil.isShinyUrl(doc.getURL()))
+         initializeStyles(doc);
    }
 
    @Override
