@@ -129,6 +129,13 @@ describe('Electron flags', () => {
       assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', '--', 'script.R']);
     });
 
+    it('relaunches when an Ozone switch appears only after a switch terminator', () => {
+      const argv = ['/usr/lib/rstudio/rstudio', '--', '--ozone-platform=x11'];
+      const result = plan({ argv, config: confWith('--ozone-platform=wayland') });
+
+      assert.deepEqual(result.relaunchArgs, ['--ozone-platform=wayland', '--', '--ozone-platform=x11']);
+    });
+
     it('prefers RSTUDIO_CHROMIUM_ARGUMENTS over electron-flags.conf', () => {
       const result = plan({
         currentPlatform: 'wayland',

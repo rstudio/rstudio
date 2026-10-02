@@ -153,8 +153,11 @@ export function planOzoneRelaunch(inputs: OzonePlatformInputs): OzoneRelaunchPla
   const { platform, source } = requested;
   const switchText = `--${kOzonePlatformSwitch}=${platform}`;
 
-  // this also covers a process that was already relaunched by this code
-  if (inputs.argv.some(isOzonePlatformArg)) {
+  // this also covers a process that was already relaunched by this code;
+  // Chromium reads anything after a '--' as a plain argument, not a switch
+  const terminatorIndex = inputs.argv.indexOf('--');
+  const switchArgs = terminatorIndex === -1 ? inputs.argv : inputs.argv.slice(0, terminatorIndex);
+  if (switchArgs.some(isOzonePlatformArg)) {
     return { message: `Ignoring ${switchText} from ${source}: the command line sets --${kOzonePlatformSwitch}` };
   }
 
