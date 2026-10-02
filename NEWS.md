@@ -1,7 +1,7 @@
 ## RStudio 2026.10.0 "Blue Mistflower" Release Notes
 
 ### New
-- ([#18689](https://github.com/rstudio/rstudio/pull/18689)): Vim key mappings can now also be loaded from `$XDG_CONFIG_HOME/vim/vimrc` (or `~/.config/vim/vimrc` when `XDG_CONFIG_HOME` is unset), which is checked after `~/.rstudio-vimrc` and `~/.vimrc`.
+- ([#19027](https://github.com/rstudio/rstudio/issues/19027)): Vim key mappings can now also be loaded from `$XDG_CONFIG_HOME/vim/vimrc` (or `~/.config/vim/vimrc` when `XDG_CONFIG_HOME` is unset), which is checked after `~/.rstudio-vimrc` and `~/.vimrc`.
 - ([#4422](https://github.com/rstudio/rstudio/issues/4422)): Plots can now be drawn at a fixed size instead of the size of the Plots pane (Plots > Fixed Size..., or the size menu in the Plots pane toolbar). The plot is scaled down to fit the pane without being redrawn when the pane is resized, and exported plots default to the same size. Save Plot as Image can also save bitmaps at a chosen resolution (up to 600 DPI) without changing the plot's layout, and shows the image's size in inches and pixels.
 - ([#17787](https://github.com/rstudio/rstudio/issues/17787)): Columns in the data viewer can now be hidden and shown from the summary panel, individually or all at once.
 - ([#9755](https://github.com/rstudio/rstudio/issues/9755)): Objects whose names begin with a dot (e.g. `.data` arguments while debugging) can now be shown in the Environment pane with Show Hidden Objects in the pane's List/Grid menu. The menu also offers Show .Last.value, previously only in Global Options, and the pane now refreshes as soon as either setting changes.
