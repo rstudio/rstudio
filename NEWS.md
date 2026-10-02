@@ -2,8 +2,6 @@
 
 ### New
 - ([#7350](https://github.com/rstudio/rstudio/issues/7350)): Added XDG-compliance to vimrc loading; binds can now be loaded from user-set `$XDG_CONFIG_HOME`.
-- ([#18803](https://github.com/rstudio/rstudio/issues/18803)): RStudio Desktop now logs detailed renderer, GPU, and utility process failures to help diagnose crashes.
-- ([#18692](https://github.com/rstudio/rstudio/issues/18692)): The active document tab now has a bold label and a blue overline to make it easier to identify. This is enabled by default and can be disabled in Global Options > General > Basic > Other.
 - ([#4422](https://github.com/rstudio/rstudio/issues/4422)): Plots can now be drawn at a fixed size instead of the size of the Plots pane (Plots > Fixed Size..., or the size menu in the Plots pane toolbar). The plot is scaled down to fit the pane without being redrawn when the pane is resized, and exported plots default to the same size. Save Plot as Image can also save bitmaps at a chosen resolution (up to 600 DPI) without changing the plot's layout, and shows the image's size in inches and pixels.
 - ([#17787](https://github.com/rstudio/rstudio/issues/17787)): Columns in the data viewer can now be hidden and shown from the summary panel, individually or all at once.
 - ([#9755](https://github.com/rstudio/rstudio/issues/9755)): Objects whose names begin with a dot (e.g. `.data` arguments while debugging) can now be shown in the Environment pane with Show Hidden Objects in the pane's List/Grid menu. The menu also offers Show .Last.value, previously only in Global Options, and the pane now refreshes as soon as either setting changes.
