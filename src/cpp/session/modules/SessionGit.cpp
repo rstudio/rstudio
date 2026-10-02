@@ -818,13 +818,13 @@ public:
          return error;
 
       std::string projectOffset;
-      FilePath currentProjectDir(projects::projectContext().directory().getCanonicalPath());
-      FilePath currentRoot(root_.getCanonicalPath());
-      if (projects::projectContext().hasProject() &&
-          currentProjectDir != currentRoot &&
-          currentProjectDir.isWithin(currentRoot))
+      std::string canonicalRoot = root_.getCanonicalPath();
+      FilePath currentRoot(canonicalRoot);
+      if (projects::projectContext().hasProject())
       {
-         projectOffset = currentProjectDir.getRelativePath(currentRoot);
+         FilePath currentProjectDir(projects::projectContext().directory().getCanonicalPath());
+         if (currentProjectDir != currentRoot && currentProjectDir.isWithin(currentRoot))
+            projectOffset = currentProjectDir.getRelativePath(currentRoot);
       }
 
       for (json::Value value : parseWorktreeList(output))
@@ -832,12 +832,16 @@ public:
          json::Object worktree = value.getObject();
          FilePath path(worktree["path"].getString());
          worktree["path"] = module_context::createAliasedPath(path);
-         worktree["is_current"] = path.getCanonicalPath() == root_.getCanonicalPath();
+
+         // a prunable entry's directory is gone, and can't be canonicalized
+         // (which would log an error on every refresh)
+         bool exists = path.isDirectory();
+         worktree["is_current"] = exists && path.getCanonicalPath() == canonicalRoot;
 
          // bare and prunable entries have no checkout to look in
          FilePath projectDir = path;
          FilePath projectFile;
-         if (!worktree["bare"].getBool() && !worktree["prunable"].getBool() && path.isDirectory())
+         if (exists && !worktree["bare"].getBool() && !worktree["prunable"].getBool())
          {
             if (!projectOffset.empty() && path.completePath(projectOffset).isDirectory())
                projectDir = path.completePath(projectOffset);
@@ -1925,11 +1929,17 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
                   std::back_inserter(jsonBranches),
                   json::toJsonValue<std::string>);
 
-   // a failure to list worktrees shouldn't prevent listing branches
+   // a failure to list worktrees shouldn't prevent listing branches; as this
+   // runs on every status refresh, report it once rather than each time (a
+   // git older than 2.5 has no 'worktree' subcommand at all)
+   static bool s_loggedWorktreeError = false;
    json::Array worktrees;
    error = s_git_.listWorktrees(&worktrees);
-   if (error)
+   if (error && !s_loggedWorktreeError)
+   {
+      s_loggedWorktreeError = true;
       LOG_ERROR(error);
+   }
 
    json::Object result;
    result["branches"] = jsonBranches;
