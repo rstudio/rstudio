@@ -22,15 +22,13 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RActiveSessionsOverlay.hpp>
 #include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/system/System.hpp>
 
 #include <shared_core/SafeConvert.hpp>
-
-// for RSTUDIO_PRO_BUILD
-#include "config.h"
 
 using namespace boost::placeholders;
 
@@ -88,32 +86,33 @@ const std::string ActiveSession::kStatusMessage = "status_message";
 
 const std::set<std::string>& ActiveSession::defaultProperties()
 {
-   static const std::set<std::string> properties = {
-      kExecuting,
-      kInitial,
-      kLabel,
-      kLastUsed,
-      kProject,
-      kProjectId,
-      kSavePromptRequired,
-      kRunning,
-      kRVersion,
-      kRVersionHome,
-      kRVersionLabel,
-      kWorkingDir,
-      kActivityState,
-      kLastStateUpdated,
-      kEditor,
-      kLastResumed,
-      kSuspendTimestamp,
-      kBlockingSuspend,
-      kCreated,
-      kLaunchParameters,
-#ifdef RSTUDIO_PRO_BUILD
-      // the active_session_metadata schema only has this column in Workbench
-      kStatusMessage,
-#endif
-   };
+   static const std::set<std::string> properties = []()
+   {
+      std::set<std::string> props = {
+         kExecuting,
+         kInitial,
+         kLabel,
+         kLastUsed,
+         kProject,
+         kProjectId,
+         kSavePromptRequired,
+         kRunning,
+         kRVersion,
+         kRVersionHome,
+         kRVersionLabel,
+         kWorkingDir,
+         kActivityState,
+         kLastStateUpdated,
+         kEditor,
+         kLastResumed,
+         kSuspendTimestamp,
+         kBlockingSuspend,
+         kCreated,
+         kLaunchParameters
+      };
+      overlay::addDefaultProperties(&props);
+      return props;
+   }();
    return properties;
 }
 
