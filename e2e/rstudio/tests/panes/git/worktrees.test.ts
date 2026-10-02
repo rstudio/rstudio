@@ -171,7 +171,7 @@ test.describe.serial('Git pane worktrees', () => {
     });
     // the project label keeps the primary checkout's name and adds the worktree
     await expect(page.locator(PROJECT_MENU)).toContainText(
-      `${PROJECT_NAME} (${LINKED_WORKTREE})`,
+      `${PROJECT_NAME} [${LINKED_WORKTREE}]`,
       { timeout: 30000 },
     );
 

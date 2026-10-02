@@ -1196,7 +1196,7 @@ std::string ProjectContext::worktreeDisplayName() const
          primaryName = config.projectName;
    }
 
-   return primaryName + " (" + worktreeRoot.getFilename() + ")";
+   return primaryName + " [" + worktreeRoot.getFilename() + "]";
 }
 
 json::Object ProjectContext::uiPrefs() const
