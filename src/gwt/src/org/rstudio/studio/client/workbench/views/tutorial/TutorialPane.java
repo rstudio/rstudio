@@ -360,8 +360,10 @@ public class TutorialPane
    }
 
    // Hides the tutorials on the home page that don't match the filter box.
-   // Each whitespace-separated term must appear somewhere in the tutorial's
-   // title, package name, or tutorial name, so adding a term narrows the list.
+   // Each term must appear somewhere in the tutorial's title, package name,
+   // or tutorial name, so adding a term narrows the list. Whitespace and
+   // punctuation both separate terms, so the "package: name" line can be
+   // copied in as shown; a fragment of a hyphenated name still matches it.
    private void applyFilter()
    {
       Document doc = frame_.getWindow().getDocument();
@@ -369,7 +371,7 @@ public class TutorialPane
       if (container == null)
          return;
 
-      String[] terms = filterWidget_.getValue().trim().toLowerCase().split("\\s+");
+      String[] terms = filterWidget_.getValue().toLowerCase().split("[^a-z0-9]+");
       NodeList<Element> entries = DomUtils.querySelectorAll(container, ".rstudio-tutorials-entry");
 
       int visibleCount = 0;

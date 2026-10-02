@@ -1,6 +1,7 @@
 // The Tutorial pane's filter box narrows the home page's list of tutorials
-// (#10173, #7566). Every whitespace-separated term must match somewhere in a
-// tutorial's title, package name, or tutorial name; the match ignores case.
+// (#10173, #7566). Every term (separated by whitespace or punctuation) must
+// match somewhere in a tutorial's title, package name, or tutorial name; the
+// match ignores case.
 //
 // The list comes from the installed packages' learnr tutorials, so these tests
 // read the entries' data attributes rather than assuming a particular tutorial
@@ -49,9 +50,8 @@ async function readVisibleEntries(frame: FrameLocator): Promise<Entry[]> {
 function matches(entry: Entry, filter: string): boolean {
   const haystack = `${entry.title} ${entry.pkg} ${entry.name}`.toLowerCase();
   return filter
-    .trim()
     .toLowerCase()
-    .split(/\s+/)
+    .split(/[^a-z0-9]+/)
     .every((term) => haystack.includes(term));
 }
 
@@ -74,6 +74,11 @@ test.describe('Tutorial pane filter', () => {
     // 180s covers a cold install of learnr and its dependencies on CI.
     learnrAvailable = await consoleActions.ensurePackage('learnr', 180_000);
     await consoleActions.clearConsole();
+  });
+
+  // The per-test reset leaves another tab selected, so bring the pane back
+  // (and its home page, with the list indexed) before every test.
+  test.beforeEach(async ({ rstudioPage: page }) => {
     if (!learnrAvailable)
       return;
 
@@ -82,11 +87,12 @@ test.describe('Tutorial pane filter', () => {
 
     const frame = tutorialFrame(page);
     await expect(frame.locator(ENTRY).first()).toBeVisible({ timeout: INDEX_TIMEOUT });
-    entries = await readEntries(frame);
+    if (entries.length === 0)
+      entries = await readEntries(frame);
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    if (learnrAvailable)
+    if (learnrAvailable && (await page.locator(FILTER_INPUT).isVisible()))
       await setFilter(page, '');
   });
 
@@ -122,6 +128,20 @@ test.describe('Tutorial pane filter', () => {
     expect(await readVisibleEntries(frame)).toEqual(expected);
   });
 
+  test('accepts the "package: name" line as displayed', async ({ rstudioPage: page }) => {
+    test.skip(!learnrAvailable, 'required R package not available: learnr');
+
+    const frame = tutorialFrame(page);
+    const target = entries[0];
+    const filter = `${target.pkg}: ${target.name}`;
+    const expected = entries.filter((e) => matches(e, filter));
+    expect(expected).toContainEqual(target);
+
+    await setFilter(page, filter);
+    await expect(frame.locator(`${ENTRY}:visible`)).toHaveCount(expected.length);
+    expect(await readVisibleEntries(frame)).toEqual(expected);
+  });
+
   test('shows a message when nothing matches, and clears', async ({ rstudioPage: page }) => {
     test.skip(!learnrAvailable, 'required R package not available: learnr');
 
@@ -145,8 +165,11 @@ test.describe('Tutorial pane filter', () => {
     await setFilter(page, pkg);
     await expect(frame.locator(`${ENTRY}:visible`)).toHaveCount(expected.length);
 
-    // Refresh reloads the home page; the filter should be applied again.
-    await executeCommand(page, 'tutorialRefresh');
+    // Home reloads the home page; the filter should be applied again. Mark the
+    // current document so the assertion waits for the reloaded one.
+    await frame.locator('body').evaluate((body) => body.setAttribute('data-pw-stale', '1'));
+    await executeCommand(page, 'tutorialHome');
+    await expect(frame.locator('body[data-pw-stale]')).toHaveCount(0);
     await expect(frame.locator(`${ENTRY}:visible`)).toHaveCount(expected.length);
     expect(await readVisibleEntries(frame)).toEqual(expected);
   });
