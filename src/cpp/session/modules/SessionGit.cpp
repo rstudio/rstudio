@@ -806,8 +806,10 @@ public:
 
    // Lists the linked worktrees of this repository (including the main one),
    // as reported by 'git worktree list --porcelain'. Each entry also carries
-   // the .Rproj file found in that worktree (if any) so that the client can
-   // open it as a project directly.
+   // the directory the project lives in within that worktree and the .Rproj
+   // file found there (if any), so that the client can open it as a project
+   // directly. A project in a subdirectory of the repository is looked for at
+   // the same offset in every worktree.
    core::Error listWorktrees(json::Array* pWorktrees)
    {
       std::string output;
@@ -860,11 +862,17 @@ public:
                            bool createBranch,
                            boost::shared_ptr<ConsoleProcess>* ppCP)
    {
+      // a relative path would be resolved against the working directory --
+      // typically this very checkout -- rather than where the user expects
+      FilePath worktreePath = module_context::resolveAliasedPath(path);
+      if (!worktreePath.isAbsolute())
+         return systemError(boost::system::errc::invalid_argument, "worktree path must be absolute: " + path, ERROR_LOCATION);
+
       ShellArgs args = gitArgs() << "worktree" << "add";
       if (createBranch)
          args << "-b" << branch;
 
-      args << module_context::resolveAliasedPath(path);
+      args << worktreePath;
       if (!createBranch)
          args << branch;
 

@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
@@ -73,21 +74,25 @@ public class WorktreeActions
    }
 
    // The directory new worktrees are created under: the last one used, else
-   // alongside the main worktree, else alongside the project.
+   // alongside the main worktree, else alongside the project, else home (a
+   // checkout at "~" or directly under "/" has no usable parent).
    public String defaultParentDir()
    {
       String parentDir = pUserState_.get().gitWorktreeParentDir().getGlobalValue();
       if (!StringUtil.isNullOrEmpty(parentDir))
          return parentDir;
 
-      for (WorktreeInfo worktree : JsUtil.asIterable(gitState_.getBranchInfo().getWorktrees()))
+      for (WorktreeInfo worktree : worktrees())
       {
          if (worktree.isMain())
-            parentDir = FileSystemItem.createDir(worktree.getPath()).getParentPathString();
+            parentDir = containingDir(worktree.getPath());
       }
 
       if (StringUtil.isNullOrEmpty(parentDir))
-         parentDir = session_.getSessionInfo().getActiveProjectDir().getParentPathString();
+         parentDir = containingDir(session_.getSessionInfo().getActiveProjectDir().getPath());
+
+      if (StringUtil.isNullOrEmpty(parentDir))
+         parentDir = FileSystemItem.HOME_PATH;
 
       return parentDir;
    }
@@ -96,7 +101,7 @@ public class WorktreeActions
    public List<WorktreeInfo> removableWorktrees()
    {
       List<WorktreeInfo> worktrees = new ArrayList<>();
-      for (WorktreeInfo worktree : JsUtil.asIterable(gitState_.getBranchInfo().getWorktrees()))
+      for (WorktreeInfo worktree : worktrees())
       {
          if (!worktree.isMain() && !worktree.isCurrent() && !worktree.isBare())
             worktrees.add(worktree);
@@ -162,7 +167,9 @@ public class WorktreeActions
       // refresh so the branch menu picks up the new worktree, then offer to
       // open it; the opener needs the refreshed entry for its project file.
       // Git reports the resolved path, which can differ from the one the user
-      // typed (symlinks), so match on the directory name as well.
+      // typed (symlinks), so fall back to matching on the directory name --
+      // but only when no entry matches the path itself, as another worktree
+      // can share the name.
       final String name = FileSystemItem.createDir(path).getName();
       gitState_.refresh(false, new Command()
       {
@@ -170,15 +177,17 @@ public class WorktreeActions
          public void execute()
          {
             WorktreeInfo added = null;
-            for (WorktreeInfo worktree : JsUtil.asIterable(gitState_.getBranchInfo().getWorktrees()))
+            WorktreeInfo sameName = null;
+            for (WorktreeInfo worktree : worktrees())
             {
-               if (StringUtil.equals(worktree.getPath(), path) ||
-                   StringUtil.equals(FileSystemItem.createDir(worktree.getPath()).getName(), name))
-               {
+               if (StringUtil.equals(worktree.getPath(), path))
                   added = worktree;
-               }
+               else if (StringUtil.equals(FileSystemItem.createDir(worktree.getPath()).getName(), name))
+                  sameName = worktree;
             }
 
+            if (added == null)
+               added = sameName;
             if (added == null)
                return;
 
@@ -310,6 +319,23 @@ public class WorktreeActions
          events_.fireEvent(new OpenProjectNewWindowEvent(projectFile, null));
       else
          events_.fireEvent(new SwitchToProjectEvent(projectFile));
+   }
+
+   // The known worktrees; empty until the first status refresh has completed
+   private Iterable<WorktreeInfo> worktrees()
+   {
+      BranchesInfo branchInfo = gitState_.getBranchInfo();
+      if (branchInfo == null)
+         return new ArrayList<>();
+
+      return JsUtil.asIterable(branchInfo.getWorktrees());
+   }
+
+   // The directory holding `path`, or "" when there is none ("~", "/")
+   private static String containingDir(String path)
+   {
+      FileSystemItem dir = FileSystemItem.createDir(path).getContainingDir();
+      return dir == null ? "" : dir.getPath();
    }
 
    private final EventBus events_;
