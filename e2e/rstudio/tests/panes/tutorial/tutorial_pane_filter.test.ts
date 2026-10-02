@@ -7,6 +7,8 @@
 // (ex-data-basics, hello, ...); globalSetup preinstalls learnr from
 // required-packages.txt. They are spelled out rather than derived from a copy
 // of the matching rule so that a wrong rule can't be mirrored into the oracle.
+// Those tests count only learnr's entries, so a tutorial from some other
+// installed package that happens to match too does not fail them.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { FrameLocator, Page } from '@playwright/test';
@@ -18,6 +20,7 @@ const FILTER_INPUT = '#rstudio_sw_tutorial input';
 const STOP_BUTTON = "[id^='rstudio_tb_tutorialstop']";
 const ENTRY = '.rstudio-tutorials-entry';
 const VISIBLE_ENTRY = `${ENTRY}:visible`;
+const VISIBLE_LEARNR_ENTRY = `${ENTRY}[data-tutorial-package="learnr"]:visible`;
 const EMPTY_MESSAGE = '#rstudio_tutorials_filter_empty';
 
 // Indexing the installed tutorials runs after the session starts, and the
@@ -121,8 +124,8 @@ test.describe('Tutorial pane filter', () => {
     expect(expected.length).toBeLessThan(entries.length);
 
     await setFilter(page, 'EX-DATA');
-    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(expected.length);
-    expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual(expected);
+    await expect(frame.locator(VISIBLE_LEARNR_ENTRY)).toHaveCount(expected.length);
+    expect(await readEntries(frame, VISIBLE_LEARNR_ENTRY)).toEqual(expected);
     await expect(frame.locator(EMPTY_MESSAGE)).toBeHidden();
   });
 
@@ -135,12 +138,12 @@ test.describe('Tutorial pane filter', () => {
     expect(expected).toHaveLength(1);
 
     await setFilter(page, 'learnr');
-    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(learnrCount);
+    await expect(frame.locator(VISIBLE_LEARNR_ENTRY)).toHaveCount(learnrCount);
 
     // adding a word from the title narrows the list
     await setFilter(page, 'learnr basics');
-    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(1);
-    expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual(expected);
+    await expect(frame.locator(VISIBLE_LEARNR_ENTRY)).toHaveCount(1);
+    expect(await readEntries(frame, VISIBLE_LEARNR_ENTRY)).toEqual(expected);
   });
 
   test('accepts the "package: name" line as displayed', async ({ rstudioPage: page }) => {
@@ -151,8 +154,8 @@ test.describe('Tutorial pane filter', () => {
     expect(expected).toHaveLength(1);
 
     await setFilter(page, 'learnr: hello');
-    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(1);
-    expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual(expected);
+    await expect(frame.locator(VISIBLE_LEARNR_ENTRY)).toHaveCount(1);
+    expect(await readEntries(frame, VISIBLE_LEARNR_ENTRY)).toEqual(expected);
   });
 
   test('filters on a paste, which arrives without a key', async ({ rstudioPage: page }) => {
@@ -163,8 +166,8 @@ test.describe('Tutorial pane filter', () => {
     expect(expected).toHaveLength(1);
 
     await pasteFilter(page, 'learnr: hello');
-    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(1);
-    expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual(expected);
+    await expect(frame.locator(VISIBLE_LEARNR_ENTRY)).toHaveCount(1);
+    expect(await readEntries(frame, VISIBLE_LEARNR_ENTRY)).toEqual(expected);
   });
 
   test('keeps non-ASCII text together as one term', async ({ rstudioPage: page }) => {
@@ -235,7 +238,7 @@ test.describe('Tutorial pane filter', () => {
     expect(expected).toHaveLength(1);
 
     await setFilter(page, 'learnr: hello');
-    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(1);
+    await expect(frame.locator(VISIBLE_LEARNR_ENTRY)).toHaveCount(1);
 
     const consoleActions = new ConsolePaneActions(page);
     try {
@@ -249,8 +252,8 @@ test.describe('Tutorial pane filter', () => {
       await executeCommand(page, 'tutorialHome');
       await expect(page.locator(FILTER_INPUT)).toBeVisible();
       await expect(page.locator(FILTER_INPUT)).toHaveValue('learnr: hello');
-      await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(1);
-      expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual(expected);
+      await expect(frame.locator(VISIBLE_LEARNR_ENTRY)).toHaveCount(1);
+      expect(await readEntries(frame, VISIBLE_LEARNR_ENTRY)).toEqual(expected);
     } finally {
       // Home leaves the tutorial's job running; stop it so it doesn't outlive
       // the test (Stop is only offered while the tutorial itself is shown).

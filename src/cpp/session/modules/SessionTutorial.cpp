@@ -279,7 +279,9 @@ void handleTutorialHomeRequest(const http::Request& request,
                << "<button"
                << " class=\"rstudio-tutorials-run-button\""
                << " aria-label=\"Start tutorial '" << htmlEscape(tutorial.name, true) << "' from package '" << htmlEscape(pkgName, true) << "'\""
-               << " onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name, true) << "', '" << htmlEscape(pkgName, true) << "')\""
+               // the handler is JavaScript inside an attribute: the HTML parser
+               // decodes the attribute before JS reads it, so escape for both
+               << " onclick=\"window.parent.tutorialRun('" << htmlEscape(jsLiteralEscape(tutorial.name), true) << "', '" << htmlEscape(jsLiteralEscape(pkgName), true) << "')\""
                << ">"
                   
                << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"
