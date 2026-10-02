@@ -4,9 +4,9 @@
 // the match ignores case.
 //
 // The expectations are written against the tutorials learnr itself ships
-// (ex-data-basics, hello, ...), which the suite installs if needed. They are
-// spelled out rather than derived from a copy of the matching rule so that a
-// wrong rule can't be mirrored into the oracle.
+// (ex-data-basics, hello, ...); globalSetup preinstalls learnr from
+// required-packages.txt. They are spelled out rather than derived from a copy
+// of the matching rule so that a wrong rule can't be mirrored into the oracle.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { FrameLocator, Page } from '@playwright/test';
@@ -48,19 +48,25 @@ function learnrTutorials(entries: Entry[], ...names: string[]): Entry[] {
   return entries.filter((e) => e.pkg === 'learnr' && names.includes(e.name));
 }
 
-// The filter responds to keyup, so the text has to arrive as keystrokes.
-// Characters with no key on the keyboard (CJK, for instance) are inserted
-// without one, so finish with a harmless key to deliver the keyup an IME
-// would have produced.
+// Type the text so the filter sees it the way a user's keystrokes arrive; the
+// paste test covers edits that bypass the keyboard.
 async function setFilter(page: Page, text: string): Promise<void> {
   const input = page.locator(FILTER_INPUT);
   await input.click();
   await input.press('ControlOrMeta+a');
   await input.press('Backspace');
-  if (text.length > 0) {
+  if (text.length > 0)
     await input.pressSequentially(text);
-    await input.press('End');
-  }
+}
+
+// A paste from the context menu (or a drag-and-drop) changes the value with
+// an input event but no key, which is the one way to deliver text that
+// setFilter() does not.
+async function pasteFilter(page: Page, text: string): Promise<void> {
+  await page.locator(FILTER_INPUT).evaluate((el: HTMLInputElement, value: string) => {
+    el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, text);
 }
 
 test.describe('Tutorial pane filter', () => {
@@ -70,8 +76,12 @@ test.describe('Tutorial pane filter', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     const consoleActions = new ConsolePaneActions(page);
-    // 180s covers a cold install of learnr and its dependencies on CI.
-    learnrAvailable = await consoleActions.ensurePackage('learnr', 180_000);
+    // The tutorials are indexed as the session starts, so learnr has to be in
+    // place by then (required-packages.txt puts it there): a copy installed
+    // now would not be listed. ensurePackage() still runs to fill in any
+    // missing dependency, which the pane would otherwise prompt for.
+    const preinstalled = (await consoleActions.evalRLogical('requireNamespace("learnr", quietly = TRUE)')) === true;
+    learnrAvailable = preinstalled && (await consoleActions.ensurePackage('learnr', 180_000));
     // Starting a tutorial also needs rstudioapi; without it the pane prompts
     // to install it instead of launching.
     tutorialDepsAvailable = learnrAvailable && (await consoleActions.ensurePackage('rstudioapi', 120_000));
@@ -103,7 +113,7 @@ test.describe('Tutorial pane filter', () => {
   });
 
   test('matches part of a tutorial name, ignoring case', async ({ rstudioPage: page }) => {
-    test.skip(!learnrAvailable, 'required R package not available: learnr');
+    test.skip(!learnrAvailable, 'learnr must be preinstalled (required-packages.txt)');
 
     const frame = tutorialFrame(page);
     const expected = learnrTutorials(entries, 'ex-data-basics', 'ex-data-filter', 'ex-data-mutate', 'ex-data-summarise');
@@ -117,7 +127,7 @@ test.describe('Tutorial pane filter', () => {
   });
 
   test('every term must match somewhere', async ({ rstudioPage: page }) => {
-    test.skip(!learnrAvailable, 'required R package not available: learnr');
+    test.skip(!learnrAvailable, 'learnr must be preinstalled (required-packages.txt)');
 
     const frame = tutorialFrame(page);
     const learnrCount = entries.filter((e) => e.pkg === 'learnr').length;
@@ -134,7 +144,7 @@ test.describe('Tutorial pane filter', () => {
   });
 
   test('accepts the "package: name" line as displayed', async ({ rstudioPage: page }) => {
-    test.skip(!learnrAvailable, 'required R package not available: learnr');
+    test.skip(!learnrAvailable, 'learnr must be preinstalled (required-packages.txt)');
 
     const frame = tutorialFrame(page);
     const expected = learnrTutorials(entries, 'hello');
@@ -145,34 +155,52 @@ test.describe('Tutorial pane filter', () => {
     expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual(expected);
   });
 
+  test('filters on a paste, which arrives without a key', async ({ rstudioPage: page }) => {
+    test.skip(!learnrAvailable, 'learnr must be preinstalled (required-packages.txt)');
+
+    const frame = tutorialFrame(page);
+    const expected = learnrTutorials(entries, 'hello');
+    expect(expected).toHaveLength(1);
+
+    await pasteFilter(page, 'learnr: hello');
+    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(1);
+    expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual(expected);
+  });
+
   test('keeps non-ASCII text together as one term', async ({ rstudioPage: page }) => {
-    test.skip(!learnrAvailable, 'required R package not available: learnr');
+    test.skip(!learnrAvailable, 'learnr must be preinstalled (required-packages.txt)');
 
     // No installed package ships a non-Latin tutorial, so add two entries to
-    // the page by hand. The home page is regenerated on every load, so they
-    // disappear with the next reload.
+    // the page by hand. The home page is regenerated on every load, so a
+    // reload (the index finishing a late pass, say) drops them again; the
+    // check below re-adds them and retries if that happens underneath it.
     const frame = tutorialFrame(page);
-    await frame.locator('.rstudio-tutorials-container').evaluate((container) => {
-      const add = (name: string, title: string) => {
-        const el = document.createElement('div');
-        el.className = 'rstudio-tutorials-section rstudio-tutorials-entry';
-        el.setAttribute('data-tutorial-package', 'exemples');
-        el.setAttribute('data-tutorial-name', name);
-        el.setAttribute('data-tutorial-title', title);
-        el.textContent = title;
-        container.appendChild(el);
-      };
-      add('donnees', 'Les données');
-      add('donner', 'Donner des exemples');
-    });
+    const addEntries = () =>
+      frame.locator('.rstudio-tutorials-container').evaluate((container) => {
+        if (container.querySelector('[data-tutorial-package="exemples"]'))
+          return;
+        const add = (name: string, title: string) => {
+          const el = document.createElement('div');
+          el.className = 'rstudio-tutorials-section rstudio-tutorials-entry';
+          el.setAttribute('data-tutorial-package', 'exemples');
+          el.setAttribute('data-tutorial-name', name);
+          el.setAttribute('data-tutorial-title', title);
+          el.textContent = title;
+          container.appendChild(el);
+        };
+        add('donnees', 'Les données');
+        add('donner', 'Donner des exemples');
+      });
 
     // "données" must not be split into "donn" and "es" (which would also
     // match "Donner des exemples")
-    await setFilter(page, 'Données');
-    await expect(frame.locator(VISIBLE_ENTRY)).toHaveCount(1);
-    expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual([
-      { pkg: 'exemples', name: 'donnees', title: 'Les données' },
-    ]);
+    await expect(async () => {
+      await addEntries();
+      await setFilter(page, 'Données');
+      expect(await readEntries(frame, VISIBLE_ENTRY)).toEqual([
+        { pkg: 'exemples', name: 'donnees', title: 'Les données' },
+      ]);
+    }).toPass();
 
     // a non-Latin query is a term too, not an empty filter
     await setFilter(page, '数据');
@@ -185,7 +213,7 @@ test.describe('Tutorial pane filter', () => {
   });
 
   test('shows a message when nothing matches, and clears', async ({ rstudioPage: page }) => {
-    test.skip(!learnrAvailable, 'required R package not available: learnr');
+    test.skip(!learnrAvailable, 'learnr must be preinstalled (required-packages.txt)');
 
     const frame = tutorialFrame(page);
     await setFilter(page, 'no-such-tutorial-anywhere');
@@ -200,7 +228,7 @@ test.describe('Tutorial pane filter', () => {
   });
 
   test('hides the box while a tutorial runs and re-applies the filter after Home', async ({ rstudioPage: page }) => {
-    test.skip(!tutorialDepsAvailable, 'required R packages not available: learnr, rstudioapi');
+    test.skip(!tutorialDepsAvailable, 'learnr must be preinstalled (required-packages.txt) and rstudioapi available');
 
     const frame = tutorialFrame(page);
     const expected = learnrTutorials(entries, 'hello');
@@ -213,7 +241,7 @@ test.describe('Tutorial pane filter', () => {
     try {
       await frame.locator(`${ENTRY}[data-tutorial-name="hello"] button`).click();
 
-      // the box goes as soon as the tutorial is launched, before it renders
+      // the box goes once the loading page arrives, before the tutorial renders
       await expect(page.locator(FILTER_INPUT)).toBeHidden();
       await expect(page.locator(STOP_BUTTON)).toBeVisible({ timeout: TUTORIAL_START_TIMEOUT });
       await expect(page.locator(FILTER_INPUT)).toBeHidden();
