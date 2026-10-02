@@ -31,14 +31,13 @@ import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -47,7 +46,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -137,7 +135,8 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
-      sbRemote_ = new SelectWidget(constants_.remoteColon());
+      sbRemote_ = new SelectWidget();
+      sbRemote_.getListBox().setWidth("100%");
       sbRemote_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -148,7 +147,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
-      btnAddRemote_ = new SmallButton(constants_.addRemoteEllipses());
+      btnAddRemote_ = new ThemedButton(constants_.addRemoteEllipses());
       btnAddRemote_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -182,33 +181,26 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
+      addLeftButton(btnAddRemote_, ElementIds.NEW_BRANCH_ADD_REMOTE);
+
       cbPush_ = new CheckBox(constants_.syncBranchWithRemote());
       cbPush_.setVisible(sbRemote_.getValue() != REMOTE_NONE);
       cbPush_.setValue(true);
       
       setRemotes(remotesInfo);
       
-      LayoutGrid ctrBranch = new LayoutGrid(1, 2);
-      ctrBranch.setWidth("100%");
-      FormLabel branchLabel = new FormLabel(constants_.branchNameColon(), tbBranch_);
-      ctrBranch.setWidget(0, 0, branchLabel);
-      ctrBranch.setWidget(0, 1, tbBranch_);
-      
-      HorizontalPanel ctrRemote = new HorizontalPanel();
-      ctrRemote.setWidth("100%");
-      ctrRemote.add(sbRemote_);
-      sbRemote_.getElement().getStyle().setFloat(Style.Float.LEFT);
-      ctrRemote.add(btnAddRemote_);
-      btnAddRemote_.getElement().getStyle().setFloat(Style.Float.RIGHT);
-      btnAddRemote_.getElement().getStyle().setMarginTop(2, Unit.PX);
-      btnAddRemote_.getElement().getStyle().setMarginRight(3, Unit.PX);
-      
-      VerticalPanel panel = new VerticalPanel();
-      panel.add(ctrBranch);
-      panel.add(new VerticalSpacer("6px"));
-      panel.add(ctrRemote);
-      
-      container_.add(panel);
+      // branch name and remote share a grid so their inputs line up
+      LayoutGrid grid = new LayoutGrid(2, 2);
+      grid.setWidth("100%");
+      grid.setWidget(0, 0, new FormLabel(constants_.branchNameColon(), tbBranch_));
+      grid.setWidget(0, 1, tbBranch_);
+      tbBranch_.setWidth("100%");
+      grid.setWidget(1, 0, new FormLabel(constants_.remoteColon(), sbRemote_.getListBox()));
+      grid.setWidget(1, 1, sbRemote_);
+      grid.getCellFormatter().getElement(1, 1).getStyle().setPaddingTop(6, Unit.PX);
+
+      container_.add(grid);
+      container_.add(new VerticalSpacer("6px"));
       container_.add(cbPush_);
 
       // optionally check the new branch out into a worktree of its own, at
@@ -238,22 +230,33 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       remotesInfo_ = remotesInfo;
       
+      // one entry per remote (git lists fetch and push URLs separately),
+      // labelled with its URL so similarly named remotes can be told apart
       List<String> remotes = new ArrayList<>();
+      List<String> labels = new ArrayList<>();
       for (RemotesInfo info : JsUtil.asIterable(remotesInfo))
       {
          if (!remotes.contains(info.getRemote()))
          {
             String remote = info.getRemote();
-            remotes.add(info.getRemote());
+            remotes.add(remote);
+            labels.add(StringUtil.isNullOrEmpty(info.getUrl())
+                  ? remote
+                  : remote + " (" + info.getUrl() + ")");
             if (activeRemote == null && info.isActive())
                activeRemote = remote;
          }
       }
       
       String[] choices = new String[remotes.size() + 1];
+      String[] choiceLabels = new String[remotes.size() + 1];
       for (int i = 0; i < remotes.size(); i++)
+      {
          choices[i] = remotes.get(i);
+         choiceLabels[i] = labels.get(i);
+      }
       choices[remotes.size()] = REMOTE_NONE;
+      choiceLabels[remotes.size()] = REMOTE_NONE;
       
       // if we haven't set an active remote, try defaulting to the one called
       // 'origin' (if it exists)
@@ -275,7 +278,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       if (activeRemote == null)
          activeRemote = choices[0];
       
-      sbRemote_.setChoices(choices);
+      sbRemote_.setChoices(choiceLabels, choices);
       sbRemote_.setValue(activeRemote);
       
       cbPush_.setVisible(choices.length > 1);
@@ -310,7 +313,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    private final VerticalPanel container_;
    private final TextBox tbBranch_;
    private final SelectWidget sbRemote_;
-   private final SmallButton btnAddRemote_;
+   private final ThemedButton btnAddRemote_;
    private final CheckBox cbPush_;
    
    private static final String REMOTE_NONE = "(None)";

@@ -200,6 +200,7 @@ public class ElementIds
    public final static String NEW_WORKTREE_DIRECTORY = "new_worktree_directory";
    public final static String NEW_BRANCH_NAME = "new_branch_name";
    public final static String NEW_BRANCH_WORKTREE = "new_branch_worktree";
+   public final static String NEW_BRANCH_ADD_REMOTE = "new_branch_add_remote";
    public final static String REMOVE_WORKTREE_SELECT = "remove_worktree_select";
    public final static String REMOVE_WORKTREE_FORCE = "remove_worktree_force";
    public final static String NEW_PROJECT_TYPE = "project_type";
