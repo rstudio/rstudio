@@ -24,6 +24,8 @@
 // simple accessors (which we know will not longjmp)
 #define R_INTERNAL_FUNCTIONS
 
+#include <cwctype>
+
 #include <fmt/format.h>
 
 #include <boost/bind/bind.hpp>
@@ -2608,6 +2610,165 @@ void checkArgumentsMatchedMultipleTimes(RTokenCursor cursor,
    }
 }
 
+// Check a format string passed to sprintf() for '%s' conversions carrying
+// the '0' flag, e.g. '%05s'. The C standard leaves that combination undefined,
+// and in practice some C libraries zero-pad while others space-pad, so code
+// relying on it behaves differently across operating systems.
+void checkZeroPaddedStringFormat(const RToken& token,
+                                 ParseStatus& status)
+{
+   const std::wstring content = token.content();
+   std::size_t n = content.size();
+   
+   for (std::size_t i = 0; i < n; i++)
+   {
+      if (content[i] != L'%')
+         continue;
+      
+      std::size_t start = i++;
+      
+      // '%%' is a literal percent sign
+      if (i < n && content[i] == L'%')
+         continue;
+      
+      // positional argument, e.g. '%2$s'
+      std::size_t j = i;
+      while (j < n && iswdigit(content[j]))
+         j++;
+      if (j < n && content[j] == L'$')
+         i = j + 1;
+      
+      bool zeroFlag = false;
+      while (i < n && (content[i] == L'-' || content[i] == L'+' || content[i] == L' ' ||
+                       content[i] == L'#' || content[i] == L'0'))
+      {
+         if (content[i] == L'0')
+            zeroFlag = true;
+         i++;
+      }
+      
+      // width, either literal or supplied as an argument
+      if (i < n && content[i] == L'*')
+         i++;
+      while (i < n && iswdigit(content[i]))
+         i++;
+      
+      // precision
+      if (i < n && content[i] == L'.')
+      {
+         i++;
+         if (i < n && content[i] == L'*')
+            i++;
+         while (i < n && iswdigit(content[i]))
+            i++;
+      }
+      
+      if (i >= n || content[i] != L's' || !zeroFlag)
+         continue;
+      
+      // map the specifier's offsets within the token back to document positions
+      std::size_t startRow = token.row();
+      std::size_t startColumn = token.column();
+      for (std::size_t k = 0; k < start; k++)
+      {
+         if (content[k] == L'\n')
+         {
+            startRow++;
+            startColumn = 0;
+         }
+         else
+         {
+            startColumn++;
+         }
+      }
+      
+      std::string specifier = string_utils::wideToUtf8(content.substr(start, i - start + 1));
+      std::string message = fmt::format(
+               "'{}' zero-pads on some platforms but not others; use formatC() with flag = \"0\" to zero-pad strings",
+               specifier);
+      
+      status.lint().add(
+               startRow,
+               startColumn,
+               startRow,
+               startColumn + (i - start + 1),
+               LintTypeWarning,
+               message);
+   }
+}
+
+// Find the format string in a call to sprintf() or gettextf(): the
+// argument named 'fmt' if present, otherwise the first positional argument.
+void checkSprintfCall(RTokenCursor cursor,
+                      ParseStatus& status)
+{
+   if (!cursor.isType(RToken::LPAREN))
+      return;
+   
+   RTokenCursor endCursor = cursor.clone();
+   if (!endCursor.fwdToMatchingToken())
+      return;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return;
+   
+   const RToken* pNamedFormat = nullptr;
+   const RToken* pPositionalFormat = nullptr;
+   bool seenNamedFormat = false;
+   bool seenPositional = false;
+   
+   while (cursor.offset() < endCursor.offset())
+   {
+      // named argument?
+      if (isValidAsIdentifier(cursor) &&
+          cursor.nextSignificantToken().contentEquals(L"="))
+      {
+         bool isFormat = isSymbolNamed(cursor, L"fmt");
+         
+         if (!cursor.moveToNextSignificantToken())
+            return;
+         
+         if (!cursor.moveToNextSignificantToken())
+            return;
+         
+         if (isFormat)
+         {
+            seenNamedFormat = true;
+            if (cursor.isType(RToken::STRING))
+               pNamedFormat = &cursor.currentToken();
+         }
+      }
+      else if (!seenPositional && !cursor.isType(RToken::COMMA))
+      {
+         seenPositional = true;
+         if (cursor.isType(RToken::STRING))
+            pPositionalFormat = &cursor.currentToken();
+      }
+      
+      // skip to the comma ending this argument
+      while (cursor.offset() < endCursor.offset() && !cursor.isType(RToken::COMMA))
+      {
+         if (isLeftBracket(cursor) && !cursor.fwdToMatchingToken())
+            return;
+         
+         if (!cursor.moveToNextSignificantToken())
+            return;
+      }
+      
+      if (!cursor.isType(RToken::COMMA))
+         break;
+      
+      if (!cursor.moveToNextSignificantToken())
+         return;
+   }
+   
+   // once 'fmt' is named, the positional arguments are all data for '...',
+   // even if the named format isn't a literal we can inspect
+   const RToken* pFormat = seenNamedFormat ? pNamedFormat : pPositionalFormat;
+   if (pFormat != nullptr)
+      checkZeroPaddedStringFormat(*pFormat, status);
+}
+
 void validateFunctionCall(RTokenCursor cursor,
                           ParseStatus& status)
 {
@@ -3517,6 +3678,13 @@ ARGUMENT_LIST:
          validateFunctionCall(cursor, status);
 
       checkPackageInstalled(cursor, status);
+      
+      if (isSymbolNamed(cursor.previousSignificantToken(), L"sprintf") ||
+          isSymbolNamed(cursor.previousSignificantToken(), L"gettextf"))
+      {
+         checkSprintfCall(cursor, status);
+      }
+      
       addExtraScopedSymbolsForCall(cursor, status);
       
       // Update the current state.
