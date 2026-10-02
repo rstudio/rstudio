@@ -33,7 +33,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -154,16 +153,12 @@ public class EditorCommandManager
       // source document is open; rebindCommand() fires
       // SetEditorCommandBindingsEvent, which live editors already honor.
       //
-      // Wait for SessionInitEvent rather than loading here: on the server Ace
-      // can finish loading before client_init returns, and an RPC sent before
+      // Wait for session info before loading: on the server Ace can finish
+      // loading before client_init returns, and an RPC sent before
       // then carries no client id, so the session rejects it with
       // INVALID_CLIENT_ID and the client disconnects itself. Ace can also
-      // finish after the session is up, in which case the event has already
-      // fired and we load right away.
-      if (session_.getSessionInfo() != null)
-         loadBindings();
-      else
-         events_.addHandler(SessionInitEvent.TYPE, event -> loadBindings());
+      // finish after session info has arrived, in which case we load right away.
+      session_.withSessionInfo(info -> loadBindings());
 
       events_.addHandler(CopySourcePathEvent.TYPE, event ->
       {

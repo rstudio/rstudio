@@ -17,6 +17,7 @@
 
 #include <session/SessionConsoleProcessInfo.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <deque>
 
@@ -162,6 +163,7 @@ public:
    Input dequeInput();
    void enquePrompt(const std::string& prompt);
    void interrupt();
+   void terminate();
    void interruptChild();
    void resize(int cols, int rows);
    bool isStarted() const { return started_; }
@@ -246,6 +248,13 @@ private:
 
    // The number of times we've tried to interrupt / stop this process
    int interruptCount_ = 0;
+
+   // Whether the process should be stopped outright (see terminate())
+   bool terminate_ = false;
+
+   // Whether a websocket client is attached; set from the websocket
+   // thread, read on the main thread when output arrives
+   std::atomic<bool> websocketConnected_{false};
 
    // Whether to send pty interrupt
    bool interruptChild_ = false;

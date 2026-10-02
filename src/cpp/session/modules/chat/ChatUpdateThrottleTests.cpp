@@ -320,6 +320,42 @@ TEST(ChatUpdateThrottle, ThrottledSkipClearsWhenInstalledChanged)
    EXPECT_TRUE(out.downloadUrl.empty());
 }
 
+TEST(ChatUpdateThrottle, ThrottledSkipPreservesReinstallWhenInstalledUnchanged)
+{
+   // The manual check found the installed version current and offered to
+   // reinstall it. A throttled skip before the user accepts must keep the
+   // offer, or accepting fails with nothing to reinstall.
+   PendingUpdate prior;
+   prior.reinstallAvailable = true;
+   prior.newVersion = "0.5.0";
+   prior.downloadUrl = "https://cdn.posit.co/posit-ai/assistant-rstudio-0.5.0.zip";
+   prior.expectedSha256 = "695adb72723a3bb6d69c3e1cafd439f953e68f9ae3e5c0a10265a4314013cbcc";
+
+   PendingUpdate out = carryPendingUpdateThroughSkip(prior, "0.5.0", "0.5.0");
+
+   EXPECT_TRUE(out.reinstallAvailable);
+   EXPECT_FALSE(out.updateAvailable);
+   EXPECT_EQ(out.newVersion, "0.5.0");
+   EXPECT_EQ(out.downloadUrl, "https://cdn.posit.co/posit-ai/assistant-rstudio-0.5.0.zip");
+   EXPECT_EQ(out.expectedSha256, "695adb72723a3bb6d69c3e1cafd439f953e68f9ae3e5c0a10265a4314013cbcc");
+}
+
+TEST(ChatUpdateThrottle, ThrottledSkipClearsReinstallWhenInstalledChanged)
+{
+   // The reinstall offer names the version installed when it was computed; once
+   // the session runs something else it would reinstall the wrong version.
+   PendingUpdate prior;
+   prior.reinstallAvailable = true;
+   prior.newVersion = "0.5.0";
+   prior.downloadUrl = "https://cdn.posit.co/posit-ai/assistant-rstudio-0.5.0.zip";
+
+   PendingUpdate out = carryPendingUpdateThroughSkip(prior, "0.5.0", "0.5.1");
+
+   EXPECT_FALSE(out.reinstallAvailable);
+   EXPECT_TRUE(out.newVersion.empty());
+   EXPECT_TRUE(out.downloadUrl.empty());
+}
+
 // ---- bumpRecord ----
 
 TEST(ChatUpdateThrottle, BumpPreservesPriorAndBumpsTime)

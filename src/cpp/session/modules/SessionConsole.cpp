@@ -20,6 +20,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/Exec.hpp>
 #include <core/system/OutputCapture.hpp>
@@ -80,7 +81,8 @@ boost::regex suppressOutputRegex()
 
 bool suppressOutput(const std::string& output)
 {
-   static boost::regex reTokens = suppressOutputRegex();
+   // leaked: read by the output capture thread, which is never stopped (#18318)
+   static boost::regex& reTokens = core::make_leaked<boost::regex>(suppressOutputRegex());
    return boost::regex_search(output, reTokens);
 }
 

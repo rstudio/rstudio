@@ -14,6 +14,7 @@
  */
 
 #include "ChatUpdateThrottle.hpp"
+#include "ChatInstallation.hpp"
 #include "ChatLogging.hpp"
 
 #include <limits>
@@ -23,7 +24,6 @@
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/FileSerializer.hpp>
-#include <core/system/Xdg.hpp>
 
 using namespace rstudio::core;
 
@@ -35,9 +35,7 @@ namespace throttle {
 
 core::FilePath manifestCheckStatePath()
 {
-   return core::system::xdg::userDataDir()
-      .completePath("pai")
-      .completeChildPath("manifest-check.json");
+   return installation::positAiStorageDir().completeChildPath("manifest-check.json");
 }
 
 boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePath& stateFile)
@@ -241,8 +239,9 @@ PendingUpdate carryPendingUpdateThroughSkip(const PendingUpdate& prior,
                                             const std::string& priorInstalledVersion,
                                             const std::string& installedVersion)
 {
-   // No pending update from the last completed check -> nothing to carry.
-   if (!prior.updateAvailable)
+   // No pending update or reinstall from the last completed check -> nothing
+   // to carry.
+   if (!prior.updateAvailable && !prior.reinstallAvailable)
       return PendingUpdate();
 
    // The installed version changed since the check that computed this pending

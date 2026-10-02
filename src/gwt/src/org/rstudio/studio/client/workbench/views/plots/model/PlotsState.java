@@ -53,4 +53,9 @@ public class PlotsState extends JavaScriptObject
    public final native boolean getShowManipulator() /*-{
       return this.showManipulator;
    }-*/;
+
+   // whether the plot was drawn at a fixed size rather than the pane's size
+   public final native boolean getFixedSize() /*-{
+      return !!this.fixedSize;
+   }-*/;
 }

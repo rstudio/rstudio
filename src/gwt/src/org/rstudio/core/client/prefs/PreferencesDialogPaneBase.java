@@ -219,10 +219,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
    
    public void setTabPanelSize(DialogTabLayoutPanel panel)
    {
-      int width = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH
-            - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
-            - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
-      panel.setWidth(width + "px");
+      panel.setWidth(PreferencesDialogConstants.PANE_CONTENT_WIDTH + "px");
 
       // Set the height directly: GWT's setHeight() has a legacy IE assertion
       // that cannot parse CSS expressions such as min() and calc().

@@ -762,10 +762,12 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_FALSE(validateOptions(options, &connectionStr));
    EXPECT_EQ(std::string("host='myhost' user='joe' dbname='rstudio-test' password='abc123'"), connectionStr);
 
+   // ' and \ have to be backslash-escaped once embedded in the connection string,
+   // or libpq reads the password as ending at the embedded quote
    options.connectionUri = "postgres://joe@myhost/rstudio-test";
    options.password = "abc'\\123";
    EXPECT_FALSE(validateOptions(options, &connectionStr));
-   EXPECT_EQ(std::string("host='myhost' user='joe' dbname='rstudio-test' password='abc'\\123'"), connectionStr);
+   EXPECT_EQ(std::string("host='myhost' user='joe' dbname='rstudio-test' password='abc\\'\\\\123'"), connectionStr);
 
    options.connectionUri = "postgres://joe@myhost/rstudio-test?sslmode=disable";
    options.password = "abc123";
@@ -792,6 +794,12 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_FALSE(validateOptions(options, &connectionStr, &password));
    EXPECT_EQ(std::string("12345"), password) << "Expected password to be '12345' but got '" << password << "'";
    EXPECT_EQ(std::string("host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test'"), connectionStr);
+
+   // ... and it is returned verbatim, since the caller is not embedding it in a
+   // connection string and would otherwise have to undo the escaping
+   options.password = "abc'\\123";
+   EXPECT_FALSE(validateOptions(options, &connectionStr, &password));
+   EXPECT_EQ(std::string("abc'\\123"), password) << "Expected the raw password but got '" << password << "'";
 #else
    GTEST_SKIP() << "Skipping Postgres connection URI tests as Postgres support is not enabled with RSTUDIO_HAS_SOCI_POSTGRESQL";
 #endif

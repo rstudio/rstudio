@@ -17,12 +17,14 @@
 
 #include <stdio.h>
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include <fcntl.h>
 #include <grp.h>
+#include <limits.h>
 #include <pwd.h>
 #include <signal.h>
 #include <sys/resource.h>
@@ -43,7 +45,9 @@
 #include <mach-o/dyld.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/proc_info.h>
+#include <sys/sysctl.h>
 #endif
 
 #ifdef __linux__
@@ -127,6 +131,8 @@
 #include <boost/scope_exit.hpp>
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
+
+#include <fmt/format.h>
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
@@ -2026,36 +2032,6 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
    return Success();
 }
 
-namespace {
-
-Error readStatFields(const FilePath& statFilePath,
-                     std::size_t numRequiredFields,
-                     std::vector<std::string>* pFields)
-{
-   if (!statFilePath.exists())
-      return core::fileNotFoundError(statFilePath, ERROR_LOCATION);
-
-   std::string str;
-   Error error = core::readStringFromFile(statFilePath, &str);
-   if (error)
-      return error;
-
-   boost::algorithm::split(*pFields, str,
-                           boost::is_any_of(" "),
-                           boost::algorithm::token_compress_on);
-   if (pFields->size() < numRequiredFields)
-   {
-      Error error = systemError(boost::system::errc::protocol_error,
-                                ERROR_LOCATION);
-      error.addProperty("stat-fields", str);
-      return error;
-   }
-
-   return Success();
-}
-
-} // anonymous namespace
-
 Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 {
    // get clock ticks (bail if we can't)
@@ -2093,17 +2069,41 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    }
 
 
-   // read the stat fields
-   boost::format fmt("/proc/%1%");
-   std::string dir = boost::str(fmt % pid);
-   FilePath procDir(dir);
-   std::vector<std::string> fields;
-   error = readStatFields(procDir.completeChildPath("stat"), 22, &fields);
+   // read the stat line; the command name is parenthesized and may itself
+   // contain spaces, so split only what follows its closing parenthesis
+   FilePath statFile(fmt::format("/proc/{}/stat", pid));
+   std::string contents;
+   error = core::readStringFromFile(statFile, &contents);
    if (error)
       return error;
 
+   std::size_t nameEnd = contents.rfind(')');
+   if (nameEnd == std::string::npos)
+   {
+      Error parseError = systemError(boost::system::errc::protocol_error,
+                                     ERROR_LOCATION);
+      parseError.addProperty("stat-fields", contents);
+      return parseError;
+   }
+
+   // fields after the name, starting with the state (field 3 of the line);
+   // starttime is field 22 of the line
+   std::vector<std::string> fields;
+   boost::algorithm::split(fields,
+                           boost::algorithm::trim_copy(contents.substr(nameEnd + 1)),
+                           boost::is_any_of(" "),
+                           boost::algorithm::token_compress_on);
+   const std::size_t startTimeIndex = 22 - 3;
+   if (fields.size() <= startTimeIndex)
+   {
+      Error parseError = systemError(boost::system::errc::protocol_error,
+                                     ERROR_LOCATION);
+      parseError.addProperty("stat-fields", contents);
+      return parseError;
+   }
+
    // get the creation time and return success
-   double startTicks = safe_convert::stringTo<double>(fields[21], 0);
+   double startTicks = safe_convert::stringTo<double>(fields[startTimeIndex], 0);
    double startSecs = (startTicks / clockTicks) + bootTime;
    *pCreationTime = date_time::timeFromSecondsSinceEpoch(startSecs);
    return Success();
@@ -2199,7 +2199,21 @@ Error processInfo(const std::string& process,
 
 Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 {
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+   struct kinfo_proc info;
+   std::size_t size = sizeof(info);
+   int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(pid) };
+   if (::sysctl(name, 4, &info, &size, nullptr, 0) == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   // sysctl reports success with no data when the process does not exist
+   if (size == 0)
+      return systemError(ESRCH, ERROR_LOCATION);
+
+   const struct timeval& start = info.kp_proc.p_starttime;
+   double startSecs =
+      static_cast<double>(start.tv_sec) + start.tv_usec / 1000000.0;
+   *pCreationTime = date_time::timeFromSecondsSinceEpoch(startSecs);
+   return Success();
 }
 #endif
 
@@ -2213,6 +2227,83 @@ bool isProcessRunning(pid_t pid)
    int result = kill(pid, 0);
    return result == 0 || errno == EPERM;
 }
+
+#ifdef __linux__
+namespace {
+
+// the state character of a /proc/<pid>/stat or /proc/<pid>/task/<tid>/stat
+// line; it follows the parenthesized command name, which may itself contain
+// spaces and parentheses
+bool readProcState(const FilePath& statPath, char* pState)
+{
+   std::string contents;
+   Error error = core::readStringFromFile(statPath, &contents);
+   if (error)
+      return false;
+
+   std::size_t end = contents.rfind(')');
+   if (end == std::string::npos || end + 2 >= contents.size())
+      return false;
+
+   *pState = contents[end + 2];
+   return true;
+}
+
+} // anonymous namespace
+
+bool isProcessZombie(pid_t pid)
+{
+   FilePath procDir(fmt::format("/proc/{}", pid));
+   char state = 0;
+   if (!readProcState(procDir.completePath("stat"), &state) || state != 'Z')
+      return false;
+
+   // /proc/<pid>/stat describes the thread group leader, which reads as a
+   // zombie as soon as the main thread exits even while other threads run
+   // on. The process is only gone once no thread is left alive; whenever
+   // that cannot be established (an unreadable task, or a thread set that
+   // changed while being scanned, e.g. a worker replaced itself) err towards
+   // treating it as alive.
+   FilePath taskDir = procDir.completePath("task");
+   std::vector<FilePath> tasks;
+   Error error = taskDir.getChildren(tasks);
+   if (error)
+      return false;
+
+   for (const FilePath& task : tasks)
+   {
+      char taskState = 0;
+      if (!readProcState(task.completePath("stat"), &taskState))
+         return false;
+      if (taskState != 'Z' && taskState != 'X')
+         return false;
+   }
+
+   std::vector<FilePath> tasksAfter;
+   error = taskDir.getChildren(tasksAfter);
+   if (error)
+      return false;
+
+   std::sort(tasks.begin(), tasks.end());
+   std::sort(tasksAfter.begin(), tasksAfter.end());
+   return tasks == tasksAfter;
+}
+#elif defined(__APPLE__)
+bool isProcessZombie(pid_t pid)
+{
+   struct kinfo_proc info;
+   std::size_t size = sizeof(info);
+   int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(pid) };
+   if (::sysctl(name, 4, &info, &size, nullptr, 0) == -1 || size == 0)
+      return false;
+   return info.kp_proc.p_stat == SZOMB;
+}
+#else
+bool isProcessZombie(pid_t)
+{
+   return false;
+}
+#endif
 
 std::string ProcessInfo::getUsername() const
 {
@@ -2440,7 +2531,36 @@ void printCoreDumpable(const std::string& context)
 }
 
 
+namespace {
+
+void logErrorToLogger(const Error& error)
+{
+   LOG_ERROR(error);
+}
+
+// for a child between fork and exec, which must not touch the logger: the fork
+// handlers in Logger.cpp keep our own locks usable there, but the child should
+// not depend on them, so it goes straight to syslog as launchChildProcess does
+void logErrorAfterFork(const Error& error)
+{
+   safeLogToSyslog(log::getProgramId(), log::LogLevel::ERR, error.asString());
+}
+
+Error runProcessImpl(const std::string& path,
+                     const std::string& runAsUser,
+                     const ResolvedUser* pRunAsUser,
+                     ProcessConfig& config,
+                     ProcessConfigFilter configFilter,
+                     const boost::function<void(const Error&)>& logError);
+
+} // anonymous namespace
+
 void setProcessLimits(ProcessLimits limits)
+{
+   setProcessLimits(limits, logErrorToLogger);
+}
+
+void setProcessLimits(const ProcessLimits& limits, const boost::function<void(const Error&)>& logError)
 {
    // memory limit
    if (limits.memoryLimitBytes != 0)
@@ -2455,7 +2575,7 @@ void setProcessLimits(ProcessLimits limits)
       Error error = setResourceLimit(MemoryLimit, limits.memoryLimitBytes);
       if (error)
       {
-         LOG_ERROR(error);
+         logError(error);
       }
    }
 
@@ -2464,7 +2584,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(StackLimit, limits.stackLimitBytes);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // user processes limit
@@ -2473,7 +2593,7 @@ void setProcessLimits(ProcessLimits limits)
       Error error = setResourceLimit(UserProcessesLimit,
                                      limits.userProcessesLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // cpu limit
@@ -2481,7 +2601,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(CpuLimit, limits.cpuLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // nice limit
@@ -2489,7 +2609,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(NiceLimit, limits.niceLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // files limit
@@ -2497,14 +2617,14 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setResourceLimit(FilesLimit, limits.filesLimit);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
    // priority
    if (limits.priority != 0)
    {
       if (::setpriority(PRIO_PROCESS, 0, limits.priority) == -1)
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+         logError(systemError(errno, ERROR_LOCATION));
    }
 
    // cpu affinity
@@ -2513,7 +2633,7 @@ void setProcessLimits(ProcessLimits limits)
    {
       Error error = setCpuAffinity(limits.cpuAffinity);
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 #endif
 }
@@ -2592,11 +2712,35 @@ Error launchChildProcess(std::string path,
                          ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
-   // Ensure the config.user is populated before the fork so runProcess is not accessing the password db in the
-   // weird after-fork-before-exec state (i.e. skip the getCurrentUser call in runProcess)
+   // Resolve the user the child will switch to before the fork, so that the child
+   // needn't consult the password or group databases in the weird after-fork-before-exec
+   // state: another thread may have held one of their locks when we forked, and a
+   // child waiting on such a lock never gets to exec (see ResolvedUser). The group
+   // lookup the child's initgroups(3) used to make now runs on the calling thread;
+   // it bypasses the group cache so that each session starts with the user's
+   // current groups, as it did before
+   boost::optional<ResolvedUser> resolvedRunAsUser;
+   if (!runAsUser.empty() && posix::realUserIsRoot())
+   {
+      ResolvedUser resolved;
+      Error error = resolveUser(runAsUser, &resolved);
+      if (error)
+      {
+         LOG_DEBUG_MESSAGE("Error from resolveUser in launchChildProcess: " + error.asString());
+         return error;
+      }
+
+      resolvedRunAsUser = resolved;
+   }
+
+   // Likewise ensure config.user is populated before the fork (i.e. skip the getCurrentUser call in runProcess)
    if (config.user.isEmpty())
    {
-      if (!runAsUser.empty())
+      if (resolvedRunAsUser)
+      {
+         config.user = resolvedRunAsUser->user;
+      }
+      else if (!runAsUser.empty())
       {
          Error error = getUserFromUsername(runAsUser, config.user);
          if (error)
@@ -2636,7 +2780,7 @@ Error launchChildProcess(std::string path,
          ::_exit(EXIT_FAILURE);
       }
 
-      Error error = runProcess(path, runAsUser, config, configFilter);
+      Error error = runProcessImpl(path, runAsUser, resolvedRunAsUser.get_ptr(), config, configFilter, logErrorAfterFork);
       if (error)
       {
          // Use safe logger in 'after fork before exec'
@@ -2656,6 +2800,22 @@ Error runProcess(const std::string& path,
                  const std::string& runAsUser,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter)
+{
+   return runProcessImpl(path, runAsUser, nullptr, config, configFilter, logErrorToLogger);
+}
+
+namespace {
+
+// runProcess, switching to runAsUser as resolved before a fork when pRunAsUser is
+// given, and reporting the failures it carries on past through logError:
+// launchChildProcess calls this in the child, where that must be syslog rather
+// than the logger
+Error runProcessImpl(const std::string& path,
+                     const std::string& runAsUser,
+                     const ResolvedUser* pRunAsUser,
+                     ProcessConfig& config,
+                     ProcessConfigFilter configFilter,
+                     const boost::function<void(const Error&)>& logError)
 {
    // change user here if requested and we have privilege. if we don't have privilege, we can only
    // "run as" the current user (we'll check that later)
@@ -2679,10 +2839,13 @@ Error runProcess(const std::string& path,
       }
 
       // set limits - after the pamSessionFilter since it will define cgroups and set ulimit itself
-      setProcessLimits(config.limits);
+      setProcessLimits(config.limits, logError);
 
-      // switch user
-      error = permanentlyDropPriv(runAsUser);
+      // switch user, without any lookups when the caller resolved it ahead of a fork
+      if (pRunAsUser != nullptr)
+         error = permanentlyDropPrivAfterFork(*pRunAsUser);
+      else
+         error = permanentlyDropPriv(runAsUser);
       if (error)
          return error;
    }
@@ -2690,7 +2853,7 @@ Error runProcess(const std::string& path,
    {
       // set limits - calls may fail if attempting to set greater than max allowed values
       // since the user is potentially unprivileged
-      setProcessLimits(config.limits);
+      setProcessLimits(config.limits, logError);
    }
 
    // clear the signal mask so the child process can handle whatever
@@ -2832,6 +2995,8 @@ Error runProcess(const std::string& path,
    
    return error;
 }
+
+} // anonymous namespace
 
 Error getChildProcesses(
       std::vector<ProcessInfo>* pOutProcesses,
@@ -3269,12 +3434,12 @@ Error restorePriv()
  * commands like 'cifscred add' that are then shared with other users. Linux cleans up keys when the process exits.
  * Use 'keyctl show' to see the keyrings of a session and 'cat /proc/keys' to see the keys on a system.
  */
-void resetKeyring()
+Error resetKeyring()
 {
 #ifdef __linux__
    // just in case permanentlyDropPrivs was used to change back to root for some reason
    if (realUserIsRoot())
-      return;
+      return Success();
 
    /*
     * Create a new session keyring, replacing the one owned by root. When the name arg is NULL, an anonymous keyring
@@ -3287,9 +3452,12 @@ void resetKeyring()
    {
       // EPERM is returned in a docker container when SYS_ADMIN capability is not present. In that case, nothing in
       // the container can change the keyring omitting the error in that case.
-      if (errno != EPERM)
-         LOG_ERROR_MESSAGE("Unable to create new session keyring - errno: " + std::to_string(errno));
-      return;
+      if (errno == EPERM)
+         return Success();
+
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("description", "Unable to create new session keyring");
+      return error;
    }
 
    /* Now link the new session keyring to the current user's keyring */
@@ -3300,14 +3468,106 @@ void resetKeyring()
 
    if (ret < 0)
    {
-      LOG_ERROR_MESSAGE("Unable to link new session keyring with the user keyring - errno: " + std::to_string(errno));
-      return;
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("description", "Unable to link new session keyring with the user keyring");
+      return error;
    }
 #endif
+
+   return Success();
 }
+
+namespace {
 
 // privilege manipulation for systems that support setresuid/getresuid
 #if defined(HAVE_SETRESUID)
+
+Error setGroupId(GidType gid)
+{
+   if (::setresgid(gid, gid, gid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   gid_t rgid, egid, sgid;
+   if (::getresgid(&rgid, &egid, &sgid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   if (rgid != gid || egid != gid || sgid != gid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+}
+
+Error setUserId(UidType uid)
+{
+   if (::setresuid(uid, uid, uid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   uid_t ruid, euid, suid;
+   if (::getresuid(&ruid, &euid, &suid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   if (ruid != uid || euid != uid || suid != uid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+}
+
+// privilege manipulation for systems that don't support setresuid/getresuid
+#else
+
+Error setGroupId(GidType gid)
+{
+   if (::setregid(gid, gid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   if (::getgid() != gid || ::getegid() != gid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+}
+
+Error setUserId(UidType uid)
+{
+   if (::setreuid(uid, uid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   if (::getuid() != uid || ::geteuid() != uid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+}
+
+#endif
+
+// the steps every permanentlyDropPriv overload shares once the supplementary
+// group list has been set; a failure to reset the keyring afterwards does not
+// fail the drop, and is reported through logError (syslog, after a fork)
+Error permanentlyDropPrivImpl(UidType uid, GidType targetGID, const boost::function<void(const Error&)>& logError)
+{
+   bool isRootAtStart = realUserIsRoot();
+
+   Error error = setGroupId(targetGID);
+   if (error)
+      return error;
+
+   error = setUserId(uid);
+   if (error)
+      return error;
+
+   // just in case this method is ever called not as root
+   if (isRootAtStart)
+   {
+      error = resetKeyring();
+      if (error)
+         logError(error);
+   }
+
+   return Success();
+}
+
+} // anonymous namespace
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
@@ -3316,8 +3576,6 @@ Error permanentlyDropPriv(const std::string& newUsername)
 
 Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
 {
-   bool isRootAtStart = realUserIsRoot();
-
    // get user info
    User user;
    Error error = getUserFromUsername(newUsername, user);
@@ -3364,110 +3622,32 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
-   // set group
-   if (::setresgid(targetGID, targetGID, targetGID) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   gid_t rgid, egid, sgid;
-   if (::getresgid(&rgid, &egid, &sgid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   if (rgid != targetGID || egid != targetGID || sgid != targetGID)
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // set user
-   if (::setresuid(user.getUserId(), user.getUserId(), user.getUserId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   uid_t ruid, euid, suid;
-   if (::getresuid(&ruid, &euid, &suid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   if (ruid != user.getUserId() || euid != user.getUserId() || suid != user.getUserId())
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // just in case this method is ever called not as root
-   if (isRootAtStart)
-      resetKeyring();
-
-   // success
-   return Success();
+   return permanentlyDropPrivImpl(user.getUserId(), targetGID, logErrorToLogger);
 }
 
-// privilege manipulation for systems that don't support setresuid/getresuid
-#else
-
-Error permanentlyDropPriv(const std::string& newUsername)
+Error resolveUser(const std::string& username, ResolvedUser* pUser)
 {
-   return permanentlyDropPriv(newUsername, std::string());
-}
-
-Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
-{
-   bool isRootAtStart = realUserIsRoot();
-
-   // clear error state
-   errno = 0;
-
-   // get user info
-   User user;
-   Error error = getUserFromUsername(newUsername, user);
+   Error error = getUserFromUsername(username, pUser->user);
    if (error)
       return error;
 
-   // get group info if one was provided
-   boost::optional<GidType> groupOpt;
-   if (!newGroupname.empty())
-   {
-      // verify that the user is a member of the provided group
-      bool belongs = false;
-      error = userBelongsToGroup(user, newGroupname, &belongs);
-      if (error)
-         return error;
-
-      if (!belongs)
-         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
-
-      group::Group group;
-      error = group::groupFromName(newGroupname, &group);
-      if (error)
-         return error;
-
-      groupOpt = group.groupId;
-   }
-
-   GidType targetGID = groupOpt.value_or(user.getGroupId());
-
-   // supplemental group list
-   // NOTE: We are intentionally specifying the user's primary group here
-   // regardless of whether an alternate group is provided. This so all of
-   // the user's groups are maintained for the new process. Initializing
-   // with the alternate group results in the process running with only a single
-   // group.
-   if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // set group
-   if (::setregid(targetGID, targetGID) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::getgid() != targetGID || ::getegid() != targetGID)
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // set user
-   if (::setreuid(user.getUserId(), user.getUserId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::getuid() != user.getUserId() || ::geteuid() != user.getUserId())
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // just in case this method is ever called not as root
-   if (isRootAtStart)
-      resetKeyring();
-
-   // success
-   return Success();
+   return group::queryUserGroupIds(pUser->user, &pUser->groupIds);
 }
 
-#endif
+Error permanentlyDropPrivAfterFork(const ResolvedUser& user)
+{
+   // clear error state
+   errno = 0;
+
+   // supplemental group list, resolved ahead of the fork in place of the
+   // initgroups(3) call above; like initgroups, pass no more groups than the
+   // kernel accepts
+   int numGroups = static_cast<int>(std::min<std::size_t>(user.groupIds.size(), NGROUPS_MAX));
+   if (::setgroups(numGroups, user.groupIds.data()) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   return permanentlyDropPrivImpl(user.user.getUserId(), user.user.getGroupId(), logErrorAfterFork);
+}
 
 Error restoreRoot()
 {

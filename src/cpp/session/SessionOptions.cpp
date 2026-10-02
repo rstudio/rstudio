@@ -22,6 +22,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/Log.hpp>
@@ -94,7 +95,8 @@ void ensureDefaultDirectory(std::string* pDirectory,
 
 Options& options()
 {
-   static Options instance;
+   // leaked: read by the http listener and other threads, which can outlive exit() (#18318)
+   static Options& instance = core::make_leaked<Options>();
    return instance;
 }
 

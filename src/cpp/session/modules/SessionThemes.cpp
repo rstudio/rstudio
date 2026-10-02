@@ -642,8 +642,6 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 
 Error syncThemePrefs()
 {
-   Error err;
-
    // Global editor theme: the effective value with the project layer excluded.
    std::string globalName = resolveGlobalThemeName(
       [](const std::string& layer) -> boost::optional<std::string> {
@@ -681,6 +679,7 @@ Error syncThemePrefs()
    auto storedName = stateTheme.find(kThemeName);
    bool needsUpdate =
       storedName == stateTheme.end() ||
+      !(*storedName).getValue().isString() ||
       (*storedName).getValue().getString() != appliedName;
 
    if (needsUpdate)
@@ -692,7 +691,13 @@ Error syncThemePrefs()
          jsonTheme["name"] = std::get<0>(found->second);
          jsonTheme["url"] = std::get<1>(found->second);
          jsonTheme["isDark"] = std::get<2>(found->second);
-         err = prefs::userState().setTheme(jsonTheme);
+
+         // this runs during session initialization, where a returned error
+         // is fatal; a state file we can't write shouldn't keep the session
+         // from starting
+         Error error = prefs::userState().setTheme(jsonTheme);
+         if (error)
+            LOG_ERROR(error);
       }
       else
       {
@@ -703,7 +708,7 @@ Error syncThemePrefs()
       }
    }
 
-   return err;
+   return Success();
 }
 
 SEXP rs_getGlobalThemeDir()

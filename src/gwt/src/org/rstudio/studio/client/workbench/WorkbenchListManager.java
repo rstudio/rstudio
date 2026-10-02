@@ -21,7 +21,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchLists;
 import org.rstudio.studio.client.workbench.model.WorkbenchListsServerOperations;
@@ -39,7 +38,6 @@ public class WorkbenchListManager
                                Session session,
                                WorkbenchListsServerOperations server)
    {
-      session_ = session;
       server_ = server;
 
       listContexts_.put(FILE_MRU, new ListContext(FILE_MRU));
@@ -49,9 +47,9 @@ public class WorkbenchListManager
       listContexts_.put(HELP_HISTORY, new ListContext(HELP_HISTORY));
       listContexts_.put(USER_DICTIONARY, new ListContext(USER_DICTIONARY));
 
-      events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      session.withSessionInfo(info ->
       {
-         WorkbenchLists lists = session_.getSessionInfo().getLists();
+         WorkbenchLists lists = info.getLists();
          updateList(FILE_MRU, lists);
          updateList(PROJECT_NAME_MRU, lists);
          updateList(PLOT_PUBLISH_MRU, lists);
@@ -185,7 +183,6 @@ public class WorkbenchListManager
 
    private final HashMap<String,ListContext> listContexts_ = new HashMap<>();
 
-   private final Session session_;
    private final WorkbenchListsServerOperations server_;
 
    private static final String FILE_MRU = "file_mru";

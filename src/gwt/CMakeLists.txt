@@ -13,7 +13,7 @@
 #
 #
 
-cmake_minimum_required(VERSION 3.6.3)
+cmake_minimum_required(VERSION 3.25)
 project (RSTUDIO_GWT)
 
 # define output dirs
@@ -178,57 +178,55 @@ if(GWT_COPY)
       PATTERN ".gitignore" EXCLUDE
       REGEX "\\.js\\.map$" EXCLUDE)
 
-   # copy symbol maps, gzipped to save space when supported -- they are only
+   # copy symbol maps, gzipped to save space -- they are only
    # read when deobfuscating client-side stack traces for the log, and
    # GwtSymbolMaps.cpp reads both the plain and gzipped forms. only the
    # *.symbolMap files themselves are gzipped; any other files in the folder
    # (e.g. the .symbolMapOffset read by ServerEval.cpp) are installed as-is.
-   # (3.19 is required for file(CHMOD) in the gzip-file.cmake helper)
-   if(CMAKE_VERSION VERSION_LESS "3.19")
-      install(
-         DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
-         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
-   else()
-      install(
-         DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
-         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps
-         PATTERN "*.symbolMap" EXCLUDE)
+   install(
+      DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
+      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps
+      PATTERN "*.symbolMap" EXCLUDE)
 
-      # GWT_EXTRAS_DIR may be relative to this source directory (as
-      # install(DIRECTORY) would resolve it); the install-time code below
-      # runs with a different working directory and needs an absolute path
-      get_filename_component(GWT_EXTRAS_ABSOLUTE_DIR "${GWT_EXTRAS_DIR}"
-         ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+   # GWT_EXTRAS_DIR may be relative to this source directory (as
+   # install(DIRECTORY) would resolve it); the install-time code below
+   # runs with a different working directory and needs an absolute path
+   get_filename_component(GWT_EXTRAS_ABSOLUTE_DIR "${GWT_EXTRAS_DIR}"
+      ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
-      # locate the gzip helper relative to this file: the top-level source
-      # directory need not be the repository root (e.g. cmake -S src)
-      get_filename_component(GZIP_HELPER_SCRIPT
-         "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/gzip-file.cmake" ABSOLUTE)
-      install(CODE "
-         # resolve symlinks (the folder exists by install time): the helper
-         # runs with this directory as its working directory, and
-         # file(ARCHIVE_CREATE) misresolves paths from symlinked directories
-         get_filename_component(SYMBOL_MAPS_SOURCE_DIR
-            \"${GWT_EXTRAS_ABSOLUTE_DIR}/rstudio/symbolMaps\" REALPATH)
-         set(SYMBOL_MAPS_DIR \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps\")
-         file(MAKE_DIRECTORY \"\${SYMBOL_MAPS_DIR}\")
-         file(GLOB SYMBOL_MAPS \"\${SYMBOL_MAPS_SOURCE_DIR}/*.symbolMap\")
-         foreach(SYMBOL_MAP \${SYMBOL_MAPS})
-            get_filename_component(SYMBOL_MAP_NAME \"\${SYMBOL_MAP}\" NAME)
-            message(STATUS \"Compressing: \${SYMBOL_MAP_NAME}\")
-            execute_process(
-               COMMAND \"\${CMAKE_COMMAND}\"
-                  \"-DINPUT=\${SYMBOL_MAP_NAME}\"
-                  \"-DOUTPUT=\${SYMBOL_MAPS_DIR}/\${SYMBOL_MAP_NAME}.gz\"
-                  -P \"${GZIP_HELPER_SCRIPT}\"
-               WORKING_DIRECTORY \"\${SYMBOL_MAPS_SOURCE_DIR}\"
-               RESULT_VARIABLE GZIP_RESULT)
-            if(NOT GZIP_RESULT EQUAL 0)
-               message(FATAL_ERROR \"Failed to compress \${SYMBOL_MAP_NAME}\")
-            endif()
-         endforeach()
-      ")
-   endif()
+   # locate the gzip helper relative to this file: the top-level source
+   # directory need not be the repository root (e.g. cmake -S src)
+   get_filename_component(GZIP_HELPER_SCRIPT
+      "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/gzip-file.cmake" ABSOLUTE)
+
+   # the code below runs at install time. it is a bracket argument, so it
+   # needs no escaping: only the @VAR@ references are filled in now, and the
+   # ${VAR} references are left for the install script
+   string(CONFIGURE [[
+      # resolve symlinks (the folder exists by install time): the helper
+      # runs with this directory as its working directory, and
+      # file(ARCHIVE_CREATE) misresolves paths from symlinked directories
+      get_filename_component(SYMBOL_MAPS_SOURCE_DIR
+         "@GWT_EXTRAS_ABSOLUTE_DIR@/rstudio/symbolMaps" REALPATH)
+      set(SYMBOL_MAPS_DIR "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@RSTUDIO_INSTALL_SUPPORTING@/www-symbolmaps")
+      file(MAKE_DIRECTORY "${SYMBOL_MAPS_DIR}")
+      file(GLOB SYMBOL_MAPS "${SYMBOL_MAPS_SOURCE_DIR}/*.symbolMap")
+      foreach(SYMBOL_MAP ${SYMBOL_MAPS})
+         get_filename_component(SYMBOL_MAP_NAME "${SYMBOL_MAP}" NAME)
+         message(STATUS "Compressing: ${SYMBOL_MAP_NAME}")
+         execute_process(
+            COMMAND "${CMAKE_COMMAND}"
+               "-DINPUT=${SYMBOL_MAP_NAME}"
+               "-DOUTPUT=${SYMBOL_MAPS_DIR}/${SYMBOL_MAP_NAME}.gz"
+               -P "@GZIP_HELPER_SCRIPT@"
+            WORKING_DIRECTORY "${SYMBOL_MAPS_SOURCE_DIR}"
+            RESULT_VARIABLE GZIP_RESULT)
+         if(NOT GZIP_RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to compress ${SYMBOL_MAP_NAME}")
+         endif()
+      endforeach()
+   ]] SYMBOL_MAPS_INSTALL_CODE @ONLY)
+   install(CODE "${SYMBOL_MAPS_INSTALL_CODE}")
 
 endif()
 

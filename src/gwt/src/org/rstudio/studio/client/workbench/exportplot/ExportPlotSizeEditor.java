@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -285,9 +288,19 @@ public class ExportPlotSizeEditor extends Composite
                                         0, Unit.PX, 
                                         gripper_.getImageHeight(), Unit.PX);
      
-      // constrain dimensions
-      initialWidth = constrainWidth(initialWidth);
-      initialHeight = constrainHeight(initialHeight);
+      // constrain dimensions. The copy dialogs copy from the preview, so
+      // their size is limited to the screen; Save as Image keeps a fixed
+      // plot size that's too large to preview (the preview is hidden then,
+      // see setPreviewPanelSize) rather than clamping it and losing its
+      // aspect ratio.
+      initialWidth = Math.max(initialWidth, MIN_SIZE);
+      initialHeight = Math.max(initialHeight, MIN_SIZE);
+      if (previewer_.getLimitToScreen())
+      {
+         Size maxSize = getMaxSize();
+         initialWidth = Math.min(initialWidth, maxSize.width);
+         initialHeight = Math.min(initialHeight, maxSize.height);
+      }
             
       // initialize text boxes
       setWidthTextBox(initialWidth);
@@ -396,12 +409,18 @@ public class ExportPlotSizeEditor extends Composite
               getImageHeight() != iframe.getClientHeight());
    }
    
+   public void addSizeChangedHandler(Command handler)
+   {
+      sizeChangedHandlers_.add(handler);
+   }
+
    private void setWidthTextBox(int width)
    {
       settingDimenensionInProgress_ = true;
       lastWidth_ = width;
       widthTextBox_.setText(Integer.toString(width));
       settingDimenensionInProgress_ = false;
+      fireSizeChanged();
    }
    
    
@@ -411,6 +430,13 @@ public class ExportPlotSizeEditor extends Composite
       lastHeight_ = height;
       heightTextBox_.setText(Integer.toString(height));
       settingDimenensionInProgress_ = false;
+      fireSizeChanged();
+   }
+
+   private void fireSizeChanged()
+   {
+      for (Command handler : sizeChangedHandlers_)
+         handler.execute();
    }
    
    private int constrainWidth(int width)
@@ -520,6 +546,7 @@ public class ExportPlotSizeEditor extends Composite
    private int lastHeight_;
   
    private boolean settingDimenensionInProgress_ = false;
+   private final List<Command> sizeChangedHandlers_ = new ArrayList<>();
    
    private final int MIN_SIZE = 100;
    private LayoutPanel previewPanel_;

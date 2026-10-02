@@ -58,6 +58,7 @@ set(CORE_SOURCE_FILES
    YamlUtil.cpp
    ZlibUtil.cpp
    file_lock/FileLock.cpp
+   file_lock/ForkAwareRegistry.cpp
    file_lock/AdvisoryFileLock.cpp
    file_lock/LinkBasedFileLock.cpp
    gwt/GwtFileHandler.cpp
@@ -194,6 +195,14 @@ if (UNIX)
       find_library(UUID_LIBRARIES uuid)
       find_library(RT_LIBRARIES rt)
    endif()
+   if(LINUX)
+      find_path(ACL_INCLUDE_DIR acl/libacl.h)
+      find_library(ACL_LIBRARIES acl)
+      if(NOT ACL_INCLUDE_DIR OR NOT ACL_LIBRARIES)
+         message(FATAL_ERROR "libacl development files not found")
+      endif()
+      list(APPEND CORE_INCLUDE_DIRS ${ACL_INCLUDE_DIR})
+   endif()
    find_package(ZLIB REQUIRED QUIET)
 
    # include directories and libraries
@@ -202,6 +211,7 @@ if (UNIX)
       ${UTIL_LIBRARIES}
       ${UUID_LIBRARIES}
       ${RT_LIBRARIES}
+      ${ACL_LIBRARIES}
       ${ZLIB_LIBRARIES})
 
    # add Apple frameworks we depend on
@@ -337,6 +347,7 @@ define_source_file_names(rstudio-core)
 # link dependencies
 target_link_libraries(rstudio-core
    rstudio-shared-core
+   rstudio-core-synctex
    rstudio-dtl
    rstudio-hunspell
    rstudio-utfcpp
@@ -386,15 +397,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    )
 
    target_link_libraries(rstudio-core-tests
-      rstudio-shared-core
       rstudio-core
-      rstudio-core-synctex
-      rstudio-dtl
-      rstudio-hunspell
-      rstudio-utfcpp
-      ${Boost_LIBRARIES}
-      ${SOCI_LIBRARIES}
-      ${CORE_SYSTEM_LIBRARIES}
       gtest
    )
 

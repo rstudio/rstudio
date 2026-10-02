@@ -25,10 +25,10 @@ import com.google.gwt.resources.client.ImageResource;
 
 public class CppFileType extends TextFileType
 {
-   CppFileType(String id, String ext, ImageResource icon,
+   CppFileType(String id, String label, String ext, ImageResource icon,
                boolean isCpp, boolean canSource)
    {
-      super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
+      super(id, label, EditorLanguage.LANG_CPP, ext, icon,
             WordWrap.DEFAULT, false, isCpp, false, false, false,
             false, false, false, true, false, true, false);
 

@@ -329,10 +329,11 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                   if (BrowseCap.isElectron())
                   {
                      // Fix: https://github.com/rstudio/rstudio/issues/10906
-                     // On Electron, the 'unload' event isn't being received when we close
-                     // the satellite window via WindowEx.get().close() below; we rely on 
-                     // Satellite.java invoking `opener.notifyRStudioSatelliteClosed` in response 
-                     // to that event so invoke it directly here.
+                     // Notify the main window directly. This predates the 'pagehide'
+                     // listener in Satellite.java (#18987): the 'unload' listener it
+                     // replaced was never run on Electron when the window was closed
+                     // via WindowEx.get().close() below. A second notification for
+                     // the same window is harmless.
                      satellite_.notifyRStudioSatelliteClosed();
                   }
 

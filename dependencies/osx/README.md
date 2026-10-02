@@ -37,13 +37,6 @@ https://brew.sh/, currently:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Next, if you are on an Apple Silicon Mac (as opposed to an older Intel-based Mac), re-run
-that command, preceding it with `arch -x86_64`, for example:
-
-```bash
-arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
 Satisfy Additional Dependencies
 =============================================================================
 
@@ -56,6 +49,10 @@ Additional dependencies can be satisfied by running the following script:
 Note that this script includes download, extraction, and compilation of
 boost so can take some time to complete.
 
+By default the script installs dependencies for your machine's own
+architecture only, which is all a routine development build needs. See
+"Universal Builds" below if you need to package for both architectures.
+
 To skip specific Homebrew formulae -- for example, when R is already
 installed from the CRAN `.pkg` -- set `RSTUDIO_SKIP_FORMULAS` to a
 space-separated list of formula names before running the script:
@@ -63,6 +60,36 @@ space-separated list of formula names before running the script:
 ```bash
 RSTUDIO_SKIP_FORMULAS="r" ./install-dependencies-osx
 ```
+
+Universal Builds
+=============================================================================
+
+The build machines produce a universal (x86_64 + arm64) package, which needs
+a second, x86_64 set of dependencies. On an Apple Silicon Mac that in turn
+requires Rosetta 2 and an x86_64 Homebrew installed under `/usr/local`. Only
+set this up if you need to reproduce a universal build locally.
+
+Install Rosetta 2:
+
+```bash
+softwareupdate --install-rosetta --agree-to-license
+```
+
+Install the x86_64 Homebrew by re-running the Homebrew installer under
+`arch -x86_64`:
+
+```bash
+arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Then ask the dependency script for both architectures:
+
+```bash
+./install-dependencies-osx --arch=x86_64,arm64
+```
+
+`make-package` (below) takes the same `--arch` option; pass
+`--arch=x86_64,arm64` to it to produce the universal package.
 
 Building the RStudio Distribution
 =============================================================================

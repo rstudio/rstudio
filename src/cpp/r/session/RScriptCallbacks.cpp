@@ -13,6 +13,8 @@
  *
  */
 
+#include <cstdlib>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
 
@@ -64,11 +66,15 @@ int RReadScript (const char *pmt,
    // attempt to initialize
    Error initError;
    Error error = r::exec::executeSafely<Error>(initialize, &initError);
-   if (error)
-      LOG_ERROR(error);
-
-   if (initError)
-      LOG_ERROR(initError);
+   if (error || initError)
+   {
+      // Do not execute user code or perform normal session cleanup after
+      // initialization fails. R's fatal-error path can show a dialog on Windows,
+      // so exit directly for headless script execution.
+      LOG_ERROR(initError ? initError : error);
+      rCallbacks().cleanup(false);
+      std::exit(EXIT_FAILURE);
+   }
 
    // ensure input fits in buffer; we need two extra bytes -- one for the terminating newline and
    // one for the terminating null

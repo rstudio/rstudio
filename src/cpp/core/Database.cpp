@@ -217,9 +217,12 @@ bool isSqliteTransientLockError(const soci::soci_error& error)
 
 // Database errors =================================================================================================
 
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
 namespace {
 
-std::string pgEncode(const std::string& str, bool isUrl = true)
+// nodiscard: this returns by value and has no side effects, so discarding the
+// result silently leaves the caller holding the unescaped string.
+[[nodiscard]] std::string pgEncode(const std::string& str, bool isUrl = true)
 {
    // ensure we first decode from URL string format
    std::string val = isUrl ? http::util::urlDecode(str) : str;
@@ -234,7 +237,6 @@ std::string pgEncode(const std::string& str, bool isUrl = true)
 Error getPostgresqlPassword(const PostgresqlConnectionOptions& options,
                             std::string& password)
 {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
    // override password from the input with the one from options if any
    if (!options.password.empty())
       password = options.password;
@@ -291,16 +293,12 @@ Error getPostgresqlPassword(const PostgresqlConnectionOptions& options,
       }
    }
    return Success();
-#else
-   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
 }
 
 Error parseConnectionUri(const std::string& uri,
                          std::string& password,
                          std::string* pConnectionStr)
 {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
    boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)",
                    boost::regex::icase);
    boost::cmatch matches;
@@ -458,12 +456,10 @@ Error parseConnectionUri(const std::string& uri,
    }
 
    return Success();
-#else
-   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
 }
 
 } // anonymous namespace
+#endif // RSTUDIO_HAS_SOCI_POSTGRESQL
 
 Error parsePostgresqlConnectionOptions(
     const PostgresqlConnectionOptions& options,
@@ -521,8 +517,6 @@ Error parsePostgresqlConnectionOptions(
       {
          *pConnectionStr += " sslmode=verify-ca";
       }
-   } else {
-      pgEncode(*pPassword, false);
    }
 
    return Success();
@@ -621,8 +615,10 @@ public:
             // unless requested to be returned as-is separately
             if (!pPassword_)
             {
-               // unencrypted password
-               connectionStr += " password='" + password + "'";
+               // libpq requires ' and \ to be backslash-escaped within a
+               // quoted connection-string value; the separately-returned
+               // password below stays raw, since it is not embedded anywhere.
+               connectionStr += " password='" + pgEncode(password, false) + "'";
             }
             else
                *pPassword_ = password;

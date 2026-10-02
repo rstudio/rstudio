@@ -211,11 +211,13 @@ public:
          if (error)
             return error;
 
-         // write manifest to temporary file
+         // write manifest to temporary file; it's a fresh, throwaway file in
+         // the temp directory, so there's nothing for an atomic write to protect
          std::vector<std::string> deployFileList;
          fileList.toVectorString(deployFileList);
-         error = core::writeStringVectorToFile(pDeploy->manifestPath_, 
-                                               deployFileList);
+         error = core::writeStringVectorToFile(pDeploy->manifestPath_,
+                                               deployFileList,
+                                               false /* atomic */);
          if (error)
             return error;
       }

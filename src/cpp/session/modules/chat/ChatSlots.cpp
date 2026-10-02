@@ -16,18 +16,17 @@
 #include "ChatSlots.hpp"
 
 #include "ChatConstants.hpp"
+#include "ChatInstallation.hpp"
 #include "ChatLogging.hpp"
-#include "ChatSlotManifest.hpp"
 
 #include <cctype>
+#include <chrono>
+#include <thread>
 
 #include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 
-#include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/SafeConvert.hpp>
-#include <shared_core/json/Json.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::constants;
@@ -45,52 +44,6 @@ namespace {
 // bound only exists so a filesystem that keeps producing collisions fails
 // instead of spinning.
 const int kMaxAllocationAttempts = 1000;
-
-// Reads a single string field out of a JSON file in a slot. Returns an empty
-// string when the file is absent, unparseable, or the field is missing, empty
-// or not a string -- callers treat all of those the same way.
-std::string readJsonStringField(const FilePath& slotDir,
-                                const char* fileName,
-                                const char* fieldName)
-{
-   FilePath filePath = slotDir.completeChildPath(fileName);
-   if (!filePath.isRegularFile())
-      return std::string();
-
-   std::string content;
-   Error error = readStringFromFile(filePath, &content);
-   if (error)
-      return std::string();
-
-   json::Value value;
-   if (value.parse(content) || !value.isObject())
-      return std::string();
-
-   json::Object object = value.getObject();
-   if (!object.hasMember(fieldName) || !object[fieldName].isString())
-      return std::string();
-
-   return object[fieldName].getString();
-}
-
-bool existsAndNonEmpty(const FilePath& filePath)
-{
-   return filePath.isRegularFile() && filePath.getSize() > 0;
-}
-
-// The files a Posit Assistant install cannot run without. Existence alone is
-// not enough: a truncated download used to leave a zero-byte main.js that the
-// old check accepted.
-bool hasRequiredFiles(const FilePath& slotDir)
-{
-   if (!slotDir.completeChildPath(kClientDirPath).isDirectory())
-      return false;
-
-   return existsAndNonEmpty(slotDir.completeChildPath(kServerScriptPath)) &&
-          existsAndNonEmpty(
-             slotDir.completeChildPath(kClientDirPath)
-                .completeChildPath(kIndexFileName));
-}
 
 // Device names Windows resolves no matter which directory they appear in.
 // Checked on every platform on purpose: a home directory reached from both
@@ -126,18 +79,18 @@ std::string slotNameForOrdinal(const std::string& version, int ordinal)
    return version + "-" + safe_convert::numberToString(ordinal);
 }
 
-// Budgeted against the 255-byte limit on a path component, which the ".tmp-"
-// prefix, the pid and the nonce also draw on. This truncation is what bounds
-// the name: getHostname() returns the HOSTNAME environment variable verbatim,
-// and only its gethostname() fallback is capped. A hostname can reach 253
-// characters, so this can in principle shorten two long names to the same
-// prefix; the nonce, not the hostname, is what keeps staging directories
-// distinct.
-const std::string::size_type kMaxHostnameLength = 180;
+// Short on purpose: the nonce, not the hostname, is what keeps staging
+// directories distinct, and the hostname is only there to tell a cleanup pass
+// whose abandoned extraction it is looking at. A longer cap would only push
+// the deep dist/client/assets/ paths extracted beneath it towards MAX_PATH on
+// Windows. getHostname() returns the HOSTNAME environment variable verbatim
+// (only its gethostname() fallback is capped), so the truncation here is
+// what bounds the name.
+const std::string::size_type kMaxHostnameLength = 32;
 
 // Names a staging directory. The nonce is what makes it private: no other
 // session can compute this name, so nothing else can write into the tree we
-// are about to record a manifest for. Host and pid carry no correctness weight
+// are extracting. Host and pid carry no correctness weight
 // here -- they are in the name so a later cleanup pass can tell whose
 // abandoned extraction it is looking at.
 std::string stagingDirName()
@@ -158,6 +111,46 @@ std::string stagingDirName()
       safe_convert::numberToString(
          static_cast<int64_t>(core::system::currentProcessId())) + "-" +
       core::system::generateUuid(false);
+}
+
+// A transient failure of the publish rename is retried this often, for this
+// long in total. On Windows, antivirus or the search indexer briefly holds a
+// handle inside a freshly extracted tree, and MoveFileEx then fails with
+// access denied for a moment even though nothing is wrong with the tree.
+// Elsewhere a rename between siblings either works or fails for good, so a
+// retry would only delay the error.
+#ifdef _WIN32
+const int kPublishAttempts = 10;
+#else
+const int kPublishAttempts = 1;
+#endif
+const std::chrono::milliseconds kPublishRetryDelay(100);
+
+// Renames the staged tree into its final name, retrying a spurious failure.
+// MoveDirect, never MoveCrossDevice: the staging directory is a sibling of the
+// slot, so a copy fallback would mean the invariant that makes this rename
+// atomic has been broken and we want to hear about it.
+//
+// The retry is bounded and only for a failure that leaves the name free: a
+// target that appeared belongs to another session's install, which the caller
+// arbitrates, and a staging directory that disappeared cannot be retried.
+Error publishStagingDir(const FilePath& stagingDir, const FilePath& target)
+{
+   Error error;
+   for (int attempt = 1; attempt <= kPublishAttempts; ++attempt)
+   {
+      error = stagingDir.move(target, FilePath::MoveDirect);
+      if (!error || target.exists() || !stagingDir.exists())
+         return error;
+
+      DLOG("Publishing {} failed (attempt {} of {}): {}",
+           target.getAbsolutePath(), attempt, kPublishAttempts,
+           error.getMessage());
+      if (attempt < kPublishAttempts)
+         std::this_thread::sleep_for(kPublishRetryDelay);
+   }
+
+   return error;
 }
 
 } // anonymous namespace
@@ -195,45 +188,53 @@ FilePath versionsDir(const FilePath& storageDir)
    return storageDir.completeChildPath(kVersionsDirName);
 }
 
-bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
+namespace {
+
+// verifySlot(), optionally stopping before the file checks when the slot
+// declares a protocol other than the one the caller is collecting. The link
+// and directory checks come first either way, and the protocol is read once,
+// so the slot returned is the one that was checked.
+bool verifySlotForProtocol(const FilePath& slotDir,
+                           const std::string* pRequiredProtocol,
+                           SlotInfo* pInfo)
 {
    if (!slotDir.isDirectory())
       return false;
 
-   // A slot replaced by a link is not a slot: everything in it, manifest
-   // included, would be read from a tree the slot does not contain and cannot
-   // promise is immutable. Junctions count, being how Windows redirects a
-   // directory without is_symlink() reporting it.
+   // A slot replaced by a link is not a slot: everything in it would be read
+   // from a tree the slot does not contain and cannot promise is immutable.
+   // Junctions count, being how Windows redirects a directory without
+   // is_symlink() reporting it.
    if (slotDir.isSymlink() || slotDir.isJunction())
    {
       DLOG("Slot {} is a link, not a directory", slotDir.getAbsolutePath());
       return false;
    }
 
-   if (!hasRequiredFiles(slotDir))
-   {
-      DLOG("Slot {} is missing required files", slotDir.getAbsolutePath());
-      return false;
-   }
-
-   std::string version =
-      readJsonStringField(slotDir, kPackageJsonFileName, "version");
-   if (version.empty())
-   {
-      DLOG("Slot {} declares no package version", slotDir.getAbsolutePath());
-      return false;
-   }
-
-   std::string protocol =
-      readJsonStringField(slotDir, kProtocolVersionFileName, "protocol");
+   // The protocol comes first so that a slot for another protocol costs this
+   // one small read and nothing more.
+   std::string protocol = installation::declaredProtocol(slotDir);
    if (protocol.empty())
    {
       DLOG("Slot {} declares no protocol version", slotDir.getAbsolutePath());
       return false;
    }
 
-   if (!slot_manifest::matchesSlotManifest(slotDir))
+   if (pRequiredProtocol != nullptr && protocol != *pRequiredProtocol)
       return false;
+
+   if (!installation::verifyInstallDir(slotDir))
+   {
+      DLOG("Slot {} is missing required files", slotDir.getAbsolutePath());
+      return false;
+   }
+
+   std::string version = installation::declaredVersion(slotDir);
+   if (version.empty())
+   {
+      DLOG("Slot {} declares no package version", slotDir.getAbsolutePath());
+      return false;
+   }
 
    if (pInfo != nullptr)
    {
@@ -246,7 +247,15 @@ bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
    return true;
 }
 
-std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir)
+} // anonymous namespace
+
+bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
+{
+   return verifySlotForProtocol(slotDir, nullptr, pInfo);
+}
+
+std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir,
+                                    const std::string& protocol)
 {
    std::vector<SlotInfo> found;
    if (!slotsDir.isDirectory())
@@ -263,13 +272,17 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir)
 
    for (const FilePath& child : children)
    {
-      // Staging directories and any other bookkeeping are dot-prefixed; a slot
-      // never is, because a version cannot start with a dot.
-      if (boost::algorithm::starts_with(child.getFilename(), "."))
+      // The same rule resolveSlot() applies to a selection: staging
+      // directories and other dot-prefixed bookkeeping, and any name that
+      // could not be recorded and read back as a selection. Without it a
+      // hand-made directory with a trailing space would be recorded as the
+      // fallback, rejected on the next read, and recorded again on every
+      // resolve.
+      if (!isUsableSlotName(child.getFilename()))
          continue;
 
       SlotInfo info;
-      if (verifySlot(child, &info))
+      if (verifySlotForProtocol(child, &protocol, &info))
          found.push_back(info);
    }
 
@@ -292,15 +305,9 @@ Error allocateSlot(const FilePath& stagingDir,
                    SlotPolicy policy,
                    FilePath* pSlotDir)
 {
-   // Record the manifest and verify here rather than trusting the caller, so
-   // that "a slot only reaches a final name once it has been checked" is a
-   // property of the layout instead of a rule every install path has to
-   // remember. The staging directory is private to this call, so the tree
-   // being recorded is the one that was just extracted.
-   Error error = slot_manifest::writeSlotManifest(stagingDir);
-   if (error)
-      return error;
-
+   // Verify here rather than trusting the caller, so that "a slot only reaches
+   // a final name once it has been checked" is a property of the layout
+   // instead of a rule every install path has to remember.
    SlotInfo staged;
    if (!verifySlot(stagingDir, &staged))
    {
@@ -353,10 +360,7 @@ Error allocateSlot(const FilePath& stagingDir,
          continue;
       }
 
-      // MoveDirect, never MoveCrossDevice: the staging directory is a sibling
-      // of the slot, so a copy fallback would mean the invariant that makes
-      // this rename atomic has been broken and we want to hear about it.
-      Error moveError = stagingDir.move(candidate, FilePath::MoveDirect);
+      Error moveError = publishStagingDir(stagingDir, candidate);
       if (!moveError)
       {
          DLOG("Published slot {}", candidate.getAbsolutePath());

@@ -17,68 +17,110 @@
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
-info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
+help () {
+   cat <<USAGE
+usage: install-dependencies-osx [--arch=<architectures>]
 
-if [ "$(arch)" = "arm64" ]; then
+Install the dependencies needed to build RStudio on macOS.
 
-   # install Jenkins pre-requisites
-   if is-jenkins; then
-      ./install-dependencies-osx-jenkins
+Options
+  --arch=<architectures>
+        Comma-separated list of architectures to install dependencies for
+        (x86_64, arm64). Jenkins defaults to "x86_64,arm64" on Apple Silicon
+        so it can produce a universal package; everywhere else the default is
+        the machine's own architecture. Installing x86_64 dependencies on
+        Apple Silicon requires Rosetta 2 and an x86_64 Homebrew at /usr/local.
+USAGE
+}
+
+NATIVE_ARCH="$(uname -m)"
+
+# a universal package needs both sets of dependencies, but only Jenkins
+# builds one routinely; everywhere else the other architecture's tools are
+# dead weight (and, on Apple Silicon, pull in Rosetta 2 and a second Homebrew)
+if is-jenkins && [ "${NATIVE_ARCH}" = "arm64" ]; then
+   ARCHS="x86_64,arm64"
+else
+   ARCHS="${NATIVE_ARCH}"
+fi
+
+for ARG in "$@"; do
+   case "${ARG}" in
+   --arch=*) ARCHS="${ARG#*=}" ;;
+   --help)   help; exit 0 ;;
+   *)        help; error "unknown option '${ARG}'" ;;
+   esac
+done
+
+# the Homebrew prefix for each architecture, as chosen by the Homebrew installer
+brew-prefix () {
+   case "$1" in
+   x86_64) echo "/usr/local" ;;
+   arm64)  echo "/opt/homebrew" ;;
+   esac
+}
+
+check-arch-prerequisites () {
+   local ARCH="$1"
+
+   case "${ARCH}" in
+   x86_64|arm64) ;;
+   *) error "unknown architecture '${ARCH}'; expected x86_64 or arm64" ;;
+   esac
+
+   if [ "${ARCH}" = "arm64" ] && [ "${NATIVE_ARCH}" != "arm64" ]; then
+      error "cannot install arm64 dependencies on an ${NATIVE_ARCH} machine"
    fi
 
-   # set Homebrew paths
-   find-program BREW_X86 brew       \
-      "/usr/local/bin"
+   if [ "${ARCH}" = "x86_64" ] && [ "${NATIVE_ARCH}" = "arm64" ]; then
+      if ! arch -x86_64 /usr/bin/true 2> /dev/null; then
+         error "Rosetta 2 is required to install x86_64 dependencies on Apple Silicon; install it with 'softwareupdate --install-rosetta --agree-to-license', or drop --arch=x86_64"
+      fi
+   fi
 
-   find-program BREW_ARM brew      \
-      "/opt/homebrew/bin"
+   local BREW
+   BREW="$(brew-prefix "${ARCH}")/bin/brew"
+   if ! [ -x "${BREW}" ]; then
+      error "no ${ARCH} Homebrew found at ${BREW}; see dependencies/osx/README.md for how to install it"
+   fi
+}
 
-   # save the PATH -- note that we munge this so that the correct
-   # homebrew executable is found first on the PATH
-   OLDPATH="${PATH}"
-   OLDROOT="${RSTUDIO_TOOLS_ROOT}"
+# install one architecture's dependencies into its own RSTUDIO_TOOLS_ROOT
+# sibling (e.g. /opt/rstudio-tools/x86_64), with that architecture's
+# Homebrew first on the PATH so its formulae are the ones found
+install-for-arch () {
+   local ARCH="$1"
+   local TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../${ARCH}"
 
-   # install x86_64 dependencies
-   PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   mkdir-sudo-if-necessary "${OLDROOT}/../x86_64"
-   RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../x86_64"; pwd -P)
+   mkdir-sudo-if-necessary "${TOOLS_ROOT}"
+   TOOLS_ROOT="$(cd "${TOOLS_ROOT}"; pwd -P)"
 
-   section "Installing x86_64 Dependencies"
-   arch -x86_64 ./install-dependencies-osx-arch
+   section "Installing ${ARCH} Dependencies"
+   PATH="$(brew-prefix "${ARCH}")/bin:${PATH}"  \
+   RSTUDIO_TOOLS_ROOT="${TOOLS_ROOT}"           \
+      arch "-${ARCH}" ./install-dependencies-osx-arch
+}
 
-   # install arm64 dependencies
-   PATH="$(dirname "${BREW_ARM}"):${OLDPATH}"
-   mkdir-sudo-if-necessary "${OLDROOT}/../arm64"
-   RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../arm64"; pwd -P)
+info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
+info "Installing dependencies for: ${ARCHS}"
 
-   section "Installing arm64 Dependencies"
-   arch -arm64 ./install-dependencies-osx-arch
-
-   # restore path
-   PATH="${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT="${OLDROOT}"
-
-else
-
-   # set Homebrew paths
-   find-program BREW_X86 brew       \
-      "/usr/local/bin"
-
-   # assume x86_64
-   OLDPATH="${PATH}"
-   OLDROOT="${RSTUDIO_TOOLS_ROOT}"
-
-   PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   mkdir-sudo-if-necessary "${OLDROOT}/../x86_64"
-   RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../x86_64"; pwd -P)
-
-   ./install-dependencies-osx-arch
-
-   # restore path
-   PATH="${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT="${OLDROOT}"
-
+IFS=',' read -r -a ARCH_LIST <<< "${ARCHS}"
+if [ "${#ARCH_LIST[@]}" -eq 0 ]; then
+   error "no architectures given; expected --arch=x86_64, --arch=arm64 or --arch=x86_64,arm64"
 fi
+
+for ARCH in "${ARCH_LIST[@]}"; do
+   check-arch-prerequisites "${ARCH}"
+done
+
+# install Jenkins pre-requisites
+if is-jenkins; then
+   ./install-dependencies-osx-jenkins
+fi
+
+for ARCH in "${ARCH_LIST[@]}"; do
+   install-for-arch "${ARCH}"
+done
 
 # put some necessary utilities on the PATH
 if is-jenkins; then

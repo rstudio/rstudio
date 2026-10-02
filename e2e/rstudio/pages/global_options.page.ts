@@ -7,6 +7,11 @@ export const DIALOG_BOX = '.gwt-DialogBox';
 export const OPTIONS_OK = '#rstudio_preferences_confirm';
 export const OPTIONS_CANCEL = '#rstudio_dlg_cancel';
 export const OPTIONS_APPLY = '#rstudio_dlg_apply';
+// Every section in the chooser; a section's pane has its id plus "_panel".
+export const SECTION_TABS = `${GLOBAL_OPTIONS_DIALOG} [id^="rstudio_label_"][id$="_options"]`;
+
+// Accessibility
+export const ACCESSIBILITY_PANEL = '#rstudio_label_accessibility_options_panel';
 
 // Appearance
 export const APPEARANCE_TAB = '#rstudio_label_appearance_options';

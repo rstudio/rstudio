@@ -28,6 +28,7 @@ PACKAGES=(
 	java
 	java-devel
 	jq
+	libacl-devel
 	libffi
 	libsecret-devel
 	libuuid-devel

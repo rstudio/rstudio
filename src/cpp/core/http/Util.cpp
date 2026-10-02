@@ -36,13 +36,15 @@
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
+
 #include <core/http/URL.hpp>
 #include <core/http/Header.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/Log.hpp>
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 
@@ -384,19 +386,23 @@ void parseMultipartForm(const std::string& contentType,
    }
 
    // Per RFC 2046, multipart-body ends immediately after the `--` with no CRLF necessary.
-   size_t terminatorPos = body.find("\r\n--" + boundary + "--");
+   const std::string terminator = "\r\n--" + boundary + "--";
+   size_t terminatorPos = body.find(terminator);
    if (terminatorPos == 0 || !body.size())
    {
       // No sections, just a terminating boundary
       LOG_WARNING_MESSAGE("Invalid multipart/form-data: no sections");
       return;
    }
-   // Be permissive beyond the strict requirements of RFC 2046:
-   // Use best effort to read the last part even if the terminator is missing.
-   if (terminatorPos == std::string::npos)
-      terminatorPos = body.size();
+   // Hand BoundaryFinder the terminator so it closes the final part on a real
+   // delimiter instead of the end of the view; the parts are identical either
+   // way, since the match anchors at the same CRLF. Missing terminator: read
+   // the last part anyway, more permissively than RFC 2046 requires.
+   size_t multipartLen = terminatorPos == std::string::npos
+      ? body.size()
+      : terminatorPos + terminator.size();
 
-   std::string_view multipart(&*body.begin(), terminatorPos);
+   std::string_view multipart(body.data(), multipartLen);
 
    // iterate over the multipart sections
    BoundaryFinder finder(boundary);
@@ -554,13 +560,17 @@ const char * const kAtomDateFormat = "%Y-%m-%dT%H:%M:%S%F%Q";
 
 // facet for http date (construct w/ a_ref == 1 so we manage memory)
 // statically initialized because init is very expensive
-boost::posix_time::time_facet s_httpDateFacet(kHttpDateFormat,
-                                              boost::posix_time::time_facet::period_formatter_type(),
-                                              boost::posix_time::time_facet::special_values_formatter_type(),
-                                              boost::posix_time::time_facet::date_gen_formatter_type(),
-                                              1);
+// leaked: used by threads serving http requests, which can outlive exit()
+// (#18318)
+boost::posix_time::time_facet& s_httpDateFacet = core::make_leaked<boost::posix_time::time_facet>(
+      kHttpDateFormat,
+      boost::posix_time::time_facet::period_formatter_type(),
+      boost::posix_time::time_facet::special_values_formatter_type(),
+      boost::posix_time::time_facet::date_gen_formatter_type(),
+      1);
 
-boost::posix_time::time_input_facet s_httpDateInputFacet(kHttpDateFormat, 1);
+boost::posix_time::time_input_facet& s_httpDateInputFacet =
+      core::make_leaked<boost::posix_time::time_input_facet>(kHttpDateFormat, 1);
 
 boost::posix_time::ptime parseDate(const std::string& date, const char* format)
 {
@@ -688,7 +698,7 @@ core::FilePath requestedFile(const std::string& wwwLocalPath,
    if (error)
    {
       // log if this isn't file not found
-      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+      if (!isNotFoundError(error))
       {
          error.addProperty("requested-path", relativePath);
          LOG_ERROR(error);

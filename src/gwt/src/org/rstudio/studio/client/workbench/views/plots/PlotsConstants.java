@@ -63,4 +63,16 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
     String customLabel();
     String showPlotManipulatorTitle();
     String manipulateTitle();
+    String fitToPaneLabel();
+    String plotSizeTitle();
+    String fixedPlotSizeCaption();
+    String fixedPlotSizeDescription();
+    String unitsLabel();
+    String inchesUnitsLabel();
+    String centimetersUnitsLabel();
+    String pixelsUnitsLabel();
+    String centimetersLabel();
+    String pixelsLabel();
+    String invalidPlotSizeCaption();
+    String invalidPlotSizeMessage(String min, String max, String units);
 }

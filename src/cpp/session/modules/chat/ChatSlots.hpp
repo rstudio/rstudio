@@ -83,16 +83,10 @@ bool isUsableSlotName(const std::string& name);
 /**
  * Check that a slot is a complete, coherent Posit Assistant installation.
  *
- * A slot verifies when its expected files exist and are non-empty, its
- * package.json parses and declares a version, its protocol.json parses and
- * declares a protocol, and every file recorded in its install-time manifest
- * still exists at its recorded size. A slot with no manifest does not verify:
- * every slot this module creates gets one, so its absence means the directory
- * was not produced by an install that ran to completion.
- *
- * The manifest check is a stat walk, so this is cheap enough to run on every
- * resolve, including on NFS home directories. It cannot detect corruption that
- * preserves file sizes -- that is what a forced reinstall is for.
+ * A slot verifies when it is a real directory rather than a link, its
+ * expected files exist and are non-empty, its package.json parses and declares
+ * a version, and its protocol.json parses and declares a protocol. Damage to
+ * any other file goes undetected -- that is what a forced reinstall is for.
  *
  * @param slotDir The slot directory.
  * @param pInfo Output: what the slot says about itself (optional, may be
@@ -102,15 +96,22 @@ bool isUsableSlotName(const std::string& name);
 bool verifySlot(const core::FilePath& slotDir, SlotInfo* pInfo = nullptr);
 
 /**
- * Every slot under `slotsDir` that verifies, in unspecified order.
+ * Every slot under `slotsDir` for `protocol` that verifies, in unspecified
+ * order.
  *
- * Staging directories and other hidden entries are skipped. A versions
+ * Entries that could not be recorded and read back as a selection -- staging
+ * directories, other dot-prefixed bookkeeping, and any name isUsableSlotName()
+ * rejects -- are skipped, as is any slot declaring another protocol. That
+ * check follows the link and directory checks and precedes the file checks,
+ * so slots left by earlier protocols cost one small read each. A versions
  * directory that does not exist yields no slots rather than an error.
  *
  * @param slotsDir The directory holding the slots.
- * @return The verifying slots.
+ * @param protocol The protocol the slots must declare.
+ * @return The verifying slots for that protocol.
  */
-std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir);
+std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir,
+                                    const std::string& protocol);
 
 /**
  * Create an empty staging directory to extract a package into.
@@ -119,10 +120,9 @@ std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir);
  * allocateSlot() is a rename within one filesystem rather than a copy.
  *
  * Each call returns a directory no other session can name. That matters more
- * than it looks: the install-time manifest is recorded from whatever is on
- * disk at the time, so a second writer in the same directory would be
- * described by the manifest rather than caught by it, and the resulting
- * truncated slot would verify for the rest of its life. Sessions on machines
+ * than it looks: verification checks only a few key files, so a second writer
+ * in the same directory could leave a tree missing others that still verifies
+ * and is published for the rest of its life. Sessions on machines
  * sharing an NFS home cannot be told apart by pid -- under container runtimes
  * they are routinely both pid 1 -- so uniqueness here cannot rest on the
  * process identity.
@@ -157,13 +157,10 @@ enum class SlotPolicy
 /**
  * Publish a staged package as a slot, arbitrating with concurrent installers.
  *
- * The staged package's manifest is recorded and the result verified before
- * anything is renamed, so a directory only ever reaches a final name once it
- * has been checked -- a torn install cannot exist under a name a session might
- * resolve. Recording the manifest here rather than asking callers to do it
- * first keeps that guarantee from depending on an ordering every install path
- * would have to remember; the staging directory is private to this call, so
- * the tree being recorded is the one that was just extracted.
+ * The staged package is verified before anything is renamed, so a directory
+ * only ever reaches a final name once it has been checked. Verifying here
+ * rather than asking callers to do it first keeps that guarantee from
+ * depending on an ordering every install path would have to remember.
  *
  * The staged package is then renamed to the version its own package.json
  * declares, or to `<version>-2`, `<version>-3`, ... when that name is taken.
@@ -175,6 +172,10 @@ enum class SlotPolicy
  * protocol as the staged package; a name alone is never taken as evidence of
  * what a directory holds. On adoption the staged directory is removed, since
  * nothing else can be using a directory named for this host and process.
+ *
+ * A rename that fails while its target name is still free is retried briefly
+ * before being reported: on Windows, antivirus or the search indexer can hold
+ * a handle inside a freshly extracted tree for a moment.
  *
  * @param stagingDir The staged package, as returned by prepareStagingDir().
  *                   Must be a child of the versions directory.

@@ -761,8 +761,9 @@ public class TerminalSession extends XTermWidget
       terminating_ = true;
 
       // Talk directly to the server; this will wake it up if suspended so
-      // it can actually get rid of the process record.
-      server_.processInterrupt(getHandle(), new ServerRequestCallback<VoidResponse>()
+      // it can actually get rid of the process record. Terminate rather than
+      // interrupt: an interactive shell ignores an interrupt and keeps running.
+      server_.processTerminate(getHandle(), new ServerRequestCallback<VoidResponse>()
       {
          @Override
          public void onResponseReceived(VoidResponse response)

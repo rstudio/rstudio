@@ -91,7 +91,14 @@ enum DeviceType
 };
 
 DeviceType activeDeviceType();
+int getWidth();
+int getHeight();
 double devicePixelRatio();
+
+// Draw at the given size (in pixels at 96 DPI) regardless of the size of the
+// Plots pane; a non-positive width or height follows the pane again.
+void setFixedSize(int width, int height);
+bool hasFixedSize();
 }
    
 struct DisplayState
@@ -101,13 +108,15 @@ struct DisplayState
                 int width,
                 int height,
                 int activePlotIndex,
-                int plotCount)
+                int plotCount,
+                bool fixedSize)
       : imageFilename(imageFilename), 
         manipulatorJson(manipulatorJson),
         width(width),
         height(height),
         activePlotIndex(activePlotIndex),
-        plotCount(plotCount)
+        plotCount(plotCount),
+        fixedSize(fixedSize)
    {
    }
    
@@ -117,6 +126,7 @@ struct DisplayState
    int height;
    int activePlotIndex;
    int plotCount;
+   bool fixedSize;
 };
 
 extern const char * const kPngFormat;
@@ -140,18 +150,22 @@ public:
    virtual core::Error setActivePlot(int index) = 0;
    virtual core::Error removePlot(int index) = 0;
 
-   // actions on active plot   
+   // actions on active plot; recordResolution makes sure a bitmap records
+   // the resolution it was drawn at, which only matters for files that leave
+   // RStudio (and costs a rewrite on macOS)
    virtual core::Error savePlotAsImage(const core::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
-                                       bool useDevicePixelRatio) = 0;
+                                       bool useDevicePixelRatio,
+                                       bool recordResolution = false) = 0;
 
    virtual core::Error savePlotAsImage(const core::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
-                                       double devicePixelRatio) = 0;
+                                       double devicePixelRatio,
+                                       bool recordResolution = false) = 0;
 
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,

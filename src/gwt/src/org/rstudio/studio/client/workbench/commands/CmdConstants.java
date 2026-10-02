@@ -282,6 +282,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Copy current document path") // $NON-NLS-1$
     String copySourceDocPathDesc();
     
+    // showActiveDocDirInFiles
+    @DefaultStringValue("Show Current Document's Directory in Files Pane") // $NON-NLS-1$
+    String showActiveDocDirInFilesLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String showActiveDocDirInFilesButtonLabel();
+    @DefaultStringValue("Show Document's Directory") // $NON-NLS-1$
+    String showActiveDocDirInFilesMenuLabel();
+    @DefaultStringValue("Show the directory containing the current document in the Files pane") // $NON-NLS-1$
+    String showActiveDocDirInFilesDesc();
+    
     // saveSourceDocAs
     @DefaultStringValue("Save Current Document As...") // $NON-NLS-1$
     String saveSourceDocAsLabel();
@@ -2656,6 +2666,22 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("View a larger version of the plot in a new window") // $NON-NLS-1$
     String zoomPlotDesc();
     
+    // fitPlotToPane
+    @DefaultStringValue("Fit Plots to Pane") // $NON-NLS-1$
+    String fitPlotToPaneLabel();
+    @DefaultStringValue("_Fit to Pane") // $NON-NLS-1$
+    String fitPlotToPaneMenuLabel();
+    @DefaultStringValue("Draw plots at the size of the Plots pane") // $NON-NLS-1$
+    String fitPlotToPaneDesc();
+    
+    // useFixedPlotSize
+    @DefaultStringValue("Use Fixed Plot Size...") // $NON-NLS-1$
+    String useFixedPlotSizeLabel();
+    @DefaultStringValue("Fi_xed Size...") // $NON-NLS-1$
+    String useFixedPlotSizeMenuLabel();
+    @DefaultStringValue("Draw plots at a fixed size, scaled down to fit the Plots pane") // $NON-NLS-1$
+    String useFixedPlotSizeDesc();
+    
     // removePlot
     @DefaultStringValue("Remove Current Plot...") // $NON-NLS-1$
     String removePlotLabel();
@@ -4253,12 +4279,6 @@ public interface CmdConstants extends Constants {
     String returnChatToMainButtonLabel();
     @DefaultStringValue("Return to main window") // $NON-NLS-1$
     String returnChatToMainDesc();
-    
-    // uninstallPositAssistant
-    @DefaultStringValue("Uninstall Posit Assistant") // $NON-NLS-1$
-    String uninstallPositAssistantLabel();
-    @DefaultStringValue("Uninsta_ll Posit Assistant...") // $NON-NLS-1$
-    String uninstallPositAssistantMenuLabel();
     
     // checkForPositAssistantUpdates
     @DefaultStringValue("Check for Posit Assistant Updates") // $NON-NLS-1$

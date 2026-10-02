@@ -193,6 +193,19 @@ core::Error UserStateValues::setSavePlotAsPdfOptions(core::json::Object val)
 }
 
 /**
+ * Whether plots in the Plots pane are drawn at a fixed size rather than the size of the pane, and that size.
+ */
+core::json::Object UserStateValues::fixedPlotSize()
+{
+   return readPref<core::json::Object>("fixed_plot_size");
+}
+
+core::Error UserStateValues::setFixedPlotSize(core::json::Object val)
+{
+   return writePref("fixed_plot_size", val);
+}
+
+/**
  * Most recently used settings for compiling a notebook from an R script.
  */
 core::json::Object UserStateValues::compileRNotebookPrefs()
@@ -442,6 +455,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kExportPlotOptions,
       kExportViewerOptions,
       kSavePlotAsPdfOptions,
+      kFixedPlotSize,
       kCompileRNotebookPrefs,
       kCompileRMarkdownNotebookPrefs,
       kShowPublishUi,

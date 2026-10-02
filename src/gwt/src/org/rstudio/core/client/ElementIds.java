@@ -533,6 +533,22 @@ public class ElementIds
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";
    public static String getMbPlotsExport() { return getElementId(MB_PLOTS_EXPORT); }
+   public final static String MB_PLOTS_SIZE = "mb_plots_size";
+   public static String getMbPlotsSize() { return getElementId(MB_PLOTS_SIZE); }
+
+   // SavePlotAsImageDialog
+   public final static String EXPORT_PLOT_RESOLUTION = "export_plot_resolution";
+   public static String getExportPlotResolution() { return getElementId(EXPORT_PLOT_RESOLUTION); }
+   public final static String EXPORT_PLOT_SIZE_TEXT = "export_plot_size_text";
+   public static String getExportPlotSizeText() { return getElementId(EXPORT_PLOT_SIZE_TEXT); }
+
+   // FixedPlotSizeDialog
+   public final static String FIXED_PLOT_SIZE_WIDTH = "fixed_plot_size_width";
+   public static String getFixedPlotSizeWidth() { return getElementId(FIXED_PLOT_SIZE_WIDTH); }
+   public final static String FIXED_PLOT_SIZE_HEIGHT = "fixed_plot_size_height";
+   public static String getFixedPlotSizeHeight() { return getElementId(FIXED_PLOT_SIZE_HEIGHT); }
+   public final static String FIXED_PLOT_SIZE_UNITS = "fixed_plot_size_units";
+   public static String getFixedPlotSizeUnits() { return getElementId(FIXED_PLOT_SIZE_UNITS); }
 
    // PackagesPane
    public final static String SW_PACKAGES = "sw_packages";

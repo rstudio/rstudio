@@ -219,10 +219,9 @@ jobs:
           key: rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
             rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-
-      # install-dependencies-osx (the entry-point script) adds dual-arch
-      # handling (needed on arm64, not here) and local-dev extras (PAM
-      # profile, i18n venv) we don't need in CI. Call the per-arch script
-      # directly to install only x86_64 brew formulae; that script also
+      # install-dependencies-osx (the entry-point script) adds local-dev
+      # extras (PAM profile, i18n venv) we don't need in CI. Call the per-arch
+      # script directly to install only x86_64 brew formulae; that script also
       # chains into dependencies/common/install-common at the end, so this
       # single step covers brew formulae + Boost + SOCI + GWT + node +
       # pandoc/quarto + panmirror + copilot-language-server + sccache +
@@ -376,7 +375,6 @@ jobs:
         shard: [1, 2]
     runs-on: macos-15-intel
     timeout-minutes: 120
-    environment: e2e-playwright
     env:
       # os-e2e-deps installs the harness's required packages here and exports
       # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
@@ -399,7 +397,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
@@ -678,7 +676,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 

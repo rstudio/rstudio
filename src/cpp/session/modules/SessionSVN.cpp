@@ -76,6 +76,9 @@ boost::scoped_ptr<PasswordManager> s_pPasswordManager;
 // is already in the path then this will be empty
 std::string s_svnExePath;
 
+// whether 'svn help' last succeeded; see isSvnInstalled()
+bool s_svnInstalled = false;
+
 // is the current repository svn+ssh
 bool s_isSvnSshRepository = false;
 
@@ -418,22 +421,38 @@ Error parseXml(const std::string strData,
    }
 }
 
+bool probeSvn()
+{
+   // when detection came up empty, look for svn again: it may have been
+   // installed, or the PATH changed, since the last look
+   if (s_svnExePath.empty())
+      initSvnBin();
+
+   if (s_svnExePath.empty())
+      return false;
+
+   // a failure to launch svn is the answer 'no' rather than a problem to
+   // report: on Windows an svn_exe_path that no longer exists fails here
+   int exitCode;
+   Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
+   if (error)
+      return false;
+
+   return exitCode == EXIT_SUCCESS;
+}
+
 
 } // namespace
 
 
 bool isSvnInstalled()
 {
-   int exitCode;
-   Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
+   // as in isGitInstalled(), a working svn is remembered and a missing or
+   // failing one is probed again
+   if (!s_svnInstalled)
+      s_svnInstalled = probeSvn();
 
-   // as in isGitInstalled(), a failure to launch svn is the answer 'no' rather
-   // than a problem to report: on Windows an svn_exe_path that is empty or no
-   // longer exists fails here, and this runs on every client init
-   if (error)
-      return false;
-
-   return exitCode == EXIT_SUCCESS;
+   return s_svnInstalled;
 }
 
 struct SvnInfo
@@ -540,10 +559,12 @@ Error augmentSvnIgnore();
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref == kSvnExePath)
-   {
-      initSvnBin();
-   }
+   if (pref != kSvnExePath)
+      return;
+
+   // as for git, the new svn is first run by the next isSvnInstalled()
+   initSvnBin();
+   s_svnInstalled = false;
 }
 
 void reaugmentSvnIgnore()

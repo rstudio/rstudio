@@ -18,6 +18,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Frame;
 
+import org.rstudio.core.client.Size;
+
 public class ImageFrame extends Frame
 {
    public ImageFrame(String title)
@@ -45,7 +47,7 @@ public class ImageFrame extends Frame
             {
                String sizing = "width=\"100%\" height=\"100%\"";
                setupContent(getElement(), sizing);
-               replaceLocation(getElement(), url_);
+               replaceLocation(getElement(), url_, fixedWidth(), fixedHeight());
             }
          }
       }.schedule(100);
@@ -65,12 +67,35 @@ public class ImageFrame extends Frame
    
    public void setImageUrl(String url)
    {
-      url_ = url;
-      if (isAttached())
-         replaceLocation(getElement(), url);
+      setImageUrl(url, null);
    }
 
-   private native final boolean replaceLocation(Element el, String url) /*-{
+   /**
+    * Shows the image at the given size, in CSS pixels, scaling it down to fit
+    * the frame and centering it; a null size stretches it to fill the frame.
+    */
+   public void setImageUrl(String url, Size fixedSize)
+   {
+      url_ = url;
+      fixedSize_ = fixedSize;
+      if (isAttached())
+         replaceLocation(getElement(), url, fixedWidth(), fixedHeight());
+   }
+
+   private int fixedWidth()
+   {
+      return fixedSize_ == null ? 0 : fixedSize_.width;
+   }
+
+   private int fixedHeight()
+   {
+      return fixedSize_ == null ? 0 : fixedSize_.height;
+   }
+
+   private native final boolean replaceLocation(Element el,
+                                                String url,
+                                                int fixedWidth,
+                                                int fixedHeight) /*-{
       // contentWindow itself is null while the iframe is detached or being
       // re-parented (e.g. a pane-layout quadrant swap moves the Plots pane),
       // and dereferencing it raises an uncaught TypeError that surfaces as an
@@ -81,12 +106,28 @@ public class ImageFrame extends Frame
       var img = el.contentWindow.document.getElementById('img');
       if (!img)
          return false;
+      var style = img.style;
+      if (fixedWidth > 0 && fixedHeight > 0) {
+         // the viewport units are the frame's; the outline shows where the
+         // plot ends when its background matches the pane's
+         var w = fixedWidth, h = fixedHeight;
+         style.position = 'absolute';
+         style.inset = '0';
+         style.margin = 'auto';
+         style.width = 'min(' + w + 'px, 100vw, calc(100vh * ' + w + ' / ' + h + '))';
+         style.height = 'min(' + h + 'px, 100vh, calc(100vw * ' + h + ' / ' + w + '))';
+         style.boxShadow = '0 0 0 1px rgba(128, 128, 128, 0.5)';
+      }
+      else {
+         style.position = style.inset = style.margin = '';
+         style.width = style.height = style.boxShadow = '';
+      }
       if (url && url != 'javascript:false') {
-         img.style.display = 'inline';
+         style.display = 'inline';
          img.src = url;
       }
       else {
-         img.style.display = 'none';
+         style.display = 'none';
       }
       return true;
    }-*/;
@@ -116,4 +157,5 @@ public class ImageFrame extends Frame
    }-*/;
 
    private String url_ = "javascript:false";
+   private Size fixedSize_ = null;
 }

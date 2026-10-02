@@ -180,14 +180,7 @@ Error ConnectionHistory::readConnections(json::Array* pConnections)
 Error ConnectionHistory::writeConnections(const json::Array& connectionsJson)
 {
    FilePath connectionListFile = connectionsDir_.completeChildPath(kConnectionListFile);
-   std::shared_ptr<std::ostream> pStream;
-   Error error = connectionListFile.openForWrite(pStream);
-   if (error)
-      return error;
-
-   connectionsJson.writeFormatted(*pStream);
-
-   return Success();
+   return writeStringToFileAtomic(connectionListFile, connectionsJson.writeFormatted());
 }
 
 

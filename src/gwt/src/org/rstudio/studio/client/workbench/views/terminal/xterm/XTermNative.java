@@ -243,6 +243,16 @@ public class XTermNative extends JavaScriptObject
    }-*/;
 
    /**
+    * Release any link the file link provider is still showing; used when
+    * the terminal is torn down, since xterm does not tell a hovered link that
+    * the mouse has left when its linkifier is disposed.
+    */
+   public final native void disposeFileLinkProvider() /*-{
+      if (this.rstudioFileLinks_)
+         this.rstudioFileLinks_.dispose();
+   }-*/;
+
+   /**
     * Invoke a JavaScript callback with an array of strings.
     */
    public static native void invokeCallback(JavaScriptObject callback, JsArrayString result) /*-{

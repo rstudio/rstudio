@@ -490,7 +490,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addGlobalFunction("RStudioGD", function()
 {
-   .Call("rs_createGD")
+   .Call("rs_createGD", PACKAGE = "(embedding)")
 })
 
 # set our graphics device as the default and cause it to be created/set
@@ -502,7 +502,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("activateGraphicsDevice", function()
 {
-   invisible(.Call("rs_activateGD"))
+   invisible(.Call("rs_activateGD", PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("newDesktopGraphicsDevice", function()
@@ -537,7 +537,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("GEplayDisplayList", function()
 {
    tryCatch(
-      .Call("rs_GEplayDisplayList"),
+      .Call("rs_GEplayDisplayList", PACKAGE = "(embedding)"),
       error = function(e) warning(e)
    )
 })
@@ -545,7 +545,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("GEcopyDisplayList", function(fromDevice)
 {
    tryCatch(
-      .Call("rs_GEcopyDisplayList", fromDevice),
+      .Call("rs_GEcopyDisplayList", fromDevice, PACKAGE = "(embedding)"),
       error = function(e) warning(e)
    )
 })
@@ -638,7 +638,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # generate a uuid
 .rs.addFunction("createUUID", function()
 {
-  .Call("rs_createUUID")
+  .Call("rs_createUUID", PACKAGE = "(embedding)")
 })
 
 # check the current R architecture
@@ -656,7 +656,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       else
          fileTitle <- header[[i]]
 
-      .Call("rs_showFile", fileTitle, files[[i]], delete.file)
+      .Call("rs_showFile", fileTitle, files[[i]], delete.file, PACKAGE = "(embedding)")
    }
 })
 
@@ -1186,6 +1186,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # bounds at 65520*(k+1) + 255*k*(k+1)/2; staying within R's signed
 # 32-bit integer range gives k <= 3854, so chunk size 1024 has plenty
 # of headroom.
+#
+# min() and sum() are namespace-qualified because this runs on the data
+# viewer's View() path, where a stats-teaching package attached ahead of
+# 'tools:rstudio' can otherwise capture them.
+# https://github.com/rstudio/rstudio/issues/18842
 .rs.addFunction("digest", function(x)
 {
    if (is.raw(x))
@@ -1206,12 +1211,12 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    pos <- 1L
    while (pos <= n)
    {
-      end <- min(pos + size - 1L, n)
+      end <- base::min(pos + size - 1L, n)
       k <- end - pos + 1L
       chunk <- as.integer(bytes[pos:end])
 
-      s1 <- sum(chunk)
-      weighted <- sum(seq.int(k, 1L) * chunk)
+      s1 <- base::sum(chunk)
+      weighted <- base::sum(seq.int(k, 1L) * chunk)
 
       b <- (b + k * a + weighted) %% 65521L
       a <- (a + s1) %% 65521L

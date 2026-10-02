@@ -1,4 +1,7 @@
-import type { TestType } from '@playwright/test';
+// The skip helpers below act on whichever test is running, so the base `test`
+// serves every TestType; hooks, by contrast, need the caller's own (see
+// requireAiCredentials).
+import { test as baseTest, type TestType } from '@playwright/test';
 import {
   isCopilotAuthenticated,
   isExternalServerRun,
@@ -180,6 +183,49 @@ export async function aiServiceOutageReason(provider: AIProvider): Promise<strin
     return null;
   }
   return reason;
+}
+
+/**
+ * Skip the current test -- or, from a beforeAll, the rest of its describe
+ * block -- when `provider`'s service has become unreachable since the gate
+ * probed it; return when it still answers (or under PW_AI_AUTH_STRICT). For
+ * a request through the product that failed or never came back: only the
+ * re-probe (aiServiceOutageReason) can tell an outage from a product hang.
+ */
+export async function skipIfAiServiceGone(provider: AIProvider): Promise<void> {
+  const reason = await aiServiceOutageReason(provider);
+  if (reason !== null) {
+    baseTest.skip(true, reason);
+  }
+}
+
+/**
+ * Rethrow `err`, from a wait that only a live `provider` service can satisfy
+ * (a completion, a chat reply, the assistant's install manifest), unless the
+ * service has gone away -- then skip instead (see skipIfAiServiceGone).
+ */
+export async function failUnlessAiServiceGone(provider: AIProvider, err: unknown): Promise<never> {
+  await skipIfAiServiceGone(provider);
+  throw err;
+}
+
+/**
+ * Skip the current test (from a beforeAll: the rest of its describe block)
+ * because `provider`'s service answered a request with a failure of its own:
+ * rate limited, overloaded, a 5xx. Unlike an outage there is nothing to
+ * re-probe -- the service was reached and said it could not serve the
+ * request, which is not a product bug. Under PW_AI_AUTH_STRICT this returns
+ * instead, as for an outage, and the test's own checks decide.
+ */
+export function skipForAiServiceFailure(provider: AIProvider, detail: string): void {
+  if (strictAiAuth()) {
+    return;
+  }
+  baseTest.skip(
+    true,
+    `${PROVIDERS[provider].label} failed the request on its side (${detail}); `
+      + 'a service-side failure is not a product bug',
+  );
 }
 
 /**

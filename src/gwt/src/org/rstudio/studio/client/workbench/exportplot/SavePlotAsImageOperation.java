@@ -28,5 +28,6 @@ public interface SavePlotAsImageOperation
                     boolean overwrite,
                     boolean viewAfterSave,
                     boolean useDevicePixelRatio,
+                    int resolution,
                     Operation onCompleted);
 }

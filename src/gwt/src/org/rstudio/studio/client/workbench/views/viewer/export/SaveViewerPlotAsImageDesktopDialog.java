@@ -39,4 +39,11 @@ public class SaveViewerPlotAsImageDesktopDialog extends SavePlotAsImageDialog
             options, 
             onClose);
    }
+
+   // the image is a capture of the page at the display's resolution
+   @Override
+   protected boolean supportsResolution()
+   {
+      return false;
+   }
 }

@@ -153,7 +153,7 @@ test.describe('Change Spelling Language', () => {
       consoleActions = new ConsolePaneActions(page);
       sourceActions = new SourcePaneActions(page, consoleActions);
       await expect.poll(() => getPref(page, 'spelling_dictionary_language')).toBe('en_US');
-      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour")')).toBe(false);
+      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour", PACKAGE = "(embedding)")')).toBe(false);
       await openFile(page, `${sandbox.dir}/${fileName}`);
       const editor = new AceEditor(page, '');
       await primeSpelling(page, sourceActions, editor);
@@ -161,7 +161,7 @@ test.describe('Change Spelling Language', () => {
 
       await changeLanguage(page, 'en_GB');
       await expectWordFlagged(editor, false);
-      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour")')).toBe(true);
+      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour", PACKAGE = "(embedding)")')).toBe(true);
       const projectFile = rPathLiteral(`${projectDir}/SpellingLanguage.Rproj`);
       expect(await consoleActions.evalRLogical(
         `any(readLines(${projectFile}) == "SpellingDictionary: en_GB")`,
@@ -276,7 +276,7 @@ test.describe('Change Spelling Language', () => {
       // No edits or spelling commands in the satellite after clearing the
       // override: its full project preference layer must remove the old key.
       await expectWordFlagged(editor, false);
-      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour")')).toBe(true);
+      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour", PACKAGE = "(embedding)")')).toBe(true);
     } finally {
       await satellite?.close().catch(() => {});
       await dismissAllModals(page);
