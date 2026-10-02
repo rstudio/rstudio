@@ -19,10 +19,12 @@ import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
@@ -49,6 +51,7 @@ import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
@@ -119,6 +122,14 @@ public class TutorialPane
       toolbar_.addLeftWidget(commands_.tutorialHome().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
+
+      filterWidget_ = new SearchWidget(constants_.filterTutorialsLabel());
+      filterWidget_.setPlaceholderText(constants_.filterTutorialsLabel());
+      filterWidget_.addValueChangeHandler(event -> applyFilter());
+      ElementIds.assignElementId(filterWidget_, ElementIds.SW_TUTORIAL);
+      toolbar_.addRightWidget(filterWidget_);
+      toolbar_.addRightSeparator();
+
       toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
 
       return toolbar_;
@@ -232,6 +243,7 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(false);
       commands_.tutorialStop().setEnabled(false);
+      filterWidget_.setVisible(false);
 
       String url = "./tutorial/run" +
             "?package=" + tutorial.getPackageName() +
@@ -245,6 +257,7 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(true);
       commands_.tutorialStop().setEnabled(true);
+      filterWidget_.setVisible(false);
       navigate(url, true);
    }
 
@@ -342,12 +355,71 @@ public class TutorialPane
          doc.getHead().appendChild(styleEl);
       }
 
+      applyFilter();
       body.getStyle().setVisibility(Visibility.VISIBLE);
+   }
+
+   // Hides the tutorials on the home page that don't match the filter box.
+   // Each whitespace-separated term must appear somewhere in the tutorial's
+   // title, package name, or tutorial name, so adding a term narrows the list.
+   private void applyFilter()
+   {
+      Document doc = frame_.getWindow().getDocument();
+      Element container = DomUtils.querySelector(doc.getBody(), ".rstudio-tutorials-container");
+      if (container == null)
+         return;
+
+      String[] terms = filterWidget_.getValue().trim().toLowerCase().split("\\s+");
+      NodeList<Element> entries = DomUtils.querySelectorAll(container, ".rstudio-tutorials-entry");
+
+      int visibleCount = 0;
+      for (int i = 0, n = entries.getLength(); i < n; i++)
+      {
+         Element entry = entries.getItem(i);
+         String haystack = (
+               entry.getAttribute("data-tutorial-title") + " " +
+               entry.getAttribute("data-tutorial-package") + " " +
+               entry.getAttribute("data-tutorial-name")).toLowerCase();
+
+         boolean matches = true;
+         for (String term : terms)
+            matches = matches && haystack.contains(term);
+
+         if (matches)
+         {
+            entry.getStyle().clearDisplay();
+            visibleCount++;
+         }
+         else
+         {
+            entry.getStyle().setDisplay(Display.NONE);
+         }
+      }
+
+      // the empty state only applies once there are tutorials to filter;
+      // otherwise the page is already explaining why the list is empty
+      Element empty = doc.getElementById(FILTER_EMPTY_ID);
+      if (empty == null)
+      {
+         empty = doc.createDivElement();
+         empty.setId(FILTER_EMPTY_ID);
+         empty.setClassName("rstudio-tutorials-filter-empty");
+         empty.setInnerText(constants_.noMatchingTutorialsMessage());
+         container.appendChild(empty);
+      }
+
+      boolean showEmpty = entries.getLength() > 0 && visibleCount == 0;
+      if (showEmpty)
+         empty.getStyle().clearDisplay();
+      else
+         empty.getStyle().setDisplay(Display.NONE);
    }
 
    private void onFrameLoaded()
    {
       String url = frame_.getUrl();
+      filterWidget_.setVisible(url.endsWith(TutorialPresenter.URLS_HOME));
+
       if (TutorialUtil.isShinyUrl(url))
       {
          onTutorialLoaded();
@@ -601,6 +673,7 @@ public class TutorialPane
 
    private RStudioFrame frame_;
    private Toolbar toolbar_;
+   private SearchWidget filterWidget_;
 
    // Injected ----
    private final GlobalDisplay globalDisplay_;
@@ -608,6 +681,8 @@ public class TutorialPane
    private final Session session_;
    private final DependencyManager dependencies_;
    private final TutorialServerOperations server_;
+
+   private static final String FILTER_EMPTY_ID = "rstudio_tutorials_filter_empty";
 
    private static final Resources RES = GWT.create(Resources.class);
    private static final TutorialConstants constants_ = com.google.gwt.core.client.GWT.create(TutorialConstants.class);

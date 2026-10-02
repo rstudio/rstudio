@@ -255,13 +255,19 @@ void handleTutorialHomeRequest(const http::Request& request,
 
          for (auto tutorial : tutorials)
          {
-            ss << "<div class=\"rstudio-tutorials-section\">";
-            
-            ss << "<div class=\"rstudio-tutorials-label-container\">";
-            
             std::string title = (tutorial.title.empty())
                   ? "[Untitled tutorial]"
                   : htmlEscape(tutorial.title);
+            
+            // the data attributes feed the pane's filter box
+            ss << "<div"
+               << " class=\"rstudio-tutorials-section rstudio-tutorials-entry\""
+               << " data-tutorial-package=\"" << htmlEscape(pkgName, true) << "\""
+               << " data-tutorial-name=\"" << htmlEscape(tutorial.name, true) << "\""
+               << " data-tutorial-title=\"" << htmlEscape(tutorial.title, true) << "\""
+               << ">";
+            
+            ss << "<div class=\"rstudio-tutorials-label-container\">";
             
             ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
                << title

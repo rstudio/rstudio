@@ -589,6 +589,7 @@ public class ElementIds
 
    // TutorialPane
    public final static String TUTORIAL_FRAME = "tutorial_frame";
+   public final static String SW_TUTORIAL = "sw_tutorial";
 
    // ShowPublicKeyDialog
    public final static String PUBLIC_KEY_TEXT = "public_key_text";
