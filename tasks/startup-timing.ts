@@ -7,10 +7,9 @@
 // append their startup checkpoints to one JSON-lines file per run, then prints
 // a merged timeline (medians across runs) and the longest measured spans.
 //
-// By default each run gets a fresh config/data home and Electron user-data
-// directory, so the numbers describe a clean start rather than whatever
-// project or documents happened to be open last; --user-config measures the
-// real profile instead.
+// By default each run gets a fresh config/data home, with an Electron profile
+// shared across runs. --warm-profile also shares the isolated config/data home
+// to measure repeated launches; --user-config measures the real profile instead.
 
 import { type ChildProcess, spawn } from 'node:child_process';
 import * as fs from 'node:fs';
@@ -33,7 +32,7 @@ import {
 
 const TAG = 'startup-timing';
 
-const KNOWN_FLAGS = ['path', 'runs', 'app', 'out', 'report', 'user-config', 'splash', 'extra', 'timeout', 'help'];
+const KNOWN_FLAGS = ['path', 'runs', 'app', 'out', 'report', 'user-config', 'warm-profile', 'splash', 'extra', 'timeout', 'help'];
 
 const USAGE = `
 Usage: npm run startup-timing -- [<checkout>] [options]
@@ -50,6 +49,8 @@ Options:
                      directory of run-*/ folders produced by an earlier run
   --user-config      Use the real user config, data and Electron profile
                      (default: a fresh temporary profile per run)
+  --warm-profile     Reuse isolated config/data across runs to measure caches
+                     (the first run starts with a fresh profile)
   --no-splash        Suppress the splash screen (RS_NO_SPLASH=1)
   --extra=<args>     Extra command-line arguments for RStudio (space separated)
   --timeout=<sec>    Give up on a launch after this long (default 120)
@@ -76,6 +77,7 @@ interface LaunchOptions {
   app: string | null;
   outDir: string;
   userConfig: boolean;
+  warmProfile: boolean;
   splash: boolean;
   extraArgs: string[];
   timeoutMs: number;
@@ -122,8 +124,12 @@ async function launchOnce(index: number, options: LaunchOptions): Promise<Run> {
 
   const args: string[] = [];
   if (!options.userConfig) {
-    const configHome = path.join(runDir, 'config-home');
-    const dataHome = path.join(runDir, 'data-home');
+    const profileDir = options.warmProfile ? path.join(options.outDir, 'profile') : runDir;
+    if (options.warmProfile && index === 0) {
+      fs.rmSync(profileDir, { recursive: true, force: true });
+    }
+    const configHome = path.join(profileDir, 'config-home');
+    const dataHome = path.join(profileDir, 'data-home');
     for (const dir of [configHome, dataHome]) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -430,10 +436,15 @@ async function main(): Promise<void> {
     app: appBinary,
     outDir,
     userConfig: args.flags.get('user-config') === true,
+    warmProfile: args.flags.get('warm-profile') === true,
     splash: args.flags.get('splash') !== false,
     extraArgs: typeof extra === 'string' ? extra.split(' ').filter((a) => a.length > 0) : [],
     timeoutMs: timeoutSec * 1000,
   };
+
+  if (options.userConfig && options.warmProfile) {
+    fail(TAG, '--user-config and --warm-profile cannot be combined');
+  }
 
   fs.mkdirSync(options.outDir, { recursive: true });
   step(TAG, `Measuring ${options.app ?? `the dev build in ${checkout}`} (${runs} run${runs === 1 ? '' : 's'})`);

@@ -29,12 +29,12 @@ namespace stan {
 Error initialize()
 {
    using namespace module_context;
-   using boost::bind;
-   
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionStan.R"));
-   return initBlock.execute();
+   return sourceModuleRFileOnDemand(
+      "SessionStan.R",
+      {"rpc.stan_get_completions", "rpc.stan_get_arguments", "rpc.stan_run_diagnostics",
+       "stan.getCompletions", "stan.getArguments", "stan.runDiagnostics",
+       "stan.extractFromNamespace", "stan.keywords", "stan.types", "stan.blocks",
+       "stan.rosetta", "stan.copySourceDatabaseToTempfile"});
 }
 
 } // end namespace stan

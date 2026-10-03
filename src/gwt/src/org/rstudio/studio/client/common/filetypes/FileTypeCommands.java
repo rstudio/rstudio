@@ -26,6 +26,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 
 import com.google.inject.Inject;
@@ -53,25 +54,25 @@ public class FileTypeCommands
    {
       session_ = session;
 
-      eventBus.addHandler(PackageStateChangedEvent.TYPE,
-                          new PackageStateChangedEvent.Handler() {
-         @Override
-         public void onPackageStateChanged(PackageStateChangedEvent e)
-         {
-            server.getHTMLCapabilities(
-                  new ServerRequestCallback<HTMLCapabilities>() {
+      // HTML package capabilities are optional during client initialization.
+      eventBus.addHandler(SessionInitEvent.TYPE, event -> refreshHTMLCapabilities(server));
+      eventBus.addHandler(PackageStateChangedEvent.TYPE, event -> refreshHTMLCapabilities(server));
+   }
 
-                     @Override
-                     public void onResponseReceived(HTMLCapabilities caps)
-                     {
-                        setHTMLCapabilities(caps);
-                     }
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  });
+   private void refreshHTMLCapabilities(HTMLPreviewServerOperations server)
+   {
+      server.getHTMLCapabilities(new ServerRequestCallback<HTMLCapabilities>()
+      {
+         @Override
+         public void onResponseReceived(HTMLCapabilities caps)
+         {
+            setHTMLCapabilities(caps);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
          }
       });
    }

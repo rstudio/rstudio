@@ -13,6 +13,37 @@
 #
 #
 
+.rs.addFunction("addLazyModule", function(module, names)
+{
+   loaded <- FALSE
+   loadModule <- function()
+   {
+      if (!loaded)
+      {
+         .Call("rs_sourceModule", module, PACKAGE = "(embedding)")
+         loaded <<- TRUE
+      }
+   }
+
+   # Register callable RPCs and helpers immediately, without parsing their
+   # implementations. Sourcing the module replaces all of these proxies.
+   for (name in names)
+   {
+      local({
+         fullName <- paste0(".rs.", name)
+         proxy <- function(...)
+         {
+            loadModule()
+            implementation <- get(fullName, envir = .rs.toolsEnv(), inherits = FALSE)
+            if (identical(implementation, proxy))
+               stop("Module did not define ", fullName)
+            implementation(...)
+         }
+         assign(fullName, proxy, envir = .rs.toolsEnv())
+      })
+   }
+})
+
 .rs.addFunction("enqueClientEvent", function(type, data = NULL)
 {
    .Call("rs_enqueClientEvent", type, data, PACKAGE = "(embedding)")

@@ -2269,6 +2269,20 @@ Error sourceModuleRFile(const std::string& rSourceFile)
    return r::sourceManager().sourceTools(srcPath);
 }
 
+SEXP rs_sourceModule(SEXP moduleSEXP)
+{
+   Error error = sourceModuleRFile(r::sexp::asString(moduleSEXP));
+   if (error)
+      r::exec::error(error.getSummary());
+   return R_NilValue;
+}
+
+Error sourceModuleRFileOnDemand(const std::string& module,
+                              const std::vector<std::string>& functions)
+{
+   return r::exec::RFunction(".rs.addLazyModule", module, functions).call();
+}
+
 Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                   const FilePath& workingDir,
                                   core::system::ProcessResult* pResult)
@@ -3566,6 +3580,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setPersistentValue);
    RS_REGISTER_CALL_METHOD(rs_showErrorMessage);
    RS_REGISTER_CALL_METHOD(rs_sourceDiagnostics);
+   RS_REGISTER_CALL_METHOD(rs_sourceModule);
    RS_REGISTER_CALL_METHOD(rs_threadSleep);
    RS_REGISTER_CALL_METHOD(rs_userPrompt);
    RS_REGISTER_CALL_METHOD(rs_setRpcDelay);

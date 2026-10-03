@@ -19,9 +19,11 @@
 
 # Base package names, excluded from "trusted caller" detection
 # because the agent could call them directly to access files.
-.rs.setVar("chat.basePackages", rownames(
-   installed.packages(priority = "base", lib.loc = .Library)
-))
+delayedAssign(
+   ".rs.chat.basePackages",
+   rownames(installed.packages(priority = "base", lib.loc = .Library)),
+   assign.env = .rs.toolsEnv()
+)
 
 # Specific functions from base/recommended packages that are allowed to
 # access credential files as part of their legitimate operation (e.g.
@@ -584,6 +586,9 @@
 # implementation executes. hooks are removed by .rs.chat.restoreBindings.
 .rs.addFunction("chat.injectBindings", function()
 {
+   # Resolve this before installing hooks that can themselves inspect callers.
+   # The package scan is needed only when agent execution first uses guardrails.
+   force(.rs.chat.basePackages)
    # guard against reentrant calls -- if hooks are already injected,
    # skip injection to avoid overwriting saved originals
    if (.rs.chat.bindingsInjected)

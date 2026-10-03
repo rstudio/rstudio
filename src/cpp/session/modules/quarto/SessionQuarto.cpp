@@ -16,6 +16,7 @@
 #include "SessionQuarto.hpp"
 
 #include <string>
+#include <map>
 
 #include <yaml-cpp/yaml.h>
 
@@ -37,6 +38,7 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionStartupCache.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionQuarto.hpp>
@@ -987,30 +989,69 @@ void readQuartoConfig()
    // if it's installed then detect bin and resources directories
    if (s_quartoConfig.enabled)
    {
-      core::system::ProcessResult result;
-      Error error = quartoExec({ "--paths" }, &result);
-      if (error)
+      StartupCache cache(module_context::userScratchPath().completeChildPath("quarto-paths-cache.json"));
+      json::Object key;
+      key["schema"] = 1;
+      key["executable"] = s_quartoPath.getCanonicalPath();
+      key["modified"] = static_cast<double>(s_quartoPath.getLastWriteTime());
+      key["size"] = static_cast<double>(s_quartoPath.getSize());
+      key["version"] = s_quartoVersion;
+      key["share_dir"] = s_quartoPath.getParent().getParent().completeChildPath("share").getCanonicalPath();
+      key["working_dir"] = module_context::safeCurrentPath().getAbsolutePath();
+      // Quarto launchers can honor environment overrides (including share
+      // directories). Preserve those rather than deriving paths from layout.
+      core::system::Options environment;
+      core::system::environment(&environment);
+      std::map<std::string, std::string> overrides;
+      for (const auto& variable : environment)
       {
-         LOG_ERROR(error);
-         s_quartoConfig = QuartoConfig();
-         return;
+         if (variable.first == "PATH" || variable.first.find("QUARTO_") == 0)
+            overrides[variable.first] = variable.second;
       }
-      string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
-      std::vector<std::string> paths;
-      boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
-      if (paths.size() >= 2)
+      key["environment"] = json::toJsonValue(overrides);
+
+      json::Object cached;
+      std::string binPath, resourcesPath;
+      bool cacheHit = s_quartoVersion != "99.9.9" && cache.read(key, &cached) &&
+         !json::readObject(cached, "bin", binPath, "resources", resourcesPath) &&
+         FilePath(binPath).isDirectory() && FilePath(resourcesPath).isDirectory();
+
+      if (!cacheHit)
       {
-         s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
-         s_quartoConfig.resources_path = string_utils::systemToUtf8(paths[1]);
-         s_quartoConfig.pandoc_path = quartoPandocPath().getAbsolutePath();
+         core::system::ProcessResult result;
+         Error error = quartoExec({ "--paths" }, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+            s_quartoConfig = QuartoConfig();
+            return;
+         }
+         string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
+         std::vector<std::string> paths;
+         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
+         if (paths.size() >= 2)
+         {
+            binPath = string_utils::systemToUtf8(paths[0]);
+            resourcesPath = string_utils::systemToUtf8(paths[1]);
+            if (result.exitStatus == EXIT_SUCCESS && s_quartoVersion != "99.9.9" &&
+                FilePath(binPath).isDirectory() && FilePath(resourcesPath).isDirectory())
+            {
+               json::Object value;
+               value["bin"] = binPath;
+               value["resources"] = resourcesPath;
+               cache.write(key, value);
+            }
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE("Unexpected output from quarto --paths: " + result.stdOut);
+            s_quartoConfig = QuartoConfig();
+            return;
+         }
       }
-      else
-      {
-         LOG_ERROR_MESSAGE("Unexpected output from quarto --paths: " + result.stdOut);
-         s_quartoConfig = QuartoConfig();
-         return;
-      }
-      
+      s_quartoConfig.bin_path = binPath;
+      s_quartoConfig.resources_path = resourcesPath;
+      s_quartoConfig.pandoc_path = quartoPandocPath().getAbsolutePath();
    }
 
    using namespace session::projects;

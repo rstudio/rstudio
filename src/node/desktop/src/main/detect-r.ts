@@ -34,6 +34,7 @@ import { EOL } from 'os';
 import { kWindowsRExe } from '../ui/utils';
 import { dialog } from 'electron';
 import { appState } from './app-state';
+import { REnvironmentCache } from './r-environment-cache';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -291,6 +292,16 @@ function prepareEnvironmentImpl(rPath: string): Err {
 // query also runs in the background from the moment the app starts (see
 // startRDetection), which normally fills the cache before anything asks.
 const rEnvironmentCache = new Map<string, REnvironment>();
+let diskCache: REnvironmentCache | undefined;
+
+function environmentDiskCache(): REnvironmentCache | undefined {
+  try {
+    diskCache ??= new REnvironmentCache();
+    return diskCache;
+  } catch {
+    return undefined;
+  }
+}
 
 export function detectREnvironment(rPath: string): Expected<REnvironment> {
   const cached = rEnvironmentCache.get(rPath);
@@ -299,13 +310,18 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
   }
 
   const rExecutable = rExecutableFor(rPath);
+  const environment = rQueryEnvironment();
+  const remembered = environmentDiskCache()?.read(rExecutable.getAbsolutePath(), environment);
+  if (remembered) {
+    return rememberREnvironment(rPath, parseRQueryResult(rPath, { stdout: remembered, stderr: '', status: 0 }));
+  }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
 
   const [spawned, spawnError] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
       encoding: 'utf-8',
       input: rQueryScript(),
-      env: rQueryEnvironment(),
+      env: environment,
     });
   });
   if (spawnError) {
@@ -313,7 +329,7 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
     return err(spawnError);
   }
 
-  return rememberREnvironment(
+  const result = rememberREnvironment(
     rPath,
     parseRQueryResult(rPath, {
       stdout: spawned.stdout,
@@ -322,6 +338,10 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
       error: spawned.error,
     }),
   );
+  if (!result[1] && spawned.status === 0 && spawned.stdout) {
+    environmentDiskCache()?.write(rExecutable.getAbsolutePath(), environment, spawned.stdout);
+  }
+  return result;
 }
 
 /**
@@ -334,13 +354,18 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
   }
 
   const rExecutable = rExecutableFor(rPath);
+  const environment = rQueryEnvironment();
+  const remembered = environmentDiskCache()?.read(rExecutable.getAbsolutePath(), environment);
+  if (remembered) {
+    return rememberREnvironment(rPath, parseRQueryResult(rPath, { stdout: remembered, stderr: '', status: 0 }));
+  }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable} (in background)`);
 
   const result = await new Promise<RQueryResult>((resolve) => {
     let stdout = '';
     let stderr = '';
     const child = spawn(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
-      env: rQueryEnvironment(),
+      env: environment,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     child.stdout.on('data', (data) => (stdout += data));
@@ -353,7 +378,11 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
     child.stdin.end(rQueryScript());
   });
 
-  return rememberREnvironment(rPath, parseRQueryResult(rPath, result));
+  const parsed = rememberREnvironment(rPath, parseRQueryResult(rPath, result));
+  if (!parsed[1] && result.status === 0 && result.stdout) {
+    environmentDiskCache()?.write(rExecutable.getAbsolutePath(), environment, result.stdout);
+  }
+  return parsed;
 }
 
 function rememberREnvironment(rPath: string, result: Expected<REnvironment>): Expected<REnvironment> {

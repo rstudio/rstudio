@@ -18,6 +18,8 @@
 #include "SessionThemes.hpp"
 
 #include <boost/bind/bind.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <chrono>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -26,6 +28,7 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -42,6 +45,98 @@ bool s_pythonInitialized = false;
 
 std::string s_reticulatePython;
 bool s_reticulatePythonInited = false;
+unsigned int s_pythonDiscoveryGeneration = 0;
+boost::shared_ptr<async_r::AsyncRProcess> s_pythonDiscovery;
+
+void cancelPythonDiscovery()
+{
+   ++s_pythonDiscoveryGeneration;
+   if (s_pythonDiscovery)
+      s_pythonDiscovery->terminate();
+   s_pythonDiscovery.reset();
+}
+
+class PythonDiscovery : public async_r::AsyncRProcess
+{
+public:
+   explicit PythonDiscovery(unsigned int generation)
+      : generation_(generation),
+        deadline_(std::chrono::steady_clock::now() + std::chrono::seconds(30))
+   {
+   }
+
+protected:
+   bool onContinue() override
+   {
+      return generation_ == s_pythonDiscoveryGeneration &&
+             std::chrono::steady_clock::now() < deadline_ &&
+             async_r::AsyncRProcess::onContinue();
+   }
+
+   void onStdout(const std::string& output) override
+   {
+      output_ += output;
+   }
+
+   void onCompleted(int exitStatus) override
+   {
+      // Python may have been initialized, or a terminal may have requested
+      // a synchronous answer, while this child was still discovering it.
+      if (generation_ != s_pythonDiscoveryGeneration)
+         return;
+
+      s_pythonDiscovery.reset();
+      std::size_t marker = output_.rfind('\x1e');
+      if (exitStatus == EXIT_SUCCESS && marker != std::string::npos)
+      {
+         s_reticulatePython = output_.substr(marker + 1);
+         boost::algorithm::trim(s_reticulatePython);
+         s_reticulatePythonInited = true;
+      }
+   }
+
+private:
+   unsigned int generation_;
+   std::chrono::steady_clock::time_point deadline_;
+   std::string output_;
+};
+
+void discoverPythonAsync()
+{
+   if (s_reticulatePythonInited || s_pythonDiscovery)
+      return;
+
+   // Resolve explicit configuration and an already initialized interpreter
+   // immediately. Only automatic discovery needs a child R process.
+   SEXP python = R_NilValue;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.inferReticulatePython", false)
+         .call(&python, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   if (python != R_NilValue)
+   {
+      s_reticulatePython = r::sexp::asString(python);
+      s_reticulatePythonInited = true;
+      return;
+   }
+
+   const char* command = R"(
+config <- suppressWarnings(tryCatch(reticulate::py_discover_config(),
+                                    error = function(e) NULL))
+cat("\x1e", if (is.null(config$python)) "" else config$python, sep = "")
+)";
+   boost::shared_ptr<PythonDiscovery> discovery(new PythonDiscovery(++s_pythonDiscoveryGeneration));
+   s_pythonDiscovery = discovery;
+   discovery->start(
+      command,
+      {{"RETICULATE_MINICONDA_ENABLED", "FALSE"}},
+      module_context::safeCurrentPath(),
+      async_r::R_PROCESS_VANILLA);
+}
 
 void updateReticulatePython(bool forInit)
 {
@@ -52,6 +147,10 @@ void updateReticulatePython(bool forInit)
    {
       return;
    }
+
+   // Preserve the existing terminal behavior when an answer is needed before
+   // asynchronous discovery finishes; discard any later result from the child.
+   cancelPythonDiscovery();
 
    s_reticulatePython = core::system::getenv("RETICULATE_PYTHON");
    if (s_reticulatePython.empty())
@@ -93,7 +192,7 @@ void onDeferredInit(bool)
       LOG_ERROR(error);
 
    // update python path after all R init scripts
-   updateReticulatePython(false);
+   discoverPythonAsync();
 }
 
 } // end anonymous namespace
@@ -124,6 +223,7 @@ Error initialize()
    using namespace module_context;
    
    events().onDeferredInit.connect(onDeferredInit);
+   events().onShutdown.connect([](bool) { cancelPythonDiscovery(); });
 
    RS_REGISTER_CALL_METHOD(rs_reticulateInitialized);
 
