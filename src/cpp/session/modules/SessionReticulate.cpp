@@ -50,9 +50,9 @@ boost::shared_ptr<async_r::AsyncRProcess> s_pythonDiscovery;
 
 void cancelPythonDiscovery()
 {
+   // The first supervisor poll assigns the child PID. Invalidate the probe
+   // and let onContinue stop it, avoiding an interrupt of process group zero.
    ++s_pythonDiscoveryGeneration;
-   if (s_pythonDiscovery)
-      s_pythonDiscovery->terminate();
    s_pythonDiscovery.reset();
 }
 

@@ -2305,7 +2305,13 @@ public class TextEditingTarget implements
 
       // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
-      rmarkdownHelper_.verifyPrerequisites(view_, fileType_);
+      if (fileType_.requiresKnit() || fileType_.isRpres())
+      {
+         // Restored editors precede SessionInitEvent. Wait for the capability
+         // probe instead of interpreting its empty placeholder as unsupported.
+         releaseOnDismiss_.add(fileTypeCommands_.withHTMLCapabilities(capabilities ->
+               rmarkdownHelper_.verifyPrerequisites(view_, fileType_)));
+      }
 
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
 

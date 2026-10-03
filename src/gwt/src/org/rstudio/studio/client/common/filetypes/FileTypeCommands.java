@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -29,6 +30,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -53,28 +55,55 @@ public class FileTypeCommands
                            final HTMLPreviewServerOperations server)
    {
       session_ = session;
+      server_ = server;
 
       // HTML package capabilities are optional during client initialization.
-      eventBus.addHandler(SessionInitEvent.TYPE, event -> refreshHTMLCapabilities(server));
-      eventBus.addHandler(PackageStateChangedEvent.TYPE, event -> refreshHTMLCapabilities(server));
+      eventBus.addHandler(SessionInitEvent.TYPE, event ->
+      {
+         if (htmlCapabilities_ == null && !htmlCapabilitiesRequestPending_)
+            refreshHTMLCapabilities();
+      });
+      eventBus.addHandler(PackageStateChangedEvent.TYPE, event -> refreshHTMLCapabilities());
    }
 
-   private void refreshHTMLCapabilities(HTMLPreviewServerOperations server)
+   private void refreshHTMLCapabilities()
    {
-      server.getHTMLCapabilities(new ServerRequestCallback<HTMLCapabilities>()
+      if (htmlCapabilitiesRequestPending_)
+      {
+         htmlCapabilitiesRefreshRequested_ = true;
+         return;
+      }
+
+      htmlCapabilitiesRequestPending_ = true;
+      server_.getHTMLCapabilities(new ServerRequestCallback<HTMLCapabilities>()
       {
          @Override
          public void onResponseReceived(HTMLCapabilities caps)
          {
-            setHTMLCapabilities(caps);
+            htmlCapabilitiesRequestPending_ = false;
+            if (htmlCapabilitiesRefreshRequested_)
+               refreshHTMLCapabilitiesIfRequested();
+            else
+               setHTMLCapabilities(caps);
          }
 
          @Override
          public void onError(ServerError error)
          {
+            htmlCapabilitiesRequestPending_ = false;
             Debug.logError(error);
+            refreshHTMLCapabilitiesIfRequested();
          }
       });
+   }
+
+   private void refreshHTMLCapabilitiesIfRequested()
+   {
+      if (htmlCapabilitiesRefreshRequested_)
+      {
+         htmlCapabilitiesRefreshRequested_ = false;
+         refreshHTMLCapabilities();
+      }
    }
 
    public List<TextFileType> statusBarFileTypes()
@@ -116,18 +145,42 @@ public class FileTypeCommands
    public HTMLCapabilities getHTMLCapabiliites()
    {
       if (htmlCapabilities_ == null)
-         setHTMLCapabilities(session_.getSessionInfo().getHTMLCapabilities());
+         return session_.getSessionInfo().getHTMLCapabilities();
 
       return htmlCapabilities_;
+   }
+
+   public HandlerRegistration withHTMLCapabilities(CommandWithArg<HTMLCapabilities> callback)
+   {
+      if (htmlCapabilities_ != null)
+      {
+         callback.execute(htmlCapabilities_);
+         return () -> {};
+      }
+
+      htmlCapabilitiesCallbacks_.add(callback);
+      if (!htmlCapabilitiesRequestPending_)
+         refreshHTMLCapabilities();
+
+      return () -> htmlCapabilitiesCallbacks_.remove(callback);
    }
 
    public void setHTMLCapabilities(HTMLCapabilities caps)
    {
       htmlCapabilities_ = caps;
+
+      List<CommandWithArg<HTMLCapabilities>> callbacks = new ArrayList<>(htmlCapabilitiesCallbacks_);
+      htmlCapabilitiesCallbacks_.clear();
+      for (CommandWithArg<HTMLCapabilities> callback : callbacks)
+         callback.execute(caps);
    }
 
    private final Session session_;
+   private final HTMLPreviewServerOperations server_;
 
    private HTMLCapabilities htmlCapabilities_;
+   private boolean htmlCapabilitiesRequestPending_;
+   private boolean htmlCapabilitiesRefreshRequested_;
+   private final List<CommandWithArg<HTMLCapabilities>> htmlCapabilitiesCallbacks_ = new ArrayList<>();
 
 }
