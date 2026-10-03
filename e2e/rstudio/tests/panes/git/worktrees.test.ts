@@ -102,9 +102,7 @@ test.describe.serial('Git pane worktrees', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    await closeProjectIfOpen(page).catch((err) => {
-      console.warn(`[worktrees] project close failed: ${(err as Error).message}`);
-    });
+    await closeProjectIfOpen(page);
   });
 
   test('lists worktrees and opens one as a project', async ({ rstudioPage: page }) => {
@@ -189,8 +187,10 @@ test.describe.serial('Git pane worktrees', () => {
       { timeout: 30000 },
     );
 
-    // ...and the recent projects list shows that label on its own rather than
-    // prefixing it with the directory name again
+    // Recent Projects shows the directory followed by the primary project's
+    // name. Server retries can retain another project with the same directory
+    // name, in which case the menu adds a parent-path qualifier.
+    const recentProjectLabel = new RegExp(`^${LINKED_WORKTREE}(?: — .+)? \\(${PROJECT_NAME}\\)$`);
     await page.locator(PROJECT_MENU).click();
     await expect
       .poll(
@@ -198,9 +198,7 @@ test.describe.serial('Git pane worktrees', () => {
           (await menuItems(page).allInnerTexts()).map((text) => text.replace(/\s+/g, ' ').trim()),
         { timeout: 10000 },
       )
-      .toContain(`${PROJECT_NAME} [${LINKED_WORKTREE}]`);
-    const projectMenuItems = await menuItems(page).allInnerTexts();
-    expect(projectMenuItems.some((text) => text.startsWith(`${LINKED_WORKTREE} (`))).toBe(false);
+      .toContainEqual(expect.stringMatching(recentProjectLabel));
     await page.keyboard.press('Escape');
 
     // from here the main worktree is the "other" one
@@ -343,5 +341,14 @@ test.describe.serial('Git pane worktrees', () => {
     } finally {
       await satellite.close().catch(() => {});
     }
+  });
+
+  test('closes a project with its menu already open', async ({ rstudioPage: page }) => {
+    // A failed assertion on Recent Projects leaves this popup open. Cleanup
+    // must use the open menu instead of toggling it closed with another click.
+    await page.locator(PROJECT_MENU).click();
+    await expect(page.locator('#rstudio_label_close_project_command')).toBeVisible();
+    await closeProjectIfOpen(page);
+    await expect(page.locator(PROJECT_MENU)).toContainText('(None)');
   });
 });
