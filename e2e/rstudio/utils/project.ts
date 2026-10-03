@@ -223,6 +223,14 @@ export async function closeProjectIfOpen(page: Page): Promise<boolean> {
   if (label.includes('(None)') || label === '')
     return false;
 
+  // A failed assertion can also leave a modal dialog open, whose glass
+  // swallows every click on the toolbar. Escape cancels GWT modals.
+  const glass = page.locator('div.gwt-PopupPanelGlass:visible');
+  for (let attempt = 0; attempt < 3 && await glass.count() > 0; attempt++) {
+    await page.keyboard.press('Escape');
+    await glass.first().waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
+  }
+
   // A failed assertion can leave the project popup open. Clicking its
   // toolbar button again would close it and hide the command we need.
   const closeProject = page.locator(CLOSE_PROJECT_MENU_ITEM);

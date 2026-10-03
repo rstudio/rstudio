@@ -214,6 +214,9 @@ test.describe.serial('Git pane worktrees', () => {
     await executeCommand(page, 'vcsNewWorktree');
     const branchInput = page.locator(WORKTREE_BRANCH_INPUT);
     await expect(branchInput).toBeVisible({ timeout: 10000 });
+    // The dialog focuses and selects the branch box 100ms after it is shown;
+    // typing before then loses whatever the select-all swallows.
+    await expect(branchInput).toBeFocused();
 
     // the directory name follows the branch name, with path separators
     // flattened; the parent defaults to the main worktree's parent, which is
@@ -240,6 +243,7 @@ test.describe.serial('Git pane worktrees', () => {
     await page.locator(NEW_BRANCH_BUTTON).click();
     const branchInput = page.locator(NEW_BRANCH_NAME_INPUT);
     await expect(branchInput).toBeVisible({ timeout: 10000 });
+    await expect(branchInput).toBeFocused();
     await branchInput.pressSequentially(BRANCH_DIALOG_BRANCH);
 
     // the worktree option reveals the parent directory, which defaults to the
