@@ -174,7 +174,12 @@ Then search for each old version that changed, to catch any pin missing from the
 git grep -nF "<OLD_VERSION>" -- . ':!version/news/os'
 ```
 
-Use `-F` so the dots match literally. The archived release notes under `version/news/os/` are excluded because they record what shipped. Matches that are examples rather than pins, such as the version strings in `SessionNodeTools.hpp` comments and `SessionNodeToolsTests.cpp` parser tests, stay as they are. Any other remaining match is a pin this skill doesn't list: stop and report it rather than guessing.
+Use `-F` so the dots match literally. The archived release notes under `version/news/os/` are excluded because they record what shipped. Two kinds of match are expected and stay as they are:
+
+- Pins for the version you did not update, when both versions started at the same value -- e.g. the `RSTUDIO_INSTALLED_NODE_VERSION` lines and `upload-node.sh` after a build-only update.
+- Examples rather than pins, such as the version strings in `SessionNodeTools.hpp` comments and `SessionNodeToolsTests.cpp` parser tests.
+
+Any other remaining match is a pin this skill doesn't list: stop and report it rather than guessing.
 
 ### 6. Upload to S3
 
