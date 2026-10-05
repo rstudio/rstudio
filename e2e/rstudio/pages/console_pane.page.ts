@@ -398,7 +398,13 @@ export async function executeInConsole(
   command: string,
   opts: ExecuteInConsoleOptions = {},
 ): Promise<void> {
-  await page.locator(CONSOLE_TAB).click();
+  // Focus the console through the activateConsole command rather than by
+  // clicking its tab: two clicks on a pane tab within 500ms of each other are
+  // a double-click, which maximizes that pane (ModuleTabLayoutPanel) and so
+  // minimizes the Source pane. Back-to-back calls land in that window, e.g.
+  // seedSandboxFile's R-side dir.create + writeLines on Server, where the
+  // runner cannot write the sandbox itself.
+  await focusConsole(page);
   await page.evaluate((text) => {
     const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
     const editor = el?.env?.editor;
@@ -535,7 +541,7 @@ export async function ensurePackageInstalled(
 }
 
 export async function typeInConsole(page: Page, text: string, delayMs: number = 50): Promise<void> {
-  await page.locator(CONSOLE_TAB).click();
+  await focusConsole(page);
   await page.locator(CONSOLE_INPUT).click({ force: true });
   await sleep(300);
   await page.locator(CONSOLE_INPUT)
@@ -543,7 +549,7 @@ export async function typeInConsole(page: Page, text: string, delayMs: number = 
 }
 
 export async function clearConsole(page: Page): Promise<void> {
-  await page.locator(CONSOLE_TAB).click();
+  await focusConsole(page);
   await page.locator(CONSOLE_INPUT).click({ force: true });
   await sleep(200);
   await page.keyboard.press('Control+l');

@@ -181,6 +181,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
 
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
+      uiPrefs.consoleMaxLines().addValueChangeHandler((event) ->
+      {
+         // the session ignores smaller values too (see SessionConsole.cpp)
+         if (event.getValue() >= UserPrefs.MIN_CONSOLE_LINES)
+            view_.setMaxOutputLines(event.getValue());
+      });
 
       keyDownPreviewHandlers_ = new ArrayList<>();
       keyPressPreviewHandlers_ = new ArrayList<>();

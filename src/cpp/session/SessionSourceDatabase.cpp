@@ -138,7 +138,7 @@ Error putProperties(const std::string& path, const json::Object& properties)
 
    // write the file
    FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
-   error = writeStringToFile(propertiesFilePath, properties.writeFormatted());
+   error = writeStringToFileAtomic(propertiesFilePath, properties.writeFormatted());
    if (error)
       return error;
 
@@ -250,8 +250,9 @@ Error attemptContentsMigration(json::Object& propertiesJson,
    if (contentsPath.exists())
       return Success();
    
-   // write contents sidecar file
-   return writeStringToFile(contentsPath, contents);
+   // write contents sidecar file; a partial one would stop the migration
+   // from being retried
+   return writeStringToFileAtomic(contentsPath, contents);
 }
 
 bool isIntendedAsReadOnly(const std::string& contents,
@@ -633,17 +634,19 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, 
    // allows newer versions of RStudio to remain backwards-compatible
    // with older formats for the source database
    
-   int saveTimeout = retryRewrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
+   // these files can hold the only copy of unsaved changes, so replace them
+   // atomically rather than risk a process crash leaving them truncated
+   AtomicWriteOptions options;
+   options.maxRetrySeconds = retryRewrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
 
    // write contents to file
    if (writeContents)
    {
       FilePath contentsPath(filePath.getAbsolutePath() + kContentsSuffix);
-      Error error = writeStringToFile(contentsPath,
-                                      contents_,
-                                      string_utils::LineEndingPassthrough,
-                                      true,
-                                      saveTimeout);
+      Error error = writeStringToFileAtomic(contentsPath,
+                                            contents_,
+                                            string_utils::LineEndingPassthrough,
+                                            options);
       if (error)
          return error;
    }
@@ -653,12 +656,10 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, 
    writeToJson(&jsonProperties, false);
    
    // write properties to file
-   Error error = writeStringToFile(filePath,
-                                   jsonProperties.writeFormatted(),
-                                   string_utils::LineEndingPassthrough,
-                                   true,
-                                   saveTimeout);
-   return error;
+   return writeStringToFileAtomic(filePath,
+                                  jsonProperties.writeFormatted(),
+                                  string_utils::LineEndingPassthrough,
+                                  options);
 }
 
 void SourceDocument::editProperty(const json::Object::Member& property)
@@ -814,12 +815,14 @@ bool isSourceDocument(const FilePath& filePath)
    if (filePath.isDirectory())
       return false;
    
+   // documents are named by their id, so a hidden file is never one; this
+   // covers .DS_Store, lock files, the temporary files of atomic writes, and
+   // the .nfsXXXX files NFS leaves behind when a file is replaced while open
    std::string filename = filePath.getFilename();
-   if (filename == ".DS_Store" ||
+   if (boost::algorithm::starts_with(filename, ".") ||
        filename == "lock_file" ||
        filename == "suspend_file" ||
        filename == "restart_file" ||
-       boost::algorithm::starts_with(filename, ".rstudio-lock") ||
        boost::algorithm::ends_with(filename, kContentsSuffix))
    {
       return false;

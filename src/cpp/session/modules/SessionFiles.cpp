@@ -31,6 +31,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/Log.hpp>
@@ -50,6 +51,7 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/RecycleBin.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -219,7 +221,9 @@ core::Error isPackageDirectory(const json::JsonRpcRequest& request,
 
    return Success();
 }
-                         
+
+constexpr char kXdgVimrcPath[] = "$XDG_CONFIG_HOME/vim/vimrc";
+
 core::Error getFileContents(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
@@ -228,7 +232,12 @@ core::Error getFileContents(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   FilePath targetPath = module_context::resolveAliasedPath(path);
+   // resolve against the session's home so that, on Windows, the fallback
+   // ~/.config sits beside the ~/.vimrc that the client also requests
+   FilePath targetPath = (path == kXdgVimrcPath)
+      ? core::system::xdg::xdgUserConfigHome(module_context::userHomePath())
+           .completePath("vim/vimrc")
+      : module_context::resolveAliasedPath(path);
    if (!module_context::isPathViewAllowed(targetPath))
    {
       return Error(json::errc::DirectoryViewListingProhibited, ERROR_LOCATION);
@@ -1046,8 +1055,10 @@ struct UploadState
    FilePath tmpFile;
 };
 
-boost::mutex s_uploadMutex;
-std::map<const http::Request*, boost::shared_ptr<UploadState>> s_uploadStateMap;
+// leaked: uploads are handled on the http listener thread (#18318)
+boost::mutex& s_uploadMutex = core::make_leaked<boost::mutex>();
+std::map<const http::Request*, boost::shared_ptr<UploadState>>& s_uploadStateMap =
+      core::make_leaked<std::map<const http::Request*, boost::shared_ptr<UploadState>>>();
 
 void parseContentBuffer(const std::string& buffer,
                         const boost::shared_ptr<UploadState>& pUploadState)

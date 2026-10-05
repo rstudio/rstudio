@@ -70,9 +70,13 @@ struct SuccessOutcome
 // The pending-update fields of the update state: what the last completed manifest
 // check found, and what an install would act on. These are carried across a
 // throttled skip (a check that does not re-fetch the manifest).
+//
+// reinstallAvailable is the installed-equals-available case: no update, but the
+// download fields describe the installed version so it can be reinstalled.
 struct PendingUpdate
 {
    bool updateAvailable = false;
+   bool reinstallAvailable = false;
    bool isDowngrade = false;
    std::string newVersion;
    std::string downloadUrl;

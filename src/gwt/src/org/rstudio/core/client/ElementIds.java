@@ -135,6 +135,8 @@ public class ElementIds
    public final static String LOADING_SPINNER = "loading_image";
    public final static String PLOT_IMAGE_FRAME = "plot_image_frame";
    public final static String POPUP_COMPLETIONS = "popup_completions";
+   public final static String POPUP_COMPLETIONS_HELP = "popup_completions_help";
+   public final static String POPUP_DIAGNOSTICS = "popup_diagnostics";
    public final static String PREFERENCES_CONFIRM = "preferences_confirm";
    public final static String PUBLISH_CONNECT = "publish_connect";
    public final static String PUBLISH_DISCONNECT = "publish_disconnect";
@@ -196,6 +198,13 @@ public class ElementIds
    public final static String ASSISTANT_CHAT_PREFS = "assistant_chat_prefs";
 
    public final static String NEW_PROJECT_DIRECTORY = "directory_name";
+   public final static String NEW_WORKTREE_BRANCH = "new_worktree_branch";
+   public final static String NEW_WORKTREE_DIRECTORY = "new_worktree_directory";
+   public final static String NEW_BRANCH_NAME = "new_branch_name";
+   public final static String NEW_BRANCH_WORKTREE = "new_branch_worktree";
+   public final static String NEW_BRANCH_ADD_REMOTE = "new_branch_add_remote";
+   public final static String REMOVE_WORKTREE_SELECT = "remove_worktree_select";
+   public final static String REMOVE_WORKTREE_FORCE = "remove_worktree_force";
    public final static String NEW_PROJECT_TYPE = "project_type";
    public final static String NEW_PROJECT_GIT_REPO = "git_repo";
    public final static String NEW_PROJECT_RENV = "use_renv";
@@ -367,6 +376,8 @@ public class ElementIds
       UPLOAD_TARGET("upload_target"),
       VCS_IGNORE("vcs_ignore"),
       VCS_TERMINAL("vcs_terminal"),
+      WORKTREE_PARENT("worktree_parent"),
+      NEW_BRANCH_WORKTREE_PARENT("new_branch_worktree_parent"),
       CHOOSE_IMAGE("choose_image"),
       PYTHON_PATH("python_path"),
       PROJECT_SCRATCH_PATH("project_scratch_path"),
@@ -417,7 +428,7 @@ public class ElementIds
    public final static String JOB_LAUNCHER_PRO_ENVIRONMENT = "job_launcher_pro_environment";
    public final static String SHARE_MANAGED_CREDENTIALS = "share_managed_credentials_checkbox";
    public final static String getShareManagedCredentials() { return getElementId(SHARE_MANAGED_CREDENTIALS); }
-   
+
    public final static String INCLUDE_AUDIT_DETAILS = "include_audit_details";
    public final static String getIncludeAuditDetails() { return getElementId(INCLUDE_AUDIT_DETAILS); }
 
@@ -520,6 +531,9 @@ public class ElementIds
    public final static String MB_GIT_MORE = "mb_git_more";
    public static String getMbGitMore() { return getElementId(MB_GIT_MORE); }
    public final static String TB_GIT_REFRESH = "tb_git_refresh";
+   public final static String TB_GIT_BRANCH = "tb_git_branch";
+   public final static String TB_GIT_NEW_BRANCH = "tb_git_new_branch";
+   public final static String TB_GIT_REVIEW_BRANCH = "tb_git_review_branch";
    public static String getTbGitRefresh() { return getElementId(TB_GIT_REFRESH); }
 
    // FileCommandToolbar
@@ -533,6 +547,22 @@ public class ElementIds
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";
    public static String getMbPlotsExport() { return getElementId(MB_PLOTS_EXPORT); }
+   public final static String MB_PLOTS_SIZE = "mb_plots_size";
+   public static String getMbPlotsSize() { return getElementId(MB_PLOTS_SIZE); }
+
+   // SavePlotAsImageDialog
+   public final static String EXPORT_PLOT_RESOLUTION = "export_plot_resolution";
+   public static String getExportPlotResolution() { return getElementId(EXPORT_PLOT_RESOLUTION); }
+   public final static String EXPORT_PLOT_SIZE_TEXT = "export_plot_size_text";
+   public static String getExportPlotSizeText() { return getElementId(EXPORT_PLOT_SIZE_TEXT); }
+
+   // FixedPlotSizeDialog
+   public final static String FIXED_PLOT_SIZE_WIDTH = "fixed_plot_size_width";
+   public static String getFixedPlotSizeWidth() { return getElementId(FIXED_PLOT_SIZE_WIDTH); }
+   public final static String FIXED_PLOT_SIZE_HEIGHT = "fixed_plot_size_height";
+   public static String getFixedPlotSizeHeight() { return getElementId(FIXED_PLOT_SIZE_HEIGHT); }
+   public final static String FIXED_PLOT_SIZE_UNITS = "fixed_plot_size_units";
+   public static String getFixedPlotSizeUnits() { return getElementId(FIXED_PLOT_SIZE_UNITS); }
 
    // PackagesPane
    public final static String SW_PACKAGES = "sw_packages";
@@ -573,6 +603,7 @@ public class ElementIds
 
    // TutorialPane
    public final static String TUTORIAL_FRAME = "tutorial_frame";
+   public final static String SW_TUTORIAL = "sw_tutorial";
 
    // ShowPublicKeyDialog
    public final static String PUBLIC_KEY_TEXT = "public_key_text";
@@ -668,7 +699,7 @@ public class ElementIds
    public static String getVisualMdMathIdLabel2() { return getElementId(VISUAL_MD_MATH_ID_LABEL2); }
    public final static String VISUAL_MD_MATH_ID = "visual_md_math_id";
    public static String getVisualMdMathId() { return getElementId(VISUAL_MD_MATH_ID); }
-  
+
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
    public final static String VISUAL_MD_IMAGE_HEIGHT = "visual_md_image_height";
@@ -754,6 +785,9 @@ public class ElementIds
    public final static String ENC_SHOW_ALL = "enc_show_all";
    public final static String ENC_SET_DEFAULT = "enc_set_default";
 
+   // Change Spelling Language Dialog
+   public final static String CHANGE_SPELLING_LANGUAGE_SELECT = "change_spelling_language_select";
+
    // Modify Keyboard Shortcuts Dialog
    public final static String KYBRD_SHRTCTS_FILTER_WIDGET = "kybrd_shrtcts_fltr";
    public static String getKybrdShrtctsFilterWidget() { return getElementId(KYBRD_SHRTCTS_FILTER_WIDGET); }
@@ -766,11 +800,11 @@ public class ElementIds
    // R Console Toolbar
    public final static String CONSOLE_SESSION_SUSPENDED = "r_session_suspended_console";
    public final static String CONSOLE_SESSION_SUSPEND_BLOCKED = "r_session_suspend_blocked_console";
-   
+
    // Assistant Diagnostics
    public final static String ASSISTANT_DIAGNOSTICS_CLOSE_BUTTON = "assistant_diagnostics_close_button";
    public final static String ASSISTANT_DIAGNOSTICS_COPY_BUTTON = "assistant_diagnostics_copy_button";
-   
+
    // ProjectGeneralPreferencesPane
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";
 
@@ -778,14 +812,14 @@ public class ElementIds
    public final static String APPEARANCE_EDITOR_THEME = "appearance_editor_theme";
    public final static String APPEARANCE_EDITOR_THEME_PROJECT_OVERRIDE = "appearance_editor_theme_project_override";
    public final static String PROJECT_EDITOR_THEME = "project_editor_theme";
-   
+
    // Data viewer
    public final static String DATA_EDITING_TOOLBAR = "data_editing_toolbar";
    public final static String DATA_VIEWER_FRAME = "data_viewer_frame";
-   
+
    // DocTabLayoutPanel
    public final static String DOC_TAB_PANEL_ACTIVE_TAB = "doc_tab_panel_active_tab";
-   
+
    // Chunk Options Panels
    public final static String CHUNK_OPTIONS_NAME = "chunk_opt_name";
    public final static String CHUNK_OPTIONS_OUTPUT = "chunk_opt_output";
@@ -796,7 +830,7 @@ public class ElementIds
    public final static String CHUNK_OPTIONS_CACHE = "chunk_opt_cache";
    public final static String CHUNK_OPTIONS_APPLY = "chunk_opt_apply";
    public final static String CHUNK_OPTIONS_REVERT = "chunk_opt_revert";
-   
+
    // PaneLayoutPreferencesPane
    public final static String PANE_LAYOUT_LEFT_TOP = "pane_layout_left_top";
    public final static String PANE_LAYOUT_LEFT_BOTTOM = "pane_layout_left_bottom";

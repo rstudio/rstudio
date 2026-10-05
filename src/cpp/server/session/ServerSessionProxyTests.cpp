@@ -18,13 +18,17 @@
 #include <chrono>
 #include <condition_variable>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
 
+#include <unistd.h>
+
 #include <boost/any.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/make_shared.hpp>
 
@@ -34,12 +38,132 @@
 #include <core/http/HeaderCookieConstants.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
+#include <core/json/JsonRpc.hpp>
 
+#include <server/session/ServerSessionManager.hpp>
 #include <server/session/ServerSessionProxy.hpp>
 
 using namespace rstudio::core;
-using namespace rstudio::server;
+
+namespace rstudio {
+namespace server {
+namespace tests {
+
+namespace {
+
+// a connection that goes nowhere: the error handlers write their response to
+// it, but the tests only look at what they reported to the session manager
+class NullAsyncConnection : public http::AsyncConnection
+{
+public:
+   NullAsyncConnection()
+      : strand_(ioc_)
+   {
+   }
+
+   boost::asio::io_context& ioContext() override { return ioc_; }
+   const http::Request& request() const override { return request_; }
+   http::Response& response() override { return response_; }
+
+   void writeResponse(bool, Socket::Handler) override {}
+   void writeResponse(const http::Response&, bool, const http::Headers&, Socket::Handler) override {}
+   void writeResponseHeaders(Socket::Handler) override {}
+   void writeResponseHeaders(const http::Response&, Socket::Handler) override {}
+   void writeError(const Error&) override {}
+   void close() override {}
+   void continueParsing() override {}
+
+   void setData(const boost::any& data) override { data_ = data; }
+   boost::any getData() override { return data_; }
+   const std::string& username() const override { return username_; }
+   void setUsername(const std::string& username) override { username_ = username; }
+   const std::string& handlerPrefix() const override { return handlerPrefix_; }
+   void setHandlerPrefix(const std::string& prefix) override { handlerPrefix_ = prefix; }
+   boost::asio::io_context::strand& getStrand() override { return strand_; }
+
+   // Socket
+   void asyncReadSome(boost::asio::mutable_buffer, Socket::Handler) override {}
+   void asyncWrite(const boost::asio::const_buffer&, Socket::Handler) override {}
+   void asyncWrite(const std::vector<boost::asio::const_buffer>&, Socket::Handler) override {}
+
+private:
+   boost::asio::io_context ioc_;
+   boost::asio::io_context::strand strand_;
+   http::Request request_;
+   http::Response response_;
+   boost::any data_;
+   std::string username_;
+   std::string handlerPrefix_;
+};
+
+Error noopLaunchFunction(boost::asio::io_context&,
+                         const r_util::SessionLaunchProfile&,
+                         const json::JsonRpcRequest&,
+                         const http::Request&,
+                         const http::ResponseHandler&,
+                         const http::ErrorHandler&)
+{
+   return Success();
+}
+
+// false when a launch is already pending for the context
+bool attemptLaunch(const r_util::SessionContext& context)
+{
+   boost::asio::io_context ioContext;
+   json::JsonRpcRequest jsonRequest;
+   http::Request request;
+   bool launched = false;
+
+   Error error = sessionManager().launchSession(
+      ioContext, context, jsonRequest, request, launched, core::system::Options());
+   EXPECT_FALSE(error);
+
+   return launched;
+}
+
+// what a request ends with when the process it reached hangs up, as
+// LocalStreamAsyncClient reports it
+Error hangUpError(PidType peerPid)
+{
+   Error error(boost::asio::error::make_error_code(boost::asio::error::eof), ERROR_LOCATION);
+   error.addProperty(http::kLocalStreamPeerPidProperty, peerPid);
+   return error;
+}
+
+typedef void (*ProxyErrorHandler)(boost::shared_ptr<http::AsyncConnection>,
+                                  const r_util::SessionContext&,
+                                  const Error&);
+
+// the launched pid in each half is chosen so that the liveness fallback, which
+// is what applies to an error carrying no peer pid, would decide the opposite
+void expectErrorAttributedToPeer(ProxyErrorHandler handleError, const std::string& username)
+{
+   sessionManager().setSessionLaunchFunction(noopLaunchFunction);
+   boost::shared_ptr<http::AsyncConnection> pConnection = boost::make_shared<NullAsyncConnection>();
+   r_util::SessionContext context(username);
+
+   // an error from another process keeps the launch pending, though the
+   // launched process isn't running
+   ASSERT_TRUE(attemptLaunch(context));
+   sessionManager().notePendingLaunchPid(context, std::numeric_limits<PidType>::max());
+
+   handleError(pConnection, context, hangUpError(::getpid()));
+   EXPECT_FALSE(attemptLaunch(context));
+   sessionManager().removePendingLaunch(context);
+
+   // an error from the launched process ends the launch, though that
+   // process is running
+   ASSERT_TRUE(attemptLaunch(context));
+   sessionManager().notePendingLaunchPid(context, ::getpid());
+
+   handleError(pConnection, context, hangUpError(::getpid()));
+   EXPECT_TRUE(attemptLaunch(context));
+   sessionManager().removePendingLaunch(context);
+}
+
+} // anonymous namespace
 
 namespace {
 
@@ -339,7 +463,7 @@ private:
    std::string handlerPrefix_;
 };
 
-typedef boost::function<void(boost::shared_ptr<http::AsyncConnection>, const Error&)> ProxyErrorHandler;
+typedef boost::function<void(boost::shared_ptr<http::AsyncConnection>, const Error&)> InterruptedStreamErrorHandler;
 
 struct InterruptedStreamOutcome
 {
@@ -353,7 +477,7 @@ struct InterruptedStreamOutcome
 // Streams a large /s/ response through the same wiring proxyRequest() sets up,
 // has the upstream reset while the response headers are still being written to
 // the browser, and hands the resulting error to errorHandler.
-InterruptedStreamOutcome streamThenResetUpstream(const ProxyErrorHandler& errorHandler)
+InterruptedStreamOutcome streamThenResetUpstream(const InterruptedStreamErrorHandler& errorHandler)
 {
    auto pHeaderWriteStarted = std::make_shared<Gate>();
    ResettingUpstream upstream(pHeaderWriteStarted);
@@ -775,3 +899,32 @@ TEST(StreamedLocalStreamProxyTests, EventsErrorMidBodyLeavesInFlightHeadersAlone
    EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
       << "handleEventsError rewrote the response whose headers were still being written";
 }
+
+// The proxy reports each request's outcome to the session manager along with
+// the process that produced it (#18963). The client stamps that pid on the
+// errors it raises (see LocalStreamAsyncClientTests.cpp) and the session
+// manager decides what it means (see ServerSessionManagerTests.cpp); these
+// cover the step between, where the error handlers read it off the error.
+// Losing it there would go unnoticed otherwise, since the outcome would then
+// be handled as one that couldn't be attributed.
+TEST(ProxyPendingLaunchTests, RpcErrorIsAttributedToItsPeerProcess)
+{
+   expectErrorAttributedToPeer(
+      [](boost::shared_ptr<http::AsyncConnection> ptrConnection,
+         const r_util::SessionContext& context,
+         const Error& error)
+      {
+         session_proxy::handleRpcErrorForTest(ptrConnection, context, http::Headers(), error);
+      },
+      "proxy-rpc-error-peer-pid-user");
+}
+
+TEST(ProxyPendingLaunchTests, ContentErrorIsAttributedToItsPeerProcess)
+{
+   expectErrorAttributedToPeer(session_proxy::handleContentErrorForTest,
+                               "proxy-content-error-peer-pid-user");
+}
+
+} // namespace tests
+} // namespace server
+} // namespace rstudio

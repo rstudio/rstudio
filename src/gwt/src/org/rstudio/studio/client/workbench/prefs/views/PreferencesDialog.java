@@ -147,6 +147,13 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
             @Override
             public void onResponseReceived(VoidResponse response)
             {
+               // Recheck spelling only after the new dictionary is available
+               // on the server, including in satellite editor windows.
+               UserPrefsChangedEvent event = new UserPrefsChangedEvent(
+                     session_.getSessionInfo().getUserPrefLayer(), true);
+               RStudioGinjector.INSTANCE.getEventBus().dispatchEvent(event);
+               RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(event);
+
                // write accompanying state changes
                state_.writeState();
 
@@ -168,10 +175,6 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                progressIndicator.onError(error.getUserMessage());
             }
          });
-
-      // broadcast UI pref changes to satellites
-      RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(
-                     new UserPrefsChangedEvent(session_.getSessionInfo().getUserPrefLayer()));
    }
 
    public static void ensureStylesInjected()

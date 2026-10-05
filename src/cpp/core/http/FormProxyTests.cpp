@@ -95,7 +95,7 @@ private:
 // client is still live, the downstream-closed handler once handlersDisabled_
 // is set. Both are invoked inline, exactly as the real one does (outside its
 // lock, on the caller's stack).
-class FakeDownstreamClient : public IAsyncClient
+class FakeDownstreamClient final : public IAsyncClient
 {
 public:
    explicit FakeDownstreamClient(bool settled) : settled_(settled) {}

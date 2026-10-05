@@ -28,6 +28,15 @@ export class PlotsPane extends PageObject {
   public saveAsPdfDialog: Locator;
   public copyToClipboardDialog: Locator;
 
+  // Plot size menu button, its items, and the Fixed Plot Size dialog
+  public sizeMenu: Locator;
+  public fitToPaneItem: Locator;
+  public fixedSizeItem: Locator;
+  public fixedSizeDialog: Locator;
+  public fixedSizeWidth: Locator;
+  public fixedSizeHeight: Locator;
+  public fixedSizeUnits: Locator;
+
   constructor(page: Page) {
     super(page);
     this.tab = page.locator(PLOTS_TAB);
@@ -51,5 +60,13 @@ export class PlotsPane extends PageObject {
     this.saveAsImageDialog = page.getByRole('dialog', { name: 'Save Plot as Image' });
     this.saveAsPdfDialog = page.getByRole('dialog', { name: 'Save Plot as PDF' });
     this.copyToClipboardDialog = page.getByRole('dialog', { name: 'Copy Plot to Clipboard' });
+
+    this.sizeMenu = page.locator('#rstudio_mb_plots_size');
+    this.fitToPaneItem = page.locator('#rstudio_label_fit_to_pane_command');
+    this.fixedSizeItem = page.locator('#rstudio_label_fixed_size_command');
+    this.fixedSizeDialog = page.getByRole('dialog', { name: 'Fixed Plot Size' });
+    this.fixedSizeWidth = page.locator('#rstudio_fixed_plot_size_width');
+    this.fixedSizeHeight = page.locator('#rstudio_fixed_plot_size_height');
+    this.fixedSizeUnits = page.locator('#rstudio_fixed_plot_size_units');
   }
 }

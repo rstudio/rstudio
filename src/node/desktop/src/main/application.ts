@@ -36,6 +36,7 @@ import {
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
+import { registerProcessDiagnostics } from './process-diagnostics';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
@@ -272,6 +273,8 @@ export class Application implements AppState {
   }
 
   private registerAppEvents() {
+    registerProcessDiagnostics();
+
     app.on('before-quit', () => {
       app.releaseSingleInstanceLock();
 
@@ -513,15 +516,47 @@ export class Application implements AppState {
     this.pendingWindows.push(pendingWindow);
   }
 
-  windowOpening():
+  /**
+   * Returns the pending entry queued for a window.open() of this name, if any,
+   * leaving it at the head of the queue.
+   *
+   * Entries queued ahead of it are stale: when a window of the requested name
+   * is already open in the opener's browsing context group, Chromium navigates
+   * that window instead of creating one, so neither windowOpening() nor
+   * windowCreated() ever sees the request. Drop them here so they can't attach
+   * to a later, unrelated request.
+   */
+  private pendingWindowFor(frameName: string): PendingWindow | undefined {
+    const index = this.pendingWindows.findIndex((pending) => pending.name === frameName);
+    if (index === -1) {
+      return undefined;
+    }
+
+    this.pendingWindows.splice(0, index);
+    return this.pendingWindows[0];
+  }
+
+  windowOpening(
+    frameName: string,
+  ):
     | { action: 'deny' }
     | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
-    // no additional config if pending window is a satellite
-    for (const pendingWindow of this.pendingWindows) {
+    const pendingWindow = this.pendingWindowFor(frameName);
+    if (pendingWindow) {
+      // a window of this name is already open: activate it instead. This has
+      // to be denied here, before Electron creates the window; a denied
+      // request never reaches windowCreated(), so consume the pending entry.
+      const existingWindow = this.windowTracker.getWindow(pendingWindow.name)?.window;
+      if (existingWindow) {
+        this.pendingWindows.shift();
+        raiseAndActivateWindow(existingWindow);
+        return { action: 'deny' };
+      }
+
+      // no additional config if pending window is a satellite
       if (pendingWindow.type === 'satellite') {
         return SatelliteWindow.windowOpening();
       }
-      break;
     }
 
     // determine size for secondary window
@@ -534,18 +569,11 @@ export class Application implements AppState {
   /**
    * Configures new Secondary or Satellite window
    */
-  windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void {
+  windowCreated(newWindow: BrowserWindow, owner: WebContents, frameName: string, baseUrl?: string): void {
     // check if we have a pending window waiting to come up
-    const pendingWindow = this.pendingWindows.shift();
+    const pendingWindow = this.pendingWindowFor(frameName);
     if (pendingWindow) {
-      // check for an existing window of this name
-      const existingWindow = this.windowTracker.getWindow(pendingWindow.name)?.window;
-      if (existingWindow) {
-        // activate the existing window then deny creation of new window
-        raiseAndActivateWindow(existingWindow);
-        return;
-      }
-
+      this.pendingWindows.shift();
       if (pendingWindow.type === 'satellite') {
         configureSatelliteWindow(pendingWindow, newWindow, owner);
       } else {
@@ -582,7 +610,9 @@ export class Application implements AppState {
         {
           label: i18next.t('applicationTs.newRstudioWindow'),
           click: () => {
-            this.appLaunch?.launchRStudio({ workingDirectory: appState().projectDirectory });
+            // this command starts a new, separate session: no project, and the user's
+            // default working directory rather than anything from this window (#15669)
+            this.appLaunch?.launchRStudio({ noProject: true });
           },
         },
       ]);

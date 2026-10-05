@@ -79,6 +79,10 @@ public:
       std::string extraParams = r::session::graphics::extraBitmapParams();
       if (!extraParams.empty())
          extraParams = string_utils::singleQuotedStrEscape(extraParams);
+
+      // the replay process doesn't inherit the session's R options, and
+      // extraBitmapParams() omits the AGG backend, so pass the backend along
+      std::string backend = string_utils::singleQuotedStrEscape(r::session::graphics::getDefaultBackend());
       
       // convert chunk definitions into object
       json::Object chunkDefsObject;
@@ -109,13 +113,14 @@ public:
             
       // form command to pass to R
       std::string cmd = fmt::format(
-               ".rs.replayNotebookPlots({}, {}, {}, {}, {}, {})",
+               ".rs.replayNotebookPlots({}, {}, {}, {}, {}, {}, {})",
                shell_utils::escape(chunkPath),
                width,
                height,
                r::session::graphics::device::devicePixelRatio(),
                persistOutput ? "TRUE" : "FALSE",
-               "'" + extraParams + "'");
+               "'" + extraParams + "'",
+               "'" + backend + "'");
                
       // set up environment
       core::system::Options environment;

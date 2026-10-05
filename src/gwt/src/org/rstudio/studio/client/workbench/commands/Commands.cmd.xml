@@ -209,6 +209,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="findInFiles"/>
          <separator/>
          <cmd refid="checkSpelling"/>
+         <cmd refid="changeSpellingLanguage"/>
          <cmd refid="wordCount"/>
          <separator/>
          <cmd refid="consoleClear"/>
@@ -248,6 +249,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="reindent"/>
          <cmd refid="reformatCode"/>
          <cmd refid="reformatDocument"/>
+         <separator/>
+         <cmd refid="selectCurrentStatement"/>
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
@@ -389,6 +392,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="previousPlot"/>
          <separator/>
          <cmd refid="zoomPlot"/>
+         <separator/>
+         <cmd refid="fitPlotToPane"/>
+         <cmd refid="useFixedPlotSize"/>
          <separator/>
          <cmd refid="savePlotAsImage"/>
          <cmd refid="savePlotAsPdf"/>
@@ -623,8 +629,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="viewAllPrefs"/>
             <cmd refid="restoreDefaultPaneAndTabLayout"/>
             <separator/>
-            <cmd refid="uninstallPositAssistant"/>
-            <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
             <cmd refid="toggleEditorTokenInfo"/>
@@ -750,6 +754,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="selectCurrentStatement" value="Ctrl+Alt+Shift+S"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
          <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
@@ -1225,6 +1230,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Copy Path"
         buttonLabel=""
         desc="Copy current document path"/>
+
+   <cmd id="showActiveDocDirInFiles"
+        label="Show Current Document's Directory in Files Pane"
+        menuLabel="Show Document's Directory"
+        buttonLabel=""
+        desc="Show the directory containing the current document in the Files pane"/>
 
    <cmd id="saveSourceDocAs"
         label="Save Current Document As..."
@@ -1968,6 +1979,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Execute the entire R statement which contains the cursor."
         context="r"/>
 
+   <cmd id="selectCurrentStatement"
+        label="Select Current Statement"
+        menuLabel="Select Current _Statement"
+        desc="Select the entire R statement which contains the cursor, even when it spans several lines."
+        context="r"/>
+
    <cmd id="executeCurrentParagraph"
         label="Execute Current Paragraph"
         menuLabel="Execute Current _Paragraph"
@@ -2524,6 +2541,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="editor"
         desc="Check spelling in document"/>
 
+   <cmd id="changeSpellingLanguage"
+        menuLabel="Change Spelling _Language..."
+        windowMode="main"
+        desc="Switch the dictionary used for spell checking"/>
+
    <cmd id="wordCount"
         menuLabel="_Word Count"
         context="editor"
@@ -2790,6 +2812,20 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel="Ignore"
         desc="Ignore the selected files or folders"
         rebindable="false"
+        context="vcs"/>
+
+   <cmd id="vcsNewWorktree"
+        label="New Worktree"
+        menuLabel="New Worktree..."
+        buttonLabel="New Worktree"
+        desc="Check out a branch into a new git worktree"
+        context="vcs"/>
+
+   <cmd id="vcsRemoveWorktree"
+        label="Remove Worktree"
+        menuLabel="Remove Worktree..."
+        buttonLabel="Remove Worktree"
+        desc="Remove a git worktree and delete its directory"
         context="vcs"/>
 
    <cmd id="vcsPull"
@@ -3097,6 +3133,18 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel="Zoom"
         desc="View a larger version of the plot in a new window"
         rebindable="false"/>
+
+   <cmd id="fitPlotToPane"
+        label="Fit Plots to Pane"
+        menuLabel="_Fit to Pane"
+        desc="Draw plots at the size of the Plots pane"
+        radio="true"/>
+
+   <cmd id="useFixedPlotSize"
+        label="Use Fixed Plot Size..."
+        menuLabel="Fi_xed Size..."
+        desc="Draw plots at a fixed size, scaled down to fit the Plots pane"
+        radio="true"/>
 
    <cmd id="removePlot"
         label="Remove Current Plot..."
@@ -4472,12 +4520,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Return Posit Assistant to Main Window"
         buttonLabel=""
         desc="Return to main window"/>
-
-   <cmd id="uninstallPositAssistant"
-        label="Uninstall Posit Assistant"
-        menuLabel="Uninsta_ll Posit Assistant..."
-        rebindable="false"
-        windowMode="main"/>
 
    <cmd id="checkForPositAssistantUpdates"
         label="Check for Posit Assistant Updates"

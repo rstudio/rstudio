@@ -83,7 +83,7 @@ class HttpConnectionListenerImpl : public HttpConnectionListener,
                                    boost::noncopyable
 {  
 protected:
-   HttpConnectionListenerImpl() : started_(false) {}
+   HttpConnectionListenerImpl() : bound_(false), started_(false) {}
 
    void setSslContext(boost::shared_ptr<boost::asio::ssl::context> context)
    {
@@ -93,15 +93,38 @@ protected:
    // COPYING: boost::noncopyable
    
 public:
-   virtual core::Error start()
+   // Binds the endpoint without accepting connections yet: a client that
+   // connects meanwhile waits in the socket's backlog until start(). start()
+   // binds the endpoint itself if this hasn't been called.
+   core::Error bindEndpoint()
    {
-      // cleanup any existing networking state
-      core::Error error = cleanup();
+      if (bound_)
+         return core::Success();
+
+      core::Error error = initializeAcceptor(&acceptorService_);
       if (error)
          return error;
 
-      // initialize acceptor
-      error = initializeAcceptor(&acceptorService_);
+      bound_ = true;
+      return core::Success();
+   }
+
+   // Removes what bindEndpoint() put in place (e.g. a local stream's socket
+   // and pid file) without stopping, for a process exiting without stop(),
+   // such as a session that fails to start after claiming its stream
+   void releaseEndpoint()
+   {
+      if (!bound_)
+         return;
+
+      core::Error error = cleanup();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   virtual core::Error start()
+   {
+      core::Error error = bindEndpoint();
       if (error)
          return error;
 
@@ -161,18 +184,30 @@ public:
          return;
       }
 
-      // close acceptor
-      boost::system::error_code ec;
-      acceptorService_.closeAcceptor(ec);
-      if (ec)
-         LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+      // allow subclass specific cleanup. do this while still listening: once
+      // we stop, another process may claim the endpoint, and cleanup must
+      // not remove what that process has put in place
+      core::Error error = cleanup();
+      if (error)
+         LOG_ERROR(error);
 
       // stop the server, then wait for the listener thread to finish
       ioContext().stop();
-      core::thread::joinOrAbandonThread(
+      bool joined = core::thread::joinOrAbandonThread(
             listenerThread_,
             "HttpConnectionListener thread",
             false); // released via ioContext().stop() above, not interruptible
+
+      // close the acceptor only once the listener thread is gone: that thread
+      // re-arms the accept from handleAccept, and asio acceptors are not
+      // thread-safe, so closing it concurrently can crash the listener thread
+      if (joined)
+      {
+         boost::system::error_code ec;
+         acceptorService_.closeAcceptor(ec);
+         if (ec)
+            LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+      }
 
       // wait for the static asset thread (a no-op if it was never started);
       // the interrupt releases it from its queue wait
@@ -180,11 +215,6 @@ public:
             staticAssetThread_,
             "Static asset thread",
             true);
-
-      // allow subclass specific cleanup
-      core::Error error = cleanup();
-      if (error)
-         LOG_ERROR(error);
    }
 
    // connection queues
@@ -226,7 +256,8 @@ private:
 private:
    boost::asio::io_context& ioContext() { return acceptorService_.ioContext(); }
 
-   void acceptNextConnection()
+protected:
+   virtual void acceptNextConnection()
    {
       // create the connection
       ptrNextConnection_.reset( new HttpConnectionImpl<ProtocolType>(
@@ -250,7 +281,6 @@ private:
                      boost::asio::placeholders::error)
       );
    }
-
 
    void handleAccept(const boost::system::error_code& ec)
    {
@@ -285,7 +315,7 @@ private:
                {
                     core::Error error = core::Error(ec, ERROR_LOCATION);
                     error.addProperty("description", "RStudio HTTP: Session is exiting due to too many consecutive errors");
-                    LOG_ERROR(error);
+                    logAcceptError(error, ERROR_LOCATION);
                     if (ec == boost::system::errc::too_many_files_open)
                        exitEarly(SESSION_EXIT_TOO_MANY_OPEN_FILES);
                     else if (ec == boost::system::errc::not_enough_memory)
@@ -301,9 +331,9 @@ private:
 
                // Log at different levels based on severity
                if (consecutiveErrorCount_ <= 10)
-                  LOG_ERROR(error);
+                  logAcceptError(error, ERROR_LOCATION);
                else if (consecutiveErrorCount_ % 25 == 0)  // Log every 25th error
-                  LOG_ERROR(error);
+                  logAcceptError(error, ERROR_LOCATION);
             }
          }
       }
@@ -319,6 +349,17 @@ private:
          acceptNextConnection();
       }
       CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   virtual void exitEarly(int status)
+   {
+      session::exitEarly(status);
+   }
+
+private:
+   virtual void logAcceptError(const core::Error& in_error, const core::ErrorLocation& in_location)
+   {
+      core::log::logError(in_error, in_location);
    }
 
    void onHeadersParsed(boost::shared_ptr<HttpConnectionImpl<ProtocolType> > ptrConnection)
@@ -490,6 +531,9 @@ private:
 
    // static asset thread (desktop and standalone modes only)
    boost::thread staticAssetThread_;
+
+   // flag indicating the endpoint is bound (see bindEndpoint)
+   bool bound_;
 
    // flag indicating we've started
    std::atomic<bool> started_;

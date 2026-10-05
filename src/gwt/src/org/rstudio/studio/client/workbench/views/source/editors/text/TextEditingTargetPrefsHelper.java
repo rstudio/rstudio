@@ -131,6 +131,11 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setScrollPastEndOfDocument(arg);
             }));
+      releaseOnDismiss.add(prefs.smoothScrolling().bind(
+            (arg) ->
+            {
+               docDisplay.setSmoothScrolling(arg);
+            }));
       releaseOnDismiss.add(prefs.highlightRFunctionCalls().bind(
             (arg) ->
             {

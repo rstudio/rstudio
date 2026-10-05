@@ -154,6 +154,19 @@ core::Error UserPrefValues::setShowLastDotValue(bool val)
 }
 
 /**
+ * Whether to show objects whose names begin with a dot in the Environment pane.
+ */
+bool UserPrefValues::showHiddenObjects()
+{
+   return readPref<bool>("show_hidden_objects");
+}
+
+core::Error UserPrefValues::setShowHiddenObjects(bool val)
+{
+   return writePref("show_hidden_objects", val);
+}
+
+/**
  * The line ending format to use when saving files.
  */
 std::string UserPrefValues::lineEndingConversion()
@@ -479,7 +492,7 @@ core::Error UserPrefValues::setEditorKeybindings(std::string val)
 }
 
 /**
- * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+ * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
  */
 bool UserPrefValues::vimLoadVimrc()
 {
@@ -869,6 +882,19 @@ core::Error UserPrefValues::setWarnVariableDefinedButNotUsed(bool val)
 }
 
 /**
+ * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+ */
+bool UserPrefValues::warnConfusableCharacters()
+{
+   return readPref<bool>("warn_confusable_characters");
+}
+
+core::Error UserPrefValues::setWarnConfusableCharacters(bool val)
+{
+   return writePref("warn_confusable_characters", val);
+}
+
+/**
  * Whether to automatically discover and offer to install missing R package dependencies.
  */
 bool UserPrefValues::autoDiscoverPackageDependencies()
@@ -1077,6 +1103,19 @@ core::Error UserPrefValues::setScrollPastEndOfDocument(bool val)
 }
 
 /**
+ * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+ */
+bool UserPrefValues::smoothScrolling()
+{
+   return readPref<bool>("smooth_scrolling");
+}
+
+core::Error UserPrefValues::setSmoothScrolling(bool val)
+{
+   return writePref("smooth_scrolling", val);
+}
+
+/**
  * Whether to highlight R function calls in the code editor.
  */
 bool UserPrefValues::highlightRFunctionCalls()
@@ -1142,7 +1181,7 @@ core::Error UserPrefValues::setConsoleLineLengthLimit(int val)
 }
 
 /**
- * The maximum number of console actions to store and display in the console scrollback buffer.
+ * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
  */
 int UserPrefValues::consoleMaxLines()
 {
@@ -2052,6 +2091,19 @@ core::Error UserPrefValues::setTerminalWeblinks(bool val)
 }
 
 /**
+ * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+ */
+bool UserPrefValues::terminalFileLinks()
+{
+   return readPref<bool>("terminal_file_links");
+}
+
+core::Error UserPrefValues::setTerminalFileLinks(bool val)
+{
+   return writePref("terminal_file_links", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -2312,7 +2364,7 @@ core::Error UserPrefValues::setWrapTabNavigation(bool val)
 }
 
 /**
- * Use a bold label and a blue overline to highlight the active document and pane tabs.
+ * Use a bold label and a blue overline to highlight the active document tab.
  */
 bool UserPrefValues::highlightActiveTabs()
 {
@@ -4014,6 +4066,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAlwaysSaveHistory,
       kRemoveHistoryDuplicates,
       kShowLastDotValue,
+      kShowHiddenObjects,
       kLineEndingConversion,
       kUseNewlinesInMakefiles,
       kWindowsTerminalShell,
@@ -4069,6 +4122,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckUnexpectedAssignmentInFunctionCall,
       kWarnIfNoSuchVariableInScope,
       kWarnVariableDefinedButNotUsed,
+      kWarnConfusableCharacters,
       kAutoDiscoverPackageDependencies,
       kAutoAppendNewline,
       kStripTrailingWhitespace,
@@ -4085,6 +4139,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSyntaxColorConsole,
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
+      kSmoothScrolling,
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
@@ -4160,6 +4215,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalBellStyle,
       kTerminalRenderer,
       kTerminalWeblinks,
+      kTerminalFileLinks,
       kShowRmdRenderCommand,
       kRmdRenameInScopeBehavior,
       kEnableTextDrag,

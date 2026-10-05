@@ -55,6 +55,9 @@ core::json::Array allStateLayers();
 
 core::Error initializeState();
 
+// Assigns a new context ID if user state doesn't have one yet.
+void ensureContextId();
+
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

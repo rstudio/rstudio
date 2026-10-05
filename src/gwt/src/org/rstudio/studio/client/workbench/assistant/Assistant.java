@@ -45,7 +45,6 @@ import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOpera
 import org.rstudio.studio.client.workbench.assistant.ui.AssistantDiagnosticsDialog;
 import org.rstudio.studio.client.workbench.assistant.ui.AssistantSignInDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
@@ -87,14 +86,10 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          handlers_.fireEvent(event);
       });
 
-      events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
+      session_.withSessionInfo(info ->
       {
-         @Override
-         public void onSessionInit(SessionInitEvent event)
-         {
-            assistantProjectOptions_ = session_.getSessionInfo().getAssistantProjectOptions();
-            runtimeStatus_ = session_.getSessionInfo().getAssistantRuntimeStatus();
-         }
+         assistantProjectOptions_ = info.getAssistantProjectOptions();
+         runtimeStatus_ = info.getAssistantRuntimeStatus();
       });
 
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, new ProjectOptionsChangedEvent.Handler()

@@ -136,6 +136,11 @@ core::Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername = t
 // signal (e.g. one owned by another user) counts as running
 bool isProcessRunning(pid_t pid);
 
+// check whether a process has exited but not yet been reaped; such a process
+// still "exists" to isProcessRunning() (kill(pid, 0) succeeds) but can no
+// longer hold or release anything
+bool isProcessZombie(pid_t pid);
+
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
 
 
@@ -186,6 +191,10 @@ struct ProcessLimits
 };
 
 void setProcessLimits(ProcessLimits limits);
+
+// as above, but reporting each limit that could not be set through logError
+// instead of the logger, for a child between fork and exec
+void setProcessLimits(const ProcessLimits& limits, const boost::function<void(const core::Error&)>& logError);
 
 
 struct ProcessConfig
@@ -264,11 +273,32 @@ bool realUserIsRoot();
 
 // privilege management - not thread safe
 // call from main thread at app startup or just after fork() prior to exec() for new processes
-// do not call after a fork in a multithreaded process, as this can cause deadlock!
+//
+// these name-based overloads consult the password and group databases, so do not
+// call them after a fork in a multithreaded process: another thread may have held
+// a lock in one of those lookups (in our caches, or in the NSS modules beneath
+// them) when the child was created, and a child waiting on it never gets to exec.
+// Resolve the user before the fork and use permanentlyDropPrivAfterFork instead.
 core::Error temporarilyDropPriv(const std::string& newUsername, bool chownLogDir);
 core::Error temporarilyDropPriv(const std::string& newUsername, const std::string& newGroupname, bool chownLogDir);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname);
+
+// a user and the ids of the groups it belongs to, looked up ahead of a fork
+struct ResolvedUser
+{
+   User user;
+   std::vector<GidType> groupIds;
+};
+
+core::Error resolveUser(const std::string& username, ResolvedUser* pUser);
+
+// drops to a user resolved before the fork, for a child between fork and exec:
+// makes no lookups, takes none of the locks the name-based overloads take (it
+// does not refresh the log destinations), and reports through syslog rather than
+// the logger
+core::Error permanentlyDropPrivAfterFork(const ResolvedUser& user);
+
 core::Error restorePriv();
 
 // restoreRoot should be used to set the effective ID back to root (0) before using

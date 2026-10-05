@@ -153,7 +153,7 @@
 
 .rs.addFunction("lintDirectory", function(directory = .rs.getProjectDirectory())
 {
-   .Call("rs_lintDirectory", directory)
+   .Call("rs_lintDirectory", directory, PACKAGE = "(embedding)")
 })
 
 .rs.addJsonRpcHandler("analyze_project", function(directory = .rs.getProjectDirectory())

@@ -104,9 +104,12 @@ void setenv(const std::string& key, const std::string& value)
 #ifdef _WIN32
    // NOTE: Sys.getenv reads the environment via R's C runtime, which keeps
    // its own copy of the environment. core::system::setenv writes through
-   // both the Win32 environment block and our C runtime, which suffices for
-   // UCRT builds of R (R >= 4.2, which share our C runtime), but R built
-   // against msvcrt has a separate copy that only R itself can update.
+   // both the Win32 environment block and our C runtime, which suffices only
+   // when R resolves getenv() to the same CRT module we do -- that is, in
+   // release builds against R >= 4.2. msvcrt builds of R (R < 4.2), and debug
+   // builds of RStudio (which link ucrtbased.dll rather than the release
+   // ucrtbase.dll R.dll links), each have a separate copy that only R itself
+   // can update.
    Error error = r::exec::RFunction("base:::Sys.setenv")
          .addParam(key, value)
          .call();

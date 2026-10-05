@@ -16,6 +16,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/projects/SessionProjectsOverlay.hpp>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
@@ -43,7 +45,8 @@ namespace projects {
 
 namespace {
 
-ProjectContext s_projectContext;
+// leaked: the file monitor thread calls back into this for its filter (#18318)
+ProjectContext& s_projectContext = core::make_leaked<ProjectContext>();
 
 core::r_util::ProjectId s_projectId;
 
@@ -95,7 +98,7 @@ Error writeProjectScratchPath(const json::Object& configJson)
    if (error)
       return error;
 
-   error = core::writeStringToFile(scratchPathFile, scratchPath);
+   error = core::writeStringToFileAtomic(scratchPathFile, scratchPath);
    if (error)
       return error;
    
@@ -1136,11 +1139,18 @@ void startup(const std::string& firstProjectPath)
    std::string switchToProject = projSettings.switchToProjectPath();
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
-   // check for explicit project none scope specified on the command line or desktop via initialProjectPath env var
-   if (session::options().sessionScope().isProjectNone() ||
-      session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
+   // check for explicit project none scope specified on the command line
+   if (session::options().sessionScope().isProjectNone())
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
+   }
+
+   // check for explicit project none from the desktop via the initialProjectPath env var.
+   // this is a new window alongside an existing session, so leave the last project path
+   // alone: flushing it would stop the other window's project from being restored
+   else if (session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
+   {
+      projectFilePath = FilePath();
    }
 
    // check for explicit request for a project (file association or url based)

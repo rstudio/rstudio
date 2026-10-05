@@ -164,7 +164,8 @@ bool shouldBufferLocalStreamResponseForTest(const core::http::Response& response
 
 // Exposes the /s/ content, RPC and events error handlers (handleContentError,
 // handleRpcError, handleEventsError) that proxyRequest installs on the
-// upstream client.
+// upstream client. The content and RPC handlers also report the request's
+// outcome to the session manager (#18963).
 void handleContentErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const core::r_util::SessionContext& context,

@@ -92,7 +92,7 @@ void cleanUnusedCaches()
       error = notebookIdToPath(parts[0], &path);
       if (error)
       {
-         if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+         if (isNotFoundError(error))
          {
             // we have no idea what notebook this cache is for, so it's 
             // unusable; delete it
@@ -466,7 +466,22 @@ void onDocSaved(FilePath path)
          if (executionLock.exists())
          {
             auto lock = FileLock::createDefault();
-            if (lock->isLocked(executionLock))
+
+            // isLocked() fails closed (an inspection error sets its result to
+            // locked), but here that would write a migration file only a live
+            // ChunkExecContext picks up: with nothing actually executing, the
+            // folder would be orphaned and its output dropped from the saved
+            // notebook. Prefer preserving output, so treat an inspection error
+            // as "not running" and fall through to the cleanup-and-save path.
+            bool running = false;
+            Error lockError = lock->isLocked(executionLock, &running);
+            if (lockError)
+            {
+               LOG_ERROR(lockError);
+               running = false;
+            }
+
+            if (running)
             {
                // There's code running; save a migration file and move on. The
                // chunk execution context is responsible for picking up this file

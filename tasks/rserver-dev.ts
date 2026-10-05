@@ -54,6 +54,7 @@ const KNOWN_FLAGS = [
   'restart',
   'wait',
   'gwt-timeout',
+  'user-config',
   'help',
 ];
 
@@ -76,6 +77,9 @@ Options:
   --no-wait                 Return as soon as the processes are spawned
   --gwt-timeout=<seconds>   How long to wait for the code server (default: 900)
   --restart                 Stop an already-running instance and start fresh
+  --user-config             Use your own RStudio config and data homes
+                            (~/.config/rstudio, ~/.local/share/rstudio) instead
+                            of the per-checkout copies under .rstudio-dev/
   --help                    Show this message
 `.trim();
 
@@ -152,6 +156,26 @@ function writeSecureCookieKey(checkout: string): string {
 }
 
 /**
+ * Per-checkout RStudio config and data homes for the sessions this server
+ * launches. rserver forwards RSTUDIO_CONFIG_HOME and RSTUDIO_DATA_HOME to each
+ * rsession (server/ServerXdgVars.cpp), which otherwise reads and writes the
+ * real ~/.config/rstudio and ~/.local/share/rstudio -- so a preference toggled
+ * while testing, or written by a script through .rs.writeUserPref(), would
+ * land in your everyday RStudio settings, and two instances would share state.
+ * Kept under .rstudio-dev rather than a temp dir so they survive restarts of
+ * the same checkout. HOME itself is untouched, so R and its libraries are the
+ * usual ones.
+ */
+function sessionHomes(checkout: string): { configHome: string; dataHome: string } {
+  const configHome = path.join(stateDir(checkout), 'config');
+  const dataHome = path.join(stateDir(checkout), 'data');
+  for (const dir of [configHome, dataHome]) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return { configHome, dataHome };
+}
+
+/**
  * Fail fast if a non-default code server port was chosen but the checkout's
  * build.xml predates the codeserver.port property. Such a build.xml ignores
  * the -Dcodeserver.port override, DevMode starts on 9876 regardless, and the
@@ -225,6 +249,9 @@ function printSummary(instance: Instance): void {
     `  URL:        ${instance.url}`,
     `  checkout:   ${instance.checkout}`,
     `  rserver:    pid ${instance.rserverPid}  (log: ${logFile(instance.checkout, 'rserver.log')})`,
+    instance.configHome
+      ? `  state:      ${instance.configHome} (config), ${instance.dataHome} (data)`
+      : '  state:      your own RStudio config and data homes (--user-config)',
   ];
 
   if (instance.gwt === 'devmode') {
@@ -260,6 +287,7 @@ async function main(): Promise<void> {
   const shouldBuild = args.flags.get('build') !== false;
   const shouldWait = args.flags.get('wait') !== false;
   const gwtTimeoutMs = (flagNumber(TAG, args, 'gwt-timeout') ?? 900) * 1000;
+  const useUserConfig = args.flags.get('user-config') === true;
 
   step(TAG, `Checkout: ${checkout}`);
 
@@ -340,6 +368,7 @@ async function main(): Promise<void> {
 
   const dataDir = makeDataDir();
   const secureCookieKey = writeSecureCookieKey(checkout);
+  const homes = useUserConfig ? null : sessionHomes(checkout);
   const rserverLog = logFile(checkout, 'rserver.log');
   const gwtLog = logFile(checkout, 'gwt.log');
 
@@ -369,6 +398,7 @@ async function main(): Promise<void> {
       ...process.env,
       RS_DB_MIGRATIONS_PATH: path.join(checkout, 'src', 'cpp', 'server', 'db'),
       RSTUDIO_PROJECT_ROOT: checkout,
+      ...(homes === null ? {} : { RSTUDIO_CONFIG_HOME: homes.configHome, RSTUDIO_DATA_HOME: homes.dataHome }),
     },
     stdio: ['ignore', rserverOut, rserverOut],
     detached: true,
@@ -419,6 +449,8 @@ async function main(): Promise<void> {
     gwtPid,
     dataDir,
     secureCookieKey,
+    configHome: homes === null ? null : homes.configHome,
+    dataHome: homes === null ? null : homes.dataHome,
     startedAt: new Date().toISOString(),
   };
 

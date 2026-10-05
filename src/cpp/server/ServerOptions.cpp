@@ -18,6 +18,7 @@
 
 #include <iosfwd>
 #include <fstream>
+#include <sstream>
 
 #include <boost/algorithm/string/trim.hpp>
 
@@ -26,6 +27,7 @@
 
 
 #include <core/system/User.hpp>
+#include <core/system/Xdg.hpp>
 
 using namespace rstudio::core;
 
@@ -72,6 +74,54 @@ void reportDeprecationWarnings(const Deprecated& userOptions,
 
    if (userOptions.authPamRequiresPriv != defaultOptions.authPamRequiresPriv)
       reportDeprecationWarning("auth-pam-requires-priv", os);
+}
+
+// posit-assistant-path shipped in 2026.09.0 and sessions now ignore it. rsession warns about it
+// only in each user's session log, so an administrator who set it would otherwise see sessions
+// switch to another Posit Assistant copy with nothing in the server log. rsession.conf is not
+// parsed here -- rserver does not register its options -- so its lines are scanned instead.
+void reportRemovedSessionOptions(const std::string& rsessionConfigFile,
+                                 const FilePath& resourcePath,
+                                 std::ostream& os)
+{
+   FilePath configPath = rsessionConfigFile.empty()
+      ? core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf")
+      : FilePath(rsessionConfigFile);
+   if (!configPath.exists())
+      return;
+
+   // A file rserver cannot read is reported by rsession itself when a session starts.
+   std::string contents;
+   Error error = core::readStringFromFile(configPath, &contents);
+   if (error)
+      return;
+
+   std::istringstream stream(contents);
+   std::string line;
+   while (std::getline(stream, line))
+   {
+      std::string trimmed = boost::algorithm::trim_copy(line);
+      if (trimmed.empty() || trimmed[0] == '#')
+         continue;
+
+      std::string::size_type equals = trimmed.find('=');
+      if (equals == std::string::npos)
+         continue;
+
+      std::string key = boost::algorithm::trim_copy(trimmed.substr(0, equals));
+      std::string value = boost::algorithm::trim_copy(trimmed.substr(equals + 1));
+      if (key == "posit-assistant-path" && !value.empty())
+      {
+         // The directory the session reads administrator-installed versions from; see
+         // systemStorageDir() in session/modules/chat/ChatInstallation.cpp.
+         FilePath versionsDir = resourcePath.completePath("bin/posit-assistant/versions");
+         os << "The option 'posit-assistant-path' in " << configPath.getAbsolutePath()
+            << " is no longer used and is ignored by sessions. Install administrator-managed "
+            << "Posit Assistant versions under " << versionsDir.getAbsolutePath()
+            << " instead, and remove the option." << std::endl;
+         return;
+      }
+   }
 }
 
 unsigned int stringToUserId(std::string minimumUserId,
@@ -367,6 +417,7 @@ ProgramStatus Options::read(int argc,
    resolvePath(binaryPath, &rsessionPath_);
    resolvePath(binaryPath, &rldpathPath_);
    resolvePath(resourcePath, &rsessionConfigFile_);
+   reportRemovedSessionOptions(rsessionConfigFile_, resourcePath, osWarnings);
 
    // resolve minimum user id
    authMinimumUserId_ = resolveMinimumUserId(authMinimumUserId, osWarnings);

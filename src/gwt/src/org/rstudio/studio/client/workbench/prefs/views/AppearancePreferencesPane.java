@@ -438,7 +438,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       leftPanel.add(themeButtonsPanel_);
       leftPanel.add(projectThemeOverridePanel_);
 
-      int previewWidth = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH - 312;
+      // Give the controls column 170px and the preview the rest of the pane.
+      int previewWidth = PreferencesDialogConstants.PANE_CONTENT_WIDTH - 170;
       preview_ = new AceEditorPreview(RES.codeSample().getText());
       preview_.setWidth(previewWidth + "px");
       preview_.setFontSize(Double.parseDouble(editorFontSize_.getValue()));

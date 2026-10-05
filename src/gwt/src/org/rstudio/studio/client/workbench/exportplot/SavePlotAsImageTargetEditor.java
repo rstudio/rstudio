@@ -20,6 +20,8 @@ import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageForma
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -65,6 +67,19 @@ public class SavePlotAsImageTargetEditor extends Composite
    public String getDefaultExtension()
    {
       return "." + getFormat();
+   }
+
+   // whether the format is a bitmap (rather than vector) format
+   public boolean isBitmapFormat()
+   {
+      String format = getFormat();
+      return format.equals("png") || format.equals("jpeg") ||
+             format.equals("tiff") || format.equals("bmp");
+   }
+
+   public HandlerRegistration addChangeHandler(ChangeHandler handler)
+   {
+      return imageFormatListBox_.addChangeHandler(handler);
    }
 
    private ListBox imageFormatListBox_;

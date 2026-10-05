@@ -15,14 +15,20 @@
 
 #include "ChatStaticFiles.hpp"
 #include "ChatConstants.hpp"
+#include "ChatInstallation.hpp"
 
 #include <gtest/gtest.h>
+#include <boost/optional.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
 #include <core/system/System.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::staticfiles;
 using namespace rstudio::session::modules::chat::constants;
+using rstudio::session::modules::chat::installation::InstallSearchPaths;
+using rstudio::session::modules::chat::installation::setSearchPathsForTesting;
 
 TEST(ChatStaticFiles, GetContentTypeReturnsCorrectMimeTypesForCommonExtensions)
 {
@@ -188,4 +194,276 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
 
    // Cleanup
    tempDir.removeIfExists();
+}
+
+namespace {
+
+// Stages the files verifyInstallDir() requires, plus one client asset. The
+// asset is a .js so the request under test skips the handler's HTML branch,
+// which reads session options and the current editor theme.
+FilePath stageInstallationServingApp(const std::string& assetContent)
+{
+   FilePath dir;
+   FilePath::tempFilePath(dir);
+   dir.ensureDirectory();
+
+   FilePath clientDir = dir.completeChildPath(kClientDirPath);
+   clientDir.ensureDirectory();
+
+   FilePath serverScript = dir.completeChildPath(kServerScriptPath);
+   serverScript.getParent().ensureDirectory();
+   writeStringToFile(serverScript, "// mock server script");
+
+   writeStringToFile(clientDir.completeChildPath(kIndexFileName),
+                     "<html>mock</html>");
+   writeStringToFile(clientDir.completeChildPath("app.js"), assetContent);
+
+   return dir;
+}
+
+// Requests /ai-chat/app.js from whichever installation the handler serves.
+Error requestApp(http::Response* pResponse)
+{
+   http::Request request;
+   request.setUri("/ai-chat/app.js");
+   return handleAIChatRequest(request, pResponse);
+}
+
+// The handler serves from the installation the session resolved, so each
+// test drives that resolution through a bundled copy, which is the simplest
+// thing the resolver accepts.
+// The backend port is cleared, and then the session's own sources restored,
+// after each test so a later test sees the state of a session whose chat
+// backend has not started yet. Clearing the port rebuilds the CSP header from
+// whatever resolves, so it runs while the test's sources are still in place:
+// resolving against the real user storage would repair the selector of the
+// machine running the tests. A test asserting on the header must serve an
+// installation of its own rather than rely on the state left here.
+class ChatStaticFilesResolution : public ::testing::Test
+{
+protected:
+   void TearDown() override
+   {
+      setChatBackendPort(kChatBackendPortNone);
+      setSearchPathsForTesting(boost::none);
+   }
+
+   // Makes `install` the installation the session resolves, as the bundled
+   // copy. Discards any held resolution, as changing the sources does.
+   void serve(const FilePath& install)
+   {
+      InstallSearchPaths paths;
+      paths.systemStorageDir = install;
+      paths.userInstallEnabled = false;
+      setSearchPathsForTesting(paths);
+   }
+};
+
+} // anonymous namespace
+
+TEST_F(ChatStaticFilesResolution, ServesAssetsFromTheResolvedInstallation)
+{
+   FilePath install = stageInstallationServingApp("// resolved build");
+   serve(install);
+
+   http::Response response;
+   Error error = requestApp(&response);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(response.statusCode(), http::status::Ok);
+   EXPECT_EQ(response.body(), "// resolved build");
+   EXPECT_EQ(response.contentType(), getContentType(".js"));
+
+   install.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesResolution, ServesFromTheHeldInstallationUntilItIsCleared)
+{
+   FilePath first = stageInstallationServingApp("// first build");
+   FilePath second = stageInstallationServingApp("// second build");
+
+   serve(first);
+
+   http::Response response;
+   requestApp(&response);
+   ASSERT_EQ(response.body(), "// first build");
+
+   // Replacing the bundled tree in place is what a package upgrade does; the
+   // held resolution keeps serving the same path, and the page it loaded
+   // keeps getting the same installation.
+   ASSERT_FALSE(first.remove());
+   ASSERT_FALSE(second.move(first, FilePath::MoveDirect));
+
+   http::Response held;
+   requestApp(&held);
+   EXPECT_EQ(held.body(), "// second build");
+
+   first.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesResolution, ResolvedInstallationThatIsGoneIsNotServedFrom)
+{
+   FilePath install = stageInstallationServingApp("// removed build");
+   serve(install);
+
+   http::Response before;
+   requestApp(&before);
+   ASSERT_EQ(before.body(), "// removed build");
+
+   // Removed out of band after being resolved. The handler must not keep
+   // serving from it just because it was resolved once: with nothing else to
+   // resolve, the request fails as if nothing were installed.
+   ASSERT_FALSE(install.remove());
+
+   http::Response after;
+   Error error = requestApp(&after);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(after.statusCode(), http::status::NotFound);
+}
+
+TEST_F(ChatStaticFilesResolution, PartiallyExtractedInstallationIsNotServedFrom)
+{
+   FilePath install = stageInstallationServingApp("// partial build");
+   serve(install);
+
+   http::Response before;
+   requestApp(&before);
+   ASSERT_EQ(before.body(), "// partial build");
+
+   // A directory that no longer holds a complete installation -- here the
+   // server script is gone -- is resolved around the same way, even though
+   // the asset itself is still there.
+   ASSERT_FALSE(install.completeChildPath(kServerScriptPath).remove());
+
+   http::Response after;
+   requestApp(&after);
+
+   EXPECT_EQ(after.statusCode(), http::status::NotFound);
+
+   install.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesResolution, ClearingTheResolutionServesTheNewInstallation)
+{
+   FilePath first = stageInstallationServingApp("// first build");
+   FilePath second = stageInstallationServingApp("// second build");
+   serve(first);
+
+   http::Response response;
+   requestApp(&response);
+   ASSERT_EQ(response.body(), "// first build");
+
+   // What an install does: the sources now resolve elsewhere, and the held
+   // answer is discarded so the components restarting -- and the page --
+   // come back on the new installation.
+   serve(second);
+
+   http::Response cleared;
+   requestApp(&cleared);
+   EXPECT_EQ(cleared.body(), "// second build");
+
+   first.removeIfExists();
+   second.removeIfExists();
+}
+
+namespace {
+
+// Stages an installation whose client serves one non-index HTML page, plus a
+// dist/csp.json carrying the given connect-src. A non-index page takes the
+// handler's CSP branch without the index-only theme injection and auth cookie.
+FilePath stageInstallationServingCsp(const std::string& connectSrc)
+{
+   FilePath dir = stageInstallationServingApp("// csp build");
+
+   writeStringToFile(dir.completeChildPath(kClientDirPath)
+                        .completeChildPath("page.html"),
+                     "<html>page</html>");
+
+   writeStringToFile(dir.completeChildPath(kCspConfigPath),
+                     "{\"connect-src\": \"" + connectSrc + "\"}");
+
+   return dir;
+}
+
+// Requests the non-index page, returning the CSP header the handler set.
+std::string requestPageCsp()
+{
+   http::Request request;
+   request.setUri("/ai-chat/page.html");
+
+   http::Response response;
+   Error error = handleAIChatRequest(request, &response);
+   EXPECT_FALSE(error);
+
+   return response.headerValue("Content-Security-Policy");
+}
+
+} // anonymous namespace
+
+TEST_F(ChatStaticFilesResolution, CspIsRereadWhenTheBackendPortChanges)
+{
+   FilePath install = stageInstallationServingCsp("https://before.example");
+   serve(install);
+   setChatBackendPort(1234);
+
+   EXPECT_NE(requestPageCsp().find("https://before.example"), std::string::npos);
+
+   // A bundled copy replaced in place keeps its path, so only the contents
+   // differ. A backend restart re-reads the directives, so the
+   // policy served is the one belonging to what is being served now.
+   writeStringToFile(install.completeChildPath(kCspConfigPath),
+                     "{\"connect-src\": \"https://after.example\"}");
+   setChatBackendPort(5678);
+
+   std::string header = requestPageCsp();
+   EXPECT_NE(header.find("https://after.example"), std::string::npos);
+   EXPECT_EQ(header.find("https://before.example"), std::string::npos);
+
+   install.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesResolution, CspIsReadFromTheInstallationBeingServed)
+{
+   FilePath first = stageInstallationServingCsp("https://first.example");
+   FilePath second = stageInstallationServingCsp("https://second.example");
+
+   serve(first);
+   setChatBackendPort(1234);
+   EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
+
+   // A restart onto another installation -- what a versioned install does --
+   // must serve that installation's directives.
+   serve(second);
+   setChatBackendPort(5678);
+
+   std::string header = requestPageCsp();
+   EXPECT_NE(header.find("https://second.example"), std::string::npos);
+   EXPECT_EQ(header.find("https://first.example"), std::string::npos);
+
+   first.removeIfExists();
+   second.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesResolution, CspFollowsTheResolutionWithoutABackendPortChange)
+{
+   FilePath first = stageInstallationServingCsp("https://first.example");
+   FilePath second = stageInstallationServingCsp("https://second.example");
+
+   serve(first);
+   setChatBackendPort(1234);
+   EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
+
+   // Changing which installation is served is enough on its own: the
+   // resolution can change with no backend start behind it -- an install
+   // clears it, a removed installation is resolved around -- and a policy
+   // that only followed the port would outlive the installation it came from.
+   serve(second);
+
+   std::string header = requestPageCsp();
+   EXPECT_NE(header.find("https://second.example"), std::string::npos);
+   EXPECT_EQ(header.find("https://first.example"), std::string::npos);
+
+   first.removeIfExists();
+   second.removeIfExists();
 }

@@ -104,6 +104,20 @@ std::string modifyPath(const std::string& path,
    if (path.empty())
       return entry;
 
+   // skip additions that can't change lookup (appending an entry already on the
+   // PATH, or prepending the one already first), so re-applying them to a saved
+   // PATH doesn't stack copies. empty entries are exempt: their position matters
+   // to TeX, which expands its default search path there
+   if (!entry.empty())
+   {
+      std::vector<std::string> entries = algorithm::split(path, kPathSeparator);
+      bool present = prepend
+            ? entries.front() == entry
+            : std::find(entries.begin(), entries.end(), entry) != entries.end();
+      if (present)
+         return path;
+   }
+
    // otherwise, prepend or append as appropriate
    return prepend
          ? entry + kPathSeparator + path

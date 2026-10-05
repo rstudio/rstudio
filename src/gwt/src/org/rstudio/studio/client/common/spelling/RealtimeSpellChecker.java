@@ -68,11 +68,11 @@ public class RealtimeSpellChecker
       // subscribe to spelling prefs changes (invalidateAll on changes)
       ValueChangeHandler<Boolean> prefChangedHandler = (event) -> context_.invalidateAllWords();
       ValueChangeHandler<Boolean> realtimeChangedHandler = (event) -> {};
-      ValueChangeHandler<String> dictChangedHandler = (event) -> {};
       userPrefs_.ignoreUppercaseWords().addValueChangeHandler(prefChangedHandler);
       userPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
-      userPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
       userPrefs_.realTimeSpellchecking().addValueChangeHandler(realtimeChangedHandler);
+
+      context_.releaseOnDismiss(spellingService_.addChangeHandler((event) -> onDictionariesChanged()));
 
       // subscribe to user dictionary changes
       context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
@@ -143,6 +143,16 @@ public class RealtimeSpellChecker
       context_.invalidateWord(affectedWord, false);
    }
 
+   // a different dictionary invalidates every verdict cached in this session;
+   // drop them and re-check the document so the change shows immediately
+   private void onDictionariesChanged()
+   {
+      dictionaryGeneration_++;
+      correctWords.clear();
+      incorrectWords.clear();
+      context_.invalidateAllWords();
+   }
+
    public SpellCheckerResult getCachedWords(ArrayList<String> words)
    {
       SpellCheckerResult result = new SpellCheckerResult();
@@ -164,6 +174,7 @@ public class RealtimeSpellChecker
    public void checkWords(ArrayList<String> words,
                           ServerRequestCallback<SpellCheckerResult> callback)
    {
+      final int dictionaryGeneration = dictionaryGeneration_;
       SpellCheckerResult knownWords = getCachedWords(words);
 
       // we've already cached all of the words, don't hit the server
@@ -178,6 +189,14 @@ public class RealtimeSpellChecker
             @Override
             public void onResponseReceived(SpellCheckerResult response)
             {
+               // The service retries stale server responses, but the cached
+               // words captured above also need to use the current dictionaries.
+               if (dictionaryGeneration != dictionaryGeneration_)
+               {
+                  checkWords(words, callback);
+                  return;
+               }
+
                // cache responses so we don't have to hit the server for these words again in the session
                correctWords.addAll(response.getCorrect());
                for (String wrongWord : response.getIncorrect())
@@ -193,7 +212,14 @@ public class RealtimeSpellChecker
             @Override
             public void onError(ServerError error)
             {
+               if (dictionaryGeneration != dictionaryGeneration_)
+               {
+                  checkWords(words, callback);
+                  return;
+               }
+
                Debug.logError(error);
+               callback.onError(error);
             }
          });
       }
@@ -300,6 +326,7 @@ public class RealtimeSpellChecker
 
    private final HashSet<String> correctWords = new HashSet<>();
    private final HashMap<String, JsArrayString> incorrectWords = new HashMap<>();
+   private int dictionaryGeneration_;
 
    private SpellingService spellingService_;
    private UserPrefs userPrefs_;

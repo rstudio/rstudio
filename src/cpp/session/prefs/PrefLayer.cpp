@@ -223,7 +223,9 @@ Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
    return Success();
 }
 
-Error PrefLayer::writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile)
+Error PrefLayer::writePrefsToFile(const core::json::Object& prefs,
+                                  const core::FilePath& prefsFile,
+                                  bool ownerOnly)
 {
    Error error;
 
@@ -235,10 +237,15 @@ Error PrefLayer::writePrefsToFile(const core::json::Object& prefs, const core::F
          return error;
    }
 
-   // Save the new preferences to file
-   error = writeStringToFile(prefsFile, prefs.writeFormatted());
-
-   return error;
+   // Replace the file atomically: other sessions watch it and reload it when
+   // it changes, and a truncated read would wipe their preferences (and then
+   // this file, the next time they write it).
+   AtomicWriteOptions options;
+   options.ownerOnly = ownerOnly;
+   return writeStringToFileAtomic(prefsFile,
+                                  prefs.writeFormatted(),
+                                  string_utils::LineEndingPassthrough,
+                                  options);
 }
 
 boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)

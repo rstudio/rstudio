@@ -78,7 +78,9 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
 /**
  * Handle HTTP requests for Posit Assistant Chat static files.
  *
- * Serves files from the Posit Assistant installation's client directory.
+ * Serves files from the client directory of the installation this session
+ * resolved (installation::locatePositAssistantInstallation()), so the UI is
+ * served from the same installation as the backend it talks to.
  * URI format: /ai-chat/<path>
  * Defaults to index.html for "/" requests.
  *

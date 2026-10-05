@@ -33,7 +33,11 @@
 
 namespace rstudio {
 namespace core {
-namespace http {  
+namespace http {
+
+// error property carrying the pid of the process a request had reached
+// when it failed (absent when no connection was made)
+const char* const kLocalStreamPeerPidProperty = "peer-pid";
 
 class LocalStreamAsyncClient
    : public AsyncClient<boost::asio::local::stream_protocol::socket>
@@ -53,6 +57,13 @@ public:
        retriedPermDenied_(false)
    {
       setConnectionRetryProfile(retryProfile);
+   }
+
+   // pid of the process this client last connected to; -1 before any
+   // connection is made, or where the platform can't tell
+   PidType peerPid() const
+   {
+      return peerPid_;
    }
 
 protected:
@@ -117,6 +128,8 @@ private:
       {
          if (!ec)
          {
+            notePeerPid();
+
             // the connection was successful call base to write the request
             writeRequest();
          }
@@ -128,11 +141,30 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   // the outcome of a request says something about the process that
+   // produced it, not about the socket path: rserver uses the pid to tell
+   // a response from the session a restart is replacing apart from one
+   // from its replacement (#18963)
+   void notePeerPid()
+   {
+      PidType peerPid = -1;
+      Error error = core::system::user::socketPeerPid(socket().native_handle(), &peerPid);
+      if (error)
+      {
+         LOG_DEBUG_MESSAGE("Unable to determine peer pid for " + localStreamPath_.getAbsolutePath() + ": " + error.asString());
+         return;
+      }
+
+      peerPid_ = peerPid;
+   }
+
    virtual void addErrorProperties(Error& error)
    {
       AsyncClient::addErrorProperties(error);
 
       error.addProperty("path", localStreamPath_);
+      if (peerPid_ != -1)
+         error.addProperty(kLocalStreamPeerPidProperty, peerPid_);
       if (validateUid_.is_initialized())
          error.addProperty("user-id", validateUid_.get());
    }
@@ -170,6 +202,7 @@ private:
    boost::asio::local::stream_protocol::socket socket_;
    core::FilePath localStreamPath_;
    boost::optional<UidType> validateUid_;
+   PidType peerPid_ = -1;
    bool retriedPermDenied_;
 };
    

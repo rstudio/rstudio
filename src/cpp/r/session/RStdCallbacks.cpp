@@ -683,7 +683,7 @@ void Rsavehistory(SEXP call, SEXP op, SEXP args, SEXP env)
    try
    {
       doHistoryFileOperation(args, boost::bind(&ConsoleHistory::saveToFile,
-                                               &consoleHistory(), _1));
+                                               &consoleHistory(), _1, false /* atomic */));
    }
    catch(r::exec::RErrorException& e)
    {
@@ -790,7 +790,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
          if (utils::alwaysSaveHistory() || saveact == SA_SAVE)
          {
             FilePath historyPath = rHistoryFilePath();
-            Error error = consoleHistory().saveToFile(historyPath);
+            Error error = consoleHistory().saveToFile(historyPath, false /* atomic */);
             if (error)
                reportHistoryAccessError("write history to", historyPath, error);
          }

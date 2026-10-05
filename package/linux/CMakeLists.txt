@@ -77,11 +77,13 @@ if(RSTUDIO_SERVER)
   string(FIND "${RSTUDIO_PACKAGE_OS}" "SUSE" SUSE_POS)
   if(SUSE_POS GREATER 0)
      # SuSE based systems
+     list(APPEND RSTUDIO_RPM_DEPENDS "libacl1")
      list(APPEND RSTUDIO_RPM_DEPENDS "libsqlite3-0")
      if(RSTUDIO_PRO_BUILD)
        list(APPEND RSTUDIO_RPM_DEPENDS "libpq5")
      endif()
   else()
+    list(APPEND RSTUDIO_RPM_DEPENDS "libacl")
     list(APPEND RSTUDIO_RPM_DEPENDS "sqlite")
     if(RSTUDIO_PRO_BUILD)
       list(APPEND RSTUDIO_RPM_DEPENDS "postgresql-libs")
@@ -95,6 +97,7 @@ if(RSTUDIO_SERVER)
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
   list(APPEND RSTUDIO_DEBIAN_DEPENDS
     "${RSTUDIO_DEBIAN_DEPENDS_SSL}"
+    "libacl1"
     "psmisc"
     "libclang-dev"
     "libsqlite3-0"
@@ -121,6 +124,7 @@ elseif(RSTUDIO_ELECTRON)
     # SuSE based systems
     list(
       APPEND RSTUDIO_RPM_DEPENDS
+      "libacl1"
       "libxkbcommon-x11-0"
       "libsqlite3-0")
     if(RSTUDIO_PRO_BUILD)
@@ -128,6 +132,7 @@ elseif(RSTUDIO_ELECTRON)
     endif()
   else()
     list(APPEND RSTUDIO_RPM_DEPENDS
+      "libacl"
       "libxkbcommon-x11"
       "sqlite")
     if(RSTUDIO_PRO_BUILD)
@@ -138,6 +143,7 @@ elseif(RSTUDIO_ELECTRON)
   # deb dependencies
   list(APPEND RSTUDIO_DEBIAN_DEPENDS
     "${RSTUDIO_DEBIAN_DEPENDS_SSL}"
+    "libacl1"
     "libclang-dev"
     "libsqlite3-0"
     "libxkbcommon-x11-0")

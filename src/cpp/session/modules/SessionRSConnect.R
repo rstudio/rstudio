@@ -482,7 +482,7 @@
 })
 
 .rs.addFunction("quartoFileResources", function(target) {
-   .Call("rs_quartoFileResources", target)
+   .Call("rs_quartoFileResources", target, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("quartoFileProject", function(target) {

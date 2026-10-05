@@ -21,10 +21,19 @@
 # include <winsock2.h>
 #endif
 
+#ifndef _WIN32
+# include <cerrno>
+# include <sys/stat.h>
+# include <unistd.h>
+#endif
+
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/User.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
@@ -49,12 +58,11 @@ namespace system {
 namespace xdg {
 namespace {
 
-FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
-                           const boost::optional<std::string>& user,
-                           const boost::optional<FilePath>& homeDir,
-                           const std::string& suffix = "")
+// expand HOME, USER, and HOSTNAME if given
+std::string expandXdgVars(const std::string& path,
+                          const boost::optional<std::string>& user,
+                          const boost::optional<FilePath>& homeDir)
 {
-   // expand HOME, USER, and HOSTNAME if given
    std::string resolvedHostname = getHostname();
    std::string resolvedUser = user ? *user : username();
    FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
@@ -64,8 +72,16 @@ FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
    core::system::setenv(&environment, "USER", resolvedUser);
    core::system::setenv(&environment, "HOSTNAME", resolvedHostname);
 
+   return core::system::expandEnvVars(environment, path);
+}
+
+FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
+                           const boost::optional<std::string>& user,
+                           const boost::optional<FilePath>& homeDir,
+                           const std::string& suffix = "")
+{
    // resolve aliases in the path
-   std::string expanded = core::system::expandEnvVars(environment, rstudioXdgPath.getAbsolutePath());
+   std::string expanded = expandXdgVars(rstudioXdgPath.getAbsolutePath(), user, homeDir);
    rstudioXdgPath = FilePath::resolveAliasedPath(expanded, homeDir ? *homeDir : userHomePath());
    
    // if a suffix was provided, use it
@@ -293,6 +309,22 @@ FilePath userConfigDir(
    );
 }
 
+FilePath xdgUserConfigHome(const boost::optional<FilePath>& homeDir)
+{
+   FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
+
+   // '~' and $HOME are expanded first, as for RStudio's other XDG variables;
+   // the check has to precede resolveAliasedPath(), which would complete a
+   // relative value against the current directory
+   std::string expanded =
+      expandXdgVars(core::system::getenv("XDG_CONFIG_HOME"), boost::none, resolvedHome);
+   bool isHomeAliased = expanded == "~" || boost::algorithm::starts_with(expanded, "~/");
+   if (isHomeAliased || FilePath(expanded).isAbsolute())
+      return FilePath::resolveAliasedPath(expanded, resolvedHome);
+
+   return FilePath::resolveAliasedPath("~/.config", resolvedHome);
+}
+
 FilePath userDataDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
@@ -400,6 +432,122 @@ void verifyUserDirs(
    testDir(userDataDir(user, homeDir).completePath("log"), ERROR_LOCATION);
 #endif
 }
+
+namespace {
+
+// the temporary directory standing in for the user data directory, if any
+FilePath s_temporaryUserDataDir;
+
+} // anonymous namespace
+
+bool isUserDataDirTemporary()
+{
+   // the redirect points the user data directory at the temporary one through
+   // RSTUDIO_DATA_HOME, so it lasts as long as that does (e.g. a test
+   // restoring the environment ends it)
+   return !s_temporaryUserDataDir.isEmpty() &&
+          userDataDir().getAbsolutePath() == s_temporaryUserDataDir.getAbsolutePath();
+}
+
+#ifndef _WIN32
+
+Error checkDirectoryWritable(const FilePath& dir)
+{
+   Error error = dir.ensureDirectory();
+   if (error)
+      return error;
+
+   // create a file rather than inspecting permission bits, so that a read-only
+   // file system or an exhausted quota is caught too. this runs before logging
+   // is set up, so leave reporting the error to the caller
+   FilePath probe = dir.completePath(".write-test-" + core::system::generateShortenedUuid());
+   error = writeStringToFile(
+      probe,
+      "rstudio",
+      string_utils::LineEndingPassthrough,
+      true,   // truncate
+      0,      // maxOpenRetrySeconds
+      false); // logError
+   if (error)
+   {
+      probe.removeIfExists();
+      return error;
+   }
+
+   return probe.remove();
+}
+
+Error temporaryUserDataDir(FilePath* pDir)
+{
+   FilePath tempFile;
+   Error error = FilePath::tempFilePath(tempFile);
+   if (error)
+      return error;
+
+   FilePath dir = tempFile.getParent().completeChildPath("rstudio-data-" + username());
+   std::string path = dir.getAbsolutePath();
+   if (::mkdir(path.c_str(), 0700) != 0 && errno != EEXIST)
+   {
+      error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   // the temporary directory is often shared with other users, so don't
+   // accept a directory (or a symlink to one) that somebody else created
+   struct stat info;
+   if (::lstat(path.c_str(), &info) != 0)
+   {
+      error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   if (!S_ISDIR(info.st_mode) || info.st_uid != ::geteuid())
+   {
+      error = systemError(
+         boost::system::errc::permission_denied,
+         "Not a directory owned by the current user",
+         ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   if ((info.st_mode & 077) != 0 && ::chmod(path.c_str(), 0700) != 0)
+   {
+      error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", path);
+      return error;
+   }
+
+   *pDir = dir;
+   return Success();
+}
+
+Error redirectUnwritableUserDataDir(FilePath* pTemporaryDir, Error* pTemporaryDirError)
+{
+   Error dataDirError = checkDirectoryWritable(userDataDir());
+   if (!dataDirError)
+      return Success();
+
+   FilePath temporaryDir;
+   Error error = temporaryUserDataDir(&temporaryDir);
+   if (!error)
+      error = checkDirectoryWritable(temporaryDir);
+   if (error)
+   {
+      *pTemporaryDirError = error;
+      return dataDirError;
+   }
+
+   setenv("RSTUDIO_DATA_HOME", temporaryDir.getAbsolutePath());
+   s_temporaryUserDataDir = temporaryDir;
+
+   *pTemporaryDir = temporaryDir;
+   return dataDirError;
+}
+
+#endif
 
 FilePath systemConfigDir()
 {

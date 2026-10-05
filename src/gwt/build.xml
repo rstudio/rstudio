@@ -616,6 +616,10 @@
 
    <target name="testpage" depends="acesupport"
            description="Runs the standalone HTML test pages under test/ in headless chromium">
+      <exec executable="${node.bin}" failonerror="true">
+         <arg value="--test"/>
+         <arg value="test/terminal_file_links.test.cjs"/>
+      </exec>
       <retry retrycount="3">
          <exec executable="${npm.bin}" dir="${testpage.runner.dir}" resolveexecutable="true" failonerror="true">
             <arg value="ci"/>

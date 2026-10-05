@@ -333,8 +333,8 @@ assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.tools
    invisible(result)
 })
 
-.rs.addFunction("markdownToHTML", function(content) {
-   .Call("rs_markdownToHTML", content, PACKAGE = "(embedding)")
+.rs.addFunction("markdownToHTML", function(content, escapeHTML = FALSE) {
+   .Call("rs_markdownToHTML", content, escapeHTML, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("readPrefInternal", function(method, prefName) {
@@ -422,7 +422,7 @@ assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.tools
 })
 
 .rs.addGlobalFunction("rstudioDiagnosticsReport", function() {
-  invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
+  invisible(.Call("rs_sourceDiagnostics", PACKAGE = "(embedding)"))
 })
 
 

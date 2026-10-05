@@ -27,6 +27,7 @@
 #include "modules/SessionAssistant.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
+#include "modules/SessionDirty.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFind.hpp"
@@ -317,6 +318,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
+   // the save action a quit or project close would take right now
+   sessionInfo["save_action"] = modules::dirty::saveAction();
+
    // resumed
    sessionInfo["resumed"] = resumed;
 
@@ -403,6 +407,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
       sessionInfo["active_project_name"] = projects::projectContext().projectName();
+
+      std::string worktreePrimary, worktreeDirectory;
+      projects::projectContext().worktreeNames(&worktreePrimary, &worktreeDirectory);
+      sessionInfo["active_project_worktree_primary"] = worktreePrimary;
+      sessionInfo["active_project_worktree_directory"] = worktreeDirectory;
+
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
       sessionInfo["project_supports_sharing"] = 
@@ -498,6 +508,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["quarto_config"] = quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
+   sessionInfo["graphics_default_backend"] = modules::graphics::defaultBackend();
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
    sessionInfo["presentation_commands"] = options.allowPresentationCommands();

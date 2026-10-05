@@ -35,6 +35,7 @@ public interface ThemeStyles extends CssResource
    String subtitle();
 
    String docTabPanel();
+   String docTabPanelClipped();
    String docTabIcon();
    String docMenuScroll();
 

@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.console.Console.Language;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -64,7 +65,8 @@ public class ConsolePane extends WorkbenchPane
                       EventBus events,
                       Commands commands,
                       Session session,
-                      AriaLiveService ariaLive)
+                      AriaLiveService ariaLive,
+                      Provider<PaneManager> pPaneManager)
    {
       // We pass null in place of events here to prevent ActivePaneEvent from being called.
       // ActivatePaneEvent isn't necessary and causes an exception for the Console Pane.
@@ -87,7 +89,7 @@ public class ConsolePane extends WorkbenchPane
       // is always created during startup
       ensureWidget();
 
-      new Console(this, events, session, commands);
+      new Console(this, events, session, commands, pPaneManager);
    }
 
    public void setWorkingDirectory(String directory)

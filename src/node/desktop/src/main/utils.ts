@@ -30,6 +30,7 @@ import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
 import { appState } from './app-state';
+import { isOzonePlatformChromiumArgument } from './electron-flags';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -96,6 +97,12 @@ export function augmentCommandLineArguments(): void {
 
   const pieces = user.split(' ');
   pieces.forEach((piece) => {
+    // applied at startup by relaunching (see relaunchForOzonePlatform in main.ts);
+    // changing it now would reach only the child processes
+    if (isOzonePlatformChromiumArgument(piece)) {
+      return;
+    }
+
     // if this piece doesn't start with '-', treat it as a plain argument
     if (!piece.startsWith('-')) {
       app.commandLine.appendArgument(piece);
@@ -607,7 +614,6 @@ export function registerWebContentsDebugHandlers(webContents: WebContents) {
     'plugin-crashed',
     'preferred-size-changed',
     'preload-error',
-    'render-process-gone',
     'responsive',
     'select-bluetooth-device',
     'select-client-certificate',

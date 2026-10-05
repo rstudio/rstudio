@@ -73,6 +73,12 @@ function reportInstance(instance: Instance): void {
 
   console.log(`    started:  ${instance.startedAt}`);
 
+  if (instance.configHome) {
+    console.log(`    state:    ${instance.configHome} (config), ${instance.dataHome} (data)`);
+  } else if (instance.configHome === null) {
+    console.log('    state:    your own RStudio config and data homes (--user-config)');
+  }
+
   if (!rserverAlive) {
     console.log(`    note:     stale record; clear it with \`npm run rserver-stop -- ${instance.checkout}\``);
   }

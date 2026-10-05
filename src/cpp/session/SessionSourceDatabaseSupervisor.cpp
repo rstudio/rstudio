@@ -21,6 +21,10 @@
 # include <windows.h>
 #endif
 
+#include <algorithm>
+#include <chrono>
+#include <ctime>
+#include <thread>
 #include <vector>
 
 #include <boost/scope_exit.hpp>
@@ -31,6 +35,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/FileLock.hpp>
 #include <core/FileUtils.hpp>
+#include <core/Log.hpp>
 #include <core/BoostErrors.hpp>
 
 #include <r/session/RSession.hpp>
@@ -129,6 +134,13 @@ FilePath sessionRestartFilePath(const FilePath& sessionDir)
    return sessionDir.completePath("restart_file");
 }
 
+// a restart file older than this belongs to a restart that never completed.
+// a restart can wait a long time for the Launcher to schedule the new session,
+// and another session adopting its directory in the meantime would take its
+// documents, so this is generous; the documents of a restart that did fail
+// are only recovered later, not lost
+const std::time_t kRestartFileMaxAgeSeconds = 60 * 60 * 24;
+
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
 boost::shared_ptr<FileLock> createSessionDirLock()
 {
@@ -167,10 +179,10 @@ bool isNotSessionDir(const FilePath& filePath)
                                                 rstudio::core::r_util::kSessionDirPrefix);
 }
 
-Error enumerateSessionDirs(std::vector<FilePath>* pSessionDirs)
+Error enumerateSessionDirs(const FilePath& sourceRoot, std::vector<FilePath>* pSessionDirs)
 {
    // get the directories
-   Error error = sourceDatabaseRoot().getChildren(*pSessionDirs);
+   Error error = sourceRoot.getChildren(*pSessionDirs);
    if (error)
       return error;
 
@@ -187,6 +199,8 @@ Error enumerateSessionDirs(std::vector<FilePath>* pSessionDirs)
 void attemptToMoveSourceDbFiles(const FilePath& fromPath,
                                 const FilePath& toPath)
 {
+   removeStaleAtomicWriteTempFiles(fromPath);
+
    // enumerate the from path
    std::vector<FilePath> children;
    Error error = fromPath.getChildren(children);
@@ -201,6 +215,10 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       // stores -- these directories correspond to the persistent docs
       // of particular long-running sessions)
       if (filePath.isDirectory())
+         continue;
+
+      // a recent temporary file may belong to a write still in progress
+      if (isAtomicWriteTempFile(filePath))
          continue;
 
       // if the target path already exists then skip it and log
@@ -241,13 +259,7 @@ Error createSessionDir()
    if (error)
       return error;
 
-   // attempt to acquire the lock. if we can't then we still continue
-   // so we can support filesystems that don't have file locks.
-   error = sessionDirLock().acquire(sessionLockFilePath(sessionDirPath()));
-   if (error)
-      LOG_ERROR(error);
-
-   return Success();
+   return detail::acquireSessionDirLock(sessionDirPath(), sessionDirLock());
 }
 
 Error createSessionDirFromPersistent()
@@ -308,68 +320,22 @@ Error createSessionDirFromPersistent()
    return Success();
 }
 
-bool reclaimOrphanedSession()
+bool isLockingUnsupported(const Error& error)
 {
-   // check for existing sessions
-   std::vector<FilePath> sessionDirs;
-   Error error = enumerateSessionDirs(&sessionDirs);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
+   return error == systemError(boost::system::errc::operation_not_supported, ErrorLocation()) ||
+          error == systemError(boost::system::errc::function_not_supported, ErrorLocation());
+}
 
-   for (const FilePath& sessionDir : sessionDirs)
-   {
-      // if the suspend file exists, this session is only sleeping, not dead
-      if (sessionSuspendFilePath(sessionDir).exists())
-         continue;
-
-      FilePath restartFile = sessionRestartFilePath(sessionDir);
-      if (restartFile.exists())
-      {
-         if (std::time(nullptr) - restartFile.getLastWriteTime() >
-              (1000 * 60 * 5))
-         {
-            // the file exists, but it's more than five minutes old, so 
-            // something went wrong 
-            Error error = restartFile.remove();
-            if (error)
-               LOG_ERROR(error);
-         }
-         else
-         {
-            // the restart file exists and is new, so it represents a 
-            // session currently undergoing a suspend for restart -- leave
-            // it alone
-            continue;
-         }
-      }
-
-      FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!sessionDirLock().isLocked(lockFilePath))
-      {
-         // adopt by giving the session dir our own name
-         Error error = sessionDir.move(sessionDirPath());
-         if (error)
-            LOG_ERROR(error);
-         else
-         {
-            error = sessionDirLock().acquire(
-                  sessionLockFilePath(sessionDirPath()));
-            if (!error)
-            {
-               return true;
-            }
-            else
-            {
-               LOG_ERROR(error);
-            }
-         }
-      }
-   }
-
-   return false;
+Error sessionDirInUseError(const FilePath& sessionDir)
+{
+   Error error = systemError(
+      boost::system::errc::no_lock_available,
+      "RStudio cannot use this session's recovery data because it is locked. "
+      "Another RStudio session may be using it. Close that session or wait "
+      "a moment, then try again.",
+      ERROR_LOCATION);
+   error.addProperty("source-directory", sessionDir);
+   return error;
 }
 
 Error removeAndRecreate(const FilePath& dir)
@@ -383,6 +349,167 @@ Error removeAndRecreate(const FilePath& dir)
 
 } // anonymous namespace
 
+namespace detail {
+
+Error isSessionDirLocked(const FilePath& sessionDir, const FileLock& advisoryLock, bool* pLocked)
+{
+   FilePath lockFile = sessionLockFilePath(sessionDir);
+#ifndef _WIN32
+   // A recently created empty file can be either a released advisory lock or
+   // an unfinished link-lock publication. Give it time to become unambiguous,
+   // bounded by the configured timeout and a 30-second startup wait.
+   auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(
+      std::min<long>(30, FileLock::getTimeoutInterval().total_seconds()));
+#endif
+   while (true)
+   {
+      // Probe advisory locks first: reading link metadata can otherwise close
+      // a descriptor for an advisory lock held by this process. Unsupported
+      // locking is the only inspection failure we can safely disregard.
+      Error error = advisoryLock.isLocked(lockFile, pLocked);
+      if (error && !isLockingUnsupported(error))
+         return error;
+      if (!error && *pLocked)
+         return Success();
+
+#ifndef _WIN32
+      error = LinkBasedFileLock().isLocked(lockFile, pLocked);
+      if (error || !*pLocked || lockFile.isSymlink() || lockFile.getSize() != 0 ||
+          std::chrono::steady_clock::now() >= deadline)
+      {
+         return error;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#else
+      *pLocked = false;
+      return Success();
+#endif
+   }
+}
+
+Error acquireSessionDirLock(const FilePath& sessionDir, FileLock& lock)
+{
+   // An existing database may belong to a session using the other lock type.
+   // If ownership cannot be inspected, do not write to it.
+   bool locked = true;
+   Error error = isSessionDirLocked(sessionDir, AdvisoryFileLock(), &locked);
+   if (error)
+      return error;
+   if (locked)
+      return sessionDirInUseError(sessionDir);
+
+   error = lock.acquire(sessionLockFilePath(sessionDir));
+   if (error)
+   {
+      // Contention is fatal, even if the owner arrived after our probe.
+      // Retain the existing fallback for filesystems without lock support.
+      if (FileLock::isNoLockAvailable(error))
+         return sessionDirInUseError(sessionDir);
+      if (!isLockingUnsupported(error))
+         return error;
+      LOG_ERROR(error);
+   }
+
+   return Success();
+}
+
+Error reclaimOrphanedSession(
+      const FilePath& sourceRoot,
+      const FilePath& targetDir,
+      FileLock& lock,
+      bool* pReclaimed)
+{
+   *pReclaimed = false;
+
+   // check for existing sessions
+   std::vector<FilePath> sessionDirs;
+   Error error = enumerateSessionDirs(sourceRoot, &sessionDirs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return Success();
+   }
+
+   for (const FilePath& sessionDir : sessionDirs)
+   {
+      // if the suspend file exists, this session is only sleeping, not dead
+      if (sessionSuspendFilePath(sessionDir).exists())
+         continue;
+
+      // Leave alone directories we can't write to (e.g. one left behind by a
+      // session run as root). We couldn't lock one after adopting it, and as
+      // adopting renames it after this session, each later start would adopt
+      // it and fail again. Checked before the restart file, which we
+      // couldn't remove either.
+      bool writeable = false;
+      Error writeableError = sessionDir.isWriteable(writeable);
+      if (writeableError)
+      {
+         LOG_ERROR(writeableError);
+         continue;
+      }
+      if (!writeable)
+      {
+         WLOGF("Not recovering source database {}: directory is not writable", sessionDir.getAbsolutePath());
+         continue;
+      }
+
+      FilePath restartFile = sessionRestartFilePath(sessionDir);
+      if (restartFile.exists())
+      {
+         if (std::time(nullptr) - restartFile.getLastWriteTime() > kRestartFileMaxAgeSeconds)
+         {
+            // the file exists, but it's too old to belong to a restart
+            // still in progress, so something went wrong
+            Error error = restartFile.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
+         else
+         {
+            // the restart file exists and is new, so it represents a 
+            // session currently undergoing a suspend for restart -- leave
+            // it alone
+            continue;
+         }
+      }
+
+      // Adopt only a session dir we can confirm is unlocked. isLocked() fails
+      // closed (an inspection error reads as locked), which is the safe choice
+      // here: adopting a dir another live session still holds would corrupt
+      // its source database. A transient inspection error therefore defers
+      // recovery of this dir to a later start rather than risk a steal.
+      bool locked = true;
+      Error lockError = isSessionDirLocked(sessionDir, AdvisoryFileLock(), &locked);
+      if (lockError)
+         LOG_ERROR(lockError);
+
+      if (!locked)
+      {
+         // adopt by giving the session dir our own name
+         Error error = sessionDir.move(targetDir);
+         if (error)
+            LOG_ERROR(error);
+         else
+         {
+            // Once adopted, preserve these documents if locking fails. Do
+            // not fall through to importing persistent documents into a
+            // directory that another session may now own.
+            error = acquireSessionDirLock(targetDir, lock);
+            if (error)
+               return error;
+
+            *pReclaimed = true;
+            return Success();
+         }
+      }
+   }
+
+   return Success();
+}
+
+} // namespace detail
+
 
 // NOTE: we attempt to use file locks to coordinate between disperate
 // processes all attempting to open a session in the same context (project
@@ -395,12 +522,12 @@ Error removeAndRecreate(const FilePath& dir)
 // support file-locking. In these cases we need to gracefully fall back
 // to some sane behavior. To implement this we use the following scheme:
 //
-//  (1) Always attempt to call FileLock::acquire to create an advisory lock
-//      but if it fails we still allow the process to start up.
+//  (1) Acquire the configured lock type. Unsupported locking may be
+//      tolerated, but contention with another session prevents startup.
 //
-//  (2) When checking for "orphan" source-db directories we try to acquire
-//      a lock on them -- for volumes that don't support locks this will
-//      always be an error so we'll never be able to recover an orphan dir
+//  (2) Check both lock types before recovering or reusing a directory, since
+//      older versions and customized configurations can use either type.
+//      If inspection fails, leave the directory alone.
 //
 // In some multi-machine cases it's actually possible for two processes
 // to both get a lock on the same file. For this reason if we are running
@@ -411,21 +538,12 @@ Error removeAndRecreate(const FilePath& dir)
 
 Error attachToSourceDatabase()
 {  
-   // this session may already have a source database; if it does, re-acquire a
-   // lock and then use it. don't log warnings as this should only fail when
-   // e.g. the filesystem does not support the active locking scheme
+   // A resumed session may already have a source database. Refuse to share
+   // it with another owner, including one using a different lock type.
    FilePath existingSdb = sessionDirPath();
    if (existingSdb.exists())
    {
-      Error error = sessionDirLock().acquire(sessionLockFilePath(existingSdb));
-      if (error)
-      {
-         LOG_ERROR(error);
-      }
-      else
-      {
-         return Success();
-      }
+      return detail::acquireSessionDirLock(existingSdb, sessionDirLock());
    }
    
    // migrate from 'sdb' to current folder layout if needed
@@ -448,7 +566,16 @@ Error attachToSourceDatabase()
       return error;
 
    // if there is an orphan (crash) then reclaim it.
-   if (reclaimOrphanedSession())
+   bool reclaimed = false;
+   error = detail::reclaimOrphanedSession(
+      sourceDatabaseRoot(),
+      sessionDirPath(),
+      sessionDirLock(),
+      &reclaimed);
+   if (error)
+      return error;
+
+   if (reclaimed)
    {
       return Success();
    }
@@ -594,6 +721,3 @@ void resumeSourceDatabase()
 } // namespace source_database
 } // namespace session
 } // namespace rstudio
-
-
-

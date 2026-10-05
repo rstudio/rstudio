@@ -647,7 +647,6 @@ jobs:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       options: ${{ needs.setup.outputs.e2e_container_options }}
     timeout-minutes: 120
-    environment: e2e-playwright
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
@@ -675,7 +674,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
@@ -1177,7 +1176,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 

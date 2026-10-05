@@ -301,39 +301,88 @@ TEST(ChatIntegrity, GetPackageInfoSha256EmptyWhenMissing)
    EXPECT_TRUE(sha256.empty());
 }
 
-TEST(ChatIntegrity, GetPackageInfoSelectsHighestMinorVersion)
+TEST(ChatIntegrity, GetPackageInfoIgnoresHigherMinorVersion)
 {
    json::Object v10Info;
    v10Info["version"] = "1.0.0";
    v10Info["url"] = "https://example.com/pkg-1.0.zip";
-   v10Info["sha256"] = "hash10";
-
-   json::Object v12Info;
-   v12Info["version"] = "1.2.0";
-   v12Info["url"] = "https://example.com/pkg-1.2.zip";
-   v12Info["sha256"] = "hash12";
 
    json::Object v11Info;
    v11Info["version"] = "1.1.0";
    v11Info["url"] = "https://example.com/pkg-1.1.zip";
-   v11Info["sha256"] = "hash11";
 
    json::Object versions;
    versions["1.0"] = v10Info;
-   versions["1.2"] = v12Info;
    versions["1.1"] = v11Info;
 
    json::Object manifest;
    manifest["versions"] = versions;
 
-   std::string packageVersion, downloadUrl, sha256;
+   std::string packageVersion, downloadUrl;
    Error error = getPackageInfoFromManifest(
-      manifest, "1.0", &packageVersion, &downloadUrl, &sha256);
+      manifest, "1.0", &packageVersion, &downloadUrl);
 
    EXPECT_FALSE(error);
-   EXPECT_EQ(packageVersion, "1.2.0");
-   EXPECT_EQ(downloadUrl, "https://example.com/pkg-1.2.zip");
-   EXPECT_EQ(sha256, "hash12");
+   EXPECT_EQ(packageVersion, "1.0.0");
+   EXPECT_EQ(downloadUrl, "https://example.com/pkg-1.0.zip");
+}
+
+TEST(ChatIntegrity, GetPackageInfoErrorsWhenOnlyAHigherMinorIsPublished)
+{
+   // A 1.1 package would be refused by the install identity check, so it must
+   // not be offered either.
+   json::Object manifest = makeManifest(
+      "1.1", "1.1.0", "https://example.com/pkg-1.1.zip");
+
+   std::string packageVersion, downloadUrl;
+   Error error = getPackageInfoFromManifest(
+      manifest, "1.0", &packageVersion, &downloadUrl);
+
+   EXPECT_TRUE(error != Success());
+}
+
+TEST(ChatIntegrity, GetPackageInfoUnusableEntryReportsProtocolNotSupported)
+{
+   // The update check only treats protocol_not_supported as "nothing to
+   // offer"; any other code would leave a fresh installation looking current.
+   const int kNotSupported = boost::system::errc::protocol_not_supported;
+   std::string packageVersion, downloadUrl;
+
+   json::Object notAnObject;
+   json::Object versions;
+   versions["1.0"] = "1.0.0";
+   notAnObject["versions"] = versions;
+   Error error = getPackageInfoFromManifest(
+      notAnObject, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object noUrl;
+   noUrl["version"] = "1.0.0";
+   versions["1.0"] = noUrl;
+   json::Object missingUrl;
+   missingUrl["versions"] = versions;
+   error = getPackageInfoFromManifest(
+      missingUrl, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object noVersion;
+   noVersion["url"] = "https://example.com/pkg.zip";
+   versions["1.0"] = noVersion;
+   json::Object missingVersion;
+   missingVersion["versions"] = versions;
+   error = getPackageInfoFromManifest(
+      missingVersion, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object http = makeManifest("1.0", "1.0.0", "http://example.com/pkg.zip");
+   error = getPackageInfoFromManifest(
+      http, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
+
+   json::Object absent = makeManifest("2.0", "1.0.0", "https://example.com/pkg.zip");
+   error = getPackageInfoFromManifest(
+      absent, "1.0", &packageVersion, &downloadUrl);
+   EXPECT_EQ(error.getCode(), kNotSupported);
 }
 
 TEST(ChatIntegrity, GetPackageInfoIgnoresDifferentMajorVersion)
@@ -397,18 +446,6 @@ TEST(ChatIntegrity, GetPackageInfoErrorsOnMissingVersionsField)
    EXPECT_TRUE(error != Success());
 }
 
-TEST(ChatIntegrity, GetPackageInfoErrorsOnInvalidProtocolVersion)
-{
-   json::Object manifest = makeManifest(
-      "1.0", "2.0.0", "https://example.com/pkg.zip");
-
-   std::string packageVersion, downloadUrl;
-   Error error = getPackageInfoFromManifest(
-      manifest, "not-a-version", &packageVersion, &downloadUrl);
-
-   EXPECT_TRUE(error != Success());
-}
-
 TEST(ChatIntegrity, GetPackageInfoErrorsOnNullPointers)
 {
    json::Object manifest = makeManifest(
@@ -458,16 +495,16 @@ TEST(ChatIntegrity, GetPackageInfoProvidersEmptyWhenAbsent)
 
 TEST(ChatIntegrity, GetPackageInfoProvidersFromSelectedProtocol)
 {
-   // Lower minor advertises providers; the selected (highest minor) entry does
-   // not -- the result must reflect the selected entry, not a skipped one.
+   // Another entry advertises providers; the selected one does not -- the
+   // result must reflect the selected entry, not a skipped one.
    json::Object v10Info;
    v10Info["version"] = "1.0.0";
    v10Info["url"] = "https://example.com/pkg-1.0.zip";
-   v10Info["providers"] = json::toJsonArray(std::vector<std::string>{"byok"});
 
    json::Object v11Info;
    v11Info["version"] = "1.1.0";
    v11Info["url"] = "https://example.com/pkg-1.1.zip";
+   v11Info["providers"] = json::toJsonArray(std::vector<std::string>{"byok"});
 
    json::Object versions;
    versions["1.0"] = v10Info;
@@ -481,7 +518,7 @@ TEST(ChatIntegrity, GetPackageInfoProvidersFromSelectedProtocol)
       manifest, "1.0", &packageVersion, &downloadUrl, &sha256, &providers);
 
    EXPECT_FALSE(error);
-   EXPECT_EQ(packageVersion, "1.1.0");
+   EXPECT_EQ(packageVersion, "1.0.0");
    EXPECT_TRUE(providers.empty());
 }
 

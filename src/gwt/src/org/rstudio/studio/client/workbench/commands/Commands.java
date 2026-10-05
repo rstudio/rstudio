@@ -63,6 +63,7 @@ public abstract class
    public abstract AppCommand saveAllSourceDocs();
    public abstract AppCommand renameSourceDoc();
    public abstract AppCommand copySourceDocPath();
+   public abstract AppCommand showActiveDocDirInFiles();
    public abstract AppCommand closeSourceDoc();
    public abstract AppCommand closeOtherSourceDocs();
    public abstract AppCommand closeAllSourceDocs();
@@ -83,6 +84,7 @@ public abstract class
    public abstract AppCommand executeLastCode();
    public abstract AppCommand executeCurrentLine();
    public abstract AppCommand executeCurrentStatement();
+   public abstract AppCommand selectCurrentStatement();
    public abstract AppCommand executeCurrentParagraph();
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertChunkR();
@@ -316,6 +318,8 @@ public abstract class
    public abstract AppCommand vcsRefreshNoError();
    public abstract AppCommand vcsOpen();
    public abstract AppCommand vcsIgnore();
+   public abstract AppCommand vcsNewWorktree();
+   public abstract AppCommand vcsRemoveWorktree();
    public abstract AppCommand vcsPull();
    public abstract AppCommand vcsPullRebase();
    public abstract AppCommand vcsPush();
@@ -441,6 +445,8 @@ public abstract class
    public abstract AppCommand savePlotAsPdf();
    public abstract AppCommand copyPlotToClipboard();
    public abstract AppCommand zoomPlot();
+   public abstract AppCommand fitPlotToPane();
+   public abstract AppCommand useFixedPlotSize();
    public abstract AppCommand removePlot();
    public abstract AppCommand clearPlots();
    public abstract AppCommand refreshPlot();
@@ -718,6 +724,7 @@ public abstract class
 
    // Other
    public abstract AppCommand checkSpelling();
+   public abstract AppCommand changeSpellingLanguage();
    public abstract AppCommand wordCount();
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
@@ -783,7 +790,6 @@ public abstract class
    // Chat satellite window
    public abstract AppCommand popOutChat();
    public abstract AppCommand returnChatToMain();
-   public abstract AppCommand uninstallPositAssistant();
    public abstract AppCommand checkForPositAssistantUpdates();
 
    // Internal

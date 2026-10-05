@@ -20,6 +20,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -84,7 +85,18 @@ public class SessionInfo extends JavaScriptObject
    public final native String getPrompt() /*-{
       return this.prompt;
    }-*/;
-   
+
+   /**
+    * The save action a quit or project close would take right now, as one of
+    * the {@link SaveAction} constants, or null if the session did not report
+    * one. The session also publishes this through SaveActionChangedEvent, but
+    * that event is asynchronous -- callers that can run before the first one
+    * arrives must start from this value.
+    */
+   public final native SaveAction getSaveAction() /*-{
+      return (this.save_action == null) ? null : { action: this.save_action };
+   }-*/;
+
    public final native JsArray<RnwWeave> getRnwWeaveTypes() /*-{
       return this.rnw_weave_types;
    }-*/;
@@ -291,6 +303,49 @@ public class SessionInfo extends JavaScriptObject
    public final native String getActiveProjectName() /*-{
       return this.active_project_name;
    }-*/;
+
+   // For a project in a linked git worktree, the primary checkout's project
+   // name and the worktree's directory name; both empty otherwise
+   public final native String getActiveProjectWorktreePrimary() /*-{
+      return this.active_project_worktree_primary || "";
+   }-*/;
+
+   public final native String getActiveProjectWorktreeDirectory() /*-{
+      return this.active_project_worktree_directory || "";
+   }-*/;
+
+   // "<primary project> [<worktree directory>]" for a project in a linked
+   // git worktree, which tells checkouts of one project apart; empty otherwise
+   public final String getActiveProjectWorktreeName()
+   {
+      String primary = getActiveProjectWorktreePrimary();
+      if (StringUtil.isNullOrEmpty(primary))
+         return "";
+
+      return primary + " [" + getActiveProjectWorktreeDirectory() + "]";
+   }
+
+   // The name the project goes by: its configured name, else the worktree
+   // label, else empty
+   public final String getActiveProjectDisplayName()
+   {
+      String name = getActiveProjectName();
+      if (StringUtil.isNullOrEmpty(name))
+         name = getActiveProjectWorktreeName();
+      return StringUtil.notNull(name);
+   }
+
+   // The name recorded alongside the project in the recent projects list,
+   // which shows it next to the project's directory ("<directory> (<name>)"):
+   // the configured name, else the primary checkout's name for a project in
+   // a linked worktree, else empty
+   public final String getActiveProjectMruName()
+   {
+      String name = getActiveProjectName();
+      if (StringUtil.isNullOrEmpty(name))
+         name = getActiveProjectWorktreePrimary();
+      return StringUtil.notNull(name);
+   }
 
    public final FileSystemItem getActiveProjectDir()
    {
@@ -706,6 +761,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native JsArrayString getGraphicsBackends() /*-{
      return this.graphics_backends;
+   }-*/;
+
+   public final native String getGraphicsDefaultBackend() /*-{
+     return this.graphics_default_backend || "default";
    }-*/;
 
    public final native boolean getPythonInitialized() /*-{

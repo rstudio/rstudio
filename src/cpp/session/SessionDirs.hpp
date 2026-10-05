@@ -28,6 +28,11 @@ namespace dirs {
 
 core::FilePath getDefaultWorkingDirectory();
 core::FilePath getInitialWorkingDirectory();
+
+// Records the directory the session started in when the one named by
+// getInitialWorkingDirectory() couldn't be entered, so that later callers
+// (e.g. the client's initial working directory) agree with the session.
+void setInitialWorkingDirectory(const core::FilePath& workingDir);
 core::FilePath getProjectUserDataDir(const core::ErrorLocation& location);
 core::FilePath rHistoryDir();
 core::FilePath rEnvironmentDir();

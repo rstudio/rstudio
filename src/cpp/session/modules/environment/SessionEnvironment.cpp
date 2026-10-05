@@ -87,6 +87,11 @@ SerializationCache s_serializationCache;
 // avoid potential contention between console handlers
 std::recursive_mutex s_consoleMutex;
 
+// the last browser position reported to the client. the client arms a timer on
+// every debug command and cancels it only when the server answers, so a step it
+// hears nothing about costs it a needless requery_context round trip.
+json::Object s_lastBrowserLineJson;
+
 // Keeps track of the data related to the most recent debugging event
 class LineDebugState
 {
@@ -232,11 +237,6 @@ bool isGlobalEnvironmentSerializable()
    
    // Return true only if all values can be serialized.
    return allValuesSerializable;
-}
-
-bool isValidSrcref(SEXP srcref)
-{
-   return srcref && TYPEOF(srcref) != NILSXP && TYPEOF(srcref) != SYMSXP;
 }
 
 bool handleRBrowseEnv(const core::FilePath& filePath)
@@ -386,9 +386,9 @@ struct CallFrameResult
    bool hasSourceRefs;       // whether the function has source refs
    SEXP callFunSourceRefs;   // srcref attribute on the original function
 
-   // Source context info at target depth (for simulated srcrefs)
-   SEXP srcContextCallfun;
-   SEXP srcContextCall;
+   // Depth of the frame the browser is halted in, which is not the requested
+   // depth once the user selects another frame from the call stack.
+   int browserDepth;
 
    CallFrameResult()
       : contextCallfun(R_NilValue),
@@ -396,8 +396,7 @@ struct CallFrameResult
         originalCallfun(R_NilValue),
         hasSourceRefs(false),
         callFunSourceRefs(R_NilValue),
-        srcContextCallfun(R_NilValue),
-        srcContextCall(R_NilValue)
+        browserDepth(0)
    {
    }
 };
@@ -423,10 +422,10 @@ CallFrameResult callFramesFromR(int depth,
    // during debug stepping). This is not accessible from R's sys.*() functions,
    // so we pass it in.
    //
-   // In R >= 4.5, skip=NA_INTEGER checks R_Srcref first, giving the correct
-   // srcref for the current debug position. In R < 4.5, NA_INTEGER is not
-   // handled specially, so we use skip=0 (checks R_Srcref, then walks
-   // context stack).
+   // In R >= 4.5, skip=NA_INTEGER checks the current evaluator position
+   // before searching outward through the context stack. .rs.callFrames
+   // checks whether the innermost function can use the returned reference.
+   // Older R versions do not handle NA_INTEGER specially, so use skip=0.
    int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
    SEXP currentSrcref = R_GetCurrentSrcref(skip);
 
@@ -477,16 +476,9 @@ CallFrameResult callFramesFromR(int depth,
       if (error) LOG_ERROR(error);
    }
 
-   // Extract source context info
-   SEXP srcContextSEXP;
-   error = r::sexp::getNamedListSEXP(resultSEXP, "src_context", &srcContextSEXP);
-   if (!error && srcContextSEXP != R_NilValue)
-   {
-      error = r::sexp::getNamedListSEXP(srcContextSEXP, "callfun", &result.srcContextCallfun);
-      if (error) LOG_ERROR(error);
-      error = r::sexp::getNamedListSEXP(srcContextSEXP, "call", &result.srcContextCall);
-      if (error) LOG_ERROR(error);
-   }
+   error = r::sexp::getNamedListElement(resultSEXP, "browser_depth", &result.browserDepth);
+   if (error)
+      LOG_ERROR(error);
 
    // Propagate lastDebugLine update back to C++ (for simulated srcref state)
    if (pLineDebugState != nullptr)
@@ -504,17 +496,13 @@ CallFrameResult callFramesFromR(int depth,
 
 json::Array environmentListAsJson()
 {
-    using namespace rstudio::r::sexp;
     std::vector<std::string> names;
     json::Array listJson;
 
     if (s_pEnvironmentMonitor->hasEnvironment())
     {
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
-       listEnvironment(env,
-                       false,
-                       prefs::userPrefs().showLastDotValue(),
-                       &names);
+       listEnvironmentForPane(env, &names);
 
        // get object details and transform to json
        std::transform(names.begin(),
@@ -747,7 +735,7 @@ json::Object pythonEnvironmentStateData(const std::string& environment)
 // used both to initialize the environment state on first load and to send
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
-      bool isDebugStepping,
+      bool /* isDebugStepping */,
       int depth,
       bool includeContents,
       LineDebugState* pLineDebugState)
@@ -860,10 +848,51 @@ json::Object commonEnvironmentStateData(
       varJson["environment_is_local"] = local;
    }
  
-   // If we have source references while we're stepping through, then
-   // we can accurately provide the current context even for the top-most frame.
-   if (isDebugStepping && hasCodeInFrame)
-      varJson["context_depth"] = 1;
+   // The client browses call_frames[context_depth - 1], so context_depth has
+   // to name the frame the browser is actually in. This used to be forced to 1
+   // while stepping, which worked only because R_GetCurrentSrcref's outward
+   // search leaked the stepping position onto the innermost frame. Code run as
+   // a promise inside tryCatch, withCallingHandlers or suppressWarnings leaves
+   // other frames innermost -- source-less ones such as doTryCatch, or the
+   // wrapper itself carrying its own call site -- so forcing 1 pointed the
+   // client at the wrong frame and lost the debug highlight (#18754).
+   //
+   // context_depth also follows the frame the user selects from the call
+   // stack, so the client cannot read it as "execution is halted here". Say
+   // which frame that is instead of leaving it to infer depth 1.
+   varJson["browse_frame_depth"] = depth > 0 ? cfResult.browserDepth : 0;
+
+   // Remember where this state leaves the client's debug highlight, so a later
+   // step whose position cannot be resolved has something to repeat. The client
+   // reads its position out of call_frames[context_depth - 1], and a browser
+   // line event carries the same four fields.
+   s_lastBrowserLineJson = json::Object();
+   if (depth > 0 && static_cast<size_t>(depth) <= cfResult.frames.getSize())
+   {
+      json::Value browseFrameJson = cfResult.frames.getValueAt(depth - 1);
+      if (browseFrameJson.isObject())
+      {
+         int lineNumber = 0, endLineNumber = 0;
+         int characterNumber = 0, endCharacterNumber = 0;
+
+         Error error = json::readObject(browseFrameJson.getObject(),
+                                        "line_number", lineNumber,
+                                        "end_line_number", endLineNumber,
+                                        "character_number", characterNumber,
+                                        "end_character_number", endCharacterNumber);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else
+         {
+            s_lastBrowserLineJson["line_number"] = lineNumber;
+            s_lastBrowserLineJson["end_line_number"] = endLineNumber;
+            s_lastBrowserLineJson["character_number"] = characterNumber;
+            s_lastBrowserLineJson["end_character_number"] = endCharacterNumber;
+         }
+      }
+   }
 
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function
@@ -888,12 +917,19 @@ void enqueContextDepthChangedEvent(bool isDebugStepping,
    module_context::enqueClientEvent(event);
 }
 
+void enqueBrowserLineChangedEvent(const json::Object& varJson)
+{
+   ClientEvent event(client_events::kBrowserLineChanged, varJson);
+   module_context::enqueClientEvent(event);
+}
+
 void enqueBrowserLineChangedEvent(const SEXP srcref)
 {
    json::Object varJson;
    sourceRefToJson(srcref, &varJson);
-   ClientEvent event(client_events::kBrowserLineChanged, varJson);
-   module_context::enqueClientEvent(event);
+
+   s_lastBrowserLineJson = varJson;
+   enqueBrowserLineChangedEvent(varJson);
 }
 
 Error setContextDepth(boost::shared_ptr<int> pContextDepth,
@@ -953,6 +989,24 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    return Success();
 }
 
+void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
+{
+   if (pref != kShowHiddenObjects && pref != kShowLastDotValue)
+      return;
+
+   // the prefs only affect R listings; the pane re-lists on its own when
+   // switched back to R
+   if (s_environmentLanguage != kEnvironmentLanguageR)
+      return;
+
+   // refresh from here rather than from the client so the listing is fetched
+   // only after the new value has reached the session. A write that leaves
+   // the effective value alone (a user-layer write under a project override)
+   // costs one redundant listing, which is harmless.
+   ClientEvent event(client_events::kEnvironmentRefresh);
+   module_context::enqueClientEvent(event);
+}
+
 void onDetectChanges(module_context::ChangeSource /* source */)
 {
    // Prevent recursive calls to this function
@@ -985,53 +1039,64 @@ void onDetectChanges(module_context::ChangeSource /* source */)
 
 namespace {
 
+// Resolve the debug position after a step that stayed within the same frame.
+// Returns R_NilValue when no position could be determined.
 SEXP inferDebugSrcrefs(
       int depth,
       boost::shared_ptr<LineDebugState> pLineDebugState)
 {
-   // R_GetCurrentSrcref(skip) is a public R API that returns the srcref
-   // for the expression currently being evaluated during debugging.
-   //
-   // In R >= 4.5, skip=NA_INTEGER checks R_Srcref (the evaluator's current
-   // position) first, giving the correct srcref during debug stepping.
-   // In R < 4.5, skip=NA_INTEGER is not handled specially and always
-   // returns R_NilValue, so we use skip=0 (checks R_Srcref, then walks
-   // context stack) which is correct on older R.
+   // Only the active frame is resolved here. Building the whole frame list
+   // would apply the same source-reference rules, but it re-reads source
+   // files and re-deparses source-less functions on every step.
    r::sexp::Protect protect;
-   int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
-   SEXP srcref = R_GetCurrentSrcref(skip);
-   if (isValidSrcref(srcref))
-      return srcref;
 
-   // Fall back to building call frames and simulating source refs
-   CallFrameResult cfResult = callFramesFromR(depth, pLineDebugState.get(), &protect);
-
-   // Use the source context's callfun to simulate source refs
-   if (cfResult.srcContextCallfun != R_NilValue)
+   SEXP lineDebugStateSEXP = R_NilValue;
+   if (pLineDebugState)
    {
-      SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
-      r::sexp::setAttrib(info, "_rs_callfun", cfResult.srcContextCallfun);
-
-      if (pLineDebugState)
-      {
-         SEXP lastDebugSEXP = r::sexp::create(pLineDebugState->lastDebugText, &protect);
-         r::sexp::setAttrib(info, "_rs_calltext", lastDebugSEXP);
-
-         SEXP lastLineSEXP = r::sexp::create(pLineDebugState->lastDebugLine, &protect);
-         r::sexp::setAttrib(info, "_rs_lastline", lastLineSEXP);
-      }
-
-      srcref = R_NilValue;
-      Error error = r::exec::RFunction(".rs.simulateSourceRefs", info)
-            .call(&srcref, &protect);
-      if (error)
-         LOG_ERROR(error);
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("lastDebugText", pLineDebugState->lastDebugText);
+      builder.add("lastDebugLine", pLineDebugState->lastDebugLine);
+      lineDebugStateSEXP = r::sexp::create(builder, &protect);
    }
 
-   if (pLineDebugState && isValidSrcref(srcref))
+   // R's evaluator position is not reachable from R's sys.*() functions, so
+   // pass it in; .rs.debugSourceRef decides whether this frame may use it.
+   // A raw R_GetCurrentSrcref result can belong to a caller when the function
+   // being stepped through has no source references (#18754).
+   int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
+   SEXP currentSrcref = R_GetCurrentSrcref(skip);
+
+   SEXP resultSEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.debugSourceRef")
+         .addParam(depth)
+         .addParam(currentSrcref)
+         .addParam(lineDebugStateSEXP)
+         .call(&resultSEXP, &protect);
+
+   if (error)
    {
-      int lastDebugLine = INTEGER(srcref)[0] - 1;
-      pLineDebugState->lastDebugLine = lastDebugLine;
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   if (resultSEXP == R_NilValue)
+      return R_NilValue;
+
+   SEXP srcref = R_NilValue;
+   error = r::sexp::getNamedListSEXP(resultSEXP, "srcref", &srcref);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   // Propagate lastDebugLine update back to C++ (for simulated srcref state)
+   if (pLineDebugState)
+   {
+      int updatedLine = -1;
+      error = r::sexp::getNamedListElement(resultSEXP, "lastDebugLine", &updatedLine);
+      if (!error && updatedLine >= 0)
+         pLineDebugState->lastDebugLine = updatedLine;
    }
 
    return srcref;
@@ -1104,8 +1169,15 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0 && !r::session::inDebugHiddenContext())
    {
+      // Leave the highlight where it is when the new position cannot be
+      // resolved; an empty srcref would report line 0 to the client. Repeat
+      // the position the client already holds rather than staying silent, so
+      // it stops waiting on an answer that is not coming.
       SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
-      enqueBrowserLineChangedEvent(srcref);
+      if (srcref != R_NilValue)
+         enqueBrowserLineChangedEvent(srcref);
+      else if (!s_lastBrowserLineJson.isEmpty())
+         enqueBrowserLineChangedEvent(s_lastBrowserLineJson);
    }
    
 }
@@ -1861,6 +1933,7 @@ Error initialize()
    events().onConsoleOutput.connect(bind(onConsoleOutput,
                                          pLineDebugState,
                                          pCapturingDebugOutput, _1, _2));
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);

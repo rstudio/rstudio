@@ -59,7 +59,7 @@ void deserializeConsoleProcs(const std::string& jsonStr)
    if (jsonStr.empty())
       return;
    json::Value value;
-   if (value.parse(jsonStr))
+   if (value.parse(jsonStr) || !value.isArray())
    {
       LOG_WARNING_MESSAGE("invalid console process json: " + jsonStr);
       return;
@@ -70,6 +70,12 @@ void deserializeConsoleProcs(const std::string& jsonStr)
         it != procs.end();
         it++)
    {
+      if (!(*it).isObject())
+      {
+         WLOGF("Skipping invalid console process entry: {}", (*it).write());
+         continue;
+      }
+
       ConsoleProcessPtr proc = ConsoleProcess::fromJson((*it).getObject());
 
       // Deserializing consoleprocs list only happens during session

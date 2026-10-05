@@ -28,6 +28,12 @@ namespace session {
 
 core::Error initialize();
 
+// Sets aside saved session state (from a suspend or a restart) that an earlier
+// start never finished restoring, so that a crash while restoring it doesn't
+// repeat on every start. Must run before deciding how to start R, since the
+// state is no longer there afterwards.
+void setAsideUnfinishedRestores();
+
 void reportHistoryAccessError(const std::string& context,
                               const core::FilePath& historyFilePath,
                               const core::Error& error);

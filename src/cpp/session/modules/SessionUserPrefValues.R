@@ -108,6 +108,15 @@
    clear = function() { .rs.clearUserPref("show_last_dot_value") }
 )
 
+# Show hidden objects in Environment pane
+#
+# Whether to show objects whose names begin with a dot in the Environment pane.
+.rs.uiPrefs$showHiddenObjects <- list(
+   get = function() { .rs.getUserPref("show_hidden_objects") },
+   set = function(value) { .rs.setUserPref("show_hidden_objects", value) },
+   clear = function() { .rs.clearUserPref("show_hidden_objects") }
+)
+
 # Line ending format
 #
 # The line ending format to use when saving files.
@@ -339,8 +348,8 @@
 
 # Load Vim keybindings from a vimrc file
 #
-# Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim
-# editor keybindings are enabled.
+# Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or
+# $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
 .rs.uiPrefs$vimLoadVimrc <- list(
    get = function() { .rs.getUserPref("vim_load_vimrc") },
    set = function(value) { .rs.setUserPref("vim_load_vimrc", value) },
@@ -619,6 +628,16 @@
    clear = function() { .rs.clearUserPref("warn_variable_defined_but_not_used") }
 )
 
+# Warn about characters that look like ASCII but are not
+#
+# Whether to warn about characters in R code that look like ASCII but are not,
+# such as the Cyrillic letter 'c' or typographic quotes
+.rs.uiPrefs$warnConfusableCharacters <- list(
+   get = function() { .rs.getUserPref("warn_confusable_characters") },
+   set = function(value) { .rs.setUserPref("warn_confusable_characters", value) },
+   clear = function() { .rs.clearUserPref("warn_confusable_characters") }
+)
+
 # Detect missing R packages in the editor
 #
 # Whether to automatically discover and offer to install missing R package
@@ -769,6 +788,16 @@
    clear = function() { .rs.clearUserPref("scroll_past_end_of_document") }
 )
 
+# Smooth scrolling
+#
+# Whether the source editor animates scrolling, e.g. when moving the cursor or
+# jumping to a line, instead of jumping instantly.
+.rs.uiPrefs$smoothScrolling <- list(
+   get = function() { .rs.getUserPref("smooth_scrolling") },
+   set = function(value) { .rs.setUserPref("smooth_scrolling", value) },
+   clear = function() { .rs.clearUserPref("smooth_scrolling") }
+)
+
 # Highlight R function calls
 #
 # Whether to highlight R function calls in the code editor.
@@ -816,8 +845,9 @@
 
 # Maximum lines in R console
 #
-# The maximum number of console actions to store and display in the console
-# scrollback buffer.
+# The maximum number of lines of output to keep in the console scrollback buffer.
+# Very long lines are stored in chunks and may count as more than one line, so
+# slightly fewer lines than this may be restored when a session resumes.
 .rs.uiPrefs$consoleMaxLines <- list(
    get = function() { .rs.getUserPref("console_max_lines") },
    set = function(value) { .rs.setUserPref("console_max_lines", value) },
@@ -1464,6 +1494,16 @@
    clear = function() { .rs.clearUserPref("terminal_weblinks") }
 )
 
+# Make file paths in Terminal clickable
+#
+# Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click
+# (Cmd+Click on macOS).
+.rs.uiPrefs$terminalFileLinks <- list(
+   get = function() { .rs.getUserPref("terminal_file_links") },
+   set = function(value) { .rs.setUserPref("terminal_file_links", value) },
+   clear = function() { .rs.clearUserPref("terminal_file_links") }
+)
+
 # Show R Markdown render command
 #
 # Whether to print the render command use to knit R Markdown documents in the R
@@ -1657,10 +1697,9 @@
    clear = function() { .rs.clearUserPref("wrap_tab_navigation") }
 )
 
-# Highlight active document and pane tabs
+# Highlight active document tab
 #
-# Use a bold label and a blue overline to highlight the active document and pane
-# tabs.
+# Use a bold label and a blue overline to highlight the active document tab.
 .rs.uiPrefs$highlightActiveTabs <- list(
    get = function() { .rs.getUserPref("highlight_active_tabs") },
    set = function(value) { .rs.setUserPref("highlight_active_tabs", value) },

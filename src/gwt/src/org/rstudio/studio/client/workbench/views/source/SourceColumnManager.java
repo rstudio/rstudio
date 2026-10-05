@@ -103,6 +103,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FilePathChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocSelectionChangedEvent;
@@ -250,6 +252,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       initDynamicCommands();
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
+      // Handled here rather than per column so the active column is managed
+      // last; an inactive column managed after it can hide its commands.
+      events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
+      events_.addHandler(FilePathChangedEvent.TYPE, event -> manageCommands(false));
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
       events_.addHandler(DocumentCloseEvent.TYPE, this);
@@ -646,7 +652,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (!hasActiveEditor())
          return false;
-      Boolean dirty = activeColumn_.getActiveEditor().dirtyState().getValue();
+      return isDirty(activeColumn_.getActiveEditor());
+   }
+
+   // dirtyState() is a Value<Boolean> that can still be null before the
+   // editor finishes initializing, so treat "unknown" as clean.
+   private static boolean isDirty(EditingTarget editor)
+   {
+      Boolean dirty = editor.dirtyState().getValue();
       return dirty != null && dirty;
    }
 
@@ -1347,8 +1360,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // set the extended type of the specified source file
 
       EditingTarget target = findEditor(e.getDocId());
-      if (target != null)
-         target.adaptToExtendedFileType(e.getExtendedType());
+      if (target == null)
+         return;
+
+      String previousType = target.getExtendedFileType();
+      target.adaptToExtendedFileType(e.getExtendedType());
+
+      // The extended type decides some commands (e.g. Publish). It is detected
+      // after every save, so refresh only when it changed.
+      if (!StringUtil.equals(previousType, target.getExtendedFileType()))
+         manageCommands(false);
    }
 
    @Override
@@ -1361,12 +1382,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void onDocumentResetToUntitled(DocumentResetToUntitledEvent event)
    {
       // Reuse an existing untitled doc if one is open. Untitled = no path.
+      //
+      // A *dirty* untitled doc is not reusable: revertUnsavedTargets below
+      // only reverts file-backed editors, so keeping it would carry the
+      // previous caller's unsaved text into the "clean slate" this event
+      // promises. That text then surfaces later as a modal Save File prompt
+      // the next time anything saves all documents, whose glass panel blocks
+      // every subsequent click. Close it with the rest and start fresh.
       String existingUntitledId = null;
       for (SourceColumn column : columnList_)
       {
          for (EditingTarget editor : column.getEditors())
          {
-            if (editor.getPath() == null)
+            if (editor.getPath() == null && !isDirty(editor))
             {
                existingUntitledId = editor.getId();
                break;
@@ -2103,9 +2131,59 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       });
    }
 
-   private void vimEditFile(String path)
+   private void vimEditFile(String fileName)
    {
-      editFile(path, new ResultCallback<EditingTarget, ServerError>() {});
+      String path = SourceVimCommands.parseFileName(fileName);
+      if (path == null)
+      {
+         globalDisplay_.showErrorMessage(
+            constants_.errorWhileOpeningFile(),
+            constants_.vimFileNameNotSupported(fileName));
+         return;
+      }
+
+      // the backend keeps a document's path as given, so resolve the path
+      // against R's working directory before opening it
+      server_.ensureEditableFile(path, new SimpleRequestCallback<JsObject>(constants_.errorWhileOpeningFile())
+      {
+         @Override
+         public void onResponseReceived(JsObject result)
+         {
+            String resolvedPath = result.getString("path");
+            String error = result.getString("error");
+
+            if (error.equals("is_folder"))
+            {
+               globalDisplay_.showErrorMessage(
+                  constants_.errorWhileOpeningFile(),
+                  constants_.vimEditFileIsFolder(resolvedPath));
+            }
+            else if (error.equals("not_created"))
+            {
+               globalDisplay_.showErrorMessage(
+                  constants_.errorWhileOpeningFile(),
+                  constants_.vimEditFileNotCreated(resolvedPath));
+            }
+            else
+            {
+               openFile(FileSystemItem.createFile(resolvedPath));
+            }
+         }
+      });
+   }
+
+   private void vimNewSourceDoc()
+   {
+      newDoc(FileTypeRegistry.R, null);
+   }
+
+   private void vimOpenAdjacentFile(boolean forward)
+   {
+      // Source implements these commands
+      if (forward)
+         commands_.openNextFileOnFilesystem().execute();
+      else
+         commands_.openPreviousFileOnFilesystem().execute();
    }
 
    public void openProjectDocs(final Session session, boolean mainColumn)
@@ -2599,6 +2677,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
       dynamicCommands_.add(commands_.sendFilenameToTerminal());
       dynamicCommands_.add(commands_.renameSourceDoc());
+      dynamicCommands_.add(commands_.showActiveDocDirInFiles());
       dynamicCommands_.add(commands_.sourceAsWorkbenchJob());
       dynamicCommands_.add(commands_.sourceAsJob());
       dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());

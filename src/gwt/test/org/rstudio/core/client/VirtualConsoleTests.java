@@ -18,6 +18,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -256,6 +257,48 @@ public class VirtualConsoleTests extends GWTTestCase
             "<span class=\"a\"></span>" +
             "<span class=\"a xtermColor1\">45</span>",
             ele.getInnerHTML());
+   }
+
+   public void testSgrOnlyFormatting()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      // false: assigns to innerHTML instead of innerText
+      vc.setPreserveHTML(false);
+      // true: strip all ANSI formatting beyond color and newlines
+      vc.setSgrOnly(true);
+
+      vc.submit("\033[31m<b>red</b>\033[0m");
+      Assert.assertEquals(
+            "<span class=\"xtermColor1\">&lt;b&gt;red&lt;/b&gt;</span>",
+            ele.getInnerHTML());
+   }
+
+   public void testSgrOnlyStripping()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.setPreserveHTML(false);
+      vc.setSgrOnly(true);
+
+      vc.submit("pre\rpost\n\033]8;;ide:run:test()\7link\033]8;;\7");
+      Assert.assertTrue(ele.getInnerText().contains("pre"));
+      Assert.assertTrue(ele.getInnerText().contains("post"));
+      Assert.assertFalse(ele.getInnerHTML().contains("<a"));
+
+      // the hyperlink's content is preserved, but not the escape sequence
+      Assert.assertTrue(ele.getInnerText().contains("link"));
+      Assert.assertFalse(ele.getInnerText().contains("ide:run"));
+      Assert.assertFalse(ele.getInnerText().contains("]8;;"));
+
+      // CRLF is a line break, not a stray control character
+      PreElement crlf = Document.get().createPreElement();
+      VirtualConsole vcCrlf = getVC(crlf);
+      vcCrlf.setPreserveHTML(false);
+      vcCrlf.setSgrOnly(true);
+
+      vcCrlf.submit("one\r\ntwo");
+      Assert.assertEquals("one\ntwo", crlf.getInnerText());
    }
 
    public void testAnsiColorStyleHelper()
@@ -807,7 +850,7 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit(AnsiCode.CSI + "?25lBuilding sites \342\200\246 " +
-                AnsiCode.CSI + "?25h\r" + AnsiCode.CSI + "[K");
+                AnsiCode.CSI + "?25h" + AnsiCode.CSI + "K");
       Assert.assertEquals("<span>Building sites \342\200\246 </span>", ele.getInnerHTML());
       Assert.assertEquals("Building sites \342\200\246 ", vc.toString());
    }
@@ -818,7 +861,7 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("We are " + AnsiCode.CSI + "?25lbuilding sites \342\200\246" +
-                AnsiCode.CSI + "?25h\r" + AnsiCode.CSI + "[K");
+                AnsiCode.CSI + "?25h" + AnsiCode.CSI + "K");
       Assert.assertEquals("<span>We are building sites \342\200\246</span>", ele.getInnerHTML());
       Assert.assertEquals("We are building sites \342\200\246", vc.toString());
    }
@@ -1235,6 +1278,427 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\".*\">text</a>"));
    }
 
+   public void testHyperlinkStringTerminator()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b\\link\u001b]8;;\u001b\\\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+   }
+
+   public void testHyperlinkStringTerminatorSplitAcrossSubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b");
+      vc.submit("\\link\u001b]8;;\u001b\\\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+   }
+
+   public void testHyperlinkEndedByOtherEscape()
+   {
+      // ESC ')' is not ST, but still ends the string; the ESC ')' is then
+      // parsed (and discarded) as an escape sequence of its own
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b\\link\u001b]8;;\u001b)\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+
+      // here, ESC ')' 'l' is a character set designation, consuming the 'l'
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\u001b]8;;https://example.com\u001b)link\u001b]8;;\u001b)\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">ink</a><span>\n</span>$"));
+   }
+
+   public void testEmptySgrParameterResets()
+   {
+      // CSI m, as emitted by git and grep
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[31mred\033[mplain");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span>plain</span>", ele.getInnerHTML());
+
+      // tput sgr0
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033[31mred\033(B\033[mplain");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span>plain</span>", ele.getInnerHTML());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033[31mred\033[;1mbold");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span class=\"xtermBold\">bold</span>", ele.getInnerHTML());
+   }
+
+   public void testUnknownExtendedColorFormat()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[31mred\033[38;3mplain");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span><span>plain</span>", ele.getInnerHTML());
+   }
+
+   public void testUnsupportedCsiDoesNotHoldBackOutput()
+   {
+      String[] sequences = {
+         "\033[4:3m",              // sub-parameters (curly underline)
+         "\033[38:2::255:0:0m",    // sub-parameters (RGB color)
+         "\033[12345m",            // long parameter
+         "\033[2 q",               // intermediate byte (cursor style)
+      };
+
+      for (String sequence : sequences)
+      {
+         PreElement ele = Document.get().createPreElement();
+         VirtualConsole vc = getVC(ele);
+         vc.submit("a" + sequence + "b\n");
+         vc.submit("next\n");
+         Assert.assertEquals(AnsiCode.prettyPrint(sequence), "ab\nnext\n", ele.getInnerText());
+      }
+   }
+
+   public void testPartialEscapeSplitAcrossSubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033[4:3");
+      vc.submit("mb\033(");
+      vc.submit("Bc");
+      Assert.assertEquals("abc", ele.getInnerText());
+   }
+
+   public void testCsiWithBracketFinalByte()
+   {
+      // as in xterm, ESC '[' '[' is a CSI sequence ending in '[', whether or
+      // not the input is split after it
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033[[Ab");
+      Assert.assertEquals("aAb", ele.getInnerText());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[[");
+      vc.submit("Ab");
+      Assert.assertEquals("aAb", ele.getInnerText());
+   }
+
+   public void testSgrWithSubParameters()
+   {
+      // the supported parameters still apply when one has sub-parameters
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[1;31;4:3mtext");
+      Assert.assertEquals("<span class=\"xtermBold xtermColor1\">text</span>", ele.getInnerHTML());
+   }
+
+   public void testDanglingCsiDoesNotSwallowPrompt()
+   {
+      // the prompts are made of CSI parameter and intermediate bytes, so a
+      // dangling ESC '[' must not hold them back waiting for a final byte
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033[");
+      vc.submit("> ");
+      vc.submit("hello\n");
+      Assert.assertEquals("> hello\n", ele.getInnerText());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033[");
+      vc.submit("+ ");
+      Assert.assertEquals("+ ", ele.getInnerText());
+
+      // whereas a split private mode sequence is completed
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[?2");
+      vc.submit("5lb");
+      Assert.assertEquals("ab", ele.getInnerText());
+   }
+
+   public void testPartialCsiWithIntermediateOrPrivateMarker()
+   {
+      // split after an intermediate byte
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033[2 ");
+      vc.submit("qb");
+      Assert.assertEquals("ab", ele.getInnerText());
+
+      // split after a private marker and its parameters
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[>4");
+      vc.submit(";2mb");
+      Assert.assertEquals("ab", ele.getInnerText());
+
+      // split right after the private marker
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[>");
+      vc.submit("4;2mb");
+      Assert.assertEquals("ab", ele.getInnerText());
+   }
+
+   public void testSplitEightBitCsi()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u009b3");
+      vc.submit("1mred");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span>", ele.getInnerHTML());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\u009b");
+      vc.submit("31mred");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span>", ele.getInnerHTML());
+   }
+
+   public void testLongUnterminatedOscNotHeldBack()
+   {
+      // an unterminated OSC longer than the hold-back limit is shown at once
+      StringBuilder payload = new StringBuilder();
+      for (int i = 0; i <= VirtualConsole.MAX_PARTIAL_STRING_LENGTH; i++)
+         payload.append('x');
+
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]" + payload);
+      Assert.assertEquals(payload.toString(), ele.getInnerText());
+   }
+
+   public void testUnterminatedOscAcrossSubmits()
+   {
+      // an unterminated string is held back until a console control
+      // character shows it to be malformed; then only its introducer is lost
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]oops");
+      Assert.assertEquals("", ele.getInnerText());
+      vc.submit(" more");
+      Assert.assertEquals("", ele.getInnerText());
+      vc.submit("\nnext\n");
+      Assert.assertEquals("oops more\nnext\n", ele.getInnerText());
+   }
+
+   public void testOscSplitAcrossManySubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://a");
+      vc.submit("bcd");
+      vc.submit("\033\\link\033]8;;\033\\\n");
+      Assert.assertEquals("link\n", ele.getInnerText());
+      Assert.assertEquals("link", anchorText(ele));
+
+      // a long payload arriving in many pieces is discarded whole
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033]1337;File=inline=1:");
+      for (int i = 0; i < 200; i++)
+         vc.submit("QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=");
+      Assert.assertEquals("a", ele.getInnerText());
+      vc.submit("\007b\n");
+      Assert.assertEquals("ab\n", ele.getInnerText());
+   }
+
+   public void testFlushPartialAnsiCode()
+   {
+      // a held-back string is shown as malformed
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033]oops");
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("aoops", ele.getInnerText());
+      vc.submit("b");
+      Assert.assertEquals("aoopsb", ele.getInnerText());
+
+      // so is a held-back CSI sequence, while a lone ESC is dropped
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("a\033[3");
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("a3", ele.getInnerText());
+      vc.submit("\033");
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("a3", ele.getInnerText());
+
+      // nothing held back, nothing to do
+      vc.flushPartialAnsiCode();
+      Assert.assertEquals("a3", ele.getInnerText());
+   }
+
+   public void testHeldBackStringShownOnClassChange()
+   {
+      // output of another class can't complete the string, and the held-back
+      // text keeps its own class
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]oops", "one");
+      vc.submit("x", "two");
+      Assert.assertEquals(
+            "<span class=\"one\">oops</span><span class=\"two\">x</span>",
+            ele.getInnerHTML());
+
+      // whereas the same class continues the string
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("\033]8;;https://example.com", "one");
+      vc.submit("\007link\033]8;;\007", "one");
+      Assert.assertEquals("link", anchorText(ele));
+   }
+
+   public void testEscapeBeforeControlCharacter()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033\nb\033(\rc");
+      Assert.assertEquals("a\nc", ele.getInnerText());
+   }
+
+   public void testEightBitCsi()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\u009b31mred\u009b?25l");
+      Assert.assertEquals("<span class=\"xtermColor1\">red</span>", ele.getInnerHTML());
+   }
+
+   public void testBelDiscarded()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\007b");
+      Assert.assertEquals("ab", ele.getInnerText());
+      Assert.assertEquals("ab", vc.toString());
+
+      // also when ANSI escapes are ignored
+      ele = Document.get().createPreElement();
+      FakePrefs prefs = new FakePrefs();
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
+      vc = new VirtualConsole(ele, prefs);
+      vc.submit("a\007b");
+      Assert.assertEquals("ab", ele.getInnerText());
+   }
+
+   public void testOtherOscDiscarded()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]0;title\007a\033]7;file://host/home\033\\b");
+      Assert.assertEquals("ab", ele.getInnerText());
+   }
+
+   public void testOtherStringSequencesDiscarded()
+   {
+      // DCS, SOS, PM, APC, and the screen window title carry payloads, like OSC
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033P1$r\033\\b\033Xsos\033\\c\033^pm\007d\033_apc\033\\e\033ktitle\033\\f");
+      Assert.assertEquals("abcdef", ele.getInnerText());
+   }
+
+   public void testOscSplitAcrossSubmits()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://exa");
+      vc.submit("mple.com\007link\033]");
+      vc.submit("8;;\007\n");
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\"[^\"]*\">link</a><span>\n</span>$"));
+   }
+
+   public void testOscAfterHeldBackEscape()
+   {
+      // a lone ESC held back from the previous submit starts the string
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("a\033");
+      vc.submit("]8;;https://example.com");
+      vc.submit("\007link\033]8;;\007\n");
+      Assert.assertEquals("alink\n", ele.getInnerText());
+      Assert.assertEquals("link", anchorText(ele));
+   }
+
+   public void testHyperlinkTextSplitAcrossSubmits()
+   {
+      // the two halves of the link text share one anchor
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://example.com\007li");
+      vc.submit("nk\033]8;;\007\n");
+
+      NodeList<Element> anchors = ele.getElementsByTagName("a");
+      Assert.assertEquals(1, anchors.getLength());
+      Assert.assertEquals("link", anchors.getItem(0).getInnerText());
+      Assert.assertEquals("link\n", ele.getInnerText());
+   }
+
+   public void testHyperlinkParamWithoutValue()
+   {
+      // a parameter without '=' is skipped rather than failing the submit
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;id;https://example.com\007link\033]8;;\007 after\n");
+      Assert.assertEquals("link after\n", ele.getInnerText());
+      Assert.assertEquals("link", anchorText(ele));
+   }
+
+   public void testUnterminatedOscShown()
+   {
+      // no output is lost to an OSC string that never ends
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]0;title\nnext");
+      Assert.assertEquals("0;title\nnext", ele.getInnerText());
+   }
+
+   public void testPlainTextOverwritesHyperlink()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://example.com\007link\033]8;;\007\r");
+      vc.submit("text");
+      Assert.assertEquals("text", ele.getInnerText());
+      Assert.assertEquals("", anchorText(ele));
+   }
+
+   public void testHyperlinkOverwritesPlainText()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abcdef\r");
+      vc.submit("\033]8;;https://example.com\007ab\033]8;;\007");
+      Assert.assertEquals("abcdef", ele.getInnerText());
+      Assert.assertEquals("ab", anchorText(ele));
+   }
+
+   public void testHyperlinkOverwritesHyperlink()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033]8;;https://a.com\007aaaa\033]8;;\007 tail\r");
+      vc.submit("\033]8;;https://b.com\007bb\033]8;;\007");
+      Assert.assertEquals("bbaa tail", ele.getInnerText());
+
+      NodeList<Element> anchors = ele.getElementsByTagName("a");
+      Assert.assertEquals(2, anchors.getLength());
+      Assert.assertEquals("bb", anchors.getItem(0).getInnerText());
+      Assert.assertEquals("aa", anchors.getItem(1).getInnerText());
+   }
+
+   private static String anchorText(Element ele)
+   {
+      StringBuilder text = new StringBuilder();
+      NodeList<Element> anchors = ele.getElementsByTagName("a");
+      for (int i = 0; i < anchors.getLength(); i++)
+         text.append(anchors.getItem(i).getInnerText());
+      return text.toString();
+   }
+
    public void testIssue9846()
    {
       PreElement ele = Document.get().createPreElement();
@@ -1242,7 +1706,7 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("i Some intermediate step with a \033[32mfield\033[39m-----------------------\r+++++++++++++++++++++++++++++++++++++\r\033[33m!\033[39m An alert message which is long enough\ni Some intermediate step with a \033[32mfield\033[39m\n");
       Assert.assertEquals("<span class=\"xtermColor3\">!</span><span> An alert message which is long enough</span><span>---------------------\ni Some intermediate step with a </span><span class=\"xtermColor2\">field</span><span>\n</span>", ele.getInnerHTML());
    }
-   
+
    public void testCsiCursorMovement()
    {
       PreElement ele = Document.get().createPreElement();
@@ -1250,7 +1714,7 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("Hello world!\033[10DLL\033[4CRL");
       Assert.assertEquals(ele.getInnerText(), "HeLLo woRLd!");
    }
-   
+
    public void testEraseInLineMode0Default()
    {
       // \033[K with no param defaults to mode 0 (erase from cursor to end of line)
@@ -1519,7 +1983,7 @@ public class VirtualConsoleTests extends GWTTestCase
       String text = "\u001b[34mhello\u001b[0m";
       for (int i = 0, n = text.length(); i < n; i++)
          vc.submit(text.substring(i, i + 1));
-      
+
       Assert.assertEquals(ele.getInnerText(), "hello");
    }
 
@@ -1637,6 +2101,43 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("abc\ndef\033[1A\033[9CX");
+      Assert.assertEquals("abcX\ndef", vc.toString());
+   }
+
+   public void testCsiCursorMovementDefaultsToOne()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\r\033[Cx\033[Dy");
+      Assert.assertEquals("ayc", vc.toString());
+   }
+
+   public void testCsiCursorMovementZeroCountMeansOne()
+   {
+      // as in xterm, an explicit count of 0 moves by 1
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\r\033[0Cx\033[0Dy");
+      Assert.assertEquals("ayc", vc.toString());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("abc\033[0Gx");
+      Assert.assertEquals("xbc", vc.toString());
+
+      ele = Document.get().createPreElement();
+      vc = getVC(ele);
+      vc.submit("abc\ndef\033[0A\rx");
+      Assert.assertEquals("xbc\ndef", vc.toString());
+   }
+
+   public void testCsiCursorForwardHugeCount()
+   {
+      // a count of Integer.MAX_VALUE, from a cursor past column 0, still stops
+      // at the end of the line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("abc\ndef\033[1A\033[2147483647CX");
       Assert.assertEquals("abcX\ndef", vc.toString());
    }
 

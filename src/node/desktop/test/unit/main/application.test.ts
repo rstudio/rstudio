@@ -15,18 +15,26 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { restore, saveAndClear } from '../unit-utils';
+import { Menu } from 'electron';
+
+import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 import { Application, collectStateDirIssues } from '../../../src/main/application';
+import { ApplicationLaunch } from '../../../src/main/application-launch';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { randomString } from '../../../src/main/utils';
 import { FilePath } from '../../../src/core/file-path';
 import { kRunDiagnosticsOption } from '../../../src/main/args-manager';
+import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
+import { MainWindow } from '../../../src/main/main-window';
+import { PendingWindow } from '../../../src/main/pending-window';
 
 describe('Application', () => {
   before(() => {
@@ -92,6 +100,37 @@ describe('Application', () => {
     });
   });
 
+  describe('Dock menu', () => {
+    beforeEach(() => {
+      clearApplicationSingleton();
+    });
+    afterEach(() => {
+      sinon.restore();
+      clearApplicationSingleton();
+    });
+
+    it('new window opens with no project', function () {
+      if (process.platform !== 'darwin') {
+        this.skip();
+      }
+
+      const application = new Application();
+      setApplication(application);
+
+      const appLaunch = createSinonStubInstance(ApplicationLaunch);
+      application.appLaunch = appLaunch;
+
+      const buildFromTemplate = sinon.spy(Menu, 'buildFromTemplate');
+      application.setDockMenu();
+
+      // the menu item's click handler ignores the arguments Electron passes it
+      const newWindowItem = buildFromTemplate.firstCall.args[0][0];
+      (newWindowItem.click as unknown as () => void)();
+
+      assert.isTrue(appLaunch.launchRStudio.calledOnceWithExactly({ noProject: true }));
+    });
+  });
+
   describe('Command line switches', () => {
     it('run-diagnostics sets diag mode and continues', () => {
       const app = new Application();
@@ -102,6 +141,114 @@ describe('Application', () => {
       assert.isTrue(app.runDiagnostics);
     });
   });
+  describe('Window creation', () => {
+    // stands in for a tracked window; only the methods the tracker and
+    // raiseAndActivateWindow() touch are provided
+    function trackedWindow(): { tracked: DesktopBrowserWindow; focus: sinon.SinonStub } {
+      const focus = sinon.stub();
+      const window = {
+        isMinimized: sinon.stub().returns(false),
+        restore: sinon.stub(),
+        moveTop: sinon.stub(),
+        showInactive: sinon.stub(),
+        focus: focus,
+        addListener: sinon.stub(),
+      };
+      return { tracked: { window } as unknown as DesktopBrowserWindow, focus };
+    }
+
+    function pendingSatellite(name: string): PendingWindow {
+      return {
+        type: 'satellite',
+        name: name,
+        mainWindow: {} as MainWindow,
+        screenX: -1,
+        screenY: -1,
+        width: 100,
+        height: 100,
+        allowExternalNavigate: false,
+      };
+    }
+
+    function pendingSecondary(name: string): PendingWindow {
+      return {
+        type: 'secondary',
+        name: name,
+        allowExternalNavigate: false,
+        showToolbar: true,
+      };
+    }
+
+    it('denies a satellite whose name is already open and activates that window', () => {
+      const app = new Application();
+      const { tracked, focus } = trackedWindow();
+      app.windowTracker.addWindow('rstudio_satellite_source', tracked);
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+
+      const result = app.windowOpening('rstudio_satellite_source');
+
+      assert.equal(result.action, 'deny');
+      assert.isTrue(focus.calledOnce);
+      // a denied request never reaches windowCreated(), so the pending entry
+      // must not be left behind for the next unrelated window.open()
+      assert.equal(app.pendingWindows.length, 0);
+    });
+
+    it('denies a secondary window whose name is already open and activates that window', () => {
+      const app = new Application();
+      const { tracked, focus } = trackedWindow();
+      app.windowTracker.addWindow('_rstudio_help', tracked);
+      app.prepareForWindow(pendingSecondary('_rstudio_help'));
+
+      const result = app.windowOpening('_rstudio_help');
+
+      assert.equal(result.action, 'deny');
+      assert.isTrue(focus.calledOnce);
+      assert.equal(app.pendingWindows.length, 0);
+    });
+
+    it('allows a satellite with an unused name and leaves it queued for windowCreated()', () => {
+      const app = new Application();
+      app.windowTracker.addWindow('rstudio_satellite_other', trackedWindow().tracked);
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+
+      const result = app.windowOpening('rstudio_satellite_source');
+
+      assert.equal(result.action, 'allow');
+      assert.equal(app.pendingWindows.length, 1);
+    });
+
+    it('drops stale entries queued ahead of the requested window', () => {
+      // Chromium reuses an already-open window of the same name without
+      // consulting us, so the entry queued for it never gets consumed; it must
+      // not deny (or configure) the next, unrelated window.open()
+      const app = new Application();
+      const { tracked, focus } = trackedWindow();
+      app.windowTracker.addWindow('rstudio_satellite_source', tracked);
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+      app.prepareForWindow(pendingSecondary('_rstudio_help'));
+
+      const result = app.windowOpening('_rstudio_help');
+
+      assert.equal(result.action, 'allow');
+      assert.isTrue(focus.notCalled);
+      assert.deepEqual(
+        app.pendingWindows.map((pending) => pending.name),
+        ['_rstudio_help'],
+      );
+    });
+
+    it('leaves the queue alone for a request with no pending entry', () => {
+      const app = new Application();
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+
+      const result = app.windowOpening('_blank');
+
+      assert.equal(result.action, 'allow');
+      assert.equal(app.pendingWindows.length, 1);
+    });
+  });
+
   describe('Assorted helpers', () => {
     it('generates and stores port', () => {
       const app = new Application();

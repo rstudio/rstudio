@@ -223,6 +223,7 @@ public class CodePreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
       displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
+      displayPanel.add(checkboxPref(constants_.displaySmoothScrollingLabel(), prefs_.smoothScrolling()));
 
       foldMode_ = new SelectWidget(
             constants_.displayFoldStyleLabel(),
@@ -544,6 +545,8 @@ public class CodePreferencesPane extends PreferencesPane
       rOptionsPanel.add(checkboxPref(
             constants_.diagnosticsWarnVariableDefinedButNotUsedLabel(), prefs_.warnVariableDefinedButNotUsed()));
       rOptionsPanel.add(checkboxPref(constants_.diagnosticsStyleDiagnosticsLabel(), prefs_.styleDiagnostics()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnConfusableCharactersLabel(), prefs_.warnConfusableCharacters()));
       rOptionsPanel.setVisible(prefs_.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override

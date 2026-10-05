@@ -27,9 +27,12 @@
 #include <unistd.h>
 #endif
 
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
+#include <cstdio>
 #include <cstdlib>
 #include <csignal>
 
@@ -41,6 +44,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/program_options.hpp>
 
 #include <core/AnsiEscapes.hpp>
 #include <core/BoostSignals.hpp>
@@ -283,7 +289,8 @@ namespace session {
 
 namespace {
 
-std::string s_fallbackLibraryPath;
+// leaked: exitFromBackgroundThread() reads it (see there)
+std::string& s_fallbackLibraryPath = core::make_leaked<std::string>();
 
 } // end anonymous namespace
 
@@ -947,6 +954,106 @@ void notifyIfWorkingDirectoryTooLong()
       console_output::OutputTypeWarning);
 }
 
+// Set during startup when the user data directory can't be written and a
+// temporary directory is used in its place. Like the warning above, it's held
+// until the console is available.
+std::string s_temporaryDataDirWarning;
+
+// Set during startup when the working directory the session was to start in
+// couldn't be entered and another was used in its place. Held until the
+// console is available, like the warnings above.
+std::string s_workingDirectoryWarning;
+
+// Whether the session was given a scope on the command line, as rserver does
+// for the sessions it manages (e.g. with multiple sessions or the Launcher).
+// Checked before the options are read, since they depend on the data
+// directory, so the option is parsed here the way Options::read parses it,
+// accepting every spelling it does (-s ID, -sID, --scope ID, --scope=ID and
+// unambiguous prefixes of --scope).
+bool hasSessionScopeArgument(int argc, char * const argv[])
+{
+   using namespace boost::program_options;
+
+   options_description scopeOption;
+   scopeOption.add_options()
+      (kScopeSessionOption "," kScopeSessionOptionShort, value<std::string>(), "");
+
+   try
+   {
+      command_line_parser parser(argc, const_cast<char**>(argv));
+      parser.options(scopeOption).allow_unregistered();
+
+      variables_map vm;
+      store(parser.run(), vm);
+      return vm.count(kScopeSessionOption) > 0;
+   }
+   catch (const boost::program_options::error&)
+   {
+      // Options::read reports the problem
+      return false;
+   }
+}
+
+void reportUnwritableUserDataDir(const FilePath& dataDir,
+                                 const Error& dataDirError,
+                                 const FilePath& temporaryDir,
+                                 const Error& temporaryDirError)
+{
+   if (temporaryDir.isEmpty())
+   {
+      // startup carries on with the unwritable directory, and will likely fail
+      ELOGF("Unable to write to user data directory {}: {}",
+            dataDir.getAbsolutePath(),
+            dataDirError.asString());
+      ELOGF("Unable to use a temporary directory in its place: {}",
+            temporaryDirError.asString());
+      return;
+   }
+
+   WLOGF("Unable to write to user data directory {}; using temporary directory {} instead: {}",
+         dataDir.getAbsolutePath(),
+         temporaryDir.getAbsolutePath(),
+         dataDirError.asString());
+
+   s_temporaryDataDirWarning = fmt::format(
+      "WARNING: RStudio can't write to its data directory, so this session is "
+      "keeping its state in a temporary directory instead.\n"
+      "\n"
+      "    Data directory:      {} ({})\n"
+      "    Temporary directory: {}\n"
+      "\n"
+      "State kept in the temporary directory, including unsaved documents, may "
+      "be deleted by the system, and it will not be moved back once the data "
+      "directory is fixed. To fix it, make sure the data directory is owned by "
+      "you and writable; this can happen if RStudio was previously run as "
+      "another user, e.g. with sudo.",
+      dataDir.getAbsolutePath(),
+      dataDirError.getMessage(),
+      temporaryDir.getAbsolutePath());
+}
+
+void notifyIfUserDataDirTemporary()
+{
+   if (s_temporaryDataDirWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_temporaryDataDirWarning,
+      console_output::OutputTypeWarning);
+}
+
+void notifyIfWorkingDirectoryReplaced()
+{
+   if (s_workingDirectoryWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_workingDirectoryWarning,
+      console_output::OutputTypeWarning);
+}
+
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -985,6 +1092,12 @@ void rSessionInitHook(bool newSession)
 
    // notify the user if the working directory is too long to launch children from
    notifyIfWorkingDirectoryTooLong();
+
+   // notify the user if session state is being kept in a temporary directory
+   notifyIfUserDataDirTemporary();
+
+   // notify the user if the session started somewhere other than its working directory
+   notifyIfWorkingDirectoryReplaced();
 
    // synchronize session info
    json::Object dataJson;
@@ -1732,11 +1845,7 @@ void detectParentTermination()
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-
-      // we no longer exit with ::abort because it generated unwanted exceptions
-      // ::_Exit should perform the same functionality (not running destructors and exiting process)
-      // without generating an exception
-      std::_Exit(EXIT_FAILURE);
+      exitEarly(EXIT_FAILURE);
    }
    else if (result == ParentTerminationNormal)
    {
@@ -1755,11 +1864,7 @@ void detectParentTermination(int parentFdRead, int parentFdWrite)
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-
-      // we no longer exit with ::abort because it generated unwanted exceptions
-      // ::_Exit should perform the same functionality (not running destructors and exiting process)
-      // without generating an exception
-      std::_Exit(EXIT_FAILURE);
+      exitEarly(EXIT_FAILURE);
    }
    else if (result == ParentTerminationNormal)
    {
@@ -1828,11 +1933,91 @@ void loadCranRepos(const std::string& repos,
 namespace rstudio {
 namespace session {
 
+void exitFromBackgroundThread(int status)
+{
+   // Nothing may escape: the listener thread would swallow an exception and
+   // keep the session running, and the macOS monitor thread would terminate()
+   // with the crash report it exists to avoid. Each step below is best
+   // effort on its own, so one failing must not skip the rest.
+
+   // Everything below can block indefinitely: the lock release writes to a
+   // session directory that may sit on a stalled network mount, and fflush()
+   // waits on each stream's lock, which a thread blocked in a read or write
+   // can hold forever. A watchdog bounds the whole exit; without one, we
+   // leave at once rather than risk never leaving.
+   bool bounded = false;
+   try
+   {
+      std::thread([status]()
+      {
+         std::this_thread::sleep_for(std::chrono::seconds(2));
+         std::_Exit(status);
+      }).detach();
+
+      bounded = true;
+   }
+   catch (...)
+   {
+   }
+
+   if (!bounded)
+      std::_Exit(status);
+
+   // exit() flushes stdio, which output to R's file() and pipe() connections
+   // relies on to reach disk. This runs before the lock release below, so a
+   // hung flush costs a successor some waiting rather than costing the user
+   // buffered output.
+   try
+   {
+      std::fflush(nullptr);
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      FilePath(s_fallbackLibraryPath).removeIfExists();
+   }
+   catch (...)
+   {
+   }
+
+   // Link-based locks stay on disk marked as held. Only a reader on this
+   // host that is not load-balanced treats a dead owner's lock as stale at
+   // once; any other reader would wait out the lock timeout. The main thread
+   // may still be taking or using locks, so a successor that reads the
+   // release could act on a directory this process is still writing to. That
+   // window is kept to the release itself, with nothing else between it and
+   // _Exit(); the main-thread path has always released before exit() too.
+   try
+   {
+      FileLock::cleanUp();
+   }
+   catch (...)
+   {
+   }
+
+   std::_Exit(status);
+}
+
 void exitEarly(int status)
 {
+   // exit() runs atexit handlers and static destructors on the calling
+   // thread, underneath a main thread that may still be using them. _Exit()
+   // skips both for the executable (on Windows, rsession.dll still gets
+   // DLL_PROCESS_DETACH and destroys its own statics). A background caller
+   // skips the worker joins below too: the main thread may be stopping or
+   // destroying the same thread handles, and _Exit() destroys nothing the
+   // workers use.
+   if (!core::thread::isMainThread())
+      exitFromBackgroundThread(status);
+
+   // no worker may still be running when exit() destroys the statics it uses
    stopMonitorWorkerThread();
    server_rpc::stop();
    offlineService().stop();
+
    FileLock::cleanUp();
    FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
@@ -2321,6 +2506,24 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       }
 #endif
       
+#ifndef _WIN32
+      // the log and all session state live in the user data directory; if it
+      // can't be written, switch to a temporary directory before either is used.
+      // a session with a scope is left alone: other processes, possibly on
+      // other hosts, look for its state (e.g. a suspended session) in the data
+      // directory, and a temporary directory would hide it from them
+      FilePath originalDataDir = core::system::xdg::userDataDir();
+      FilePath temporaryDataDir;
+      Error temporaryDataDirError;
+      Error dataDirError;
+      if (!hasSessionScopeArgument(argc, argv))
+      {
+         dataDirError = core::system::xdg::redirectUnwritableUserDataDir(
+            &temporaryDataDir,
+            &temporaryDataDirError);
+      }
+#endif
+
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
@@ -2332,6 +2535,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                   core::system::xdg::userLogDir(),
                                   true); // force log dir to be under user's home directory
       core::startup_timing::checkpoint("log-initialized");
+
+#ifndef _WIN32
+      if (dataDirError)
+      {
+         reportUnwritableUserDataDir(
+            originalDataDir,
+            dataDirError,
+            temporaryDataDir,
+            temporaryDataDirError);
+      }
+#endif
 
       // report any failure from initHook(), which ran before logging was up
 #ifdef _WIN32
@@ -2454,6 +2668,36 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                                      core::system::generateShortenedUuid(),
                                                      log::LogLevel::WARN,
                                                      log::LogMessageFormatType::PRETTY)));
+
+      // claim the session's socket before touching anything a second
+      // process for the same session would share with it (its project
+      // settings, source database, etc.), so that a duplicate launch of a
+      // session that's already running stops here (#18941)
+      error = claimSessionStream();
+      if (error == boost::asio::error::make_error_code(boost::asio::error::address_in_use))
+      {
+         std::string pid;
+         FilePath pidFile(error.getProperty("stream") + ".pid");
+         if (readStringFromFile(pidFile, &pid))
+            pid.clear();
+
+         WLOGF("Not starting: this session is already running{} [stream={}]",
+               pid.empty() ? "" : " in process " + boost::algorithm::trim_copy(pid),
+               error.getProperty("stream"));
+         return EXIT_FAILURE;
+      }
+      else if (error)
+      {
+         return sessionExitFailure(error, ERROR_LOCATION);
+      }
+
+      // a session that fails to start mustn't leave its socket and a pid file
+      // naming a dead process behind (on success, R exits the process)
+      BOOST_SCOPE_EXIT(void)
+      {
+         releaseSessionStream();
+      }
+      BOOST_SCOPE_EXIT_END
 
       // initialize monitor but stop its thread on exit
       initMonitorClient();
@@ -2732,12 +2976,48 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // set working directory
       FilePath workingDir = dirs::getInitialWorkingDirectory();
 
+      // the saved working directory can exist yet be impossible to enter (e.g.
+      // its permissions changed); exiting here would leave it saved and fail
+      // every later start the same way, so fall back to the default working
+      // directory and then the home directory. the log alone wouldn't explain
+      // why a project appears to have opened somewhere else, so the console
+      // says so too once it's up
+      Error workingDirError = workingDir.makeCurrentPath();
+      if (workingDirError)
+      {
+         LOG_ERROR(workingDirError);
+
+         FilePath fallbackDir = dirs::getDefaultWorkingDirectory();
+         error = fallbackDir.makeCurrentPath();
+         if (error)
+         {
+            LOG_ERROR(error);
+            fallbackDir = options.userHomePath();
+            error = fallbackDir.makeCurrentPath();
+         }
+         if (error)
+            return sessionExitFailure(error, ERROR_LOCATION);
+
+         s_workingDirectoryWarning = fmt::format(
+            "WARNING: RStudio could not start this session in {} ({}), so it "
+            "started in {} instead. Check that the directory exists and that "
+            "you have permission to enter it.",
+            workingDir.getAbsolutePath(),
+            workingDirError.getMessage(),
+            fallbackDir.getAbsolutePath());
+         workingDir = fallbackDir;
+
+         // the client and .RData handling ask for the initial working
+         // directory later, and should get the one the session is in
+         dirs::setInitialWorkingDirectory(workingDir);
+      }
+
 #ifdef _WIN32
       // Long path awareness (see the longPathAware entry in rsession.exe.manifest)
       // does not extend to the current directory: per the SetCurrentDirectory docs,
       // "Setting a current directory longer than MAX_PATH causes CreateProcessW to
       // fail", which would take out git, terminals, builds and R CMD. Before we
-      // declared long path awareness this call simply failed; now it succeeds and the
+      // declared long path awareness makeCurrentPath() simply failed; now it succeeds and the
       // damage shows up later with no obvious cause, so say so up front. See #12806.
       //
       // Measure in UTF-16 units, which is what MAX_PATH counts and what the wide APIs
@@ -2759,10 +3039,6 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          LOG_WARNING_MESSAGE(s_workingDirWarning);
       }
 #endif
-
-      error = workingDir.makeCurrentPath();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
 
       // override the active session's working directory
       // it is created with the default value of ~, so if our session options

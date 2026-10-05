@@ -33,6 +33,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
@@ -258,8 +259,9 @@ Error launchSessionRecovery(
    bool launched;
 
    core::system::Options environment;
+   core::json::JsonRpcRequest jsonRequest;
    return sessionManager().launchSession(ptrConnection->ioContext(),
-         context, request, launched, environment);
+         context, jsonRequest, request, launched, environment);
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(
@@ -306,14 +308,35 @@ bool sessionContextForRequest(
    }
 }
 
+// the pid of the session process a proxied request reached, so the session
+// manager can tell an outcome produced by the session a restart is replacing
+// from one produced by its replacement (#18963); -1 when no connection was
+// made. the client is captured weakly: it owns the handlers this is called
+// from, and a strong reference would keep it alive forever.
+PidType peerPidOf(const boost::weak_ptr<http::LocalStreamAsyncClient>& weakClient)
+{
+   boost::shared_ptr<http::LocalStreamAsyncClient> pClient = weakClient.lock();
+   return pClient ? pClient->peerPid() : -1;
+}
+
+// errors reach their handlers without the client; the client stamps the pid
+// on them instead
+PidType peerPidOf(const Error& error)
+{
+   return safe_convert::stringTo<PidType>(error.getProperty(http::kLocalStreamPeerPidProperty), -1);
+}
+
 // The /s/ path's headers-received hook. Its whole content is the pending-launch
 // bookkeeping, which only needs to know that the session answered -- see
 // ResponseHeadersHandler in AsyncClient.hpp for why hooks live here rather than
 // in the completion handler.
-void handleProxyResponseHeaders(const r_util::SessionContext& context, http::Response&)
+void handleProxyResponseHeaders(
+   const r_util::SessionContext& context,
+   const boost::weak_ptr<http::LocalStreamAsyncClient>& weakClient,
+   http::Response&)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context);
+   sessionManager().removePendingLaunch(context, true, std::string(), peerPidOf(weakClient));
 }
 
 void handleProxyResponse(
@@ -606,7 +629,7 @@ void handleContentError(
       const Error& error)
 {   
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context, false, std::string());
+   sessionManager().removePendingLaunch(context, false, std::string(), peerPidOf(error));
 
 
    // check for authentication error
@@ -694,7 +717,7 @@ void handleRpcError(
       const Error& error)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context, false, std::string());
+   sessionManager().removePendingLaunch(context, false, std::string(), peerPidOf(error));
 
    // Assemble the error response separately and hand it to writeResponse(),
    // which claims the connection before assigning it. ptrConnection->response()
@@ -907,9 +930,12 @@ void proxyRequest(
    // create client
    // if the user is available on the system pass in the uid for validation to ensure
    // that we only connect to the socket if it was created by the user
-   boost::shared_ptr<http::IAsyncClient> pClient(new http::LocalStreamAsyncClient(
-                                                    ptrConnection->ioContext(),
-                                                    streamPath, false, validateUid));
+   boost::shared_ptr<http::LocalStreamAsyncClient> pStreamClient(new http::LocalStreamAsyncClient(
+      ptrConnection->ioContext(),
+      streamPath,
+      false,
+      validateUid));
+   boost::shared_ptr<http::IAsyncClient> pClient = pStreamClient;
 
    // setup retry context
    if (!connectionRetryProfile.empty())
@@ -929,7 +955,10 @@ void proxyRequest(
 
       fixedBufferProxy->proxy(pClient, getAuthCookies(ptrConnection->response()));
       pClient->setResponseHeadersHandler(
-         boost::bind(handleProxyResponseHeaders, context, _1));
+         boost::bind(handleProxyResponseHeaders,
+                     context,
+                     boost::weak_ptr<http::LocalStreamAsyncClient>(pStreamClient),
+                     _1));
       pClient->setStreamNonChunkedResponses(true);
       pClient->setBufferPredicate(shouldBufferLocalStreamResponse);
       pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),

@@ -96,8 +96,12 @@ public class PlumberAPIPresenter implements
    
    private native void initializeEvents() /*-{  
       var thiz = this;   
-      $wnd.addEventListener(
-            "unload",
+
+      // listen on this module's frame ('window') rather than the top-level
+      // window ('$wnd'); see the note in Satellite.initializeNative()
+      // https://github.com/rstudio/rstudio/issues/18987
+      window.addEventListener(
+            "pagehide",
             $entry(function() {
                thiz.@org.rstudio.studio.client.plumber.PlumberAPIPresenter::onClose()();
             }),
@@ -124,7 +128,8 @@ public class PlumberAPIPresenter implements
    }-*/;
    
    private final native void notifyPlumberAPIClosed(JavaScriptObject params) /*-{
-      $wnd.opener.notifyPlumberAPIClosed(params);
+      if ($wnd.opener)
+         $wnd.opener.notifyPlumberAPIClosed(params);
    }-*/;
 
    private final native void notifyPlumberAPIDisconnected(JavaScriptObject params) /*-{

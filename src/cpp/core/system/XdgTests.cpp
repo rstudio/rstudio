@@ -19,6 +19,11 @@
 
 #include <boost/filesystem.hpp>
 
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <vector>
+
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
@@ -36,12 +41,55 @@ namespace {
 boost::optional<std::string> s_defaultUser("default");
 boost::optional<FilePath>    s_defaultHome("/tmp/default");
 
+// RAII guard that unsets a set of environment variables, restoring their original values (or
+// leaving them unset) when the guard goes out of scope. Counterpart to EnvironmentScope (in
+// core/system/Environment.hpp), which overrides a variable to a specific value - this instead
+// guarantees a variable is absent for the scope's duration, regardless of what the ambient
+// environment happens to have set.
+class ScopedEnvUnset : boost::noncopyable
+{
+public:
+   explicit ScopedEnvUnset(std::vector<std::string> variables) : variables_(std::move(variables))
+   {
+      for (const auto& variable : variables_)
+      {
+         std::string previousValue;
+         hadValue_.push_back(core::system::getenv(variable, &previousValue));
+         previousValues_.push_back(previousValue);
+         core::system::unsetenv(variable);
+      }
+   }
+
+   ~ScopedEnvUnset()
+   {
+      for (size_t i = 0; i < variables_.size(); ++i)
+      {
+         if (hadValue_[i])
+            core::system::setenv(variables_[i], previousValues_[i]);
+         else
+            core::system::unsetenv(variables_[i]);
+      }
+   }
+
+private:
+   std::vector<std::string> variables_;
+   std::vector<std::string> previousValues_;
+   std::vector<bool> hadValue_;
+};
+
 } // end anonymous namespace
 
 TEST(XdgTest, DirectoryResolution)
 {
+   // userConfigDir/userDataDir/userCacheDir consult these env vars ahead of any explicitly-supplied
+   // home directory (see EnvironmentOverrides below), so clear them here - otherwise this test's
+   // explicit-home-dir assertions are at the mercy of whatever the ambient environment happens to
+   // have set for them.
+   ScopedEnvUnset scopedEnvUnset({"RSTUDIO_CONFIG_HOME", "XDG_CONFIG_HOME", "RSTUDIO_DATA_HOME",
+                                  "XDG_DATA_HOME", "RSTUDIO_CACHE_HOME", "XDG_CACHE_HOME"});
+
    FilePath homePath(core::system::getenv("HOME"));
-   
+
    EXPECT_EQ(homePath.completeChildPath(".config/rstudio"), userConfigDir());
    EXPECT_EQ(homePath.completeChildPath(".config/rstudio"), userConfigDir(s_defaultUser));
    EXPECT_EQ(FilePath("/tmp/default/.config/rstudio"), userConfigDir(s_defaultUser, s_defaultHome));
@@ -54,7 +102,6 @@ TEST(XdgTest, DirectoryResolution)
    EXPECT_EQ(homePath.completeChildPath(".cache/rstudio"), userCacheDir(s_defaultUser));
    EXPECT_EQ(FilePath("/tmp/default/.cache/rstudio"), userCacheDir(s_defaultUser, s_defaultHome));
 }
-   
 
 TEST(XdgTest, EnvironmentOverrides)
 {
@@ -149,6 +196,140 @@ TEST(XdgTest, SystemConfigFileSearch)
    boost::filesystem::remove_all(testDir);
 }
 
+namespace {
+
+// A unique directory for a single test, removed when the test finishes.
+class ScopedTestDir : boost::noncopyable
+{
+public:
+   ScopedTestDir()
+   {
+      EXPECT_FALSE(FilePath::tempFilePath(path_));
+      EXPECT_FALSE(path_.ensureDirectory());
+   }
+
+   ~ScopedTestDir()
+   {
+      EXPECT_FALSE(path_.removeIfExists());
+   }
+
+   const FilePath& path() const
+   {
+      return path_;
+   }
+
+private:
+   FilePath path_;
+};
+
+mode_t fileMode(const FilePath& path)
+{
+   struct stat info;
+   EXPECT_EQ(0, ::lstat(path.getAbsolutePath().c_str(), &info));
+   return info.st_mode & 07777;
+}
+
+} // anonymous namespace
+
+TEST(XdgTest, CheckDirectoryWritable)
+{
+   ScopedTestDir testDir;
+
+   EXPECT_FALSE(checkDirectoryWritable(testDir.path()));
+
+   // a missing directory is created, and no probe file is left behind
+   FilePath missing = testDir.path().completePath("a/b");
+   EXPECT_FALSE(checkDirectoryWritable(missing));
+   EXPECT_TRUE(missing.isDirectory());
+   std::vector<FilePath> children;
+   EXPECT_FALSE(missing.getChildren(children));
+   EXPECT_TRUE(children.empty());
+
+   FilePath file = testDir.path().completePath("file");
+   ASSERT_FALSE(file.ensureFile());
+   EXPECT_TRUE(checkDirectoryWritable(file));
+
+   // root can write regardless of permission bits
+   if (::geteuid() != 0)
+   {
+      FilePath readOnly = testDir.path().completePath("read-only");
+      ASSERT_FALSE(readOnly.ensureDirectory());
+      ASSERT_EQ(0, ::chmod(readOnly.getAbsolutePath().c_str(), 0555));
+      EXPECT_TRUE(checkDirectoryWritable(readOnly));
+      ASSERT_EQ(0, ::chmod(readOnly.getAbsolutePath().c_str(), 0755));
+   }
+}
+
+TEST(XdgTest, TemporaryUserDataDir)
+{
+   ScopedTestDir testDir;
+   EnvironmentScope scope("TMPDIR", testDir.path().getAbsolutePath().c_str());
+   FilePath expected = testDir.path().completePath("rstudio-data-" + username());
+
+   FilePath temporaryDir;
+   ASSERT_FALSE(temporaryUserDataDir(&temporaryDir));
+   EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
+   EXPECT_TRUE(temporaryDir.isDirectory());
+   EXPECT_EQ(0700, fileMode(temporaryDir));
+
+   // an existing directory is reused, and made private again
+   ASSERT_EQ(0, ::chmod(expected.getAbsolutePath().c_str(), 0755));
+   ASSERT_FALSE(temporaryUserDataDir(&temporaryDir));
+   EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
+   EXPECT_EQ(0700, fileMode(temporaryDir));
+
+   // anything else at that path is refused, including a symlink to a directory
+   ASSERT_FALSE(expected.remove());
+   FilePath target = testDir.path().completePath("target");
+   ASSERT_FALSE(target.ensureDirectory());
+   ASSERT_EQ(0, ::symlink(target.getAbsolutePath().c_str(), expected.getAbsolutePath().c_str()));
+   EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
+
+   ASSERT_EQ(0, ::unlink(expected.getAbsolutePath().c_str()));
+   ASSERT_FALSE(expected.ensureFile());
+   EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
+}
+
+TEST(XdgTest, RedirectUnwritableUserDataDir)
+{
+   // root can write regardless of permission bits
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "permission checks don't apply to root";
+
+   ScopedTestDir testDir;
+   FilePath dataDir = testDir.path().completePath("data");
+   ASSERT_FALSE(dataDir.ensureDirectory());
+   EnvironmentScope tmpScope("TMPDIR", testDir.path().getAbsolutePath().c_str());
+
+   {
+      EnvironmentScope dataScope("RSTUDIO_DATA_HOME", dataDir.getAbsolutePath().c_str());
+
+      // a writable data directory is left alone
+      FilePath temporaryDir;
+      Error temporaryDirError;
+      EXPECT_FALSE(redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError));
+      EXPECT_TRUE(temporaryDir.isEmpty());
+      EXPECT_EQ(dataDir.getAbsolutePath(), userDataDir().getAbsolutePath());
+      EXPECT_FALSE(isUserDataDirTemporary());
+
+      // an unwritable one is replaced by the temporary directory
+      ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0555));
+      Error error = redirectUnwritableUserDataDir(&temporaryDir, &temporaryDirError);
+      ASSERT_EQ(0, ::chmod(dataDir.getAbsolutePath().c_str(), 0755));
+
+      EXPECT_TRUE(error);
+      EXPECT_FALSE(temporaryDirError);
+      FilePath expected = testDir.path().completePath("rstudio-data-" + username());
+      EXPECT_EQ(expected.getAbsolutePath(), temporaryDir.getAbsolutePath());
+      EXPECT_EQ(expected.getAbsolutePath(), userDataDir().getAbsolutePath());
+      EXPECT_TRUE(isUserDataDirTemporary());
+   }
+
+   // the redirect ends with the environment that carried it, so it doesn't
+   // outlive this test
+   EXPECT_FALSE(isUserDataDirTemporary());
+}
+
 } // namespace tests
 } // namespace xdg
 } // namespace system
@@ -156,3 +337,58 @@ TEST(XdgTest, SystemConfigFileSearch)
 } // namespace rstudio
 
 #endif // _WIN32
+
+#include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
+
+namespace rstudio {
+namespace core {
+namespace system {
+namespace xdg {
+namespace tests {
+
+// Unlike the tests above this also runs on Windows, where Desktop resolves
+// $XDG_CONFIG_HOME/vim/vimrc too; paths are built from the current directory
+// because a drive-less path such as /tmp is relative there.
+TEST(XdgTest, XdgUserConfigHome)
+{
+   FilePath base = FilePath::safeCurrentPath(FilePath()).completeChildPath("xdg-test");
+   FilePath home = base.completeChildPath("home");
+   FilePath fallback = home.completeChildPath(".config");
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "");
+      EXPECT_EQ(fallback, xdgUserConfigHome(home));
+
+      EnvironmentScope rstudioScope("RSTUDIO_CONFIG_HOME", base.completeChildPath("rstudio").getAbsolutePath().c_str());
+      EXPECT_EQ(fallback, xdgUserConfigHome(home));
+   }
+
+   {
+      FilePath custom = base.completeChildPath("custom");
+      EnvironmentScope scope("XDG_CONFIG_HOME", custom.getAbsolutePath().c_str());
+      EXPECT_EQ(custom, xdgUserConfigHome(home));
+   }
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "~/configurations");
+      EXPECT_EQ(home.completeChildPath("configurations"), xdgUserConfigHome(home));
+   }
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "$HOME/configurations");
+      EXPECT_EQ(home.completeChildPath("configurations"), xdgUserConfigHome(home));
+   }
+
+   // the XDG spec requires relative values to be ignored
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", ".config");
+      EXPECT_EQ(fallback, xdgUserConfigHome(home));
+   }
+}
+
+} // namespace tests
+} // namespace xdg
+} // namespace system
+} // namespace core
+} // namespace rstudio

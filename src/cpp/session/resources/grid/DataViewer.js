@@ -208,6 +208,14 @@ var renderEnd = 0;
 // spacer even when the row window itself is unchanged.
 var renderOverscroll = 0;
 
+// The scrollTop each pane was last given by the code that mirrors the other
+// pane onto it, or -1 when the pane has moved on its own since. A scroll event
+// does not say who scrolled, and the one for a programmatic write can arrive a
+// frame after the write; these are how the two scroll handlers recognise the
+// echo of their own mirroring. See syncPinnedScrollTop.
+var pinnedMirroredTop = -1;
+var viewportMirroredTop = -1;
+
 // Incremental row recycling state
 var renderedRowElements = new Map(); // rowIndex -> <tr> element
 var topSpacerRow = null;
@@ -2606,6 +2614,10 @@ var applyPinnedColumns = function() {
       }
       table.style.paddingRight = overscroll + "px";
    }
+
+   // The padding just written is what decides whether the viewport overflows
+   // horizontally, and so whether a native bar takes a gutter out of it.
+   syncPinnedPaneGutter();
 };
 
 // ==========================================================================
@@ -4008,6 +4020,34 @@ var hScrollbarOverlayHeight = function(viewport) {
       ? 0 : NATIVE_H_SCROLLBAR_OVERLAY_RESERVE;
 };
 
+// Inset the frozen pane by the layout space the viewport's native horizontal
+// scrollbar claims, so the two panes share one vertical scroll range. The
+// panes are the same height with the same rows and spacers, but the gutter
+// comes out of the viewport's clientHeight only (the frozen pane's own bar is
+// hidden and its table never overflows horizontally), so its scroll range
+// ended a gutter short of the viewport's. syncPinnedScrollTop then clamped it
+// a bar's height early at maximum scroll -- leaving the row labels a row out
+// of step with the rows beside them, and setting up the onPinnedScroll clamp
+// check that yanked the viewport back under the bar (#18620). Zero in overlay
+// mode and wherever the platform floats native bars, where the ranges already
+// match. Runs from applyPinnedColumns, whose overscroll padding is what makes
+// the viewport overflow horizontally in the first place.
+var syncPinnedPaneGutter = function() {
+   var viewport = domViewport;
+   var pinnedPane = domPinnedPane;
+   if (!viewport || !pinnedPane) return;
+
+   // The scroll panes carry no border, so this is exactly the bar's gutter.
+   // Padding rather than margin: bottom padding extends the scroll range by
+   // the same amount without shrinking the pane's box, so the strip beside the
+   // bar still takes wheel and middle-click autoscroll (with a margin it fell
+   // through to the non-scrollable #gridPanes).
+   var gutter = Math.max(0, viewport.offsetHeight - viewport.clientHeight);
+   var paddingBottom = gutter > 0 ? gutter + "px" : "";
+   if (pinnedPane.style.paddingBottom !== paddingBottom)
+      pinnedPane.style.paddingBottom = paddingBottom;
+};
+
 // Height of the viewport area in which data rows are actually visible. The
 // viewport's full clientHeight overstates this: the sticky <thead> overlays
 // the top (while still contributing to scroll content height), and the custom
@@ -4228,12 +4268,30 @@ var updateSpacerRowHeight = function(spacerTr, heightPx) {
    }
 };
 
+// The height last written by updateSpacerRowHeight. Read back from the inline
+// style rather than recomputed from renderStart / renderEnd: a full rebuild
+// that stopped at a row missing from the cache folds the unrendered remainder
+// into the bottom spacer, so that spacer can be taller than renderEnd implies.
+var spacerRowHeight = function(spacerTr) {
+   if (!spacerTr || !spacerTr.firstChild) return 0;
+   return parseFloat(spacerTr.firstChild.style.height) || 0;
+};
+
 // Render rows visible in the current scroll window. Two paths:
 //   - Incremental (default): patch the existing DOM, adding/removing only
 //     rows that crossed the window edge. Fast; used for normal scroll.
 //   - Full rebuild (forceRebuild=true): wipe and re-render the whole window.
 //     Required after fetches, sort/filter, sidebar toggle, resize, etc. --
 //     anything that invalidates row content or window layout.
+//
+// Neither path may leave the scroll content shorter, even for a moment, than
+// it is once the render completes. The browser clamps scrollTop to the content
+// it has laid out, so a layout pass that lands between "rows recycled off the
+// top" and "top spacer grown to cover them" pulls a view near the bottom back
+// up by the height of the recycled rows -- four rows for a wheel notch, one for
+// an arrow key -- and the last row can then never be reached (#18988). Nothing
+// here forces such a pass, but the grid does not get to decide when the
+// browser lays out, so both paths are ordered to be safe if one does.
 var renderVisibleRows = function(forceRebuild) {
    var viewport = domViewport;
    var tbody = domTbody;
@@ -4337,19 +4395,19 @@ var renderVisibleRows = function(forceRebuild) {
       fragU.appendChild(bottomSpacerRow.unpinned);
       fragP.appendChild(bottomSpacerRow.pinned);
 
-      tbody.innerHTML = "";
-      tbody.appendChild(fragU);
-      if (pinnedTbody) {
-         pinnedTbody.innerHTML = "";
-         pinnedTbody.appendChild(fragP);
-      }
-
+      // Size the spacers while they are still detached, then swap each pane's
+      // rows in a single step, so the content goes straight from the old
+      // window's height to the new one's with no empty state in between.
       var topH = newStart * ROW_HEIGHT;
       var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT + overscroll;
       updateSpacerRowHeight(topSpacerRow.unpinned, topH);
       updateSpacerRowHeight(topSpacerRow.pinned, topH);
       updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
       updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
+
+      tbody.replaceChildren(fragU);
+      if (pinnedTbody)
+         pinnedTbody.replaceChildren(fragP);
 
       renderStart = newStart;
       renderEnd = newEnd;
@@ -4358,6 +4416,21 @@ var renderVisibleRows = function(forceRebuild) {
    }
 
    // --- Incremental update (both panes in lockstep) ---
+
+   // Grow before shrinking: a spacer that ends up taller is resized now, ahead
+   // of the rows it replaces being removed, and one that ends up shorter keeps
+   // its height until the rows that replace it are in. The content is then
+   // never shorter than its final height while the window is being patched.
+   var topH = newStart * ROW_HEIGHT;
+   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT + overscroll;
+   if (topH > spacerRowHeight(topSpacerRow.unpinned)) {
+      updateSpacerRowHeight(topSpacerRow.unpinned, topH);
+      updateSpacerRowHeight(topSpacerRow.pinned, topH);
+   }
+   if (botH > spacerRowHeight(bottomSpacerRow.unpinned)) {
+      updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
+      updateSpacerRowHeight(bottomSpacerRow.pinned, botH);
+   }
 
    // Remove rows that are no longer in the window
    // Scrolling down: remove from top (renderStart .. newStart-1)
@@ -4425,9 +4498,8 @@ var renderVisibleRows = function(forceRebuild) {
       return;
    }
 
-   // Update spacer heights (both panes stay aligned)
-   var topH = newStart * ROW_HEIGHT;
-   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT + overscroll;
+   // Settle the spacers at their final heights (both panes stay aligned); this
+   // is where the ones that were held back above shrink.
    updateSpacerRowHeight(topSpacerRow.unpinned, topH);
    updateSpacerRowHeight(topSpacerRow.pinned, topH);
    updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
@@ -4449,33 +4521,72 @@ var debouncedInfoBar = debounce(TIMING.infoBarDebounce, updateInfoBar);
 // scroll event -- it's a single property write -- so the panes never lag a
 // frame apart. Horizontal scroll never touches the pinned pane (it has no
 // horizontal overflow).
+//
+// Each pane mirrors the other, so each one's write comes back as a scroll
+// event on the pane it wrote to. Comparing the two panes' positions is not
+// enough to tell that echo from a scroll of the pane's own: Chrome 154
+// delivers the event for a programmatic write in the frame after the write,
+// and while a scroll is in progress the pane that is being scrolled has moved
+// on by then. The echo read as a scroll to the previous frame's position and
+// was mirrored back, pulling the scrolling pane back a frame's travel on every
+// frame -- a wheel gesture covered about half its distance, a scrollbar drag
+// flickered, and either could finish short of where it was sent, which at the
+// bottom left the last row out of reach (#18988). Earlier versions deliver the
+// event within the same frame, where the positions still agree.
+//
+// So each handler remembers the position it gave the other pane, and the other
+// pane's handler ignores a scroll event that finds the pane still there.
 var syncPinnedScrollTop = function() {
-   if (domPinnedPane && domViewport)
-      domPinnedPane.scrollTop = domViewport.scrollTop;
+   if (!domPinnedPane || !domViewport) return;
+
+   // The echo of onPinnedScroll's write: the frozen pane is the one being
+   // scrolled, and is already ahead of this.
+   var top = domViewport.scrollTop;
+   if (top === viewportMirroredTop) return;
+   viewportMirroredTop = -1;
+
+   if (domPinnedPane.scrollTop === top) return;
+
+   // Read back rather than assumed, since the write is clamped to the pane's
+   // scroll range.
+   domPinnedPane.scrollTop = top;
+   pinnedMirroredTop = domPinnedPane.scrollTop;
 };
 
 // The frozen pane is itself vertically scrollable (so wheel / middle-click over
 // it work), but the unpinned pane is the master that drives rendering and holds
 // the visible scrollbar. Mirror the frozen pane's scroll onto the master, which
-// re-renders and mirrors back via onScroll -> syncPinnedScrollTop. The equality
-// guards make this converge without an event ping-pong (setting scrollTop to
-// its current value fires no scroll event).
+// re-renders via onScroll; syncPinnedScrollTop recognises the echo and leaves
+// the frozen pane alone.
 var onPinnedScroll = function() {
    if (!domPinnedPane || !domViewport) return;
-   if (domViewport.scrollTop === domPinnedPane.scrollTop) return;
-   // In native-scrollbar mode the viewport's horizontal scrollbar shrinks its
-   // clientHeight, so the viewport can scroll slightly lower than the
-   // (scrollbar-free) frozen pane. When the viewport is ahead but the frozen
-   // pane is already clamped at its own bottom, that gap is just the clamp --
-   // not a user scroll of the frozen pane -- so leave the viewport alone rather
-   // than yanking it back up (which snapped the bottom edge). The scrollHeight
-   // read is reached only in this descending/bottom case, not on the common
-   // synced-echo path above.
-   if (domViewport.scrollTop > domPinnedPane.scrollTop) {
+
+   // The echo of syncPinnedScrollTop's write; see there.
+   var top = domPinnedPane.scrollTop;
+   if (top === pinnedMirroredTop) return;
+   pinnedMirroredTop = -1;
+
+   if (domViewport.scrollTop === top) return;
+   // syncPinnedPaneGutter gives both panes the same scroll range, but the
+   // gutter it mirrors is a whole-pixel measurement of a fractional layout,
+   // so the frozen pane can still clamp a fraction of a pixel short of the
+   // viewport. When the viewport is ahead but the frozen pane is already at
+   // its own bottom, that gap is just the clamp -- not a user scroll of the
+   // frozen pane -- so leave the viewport alone rather than yanking it back
+   // up. Compared with a pixel of slack: scrollHeight and clientHeight are
+   // rounded while scrollTop is not, and under non-integer display scaling
+   // (Windows at 125%) the clamped offset reads e.g. 681.5 against a computed
+   // max of 682. An exact >= took that as "not clamped" and yanked the
+   // viewport back under the horizontal scrollbar on every wheel tick at the
+   // bottom (#18620). The scrollHeight read is reached only in this
+   // descending/bottom case, not on the common echo path above.
+   if (domViewport.scrollTop > top) {
       var pinnedMax = domPinnedPane.scrollHeight - domPinnedPane.clientHeight;
-      if (domPinnedPane.scrollTop >= pinnedMax) return;
+      if (top >= pinnedMax - 1) return;
    }
-   domViewport.scrollTop = domPinnedPane.scrollTop;
+
+   domViewport.scrollTop = top;
+   viewportMirroredTop = domViewport.scrollTop;
 };
 
 // The frozen pane has no horizontal scroll of its own (its table is exactly the
@@ -5729,24 +5840,35 @@ var renderSidebarWindow = function(force) {
    // space past its end (matching the old overflow-only overscroll padding).
    var overscroll = (n * H > clientH) ? Math.max(0, clientH - H) : 0;
    var tail = (last < 0) ? n : (n - 1 - last);
-   sidebarRenderTop.style.height = (first * H) + "px";
-   sidebarRenderBottom.style.height = (Math.max(0, tail) * H + overscroll) + "px";
+   var topH = first * H;
+   var botH = Math.max(0, tail) * H + overscroll;
+
+   // As in renderVisibleRows, the list must never be shorter mid-render than
+   // it ends up, or a layout pass landing here clamps a scrollTop near the
+   // bottom. A spacer that ends up taller grows now; one that ends up shorter
+   // waits until the new entries are in.
+   if (topH > (parseFloat(sidebarRenderTop.style.height) || 0))
+      sidebarRenderTop.style.height = topH + "px";
+   if (botH > (parseFloat(sidebarRenderBottom.style.height) || 0))
+      sidebarRenderBottom.style.height = botH + "px";
 
    // Drop sparklines queued for the entries we're about to destroy; the rebuilt
    // entries re-queue their own (otherwise renderPendingSparklines could draw
    // into a now-detached slot).
    pendingSparklines_ = [];
 
-   sidebarRenderMid.innerHTML = "";
-   if (last >= first) {
-      var frag = document.createDocumentFragment();
-      for (var i = first; i <= last; i++) {
-         var col = sidebarListCols[i];
-         var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
-         frag.appendChild(buildSidebarEntry(col, absIdx, i));
-      }
-      sidebarRenderMid.appendChild(frag);
+   // Swapped in a single step rather than emptied and refilled, which left the
+   // list a window's height short in between.
+   var frag = document.createDocumentFragment();
+   for (var i = first; i <= last; i++) {
+      var col = sidebarListCols[i];
+      var absIdx = (typeof col.col_index === "number") ? col.col_index : i + 1;
+      frag.appendChild(buildSidebarEntry(col, absIdx, i));
    }
+   sidebarRenderMid.replaceChildren(frag);
+
+   sidebarRenderTop.style.height = topH + "px";
+   sidebarRenderBottom.style.height = botH + "px";
 
    // Draw the seeded sparklines and fetch any summaries the new entries queued
    // -- but only while the panel is shown. A collapsed panel can still have a
@@ -7586,6 +7708,8 @@ var resetGridState = function() {
    // refresh.
    lastScrollTop = 0;
    lastScrollLeft = 0;
+   pinnedMirroredTop = -1;
+   viewportMirroredTop = -1;
 
    // Data
    cols = null;

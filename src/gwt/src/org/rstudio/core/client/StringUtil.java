@@ -386,6 +386,7 @@ public class StringUtil
          if (c == '&')
          {
             // Keep this entity table in sync with core::string_utils::htmlEscape
+            // and its inverse core::string_utils::htmlUnescape
             // (src/cpp/core/StringUtils.cpp). Match is case-sensitive; the
             // server only emits the lowercase forms below.
             if (s.startsWith("&lt;", i))        { out.append('<');  i += 4; }
@@ -1229,9 +1230,9 @@ public class StringUtil
    }
 
    /**
-    * Given map of name/value pairs, collapse into a single string using specified 
+    * Given map of name/value pairs, collapse into a single string using specified
     * separators:
-    * 
+    *
     *    {prefix}key{keyValueSeparator}value{fieldSeparator}
     */
    public static String collapse(Map<String, String> map,
@@ -1475,14 +1476,14 @@ public class StringUtil
    public static native int newlineCount(String string)
    /*-{
       var count = 0;
-      
+
       for (var index = string.indexOf('\n', 0);
            index !== -1;
            index = string.indexOf('\n', index + 1))
       {
           count++;
       }
-      
+
       return count;
    }-*/;
 
@@ -1716,24 +1717,24 @@ public class StringUtil
 
       return result;
    }
-   
+
    public static final String nullCoalesce(String value, String defaultValue)
    {
       return value == null ? defaultValue : value;
    }
-   
+
    public static final String ensureColonSuffix(String text)
    {
       if (text == null)
          return null;
-      
+
       if (text.trim().isEmpty())
          return "";
-      
+
       Match match = RE_TRAILING_COLON.match(text, 0);
       if (match == null)
          text = text + ":";
-      
+
       return text;
    }
 
@@ -1754,7 +1755,7 @@ public class StringUtil
 
    private static final Pattern RE_LEADING_WHITESPACE  = Pattern.create("^\\s+", "");
    private static final Pattern RE_TRAILING_WHITESPACE = Pattern.create("\\s+$", "");
-   
+
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat FALLBACK_DATE_FORMAT = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");

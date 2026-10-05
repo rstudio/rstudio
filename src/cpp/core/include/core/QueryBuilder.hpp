@@ -249,6 +249,8 @@ RawQueryBuilder::Secret<T> SECRET(const T& value)
  *
  * This produces a query similar to:
  *    SELECT id FROM table_name WHERE (column_a = ? OR column_b = ?)
+ *
+ * A QBWhereOr() object with no clauses added matches NO rows.
  */
 class QBWhereOr :
    public detail::QBCompoundWhere,
@@ -281,8 +283,11 @@ public:
  * This produces a query similar to:
  *    SELECT id FROM table_name WHERE (column_a = ? AND column_b = ?)
  *
- * This is only practically useful within a QBWhereOr() expression, as the
- * default behavior of .where() is already to use AND.
+ * This is equivalent to the default behavior of .where() on the Builder
+ * classes, but it can be used inside .whereNot() for NOT-AND semantics,
+ * or inside a QBWhereOr() expression for compound boolean logic.
+ *
+ * A QBWhereAnd() object with no clauses added matches ALL rows.
  */
 class QBWhereAnd :
    public detail::QBCompoundWhere,

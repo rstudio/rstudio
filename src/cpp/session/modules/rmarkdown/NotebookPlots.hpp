@@ -21,6 +21,7 @@
 
 #include <core/BoostSignals.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 
@@ -61,7 +62,8 @@ public:
          double dpi,
          PlotSizeBehavior sizeBehavior,
          const core::FilePath& plotFolder,
-         const std::string& chunkGraphicsBackend);
+         const std::string& chunkGraphicsBackend,
+         const core::json::Object& chunkDeviceArgs);
    void disconnect();
    void onExprComplete();
 private:
@@ -85,6 +87,7 @@ private:
    std::string nbCtxId_;
 
    std::string chunkGraphicsBackend_;
+   core::json::Object chunkDeviceArgs_;
    r::sexp::PreservedSEXP defaultGraphicsBackend_;
 
    r::sexp::PreservedSEXP deviceOption_;

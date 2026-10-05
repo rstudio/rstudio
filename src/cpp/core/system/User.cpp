@@ -23,6 +23,7 @@
 
 #include <shared_core/system/User.hpp>
 
+#include <pthread.h>
 #include <pwd.h>
 
 #include <boost/algorithm/string.hpp>
@@ -36,7 +37,6 @@
 
 #include <core/system/PosixGroup.hpp>
 
-#include <core/Thread.hpp>
 #include <core/Log.hpp>
 
 namespace rstudio {
@@ -53,7 +53,47 @@ struct UserCache {
 std::map<std::string, UserCache> s_usernameCache;
 std::map<UidType, UserCache> s_userIdCache;
 
-boost::mutex s_userCacheMutex;
+// A plain pthread mutex (rather than boost::mutex) so it can participate in pthread_atfork below: a child forked
+// while another thread held this mutex (e.g. rserver launching a session) could otherwise never look up a user.
+pthread_mutex_t s_userCacheMutex = PTHREAD_MUTEX_INITIALIZER;
+
+class UserCacheLock
+{
+public:
+   UserCacheLock()
+   {
+      ::pthread_mutex_lock(&s_userCacheMutex);
+   }
+
+   ~UserCacheLock()
+   {
+      ::pthread_mutex_unlock(&s_userCacheMutex);
+   }
+};
+
+// Hold the mutex across fork so both the parent and the child resume with it unlocked (the child's sole thread is the
+// forking thread, which owns it). Nothing logs under this mutex, but register after the logger's handlers regardless.
+struct AtForkRegistration
+{
+   AtForkRegistration()
+   {
+      log::registerForkHandlers();
+      ::pthread_atfork(lockUserCache, unlockUserCache, unlockUserCache);
+   }
+
+private:
+   static void lockUserCache()
+   {
+      ::pthread_mutex_lock(&s_userCacheMutex);
+   }
+
+   static void unlockUserCache()
+   {
+      ::pthread_mutex_unlock(&s_userCacheMutex);
+   }
+};
+
+AtForkRegistration s_atForkRegistration;
 
 constexpr const std::chrono::duration<double> s_userCacheDuration = std::chrono::milliseconds(5*60*1000);
 
@@ -62,12 +102,11 @@ void addUserToCache(User& user)
    UserCache cacheEnt;
    cacheEnt.user = user;
    cacheEnt.cacheTime = std::chrono::steady_clock::now();
-   LOCK_MUTEX(s_userCacheMutex)
    {
+      UserCacheLock lock;
       s_usernameCache[user.getUsername()] = cacheEnt;
       s_userIdCache[user.getUserId()] = cacheEnt;
    }
-   END_LOCK_MUTEX
 }
 
 bool getUserFromNameCache(const std::string& in_username, User* pUser, bool* pExpired)
@@ -75,8 +114,8 @@ bool getUserFromNameCache(const std::string& in_username, User* pUser, bool* pEx
    std::chrono::steady_clock::time_point cacheTime;
    User cacheUser;
 
-   LOCK_MUTEX(s_userCacheMutex)
    {
+      UserCacheLock lock;
       auto it = s_usernameCache.find(in_username);
       if (it == s_usernameCache.end())
       {
@@ -89,7 +128,6 @@ bool getUserFromNameCache(const std::string& in_username, User* pUser, bool* pEx
          cacheTime = it->second.cacheTime;
       }
    }
-   END_LOCK_MUTEX
 
    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
    if (cacheTime + s_userCacheDuration > now)
@@ -108,8 +146,8 @@ bool getUserFromIdCache(UidType in_userId, User* pUser, bool* pExpired)
    std::chrono::steady_clock::time_point cacheTime;
    User cacheUser;
 
-   LOCK_MUTEX(s_userCacheMutex)
    {
+      UserCacheLock lock;
       auto it = s_userIdCache.find(in_userId);
       if (it == s_userIdCache.end())
       {
@@ -122,7 +160,6 @@ bool getUserFromIdCache(UidType in_userId, User* pUser, bool* pExpired)
          cacheTime = it->second.cacheTime;
       }
    }
-   END_LOCK_MUTEX
 
    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
    if (cacheTime + s_userCacheDuration > now)
@@ -193,8 +230,8 @@ Error getUserFromUserId(UidType in_userId, User& out_user)
 void removeUserFromCache(const std::string& in_username)
 {
    int newSize;
-   LOCK_MUTEX(s_userCacheMutex)
    {
+      UserCacheLock lock;
       auto it = s_usernameCache.find(in_username);
       if (it != s_usernameCache.end())
       {
@@ -204,7 +241,6 @@ void removeUserFromCache(const std::string& in_username)
       }
       newSize = s_usernameCache.size();
    }
-   END_LOCK_MUTEX
 
    group::removeUserFromGroupCache(in_username);
 

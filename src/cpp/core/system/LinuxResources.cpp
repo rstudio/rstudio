@@ -15,6 +15,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/Algorithm.hpp>
@@ -28,10 +29,18 @@
 #include <core/system/PosixSystem.hpp>
 
 #include <boost/regex.hpp>
+#include <boost/scope_exit.hpp>
 
-#include <iostream>
-#include <fstream>
+#include <fmt/format.h>
+
+#include <algorithm>
+#include <cerrno>
+#include <cstdlib>
+#include <map>
+#include <sstream>
 #include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <sys/sysinfo.h>
 
@@ -56,117 +65,161 @@ MemoryUsageMode effectiveMemoryUsageMode()
    return s_memoryUsageMode;
 }
 
-// Parses /proc/meminfo to look up specific memory stats.
-Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
+// More than any of the procfs files read here holds. A descriptor that never
+// reports end-of-file would otherwise be read until memory ran out.
+const std::size_t kMaxProcFileSize = 1024 * 1024;
+
+// The lines of /proc/<pid>/status that give the parent and the size of a process.
+const std::vector<std::string>& processStatusKeys()
 {
-   // /proc/meminfo and /proc/<pid>/status contains lines that look like this:
+   // leaked: memory usage is queried from the offline service thread (#18318)
+   static const std::vector<std::string>& s_keys = core::make_leaked<std::vector<std::string>>(
+         std::initializer_list<std::string>{"PPid", "VmRSS", "VmSwap"});
+   return s_keys;
+}
+
+// Reads the number that follows the colon of a "Key: value" line. Blanks may
+// come before it, and a unit after it.
+bool readProcFileValue(const std::string& contents, std::size_t pos, std::size_t lineEnd, long* pValue)
+{
+   while (pos < lineEnd && (contents[pos] == ' ' || contents[pos] == '\t'))
+      pos++;
+
+   // strtol skips whitespace of its own, which could take it to the next line
+   if (pos == lineEnd || contents[pos] < '0' || contents[pos] > '9')
+      return false;
+
+   errno = 0;
+   *pValue = ::strtol(contents.c_str() + pos, nullptr, 10);
+   return errno == 0;
+}
+
+// Looks up the values of "Key: value" lines in a single pass over the
+// contents of a procfs file. A key that isn't there is left without a value.
+// So is one whose value can't be read, which is reported as an error once
+// the other keys have been looked up.
+Error scanProcFileKeys(const std::string& contents,
+                       const std::vector<std::string>& keys,
+                       std::vector<boost::optional<long>>* pValues)
+{
+   // /proc/meminfo and /proc/<pid>/status contain lines that look like this:
    //
    // MemTotal: 8124360 kB
+   pValues->assign(keys.size(), boost::none);
 
-   // Open the file and prepare to read it
-   FilePath memInfoFile(procPath);
-   std::shared_ptr<std::istream> pMemStream;
-   Error error = memInfoFile.openForRead(pMemStream);
-   if (error)
-   {
-      return error;
-   }
+   Error scanError;
    std::size_t numFound = 0;
-
-   // Read one line at a time, looking for each key
-   while (!pMemStream->eof())
+   std::size_t lineStart = 0;
+   while (numFound < keys.size() && lineStart < contents.size())
    {
-      std::string memLine;
-      try
-      {
-         std::getline(*pMemStream, memLine);
-      }
-      catch(const std::exception& e)
-      {
-         Error error = systemError(boost::system::errc::io_error,
-                                   ERROR_LOCATION);
-         error.addProperty("what", e.what());
-         error.addProperty("path", procPath);
-         return error;
-      }
+      std::size_t lineEnd = contents.find('\n', lineStart);
+      if (lineEnd == std::string::npos)
+         lineEnd = contents.size();
 
       for (std::size_t i = 0; i < keys.size(); i++)
       {
+         // The first line for a key is the one that counts. A repeated line
+         // must not be counted in place of a key that is yet to be found.
          const std::string& key = keys[i];
-         if (string_utils::isPrefixOf(memLine, keys[i] + ":"))
-         {
-            // This is the key we're looking for; read the value from the remainder of the line.
-            try
-            {
-               std::stringstream lineStream(string_utils::substring(
-                        memLine, key.size() + 1));
-               long nextValue;
-               lineStream >> nextValue;
-               (*pValues)[i] = nextValue;
-               numFound++;
-            }
-            catch (...)
-            {
-               error = systemError(boost::system::errc::protocol_error,
-                     "Could not read proc path value "
-                     "'" + key + "'"
-                     " from " + procPath + " line "
-                     "'" + memLine + "'",
-                     ERROR_LOCATION);
-            }
+         std::size_t keyEnd = lineStart + key.size();
+         bool isKeyOfLine = !(*pValues)[i] &&
+                            keyEnd < lineEnd &&
+                            contents[keyEnd] == ':' &&
+                            contents.compare(lineStart, key.size(), key) == 0;
+         if (!isKeyOfLine)
+            continue;
 
-            // We found the key
-            break;
+         long value = 0;
+         if (readProcFileValue(contents, keyEnd + 1, lineEnd, &value))
+         {
+            (*pValues)[i] = value;
+            numFound++;
          }
-      }
-      if (error || numFound == keys.size())
+         else if (!scanError)
+         {
+            std::string line = contents.substr(lineStart, lineEnd - lineStart);
+            scanError = systemError(boost::system::errc::protocol_error,
+                                    fmt::format("Could not read proc value '{}' from line '{}'", key, line),
+                                    ERROR_LOCATION);
+         }
+
          break;
+      }
+
+      lineStart = lineEnd + 1;
    }
+
+   return scanError;
+}
+
+// Reads a procfs file, and hands its contents to a parser. An error from the
+// parser is given the path of the file.
+template <typename Parser>
+Error parseProcFile(const std::string& procPath, Parser parser)
+{
+   std::string contents;
+   Error error = readProcFile(procPath, &contents);
    if (error)
       return error;
 
-   if (numFound != keys.size())
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         "Proc stat file: " + procPath + " missing value - found only: " + std::to_string(numFound) + " of: " +
-                         std::to_string(keys.size()) + " keys",
-                         ERROR_LOCATION);
-   }
-   return Success();
+   error = parser(contents);
+   if (error)
+      error.addProperty("path", procPath);
+   return error;
 }
 
-// Returns the RSS + swap for the specified process.
+// Reads /proc/meminfo to look up specific memory stats.
+Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
+{
+   return parseProcFile(procPath, [&](const std::string& contents)
+   {
+      return parseProcFileKeys(contents, keys, pValues);
+   });
+}
+
+// Reads the parent and the size of a process from its /proc/<pid>/status.
+Error readProcessStatus(const std::string& statusPath, ProcessStatus* pStatus)
+{
+   return parseProcFile(statusPath, [&](const std::string& contents)
+   {
+      return parseProcessStatus(contents, pStatus);
+   });
+}
+
+// Whether a procfs read failed because the process has since exited: ENOENT
+// if it was gone before the open, ESRCH if it was reaped before the read.
+bool isProcessGone(const Error& error)
+{
+   return isNotFoundError(error) || error == systemError(ESRCH, ErrorLocation());
+}
+
+// Returns the RSS + swap for the specified process, in kb.
 // The goal here is to choose values that are specific to a given process,
 // that are using real resources on the system. Including swap so that processes
 // that overflow main memory continue are measured based on their complete size.
 long getProcessSize(PidType pid)
 {
-   std::string statmPath = "/proc/" + std::to_string(pid) + "/statm";
-
-   std::vector<std::string> keys = {"VmRSS", "VmSwap"};
-   std::vector<long> values = {0, 0};
-
-   Error error = readProcFileKeys("/proc/" + std::to_string(pid) + "/status", keys, &values);
+   ProcessStatus status;
+   Error error = readProcessStatus("/proc/" + std::to_string(pid) + "/status", &status);
    if (error)
    {
       LOG_ERROR(error);
       return 0;
    }
 
-   // Return the sum of rss and swap in kb
-   return values[0] + values[1];
+   return status.sizeKb;
 }
 
-bool isChildOfParent(const std::map<PidType, PidType>& childToParentMap, PidType parentPid, PidType childPid)
+bool isChildOfParent(const std::map<PidType, ProcessStatus>& processes, PidType parentPid, PidType childPid)
 {
    if (childPid == parentPid)
       return true;
    do
    {
-      auto it = childToParentMap.find(childPid);
-      if (it == childToParentMap.end())
+      auto it = processes.find(childPid);
+      if (it == processes.end())
          return false;
-      PidType nextParent = it->second;
+      PidType nextParent = it->second.parentPid;
       if (nextParent == parentPid)
          return true;
       childPid = nextParent;
@@ -177,7 +230,7 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
 {
    DIR *pDir = nullptr;
    long childRssSize = 0;
-   std::map<PidType, PidType> childToParentMap;
+   std::map<PidType, ProcessStatus> processes;
 
    try
    {
@@ -197,6 +250,11 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
          if (pid <= 0)
             continue;
 
+         // The parent's size is the caller's to read, and its own parent
+         // has no bearing on which processes descend from it
+         if (pid == parentPid)
+            continue;
+
          FilePath procDir = FilePath("/proc").completeChildPath(pDirEnt->d_name);
 
          // Check that the process is owned by the same user
@@ -205,25 +263,26 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
          if (error || fileUid != userId)
             continue;
 
-         std::string statusPath = "/proc/" + std::string(pDirEnt->d_name) + "/status";
-         std::ifstream statusFile(statusPath);
-         if (statusFile.is_open())
+         // Take the parent and the size from a single read of the status
+         // file. Processes come and go while /proc is scanned, so one that
+         // has exited since it was listed is expected, and is left out.
+         ProcessStatus status;
+         error = readProcessStatus("/proc/" + std::string(pDirEnt->d_name) + "/status", &status);
+         if (error)
          {
-            std::string line;
-            while (std::getline(statusFile, line)) {
-               if (line.find("PPid:") == 0) {
-                  std::istringstream iss(line.substr(5));
-                  PidType ppid;
-                  iss >> ppid;
-                  // Sanity check that the child is not already a parent of this new parent
-                  // to avoid cycles in the childToParentMap
-                  if (!isChildOfParent(childToParentMap, pid, ppid))
-                     childToParentMap[pid] = ppid;
-                  break;
-                }
-            }
-            statusFile.close();
+            if (!isProcessGone(error))
+               log::logErrorAsDebug(error);
+
+            // A process whose parent is known keeps its place in the process
+            // tree, without a size, so that its descendants are still counted
+            if (status.parentPid == -1)
+               continue;
          }
+
+         // Sanity check that the child is not already a parent of this new parent
+         // to avoid cycles in the process tree
+         if (!isChildOfParent(processes, pid, status.parentPid))
+            processes[pid] = status;
       }
       ::closedir(pDir);
       pDir = nullptr;
@@ -234,16 +293,12 @@ long getProcessSizeOfChildren(PidType parentPid, UidType userId)
          ::closedir(pDir);
       return 0;
    }
-   int numChildren = 0;
-   for (const auto& entry : childToParentMap)
+
+   for (const auto& entry : processes)
    {
-      PidType pid = entry.first;
-      PidType childParent = entry.second;
-      if (childParent == parentPid || isChildOfParent(childToParentMap, parentPid, childParent))
-      {
-         childRssSize += getProcessSize(pid);
-         numChildren++;
-      }
+      const ProcessStatus& status = entry.second;
+      if (isChildOfParent(processes, parentPid, status.parentPid))
+         childRssSize += status.sizeKb;
    }
    return childRssSize;
 }
@@ -442,8 +497,7 @@ public:
    // In container mode the cgroup is shared by every session in the launcher
    // container, so the cgroup usage is a container-wide aggregate, not this
    // session's footprint. In meminfo mode the cgroup usage is deliberately
-   // avoided because it can include reclaimable file cache that doesn't reflect
-   // actual session use. In both of those modes, return this session's own
+   // avoided at the admin's request. In both of those modes, return this session's own
    // process-tree RSS (procfs) so the IDE gauge / "Session memory used" figure
    // reflects the individual session's real usage. getTotalMemoryUsed() reports
    // the container-wide cgroup usage via getCgroupMemoryUsed() so the
@@ -470,26 +524,38 @@ public:
    }
 
    // Reads the cgroup's memory usage (container-wide in container mode,
-   // session-scoped otherwise). Returns an error if the cgroup memory controller
-   // isn't available; callers choose an appropriate fallback (process-tree RSS
-   // for the per-session figure, node /proc/meminfo for the container-wide one).
+   // session-scoped otherwise), excluding reclaimable page cache. Returns an
+   // error if the cgroup memory controller isn't available; callers choose an
+   // appropriate fallback (process-tree RSS for the per-session figure, node
+   // /proc/meminfo for the container-wide one).
+   //
+   // The raw memory.current (v2) / memory.usage_in_bytes (v1) includes page
+   // cache charged to the cgroup. The kernel doesn't reclaim that cache until
+   // the cgroup nears memory.high, so an I/O-heavy session (e.g. grepping a
+   // large NFS tree) will sit at its limit even though its processes use very
+   // little memory. We subtract the file LRU pages so the figure reflects what
+   // the kernel can't reclaim. If memory.stat can't be read, fall back to the
+   // raw usage.
    Error getCgroupMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      Error error;
-      if (!isV2_)
-      {
-         error = getCgroupMemoryStat("memory.usage_in_bytes", pUsedKb);
-      }
-      else
-      {
-         error = getCgroupMemoryStat("memory.current", pUsedKb);
-      }
+      long currentKb = 0;
+      Error error = getCgroupMemoryStat(isV2_ ? "memory.current" : "memory.usage_in_bytes", &currentKb);
+      if (error)
+         return error;
+
+      std::string memoryStat;
+      error = readStringFromFile(path_.completePath("memory.stat"), &memoryStat);
       if (!error)
+         error = computeCgroupMemoryUsedKb(currentKb, memoryStat, isV2_, pUsedKb);
+      if (error)
       {
-         *pProvider = MemoryProviderLinuxCgroups;
+         LOG_DEBUG_MESSAGE("Unable to exclude page cache from cgroup memory usage, using raw usage: " +
+                           error.asString());
+         *pUsedKb = currentKb;
       }
 
-      return error;
+      *pProvider = MemoryProviderLinuxCgroups;
+      return Success();
    }
 
    virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
@@ -841,8 +907,8 @@ std::string getMemoryCgroup(uid_t uid)
       return std::string();
    }
 
-   std::shared_ptr<std::istream> pCgroupStream;
-   Error error = cgroup.openForRead(pCgroupStream);
+   std::string contents;
+   Error error = readProcFile(cgroup.getAbsolutePath(), &contents);
    if (error)
    {
       // Can't read cgroup file (unexpected)
@@ -850,68 +916,18 @@ std::string getMemoryCgroup(uid_t uid)
       return std::string();
    }
 
-   // Loop through lines in cgroup file. We're trying to figure out where our memory entry is.
-   // It looks like this:
-   // 9:memory:/user.slice/user-1000.slice/user@1000.service
-   //
-   // When using cgroups v2, it looks instead like this:
-   // 0::/user.slice/user-1000.slice/user@1000.service
-   try
-   {
-      std::string pattern = R"(^/system\.slice/[^/]+\.service$)";
-      boost::regex systemRegex(pattern);
-
-      while (!pCgroupStream->eof())
-      {
-         std::string line;
-         std::getline(*pCgroupStream, line);
-         std::vector<std::string> entries = core::algorithm::split(line, ":");
-
-         // We expect 3 entries; from the example above they'd be:
-         // 0. "9"
-         // 1. "memory"
-         // 2. "/user.slice/user-1000.slice/user@1000.service"
-         if (entries.size() != 3)
-         {
-            continue;
-         }
-
-         // cgroups v2; everything is under one hierarchy.
-         if (entries[0] == "0")
-         {
-            if (isSharedCgroup(entries[2], uid))
-               return std::string();
-            return entries[2];
-         }
-
-         // We are only interested in the "memory" entry.
-         if (entries[1] == "memory")
-         {
-            if (isSharedCgroup(entries[2], uid))
-               return std::string();
-
-            // Return the memory entry.
-            return entries[2];
-         }
-      }
-
-      // If we got this far, we hit the end of the file without finding a memory entry.
-      LOG_INFO_MESSAGE("No memory control group found in /proc/self/cgroup");
-   }
-   catch (...)
-   {
-      LOG_WARNING_MESSAGE("Could not parse /proc/self/cgroup, will not use cgroup memory statistics");
-   }
-
-   return std::string();
+   return parseMemoryCgroup(contents, uid);
 }
 
 // Factory for memory provider instantiation
 boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider(bool writeLimit, uid_t uid)
 {
-   static boost::mutex s_mutex;
-   static boost::shared_ptr<LinuxMemoryProvider> s_readLimitProvider;
-   static boost::shared_ptr<LinuxMemoryProvider> s_writeLimitProvider;
+   // leaked: memory usage is queried from the offline service thread (#18318)
+   static boost::mutex& s_mutex = core::make_leaked<boost::mutex>();
+   static boost::shared_ptr<LinuxMemoryProvider>& s_readLimitProvider =
+         core::make_leaked<boost::shared_ptr<LinuxMemoryProvider>>();
+   static boost::shared_ptr<LinuxMemoryProvider>& s_writeLimitProvider =
+         core::make_leaked<boost::shared_ptr<LinuxMemoryProvider>>();
 
    // Return memory provider if we have one
    if (writeLimit && s_writeLimitProvider)
@@ -1040,6 +1056,200 @@ Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
 void setMemoryUsageMode(MemoryUsageMode mode)
 {
    s_memoryUsageMode = mode;
+}
+
+Error readProcFile(const std::string& procPath, std::string* pContents)
+{
+   int fd = -1;
+   Error error = posix::posixCall<int>(
+      [&]() { return ::open(procPath.c_str(), O_RDONLY | O_CLOEXEC); },
+      ERROR_LOCATION,
+      &fd);
+   if (error)
+   {
+      error.addProperty("path", procPath);
+      return error;
+   }
+
+   // The contents are allocated as they are read, which can throw
+   BOOST_SCOPE_EXIT(fd)
+   {
+      ::close(fd);
+   }
+   BOOST_SCOPE_EXIT_END
+
+   error = readProcFileDescriptor(fd, pContents);
+   if (error)
+      error.addProperty("path", procPath);
+   return error;
+}
+
+Error readProcFileDescriptor(int fd, std::string* pContents)
+{
+   pContents->clear();
+
+   char buffer[4096];
+   while (true)
+   {
+      ssize_t bytesRead = posix::posixCall<ssize_t>([&]() { return ::read(fd, buffer, sizeof(buffer)); });
+      if (bytesRead == -1)
+         return systemError(errno, ERROR_LOCATION);
+
+      if (bytesRead == 0)
+         return Success();
+
+      pContents->append(buffer, static_cast<std::size_t>(bytesRead));
+      if (pContents->size() > kMaxProcFileSize)
+      {
+         return systemError(boost::system::errc::file_too_large,
+                            fmt::format("Proc file is larger than {} bytes", kMaxProcFileSize),
+                            ERROR_LOCATION);
+      }
+   }
+}
+
+Error parseProcFileKeys(const std::string& contents, const std::vector<std::string>& keys, std::vector<long>* pValues)
+{
+   std::vector<boost::optional<long>> found;
+   Error error = scanProcFileKeys(contents, keys, &found);
+   if (error)
+      return error;
+
+   std::vector<long> values;
+   for (std::size_t i = 0; i < keys.size(); i++)
+   {
+      if (!found[i])
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            fmt::format("Proc file has no value for key '{}'", keys[i]),
+                            ERROR_LOCATION);
+      }
+
+      values.push_back(*found[i]);
+   }
+
+   pValues->swap(values);
+   return Success();
+}
+
+Error parseProcessStatus(const std::string& contents, ProcessStatus* pStatus)
+{
+   *pStatus = ProcessStatus();
+
+   std::vector<boost::optional<long>> values;
+   Error error = scanProcFileKeys(contents, processStatusKeys(), &values);
+
+   // The parent is given even if a memory line couldn't be read, so that the
+   // process can still be placed in the process tree
+   if (values[0])
+      pStatus->parentPid = static_cast<pid_t>(*values[0]);
+
+   if (error)
+      return error;
+
+   if (!values[0])
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Process status has no PPid",
+                         ERROR_LOCATION);
+   }
+
+   // A memory line that is missing counts as 0. A process without an address
+   // space has neither, and gVisor's procfs reports VmRSS without VmSwap.
+   pStatus->sizeKb = values[1].get_value_or(0) + values[2].get_value_or(0);
+   return Success();
+}
+
+std::string parseMemoryCgroup(const std::string& contents, uid_t uid)
+{
+   // Loop through lines in cgroup file. We're trying to figure out where our memory entry is.
+   // It looks like this:
+   // 9:memory:/user.slice/user-1000.slice/user@1000.service
+   //
+   // When using cgroups v2, it looks instead like this:
+   // 0::/user.slice/user-1000.slice/user@1000.service
+   try
+   {
+      std::istringstream stream(contents);
+      std::string line;
+      while (std::getline(stream, line))
+      {
+         // We expect 3 fields; from the example above they'd be:
+         // 0. "9"
+         // 1. "memory"
+         // 2. "/user.slice/user-1000.slice/user@1000.service"
+         //
+         // Only the first two colons separate fields, as the path can
+         // contain colons of its own.
+         std::size_t idEnd = line.find(':');
+         if (idEnd == std::string::npos)
+            continue;
+
+         std::size_t controllersEnd = line.find(':', idEnd + 1);
+         if (controllersEnd == std::string::npos)
+            continue;
+
+         std::string id = line.substr(0, idEnd);
+         std::string controllers = line.substr(idEnd + 1, controllersEnd - idEnd - 1);
+         std::string path = line.substr(controllersEnd + 1);
+
+         // cgroups v2 has everything under one hierarchy. Otherwise, we are
+         // only interested in the "memory" entry.
+         if (id == "0" || controllers == "memory")
+         {
+            if (isSharedCgroup(path, uid))
+               return std::string();
+
+            return path;
+         }
+      }
+
+      // If we got this far, we hit the end of the file without finding a memory entry.
+      LOG_INFO_MESSAGE("No memory control group found in /proc/self/cgroup");
+   }
+   catch (...)
+   {
+      LOG_WARNING_MESSAGE("Could not parse /proc/self/cgroup, will not use cgroup memory statistics");
+   }
+
+   return std::string();
+}
+
+Error computeCgroupMemoryUsedKb(long currentKb, const std::string& memoryStat, bool isV2, long *pUsedKb)
+{
+   // memory.stat lines look like "active_file 9056256", with values in bytes.
+   // v1 prefixes the hierarchical (self + descendants) totals with "total_",
+   // which is what matches memory.usage_in_bytes.
+   //
+   // Shmem/tmpfs pages are swap-backed and live on the anon LRU, so they're not
+   // in active_file/inactive_file and stay counted. Mlocked file pages are on
+   // the unevictable LRU and also stay counted.
+   const std::string activeKey = isV2 ? "active_file" : "total_active_file";
+   const std::string inactiveKey = isV2 ? "inactive_file" : "total_inactive_file";
+
+   boost::optional<long> activeFile, inactiveFile;
+   std::istringstream stream(memoryStat);
+   std::string key;
+   long value;
+   while (stream >> key >> value)
+   {
+      if (key == activeKey)
+         activeFile = value;
+      else if (key == inactiveKey)
+         inactiveFile = value;
+   }
+
+   if (!activeFile || !inactiveFile)
+   {
+      return systemError(boost::system::errc::protocol_error,
+                         "Missing " + activeKey + " or " + inactiveKey + " in cgroup memory.stat",
+                         ERROR_LOCATION);
+   }
+
+   // memory.current and memory.stat aren't read atomically, so clamp.
+   long reclaimableKb = (*activeFile + *inactiveFile) / 1024;
+   *pUsedKb = std::max(0L, currentKb - reclaimableKb);
+   return Success();
 }
 
 Error setProcessMemoryLimit(long highMemKb, long maxMemKb, uid_t uid, MemoryProvider *pProvider)

@@ -38,8 +38,6 @@ import com.google.gwt.event.dom.client.HasAllFocusHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -61,6 +59,9 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.ValueBoxBase;
 import com.google.gwt.user.client.ui.Widget;
+
+import elemental2.dom.HTMLElement;
+import jsinterop.base.Js;
 
 public class SearchWidget extends Composite implements SearchDisplay
 {
@@ -237,19 +238,14 @@ public class SearchWidget extends Composite implements SearchDisplay
 
       if (continuousSearch)
       {
-         // Unlike SuggestBox's ValueChangeEvent impl, we want the
-         // event to fire as soon as the value changes
-         suggestBox_.addKeyUpHandler(new KeyUpHandler() {
-            public void onKeyUp(KeyUpEvent event)
-            {
-               String value = suggestBox_.getText();
-               if (value != lastValueSent_)
-               {
-                  updateLastValue(value);
-                  ValueChangeEvent.fire(SearchWidget.this, value);
-               }
-            }
-         });
+         // Unlike SuggestBox's ValueChangeEvent impl, we want the event to
+         // fire as soon as the value changes. Typing arrives as keyup; a paste
+         // from the context menu or a drag-and-drop only produces an input
+         // event, so listen for both.
+         suggestBox_.addKeyUpHandler(event -> fireValueChangeIfNeeded());
+
+         HTMLElement inputEl = Js.cast(textBox.getElement());
+         inputEl.addEventListener("input", event -> fireValueChangeIfNeeded());
       }
       
       suggestBox_.addValueChangeHandler(new ValueChangeHandler<String>()
@@ -389,6 +385,16 @@ public class SearchWidget extends Composite implements SearchDisplay
    protected ValueBoxBase<String> getTextBox()
    {
       return suggestBox_.getValueBox();
+   }
+
+   private void fireValueChangeIfNeeded()
+   {
+      String value = suggestBox_.getText();
+      if (!StringUtil.equals(value, lastValueSent_))
+      {
+         updateLastValue(value);
+         ValueChangeEvent.fire(SearchWidget.this, value);
+      }
    }
 
    private void updateLastValue(String value)

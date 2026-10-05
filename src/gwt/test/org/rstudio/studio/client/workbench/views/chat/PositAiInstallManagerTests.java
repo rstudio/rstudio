@@ -44,15 +44,19 @@ public class PositAiInstallManagerTests extends GWTTestCase
       boolean isInitialInstall = false;
       boolean isDowngrade = false;
       boolean additionalProvidersAvailable = false;
+      boolean reinstallAvailable = false;
       String currentVersion = null;
       String newVersion = null;
       boolean installed = false;
 
       @Override
-      public void onNoUpdateAvailable()
+      public void onNoUpdateAvailable(String currentVersion,
+                                      boolean reinstallAvailable)
       {
          calls++;
          method = "onNoUpdateAvailable";
+         this.currentVersion = currentVersion;
+         this.reinstallAvailable = reinstallAvailable;
       }
 
       @Override
@@ -178,6 +182,32 @@ public class PositAiInstallManagerTests extends GWTTestCase
       PositAiInstallManager.dispatchUpdateCheck(wellFormed(), r);
       assertEquals(1, r.calls);
       assertEquals("onNoUpdateAvailable", r.method);
+   }
+
+   public void testReinstallAvailableDefaultsToFalseWhenOmitted()
+   {
+      // An older rsession sends no reinstallAvailable field.
+      JsObject o = wellFormed();
+      o.setString("currentVersion", "1.2.3");
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(o, r);
+      assertEquals(1, r.calls);
+      assertEquals("onNoUpdateAvailable", r.method);
+      assertEquals("1.2.3", r.currentVersion);
+      assertFalse(r.reinstallAvailable);
+   }
+
+   public void testReinstallAvailableRoutesToNoUpdateWithReinstall()
+   {
+      JsObject o = wellFormed();
+      o.setBoolean("reinstallAvailable", true);
+      o.setString("currentVersion", "1.2.3");
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(o, r);
+      assertEquals(1, r.calls);
+      assertEquals("onNoUpdateAvailable", r.method);
+      assertEquals("1.2.3", r.currentVersion);
+      assertTrue(r.reinstallAvailable);
    }
 
    public void testUpdateAvailableDefaultsOptionalFlagsToFalse()

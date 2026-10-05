@@ -152,6 +152,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
@@ -186,6 +187,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Comm
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.FilePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
@@ -426,6 +428,7 @@ public class TextEditingTarget implements
          suppressFileLockError_ = suppressFileLockError;
          executeOnSuccess_ = executeOnSuccess;
          executeOnSilentFailure_ = executeOnSilentFailure;
+         previousPath_ = docUpdateSentinel_.getPath();
       }
 
       public void onProgress(String message)
@@ -491,6 +494,12 @@ public class TextEditingTarget implements
             {
                view_.getSourceOnSave().setValue(false, true);
             }
+         }
+         else if (file_ != null && !StringUtil.equals(previousPath_, file_.getPath()))
+         {
+            // A new path can change the commands (Rename needs a path; the
+            // VCS commands need it inside the project) when the type doesn't.
+            events_.fireEvent(new FilePathChangedEvent());
          }
 
          if (executeOnSuccess_ != null)
@@ -580,6 +589,7 @@ public class TextEditingTarget implements
       private final boolean suppressFileLockError_;
       private final Command executeOnSuccess_;
       private final Command executeOnSilentFailure_;
+      private final String previousPath_;
    }
 
    @Inject
@@ -1883,6 +1893,11 @@ public class TextEditingTarget implements
                public void onResetEditorCommands(ResetEditorCommandsEvent event)
                {
                   getDocDisplay().resetCommands();
+
+                  // resetCommands() reinstalls every Ace default, which replaces
+                  // the animated line navigation commands that smooth scrolling
+                  // installs.
+                  getDocDisplay().setSmoothScrolling(prefs_.smoothScrolling().getValue());
                }
             });
 
@@ -2889,10 +2904,11 @@ public class TextEditingTarget implements
       // start with the set of commands supported by the file type
       HashSet<AppCommand> commands = fileType_.getSupportedCommands(commands_);
 
-      // if the file has a path, it can also be renamed
+      // if the file has a path, it can also be renamed or shown in the Files pane
       if (getPath() != null)
       {
          commands.add(commands_.renameSourceDoc());
+         commands.add(commands_.showActiveDocDirInFiles());
       }
       
       return commands;
@@ -4563,6 +4579,13 @@ public class TextEditingTarget implements
       docUpdateSentinel_.withSavedDocNoRetry(onsaved);
    }
 
+   // Whether the editor holds edits not yet backed up to the server's copy of
+   // the document
+   public boolean hasPendingChanges()
+   {
+      return docUpdateSentinel_ != null && docUpdateSentinel_.hasPendingChanges();
+   }
+
    @Handler
    void onWordCount()
    {
@@ -4789,6 +4812,15 @@ public class TextEditingTarget implements
    void onCopySourceDocPath()
    {
       events_.fireEvent(new CopySourcePathEvent(docUpdateSentinel_.getPath()));
+   }
+
+   @Handler
+   void onShowActiveDocDirInFiles()
+   {
+      FileSystemItem dir = FileSystemItem.createFile(docUpdateSentinel_.getPath()).getContainingDir();
+      if (dir == null)
+         return;
+      events_.fireEvent(new DirectoryNavigateEvent(dir, true));
    }
 
    @Handler
@@ -6258,6 +6290,18 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onSelectCurrentStatement()
+   {
+      withVisualModeSelection(() ->
+      {
+         DocDisplay display = activeDisplay();
+         Range range = EditingTargetCodeExecution.getCurrentStatementRange(display);
+         if (range != null)
+            display.setSelectionRange(range);
+      });
+   }
+
+   @Handler
    void onExecuteCurrentParagraph()
    {
       withVisualModeSelection(() ->
@@ -7376,7 +7420,7 @@ public class TextEditingTarget implements
       if (activeDocPath != null)
       {
          FileSystemItem wdPath =
-            FileSystemItem.createFile(activeDocPath).getParentPath();
+            FileSystemItem.createFile(activeDocPath).getContainingDir();
          consoleDispatcher_.executeSetWd(wdPath, true);
       }
       else

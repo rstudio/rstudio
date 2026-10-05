@@ -762,10 +762,12 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_FALSE(validateOptions(options, &connectionStr));
    EXPECT_EQ(std::string("host='myhost' user='joe' dbname='rstudio-test' password='abc123'"), connectionStr);
 
+   // ' and \ have to be backslash-escaped once embedded in the connection string,
+   // or libpq reads the password as ending at the embedded quote
    options.connectionUri = "postgres://joe@myhost/rstudio-test";
    options.password = "abc'\\123";
    EXPECT_FALSE(validateOptions(options, &connectionStr));
-   EXPECT_EQ(std::string("host='myhost' user='joe' dbname='rstudio-test' password='abc'\\123'"), connectionStr);
+   EXPECT_EQ(std::string("host='myhost' user='joe' dbname='rstudio-test' password='abc\\'\\\\123'"), connectionStr);
 
    options.connectionUri = "postgres://joe@myhost/rstudio-test?sslmode=disable";
    options.password = "abc123";
@@ -792,6 +794,12 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_FALSE(validateOptions(options, &connectionStr, &password));
    EXPECT_EQ(std::string("12345"), password) << "Expected password to be '12345' but got '" << password << "'";
    EXPECT_EQ(std::string("host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test'"), connectionStr);
+
+   // ... and it is returned verbatim, since the caller is not embedding it in a
+   // connection string and would otherwise have to undo the escaping
+   options.password = "abc'\\123";
+   EXPECT_FALSE(validateOptions(options, &connectionStr, &password));
+   EXPECT_EQ(std::string("abc'\\123"), password) << "Expected the raw password but got '" << password << "'";
 #else
    GTEST_SKIP() << "Skipping Postgres connection URI tests as Postgres support is not enabled with RSTUDIO_HAS_SOCI_POSTGRESQL";
 #endif
@@ -1232,6 +1240,27 @@ TEST_F(DatabaseTestsFixture, CompoundWhereExpressions)
    }
    ASSERT_EQ(expected.size(), 0) << "missing rows in WHERE AND test";
    ASSERT_FALSE(unexpected) << "unexpected results in WHERE AND test";
+
+   SelectBuilder builder3(sqliteConnection, "BuilderTest");
+   builder3.add("id");
+   builder3.whereNot(QBWhereAnd()
+      .where("bar", 0)
+      .where("foo", 2)
+   );
+
+   sql = builder3.toSQL();
+   EXPECT_EQ(sql, "SELECT id FROM BuilderTest WHERE NOT (bar = :where_1_bar AND foo = :where_1_foo)");
+}
+
+TEST_F(DatabaseTestsFixture, EmptyCompoundWhere)
+{
+   SelectBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("id").where(QBWhereAnd());
+   EXPECT_EQ(builder.toSQL(), "SELECT id FROM BuilderTest WHERE (1 = 1)");
+
+   SelectBuilder builder2(sqliteConnection, "BuilderTest");
+   builder2.add("id").where(QBWhereOr());
+   EXPECT_EQ(builder2.toSQL(), "SELECT id FROM BuilderTest WHERE (1 = 0)");
 }
 
 TEST_F(DatabaseTestsFixture, RawBuilderWorks)
