@@ -135,6 +135,8 @@ public class ElementIds
    public final static String LOADING_SPINNER = "loading_image";
    public final static String PLOT_IMAGE_FRAME = "plot_image_frame";
    public final static String POPUP_COMPLETIONS = "popup_completions";
+   public final static String POPUP_COMPLETIONS_HELP = "popup_completions_help";
+   public final static String POPUP_DIAGNOSTICS = "popup_diagnostics";
    public final static String PREFERENCES_CONFIRM = "preferences_confirm";
    public final static String PUBLISH_CONNECT = "publish_connect";
    public final static String PUBLISH_DISCONNECT = "publish_disconnect";
@@ -426,7 +428,7 @@ public class ElementIds
    public final static String JOB_LAUNCHER_PRO_ENVIRONMENT = "job_launcher_pro_environment";
    public final static String SHARE_MANAGED_CREDENTIALS = "share_managed_credentials_checkbox";
    public final static String getShareManagedCredentials() { return getElementId(SHARE_MANAGED_CREDENTIALS); }
-   
+
    public final static String INCLUDE_AUDIT_DETAILS = "include_audit_details";
    public final static String getIncludeAuditDetails() { return getElementId(INCLUDE_AUDIT_DETAILS); }
 
@@ -697,7 +699,7 @@ public class ElementIds
    public static String getVisualMdMathIdLabel2() { return getElementId(VISUAL_MD_MATH_ID_LABEL2); }
    public final static String VISUAL_MD_MATH_ID = "visual_md_math_id";
    public static String getVisualMdMathId() { return getElementId(VISUAL_MD_MATH_ID); }
-  
+
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
    public final static String VISUAL_MD_IMAGE_HEIGHT = "visual_md_image_height";
@@ -798,11 +800,11 @@ public class ElementIds
    // R Console Toolbar
    public final static String CONSOLE_SESSION_SUSPENDED = "r_session_suspended_console";
    public final static String CONSOLE_SESSION_SUSPEND_BLOCKED = "r_session_suspend_blocked_console";
-   
+
    // Assistant Diagnostics
    public final static String ASSISTANT_DIAGNOSTICS_CLOSE_BUTTON = "assistant_diagnostics_close_button";
    public final static String ASSISTANT_DIAGNOSTICS_COPY_BUTTON = "assistant_diagnostics_copy_button";
-   
+
    // ProjectGeneralPreferencesPane
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";
 
@@ -810,14 +812,14 @@ public class ElementIds
    public final static String APPEARANCE_EDITOR_THEME = "appearance_editor_theme";
    public final static String APPEARANCE_EDITOR_THEME_PROJECT_OVERRIDE = "appearance_editor_theme_project_override";
    public final static String PROJECT_EDITOR_THEME = "project_editor_theme";
-   
+
    // Data viewer
    public final static String DATA_EDITING_TOOLBAR = "data_editing_toolbar";
    public final static String DATA_VIEWER_FRAME = "data_viewer_frame";
-   
+
    // DocTabLayoutPanel
    public final static String DOC_TAB_PANEL_ACTIVE_TAB = "doc_tab_panel_active_tab";
-   
+
    // Chunk Options Panels
    public final static String CHUNK_OPTIONS_NAME = "chunk_opt_name";
    public final static String CHUNK_OPTIONS_OUTPUT = "chunk_opt_output";
@@ -828,7 +830,7 @@ public class ElementIds
    public final static String CHUNK_OPTIONS_CACHE = "chunk_opt_cache";
    public final static String CHUNK_OPTIONS_APPLY = "chunk_opt_apply";
    public final static String CHUNK_OPTIONS_REVERT = "chunk_opt_revert";
-   
+
    // PaneLayoutPreferencesPane
    public final static String PANE_LAYOUT_LEFT_TOP = "pane_layout_left_top";
    public final static String PANE_LAYOUT_LEFT_BOTTOM = "pane_layout_left_bottom";

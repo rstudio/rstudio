@@ -370,7 +370,7 @@ options(help_type = "html")
    
    results <- helpHandlerFunc("completion", topic, source)
    if (!is.null(results)) {
-      results$description <- .rs.markdownToHTML(results$description)
+      results$description <- .rs.markdownToHTML(results$description, escapeHTML = TRUE)
    }
      
    results 
@@ -392,7 +392,7 @@ options(help_type = "html")
    results <- helpHandlerFunc("parameter", NULL, source)
    if (!is.null(results)) {
       results$type <- .rs.acCompletionTypes$ARGUMENT
-      results$arg_descriptions <- sapply(results$arg_descriptions, .rs.markdownToHTML)
+      results$arg_descriptions <- sapply(results$arg_descriptions, .rs.markdownToHTML, escapeHTML = TRUE)
    }
    
    results
@@ -490,7 +490,8 @@ options(help_type = "html")
       return(NULL)
    
    described <- .rs.describeObject(name, data)
-   description <- described$description
+   # .rs.htmlEscape takes a scalar; str() output may run to several lines
+   description <- vapply(described$description, .rs.htmlEscape, character(1), USE.NAMES = FALSE)
    type <- described$type
    size <- described$length
    
@@ -555,7 +556,7 @@ options(help_type = "html")
       )
       
       vbls <- if (ncol(data) == 1) "variable" else "variables"
-      html <- sprintf(fmt, name, nrow(data), ncol(data), vbls)
+      html <- sprintf(fmt, .rs.htmlEscape(name), nrow(data), ncol(data), vbls)
       
       out <- list(
          html = html,
@@ -664,7 +665,8 @@ options(help_type = "html")
    description <- sub("<li><p>", "", description)
 
    out <- list(
-      html = paste0("<h2>data.table special symbol ", what, "</h2><h3>Description</h3><p>", description, "</p>"),
+      # 'description' is markup scraped from the rendered help above
+      html = paste0("<h2>data.table special symbol ", .rs.htmlEscape(what), "</h2><h3>Description</h3><p>", description, "</p>"),
       signature = NULL, 
       pkgname = "data.table"
    )

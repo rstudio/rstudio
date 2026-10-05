@@ -49,7 +49,7 @@ public class SourceMarkerItemCodec
    {
       showFileHeaders_ = show;
    }
-   
+
    public void setFileHeaderBasePath(String basePath)
    {
       fileHeaderBasePath_ = basePath;
@@ -61,7 +61,7 @@ public class SourceMarkerItemCodec
       TableRowElement tr = Document.get().createTRElement();
       tr.addClassName(ThemeFonts.getFixedWidthClass());
       FontSizer.applyNormalFontSize(tr);
-      
+
       tr.setAttribute(DATA_PATH,
                       entry.getPath());
       tr.setAttribute(DATA_LINE,
@@ -109,7 +109,7 @@ public class SourceMarkerItemCodec
       return tr;
 
    }
-   
+
    /**
     * Source-marker messages are often derived from compiler/linter output and
     * can contain attacker-controlled text (e.g. via #pragma message or #warning
@@ -120,6 +120,9 @@ public class SourceMarkerItemCodec
     */
    static void renderMessage(VirtualConsole vc, boolean messageIsHtml, String message)
    {
+      // support ANSI formatting, disable other control codes
+      vc.setSgrOnly(true);
+
       if (messageIsHtml)
       {
          vc.setPreserveHTML(true);
@@ -139,12 +142,12 @@ public class SourceMarkerItemCodec
          TableCellElement td = Document.get().createTDElement();
          td.setClassName(resources_.styles().disclosure());
          td.setVAlign("middle");
-   
+
          DivElement div = Document.get().createDivElement();
          div.setTitle(constants_.viewErrorLogfile());
          div.setClassName(resources_.styles().disclosure());
          div.addClassName(ThemeResources.INSTANCE.themeStyles().handCursor());
-   
+
          td.appendChild(div);
          return td;
       }
@@ -176,7 +179,7 @@ public class SourceMarkerItemCodec
 
       TableCellElement cell = Document.get().createTDElement();
       cell.setColSpan(3);
-      
+
       String path = row.getAttribute(DATA_PATH);
       if (!StringUtil.isNullOrEmpty(fileHeaderBasePath_))
       {
@@ -202,7 +205,7 @@ public class SourceMarkerItemCodec
       int column = Integer.parseInt(row.getAttribute(DATA_COLUMN));
       if (column < 0) // If we couldn't figure out the column
          column = 1;
-      
+
       return new CodeNavigationTarget(path,
                                       FilePosition.create(line, column));
    }
