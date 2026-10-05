@@ -75,7 +75,7 @@ Before editing, note the current values of `RSTUDIO_NODE_VERSION` and `RSTUDIO_I
 
 #### 5a. Build-time Node files (only if updating build)
 
-**`cmake/globals.cmake`** (~line 243) — CMake cache variable:
+**`cmake/globals.cmake`** (~line 341) — CMake cache variable:
 ```cmake
 set(RSTUDIO_NODE_VERSION "<VERSION>" CACHE INTERNAL "Node version for building")
 ```
@@ -85,12 +85,12 @@ set(RSTUDIO_NODE_VERSION "<VERSION>" CACHE INTERNAL "Node version for building")
 export RSTUDIO_NODE_VERSION="<VERSION>"
 ```
 
-**`dependencies/tools/rstudio-tools.cmd`** (~line 54) — Windows batch, no quotes:
+**`dependencies/tools/rstudio-tools.cmd`** (~line 67) — Windows batch, no quotes:
 ```cmd
 set RSTUDIO_NODE_VERSION=<VERSION>
 ```
 
-**`src/gwt/build.xml`** (~line 234) — XML property attribute:
+**`src/gwt/build.xml`** (~line 261) — XML property attribute:
 ```xml
 <property name="node.version" value="<VERSION>"/>
 ```
@@ -120,7 +120,7 @@ const PINNED_NODE_VERSION = '<VERSION>';
 
 #### 5b. Installed Node files (only if updating installed)
 
-**`cmake/globals.cmake`** (~line 246) — CMake cache variable:
+**`cmake/globals.cmake`** (~line 344) — CMake cache variable:
 ```cmake
 set(RSTUDIO_INSTALLED_NODE_VERSION "<VERSION>" CACHE INTERNAL "Node version installed with product")
 ```
@@ -130,7 +130,7 @@ set(RSTUDIO_INSTALLED_NODE_VERSION "<VERSION>" CACHE INTERNAL "Node version inst
 export RSTUDIO_INSTALLED_NODE_VERSION="<VERSION>"
 ```
 
-**`dependencies/tools/rstudio-tools.cmd`** (~line 57) — Windows batch, no quotes:
+**`dependencies/tools/rstudio-tools.cmd`** (~line 70) — Windows batch, no quotes:
 ```cmd
 set RSTUDIO_INSTALLED_NODE_VERSION=<VERSION>
 ```

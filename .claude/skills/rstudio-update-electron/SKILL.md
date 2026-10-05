@@ -25,7 +25,7 @@ If the output is not `main`, **stop immediately** and warn the user that they mu
 
 ### 2. Update `NEWS.md`
 
-Find the `### Dependencies` section and update the Electron version line:
+Find the `### Dependencies` section and set the Electron version line. The section lists only dependencies changed this release cycle, so if no such line is present, add one, keeping the list alphabetical:
 
 ```
 - Electron <NEW_VERSION>
