@@ -15,14 +15,26 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <condition_variable>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+
 #include <boost/any.hpp>
+#include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/make_shared.hpp>
 
 #include <shared_core/system/User.hpp>
 #include <core/http/AsyncConnection.hpp>
+#include <core/http/FixedBufferProxy.hpp>
 #include <core/http/HeaderCookieConstants.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/TcpIpAsyncClient.hpp>
 
 #include <server/session/ServerSessionProxy.hpp>
 
@@ -93,6 +105,298 @@ private:
    std::string username_;
    std::string handlerPrefix_;
 };
+
+// One-shot signal from the proxy's io_context thread to the upstream thread.
+class Gate
+{
+public:
+   void open()
+   {
+      std::lock_guard<std::mutex> lock(mutex_);
+      open_ = true;
+      cv_.notify_all();
+   }
+
+   // Bounded, so a gate that never opens fails the test rather than hanging it.
+   bool wait()
+   {
+      std::unique_lock<std::mutex> lock(mutex_);
+      return cv_.wait_for(lock, std::chrono::seconds(2), [this]() { return open_; });
+   }
+
+private:
+   std::mutex mutex_;
+   std::condition_variable cv_;
+   bool open_ = false;
+};
+
+// Stands in for rsession on the /s/ path. It starts a response big enough for
+// proxyRequest() to stream (Content-Length over the 1MB threshold), and once the
+// proxy has started writing that response's headers to the browser, it resets
+// the connection partway through the body.
+class ResettingUpstream
+{
+public:
+   explicit ResettingUpstream(std::shared_ptr<Gate> pHeaderWriteStarted)
+      : acceptor_(ioc_, boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0)),
+        pHeaderWriteStarted_(pHeaderWriteStarted)
+   {
+   }
+
+   ~ResettingUpstream()
+   {
+      if (thread_.joinable())
+         thread_.join();
+   }
+
+   unsigned short port() { return acceptor_.local_endpoint().port(); }
+
+   void start() { thread_ = std::thread([this]() { run(); }); }
+
+private:
+   void run()
+   {
+      boost::system::error_code ec;
+      boost::asio::ip::tcp::socket socket(ioc_);
+      acceptor_.accept(socket, ec);
+      if (ec)
+         return;
+
+      boost::asio::streambuf request;
+      boost::asio::read_until(socket, request, "\r\n\r\n", ec);
+      if (ec)
+         return;
+
+      std::string head =
+         "HTTP/1.1 200 OK\r\n"
+         "Content-Type: application/json\r\n"
+         "Content-Length: 2097152\r\n"
+         "\r\n" + std::string(16384, 'x');
+      boost::asio::write(socket, boost::asio::buffer(head), ec);
+      if (ec)
+         return;
+
+      // a zero linger timeout makes close() send RST instead of FIN, so the
+      // proxy's next read fails with connection_reset
+      pHeaderWriteStarted_->wait();
+      socket.set_option(boost::asio::socket_base::linger(true, 0), ec);
+      socket.close(ec);
+   }
+
+   boost::asio::io_context ioc_;
+   boost::asio::ip::tcp::acceptor acceptor_;
+   std::shared_ptr<Gate> pHeaderWriteStarted_;
+   std::thread thread_;
+};
+
+// Stands in for the browser's connection on the /s/ streaming path. Like
+// AsyncConnectionImpl::claimResponse(), it lets the first write entry point
+// claim its single response and refuses later ones without writing. Unlike a
+// socket, it holds a streamed response's header write open until the test
+// completes it, which makes the window deterministic in which asio would still
+// be reading that write's buffers. AsyncConnectionImpl's buffers point straight
+// into response_'s strings (see writeResponseHeadersImpl()), so
+// headerBytesInFlight_ is what those strings must still hold when the write
+// finishes.
+class StreamingConnection : public http::AsyncConnection
+{
+public:
+   explicit StreamingConnection(boost::asio::io_context& ioc)
+      : ioc_(ioc),
+        strand_(ioc)
+   {
+   }
+
+   boost::asio::io_context& ioContext() override { return ioc_; }
+   const http::Request& request() const override { return request_; }
+   http::Response& response() override { return response_; }
+
+   void writeResponse(bool close, http::Socket::Handler handler) override
+   {
+      if (claimResponse(handler))
+         completeLater(handler, 0);
+   }
+
+   void writeResponse(const http::Response& response,
+                       bool close,
+                       const http::Headers& extraHeaders,
+                       http::Socket::Handler handler) override
+   {
+      if (!claimResponse(handler))
+         return;
+
+      response_.assign(response, extraHeaders);
+      completeLater(handler, 0);
+   }
+
+   void writeResponseHeaders(http::Socket::Handler handler) override
+   {
+      if (claimResponse(handler))
+         startHeaderWrite(handler);
+   }
+
+   void writeResponseHeaders(const http::Response& response, http::Socket::Handler handler) override
+   {
+      if (!claimResponse(handler))
+         return;
+
+      response_.assign(response);
+      startHeaderWrite(handler);
+   }
+
+   void writeError(const Error& error) override
+   {
+      if (claimResponse(http::Socket::Handler()))
+         response_.setError(error);
+   }
+
+   void close() override { closed_ = true; }
+   void continueParsing() override {}
+   void setData(const boost::any& data) override { data_ = data; }
+   boost::any getData() override { return data_; }
+   const std::string& username() const override { return username_; }
+   void setUsername(const std::string& username) override { username_ = username; }
+   const std::string& handlerPrefix() const override { return handlerPrefix_; }
+   void setHandlerPrefix(const std::string& prefix) override { handlerPrefix_ = prefix; }
+   boost::asio::io_context::strand& getStrand() override { return strand_; }
+
+   // Socket
+   void asyncReadSome(boost::asio::mutable_buffer, http::Socket::Handler) override {}
+
+   void asyncWrite(const boost::asio::const_buffer& buffer, http::Socket::Handler handler) override
+   {
+      completeLater(handler, buffer.size());
+   }
+
+   void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers, http::Socket::Handler handler) override
+   {
+      completeLater(handler, boost::asio::buffer_size(buffers));
+   }
+
+   bool headerWriteInFlight() const { return !pendingHeaderWrite_.empty(); }
+
+   void completeHeaderWrite(const boost::system::error_code& ec)
+   {
+      http::Socket::Handler handler;
+      handler.swap(pendingHeaderWrite_);
+      if (handler)
+         boost::asio::post(strand_, boost::bind(handler, ec, std::size_t(0)));
+   }
+
+   std::string serializedHeaders() const
+   {
+      std::string bytes;
+      for (const boost::asio::const_buffer& buffer : response_.headerBuffers())
+         bytes.append(static_cast<const char*>(buffer.data()), buffer.size());
+      return bytes;
+   }
+
+   http::Request request_;
+   http::Response response_;
+   std::string headerBytesInFlight_;
+   std::function<void()> onHeaderWriteStarted_;
+   int refusedWrites_ = 0;
+   bool closed_ = false;
+
+private:
+   bool claimResponse(const http::Socket::Handler& handler)
+   {
+      if (!responseClaimed_)
+      {
+         responseClaimed_ = true;
+         return true;
+      }
+
+      ++refusedWrites_;
+      if (handler)
+      {
+         boost::system::error_code ec = boost::asio::error::already_started;
+         boost::asio::post(strand_, boost::bind(handler, ec, std::size_t(0)));
+      }
+      return false;
+   }
+
+   void startHeaderWrite(const http::Socket::Handler& handler)
+   {
+      headerBytesInFlight_ = serializedHeaders();
+      pendingHeaderWrite_ = handler;
+      if (onHeaderWriteStarted_)
+         onHeaderWriteStarted_();
+   }
+
+   void completeLater(const http::Socket::Handler& handler, std::size_t bytes)
+   {
+      if (handler)
+         boost::asio::post(strand_, boost::bind(handler, boost::system::error_code(), bytes));
+   }
+
+   boost::asio::io_context& ioc_;
+   boost::asio::io_context::strand strand_;
+   http::Socket::Handler pendingHeaderWrite_;
+   bool responseClaimed_ = false;
+   boost::any data_;
+   std::string username_;
+   std::string handlerPrefix_;
+};
+
+typedef boost::function<void(boost::shared_ptr<http::AsyncConnection>, const Error&)> ProxyErrorHandler;
+
+struct InterruptedStreamOutcome
+{
+   bool sawUpstreamError = false;
+   bool headerWriteInFlightAtError = false;
+   std::string headerBytesInFlight;
+   std::string headerBytesAfterError;
+   int refusedWrites = 0;
+};
+
+// Streams a large /s/ response through the same wiring proxyRequest() sets up,
+// has the upstream reset while the response headers are still being written to
+// the browser, and hands the resulting error to errorHandler.
+InterruptedStreamOutcome streamThenResetUpstream(const ProxyErrorHandler& errorHandler)
+{
+   auto pHeaderWriteStarted = std::make_shared<Gate>();
+   ResettingUpstream upstream(pHeaderWriteStarted);
+   upstream.start();
+
+   boost::asio::io_context ioc;
+   auto pConnection = boost::make_shared<StreamingConnection>(ioc);
+   pConnection->request_.setMethod("POST");
+   pConnection->request_.setUri("/rpc/large_result");
+   pConnection->onHeaderWriteStarted_ = [pHeaderWriteStarted]() { pHeaderWriteStarted->open(); };
+
+   auto pClient = boost::make_shared<http::TcpIpAsyncClient>(ioc, "127.0.0.1", std::to_string(upstream.port()));
+   pClient->setRequestTimeout(boost::posix_time::seconds(5));
+   pClient->request().setMethod("POST");
+   pClient->request().setUri("/rpc/large_result");
+
+   auto pProxy = boost::make_shared<http::FixedBufferProxy>(pConnection);
+   pProxy->proxy(pClient, session_proxy::getAuthCookies(pConnection->response()));
+   pClient->setStreamNonChunkedResponses(true);
+   pClient->setBufferPredicate(session_proxy::shouldBufferLocalStreamResponseForTest);
+
+   InterruptedStreamOutcome outcome;
+   pClient->execute(
+      [](const http::Response&) {},
+      [&](const Error& error)
+      {
+         outcome.sawUpstreamError = true;
+         outcome.headerWriteInFlightAtError = pConnection->headerWriteInFlight();
+         errorHandler(pConnection, error);
+      });
+   ioc.run();
+
+   outcome.headerBytesInFlight = pConnection->headerBytesInFlight_;
+   outcome.headerBytesAfterError = pConnection->serializedHeaders();
+   outcome.refusedWrites = pConnection->refusedWrites_;
+
+   // finish the held header write so FixedBufferProxy tears itself down
+   pConnection->completeHeaderWrite(boost::asio::error::operation_aborted);
+   ioc.restart();
+   ioc.run();
+
+   return outcome;
+}
 
 } // anonymous namespace
 
@@ -409,4 +713,45 @@ TEST(ProxyLocalhostResponseTests, PreservesRefreshedAuthCookiesOnNormalResponse)
 
    // The upstream response's own content must still make it through.
    EXPECT_EQ(connection.writtenResponse_.body(), "hello from rsession");
+}
+
+// proxyRequest() now streams any /s/ response of 1MB or more through a
+// FixedBufferProxy, which claims the connection's response and writes its headers
+// from response()'s own storage. If rsession then drops the connection mid-body,
+// the upstream client (on its own strand) calls the site's error handler.
+// handleRpcError() and handleEventsError() build their JSON-RPC error in place
+// in ptrConnection->response() and only then call writeResponse(). That write is
+// refused, but by then the handler has already rewritten the headers the
+// in-flight write is sending, which is the mutation AsyncConnection::response()'s
+// threading note forbids. On a real socket this is a use-after-free.
+TEST(StreamedLocalStreamProxyTests, RpcErrorMidBodyLeavesInFlightHeadersAlone)
+{
+   r_util::SessionContext context("test-user");
+   InterruptedStreamOutcome outcome = streamThenResetUpstream(
+      [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
+      {
+         session_proxy::handleRpcErrorForTest(ptrConnection, context, error);
+      });
+
+   ASSERT_TRUE(outcome.sawUpstreamError);
+   ASSERT_TRUE(outcome.headerWriteInFlightAtError);
+   EXPECT_EQ(1, outcome.refusedWrites);
+   EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
+      << "handleRpcError rewrote the response whose headers were still being written";
+}
+
+TEST(StreamedLocalStreamProxyTests, EventsErrorMidBodyLeavesInFlightHeadersAlone)
+{
+   r_util::SessionContext context("test-user");
+   InterruptedStreamOutcome outcome = streamThenResetUpstream(
+      [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
+      {
+         session_proxy::handleEventsErrorForTest(ptrConnection, context, error);
+      });
+
+   ASSERT_TRUE(outcome.sawUpstreamError);
+   ASSERT_TRUE(outcome.headerWriteInFlightAtError);
+   EXPECT_EQ(1, outcome.refusedWrites);
+   EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
+      << "handleEventsError rewrote the response whose headers were still being written";
 }

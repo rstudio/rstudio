@@ -697,22 +697,25 @@ void handleRpcError(
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(context, false, std::string());
 
+   // Not safe to mutate response if FixedBufferProxy has already begun sending, make a copy.
+   http::Response response = http::Response();
+   response.assign(ptrConnection->response());
+
    // check for authentication error
    if (server::isAuthenticationError(error))
    {
       LOG_DEBUG_MESSAGE("-- rpc error: authentication error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
-                            &(ptrConnection->response()));
-      ptrConnection->writeResponse();
+                            &(response));
+      ptrConnection->writeResponse(response);
       return;
    }
 
    if (server::isSessionUnavailableError(error))
    {
       LOG_DEBUG_MESSAGE("-- rpc error: session unavailable for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
-      http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
-      ptrConnection->writeResponse();
+      ptrConnection->writeResponse(response);
       return;
    }
 
@@ -728,8 +731,8 @@ void handleRpcError(
       clJson["id"] = context.scope.id();
       json::JsonRpcResponse jsonRpcResponse;
       jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
-      json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
-      ptrConnection->writeResponse();
+      json::setJsonRpcResponse(jsonRpcResponse, &(response));
+      ptrConnection->writeResponse(response);
       return;
    }
 
@@ -741,19 +744,19 @@ void handleRpcError(
    {
       LOG_DEBUG_MESSAGE("-- rpc error: connection unavailable for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
-                            &(ptrConnection->response()));
+                            &(response));
    }
    else if (!handleLicenseError(ptrConnection, error))
    {
       LOG_DEBUG_MESSAGE("-- rpc error: other error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response()));
+                           &(response));
    }
    else
       LOG_DEBUG_MESSAGE("-- rpc error: license error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
    // write the response
-   ptrConnection->writeResponse();
+   ptrConnection->writeResponse(response);
 }
 
 void handleEventsError(
@@ -766,25 +769,28 @@ void handleEventsError(
 
    LOG_DEBUG_MESSAGE("-- events error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
+   // Not safe to mutate response if FixedBufferProxy has already begun sending, make a copy.
+   http::Response response = http::Response();
+   response.assign(ptrConnection->response());
+
    // distinguish connection error as (expected) "Unavailable" error state
    if (http::isConnectionUnavailableError(error))
    {
       // if this request required a session then return a standard 503
       if (requiresSession(ptrConnection->request()))
       {
-         http::Response& response = ptrConnection->response();
          response.setStatusCode(http::status::ServiceUnavailable);
       }
       else
       {
          json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
-                              &(ptrConnection->response()));
+                              &(response));
       }
    }
    else if (server::isInvalidSessionScopeError(error))
    {
       json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
-                           &(ptrConnection->response()));
+                           &(response));
    }
    else if (!handleLicenseError(ptrConnection, error))
    {
@@ -792,11 +798,11 @@ void handleEventsError(
       logIfNotConnectionTerminated(error, ptrConnection->request());
 
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response()));
+                           &(response));
    }
 
    // write the response
-   ptrConnection->writeResponse();
+   ptrConnection->writeResponse(response);
 }
 
 // Which local-stream /s/ responses must be held whole rather than streamed.
@@ -1046,6 +1052,25 @@ void handleLocalhostResponseForTest(
                            baseAddress,
                            ipv6,
                            response);
+}
+
+// The error handlers proxyRpcRequest() and proxyEventsRequest() hand to
+// proxyRequest(), which installs them on an upstream client whose body may be
+// streaming through a FixedBufferProxy when they fire.
+void handleRpcErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const Error& error)
+{
+   handleRpcError(ptrConnection, context, error);
+}
+
+void handleEventsErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const Error& error)
+{
+   handleEventsError(ptrConnection, context, error);
 }
 #endif
 

@@ -35,11 +35,17 @@ namespace {
 // do this for Jetty (as it often doesn't send a Content-Length header)
 // and do not do it if we are streaming chunked encoding
 bool stopReadingAndRespondImpl(const core::http::Response& response,
-                               bool chunkedEncoding)
+                               bool chunkedEncoding,
+                               bool isStreamedResponse)
 {
    std::string server = response.headerValue("Server");
    if (boost::algorithm::contains(server, "Jetty"))
    {
+      return false;
+   } else if (isStreamedResponse)
+   {
+      // We are using fixed-size response buffering and can't draw
+      // conclusions from response.body.length().
       return false;
    }
    else
@@ -123,7 +129,7 @@ private:
 
    virtual bool stopReadingAndRespond()
    {
-      return stopReadingAndRespondImpl(response_, chunkedEncoding_);
+      return stopReadingAndRespondImpl(response_, chunkedEncoding_, isStreamingResponse());
    }
 
    virtual bool keepConnectionAlive()
@@ -170,7 +176,7 @@ private:
 
    virtual bool stopReadingAndRespond()
    {
-      return stopReadingAndRespondImpl(response_, chunkedEncoding_);
+      return stopReadingAndRespondImpl(response_, chunkedEncoding_, isStreamingResponse());
    }
 
    virtual bool keepConnectionAlive()
