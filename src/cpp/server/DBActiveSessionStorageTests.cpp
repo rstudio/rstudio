@@ -7,6 +7,9 @@
 #include <core/Result.hpp>
 #include <iostream>
 
+// for RSTUDIO_PRO_BUILD
+#include "server-config.h"
+
 using namespace rstudio::core;
 using namespace rstudio::core::database;
 using namespace rstudio::server::storage;
@@ -707,7 +710,14 @@ TEST_F(SqliteDBActiveSessionStorageTest, DefaultPropertiesAreAllReadable)
    // THEN: It succeeds and returns every default property
    ASSERT_FALSE(error) << "readProperties failed: " << error.asString();
    for (const std::string& name : r_util::ActiveSession::defaultProperties())
+   {
+#ifndef RSTUDIO_PRO_BUILD
+      // only Workbench resolves the stored project id back into project and project_id
+      if (name == r_util::ActiveSession::kProject || name == r_util::ActiveSession::kProjectId)
+         continue;
+#endif
       EXPECT_NE(props.find(name), props.end()) << "missing default property: " << name;
+   }
 }
 
 // PostgreSQL equivalents
