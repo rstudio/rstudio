@@ -179,6 +179,6 @@ Key rules baked into that step:
 - Use a dedicated test account. The upload channel keeps token bytes out of
   the console history, but the stores still land in a real account's home,
   and a run that dies before teardown leaves them there.
-- A quick experiment for #18348 confirmed the copilot-language-server reads a
-  plaintext `auth.db` without `GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION` set, so
-  no remote `~/.Renviron` edit is needed.
+- The copilot-language-server reads a plaintext `auth.db` without
+  `GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION` set, so no remote `~/.Renviron` edit
+  is needed.
