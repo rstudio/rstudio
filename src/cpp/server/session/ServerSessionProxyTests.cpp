@@ -730,7 +730,7 @@ TEST(StreamedLocalStreamProxyTests, RpcErrorMidBodyLeavesInFlightHeadersAlone)
    InterruptedStreamOutcome outcome = streamThenResetUpstream(
       [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
       {
-         session_proxy::handleRpcErrorForTest(ptrConnection, context, error);
+         session_proxy::handleRpcErrorForTest(ptrConnection, context, http::Headers(), error);
       });
 
    ASSERT_TRUE(outcome.sawUpstreamError);
@@ -746,7 +746,7 @@ TEST(StreamedLocalStreamProxyTests, EventsErrorMidBodyLeavesInFlightHeadersAlone
    InterruptedStreamOutcome outcome = streamThenResetUpstream(
       [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
       {
-         session_proxy::handleEventsErrorForTest(ptrConnection, context, error);
+         session_proxy::handleEventsErrorForTest(ptrConnection, context, http::Headers(), error);
       });
 
    ASSERT_TRUE(outcome.sawUpstreamError);

@@ -542,9 +542,7 @@ void handleLocalhostResponse(
    }
 }
 
-bool handleLicenseError(
-      boost::shared_ptr<http::AsyncConnection> ptrConnection,
-      const Error& error)
+bool handleLicenseError(const Error& error, http::Response* pResponse)
 {
    return false;
 }
@@ -581,7 +579,7 @@ void handleLocalhostError(
       return;
    }
 
-   if (handleLicenseError(ptrConnection, error))
+   if (handleLicenseError(error, &ptrConnection->response()))
    {
       ptrConnection->writeResponse();
    }
@@ -675,7 +673,7 @@ void handleContentError(
 
       ptrConnection->writeResponse();
    }
-   else if (handleLicenseError(ptrConnection, error))
+   else if (handleLicenseError(error, &ptrConnection->response()))
    {
       LOG_WARNING_MESSAGE("Session limit error for " + ptrConnection->request().debugInfoFinal() + " detail: " + error.asString());
       ptrConnection->writeResponse();
@@ -692,14 +690,18 @@ void handleContentError(
 void handleRpcError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
+      const http::Headers& authCookies,
       const Error& error)
 {
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(context, false, std::string());
 
-   // Not safe to mutate response if FixedBufferProxy has already begun sending, make a copy.
-   http::Response response = http::Response();
-   response.assign(ptrConnection->response());
+   // Assemble the error response separately and hand it to writeResponse(),
+   // which claims the connection before assigning it. ptrConnection->response()
+   // must not be read or mutated here: on the /s/ path FixedBufferProxy may be
+   // writing it from the upstream client's strand. authCookies were captured
+   // when this handler was bound, before the upstream request started.
+   http::Response response;
 
    // check for authentication error
    if (server::isAuthenticationError(error))
@@ -707,7 +709,7 @@ void handleRpcError(
       LOG_DEBUG_MESSAGE("-- rpc error: authentication error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                             &(response));
-      ptrConnection->writeResponse(response);
+      ptrConnection->writeResponse(response, true, authCookies);
       return;
    }
 
@@ -715,7 +717,7 @@ void handleRpcError(
    {
       LOG_DEBUG_MESSAGE("-- rpc error: session unavailable for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       response.setStatusCode(http::status::ServiceUnavailable);
-      ptrConnection->writeResponse(response);
+      ptrConnection->writeResponse(response, true, authCookies);
       return;
    }
 
@@ -732,7 +734,7 @@ void handleRpcError(
       json::JsonRpcResponse jsonRpcResponse;
       jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
       json::setJsonRpcResponse(jsonRpcResponse, &(response));
-      ptrConnection->writeResponse(response);
+      ptrConnection->writeResponse(response, true, authCookies);
       return;
    }
 
@@ -746,7 +748,7 @@ void handleRpcError(
       json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
                             &(response));
    }
-   else if (!handleLicenseError(ptrConnection, error))
+   else if (!handleLicenseError(error, &response))
    {
       LOG_DEBUG_MESSAGE("-- rpc error: other error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
@@ -756,12 +758,13 @@ void handleRpcError(
       LOG_DEBUG_MESSAGE("-- rpc error: license error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
    // write the response
-   ptrConnection->writeResponse(response);
+   ptrConnection->writeResponse(response, true, authCookies);
 }
 
 void handleEventsError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
+      const http::Headers& authCookies,
       const Error& error)
 {
    // NOTE: events requests don't initiate session launches so
@@ -769,9 +772,12 @@ void handleEventsError(
 
    LOG_DEBUG_MESSAGE("-- events error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
-   // Not safe to mutate response if FixedBufferProxy has already begun sending, make a copy.
-   http::Response response = http::Response();
-   response.assign(ptrConnection->response());
+   // Assemble the error response separately and hand it to writeResponse(),
+   // which claims the connection before assigning it. ptrConnection->response()
+   // must not be read or mutated here: on the /s/ path FixedBufferProxy may be
+   // writing it from the upstream client's strand. authCookies were captured
+   // when this handler was bound, before the upstream request started.
+   http::Response response;
 
    // distinguish connection error as (expected) "Unavailable" error state
    if (http::isConnectionUnavailableError(error))
@@ -792,7 +798,7 @@ void handleEventsError(
       json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
                            &(response));
    }
-   else if (!handleLicenseError(ptrConnection, error))
+   else if (!handleLicenseError(error, &response))
    {
       // log if not connection terminated
       logIfNotConnectionTerminated(error, ptrConnection->request());
@@ -802,7 +808,7 @@ void handleEventsError(
    }
 
    // write the response
-   ptrConnection->writeResponse(response);
+   ptrConnection->writeResponse(response, true, authCookies);
 }
 
 // Which local-stream /s/ responses must be held whole rather than streamed.
@@ -1060,17 +1066,19 @@ void handleLocalhostResponseForTest(
 void handleRpcErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
+      const http::Headers& authCookies,
       const Error& error)
 {
-   handleRpcError(ptrConnection, context, error);
+   handleRpcError(ptrConnection, context, authCookies, error);
 }
 
 void handleEventsErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
+      const http::Headers& authCookies,
       const Error& error)
 {
-   handleEventsError(ptrConnection, context, error);
+   handleEventsError(ptrConnection, context, authCookies, error);
 }
 #endif
 
@@ -1274,7 +1282,8 @@ void proxyRpcRequest(
    proxyRequest(isClientInit ? RequestType::ClientInit : RequestType::Rpc,
                 context,
                 ptrConnection,
-                boost::bind(handleRpcError, ptrConnection, context, _1),
+                boost::bind(handleRpcError, ptrConnection, context,
+                            getAuthCookies(ptrConnection->response()), _1),
                 sessionRetryProfile(ptrConnection, context));
 }
    
@@ -1294,7 +1303,8 @@ void proxyEventsRequest(
    proxyRequest(RequestType::Events,
                 context,
                 ptrConnection,
-                boost::bind(handleEventsError, ptrConnection, context, _1),
+                boost::bind(handleEventsError, ptrConnection, context,
+                            getAuthCookies(ptrConnection->response()), _1),
                 http::ConnectionRetryProfile());
 }
 

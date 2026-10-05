@@ -167,11 +167,13 @@ bool shouldBufferLocalStreamResponseForTest(const core::http::Response& response
 void handleRpcErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const core::r_util::SessionContext& context,
+      const core::http::Headers& authCookies,
       const core::Error& error);
 
 void handleEventsErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const core::r_util::SessionContext& context,
+      const core::http::Headers& authCookies,
       const core::Error& error);
 #endif
 
