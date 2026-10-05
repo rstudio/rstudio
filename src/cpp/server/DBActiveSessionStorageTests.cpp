@@ -707,7 +707,12 @@ TEST_F(SqliteDBActiveSessionStorageTest, DefaultPropertiesAreAllReadable)
    // THEN: It succeeds and returns every default property
    ASSERT_FALSE(error) << "readProperties failed: " << error.asString();
    for (const std::string& name : r_util::ActiveSession::defaultProperties())
+   {
+      // only Workbench's database storage returns project / project_id
+      if (name == r_util::ActiveSession::kProject || name == r_util::ActiveSession::kProjectId)
+         continue;
       EXPECT_NE(props.find(name), props.end()) << "missing default property: " << name;
+   }
 }
 
 // PostgreSQL equivalents
