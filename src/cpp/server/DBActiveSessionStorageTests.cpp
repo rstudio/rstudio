@@ -695,9 +695,6 @@ TEST_F(SqliteDBActiveSessionStorageTest, DestroyRemovesSession)
 // A batch read with no fields reads ActiveSession::defaultProperties(), and one property
 // this storage cannot map to a column fails the whole read, dropping the session from
 // the batch.
-//
-// Only Workbench resolves the stored project back into project and project_id, so
-// those are checked in Workbench's own tests.
 TEST_F(SqliteDBActiveSessionStorageTest, DefaultPropertiesAreAllReadable)
 {
    // GIVEN: An existing session row
@@ -711,6 +708,7 @@ TEST_F(SqliteDBActiveSessionStorageTest, DefaultPropertiesAreAllReadable)
    ASSERT_FALSE(error) << "readProperties failed: " << error.asString();
    for (const std::string& name : r_util::ActiveSession::defaultProperties())
    {
+      // only Workbench's database storage returns project / project_id
       if (name == r_util::ActiveSession::kProject || name == r_util::ActiveSession::kProjectId)
          continue;
       EXPECT_NE(props.find(name), props.end()) << "missing default property: " << name;

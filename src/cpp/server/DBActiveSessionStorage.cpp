@@ -14,7 +14,6 @@
  */
 
 #include <server/DBActiveSessionStorage.hpp>
-#include <server/DBActiveSessionStorageOverlay.hpp>
 
 #include <core/Database.hpp>
 #include <core/Result.hpp>
@@ -24,6 +23,7 @@
 #include <server_core/ServerDatabase.hpp>
 
 #include <numeric>
+#include <vector>
 
 using namespace rstudio::core;
 using namespace rstudio::core::database;
@@ -33,6 +33,14 @@ using namespace rstudio::server_core::database;
 namespace rstudio {
 namespace server {
 namespace storage {
+
+namespace overlay {
+
+// Adds any properties stored in an active_session_metadata column of the same name
+// that only this build's schema has
+void addColumnProperties(std::vector<std::string>* pProperties);
+
+} // namespace overlay
 
 namespace {
 

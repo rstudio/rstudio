@@ -13,7 +13,8 @@
  *
  */
 
-#include <server/DBActiveSessionStorageOverlay.hpp>
+#include <string>
+#include <vector>
 
 namespace rstudio {
 namespace server {
