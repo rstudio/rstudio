@@ -1063,6 +1063,14 @@ void handleLocalhostResponseForTest(
 // The error handlers proxyRpcRequest() and proxyEventsRequest() hand to
 // proxyRequest(), which installs them on an upstream client whose body may be
 // streaming through a FixedBufferProxy when they fire.
+void handleContentErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const Error& error)
+{
+   handleContentError(ptrConnection, context, error);
+}
+
 void handleRpcErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,

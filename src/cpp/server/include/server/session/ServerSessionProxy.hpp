@@ -162,8 +162,14 @@ void handleLocalhostResponseForTest(
 // responses proxyRequest holds whole rather than streams.
 bool shouldBufferLocalStreamResponseForTest(const core::http::Response& response);
 
-// Exposes the /s/ RPC and events error handlers (handleRpcError,
-// handleEventsError) that proxyRequest installs on the upstream client.
+// Exposes the /s/ content, RPC and events error handlers (handleContentError,
+// handleRpcError, handleEventsError) that proxyRequest installs on the
+// upstream client.
+void handleContentErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const core::r_util::SessionContext& context,
+      const core::Error& error);
+
 void handleRpcErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const core::r_util::SessionContext& context,

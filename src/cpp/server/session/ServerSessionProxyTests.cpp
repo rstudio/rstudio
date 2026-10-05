@@ -724,6 +724,26 @@ TEST(ProxyLocalhostResponseTests, PreservesRefreshedAuthCookiesOnNormalResponse)
 // refused, but by then the handler has already rewritten the headers the
 // in-flight write is sending, which is the mutation AsyncConnection::response()'s
 // threading note forbids. On a real socket this is a use-after-free.
+// handleContentError() reaches the same mid-body failure through its
+// catch-all writeError() branch, which claims the connection before touching
+// response(). Its other branches still populate response() in place, so this
+// guards against a transport error ever being routed into one of them.
+TEST(StreamedLocalStreamProxyTests, ContentErrorMidBodyLeavesInFlightHeadersAlone)
+{
+   r_util::SessionContext context("test-user");
+   InterruptedStreamOutcome outcome = streamThenResetUpstream(
+      [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
+      {
+         session_proxy::handleContentErrorForTest(ptrConnection, context, error);
+      });
+
+   ASSERT_TRUE(outcome.sawUpstreamError);
+   ASSERT_TRUE(outcome.headerWriteInFlightAtError);
+   EXPECT_EQ(1, outcome.refusedWrites);
+   EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
+      << "handleContentError rewrote the response whose headers were still being written";
+}
+
 TEST(StreamedLocalStreamProxyTests, RpcErrorMidBodyLeavesInFlightHeadersAlone)
 {
    r_util::SessionContext context("test-user");
