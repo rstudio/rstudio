@@ -233,7 +233,7 @@ Frontend:
 - **Find where an RPC is handled**: grep for the RPC name (e.g. `"chat_start_backend"`) in `src/cpp/session/modules/`.
 - **Find a command handler**: grep for `on<CommandName>` with `@Handler` in `src/gwt/`.
 - **Find where a preference is used**: search for its key from `user-prefs-schema.json` in both `src/cpp/` and `src/gwt/`.
-- **Trace a client event**: find the event's wire name in `SessionClientEvent.cpp`, then grep for it in both backend (where it's fired) and frontend (where it's handled).
+- **Trace a client event**: the wire name (e.g. `execute_app_command`) links the C++ constant in `SessionClientEvent.cpp` (`kExecuteAppCommand`) to the Java constant in `ClientEvent.java` (`ClientEvent.ExecuteAppCommand`). Grep for the C++ constant to find where it's fired, and for the Java constant to find where it's dispatched.
 
 
 ## Building RStudio
