@@ -75,27 +75,27 @@ Before editing, note the current values of `RSTUDIO_NODE_VERSION` and `RSTUDIO_I
 
 #### 5a. Build-time Node files (only if updating build)
 
-**`cmake/globals.cmake`** (~line 341) — CMake cache variable:
+**`cmake/globals.cmake`** — CMake cache variable:
 ```cmake
 set(RSTUDIO_NODE_VERSION "<VERSION>" CACHE INTERNAL "Node version for building")
 ```
 
-**`dependencies/tools/rstudio-tools.sh`** (~line 58) — bash export with quotes:
+**`dependencies/tools/rstudio-tools.sh`** — bash export with quotes:
 ```bash
 export RSTUDIO_NODE_VERSION="<VERSION>"
 ```
 
-**`dependencies/tools/rstudio-tools.cmd`** (~line 67) — Windows batch, no quotes:
+**`dependencies/tools/rstudio-tools.cmd`** — Windows batch, no quotes:
 ```cmd
 set RSTUDIO_NODE_VERSION=<VERSION>
 ```
 
-**`src/gwt/build.xml`** (~line 261) — XML property attribute:
+**`src/gwt/build.xml`** — XML property attribute:
 ```xml
 <property name="node.version" value="<VERSION>"/>
 ```
 
-**`src/node/desktop/envvars.sh`** (~lines 6, 8) — two hardcoded paths, one with `-arm64` suffix:
+**`src/node/desktop/envvars.sh`** — two hardcoded paths, one with `-arm64` suffix:
 ```bash
 NODE_PATH=$(readlink -fn ../../../dependencies/common/node/<VERSION>-arm64/bin)
 ```
@@ -103,39 +103,39 @@ NODE_PATH=$(readlink -fn ../../../dependencies/common/node/<VERSION>-arm64/bin)
 NODE_PATH=$(realpath ../../../dependencies/common/node/<VERSION>/bin)
 ```
 
-**`src/node/CMakeNodeTools.txt`** (~line 22) — CMake fallback default:
+**`src/node/CMakeNodeTools.txt`** — CMake fallback default:
 ```cmake
 set(RSTUDIO_NODE_VERSION "<VERSION>")
 ```
 
-**`e2e/rstudio/scripts/dev-common.ts`** (~line 15) — TypeScript constant used by the dev Playwright runners to pin node on PATH:
+**`e2e/rstudio/scripts/dev-common.ts`** — TypeScript constant used by the dev Playwright runners to pin node on PATH:
 ```ts
 const PINNED_NODE_VERSION = '<VERSION>';
 ```
 
-**`src/node/desktop/.vscode/settings.json`** (~line 81) — JSON string with backslash path separators:
+**`src/node/desktop/.vscode/settings.json`** — JSON string with backslash path separators:
 ```json
 "PATH": "${workspaceFolder}\\..\\..\\..\\dependencies\\common\\node\\<VERSION>;${env:PATH}"
 ```
 
 #### 5b. Installed Node files (only if updating installed)
 
-**`cmake/globals.cmake`** (~line 344) — CMake cache variable:
+**`cmake/globals.cmake`** — CMake cache variable:
 ```cmake
 set(RSTUDIO_INSTALLED_NODE_VERSION "<VERSION>" CACHE INTERNAL "Node version installed with product")
 ```
 
-**`dependencies/tools/rstudio-tools.sh`** (~line 70) — bash export with quotes:
+**`dependencies/tools/rstudio-tools.sh`** — bash export with quotes:
 ```bash
 export RSTUDIO_INSTALLED_NODE_VERSION="<VERSION>"
 ```
 
-**`dependencies/tools/rstudio-tools.cmd`** (~line 70) — Windows batch, no quotes:
+**`dependencies/tools/rstudio-tools.cmd`** — Windows batch, no quotes:
 ```cmd
 set RSTUDIO_INSTALLED_NODE_VERSION=<VERSION>
 ```
 
-**`dependencies/tools/upload-node.sh`** (~line 13) — bash variable with `v` prefix:
+**`dependencies/tools/upload-node.sh`** — bash variable with `v` prefix:
 ```bash
 NODE_VERSION="v<VERSION>"
 ```
@@ -168,11 +168,19 @@ Confirm:
 - Syntax matches each file's format (CMake quotes, bash quotes, batch no-quotes, XML attributes, JSON strings)
 - The `v` prefix appears ONLY in `upload-node.sh`
 
+Then search for each old version that changed, to catch any pin missing from the lists above:
+
+```bash
+git grep -nF "<OLD_VERSION>" -- . ':!version/news/os'
+```
+
+Use `-F` so the dots match literally. The archived release notes under `version/news/os/` are excluded because they record what shipped. Matches that are examples rather than pins, such as the version strings in `SessionNodeTools.hpp` comments and `SessionNodeToolsTests.cpp` parser tests, stay as they are. Any other remaining match is a pin this skill doesn't list: stop and report it rather than guessing.
+
 ### 6. Upload to S3
 
 Upload Node.js binaries for each unique new version using `dependencies/tools/upload-node.sh`. This script downloads platform archives from nodejs.org and uploads them to the `rstudio-buildtools` S3 bucket.
 
-The script reads its version from the hardcoded `NODE_VERSION` variable on line 13 (set in Step 5b for installed updates). The upload covers all platforms: darwin-arm64, darwin-x64, linux-arm64, linux-x64, win-x64, win-arm64.
+The script reads its version from the hardcoded `NODE_VERSION` variable (set in Step 5b for installed updates). The upload covers all platforms: darwin-arm64, darwin-x64, linux-arm64, linux-x64, win-x64, win-arm64.
 
 **If updating installed** (or both to the same version): `upload-node.sh` already has the correct version from Step 5b. Run it:
 
