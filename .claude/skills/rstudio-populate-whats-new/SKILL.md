@@ -1,6 +1,6 @@
 ---
 name: rstudio-populate-whats-new
-description: Use when filling in the RStudio Desktop "What's New" page for a release from NEWS.md — writing, updating, or replacing the placeholder in src/node/desktop/src/assets/whats-new/<release-slug>/index.html. Trigger on phrases like "populate What's New", "add the What's New content", "update the What's New page", "What's New for <release name>", or any request to turn this release's NEWS.md entries into the window users see on first launch after an update.
+description: Use when filling in the RStudio Desktop "What's New" page for a release from NEWS.md — writing, updating, or replacing the placeholder in src/node/desktop/src/assets/whats-new/<release-slug>/index.html. Also use for any request to turn this release's NEWS.md entries into the window users see on first launch after an update.
 ---
 
 # Populate the What's New content
