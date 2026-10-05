@@ -1,5 +1,5 @@
 /*
- * DBActiveSessionStorageOverlay.cpp
+ * DBActiveSessionStorageOverlay.hpp
  *
  * Copyright (C) 2026 by Posit Software, PBC
  *
@@ -13,18 +13,24 @@
  *
  */
 
-#include <server/DBActiveSessionStorageOverlay.hpp>
+#ifndef DB_ACTIVE_SESSION_STORAGE_OVERLAY_HPP
+#define DB_ACTIVE_SESSION_STORAGE_OVERLAY_HPP
+
+#include <string>
+#include <vector>
 
 namespace rstudio {
 namespace server {
 namespace storage {
 namespace overlay {
 
-void addColumnProperties(std::vector<std::string>*)
-{
-}
+// Adds any properties stored in an active_session_metadata column of the same name
+// that only this build's schema has
+void addColumnProperties(std::vector<std::string>* pProperties);
 
 } // namespace overlay
 } // namespace storage
 } // namespace server
 } // namespace rstudio
+
+#endif // DB_ACTIVE_SESSION_STORAGE_OVERLAY_HPP
