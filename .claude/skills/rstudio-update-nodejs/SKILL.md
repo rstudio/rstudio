@@ -176,7 +176,7 @@ git grep -nF "<OLD_VERSION>" -- . ':!version/news/os'
 
 Use `-F` so the dots match literally. The archived release notes under `version/news/os/` are excluded because they record what shipped. Two kinds of match are expected and stay as they are:
 
-- Pins for the version you did not update, when both versions started at the same value -- e.g. the `RSTUDIO_INSTALLED_NODE_VERSION` lines and `upload-node.sh` after a build-only update.
+- Pins for the version you did not update, when both versions started at the same value -- e.g. the `RSTUDIO_INSTALLED_NODE_VERSION` lines, `upload-node.sh`, and any `NEWS.md` Node.js line after a build-only update.
 - Examples rather than pins, such as the version strings in `SessionNodeTools.hpp` comments and `SessionNodeToolsTests.cpp` parser tests.
 
 Any other remaining match is a pin this skill doesn't list: stop and report it rather than guessing.
