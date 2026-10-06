@@ -93,7 +93,7 @@ pipeline {
       environment {
         // boost won't compile without the brew version of openssl.
         // only add it to the dep resolve step though, or the ide build will compile against the wrong openssl
-        PATH = '/usr/local/opt/openssl/bin:/usr/local/opt/openssl/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+        PATH = '/usr/local/opt/openssl@3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
         GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
       }
       steps {

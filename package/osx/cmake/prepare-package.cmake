@@ -64,7 +64,7 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
    endif()
 
    # copy required Homebrew libraries
-   list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
+   list(APPEND HOMEBREW_LIBS gettext openssl@3 sqlite3)
    if(@RSTUDIO_PRO_BUILD@)
       list(APPEND HOMEBREW_LIBS krb5 libpq)
    endif()
@@ -112,7 +112,7 @@ else()
 endif()
 
 # copy required Homebrew libraries for the primary architecture
-list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
+list(APPEND HOMEBREW_LIBS gettext openssl@3 sqlite3)
 if(@RSTUDIO_PRO_BUILD@)
    list(APPEND HOMEBREW_LIBS krb5 libpq)
 endif()
