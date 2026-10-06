@@ -4,7 +4,7 @@
 -
 
 ### Fixed
-- RStudio now builds against OpenSSL 4.x; building against OpenSSL 1.1 and 3.x continues to work.
+- RStudio is now compatible with (and can build against) OpenSSL 4.x.
 
 ### Dependencies
 -
