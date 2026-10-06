@@ -65,9 +65,6 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
 
    # copy required Homebrew libraries
    list(APPEND HOMEBREW_LIBS gettext openssl@3 sqlite3)
-   if(@RSTUDIO_PRO_BUILD@)
-      list(APPEND HOMEBREW_LIBS krb5 libpq)
-   endif()
 
    file(MAKE_DIRECTORY "${ARM64_FRAMEWORKS_DIRECTORY}")
    foreach(LIB ${HOMEBREW_LIBS})
@@ -113,9 +110,6 @@ endif()
 
 # copy required Homebrew libraries for the primary architecture
 list(APPEND HOMEBREW_LIBS gettext openssl@3 sqlite3)
-if(@RSTUDIO_PRO_BUILD@)
-   list(APPEND HOMEBREW_LIBS krb5 libpq)
-endif()
 
 file(MAKE_DIRECTORY "${X64_FRAMEWORKS_DIRECTORY}")
 foreach(LIB ${HOMEBREW_LIBS})
