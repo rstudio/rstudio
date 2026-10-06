@@ -64,7 +64,7 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
    endif()
 
    # copy required Homebrew libraries
-   list(APPEND HOMEBREW_LIBS gettext openssl@3)
+   list(APPEND HOMEBREW_LIBS openssl@3)
 
    file(MAKE_DIRECTORY "${ARM64_FRAMEWORKS_DIRECTORY}")
    foreach(LIB ${HOMEBREW_LIBS})
@@ -109,7 +109,7 @@ else()
 endif()
 
 # copy required Homebrew libraries for the primary architecture
-list(APPEND HOMEBREW_LIBS gettext openssl@3)
+list(APPEND HOMEBREW_LIBS openssl@3)
 
 file(MAKE_DIRECTORY "${X64_FRAMEWORKS_DIRECTORY}")
 foreach(LIB ${HOMEBREW_LIBS})
