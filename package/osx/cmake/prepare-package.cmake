@@ -24,6 +24,7 @@ set(RSESSION_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/
 set(X64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks")
 set(ARM64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks/arm64")
 set(FIX_LIBRARY_PATHS_SCRIPT_PATH "@CMAKE_CURRENT_SOURCE_DIR@/scripts/fix-library-paths.sh")
+set(VERIFY_LIBRARY_PATHS_SCRIPT_PATH "@CMAKE_CURRENT_SOURCE_DIR@/scripts/verify-library-paths.sh")
 
 # NOTE: This part of CMake will be run by the x86 branch of the build,
 # so we don't want to filter based on the architecture here.
@@ -229,4 +230,14 @@ if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")
    # remove staging artifacts so they are not packaged or signed
    file(REMOVE_RECURSE "${LIPO_STAGING_DIR}")
 
+endif()
+
+# fail the package build, rather than the app at launch, if a binary loads a
+# library from Frameworks/ that was not bundled
+execute_process(
+   COMMAND "${VERIFY_LIBRARY_PATHS_SCRIPT_PATH}" "${RSESSION_BINARY_DIR}"
+   RESULT_VARIABLE VERIFY_PATHS_RESULT)
+
+if(NOT VERIFY_PATHS_RESULT EQUAL 0)
+   message(FATAL_ERROR "Bundled library check failed (exit ${VERIFY_PATHS_RESULT}); see errors above")
 endif()
