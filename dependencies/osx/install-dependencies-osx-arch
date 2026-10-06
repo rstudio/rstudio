@@ -48,7 +48,7 @@ FORMULAS=(
    libtool
    libuv
    openjdk@17
-   openssl
+   openssl@3
    ninja
    pidof
    pkgconf
