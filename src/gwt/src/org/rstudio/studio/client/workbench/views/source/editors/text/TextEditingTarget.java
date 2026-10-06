@@ -7033,21 +7033,42 @@ public class TextEditingTarget implements
       Scope[] previousScopes = scopeHelper_.getSweaveChunks(position,
             which);
 
+      // Collect the code to run. The console runs R or, through the
+      // reticulate REPL, Python, so a batch mixing both has to switch
+      // languages in document order. The first chunk's language travels
+      // with the event, which adapts the console from whatever it is in
+      // now; later switches are written into the code itself, as the same
+      // console input the session enqueues in adaptToLanguage()
+      // (SessionModuleContext.cpp). The session splits multi-line console
+      // input and runs it line by line, so the switches land in order.
+      String firstLanguage = null;
+      String language = null;
       StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
       {
-         if (isRChunk(scope) && isExecutableChunk(scope))
-         {
-            builder.append("# " + scope.getLabel() + "\n");
-            builder.append(scopeHelper_.getSweaveChunkText(scope));
-            builder.append("\n\n");
-         }
+         String chunkLanguage = chunkConsoleLanguage(scope);
+         if (chunkLanguage == null || !isExecutableChunk(scope))
+            continue;
+
+         if (language == null)
+            firstLanguage = chunkLanguage;
+         else if (!StringUtil.equals(chunkLanguage, language))
+            builder.append(consoleLanguageSwitch(chunkLanguage) + "\n\n");
+         language = chunkLanguage;
+
+         builder.append("# " + scope.getLabel() + "\n");
+         builder.append(scopeHelper_.getSweaveChunkText(scope));
+         builder.append("\n\n");
       }
 
+      // nothing to run; in particular, don't switch the console language
+      if (firstLanguage == null)
+         return;
+
       final String code = builder.toString().trim();
+      final String consoleLanguage = firstLanguage;
       if (fileType_.isRmd())
       {
-         final Position positionFinal = position;
          docUpdateSentinel_.withSavedDoc(new Command()
          {
             @Override
@@ -7061,12 +7082,7 @@ public class TextEditingTarget implements
                         @Override
                         public void execute()
                         {
-                           // compute the language for this chunk
-                           String language = (DocumentMode.isPositionInPythonMode(docDisplay_, positionFinal))
-                                 ? ConsoleLanguageTracker.LANGUAGE_PYTHON
-                                 : ConsoleLanguageTracker.LANGUAGE_R;
-
-                           events_.fireEvent(new SendToConsoleEvent(code, language, true));
+                           events_.fireEvent(new SendToConsoleEvent(code, consoleLanguage, true));
                         }
                      });
             }
@@ -7210,18 +7226,33 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private boolean isRChunk(Scope scope)
+   // The console language that runs this chunk, or null when the chunk's
+   // engine has no console (bash, sql, ...). 'Rscript' is left out on
+   // purpose: such chunks are typically meant to run in their own process.
+   private String chunkConsoleLanguage(Scope scope)
    {
-      String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
-      Map<String, String> chunkOptions = RChunkHeaderParser.parse(labelText);
+      String header = docDisplay_.getLine(scope.getPreamble().getRow());
+      Map<String, String> chunkOptions = RChunkHeaderParser.parse(header);
       if (!chunkOptions.containsKey("engine"))
-         return true;
-      
-      // NOTE: We might want to include 'Rscript' but such chunks are typically
-      // intended to be run in their own process so it might not make sense to
-      // collect those here.
-      String engine = chunkOptions.get("engine").toLowerCase();
-      return engine == "\"r\"";
+         return ConsoleLanguageTracker.LANGUAGE_R;
+
+      // the header parser keeps the quotes around the engine name
+      String engine = StringUtil.dequote(chunkOptions.get("engine")).toLowerCase();
+      if (StringUtil.equals(engine, "r"))
+         return ConsoleLanguageTracker.LANGUAGE_R;
+      else if (StringUtil.equals(engine, "python"))
+         return ConsoleLanguageTracker.LANGUAGE_PYTHON;
+      else
+         return null;
+   }
+
+   // Console input that moves the console to 'language'; mirrors what the
+   // session enqueues in adaptToLanguage() (SessionModuleContext.cpp).
+   private static String consoleLanguageSwitch(String language)
+   {
+      return StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_PYTHON)
+            ? "reticulate::repl_python()"
+            : "quit";
    }
    
 
