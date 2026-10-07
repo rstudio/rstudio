@@ -23,9 +23,11 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include <unistd.h>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/any.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/error.hpp>
@@ -42,6 +44,12 @@
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/json/JsonRpc.hpp>
 
+#include <core/http/SocketUtils.hpp>
+
+#include <server_core/SocketOwnership.hpp>
+#include <server_core/http/LocalhostAsyncClient.hpp>
+
+#include <server/ServerErrorCategory.hpp>
 #include <server/session/ServerSessionManager.hpp>
 #include <server/session/ServerSessionProxy.hpp>
 
@@ -254,20 +262,60 @@ private:
    bool open_ = false;
 };
 
-// Stands in for rsession on the /s/ path. It starts a response big enough for
-// proxyRequest() to stream (Content-Length over the 1MB threshold), and once the
-// proxy has started writing that response's headers to the browser, it resets
-// the connection partway through the body.
-class ResettingUpstream
+// The ways an upstream can abandon a streamed body once the proxy has started
+// writing the response's headers to the browser.
+enum class UpstreamFailure
+{
+   // RST mid-body: the client's next read fails with connection_reset.
+   Reset,
+
+   // FIN mid-body, short of the declared Content-Length. The client currently
+   // treats this as the end of the body rather than an error (see
+   // AsyncClient::handleReadContent()), so the error handler is not reached;
+   // it is kept here so that a future change reporting truncation as an error
+   // is exercised against the error handlers too.
+   Close,
+
+   // Stops sending mid-body until the client's request deadline fires, which
+   // it reports as timed_out.
+   Stall
+};
+
+const UpstreamFailure kUpstreamFailures[] = {
+   UpstreamFailure::Reset,
+   UpstreamFailure::Close,
+   UpstreamFailure::Stall
+};
+
+std::string describe(UpstreamFailure failure)
+{
+   switch (failure)
+   {
+      case UpstreamFailure::Reset: return "upstream reset mid-body";
+      case UpstreamFailure::Close: return "upstream closed mid-body";
+      case UpstreamFailure::Stall: return "upstream stalled mid-body";
+   }
+   return std::string();
+}
+
+// Stands in for rsession (/s/) or a user's app (/p/). It starts a response big
+// enough for the proxy to stream (Content-Length over the 1MB threshold), and
+// once the proxy has started writing that response's headers to the browser,
+// abandons the body as `failure` describes.
+class InterruptingUpstream
 {
 public:
-   explicit ResettingUpstream(std::shared_ptr<Gate> pHeaderWriteStarted)
+   InterruptingUpstream(UpstreamFailure failure,
+                        std::shared_ptr<Gate> pHeaderWriteStarted,
+                        std::shared_ptr<Gate> pReleased)
       : acceptor_(ioc_, boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0)),
-        pHeaderWriteStarted_(pHeaderWriteStarted)
+        failure_(failure),
+        pHeaderWriteStarted_(pHeaderWriteStarted),
+        pReleased_(pReleased)
    {
    }
 
-   ~ResettingUpstream()
+   ~InterruptingUpstream()
    {
       if (thread_.joinable())
          thread_.join();
@@ -300,20 +348,35 @@ private:
       if (ec)
          return;
 
-      // a zero linger timeout makes close() send RST instead of FIN, so the
-      // proxy's next read fails with connection_reset
       pHeaderWriteStarted_->wait();
-      socket.set_option(boost::asio::socket_base::linger(true, 0), ec);
+      switch (failure_)
+      {
+         case UpstreamFailure::Reset:
+            // a zero linger timeout makes close() send RST instead of FIN
+            socket.set_option(boost::asio::socket_base::linger(true, 0), ec);
+            break;
+
+         case UpstreamFailure::Close:
+            socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+            break;
+
+         case UpstreamFailure::Stall:
+            // hold the connection open until the client has given up on it
+            pReleased_->wait();
+            break;
+      }
       socket.close(ec);
    }
 
    boost::asio::io_context ioc_;
    boost::asio::ip::tcp::acceptor acceptor_;
+   UpstreamFailure failure_;
    std::shared_ptr<Gate> pHeaderWriteStarted_;
+   std::shared_ptr<Gate> pReleased_;
    std::thread thread_;
 };
 
-// Stands in for the browser's connection on the /s/ streaming path. Like
+// Stands in for the browser's connection on the /s/ and /p/ streaming paths. Like
 // AsyncConnectionImpl::claimResponse(), it lets the first write entry point
 // claim its single response and refuses later ones without writing. Unlike a
 // socket, it holds a streamed response's header write open until the test
@@ -465,22 +528,38 @@ private:
 
 typedef boost::function<void(boost::shared_ptr<http::AsyncConnection>, const Error&)> InterruptedStreamErrorHandler;
 
+// Which proxy site's upstream wiring the harness reproduces.
+enum class ProxySite
+{
+   // /s/, as proxyRequest() wires it (with a TCP client standing in for the
+   // local stream client; both share AsyncClient's read and error paths)
+   LocalStream,
+
+   // /p/, as proxyLocalhostRequest() wires it
+   Localhost
+};
+
 struct InterruptedStreamOutcome
 {
    bool sawUpstreamError = false;
+   Error upstreamError;
    bool headerWriteInFlightAtError = false;
    std::string headerBytesInFlight;
    std::string headerBytesAfterError;
    int refusedWrites = 0;
 };
 
-// Streams a large /s/ response through the same wiring proxyRequest() sets up,
-// has the upstream reset while the response headers are still being written to
-// the browser, and hands the resulting error to errorHandler.
-InterruptedStreamOutcome streamThenResetUpstream(const InterruptedStreamErrorHandler& errorHandler)
+// Streams a large response through the same wiring the given proxy site sets
+// up, has the upstream abandon the body (as `failure` describes) while the
+// response headers are still being written to the browser, and hands any
+// resulting error to errorHandler.
+InterruptedStreamOutcome streamThenInterruptUpstream(ProxySite site,
+                                                     UpstreamFailure failure,
+                                                     const InterruptedStreamErrorHandler& errorHandler)
 {
    auto pHeaderWriteStarted = std::make_shared<Gate>();
-   ResettingUpstream upstream(pHeaderWriteStarted);
+   auto pReleased = std::make_shared<Gate>();
+   InterruptingUpstream upstream(failure, pHeaderWriteStarted, pReleased);
    upstream.start();
 
    boost::asio::io_context ioc;
@@ -489,15 +568,42 @@ InterruptedStreamOutcome streamThenResetUpstream(const InterruptedStreamErrorHan
    pConnection->request_.setUri("/rpc/large_result");
    pConnection->onHeaderWriteStarted_ = [pHeaderWriteStarted]() { pHeaderWriteStarted->open(); };
 
-   auto pClient = boost::make_shared<http::TcpIpAsyncClient>(ioc, "127.0.0.1", std::to_string(upstream.port()));
-   pClient->setRequestTimeout(boost::posix_time::seconds(5));
+   const std::string port = std::to_string(upstream.port());
+   boost::shared_ptr<http::IAsyncClient> pClient;
+   if (site == ProxySite::Localhost)
+   {
+      auto pLocalhost = boost::make_shared<server_core::http::LocalhostAsyncClient>(ioc, "127.0.0.1", port);
+
+      // run the port-ownership check proxyLocalhostRequest() enables; this
+      // process owns the upstream, so the check passes and the request goes out
+      pLocalhost->setExpectedPeerUid(::getuid());
+      pClient = pLocalhost;
+      pClient->setStrand(&pConnection->getStrand());
+   }
+   else
+   {
+      pClient = boost::make_shared<http::TcpIpAsyncClient>(ioc, "127.0.0.1", port);
+   }
+
+   boost::posix_time::time_duration requestTimeout = boost::posix_time::seconds(5);
+   if (failure == UpstreamFailure::Stall)
+      requestTimeout = boost::posix_time::milliseconds(500);
+   pClient->setRequestTimeout(requestTimeout);
    pClient->request().setMethod("POST");
    pClient->request().setUri("/rpc/large_result");
 
    auto pProxy = boost::make_shared<http::FixedBufferProxy>(pConnection);
-   pProxy->proxy(pClient, session_proxy::getAuthCookies(pConnection->response()));
+   if (site == ProxySite::Localhost)
+   {
+      pProxy->proxy(pClient);
+      pClient->setBufferPredicate(session_proxy::shouldBufferLocalhostResponseForTest);
+   }
+   else
+   {
+      pProxy->proxy(pClient, session_proxy::getAuthCookies(pConnection->response()));
+      pClient->setBufferPredicate(session_proxy::shouldBufferLocalStreamResponseForTest);
+   }
    pClient->setStreamNonChunkedResponses(true);
-   pClient->setBufferPredicate(session_proxy::shouldBufferLocalStreamResponseForTest);
 
    InterruptedStreamOutcome outcome;
    pClient->execute(
@@ -505,10 +611,12 @@ InterruptedStreamOutcome streamThenResetUpstream(const InterruptedStreamErrorHan
       [&](const Error& error)
       {
          outcome.sawUpstreamError = true;
+         outcome.upstreamError = error;
          outcome.headerWriteInFlightAtError = pConnection->headerWriteInFlight();
          errorHandler(pConnection, error);
       });
    ioc.run();
+   pReleased->open();
 
    outcome.headerBytesInFlight = pConnection->headerBytesInFlight_;
    outcome.headerBytesAfterError = pConnection->serializedHeaders();
@@ -520,6 +628,73 @@ InterruptedStreamOutcome streamThenResetUpstream(const InterruptedStreamErrorHan
    ioc.run();
 
    return outcome;
+}
+
+// handleContentError() and handleLocalhostError() still populate the
+// connection's own response() in their special-case branches before calling
+// writeResponse(). That is only safe because none of those branches can match
+// an error raised after the upstream has started responding -- by which point
+// a streaming FixedBufferProxy may own the response and be writing straight
+// from its storage. Each check those handlers make ahead of their catch-all
+// writeError() branch (which claims the connection before mutating anything)
+// is listed here; returns the ones `error` matches.
+std::vector<std::string> mutatingBranchesMatching(const Error& error)
+{
+   std::vector<std::string> matches;
+   if (server::isAuthenticationError(error))
+      matches.push_back("isAuthenticationError");
+   if (server::isSessionUnavailableError(error))
+      matches.push_back("isSessionUnavailableError");
+   if (server::isInvalidSessionScopeError(error))
+      matches.push_back("isInvalidSessionScopeError");
+   if (http::isConnectionUnavailableError(error))
+      matches.push_back("isConnectionUnavailableError");
+   if (!error.getProperty(server_core::socket_utils::kPortOwnershipRejectedProperty).empty())
+      matches.push_back(server_core::socket_utils::kPortOwnershipRejectedProperty);
+
+   http::Response scratch;
+   if (session_proxy::handleLicenseErrorForTest(error, &scratch))
+      matches.push_back("handleLicenseError");
+
+   return matches;
+}
+
+void expectReachesNoMutatingBranch(const Error& error)
+{
+   std::vector<std::string> matches = mutatingBranchesMatching(error);
+   EXPECT_TRUE(matches.empty())
+      << "a mid-body error would reach an error-handler branch that mutates the "
+      << "connection's response in place (" << boost::algorithm::join(matches, ", ")
+      << "): " << error.asString();
+}
+
+// Interrupts a streamed response every way an upstream can, and checks that
+// errorHandler leaves the response whose headers are in flight alone.
+void expectInterruptionsLeaveInFlightHeadersAlone(ProxySite site,
+                                                  const InterruptedStreamErrorHandler& errorHandler)
+{
+   for (UpstreamFailure failure : kUpstreamFailures)
+   {
+      SCOPED_TRACE(describe(failure));
+      InterruptedStreamOutcome outcome = streamThenInterruptUpstream(site, failure, errorHandler);
+
+      EXPECT_FALSE(outcome.headerBytesInFlight.empty())
+         << "the response never started streaming, so nothing was exercised";
+      EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
+         << "the error handler rewrote the response whose headers were still being written";
+
+      // see UpstreamFailure::Close
+      if (failure == UpstreamFailure::Close && !outcome.sawUpstreamError)
+         continue;
+
+      EXPECT_TRUE(outcome.sawUpstreamError);
+      if (!outcome.sawUpstreamError)
+         continue;
+
+      EXPECT_TRUE(outcome.headerWriteInFlightAtError);
+      EXPECT_EQ(1, outcome.refusedWrites);
+      expectReachesNoMutatingBranch(outcome.upstreamError);
+   }
 }
 
 } // anonymous namespace
@@ -839,65 +1014,93 @@ TEST(ProxyLocalhostResponseTests, PreservesRefreshedAuthCookiesOnNormalResponse)
    EXPECT_EQ(connection.writtenResponse_.body(), "hello from rsession");
 }
 
-// proxyRequest() now streams any /s/ response of 1MB or more through a
-// FixedBufferProxy, which claims the connection's response and writes its headers
-// from response()'s own storage. If rsession then drops the connection mid-body,
-// the upstream client (on its own strand) calls the site's error handler.
-// handleRpcError() and handleEventsError() build their JSON-RPC error in place
-// in ptrConnection->response() and only then call writeResponse(). That write is
-// refused, but by then the handler has already rewritten the headers the
-// in-flight write is sending, which is the mutation AsyncConnection::response()'s
-// threading note forbids. On a real socket this is a use-after-free.
-// handleContentError() reaches the same mid-body failure through its
-// catch-all writeError() branch, which claims the connection before touching
-// response(). Its other branches still populate response() in place, so this
-// guards against a transport error ever being routed into one of them.
+// proxyRequest() streams any /s/ response of 1MB or more through a
+// FixedBufferProxy, and proxyLocalhostRequest() does the same for /p/. Either
+// way the proxy claims the connection's response and writes its headers from
+// response()'s own storage. If the upstream then abandons the body, the
+// upstream client calls the site's error handler while that write may still be
+// in flight. Whatever the handler does, it must not mutate response() then,
+// which is what AsyncConnection::response()'s threading note forbids; on a real
+// socket it is a use-after-free.
+//
+// handleRpcError() and handleEventsError() assemble their error in a response
+// of their own. handleContentError() and handleLocalhostError() reach a mid-body
+// failure through their catch-all writeError() branch, which claims the
+// connection first; their other branches still populate response() in place,
+// so these also guard against a mid-body error ever being routed into one of
+// those (see mutatingBranchesMatching()).
 TEST(StreamedLocalStreamProxyTests, ContentErrorMidBodyLeavesInFlightHeadersAlone)
 {
    r_util::SessionContext context("test-user");
-   InterruptedStreamOutcome outcome = streamThenResetUpstream(
+   expectInterruptionsLeaveInFlightHeadersAlone(
+      ProxySite::LocalStream,
       [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
       {
          session_proxy::handleContentErrorForTest(ptrConnection, context, error);
       });
-
-   ASSERT_TRUE(outcome.sawUpstreamError);
-   ASSERT_TRUE(outcome.headerWriteInFlightAtError);
-   EXPECT_EQ(1, outcome.refusedWrites);
-   EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
-      << "handleContentError rewrote the response whose headers were still being written";
 }
 
 TEST(StreamedLocalStreamProxyTests, RpcErrorMidBodyLeavesInFlightHeadersAlone)
 {
    r_util::SessionContext context("test-user");
-   InterruptedStreamOutcome outcome = streamThenResetUpstream(
+   expectInterruptionsLeaveInFlightHeadersAlone(
+      ProxySite::LocalStream,
       [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
       {
          session_proxy::handleRpcErrorForTest(ptrConnection, context, http::Headers(), error);
       });
-
-   ASSERT_TRUE(outcome.sawUpstreamError);
-   ASSERT_TRUE(outcome.headerWriteInFlightAtError);
-   EXPECT_EQ(1, outcome.refusedWrites);
-   EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
-      << "handleRpcError rewrote the response whose headers were still being written";
 }
 
 TEST(StreamedLocalStreamProxyTests, EventsErrorMidBodyLeavesInFlightHeadersAlone)
 {
    r_util::SessionContext context("test-user");
-   InterruptedStreamOutcome outcome = streamThenResetUpstream(
+   expectInterruptionsLeaveInFlightHeadersAlone(
+      ProxySite::LocalStream,
       [&](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
       {
          session_proxy::handleEventsErrorForTest(ptrConnection, context, http::Headers(), error);
       });
+}
 
-   ASSERT_TRUE(outcome.sawUpstreamError);
-   ASSERT_TRUE(outcome.headerWriteInFlightAtError);
-   EXPECT_EQ(1, outcome.refusedWrites);
-   EXPECT_EQ(outcome.headerBytesInFlight, outcome.headerBytesAfterError)
-      << "handleEventsError rewrote the response whose headers were still being written";
+TEST(StreamedLocalhostProxyTests, LocalhostErrorMidBodyLeavesInFlightHeadersAlone)
+{
+   expectInterruptionsLeaveInFlightHeadersAlone(
+      ProxySite::Localhost,
+      [](boost::shared_ptr<http::AsyncConnection> ptrConnection, const Error& error)
+      {
+         session_proxy::handleLocalhostErrorForTest(ptrConnection, error);
+      });
+}
+
+// The errors the upstream clients raise once a response is under way, built
+// with the properties they attach (AsyncClient/LocalStreamAsyncClient
+// addErrorProperties()), checked against the same branch list. This covers
+// transport errors the harness above can't readily provoke, and fails fast if
+// a classifier is widened to match one -- e.g. connection_reset being added to
+// isConnectionUnavailableError() so that a reset reads as a session to relaunch.
+TEST(StreamedProxyErrorClassificationTests, MidBodyTransportErrorsReachNoMutatingBranch)
+{
+   const Error midBodyErrors[] = {
+      Error(boost::asio::error::eof, ERROR_LOCATION),
+      Error(boost::asio::error::connection_reset, ERROR_LOCATION),
+      Error(boost::asio::error::connection_aborted, ERROR_LOCATION),
+      Error(boost::asio::error::broken_pipe, ERROR_LOCATION),
+      Error(boost::asio::error::operation_aborted, ERROR_LOCATION),
+      Error(boost::asio::error::timed_out, ERROR_LOCATION),
+      systemError(boost::system::errc::timed_out, ERROR_LOCATION),
+   };
+
+   for (const Error& bare : midBodyErrors)
+   {
+      SCOPED_TRACE(bare.asString());
+      expectReachesNoMutatingBranch(bare);
+
+      Error tagged = bare;
+      tagged.addProperty("path", "/tmp/rstudio-test-stream");
+      tagged.addProperty(http::kLocalStreamPeerPidProperty, 4242);
+      tagged.addProperty("user-id", 1000);
+      expectReachesNoMutatingBranch(tagged);
+   }
 }
 
 // The proxy reports each request's outcome to the session manager along with

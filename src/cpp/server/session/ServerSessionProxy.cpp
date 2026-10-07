@@ -1117,6 +1117,18 @@ void handleEventsErrorForTest(
 {
    handleEventsError(ptrConnection, context, authCookies, error);
 }
+
+void handleLocalhostErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const Error& error)
+{
+   handleLocalhostError(ptrConnection, error);
+}
+
+bool handleLicenseErrorForTest(const Error& error, http::Response* pResponse)
+{
+   return handleLicenseError(error, pResponse);
+}
 #endif
 
 bool applyProxyFilter(

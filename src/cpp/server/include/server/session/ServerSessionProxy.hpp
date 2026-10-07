@@ -182,6 +182,17 @@ void handleEventsErrorForTest(
       const core::r_util::SessionContext& context,
       const core::http::Headers& authCookies,
       const core::Error& error);
+
+// Exposes the /p/ error handler (handleLocalhostError) that
+// proxyLocalhostRequest installs on the upstream client.
+void handleLocalhostErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const core::Error& error);
+
+// Exposes the license-error mapping (handleLicenseError) the error handlers
+// above consult; returns whether it recognized error and populated *pResponse.
+bool handleLicenseErrorForTest(const core::Error& error,
+                               core::http::Response* pResponse);
 #endif
 
 } // namespace session_proxy
