@@ -48,6 +48,14 @@ public class ConsoleLanguageTracker
    
    public static final String LANGUAGE_R      = "R";
    public static final String LANGUAGE_PYTHON = "Python";
+
+   // Console input that enters / leaves the reticulate REPL. The first entry
+   // of each is what the session enqueues in adaptToLanguage() and what
+   // batches of chunks embed to switch part-way; the rest are the other
+   // spellings reticulate honors, which the projection has to follow too.
+   // Mirrors isPythonReplEnter() / isPythonReplExit() in SessionConsoleInput.cpp.
+   private static final String[] REPL_ENTER_INPUTS = { "reticulate::repl_python()", "repl_python()" };
+   private static final String[] REPL_EXIT_INPUTS  = { "quit", "exit", "quit()", "exit()" };
    
    @Inject
    public ConsoleLanguageTracker(Session session,
@@ -150,8 +158,8 @@ public class ConsoleLanguageTracker
    public static String consoleLanguageSwitch(String language)
    {
       return StringUtil.equals(language, LANGUAGE_PYTHON)
-            ? "reticulate::repl_python()"
-            : "quit";
+            ? REPL_ENTER_INPUTS[0]
+            : REPL_EXIT_INPUTS[0];
    }
 
    // The language the console is in once 'input' has run, starting from
@@ -162,13 +170,24 @@ public class ConsoleLanguageTracker
       boolean python = StringUtil.equals(language, LANGUAGE_PYTHON);
       for (String line : StringUtil.notNull(input).split("\n"))
       {
-         if (python && (line.equals("quit") || line.equals("exit")))
+         if (python && isOneOf(line, REPL_EXIT_INPUTS))
             python = false;
-         else if (!python && (line.equals("reticulate::repl_python()") || line.equals("repl_python()")))
+         else if (!python && isOneOf(line, REPL_ENTER_INPUTS))
             python = true;
       }
 
       return python ? LANGUAGE_PYTHON : LANGUAGE_R;
+   }
+
+   private static boolean isOneOf(String line, String[] candidates)
+   {
+      for (String candidate : candidates)
+      {
+         if (line.equals(candidate))
+            return true;
+      }
+
+      return false;
    }
 
    private void init()

@@ -3503,18 +3503,28 @@ Error adaptToLanguage(const std::string& language)
    // that switches languages part-way (e.g. "Run All Chunks Above" over
    // mixed R and Python chunks) must be judged against where that batch
    // ends. A switch enqueued by an earlier call reaches the input buffer
-   // through the console input service, so until the next prompt it may
-   // not be visible there yet; remember where it leads in the meantime.
-   static std::string s_pendingLanguage;
+   // through the console input service, so it is visible nowhere until it
+   // lands; remember where it leads, then follow the input the console
+   // pops from there. No prompt fires while buffered input drains, and by
+   // the time the next call arrives a later line may already have undone
+   // the switch (a batch that returns to R), so neither the enqueued
+   // language nor the console's current state can be taken as is. The
+   // next prompt means the console is idle, and its real state takes over.
+   static std::string s_projectedLanguage;
    static RSTUDIO_BOOST_CONNECTION s_promptConnection;
+   static RSTUDIO_BOOST_CONNECTION s_inputConnection;
    if (!s_promptConnection.connected())
    {
       s_promptConnection = module_context::events().onConsolePrompt.connect([](const std::string&) {
-         s_pendingLanguage.clear();
+         s_projectedLanguage.clear();
+      });
+      s_inputConnection = module_context::events().onConsoleInput.connect([](const std::string& input) {
+         if (!s_projectedLanguage.empty())
+            s_projectedLanguage = console_input::languageAfterInput(s_projectedLanguage, input);
       });
    }
 
-   std::string activeLanguage = s_pendingLanguage.empty() ? getActiveLanguage() : s_pendingLanguage;
+   std::string activeLanguage = s_projectedLanguage.empty() ? getActiveLanguage() : s_projectedLanguage;
    activeLanguage = console_input::languageAfterPendingInput(activeLanguage);
    if (language == activeLanguage)
       return Success();
@@ -3538,7 +3548,7 @@ Error adaptToLanguage(const std::string& language)
    if (error)
       LOG_ERROR(error);
    else
-      s_pendingLanguage = language;
+      s_projectedLanguage = language;
 
    return Success();
 }

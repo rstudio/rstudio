@@ -183,6 +183,91 @@ test.describe('Run All Chunks with console chunk output', () => {
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
   });
 
+  test('Run All Chunks Below: a final Python chunk ending in an open block is closed', async ({ rstudioPage: page }) => {
+    // The REPL reads a line at a time and only closes an indented block on
+    // a blank line. A chunk's text has no trailing newline, so a batch that
+    // ends inside a block would leave the REPL at its '...' continuation
+    // prompt with the block unevaluated.
+    file = 'run_below_python_open_block.qmd';
+    await writeAndOpenFile(page, sandbox.dir, file, heredoc`
+      ---
+      title: run all chunks below
+      ---
+
+      ${FENCE}{r first}
+      "cursor goes here"
+      ${FENCE}
+
+      ${FENCE}{python}
+      total = 0
+      for i in range(4):
+          total += i
+      ${FENCE}
+    `);
+    await sourceActions.navigateToChunkByLabel('first');
+
+    await executeCommand(page, 'executeSubsequentChunks');
+
+    await expect(interpreterLabel(page)).toContainText('Python', { timeout: 60000 });
+    // The probe is echoed with the prompt it was submitted at: '>>> ' once
+    // the block has been closed and run, '... ' if it is still open.
+    await consoleActions.executeInConsole('print("probe", total)');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('>>> print("probe", total)');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('probe 6', { timeout: 30000 });
+    await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
+  });
+
+  test('a Python chunk run after the batch has left the REPL, with no prompt in between, reaches Python', async ({ rstudioPage: page }) => {
+    // The session enqueues the switch to Python itself and then has to
+    // follow the batch through the REPL and back out: when the console is
+    // busy as the batch is sent, the switch and the batch both queue behind
+    // that work and no prompt fires until everything has drained. A Python
+    // chunk run once the batch is back in R must see that the console has
+    // left the REPL, not the switch the session enqueued earlier.
+    file = 'run_above_no_prompt.qmd';
+    await writeAndOpenFile(page, sandbox.dir, file, heredoc`
+      ---
+      title: no prompt
+      ---
+
+      ${FENCE}{python first}
+      import time
+      time.sleep(2)
+      stale_probe = 'python'
+      ${FENCE}
+
+      ${FENCE}{r slow}
+      Sys.sleep(5)
+      ${FENCE}
+
+      ${FENCE}{r last}
+      "cursor goes here"
+      ${FENCE}
+
+      ${FENCE}{python probe}
+      print("probe:" + stale_probe)
+      ${FENCE}
+    `);
+
+    // Keep R busy so the switch and the batch queue behind it, with no
+    // prompt between them. The Python sleep keeps the REPL phase long
+    // enough for the label to be seen in Python before it returns to R.
+    await consoleActions.executeInConsole('Sys.sleep(3)', { wait: false });
+    await sourceActions.navigateToChunkByLabel('last');
+    await executeCommand(page, 'executePreviousChunks');
+
+    // The interpreter label follows the REPL in and back out; once it is
+    // back on R the slow chunk is running and the probe queues behind it.
+    await expect(interpreterLabel(page)).toContainText('Python', { timeout: 60000 });
+    await expect(interpreterLabel(page)).toContainText(/^R /, { timeout: 30000 });
+    await sourceActions.navigateToChunkByLabel('probe');
+    await executeCommand(page, 'executeCurrentChunk');
+
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('probe:python', { timeout: 60000 });
+    await expect(interpreterLabel(page)).toContainText('Python');
+    await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
+  });
+
   test('a Python chunk run while the batch is still draining reaches Python, despite an early prompt', async ({ rstudioPage: page }) => {
     // Run All Chunks Above from an R console with a Python-first batch: the
     // session enqueues reticulate::repl_python() itself, and if the REPL

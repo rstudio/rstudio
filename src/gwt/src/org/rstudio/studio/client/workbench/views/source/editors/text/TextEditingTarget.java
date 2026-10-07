@@ -7067,7 +7067,11 @@ public class TextEditingTarget implements
       if (firstLanguage == null)
          return;
 
-      final String code = builder.toString().trim();
+      String batch = builder.toString().trim();
+      if (StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_PYTHON))
+         batch = closePythonBlock(batch);
+
+      final String code = batch;
       final String consoleLanguage = firstLanguage;
       final Command sendToConsole = () ->
       {
@@ -7290,6 +7294,20 @@ public class TextEditingTarget implements
       return true;
    }
 
+   // The Python REPL reads console input a line at a time and only closes
+   // an indented block on a blank line, so code that ends inside one would
+   // sit at the '...' continuation prompt until the user pressed Enter. The
+   // session leaves a trailing empty line empty (fixupPendingConsoleInput()
+   // in SessionConsoleInput.cpp), so it reaches the REPL and closes the block.
+   private static String closePythonBlock(String code)
+   {
+      int lastLine = code.lastIndexOf('\n') + 1;
+      if (lastLine < code.length() && Character.isWhitespace(code.charAt(lastLine)))
+         return code + "\n";
+
+      return code;
+   }
+
    private void executeSweaveChunk(final Scope chunk,
                                    final int mode,
                                    final boolean scrollNearTop)
@@ -7337,7 +7355,10 @@ public class TextEditingTarget implements
                // compute the language for this chunk
                String language = "R";
                if (DocumentMode.isPositionInPythonMode(docDisplay_, chunk.getBodyStart()))
+               {
                   language = "Python";
+                  code = closePythonBlock(code);
+               }
 
                events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }

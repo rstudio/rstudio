@@ -242,6 +242,12 @@ test_that("the REPL hook runs buffered code before an unindented quit", {
    expect_message(expect_false(.rs.reticulate.replHook(buffer, "exit", "exit")))
    expect_true(buffer$empty())
 
+   # the call spellings reticulate accepts are exit requests too
+   buffer$push("def rstudio_hook_test_2():", "    return 2")
+   expect_false(.rs.reticulate.replHook(buffer, "exit()", "exit()"))
+   expect_true(buffer$empty())
+   expect_equal(reticulate::py_eval("rstudio_hook_test_2()"), 2L)
+
    # an indented quit inside a block is left to reticulate as before
    buffer$push("def g():")
    expect_false(.rs.reticulate.replHook(buffer, "    quit", "quit"))
