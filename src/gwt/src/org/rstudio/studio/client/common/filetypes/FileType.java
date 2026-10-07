@@ -45,25 +45,6 @@ public abstract class FileType
       return id_;
    }
 
-   // A file type is identified by its id, so instances constructed outside the
-   // registry still compare equal to the registry's singletons.
-   @Override
-   public boolean equals(Object other)
-   {
-      if (this == other)
-         return true;
-      if (!(other instanceof FileType))
-         return false;
-
-      return id_.equals(((FileType) other).id_);
-   }
-
-   @Override
-   public int hashCode()
-   {
-      return id_.hashCode();
-   }
-
    public void openFile(FileSystemItem file, 
                         FilePosition position,
                         int navMethod,

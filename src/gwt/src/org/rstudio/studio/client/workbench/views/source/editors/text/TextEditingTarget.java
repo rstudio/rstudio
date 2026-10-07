@@ -3933,12 +3933,20 @@ public class TextEditingTarget implements
       view_.adaptToExtendedFileType(extendedType);
 
       // save new extended type (updateRmdFormat below reads it)
+      boolean extendedTypeChanged = !StringUtil.equals(extendedType, extendedType_);
       extendedType_ = extendedType;
 
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
-         updateRmdFormat();
+         // the format menu is derived from the front matter, so only rebuild it
+         // when that changed: every save (including idle autosaves) lands here,
+         // and rebuilding would also clear a format menu the user has open
+         if (extendedTypeChanged ||
+             !StringUtil.equals(getRmdFrontMatter(), rmdFormatFrontMatter_))
+         {
+            updateRmdFormat();
+         }
       }
 
       quartoHelper_.manageCommands();
@@ -5720,6 +5728,8 @@ public class TextEditingTarget implements
 
    private void updateRmdFormat()
    {
+      rmdFormatFrontMatter_ = getRmdFrontMatter();
+
       String formatUiName = "";
       List<String> formatList = new ArrayList<>();
       List<String> valueList = new ArrayList<>();
@@ -10243,6 +10253,8 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
+   // front matter the format menu was last built from
+   private String rmdFormatFrontMatter_;
 
    // prevent multiple manual saves from queuing up
    private boolean documentChangedDuringDebugSession_ = false;
