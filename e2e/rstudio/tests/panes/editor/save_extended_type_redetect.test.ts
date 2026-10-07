@@ -24,17 +24,20 @@ import { useSuiteSandbox } from '@utils/sandbox';
 
 const GET_EVENTS = /\/events\/get_events(?:\?|$)/;
 
-// "colour" sits at columns 4-10 of the body line (row 4)
+// "colour" sits at columns 4-10 of the body line (row 4). The trailing
+// newline leaves an empty last line (row 5) for editAndSave to type on.
 const CONTENT = heredoc`
   ---
   title: "Markers"
   output: html_document
   ---
   The colour of the sky.
+
 `;
 const WORD_ROW = 4;
 const WORD_START = 4;
 const WORD_END = 10;
+const EMPTY_LAST_ROW = 5;
 
 // A realtime spelling marker is a front "text" marker covering exactly the word.
 async function isWordFlagged(editor: AceEditor): Promise<boolean> {
@@ -55,11 +58,13 @@ async function focusEditor(page: Page, sourceActions: SourcePaneActions, editor:
   }
 }
 
-// A no-op edit on the trailing empty line marks the document dirty without
-// touching the flagged word; the save then runs the lint-on-save pass.
+// A no-op edit on the empty last line marks the document dirty without
+// touching the row holding the flagged word (which would re-run the
+// realtime check on it); the save then runs the lint-on-save pass.
 async function editAndSave(page: Page, sourceActions: SourcePaneActions, editor: AceEditor): Promise<void> {
   await focusEditor(page, sourceActions, editor);
-  await editor.gotoLine(CONTENT.split('\n').length + 1, 0);
+  await editor.gotoLine(EMPTY_LAST_ROW + 1, 0);
+  expect(await editor.getCursorPosition()).toEqual({ row: EMPTY_LAST_ROW, column: 0 });
   await page.keyboard.type(' ');
   await page.keyboard.press('Backspace');
   await saveDocument(page);
