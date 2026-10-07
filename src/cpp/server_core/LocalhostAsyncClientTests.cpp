@@ -15,116 +15,20 @@
 
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <condition_variable>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
 
 #include <boost/asio.hpp>
 #include <boost/make_shared.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/tests/GatedResponder.hpp>
 #include <server_core/http/LocalhostAsyncClient.hpp>
 
 namespace rstudio {
 namespace server_core {
 namespace http {
-
-namespace {
-
-// One-shot signal from the client's io_context thread to the responder thread.
-class Gate
-{
-public:
-   void open()
-   {
-      std::lock_guard<std::mutex> lock(mutex_);
-      open_ = true;
-      cv_.notify_all();
-   }
-
-   // Bounded, so a gate that never opens fails the test rather than hanging it.
-   bool wait()
-   {
-      std::unique_lock<std::mutex> lock(mutex_);
-      return cv_.wait_for(lock, std::chrono::seconds(2), [this]() { return open_; });
-   }
-
-private:
-   std::mutex mutex_;
-   std::condition_variable cv_;
-   bool open_ = false;
-};
-
-// Serves one response with no Content-Length and no Transfer-Encoding, so its
-// body is delimited by the connection closing. The headers go out together with
-// the first part of the body; the rest is only written once the client has
-// parsed the headers, so the client must read again to see it.
-class EofDelimitedResponder
-{
-public:
-   EofDelimitedResponder(const std::string& firstPart,
-                         const std::string& secondPart,
-                         std::shared_ptr<Gate> pHeadersParsed)
-      : acceptor_(ioc_, boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0)),
-        firstPart_(firstPart),
-        secondPart_(secondPart),
-        pHeadersParsed_(pHeadersParsed)
-   {
-   }
-
-   ~EofDelimitedResponder()
-   {
-      if (thread_.joinable())
-         thread_.join();
-   }
-
-   unsigned short port() { return acceptor_.local_endpoint().port(); }
-
-   void start() { thread_ = std::thread([this]() { run(); }); }
-
-private:
-   void run()
-   {
-      boost::system::error_code ec;
-      boost::asio::ip::tcp::socket socket(ioc_);
-      acceptor_.accept(socket, ec);
-      if (ec)
-         return;
-
-      boost::asio::streambuf request;
-      boost::asio::read_until(socket, request, "\r\n\r\n", ec);
-      if (ec)
-         return;
-
-      std::string head =
-         "HTTP/1.1 200 OK\r\n"
-         "Content-Type: application/octet-stream\r\n"
-         "\r\n" + firstPart_;
-      boost::asio::write(socket, boost::asio::buffer(head), ec);
-      if (ec)
-         return;
-
-      // A client that already gave up on the body just makes this write fail.
-      pHeadersParsed_->wait();
-      boost::asio::write(socket, boost::asio::buffer(secondPart_), ec);
-
-      socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-      socket.close(ec);
-   }
-
-   boost::asio::io_context ioc_;
-   boost::asio::ip::tcp::acceptor acceptor_;
-   std::string firstPart_;
-   std::string secondPart_;
-   std::shared_ptr<Gate> pHeadersParsed_;
-   std::thread thread_;
-};
-
-} // anonymous namespace
 
 // proxyLocalhostRequest() (/p/) streams every response its buffer predicate
 // doesn't hold, including one with no Content-Length (see
@@ -142,8 +46,24 @@ TEST(LocalhostAsyncClientTest, StreamsEofDelimitedBodyToCompletion)
    const std::string firstPart(4096, 'a');
    const std::string secondPart(4096, 'b');
 
-   auto pHeadersParsed = std::make_shared<Gate>();
-   EofDelimitedResponder responder(firstPart, secondPart, pHeadersParsed);
+   // No Content-Length and no Transfer-Encoding, so the body is delimited by
+   // the connection closing. The headers go out together with the first part
+   // of the body; the rest is only written once the client has parsed the
+   // headers, so the client must read again to see it.
+   const std::string head =
+      "HTTP/1.1 200 OK\r\n"
+      "Content-Type: application/octet-stream\r\n"
+      "\r\n" + firstPart;
+
+   auto pHeadersParsed = std::make_shared<core::tests::Gate>();
+   core::tests::GatedResponder responder(
+      head, pHeadersParsed, [&](boost::asio::ip::tcp::socket& socket)
+      {
+         // a client that already gave up on the body just makes this write fail
+         boost::system::error_code ec;
+         boost::asio::write(socket, boost::asio::buffer(secondPart), ec);
+         socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+      });
    responder.start();
 
    boost::asio::io_context ioc;
