@@ -4,7 +4,7 @@ if (file.exists("dependencies/windows/install-openssl"))
    setwd("dependencies/windows/install-openssl")
 
 OWD <- getwd()
-URL <- "https://www.openssl.org/source/openssl-3.1.4.tar.gz"
+URL <- "https://www.openssl.org/source/openssl-3.5.9.tar.gz"
 NAME <- sub(".tar.gz$", "", basename(URL))
 
 source("../tools.R")
