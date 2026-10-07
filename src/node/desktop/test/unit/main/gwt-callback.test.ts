@@ -347,6 +347,33 @@ describe('DesktopCallback', () => {
       assert.deepEqual(order, ['image', 'text']);
     });
 
+    // the screen can change while earlier writes finish, so the capture must
+    // not wait for them the way the clipboard write does
+    it('desktop_copy_page_region_to_clipboard captures without waiting for a pending write', async () => {
+      const bitmap = Buffer.alloc(2 * 2 * 4, 0xff);
+      const capturePage = sinon.stub().resolves(nativeImage.createFromBitmap(bitmap, { width: 2, height: 2 }));
+      mainWindow.window = { capturePage } as unknown as BrowserWindow;
+      holdTextWrites();
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'pending');
+      const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      await tick();
+      assert.isTrue(capturePage.calledOnce, 'capture waited for the pending write');
+
+      await releaseWrites();
+      await copied;
+    });
+
+    it('desktop_copy_page_region_to_clipboard leaves the clipboard alone when capture fails', async () => {
+      mainWindow.window = {
+        capturePage: sinon.stub().rejects(new Error('capture failed')),
+      } as unknown as BrowserWindow;
+      const write = sinon.stub(clipboard, 'write').resolves();
+
+      await invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      assert.isFalse(write.called);
+    });
+
     it('desktop_clipboard_paste waits for a pending write', async () => {
       let contents = 'old';
       let pasted: string | undefined;
