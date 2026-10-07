@@ -87,12 +87,6 @@ function formatSelectedVersionForUi(rBinDir: string) {
   }
 }
 
-async function readClipboardType(mimeType: string): Promise<Blob | undefined> {
-  const items = await clipboard.read();
-  const item = items.find((candidate) => candidate.types.includes(mimeType));
-  return item ? (item.getType(mimeType) as Promise<Blob>) : undefined;
-}
-
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
  * via the ContextBridge.
@@ -375,7 +369,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle('desktop_get_clipboard_uris', async () => {
       // if we don't have a URI list, nothing to do
-      const blob = await readClipboardType('text/uri-list');
+      const blob = await this.readClipboardType('text/uri-list');
       if (!blob) {
         return [];
       }
@@ -400,7 +394,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      const blob = await readClipboardType('image/png');
+      const blob = await this.readClipboardType('image/png');
       if (!blob) {
         return '';
       }
@@ -656,9 +650,9 @@ export class GwtCallback extends EventEmitter {
         try {
           const rect: Rectangle = { x, y, width, height };
           const image = await this.mainWindow.window.capturePage(rect);
-          await clipboard.write([
-            new ClipboardItem({ 'image/png': new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }) }),
-          ]);
+          const png = new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' });
+          this.queueClipboardWrite(async () => clipboard.write([new ClipboardItem({ 'image/png': png })]));
+          await this.clipboardWrite;
         } catch (e: unknown) {
           logger().logError(e);
         }
@@ -1324,8 +1318,27 @@ export class GwtCallback extends EventEmitter {
     this.owners.delete(owner);
   }
 
-  private queueClipboardWrite(write: () => Promise<void>): void {
+  /**
+   * Write to the clipboard after any pending write, so that reads and pastes
+   * waiting on clipboardWrite see it.
+   */
+  queueClipboardWrite(write: () => Promise<void>): void {
     this.clipboardWrite = this.clipboardWrite.then(write).catch((error: unknown) => logger().logError(error));
+  }
+
+  // A failed read is logged and treated as an empty clipboard: the renderer
+  // reports a rejected IPC call without ever invoking its callback, which
+  // would leave a visual-editor paste waiting forever.
+  private async readClipboardType(mimeType: string): Promise<Blob | undefined> {
+    await this.clipboardWrite;
+    try {
+      const items = await clipboard.read();
+      const item = items.find((candidate) => candidate.types.includes(mimeType));
+      return item ? ((await item.getType(mimeType)) as Blob) : undefined;
+    } catch (error: unknown) {
+      logger().logError(error);
+      return undefined;
+    }
   }
 
   /**

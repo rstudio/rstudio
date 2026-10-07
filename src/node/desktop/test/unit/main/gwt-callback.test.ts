@@ -70,10 +70,10 @@ describe('DesktopCallback', () => {
     handle.restore();
   });
 
-  async function invoke(channel: string): Promise<unknown> {
+  async function invoke(channel: string, ...args: unknown[]): Promise<unknown> {
     const handler = invokeHandlers.get(channel);
     assert.isDefined(handler, `no handler registered for '${channel}'`);
-    return handler!({} as IpcMainInvokeEvent);
+    return handler!({} as IpcMainInvokeEvent, ...args);
   }
 
   afterEach(() => {
@@ -228,12 +228,33 @@ describe('DesktopCallback', () => {
 
   describe('clipboard handlers', () => {
     let tempDir: string;
+    let heldWrites: (() => void)[] = [];
+
+    const tick = async () => new Promise((resolve) => setTimeout(resolve, 20));
+
+    // Stub clipboard.writeText so each write stays pending until released,
+    // standing in for a slow async write; onWrite runs when it completes.
+    function holdTextWrites(onWrite?: (text: string) => void) {
+      sinon.stub(clipboard, 'writeText').callsFake(async (text: string) => {
+        await new Promise<void>((resolve) => heldWrites.push(resolve));
+        onWrite?.(text);
+      });
+    }
+
+    async function releaseWrites() {
+      heldWrites.forEach((release) => release());
+      heldWrites = [];
+      await tick();
+    }
 
     beforeEach(() => {
       tempDir = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-clipboard-')));
     });
 
-    afterEach(() => {
+    // the GwtCallback is shared by the suite, so a write a failed test left
+    // pending would stall every later read that waits on it
+    afterEach(async () => {
+      await releaseWrites();
       clipboard.clear();
       rmSync(tempDir, { recursive: true, force: true });
     });
@@ -247,24 +268,60 @@ describe('DesktopCallback', () => {
     // followed by a yank), so a read must not overtake a pending async write
     it('desktop_get_clipboard_text waits for a pending write', async () => {
       let contents = 'old';
-      sinon.stub(clipboard, 'writeText').callsFake(async (text: string) => {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        contents = text;
-      });
+      holdTextWrites((text) => (contents = text));
       sinon.stub(clipboard, 'readText').callsFake(async () => contents);
 
       ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
-      assert.equal(await invoke('desktop_get_clipboard_text'), 'new');
+      const result = invoke('desktop_get_clipboard_text');
+      await tick();
+      await releaseWrites();
+      assert.equal(await result, 'new');
+    });
+
+    it('desktop_get_clipboard_uris and _image wait for a pending write', async () => {
+      holdTextWrites();
+      const read = sinon.stub(clipboard, 'read').resolves([]);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      const results = Promise.all([invoke('desktop_get_clipboard_uris'), invoke('desktop_get_clipboard_image')]);
+      await tick();
+      assert.isFalse(read.called, 'read before the write finished');
+
+      await releaseWrites();
+      assert.deepEqual(await results, [[], '']);
+      assert.isTrue(read.calledTwice);
+    });
+
+    // a rejected IPC call never reaches the renderer's callback, so a failed
+    // read must still answer or a visual-editor paste would hang
+    it('desktop_get_clipboard_uris and _image treat a failed read as empty', async () => {
+      sinon.stub(clipboard, 'read').rejects(new Error('clipboard unavailable'));
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), []);
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
+    });
+
+    it('desktop_copy_page_region_to_clipboard writes after a pending write', async () => {
+      const bitmap = Buffer.alloc(2 * 2 * 4, 0xff);
+      const image = nativeImage.createFromBitmap(bitmap, { width: 2, height: 2 });
+      mainWindow.window = { capturePage: sinon.stub().resolves(image) } as unknown as BrowserWindow;
+      holdTextWrites();
+      const write = sinon.spy(clipboard, 'write');
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      await tick();
+      assert.isFalse(write.called, 'image written before the pending write finished');
+
+      await releaseWrites();
+      await copied;
+      assert.isTrue(write.calledOnce);
+      assert.isTrue(await clipboard.has('image/png'));
     });
 
     it('desktop_clipboard_paste waits for a pending write', async () => {
       let contents = 'old';
       let pasted: string | undefined;
-      let finishWrite: (() => void) | undefined;
-      sinon.stub(clipboard, 'writeText').callsFake(async (text: string) => {
-        await new Promise<void>((resolve) => (finishWrite = resolve));
-        contents = text;
-      });
+      holdTextWrites((text) => (contents = text));
       const target = {
         isDestroyed: sinon.stub().returns(false),
         paste: sinon.stub().callsFake(() => (pasted = contents)),
@@ -273,31 +330,26 @@ describe('DesktopCallback', () => {
 
       ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
       ipcMain.emit('desktop_clipboard_paste', {});
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await tick();
       assert.isFalse(target.paste.called, 'pasted before the write finished');
 
-      finishWrite?.();
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await releaseWrites();
       assert.equal(pasted, 'new');
     });
 
     // the window can close while the write is pending; pasting into its
     // destroyed WebContents would throw from a promise nothing awaits
     it('desktop_clipboard_paste skips a target destroyed during a pending write', async () => {
-      let finishWrite: (() => void) | undefined;
-      sinon.stub(clipboard, 'writeText').callsFake(async () => {
-        await new Promise<void>((resolve) => (finishWrite = resolve));
-      });
+      holdTextWrites();
       const target = { isDestroyed: sinon.stub().returns(false), paste: sinon.stub() };
       sinon.stub(webContents, 'getFocusedWebContents').returns(target as unknown as Electron.WebContents);
 
       ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
       ipcMain.emit('desktop_clipboard_paste', {});
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      assert.isDefined(finishWrite, 'write never started');
+      await tick();
+      assert.lengthOf(heldWrites, 1, 'write never started');
       target.isDestroyed.returns(true);
-      finishWrite!();
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      await releaseWrites();
 
       assert.isFalse(target.paste.called);
     });
