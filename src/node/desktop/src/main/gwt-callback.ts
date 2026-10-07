@@ -651,13 +651,13 @@ export class GwtCallback extends EventEmitter {
         // requested, but queue the write now too, so a copy made while the
         // capture is pending lands after this image rather than under it
         const rect: Rectangle = { x, y, width, height };
-        const capture = this.mainWindow.window.capturePage(rect).then(
-          (image) => new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }),
-          (error: unknown) => {
+        const capture = this.mainWindow.window
+          .capturePage(rect)
+          .then((image) => new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }))
+          .catch((error: unknown) => {
             logger().logError(error);
             return undefined;
-          },
-        );
+          });
         this.queueClipboardWrite(async () => {
           const png = await capture;
           if (png) {

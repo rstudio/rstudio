@@ -374,6 +374,34 @@ describe('DesktopCallback', () => {
       assert.isFalse(write.called);
     });
 
+    // the queued write only awaits the capture once earlier writes finish, so
+    // a conversion failure before then must already be handled
+    it('desktop_copy_page_region_to_clipboard handles a PNG conversion failure', async () => {
+      const unhandled = sinon.spy();
+      process.on('unhandledRejection', unhandled);
+      try {
+        const image = {
+          toPNG: () => {
+            throw new Error('encode failed');
+          },
+        };
+        mainWindow.window = { capturePage: sinon.stub().resolves(image) } as unknown as BrowserWindow;
+        holdTextWrites();
+        const write = sinon.stub(clipboard, 'write').resolves();
+
+        ipcMain.emit('desktop_set_clipboard_text', {}, 'pending');
+        const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+        await tick();
+        await releaseWrites();
+        await copied;
+
+        assert.isFalse(unhandled.called, 'conversion failure was not handled');
+        assert.isFalse(write.called);
+      } finally {
+        process.off('unhandledRejection', unhandled);
+      }
+    });
+
     it('desktop_clipboard_paste waits for a pending write', async () => {
       let contents = 'old';
       let pasted: string | undefined;
