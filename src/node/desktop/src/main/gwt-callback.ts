@@ -353,7 +353,9 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_clipboard_paste', () => {
-      focusedWebContents()?.paste();
+      // capture the target now; focus may move while a write is pending
+      const target = focusedWebContents();
+      void this.clipboardWrite.then(() => target?.paste());
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {

@@ -16,7 +16,16 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
-import { app, BrowserWindow, clipboard, ClipboardItem, ipcMain, IpcMainInvokeEvent, nativeImage } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  ClipboardItem,
+  ipcMain,
+  IpcMainInvokeEvent,
+  nativeImage,
+  webContents,
+} from 'electron';
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
@@ -246,6 +255,27 @@ describe('DesktopCallback', () => {
 
       ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
       assert.equal(await invoke('desktop_get_clipboard_text'), 'new');
+    });
+
+    it('desktop_clipboard_paste waits for a pending write', async () => {
+      let contents = 'old';
+      let pasted: string | undefined;
+      let finishWrite: (() => void) | undefined;
+      sinon.stub(clipboard, 'writeText').callsFake(async (text: string) => {
+        await new Promise<void>((resolve) => (finishWrite = resolve));
+        contents = text;
+      });
+      const target = { paste: sinon.stub().callsFake(() => (pasted = contents)) };
+      sinon.stub(webContents, 'getFocusedWebContents').returns(target as unknown as Electron.WebContents);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      ipcMain.emit('desktop_clipboard_paste', {});
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.isFalse(target.paste.called, 'pasted before the write finished');
+
+      finishWrite?.();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.equal(pasted, 'new');
     });
 
     it('desktop_get_clipboard_uris returns the paths of copied files', async () => {
