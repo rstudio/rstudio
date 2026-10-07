@@ -61,24 +61,29 @@ namespace {
 
 static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
 
-// Cached result of r_util::isPackageDirectory(directory()), consulted by
-// isPackageProject() when the DESCRIPTION file is not indexed (i.e. when the
-// project's build type is not 'Package'). Reading DESCRIPTION on every call
-// is expensive on slow filesystems, and isPackageProject() is called often
-// (e.g. once per file indexed, and several times per lint).
-//
-// Only used while the project file monitor is running, since that is what
-// lets us observe (and so invalidate on) changes to DESCRIPTION.
-//
-// https://github.com/rstudio/rstudio/issues/19056
-static boost::optional<bool> s_isPackageDirectory;
+// The directory whose DESCRIPTION file describes the project as a package.
+// For package projects this is the package directory, which can differ from
+// the project directory; for other build types it is the project directory
+// itself. The indexed DESCRIPTION, the file monitor handler that refreshes
+// it, and the unindexed fallback in isPackageProject() all consult this same
+// location. (Note that buildTargetPath() is empty for build type 'None',
+// and a relative "DESCRIPTION" path would resolve against the working
+// directory rather than the project.)
+FilePath packageDescriptionDirectory()
+{
+   ProjectContext& context = projectContext();
+   if (context.config().buildType == r_util::kBuildTypePackage)
+      return context.buildTargetPath();
+
+   return context.directory();
+}
 
 void onDescriptionChanged()
 {
    s_pIndexedPackageInfo.reset();
 
    std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
-   Error error = pInfo->read(projectContext().buildTargetPath());
+   Error error = pInfo->read(packageDescriptionDirectory());
    if (error)
       LOG_ERROR(error);
 
@@ -87,29 +92,16 @@ void onDescriptionChanged()
 
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   // the indexed DESCRIPTION lives in the build target directory, which can
-   // differ from the project directory checked by isPackageDirectory()
-   std::string indexedDescPath =
-      projectContext().buildTargetPath().completeChildPath("DESCRIPTION").getAbsolutePath();
-   std::string projectDescPath =
-      projectContext().directory().completeChildPath("DESCRIPTION").getAbsolutePath();
-
-   bool indexedDescChanged = false;
-   bool projectDescChanged = false;
+   FilePath descPath = packageDescriptionDirectory().completeChildPath("DESCRIPTION");
    for (auto& event : events)
    {
-      const std::string& path = event.fileInfo().absolutePath();
-      if (path == indexedDescPath)
-         indexedDescChanged = true;
-      if (path == projectDescPath)
-         projectDescChanged = true;
+      auto& info = event.fileInfo();
+      if (info.absolutePath() == descPath.getAbsolutePath())
+      {
+         onDescriptionChanged();
+         break;
+      }
    }
-
-   if (projectDescChanged)
-      s_isPackageDirectory.reset();
-
-   if (indexedDescChanged)
-      onDescriptionChanged();
 }
 
 Error validateScratchPath(const FilePath& scratchPath)
@@ -925,10 +917,6 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
-   // discard any value cached by a previous monitor; changes made while
-   // monitoring was down were not observed
-   s_isPackageDirectory.reset();
-
    // re-augment .Rbuildignore to pick up any AI tool-state directories
    // (.posit/assistant, legacy .positai) that were created between project
    // init and file monitor start (small but real window). augmentRbuildignore
@@ -1535,16 +1523,14 @@ bool ProjectContext::isPackageProject()
    if (!hasProject())
       return false;
 
+   // Prefer the indexed DESCRIPTION, which is kept current by the project
+   // file monitor; otherwise consult the file directly. Callers that would
+   // otherwise hit this path repeatedly (e.g. the R parser, once per function
+   // call in a document) cache the result themselves.
    if (s_pIndexedPackageInfo != nullptr)
       return s_pIndexedPackageInfo->type() == kPackageType;
 
-   if (!hasFileMonitor_)
-      return r_util::isPackageDirectory(directory());
-
-   if (!s_isPackageDirectory)
-      s_isPackageDirectory = r_util::isPackageDirectory(directory());
-
-   return *s_isPackageDirectory;
+   return r_util::isPackageDirectory(packageDescriptionDirectory());
 }
 
 bool ProjectContext::supportsSharing()
