@@ -61,13 +61,11 @@ namespace {
 
 static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
 
-// The directory whose DESCRIPTION file describes the project as a package.
-// For package projects this is the package directory, which can differ from
-// the project directory; for other build types it is the project directory
-// itself. The indexed DESCRIPTION, the file monitor handler that refreshes
-// it, and the unindexed fallback in isPackageProject() all consult this same
-// location. (Note that buildTargetPath() is empty for build type 'None',
-// and a relative "DESCRIPTION" path would resolve against the working
+// The directory whose DESCRIPTION file is indexed by the project file
+// monitor. For package projects this is the package directory, which can
+// differ from the project directory; for other build types it is the project
+// directory itself. (Note that buildTargetPath() is empty for build type
+// 'None', and a relative "DESCRIPTION" path would resolve against the working
 // directory rather than the project.)
 FilePath packageDescriptionDirectory()
 {
@@ -1524,13 +1522,17 @@ bool ProjectContext::isPackageProject()
       return false;
 
    // Prefer the indexed DESCRIPTION, which is kept current by the project
-   // file monitor; otherwise consult the file directly. Callers that would
-   // otherwise hit this path repeatedly (e.g. the R parser, once per function
-   // call in a document) cache the result themselves.
+   // file monitor; otherwise check the project directory itself. A package
+   // project whose package lives in a subdirectory (PackagePath) is thus not
+   // classified as one until its DESCRIPTION has been indexed; callers such
+   // as augmentRbuildignore() assume the package directory is the project
+   // directory, so this is left as it was. Callers that would otherwise hit
+   // this path repeatedly (e.g. the R parser, once per function call in a
+   // document) cache the result themselves.
    if (s_pIndexedPackageInfo != nullptr)
       return s_pIndexedPackageInfo->type() == kPackageType;
 
-   return r_util::isPackageDirectory(packageDescriptionDirectory());
+   return r_util::isPackageDirectory(directory());
 }
 
 bool ProjectContext::supportsSharing()
