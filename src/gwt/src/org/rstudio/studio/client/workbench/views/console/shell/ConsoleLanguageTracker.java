@@ -202,8 +202,20 @@ public class ConsoleLanguageTracker
       // through the input itself: code queued behind a batch that switches
       // languages part-way has to be judged against where that batch ends.
       // the next prompt corrects any drift.
-      if ((event.getFlags() & (ConsoleInputEvent.FLAG_CANCEL | ConsoleInputEvent.FLAG_EOF)) == 0)
-         setLanguage(languageAfterInput(language_, event.getInput()));
+      //
+      // input typed into the console gets here without going through
+      // adaptToLanguage(), so it must not re-trust a copy the last prompt
+      // disagreed with. the two readings are followed separately: the
+      // console may be idle where that prompt left it (language_), or still
+      // draining input that ends at expected_. while they agree (confirmed_)
+      // this is the same as updating both; while they disagree, confirmed_
+      // stays false and the next prompt or RPC response settles it.
+      if ((event.getFlags() & (ConsoleInputEvent.FLAG_CANCEL | ConsoleInputEvent.FLAG_EOF)) != 0)
+         return;
+
+      String input = event.getInput();
+      language_ = languageAfterInput(language_, input);
+      expected_ = languageAfterInput(expected_, input);
    }
    
    @Override

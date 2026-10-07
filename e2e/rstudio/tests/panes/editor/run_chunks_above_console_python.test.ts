@@ -192,6 +192,11 @@ test.describe('Run All Chunks with console chunk output', () => {
     // needs its own switch; the client must not take the early prompt as
     // proof it is already in Python. Holding the batch's RPC makes the early
     // prompt deterministic.
+    //
+    // A line typed into the console while the batch drains also queues
+    // behind it (so it runs as R), and it reaches the client's tracker
+    // without the language check an editor send goes through. It must not
+    // make the tracker trust the early prompt's Python either.
     file = 'run_above_early_prompt.qmd';
     await writeAndOpenFile(page, sandbox.dir, file, heredoc`
       ---
@@ -211,7 +216,7 @@ test.describe('Run All Chunks with console chunk output', () => {
       ${FENCE}
 
       ${FENCE}{python probe}
-      print("probe:" + stale_probe)
+      print("probe:" + stale_probe + ":" + r.typed_probe)
       ${FENCE}
     `);
 
@@ -235,12 +240,13 @@ test.describe('Run All Chunks with console chunk output', () => {
       releaseBatch();
 
       // Once the R chunk is echoed the batch has left the REPL and R is busy
-      // with it, so the probe chunk queues behind it.
+      // with it, so the typed line and the probe chunk queue behind it.
       await expect(consoleActions.consolePane.consoleOutput).toContainText('Sys.sleep(5)', { timeout: 30000 });
+      await consoleActions.executeInConsole('typed_probe <- "r"', { wait: false });
       await sourceActions.navigateToChunkByLabel('probe');
       await executeCommand(page, 'executeCurrentChunk');
 
-      await expect(consoleActions.consolePane.consoleOutput).toContainText('probe:python', { timeout: 60000 });
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('probe:python:r', { timeout: 60000 });
       await expect(interpreterLabel(page)).toContainText('Python');
       await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
     } finally {
