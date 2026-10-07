@@ -1695,19 +1695,30 @@ ParseStatus::ParseStatus(const FilePath& filePath, const ParseOptions& parseOpti
      lint_(parseOptions),
      parseOptions_(parseOptions),
      filePath_(filePath),
+     lookupContextResolved_(false),
      isPackageProject_(false)
 {
    parseStateStack_.push(ParseStateTopLevel);
    functionNames_.push(std::wstring(L""));
+}
+
+void ParseStatus::resolveLookupContext()
+{
+   if (lookupContextResolved_)
+      return;
+
+   lookupContextResolved_ = true;
 
    // Resolve the project and source index information used when looking up
-   // functions during the parse. We do this once up front, rather than for
-   // each function call encountered in the document: checking whether the
-   // project is a package, and whether the document exists on disk, both
-   // require filesystem access, and a large document can contain thousands
-   // of function calls. On slow filesystems (e.g. network drives, or Windows
-   // drives mounted within WSL) these repeated checks dominated the time
-   // required to lint a document.
+   // functions during the parse. We do this at most once per parse, rather
+   // than for each function call encountered in the document: checking
+   // whether the project is a package, and whether the document exists on
+   // disk, both require filesystem access, and a large document can contain
+   // thousands of function calls. On slow filesystems (e.g. network drives,
+   // or Windows drives mounted within WSL) these repeated checks dominated
+   // the time required to lint a document. Resolving lazily also keeps
+   // parses that never look up a function (e.g. of code fragments) free of
+   // filesystem access altogether.
    //
    // https://github.com/rstudio/rstudio/issues/19056
    if (projects::projectContext().isPackageProject())

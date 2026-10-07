@@ -1559,27 +1559,32 @@ public:
    }
 
    // Whether the document being parsed belongs to a package project, and
-   // if so, the name of that package. Resolved once when the parse begins;
-   // see the constructor for details.
-   bool isPackageProject() const
+   // if so, the name of that package. Resolved on first use, at most once
+   // per parse; see resolveLookupContext() for details.
+   bool isPackageProject()
    {
+      resolveLookupContext();
       return isPackageProject_;
    }
 
-   const std::string& packageName() const
+   const std::string& packageName()
    {
+      resolveLookupContext();
       return packageName_;
    }
 
    // The packages inferred by the source index for the document being
-   // parsed (e.g. from library() calls), if any. Resolved once when the
-   // parse begins; see the constructor for details.
-   const std::vector<std::string>& inferredPackages() const
+   // parsed (e.g. from library() calls), if any. Resolved on first use,
+   // at most once per parse; see resolveLookupContext() for details.
+   const std::vector<std::string>& inferredPackages()
    {
+      resolveLookupContext();
       return inferredPackages_;
    }
 
 private:
+   void resolveLookupContext();
+
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
    LintItems lint_;
@@ -1598,6 +1603,7 @@ private:
    Stack<RToken> bracketStack_;
 
    FilePath filePath_;
+   bool lookupContextResolved_;
    bool isPackageProject_;
    std::string packageName_;
    std::vector<std::string> inferredPackages_;

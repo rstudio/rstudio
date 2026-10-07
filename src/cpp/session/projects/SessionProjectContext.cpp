@@ -61,6 +61,18 @@ namespace {
 
 static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
 
+// Cached result of r_util::isPackageDirectory(directory()), consulted by
+// isPackageProject() when the DESCRIPTION file is not indexed (i.e. when the
+// project's build type is not 'Package'). Reading DESCRIPTION on every call
+// is expensive on slow filesystems, and isPackageProject() is called often
+// (e.g. once per file indexed, and several times per lint).
+//
+// Only used while the project file monitor is running, since that is what
+// lets us observe (and so invalidate on) changes to DESCRIPTION.
+//
+// https://github.com/rstudio/rstudio/issues/19056
+static boost::optional<bool> s_isPackageDirectory;
+
 void onDescriptionChanged()
 {
    s_pIndexedPackageInfo.reset();
@@ -75,16 +87,29 @@ void onDescriptionChanged()
 
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   FilePath descPath = projectContext().buildTargetPath().completeChildPath("DESCRIPTION");
+   // the indexed DESCRIPTION lives in the build target directory, which can
+   // differ from the project directory checked by isPackageDirectory()
+   std::string indexedDescPath =
+      projectContext().buildTargetPath().completeChildPath("DESCRIPTION").getAbsolutePath();
+   std::string projectDescPath =
+      projectContext().directory().completeChildPath("DESCRIPTION").getAbsolutePath();
+
+   bool indexedDescChanged = false;
+   bool projectDescChanged = false;
    for (auto& event : events)
    {
-      auto& info = event.fileInfo();
-      if (info.absolutePath() == descPath.getAbsolutePath())
-      {
-         onDescriptionChanged();
-         break;
-      }
+      const std::string& path = event.fileInfo().absolutePath();
+      if (path == indexedDescPath)
+         indexedDescChanged = true;
+      if (path == projectDescPath)
+         projectDescChanged = true;
    }
+
+   if (projectDescChanged)
+      s_isPackageDirectory.reset();
+
+   if (indexedDescChanged)
+      onDescriptionChanged();
 }
 
 Error validateScratchPath(const FilePath& scratchPath)
@@ -900,6 +925,10 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
+   // discard any value cached by a previous monitor; changes made while
+   // monitoring was down were not observed
+   s_isPackageDirectory.reset();
+
    // re-augment .Rbuildignore to pick up any AI tool-state directories
    // (.posit/assistant, legacy .positai) that were created between project
    // init and file monitor start (small but real window). augmentRbuildignore
@@ -1509,7 +1538,13 @@ bool ProjectContext::isPackageProject()
    if (s_pIndexedPackageInfo != nullptr)
       return s_pIndexedPackageInfo->type() == kPackageType;
 
-   return r_util::isPackageDirectory(directory());
+   if (!hasFileMonitor_)
+      return r_util::isPackageDirectory(directory());
+
+   if (!s_isPackageDirectory)
+      s_isPackageDirectory = r_util::isPackageDirectory(directory());
+
+   return *s_isPackageDirectory;
 }
 
 bool ProjectContext::supportsSharing()
