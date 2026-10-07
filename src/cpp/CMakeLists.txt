@@ -448,6 +448,12 @@ if(UNIX)
    # the OpenSSL we actually link against.
    include_directories(BEFORE "${OPENSSL_INCLUDE_DIR}")
 
+   # Homebrew's unversioned 'openssl' tracks the newest major release; keep
+   # both slices of a universal macOS package on OpenSSL 3
+   if(APPLE AND RSTUDIO_PACKAGE_BUILD AND NOT OPENSSL_VERSION MATCHES "^3\\.")
+      message(FATAL_ERROR "macOS package builds require OpenSSL 3.x, but found ${OPENSSL_VERSION} at '${OPENSSL_ROOT_DIR}'. Install it with '${HOMEBREW_PREFIX}/bin/brew install openssl@3' and reconfigure.")
+   endif()
+
 endif()
 
 if(WIN32)
