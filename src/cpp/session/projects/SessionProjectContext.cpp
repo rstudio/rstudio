@@ -80,8 +80,13 @@ void onDescriptionChanged()
 {
    s_pIndexedPackageInfo.reset();
 
+   // a removed DESCRIPTION simply means the project is no longer a package
+   FilePath descDir = packageDescriptionDirectory();
+   if (!descDir.completeChildPath("DESCRIPTION").exists())
+      return;
+
    std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
-   Error error = pInfo->read(packageDescriptionDirectory());
+   Error error = pInfo->read(descDir);
    if (error)
       LOG_ERROR(error);
 

@@ -16,7 +16,6 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include <boost/optional.hpp>
-#include <boost/scope_exit.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
@@ -51,13 +50,10 @@ TEST(SessionProjectsTests, IsPackageProjectFalseWithoutProject)
             "Package: foo\nVersion: 0.1.0\nType: Package\n");
    ASSERT_FALSE(error) << error.asString();
 
-   FilePath previousDir = FilePath::safeCurrentPath(packageDir);
-   BOOST_SCOPE_EXIT(&previousDir, &packageDir)
-   {
-      previousDir.makeCurrentPath();
-      packageDir.removeIfExists();
-   }
-   BOOST_SCOPE_EXIT_END
+   // declared in reverse order of teardown: restore the working directory
+   // before removing the temporary package directory
+   RemoveOnExitScope removeScope(packageDir, ERROR_LOCATION);
+   RestoreCurrentPathScope restoreScope(FilePath::safeCurrentPath(packageDir), ERROR_LOCATION);
 
    error = packageDir.makeCurrentPath();
    ASSERT_FALSE(error) << error.asString();

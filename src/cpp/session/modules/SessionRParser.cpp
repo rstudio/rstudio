@@ -806,7 +806,10 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       // Try looking up the symbol by name.
       bool lookupFailed = false;
       FunctionInformation info =
-            RSourceIndex::getFunctionInformationAnywhere(fnName, status.inferredPackages(), &lookupFailed);
+            RSourceIndex::getFunctionInformationAnywhere(
+               fnName,
+               status.inferredPackages(),
+               &lookupFailed);
       
       if (!lookupFailed)
       {
