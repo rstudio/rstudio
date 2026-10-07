@@ -32,8 +32,9 @@ xcopy <- function(src, dst) {
 # OpenSSL compiles its install paths into libcrypto, and at runtime reads
 # openssl.cnf and loads engines and modules from them. Keep its admin-protected
 # Program Files defaults (no --prefix/--openssldir) and stage the install
-# under each build tree with DESTDIR instead.
-OPTS <- "no-asm no-shared -DUNICODE -D_UNICODE"
+# under each build tree with DESTDIR instead. RStudio ships no openssl.cnf,
+# so no-autoload-config also stops OpenSSL from loading one at all.
+OPTS <- "no-asm no-shared no-autoload-config -DUNICODE -D_UNICODE"
 
 section("Building OpenSSL 32bit (Debug)")
 TARGET <- sprintf("build-%s-debug-32", NAME)
