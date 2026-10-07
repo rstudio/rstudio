@@ -1500,6 +1500,12 @@ void ProjectContext::setWebsiteOutputFormat(
 
 bool ProjectContext::isPackageProject()
 {
+   // Without a project, there is no project directory to inspect. (Note that
+   // directory() is empty in this case, so r_util::isPackageDirectory() would
+   // otherwise look for a DESCRIPTION file in the current working directory.)
+   if (!hasProject())
+      return false;
+
    if (s_pIndexedPackageInfo != nullptr)
       return s_pIndexedPackageInfo->type() == kPackageType;
 
