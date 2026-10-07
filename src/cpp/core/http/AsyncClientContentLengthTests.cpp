@@ -1508,10 +1508,7 @@ public:
 
    void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler) override
    {
-      ++asyncWriteCount_;
       std::size_t n = buffer.size();
-      if (onWrite_)
-         onWrite_(n);
       writtenBytes_.append(static_cast<const char*>(buffer.data()), n);
       boost::asio::post(ioc_, [handler, n]() { handler(boost::system::error_code(), n); });
    }
@@ -1519,23 +1516,14 @@ public:
    void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers,
                     Socket::Handler handler) override
    {
-      ++asyncWriteCount_;
       std::size_t total = 0;
       for (const auto& buffer : buffers)
-         total += buffer.size();
-      if (onWrite_)
-         onWrite_(total);
-      for (const auto& buffer : buffers)
+      {
          writtenBytes_.append(static_cast<const char*>(buffer.data()), buffer.size());
+         total += buffer.size();
+      }
       boost::asio::post(ioc_, [handler, total]() { handler(boost::system::error_code(), total); });
    }
-
-   // invoked synchronously at the start of every asyncWrite() overload above,
-   // with the size of the buffer about to be written, before it is appended to
-   // writtenBytes_ -- lets a test observe both the size of the write that is
-   // about to happen and the state of writtenBytes_ as of just before it lands
-   std::function<void(std::size_t)> onWrite_;
-   int asyncWriteCount_ = 0;
 
    int writeResponseCount_ = 0;
    int writeResponseHeadersCount_ = 0;
