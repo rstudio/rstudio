@@ -667,18 +667,18 @@ TEST(AsyncClientContentLength, DeliversBodyWithoutContentLengthViaEof)
    EXPECT_FALSE(outcome.timedOut);
 }
 
-// TcpIpProxyAsyncClient's stopReadingAndRespond() override
-// (load_balancer/Common.cpp) forces an early close+respond once it believes
-// the body is fully received: `!chunkedEncoding_ && response_.body().length()
-// >= response_.contentLength()`. Message::contentLength() reads an absent
-// Content-Length header as 0, and a streaming response never populates
-// response_.body() (see AsyncClient::streamedBodyComplete()) -- so on a
-// streaming, EOF-delimited response that comparison reads `0 >= 0` as
-// "complete" before a single byte is relayed, and closeAndRespond() would fire
-// immediately with an empty body. This local subclass carries that override
-// shape guarded by isStreamingResponse() (the rstudio-pro#12209 fix), and
-// this test is the regression coverage the guard exists for: reverting the
-// guard reproduces the bug and fails this test with an empty assembled body.
+// An AsyncClient subclass can override stopReadingAndRespond() to force an
+// early close+respond once it believes the body is fully received:
+// `!chunkedEncoding_ && response_.body().length() >= response_.contentLength()`.
+// Message::contentLength() reads an absent Content-Length header as 0, and a
+// streaming response never populates response_.body() (see
+// AsyncClient::streamedBodyComplete()) -- so on a streaming, EOF-delimited
+// response that comparison reads `0 >= 0` as "complete" before a single byte
+// is relayed, and closeAndRespond() would fire immediately with an empty body.
+// This local subclass carries that override shape guarded by
+// isStreamingResponse() (the rstudio-pro#12209 fix), and this test is the
+// regression coverage the guard exists for: reverting the guard reproduces the
+// bug and fails this test with an empty assembled body.
 class GuardedStopReadingAsyncClient : public TcpIpAsyncClient
 {
 public:

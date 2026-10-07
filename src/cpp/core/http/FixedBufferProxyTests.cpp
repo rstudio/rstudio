@@ -332,9 +332,8 @@ struct Fixture
    // refreshed cookies before dispatching to the handler that builds the proxy.
    //
    // preservedCookiesOverride, when supplied, is forwarded to proxy() in place
-   // of the automatic snapshot -- see the launcher proxy's use of it
-   // (proxyToLauncherEndpoints) to make its streamed delivery apply the same
-   // scope-based cookie filtering as its buffered one.
+   // of the automatic snapshot -- as a caller does to make its streamed
+   // delivery apply the same scope-based cookie filtering as its buffered one.
    Fixture(uint64_t maxBufferSize = 1024 * 1024,
            const http::Headers& preStamped = http::Headers(),
            const boost::optional<http::Headers>& preservedCookiesOverride = boost::none)
@@ -957,10 +956,9 @@ TEST(FixedBufferProxy, PreservesSetCookieAlreadyStampedOnClientResponse)
 TEST(FixedBufferProxy, PreservedCookiesOverrideReplacesAutomaticSnapshotEntirely)
 {
    // Regression test (rstudio-pro#12209 follow-up): a caller that supplies
-   // preservedCookiesOverride -- e.g. the launcher proxy passing
-   // launcherCookieCarryOver()'s scope-filtered result -- must get exactly
-   // that set on the wire, not the union of it with whatever the automatic
-   // snapshot would have found. Otherwise a cookie the override's filtering
+   // preservedCookiesOverride -- e.g. a scope-filtered set of cookies -- must
+   // get exactly that set on the wire, not the union of it with whatever the
+   // automatic snapshot would have found. Otherwise a cookie the override's filtering
    // intentionally withheld (a Jupyter Notebook scope that already presented
    // a user-id cookie, say) would still leak onto the streamed response via
    // the blind snapshot underneath it.
@@ -983,10 +981,10 @@ TEST(FixedBufferProxy, PreservedCookiesOverrideReplacesAutomaticSnapshotEntirely
 TEST(FixedBufferProxy, PreservedCookiesOverrideIsUsedInsteadOfClientResponseCookies)
 {
    // The mirror case: an override cookie not present on the client
-   // connection's own response at all -- e.g. one selected by
-   // launcherCookieCarryOver()'s Jupyter/VS Code branch -- must still reach
-   // the wire, proving the override is consulted rather than the automatic
-   // snapshot being consulted alongside or instead of it.
+   // connection's own response at all -- e.g. one the caller's filtering
+   // derived from elsewhere -- must still reach the wire, proving the
+   // override is consulted rather than the automatic snapshot being consulted
+   // alongside or instead of it.
    Fixture fixture(1024 * 1024,
                    {http::Header("Set-Cookie", "auth=refreshed")},
                    http::Headers{http::Header("Set-Cookie", "port-token=xyz")});

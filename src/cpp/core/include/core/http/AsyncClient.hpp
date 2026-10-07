@@ -98,7 +98,7 @@ typedef boost::function<void(void)> ConnectHandler;
 //
 //  - It fires once per upstream *attempt*, not once per client request. A site
 //    that retries another endpoint or node builds a fresh client per attempt
-//    (see load_balancer/Common.cpp and proxyToLauncherEndpoints), so anything
+//    (as the load balancer and launcher proxy in rstudio-pro do), so anything
 //    done here must be idempotent, or harmless, on a response that is
 //    subsequently discarded in favor of a retry.
 typedef boost::function<void(http::Response&)> ResponseHeadersHandler;
@@ -1973,8 +1973,8 @@ protected:
    // True once handleReadHeaders() has decided this non-chunked response's body
    // will be streamed piece-wise to the FixedBufferHandler rather than
    // accumulated into response_. Subclasses that infer body completeness from
-   // response_.body() -- see the stopReadingAndRespond() overrides in
-   // server/load_balancer/Common.cpp -- must consult this: response_.body()
+   // response_.body() -- e.g. a stopReadingAndRespond() override that
+   // compares it against Content-Length -- must consult this: response_.body()
    // stays empty for the entire response when it is true, so a length compare
    // against it reads as "0 bytes of N received" (harmless) or, for a response
    // with no Content-Length at all, as "complete" before a single byte has been

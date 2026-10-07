@@ -146,7 +146,7 @@ void prepareLocalhostResponseForTest(
       core::http::Response* pPreparedResponse);
 
 // Exposes the /p/ buffering policy (shouldBufferLocalhostResponse) -- which
-// responses handleLocalhostRequest holds whole rather than streams.
+// responses proxyLocalhostRequest holds whole rather than streams.
 bool shouldBufferLocalhostResponseForTest(const core::http::Response& response);
 
 // Exercises handleLocalhostResponse()'s normal (non-websocket-upgrade)
