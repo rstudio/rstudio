@@ -291,6 +291,24 @@
       add = TRUE
    )
    
+   # reticulate only honors 'quit' / 'exit' when its buffer is empty. Input
+   # scripted from the editor (e.g. a batch of chunks that moves back to R)
+   # can end a block and then ask to leave the REPL without the blank line
+   # that would close that block; run what's buffered first, as reticulate
+   # itself would on the next dedented statement, so the exit goes through
+   # rather than being evaluated as a Python expression.
+   isExit <- trimmed %in% c("quit", "exit", "quit()", "exit()")
+   if (isExit && !buffer$empty() && !grepl("^\\s", contents))
+   {
+      code <- paste(buffer$data(), collapse = "\n")
+      buffer$clear()
+      tryCatch(
+         reticulate::py_run_string(code),
+         error = function(e) message(conditionMessage(e))
+      )
+      return(FALSE)
+   }
+
    # special handling for commands when buffer is currently empty
    if (buffer$empty())
    {

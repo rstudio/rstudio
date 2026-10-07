@@ -30,6 +30,11 @@ namespace session {
 namespace console_input {
 
 void clearConsoleInputBuffer();
+
+// The language ("R" or "Python") the console will be in once all pending
+// console input has run, starting from 'language' now.
+std::string languageAfterPendingInput(const std::string& language);
+
 bool executing();
 void setExecuting(bool executing);
 void updateSessionExecuting();

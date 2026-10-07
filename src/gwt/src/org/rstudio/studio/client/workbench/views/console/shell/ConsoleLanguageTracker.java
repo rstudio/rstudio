@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 
@@ -40,6 +41,7 @@ import com.google.inject.Singleton;
 public class ConsoleLanguageTracker
       implements SessionInitEvent.Handler,
                  ConsolePromptEvent.Handler,
+                 ConsoleInputEvent.Handler,
                  RestartStatusEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ConsoleLanguageTracker> {}
@@ -65,6 +67,7 @@ public class ConsoleLanguageTracker
       
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(ConsolePromptEvent.TYPE, this);
+      events_.addHandler(ConsoleInputEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
       
       init();
@@ -137,6 +140,32 @@ public class ConsoleLanguageTracker
       adaptToLanguage(language, null);
    }
 
+   // Console input that moves the console to 'language': the same input the
+   // session enqueues in adaptToLanguage() (SessionModuleContext.cpp).
+   public static String consoleLanguageSwitch(String language)
+   {
+      return StringUtil.equals(language, LANGUAGE_PYTHON)
+            ? "reticulate::repl_python()"
+            : "quit";
+   }
+
+   // The language the console is in once 'input' has run, starting from
+   // 'language'. Follows the REPL through the input's lines the same way
+   // the session does in fixupPendingConsoleInput() (SessionConsoleInput.cpp).
+   public static String languageAfterInput(String language, String input)
+   {
+      boolean python = StringUtil.equals(language, LANGUAGE_PYTHON);
+      for (String line : StringUtil.notNull(input).split("\n"))
+      {
+         if (python && (line.equals("quit") || line.equals("exit")))
+            python = false;
+         else if (!python && (line.equals("reticulate::repl_python()") || line.equals("repl_python()")))
+            python = true;
+      }
+
+      return python ? LANGUAGE_PYTHON : LANGUAGE_R;
+   }
+
    private void init()
    {
    }
@@ -151,6 +180,17 @@ public class ConsoleLanguageTracker
    public void onConsolePrompt(ConsolePromptEvent event)
    {
       language_ = event.getPrompt().getLanguage();
+   }
+
+   @Override
+   public void onConsoleInput(ConsoleInputEvent event)
+   {
+      // no prompt arrives while queued input drains, so follow the language
+      // through the input itself: code queued behind a batch that switches
+      // languages part-way has to be judged against where that batch ends.
+      // the next prompt corrects any drift.
+      if ((event.getFlags() & (ConsoleInputEvent.FLAG_CANCEL | ConsoleInputEvent.FLAG_EOF)) == 0)
+         language_ = languageAfterInput(language_, event.getInput());
    }
    
    @Override
