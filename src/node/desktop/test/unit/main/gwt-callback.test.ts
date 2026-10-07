@@ -265,7 +265,10 @@ describe('DesktopCallback', () => {
         await new Promise<void>((resolve) => (finishWrite = resolve));
         contents = text;
       });
-      const target = { paste: sinon.stub().callsFake(() => (pasted = contents)) };
+      const target = {
+        isDestroyed: sinon.stub().returns(false),
+        paste: sinon.stub().callsFake(() => (pasted = contents)),
+      };
       sinon.stub(webContents, 'getFocusedWebContents').returns(target as unknown as Electron.WebContents);
 
       ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
@@ -276,6 +279,27 @@ describe('DesktopCallback', () => {
       finishWrite?.();
       await new Promise((resolve) => setTimeout(resolve, 20));
       assert.equal(pasted, 'new');
+    });
+
+    // the window can close while the write is pending; pasting into its
+    // destroyed WebContents would throw from a promise nothing awaits
+    it('desktop_clipboard_paste skips a target destroyed during a pending write', async () => {
+      let finishWrite: (() => void) | undefined;
+      sinon.stub(clipboard, 'writeText').callsFake(async () => {
+        await new Promise<void>((resolve) => (finishWrite = resolve));
+      });
+      const target = { isDestroyed: sinon.stub().returns(false), paste: sinon.stub() };
+      sinon.stub(webContents, 'getFocusedWebContents').returns(target as unknown as Electron.WebContents);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      ipcMain.emit('desktop_clipboard_paste', {});
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.isDefined(finishWrite, 'write never started');
+      target.isDestroyed.returns(true);
+      finishWrite!();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      assert.isFalse(target.paste.called);
     });
 
     it('desktop_get_clipboard_uris returns the paths of copied files', async () => {
