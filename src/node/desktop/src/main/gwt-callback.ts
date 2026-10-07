@@ -647,15 +647,15 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       async (_event, x: number, y: number, width: number, height: number) => {
-        try {
-          const rect: Rectangle = { x, y, width, height };
+        // capture inside the queued write so a copy made while the capture is
+        // pending lands after this image instead of being overwritten by it
+        const rect: Rectangle = { x, y, width, height };
+        this.queueClipboardWrite(async () => {
           const image = await this.mainWindow.window.capturePage(rect);
           const png = new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' });
-          this.queueClipboardWrite(async () => clipboard.write([new ClipboardItem({ 'image/png': png })]));
-          await this.clipboardWrite;
-        } catch (e: unknown) {
-          logger().logError(e);
-        }
+          await clipboard.write([new ClipboardItem({ 'image/png': png })]);
+        });
+        await this.clipboardWrite;
       },
     );
 

@@ -318,6 +318,35 @@ describe('DesktopCallback', () => {
       assert.isTrue(await clipboard.has('image/png'));
     });
 
+    it('desktop_copy_page_region_to_clipboard keeps its place while capturing', async () => {
+      const bitmap = Buffer.alloc(2 * 2 * 4, 0xff);
+      const image = nativeImage.createFromBitmap(bitmap, { width: 2, height: 2 });
+      let finishCapture: (() => void) | undefined;
+      const capturePage = sinon.stub().callsFake(async () => {
+        await new Promise<void>((resolve) => (finishCapture = resolve));
+        return image;
+      });
+      mainWindow.window = { capturePage } as unknown as BrowserWindow;
+      const order: string[] = [];
+      sinon.stub(clipboard, 'writeText').callsFake(async () => {
+        order.push('text');
+      });
+      sinon.stub(clipboard, 'write').callsFake(async () => {
+        order.push('image');
+      });
+
+      const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      await tick();
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'copied during capture');
+      await tick();
+      assert.isDefined(finishCapture, 'capture never started');
+      finishCapture!();
+      await copied;
+      await tick();
+
+      assert.deepEqual(order, ['image', 'text']);
+    });
+
     it('desktop_clipboard_paste waits for a pending write', async () => {
       let contents = 'old';
       let pasted: string | undefined;
