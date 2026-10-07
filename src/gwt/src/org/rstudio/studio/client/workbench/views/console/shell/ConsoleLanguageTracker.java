@@ -97,7 +97,9 @@ public class ConsoleLanguageTracker
                   @Override
                   public void onResponseReceived(VoidResponse response)
                   {
-                     language_ = language;
+                     // the session projected over everything queued, so
+                     // this is where the console ends up once that drains
+                     setLanguage(language);
                      
                      if (command != null)
                         command.execute();
@@ -114,7 +116,10 @@ public class ConsoleLanguageTracker
                });
       };
       
-      if (!StringUtil.equals(language, language_))
+      // the local copy is only trusted while the last prompt confirmed it;
+      // otherwise the session decides, projecting over its pending input
+      // (adaptToLanguage() in SessionModuleContext.cpp)
+      if (!confirmed_ || !StringUtil.equals(language, language_))
       {
          if (language.equals(LANGUAGE_PYTHON))
          {
@@ -173,13 +178,21 @@ public class ConsoleLanguageTracker
    @Override
    public void onSessionInit(SessionInitEvent event)
    {
-      language_ = session_.getSessionInfo().getConsoleLanguage();
+      setLanguage(session_.getSessionInfo().getConsoleLanguage());
    }
 
    @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
+      // a prompt can arrive before input the client already sent is
+      // buffered: the session enqueues the switch adaptToLanguage() asks for
+      // itself, and the REPL it starts (or returns to) prompts if the input
+      // queued behind it has not landed yet. that prompt reports where the
+      // input starts, not where it ends, so until a later prompt agrees with
+      // the projection the local copy is not a safe basis for skipping the
+      // RPC. an error or interrupt that cut the input short reads the same.
       language_ = event.getPrompt().getLanguage();
+      confirmed_ = StringUtil.equals(language_, expected_);
    }
 
    @Override
@@ -190,7 +203,7 @@ public class ConsoleLanguageTracker
       // languages part-way has to be judged against where that batch ends.
       // the next prompt corrects any drift.
       if ((event.getFlags() & (ConsoleInputEvent.FLAG_CANCEL | ConsoleInputEvent.FLAG_EOF)) == 0)
-         language_ = languageAfterInput(language_, event.getInput());
+         setLanguage(languageAfterInput(language_, event.getInput()));
    }
    
    @Override
@@ -199,11 +212,28 @@ public class ConsoleLanguageTracker
       // on session restart, the console will return to R mode
       if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
       {
-         language_ = LANGUAGE_R;
+         setLanguage(LANGUAGE_R);
       }
    }
 
+   // record where the console is (or will be, once pending input drains)
+   // and that the next prompt is expected to report the same language
+   private void setLanguage(String language)
+   {
+      language_ = language;
+      expected_ = language;
+      confirmed_ = true;
+   }
+
+   // the console's language, as far as the client can tell
    private String language_;
+
+   // the language the next prompt should report, i.e. where the input the
+   // client sent leaves the console
+   private String expected_;
+
+   // whether the last prompt agreed with expected_
+   private boolean confirmed_ = true;
    
    private static final ConsoleConstants CONSTANTS = GWT.create(ConsoleConstants.class);
 

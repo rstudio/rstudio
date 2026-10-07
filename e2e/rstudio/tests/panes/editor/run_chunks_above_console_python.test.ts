@@ -18,7 +18,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
-import { waitForConsoleIdle } from '@pages/console_pane.page';
+import { getConsolePromptCount, waitForConsoleIdle } from '@pages/console_pane.page';
 
 // The console toolbar's interpreter label: "R 4.x.y" or "Python 3.x.y".
 // The console pane is tabbed (Console / Terminal / ...), which is the
@@ -41,6 +41,8 @@ async function exitPythonReplIfActive(page: Page, consoleActions: ConsolePaneAct
 // raw -- an escaped backtick would land in the file as a literal
 // backslash-backtick.
 const FENCE = '```';
+
+const CONSOLE_INPUT_RPC = /\/rpc\/console_input(?:\?|$)/;
 
 test.describe('Run All Chunks with console chunk output', () => {
   const sandbox = useSuiteSandbox();
@@ -179,5 +181,71 @@ test.describe('Run All Chunks with console chunk output', () => {
     await consoleActions.executeInConsole('print("probe", total, done)');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('probe 6 7', { timeout: 30000 });
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
+  });
+
+  test('a Python chunk run while the batch is still draining reaches Python, despite an early prompt', async ({ rstudioPage: page }) => {
+    // Run All Chunks Above from an R console with a Python-first batch: the
+    // session enqueues reticulate::repl_python() itself, and if the REPL
+    // prompts before the batch sent behind it has been buffered, the client
+    // sees a Python prompt even though the batch leaves the console in R.
+    // A Python chunk run while that batch drains queues behind it, so it
+    // needs its own switch; the client must not take the early prompt as
+    // proof it is already in Python. Holding the batch's RPC makes the early
+    // prompt deterministic.
+    file = 'run_above_early_prompt.qmd';
+    await writeAndOpenFile(page, sandbox.dir, file, heredoc`
+      ---
+      title: early prompt
+      ---
+
+      ${FENCE}{python first}
+      stale_probe = 'python'
+      ${FENCE}
+
+      ${FENCE}{r slow}
+      Sys.sleep(5)
+      ${FENCE}
+
+      ${FENCE}{r last}
+      "cursor goes here"
+      ${FENCE}
+
+      ${FENCE}{python probe}
+      print("probe:" + stale_probe)
+      ${FENCE}
+    `);
+
+    let releaseBatch = () => {};
+    const batchHeld = new Promise<void>((resolve) => (releaseBatch = resolve));
+    await page.route(CONSOLE_INPUT_RPC, async (route) => {
+      if (route.request().postData()?.includes("stale_probe = 'python'"))
+        await batchHeld;
+      await route.continue();
+    });
+
+    try {
+      await sourceActions.navigateToChunkByLabel('last');
+      const promptCountBefore = await getConsolePromptCount(page);
+      expect(promptCountBefore).not.toBeNull();
+      await executeCommand(page, 'executePreviousChunks');
+
+      // With the batch held, the only prompt that can arrive is the REPL's.
+      await expect.poll(() => getConsolePromptCount(page), { timeout: 60000 }).toBeGreaterThan(promptCountBefore!);
+      await expect(interpreterLabel(page)).toContainText('Python');
+      releaseBatch();
+
+      // Once the R chunk is echoed the batch has left the REPL and R is busy
+      // with it, so the probe chunk queues behind it.
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('Sys.sleep(5)', { timeout: 30000 });
+      await sourceActions.navigateToChunkByLabel('probe');
+      await executeCommand(page, 'executeCurrentChunk');
+
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('probe:python', { timeout: 60000 });
+      await expect(interpreterLabel(page)).toContainText('Python');
+      await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
+    } finally {
+      releaseBatch();
+      await page.unroute(CONSOLE_INPUT_RPC);
+    }
   });
 });

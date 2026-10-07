@@ -209,7 +209,7 @@ export class SourcePaneActions {
         const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
         if (!editor) continue;
         const lines = editor.getValue().split('\n');
-        const pattern = new RegExp('```\\{r\\s+' + lbl + '[\\s,}]');
+        const pattern = new RegExp('```\\{[A-Za-z]+\\s+' + lbl + '[\\s,}]');
         for (let j = 0; j < lines.length; j++) {
           if (pattern.test(lines[j])) {
             editor.gotoLine(j + 1, 0);
