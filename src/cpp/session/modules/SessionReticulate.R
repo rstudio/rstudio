@@ -280,6 +280,22 @@
    
 })
 
+#' Is Buffered REPL Input Complete?
+#'
+#' The REPL buffers code that codeop reports as incomplete. A block awaiting
+#' the blank line that closes it still compiles on its own, while an open
+#' string or bracket does not.
+#'
+#' @param code The buffered Python code, as a single string.
+.rs.addFunction("reticulate.isCompleteCode", function(code)
+{
+   builtins <- reticulate::import_builtins(convert = FALSE)
+   tryCatch({
+      builtins$compile(code, "<string>", "exec")
+      TRUE
+   }, error = function(e) FALSE)
+})
+
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
 {
    # ensure we call repl_iteration hook on exit
@@ -296,17 +312,21 @@
    # can end a block and then ask to leave the REPL without the blank line
    # that would close that block; run what's buffered first, as reticulate
    # itself would on the next dedented statement, so the exit goes through
-   # rather than being evaluated as a Python expression.
+   # rather than being evaluated as a Python expression. Only a block is
+   # treated that way: inside an open string or bracket the line is content.
    isExit <- trimmed %in% c("quit", "exit", "quit()", "exit()")
    if (isExit && !buffer$empty() && !grepl("^\\s", contents))
    {
       code <- paste(buffer$data(), collapse = "\n")
-      buffer$clear()
-      tryCatch(
-         reticulate::py_run_string(code),
-         error = function(e) message(conditionMessage(e))
-      )
-      return(FALSE)
+      if (.rs.reticulate.isCompleteCode(code))
+      {
+         buffer$clear()
+         tryCatch(
+            reticulate::py_run_string(code),
+            error = function(e) message(conditionMessage(e))
+         )
+         return(FALSE)
+      }
    }
 
    # special handling for commands when buffer is currently empty
