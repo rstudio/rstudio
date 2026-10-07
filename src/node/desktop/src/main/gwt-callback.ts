@@ -105,6 +105,10 @@ export class GwtCallback extends EventEmitter {
   pendingQuit: number = PendingQuit.PendingQuitNone;
 
   private hasFontConfig = false;
+  // Electron 44 clipboard writes are async and the renderer fires them without
+  // waiting, so reads chain on the last write to avoid returning stale text
+  // (e.g. an Emacs kill followed immediately by a yank).
+  private clipboardWrite: Promise<void> = Promise.resolve();
   private owners = new Set<GwtWindow>();
 
   // Info used by the "session failed to load" error page (error.html)
@@ -353,10 +357,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      clipboard.writeText(text).catch((error: unknown) => logger().logError(error));
+      this.queueClipboardWrite(async () => clipboard.writeText(text));
     });
 
     ipcMain.handle('desktop_get_clipboard_text', async () => {
+      await this.clipboardWrite;
       return clipboard.readText();
     });
 
@@ -413,11 +418,12 @@ export class GwtCallback extends EventEmitter {
     // undefined elsewhere.
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
       if (process.platform === 'linux') {
-        clipboard.selection.writeText(selection).catch((error: unknown) => logger().logError(error));
+        this.queueClipboardWrite(async () => clipboard.selection.writeText(selection));
       }
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', async () => {
+      await this.clipboardWrite;
       return process.platform === 'linux' ? clipboard.selection.readText() : '';
     });
 
@@ -1308,6 +1314,10 @@ export class GwtCallback extends EventEmitter {
    */
   unregisterOwner(owner: GwtWindow): void {
     this.owners.delete(owner);
+  }
+
+  private queueClipboardWrite(write: () => Promise<void>): void {
+    this.clipboardWrite = this.clipboardWrite.then(write).catch((error: unknown) => logger().logError(error));
   }
 
   /**

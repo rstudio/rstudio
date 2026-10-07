@@ -234,6 +234,20 @@ describe('DesktopCallback', () => {
       assert.equal(await invoke('desktop_get_clipboard_text'), 'clipboard text');
     });
 
+    // the renderer fires a write and may read straight back (an Emacs kill
+    // followed by a yank), so a read must not overtake a pending async write
+    it('desktop_get_clipboard_text waits for a pending write', async () => {
+      let contents = 'old';
+      sinon.stub(clipboard, 'writeText').callsFake(async (text: string) => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        contents = text;
+      });
+      sinon.stub(clipboard, 'readText').callsFake(async () => contents);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      assert.equal(await invoke('desktop_get_clipboard_text'), 'new');
+    });
+
     it('desktop_get_clipboard_uris returns the paths of copied files', async () => {
       const files = ['first.txt', 'second.txt'].map((name) => path.join(tempDir, name));
       files.forEach((file) => writeFileSync(file, ''));
