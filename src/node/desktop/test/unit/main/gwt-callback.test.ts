@@ -38,6 +38,7 @@ import { Application } from '../../../src/main/application';
 
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import { MainWindow } from '../../../src/main/main-window';
+import desktop from '../../../src/native/desktop.node';
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
   return {
@@ -402,6 +403,33 @@ describe('DesktopCallback', () => {
       }
     });
 
+    // a synchronous throw (e.g. a destroyed window) must still resolve the
+    // handler, or the copy-plot dialog waiting on it never closes
+    it('desktop_copy_page_region_to_clipboard resolves when capture throws synchronously', async () => {
+      mainWindow.window = {
+        capturePage: () => {
+          throw new Error('Object has been destroyed');
+        },
+      } as unknown as BrowserWindow;
+      const write = sinon.stub(clipboard, 'write').resolves();
+
+      await invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      assert.isFalse(write.called);
+    });
+
+    it('desktop_clean_clipboard waits for a pending write', async () => {
+      holdTextWrites();
+      const clean = sinon.stub(desktop, 'cleanClipboard');
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'pending');
+      ipcMain.emit('desktop_clean_clipboard', {}, false);
+      await tick();
+      assert.isFalse(clean.called, 'cleaned before the pending write finished');
+
+      await releaseWrites();
+      assert.isTrue(clean.calledOnceWith(false));
+    });
+
     it('desktop_clipboard_paste waits for a pending write', async () => {
       let contents = 'old';
       let pasted: string | undefined;
@@ -457,16 +485,55 @@ describe('DesktopCallback', () => {
       actual.forEach((file) => assert.isTrue(existsSync(file), `${file} does not exist`));
     });
 
-    it('desktop_get_clipboard_uris drops a file URI that has no valid path', async () => {
+    it('desktop_get_clipboard_uris drops entries that are not valid file URIs', async () => {
       // an encoded separator is rejected by fileURLToPath on every platform
       const valid = pathToFileURL(path.join(tempDir, 'kept.txt')).href;
-      const item = new ClipboardItem({ 'text/uri-list': `file:///a%2Fb\r\n${valid}` });
+      const entries = ['file:///a%2Fb', 'https://example.com/plot.png', '# comment', valid];
+      const item = new ClipboardItem({ 'text/uri-list': entries.join('\r\n') });
       sinon.stub(clipboard, 'read').resolves([item]);
 
       const expected = path.join(tempDir, 'kept.txt');
       assert.deepEqual(await invoke('desktop_get_clipboard_uris'), [
         process.platform === 'win32' ? expected.replace(/\\/g, '/') : expected,
       ]);
+    });
+
+    // the renderer never calls back on a rejected IPC call, so every failed
+    // read has to come back as an empty result instead
+    it('desktop_get_clipboard_text treats a failed read as empty', async () => {
+      sinon.stub(clipboard, 'readText').rejects(new Error('clipboard unavailable'));
+      assert.equal(await invoke('desktop_get_clipboard_text'), '');
+    });
+
+    it('desktop_get_global_mouse_selection treats a failed read as empty', async function () {
+      if (process.platform !== 'linux') {
+        this.skip();
+      }
+      sinon.stub(clipboard.selection, 'readText').rejects(new Error('selection unavailable'));
+      assert.equal(await invoke('desktop_get_global_mouse_selection'), '');
+    });
+
+    it('desktop_get_clipboard_uris and _image treat a failed payload decode as empty', async () => {
+      const failingBlob = {
+        size: 1,
+        text: sinon.stub().rejects(new Error('decode failed')),
+        arrayBuffer: sinon.stub().rejects(new Error('decode failed')),
+      };
+      const item = { types: ['text/uri-list', 'image/png'], getType: sinon.stub().resolves(failingBlob) };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), []);
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
+      assert.isTrue(failingBlob.text.called);
+      assert.isTrue(failingBlob.arrayBuffer.called);
+    });
+
+    // Electron resolves an empty Blob when it can't convert the clipboard's
+    // bitmap to PNG; saving it would hand the visual editor a broken image
+    it('desktop_get_clipboard_image treats an empty image as no image', async () => {
+      const item = { types: ['image/png'], getType: sinon.stub().resolves(new Blob([])) };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
     });
 
     it('desktop_get_clipboard_uris returns nothing without a URI list', async () => {

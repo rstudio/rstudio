@@ -43,7 +43,7 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
-import { clipboardWritesSettled, queueClipboardWrite, readClipboardType } from './clipboard-queue';
+import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
 import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
@@ -360,28 +360,24 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_clipboard_text', async () => {
-      await clipboardWritesSettled();
-      return clipboard.readText();
+      return readClipboardText();
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', async () => {
       // if we don't have a URI list, nothing to do
-      const blob = await readClipboardType('text/uri-list');
-      if (!blob) {
+      const uriList = await readClipboardType('text/uri-list', async (blob) => blob.text());
+      if (uriList === undefined) {
         return [];
       }
 
       // return uri list as array; entries are CRLF-separated per RFC 2483
-      const parts = (await blob.text()).split(/\r?\n/).filter((x) => x.length > 0);
+      const parts = uriList.split(/\r?\n/).filter((x) => x.length > 0);
 
-      // file URIs are percent-encoded, so decode them to filesystem paths;
-      // the visual editor expects forward slashes, including on Windows
+      // Electron only puts percent-encoded file:// URIs here; decode them to
+      // filesystem paths, with the forward slashes the visual editor expects
+      // on Windows, and drop anything that isn't a valid file URI
       const paths: string[] = [];
       for (const part of parts) {
-        if (!part.startsWith('file:')) {
-          paths.push(part);
-          continue;
-        }
         try {
           const filePath = fileURLToPath(part);
           paths.push(process.platform === 'win32' ? filePath.replace(/\\/g, '/') : filePath);
@@ -398,12 +394,10 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      const blob = await readClipboardType('image/png');
-      if (!blob) {
+      const pngData = await readClipboardType('image/png', async (blob) => Buffer.from(await blob.arrayBuffer()));
+      if (!pngData) {
         return '';
       }
-
-      const pngData = Buffer.from(await blob.arrayBuffer());
 
       const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
       const tempPathName = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard');
@@ -429,8 +423,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', async () => {
-      await clipboardWritesSettled();
-      return process.platform === 'linux' ? clipboard.selection.readText() : '';
+      return process.platform === 'linux' ? readClipboardText(clipboard.selection) : '';
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
@@ -653,10 +646,12 @@ export class GwtCallback extends EventEmitter {
       async (_event, x: number, y: number, width: number, height: number) => {
         // capture now, so the image is what was on screen when Copy was
         // requested, but queue the write now too, so a copy made while the
-        // capture is pending lands after this image rather than under it
+        // capture is pending lands after this image rather than under it;
+        // capturePage() can also throw synchronously (destroyed window), and
+        // the handler must still resolve or the copy dialog never closes
         const rect: Rectangle = { x, y, width, height };
-        const capture = this.mainWindow.window
-          .capturePage(rect)
+        const capture = Promise.resolve()
+          .then(async () => this.mainWindow.window.capturePage(rect))
           .then((image) => new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }))
           .catch((error: unknown) => {
             logger().logError(error);
@@ -800,8 +795,10 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
+    // cleanClipboard rewrites the pasteboard, so it takes its turn with the
+    // other clipboard writes instead of interleaving with a pending one
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
-      desktop.cleanClipboard(stripHtml);
+      queueClipboardWrite(() => desktop.cleanClipboard(stripHtml));
     });
 
     ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
