@@ -34,7 +34,7 @@ import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform, release } from 'os';
 import i18next from 'i18next';
 import path, { dirname } from 'path';
-import { pathToFileURL } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
 import { normalizeSeparatorsNative } from '../ui/utils';
 import { logger } from '../core/logger';
@@ -377,16 +377,23 @@ export class GwtCallback extends EventEmitter {
       // return uri list as array; entries are CRLF-separated per RFC 2483
       const parts = (await blob.text()).split(/\r?\n/).filter((x) => x.length > 0);
 
-      // strip off file prefix, if any
-      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
-      const trimmed = parts.map((x) => {
-        if (x.startsWith(filePrefix)) {
-          x = x.substring(filePrefix.length);
+      // file URIs are percent-encoded, so decode them to filesystem paths;
+      // the visual editor expects forward slashes, including on Windows
+      const paths: string[] = [];
+      for (const part of parts) {
+        if (!part.startsWith('file:')) {
+          paths.push(part);
+          continue;
         }
-        return x;
-      });
+        try {
+          const filePath = fileURLToPath(part);
+          paths.push(process.platform === 'win32' ? filePath.replace(/\\/g, '/') : filePath);
+        } catch (error: unknown) {
+          logger().logError(error);
+        }
+      }
 
-      return trimmed;
+      return paths;
     });
 
     // Check for an image on the clipboard; if one exists,

@@ -26,7 +26,7 @@ import {
   nativeImage,
   webContents,
 } from 'electron';
-import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -438,15 +438,35 @@ describe('DesktopCallback', () => {
       assert.isFalse(target.paste.called);
     });
 
+    // file names that need percent-encoding in a URI must come back as the
+    // plain filesystem paths
     it('desktop_get_clipboard_uris returns the paths of copied files', async () => {
-      const files = ['first.txt', 'second.txt'].map((name) => path.join(tempDir, name));
+      const files = ['plain.txt', 'with space.txt', 'café.txt'].map((name) => path.join(tempDir, name));
       files.forEach((file) => writeFileSync(file, ''));
       const uris = files.map((file) => pathToFileURL(file).href);
       await clipboard.write([new ClipboardItem({ 'text/uri-list': uris.join('\r\n') })]);
 
-      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
-      const expected = uris.map((uri) => uri.substring(filePrefix.length));
-      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), expected);
+      const expected = process.platform === 'win32' ? files.map((file) => file.replace(/\\/g, '/')) : files;
+      // macOS hands back file names in decomposed Unicode (NFD); the file
+      // system treats both forms as the same file
+      const actual = (await invoke('desktop_get_clipboard_uris')) as string[];
+      assert.deepEqual(
+        actual.map((file) => file.normalize('NFC')),
+        expected.map((file) => file.normalize('NFC')),
+      );
+      actual.forEach((file) => assert.isTrue(existsSync(file), `${file} does not exist`));
+    });
+
+    it('desktop_get_clipboard_uris drops a file URI that has no valid path', async () => {
+      // an encoded separator is rejected by fileURLToPath on every platform
+      const valid = pathToFileURL(path.join(tempDir, 'kept.txt')).href;
+      const item = new ClipboardItem({ 'text/uri-list': `file:///a%2Fb\r\n${valid}` });
+      sinon.stub(clipboard, 'read').resolves([item]);
+
+      const expected = path.join(tempDir, 'kept.txt');
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), [
+        process.platform === 'win32' ? expected.replace(/\\/g, '/') : expected,
+      ]);
     });
 
     it('desktop_get_clipboard_uris returns nothing without a URI list', async () => {
