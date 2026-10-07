@@ -4,7 +4,6 @@
 build_*/
 build-*/
 *-build/
-!src/node/desktop/src/assets/whats-new/developer-build/
 *_build/
 *-build-*/
 *_build_*/

@@ -4585,6 +4585,13 @@ public class TextEditingTarget implements
       docUpdateSentinel_.withSavedDocNoRetry(onsaved);
    }
 
+   // Whether the editor holds edits not yet backed up to the server's copy of
+   // the document
+   public boolean hasPendingChanges()
+   {
+      return docUpdateSentinel_ != null && docUpdateSentinel_.hasPendingChanges();
+   }
+
    @Handler
    void onWordCount()
    {

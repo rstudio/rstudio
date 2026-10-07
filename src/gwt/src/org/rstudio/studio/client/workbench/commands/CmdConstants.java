@@ -2308,6 +2308,26 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Ignore the selected files or folders") // $NON-NLS-1$
     String vcsIgnoreDesc();
     
+    // vcsNewWorktree
+    @DefaultStringValue("New Worktree") // $NON-NLS-1$
+    String vcsNewWorktreeLabel();
+    @DefaultStringValue("New Worktree") // $NON-NLS-1$
+    String vcsNewWorktreeButtonLabel();
+    @DefaultStringValue("New Worktree...") // $NON-NLS-1$
+    String vcsNewWorktreeMenuLabel();
+    @DefaultStringValue("Check out a branch into a new git worktree") // $NON-NLS-1$
+    String vcsNewWorktreeDesc();
+    
+    // vcsRemoveWorktree
+    @DefaultStringValue("Remove Worktree") // $NON-NLS-1$
+    String vcsRemoveWorktreeLabel();
+    @DefaultStringValue("Remove Worktree") // $NON-NLS-1$
+    String vcsRemoveWorktreeButtonLabel();
+    @DefaultStringValue("Remove Worktree...") // $NON-NLS-1$
+    String vcsRemoveWorktreeMenuLabel();
+    @DefaultStringValue("Remove a git worktree and delete its directory") // $NON-NLS-1$
+    String vcsRemoveWorktreeDesc();
+    
     // vcsPull
     @DefaultStringValue("Pull") // $NON-NLS-1$
     String vcsPullButtonLabel();
@@ -4289,9 +4309,5 @@ public interface CmdConstants extends Constants {
     // showReleaseNotes
     @DefaultStringValue("R_elease Notes") // $NON-NLS-1$
     String showReleaseNotesMenuLabel();
-    
-    // whatsNewRStudio
-    @DefaultStringValue("What's _New") // $NON-NLS-1$
-    String whatsNewRStudioMenuLabel();
     
 }

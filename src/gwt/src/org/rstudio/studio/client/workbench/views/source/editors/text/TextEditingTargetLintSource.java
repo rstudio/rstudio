@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Command;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -98,19 +97,17 @@ public class TextEditingTargetLintSource implements LintSource
       }
       else
       {
-         for (int i = 0; i < lint.length(); i++) {
+         for (int i = 0; i < lint.length(); i++)
+         {
             LintItem lintItem = lint.get(i);
+            DivElement element = Document.get().createDivElement();
+            VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
 
-            if (StringUtil.isNullOrEmpty(lintItem.getHtml()))
-            {
-               DivElement element = Document.get().createDivElement();
-               VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
-
-               vc.setPreserveHTML(true);
-               vc.submit(lintItem.getText());
-               String renderedText = element.getInnerHTML();
-               lintItem.setHtml(renderedText);
-            }
+            // Only render color codes, strip all other formatting
+            vc.setPreserveHTML(false);
+            vc.setSgrOnly(true);
+            vc.submit(lintItem.getText());
+            lintItem.setHtml(element.getInnerHTML());
          }
 
          target_.getDocDisplay().showLint(lint);

@@ -27,6 +27,8 @@
 # include <unistd.h>
 #endif
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/User.hpp>
 
@@ -56,12 +58,11 @@ namespace system {
 namespace xdg {
 namespace {
 
-FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
-                           const boost::optional<std::string>& user,
-                           const boost::optional<FilePath>& homeDir,
-                           const std::string& suffix = "")
+// expand HOME, USER, and HOSTNAME if given
+std::string expandXdgVars(const std::string& path,
+                          const boost::optional<std::string>& user,
+                          const boost::optional<FilePath>& homeDir)
 {
-   // expand HOME, USER, and HOSTNAME if given
    std::string resolvedHostname = getHostname();
    std::string resolvedUser = user ? *user : username();
    FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
@@ -71,8 +72,16 @@ FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
    core::system::setenv(&environment, "USER", resolvedUser);
    core::system::setenv(&environment, "HOSTNAME", resolvedHostname);
 
+   return core::system::expandEnvVars(environment, path);
+}
+
+FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
+                           const boost::optional<std::string>& user,
+                           const boost::optional<FilePath>& homeDir,
+                           const std::string& suffix = "")
+{
    // resolve aliases in the path
-   std::string expanded = core::system::expandEnvVars(environment, rstudioXdgPath.getAbsolutePath());
+   std::string expanded = expandXdgVars(rstudioXdgPath.getAbsolutePath(), user, homeDir);
    rstudioXdgPath = FilePath::resolveAliasedPath(expanded, homeDir ? *homeDir : userHomePath());
    
    // if a suffix was provided, use it
@@ -298,6 +307,22 @@ FilePath userConfigDir(
          user,
          homeDir
    );
+}
+
+FilePath xdgUserConfigHome(const boost::optional<FilePath>& homeDir)
+{
+   FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
+
+   // '~' and $HOME are expanded first, as for RStudio's other XDG variables;
+   // the check has to precede resolveAliasedPath(), which would complete a
+   // relative value against the current directory
+   std::string expanded =
+      expandXdgVars(core::system::getenv("XDG_CONFIG_HOME"), boost::none, resolvedHome);
+   bool isHomeAliased = expanded == "~" || boost::algorithm::starts_with(expanded, "~/");
+   if (isHomeAliased || FilePath(expanded).isAbsolute())
+      return FilePath::resolveAliasedPath(expanded, resolvedHome);
+
+   return FilePath::resolveAliasedPath("~/.config", resolvedHome);
 }
 
 FilePath userDataDir(

@@ -124,6 +124,8 @@ std::string toUpper(const std::string& str);
 std::string textToHtml(const std::string& str);
 
 std::string htmlEscape(const std::string& str, bool isAttributeValue = false);
+std::string htmlUnescape(const std::string& str);
+std::string htmlToText(const std::string& str);
 std::string jsLiteralEscape(const std::string& str);
 std::string jsonLiteralEscape(const std::string& str);
 std::string jsonLiteralUnescape(const std::string& str);

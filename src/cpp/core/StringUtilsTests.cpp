@@ -66,7 +66,7 @@ TEST(StringTest, StrippedOfBackQuotesWorks)
    std::string string = "`abc`";
    std::string stripped = strippedOfBackQuotes(string);
    EXPECT_EQ(std::string("abc"), stripped);
-   
+
    EXPECT_EQ(std::string("abc"), strippedOfBackQuotes("abc"));
 }
 
@@ -109,13 +109,13 @@ TEST(StringTest, CommentHeadersCanBeExtracted)
             "% Let's hope the text is extracted.\n"
             "\n"
             "This should be ignored.");
-   
+
    std::string extracted;
    bool success = extractCommentHeader(text, kLatexStyleLineCommentRegex, &extracted);
    std::string expected(
             "This is a header.\n"
             "Let's hope the text is extracted.\n");
-   
+
    EXPECT_TRUE(success);
    EXPECT_EQ(expected, extracted);
 }
@@ -123,11 +123,11 @@ TEST(StringTest, CommentHeadersCanBeExtracted)
 TEST(StringTest, CommentHeadersWithNoTrailingNewlineAreHandled)
 {
    std::string text("% Hello\n% World");
-   
+
    std::string extracted;
    bool success = extractCommentHeader(text, kLatexStyleLineCommentRegex, &extracted);
    std::string expected("Hello\nWorld\n");
-   
+
    EXPECT_TRUE(success);
    EXPECT_EQ(expected, extracted);
 }
@@ -136,7 +136,7 @@ TEST(StringTest, CommentHeaderEdgeCasesAreHandled)
 {
    std::string extracted;
    EXPECT_FALSE(extractCommentHeader("", kLatexStyleLineCommentRegex, &extracted));
-   
+
    std::string text(
             "There is a comment\n"
             "% but not at the start of the document.\n");
@@ -159,10 +159,10 @@ TEST(StringTest, HtmlTagsInJsonAreEscaped)
 TEST(StringTest, SomeSimpleStringsCanBeFormatted)
 {
    std::string s;
-   
+
    s = string_utils::sprintf("%s, %s!", "Hello", "world");
    EXPECT_EQ(std::string("Hello, world!"), s);
-   
+
    s = string_utils::sprintf("%i + %i == %i", 2, 2, 2 + 2);
    EXPECT_EQ(std::string("2 + 2 == 4"), s);
 }
@@ -445,6 +445,46 @@ TEST(StringTest, Utf8IncompleteSuffixLengthIgnoresInvalidSequences)
    // a complete sequence followed by nothing more is not truncated, even
    // though its last bytes are continuation bytes
    EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xE2\x94\x80"));
+}
+
+TEST(StringTest, HtmlUnescapeReversesHtmlEscape)
+{
+   // round-trips the full entity set htmlEscape emits
+   std::string raw = "object 'y' not found in R/foo.R <a> & \"b\"";
+   EXPECT_EQ(raw, htmlUnescape(htmlEscape(raw)));
+
+   // a literal entity in the source survives the round trip
+   std::string literal = "use &lt; to mean less-than";
+   EXPECT_EQ(literal, htmlUnescape(htmlEscape(literal)));
+
+   // decoding does not cascade: an escaped entity decodes to the entity, not
+   // to the character it names
+   EXPECT_EQ("&lt;", htmlUnescape("&amp;lt;"));
+   EXPECT_EQ("&amp;", htmlUnescape("&amp;amp;"));
+
+   // text with no entities is returned unchanged
+   EXPECT_EQ("nothing to decode", htmlUnescape("nothing to decode"));
+
+   // an unrecognized or truncated entity is left alone rather than eaten
+   EXPECT_EQ("a & b", htmlUnescape("a & b"));
+   EXPECT_EQ("&nbsp;", htmlUnescape("&nbsp;"));
+   EXPECT_EQ("&lt", htmlUnescape("&lt"));
+
+   // adjacent entities decode independently, and matching is case-sensitive
+   EXPECT_EQ("<>", htmlUnescape("&lt;&gt;"));
+   EXPECT_EQ("&LT;", htmlUnescape("&LT;"));
+}
+
+TEST(StringTest, HtmlToTextDropsTagsThenDecodesEntities)
+{
+   // remove tags, including attributes
+   EXPECT_EQ("foo bar baz", htmlToText("<a href=\"a\">foo</a> <b>bar</b> <span class='c'>baz</span>"));
+
+   // entities are decoded once and only once
+   EXPECT_EQ("<b>foo</b>", htmlToText("&lt;b&gt;foo&lt;&#x2F;b&gt;"));
+
+   // stray < doesn't eat the whole message
+   EXPECT_EQ("a < b", htmlToText("a < b"));
 }
 
 #ifdef _WIN32

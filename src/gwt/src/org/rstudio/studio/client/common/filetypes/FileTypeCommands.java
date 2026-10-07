@@ -129,6 +129,7 @@ public class FileTypeCommands
          FileTypeRegistry.LESS,
          FileTypeRegistry.JS,
          FileTypeRegistry.JSON,
+         FileTypeRegistry.C,
          FileTypeRegistry.CPP,
          FileTypeRegistry.PYTHON,
          FileTypeRegistry.SQL,

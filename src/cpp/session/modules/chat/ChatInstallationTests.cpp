@@ -462,25 +462,64 @@ TEST_F(ChatInstallationSearch, AdminSelectionDoesNotHoldBackANewerBundledCopy)
    EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
 
-TEST_F(ChatInstallationSearch, ResolvesAroundAStaleAdminSelectorWithoutRewritingIt)
+TEST_F(ChatInstallationSearch, IgnoresAdminSlotsBehindAStaleAdminSelectorWithoutRewritingIt)
 {
+   // A slot the administrator never selected does not run in place of the
+   // one they did, even when that one is gone.
    makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0", kProtocolVersion, false);
-   FilePath newest =
-      makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
    ASSERT_FALSE(selector::selectSlot(paths_.systemStorageDir, kProtocolVersion, "9.9.9"));
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), newest);
+   EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
+
+   stageInstallation(bundled_, "0.5.0");
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
    EXPECT_EQ(selector::readSelections(paths_.systemStorageDir)[kProtocolVersion], "9.9.9");
 }
 
-TEST_F(ChatInstallationSearch, ResolvesTheNewestAdminSlotWithoutCreatingASelector)
+TEST_F(ChatInstallationSearch, IgnoresAdminSlotsWithoutAnAdminSelectorAndCreatesNone)
 {
+   // Removing the selection is how an administrator returns sessions to the
+   // bundled copy, whatever versions are still installed beside it.
    makeSlot(paths_.systemStorageDir, "1.0.0", "1.0.0", kProtocolVersion, false);
-   FilePath newest =
-      makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
 
-   EXPECT_EQ(locatePositAssistantInstallation(paths_), newest);
-   EXPECT_TRUE(selector::readSelections(paths_.systemStorageDir).empty());
+   EXPECT_TRUE(locatePositAssistantInstallation(paths_).isEmpty());
+
+   stageInstallation(bundled_, "0.5.0");
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
+   EXPECT_FALSE(paths_.systemStorageDir.completeChildPath(kSelectorFileName).exists());
+}
+
+TEST_F(ChatInstallationSearch, IgnoresAdminSlotsBehindAMalformedAdminSelector)
+{
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+   ASSERT_FALSE(writeStringToFile(
+      paths_.systemStorageDir.completeChildPath(kSelectorFileName), "{\"selected\": ["));
+   stageInstallation(bundled_, "0.5.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
+}
+
+TEST_F(ChatInstallationSearch, IgnoresAnAdminSelectionOfASlotForAnotherProtocol)
+{
+   makeSlot(paths_.systemStorageDir, "9.9.9", "9.9.9", "99.0", false);
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+   ASSERT_FALSE(selector::selectSlot(paths_.systemStorageDir, kProtocolVersion, "9.9.9"));
+   stageInstallation(bundled_, "0.5.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
+}
+
+TEST_F(ChatInstallationSearch, IgnoresAdminSlotsWhenOnlyAnotherProtocolIsSelected)
+{
+   // A selector left from before a protocol bump says nothing about which of
+   // the new protocol's slots the administrator wants.
+   makeSlot(paths_.systemStorageDir, "9.9.9", "9.9.9", "99.0");
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+   stageInstallation(bundled_, "0.5.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths_), bundled_);
 }
 
 TEST_F(ChatInstallationSearch, ReadsAdminInstallationsOnlyFromTheSlots)
@@ -630,6 +669,13 @@ TEST_F(ChatInstallationSearch, UserInstallRanksAgainstTheAdminSlot)
    EXPECT_FALSE(userInstallWouldBeSelected(paths_, "1.5.0"));
    EXPECT_TRUE(userInstallWouldBeSelected(paths_, "2.0.0"));
    EXPECT_TRUE(userInstallWouldBeSelected(paths_, "2.5.0"));
+}
+
+TEST_F(ChatInstallationSearch, UserInstallDoesNotRankAgainstAnUnselectedAdminSlot)
+{
+   makeSlot(paths_.systemStorageDir, "2.0.0", "2.0.0", kProtocolVersion, false);
+
+   EXPECT_TRUE(userInstallWouldBeSelected(paths_, "1.5.0"));
 }
 
 TEST_F(ChatInstallationSearch, UserInstallWouldBeSelectedOverIncompatibleReadOnlyInstall)

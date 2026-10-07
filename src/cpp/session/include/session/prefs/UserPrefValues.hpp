@@ -358,7 +358,6 @@ namespace prefs {
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
 #define kEnableSplashScreen "enable_splash_screen"
-#define kShowWhatsNew "show_whats_new"
 #define kDefaultRVersion "default_r_version"
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
@@ -740,7 +739,7 @@ public:
    core::Error setEditorKeybindings(std::string val);
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    bool vimLoadVimrc();
    core::Error setVimLoadVimrc(bool val);
@@ -1818,12 +1817,6 @@ public:
     */
    bool enableSplashScreen();
    core::Error setEnableSplashScreen(bool val);
-
-   /**
-    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
-    */
-   bool showWhatsNew();
-   core::Error setShowWhatsNew(bool val);
 
    /**
     * The R version to use by default.

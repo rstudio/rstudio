@@ -53695,7 +53695,7 @@ var bgStyle = function (color, background) {
     }
     var textColor = bright ? "#000000a0" : "#ffffffa0";
     var borderColor = bgBrightness > 0.5 ? "#000000a0" : "#ffffffa0";
-    return "background: #" + hex + "; color: " + textColor + "!important; margin-left: -1px; margin-right:-1px; border: 1px solid " + borderColor + ";";
+    return "background: #" + hex + "; color: " + textColor + "!important; outline: 1px solid " + borderColor + ";";
 };
 var Text = /** @class */ (function () {
     function Text(parentEl) {

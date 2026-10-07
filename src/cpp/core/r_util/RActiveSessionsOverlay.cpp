@@ -1,5 +1,5 @@
 /*
- * whats-new-preload.ts
+ * RActiveSessionsOverlay.cpp
  *
  * Copyright (C) 2026 by Posit Software, PBC
  *
@@ -13,13 +13,18 @@
  *
  */
 
-import { contextBridge, ipcRenderer } from 'electron';
+#include <core/r_util/RActiveSessionsOverlay.hpp>
 
-contextBridge.exposeInMainWorld('whatsNew', {
-  close: () => {
-    ipcRenderer.send('whats-new-close');
-  },
-  openExternal: (url: string) => {
-    ipcRenderer.send('whats-new-open-external', url);
-  },
-});
+namespace rstudio {
+namespace core {
+namespace r_util {
+namespace overlay {
+
+void addDefaultProperties(std::set<std::string>*)
+{
+}
+
+} // namespace overlay
+} // namespace r_util
+} // namespace core
+} // namespace rstudio

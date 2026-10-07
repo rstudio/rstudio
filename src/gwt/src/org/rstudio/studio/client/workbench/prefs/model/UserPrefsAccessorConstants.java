@@ -328,11 +328,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String editorKeybindingsEnum_sublime();
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    @DefaultStringValue("Load Vim keybindings from a vimrc file")
    String vimLoadVimrcTitle();
-   @DefaultStringValue("Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.")
+   @DefaultStringValue("Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.")
    String vimLoadVimrcDescription();
 
    /**
@@ -1810,14 +1810,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String enableSplashScreenTitle();
    @DefaultStringValue("Whether to show the splash screen when RStudio is starting.")
    String enableSplashScreenDescription();
-
-   /**
-    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
-    */
-   @DefaultStringValue("Show the What's New window automatically after updating RStudio")
-   String showWhatsNewTitle();
-   @DefaultStringValue("Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.")
-   String showWhatsNewDescription();
 
    /**
     * The R version to use by default.

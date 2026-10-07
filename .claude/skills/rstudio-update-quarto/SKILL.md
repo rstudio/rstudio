@@ -67,7 +67,7 @@ In the `### Dependencies` section of the release notes at the top of the file, s
 - Quarto <VERSION>
 ```
 
-**There is often no Quarto line to update.** That section lists only the dependencies modified during the current release cycle, so when the notes are rotated for a new release, the unchanged dependency lines are pruned (see commit `e8b91f112a`). If no Quarto line is present, add one, keeping the ordering used before the prune: Ace, MathJax, Copilot Language Server, Electron, Node.js, Quarto, xterm.js.
+**There is often no Quarto line to update.** That section lists only the dependencies modified during the current release cycle, so when the notes are rotated for a new release, the unchanged dependency lines are pruned (see commit `e8b91f112a`). If no Quarto line is present, add one, keeping the list alphabetical by dependency name.
 
 #### `dependencies/tools/upload-quarto.sh`
 
