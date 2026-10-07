@@ -17,6 +17,7 @@ import { BrowserWindow, clipboard, dialog, Menu, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { appState } from './app-state';
+import { queueClipboardWrite } from './clipboard-queue';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
@@ -111,7 +112,7 @@ const createContextMenuImageTemplate = (sender: WebContents, params: Electron.Co
     {
       label: i18next.t('contextMenu.copyImageAddress'),
       click: () => {
-        appState().gwtCallback?.queueClipboardWrite(async () => clipboard.writeText(params.srcURL));
+        queueClipboardWrite(async () => clipboard.writeText(params.srcURL));
       },
     },
 

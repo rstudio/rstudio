@@ -43,6 +43,7 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
+import { clipboardWritesSettled, queueClipboardWrite, readClipboardType } from './clipboard-queue';
 import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
@@ -99,10 +100,6 @@ export class GwtCallback extends EventEmitter {
   pendingQuit: number = PendingQuit.PendingQuitNone;
 
   private hasFontConfig = false;
-  // Electron 44 clipboard writes are async and the renderer fires them without
-  // waiting, so reads chain on the last write to avoid returning stale text
-  // (e.g. an Emacs kill followed immediately by a yank).
-  private clipboardWrite: Promise<void> = Promise.resolve();
   private owners = new Set<GwtWindow>();
 
   // Info used by the "session failed to load" error page (error.html)
@@ -349,7 +346,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_clipboard_paste', () => {
       // capture the target now; focus may move while a write is pending
       const target = focusedWebContents();
-      this.clipboardWrite
+      clipboardWritesSettled()
         .then(() => {
           if (target && !target.isDestroyed()) {
             target.paste();
@@ -359,17 +356,17 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      this.queueClipboardWrite(async () => clipboard.writeText(text));
+      queueClipboardWrite(async () => clipboard.writeText(text));
     });
 
     ipcMain.handle('desktop_get_clipboard_text', async () => {
-      await this.clipboardWrite;
+      await clipboardWritesSettled();
       return clipboard.readText();
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', async () => {
       // if we don't have a URI list, nothing to do
-      const blob = await this.readClipboardType('text/uri-list');
+      const blob = await readClipboardType('text/uri-list');
       if (!blob) {
         return [];
       }
@@ -401,7 +398,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      const blob = await this.readClipboardType('image/png');
+      const blob = await readClipboardType('image/png');
       if (!blob) {
         return '';
       }
@@ -427,12 +424,12 @@ export class GwtCallback extends EventEmitter {
     // undefined elsewhere.
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
       if (process.platform === 'linux') {
-        this.queueClipboardWrite(async () => clipboard.selection.writeText(selection));
+        queueClipboardWrite(async () => clipboard.selection.writeText(selection));
       }
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', async () => {
-      await this.clipboardWrite;
+      await clipboardWritesSettled();
       return process.platform === 'linux' ? clipboard.selection.readText() : '';
     });
 
@@ -665,13 +662,13 @@ export class GwtCallback extends EventEmitter {
             logger().logError(error);
             return undefined;
           });
-        this.queueClipboardWrite(async () => {
+        queueClipboardWrite(async () => {
           const png = await capture;
           if (png) {
             await clipboard.write([new ClipboardItem({ 'image/png': png })]);
           }
         });
-        await this.clipboardWrite;
+        await clipboardWritesSettled();
       },
     );
 
@@ -1332,29 +1329,6 @@ export class GwtCallback extends EventEmitter {
    */
   unregisterOwner(owner: GwtWindow): void {
     this.owners.delete(owner);
-  }
-
-  /**
-   * Write to the clipboard after any pending write, so that reads and pastes
-   * waiting on clipboardWrite see it.
-   */
-  queueClipboardWrite(write: () => Promise<void>): void {
-    this.clipboardWrite = this.clipboardWrite.then(write).catch((error: unknown) => logger().logError(error));
-  }
-
-  // A failed read is logged and treated as an empty clipboard: the renderer
-  // reports a rejected IPC call without ever invoking its callback, which
-  // would leave a visual-editor paste waiting forever.
-  private async readClipboardType(mimeType: string): Promise<Blob | undefined> {
-    await this.clipboardWrite;
-    try {
-      const items = await clipboard.read();
-      const item = items.find((candidate) => candidate.types.includes(mimeType));
-      return item ? ((await item.getType(mimeType)) as Blob) : undefined;
-    } catch (error: unknown) {
-      logger().logError(error);
-      return undefined;
-    }
   }
 
   /**

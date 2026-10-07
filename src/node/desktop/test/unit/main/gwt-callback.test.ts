@@ -251,7 +251,7 @@ describe('DesktopCallback', () => {
       tempDir = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-clipboard-')));
     });
 
-    // the GwtCallback is shared by the suite, so a write a failed test left
+    // the clipboard write queue is process-wide, so a write a failed test left
     // pending would stall every later read that waits on it
     afterEach(async () => {
       await releaseWrites();
