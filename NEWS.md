@@ -11,6 +11,6 @@
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
 
 ### Dependencies
-- ([rstudio/rstudio-pro#13101](https://github.com/rstudio/rstudio-pro/issues/13101)): RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
+- RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
 - Updated OpenSSL on Windows from 3.1.4 to 3.5.9
 
