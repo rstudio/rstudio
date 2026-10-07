@@ -1190,9 +1190,9 @@ public class TextEditingTargetWidget
       // Re-applying the type the editor already has would reset its language,
       // completion and keyboard handlers and clear the lint markers that a
       // save just rendered (every save re-detects the extended type).
-      if (fileType != editor_.getFileType())
+      if (!fileType.equals(editor_.getFileType()))
          editor_.setFileType(fileType);
-      if (splitEditor_ != null && fileType != splitEditor_.getFileType())
+      if (splitEditor_ != null && !fileType.equals(splitEditor_.getFileType()))
          splitEditor_.setFileType(fileType);
 
       boolean canCompilePdf = fileType.canCompilePDF();

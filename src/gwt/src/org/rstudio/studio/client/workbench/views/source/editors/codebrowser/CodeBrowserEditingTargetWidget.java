@@ -233,7 +233,9 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    @Override
    public void adaptToFileType(TextFileType fileType)
    {
-      docDisplay_.setFileType(fileType, true); 
+      // re-applying the current type would only reset the editor
+      if (!fileType.equals(docDisplay_.getFileType()))
+         docDisplay_.setFileType(fileType, true);
    }
 
 

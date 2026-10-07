@@ -3927,16 +3927,9 @@ public class TextEditingTarget implements
       // hasn't changed as the path may have changed
       syncPublishPath(docUpdateSentinel_.getPath());
 
-      // if autosaves are enabled and the extended type hasn't changed, then
-      // don't do any further work as adapting to the extended type can cause
-      // disruptive side effects during autosave (e.g., knocking down
-      // autocomplete dialogs, resetting vim mode)
-      if (StringUtil.equals(extendedType, extendedType_) &&
-          prefs_.autoSaveEnabled())
-      {
-         return;
-      }
-
+      // always re-adapt, even when the extended type is unchanged: a save can
+      // change the output formats in the YAML header, and the view only resets
+      // the editor when the file type itself changes
       view_.adaptToExtendedFileType(extendedType);
 
       // save new extended type (updateRmdFormat below reads it)
