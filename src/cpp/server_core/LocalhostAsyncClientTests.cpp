@@ -134,9 +134,10 @@ private:
 // after the headers and ends the response right there. The browser gets only
 // the bytes that arrived with the headers.
 //
-// AsyncClient::isStreamingResponse() exists for this override shape (see
-// AsyncClientContentLengthTests' GuardedStopReadingAsyncClient); both
-// LocalhostAsyncClient overrides need to consult it.
+// AsyncClient::readSomeContent() guards against this for every subclass by
+// never consulting stopReadingAndRespond() for a streamed (or chunked) body;
+// see AsyncClientContentLengthTests' StopReadingOnContentLengthAsyncClient.
+// This test checks the guard covers LocalhostAsyncClient's own override.
 TEST(LocalhostAsyncClientTest, StreamsEofDelimitedBodyToCompletion)
 {
    const std::string firstPart(4096, 'a');
