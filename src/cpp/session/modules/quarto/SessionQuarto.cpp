@@ -997,15 +997,16 @@ void readQuartoConfig()
       key["size"] = static_cast<double>(s_quartoPath.getSize());
       key["version"] = s_quartoVersion;
       key["share_dir"] = s_quartoPath.getParent().getParent().completeChildPath("share").getCanonicalPath();
-      key["working_dir"] = module_context::safeCurrentPath().getAbsolutePath();
       // Quarto launchers can honor environment overrides (including share
       // directories). Preserve those rather than deriving paths from layout.
+      // Nothing else about a launch (working directory, PATH) changes the
+      // answer, and keying on it would miss on every project switch.
       core::system::Options environment;
       core::system::environment(&environment);
       std::map<std::string, std::string> overrides;
       for (const auto& variable : environment)
       {
-         if (variable.first == "PATH" || variable.first.find("QUARTO_") == 0)
+         if (variable.first.find("QUARTO_") == 0)
             overrides[variable.first] = variable.second;
       }
       key["environment"] = json::toJsonValue(overrides);

@@ -58,7 +58,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
    
    protected void verifyAvailable(final RnwWeave weave)
    {
-      // first check if it was already available at startup
+      // first check whether an earlier probe already found it
       TexCapabilities texCap = session_.getSessionInfo().getTexCapabilities();
       if (texCap.isRnwWeaveAvailable(weave))
          return;
@@ -68,6 +68,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
          @Override
          public void onResponseReceived(TexCapabilities capabilities)
          {
+            session_.getSessionInfo().setTexCapabilities(capabilities);
             if (!capabilities.isRnwWeaveAvailable(weave))
             {
                globalDisplay_.showYesNoMessage(

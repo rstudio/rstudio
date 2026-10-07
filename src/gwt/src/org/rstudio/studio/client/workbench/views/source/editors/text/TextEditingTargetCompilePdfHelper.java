@@ -190,6 +190,8 @@ public class TextEditingTargetCompilePdfHelper
       }
             
        
+      // Startup ships an empty placeholder; the first probe fills it in so
+      // later editors skip the server round trip when everything is installed.
       final SessionInfo sessionInfo = session_.getSessionInfo();
       TexCapabilities texCap = sessionInfo.getTexCapabilities();
 
@@ -210,6 +212,7 @@ public class TextEditingTargetCompilePdfHelper
             @Override
             public void onResponseReceived(TexCapabilities response)
             {
+               sessionInfo.setTexCapabilities(response);
                if (checkForTeX && !response.isTexInstalled())
                {
                   String warning;

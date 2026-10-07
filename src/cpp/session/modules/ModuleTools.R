@@ -13,7 +13,23 @@
 #
 #
 
-.rs.addFunction("addLazyModule", function(module, names)
+# The names a module would register when sourced. Startup enumerates RPC
+# handlers once, so every definition needs a proxy before the module loads.
+.rs.addFunction("lazyModuleDefinitions", function(module)
+{
+   lines <- readLines(module, warn = FALSE)
+   pattern <- '\\.rs\\.add(Function|JsonRpcHandler)\\(\\s*"([^"]+)"'
+   matches <- regmatches(lines, regexec(pattern, lines, perl = TRUE))
+   matches <- matches[lengths(matches) > 0L]
+   if (length(matches) == 0L)
+      stop("No definitions found in module '", module, "'")
+
+   kinds <- vapply(matches, `[[`, character(1), 2L)
+   names <- vapply(matches, `[[`, character(1), 3L)
+   ifelse(kinds == "JsonRpcHandler", paste0("rpc.", names), names)
+})
+
+.rs.addFunction("addLazyModule", function(module, names = .rs.lazyModuleDefinitions(module))
 {
    loaded <- FALSE
    loadModule <- function()

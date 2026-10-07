@@ -81,7 +81,9 @@ describe('R environment disk cache', () => {
   });
 
   it('rejects a symlink redirected to another R installation', function () {
-    if (process.platform === 'win32') this.skip();
+    if (process.platform === 'win32') {
+      this.skip();
+    }
     const alias = join(root, 'selected-R');
     symlinkSync(executable, alias);
     const cache = new REnvironmentCache(directory);
@@ -100,6 +102,15 @@ describe('R environment disk cache', () => {
     assert.isNull(cache.read(executable, environment));
     writeFileSync(join(directory, 'r-environment.json'), 'broken json');
     assert.isNull(cache.read(executable, environment));
+  });
+
+  it('recovers from a damaged cache file in a later process', () => {
+    mkdirSync(directory);
+    writeFileSync(join(directory, 'r-environment.json'), 'broken json');
+    const cache = new REnvironmentCache(directory);
+    assert.isNull(cache.read(executable, environment));
+    cache.write(executable, environment, stdout);
+    assert.equal(new REnvironmentCache(directory).read(executable, environment), stdout);
   });
 
   it('does not remember incomplete query output', () => {

@@ -21,6 +21,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerErrorCause;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -30,7 +32,9 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
 
 public class FileTypeCommandsTests extends GWTTestCase
 {
@@ -60,7 +64,7 @@ public class FileTypeCommandsTests extends GWTTestCase
 
       assertEquals(1, server_.requests_);
       assertEquals(0, received.size());
-      server_.callback_.onResponseReceived(createCapabilities(true));
+      server_.latest().onResponseReceived(createCapabilities(true));
       assertEquals(2, received.size());
       assertTrue(received.get(0).isRMarkdownSupported());
       assertTrue(commands_.getHTMLCapabiliites().isRMarkdownSupported());
@@ -73,7 +77,7 @@ public class FileTypeCommandsTests extends GWTTestCase
       commands_.withHTMLCapabilities(received::add);
       assertEquals(0, received.size());
 
-      server_.callback_.onResponseReceived(createCapabilities(false));
+      server_.latest().onResponseReceived(createCapabilities(false));
       assertEquals(1, received.size());
       assertFalse(received.get(0).isRMarkdownSupported());
    }
@@ -83,14 +87,14 @@ public class FileTypeCommandsTests extends GWTTestCase
       List<HTMLCapabilities> received = new ArrayList<>();
       HandlerRegistration registration = commands_.withHTMLCapabilities(received::add);
       registration.removeHandler();
-      server_.callback_.onResponseReceived(createCapabilities(true));
+      server_.latest().onResponseReceived(createCapabilities(true));
       assertEquals(0, received.size());
    }
 
    public void testEditorsOpenedAfterProbeReceiveCachedResult()
    {
       events_.fireEvent(new SessionInitEvent());
-      server_.callback_.onResponseReceived(createCapabilities(true));
+      server_.latest().onResponseReceived(createCapabilities(true));
       List<HTMLCapabilities> received = new ArrayList<>();
       commands_.withHTMLCapabilities(received::add);
       assertEquals(1, received.size());
@@ -98,18 +102,60 @@ public class FileTypeCommandsTests extends GWTTestCase
       assertEquals(1, server_.requests_);
    }
 
-   public void testPackageChangeDuringProbeWaitsForFreshResult()
+   public void testPackageChangeDuringProbeSupersedesIt()
    {
       List<HTMLCapabilities> received = new ArrayList<>();
       commands_.withHTMLCapabilities(received::add);
       events_.fireEvent(new PackageStateChangedEvent(null));
-      server_.callback_.onResponseReceived(createCapabilities(false));
-      assertEquals(0, received.size());
       assertEquals(2, server_.requests_);
 
-      server_.callback_.onResponseReceived(createCapabilities(true));
+      // the superseded probe's answer is stale
+      server_.callbacks_.get(0).onResponseReceived(createCapabilities(false));
+      assertEquals(0, received.size());
+      assertFalse(commands_.hasHTMLCapabilities());
+
+      server_.callbacks_.get(1).onResponseReceived(createCapabilities(true));
       assertEquals(1, received.size());
       assertTrue(received.get(0).isRMarkdownSupported());
+   }
+
+   public void testFailedProbeIsRetriedForWaitingEditors()
+   {
+      List<HTMLCapabilities> received = new ArrayList<>();
+      commands_.withHTMLCapabilities(received::add);
+      server_.latest().onError(new ProbeError());
+      assertEquals(1, server_.requests_);
+      assertEquals(0, received.size());
+
+      delayTestFinish(FileTypeCommands.HTML_CAPABILITIES_RETRY_MS * 5);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            assertEquals(2, server_.requests_);
+            server_.latest().onResponseReceived(createCapabilities(true));
+            assertEquals(1, received.size());
+            assertTrue(commands_.hasHTMLCapabilities());
+            finishTest();
+         }
+      }.schedule(FileTypeCommands.HTML_CAPABILITIES_RETRY_MS * 2);
+   }
+
+   public void testLaterEditorsRequestAgainAfterRetriesAreExhausted()
+   {
+      List<HTMLCapabilities> received = new ArrayList<>();
+      commands_.withHTMLCapabilities(received::add);
+      for (int i = 0; i <= FileTypeCommands.MAX_HTML_CAPABILITIES_RETRIES; i++)
+      {
+         server_.latest().onError(new ProbeError());
+         commands_.withHTMLCapabilities(received::add);
+      }
+
+      // each failure is followed by one request from the next editor only
+      assertEquals(FileTypeCommands.MAX_HTML_CAPABILITIES_RETRIES + 2, server_.requests_);
+      server_.latest().onResponseReceived(createCapabilities(true));
+      assertEquals(FileTypeCommands.MAX_HTML_CAPABILITIES_RETRIES + 2, received.size());
    }
 
    private static native SessionInfo createSessionInfo() /*-{
@@ -126,7 +172,12 @@ public class FileTypeCommandsTests extends GWTTestCase
       public void getHTMLCapabilities(ServerRequestCallback<HTMLCapabilities> callback)
       {
          requests_++;
-         callback_ = callback;
+         callbacks_.add(callback);
+      }
+
+      ServerRequestCallback<HTMLCapabilities> latest()
+      {
+         return callbacks_.get(callbacks_.size() - 1);
       }
 
       @Override
@@ -165,7 +216,28 @@ public class FileTypeCommandsTests extends GWTTestCase
       public void rpubsTerminateUpload(String contextId, ServerRequestCallback<VoidResponse> callback) {}
 
       private int requests_;
-      private ServerRequestCallback<HTMLCapabilities> callback_;
+      private final List<ServerRequestCallback<HTMLCapabilities>> callbacks_ = new ArrayList<>();
+   }
+
+   private static class ProbeError implements ServerError
+   {
+      @Override
+      public int getCode() { return EXECUTION; }
+
+      @Override
+      public String getMessage() { return "probe failed"; }
+
+      @Override
+      public String getRedirectUrl() { return null; }
+
+      @Override
+      public ServerErrorCause getCause() { return null; }
+
+      @Override
+      public String getUserMessage() { return getMessage(); }
+
+      @Override
+      public JSONValue getClientInfo() { return null; }
    }
 
    private EventBus events_;

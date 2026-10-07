@@ -21,10 +21,10 @@ public class HTMLCapabilities extends JavaScriptObject
    protected HTMLCapabilities() {}
  
    public native final boolean isRMarkdownSupported() /*-{
-      return this.r_markdown_supported;
+      return !!this.r_markdown_supported;
    }-*/;
    
    public native final boolean isStitchSupported() /*-{
-      return this.stitch_supported;
+      return !!this.stitch_supported;
    }-*/;
 }

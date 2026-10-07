@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -63,47 +64,46 @@ public class FileTypeCommands
          if (htmlCapabilities_ == null && !htmlCapabilitiesRequestPending_)
             refreshHTMLCapabilities();
       });
+      // A package change supersedes any probe still in flight.
       eventBus.addHandler(PackageStateChangedEvent.TYPE, event -> refreshHTMLCapabilities());
    }
 
    private void refreshHTMLCapabilities()
    {
-      if (htmlCapabilitiesRequestPending_)
-      {
-         htmlCapabilitiesRefreshRequested_ = true;
-         return;
-      }
-
+      htmlCapabilitiesRetry_.cancel();
+      final int generation = ++htmlCapabilitiesGeneration_;
       htmlCapabilitiesRequestPending_ = true;
       server_.getHTMLCapabilities(new ServerRequestCallback<HTMLCapabilities>()
       {
          @Override
          public void onResponseReceived(HTMLCapabilities caps)
          {
+            if (generation != htmlCapabilitiesGeneration_)
+               return;
+
             htmlCapabilitiesRequestPending_ = false;
-            if (htmlCapabilitiesRefreshRequested_)
-               refreshHTMLCapabilitiesIfRequested();
-            else
-               setHTMLCapabilities(caps);
+            htmlCapabilitiesRetries_ = 0;
+            setHTMLCapabilities(caps);
          }
 
          @Override
          public void onError(ServerError error)
          {
+            if (generation != htmlCapabilitiesGeneration_)
+               return;
+
             htmlCapabilitiesRequestPending_ = false;
             Debug.logError(error);
-            refreshHTMLCapabilitiesIfRequested();
+
+            // Restored editors are waiting on this answer, so retry a few
+            // times; afterwards the next editor or package change asks again.
+            if (htmlCapabilitiesRetries_ < MAX_HTML_CAPABILITIES_RETRIES)
+            {
+               htmlCapabilitiesRetries_++;
+               htmlCapabilitiesRetry_.schedule(HTML_CAPABILITIES_RETRY_MS * htmlCapabilitiesRetries_);
+            }
          }
       });
-   }
-
-   private void refreshHTMLCapabilitiesIfRequested()
-   {
-      if (htmlCapabilitiesRefreshRequested_)
-      {
-         htmlCapabilitiesRefreshRequested_ = false;
-         refreshHTMLCapabilities();
-      }
    }
 
    public List<TextFileType> statusBarFileTypes()
@@ -143,12 +143,20 @@ public class FileTypeCommands
       return fileTypes;
    }
 
+   // Until the probe answers this is the session's empty placeholder, which
+   // reports nothing as supported; decisions should go through
+   // withHTMLCapabilities() instead.
    public HTMLCapabilities getHTMLCapabiliites()
    {
       if (htmlCapabilities_ == null)
          return session_.getSessionInfo().getHTMLCapabilities();
 
       return htmlCapabilities_;
+   }
+
+   public boolean hasHTMLCapabilities()
+   {
+      return htmlCapabilities_ != null;
    }
 
    public HandlerRegistration withHTMLCapabilities(CommandWithArg<HTMLCapabilities> callback)
@@ -180,8 +188,19 @@ public class FileTypeCommands
    private final HTMLPreviewServerOperations server_;
 
    private HTMLCapabilities htmlCapabilities_;
+   private int htmlCapabilitiesGeneration_;
    private boolean htmlCapabilitiesRequestPending_;
-   private boolean htmlCapabilitiesRefreshRequested_;
+   private int htmlCapabilitiesRetries_;
+   private final Timer htmlCapabilitiesRetry_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         refreshHTMLCapabilities();
+      }
+   };
    private final List<CommandWithArg<HTMLCapabilities>> htmlCapabilitiesCallbacks_ = new ArrayList<>();
 
+   public static final int HTML_CAPABILITIES_RETRY_MS = 1000;
+   public static final int MAX_HTML_CAPABILITIES_RETRIES = 3;
 }

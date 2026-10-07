@@ -143,6 +143,7 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.Assist
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantRange;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
@@ -2307,10 +2308,9 @@ public class TextEditingTarget implements
       checkCompilePdfDependencies();
       if (fileType_.requiresKnit() || fileType_.isRpres())
       {
-         // Restored editors precede SessionInitEvent. Wait for the capability
-         // probe instead of interpreting its empty placeholder as unsupported.
-         releaseOnDismiss_.add(fileTypeCommands_.withHTMLCapabilities(capabilities ->
-               rmarkdownHelper_.verifyPrerequisites(view_, fileType_)));
+         // Restored editors precede SessionInitEvent.
+         withHTMLCapabilities(capabilities ->
+               rmarkdownHelper_.verifyPrerequisites(view_, fileType_));
       }
 
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
@@ -7845,16 +7845,24 @@ public class TextEditingTarget implements
 
    void previewRpresentation()
    {
-      SessionInfo sessionInfo = session_.getSessionInfo();
-      if (!fileTypeCommands_.getHTMLCapabiliites().isRMarkdownSupported())
+      withHTMLCapabilities(capabilities ->
       {
-         globalDisplay_.showMessage(
-               MessageDisplay.MSG_WARNING,
-               constants_.previewRpresentationCaption(),
-               constants_.previewRpresentationMessage());
-         return;
-      }
+         if (!capabilities.isRMarkdownSupported())
+         {
+            globalDisplay_.showMessage(
+                  MessageDisplay.MSG_WARNING,
+                  constants_.previewRpresentationCaption(),
+                  constants_.previewRpresentationMessage());
+            return;
+         }
 
+         showRpresentation();
+      });
+   }
+
+   private void showRpresentation()
+   {
+      SessionInfo sessionInfo = session_.getSessionInfo();
       PresentationState state = sessionInfo.getPresentationState();
 
       // if this presentation is already showing then just activate
@@ -8185,22 +8193,36 @@ public class TextEditingTarget implements
 
    void previewHTML()
    {
-      // validate pre-reqs
-      if (!rmarkdownHelper_.verifyPrerequisites(view_, fileType_))
-         return;
-
-      doHtmlPreview(new Provider<HTMLPreviewParams>()
+      withHTMLCapabilities(capabilities ->
       {
-         @Override
-         public HTMLPreviewParams get()
+         // validate pre-reqs
+         if (!rmarkdownHelper_.verifyPrerequisites(view_, fileType_))
+            return;
+
+         doHtmlPreview(new Provider<HTMLPreviewParams>()
          {
-            return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
-                                            docUpdateSentinel_.getEncoding(),
-                                            fileType_.isMarkdown(),
-                                            fileType_.requiresKnit(),
-                                            false);
-         }
+            @Override
+            public HTMLPreviewParams get()
+            {
+               return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                               docUpdateSentinel_.getEncoding(),
+                                               fileType_.isMarkdown(),
+                                               fileType_.requiresKnit(),
+                                               false);
+            }
+         });
       });
+   }
+
+   // The knitr probe answers after startup; its placeholder reports nothing
+   // as supported, so prerequisite checks wait for the real answer. Only a
+   // pending probe needs releasing should the editor close first.
+   private void withHTMLCapabilities(CommandWithArg<HTMLCapabilities> callback)
+   {
+      if (fileTypeCommands_.hasHTMLCapabilities())
+         callback.execute(fileTypeCommands_.getHTMLCapabiliites());
+      else
+         releaseOnDismiss_.add(fileTypeCommands_.withHTMLCapabilities(callback));
    }
 
    private void doHtmlPreview(final Provider<HTMLPreviewParams> pParams)
@@ -8362,24 +8384,27 @@ public class TextEditingTarget implements
       }
       else
       {
-         if (!rmarkdownHelper_.verifyPrerequisites("Compile Report",
-               view_,
-               FileTypeRegistry.RMARKDOWN))
+         withHTMLCapabilities(capabilities ->
          {
-            return;
-         }
-
-         doHtmlPreview(new Provider<HTMLPreviewParams>()
-         {
-            @Override
-            public HTMLPreviewParams get()
+            if (!rmarkdownHelper_.verifyPrerequisites("Compile Report",
+                  view_,
+                  FileTypeRegistry.RMARKDOWN))
             {
-               return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
-                                               docUpdateSentinel_.getEncoding(),
-                                               true,
-                                               true,
-                                               true);
+               return;
             }
+
+            doHtmlPreview(new Provider<HTMLPreviewParams>()
+            {
+               @Override
+               public HTMLPreviewParams get()
+               {
+                  return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                                  docUpdateSentinel_.getEncoding(),
+                                                  true,
+                                                  true,
+                                                  true);
+               }
+            });
          });
       }
    }

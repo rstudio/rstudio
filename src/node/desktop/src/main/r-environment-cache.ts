@@ -37,8 +37,11 @@ export class REnvironmentCache {
   private store: Store;
 
   constructor(directory?: string) {
+    // conf parses the file here; a damaged one must be a miss on this and
+    // every later launch, not a throw that disables the cache until repaired.
     this.store = new ElectronStore({
       name: 'r-environment',
+      clearInvalidConfig: true,
       ...(directory ? { cwd: directory } : {}),
     }) as unknown as Store;
   }

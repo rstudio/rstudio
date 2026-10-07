@@ -2285,10 +2285,11 @@ SEXP rs_sourceModule(SEXP moduleSEXP)
    return R_NilValue;
 }
 
-Error sourceModuleRFileOnDemand(const std::string& module,
-                              const std::vector<std::string>& functions)
+Error sourceModuleRFileOnDemand(const std::string& rSourceFile)
 {
-   return r::exec::RFunction(".rs.addLazyModule", module, functions).call();
+   FilePath modulesPath = session::options().modulesRSourcePath();
+   FilePath srcPath = modulesPath.completePath(rSourceFile);
+   return r::exec::RFunction(".rs.addLazyModule", srcPath.getAbsolutePath()).call();
 }
 
 Error sourceModuleRFileWithResult(const std::string& rSourceFile,

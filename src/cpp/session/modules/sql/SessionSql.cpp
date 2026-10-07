@@ -29,12 +29,7 @@ namespace sql {
 Error initialize()
 {
    using namespace module_context;
-   return sourceModuleRFileOnDemand(
-      "SessionSql.R",
-      {"rpc.sql_get_completions", "sql.getCompletions", "sql.getCompletionsKeywords",
-       "sql.getCompletionsSchemas", "sql.getCompletionsTables", "sql.getCompletionsFields",
-       "sql.getCompletionsIdentifiers", "sql.listTables", "sql.keywords", "sql.asDBIConnection",
-       "db.listFields", "db.listSchemas", "db.listTables", "sql.isTableScopedKeyword"});
+   return sourceModuleRFileOnDemand("SessionSql.R");
 }
 
 } // end namespace sql

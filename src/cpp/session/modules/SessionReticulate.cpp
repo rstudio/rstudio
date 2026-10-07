@@ -23,6 +23,7 @@
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/Log.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -47,6 +48,7 @@ std::string s_reticulatePython;
 bool s_reticulatePythonInited = false;
 unsigned int s_pythonDiscoveryGeneration = 0;
 boost::shared_ptr<async_r::AsyncRProcess> s_pythonDiscovery;
+const int kPythonDiscoveryTimeoutSeconds = 30;
 
 void cancelPythonDiscovery()
 {
@@ -61,7 +63,7 @@ class PythonDiscovery : public async_r::AsyncRProcess
 public:
    explicit PythonDiscovery(unsigned int generation)
       : generation_(generation),
-        deadline_(std::chrono::steady_clock::now() + std::chrono::seconds(30))
+        deadline_(std::chrono::steady_clock::now() + std::chrono::seconds(kPythonDiscoveryTimeoutSeconds))
    {
    }
 
@@ -91,8 +93,18 @@ protected:
       {
          s_reticulatePython = output_.substr(marker + 1);
          boost::algorithm::trim(s_reticulatePython);
-         s_reticulatePythonInited = true;
       }
+      else
+      {
+         // Record the miss: otherwise the next terminal repeats this same
+         // discovery synchronously, blocking the session for as long again.
+         if (std::chrono::steady_clock::now() >= deadline_)
+            WLOGF("Python discovery did not finish within {} seconds; terminals will not set RETICULATE_PYTHON", kPythonDiscoveryTimeoutSeconds);
+         else
+            WLOGF("Python discovery exited with status {}; terminals will not set RETICULATE_PYTHON", exitStatus);
+         s_reticulatePython.clear();
+      }
+      s_reticulatePythonInited = true;
    }
 
 private:
