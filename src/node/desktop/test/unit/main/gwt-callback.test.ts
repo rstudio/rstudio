@@ -16,8 +16,16 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, clipboard, ClipboardItem, ipcMain, IpcMainInvokeEvent, nativeImage } from 'electron';
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import os from 'os';
+import path from 'path';
+import { pathToFileURL } from 'url';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
+
+import { FilePath } from '../../../src/core/file-path';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import { MainWindow } from '../../../src/main/main-window';
@@ -40,11 +48,24 @@ describe('DesktopCallback', () => {
   // can only be handled once per process, so the instance is shared by the suite
   let mainWindow: StubbedClass<MainWindow>;
   let callback: GwtCallback;
+  type InvokeHandler = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown;
+  const invokeHandlers = new Map<string, InvokeHandler>();
 
   before(() => {
     mainWindow = createSinonStubInstance(MainWindow);
+    const handle = sinon.spy(ipcMain, 'handle');
     callback = new GwtCallback(mainWindow);
+    for (const call of handle.getCalls()) {
+      invokeHandlers.set(call.args[0], call.args[1] as InvokeHandler);
+    }
+    handle.restore();
   });
+
+  async function invoke(channel: string): Promise<unknown> {
+    const handler = invokeHandlers.get(channel);
+    assert.isDefined(handler, `no handler registered for '${channel}'`);
+    return handler!({} as IpcMainInvokeEvent);
+  }
 
   afterEach(() => {
     sinon.restore();
@@ -193,6 +214,62 @@ describe('DesktopCallback', () => {
       assert.isFalse(main.showInactive.called);
       assert.isFalse(main.restore.called);
       assert.isFalse(main.moveTop.called);
+    });
+  });
+
+  describe('clipboard handlers', () => {
+    let tempDir: string;
+
+    beforeEach(() => {
+      tempDir = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-clipboard-')));
+    });
+
+    afterEach(() => {
+      clipboard.clear();
+      rmSync(tempDir, { recursive: true, force: true });
+    });
+
+    it('desktop_get_clipboard_text returns the clipboard text', async () => {
+      await clipboard.writeText('clipboard text');
+      assert.equal(await invoke('desktop_get_clipboard_text'), 'clipboard text');
+    });
+
+    it('desktop_get_clipboard_uris returns the paths of copied files', async () => {
+      const files = ['first.txt', 'second.txt'].map((name) => path.join(tempDir, name));
+      files.forEach((file) => writeFileSync(file, ''));
+      const uris = files.map((file) => pathToFileURL(file).href);
+      await clipboard.write([new ClipboardItem({ 'text/uri-list': uris.join('\r\n') })]);
+
+      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
+      const expected = uris.map((uri) => uri.substring(filePrefix.length));
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), expected);
+    });
+
+    it('desktop_get_clipboard_uris returns nothing without a URI list', async () => {
+      await clipboard.writeText('not a uri list');
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), []);
+    });
+
+    it('desktop_get_clipboard_image saves a clipboard image to a PNG file', async () => {
+      const application = new Application();
+      application.setScratchTempDir(new FilePath(tempDir));
+      setApplication(application);
+      try {
+        const bitmap = Buffer.alloc(2 * 3 * 4, 0xff);
+        const png = nativeImage.createFromBitmap(bitmap, { width: 2, height: 3 }).toPNG();
+        await clipboard.write([new ClipboardItem({ 'image/png': new Blob([new Uint8Array(png)]) })]);
+
+        const pngPath = (await invoke('desktop_get_clipboard_image')) as string;
+        assert.isTrue(pngPath.startsWith(tempDir), `${pngPath} is not under ${tempDir}`);
+        assert.deepEqual(nativeImage.createFromPath(pngPath).getSize(), { width: 2, height: 3 });
+      } finally {
+        clearApplicationSingleton();
+      }
+    });
+
+    it('desktop_get_clipboard_image returns nothing without an image', async () => {
+      await clipboard.writeText('not an image');
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
     });
   });
 });

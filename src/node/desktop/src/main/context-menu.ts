@@ -16,6 +16,7 @@
 import { BrowserWindow, clipboard, dialog, Menu, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
+import { logger } from '../core/logger';
 import { appState } from './app-state';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
@@ -111,7 +112,7 @@ const createContextMenuImageTemplate = (sender: WebContents, params: Electron.Co
     {
       label: i18next.t('contextMenu.copyImageAddress'),
       click: () => {
-        clipboard.writeText(params.srcURL);
+        clipboard.writeText(params.srcURL).catch((error: unknown) => logger().logError(error));
       },
     },
 

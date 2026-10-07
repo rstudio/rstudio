@@ -14,59 +14,76 @@
  */
 
 import { assert } from 'chai';
-import { clipboard } from 'electron';
+import { clipboard, ClipboardItem } from 'electron';
 import { describe } from 'mocha';
 
 import os from 'os';
 
 import desktop from '../../../src/native/desktop.node';
 
+// Raw macOS pasteboard flavor holding UTF-16 text; Electron 44 reaches raw
+// platform formats only through this custom MIME type.
+const utf16Format = 'electron application/osclipboard;format="public.utf16-plain-text"';
+
+async function readClipboardType(mimeType: string): Promise<Blob> {
+  const items = await clipboard.read();
+  const item = items.find((candidate) => candidate.types.includes(mimeType));
+  assert.isDefined(item, `clipboard has no '${mimeType}' entry`);
+  return item!.getType(mimeType) as Promise<Blob>;
+}
+
+async function readClipboardHtml(): Promise<string> {
+  return (await readClipboardType('text/html')).text();
+}
+
 describe('Desktop Native Code', () => {
-  it('cleanClipboard with plain text', () => {
-    clipboard.writeText('write to clipboard');
+  it('cleanClipboard with plain text', async () => {
+    await clipboard.writeText('write to clipboard');
     desktop.cleanClipboard(false);
-    assert.equal(clipboard.readText('clipboard'), 'write to clipboard');
+    assert.equal(await clipboard.readText(), 'write to clipboard');
   });
 
   // Exercises the UTF-16 -> UTF-8 conversion with multibyte BMP characters
   // (cafe, CJK) and an astral character requiring a surrogate pair (emoji),
   // which the ASCII-only cases above do not cover.
-  it('cleanClipboard preserves non-ASCII plain text', () => {
+  it('cleanClipboard preserves non-ASCII plain text', async () => {
     const text = 'café 世界 😀';
-    clipboard.writeText(text);
+    await clipboard.writeText(text);
     desktop.cleanClipboard(false);
-    assert.equal(clipboard.readText('clipboard'), text);
+    assert.equal(await clipboard.readText(), text);
   });
 
   // Malformed UTF-16 that decodes to nothing must not wipe the clipboard:
   // conversion happens before the pasteboard is cleared, and cleanClipboard
   // bails out when it produces no text. macOS-only (utf16 pasteboard flavor).
-  it('cleanClipboard leaves malformed UTF-16 data untouched', function () {
+  it('cleanClipboard leaves malformed UTF-16 data untouched', async function () {
     if (process.platform !== 'darwin') {
       this.skip();
     }
     const malformed = Buffer.from([0x00, 0xd8]); // lone high surrogate (U+D800)
     clipboard.clear();
-    clipboard.writeBuffer('public.utf16-plain-text', malformed);
+    await clipboard.write([new ClipboardItem({ [utf16Format]: new Blob([malformed]) })]);
     desktop.cleanClipboard(false);
-    assert.deepEqual([...clipboard.readBuffer('public.utf16-plain-text')], [...malformed]);
+    const actual = Buffer.from(await (await readClipboardType(utf16Format)).arrayBuffer());
+    assert.deepEqual([...actual], [...malformed]);
   });
 
   // Valid UTF-16 that begins with a NUL must still be cleaned rather than
   // mistaken for a decode failure: the NUL is preserved and the text converted.
-  it('cleanClipboard handles valid UTF-16 with a leading NUL', function () {
+  it('cleanClipboard handles valid UTF-16 with a leading NUL', async function () {
     if (process.platform !== 'darwin') {
       this.skip();
     }
     clipboard.clear();
     // UTF-16LE bytes for a NUL (U+0000) followed by 'A'
-    clipboard.writeBuffer('public.utf16-plain-text', Buffer.from([0x00, 0x00, 0x41, 0x00]));
+    const utf16 = Buffer.from([0x00, 0x00, 0x41, 0x00]);
+    await clipboard.write([new ClipboardItem({ [utf16Format]: new Blob([utf16]) })]);
     desktop.cleanClipboard(false);
-    assert.equal(clipboard.readText('clipboard'), '\u0000A');
+    assert.equal(await clipboard.readText(), '\u0000A');
   });
 
   // HTML stripping only available on Mac to handle pasteboard types
-  it('cleanClipboard with strip HTML', () => {
+  it('cleanClipboard with strip HTML', async () => {
     const htmlText =
       '<div class="body">\
     <div class="pm-content">\
@@ -74,17 +91,18 @@ describe('Desktop Native Code', () => {
     <p>Nullam augue</p>\
     </div></div>';
     const plainText = `Summary${JSON.stringify(os.EOL)}Nullam augue`;
-    const expected = process.platform === 'darwin' ? plainText : htmlText;
 
-    clipboard.write({
-      text: plainText,
-      html: htmlText,
-    });
+    await clipboard.write([new ClipboardItem({ 'text/plain': plainText, 'text/html': htmlText })]);
     desktop.cleanClipboard(true);
-    assert.equal(clipboard.readHTML('clipboard'), expected);
+    if (process.platform === 'darwin') {
+      assert.isFalse(await clipboard.has('text/html'));
+      assert.equal(await clipboard.readText(), plainText);
+    } else {
+      assert.equal(await readClipboardHtml(), htmlText);
+    }
   });
 
-  it('cleanClipboard with HTML', () => {
+  it('cleanClipboard with HTML', async () => {
     const htmlText =
       '<div class="body">\
     <div class="pm-content">\
@@ -94,12 +112,9 @@ describe('Desktop Native Code', () => {
     const plainText = 'Summary\nNullam augue';
     const expected = process.platform === 'darwin' ? `<meta charset='utf-8'>${htmlText}` : htmlText;
 
-    clipboard.write({
-      text: plainText,
-      html: htmlText,
-    });
+    await clipboard.write([new ClipboardItem({ 'text/plain': plainText, 'text/html': htmlText })]);
     desktop.cleanClipboard(false);
-    assert.equal(clipboard.readHTML('clipboard'), expected);
+    assert.equal(await readClipboardHtml(), expected);
   });
 
   // The dialog watcher's observable behavior (raising rsession dialogs above

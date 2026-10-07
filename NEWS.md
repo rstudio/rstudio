@@ -12,4 +12,5 @@
 
 ### Dependencies
 - ([rstudio/rstudio-pro#13101](https://github.com/rstudio/rstudio-pro/issues/13101)): RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
+- Electron 44.7.0
 

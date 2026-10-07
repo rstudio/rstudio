@@ -19,6 +19,7 @@ import {
   nativeTheme,
   BrowserWindow,
   clipboard,
+  ClipboardItem,
   ipcMain,
   Rectangle,
   screen,
@@ -84,6 +85,12 @@ function formatSelectedVersionForUi(rBinDir: string) {
   } else {
     return rHome;
   }
+}
+
+async function readClipboardType(mimeType: string): Promise<Blob | undefined> {
+  const items = await clipboard.read();
+  const item = items.find((candidate) => candidate.types.includes(mimeType));
+  return item ? (item.getType(mimeType) as Promise<Blob>) : undefined;
 }
 
 /**
@@ -346,23 +353,22 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      clipboard.writeText(text, 'clipboard');
+      clipboard.writeText(text).catch((error: unknown) => logger().logError(error));
     });
 
-    ipcMain.handle('desktop_get_clipboard_text', () => {
-      const text = clipboard.readText('clipboard');
-      return text;
+    ipcMain.handle('desktop_get_clipboard_text', async () => {
+      return clipboard.readText();
     });
 
-    ipcMain.handle('desktop_get_clipboard_uris', () => {
+    ipcMain.handle('desktop_get_clipboard_uris', async () => {
       // if we don't have a URI list, nothing to do
-      if (!clipboard.has('text/uri-list')) {
+      const blob = await readClipboardType('text/uri-list');
+      if (!blob) {
         return [];
       }
 
-      // return uri list as array
-      const data = clipboard.read('text/uri-list');
-      const parts = data.split('\n');
+      // return uri list as array; entries are CRLF-separated per RFC 2483
+      const parts = (await blob.text()).split(/\r?\n/).filter((x) => x.length > 0);
 
       // strip off file prefix, if any
       const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
@@ -379,15 +385,14 @@ export class GwtCallback extends EventEmitter {
     // Check for an image on the clipboard; if one exists,
     // write it to file in the temporary directory and
     // return the path to that file.
-    ipcMain.handle('desktop_get_clipboard_image', () => {
+    ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      if (!clipboard.availableFormats().includes('image/png')) {
+      const blob = await readClipboardType('image/png');
+      if (!blob) {
         return '';
       }
 
-      // read image from clipboard
-      const image = clipboard.readImage('clipboard');
-      const pngData = image.toPNG();
+      const pngData = Buffer.from(await blob.arrayBuffer());
 
       const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
       const tempPathName = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard');
@@ -404,13 +409,16 @@ export class GwtCallback extends EventEmitter {
       return pngPath;
     });
 
+    // The selection clipboard exists only on Linux; clipboard.selection is
+    // undefined elsewhere.
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      clipboard.writeText(selection, 'selection');
+      if (process.platform === 'linux') {
+        clipboard.selection.writeText(selection).catch((error: unknown) => logger().logError(error));
+      }
     });
 
-    ipcMain.handle('desktop_get_global_mouse_selection', () => {
-      const selection = clipboard.readText('selection');
-      return selection;
+    ipcMain.handle('desktop_get_global_mouse_selection', async () => {
+      return process.platform === 'linux' ? clipboard.selection.readText() : '';
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
@@ -634,7 +642,9 @@ export class GwtCallback extends EventEmitter {
         try {
           const rect: Rectangle = { x, y, width, height };
           const image = await this.mainWindow.window.capturePage(rect);
-          clipboard.writeImage(image);
+          await clipboard.write([
+            new ClipboardItem({ 'image/png': new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }) }),
+          ]);
         } catch (e: unknown) {
           logger().logError(e);
         }
