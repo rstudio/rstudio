@@ -386,6 +386,11 @@ jobs:
         shard: [1, 2]
     runs-on: xcode-27
     timeout-minutes: 120
+    # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
+    # deployment: false keeps each shard from recording a deployment on the PR.
+    environment:
+      name: e2e-playwright
+      deployment: false
     env:
       # os-e2e-deps installs the harness's required packages here and exports
       # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
