@@ -23,6 +23,7 @@ fi
 AWS_BUCKET="rstudio-buildtools"
 
 # Check every archive before uploading any
+NAMES=""
 for FILE in "$@"; do
     NAME=$(basename "${FILE}")
     if ! [[ "${NAME}" =~ ^openssl-[0-9]+\.[0-9]+\.[0-9]+(-macos-(arm64|x86_64)\.tar\.gz|\.zip)$ ]]; then
@@ -34,6 +35,12 @@ for FILE in "$@"; do
         echo "error: '${FILE}' does not exist" >&2
         exit 1
     fi
+    # both copies would pass the existence check, and the second upload fail
+    if [[ " ${NAMES} " == *" ${NAME} "* ]]; then
+        echo "error: more than one archive is named '${NAME}'" >&2
+        exit 1
+    fi
+    NAMES="${NAMES} ${NAME}"
 done
 
 # Check that we're logged in with AWS
