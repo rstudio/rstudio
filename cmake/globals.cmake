@@ -659,18 +659,6 @@ if(APPLE)
       link_directories(${HOMEBREW_PREFIX}/opt/icu4c/lib)
    endif()
 
-   # set OPENSSL_ROOT_DIR if unset; prefer openssl@3 because Homebrew's
-   # unversioned 'openssl' tracks the newest major release
-   if(NOT DEFINED OPENSSL_ROOT_DIR)
-
-      if(EXISTS "${HOMEBREW_PREFIX}/opt/openssl@3")
-         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl@3" CACHE INTERNAL "")
-      elseif(EXISTS "${HOMEBREW_PREFIX}/opt/openssl")
-         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
-      endif()
-
-   endif()
-
 endif()
 
 # If enabled, use caching for the build.

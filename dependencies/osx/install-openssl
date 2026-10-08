@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+#
+# install-openssl
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing OpenSSL"
+
+# Keep in sync with build-openssl and OPENSSL_ROOT_DIR in src/cpp/CMakeLists.txt.
+OPENSSL_VERSION="3.5.9"
+
+# install-dependencies-osx runs this under 'arch -<arch>' for each
+# architecture it installs, with RSTUDIO_TOOLS_ROOT set to match
+ARCH="$(uname -m)"
+OPENSSL_DIR="${RSTUDIO_TOOLS_ROOT}/openssl-${OPENSSL_VERSION}"
+OPENSSL_ARCHIVE="openssl-${OPENSSL_VERSION}-macos-${ARCH}.tar.gz"
+OPENSSL_URL="${RSTUDIO_BUILDTOOLS}/${OPENSSL_ARCHIVE}"
+
+if [ -f "${OPENSSL_DIR}/lib/libcrypto.a" ]; then
+   info "OpenSSL ${OPENSSL_VERSION} already installed at '${OPENSSL_DIR}'"
+   exit 0
+fi
+
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
+rm -rf "${OPENSSL_DIR}"
+download "${OPENSSL_URL}" "${OPENSSL_ARCHIVE}"
+extract "${OPENSSL_ARCHIVE}"
+rm -f "${OPENSSL_ARCHIVE}"
+
+# a mislabeled archive would otherwise surface only as link errors much later
+for LIB in libcrypto.a libssl.a; do
+   LIB_ARCHS="$(lipo -archs "${OPENSSL_DIR}/lib/${LIB}")"
+   if [ "${LIB_ARCHS}" != "${ARCH}" ]; then
+      rm -rf "${OPENSSL_DIR}"
+      error "'${OPENSSL_URL}' contains a ${LIB_ARCHS} ${LIB}; expected ${ARCH}"
+   fi
+done

@@ -48,7 +48,6 @@ FORMULAS=(
    libtool
    libuv
    openjdk@17
-   openssl@3
    ninja
    pidof
    pkgconf
@@ -81,6 +80,9 @@ done
 
 # set up .gdbinit
 grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shell off" >> ~/.gdbinit
+
+# install OpenSSL, built from source by build-openssl
+./install-openssl
 
 # install common utilities
 cd ../common

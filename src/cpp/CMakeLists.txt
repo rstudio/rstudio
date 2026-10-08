@@ -449,6 +449,24 @@ endif()
 
 if(UNIX)
 
+   if(APPLE)
+
+      # link the static OpenSSL that dependencies/osx/build-openssl builds and
+      # install-openssl puts in the tools root, not Homebrew's
+      set(OPENSSL_ROOT_DIR "${RSTUDIO_TOOLS_ROOT}/openssl-3.5.9")
+      set(OPENSSL_USE_STATIC_LIBS TRUE)
+      if(NOT EXISTS "${OPENSSL_ROOT_DIR}/lib/libcrypto.a")
+         message(FATAL_ERROR "OpenSSL not found at '${OPENSSL_ROOT_DIR}'. Run dependencies/osx/install-dependencies-osx and reconfigure.")
+      endif()
+
+      # find_package keeps paths cached by an earlier configure, which may
+      # name Homebrew's OpenSSL or an older version of ours
+      unset(OPENSSL_INCLUDE_DIR CACHE)
+      unset(OPENSSL_CRYPTO_LIBRARY CACHE)
+      unset(OPENSSL_SSL_LIBRARY CACHE)
+
+   endif()
+
    find_package(OpenSSL REQUIRED)
 
    # Add the headers as a normal (non-SYSTEM) include placed BEFORE the others,
@@ -458,12 +476,6 @@ if(UNIX)
    # x86_64 Homebrew on Apple Silicon) would otherwise shadow the headers of
    # the OpenSSL we actually link against.
    include_directories(BEFORE "${OPENSSL_INCLUDE_DIR}")
-
-   # Homebrew's unversioned 'openssl' tracks the newest major release; keep
-   # both slices of a universal macOS package on OpenSSL 3
-   if(APPLE AND RSTUDIO_PACKAGE_BUILD AND NOT OPENSSL_VERSION MATCHES "^3\\.")
-      message(FATAL_ERROR "macOS package builds require OpenSSL 3.x, but found ${OPENSSL_VERSION} at '${OPENSSL_ROOT_DIR}'. Install it with '${HOMEBREW_PREFIX}/bin/brew install openssl@3' and reconfigure.")
-   endif()
 
 endif()
 
