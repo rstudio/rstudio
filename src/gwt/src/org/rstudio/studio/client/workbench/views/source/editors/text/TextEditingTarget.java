@@ -7033,48 +7033,83 @@ public class TextEditingTarget implements
       Scope[] previousScopes = scopeHelper_.getSweaveChunks(position,
             which);
 
+      // Collect the code to run. The console runs R or, through the
+      // reticulate REPL, Python, so a batch mixing both has to switch
+      // languages in document order. The first chunk's language travels
+      // with the event, which adapts the console from whatever it is in
+      // now; later switches are written into the code itself, as the same
+      // console input the session enqueues for that. The session splits
+      // multi-line console input and runs it line by line, so the switches
+      // land in order.
+      String firstLanguage = null;
+      String language = null;
+      boolean hasPython = false;
       StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
       {
-         if (isRChunk(scope) && isExecutableChunk(scope))
-         {
-            builder.append("# " + scope.getLabel() + "\n");
-            builder.append(scopeHelper_.getSweaveChunkText(scope));
-            builder.append("\n\n");
-         }
+         String chunkLanguage = chunkConsoleLanguage(scope);
+         if (chunkLanguage == null || !isExecutableChunk(scope))
+            continue;
+
+         if (language == null)
+            firstLanguage = chunkLanguage;
+         else if (!StringUtil.equals(chunkLanguage, language))
+            builder.append(ConsoleLanguageTracker.consoleLanguageSwitch(chunkLanguage) + "\n\n");
+         language = chunkLanguage;
+         hasPython = hasPython || StringUtil.equals(chunkLanguage, ConsoleLanguageTracker.LANGUAGE_PYTHON);
+
+         builder.append("# " + scope.getLabel() + "\n");
+         builder.append(scopeHelper_.getSweaveChunkText(scope));
+         builder.append("\n\n");
       }
 
-      final String code = builder.toString().trim();
-      if (fileType_.isRmd())
+      // nothing to run; in particular, don't switch the console language
+      if (firstLanguage == null)
+         return;
+
+      String batch = builder.toString().trim();
+      if (StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_PYTHON))
+         batch = closePythonBlock(batch);
+
+      final String code = batch;
+      final String consoleLanguage = firstLanguage;
+      final Command sendToConsole = () ->
       {
-         final Position positionFinal = position;
-         docUpdateSentinel_.withSavedDoc(new Command()
+         events_.fireEvent(new SendToConsoleEvent(code, consoleLanguage, true));
+      };
+
+      final Command runChunks = () ->
+      {
+         if (fileType_.isRmd())
          {
-            @Override
-            public void execute()
+            docUpdateSentinel_.withSavedDoc(() ->
             {
                rmarkdownHelper_.prepareForRmdChunkExecution(
                      docUpdateSentinel_.getId(),
                      docUpdateSentinel_.getContents(),
-                     new Command()
-                     {
-                        @Override
-                        public void execute()
-                        {
-                           // compute the language for this chunk
-                           String language = (DocumentMode.isPositionInPythonMode(docDisplay_, positionFinal))
-                                 ? ConsoleLanguageTracker.LANGUAGE_PYTHON
-                                 : ConsoleLanguageTracker.LANGUAGE_R;
+                     sendToConsole);
+            });
+         }
+         else
+         {
+            sendToConsole.execute();
+         }
+      };
 
-                           events_.fireEvent(new SendToConsoleEvent(code, language, true));
-                        }
-                     });
-            }
-         });
+      // The console only checks for reticulate when the batch starts in
+      // Python; a batch that reaches Python later needs it just the same.
+      boolean reachesPython = hasPython &&
+            !StringUtil.equals(firstLanguage, ConsoleLanguageTracker.LANGUAGE_PYTHON);
+      if (reachesPython)
+      {
+         dependencyManager_.withReticulate(
+               constants_.executeChunksPythonProgressCaption(),
+               constants_.executeChunksPythonUserPrompt(),
+               runChunks);
       }
       else
       {
-         events_.fireEvent(new SendToConsoleEvent(code, true));
+         runChunks.execute();
       }
    }
 
@@ -7210,20 +7245,19 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private boolean isRChunk(Scope scope)
+   // The console language that runs this chunk, or null when the chunk's
+   // engine has no console (bash, sql, ...). 'Rscript' is left out on
+   // purpose: such chunks are typically meant to run in their own process.
+   private String chunkConsoleLanguage(Scope scope)
    {
-      String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
-      Map<String, String> chunkOptions = RChunkHeaderParser.parse(labelText);
-      if (!chunkOptions.containsKey("engine"))
-         return true;
-      
-      // NOTE: We might want to include 'Rscript' but such chunks are typically
-      // intended to be run in their own process so it might not make sense to
-      // collect those here.
-      String engine = chunkOptions.get("engine").toLowerCase();
-      return engine == "\"r\"";
+      String engine = getEngineForRow(scope.getPreamble().getRow()).toLowerCase();
+      if (engine.equals("r"))
+         return ConsoleLanguageTracker.LANGUAGE_R;
+      else if (engine.equals("python"))
+         return ConsoleLanguageTracker.LANGUAGE_PYTHON;
+      else
+         return null;
    }
-   
 
    private boolean isExecutableChunk(final Scope chunk)
    {
@@ -7258,6 +7292,20 @@ public class TextEditingTarget implements
       }
 
       return true;
+   }
+
+   // The Python REPL reads console input a line at a time and only closes
+   // an indented block on a blank line, so code that ends inside one would
+   // sit at the '...' continuation prompt until the user pressed Enter. The
+   // session leaves a trailing empty line empty (fixupPendingConsoleInput()
+   // in SessionConsoleInput.cpp), so it reaches the REPL and closes the block.
+   private static String closePythonBlock(String code)
+   {
+      int lastLine = code.lastIndexOf('\n') + 1;
+      if (lastLine < code.length() && Character.isWhitespace(code.charAt(lastLine)))
+         return code + "\n";
+
+      return code;
    }
 
    private void executeSweaveChunk(final Scope chunk,
@@ -7307,7 +7355,10 @@ public class TextEditingTarget implements
                // compute the language for this chunk
                String language = "R";
                if (DocumentMode.isPositionInPythonMode(docDisplay_, chunk.getBodyStart()))
+               {
                   language = "Python";
+                  code = closePythonBlock(code);
+               }
 
                events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }

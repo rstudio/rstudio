@@ -148,7 +148,8 @@ public class ConsoleInterpreterVersion
       ElementIds.assignElementId(label_,
             ElementIds.CONSOLE_INTERPRETER_VERSION + (isTabbedView ? "_tabbed" : ""));
 
-      if (isPythonActive())
+      pythonActive_ = isPythonActive();
+      if (pythonActive_)
       {
          logoContainer_.add(pythonLogo_);
       }
@@ -224,6 +225,7 @@ public class ConsoleInterpreterVersion
    
    public void adaptToR()
    {
+      pythonActive_ = false;
       logoContainer_.remove(0);
       logoContainer_.insert(rLogo_, 0);
       setRVersionLabel();
@@ -232,6 +234,7 @@ public class ConsoleInterpreterVersion
 
    private void adaptToPython(PythonInterpreter info)
    {
+      pythonActive_ = true;
       logoContainer_.remove(0);
       logoContainer_.insert(pythonLogo_, 0);
       label_.setText(pythonVersionLabel(info));
@@ -274,7 +277,12 @@ public class ConsoleInterpreterVersion
          public void onResponseReceived(RVersionSpec versionSpec)
          {
             rVersion_ = versionSpec.getVersion();
-            setRVersionLabel();
+
+            // the REPL may have started again while this request was in
+            // flight (e.g. a batch of chunks moving Python -> R -> Python);
+            // the label then already names Python and must stay that way
+            if (!pythonActive_)
+               setRVersionLabel();
          }
 
          @Override
@@ -318,6 +326,7 @@ public class ConsoleInterpreterVersion
    private final FlowPanel logoContainer_;
    private final Widget rLogo_;
    private final Widget pythonLogo_;
+   private boolean pythonActive_;
    private final Label label_;
    private String rVersion_;
    private HandlerRegistration reticulateHandler_;
