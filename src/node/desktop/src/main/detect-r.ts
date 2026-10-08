@@ -311,9 +311,9 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
 
   const rExecutable = rExecutableFor(rPath);
   const environment = rQueryEnvironment();
-  const remembered = environmentDiskCache()?.read(rExecutable.getAbsolutePath(), environment);
+  const remembered = readRememberedEnvironment(rPath, rExecutable, environment);
   if (remembered) {
-    return rememberREnvironment(rPath, parseRQueryResult(rPath, { stdout: remembered, stderr: '', status: 0 }));
+    return remembered;
   }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
 
@@ -329,18 +329,14 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
     return err(spawnError);
   }
 
-  const result = rememberREnvironment(
-    rPath,
-    parseRQueryResult(rPath, {
-      stdout: spawned.stdout,
-      stderr: spawned.stderr,
-      status: spawned.status,
-      error: spawned.error,
-    }),
-  );
-  if (!result[1] && spawned.status === 0 && spawned.stdout) {
-    environmentDiskCache()?.write(rExecutable.getAbsolutePath(), environment, spawned.stdout);
-  }
+  const query: RQueryResult = {
+    stdout: spawned.stdout,
+    stderr: spawned.stderr,
+    status: spawned.status,
+    error: spawned.error,
+  };
+  const result = rememberREnvironment(rPath, parseRQueryResult(rPath, query));
+  persistEnvironment(rExecutable, environment, result, query);
   return result;
 }
 
@@ -355,9 +351,9 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
 
   const rExecutable = rExecutableFor(rPath);
   const environment = rQueryEnvironment();
-  const remembered = environmentDiskCache()?.read(rExecutable.getAbsolutePath(), environment);
+  const remembered = readRememberedEnvironment(rPath, rExecutable, environment);
   if (remembered) {
-    return rememberREnvironment(rPath, parseRQueryResult(rPath, { stdout: remembered, stderr: '', status: 0 }));
+    return remembered;
   }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable} (in background)`);
 
@@ -379,10 +375,37 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
   });
 
   const parsed = rememberREnvironment(rPath, parseRQueryResult(rPath, result));
-  if (!parsed[1] && result.status === 0 && result.stdout) {
-    environmentDiskCache()?.write(rExecutable.getAbsolutePath(), environment, result.stdout);
-  }
+  persistEnvironment(rExecutable, environment, parsed, result);
   return parsed;
+}
+
+/**
+ * Replays a remembered query for this executable and environment, if any.
+ */
+function readRememberedEnvironment(
+  rPath: string,
+  rExecutable: FilePath,
+  environment: NodeJS.ProcessEnv,
+): Expected<REnvironment> | undefined {
+  const remembered = environmentDiskCache()?.read(rExecutable.getAbsolutePath(), environment);
+  if (!remembered) {
+    return undefined;
+  }
+  return rememberREnvironment(rPath, parseRQueryResult(rPath, { stdout: remembered, stderr: '', status: 0 }));
+}
+
+/**
+ * Remembers a query across launches, but only a complete, successful one.
+ */
+function persistEnvironment(
+  rExecutable: FilePath,
+  environment: NodeJS.ProcessEnv,
+  result: Expected<REnvironment>,
+  query: RQueryResult,
+): void {
+  if (!result[1] && query.status === 0 && query.stdout) {
+    environmentDiskCache()?.write(rExecutable.getAbsolutePath(), environment, query.stdout);
+  }
 }
 
 function rememberREnvironment(rPath: string, result: Expected<REnvironment>): Expected<REnvironment> {

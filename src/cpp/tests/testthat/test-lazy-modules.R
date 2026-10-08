@@ -38,23 +38,70 @@ test_that("lazy modules derive their proxies from the module's definitions", {
    path <- tempfile(fileext = ".R")
    on.exit(unlink(path), add = TRUE)
    functions <- c("startupTest.derived", "rpc.startup_test_derived", "startupTest.spaced")
-   mentioned <- "startupTest.comment"
-   on.exit(rm(list = paste0(".rs.", c(functions, mentioned)), envir = .rs.toolsEnv()), add = TRUE)
+   on.exit(rm(list = paste0(".rs.", functions), envir = .rs.toolsEnv()), add = TRUE)
 
    writeLines(c(
       '.rs.addFunction("startupTest.derived", function() "derived")',
       '.rs.addJsonRpcHandler("startup_test_derived", function() .rs.startupTest.derived())',
       '.rs.addFunction( "startupTest.spaced",',
       '                function() "spaced")',
-      '# .rs.addFunction("startupTest.comment", ...) is only mentioned here'
+      '# .rs.addFunction("startupTest.comment", ...) is only mentioned here',
+      'message(".rs.addFunction(\\"startupTest.quoted\\", ...) is only quoted here")'
    ), path)
 
-   expect_setequal(.rs.lazyModuleDefinitions(path), c(functions, mentioned))
+   expect_setequal(.rs.lazyModuleDefinitions(path), functions)
    .rs.addLazyModule(path)
+   expect_false(exists(".rs.startupTest.comment", envir = .rs.toolsEnv(), inherits = FALSE))
+   expect_false(exists(".rs.startupTest.quoted", envir = .rs.toolsEnv(), inherits = FALSE))
    expect_equal(.rs.rpc.startup_test_derived(), "derived")
    expect_equal(.rs.startupTest.spaced(), "spaced")
-   # a stray mention only yields a proxy that reports the omission
-   expect_error(.rs.startupTest.comment(), "did not define")
+})
+
+test_that("lazy module proxies report definitions the module omits", {
+   path <- tempfile(fileext = ".R")
+   on.exit(unlink(path), add = TRUE)
+   functions <- c("startupTest.present", "startupTest.omitted")
+   on.exit(rm(list = paste0(".rs.", functions), envir = .rs.toolsEnv()), add = TRUE)
+
+   writeLines('.rs.addFunction("startupTest.present", function() TRUE)', path)
+   .rs.addLazyModule(path, functions)
+   expect_true(.rs.isLazyModuleProxy(.rs.startupTest.omitted))
+   expect_error(.rs.startupTest.omitted(), "did not define")
+   expect_true(.rs.startupTest.present())
+})
+
+test_that("lazy modules do not shadow helpers defined by other modules", {
+   path <- tempfile(fileext = ".R")
+   on.exit(unlink(path), add = TRUE)
+   functions <- c("startupTest.shared", "startupTest.own")
+   on.exit(rm(list = paste0(".rs.", functions), envir = .rs.toolsEnv()), add = TRUE)
+
+   .rs.addFunction("startupTest.shared", function() "from another module")
+   writeLines(c(
+      '.rs.addFunction("startupTest.shared", function() "from the lazy module")',
+      '.rs.addFunction("startupTest.own", function() .rs.startupTest.shared())'
+   ), path)
+
+   .rs.addLazyModule(path)
+   expect_false(.rs.isLazyModuleProxy(.rs.startupTest.shared))
+   expect_equal(.rs.startupTest.shared(), "from another module")
+
+   # loading the module still lets it redefine the helper, as sourcing would
+   expect_equal(.rs.startupTest.own(), "from the lazy module")
+   expect_equal(.rs.startupTest.shared(), "from the lazy module")
+})
+
+test_that("lazy module proxies can be replaced by a later lazy module", {
+   first <- tempfile(fileext = ".R")
+   second <- tempfile(fileext = ".R")
+   on.exit(unlink(c(first, second)), add = TRUE)
+   on.exit(rm(".rs.startupTest.replaced", envir = .rs.toolsEnv()), add = TRUE)
+
+   writeLines('.rs.addFunction("startupTest.replaced", function() "first")', first)
+   writeLines('.rs.addFunction("startupTest.replaced", function() "second")', second)
+   .rs.addLazyModule(first)
+   .rs.addLazyModule(second)
+   expect_equal(.rs.startupTest.replaced(), "second")
 })
 
 test_that("lazy modules can retry after a failed load", {

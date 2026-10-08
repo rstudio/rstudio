@@ -988,11 +988,20 @@ json::Object currentStateAsJson()
    return s_compilePdfState.asJson();
 }
 
+void onDeferredInit(bool)
+{
+   // Client init no longer probes TeX, so a TinyTeX-only machine gets
+   // pdflatex on the PATH here for terminals and system() calls that
+   // run before the first PDF compile.
+   module_context::addTinytexToPathIfNecessary();
+}
+
 Error initialize()
 {
    // register suspend handler
    using namespace module_context;
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+   events().onDeferredInit.connect(onDeferredInit);
 
    return Success();
 }

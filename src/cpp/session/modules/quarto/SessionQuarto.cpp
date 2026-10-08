@@ -18,6 +18,10 @@
 #include <string>
 #include <map>
 
+#ifndef _WIN32
+# include <unistd.h>
+#endif
+
 #include <yaml-cpp/yaml.h>
 
 #include <shared_core/Error.hpp>
@@ -540,6 +544,28 @@ core::system::ProcessOptions quartoOptions()
    return options;
 }
 
+FilePath quartoPathsCachePath()
+{
+   return module_context::userScratchPath().completeChildPath("quarto-paths-cache.json");
+}
+
+// Whether a quarto --paths answer is worth reusing: the cache key proves the
+// launcher's files are unchanged, not that it can still run, so a hit also
+// needs a launchable executable and the tools directory its launcher runs.
+bool quartoPathsUsable(const std::string& binPath, const std::string& resourcesPath)
+{
+#ifdef _WIN32
+   bool launchable = s_quartoPath.exists();
+#else
+   bool launchable = ::access(s_quartoPath.getAbsolutePath().c_str(), X_OK) == 0;
+#endif
+   FilePath binDir(binPath);
+   return launchable &&
+          binDir.isDirectory() &&
+          binDir.completeChildPath("tools").isDirectory() &&
+          FilePath(resourcesPath).isDirectory();
+}
+
 Error runQuarto(const std::vector<std::string>& args,
                 const core::FilePath& workingDir,
                 core::system::ProcessResult* pResult)
@@ -548,13 +574,23 @@ Error runQuarto(const std::vector<std::string>& args,
    if (!workingDir.isEmpty())
       options.workingDir = workingDir;
 
-   return core::system::runProgram(
+   Error error = core::system::runProgram(
       string_utils::utf8ToSystem(quartoExecutablePath()),
       args,
       "",
       options,
       pResult
    );
+
+   // A launcher that no longer starts must be probed again next session.
+   if (error)
+   {
+      Error removeError = quartoPathsCachePath().removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+   }
+
+   return error;
 }
 
 
@@ -989,7 +1025,7 @@ void readQuartoConfig()
    // if it's installed then detect bin and resources directories
    if (s_quartoConfig.enabled)
    {
-      StartupCache cache(module_context::userScratchPath().completeChildPath("quarto-paths-cache.json"));
+      StartupCache cache(quartoPathsCachePath());
       json::Object key;
       key["schema"] = 1;
       key["executable"] = s_quartoPath.getCanonicalPath();
@@ -1013,9 +1049,11 @@ void readQuartoConfig()
 
       json::Object cached;
       std::string binPath, resourcesPath;
-      bool cacheHit = s_quartoVersion != "99.9.9" && cache.read(key, &cached) &&
+      // development builds (99.9.9) change without their key changing
+      bool cacheable = s_quartoVersion != "99.9.9";
+      bool cacheHit = cacheable && cache.read(key, &cached) &&
          !json::readObject(cached, "bin", binPath, "resources", resourcesPath) &&
-         FilePath(binPath).isDirectory() && FilePath(resourcesPath).isDirectory();
+         quartoPathsUsable(binPath, resourcesPath);
 
       if (!cacheHit)
       {
@@ -1034,8 +1072,7 @@ void readQuartoConfig()
          {
             binPath = string_utils::systemToUtf8(paths[0]);
             resourcesPath = string_utils::systemToUtf8(paths[1]);
-            if (result.exitStatus == EXIT_SUCCESS && s_quartoVersion != "99.9.9" &&
-                FilePath(binPath).isDirectory() && FilePath(resourcesPath).isDirectory())
+            if (cacheable && quartoPathsUsable(binPath, resourcesPath))
             {
                json::Object value;
                value["bin"] = binPath;

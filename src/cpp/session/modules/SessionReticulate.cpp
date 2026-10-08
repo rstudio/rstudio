@@ -46,6 +46,7 @@ bool s_pythonInitialized = false;
 
 std::string s_reticulatePython;
 bool s_reticulatePythonInited = false;
+bool s_pythonDiscoveryTimedOut = false;
 unsigned int s_pythonDiscoveryGeneration = 0;
 boost::shared_ptr<async_r::AsyncRProcess> s_pythonDiscovery;
 const int kPythonDiscoveryTimeoutSeconds = 30;
@@ -94,16 +95,24 @@ protected:
          s_reticulatePython = output_.substr(marker + 1);
          boost::algorithm::trim(s_reticulatePython);
       }
+      else if (std::chrono::steady_clock::now() >= deadline_)
+      {
+         // A slow discovery may well succeed later (cold network home, large
+         // conda install), so leave the answer open: the next terminal retries
+         // in the background rather than repeating it synchronously.
+         WLOGF("Python discovery did not finish within {} seconds; retrying when a terminal next needs it", kPythonDiscoveryTimeoutSeconds);
+         s_pythonDiscoveryTimedOut = true;
+         s_reticulatePython.clear();
+         return;
+      }
       else
       {
          // Record the miss: otherwise the next terminal repeats this same
          // discovery synchronously, blocking the session for as long again.
-         if (std::chrono::steady_clock::now() >= deadline_)
-            WLOGF("Python discovery did not finish within {} seconds; terminals will not set RETICULATE_PYTHON", kPythonDiscoveryTimeoutSeconds);
-         else
-            WLOGF("Python discovery exited with status {}; terminals will not set RETICULATE_PYTHON", exitStatus);
+         WLOGF("Python discovery exited with status {}; terminals will not set RETICULATE_PYTHON", exitStatus);
          s_reticulatePython.clear();
       }
+      s_pythonDiscoveryTimedOut = false;
       s_reticulatePythonInited = true;
    }
 
@@ -157,6 +166,14 @@ void updateReticulatePython(bool forInit)
 
    if (!ASSERT_MAIN_THREAD())
    {
+      return;
+   }
+
+   // After a timed-out discovery, terminals go without RETICULATE_PYTHON for
+   // now and retry in the background instead of blocking for as long again.
+   if (!forInit && s_pythonDiscoveryTimedOut)
+   {
+      discoverPythonAsync();
       return;
    }
 

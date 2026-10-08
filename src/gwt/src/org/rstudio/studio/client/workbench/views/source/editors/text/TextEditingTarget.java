@@ -8215,14 +8215,11 @@ public class TextEditingTarget implements
    }
 
    // The knitr probe answers after startup; its placeholder reports nothing
-   // as supported, so prerequisite checks wait for the real answer. Only a
-   // pending probe needs releasing should the editor close first.
+   // as supported, so prerequisite checks wait for the real answer. A probe
+   // still pending when the editor closes is released with it.
    private void withHTMLCapabilities(CommandWithArg<HTMLCapabilities> callback)
    {
-      if (fileTypeCommands_.hasHTMLCapabilities())
-         callback.execute(fileTypeCommands_.getHTMLCapabiliites());
-      else
-         releaseOnDismiss_.add(fileTypeCommands_.withHTMLCapabilities(callback));
+      releaseOnDismiss_.add(fileTypeCommands_.withHTMLCapabilities(callback));
    }
 
    private void doHtmlPreview(final Provider<HTMLPreviewParams> pParams)

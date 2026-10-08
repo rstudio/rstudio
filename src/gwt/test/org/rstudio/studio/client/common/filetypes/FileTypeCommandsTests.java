@@ -54,6 +54,28 @@ public class FileTypeCommandsTests extends GWTTestCase
       commands_ = new FileTypeCommands(session, events_, server_);
    }
 
+   public void testProbeStartsAtConstructionWhenSessionInfoExists()
+   {
+      // the eager singleton may be created after session init
+      assertEquals(1, server_.requests_);
+      assertFalse(commands_.hasHTMLCapabilities());
+      server_.latest().onResponseReceived(createCapabilities(true));
+      assertTrue(commands_.hasHTMLCapabilities());
+   }
+
+   public void testProbeStartsOnSessionInitWithoutWaitingForAnEditor()
+   {
+      EventBus events = new EventBus(null, null);
+      Session session = new Session(events);
+      CapabilityServer server = new CapabilityServer();
+      new FileTypeCommands(session, events, server);
+      assertEquals(0, server.requests_);
+
+      session.setSessionInfo(createSessionInfo());
+      events.fireEvent(new SessionInitEvent());
+      assertEquals(1, server.requests_);
+   }
+
    public void testPlaceholderDoesNotCompleteRestoredEditorChecks()
    {
       assertFalse(commands_.getHTMLCapabiliites().isRMarkdownSupported());

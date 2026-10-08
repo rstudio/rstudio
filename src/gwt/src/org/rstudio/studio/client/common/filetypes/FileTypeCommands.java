@@ -22,12 +22,12 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -58,12 +58,20 @@ public class FileTypeCommands
       session_ = session;
       server_ = server;
 
-      // HTML package capabilities are optional during client initialization.
-      eventBus.addHandler(SessionInitEvent.TYPE, event ->
+      // HTML package capabilities are optional during client initialization,
+      // so the main window probes as soon as session info exists: at once
+      // when this singleton is created after it, otherwise on SessionInitEvent.
+      // Preview and Compile Report then usually stay synchronous (a window
+      // opened only after a round trip can be popup-blocked). Satellites ask
+      // when an editor first needs the answer.
+      if (!Satellite.isCurrentWindowSatellite())
       {
-         if (htmlCapabilities_ == null && !htmlCapabilitiesRequestPending_)
-            refreshHTMLCapabilities();
-      });
+         session.withSessionInfo(info ->
+         {
+            if (htmlCapabilities_ == null && !htmlCapabilitiesRequestPending_)
+               refreshHTMLCapabilities();
+         });
+      }
       // A package change supersedes any probe still in flight.
       eventBus.addHandler(PackageStateChangedEvent.TYPE, event -> refreshHTMLCapabilities());
    }
