@@ -9,6 +9,7 @@
 - ([#17215](https://github.com/rstudio/rstudio/issues/17215)): Fixed an issue where color previews in the editor shifted the cursor and bracket highlighting to the right at fractional zoom levels or display scaling
 - ([#19054](https://github.com/rstudio/rstudio/issues/19054)): Fixed an issue where saving a document could clear its spelling and diagnostic markers; the R Markdown toolbar now also picks up output format changes when autosave is enabled
 - ([#19056](https://github.com/rstudio/rstudio/issues/19056)): Fixed an issue where R diagnostics were very slow for large documents when the document or the working directory was on a slow filesystem (e.g. a network drive, or a Windows drive mounted within WSL), as the filesystem was consulted for every function call in the document
+- ([#12375](https://github.com/rstudio/rstudio/issues/12375)): `debugSource()` no longer errors when `options(keep.source = FALSE)` is set, or when the file is empty or contains only comments. Thanks to [@AzazelSensei](https://github.com/AzazelSensei).
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
