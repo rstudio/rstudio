@@ -452,8 +452,8 @@ if(UNIX)
    if(APPLE)
 
       # Older configures cached Homebrew's OpenSSL as an INTERNAL value: opt/openssl@3,
-      # opt/openssl, or (before #14718) Cellar/openssl/<version>. Spot it by value,
-      # as a -DOPENSSL_ROOT_DIR given later may keep the INTERNAL type.
+      # opt/openssl, or (before #14718) Cellar/openssl/<version>. A -DOPENSSL_ROOT_DIR
+      # re-types the entry as UNINITIALIZED, so an explicit root is never dropped here.
       get_property(_openssl_root_type CACHE OPENSSL_ROOT_DIR PROPERTY TYPE)
       string(FIND "${OPENSSL_ROOT_DIR}" "${HOMEBREW_PREFIX}/" _openssl_brew_index)
       if(_openssl_root_type STREQUAL "INTERNAL" AND _openssl_brew_index EQUAL 0)
