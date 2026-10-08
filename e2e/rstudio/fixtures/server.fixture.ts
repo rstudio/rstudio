@@ -165,6 +165,12 @@ function writeRsessionWrapper(serverRoot: string, userHome: string, rserverBin: 
   if (process.env.PW_ODBC_DIR) {
     lines.push(`export ODBCSYSINI=${shQuote(process.env.PW_ODBC_DIR)}`);
   }
+  // The Python the reticulate specs should use. rserver rebuilds the session
+  // environment, so the name has to be re-exported here to reach reticulate;
+  // a spawned Desktop process inherits it from process.env already.
+  if (process.env.RETICULATE_PYTHON) {
+    lines.push(`export RETICULATE_PYTHON=${shQuote(process.env.RETICULATE_PYTHON)}`);
+  }
   if (process.platform === 'darwin') {
     lines.push(`export DYLD_INSERT_LIBRARIES=${shQuote(macosLibRPath(rserverConf))}`);
   }
