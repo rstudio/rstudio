@@ -259,6 +259,48 @@ public class VirtualConsoleTests extends GWTTestCase
             ele.getInnerHTML());
    }
 
+   public void testSgrOnlyFormatting()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      // false: assigns to innerHTML instead of innerText
+      vc.setPreserveHTML(false);
+      // true: strip all ANSI formatting beyond color and newlines
+      vc.setSgrOnly(true);
+
+      vc.submit("\033[31m<b>red</b>\033[0m");
+      Assert.assertEquals(
+            "<span class=\"xtermColor1\">&lt;b&gt;red&lt;/b&gt;</span>",
+            ele.getInnerHTML());
+   }
+
+   public void testSgrOnlyStripping()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.setPreserveHTML(false);
+      vc.setSgrOnly(true);
+
+      vc.submit("pre\rpost\n\033]8;;ide:run:test()\7link\033]8;;\7");
+      Assert.assertTrue(ele.getInnerText().contains("pre"));
+      Assert.assertTrue(ele.getInnerText().contains("post"));
+      Assert.assertFalse(ele.getInnerHTML().contains("<a"));
+
+      // the hyperlink's content is preserved, but not the escape sequence
+      Assert.assertTrue(ele.getInnerText().contains("link"));
+      Assert.assertFalse(ele.getInnerText().contains("ide:run"));
+      Assert.assertFalse(ele.getInnerText().contains("]8;;"));
+
+      // CRLF is a line break, not a stray control character
+      PreElement crlf = Document.get().createPreElement();
+      VirtualConsole vcCrlf = getVC(crlf);
+      vcCrlf.setPreserveHTML(false);
+      vcCrlf.setSgrOnly(true);
+
+      vcCrlf.submit("one\r\ntwo");
+      Assert.assertEquals("one\ntwo", crlf.getInnerText());
+   }
+
    public void testAnsiColorStyleHelper()
    {
       Assert.assertEquals("xtermColor0",
@@ -1664,7 +1706,7 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("i Some intermediate step with a \033[32mfield\033[39m-----------------------\r+++++++++++++++++++++++++++++++++++++\r\033[33m!\033[39m An alert message which is long enough\ni Some intermediate step with a \033[32mfield\033[39m\n");
       Assert.assertEquals("<span class=\"xtermColor3\">!</span><span> An alert message which is long enough</span><span>---------------------\ni Some intermediate step with a </span><span class=\"xtermColor2\">field</span><span>\n</span>", ele.getInnerHTML());
    }
-   
+
    public void testCsiCursorMovement()
    {
       PreElement ele = Document.get().createPreElement();
@@ -1672,7 +1714,7 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("Hello world!\033[10DLL\033[4CRL");
       Assert.assertEquals(ele.getInnerText(), "HeLLo woRLd!");
    }
-   
+
    public void testEraseInLineMode0Default()
    {
       // \033[K with no param defaults to mode 0 (erase from cursor to end of line)
@@ -1941,7 +1983,7 @@ public class VirtualConsoleTests extends GWTTestCase
       String text = "\u001b[34mhello\u001b[0m";
       for (int i = 0, n = text.length(); i < n; i++)
          vc.submit(text.substring(i, i + 1));
-      
+
       Assert.assertEquals(ele.getInnerText(), "hello");
    }
 

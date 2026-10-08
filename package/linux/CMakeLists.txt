@@ -127,17 +127,11 @@ elseif(RSTUDIO_ELECTRON)
       "libacl1"
       "libxkbcommon-x11-0"
       "libsqlite3-0")
-    if(RSTUDIO_PRO_BUILD)
-      list(APPEND RSTUDIO_RPM_DEPENDS "libpq5")
-    endif()
   else()
     list(APPEND RSTUDIO_RPM_DEPENDS
       "libacl"
       "libxkbcommon-x11"
       "sqlite")
-    if(RSTUDIO_PRO_BUILD)
-      list(APPEND RSTUDIO_RPM_DEPENDS "postgresql-libs")
-    endif()
   endif()
 
   # deb dependencies
@@ -147,10 +141,6 @@ elseif(RSTUDIO_ELECTRON)
     "libclang-dev"
     "libsqlite3-0"
     "libxkbcommon-x11-0")
-
-  if(RSTUDIO_PRO_BUILD)
-    list(APPEND RSTUDIO_DEBIAN_DEPENDS "libpq5")
-  endif()
 
 endif()
 

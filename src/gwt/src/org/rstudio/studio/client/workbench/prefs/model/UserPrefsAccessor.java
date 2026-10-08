@@ -54,6 +54,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ALWAYS_SAVE_HISTORY = "always_save_history";
    public static final String REMOVE_HISTORY_DUPLICATES = "remove_history_duplicates";
    public static final String SHOW_LAST_DOT_VALUE = "show_last_dot_value";
+   public static final String SHOW_HIDDEN_OBJECTS = "show_hidden_objects";
    public static final String LINE_ENDING_CONVERSION = "line_ending_conversion";
    public static final String USE_NEWLINES_IN_MAKEFILES = "use_newlines_in_makefiles";
    public static final String WINDOWS_TERMINAL_SHELL = "windows_terminal_shell";
@@ -260,7 +261,6 @@ public class UserPrefsAccessor extends Prefs
    public static final String RESTORE_PROJECT_R_VERSION = "restore_project_r_version";
    public static final String CLANG_VERBOSE = "clang_verbose";
    public static final String ENABLE_SPLASH_SCREEN = "enable_splash_screen";
-   public static final String SHOW_WHATS_NEW = "show_whats_new";
    public static final String DEFAULT_R_VERSION = "default_r_version";
    public static final String DATA_VIEWER_MAX_COLUMNS = "data_viewer_max_columns";
    public static final String DATA_VIEWER_MAX_CELL_SIZE = "data_viewer_max_cell_size";
@@ -511,6 +511,18 @@ public class UserPrefsAccessor extends Prefs
          "show_last_dot_value",
          _constants.showLastDotValueTitle(), 
          _constants.showLastDotValueDescription(), 
+         false);
+   }
+
+   /**
+    * Whether to show objects whose names begin with a dot in the Environment pane.
+    */
+   public PrefValue<Boolean> showHiddenObjects()
+   {
+      return bool(
+         "show_hidden_objects",
+         _constants.showHiddenObjectsTitle(), 
+         _constants.showHiddenObjectsDescription(), 
          false);
    }
 
@@ -947,7 +959,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String EDITOR_KEYBINDINGS_SUBLIME = "sublime";
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    public PrefValue<Boolean> vimLoadVimrc()
    {
@@ -3364,18 +3376,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
-    */
-   public PrefValue<Boolean> showWhatsNew()
-   {
-      return bool(
-         "show_whats_new",
-         _constants.showWhatsNewTitle(), 
-         _constants.showWhatsNewDescription(), 
-         true);
-   }
-
-   /**
     * The R version to use by default.
     */
    public PrefValue<DefaultRVersion> defaultRVersion()
@@ -4769,6 +4769,8 @@ public class UserPrefsAccessor extends Prefs
          removeHistoryDuplicates().setValue(layer, source.getBool("remove_history_duplicates"));
       if (source.hasKey("show_last_dot_value"))
          showLastDotValue().setValue(layer, source.getBool("show_last_dot_value"));
+      if (source.hasKey("show_hidden_objects"))
+         showHiddenObjects().setValue(layer, source.getBool("show_hidden_objects"));
       if (source.hasKey("line_ending_conversion"))
          lineEndingConversion().setValue(layer, source.getString("line_ending_conversion"));
       if (source.hasKey("use_newlines_in_makefiles"))
@@ -5181,8 +5183,6 @@ public class UserPrefsAccessor extends Prefs
          clangVerbose().setValue(layer, source.getInteger("clang_verbose"));
       if (source.hasKey("enable_splash_screen"))
          enableSplashScreen().setValue(layer, source.getBool("enable_splash_screen"));
-      if (source.hasKey("show_whats_new"))
-         showWhatsNew().setValue(layer, source.getBool("show_whats_new"));
       if (source.hasKey("default_r_version"))
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
       if (source.hasKey("data_viewer_max_columns"))
@@ -5383,6 +5383,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(alwaysSaveHistory());
       prefs.add(removeHistoryDuplicates());
       prefs.add(showLastDotValue());
+      prefs.add(showHiddenObjects());
       prefs.add(lineEndingConversion());
       prefs.add(useNewlinesInMakefiles());
       prefs.add(windowsTerminalShell());
@@ -5589,7 +5590,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(restoreProjectRVersion());
       prefs.add(clangVerbose());
       prefs.add(enableSplashScreen());
-      prefs.add(showWhatsNew());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
       prefs.add(dataViewerMaxCellSize());

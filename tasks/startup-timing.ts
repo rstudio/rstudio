@@ -114,7 +114,6 @@ async function launchOnce(index: number, options: LaunchOptions): Promise<Run> {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     RSTUDIO_STARTUP_TIMING: timingFile,
-    RSTUDIO_DISABLE_WHATS_NEW: '1',
   };
   if (!options.splash) {
     env.RS_NO_SPLASH = '1';

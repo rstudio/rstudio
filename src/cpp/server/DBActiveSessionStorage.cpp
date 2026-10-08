@@ -14,6 +14,7 @@
  */
 
 #include <server/DBActiveSessionStorage.hpp>
+#include <server/DBActiveSessionStorageOverlay.hpp>
 
 #include <core/Database.hpp>
 #include <core/Result.hpp>
@@ -23,9 +24,6 @@
 #include <server_core/ServerDatabase.hpp>
 
 #include <numeric>
-
-// for RSTUDIO_PRO_BUILD
-#include "server-config.h"
 
 using namespace rstudio::core;
 using namespace rstudio::core::database;
@@ -70,7 +68,7 @@ const ASMMaps& asmMaps()
       m.columns[ActiveSession::kProjectId] = kProjectColumnName;
       m.properties[kProjectColumnName] = ActiveSession::kProjectId;
 
-      std::string keys[] = {
+      std::vector<std::string> keys = {
          ActiveSession::kCreated,
          ActiveSession::kExecuting,
          ActiveSession::kInitial,
@@ -89,16 +87,13 @@ const ASMMaps& asmMaps()
          ActiveSession::kSuspendTimestamp,
          ActiveSession::kBlockingSuspend,
          ActiveSession::kLaunchParameters,
-#ifdef RSTUDIO_PRO_BUILD
-         // the active_session_metadata schema only has this column in Workbench
-         ActiveSession::kSuspendSize,
-#endif
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
          // only used in tests
          "user_id",
          "session_id",
 #endif
       };
+      overlay::addColumnProperties(&keys);
 
       for (const std::string& key : keys) {
          // Since these are compile-time constants, we know they're already validated.

@@ -591,7 +591,7 @@
 
 .rs.addFunction("getPendingInput", function()
 {
-   .Call("rs_getPendingInput")
+   .Call("rs_getPendingInput", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("doStripSurrounding", function(string, complements)
@@ -1041,7 +1041,7 @@
 
 .rs.addFunction("isSubsequence", function(strings, string)
 {
-   .Call("rs_isSubsequence", strings, string)
+   .Call("rs_isSubsequence", strings, string, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("whichIsSubsequence", function(strings, string)
@@ -1134,12 +1134,12 @@
 
 .rs.addFunction("packageNameForSourceFile", function(filePath)
 {
-   .Call("rs_packageNameForSourceFile", filePath)
+   .Call("rs_packageNameForSourceFile", filePath, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("isRScriptInPackageBuildTarget", function(filePath)
 {
-   .Call("rs_isRScriptInPackageBuildTarget", filePath)
+   .Call("rs_isRScriptInPackageBuildTarget", filePath, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("namedVectorAsList", function(vector)
@@ -1338,17 +1338,17 @@
 
 .rs.addFunction("scoreMatches", function(strings, string)
 {
-   .Call("rs_scoreMatches", strings, string)
+   .Call("rs_scoreMatches", strings, string, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getProjectDirectory", function()
 {
-   .Call("rs_getProjectDirectory")
+   .Call("rs_getProjectDirectory", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("hasFileMonitor", function()
 {
-   .Call("rs_hasFileMonitor")
+   .Call("rs_hasFileMonitor", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("doListIndex", function(routine, term, inDirectory, maxCount)
@@ -1359,7 +1359,7 @@
    inDirectory <- suppressWarnings(.rs.normalizePath(inDirectory))
    inDirectory <- gsub("[/\\\\]+$", "", inDirectory)
 
-   .Call(routine, term, inDirectory, as.integer(maxCount))
+   .Call(routine, term, inDirectory, as.integer(maxCount), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("listIndexedFiles", function(term = "",
@@ -1570,7 +1570,8 @@
    list(
       formal_names = character(),
       formal_info  = list(),
-      performs_nse = I(0L)
+      performs_nse = I(0L),
+      is_primitive = I(0L)
    )
 })
 
@@ -1667,6 +1668,15 @@
 
 .rs.addFunction("generateFunctionInformation", function(func) {
 
+  # Primitives have no formals; record them as such so that they
+  # aren't mistaken for closures which accept no arguments.
+  if (is.primitive(func))
+  {
+     info <- .rs.emptyFunctionInfo()
+     info$is_primitive <- I(1L)
+     return(info)
+  }
+
   formals <- formals(func)
   if (!length(formals))
      return(.rs.emptyFunctionInfo())
@@ -1699,7 +1709,8 @@
   list(
      formal_names = formalNames,
      formal_info  = formalInfo,
-     performs_nse = I(as.integer(performsNse))
+     performs_nse = I(as.integer(performsNse)),
+     is_primitive = I(0L)
   )
  
 })
@@ -2280,17 +2291,17 @@
 
 .rs.addFunction("base64encode", function(data, binary = FALSE)
 {
-   .Call("rs_base64encode", data, binary)
+   .Call("rs_base64encode", data, binary, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("base64encodeFile", function(path)
 {
-   .Call("rs_base64encodeFile", path)
+   .Call("rs_base64encodeFile", path, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("base64decode", function(data, binary = FALSE)
 {
-   .Call("rs_base64decode", data, binary)
+   .Call("rs_base64decode", data, binary, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("CRANDownloadOptionsString", function()

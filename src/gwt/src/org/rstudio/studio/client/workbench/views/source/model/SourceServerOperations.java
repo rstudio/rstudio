@@ -287,6 +287,12 @@ public interface SourceServerOperations extends FilesServerOperations,
    void createAliasedPath(String path,
                           ServerRequestCallback<String> requestCallback);
 
+   // Resolves a path against R's working directory and creates the file if
+   // needed. The result has the aliased "path", and an "error" that is empty,
+   // "is_folder", or "not_created".
+   void ensureEditableFile(String path,
+                           ServerRequestCallback<JsObject> requestCallback);
+
    void recoverPackageSource(String path,
                              ServerRequestCallback<String> requestCallback);
 

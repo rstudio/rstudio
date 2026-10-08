@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeCommand } from '@utils/commands';
+import { drainClientExceptions, executeCommand } from '@utils/commands';
 import { createAndOpenProject, closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
@@ -56,6 +56,20 @@ test.describe('Find in Files', () => {
 
     await page.locator(FIND_CANCEL_BTN).click();
     await expect(page.locator(FIND_DIALOG)).toBeHidden();
+  });
+
+  test('refresh before any search is a no-op', async ({ rstudioPage: page }) => {
+    // The last search is persisted per project, so a fresh project starts with
+    // none to refresh (#19005).
+    await createAndOpenProject(page, sandbox.dir, 'find_refresh_no_search_project');
+
+    await executeCommand(page, 'activateFindInFiles');
+    const refreshBtn = page.locator(REFRESH_BTN);
+    await expect(refreshBtn).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await refreshBtn.click();
+
+    expect(await drainClientExceptions(page)).toEqual([]);
+    await expect(page.locator(STOP_SEARCH_BTN)).toBeHidden();
   });
 
   test('searches across multiple files and toggles the replace toolbar', async ({ rstudioPage: page }) => {

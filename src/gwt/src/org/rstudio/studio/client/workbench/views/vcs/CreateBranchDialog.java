@@ -19,24 +19,24 @@ import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -45,7 +45,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -55,11 +55,19 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
    public static class Input
    {
-      public Input(String branch, String remote, boolean push)
+      public Input(String branch, String remote, boolean push, String worktreeParent)
       {
          branch_ = branch;
          remote_ = remote;
          push_ = push;
+         worktreeParent_ = worktreeParent;
+      }
+
+      // Directory to create a worktree for the branch in, or null to check
+      // the branch out here
+      public final String getWorktreeParent()
+      {
+         return worktreeParent_;
       }
       
       public final String getBranch()
@@ -80,19 +88,22 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       private final String branch_;
       private final String remote_;
       private final boolean push_;
+      private final String worktreeParent_;
    }
 
    @Override
    protected Input collectInput()
    {
       String branch = tbBranch_.getValue().trim();
-      String remote = sbRemote_.getValue().trim();
+      String remote = sbRemote_.getSelectedValue().trim();
       boolean push = cbPush_.isVisible() ? cbPush_.getValue() : false;
-      return new Input(branch, remote, push);
+      String worktreeParent = cbWorktree_.getValue() ? dirWorktreeParent_.getText().trim() : null;
+      return new Input(branch, remote, push, worktreeParent);
    }
    
    public CreateBranchDialog(final String caption,
                              final JsArray<RemotesInfo> remotesInfo,
+                             final String worktreeParentDir,
                              final OperationWithInput<CreateBranchDialog.Input> onCreateBranch,
                              final OperationWithInput<AddRemoteDialog.Input> onAddRemote)
    {
@@ -105,6 +116,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       container_ = new VerticalPanel();
       
       tbBranch_ = textBox();
+      ElementIds.assignElementId(tbBranch_, ElementIds.NEW_BRANCH_NAME);
       Roles.getTextboxRole().setAriaRequiredProperty(tbBranch_.getElement(), true);
       tbBranch_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -116,25 +128,27 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
                @Override
                public void execute()
                {
-                  String text = tbBranch_.getValue();
-                  enableOkButton(!StringUtil.isNullOrEmpty(text));
+                  updateOkButton();
                }
             });
          }
       });
       
-      sbRemote_ = new SelectWidget(constants_.remoteColon());
+      // a bare ListBox, so it lines up with the branch name box in the grid
+      // (SelectWidget adds its own margins)
+      sbRemote_ = new ListBox();
+      sbRemote_.setWidth("100%");
       sbRemote_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
-            boolean isNone = sbRemote_.getValue() == REMOTE_NONE;
+            boolean isNone = sbRemote_.getSelectedValue() == REMOTE_NONE;
             cbPush_.setVisible(!isNone);
          }
       });
       
-      btnAddRemote_ = new SmallButton(constants_.addRemoteEllipses());
+      btnAddRemote_ = new ThemedButton(constants_.addRemoteEllipses());
       btnAddRemote_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -145,7 +159,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
             String remoteUrl = null;
             if (remotesInfo_ != null)
             {
-               final String currentRemote = sbRemote_.getValue();
+               final String currentRemote = sbRemote_.getSelectedValue();
                RemotesInfo info = Functional.find(remotesInfo_, new Predicate<RemotesInfo>()
                {
                   @Override
@@ -168,36 +182,59 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
+      addLeftButton(btnAddRemote_, ElementIds.NEW_BRANCH_ADD_REMOTE);
+
       cbPush_ = new CheckBox(constants_.syncBranchWithRemote());
-      cbPush_.setVisible(sbRemote_.getValue() != REMOTE_NONE);
+      cbPush_.setVisible(sbRemote_.getSelectedValue() != REMOTE_NONE);
       cbPush_.setValue(true);
       
       setRemotes(remotesInfo);
       
-      LayoutGrid ctrBranch = new LayoutGrid(1, 2);
-      ctrBranch.setWidth("100%");
-      FormLabel branchLabel = new FormLabel(constants_.branchNameColon(), tbBranch_);
-      ctrBranch.setWidget(0, 0, branchLabel);
-      ctrBranch.setWidget(0, 1, tbBranch_);
-      
-      HorizontalPanel ctrRemote = new HorizontalPanel();
-      ctrRemote.setWidth("100%");
-      ctrRemote.add(sbRemote_);
-      sbRemote_.getElement().getStyle().setFloat(Style.Float.LEFT);
-      ctrRemote.add(btnAddRemote_);
-      btnAddRemote_.getElement().getStyle().setFloat(Style.Float.RIGHT);
-      btnAddRemote_.getElement().getStyle().setMarginTop(2, Unit.PX);
-      btnAddRemote_.getElement().getStyle().setMarginRight(3, Unit.PX);
-      
-      VerticalPanel panel = new VerticalPanel();
-      panel.add(ctrBranch);
-      panel.add(new VerticalSpacer("6px"));
-      panel.add(ctrRemote);
-      
-      container_.add(panel);
+      // branch name and remote share a grid so their inputs line up
+      LayoutGrid grid = new LayoutGrid(2, 2);
+      grid.setWidth("100%");
+      grid.setWidget(0, 0, new FormLabel(constants_.branchNameColon(), tbBranch_));
+      grid.setWidget(0, 1, tbBranch_);
+      tbBranch_.setWidth("100%");
+      grid.setWidget(1, 0, new FormLabel(constants_.remoteColon(), sbRemote_));
+      grid.setWidget(1, 1, sbRemote_);
+      grid.getCellFormatter().getElement(1, 1).getStyle().setPaddingTop(6, Unit.PX);
+
+      container_.add(grid);
+      container_.add(new VerticalSpacer("6px"));
       container_.add(cbPush_);
+
+      // optionally check the new branch out into a worktree of its own, at
+      // <parent>/<branch name with separators flattened>
+      cbWorktree_ = new CheckBox(constants_.createInNewWorktree());
+      ElementIds.assignElementId(cbWorktree_, ElementIds.NEW_BRANCH_WORKTREE);
+      dirWorktreeParent_ = new DirectoryChooserTextBox(
+            constants_.createInColon(),
+            ElementIds.TextBoxButtonId.NEW_BRANCH_WORKTREE_PARENT,
+            tbBranch_);
+      dirWorktreeParent_.setText(worktreeParentDir);
+      dirWorktreeParent_.getElement().getStyle().setPaddingTop(4, Unit.PX);
+      dirWorktreeParent_.setVisible(false);
+      dirWorktreeParent_.addValueChangeHandler(event -> updateOkButton());
+      cbWorktree_.addValueChangeHandler(event ->
+      {
+         dirWorktreeParent_.setVisible(event.getValue());
+         updateOkButton();
+      });
+
+      container_.add(cbWorktree_);
+      container_.add(dirWorktreeParent_);
    }
-   
+
+   private void updateOkButton()
+   {
+      boolean ok = !StringUtil.isNullOrEmpty(tbBranch_.getValue().trim());
+      if (cbWorktree_.getValue())
+         ok = ok && !StringUtil.isNullOrEmpty(dirWorktreeParent_.getText().trim());
+
+      enableOkButton(ok);
+   }
+
    public void setRemotes(JsArray<RemotesInfo> remotesInfo)
    {
       setRemotes(null, remotesInfo);
@@ -208,47 +245,47 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       remotesInfo_ = remotesInfo;
       
+      // one entry per remote (git lists fetch and push URLs separately),
+      // labelled with its URL so similarly named remotes can be told apart
       List<String> remotes = new ArrayList<>();
+      List<String> labels = new ArrayList<>();
       for (RemotesInfo info : JsUtil.asIterable(remotesInfo))
       {
          if (!remotes.contains(info.getRemote()))
          {
             String remote = info.getRemote();
-            remotes.add(info.getRemote());
+            remotes.add(remote);
+            labels.add(StringUtil.isNullOrEmpty(info.getUrl())
+                  ? remote
+                  : remote + " (" + info.getUrl() + ")");
             if (activeRemote == null && info.isActive())
                activeRemote = remote;
          }
       }
       
-      String[] choices = new String[remotes.size() + 1];
-      for (int i = 0; i < remotes.size(); i++)
-         choices[i] = remotes.get(i);
-      choices[remotes.size()] = REMOTE_NONE;
-      
+      remotes.add(REMOTE_NONE);
+      labels.add(REMOTE_NONE);
+
       // if we haven't set an active remote, try defaulting to the one called
       // 'origin' (if it exists)
-      if (activeRemote == null)
-      {
-         for (int i = 0; i < choices.length; i++)
-         {
-            if (REMOTE_ORIGIN == choices[i])
-            {
-               activeRemote = REMOTE_ORIGIN;
-               break;
-            }
-         }
-      }
-      
+      if (activeRemote == null && remotes.contains(REMOTE_ORIGIN))
+         activeRemote = REMOTE_ORIGIN;
+
       // if we still haven't found anything, just default to the first entry
       // (note that because we always add the (none) remote there will always
       // be an entry available here)
       if (activeRemote == null)
-         activeRemote = choices[0];
-      
-      sbRemote_.setChoices(choices);
-      sbRemote_.setValue(activeRemote);
-      
-      cbPush_.setVisible(choices.length > 1);
+         activeRemote = remotes.get(0);
+
+      sbRemote_.clear();
+      for (int i = 0; i < remotes.size(); i++)
+      {
+         sbRemote_.addItem(labels.get(i), remotes.get(i));
+         if (remotes.get(i) == activeRemote)
+            sbRemote_.setSelectedIndex(i);
+      }
+
+      cbPush_.setVisible(remotes.size() > 1);
    }
 
    @Override
@@ -264,6 +301,9 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       tbBranch_.selectAll();
    }
    
+   private final CheckBox cbWorktree_;
+   private final DirectoryChooserTextBox dirWorktreeParent_;
+
    private TextBox textBox()
    {
       TextBox textBox = new TextBox();
@@ -276,8 +316,8 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    
    private final VerticalPanel container_;
    private final TextBox tbBranch_;
-   private final SelectWidget sbRemote_;
-   private final SmallButton btnAddRemote_;
+   private final ListBox sbRemote_;
+   private final ThemedButton btnAddRemote_;
    private final CheckBox cbPush_;
    
    private static final String REMOTE_NONE = "(None)";

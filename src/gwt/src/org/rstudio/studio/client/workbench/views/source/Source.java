@@ -1720,6 +1720,12 @@ public class Source implements InsertSourceEvent.Handler,
       return getUnsavedChanges(type,  null);
    }
 
+   // The editor for the given document in this window, or null if none
+   public EditingTarget findEditor(String docId)
+   {
+      return columnManager_.findEditor(docId);
+   }
+
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
       ArrayList<UnsavedChangesTarget> targets = new ArrayList<>();

@@ -1682,11 +1682,22 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 }
 
 /* Honor user vestibular-accessibility preference: drop animations and
-   transitions instead of slow fades / spins / column-flash pulses. */
+   transitions instead of slow fades / spins / column-flash pulses.
+
+   Transitions are switched off outright rather than shortened. A near-zero
+   transition-duration on every element starts a transition for every style
+   change on every element -- transition-property defaults to `all` -- and an
+   element mid-transition is laid out at its old value for the frame the
+   transition starts in. The virtualizers size their spacers through inline
+   styles while removing the rows those spacers replace, so with the old rule
+   the content was one recycled window short for one frame after each render;
+   the browser clamped both panes' scrollTop to it and the last rows could not
+   be reached (#18988; Windows "Animation effects" off). The animations are
+   only ever started by the flash classes, so shortening them is safe. */
 @media (prefers-reduced-motion: reduce) {
    *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+      transition: none !important;
    }
 }

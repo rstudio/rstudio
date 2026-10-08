@@ -25,7 +25,8 @@
       title,
       prompt,
       .rs.isPackageInstalled("keyring"),
-      .rs.hasSecret(name)
+      .rs.hasSecret(name),
+      PACKAGE = "(embedding)"
    )
 
    if (is.null(result)) stop("Ask for secret operation was cancelled.")

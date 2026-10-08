@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { cloneTreeHardlinks } from './r-libs-setup';
@@ -12,9 +11,9 @@ import { cloneTreeHardlinks } from './r-libs-setup';
  * `pai/bin` is never read. The assistant repo's `npm run deploy:rstudio`
  * publishes its build in that layout, and the build under test is the slot
  * the seed's `selected.json` names. That slot is re-published into the
- * sandbox -- manifest and selector rewritten -- rather than the seed being
- * copied wholesale: a sandbox that does not verify resolves nothing, and the
- * IDE downloads the official package instead, silently testing the wrong build.
+ * sandbox -- selector rewritten -- rather than the seed being copied
+ * wholesale: a sandbox that does not verify resolves nothing, and the IDE
+ * downloads the official package instead, silently testing the wrong build.
  *
  * The C++ side of this lives in `src/cpp/session/modules/chat/ChatSlots.cpp`
  * and `ChatSelector.cpp`; the file names and JSON shapes below mirror
@@ -24,7 +23,6 @@ import { cloneTreeHardlinks } from './r-libs-setup';
 // Mirrors chat::constants in src/cpp/session/modules/chat/ChatConstants.cpp.
 const VERSIONS_DIR_NAME = 'versions';
 const SELECTOR_FILE_NAME = 'selected.json';
-const SLOT_MANIFEST_FILE_NAME = '.slot-manifest.json';
 const PACKAGE_JSON_FILE_NAME = 'package.json';
 const PROTOCOL_FILE_NAME = 'protocol.json';
 const CLIENT_DIR_PATH = 'dist/client';
@@ -33,47 +31,6 @@ const INDEX_FILE_NAME = 'index.html';
 
 /** Legacy unversioned install, never read by RStudio and never seeded. */
 const LEGACY_PACKAGE_DIR = 'bin';
-
-interface ManifestEntry {
-  size: number;
-  sha256: string;
-}
-
-/** Every regular file under `dir`, as '/'-separated paths relative to it. */
-function relativeFiles(dir: string, prefix = ''): string[] {
-  const found: string[] = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
-    // Symlinks are skipped rather than followed, matching collectEntries() in
-    // ChatSlotManifest.cpp: recording one would record the target's size and
-    // make the slot verify against a file outside it.
-    if (entry.isSymbolicLink()) continue;
-    if (entry.isDirectory()) {
-      found.push(...relativeFiles(path.join(dir, entry.name), relative));
-    } else if (entry.isFile() && relative !== SLOT_MANIFEST_FILE_NAME) {
-      found.push(relative);
-    }
-  }
-  return found;
-}
-
-/**
- * Record the install-time manifest a slot needs to verify.
- *
- * Verification compares sizes only, but the hashes are recorded anyway so a
- * seeded slot is indistinguishable on disk from one an install produced.
- */
-function writeSlotManifest(slotDir: string): void {
-  const files: Record<string, ManifestEntry> = {};
-  for (const relative of relativeFiles(slotDir)) {
-    const absolute = path.join(slotDir, relative);
-    files[relative] = {
-      size: fs.statSync(absolute).size,
-      sha256: crypto.createHash('sha256').update(fs.readFileSync(absolute)).digest('hex'),
-    };
-  }
-  fs.writeFileSync(path.join(slotDir, SLOT_MANIFEST_FILE_NAME), JSON.stringify({ files }));
-}
 
 // Device names Windows resolves in any directory. Checked on every platform for
 // the same reason the C++ side checks them: a sandbox seeded on one OS has to
@@ -239,13 +196,11 @@ export function inspectSeed(seedRoot: string): {
 /**
  * Lay out the slot `seedRoot` selects as the only slot in `storageDir`.
  *
- * The slot is copied to `versions/<version>`, its manifest is rewritten, and
- * it is selected for the protocol it declares. The manifest is recorded from
- * the copied files rather than trusted, so the sandbox slot verifies against
- * exactly what was copied. The seed's other slots and its `selected.json` are
- * not copied, so the build under test is the only one there. Nor is `bin`:
- * RStudio never reads it, so copying it would only add 18 MB per sandbox and
- * make a resolver regression harder to notice. Everything else (`ai-logs`,
+ * The slot is copied to `versions/<version>` and selected for the protocol it
+ * declares. The seed's other slots and its `selected.json` are not copied, so
+ * the build under test is the only one there. Nor is `bin`: RStudio never
+ * reads it, so copying it would only add 18 MB per sandbox and make a resolver
+ * regression harder to notice. Everything else (`ai-logs`,
  * `manifest-check.json`, ...) is shared state that lives beside the slots and
  * is copied as-is.
  *
@@ -268,7 +223,6 @@ export function seedPaiSlot(seedRoot: string, storageDir: string): string {
 
   const slotDir = path.join(storageDir, VERSIONS_DIR_NAME, version);
   fs.cpSync(seedSlotDir, slotDir, { recursive: true });
-  writeSlotManifest(slotDir);
 
   fs.writeFileSync(
     path.join(storageDir, SELECTOR_FILE_NAME),

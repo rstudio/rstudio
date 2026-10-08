@@ -12,6 +12,7 @@ import { setPref, documentCloseAllNoSave } from '../utils/commands';
 import { withDeadline } from '../utils/deadline';
 import { rLibsUserTemplate, workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
+import { keepRequestInterceptionOn } from './request-interception';
 import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
@@ -163,6 +164,12 @@ function writeRsessionWrapper(serverRoot: string, userHome: string, rserverBin: 
   // to server-mode sessions the same way it is to a spawned Desktop process.
   if (process.env.PW_ODBC_DIR) {
     lines.push(`export ODBCSYSINI=${shQuote(process.env.PW_ODBC_DIR)}`);
+  }
+  // The Python the reticulate specs should use. rserver rebuilds the session
+  // environment, so the name has to be re-exported here to reach reticulate;
+  // a spawned Desktop process inherits it from process.env already.
+  if (process.env.RETICULATE_PYTHON) {
+    lines.push(`export RETICULATE_PYTHON=${shQuote(process.env.RETICULATE_PYTHON)}`);
   }
   if (process.platform === 'darwin') {
     lines.push(`export DYLD_INSERT_LIBRARIES=${shQuote(macosLibRPath(rserverConf))}`);
@@ -482,6 +489,8 @@ export async function launchServer(): Promise<ServerSession> {
   await page.keyboard.press('Control+l');
   await sleep(500);
   console.log('Console cleared');
+
+  await keepRequestInterceptionOn(context);
 
   return { page, browser, rserverProcess, rserverCleanupDirs };
 }

@@ -1038,8 +1038,10 @@
          {
             "name": "posit-assistant-path",
             "type": "core::FilePath",
-            "memberName": "positAssistantPath_",
-            "description": "Specifies the absolute path of the directory holding an administrator-managed Posit Assistant installation, that is, the directory containing the installation's dist directory. Replaces the default system-wide location rather than adding to it."
+            "memberName": "deprecatedPositAssistantPath_",
+            "description": "No longer used. Accepted so that configuration files which set it still parse; administrator-installed Posit Assistant versions are read from the posit-assistant directory beside the session binary.",
+            "isDeprecated": true,
+            "isHidden": true
          }
       ],
       "trust": [

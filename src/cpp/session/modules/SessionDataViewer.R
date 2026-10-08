@@ -1670,7 +1670,7 @@
       return(invisible(NULL))
    
    # call viewData 
-   invisible(.Call("rs_viewData", x, expr, title, name, env, cacheKey, FALSE))
+   invisible(.Call("rs_viewData", x, expr, title, name, env, cacheKey, FALSE, PACKAGE = "(embedding)"))
 })
 
 .rs.registerReplaceHook("View", "utils", .rs.viewHook)
@@ -1700,7 +1700,7 @@
 .rs.addFunction("viewDataFrame", function(x, title, preview) {
    cacheKey <- .rs.addCachedData(force(x), "")
    if (.rs.isNonEmptyScalarString(cacheKey))
-      invisible(.Call("rs_viewData", x, "", title, "", emptyenv(), cacheKey, preview))
+      invisible(.Call("rs_viewData", x, "", title, "", emptyenv(), cacheKey, preview, PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {
@@ -1716,7 +1716,7 @@
 
 .rs.addFunction("addCachedData", function(obj, objName) 
 {
-   cacheKey <- .Call("rs_generateShortUuid")
+   cacheKey <- .Call("rs_generateShortUuid", PACKAGE = "(embedding)")
    .rs.assignCachedData(cacheKey, obj, objName)
    cacheKey
 })

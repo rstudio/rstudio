@@ -506,8 +506,8 @@ protected:
       value<bool>(&positAssistantTestManifest_)->default_value(false)->implicit_value(true),
       "Use the test manifest URL for Posit Assistant package updates.")
       ("posit-assistant-path",
-      value<std::string>(&positAssistantPath_)->default_value(std::string()),
-      "Specifies the absolute path of the directory holding an administrator-managed Posit Assistant installation, that is, the directory containing the installation's dist directory. Replaces the default system-wide location rather than adding to it.");
+      value<std::string>(&deprecatedPositAssistantPath_)->default_value(std::string()),
+      "No longer used. Accepted so that configuration files which set it still parse; administrator-installed Posit Assistant versions are read from the posit-assistant directory beside the session binary.");
 
    pTrust->add_options()
       ("project-trust-dialogs",
@@ -664,7 +664,7 @@ public:
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
-   core::FilePath positAssistantPath() const { return core::FilePath(positAssistantPath_); }
+   core::FilePath deprecatedPositAssistantPath() const { return core::FilePath(deprecatedPositAssistantPath_); }
    int projectTrustDialogs() const { return projectTrustDialogs_; }
    bool projectTrustRequired() const { return projectTrustRequired_; }
    std::string previewAllowedFunctions() const { return previewAllowedFunctions_; }
@@ -806,7 +806,7 @@ protected:
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
-   std::string positAssistantPath_;
+   std::string deprecatedPositAssistantPath_;
    int projectTrustDialogs_;
    bool projectTrustRequired_;
    std::string previewAllowedFunctions_;

@@ -47,6 +47,7 @@ namespace prefs {
 #define kAlwaysSaveHistory "always_save_history"
 #define kRemoveHistoryDuplicates "remove_history_duplicates"
 #define kShowLastDotValue "show_last_dot_value"
+#define kShowHiddenObjects "show_hidden_objects"
 #define kLineEndingConversion "line_ending_conversion"
 #define kLineEndingConversionDefault "default"
 #define kLineEndingConversionWindows "windows"
@@ -358,7 +359,6 @@ namespace prefs {
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
 #define kEnableSplashScreen "enable_splash_screen"
-#define kShowWhatsNew "show_whats_new"
 #define kDefaultRVersion "default_r_version"
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
@@ -584,6 +584,12 @@ public:
    core::Error setShowLastDotValue(bool val);
 
    /**
+    * Whether to show objects whose names begin with a dot in the Environment pane.
+    */
+   bool showHiddenObjects();
+   core::Error setShowHiddenObjects(bool val);
+
+   /**
     * The line ending format to use when saving files.
     */
    std::string lineEndingConversion();
@@ -734,7 +740,7 @@ public:
    core::Error setEditorKeybindings(std::string val);
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    bool vimLoadVimrc();
    core::Error setVimLoadVimrc(bool val);
@@ -1818,12 +1824,6 @@ public:
     */
    bool enableSplashScreen();
    core::Error setEnableSplashScreen(bool val);
-
-   /**
-    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
-    */
-   bool showWhatsNew();
-   core::Error setShowWhatsNew(bool val);
 
    /**
     * The R version to use by default.

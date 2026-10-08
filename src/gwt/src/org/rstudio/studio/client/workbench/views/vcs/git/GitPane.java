@@ -145,6 +145,9 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
       moreMenu.addItem(commands_.vcsRevert().createMenuItem(false));
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
+      moreMenu.addItem(commands_.vcsNewWorktree().createMenuItem(false));
+      moreMenu.addItem(commands_.vcsRemoveWorktree().createMenuItem(false));
+      moreMenu.addSeparator();
       moreMenu.addItem(commands_.newTerminal().createMenuItem(false));
 
       ToolbarPopupMenu pullMoreMenu = new ToolbarPopupMenu();
@@ -171,10 +174,12 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
       ElementIds.assignElementId(moreButton_, ElementIds.MB_GIT_MORE);
       toolbar.addLeftWidget(moreButton_);
 
+      ElementIds.assignElementId(createBranchToolbarButton_, ElementIds.TB_GIT_NEW_BRANCH);
       toolbar.addRightWidget(createBranchToolbarButton_);
 
       toolbar.addRightSeparator();
 
+      ElementIds.assignElementId(switchBranchToolbarButton_, ElementIds.TB_GIT_BRANCH);
       toolbar.addRightWidget(switchBranchToolbarButton_);
       switchBranchToolbarButton_.setRightAlignMenu(true);
 

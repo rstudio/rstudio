@@ -1003,6 +1003,13 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void processTerminate(String handle,
+                                ServerRequestCallback<VoidResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, PROCESS_TERMINATE, handle, requestCallback);
+   }
+
+   @Override
    public void processReap(String handle,
                            ServerRequestCallback<VoidResponse> requestCallback)
    {
@@ -2872,6 +2879,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_ALIASED_PATH, params, requestCallback);
    }
 
+   public void ensureEditableFile(String path,
+                                  ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, ENSURE_EDITABLE_FILE, params, requestCallback);
+   }
+
    public void recoverPackageSource(String path,
                                     ServerRequestCallback<String> requestCallback)
    {
@@ -3142,6 +3157,34 @@ public class RemoteServer implements Server
                            ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_CHECKOUT, id,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   @Override
+   public void gitAddWorktree(String path,
+                              String branch,
+                              boolean createBranch,
+                              String startPoint,
+                              ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(branch));
+      params.set(2, JSONBoolean.getInstance(createBranch));
+      params.set(3, new JSONString(startPoint));
+      sendRequest(RPC_SCOPE, GIT_ADD_WORKTREE, params,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+
+   @Override
+   public void gitRemoveWorktree(String path,
+                                 boolean force,
+                                 ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, JSONBoolean.getInstance(force));
+      sendRequest(RPC_SCOPE, GIT_REMOVE_WORKTREE, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -7324,6 +7367,7 @@ public class RemoteServer implements Server
 
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";
+   private static final String PROCESS_TERMINATE = "process_terminate";
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
    private static final String PROCESS_SET_SIZE = "process_set_size";
@@ -7462,6 +7506,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String CREATE_ALIASED_PATH = "create_aliased_path";
+   private static final String ENSURE_EDITABLE_FILE = "ensure_editable_file";
    private static final String RECOVER_PACKAGE_SOURCE = "recover_package_source";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
 
@@ -7492,6 +7537,8 @@ public class RemoteServer implements Server
    private static final String GIT_FULL_STATUS = "git_full_status";
    private static final String GIT_CREATE_BRANCH = "git_create_branch";
    private static final String GIT_LIST_BRANCHES = "git_list_branches";
+   private static final String GIT_ADD_WORKTREE = "git_add_worktree";
+   private static final String GIT_REMOVE_WORKTREE = "git_remove_worktree";
    private static final String GIT_LIST_REMOTES = "git_list_remotes";
    private static final String GIT_ADD_REMOTE = "git_add_remote";
    private static final String GIT_CHECKOUT = "git_checkout";

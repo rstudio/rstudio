@@ -14,6 +14,7 @@ import { workerRLibsUser } from './r-libs-setup';
 import { provisionPaiDataHome } from './pai-seed';
 import { trackForReaping } from './process-reaper';
 import { captureOutputTail, describeLaunchState } from './launch-diagnostics';
+import { keepRequestInterceptionOn } from './request-interception';
 import { isDebugMode } from '../utils/debug';
 import { userHomeForAuthState } from '../utils/auth';
 
@@ -600,7 +601,6 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // the config root so a deliberate quit-and-restart (which reuses the
       // config root) still sees its persisted state.
       RSTUDIO_DATA_HOME: tempConfig.dataHome,
-      RSTUDIO_DISABLE_WHATS_NEW: '1',
       // Under PW_DEBUG, have the launched app open Chromium DevTools on
       // startup so the renderer's Performance profiler is ready before
       // waitForUserConsoleInput resumes the test.
@@ -859,6 +859,8 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     );
     logLaunchStep('console input not busy');
     console.log('RStudio console is ready');
+
+    await keepRequestInterceptionOn(page.context());
 
     // rsession logs land in RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp).
     const logDir = path.join(tempConfig.dataHome, 'log');

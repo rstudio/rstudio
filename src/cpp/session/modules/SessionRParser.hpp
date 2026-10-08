@@ -327,6 +327,10 @@ public:
    void unexpectedToken(const RToken& token,
                         const std::string& expected = std::string())
    {
+      // Error tokens get a more specific message, wherever they show up.
+      if (token.isType(RToken::ERR))
+         return invalidCharacter(token);
+
       const std::string& content = token.contentAsUtf8();
       std::string message = "unexpected token '" + content + "'";
       if (!expected.empty())
@@ -530,7 +534,94 @@ public:
       addLintItem(rToken, LintTypeError, message);
    }
 
-   
+   void unexpectedAssignmentToLiteralInConditional(const RToken& rToken,
+                                                   const std::string& context)
+   {
+      std::string message = fmt::format(
+          "unexpected '<-' in '{}' conditional; did you mean to use '< -'?",
+          context);
+
+      addLintItem(rToken, LintTypeWarning, message);
+   }
+
+   void invalidAssignmentTarget(const RToken& rToken)
+   {
+      std::string message = fmt::format(
+          "invalid assignment target '{}'",
+          rToken.contentAsUtf8());
+
+      addLintItem(rToken, LintTypeError, message);
+   }
+
+   void repeatedFormalArgument(const RToken& rToken)
+   {
+      std::string message = fmt::format(
+          "repeated formal argument '{}'",
+          token_utils::getSymbolName(rToken));
+
+      addLintItem(rToken, LintTypeError, message);
+   }
+
+   void argumentMatchedMultipleTimes(const RToken& rToken)
+   {
+      std::string message = fmt::format(
+          "formal argument '{}' matched by multiple actual arguments",
+          token_utils::getSymbolName(rToken));
+
+      addLintItem(rToken, LintTypeError, message);
+   }
+
+   void emptyTrailingArgument(const RToken& rToken,
+                              const std::string& functionName)
+   {
+      std::string message = fmt::format(
+          "empty trailing argument in call to '{}'",
+          functionName);
+
+      addLintItem(rToken, LintTypeError, message);
+   }
+
+   void bareReturn(const RToken& rToken)
+   {
+      addLintItem(
+               rToken,
+               LintTypeWarning,
+               "'return' used without parentheses; did you mean 'return()'?");
+   }
+
+   void invalidCharacter(const RToken& rToken)
+   {
+      std::string content = rToken.contentAsUtf8();
+
+      // The tokenizer emits an error token for an unterminated raw
+      // string, a lone '%', and any character that starts no token.
+      // Smart quotes are by far the most common of the latter (they
+      // arrive via copy-paste from word processors and chat).
+      std::string message;
+      if (content == "\xE2\x80\x9C" || content == "\xE2\x80\x9D")
+         message = "unexpected smart quote '" + content + "'; use a straight quote (\") instead";
+      else if (content == "\xE2\x80\x98" || content == "\xE2\x80\x99")
+         message = "unexpected smart quote '" + content + "'; use a straight quote (') instead";
+      else if (content == "%")
+         message = "unterminated '%' operator";
+      else if (content.size() > 1 && (content[0] == 'r' || content[0] == 'R'))
+         message = "unterminated raw string";
+      else
+         message = "unexpected character '" + content + "'";
+
+      addLintItem(rToken, LintTypeError, message);
+   }
+
+   void packageNotInstalled(const RToken& rToken,
+                            const std::string& packageName)
+   {
+      std::string message = fmt::format(
+          "package '{}' is not installed",
+          packageName);
+
+      addLintItem(rToken, LintTypeWarning, message);
+   }
+
    void addLintItem(const RToken& rToken,
                     LintType type,
                     const std::string& message)
@@ -1092,17 +1183,8 @@ class ParseStatus
    
 public:
    
-   explicit ParseStatus(const FilePath& filePath, const ParseOptions& parseOptions)
-      : pRoot_(ParseNode::createRootNode()),
-        pNode_(pRoot_.get()),
-        lint_(parseOptions),
-        parseOptions_(parseOptions),
-        filePath_(filePath)
-   {
-      parseStateStack_.push(ParseStateTopLevel);
-      functionNames_.push(std::wstring(L""));
-   }
-   
+   explicit ParseStatus(const FilePath& filePath, const ParseOptions& parseOptions);
+
    ParseNode* node() { return pNode_; }
    LintItems& lint() { return lint_; }
    boost::shared_ptr<ParseNode> root() { return pRoot_; }
@@ -1476,7 +1558,33 @@ public:
       return filePath_;
    }
 
+   // Whether the document being parsed belongs to a package project, and
+   // if so, the name of that package. Resolved on first use, at most once
+   // per parse; see resolveLookupContext() for details.
+   bool isPackageProject()
+   {
+      resolveLookupContext();
+      return isPackageProject_;
+   }
+
+   const std::string& packageName()
+   {
+      resolveLookupContext();
+      return packageName_;
+   }
+
+   // The packages inferred by the source index for the document being
+   // parsed (e.g. from library() calls), if any. Resolved on first use,
+   // at most once per parse; see resolveLookupContext() for details.
+   const std::vector<std::string>& inferredPackages()
+   {
+      resolveLookupContext();
+      return inferredPackages_;
+   }
+
 private:
+   void resolveLookupContext();
+
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
    LintItems lint_;
@@ -1493,8 +1601,12 @@ private:
    // this should be the case but should attempt to enforce
    // this.
    Stack<RToken> bracketStack_;
-   
+
    FilePath filePath_;
+   bool lookupContextResolved_;
+   bool isPackageProject_;
+   std::string packageName_;
+   std::vector<std::string> inferredPackages_;
 };
 
 class ParseResults {

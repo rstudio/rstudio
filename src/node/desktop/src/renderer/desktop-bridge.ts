@@ -515,10 +515,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_splash_screen', enable);
     },
 
-    setShowWhatsNew: (enable: boolean) => {
-      ipcRenderer.send('desktop_set_show_whats_new', enable);
-    },
-
     setAutohideMenubar: (enable: boolean) => {
       ipcRenderer.send('desktop_set_autohide_menubar', enable);
     },
@@ -767,10 +763,6 @@ export function getDesktopBridge() {
 
     showSplashScreen: () => {
       ipcRenderer.send('desktop_show_splash_screen');
-    },
-
-    showWhatsNew: () => {
-      ipcRenderer.send('desktop_show_whats_new');
     },
 
     consoleLog: (output: string) => {

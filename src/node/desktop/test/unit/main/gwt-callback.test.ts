@@ -16,12 +16,30 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  ClipboardItem,
+  ipcMain,
+  IpcMainInvokeEvent,
+  nativeImage,
+  webContents,
+} from 'electron';
+import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
+import os from 'os';
+import path from 'path';
+import { pathToFileURL } from 'url';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
+
+import { FilePath } from '../../../src/core/file-path';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 
 import { GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
 import { MainWindow } from '../../../src/main/main-window';
+import desktop from '../../../src/native/desktop.node';
 
 function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
   return {
@@ -41,11 +59,24 @@ describe('DesktopCallback', () => {
   // can only be handled once per process, so the instance is shared by the suite
   let mainWindow: StubbedClass<MainWindow>;
   let callback: GwtCallback;
+  type InvokeHandler = (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown;
+  const invokeHandlers = new Map<string, InvokeHandler>();
 
   before(() => {
     mainWindow = createSinonStubInstance(MainWindow);
+    const handle = sinon.spy(ipcMain, 'handle');
     callback = new GwtCallback(mainWindow);
+    for (const call of handle.getCalls()) {
+      invokeHandlers.set(call.args[0], call.args[1] as InvokeHandler);
+    }
+    handle.restore();
   });
+
+  async function invoke(channel: string, ...args: unknown[]): Promise<unknown> {
+    const handler = invokeHandlers.get(channel);
+    assert.isDefined(handler, `no handler registered for '${channel}'`);
+    return handler!({} as IpcMainInvokeEvent, ...args);
+  }
 
   afterEach(() => {
     sinon.restore();
@@ -249,6 +280,343 @@ describe('DesktopCallback', () => {
       assert.isFalse(main.showInactive.called);
       assert.isFalse(main.restore.called);
       assert.isFalse(main.moveTop.called);
+    });
+  });
+
+  describe('clipboard handlers', () => {
+    let tempDir: string;
+    let heldWrites: (() => void)[] = [];
+
+    const tick = async () => new Promise((resolve) => setTimeout(resolve, 20));
+
+    // Stub clipboard.writeText so each write stays pending until released,
+    // standing in for a slow async write; onWrite runs when it completes.
+    function holdTextWrites(onWrite?: (text: string) => void) {
+      sinon.stub(clipboard, 'writeText').callsFake(async (text: string) => {
+        await new Promise<void>((resolve) => heldWrites.push(resolve));
+        onWrite?.(text);
+      });
+    }
+
+    async function releaseWrites() {
+      heldWrites.forEach((release) => release());
+      heldWrites = [];
+      await tick();
+    }
+
+    beforeEach(() => {
+      tempDir = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-clipboard-')));
+    });
+
+    // the clipboard write queue is process-wide, so a write a failed test left
+    // pending would stall every later read that waits on it
+    afterEach(async () => {
+      await releaseWrites();
+      clipboard.clear();
+      rmSync(tempDir, { recursive: true, force: true });
+    });
+
+    it('desktop_get_clipboard_text returns the clipboard text', async () => {
+      await clipboard.writeText('clipboard text');
+      assert.equal(await invoke('desktop_get_clipboard_text'), 'clipboard text');
+    });
+
+    // the renderer fires a write and may read straight back (an Emacs kill
+    // followed by a yank), so a read must not overtake a pending async write
+    it('desktop_get_clipboard_text waits for a pending write', async () => {
+      let contents = 'old';
+      holdTextWrites((text) => (contents = text));
+      sinon.stub(clipboard, 'readText').callsFake(async () => contents);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      const result = invoke('desktop_get_clipboard_text');
+      await tick();
+      await releaseWrites();
+      assert.equal(await result, 'new');
+    });
+
+    it('desktop_get_clipboard_uris and _image wait for a pending write', async () => {
+      holdTextWrites();
+      const read = sinon.stub(clipboard, 'read').resolves([]);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      const results = Promise.all([invoke('desktop_get_clipboard_uris'), invoke('desktop_get_clipboard_image')]);
+      await tick();
+      assert.isFalse(read.called, 'read before the write finished');
+
+      await releaseWrites();
+      assert.deepEqual(await results, [[], '']);
+      assert.isTrue(read.calledTwice);
+    });
+
+    // a rejected IPC call never reaches the renderer's callback, so a failed
+    // read must still answer or a visual-editor paste would hang
+    it('desktop_get_clipboard_uris and _image treat a failed read as empty', async () => {
+      sinon.stub(clipboard, 'read').rejects(new Error('clipboard unavailable'));
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), []);
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
+    });
+
+    it('desktop_copy_page_region_to_clipboard writes after a pending write', async () => {
+      const bitmap = Buffer.alloc(2 * 2 * 4, 0xff);
+      const image = nativeImage.createFromBitmap(bitmap, { width: 2, height: 2 });
+      mainWindow.window = { capturePage: sinon.stub().resolves(image) } as unknown as BrowserWindow;
+      holdTextWrites();
+      const write = sinon.spy(clipboard, 'write');
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      await tick();
+      assert.isFalse(write.called, 'image written before the pending write finished');
+
+      await releaseWrites();
+      await copied;
+      assert.isTrue(write.calledOnce);
+      assert.isTrue(await clipboard.has('image/png'));
+    });
+
+    it('desktop_copy_page_region_to_clipboard keeps its place while capturing', async () => {
+      const bitmap = Buffer.alloc(2 * 2 * 4, 0xff);
+      const image = nativeImage.createFromBitmap(bitmap, { width: 2, height: 2 });
+      let finishCapture: (() => void) | undefined;
+      const capturePage = sinon.stub().callsFake(async () => {
+        await new Promise<void>((resolve) => (finishCapture = resolve));
+        return image;
+      });
+      mainWindow.window = { capturePage } as unknown as BrowserWindow;
+      const order: string[] = [];
+      sinon.stub(clipboard, 'writeText').callsFake(async () => {
+        order.push('text');
+      });
+      sinon.stub(clipboard, 'write').callsFake(async () => {
+        order.push('image');
+      });
+
+      const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      await tick();
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'copied during capture');
+      await tick();
+      assert.isDefined(finishCapture, 'capture never started');
+      finishCapture!();
+      await copied;
+      await tick();
+
+      assert.deepEqual(order, ['image', 'text']);
+    });
+
+    // the screen can change while earlier writes finish, so the capture must
+    // not wait for them the way the clipboard write does
+    it('desktop_copy_page_region_to_clipboard captures without waiting for a pending write', async () => {
+      const bitmap = Buffer.alloc(2 * 2 * 4, 0xff);
+      const capturePage = sinon.stub().resolves(nativeImage.createFromBitmap(bitmap, { width: 2, height: 2 }));
+      mainWindow.window = { capturePage } as unknown as BrowserWindow;
+      holdTextWrites();
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'pending');
+      const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      await tick();
+      assert.isTrue(capturePage.calledOnce, 'capture waited for the pending write');
+
+      await releaseWrites();
+      await copied;
+    });
+
+    it('desktop_copy_page_region_to_clipboard leaves the clipboard alone when capture fails', async () => {
+      mainWindow.window = {
+        capturePage: sinon.stub().rejects(new Error('capture failed')),
+      } as unknown as BrowserWindow;
+      const write = sinon.stub(clipboard, 'write').resolves();
+
+      await invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      assert.isFalse(write.called);
+    });
+
+    // the queued write only awaits the capture once earlier writes finish, so
+    // a conversion failure before then must already be handled
+    it('desktop_copy_page_region_to_clipboard handles a PNG conversion failure', async () => {
+      const unhandled = sinon.spy();
+      process.on('unhandledRejection', unhandled);
+      try {
+        const image = {
+          toPNG: () => {
+            throw new Error('encode failed');
+          },
+        };
+        mainWindow.window = { capturePage: sinon.stub().resolves(image) } as unknown as BrowserWindow;
+        holdTextWrites();
+        const write = sinon.stub(clipboard, 'write').resolves();
+
+        ipcMain.emit('desktop_set_clipboard_text', {}, 'pending');
+        const copied = invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+        await tick();
+        await releaseWrites();
+        await copied;
+
+        assert.isFalse(unhandled.called, 'conversion failure was not handled');
+        assert.isFalse(write.called);
+      } finally {
+        process.off('unhandledRejection', unhandled);
+      }
+    });
+
+    // a synchronous throw (e.g. a destroyed window) must still resolve the
+    // handler, or the copy-plot dialog waiting on it never closes
+    it('desktop_copy_page_region_to_clipboard resolves when capture throws synchronously', async () => {
+      mainWindow.window = {
+        capturePage: () => {
+          throw new Error('Object has been destroyed');
+        },
+      } as unknown as BrowserWindow;
+      const write = sinon.stub(clipboard, 'write').resolves();
+
+      await invoke('desktop_copy_page_region_to_clipboard', 0, 0, 2, 2);
+      assert.isFalse(write.called);
+    });
+
+    it('desktop_clean_clipboard waits for a pending write', async () => {
+      holdTextWrites();
+      const clean = sinon.stub(desktop, 'cleanClipboard');
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'pending');
+      ipcMain.emit('desktop_clean_clipboard', {}, false);
+      await tick();
+      assert.isFalse(clean.called, 'cleaned before the pending write finished');
+
+      await releaseWrites();
+      assert.isTrue(clean.calledOnceWith(false));
+    });
+
+    it('desktop_clipboard_paste waits for a pending write', async () => {
+      let contents = 'old';
+      let pasted: string | undefined;
+      holdTextWrites((text) => (contents = text));
+      const target = {
+        isDestroyed: sinon.stub().returns(false),
+        paste: sinon.stub().callsFake(() => (pasted = contents)),
+      };
+      sinon.stub(webContents, 'getFocusedWebContents').returns(target as unknown as Electron.WebContents);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      ipcMain.emit('desktop_clipboard_paste', {});
+      await tick();
+      assert.isFalse(target.paste.called, 'pasted before the write finished');
+
+      await releaseWrites();
+      assert.equal(pasted, 'new');
+    });
+
+    // the window can close while the write is pending; pasting into its
+    // destroyed WebContents would throw from a promise nothing awaits
+    it('desktop_clipboard_paste skips a target destroyed during a pending write', async () => {
+      holdTextWrites();
+      const target = { isDestroyed: sinon.stub().returns(false), paste: sinon.stub() };
+      sinon.stub(webContents, 'getFocusedWebContents').returns(target as unknown as Electron.WebContents);
+
+      ipcMain.emit('desktop_set_clipboard_text', {}, 'new');
+      ipcMain.emit('desktop_clipboard_paste', {});
+      await tick();
+      assert.lengthOf(heldWrites, 1, 'write never started');
+      target.isDestroyed.returns(true);
+      await releaseWrites();
+
+      assert.isFalse(target.paste.called);
+    });
+
+    // file names that need percent-encoding in a URI must come back as the
+    // plain filesystem paths
+    it('desktop_get_clipboard_uris returns the paths of copied files', async () => {
+      const files = ['plain.txt', 'with space.txt', 'café.txt'].map((name) => path.join(tempDir, name));
+      files.forEach((file) => writeFileSync(file, ''));
+      const uris = files.map((file) => pathToFileURL(file).href);
+      await clipboard.write([new ClipboardItem({ 'text/uri-list': uris.join('\r\n') })]);
+
+      const expected = process.platform === 'win32' ? files.map((file) => file.replace(/\\/g, '/')) : files;
+      // macOS hands back file names in decomposed Unicode (NFD); the file
+      // system treats both forms as the same file
+      const actual = (await invoke('desktop_get_clipboard_uris')) as string[];
+      assert.deepEqual(
+        actual.map((file) => file.normalize('NFC')),
+        expected.map((file) => file.normalize('NFC')),
+      );
+      actual.forEach((file) => assert.isTrue(existsSync(file), `${file} does not exist`));
+    });
+
+    it('desktop_get_clipboard_uris drops entries that are not valid file URIs', async () => {
+      // an encoded separator is rejected by fileURLToPath on every platform
+      const valid = pathToFileURL(path.join(tempDir, 'kept.txt')).href;
+      const entries = ['file:///a%2Fb', 'https://example.com/plot.png', '# comment', valid];
+      const item = new ClipboardItem({ 'text/uri-list': entries.join('\r\n') });
+      sinon.stub(clipboard, 'read').resolves([item]);
+
+      const expected = path.join(tempDir, 'kept.txt');
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), [
+        process.platform === 'win32' ? expected.replace(/\\/g, '/') : expected,
+      ]);
+    });
+
+    // the renderer never calls back on a rejected IPC call, so every failed
+    // read has to come back as an empty result instead
+    it('desktop_get_clipboard_text treats a failed read as empty', async () => {
+      sinon.stub(clipboard, 'readText').rejects(new Error('clipboard unavailable'));
+      assert.equal(await invoke('desktop_get_clipboard_text'), '');
+    });
+
+    it('desktop_get_global_mouse_selection treats a failed read as empty', async function () {
+      if (process.platform !== 'linux') {
+        this.skip();
+      }
+      sinon.stub(clipboard.selection, 'readText').rejects(new Error('selection unavailable'));
+      assert.equal(await invoke('desktop_get_global_mouse_selection'), '');
+    });
+
+    it('desktop_get_clipboard_uris and _image treat a failed payload decode as empty', async () => {
+      const failingBlob = {
+        size: 1,
+        text: sinon.stub().rejects(new Error('decode failed')),
+        arrayBuffer: sinon.stub().rejects(new Error('decode failed')),
+      };
+      const item = { types: ['text/uri-list', 'image/png'], getType: sinon.stub().resolves(failingBlob) };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), []);
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
+      assert.isTrue(failingBlob.text.called);
+      assert.isTrue(failingBlob.arrayBuffer.called);
+    });
+
+    // Electron resolves an empty Blob when it can't convert the clipboard's
+    // bitmap to PNG; saving it would hand the visual editor a broken image
+    it('desktop_get_clipboard_image treats an empty image as no image', async () => {
+      const item = { types: ['image/png'], getType: sinon.stub().resolves(new Blob([])) };
+      sinon.stub(clipboard, 'read').resolves([item as unknown as ClipboardItem]);
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
+    });
+
+    it('desktop_get_clipboard_uris returns nothing without a URI list', async () => {
+      await clipboard.writeText('not a uri list');
+      assert.deepEqual(await invoke('desktop_get_clipboard_uris'), []);
+    });
+
+    it('desktop_get_clipboard_image saves a clipboard image to a PNG file', async () => {
+      const application = new Application();
+      application.setScratchTempDir(new FilePath(tempDir));
+      setApplication(application);
+      try {
+        const bitmap = Buffer.alloc(2 * 3 * 4, 0xff);
+        const png = nativeImage.createFromBitmap(bitmap, { width: 2, height: 3 }).toPNG();
+        await clipboard.write([new ClipboardItem({ 'image/png': new Blob([new Uint8Array(png)]) })]);
+
+        const pngPath = (await invoke('desktop_get_clipboard_image')) as string;
+        assert.isTrue(pngPath.startsWith(tempDir), `${pngPath} is not under ${tempDir}`);
+        assert.deepEqual(nativeImage.createFromPath(pngPath).getSize(), { width: 2, height: 3 });
+      } finally {
+        clearApplicationSingleton();
+      }
+    });
+
+    it('desktop_get_clipboard_image returns nothing without an image', async () => {
+      await clipboard.writeText('not an image');
+      assert.equal(await invoke('desktop_get_clipboard_image'), '');
     });
   });
 });

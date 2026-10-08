@@ -108,6 +108,15 @@
    clear = function() { .rs.clearUserPref("show_last_dot_value") }
 )
 
+# Show hidden objects in Environment pane
+#
+# Whether to show objects whose names begin with a dot in the Environment pane.
+.rs.uiPrefs$showHiddenObjects <- list(
+   get = function() { .rs.getUserPref("show_hidden_objects") },
+   set = function(value) { .rs.setUserPref("show_hidden_objects", value) },
+   clear = function() { .rs.clearUserPref("show_hidden_objects") }
+)
+
 # Line ending format
 #
 # The line ending format to use when saving files.
@@ -339,8 +348,8 @@
 
 # Load Vim keybindings from a vimrc file
 #
-# Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim
-# editor keybindings are enabled.
+# Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or
+# $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
 .rs.uiPrefs$vimLoadVimrc <- list(
    get = function() { .rs.getUserPref("vim_load_vimrc") },
    set = function(value) { .rs.setUserPref("vim_load_vimrc", value) },
@@ -2027,16 +2036,6 @@
    get = function() { .rs.getUserPref("enable_splash_screen") },
    set = function(value) { .rs.setUserPref("enable_splash_screen", value) },
    clear = function() { .rs.clearUserPref("enable_splash_screen") }
-)
-
-# Show the What's New window automatically after updating RStudio
-#
-# Whether to automatically show the What's New window after updating to a new
-# version of RStudio Desktop.
-.rs.uiPrefs$showWhatsNew <- list(
-   get = function() { .rs.getUserPref("show_whats_new") },
-   set = function(value) { .rs.setUserPref("show_whats_new", value) },
-   clear = function() { .rs.clearUserPref("show_whats_new") }
 )
 
 # 

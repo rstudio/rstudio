@@ -74,6 +74,9 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String templateContentMissing();
     String templateAtPathMissing(String templatePath);
     String errorWhileOpeningFile();
+    String vimFileNameNotSupported(String fileName);
+    String vimEditFileIsFolder(String path);
+    String vimEditFileNotCreated(String path);
     String openNotebookWarningMessage();
     String notebookOpenFailed();
     String notebookOpenFailedMessage(String errorMessage);

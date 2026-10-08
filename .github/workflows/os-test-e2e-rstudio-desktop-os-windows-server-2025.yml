@@ -197,7 +197,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: src/node/desktop/package-lock.json
 
@@ -742,6 +742,11 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-2025
     timeout-minutes: 120
+    # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
+    # deployment: false keeps each shard from recording a deployment on the PR.
+    environment:
+      name: e2e-playwright
+      deployment: false
     defaults:
       run:
         shell: pwsh
@@ -769,7 +774,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
@@ -1096,7 +1101,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 

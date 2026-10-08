@@ -2045,11 +2045,9 @@ Error fileExistsError(const FilePath& in_filePath, const ErrorLocation& in_locat
 
 bool isFileNotFoundError(const Error& in_error)
 {
-#ifdef _WIN32
-   return in_error == boost::system::windows_error::file_not_found;
-#else
-   return in_error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
-#endif
+   // Windows reports a missing file and a missing parent directory with
+   // different codes, and callers can't know which one they'll be handed
+   return isNotFoundError(in_error);
 }
 
 Error fileNotFoundError(const ErrorLocation& in_location)
@@ -2077,11 +2075,8 @@ Error fileNotFoundError(const FilePath& in_filePath, const ErrorLocation& in_loc
 
 bool isPathNotFoundError(const Error& in_error)
 {
-#ifdef _WIN32
-   return in_error == boost::system::windows_error::path_not_found;
-#else
-   return in_error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
-#endif
+   // see isFileNotFoundError()
+   return isNotFoundError(in_error);
 }
 
 Error pathNotFoundError(const ErrorLocation& in_location)

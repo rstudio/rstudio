@@ -79,6 +79,21 @@ describe('Utils', () => {
     app.commandLine.removeSwitch('use-gl');
     unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
   });
+  it('augmentCommandLineArguments leaves the Ozone platform alone', () => {
+    // Electron on Linux sets this switch itself, so compare against what it started with
+    const hadSwitch = app.commandLine.hasSwitch('ozone-platform');
+    const value = app.commandLine.getSwitchValue('ozone-platform');
+    setenv(
+      'RSTUDIO_CHROMIUM_ARGUMENTS',
+      '--ozone-platform=headless -ozone-platform=headless --OZONE-PLATFORM=headless --disable-gpu',
+    );
+    Utils.augmentCommandLineArguments();
+    assert.strictEqual(app.commandLine.hasSwitch('ozone-platform'), hadSwitch);
+    assert.strictEqual(app.commandLine.getSwitchValue('ozone-platform'), value);
+    assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
+    app.commandLine.removeSwitch('disable-gpu');
+    unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
+  });
   it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
     const envvar = 'RS_SHARED_SECRET';
     assert.equal(getenv(envvar).length, 0);
@@ -140,9 +155,7 @@ describe('Utils', () => {
   });
   it('parseFilter accepts a variety of delimiters between extensions', () => {
     const input = 'Images (*.png; *.xpm, *.jpg *.tiff)';
-    const expected: FileFilter[] = [
-      { name: 'Images', extensions: ['png', 'xpm', 'jpg', 'tiff'] },
-    ];
+    const expected: FileFilter[] = [{ name: 'Images', extensions: ['png', 'xpm', 'jpg', 'tiff'] }];
     const result = Utils.parseFilter(input);
     assert.deepEqual(expected, result);
   });

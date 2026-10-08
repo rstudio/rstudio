@@ -258,43 +258,52 @@ bool selectInstalledVersion(const FilePath& storageDir,
    return true;
 }
 
+FilePath selectedSlot(const FilePath& storageDir, const std::string& protocol)
+{
+   Selections selections = readSelections(storageDir);
+   Selections::const_iterator selection = selections.find(protocol);
+   if (selection == selections.end())
+      return FilePath();
+
+   // The selector is a file anyone with write access to the storage directory
+   // can edit, so its contents are a name to check, not a path. Without this a
+   // dot-prefixed entry would resolve a staging directory -- which verifies,
+   // being a complete tree, right up until its owner renames it away
+   // underneath the running backend -- and a traversal entry would hand back
+   // the versions directory itself, since completeChildPath() returns the
+   // parent when it rejects an escape.
+   if (!slots::isUsableSlotName(selection->second))
+   {
+      WLOG("Ignoring selection '{}' for protocol {} in {}: not a slot name",
+           selection->second,
+           protocol,
+           storageDir.getAbsolutePath());
+      return FilePath();
+   }
+
+   FilePath slotDir = slots::versionsDir(storageDir).completeChildPath(selection->second);
+
+   slots::SlotInfo info;
+   if (!slots::verifySlot(slotDir, &info) || info.protocol != protocol)
+   {
+      WLOG("Selected slot '{}' for protocol {} in {} is unusable",
+           selection->second,
+           protocol,
+           storageDir.getAbsolutePath());
+      return FilePath();
+   }
+
+   DLOG("Protocol {} resolves to selected slot {}", protocol, info.name);
+   return slotDir;
+}
+
 FilePath resolveSlot(const FilePath& storageDir,
                      const std::string& protocol,
                      SelectorRepair repair)
 {
-   FilePath slotsDir = slots::versionsDir(storageDir);
-
-   Selections selections = readSelections(storageDir);
-   Selections::const_iterator selection = selections.find(protocol);
-   if (selection != selections.end())
-   {
-      // The selector is a file in the user's home, so its contents are a
-      // suggestion, not a path. Without this a dot-prefixed entry would
-      // resolve a staging directory -- which verifies, being a complete tree,
-      // right up until its owner renames it away underneath the running
-      // backend -- and a traversal entry would hand back the versions
-      // directory itself, since completeChildPath() returns the parent when it
-      // rejects an escape.
-      if (!slots::isUsableSlotName(selection->second))
-      {
-         WLOG("Ignoring selection '{}' for protocol {}: not a slot name",
-              selection->second, protocol);
-      }
-      else
-      {
-         FilePath slotDir = slotsDir.completeChildPath(selection->second);
-
-         slots::SlotInfo info;
-         if (slots::verifySlot(slotDir, &info) && info.protocol == protocol)
-         {
-            DLOG("Protocol {} resolves to selected slot {}", protocol, info.name);
-            return slotDir;
-         }
-
-         WLOG("Selected slot '{}' for protocol {} is unusable; looking for another",
-              selection->second, protocol);
-      }
-   }
+   FilePath selected = selectedSlot(storageDir, protocol);
+   if (!selected.isEmpty())
+      return selected;
 
    slots::SlotInfo fallback;
    if (!bestSlotForProtocol(storageDir, protocol, &fallback))

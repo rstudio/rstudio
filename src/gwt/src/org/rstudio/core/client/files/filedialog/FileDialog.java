@@ -211,11 +211,12 @@ public abstract class FileDialog extends FileSystemDialog
    }
 
    @Override
-   public void onNavigated()
+   protected void onBrowserNavigated()
    {
+      super.onBrowserNavigated();
+
       // re-enable before the deferred accept, which may cd() and disable again
       browser_.setFilenameEnabled(true);
-      super.onNavigated();
    }
 
    @Override

@@ -360,12 +360,20 @@ if(NOT RSTUDIO_USE_SYSTEM_SOCI)
    include_directories(BEFORE SYSTEM ${SOCI_INCLUDE_BUILD_DIR})
 endif()
 
+# PostgreSQL is only used by Workbench server components, so builds without
+# them (e.g. packaged Desktop Pro) use SQLite alone and don't link libpq
+if(RSTUDIO_PRO_BUILD AND RSTUDIO_SERVER)
+   set(RSTUDIO_USE_POSTGRESQL TRUE)
+else()
+   set(RSTUDIO_USE_POSTGRESQL FALSE)
+endif()
+
 # database library includes
-if(RSTUDIO_PRO_BUILD AND APPLE)
+if(RSTUDIO_USE_POSTGRESQL AND APPLE)
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include")
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include/libpq")
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/libpq/include")
-elseif(RSTUDIO_PRO_BUILD AND UNIX)
+elseif(RSTUDIO_USE_POSTGRESQL AND UNIX)
    include_directories(SYSTEM "/usr/include/postgresql")
    include_directories(SYSTEM "/usr/include/pgsql")
 elseif(WIN32)
@@ -377,7 +385,7 @@ if(UNIX)
    if(NOT APPLE AND RSTUDIO_USE_SYSTEM_SOCI)
       find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" REQUIRED)
       find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" REQUIRED)
-      if(RSTUDIO_PRO_BUILD)
+      if(RSTUDIO_USE_POSTGRESQL)
          find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" REQUIRED)
       endif()
       get_filename_component(SOCI_LIBRARY_DIR "${SOCI_CORE_LIB}" DIRECTORY)
@@ -385,7 +393,7 @@ if(UNIX)
       set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
       find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH REQUIRED)
       find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH REQUIRED)
-      if(RSTUDIO_PRO_BUILD)
+      if(RSTUDIO_USE_POSTGRESQL)
          find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH REQUIRED)
       endif()
    endif()
@@ -395,13 +403,16 @@ if(UNIX)
    find_library(SQLITE_LIB "sqlite3" REQUIRED)
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
 
-   if(RSTUDIO_PRO_BUILD)
+   # use the flag rather than the found paths, which can be left in the cache
+   # when an existing server build directory is reconfigured for desktop
+   set(SOCI_POSTGRESQL_LIBRARIES "")
+   if(RSTUDIO_USE_POSTGRESQL)
       find_library(PQ_LIB "pq" HINTS ${HOMEBREW_PREFIX}/opt/libpq/lib REQUIRED)
       get_filename_component(PQ_LIB "${PQ_LIB}" REALPATH)
+      set(SOCI_POSTGRESQL_LIBRARIES ${SOCI_POSTGRESQL_LIB} ${PQ_LIB})
    endif()
 
-   list(APPEND SOCI_DEPENDENCIES ${SQLITE_LIB} ${PQ_LIB})
-   list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SOCI_POSTGRESQL_LIB} ${SQLITE_LIB} ${PQ_LIB} ${SOCI_CORE_LIB} ${DL_LIB})
+   list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SQLITE_LIB} ${SOCI_POSTGRESQL_LIBRARIES} ${SOCI_CORE_LIB} ${DL_LIB})
 else()
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/${SOCI_ARCH}/lib")
    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -432,14 +443,27 @@ message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
 set(RSTUDIO_HAS_SOCI 1)
 add_definitions(-DRSTUDIO_HAS_SOCI)
 
-if(SOCI_POSTGRESQL_LIB)
+if(RSTUDIO_USE_POSTGRESQL)
    add_definitions(-DRSTUDIO_HAS_SOCI_POSTGRESQL)
 endif()
 
 if(UNIX)
 
    find_package(OpenSSL REQUIRED)
-   include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+
+   # Add the headers as a normal (non-SYSTEM) include placed BEFORE the others,
+   # for the same reason as the bundled {fmt} headers below: on macOS, clang
+   # searches the driver-added /usr/local/include ahead of every -isystem
+   # directory, so an OpenSSL installed under the /usr/local prefix (e.g. an
+   # x86_64 Homebrew on Apple Silicon) would otherwise shadow the headers of
+   # the OpenSSL we actually link against.
+   include_directories(BEFORE "${OPENSSL_INCLUDE_DIR}")
+
+   # Homebrew's unversioned 'openssl' tracks the newest major release; keep
+   # both slices of a universal macOS package on OpenSSL 3
+   if(APPLE AND RSTUDIO_PACKAGE_BUILD AND NOT OPENSSL_VERSION MATCHES "^3\\.")
+      message(FATAL_ERROR "macOS package builds require OpenSSL 3.x, but found ${OPENSSL_VERSION} at '${OPENSSL_ROOT_DIR}'. Install it with '${HOMEBREW_PREFIX}/bin/brew install openssl@3' and reconfigure.")
+   endif()
 
 endif()
 
@@ -458,7 +482,7 @@ if(WIN32)
         set(OPENSSL_BITNESS "64")
      endif()
 
-     set(OPENSSL_NAME "openssl-3.1.4")
+     set(OPENSSL_NAME "openssl-3.5.9")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}/lib")

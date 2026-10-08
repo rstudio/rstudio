@@ -113,6 +113,8 @@ export namespace Ace {
   // The runtime editor instance. Hung off the .ace_editor DOM element via
   // the .env.editor backref (see AceEditorElement below).
   export interface Editor {
+    /** The .ace_editor root element. */
+    container: HTMLElement;
     /** Per-editor command table; Ace's defaults are shared until a clone is installed. */
     commands: { byName: Record<string, { scrollIntoView?: string; [key: string]: unknown }> };
     renderer: {

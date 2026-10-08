@@ -19,6 +19,7 @@ import {
   nativeTheme,
   BrowserWindow,
   clipboard,
+  ClipboardItem,
   ipcMain,
   Rectangle,
   screen,
@@ -33,7 +34,7 @@ import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform, release } from 'os';
 import i18next from 'i18next';
 import path, { dirname } from 'path';
-import { pathToFileURL } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
 import { normalizeSeparatorsNative } from '../ui/utils';
 import { logger } from '../core/logger';
@@ -42,6 +43,7 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
+import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
 import {
   detectREnvironmentAsync,
   findDefault32Bit,
@@ -74,8 +76,6 @@ import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
 import { showPersistentSplashScreen } from './splash-screen';
 import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
-import { showWhatsNewWindow } from './whats-new-window';
-import { toReleaseSlug, isValidSlug, resolveReleaseName, resolveWhatsNewContentPath } from './whats-new-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -359,52 +359,60 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_clipboard_paste', () => {
-      focusedWebContents()?.paste();
+      // capture the target now; focus may move while a write is pending
+      const target = focusedWebContents();
+      clipboardWritesSettled()
+        .then(() => {
+          if (target && !target.isDestroyed()) {
+            target.paste();
+          }
+        })
+        .catch((error: unknown) => logger().logError(error));
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      clipboard.writeText(text, 'clipboard');
+      queueClipboardWrite(async () => clipboard.writeText(text));
     });
 
-    ipcMain.handle('desktop_get_clipboard_text', () => {
-      const text = clipboard.readText('clipboard');
-      return text;
+    ipcMain.handle('desktop_get_clipboard_text', async () => {
+      return readClipboardText();
     });
 
-    ipcMain.handle('desktop_get_clipboard_uris', () => {
+    ipcMain.handle('desktop_get_clipboard_uris', async () => {
       // if we don't have a URI list, nothing to do
-      if (!clipboard.has('text/uri-list')) {
+      const uriList = await readClipboardType('text/uri-list', async (blob) => blob.text());
+      if (uriList === undefined) {
         return [];
       }
 
-      // return uri list as array
-      const data = clipboard.read('text/uri-list');
-      const parts = data.split('\n');
+      // return uri list as array; entries are CRLF-separated per RFC 2483
+      const parts = uriList.split(/\r?\n/).filter((x) => x.length > 0);
 
-      // strip off file prefix, if any
-      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
-      const trimmed = parts.map((x) => {
-        if (x.startsWith(filePrefix)) {
-          x = x.substring(filePrefix.length);
+      // Electron only puts percent-encoded file:// URIs here; decode them to
+      // filesystem paths, with the forward slashes the visual editor expects
+      // on Windows, and drop anything that isn't a valid file URI
+      const paths: string[] = [];
+      for (const part of parts) {
+        try {
+          const filePath = fileURLToPath(part);
+          paths.push(process.platform === 'win32' ? filePath.replace(/\\/g, '/') : filePath);
+        } catch (error: unknown) {
+          logger().logError(error);
         }
-        return x;
-      });
+      }
 
-      return trimmed;
+      return paths;
     });
 
     // Check for an image on the clipboard; if one exists,
     // write it to file in the temporary directory and
     // return the path to that file.
-    ipcMain.handle('desktop_get_clipboard_image', () => {
+    ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      if (!clipboard.availableFormats().includes('image/png')) {
+      const pngData = await readClipboardType('image/png', async (blob) => Buffer.from(await blob.arrayBuffer()));
+      if (!pngData) {
         return '';
       }
-
-      // read image from clipboard
-      const image = clipboard.readImage('clipboard');
-      const pngData = image.toPNG();
 
       const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
       const tempPathName = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard');
@@ -421,13 +429,16 @@ export class GwtCallback extends EventEmitter {
       return pngPath;
     });
 
+    // The selection clipboard exists only on Linux; clipboard.selection is
+    // undefined elsewhere.
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      clipboard.writeText(selection, 'selection');
+      if (process.platform === 'linux') {
+        queueClipboardWrite(async () => clipboard.selection.writeText(selection));
+      }
     });
 
-    ipcMain.handle('desktop_get_global_mouse_selection', () => {
-      const selection = clipboard.readText('selection');
-      return selection;
+    ipcMain.handle('desktop_get_global_mouse_selection', async () => {
+      return process.platform === 'linux' ? readClipboardText(clipboard.selection) : '';
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
@@ -648,13 +659,26 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       async (_event, x: number, y: number, width: number, height: number) => {
-        try {
-          const rect: Rectangle = { x, y, width, height };
-          const image = await this.mainWindow.window.capturePage(rect);
-          clipboard.writeImage(image);
-        } catch (e: unknown) {
-          logger().logError(e);
-        }
+        // capture now, so the image is what was on screen when Copy was
+        // requested, but queue the write now too, so a copy made while the
+        // capture is pending lands after this image rather than under it;
+        // capturePage() can also throw synchronously (destroyed window), and
+        // the handler must still resolve or the copy dialog never closes
+        const rect: Rectangle = { x, y, width, height };
+        const capture = Promise.resolve()
+          .then(async () => this.mainWindow.window.capturePage(rect))
+          .then((image) => new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }))
+          .catch((error: unknown) => {
+            logger().logError(error);
+            return undefined;
+          });
+        queueClipboardWrite(async () => {
+          const png = await capture;
+          if (png) {
+            await clipboard.write([new ClipboardItem({ 'image/png': png })]);
+          }
+        });
+        await clipboardWritesSettled();
       },
     );
 
@@ -786,8 +810,10 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
+    // cleanClipboard rewrites the pasteboard, so it takes its turn with the
+    // other clipboard writes instead of interleaving with a pending one
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
-      desktop.cleanClipboard(stripHtml);
+      queueClipboardWrite(() => desktop.cleanClipboard(stripHtml));
     });
 
     ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
@@ -913,10 +939,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_enable_splash_screen', (_event, enable) => {
       ElectronDesktopOptions().setEnableSplashScreen(enable);
-    });
-
-    ipcMain.on('desktop_set_show_whats_new', (_event, enable) => {
-      ElectronDesktopOptions().setShowWhatsNew(enable);
     });
 
     ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
@@ -1164,39 +1186,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_show_splash_screen', () => {
       showPersistentSplashScreen();
-    });
-
-    ipcMain.on('desktop_show_whats_new', () => {
-      const info = buildInfo();
-      const releaseName = resolveReleaseName(info.RSTUDIO_RELEASE_NAME, findRepoRoot());
-      const slug = toReleaseSlug(releaseName);
-
-      if (!isValidSlug(slug) || !resolveWhatsNewContentPath(slug)) {
-        const msgBoxOptions = {
-          type: 'info' as const,
-          message: "What's New",
-          detail: "What's New information is not available.",
-          buttons: ['OK'],
-        };
-        const focusedWindow = this.dialogParentWindow();
-        if (focusedWindow) {
-          void appState().modalTracker.trackElectronModalAsync(async () =>
-            dialog.showMessageBox(focusedWindow, msgBoxOptions),
-          );
-        } else {
-          void appState().modalTracker.trackElectronModalAsync(async () =>
-            dialog.showMessageBox(msgBoxOptions),
-          );
-        }
-        return;
-      }
-
-      showWhatsNewWindow({
-        releaseSlug: slug,
-        releaseName: releaseName,
-        version: info.RSTUDIO_VERSION.split(/[-+]/)[0],
-        parent: this.mainWindow.window,
-      });
     });
   }
 

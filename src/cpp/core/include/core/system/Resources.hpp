@@ -17,6 +17,7 @@
 #define CORE_SYSTEM_RESOURCES_HPP
 
 #include <string>
+#include <vector>
 #include <sys/types.h>
 
 namespace rstudio {
@@ -94,14 +95,57 @@ enum MemoryUsageMode {
    // Force memory usage to be read from the cgroup.
    MemoryUsageModeCgroup,
 
-   // Force memory usage to be read from the node's /proc/meminfo. Useful when
-   // cgroup memory includes file cache that does not reflect actual session use.
+   // Force memory usage to be read from the node's /proc/meminfo instead of
+   // the cgroup.
    MemoryUsageModeMemInfo
 };
 
 // Sets the mode used to compute and report memory usage. Call once at startup,
 // before the memory providers are first used.
 void setMemoryUsageMode(MemoryUsageMode mode);
+
+// Computes cgroup memory usage excluding reclaimable page cache: currentKb
+// (memory.current on v2, memory.usage_in_bytes on v1) minus the active and
+// inactive file LRU pages from the contents of the cgroup's memory.stat.
+// Returns an error if memory.stat doesn't contain the needed keys.
+Error computeCgroupMemoryUsedKb(long currentKb, const std::string& memoryStat, bool isV2, long *pUsedKb);
+
+// Reads a procfs file in full. This uses read(2) rather than a stream so that
+// a failed read is reported with its cause, and can't be mistaken for a file
+// that has more to give.
+Error readProcFile(const std::string& procPath, std::string* pContents);
+
+// Reads what remains of a procfs file from an open descriptor. The kernel
+// generates these files as they are read, so a read can fail after the open
+// succeeded: /proc/<pid>/status fails with ESRCH once the process is reaped.
+// Returns an error for contents of more than 1MB, which no procfs file read
+// here comes near, rather than read without end.
+Error readProcFileDescriptor(int fd, std::string* pContents);
+
+// Looks up the values of "Key: value" lines, as found in /proc/meminfo and
+// /proc/<pid>/status. Returns an error unless every key is found; pValues
+// then holds one value per key, in the order of the keys. Where a key is
+// repeated, its first line is the one that counts.
+Error parseProcFileKeys(const std::string& contents, const std::vector<std::string>& keys, std::vector<long>* pValues);
+
+// The parent and the size (RSS + swap, in kB) of a process.
+struct ProcessStatus
+{
+   pid_t parentPid = -1;
+   long sizeKb = 0;
+};
+
+// Parses the parent and the size of a process from the contents of its
+// /proc/<pid>/status. A memory line that is missing counts as 0: processes
+// without an address space (zombies, kernel threads) have none. Returns an
+// error if there is no parent, or a value can't be read. With a memory line
+// that can't be read, the parent is still given, if it could be read.
+Error parseProcessStatus(const std::string& contents, ProcessStatus* pStatus);
+
+// Returns the path of the memory cgroup named by the contents of
+// /proc/<pid>/cgroup. Returns an empty string if there is none, or if it is
+// shared with other users.
+std::string parseMemoryCgroup(const std::string& contents, uid_t uid);
 
 // Sets the memory limit. Must have privileges and provide the uid of the ultimate process owner
 Error setProcessMemoryLimit(long memHighKb, long memMaxKb, uid_t uid, MemoryProvider *pProvider);

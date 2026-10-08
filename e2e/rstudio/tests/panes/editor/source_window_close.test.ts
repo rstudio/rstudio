@@ -1,0 +1,92 @@
+// Closing a popped-out source window releases its documents (#18987).
+//
+// A document shown in its own window records that window's id, and the main
+// window reopens every recorded window when it loads. The record is dropped
+// (and the document closed) once the satellite tells the main window that it
+// is going away. When that notification was lost, a window closed with its own
+// close button came back on every reload, and closed windows piled up.
+
+import { test, expect } from '@fixtures/rstudio.fixture';
+import type { Page } from 'playwright';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { useSuiteSandbox } from '@utils/sandbox';
+import { TIMEOUTS } from '@utils/constants';
+import { openFile, seedSandboxFile } from '@utils/files';
+import { executeCommand, resetSourcePaneState } from '@utils/commands';
+import { SOURCE_WINDOW_URL, closeSourceWindows, expectNoSourceWindowAfterReload } from '@utils/source-windows';
+
+const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-selected']";
+
+async function popOutActiveDoc(page: Page, caption: string): Promise<Page> {
+  await expect(page.locator(SELECTED_DOC_TAB)).toContainText(caption, {
+    timeout: TIMEOUTS.fileOpen,
+  });
+
+  const detached = page.context().waitForEvent('page');
+  await executeCommand(page, 'popoutDoc');
+  const satellite = await detached;
+  await satellite.waitForURL(SOURCE_WINDOW_URL);
+
+  await expect(satellite.locator(SELECTED_DOC_TAB)).toContainText(caption, {
+    timeout: TIMEOUTS.fileOpen,
+  });
+  return satellite;
+}
+
+// Close the window from inside the page, as its close button does, so the
+// page runs its own teardown. Playwright's page.close() skips that by default.
+async function closeLikeUser(satellite: Page): Promise<void> {
+  const closed = satellite.waitForEvent('close');
+  await satellite.evaluate(() => {
+    setTimeout(() => window.close(), 0);
+  });
+  await closed;
+}
+
+// The main window closes the window's documents once it hears the window is
+// gone; on a build that loses the notification this RPC is never sent.
+async function closeAndExpectDocumentReleased(page: Page, satellite: Page): Promise<void> {
+  const released = page.waitForResponse(
+    (response) => response.url().includes('/rpc/close_document'),
+    { timeout: TIMEOUTS.consoleReady },
+  );
+  await closeLikeUser(satellite);
+
+  // A rejected RPC still answers HTTP 200, with an "error" member.
+  const response = await released;
+  expect(await response.text()).not.toContain('"error"');
+}
+
+test.describe('Closing a popped-out source window (#18987)', () => {
+  const sandbox = useSuiteSandbox();
+
+  test.afterEach(async ({ rstudioPage: page }) => {
+    // A failing run leaves (or reopens) the window; don't hand it to the next test.
+    await closeSourceWindows(page);
+    await resetSourcePaneState(page);
+  });
+
+  test('a closed Data Viewer window does not come back on reload', async ({ rstudioPage: page }) => {
+    const consoleActions = new ConsolePaneActions(page);
+    await consoleActions.executeInConsole(
+      'source_window_close_df <- data.frame(a = 1); View(source_window_close_df)',
+    );
+
+    try {
+      const satellite = await popOutActiveDoc(page, 'source_window_close_df');
+      await closeAndExpectDocumentReleased(page, satellite);
+      await expectNoSourceWindowAfterReload(page);
+    } finally {
+      await consoleActions.executeInConsole('rm(source_window_close_df)');
+    }
+  });
+
+  test('a closed editor window does not come back on reload', async ({ rstudioPage: page }) => {
+    const fileName = 'source_window_close.R';
+    await openFile(page, await seedSandboxFile(page, sandbox.dir, fileName, '# closed\n'));
+
+    const satellite = await popOutActiveDoc(page, fileName);
+    await closeAndExpectDocumentReleased(page, satellite);
+    await expectNoSourceWindowAfterReload(page);
+  });
+});

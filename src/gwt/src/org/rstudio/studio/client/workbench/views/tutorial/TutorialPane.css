@@ -14,6 +14,8 @@
 
 @external rstudio-tutorials;
 @external rstudio-tutorials-section;
+@external rstudio-tutorials-entry;
+@external rstudio-tutorials-filter-empty;
 @external rstudio-tutorials-container;
 @external rstudio-tutorials-package;
 @external rstudio-tutorials-label-container;
@@ -156,6 +158,12 @@
    font-style: oblique;
 }
 
+.rstudio-tutorials-filter-empty {
+   margin-top: 12px;
+   padding: 4px;
+   font-style: italic;
+}
+
 /* Light styles */
 
 .rstudio-themes-light-menus.rstudio-tutorials {
@@ -178,6 +186,10 @@
 }
 
 .rstudio-themes-light-menus .rstudio-tutorials-sublabel {
+   color: rgb(116, 116, 116);
+}
+
+.rstudio-themes-light-menus .rstudio-tutorials-filter-empty {
    color: rgb(116, 116, 116);
 }
 
@@ -223,5 +235,9 @@
 }
 
 .rstudio-themes-dark-menus .rstudio-tutorials-description-empty {
+   color: rgb(172, 172, 172);
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-filter-empty {
    color: rgb(172, 172, 172);
 }

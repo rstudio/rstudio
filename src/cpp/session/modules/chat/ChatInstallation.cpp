@@ -133,36 +133,34 @@ core::FilePath positAiStorageDir()
    return core::system::xdg::userDataDir().completePath(kPositAiStorageDirName);
 }
 
-core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePath)
+core::FilePath systemStorageDir(const core::FilePath& resourcePath)
 {
-   // Mirrors the Copilot Language Server layout: the directory is installed
-   // beside the session binary, except in the macOS app bundle where it sits
-   // next to bin/ rather than inside it. The bin candidate is verified rather
-   // than merely tested for existence, so a partial directory left there does
-   // not mask a usable bundle at the other location.
-   core::FilePath binPath =
-      resourcePath.completePath("bin").completePath(kBundledPositAiDirName);
-   if (verifyInstallDir(binPath))
-      return binPath;
-
-   return resourcePath.completePath(kBundledPositAiDirName);
+   return resourcePath.completePath("bin").completePath(kSystemPositAiDirName);
 }
 
-core::FilePath bundledPositAssistantInstallPath()
+core::FilePath systemStorageDir()
 {
-   return bundledPositAssistantInstallPath(options().resourcePath());
+   return systemStorageDir(options().resourcePath());
 }
 
 InstallSearchPaths positAssistantSearchPaths()
 {
    InstallSearchPaths paths;
    paths.userStorageDir = positAiStorageDir();
-   paths.systemStorageDir =
-      core::system::xdg::systemConfigDir().completePath(kPositAiStorageDirName);
-   paths.pinnedPath = options().positAssistantPath();
-   paths.bundledPath = bundledPositAssistantInstallPath();
+   paths.systemStorageDir = systemStorageDir();
    paths.userInstallEnabled =
       module_context::isPositAssistantInstallationEnabledByAdmin();
+
+   // The option shipped in 2026.09 and is still accepted, so an rsession.conf
+   // that sets it keeps parsing; nothing reads it any more.
+   if (!options().deprecatedPositAssistantPath().isEmpty() && RS_ONCE())
+   {
+      WLOG("Ignoring the posit-assistant-path session option, which is no longer "
+           "supported: administrator-installed Posit Assistant versions are read "
+           "from {}",
+           slots::versionsDir(paths.systemStorageDir).getAbsolutePath());
+   }
+
    return paths;
 }
 
@@ -220,29 +218,33 @@ core::FilePath userSlot(const InstallSearchPaths& paths, selector::SelectorRepai
    return selector::resolveSlot(paths.userStorageDir, kProtocolVersion, repair);
 }
 
-// The administrator's slots, chosen the same way through the administrator's
-// selected.json -- which is theirs, so a stale entry is resolved around and
-// never rewritten.
-core::FilePath systemSlot(const InstallSearchPaths& paths)
+// The administrator's selected slot. A missing or stale entry falls back to
+// the bundled copy rather than to a version they never selected, and is never
+// rewritten.
+core::FilePath adminSlot(const InstallSearchPaths& paths)
 {
-   return selector::resolveSlot(paths.systemStorageDir,
-                                kProtocolVersion,
-                                selector::SelectorRepair::Disabled);
+   core::FilePath slot = selector::selectedSlot(paths.systemStorageDir, kProtocolVersion);
+   if (!slot.isEmpty())
+      return slot;
+
+   // Clearing the selection is how an administrator returns sessions to the
+   // bundled copy, so slots left beside it are expected and not worth a
+   // warning -- but without this line a log would not show they were skipped.
+   std::vector<slots::SlotInfo> unselected =
+      slots::verifiedSlots(slots::versionsDir(paths.systemStorageDir), kProtocolVersion);
+   if (!unselected.empty())
+   {
+      DLOG("Not using administrator-installed slots for protocol {}: {} selects none",
+           kProtocolVersion,
+           paths.systemStorageDir.completeChildPath(kSelectorFileName).getAbsolutePath());
+   }
+
+   return core::FilePath();
 }
 
-// The administrator's unversioned directory: what deployments have today.
-core::FilePath legacySystemInstall(const InstallSearchPaths& paths)
-{
-   return paths.systemStorageDir.completeChildPath(kLegacyInstallDirName);
-}
-
-// The valid installations that compete by version, best first. Ties keep the
-// order collected here: user, then the administrator's slots, then the
-// administrator's legacy directory, then bundled. A pinned
-// posit-assistant-path never competes -- it is used outright or ends the
-// search -- so the read-only sources are left out when the path is pinned (a
-// pinned path that holds no installation must not fall back to the shipped
-// version).
+// Every installation that competes for this session, best first. Ties keep
+// the order collected here: the user's slot, the administrator's slot, then
+// the bundled copy.
 std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
                                                bool includeUserInstall)
 {
@@ -255,22 +257,23 @@ std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
          candidates.push_back(describeInstallation(slot, "user-level"));
    }
 
-   if (paths.pinnedPath.isEmpty())
-   {
-      core::FilePath slot = systemSlot(paths);
-      if (!slot.isEmpty())
-         candidates.push_back(describeInstallation(slot, "system-wide"));
+   core::FilePath systemSlot = adminSlot(paths);
+   if (!systemSlot.isEmpty())
+      candidates.push_back(describeInstallation(systemSlot, "administrator-installed"));
 
-      core::FilePath legacy = legacySystemInstall(paths);
-      if (verifyInstallDir(legacy))
-         candidates.push_back(describeInstallation(legacy, "system-wide (legacy)"));
-
-      if (verifyInstallDir(paths.bundledPath))
-         candidates.push_back(describeInstallation(paths.bundledPath, "bundled"));
-   }
+   if (verifyInstallDir(paths.systemStorageDir))
+      candidates.push_back(describeInstallation(paths.systemStorageDir, "bundled"));
 
    std::stable_sort(candidates.begin(), candidates.end(), outranks);
    return candidates;
+}
+
+void logChosenCandidate(const InstallCandidate& candidate)
+{
+   DLOG("Using {} AI installation (version {}): {}",
+        candidate.tier,
+        candidate.versionText.empty() ? "unknown" : candidate.versionText,
+        candidate.path.getAbsolutePath());
 }
 
 } // anonymous namespace
@@ -294,48 +297,14 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
            paths.userStorageDir.getAbsolutePath());
    }
 
-   // posit-assistant-path is the administrator's explicit choice: it is used
-   // as-is, even when a newer copy exists elsewhere. A pinned path that holds
-   // no installation ends the search for read-only copies: falling through to
-   // the bundled one would answer a typo or an unmounted share with a silent
-   // downgrade to whatever version shipped with RStudio.
-   if (!paths.pinnedPath.isEmpty())
-   {
-      if (verifyInstallDir(paths.pinnedPath))
-      {
-         // Same silent version change as the managed-mode case above, so it
-         // gets the same once-per-session notice.
-         if (paths.userInstallEnabled &&
-             !userSlot(paths, selector::SelectorRepair::Disabled).isEmpty() && RS_ONCE())
-         {
-            WLOG("Ignoring user-level AI installation under {}: posit-assistant-path "
-                 "pins the installation to {}",
-                 paths.userStorageDir.getAbsolutePath(),
-                 paths.pinnedPath.getAbsolutePath());
-         }
-
-         DLOG("Using AI installation pinned by posit-assistant-path: {}",
-              paths.pinnedPath.getAbsolutePath());
-         return paths.pinnedPath;
-      }
-
-      if (RS_ONCE())
-         WLOG("posit-assistant-path set but installation invalid: {}",
-              paths.pinnedPath.getAbsolutePath());
-   }
-
-   // Among the remaining sources the newest compatible installation wins, so
-   // a per-user install made before a newer bundle shipped does not shadow it
-   // indefinitely.
+   // The newest compatible installation wins, so a per-user install made
+   // before a newer bundle or administrator's version arrived does not shadow
+   // it indefinitely.
    std::vector<InstallCandidate> candidates = rankedCandidates(paths, true);
    if (!candidates.empty())
    {
-      const InstallCandidate& best = candidates.front();
-      DLOG("Using {} AI installation (version {}): {}",
-           best.tier,
-           best.versionText.empty() ? "unknown" : best.versionText,
-           best.path.getAbsolutePath());
-      return best.path;
+      logChosenCandidate(candidates.front());
+      return candidates.front().path;
    }
 
    DLOG("No valid AI installation found (protocol {}). Checked locations:",
@@ -343,17 +312,9 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
    if (paths.userInstallEnabled)
       DLOG("  - User slots: {}",
            slots::versionsDir(paths.userStorageDir).getAbsolutePath());
-   if (paths.pinnedPath.isEmpty())
-   {
-      DLOG("  - System slots: {}",
-           slots::versionsDir(paths.systemStorageDir).getAbsolutePath());
-      DLOG("  - System install dir: {}", legacySystemInstall(paths).getAbsolutePath());
-      DLOG("  - Bundled with RStudio: {}", paths.bundledPath.getAbsolutePath());
-   }
-   else
-   {
-      DLOG("  - posit-assistant-path: {}", paths.pinnedPath.getAbsolutePath());
-   }
+   DLOG("  - Administrator slot selected by: {}",
+        paths.systemStorageDir.completeChildPath(kSelectorFileName).getAbsolutePath());
+   DLOG("  - Bundled with RStudio: {}", paths.systemStorageDir.getAbsolutePath());
 
    return core::FilePath(); // Not found
 }
@@ -411,7 +372,7 @@ bool runsUserSlot()
       std::lock_guard<std::mutex> lock(s_resolutionMutex);
       userSlotsDir = slots::versionsDir(s_searchPathsOverride
          ? s_searchPathsOverride->userStorageDir
-         : positAssistantSearchPaths().userStorageDir);
+         : positAiStorageDir());
    }
    return installDir.getParent() == userSlotsDir;
 }
@@ -419,9 +380,6 @@ bool runsUserSlot()
 bool userInstallWouldBeSelected(const InstallSearchPaths& paths, const std::string& version)
 {
    if (!paths.userInstallEnabled)
-      return false;
-
-   if (!paths.pinnedPath.isEmpty() && verifyInstallDir(paths.pinnedPath))
       return false;
 
    // The manifest only ever offers packages built for this build's protocol.

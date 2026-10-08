@@ -53,7 +53,7 @@ Update `COPILOT_VERSION` in the following four files. Each file uses a slightly 
 
 #### `NEWS.md`
 
-In the `### Dependencies` section, update the Copilot Language Server line:
+In the `### Dependencies` section, set the Copilot Language Server line. The section lists only dependencies changed this release cycle, so if no such line is present, add one, keeping the list alphabetical:
 
 ```
 - Copilot Language Server <VERSION>

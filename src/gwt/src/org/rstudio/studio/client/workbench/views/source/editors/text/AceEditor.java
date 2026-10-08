@@ -2741,10 +2741,24 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().retokenizeDocument();
    }
 
+   // The rainbow flags are global to the highlight rules, so an editor's
+   // tokens are only stale if a flag changed after it last tokenized. Each
+   // flag has a generation counter, bumped on change, so that re-syncing
+   // an unchanged flag (every save does, via adaptToFileType) does not
+   // retokenize the whole document.
    public void setRainbowParentheses(boolean rainbow)
    {
-      _setRainbowParenthesesImpl(rainbow);
-      widget_.getEditor().retokenizeDocument();
+      if (_getRainbowParenthesesImpl() != rainbow)
+      {
+         _setRainbowParenthesesImpl(rainbow);
+         rainbowParenthesesGeneration_++;
+      }
+
+      if (rainbowParenthesesTokenized_ != rainbowParenthesesGeneration_)
+      {
+         rainbowParenthesesTokenized_ = rainbowParenthesesGeneration_;
+         widget_.getEditor().retokenizeDocument();
+      }
    }
 
    public boolean getRainbowParentheses()
@@ -2754,8 +2768,17 @@ public class AceEditor implements DocDisplay
 
    public void setRainbowFencedDivs(boolean rainbow)
    {
-      _setRainbowFencedDivsImpl(rainbow);
-      widget_.getEditor().retokenizeDocument();
+      if (_getRainbowFencedDivsImpl() != rainbow)
+      {
+         _setRainbowFencedDivsImpl(rainbow);
+         rainbowFencedDivsGeneration_++;
+      }
+
+      if (rainbowFencedDivsTokenized_ != rainbowFencedDivsGeneration_)
+      {
+         rainbowFencedDivsTokenized_ = rainbowFencedDivsGeneration_;
+         widget_.getEditor().retokenizeDocument();
+      }
    }
 
    public boolean getRainbowFencedDivs()
@@ -5237,6 +5260,12 @@ public class AceEditor implements DocDisplay
    private EventBus events_;
    private TextFileType fileType_;
    private boolean isAttached_ = false;
+
+   // see setRainbowParentheses
+   private static int rainbowParenthesesGeneration_ = 0;
+   private static int rainbowFencedDivsGeneration_ = 0;
+   private int rainbowParenthesesTokenized_ = -1;
+   private int rainbowFencedDivsTokenized_ = -1;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
