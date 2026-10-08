@@ -468,12 +468,15 @@ if(UNIX)
       # install-openssl puts in the tools root, unless -DOPENSSL_ROOT_DIR names
       # another
       if(NOT DEFINED OPENSSL_ROOT_DIR)
-         execute_process(
-            COMMAND bash -c "source \"$1\" && echo \"$RSTUDIO_OPENSSL_VERSION\"" bash
-               "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh"
-            OUTPUT_VARIABLE RSTUDIO_OPENSSL_VERSION
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            COMMAND_ERROR_IS_FATAL ANY)
+         # read the pin rather than source the script, which has side effects
+         set(_openssl_pin_file "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh")
+         file(STRINGS "${_openssl_pin_file}" _openssl_pin REGEX "^export RSTUDIO_OPENSSL_VERSION=")
+         if(NOT _openssl_pin MATCHES "^export RSTUDIO_OPENSSL_VERSION=\"([0-9]+\\.[0-9]+\\.[0-9]+)\"$")
+            message(FATAL_ERROR
+               "Expected one line 'export RSTUDIO_OPENSSL_VERSION=\"<x.y.z>\"' in "
+               "'${_openssl_pin_file}', but found '${_openssl_pin}'.")
+         endif()
+         set(RSTUDIO_OPENSSL_VERSION "${CMAKE_MATCH_1}")
          set(OPENSSL_ROOT_DIR "${RSTUDIO_TOOLS_ROOT}/openssl-${RSTUDIO_OPENSSL_VERSION}")
          set(OPENSSL_USE_STATIC_LIBS TRUE)
          if(NOT EXISTS "${OPENSSL_ROOT_DIR}/lib/libcrypto.a")
