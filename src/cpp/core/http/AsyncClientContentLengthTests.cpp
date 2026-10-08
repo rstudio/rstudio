@@ -47,7 +47,6 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/system/error_code.hpp>
-#include <boost/thread/condition_variable.hpp>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/weak_ptr.hpp>
@@ -58,6 +57,7 @@
 #include <core/http/Response.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/Util.hpp>
+#include <core/tests/GatedResponder.hpp>
 
 #include <gtest/gtest.h>
 
@@ -89,19 +89,6 @@ enum class ResponseMode
    // delimited by connection close (EOF).
    NoContentLength,
 
-   // NoContentLength, but with the headers and body written in two separate
-   // writes with a pause between -- so the client's header parse leaves
-   // responseBuffer_ empty and the body bytes are only seen by a later,
-   // separate async_read() (mirrors ContentLengthSplit's rationale for the
-   // EOF-delimited case).
-   NoContentLengthSplit,
-
-   // Chunked, but with the headers and the chunk data written in two separate
-   // writes (gated like NoContentLengthSplit), so the client's header parse
-   // leaves responseBuffer_ empty and has to go back to readSomeContent() for
-   // the chunks.
-   ChunkedSplit,
-
    // Accept the connection and never reply, simulating a peer that stalls after
    // the handshake.
    NoResponse,
@@ -130,46 +117,6 @@ enum class ResponseMode
    // a user's own app behind /p/<port>/ can emit -- an exact wire image is the
    // point, so nothing here may normalize it.
    Raw
-};
-
-// Thread-safe handoff used only by the *Split response modes: lets a
-// test synchronize LocalServer's body write with the client having actually
-// parsed the response headers (via AsyncClient::setResponseHeadersHandler()),
-// rather than relying on a fixed sleep to (probabilistically) win that race.
-// The client's headers handler runs on the io_context thread while
-// LocalServer blocks on its own dedicated thread, so this needs real
-// cross-thread synchronization rather than a plain flag.
-class HeadersReceivedGate
-{
-public:
-   void notify()
-   {
-      boost::lock_guard<boost::mutex> lock(mutex_);
-      received_ = true;
-      cv_.notify_all();
-   }
-
-   // Bounded wait so a bug that never calls notify() fails the test instead of
-   // hanging it. Times out => FAIL(), rather than silently letting the caller
-   // proceed as if the signal had arrived.
-   void wait()
-   {
-      boost::unique_lock<boost::mutex> lock(mutex_);
-      boost::system_time deadline = boost::get_system_time() + boost::posix_time::seconds(2);
-      while (!received_)
-      {
-         if (!cv_.timed_wait(lock, deadline))
-         {
-            ADD_FAILURE() << "HeadersReceivedGate timed out waiting for headers-parsed signal";
-            return;
-         }
-      }
-   }
-
-private:
-   boost::mutex mutex_;
-   boost::condition_variable cv_;
-   bool received_ = false;
 };
 
 // Frames body as a single Transfer-Encoding: chunked chunk followed by the
@@ -209,14 +156,6 @@ public:
    unsigned short port() { return acceptor_.local_endpoint().port(); }
    void start() { thread_ = std::thread([this]() { run(); }); }
    void stop() { stop_ = true; }
-
-   // Only consulted by the NoContentLengthSplit and ChunkedSplit modes; must be called
-   // before start() since it is read (without further synchronization) from
-   // the server thread once writeResponse() runs.
-   void setHeadersReceivedGate(boost::shared_ptr<HeadersReceivedGate> gate)
-   {
-      pHeadersReceivedGate_ = std::move(gate);
-   }
 
 private:
    void run()
@@ -327,52 +266,6 @@ private:
             break;
          }
 
-         case ResponseMode::NoContentLengthSplit:
-         {
-            std::string headers =
-               "HTTP/1.1 200 OK\r\n"
-               "Content-Type: text/plain\r\n"
-               "\r\n";
-            boost::asio::write(socket, boost::asio::buffer(headers), ec);
-            if (ec)
-               return;
-
-            // Wait for the header read to complete (with an empty leftover
-            // buffer) before the body bytes are even written, forcing the
-            // client to see them via a later, separate async_read(). Prefer
-            // an explicit signal from the client's headers-received handler
-            // over a fixed sleep, since a sleep only makes the race
-            // vanishingly unlikely to lose, not impossible.
-            if (pHeadersReceivedGate_)
-               pHeadersReceivedGate_->wait();
-            else
-               std::this_thread::sleep_for(std::chrono::milliseconds(25));
-            boost::asio::write(socket, boost::asio::buffer(body_), ec);
-            break;
-         }
-
-         case ResponseMode::ChunkedSplit:
-         {
-            std::string headers =
-               "HTTP/1.1 200 OK\r\n"
-               "Content-Type: application/x-ndjson\r\n"
-               "Transfer-Encoding: chunked\r\n"
-               "\r\n";
-            boost::asio::write(socket, boost::asio::buffer(headers), ec);
-            if (ec)
-               return;
-
-            // see NoContentLengthSplit
-            if (pHeadersReceivedGate_)
-               pHeadersReceivedGate_->wait();
-            else
-               std::this_thread::sleep_for(std::chrono::milliseconds(25));
-
-            std::string chunks = chunkedFrame(body_);
-            boost::asio::write(socket, boost::asio::buffer(chunks), ec);
-            break;
-         }
-
          case ResponseMode::TruncatedContentLength:
          {
             std::string resp =
@@ -423,7 +316,6 @@ private:
    std::string body_;
    std::atomic<bool> stop_{false};
    std::thread thread_;
-   boost::shared_ptr<HeadersReceivedGate> pHeadersReceivedGate_;
 };
 
 struct Outcome
@@ -519,8 +411,8 @@ struct StreamingOutcome
    std::string contentLengthHeaderOnFirstChunk;
 };
 
-// Drives a client opted into setStreamNonChunkedResponses(true), with an
-// optional buffer predicate and an optional hook to simulate the fixed buffer
+// Drives a client opted into setStreamNonChunkedResponses(true) against the
+// server listening on port, with an optional buffer predicate and an optional hook to simulate the fixed buffer
 // handler applying backpressure (returning false) on any of a set of 0-based
 // chunk indices, requiring the test to call resumeChunkProcessing() to
 // continue. Each index in pauseOnChunkIndices is a raw call count (including
@@ -531,29 +423,23 @@ struct StreamingOutcome
 // completion signal itself (the empty chunk) rather than on any data chunk --
 // see BackpressureOnCompletionSignalStillCompletes below.
 // ClientType lets a test substitute a TcpIpAsyncClient subclass (e.g. one with
-// its own stopReadingAndRespond() override) for the stock client.
+// its own stopReadingAndRespond() override) for the stock client. If
+// pHeadersParsed is set, it is opened as soon as the client has parsed the
+// response headers, for a GatedResponder that holds the body back until then.
 template <typename ClientType = TcpIpAsyncClient>
-StreamingOutcome runStreamingScenario(
-   ResponseMode mode,
-   bool closeAfterResponse,
-   const std::string& responseBody,
+StreamingOutcome runStreamingClient(
+   unsigned short port,
+   const std::shared_ptr<core::tests::Gate>& pHeadersParsed = nullptr,
    const boost::function<bool(const http::Response&)>& bufferPredicate =
       boost::function<bool(const http::Response&)>(),
    std::set<int> pauseOnChunkIndices = {},
    bool pauseOnFinalSignal = false)
 {
-   boost::shared_ptr<HeadersReceivedGate> pHeadersReceivedGate =
-      boost::make_shared<HeadersReceivedGate>();
-
-   LocalServer server(mode, closeAfterResponse, responseBody);
-   server.setHeadersReceivedGate(pHeadersReceivedGate);
-   server.start();
-
    boost::asio::io_context ioc;
 
    boost::shared_ptr<ClientType> pClient =
       boost::make_shared<ClientType>(
-         ioc, "127.0.0.1", std::to_string(server.port()),
+         ioc, "127.0.0.1", std::to_string(port),
          boost::posix_time::seconds(5));
 
    pClient->setStreamNonChunkedResponses(true);
@@ -564,12 +450,14 @@ StreamingOutcome runStreamingScenario(
    if (bufferPredicate)
       pClient->setBufferPredicate(bufferPredicate);
 
-   // Signal the server the instant headers are parsed, so the gated *Split
-   // modes only write the body once the client has actually left
-   // responseBuffer_ empty -- see HeadersReceivedGate for why a fixed sleep
-   // isn't reliable. Modes that don't consult the gate ignore the signal.
-   pClient->setResponseHeadersHandler(
-      [pHeadersReceivedGate](const http::Response&) { pHeadersReceivedGate->notify(); });
+   // Signal the server the instant headers are parsed, so it only writes the
+   // body once the client has actually left responseBuffer_ empty. A fixed
+   // sleep would only make that race unlikely to lose, not impossible.
+   if (pHeadersParsed)
+   {
+      pClient->setResponseHeadersHandler(
+         [pHeadersParsed](const http::Response&) { pHeadersParsed->open(); });
+   }
 
    http::Request& request = pClient->request();
    request.setMethod("GET");
@@ -652,6 +540,26 @@ StreamingOutcome runStreamingScenario(
       fixedBufferHandler);
 
    ioc.run();
+
+   return outcome;
+}
+
+// runStreamingClient() against a LocalServer that frames responseBody
+// according to mode.
+StreamingOutcome runStreamingScenario(
+   ResponseMode mode,
+   bool closeAfterResponse,
+   const std::string& responseBody,
+   const boost::function<bool(const http::Response&)>& bufferPredicate =
+      boost::function<bool(const http::Response&)>(),
+   std::set<int> pauseOnChunkIndices = {},
+   bool pauseOnFinalSignal = false)
+{
+   LocalServer server(mode, closeAfterResponse, responseBody);
+   server.start();
+
+   StreamingOutcome outcome = runStreamingClient(
+      server.port(), nullptr, bufferPredicate, pauseOnChunkIndices, pauseOnFinalSignal);
 
    server.stop();
    return outcome;
@@ -795,10 +703,9 @@ TEST(AsyncClientContentLength, DeliversBodyWithoutContentLengthViaEof)
    EXPECT_FALSE(outcome.timedOut);
 }
 
-// The stopReadingAndRespond() overrides (LocalhostAsyncClient and
-// NamedPipeAsyncClient in this repo, plus the load balancer client in
-// rstudio-pro's src/cpp/server/load_balancer/Common.cpp) force an early
-// close+respond once they believe the body is fully received:
+// AsyncClient subclasses such as LocalhostAsyncClient and NamedPipeAsyncClient
+// override stopReadingAndRespond() to force an early close+respond once they
+// believe the body is fully received:
 // `response_.body().length() >= response_.contentLength()`.
 // Message::contentLength() reads an absent Content-Length header as 0, and
 // neither a chunked nor a streamed response ever populates response_.body() --
@@ -810,12 +717,12 @@ TEST(AsyncClientContentLength, DeliversBodyWithoutContentLengthViaEof)
 // coverage for the base class guard: dropping either half of it fails the
 // matching test with an empty assembled body.
 //
-// The tests relay through one of the gated *Split modes: the body has to
-// arrive in a *separate* async_read() from the one that parsed the headers,
-// or it would already be sitting in responseBuffer_ (and so already delivered
-// at header time) by the time an unguarded stopReadingAndRespond()
-// short-circuits the next read -- which would let the test pass without the
-// guard.
+// The tests have the server write the headers alone, and only write the body
+// once the client has parsed them: the body has to arrive in a *separate*
+// async_read() from the one that parsed the headers, or it would already be
+// sitting in responseBuffer_ (and so already delivered at header time) by the
+// time an unguarded stopReadingAndRespond() short-circuits the next read --
+// which would let the test pass without the guard.
 class StopReadingOnContentLengthAsyncClient : public TcpIpAsyncClient
 {
 public:
@@ -837,8 +744,23 @@ private:
 TEST(AsyncClientContentLength, StreamedEofDelimitedBodyIsFullyRelayedWhenSubclassStopsReadingOnContentLength)
 {
    const std::string body = "{\"name\":\"jsonlite\"}\n";
-   StreamingOutcome outcome = runStreamingScenario<StopReadingOnContentLengthAsyncClient>(
-      ResponseMode::NoContentLengthSplit, /*closeAfterResponse=*/true, body);
+
+   std::shared_ptr<core::tests::Gate> pHeadersParsed = std::make_shared<core::tests::Gate>();
+   core::tests::GatedResponder server(
+      "HTTP/1.1 200 OK\r\n"
+      "Content-Type: text/plain\r\n"
+      "\r\n",
+      pHeadersParsed,
+      [&](tcp::socket& socket)
+      {
+         boost::system::error_code ec;
+         boost::asio::write(socket, boost::asio::buffer(body), ec);
+         socket.shutdown(tcp::socket::shutdown_both, ec);
+      });
+   server.start();
+
+   StreamingOutcome outcome =
+      runStreamingClient<StopReadingOnContentLengthAsyncClient>(server.port(), pHeadersParsed);
 
    EXPECT_FALSE(outcome.timedOut);
    EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
@@ -853,8 +775,24 @@ TEST(AsyncClientContentLength, StreamedEofDelimitedBodyIsFullyRelayedWhenSubclas
 TEST(AsyncClientContentLength, ChunkedBodyIsFullyRelayedWhenSubclassStopsReadingOnContentLength)
 {
    const std::string body = "{\"name\":\"jsonlite\"}\n";
-   StreamingOutcome outcome = runStreamingScenario<StopReadingOnContentLengthAsyncClient>(
-      ResponseMode::ChunkedSplit, /*closeAfterResponse=*/true, body);
+
+   std::shared_ptr<core::tests::Gate> pHeadersParsed = std::make_shared<core::tests::Gate>();
+   core::tests::GatedResponder server(
+      "HTTP/1.1 200 OK\r\n"
+      "Content-Type: application/x-ndjson\r\n"
+      "Transfer-Encoding: chunked\r\n"
+      "\r\n",
+      pHeadersParsed,
+      [&](tcp::socket& socket)
+      {
+         boost::system::error_code ec;
+         boost::asio::write(socket, boost::asio::buffer(chunkedFrame(body)), ec);
+         socket.shutdown(tcp::socket::shutdown_both, ec);
+      });
+   server.start();
+
+   StreamingOutcome outcome =
+      runStreamingClient<StopReadingOnContentLengthAsyncClient>(server.port(), pHeadersParsed);
 
    EXPECT_FALSE(outcome.timedOut);
    EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
@@ -1505,10 +1443,7 @@ public:
 
    void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler) override
    {
-      ++asyncWriteCount_;
       std::size_t n = buffer.size();
-      if (onWrite_)
-         onWrite_(n);
       writtenBytes_.append(static_cast<const char*>(buffer.data()), n);
       boost::asio::post(ioc_, [handler, n]() { handler(boost::system::error_code(), n); });
    }
@@ -1516,23 +1451,14 @@ public:
    void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers,
                     Socket::Handler handler) override
    {
-      ++asyncWriteCount_;
       std::size_t total = 0;
       for (const auto& buffer : buffers)
-         total += buffer.size();
-      if (onWrite_)
-         onWrite_(total);
-      for (const auto& buffer : buffers)
+      {
          writtenBytes_.append(static_cast<const char*>(buffer.data()), buffer.size());
+         total += buffer.size();
+      }
       boost::asio::post(ioc_, [handler, total]() { handler(boost::system::error_code(), total); });
    }
-
-   // invoked synchronously at the start of every asyncWrite() overload above,
-   // with the size of the buffer about to be written, before it is appended to
-   // writtenBytes_ -- lets a test observe both the size of the write that is
-   // about to happen and the state of writtenBytes_ as of just before it lands
-   std::function<void(std::size_t)> onWrite_;
-   int asyncWriteCount_ = 0;
 
    int writeResponseCount_ = 0;
    int writeResponseHeadersCount_ = 0;

@@ -15,14 +15,10 @@
 
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <condition_variable>
 #include <functional>
 #include <limits>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include <unistd.h>
@@ -43,6 +39,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/tests/GatedResponder.hpp>
 
 #include <core/http/SocketUtils.hpp>
 
@@ -238,29 +235,8 @@ private:
    std::string handlerPrefix_;
 };
 
-// One-shot signal from the proxy's io_context thread to the upstream thread.
-class Gate
-{
-public:
-   void open()
-   {
-      std::lock_guard<std::mutex> lock(mutex_);
-      open_ = true;
-      cv_.notify_all();
-   }
-
-   // Bounded, so a gate that never opens fails the test rather than hanging it.
-   bool wait()
-   {
-      std::unique_lock<std::mutex> lock(mutex_);
-      return cv_.wait_for(lock, std::chrono::seconds(2), [this]() { return open_; });
-   }
-
-private:
-   std::mutex mutex_;
-   std::condition_variable cv_;
-   bool open_ = false;
-};
+using core::tests::Gate;
+using core::tests::GatedResponder;
 
 // The ways an upstream can abandon a streamed body once the proxy has started
 // writing the response's headers to the browser.
@@ -298,58 +274,24 @@ std::string describe(UpstreamFailure failure)
    return std::string();
 }
 
-// Stands in for rsession (/s/) or a user's app (/p/). It starts a response big
-// enough for the proxy to stream (Content-Length over the 1MB threshold), and
-// once the proxy has started writing that response's headers to the browser,
-// abandons the body as `failure` describes.
-class InterruptingUpstream
+// What an upstream standing in for rsession (/s/) or a user's app (/p/) sends
+// before abandoning the body: a response big enough for the proxy to stream
+// (Content-Length over the 1MB threshold) and the first part of its body.
+const char* const kInterruptedResponseHead =
+   "HTTP/1.1 200 OK\r\n"
+   "Content-Type: application/json\r\n"
+   "Content-Length: 2097152\r\n"
+   "\r\n";
+
+// Abandons the body of the response begun with kInterruptedResponseHead as
+// `failure` describes. For a stall, the connection is held open until pReleased
+// opens.
+GatedResponder::Finish abandonBody(UpstreamFailure failure, std::shared_ptr<Gate> pReleased)
 {
-public:
-   InterruptingUpstream(UpstreamFailure failure,
-                        std::shared_ptr<Gate> pHeaderWriteStarted,
-                        std::shared_ptr<Gate> pReleased)
-      : acceptor_(ioc_, boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0)),
-        failure_(failure),
-        pHeaderWriteStarted_(pHeaderWriteStarted),
-        pReleased_(pReleased)
-   {
-   }
-
-   ~InterruptingUpstream()
-   {
-      if (thread_.joinable())
-         thread_.join();
-   }
-
-   unsigned short port() { return acceptor_.local_endpoint().port(); }
-
-   void start() { thread_ = std::thread([this]() { run(); }); }
-
-private:
-   void run()
+   return [failure, pReleased](boost::asio::ip::tcp::socket& socket)
    {
       boost::system::error_code ec;
-      boost::asio::ip::tcp::socket socket(ioc_);
-      acceptor_.accept(socket, ec);
-      if (ec)
-         return;
-
-      boost::asio::streambuf request;
-      boost::asio::read_until(socket, request, "\r\n\r\n", ec);
-      if (ec)
-         return;
-
-      std::string head =
-         "HTTP/1.1 200 OK\r\n"
-         "Content-Type: application/json\r\n"
-         "Content-Length: 2097152\r\n"
-         "\r\n" + std::string(16384, 'x');
-      boost::asio::write(socket, boost::asio::buffer(head), ec);
-      if (ec)
-         return;
-
-      pHeaderWriteStarted_->wait();
-      switch (failure_)
+      switch (failure)
       {
          case UpstreamFailure::Reset:
             // a zero linger timeout makes close() send RST instead of FIN
@@ -362,19 +304,11 @@ private:
 
          case UpstreamFailure::Stall:
             // hold the connection open until the client has given up on it
-            pReleased_->wait();
+            pReleased->wait();
             break;
       }
-      socket.close(ec);
-   }
-
-   boost::asio::io_context ioc_;
-   boost::asio::ip::tcp::acceptor acceptor_;
-   UpstreamFailure failure_;
-   std::shared_ptr<Gate> pHeaderWriteStarted_;
-   std::shared_ptr<Gate> pReleased_;
-   std::thread thread_;
-};
+   };
+}
 
 // Stands in for the browser's connection on the /s/ and /p/ streaming paths. Like
 // AsyncConnectionImpl::claimResponse(), it lets the first write entry point
@@ -557,9 +491,13 @@ InterruptedStreamOutcome streamThenInterruptUpstream(ProxySite site,
                                                      UpstreamFailure failure,
                                                      const InterruptedStreamErrorHandler& errorHandler)
 {
+   // the upstream abandons the body once the proxy starts writing the
+   // response's headers to the browser
    auto pHeaderWriteStarted = std::make_shared<Gate>();
    auto pReleased = std::make_shared<Gate>();
-   InterruptingUpstream upstream(failure, pHeaderWriteStarted, pReleased);
+   GatedResponder upstream(kInterruptedResponseHead + std::string(16384, 'x'),
+                           pHeaderWriteStarted,
+                           abandonBody(failure, pReleased));
    upstream.start();
 
    boost::asio::io_context ioc;

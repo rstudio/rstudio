@@ -98,7 +98,7 @@ typedef boost::function<void(void)> ConnectHandler;
 //
 //  - It fires once per upstream *attempt*, not once per client request. A site
 //    that retries another endpoint or node builds a fresh client per attempt
-//    (see load_balancer/Common.cpp and proxyToLauncherEndpoints), so anything
+//    (as the load balancer and launcher proxy in rstudio-pro do), so anything
 //    done here must be idempotent, or harmless, on a response that is
 //    subsequently discarded in favor of a retry.
 typedef boost::function<void(http::Response&)> ResponseHeadersHandler;

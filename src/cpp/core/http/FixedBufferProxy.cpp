@@ -118,9 +118,9 @@ void FixedBufferProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConne
    if (preservedCookiesOverride)
    {
       // The caller has already computed the exact Set-Cookie headers it wants
-      // carried over -- e.g. the launcher proxy's launcherCookieCarryOver(),
-      // applying the same scope-based filtering its buffered delivery path
-      // applies -- so use that verbatim instead of the blind snapshot below.
+      // carried over -- e.g. by applying the same scope-based filtering its
+      // buffered delivery path applies -- so use that verbatim instead of the
+      // blind snapshot below.
       // Read from the same client-connection response the automatic path
       // would have used, so this is exactly as timing-safe as that snapshot.
       preservedCookies_ = *preservedCookiesOverride;

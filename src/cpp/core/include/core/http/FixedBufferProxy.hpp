@@ -40,8 +40,8 @@ constexpr uint64_t kStreamingContentLengthThreshold = 1024 * 1024; // 1MB
 // True when `response` should be held whole rather than streamed, purely on
 // size grounds. Each proxy site ORs this with its own header-observable
 // always-buffer cases to form its named buffering policy (see
-// shouldBufferLocalhostResponse, shouldBufferLauncherResponse,
-// shouldBufferNodeResponse) and hands that policy to setBufferPredicate().
+// shouldBufferLocalhostResponse and shouldBufferLocalStreamResponse in
+// ServerSessionProxy.cpp) and hands that policy to setBufferPredicate().
 //
 // An absent or unparseable Content-Length returns false: those are exactly the
 // chunked and EOF-delimited bodies with no declared upper bound, and they are
@@ -64,8 +64,7 @@ public:
    // "snapshot every Set-Cookie already on the client connection's response"
    // behavior described at preservedCookies_ below. A caller whose delivery
    // requires the same scope-based filtering on the streamed path as it
-   // applies on its own buffered path (e.g. the launcher/remote-session
-   // proxy's launcherCookieCarryOver()) computes that filtered set itself --
+   // applies on its own buffered path computes that filtered set itself --
    // from the same client-connection response this class would otherwise read
    // unfiltered -- and passes it here so both delivery strategies end up with
    // identical cookies on the wire. Absent (the default) keeps the original
