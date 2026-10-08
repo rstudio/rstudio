@@ -20,7 +20,7 @@ if [ "$#" -eq 0 ]; then
     exit 1
 fi
 
-AWS_BUCKET="s3://rstudio-buildtools"
+AWS_BUCKET="rstudio-buildtools"
 
 # Check every archive before uploading any
 for FILE in "$@"; do
@@ -39,14 +39,23 @@ done
 # Check that we're logged in with AWS
 aws sts get-caller-identity || aws sso login
 
+# Check every key before uploading any, so a clash doesn't leave a partial set;
+# only a 404 means the key is free, not a timeout or a permissions error
 for FILE in "$@"; do
     NAME=$(basename "${FILE}")
-    if aws s3api head-object --bucket "${AWS_BUCKET#s3://}" --key "${NAME}" > /dev/null 2>&1; then
-        echo "error: '${AWS_BUCKET}/${NAME}' already exists; not replacing it" >&2
+    if HEAD_ERROR=$(aws s3api head-object --bucket "${AWS_BUCKET}" --key "${NAME}" 2>&1 > /dev/null); then
+        echo "error: 's3://${AWS_BUCKET}/${NAME}' already exists; not replacing it" >&2
+        exit 1
+    elif [[ "${HEAD_ERROR}" != *"(404)"* ]]; then
+        echo "error: could not check whether 's3://${AWS_BUCKET}/${NAME}' exists: ${HEAD_ERROR}" >&2
         exit 1
     fi
 done
 
+# --if-none-match makes S3 itself refuse to replace a key uploaded since the check
 for FILE in "$@"; do
-    aws s3 cp "${FILE}" "${AWS_BUCKET}/$(basename "${FILE}")" --acl public-read
+    NAME=$(basename "${FILE}")
+    aws s3api put-object --bucket "${AWS_BUCKET}" --key "${NAME}" --body "${FILE}" \
+        --acl public-read --if-none-match '*' > /dev/null
+    echo "Uploaded s3://${AWS_BUCKET}/${NAME}"
 done
