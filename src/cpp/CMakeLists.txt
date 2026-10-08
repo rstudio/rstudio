@@ -484,10 +484,14 @@ if(UNIX)
       endif()
 
       # find_package keeps paths cached by an earlier configure, which may name
-      # another OpenSSL (e.g. Homebrew's, or an older version of ours)
+      # another OpenSSL (e.g. Homebrew's, or an older version of ours). Compare
+      # real paths: the root may hold a /../ (as make-package passes), and the
+      # cached paths don't.
+      get_filename_component(_openssl_root "${OPENSSL_ROOT_DIR}" REALPATH)
       foreach(_openssl_var OPENSSL_INCLUDE_DIR OPENSSL_CRYPTO_LIBRARY OPENSSL_SSL_LIBRARY)
-         string(FIND "${${_openssl_var}}" "${OPENSSL_ROOT_DIR}/" _openssl_index)
-         if(NOT _openssl_index EQUAL 0)
+         get_filename_component(_openssl_real_path "${${_openssl_var}}" REALPATH)
+         cmake_path(IS_PREFIX _openssl_root "${_openssl_real_path}" NORMALIZE _openssl_in_root)
+         if(NOT _openssl_in_root)
             unset(${_openssl_var} CACHE)
          endif()
       endforeach()
@@ -499,7 +503,6 @@ if(UNIX)
    # FindOpenSSL also searches pkg-config's hints, so a root missing headers or
    # a library could quietly yield parts of another OpenSSL
    if(APPLE)
-      get_filename_component(_openssl_root "${OPENSSL_ROOT_DIR}" REALPATH)
       foreach(_openssl_path ${OPENSSL_INCLUDE_DIR} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
          get_filename_component(_openssl_real_path "${_openssl_path}" REALPATH)
          cmake_path(IS_PREFIX _openssl_root "${_openssl_real_path}" NORMALIZE _openssl_in_root)
