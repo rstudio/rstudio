@@ -15,9 +15,10 @@
 #
 #
 
-# A binary in bin/ that loads a library outside macOS and the app's own
-# Frameworks/ (e.g. from the build machine's Homebrew), or one missing from
-# Frameworks/, would only fail at launch on a user's machine; check for that here.
+# A binary in bin/, or a library bundled in Frameworks/, that loads a library
+# outside macOS and Frameworks/ (e.g. from the build machine's Homebrew), or one
+# missing from Frameworks/, would only fail at launch on a user's machine; check
+# for that here.
 
 set -euo pipefail
 
@@ -37,14 +38,22 @@ FRAMEWORKS_PREFIX="@executable_path/../Frameworks/"
 shopt -s nullglob
 
 FAILED=0
-for FILE in "${BIN_DIR}"/*; do
+FRAMEWORKS_DIR="${BIN_DIR}/../Frameworks"
+for FILE in "${BIN_DIR}"/* "${FRAMEWORKS_DIR}"/*.dylib "${FRAMEWORKS_DIR}"/arm64/*.dylib; do
 
    [ -f "${FILE}" ] || continue
 
    # dependency lines are tab-indented; otool prints none for non-Mach-O files
    DEPS=$(otool -arch all -L "${FILE}" | { grep $'^\t' || true; } | cut -d' ' -f1 | tr -d '\t' | sort -u)
 
+   # a library's own install name (e.g. @rpath/libTurboActivate.dylib) is
+   # listed among its dependencies; the ID lines are the ones without a colon
+   IDS=$(otool -arch all -D "${FILE}" | { grep -v ':$' || true; } | sort -u)
+
    for DEP in ${DEPS}; do
+      if grep -qxF -- "${DEP}" <<< "${IDS}"; then
+         continue
+      fi
       case "${DEP}" in
          /usr/lib/*|/System/Library/*)
             ;;
