@@ -1227,7 +1227,16 @@ private:
       // the subsequent call to handleReadContent will perform
       // the close and respond when it gets a shutdown error (as
       // a result of the server shutting down)
-      if (stopReadingAndRespond())
+      //
+      // The hook is only consulted for a buffered, non-chunked body, the one
+      // case where response_.body() holds what has been received so far.
+      // Chunked and streamed bodies are never accumulated there -- they detect
+      // their own completion (the chunk parser, streamedBodyComplete()) or end
+      // at EOF -- so an override comparing response_.body() against
+      // contentLength() would see "0 of 0" for a body with no Content-Length
+      // and end the response before relaying any of it. Guarding here keeps
+      // overrides from having to know about either mode.
+      if (!chunkedEncoding_ && !streamResponse_ && stopReadingAndRespond())
       {
          closeAndRespond();
          return;
@@ -1243,6 +1252,7 @@ private:
                           boost::asio::placeholders::error)));
    }
 
+   // Only called for a buffered, non-chunked body; see readSomeContent().
    virtual bool stopReadingAndRespond()
    {
       return false;
@@ -1969,17 +1979,6 @@ private:
 protected:
    http::Response response_;
    bool chunkedEncoding_;
-
-   // True once handleReadHeaders() has decided this non-chunked response's body
-   // will be streamed piece-wise to the FixedBufferHandler rather than
-   // accumulated into response_. Subclasses that infer body completeness from
-   // response_.body() -- e.g. a stopReadingAndRespond() override that
-   // compares it against Content-Length -- must consult this: response_.body()
-   // stays empty for the entire response when it is true, so a length compare
-   // against it reads as "0 bytes of N received" (harmless) or, for a response
-   // with no Content-Length at all, as "complete" before a single byte has been
-   // relayed (a silently truncated body).
-   bool isStreamingResponse() const { return streamResponse_; }
 
 private:
    static constexpr std::size_t maxChunkSize = 1'048'576; // 1MB

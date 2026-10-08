@@ -32,27 +32,15 @@ namespace {
 // detect when we've got the whole response and force a response and a
 // close of the socket (this is because the current version of httpuv
 // expects a close from the client end of the socket). however, don't
-// do this for Jetty (as it often doesn't send a Content-Length header)
-// and do not do it if we are streaming chunked encoding
-bool stopReadingAndRespondImpl(const core::http::Response& response,
-                               bool chunkedEncoding,
-                               bool isStreamedResponse)
+// do this for Jetty (as it often doesn't send a Content-Length header).
+// AsyncClient only asks this for a buffered, non-chunked body.
+bool stopReadingAndRespondImpl(const core::http::Response& response)
 {
    std::string server = response.headerValue("Server");
    if (boost::algorithm::contains(server, "Jetty"))
-   {
       return false;
-   } else if (isStreamedResponse)
-   {
-      // We are using fixed-size response buffering and can't draw
-      // conclusions from response.body.length().
-      return false;
-   }
-   else
-   {
-      return !chunkedEncoding &&
-             (response.body().length() >= response.contentLength());
-   }
+
+   return response.body().length() >= response.contentLength();
 }
 
 // ensure that we don't close the connection when a websockets
@@ -129,7 +117,7 @@ private:
 
    virtual bool stopReadingAndRespond()
    {
-      return stopReadingAndRespondImpl(response_, chunkedEncoding_, isStreamingResponse());
+      return stopReadingAndRespondImpl(response_);
    }
 
    virtual bool keepConnectionAlive()
@@ -176,7 +164,7 @@ private:
 
    virtual bool stopReadingAndRespond()
    {
-      return stopReadingAndRespondImpl(response_, chunkedEncoding_, isStreamingResponse());
+      return stopReadingAndRespondImpl(response_);
    }
 
    virtual bool keepConnectionAlive()
