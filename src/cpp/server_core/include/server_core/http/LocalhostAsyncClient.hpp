@@ -38,13 +38,9 @@ bool stopReadingAndRespondImpl(const core::http::Response& response)
 {
    std::string server = response.headerValue("Server");
    if (boost::algorithm::contains(server, "Jetty"))
-   {
       return false;
-   }
-   else
-   {
-      return response.body().length() >= response.contentLength();
-   }
+
+   return response.body().length() >= response.contentLength();
 }
 
 // ensure that we don't close the connection when a websockets

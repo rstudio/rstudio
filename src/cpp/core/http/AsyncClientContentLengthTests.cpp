@@ -172,6 +172,17 @@ private:
    bool received_ = false;
 };
 
+// Frames body as a single Transfer-Encoding: chunked chunk followed by the
+// terminating zero-length chunk; an empty body yields just the terminator.
+std::string chunkedFrame(const std::string& body)
+{
+   std::ostringstream frame;
+   if (!body.empty())
+      frame << std::hex << body.size() << "\r\n" << body << "\r\n";
+   frame << "0\r\n\r\n";
+   return frame.str();
+}
+
 // A minimal blocking HTTP/1.1 server on its own thread. Accepts a single
 // connection, reads the request headers, and writes back a response framed
 // according to the requested ResponseMode. It never sends "Connection: close";
@@ -199,7 +210,7 @@ public:
    void start() { thread_ = std::thread([this]() { run(); }); }
    void stop() { stop_ = true; }
 
-   // Only consulted by ResponseMode::NoContentLengthSplit; must be called
+   // Only consulted by the NoContentLengthSplit and ChunkedSplit modes; must be called
    // before start() since it is read (without further synchronization) from
    // the server thread once writeResponse() runs.
    void setHeadersReceivedGate(boost::shared_ptr<HeadersReceivedGate> gate)
@@ -297,17 +308,12 @@ private:
 
          case ResponseMode::Chunked:
          {
-            std::ostringstream resp;
-            resp << "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: application/x-ndjson\r\n"
-                    "Transfer-Encoding: chunked\r\n"
-                    "\r\n";
-            if (!body_.empty())
-               resp << std::hex << body_.size() << "\r\n" << body_ << "\r\n";
-            resp << "0\r\n\r\n";
-
-            std::string bytes = resp.str();
-            boost::asio::write(socket, boost::asio::buffer(bytes), ec);
+            std::string resp =
+               "HTTP/1.1 200 OK\r\n"
+               "Content-Type: application/x-ndjson\r\n"
+               "Transfer-Encoding: chunked\r\n"
+               "\r\n" + chunkedFrame(body_);
+            boost::asio::write(socket, boost::asio::buffer(resp), ec);
             break;
          }
 
@@ -362,13 +368,8 @@ private:
             else
                std::this_thread::sleep_for(std::chrono::milliseconds(25));
 
-            std::ostringstream chunks;
-            if (!body_.empty())
-               chunks << std::hex << body_.size() << "\r\n" << body_ << "\r\n";
-            chunks << "0\r\n\r\n";
-
-            std::string bytes = chunks.str();
-            boost::asio::write(socket, boost::asio::buffer(bytes), ec);
+            std::string chunks = chunkedFrame(body_);
+            boost::asio::write(socket, boost::asio::buffer(chunks), ec);
             break;
          }
 
@@ -529,6 +530,9 @@ struct StreamingOutcome
 // pauseOnFinalSignal additionally simulates backpressure landing on the
 // completion signal itself (the empty chunk) rather than on any data chunk --
 // see BackpressureOnCompletionSignalStillCompletes below.
+// ClientType lets a test substitute a TcpIpAsyncClient subclass (e.g. one with
+// its own stopReadingAndRespond() override) for the stock client.
+template <typename ClientType = TcpIpAsyncClient>
 StreamingOutcome runStreamingScenario(
    ResponseMode mode,
    bool closeAfterResponse,
@@ -538,13 +542,17 @@ StreamingOutcome runStreamingScenario(
    std::set<int> pauseOnChunkIndices = {},
    bool pauseOnFinalSignal = false)
 {
+   boost::shared_ptr<HeadersReceivedGate> pHeadersReceivedGate =
+      boost::make_shared<HeadersReceivedGate>();
+
    LocalServer server(mode, closeAfterResponse, responseBody);
+   server.setHeadersReceivedGate(pHeadersReceivedGate);
    server.start();
 
    boost::asio::io_context ioc;
 
-   boost::shared_ptr<TcpIpAsyncClient> pClient =
-      boost::make_shared<TcpIpAsyncClient>(
+   boost::shared_ptr<ClientType> pClient =
+      boost::make_shared<ClientType>(
          ioc, "127.0.0.1", std::to_string(server.port()),
          boost::posix_time::seconds(5));
 
@@ -555,6 +563,13 @@ StreamingOutcome runStreamingScenario(
    pClient->setFixedBufferHandlerSupportsPause(true);
    if (bufferPredicate)
       pClient->setBufferPredicate(bufferPredicate);
+
+   // Signal the server the instant headers are parsed, so the gated *Split
+   // modes only write the body once the client has actually left
+   // responseBuffer_ empty -- see HeadersReceivedGate for why a fixed sleep
+   // isn't reliable. Modes that don't consult the gate ignore the signal.
+   pClient->setResponseHeadersHandler(
+      [pHeadersReceivedGate](const http::Response&) { pHeadersReceivedGate->notify(); });
 
    http::Request& request = pClient->request();
    request.setMethod("GET");
@@ -780,8 +795,9 @@ TEST(AsyncClientContentLength, DeliversBodyWithoutContentLengthViaEof)
    EXPECT_FALSE(outcome.timedOut);
 }
 
-// The stopReadingAndRespond() overrides in this tree (LocalhostAsyncClient,
-// NamedPipeAsyncClient, and rstudio-pro's load balancer client) force an early
+// The stopReadingAndRespond() overrides (LocalhostAsyncClient and
+// NamedPipeAsyncClient in this repo, plus the load balancer client in
+// rstudio-pro's src/cpp/server/load_balancer/Common.cpp) force an early
 // close+respond once they believe the body is fully received:
 // `response_.body().length() >= response_.contentLength()`.
 // Message::contentLength() reads an absent Content-Length header as 0, and
@@ -793,6 +809,13 @@ TEST(AsyncClientContentLength, DeliversBodyWithoutContentLengthViaEof)
 // shape with no guard of its own, so the tests below are the regression
 // coverage for the base class guard: dropping either half of it fails the
 // matching test with an empty assembled body.
+//
+// The tests relay through one of the gated *Split modes: the body has to
+// arrive in a *separate* async_read() from the one that parsed the headers,
+// or it would already be sitting in responseBuffer_ (and so already delivered
+// at header time) by the time an unguarded stopReadingAndRespond()
+// short-circuits the next read -- which would let the test pass without the
+// guard.
 class StopReadingOnContentLengthAsyncClient : public TcpIpAsyncClient
 {
 public:
@@ -811,112 +834,36 @@ private:
    }
 };
 
-struct StopReadingOutcome
-{
-   bool timedOut = false;
-   bool responseHandlerCalled = false;
-   bool sawFinal = false;
-   std::string assembled;
-};
-
-// Relays `body` through StopReadingOnContentLengthAsyncClient to a
-// FixedBufferHandler, with the server holding the body back until the client
-// has parsed the headers. mode must be one of the *Split modes: the body has
-// to arrive in a *separate* async_read() from the one that parsed the
-// headers, or it would already be sitting in responseBuffer_ (and so already
-// delivered at header time) by the time an unguarded stopReadingAndRespond()
-// short-circuits the next read -- which would let the test pass without the
-// guard.
-StopReadingOutcome runStopReadingScenario(ResponseMode mode, const std::string& body)
-{
-   boost::shared_ptr<HeadersReceivedGate> pHeadersReceivedGate =
-      boost::make_shared<HeadersReceivedGate>();
-
-   LocalServer server(mode, /*closeAfterResponse=*/true, body);
-   server.setHeadersReceivedGate(pHeadersReceivedGate);
-   server.start();
-
-   boost::asio::io_context ioc;
-   boost::shared_ptr<StopReadingOnContentLengthAsyncClient> pClient =
-      boost::make_shared<StopReadingOnContentLengthAsyncClient>(
-         ioc, "127.0.0.1", std::to_string(server.port()),
-         boost::posix_time::seconds(5));
-
-   pClient->setStreamNonChunkedResponses(true);
-   pClient->setFixedBufferHandlerSupportsPause(true);
-   // Signal the server the instant headers are parsed, so it only writes the
-   // body once the client has actually left responseBuffer_ empty -- see
-   // HeadersReceivedGate and the comment above for why a fixed sleep isn't
-   // reliable here.
-   pClient->setResponseHeadersHandler(
-      [pHeadersReceivedGate](const http::Response&) { pHeadersReceivedGate->notify(); });
-
-   http::Request& request = pClient->request();
-   request.setMethod("GET");
-   request.setUri("/file");
-   request.setHeader("Connection", "close");
-
-   StopReadingOutcome outcome;
-
-   boost::shared_ptr<boost::asio::system_timer> pTimer =
-      boost::make_shared<boost::asio::system_timer>(ioc, std::chrono::seconds(4));
-   pTimer->async_wait([&](const boost::system::error_code& ec) {
-      if (ec == boost::asio::error::operation_aborted)
-         return;
-      outcome.timedOut = true;
-      pClient->close();
-   });
-
-   FixedBufferHandler fixedBufferHandler =
-      [&](const http::Response&, const std::string& chunk) -> bool
-      {
-         if (chunk.empty())
-         {
-            outcome.sawFinal = true;
-            pTimer->cancel();
-            return true;
-         }
-
-         outcome.assembled += chunk;
-         return true;
-      };
-
-   pClient->execute(
-      [&](const http::Response&) {
-         outcome.responseHandlerCalled = true;
-         pTimer->cancel();
-      },
-      [&](const core::Error&) {
-         pTimer->cancel();
-      },
-      fixedBufferHandler);
-
-   ioc.run();
-   server.stop();
-
-   return outcome;
-}
-
 TEST(AsyncClientContentLength, StreamedEofDelimitedBodyIsFullyRelayedWhenSubclassStopsReadingOnContentLength)
 {
    const std::string body = "{\"name\":\"jsonlite\"}\n";
-   StopReadingOutcome outcome = runStopReadingScenario(ResponseMode::NoContentLengthSplit, body);
+   StreamingOutcome outcome = runStreamingScenario<StopReadingOnContentLengthAsyncClient>(
+      ResponseMode::NoContentLengthSplit, /*closeAfterResponse=*/true, body);
 
    EXPECT_FALSE(outcome.timedOut);
-   EXPECT_TRUE(outcome.sawFinal);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_FALSE(outcome.responseHandlerCalled);
-   EXPECT_EQ(outcome.assembled, body);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, body);
 }
 
 TEST(AsyncClientContentLength, ChunkedBodyIsFullyRelayedWhenSubclassStopsReadingOnContentLength)
 {
    const std::string body = "{\"name\":\"jsonlite\"}\n";
-   StopReadingOutcome outcome = runStopReadingScenario(ResponseMode::ChunkedSplit, body);
+   StreamingOutcome outcome = runStreamingScenario<StopReadingOnContentLengthAsyncClient>(
+      ResponseMode::ChunkedSplit, /*closeAfterResponse=*/true, body);
 
    EXPECT_FALSE(outcome.timedOut);
-   EXPECT_TRUE(outcome.sawFinal);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_FALSE(outcome.responseHandlerCalled);
-   EXPECT_EQ(outcome.assembled, body);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, body);
 }
 
 // rstudio#17807 (general gap): when setRequestTimeout is configured, a peer
