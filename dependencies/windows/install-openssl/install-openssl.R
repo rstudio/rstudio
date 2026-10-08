@@ -108,8 +108,12 @@ zipfile <- sprintf("%s.zip", NAME)
 zip(zipfile = zipfile, files = NAME, extras = "-q")
 
 install <- function(name) {
-   unlink(file.path(OWD, "..", name), recursive = TRUE)
-   file.rename(name, file.path(OWD, "..", name))
+   target <- file.path(OWD, "..", name)
+   unlink(target, recursive = TRUE)
+   if (file.exists(target))
+      fatal("failed to remove %s; close anything using it and re-run", shQuote(target))
+   if (!file.rename(name, target))
+      fatal("failed to move %s to %s", shQuote(name), shQuote(target))
 }
 
 install(NAME)
