@@ -46,7 +46,7 @@ destdir <- normalizePath(file.path(getwd(), "build"), winslash = "\\", mustWork 
 exec("vcvarsall.bat", "x86 && perl Configure debug-VC-WIN32 -d", OPTS)
 exec("vcvarsall.bat", "x86 && nmake")
 exec("vcvarsall.bat", "x86 && nmake test")
-exec("vcvarsall.bat", paste0("x86 && nmake install DESTDIR=", destdir))
+exec("vcvarsall.bat", paste0("x86 && nmake install_sw DESTDIR=", destdir))
 setwd("..")
 
 section("Building OpenSSL 64bit (Debug)")
@@ -58,7 +58,7 @@ destdir <- normalizePath(file.path(getwd(), "build"), winslash = "\\", mustWork 
 exec("vcvarsall.bat", "amd64 && perl Configure debug-VC-WIN64A -d", OPTS)
 exec("vcvarsall.bat", "amd64 && nmake")
 exec("vcvarsall.bat", "amd64 && nmake test")
-exec("vcvarsall.bat", paste0("amd64 && nmake install DESTDIR=", destdir))
+exec("vcvarsall.bat", paste0("amd64 && nmake install_sw DESTDIR=", destdir))
 setwd("..")
 
 section("Building OpenSSL 32bit (Release)")
@@ -70,7 +70,7 @@ destdir <- normalizePath(file.path(getwd(), "build"), winslash = "\\", mustWork 
 exec("vcvarsall.bat", "x86 && perl Configure VC-WIN32", OPTS)
 exec("vcvarsall.bat", "x86 && nmake")
 exec("vcvarsall.bat", "x86 && nmake test")
-exec("vcvarsall.bat", paste0("x86 && nmake install DESTDIR=", destdir))
+exec("vcvarsall.bat", paste0("x86 && nmake install_sw DESTDIR=", destdir))
 setwd("..")
 
 section("Building OpenSSL 64bit (Release)")
@@ -82,7 +82,7 @@ destdir <- normalizePath(file.path(getwd(), "build"), winslash = "\\", mustWork 
 exec("vcvarsall.bat", "amd64 && perl Configure VC-WIN64A", OPTS)
 exec("vcvarsall.bat", "amd64 && nmake")
 exec("vcvarsall.bat", "amd64 && nmake test")
-exec("vcvarsall.bat", paste0("amd64 && nmake install DESTDIR=", destdir))
+exec("vcvarsall.bat", paste0("amd64 && nmake install_sw DESTDIR=", destdir))
 setwd("..")
 
 section("Building redistributible")
