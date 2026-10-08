@@ -33,7 +33,8 @@ xcopy <- function(src, dst) {
 # openssl.cnf and loads engines and modules from them. Keep its admin-protected
 # Program Files defaults (no --prefix/--openssldir) and stage the install
 # under each build tree with DESTDIR instead. RStudio ships no openssl.cnf,
-# so no-autoload-config also stops OpenSSL from loading one at all.
+# so no-autoload-config also stops OpenSSL from loading one implicitly; only
+# an explicit config-load call in code would still read one.
 OPTS <- "no-asm no-shared no-autoload-config -DUNICODE -D_UNICODE"
 
 section("Building OpenSSL 32bit (Debug)")
@@ -89,10 +90,13 @@ unlink("dist", recursive = TRUE)
 dir.create(file.path("dist", NAME), recursive = TRUE)
 dirs <- list.files(pattern = sprintf("^build-%s-", NAME))
 lapply(dirs, function(dir) {
-   # DESTDIR staging mirrors the default install path, which has spaces, so
-   # move it with R rather than the unquoted xcopy helper
-   programfiles <- if (grepl("-32$", dir)) "Program Files (x86)" else "Program Files"
-   src <- file.path(dir, "build", programfiles, "OpenSSL")
+   # DESTDIR staging mirrors the default install path, whose folder name comes
+   # from the build machine's ProgramW6432 / ProgramFiles(x86), so find it
+   # rather than guess it; it has spaces, so move it with R, not xcopy
+   src <- Sys.glob(file.path(dir, "build", "*", "OpenSSL"))
+   if (length(src) != 1L)
+      fatal("expected one staged OpenSSL install under %s; found %i",
+            shQuote(file.path(dir, "build")), length(src))
    dst <- file.path("dist", NAME, sub("^build-", "", dir))
    if (!file.rename(src, dst))
       fatal("failed to move %s to %s", shQuote(src), shQuote(dst))
