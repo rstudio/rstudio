@@ -102,7 +102,6 @@ public class UserPrefs extends UserPrefsComputed
       {
          autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
          enableSplashScreen().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableSplashScreen(enabled.getValue()));
-         showWhatsNew().addValueChangeHandler(enabled -> Desktop.getFrame().setShowWhatsNew(enabled.getValue()));
          enableScreenReader().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableAccessibility(enabled.getValue()));
          enableMousewheelZoom().addValueChangeHandler(enabled -> Desktop.getFrame().setMousewheelZoomEnabled(enabled.getValue()));
          mousewheelZoomDebounceMs().addValueChangeHandler(debounceMs -> Desktop.getFrame().setMousewheelZoomDebounce(debounceMs.getValue()));
@@ -328,7 +327,6 @@ public class UserPrefs extends UserPrefsComputed
          Desktop.getFrame().setMousewheelZoomDebounce(mousewheelZoomDebounceMs().getValue());
          Desktop.getFrame().setEnableAccessibility(enableScreenReader().getValue());
          Desktop.getFrame().setEnableSplashScreen(enableSplashScreen().getValue());
-         Desktop.getFrame().setShowWhatsNew(showWhatsNew().getValue());
       }
    }
 

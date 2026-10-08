@@ -280,6 +280,55 @@
    
 })
 
+#' Is Buffered REPL Input Complete?
+#'
+#' The REPL buffers code that codeop reports as incomplete. A block awaiting
+#' the blank line that closes it still compiles on its own, while an open
+#' string or bracket does not.
+#'
+#' @param code The buffered Python code, as a single string.
+.rs.addFunction("reticulate.isCompleteCode", function(code)
+{
+   builtins <- reticulate::import_builtins(convert = FALSE)
+   tryCatch({
+      builtins$compile(code, "<string>", "exec")
+      TRUE
+   }, error = function(e) FALSE)
+})
+
+#' Run Buffered REPL Code
+#'
+#' Run code the REPL has buffered the way reticulate itself does when a
+#' dedented line arrives: in interactive mode, so expression values are
+#' echoed, with Python errors reported as the REPL reports them and an
+#' interrupt ending just this evaluation.
+#'
+#' @param code The buffered Python code, as a single string.
+.rs.addFunction("reticulate.runBufferedCode", function(code)
+{
+   ns <- asNamespace("reticulate")
+   run <- if (exists("py_compile_eval", envir = ns, inherits = FALSE))
+      function() ns$py_compile_eval(code, capture = FALSE)
+   else
+      function() reticulate::py_run_string(code)
+
+   tryCatch(
+      run(),
+      error = function(e)
+      {
+         msg <- conditionMessage(e)
+         if (inherits(e, "python.builtin.BaseException"))
+         {
+            err <- reticulate::py_last_error()
+            if (!is.null(err$message))
+               msg <- err$message
+         }
+         message(msg, appendLF = !endsWith(msg, "\n"))
+      },
+      interrupt = function(c) NULL
+   )
+})
+
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
 {
    # ensure we call repl_iteration hook on exit
@@ -291,6 +340,25 @@
       add = TRUE
    )
    
+   # reticulate only honors 'quit' / 'exit' when its buffer is empty. Input
+   # scripted from the editor (e.g. a batch of chunks that moves back to R)
+   # can end a block and then ask to leave the REPL without the blank line
+   # that would close that block; run what's buffered first, as reticulate
+   # itself would on the next dedented statement, so the exit goes through
+   # rather than being evaluated as a Python expression. Only a block is
+   # treated that way: inside an open string or bracket the line is content.
+   isExit <- trimmed %in% c("quit", "exit", "quit()", "exit()")
+   if (isExit && !buffer$empty() && !grepl("^\\s", contents))
+   {
+      code <- paste(buffer$data(), collapse = "\n")
+      if (.rs.reticulate.isCompleteCode(code))
+      {
+         buffer$clear()
+         .rs.reticulate.runBufferedCode(code)
+         return(FALSE)
+      }
+   }
+
    # special handling for commands when buffer is currently empty
    if (buffer$empty())
    {

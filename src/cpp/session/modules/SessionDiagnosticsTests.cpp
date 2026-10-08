@@ -421,6 +421,99 @@ TEST(DiagnosticsTest, HandleElseTokenDoesNotCorruptState) {
    EXPECT_ERRORS("{1 else 2}");
 }
 
+TEST(DiagnosticsTest, ZeroPaddedStringFormatsAreFlagged) {
+   // the '0' flag with '%s' is platform-dependent
+   EXPECT_LINT_MESSAGE("sprintf('%05s', x)", "'%05s' zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf(\"%-010s\", x)", "'%-010s' zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf('%0*s', 5, x)", "'%0*s' zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf('%2$05s %1$s', x, y)", "'%2$05s' zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf('%05.3s', x)", "'%05.3s' zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf('id: %05s', x)", "'%05s' zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf(fmt = '%05s', x)", "zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf(x, fmt = '%05s')", "zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf('fmt' = '%05s', x)", "zero-pads");
+   EXPECT_LINT_MESSAGE("base::sprintf('%05s', x)", "zero-pads");
+   EXPECT_LINT_MESSAGE("gettextf('%05s', x)", "zero-pads");
+   EXPECT_LINT_MESSAGE("message(sprintf('%05s', x))", "zero-pads");
+   
+   // R partially matches 'fmt'
+   EXPECT_LINT_MESSAGE("sprintf(f = '%05s', x)", "zero-pads");
+   EXPECT_LINT_MESSAGE("sprintf(x, fm = '%05s')", "zero-pads");
+   EXPECT_NO_LINT_MESSAGE("sprintf('%05s', fm = f)", "zero-pads");
+   
+   // without a width there is nothing to pad
+   EXPECT_NO_LINT_MESSAGE("sprintf('%0s', x)", "zero-pads");
+   EXPECT_NO_LINT_MESSAGE("sprintf('%-0s', x)", "zero-pads");
+   
+   // zero-padded numbers and plain widths are fine
+   EXPECT_NO_LINT("sprintf('%05d', x)");
+   EXPECT_NO_LINT("sprintf('%05.2f', x)");
+   EXPECT_NO_LINT("sprintf('%5s', x)");
+   EXPECT_NO_LINT("sprintf('%10s', x)");
+   EXPECT_NO_LINT("sprintf('%-10s', x)");
+   EXPECT_NO_LINT("sprintf('%2$5s %1$s', x, y)");
+   
+   // '%%' is a literal percent sign
+   EXPECT_NO_LINT("sprintf('%%05s', x)");
+   EXPECT_NO_LINT("sprintf('100%%', x)");
+   
+   // only the format argument is inspected
+   EXPECT_NO_LINT("sprintf('%s', '%05s')");
+   EXPECT_NO_LINT("sprintf(fmt = '%s', '%05s')");
+   EXPECT_NO_LINT("sprintf(x, '%05s', fmt = '%s %s')");
+   EXPECT_NO_LINT("sprintf(fmt = f, '%05s')");
+   EXPECT_NO_LINT("sprintf('%05s', fmt = f)");
+   EXPECT_NO_LINT("sprintf(fmt = paste0('%', n, 's'), '%05s')");
+   EXPECT_NO_LINT("sprintf(paste0('%0', 5, 's'), x)");
+   
+   // other functions, and methods that merely share the name, are not inspected
+   EXPECT_NO_LINT("paste('%05s', x)");
+   EXPECT_NO_LINT("formatC('%05s', width = 5)");
+   EXPECT_NO_LINT("x <- '%05s'");
+   EXPECT_NO_LINT("x$sprintf('%05s', y)");
+   EXPECT_NO_LINT("x@sprintf('%05s', y)");
+   
+   // the marker covers just the specifier, also after embedded newlines
+   {
+      ParseResults results = parse("sprintf('%05s', x)", s_parseOptions);
+      ASSERT_EQ(results.lint().get().size(), 1u);
+      
+      const LintItem& item = results.lint().get()[0];
+      EXPECT_EQ(item.type, LintTypeWarning);
+      EXPECT_EQ(item.startRow, 0);
+      EXPECT_EQ(item.startColumn, 9);
+      EXPECT_EQ(item.endRow, 0);
+      EXPECT_EQ(item.endColumn, 13);
+   }
+   
+   {
+      ParseResults results = parse("sprintf('%d\n  %05s', 1, x)", s_parseOptions);
+      ASSERT_EQ(results.lint().get().size(), 1u);
+      
+      const LintItem& item = results.lint().get()[0];
+      EXPECT_EQ(item.startRow, 1);
+      EXPECT_EQ(item.startColumn, 2);
+      EXPECT_EQ(item.endRow, 1);
+      EXPECT_EQ(item.endColumn, 6);
+   }
+   
+   // the check follows the 'diagnostics in R function calls' preference
+   {
+      ParseOptions options = s_parseOptions;
+      options.setLintRFunctions(false);
+      
+      ParseResults results = parse("sprintf('%05s', x)", options);
+      EXPECT_FALSE(hasLintContaining(results, "zero-pads"));
+   }
+   
+   // malformed or empty calls do not crash
+   EXPECT_ERRORS("sprintf('%05s'");
+   EXPECT_ERRORS("sprintf(");
+   EXPECT_NO_ERRORS("sprintf()");
+   EXPECT_NO_LINT_MESSAGE("sprintf(,)", "zero-pads");
+   EXPECT_NO_ERRORS("sprintf(fmt = )");
+}
+
 TEST(DiagnosticsTest, RepeatedFormalArguments) {
    EXPECT_LINT_MESSAGE("function(x, x) {}", "repeated formal argument 'x'");
    EXPECT_LINT_MESSAGE("function(x = 1, y, x) {}", "repeated formal argument 'x'");

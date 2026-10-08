@@ -5077,10 +5077,12 @@ std::string installationNotFoundMessage()
 {
    if (isInstallationManaged())
    {
+      FilePath storageDir = systemStorageDir();
       return fmt::format(
          "Posit Assistant installation not found. Installation is managed by "
-         "your administrator; expected under: {}",
-         chat_slots::versionsDir(systemStorageDir()).getAbsolutePath());
+         "your administrator; expected a version under {} selected in {}",
+         chat_slots::versionsDir(storageDir).getAbsolutePath(),
+         storageDir.completeChildPath(chat_constants::kSelectorFileName).getAbsolutePath());
    }
 
    return "Posit Assistant installation not found. Install it from the "

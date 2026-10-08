@@ -115,7 +115,7 @@ Error initialize()
 ### Key module infrastructure
 
 - `src/cpp/session/include/session/SessionModuleContext.hpp` -- module registration API (`registerRpcMethod`, `registerAsyncRpcMethod`, `sourceModuleRFile`, `enqueClientEvent`, etc.)
-- `src/cpp/session/include/session/SessionClientEvent.hpp` -- all client event type constants
+- `src/cpp/session/include/session/worker_safe/session/SessionClientEvent.hpp` -- client event type constants (declarations)
 
 
 ## Client-Server Communication
@@ -141,7 +141,12 @@ The frontend and backend communicate via JSON-RPC over HTTP. Understanding this 
    }
    ```
 
-   The method name is auto-converted from snake_case to camelCase (e.g. `chat_start_backend` → `chatStartBackend`).
+   `RemoteServer.java` implements the method and names the RPC explicitly -- there is no automatic
+   snake_case to camelCase mapping:
+
+   ```java
+   sendRequest(RPC_SCOPE, "chat_start_backend", requestCallback);
+   ```
 
 3. **Frontend** calls it from a presenter or view via the injected server operations interface.
 
@@ -151,11 +156,12 @@ The frontend and backend communicate via JSON-RPC over HTTP. Understanding this 
 1. **Backend** fires an event using `module_context::enqueClientEvent()`:
 
    ```cpp
-   ClientEvent event(client_events::kChatOutput, data);
+   ClientEvent event(client_events::kExecuteAppCommand, data);
    module_context::enqueClientEvent(event);
    ```
 
-   Event type constants are defined in `SessionClientEvent.hpp`.
+   Event type constants are declared in `worker_safe/session/SessionClientEvent.hpp` and given their
+   values and wire names in `src/cpp/session/SessionClientEvent.cpp`.
 
 2. **Frontend** receives the event through the `EventBus` and dispatches it to registered handlers.
 
@@ -197,8 +203,8 @@ When implementing a new feature end-to-end:
 
 1. **Backend module**: Create `src/cpp/session/modules/SessionXxx.cpp` with `initialize()`, RPC handlers, and optionally a companion `.R` file.
 2. **Wire the module**: Register the module's `initialize()` in the session startup sequence.
-3. **Client events** (if needed): Add event type constants to `SessionClientEvent.hpp`.
-4. **Server operations**: Create a `*ServerOperations.java` interface in the GWT frontend and add it to `Server.java`.
+3. **Client events** (if needed): Declare the constant in `worker_safe/session/SessionClientEvent.hpp`, define its value and wire name in `SessionClientEvent.cpp`, then add the wire name to the frontend's `ClientEvent.java` and dispatch it in `ClientEventDispatcher.java`.
+4. **Server operations**: Create a `*ServerOperations.java` interface in the GWT frontend, add it to the `extends` list of `WorkbenchServerOperations.java` (which `Server.java` extends), and implement its methods in `RemoteServer.java`.
 5. **Frontend view**: Add UI under `src/gwt/.../workbench/views/`.
 6. **Commands** (if needed): Add to `Commands.cmd.xml`, add stubs to `Commands.java`, and update the MD5 checksum.
 7. **DI wiring**: Bind new classes in `RStudioGinModule.java`.
@@ -208,7 +214,7 @@ When implementing a new feature end-to-end:
 
 Backend:
 - `src/cpp/session/include/session/SessionModuleContext.hpp` -- module registration API
-- `src/cpp/session/include/session/SessionClientEvent.hpp` -- client event type constants
+- `src/cpp/session/include/session/worker_safe/session/SessionClientEvent.hpp` -- client event type constants
 - `src/cpp/session/resources/schema/user-prefs-schema.json` -- user preferences schema
 - `src/cpp/session/resources/schema/user-state-schema.json` -- UI state schema
 - `src/cpp/session/session-options.json` -- session CLI options schema
@@ -227,7 +233,7 @@ Frontend:
 - **Find where an RPC is handled**: grep for the RPC name (e.g. `"chat_start_backend"`) in `src/cpp/session/modules/`.
 - **Find a command handler**: grep for `on<CommandName>` with `@Handler` in `src/gwt/`.
 - **Find where a preference is used**: search for its key from `user-prefs-schema.json` in both `src/cpp/` and `src/gwt/`.
-- **Trace a client event**: find the event constant in `SessionClientEvent.hpp`, then grep for it in both backend (where it's fired) and frontend (where it's handled).
+- **Trace a client event**: the wire name (e.g. `execute_app_command`) links the C++ constant in `SessionClientEvent.cpp` (`kExecuteAppCommand`) to the Java constant in `ClientEvent.java` (`ClientEvent.ExecuteAppCommand`). Grep for the C++ constant to find where it's fired, and for the Java constant to find where it's dispatched.
 
 
 ## Building RStudio
@@ -419,7 +425,7 @@ When a command is added here, a stub will also need to be added to the file at:
 
     src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.java
 
-When Commands.cmd.xml is modified in any way, a checksum stored in src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml.MD5 MUST be updated to match, and that file included in the commit. The MD5 file is updated when the GWT code is built using `ant` or `ant draft`.
+When Commands.cmd.xml changes, build with `ant` or `ant draft` to regenerate src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml.MD5 (it is generated; don't edit it by hand), and include it in the commit.
 
 
 ### Command Handlers

@@ -19,10 +19,13 @@ import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
@@ -49,6 +52,7 @@ import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
@@ -119,6 +123,14 @@ public class TutorialPane
       toolbar_.addLeftWidget(commands_.tutorialHome().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
+
+      filterWidget_ = new SearchWidget(constants_.filterTutorialsLabel());
+      filterWidget_.setPlaceholderText(constants_.filterTutorialsLabel());
+      filterWidget_.addValueChangeHandler(event -> applyFilter());
+      ElementIds.assignElementId(filterWidget_, ElementIds.SW_TUTORIAL);
+      toolbar_.addRightWidget(filterWidget_);
+      toolbar_.addRightSeparator();
+
       toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
 
       return toolbar_;
@@ -322,16 +334,20 @@ public class TutorialPane
       }
    }
 
-   private void onPageLoaded()
+   private void onPageLoaded(Document doc)
    {
-      // initialize styles for frame
-      Document doc = frame_.getWindow().getDocument();
+      initializeStyles(doc);
+      applyFilter();
+      doc.getBody().getStyle().setVisibility(Visibility.VISIBLE);
+   }
+
+   private void initializeStyles(Document doc)
+   {
       BodyElement body = doc.getBody();
       RStudioThemes.initializeThemes(doc, body);
       body.addClassName("ace_editor_theme");
       body.addClassName(BrowseCap.operatingSystem());
 
-      // inject styles
       final String STYLES_ID = "rstudio_tutorials_home_styles";
       if (doc.getElementById(STYLES_ID) == null)
       {
@@ -341,20 +357,138 @@ public class TutorialPane
          styleEl.setInnerHTML(RES.styles().getText());
          doc.getHead().appendChild(styleEl);
       }
+   }
 
-      body.getStyle().setVisibility(Visibility.VISIBLE);
+   // The toolbar only re-checks its separators when a command's visibility
+   // changes, so toggling the filter box has to ask for it explicitly.
+   private void setFilterVisible(boolean visible)
+   {
+      filterWidget_.setVisible(visible);
+      toolbar_.invalidateSeparators();
+   }
+
+   // The document shown in the frame, or null when there is none to work
+   // with: a cross-origin page refuses the question, and a page still
+   // loading has no body yet.
+   private Document getFrameDocument()
+   {
+      return getFrameDocument(frame_.getIFrame());
+   }
+
+   private static final native Document getFrameDocument(IFrameElementEx frame)
+   /*-{
+      try {
+         var doc = frame.contentWindow.document;
+         return (doc && doc.body) ? doc : null;
+      } catch (e) {
+         return null;
+      }
+   }-*/;
+
+   // true for the pane's own home page, whatever query or fragment it carries
+   private static boolean isHomeUrl(String url)
+   {
+      return url.replaceFirst("[?#].*$", "").endsWith(TutorialPresenter.URLS_HOME);
+   }
+
+   @Override
+   public boolean isHomePage()
+   {
+      Document doc = getFrameDocument();
+      return doc != null && isHomeUrl(doc.getURL());
+   }
+
+   // Hides the tutorials on the home page that don't match the filter box.
+   // Each term must appear somewhere in the tutorial's title, package name,
+   // or tutorial name, so adding a term narrows the list. Whitespace and
+   // ASCII punctuation separate terms, so the "package: name" line can be
+   // copied in as shown and a fragment of a hyphenated name still matches it;
+   // anything else, including non-Latin letters, stays part of its term.
+   private void applyFilter()
+   {
+      Document doc = getFrameDocument();
+      if (doc == null)
+         return;
+
+      Element container = DomUtils.querySelector(doc.getBody(), ".rstudio-tutorials-container");
+      if (container == null)
+         return;
+
+      String[] terms = filterWidget_.getValue().toLowerCase().split(FILTER_SEPARATORS);
+      NodeList<Element> entries = DomUtils.querySelectorAll(container, ".rstudio-tutorials-entry");
+
+      int visibleCount = 0;
+      for (int i = 0, n = entries.getLength(); i < n; i++)
+      {
+         Element entry = entries.getItem(i);
+         String haystack = (
+               entry.getAttribute("data-tutorial-title") + " " +
+               entry.getAttribute("data-tutorial-package") + " " +
+               entry.getAttribute("data-tutorial-name")).toLowerCase();
+
+         boolean matches = true;
+         for (String term : terms)
+         {
+            if (!haystack.contains(term))
+            {
+               matches = false;
+               break;
+            }
+         }
+
+         if (matches)
+         {
+            entry.getStyle().clearDisplay();
+            visibleCount++;
+         }
+         else
+         {
+            entry.getStyle().setDisplay(Display.NONE);
+         }
+      }
+
+      // the empty state only applies once there are tutorials to filter;
+      // otherwise the page is already explaining why the list is empty
+      Element empty = doc.getElementById(FILTER_EMPTY_ID);
+      if (empty == null)
+      {
+         empty = doc.createDivElement();
+         empty.setId(FILTER_EMPTY_ID);
+         empty.setClassName("rstudio-tutorials-filter-empty");
+         empty.setAttribute("role", "status");
+         empty.setInnerText(constants_.noMatchingTutorialsMessage());
+         container.appendChild(empty);
+      }
+
+      boolean showEmpty = entries.getLength() > 0 && visibleCount == 0;
+      if (showEmpty)
+         empty.getStyle().clearDisplay();
+      else
+         empty.getStyle().setDisplay(Display.NONE);
    }
 
    private void onFrameLoaded()
    {
-      String url = frame_.getUrl();
+      // The frame's src attribute lags behind navigation that happened inside
+      // the frame, so ask the document where it is. A cross-origin page is
+      // none of ours to set up, and the filter has nothing to act on there.
+      Document doc = getFrameDocument();
+      if (doc == null)
+      {
+         setFilterVisible(false);
+         return;
+      }
+
+      String url = doc.getURL();
+      setFilterVisible(isHomeUrl(url));
+
       if (TutorialUtil.isShinyUrl(url))
       {
          onTutorialLoaded();
       }
       else
       {
-         onPageLoaded();
+         onPageLoaded(doc);
       }
    }
 
@@ -367,7 +501,11 @@ public class TutorialPane
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      onFrameLoaded();
+      // only the pages we render ourselves follow the IDE theme; a running
+      // tutorial is left alone
+      Document doc = getFrameDocument();
+      if (doc != null && !TutorialUtil.isShinyUrl(doc.getURL()))
+         initializeStyles(doc);
    }
 
    @Override
@@ -601,6 +739,7 @@ public class TutorialPane
 
    private RStudioFrame frame_;
    private Toolbar toolbar_;
+   private SearchWidget filterWidget_;
 
    // Injected ----
    private final GlobalDisplay globalDisplay_;
@@ -608,6 +747,11 @@ public class TutorialPane
    private final Session session_;
    private final DependencyManager dependencies_;
    private final TutorialServerOperations server_;
+
+   private static final String FILTER_EMPTY_ID = "rstudio_tutorials_filter_empty";
+
+   // whitespace and the ASCII punctuation ranges !-/ :-@ [-` {-~
+   private static final String FILTER_SEPARATORS = "[\\s!-/:-@\\[-`{-~]+";
 
    private static final Resources RES = GWT.create(Resources.class);
    private static final TutorialConstants constants_ = com.google.gwt.core.client.GWT.create(TutorialConstants.class);

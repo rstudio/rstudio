@@ -202,6 +202,11 @@ public class VirtualConsole
       preserveHTML_ = preserveHTML;
    }
 
+   public void setSgrOnly(boolean sgrOnly)
+   {
+      sgrOnly_ = sgrOnly;
+   }
+
    private void backspace()
    {
       backspace(1);
@@ -1015,6 +1020,17 @@ public class VirtualConsole
     */
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
+      // If processing text instead of a terminal stream, normalize CR/LF
+      // and remove non-formatting control sequences
+      if (sgrOnly_ && data != null)
+      {
+         data = StringUtil.normalizeNewLines(data);
+         if (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
+             data = AnsiCode.strip(data);
+         else
+            data = AnsiCode.stripNonSgr(data);
+      }
+
       // output of another class (e.g. stderr after stdout) can't complete an
       // escape sequence held back from the previous submit; show it as
       // malformed first, with its own class
@@ -1377,6 +1393,12 @@ public class VirtualConsole
    
    private Match nextMatch(String data, int offset)
    {
+      if (sgrOnly_)
+      {
+         return ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF
+            ? CONTROL.match(data, offset)
+            : AnsiCode.SGR_ONLY_PATTERN.match(data, offset);
+      }
       return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
          ? CONTROL.match(data, offset)
          : AnsiCode.CONTROL_PATTERN.match(data, offset);
@@ -1713,6 +1735,7 @@ public class VirtualConsole
    private int cursor_ = 0;
    private AnsiCode ansi_ = new AnsiCode();
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
+   private boolean sgrOnly_ = false;
 
    // an escape sequence cut off by the end of the last submit, and the
    // class it was submitted with

@@ -53,6 +53,19 @@ namespace {
 using ConsoleInputQueue = std::deque<rstudio::r::session::RConsoleInput>;
 ConsoleInputQueue s_consoleInputBuffer;
 
+// console input that enters / leaves the reticulate Python REPL; the same
+// lines module_context::adaptToLanguage() enqueues to switch languages
+bool isPythonReplEnter(const std::string& line)
+{
+   return line == "reticulate::repl_python()" || line == "repl_python()";
+}
+
+bool isPythonReplExit(const std::string& line)
+{
+   // the spellings reticulate's REPL honors (with an empty buffer)
+   return line == "quit" || line == "exit" || line == "quit()" || line == "exit()";
+}
+
 // manage global state indicating whether R is processing input
 std::atomic<int> s_rProcessingInput(0);
 
@@ -234,6 +247,36 @@ void clearConsoleInputBuffer()
    s_consoleInputBuffer = ConsoleInputQueue();
 }
 
+std::string languageAfterInput(const std::string& language, const std::string& input)
+{
+   // follow the REPL through the input the same way
+   // fixupPendingConsoleInput() does when it splits each item
+   bool pyReplActive = language == "Python";
+   for (const std::string& line : core::algorithm::split(input, "\n"))
+   {
+      if (pyReplActive && isPythonReplExit(line))
+         pyReplActive = false;
+      else if (!pyReplActive && isPythonReplEnter(line))
+         pyReplActive = true;
+   }
+
+   return pyReplActive ? "Python" : "R";
+}
+
+std::string languageAfterPendingInput(const std::string& language)
+{
+   std::string result = language;
+   for (auto& input : s_consoleInputBuffer)
+   {
+      if (input.isCancel() || input.isEof())
+         continue;
+
+      result = languageAfterInput(result, input.text);
+   }
+
+   return result;
+}
+
 namespace {
 
 // this function takes the next chunk of (potentially multi-line) pending
@@ -298,7 +341,7 @@ void fixupPendingConsoleInput()
          }
          
          // if this line would exit the reticulate REPL, then update that state
-         else if (line == "quit" || line == "exit")
+         else if (isPythonReplExit(line))
          {
             blockIndent.clear();
             pyReplActive = false;
@@ -349,8 +392,7 @@ void fixupPendingConsoleInput()
       else
       {
          // check for a line that would enter the Python REPL
-         if (line == "reticulate::repl_python()" ||
-             line == "repl_python()")
+         if (isPythonReplEnter(line))
          {
             pyReplActive = true;
          }

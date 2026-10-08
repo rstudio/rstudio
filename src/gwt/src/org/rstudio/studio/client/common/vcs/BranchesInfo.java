@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 public class BranchesInfo extends JavaScriptObject
@@ -31,5 +32,9 @@ public class BranchesInfo extends JavaScriptObject
 
    public native final JsArrayString getBranches() /*-{
       return this.branches;
+   }-*/;
+
+   public native final JsArray<WorktreeInfo> getWorktrees() /*-{
+      return this.worktrees || [];
    }-*/;
 }

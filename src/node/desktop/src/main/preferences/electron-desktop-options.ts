@@ -47,7 +47,6 @@ const kZoomLevel = 'view.zoomLevel';
 const kWindowBounds = 'view.windowBounds';
 const kAccessibility = 'view.accessibility';
 const kEnableSplashScreen = 'view.enableSplashScreen';
-const kShowWhatsNew = 'view.showWhatsNew';
 const kDisableRendererAccessibility = 'view.disableRendererAccessibility';
 
 const kIgnoredUpdateVersions = 'general.ignoredUpdateVersions';
@@ -228,14 +227,6 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public enableSplashScreen(): boolean {
     return this.config.get(kEnableSplashScreen, properties.view.default.enableSplashScreen);
-  }
-
-  public setShowWhatsNew(enabled: boolean): void {
-    this.safeSet(kShowWhatsNew, enabled);
-  }
-
-  public showWhatsNew(): boolean {
-    return this.config.get(kShowWhatsNew, properties.view.default.showWhatsNew);
   }
 
   public setDisableRendererAccessibility(accessibility: boolean): void {

@@ -1541,6 +1541,10 @@ public class VisualMode implements VisualModeEditorSync,
       
       // manage toolbar buttons / menus in display
       view_.manageCommandUI();
+
+      // the mode switch replaces the whole source document, so its lint
+      // markers would otherwise be left anchored to stale positions
+      docDisplay_.clearLint();
       
       // get references to the editing container and it's source editor
       TextEditorContainer editorContainer = view_.editorContainer();

@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint.model;
 
-import org.rstudio.core.client.StringUtil;
-
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.junit.client.GWTTestCase;
 
 public class LintItemTests extends GWTTestCase
@@ -27,61 +24,19 @@ public class LintItemTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
-   public void testAsAceAnnotationsKeepsTextWhenHtmlIsAlsoSet()
+   public void testAsAceAnnotationPopulatesText()
    {
-      // Regression #17581: Ace's gutter tooltip uses 'text' for displayText
-      // and renders it via createTextNode. If 'text' is dropped when 'html'
-      // is set, the html surfaces as literal markup in the tooltip.
+      // Regression #17581: Ace's gutter tooltip reads 'text' and renders it via
+      // createTextNode. An unpopulated 'text' yields an empty tooltip.
       LintItem item = LintItem.create(0, 0, 0, 0, "unexpected token", "error");
-      item.setHtml("<span>unexpected token</span>");
-
-      JsArray<LintItem> items = JsArray.createArray().cast();
-      items.push(item);
-
-      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(items);
-      assertEquals(1, annotations.length());
-      assertEquals("unexpected token", annotations.get(0).text());
-      assertEquals("<span>unexpected token</span>", annotations.get(0).html());
+      assertEquals("unexpected token", item.asAceAnnotation().text());
    }
 
-   public void testAsAceAnnotationsPopulatesTextWhenHtmlAbsent()
+   public void testAsAceAnnotationStripsEscapesFromText()
    {
-      LintItem item = LintItem.create(0, 0, 0, 0, "unexpected token", "error");
-      JsArray<LintItem> items = JsArray.createArray().cast();
-      items.push(item);
+      LintItem item = LintItem.create(0, 0, 0, 0, "\033[31mred\033[0m", "error");
 
-      AceAnnotation annotation = LintItem.asAceAnnotations(items).get(0);
-      assertEquals("unexpected token", annotation.text());
-      assertTrue("html should be empty when not set, got: " + annotation.html(),
-                 StringUtil.isNullOrEmpty(annotation.html()));
+      assertEquals("red", item.asAceAnnotation().text());
+      assertEquals("\033[31mred\033[0m", item.getText());
    }
-
-   public void testAceAnnotationCreateKeepsTextWhenHtmlIsAlsoSet()
-   {
-      AceAnnotation annotation = AceAnnotation.create(
-            0, 0, "<span>msg</span>", "msg", "error", "ace_error", null);
-      assertEquals("msg", annotation.text());
-      assertEquals("<span>msg</span>", annotation.html());
-   }
-
-   public void testGutterTooltipDisplayTextIsRawMessage()
-   {
-      // Mirrors the regression scenario from #17581: confirm that the value
-      // Ace would feed into createTextNode is the raw lint text, not the html.
-      LintItem item = LintItem.create(0, 0, 0, 0, "unexpected token", "error");
-      item.setHtml("<span>unexpected token</span>");
-      JsArray<LintItem> items = JsArray.createArray().cast();
-      items.push(item);
-
-      AceAnnotation annotation = LintItem.asAceAnnotations(items).get(0);
-      String displayText = simulateAceDisplayText(annotation);
-      assertEquals("unexpected token", displayText);
-      assertFalse("displayText must not contain <span> markup, got: " + displayText,
-                  displayText.contains("<span"));
-   }
-
-   // Mirrors Ace's Gutter.setAnnotations: prefers 'text', falls back to 'html'.
-   private static native String simulateAceDisplayText(AceAnnotation annotation) /*-{
-      return annotation.text ? annotation.text : (annotation.html || "");
-   }-*/;
 }

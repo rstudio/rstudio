@@ -42,6 +42,8 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String previewRpresentationCaption();
     String sourcePythonUserPrompt();
     String sourcePythonProgressCaption();
+    String executeChunksPythonUserPrompt();
+    String executeChunksPythonProgressCaption();
     String onSetWorkingDirToActiveDocMessage();
     String onSetWorkingDirToActiveDocCaption();
     String onGoToLineLabel();

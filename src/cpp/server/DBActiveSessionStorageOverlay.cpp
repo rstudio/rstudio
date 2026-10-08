@@ -1,5 +1,5 @@
 /*
- * whats-new-preload.ts
+ * DBActiveSessionStorageOverlay.cpp
  *
  * Copyright (C) 2026 by Posit Software, PBC
  *
@@ -13,13 +13,18 @@
  *
  */
 
-import { contextBridge, ipcRenderer } from 'electron';
+#include <server/DBActiveSessionStorageOverlay.hpp>
 
-contextBridge.exposeInMainWorld('whatsNew', {
-  close: () => {
-    ipcRenderer.send('whats-new-close');
-  },
-  openExternal: (url: string) => {
-    ipcRenderer.send('whats-new-open-external', url);
-  },
-});
+namespace rstudio {
+namespace server {
+namespace storage {
+namespace overlay {
+
+void addColumnProperties(std::vector<std::string>*)
+{
+}
+
+} // namespace overlay
+} // namespace storage
+} // namespace server
+} // namespace rstudio

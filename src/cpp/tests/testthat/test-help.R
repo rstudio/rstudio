@@ -248,3 +248,44 @@ test_that(".rs.helpExampleDivertCommand() ignores launchers inside dontrun block
 
     expect_null(.rs.helpExampleDivertCommand("Example", "fakedontrunpkg", "dontrun"))
 })
+
+test_that("help previews escape HTML in data-derived values", {
+    markup <- "<b>markup</b>"
+
+    df <- data.frame(col = c("ok", markup), stringsAsFactors = FALSE)
+    column <- .rs.getHelpColumnImpl("col", "df", environment())
+    expect_false(grepl("<b>", column$html, fixed = TRUE))
+    expect_true(grepl("&lt;b&gt;", column$html, fixed = TRUE))
+
+    # the signature is rendered through a text sink and must stay unescaped
+    expect_true(grepl("<character>", column$signature, fixed = TRUE))
+
+    # the data-frame path interpolates the object's own name, so the name has
+    # to resolve through a search-path environment to reach that branch
+    assign(markup, head(mtcars), envir = globalenv())
+    on.exit(rm(list = markup, envir = globalenv()), add = TRUE)
+    frame <- .rs.getHelpDataFrame(markup, ".GlobalEnv", environment())
+    expect_false(grepl("<b>", frame$html, fixed = TRUE))
+    expect_true(grepl("&lt;b&gt;", frame$html, fixed = TRUE))
+})
+
+test_that("custom help descriptions render markdown but not raw HTML", {
+    expect_true(grepl("<strong>", .rs.markdownToHTML("**bold**"), fixed = TRUE))
+
+    escaped <- .rs.markdownToHTML("<b>markup</b>", escapeHTML = TRUE)
+    expect_false(grepl("<b>", escaped, fixed = TRUE))
+    expect_true(grepl("&lt;b&gt;", escaped, fixed = TRUE))
+
+    # markdown-generated tags survive escaping; only raw source HTML does not
+    expect_true(grepl("<strong>", .rs.markdownToHTML("**bold**", escapeHTML = TRUE), fixed = TRUE))
+
+    # only http, https, ftp, mailto and root-relative targets become links.
+    # A rejected one yields no anchor; sundown emits the original markdown as
+    # text instead, so the target still appears as plain text.
+    nonsafe <- .rs.markdownToHTML("[x](relative.html)", escapeHTML = TRUE)
+    expect_false(grepl("<a ", nonsafe, fixed = TRUE))
+
+    # ordinary links still render
+    safe <- .rs.markdownToHTML("[x](https://example.com)", escapeHTML = TRUE)
+    expect_true(grepl("<a href=\"https://example.com\"", safe, fixed = TRUE))
+})
