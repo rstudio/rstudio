@@ -47,15 +47,17 @@ done
 # Check that we're logged in with AWS
 aws sts get-caller-identity || aws sso login
 
-# Check every key before uploading any, so a clash doesn't leave a partial set;
-# only a 404 means the key is free, not a timeout or a permissions error
+# Check every key before uploading any, so a clash doesn't leave a partial set.
+# S3 reports a missing key as 404, or as 403 to a caller without s3:ListBucket;
+# anything else (e.g. a timeout) means we can't tell. A 403 for a key that does
+# exist is still caught by --if-none-match below.
 for FILE in "$@"; do
     NAME=$(basename "${FILE}")
     if HEAD_ERROR=$(aws s3api head-object --bucket "${AWS_BUCKET}" --key "${NAME}" \
             2>&1 > /dev/null); then
         echo "error: 's3://${AWS_BUCKET}/${NAME}' already exists; not replacing it" >&2
         exit 1
-    elif [[ "${HEAD_ERROR}" != *"(404)"* ]]; then
+    elif [[ "${HEAD_ERROR}" != *"(404)"* && "${HEAD_ERROR}" != *"(403)"* ]]; then
         echo "error: could not check whether 's3://${AWS_BUCKET}/${NAME}' exists: ${HEAD_ERROR}" >&2
         exit 1
     fi
