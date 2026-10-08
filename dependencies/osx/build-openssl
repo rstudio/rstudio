@@ -54,20 +54,18 @@ if [ "${#ARCH_LIST[@]}" -eq 0 ]; then
    error "no architectures given; expected --arch=x86_64, --arch=arm64 or --arch=x86_64,arm64"
 fi
 # make test runs what it builds, so check up front that this Mac can run each
-# architecture, rather than fail after a full compile
-NATIVE_ARCH="$(uname -m)"
+# architecture, rather than fail after a full compile. Ask the hardware, not
+# uname -m, which reports x86_64 in a Rosetta shell on Apple Silicon.
 for ARCH in "${ARCH_LIST[@]}"; do
    case "${ARCH}" in
    x86_64|arm64) ;;
    *) error "unknown architecture '${ARCH}'; expected x86_64 or arm64" ;;
    esac
 
-   if [ "${ARCH}" = "arm64" ] && [ "${NATIVE_ARCH}" != "arm64" ]; then
-      error "cannot build arm64 OpenSSL on an ${NATIVE_ARCH} machine; use --arch=x86_64"
-   fi
-
-   if [ "${ARCH}" = "x86_64" ] && [ "${NATIVE_ARCH}" = "arm64" ]; then
-      if ! arch -x86_64 /usr/bin/true 2> /dev/null; then
+   if ! arch "-${ARCH}" /usr/bin/true 2> /dev/null; then
+      if [ "${ARCH}" = "arm64" ]; then
+         error "this Mac can't run arm64 code, so can't test an arm64 build; use --arch=x86_64"
+      else
          error "Rosetta 2 is required to test x86_64 OpenSSL on Apple Silicon; install it with" \
             "'softwareupdate --install-rosetta --agree-to-license', or use --arch=arm64"
       fi
