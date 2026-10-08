@@ -23,10 +23,11 @@ fi
 AWS_BUCKET="rstudio-buildtools"
 
 # Check every archive before uploading any
+ARCHIVE_PATTERN='^openssl-[0-9]+\.[0-9]+\.[0-9]+(-macos-(arm64|x86_64)\.tar\.gz|\.zip)$'
 NAMES=""
 for FILE in "$@"; do
     NAME=$(basename "${FILE}")
-    if ! [[ "${NAME}" =~ ^openssl-[0-9]+\.[0-9]+\.[0-9]+(-macos-(arm64|x86_64)\.tar\.gz|\.zip)$ ]]; then
+    if ! [[ "${NAME}" =~ ${ARCHIVE_PATTERN} ]]; then
         echo "error: '${FILE}' is not an OpenSSL archive name the dependency scripts download" >&2
         echo "expected openssl-<version>-macos-<arm64|x86_64>.tar.gz or openssl-<version>.zip" >&2
         exit 1
@@ -50,7 +51,8 @@ aws sts get-caller-identity || aws sso login
 # only a 404 means the key is free, not a timeout or a permissions error
 for FILE in "$@"; do
     NAME=$(basename "${FILE}")
-    if HEAD_ERROR=$(aws s3api head-object --bucket "${AWS_BUCKET}" --key "${NAME}" 2>&1 > /dev/null); then
+    if HEAD_ERROR=$(aws s3api head-object --bucket "${AWS_BUCKET}" --key "${NAME}" \
+            2>&1 > /dev/null); then
         echo "error: 's3://${AWS_BUCKET}/${NAME}' already exists; not replacing it" >&2
         exit 1
     elif [[ "${HEAD_ERROR}" != *"(404)"* ]]; then
