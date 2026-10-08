@@ -746,6 +746,11 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-11-arm
     timeout-minutes: 120
+    # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
+    # deployment: false keeps each shard from recording a deployment on the PR.
+    environment:
+      name: e2e-playwright
+      deployment: false
     defaults:
       run:
         shell: pwsh
