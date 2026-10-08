@@ -61,12 +61,32 @@ namespace {
 
 static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
 
+// The directory whose DESCRIPTION file is indexed by the project file
+// monitor. For package projects this is the package directory, which can
+// differ from the project directory; for other build types it is the project
+// directory itself. (Note that buildTargetPath() is empty for build type
+// 'None', and a relative "DESCRIPTION" path would resolve against the working
+// directory rather than the project.)
+FilePath packageDescriptionDirectory()
+{
+   ProjectContext& context = projectContext();
+   if (context.config().buildType == r_util::kBuildTypePackage)
+      return context.buildTargetPath();
+
+   return context.directory();
+}
+
 void onDescriptionChanged()
 {
    s_pIndexedPackageInfo.reset();
 
+   // a removed DESCRIPTION simply means the project is no longer a package
+   FilePath descDir = packageDescriptionDirectory();
+   if (!descDir.completeChildPath("DESCRIPTION").exists())
+      return;
+
    std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
-   Error error = pInfo->read(projectContext().buildTargetPath());
+   Error error = pInfo->read(descDir);
    if (error)
       LOG_ERROR(error);
 
@@ -75,7 +95,7 @@ void onDescriptionChanged()
 
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   FilePath descPath = projectContext().buildTargetPath().completeChildPath("DESCRIPTION");
+   FilePath descPath = packageDescriptionDirectory().completeChildPath("DESCRIPTION");
    for (auto& event : events)
    {
       auto& info = event.fileInfo();
@@ -1500,6 +1520,20 @@ void ProjectContext::setWebsiteOutputFormat(
 
 bool ProjectContext::isPackageProject()
 {
+   // Without a project, there is no project directory to inspect. (Note that
+   // directory() is empty in this case, so r_util::isPackageDirectory() would
+   // otherwise look for a DESCRIPTION file in the current working directory.)
+   if (!hasProject())
+      return false;
+
+   // Prefer the indexed DESCRIPTION, which is kept current by the project
+   // file monitor; otherwise check the project directory itself. A package
+   // project whose package lives in a subdirectory (PackagePath) is thus not
+   // classified as one until its DESCRIPTION has been indexed; callers such
+   // as augmentRbuildignore() assume the package directory is the project
+   // directory, so this is left as it was. Callers that would otherwise hit
+   // this path repeatedly (e.g. the R parser, once per function call in a
+   // document) cache the result themselves.
    if (s_pIndexedPackageInfo != nullptr)
       return s_pIndexedPackageInfo->type() == kPackageType;
 
