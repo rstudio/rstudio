@@ -258,7 +258,7 @@ jobs:
           # with neither would be selected, never run, and never appear in the
           # summary -- a certification table quietly missing an environment is
           # worse than one that fails. Keep in step with the jobs below.
-          JOB_BACKED='["ubuntu24s","macos14","macos15","macos26","windows2025"]'
+          JOB_BACKED='["ubuntu24s","macos27","macos15","macos26","windows2025"]'
           NO_JOB=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson j "$JOB_BACKED" \
             '[ $m[] | select(.cell as $c | $sel | index($c)) | select(.os == null)
                | select(.cell as $c | ($j | index($c)) == null) | .cell ]')
@@ -416,7 +416,7 @@ jobs:
           NEEDED=$(jq -cn --argjson l "$LINUX_MATRIX" --argjson s "$SELECTED" '
             ([$l[] | {cell: .cell, key: .url_key}])
             + ([{cell:"ubuntu24s",key:"server_noble"},
-                {cell:"macos14",key:"macos"},
+                {cell:"macos27",key:"macos"},
                 {cell:"macos15",key:"macos"},
                 {cell:"macos26",key:"macos"},
                 {cell:"windows2025",key:"windows"}]
@@ -539,17 +539,17 @@ jobs:
       # ships one "macos" installer for both architectures.
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
-  macos14:
+  macos27:
     # Renders "(not selected)" rather than an empty "(R )" when this cell
     # is not in the run: r_declared only carries the selected cells, so the
     # lookup is null and the job is skipped anyway.
     name: >-
-      macOS 14 arm64 ${{ fromJSON(needs.pick.outputs.r_declared).macos14
-      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos14)
+      macOS 27 arm64 ${{ fromJSON(needs.pick.outputs.r_declared).macos27
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos27)
       || '(not selected)' }}
     needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos14') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos27') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-27-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
@@ -557,7 +557,7 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos14 }}
+      r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos27 }}
       build_from_source: ${{ inputs.build_from_source || false }}
       test_selector: ${{ inputs.test_selector }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
@@ -587,7 +587,7 @@ jobs:
 
   summary:
     name: Certification summary
-    needs: [pick, resolve, linux-desktop, ubuntu24s, macos26, macos15, macos14, windows2025]
+    needs: [pick, resolve, linux-desktop, ubuntu24s, macos26, macos15, macos27, windows2025]
     # Every cell's result belongs in the table, including the failures -- a
     # certification run that half-failed still has to say which half.
     if: always() && needs.pick.result == 'success'
@@ -655,13 +655,13 @@ jobs:
           ACTUAL_UBUNTU24S: ${{ needs.ubuntu24s.outputs.r_version_actual }}
           ACTUAL_MACOS26: ${{ needs.macos26.outputs.r_version_actual }}
           ACTUAL_MACOS15: ${{ needs.macos15.outputs.r_version_actual }}
-          ACTUAL_MACOS14: ${{ needs.macos14.outputs.r_version_actual }}
+          ACTUAL_MACOS27: ${{ needs.macos27.outputs.r_version_actual }}
           ACTUAL_WINDOWS2025: ${{ needs.windows2025.outputs.r_version_actual }}
           RESULT_LINUX: ${{ needs.linux-desktop.result }}
           RESULT_UBUNTU24S: ${{ needs.ubuntu24s.result }}
           RESULT_MACOS26: ${{ needs.macos26.result }}
           RESULT_MACOS15: ${{ needs.macos15.result }}
-          RESULT_MACOS14: ${{ needs.macos14.result }}
+          RESULT_MACOS27: ${{ needs.macos27.result }}
           RESULT_WINDOWS2025: ${{ needs.windows2025.result }}
         run: |
           set -euo pipefail
@@ -793,7 +793,7 @@ jobs:
           fi
 
           emit_single ubuntu24s   "$ACTUAL_UBUNTU24S"   "$RESULT_UBUNTU24S"
-          emit_single macos14     "$ACTUAL_MACOS14"     "$RESULT_MACOS14"
+          emit_single macos27     "$ACTUAL_MACOS27"     "$RESULT_MACOS27"
           emit_single macos15     "$ACTUAL_MACOS15"     "$RESULT_MACOS15"
           emit_single macos26     "$ACTUAL_MACOS26"     "$RESULT_MACOS26"
           emit_single windows2025 "$ACTUAL_WINDOWS2025" "$RESULT_WINDOWS2025"
@@ -835,7 +835,7 @@ jobs:
               --argjson s "$SELECTED" '
               ([$l[] | {cell: .cell, key: .url_key}]
                + ([{cell:"ubuntu24s",key:"server_noble"},
-                   {cell:"macos14",key:"macos"},
+                   {cell:"macos27",key:"macos"},
                    {cell:"macos15",key:"macos"},
                    {cell:"macos26",key:"macos"},
                    {cell:"windows2025",key:"windows"}]
