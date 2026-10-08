@@ -64,7 +64,10 @@ TEST(QuartoPathsCache, HitRequiresLaunchableLauncherAndToolsDirectory)
    ASSERT_FALSE(tools.ensureDirectory());
    ASSERT_FALSE(resources.ensureDirectory());
    ASSERT_FALSE(launcher.ensureFile());
+#ifndef _WIN32
+   // file modes are POSIX-only; on Windows an existing launcher is launchable
    ASSERT_FALSE(launcher.changeFileMode(FileMode::USER_READ_WRITE_EXECUTE));
+#endif
    std::string binPath = bin.getAbsolutePath();
    std::string resourcesPath = resources.getAbsolutePath();
 
