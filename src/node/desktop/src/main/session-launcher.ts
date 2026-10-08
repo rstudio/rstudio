@@ -39,13 +39,7 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { prepareEnvironment } from './detect-r';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
-import {
-  createStandaloneErrorDialog,
-  findRepoRoot,
-  getCurrentlyUniqueFolderName,
-  isAutomated,
-  userLogPath,
-} from './utils';
+import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
 import { startupCheckpoint } from './startup-timing';
