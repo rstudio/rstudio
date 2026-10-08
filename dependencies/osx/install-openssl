@@ -28,24 +28,35 @@ OPENSSL_DIR="${RSTUDIO_TOOLS_ROOT}/openssl-${OPENSSL_VERSION}"
 OPENSSL_ARCHIVE="openssl-${OPENSSL_VERSION}-macos-${ARCH}.tar.gz"
 OPENSSL_URL="${RSTUDIO_BUILDTOOLS}/${OPENSSL_ARCHIVE}"
 
-if [ -f "${OPENSSL_DIR}/lib/libcrypto.a" ]; then
+if [ -d "${OPENSSL_DIR}" ]; then
    info "OpenSSL ${OPENSSL_VERSION} already installed at '${OPENSSL_DIR}'"
    exit 0
 fi
 
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
-cd "${RSTUDIO_TOOLS_ROOT}"
 
-rm -rf "${OPENSSL_DIR}"
-download "${OPENSSL_URL}" "${OPENSSL_ARCHIVE}"
-extract "${OPENSSL_ARCHIVE}"
-rm -f "${OPENSSL_ARCHIVE}"
+# unpack and check the archive beside the install, and move it into place only
+# once it's complete, so an interrupted install is never taken for a finished one
+STAGING_DIR="$(mktemp -d "${RSTUDIO_TOOLS_ROOT}/.openssl-XXXXXX")"
+trap 'rm -rf "${STAGING_DIR}"' EXIT
+STAGED_DIR="${STAGING_DIR}/openssl-${OPENSSL_VERSION}"
+
+download "${OPENSSL_URL}" "${STAGING_DIR}/${OPENSSL_ARCHIVE}"
+tar -xf "${STAGING_DIR}/${OPENSSL_ARCHIVE}" -C "${STAGING_DIR}"
+
+if ! [ -f "${STAGED_DIR}/include/openssl/ssl.h" ]; then
+   error "'${OPENSSL_URL}' has no openssl-${OPENSSL_VERSION}/include/openssl/ssl.h"
+fi
 
 # a mislabeled archive would otherwise surface only as link errors much later
 for LIB in libcrypto.a libssl.a; do
-   LIB_ARCHS="$(lipo -archs "${OPENSSL_DIR}/lib/${LIB}")"
+   if ! [ -f "${STAGED_DIR}/lib/${LIB}" ]; then
+      error "'${OPENSSL_URL}' has no openssl-${OPENSSL_VERSION}/lib/${LIB}"
+   fi
+   LIB_ARCHS="$(lipo -archs "${STAGED_DIR}/lib/${LIB}")"
    if [ "${LIB_ARCHS}" != "${ARCH}" ]; then
-      rm -rf "${OPENSSL_DIR}"
-      error "'${OPENSSL_URL}' contains a ${LIB_ARCHS} ${LIB}; expected ${ARCH}"
+      error "'${OPENSSL_URL}' has ${LIB} for ${LIB_ARCHS}; expected ${ARCH}"
    fi
 done
+
+mv "${STAGED_DIR}" "${OPENSSL_DIR}"
