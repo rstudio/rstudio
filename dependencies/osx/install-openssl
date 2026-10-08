@@ -27,6 +27,14 @@ OPENSSL_DIR="${RSTUDIO_TOOLS_ROOT}/openssl-${OPENSSL_VERSION}"
 OPENSSL_ARCHIVE="openssl-${OPENSSL_VERSION}-macos-${ARCH}.tar.gz"
 OPENSSL_URL="${RSTUDIO_BUILDTOOLS}/${OPENSSL_ARCHIVE}"
 
+# SHA-256 of the archives build-openssl built and upload-openssl.sh published;
+# pinned so a replaced archive in the bucket can't reach the signed app
+case "${ARCH}" in
+arm64)  OPENSSL_SHA256="75e699a94db71aa1b2a2f18f2ccac0c7c71153ba6f10c9f43f99bf8ffcc53b6c" ;;
+x86_64) OPENSSL_SHA256="134dba69ada51e60e9b938c8c5a0385fb4fd06f32e181371ce5dd2907aefdcd3" ;;
+*)      error "unknown architecture '${ARCH}'; expected x86_64 or arm64" ;;
+esac
+
 if [ -d "${OPENSSL_DIR}" ]; then
    info "OpenSSL ${OPENSSL_VERSION} already installed at '${OPENSSL_DIR}'"
    exit 0
@@ -41,6 +49,10 @@ trap 'rm -rf "${STAGING_DIR}"' EXIT
 STAGED_DIR="${STAGING_DIR}/openssl-${OPENSSL_VERSION}"
 
 download "${OPENSSL_URL}" "${STAGING_DIR}/${OPENSSL_ARCHIVE}"
+if ! echo "${OPENSSL_SHA256}  ${STAGING_DIR}/${OPENSSL_ARCHIVE}" |
+      shasum -a 256 -c - > /dev/null; then
+   error "'${OPENSSL_URL}' doesn't match OPENSSL_SHA256; if the version changed, update it"
+fi
 tar -xf "${STAGING_DIR}/${OPENSSL_ARCHIVE}" -C "${STAGING_DIR}"
 
 if ! [ -f "${STAGED_DIR}/include/openssl/ssl.h" ]; then

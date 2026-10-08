@@ -97,13 +97,16 @@ Updating OpenSSL
 RStudio links a static OpenSSL built from source, not Homebrew's.
 `install-dependencies-osx` downloads it from the rstudio-buildtools S3 bucket.
 To move to a new release, change `RSTUDIO_OPENSSL_VERSION` in
-`dependencies/tools/rstudio-tools.sh`, then build both architectures (on Apple
-Silicon, with Rosetta 2 installed) and upload them:
+`dependencies/tools/rstudio-tools.sh` and the source tarball's SHA-256 in
+`build-openssl`, then build both architectures (on Apple Silicon, with
+Rosetta 2 installed) and upload them:
 
 ```bash
 ./build-openssl
 ../tools/upload-openssl.sh openssl/openssl-<version>-macos-*.tar.gz
 ```
+
+`build-openssl` prints the archives' SHA-256s; pin them in `install-openssl`.
 
 Building the RStudio Distribution
 =============================================================================

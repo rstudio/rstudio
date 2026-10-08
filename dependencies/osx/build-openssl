@@ -19,6 +19,10 @@ set -eo pipefail
 
 OPENSSL_VERSION="${RSTUDIO_OPENSSL_VERSION}"
 
+# SHA-256 of the source tarball, as published by openssl.org and on the GitHub
+# release; pinned so the download doesn't vouch for itself
+SOURCE_SHA256="603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a"
+
 help () {
    cat <<USAGE
 usage: build-openssl [--arch=<architectures>]
@@ -69,11 +73,12 @@ OUTPUT_DIR="$(pwd -P)"
 if ! [ -f "${SOURCE_ARCHIVE}" ]; then
    section "Downloading OpenSSL ${OPENSSL_VERSION}"
    download "${SOURCE_URL}" "${SOURCE_ARCHIVE}.partial"
-   download "${SOURCE_URL}.sha256" "${SOURCE_ARCHIVE}.sha256"
-   EXPECTED_SHA256="$(awk '{ print $1 }' "${SOURCE_ARCHIVE}.sha256")"
-   echo "${EXPECTED_SHA256}  ${SOURCE_ARCHIVE}.partial" | shasum -a 256 -c - ||
-      error "checksum mismatch for '${SOURCE_URL}'; delete '${OUTPUT_DIR}/${SOURCE_ARCHIVE}.partial' and re-run"
    mv "${SOURCE_ARCHIVE}.partial" "${SOURCE_ARCHIVE}"
+fi
+
+if ! echo "${SOURCE_SHA256}  ${SOURCE_ARCHIVE}" | shasum -a 256 -c - > /dev/null; then
+   rm -f "${SOURCE_ARCHIVE}"
+   error "'${SOURCE_URL}' doesn't match SOURCE_SHA256; if the version changed, update it"
 fi
 
 build-arch () {
@@ -120,7 +125,8 @@ for ARCH in "${ARCH_LIST[@]}"; do
    build-arch "${ARCH}"
 done
 
+# install-openssl pins these hashes
 yay "Built OpenSSL ${OPENSSL_VERSION}:"
 for ARCH in "${ARCH_LIST[@]}"; do
-   echo "  ${OUTPUT_DIR}/${NAME}-macos-${ARCH}.tar.gz"
+   shasum -a 256 "${OUTPUT_DIR}/${NAME}-macos-${ARCH}.tar.gz"
 done
