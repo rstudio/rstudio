@@ -323,8 +323,9 @@ test.describe.serial('Git pane worktrees', () => {
     await executeCommand(page, 'vcsCommit');
     const satellite = await satellitePromise;
     try {
-      await satellite.waitForLoadState('domcontentloaded');
-      expect(satellite.url()).toContain('view=review_changes');
+      // the page event can fire while the window is still on its initial blank
+      // document, so wait for the satellite URL rather than its first load
+      await satellite.waitForURL(/view=review_changes/);
 
       const button = satellite.locator(REVIEW_BRANCH_BUTTON);
       await expect(button).toContainText(LINKED_BRANCH, { timeout: 60000 });
