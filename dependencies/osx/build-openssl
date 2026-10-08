@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+#
+# build-openssl
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+set -eo pipefail
+
+# Keep in sync with install-openssl and OPENSSL_ROOT_DIR in src/cpp/CMakeLists.txt.
+OPENSSL_VERSION="3.5.9"
+
+help () {
+   cat <<USAGE
+usage: build-openssl [--arch=<architectures>]
+
+Build static OpenSSL ${OPENSSL_VERSION} libraries for macOS, run its test
+suite, and package the headers and libraries as
+openssl/openssl-${OPENSSL_VERSION}-macos-<arch>.tar.gz. Upload the archives
+with dependencies/tools/upload-openssl.sh; install-openssl downloads them.
+
+Options
+  --arch=<architectures>
+        Comma-separated list of architectures to build (x86_64, arm64).
+        Defaults to "x86_64,arm64". Testing the x86_64 build on Apple
+        Silicon requires Rosetta 2.
+USAGE
+}
+
+ARCHS="x86_64,arm64"
+for ARG in "$@"; do
+   case "${ARG}" in
+   --arch=*) ARCHS="${ARG#*=}" ;;
+   --help)   help; exit 0 ;;
+   *)        help; error "unknown option '${ARG}'" ;;
+   esac
+done
+
+IFS=',' read -r -a ARCH_LIST <<< "${ARCHS}"
+for ARCH in "${ARCH_LIST[@]}"; do
+   case "${ARCH}" in
+   x86_64|arm64) ;;
+   *) error "unknown architecture '${ARCH}'; expected x86_64 or arm64" ;;
+   esac
+done
+
+NAME="openssl-${OPENSSL_VERSION}"
+SOURCE_ARCHIVE="${NAME}.tar.gz"
+SOURCE_URL="https://www.openssl.org/source/${SOURCE_ARCHIVE}"
+JOBS="$(sysctl -n hw.ncpu)"
+
+cd "$(dirname "${BASH_SOURCE[0]}")"
+mkdir -p openssl
+cd openssl
+OUTPUT_DIR="$(pwd -P)"
+
+if ! [ -f "${SOURCE_ARCHIVE}" ]; then
+   section "Downloading OpenSSL ${OPENSSL_VERSION}"
+   download "${SOURCE_URL}" "${SOURCE_ARCHIVE}.partial"
+   download "${SOURCE_URL}.sha256" "${SOURCE_ARCHIVE}.sha256"
+   EXPECTED_SHA256="$(awk '{ print $1 }' "${SOURCE_ARCHIVE}.sha256")"
+   echo "${EXPECTED_SHA256}  ${SOURCE_ARCHIVE}.partial" | shasum -a 256 -c - ||
+      error "checksum mismatch for '${SOURCE_URL}'; delete '${OUTPUT_DIR}/${SOURCE_ARCHIVE}.partial' and re-run"
+   mv "${SOURCE_ARCHIVE}.partial" "${SOURCE_ARCHIVE}"
+fi
+
+build-arch () {
+   local ARCH="$1"
+   local BUILD_DIR="${OUTPUT_DIR}/build-${ARCH}"
+   local STAGE_DIR="${OUTPUT_DIR}/stage-${ARCH}"
+   local ARCHIVE="${OUTPUT_DIR}/${NAME}-macos-${ARCH}.tar.gz"
+
+   section "Building OpenSSL ${OPENSSL_VERSION} (${ARCH})"
+   rm -rf "${BUILD_DIR}" "${STAGE_DIR}" "${ARCHIVE}"
+   mkdir -p "${BUILD_DIR}"
+   tar -xf "${OUTPUT_DIR}/${SOURCE_ARCHIVE}" -C "${BUILD_DIR}" --strip-components=1
+   cd "${BUILD_DIR}"
+
+   # OpenSSL compiles its install paths into libcrypto and, at runtime, reads
+   # certificates from OPENSSLDIR and loads engines and modules from the
+   # others. /usr and /etc/ssl are root-owned on every Mac (the default
+   # /usr/local is user-writable under Homebrew), and /etc/ssl/cert.pem is the
+   # system CA bundle. RStudio ships no openssl.cnf, so don't autoload one.
+   ./Configure "darwin64-${ARCH}-cc"                     \
+      --prefix=/usr                                      \
+      --openssldir=/etc/ssl                              \
+      no-shared                                          \
+      no-autoload-config                                 \
+      "-mmacosx-version-min=${MACOSX_DEPLOYMENT_TARGET}"
+
+   make -j"${JOBS}"
+   make test HARNESS_JOBS="${JOBS}"
+   make install_sw DESTDIR="${STAGE_DIR}"
+
+   # package only the headers and static libraries; the pkg-config and CMake
+   # files name the /usr prefix, which isn't where we install them
+   subsection "Packaging ${ARCHIVE}"
+   mkdir -p "${STAGE_DIR}/${NAME}/lib"
+   mv "${STAGE_DIR}/usr/include" "${STAGE_DIR}/${NAME}/include"
+   mv "${STAGE_DIR}/usr/lib/libcrypto.a" "${STAGE_DIR}/usr/lib/libssl.a" "${STAGE_DIR}/${NAME}/lib"
+   cp LICENSE.txt "${STAGE_DIR}/${NAME}"
+   tar -czf "${ARCHIVE}" -C "${STAGE_DIR}" "${NAME}"
+
+   cd "${OUTPUT_DIR}"
+}
+
+for ARCH in "${ARCH_LIST[@]}"; do
+   build-arch "${ARCH}"
+done
+
+yay "Built OpenSSL ${OPENSSL_VERSION}:"
+for ARCH in "${ARCH_LIST[@]}"; do
+   echo "  ${OUTPUT_DIR}/${NAME}-macos-${ARCH}.tar.gz"
+done

@@ -91,6 +91,20 @@ Then ask the dependency script for both architectures:
 `make-package` (below) takes the same `--arch` option; pass
 `--arch=x86_64,arm64` to it to produce the universal package.
 
+Updating OpenSSL
+=============================================================================
+
+RStudio links a static OpenSSL built from source, not Homebrew's.
+`install-dependencies-osx` downloads it from the rstudio-buildtools S3 bucket.
+To move to a new release, change the version in `build-openssl`,
+`install-openssl` and `src/cpp/CMakeLists.txt`, then build both architectures
+(on Apple Silicon, with Rosetta 2 installed) and upload them:
+
+```bash
+./build-openssl
+../tools/upload-openssl.sh openssl/openssl-<version>-macos-*.tar.gz
+```
+
 Building the RStudio Distribution
 =============================================================================
 
