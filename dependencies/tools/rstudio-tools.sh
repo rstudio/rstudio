@@ -48,6 +48,14 @@ export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 export MACOSX_DEPLOYMENT_TARGET="12.0"
 
 
+#
+# OpenSSL version that macOS builds link statically; dependencies/osx/build-openssl
+# builds it, install-openssl installs it, and src/cpp/CMakeLists.txt reads it from
+# here. Windows pins its own in dependencies/windows/install-dependencies.cmd.
+#
+export RSTUDIO_OPENSSL_VERSION="3.5.9"
+
+
 # version of node.js used for building
 #
 # When changing node version you must upload the corresponding archives to aws s3; use

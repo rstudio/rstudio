@@ -18,8 +18,7 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing OpenSSL"
 
-# Keep in sync with build-openssl and OPENSSL_ROOT_DIR in src/cpp/CMakeLists.txt.
-OPENSSL_VERSION="3.5.9"
+OPENSSL_VERSION="${RSTUDIO_OPENSSL_VERSION}"
 
 # install-dependencies-osx runs this under 'arch -<arch>' for each
 # architecture it installs, with RSTUDIO_TOOLS_ROOT set to match

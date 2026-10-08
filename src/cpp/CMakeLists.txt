@@ -452,18 +452,34 @@ if(UNIX)
    if(APPLE)
 
       # link the static OpenSSL that dependencies/osx/build-openssl builds and
-      # install-openssl puts in the tools root, not Homebrew's
-      set(OPENSSL_ROOT_DIR "${RSTUDIO_TOOLS_ROOT}/openssl-3.5.9")
-      set(OPENSSL_USE_STATIC_LIBS TRUE)
-      if(NOT EXISTS "${OPENSSL_ROOT_DIR}/lib/libcrypto.a")
-         message(FATAL_ERROR "OpenSSL not found at '${OPENSSL_ROOT_DIR}'. Run dependencies/osx/install-dependencies-osx and reconfigure.")
+      # install-openssl puts in the tools root, unless -DOPENSSL_ROOT_DIR names
+      # another; an INTERNAL value is Homebrew's, cached by an older configure
+      get_property(_openssl_root_type CACHE OPENSSL_ROOT_DIR PROPERTY TYPE)
+      if(NOT DEFINED OPENSSL_ROOT_DIR OR _openssl_root_type STREQUAL "INTERNAL")
+         unset(OPENSSL_ROOT_DIR CACHE)
+         set(_openssl_tools_script "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh")
+         execute_process(
+            COMMAND bash -c "source '${_openssl_tools_script}' && echo $RSTUDIO_OPENSSL_VERSION"
+            OUTPUT_VARIABLE RSTUDIO_OPENSSL_VERSION
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            COMMAND_ERROR_IS_FATAL ANY)
+         set(OPENSSL_ROOT_DIR "${RSTUDIO_TOOLS_ROOT}/openssl-${RSTUDIO_OPENSSL_VERSION}")
+         set(OPENSSL_USE_STATIC_LIBS TRUE)
+         if(NOT EXISTS "${OPENSSL_ROOT_DIR}/lib/libcrypto.a")
+            message(FATAL_ERROR
+               "OpenSSL not found at '${OPENSSL_ROOT_DIR}'. "
+               "Install it with dependencies/osx/install-openssl and reconfigure.")
+         endif()
       endif()
 
-      # find_package keeps paths cached by an earlier configure, which may
-      # name Homebrew's OpenSSL or an older version of ours
-      unset(OPENSSL_INCLUDE_DIR CACHE)
-      unset(OPENSSL_CRYPTO_LIBRARY CACHE)
-      unset(OPENSSL_SSL_LIBRARY CACHE)
+      # find_package keeps paths cached by an earlier configure, which may name
+      # another OpenSSL (e.g. Homebrew's, or an older version of ours)
+      foreach(_openssl_var OPENSSL_INCLUDE_DIR OPENSSL_CRYPTO_LIBRARY OPENSSL_SSL_LIBRARY)
+         string(FIND "${${_openssl_var}}" "${OPENSSL_ROOT_DIR}/" _openssl_index)
+         if(NOT _openssl_index EQUAL 0)
+            unset(${_openssl_var} CACHE)
+         endif()
+      endforeach()
 
    endif()
 

@@ -17,8 +17,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 set -eo pipefail
 
-# Keep in sync with install-openssl and OPENSSL_ROOT_DIR in src/cpp/CMakeLists.txt.
-OPENSSL_VERSION="3.5.9"
+OPENSSL_VERSION="${RSTUDIO_OPENSSL_VERSION}"
 
 help () {
    cat <<USAGE
