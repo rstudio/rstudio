@@ -47,6 +47,9 @@ for ARG in "$@"; do
 done
 
 IFS=',' read -r -a ARCH_LIST <<< "${ARCHS}"
+if [ "${#ARCH_LIST[@]}" -eq 0 ]; then
+   error "no architectures given; expected --arch=x86_64, --arch=arm64 or --arch=x86_64,arm64"
+fi
 for ARCH in "${ARCH_LIST[@]}"; do
    case "${ARCH}" in
    x86_64|arm64) ;;
