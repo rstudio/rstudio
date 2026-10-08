@@ -1185,10 +1185,23 @@ public class TextEditingTargetWidget
       adaptToFileType(editor_.getFileType());
    }
 
+   // file types are compared by id, as TextEditingTarget.onCompleted does
+   private static boolean isSameFileType(TextFileType fileType, TextFileType other)
+   {
+      if (fileType == null || other == null)
+         return false;
+
+      return StringUtil.equals(fileType.getTypeId(), other.getTypeId());
+   }
+
    public void adaptToFileType(TextFileType fileType)
    {
-      editor_.setFileType(fileType);
-      if (splitEditor_ != null)
+      // Re-applying the type the editor already has would reset its language,
+      // completion and keyboard handlers and clear the lint markers that a
+      // save just rendered (every save re-detects the extended type).
+      if (!isSameFileType(fileType, editor_.getFileType()))
+         editor_.setFileType(fileType);
+      if (splitEditor_ != null && !isSameFileType(fileType, splitEditor_.getFileType()))
          splitEditor_.setFileType(fileType);
 
       boolean canCompilePdf = fileType.canCompilePDF();
