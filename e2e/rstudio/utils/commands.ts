@@ -848,7 +848,10 @@ export async function openProject(
   // path before its own deferred initialization has completed. Poll both so
   // the helper's post-condition is "the bridge agrees this project is
   // active" rather than "ready flipped true." Case-insensitive to match
-  // waitForActiveDocument's handling of HFS+ / NTFS.
+  // waitForActiveDocument's handling of HFS+ / NTFS, and like it, accepts
+  // the home-aliased form ("~/sub/proj.Rproj") the session reports for a
+  // project under the rsession's home directory -- e.g. a sandbox under
+  // %TEMP% on Windows, which lives in the user profile.
   //
   // Every hop is optional: a Desktop project switch navigates the window to
   // the new session, and GWT's bootstrap (rstudio.nocache.js) defines a
@@ -861,8 +864,11 @@ export async function openProject(
     await page.waitForFunction(
       (target) => {
         const path = window.rstudio?.project?.path?.() ?? null;
-        return window.rstudio?.ready === true && path !== null &&
-          path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
+        if (window.rstudio?.ready !== true || path === null) return false;
+        const pp = path.replace(/\\/g, '/').toLowerCase();
+        const expected = target.replace(/\\/g, '/').toLowerCase();
+        return pp === expected
+          || (pp.startsWith('~/') && expected.endsWith(pp.slice(1)));
       },
       projectFilePath,
       { timeout, polling: 100 },
