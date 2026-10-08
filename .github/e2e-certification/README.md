@@ -39,7 +39,7 @@ a plain dispatch runs.
 | `url_key` | Linux Desktop only | Which `os-resolve-daily-urls` output holds this engine's installer URL. Must agree with the engine config's `daily_platform_key`, with `-` written as `_`. |
 | `r_version_actual_note` | optional | Informational only. Records the observed R for a `distro` cell, with a date. Nothing reads it. |
 
-The five non-Linux cells (`ubuntu24s`, `macos14`, `macos15`, `macos26`,
+The five non-Linux cells (`ubuntu24s`, `macos27`, `macos15`, `macos26`,
 `windows2025`) need only the always-required fields: each has its own dedicated
 job in the certification workflow, guarded on the selection, rather than being
 built into a matrix.
