@@ -451,11 +451,17 @@ if(UNIX)
 
    if(APPLE)
 
-      # Older configures cached Homebrew's OpenSSL as an INTERNAL value. Spot it
-      # by value: a -DOPENSSL_ROOT_DIR given later keeps the INTERNAL type.
+      # Older configures cached Homebrew's OpenSSL as an INTERNAL value: opt/openssl@3,
+      # opt/openssl, or (before #14718) Cellar/openssl/<version>. Spot it by value,
+      # as a -DOPENSSL_ROOT_DIR given later may keep the INTERNAL type.
       get_property(_openssl_root_type CACHE OPENSSL_ROOT_DIR PROPERTY TYPE)
-      if(_openssl_root_type STREQUAL "INTERNAL" AND OPENSSL_ROOT_DIR MATCHES "/opt/openssl(@3)?$")
-         unset(OPENSSL_ROOT_DIR CACHE)
+      string(FIND "${OPENSSL_ROOT_DIR}" "${HOMEBREW_PREFIX}/" _openssl_brew_index)
+      if(_openssl_root_type STREQUAL "INTERNAL" AND _openssl_brew_index EQUAL 0)
+         string(LENGTH "${HOMEBREW_PREFIX}/" _openssl_brew_length)
+         string(SUBSTRING "${OPENSSL_ROOT_DIR}" ${_openssl_brew_length} -1 _openssl_brew_path)
+         if(_openssl_brew_path MATCHES "^(opt/openssl(@3)?|Cellar/openssl/[^/]+)$")
+            unset(OPENSSL_ROOT_DIR CACHE)
+         endif()
       endif()
 
       # link the static OpenSSL that dependencies/osx/build-openssl builds and
