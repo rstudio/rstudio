@@ -91,9 +91,7 @@ pipeline {
 
     stage('Install Dependencies') {
       environment {
-        // boost won't compile without the brew version of openssl.
-        // only add it to the dep resolve step though, or the ide build will compile against the wrong openssl
-        PATH = '/usr/local/opt/openssl@3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+        PATH = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
         GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
       }
       steps {
@@ -183,8 +181,6 @@ pipeline {
       steps {
         dir("package/osx/build/src/cpp") {
           // attempt to run cpp unit tests
-          // problems with rsession finding openssl, so those tests
-          // are disabled until we solve it (#6890)
           sh "arch -x86_64 ./rstudio-tests"
           
           // electron tests not working in CI environment, under investigation
