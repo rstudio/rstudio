@@ -15,9 +15,9 @@
 #
 #
 
-# The app bundles no libraries for the binaries in bin/, so one that loads
-# anything outside macOS (e.g. from the build machine's Homebrew) would only
-# fail at launch on a user's machine; check for that here.
+# A binary in bin/ that loads a library outside macOS and the app's own
+# Frameworks/ (e.g. from the build machine's Homebrew), or one missing from
+# Frameworks/, would only fail at launch on a user's machine; check for that here.
 
 set -euo pipefail
 
@@ -31,6 +31,8 @@ if [ ! -d "${BIN_DIR}" ]; then
    echo "error: bin directory '${BIN_DIR}' does not exist" >&2
    exit 1
 fi
+
+FRAMEWORKS_PREFIX="@executable_path/../Frameworks/"
 
 shopt -s nullglob
 
@@ -46,6 +48,12 @@ for FILE in "${BIN_DIR}"/*; do
       case "${DEP}" in
          /usr/lib/*|/System/Library/*)
             ;;
+         "${FRAMEWORKS_PREFIX}"*)
+            if [ ! -e "${BIN_DIR}/${DEP#@executable_path/}" ]; then
+               echo "error: '${FILE}' loads '${DEP}', which is not in the app bundle" >&2
+               FAILED=1
+            fi
+            ;;
          *)
             echo "error: '${FILE}' loads '${DEP}', which is not part of macOS" >&2
             FAILED=1
@@ -56,6 +64,6 @@ for FILE in "${BIN_DIR}"/*; do
 done
 
 if [ "${FAILED}" != "0" ]; then
-   echo "Link these libraries statically, or stop linking them." >&2
+   echo "Link these libraries statically, bundle them in Frameworks/, or stop linking them." >&2
    exit 1
 fi
