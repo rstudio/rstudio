@@ -451,15 +451,20 @@ if(UNIX)
 
    if(APPLE)
 
+      # Older configures cached Homebrew's OpenSSL as an INTERNAL value. Spot it
+      # by value: a -DOPENSSL_ROOT_DIR given later keeps the INTERNAL type.
+      get_property(_openssl_root_type CACHE OPENSSL_ROOT_DIR PROPERTY TYPE)
+      if(_openssl_root_type STREQUAL "INTERNAL" AND OPENSSL_ROOT_DIR MATCHES "/opt/openssl(@3)?$")
+         unset(OPENSSL_ROOT_DIR CACHE)
+      endif()
+
       # link the static OpenSSL that dependencies/osx/build-openssl builds and
       # install-openssl puts in the tools root, unless -DOPENSSL_ROOT_DIR names
-      # another; an INTERNAL value is Homebrew's, cached by an older configure
-      get_property(_openssl_root_type CACHE OPENSSL_ROOT_DIR PROPERTY TYPE)
-      if(NOT DEFINED OPENSSL_ROOT_DIR OR _openssl_root_type STREQUAL "INTERNAL")
-         unset(OPENSSL_ROOT_DIR CACHE)
-         set(_openssl_tools_script "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh")
+      # another
+      if(NOT DEFINED OPENSSL_ROOT_DIR)
          execute_process(
-            COMMAND bash -c "source '${_openssl_tools_script}' && echo $RSTUDIO_OPENSSL_VERSION"
+            COMMAND bash -c "source \"$1\" && echo \"$RSTUDIO_OPENSSL_VERSION\"" bash
+               "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh"
             OUTPUT_VARIABLE RSTUDIO_OPENSSL_VERSION
             OUTPUT_STRIP_TRAILING_WHITESPACE
             COMMAND_ERROR_IS_FATAL ANY)
@@ -484,6 +489,22 @@ if(UNIX)
    endif()
 
    find_package(OpenSSL REQUIRED)
+
+   # FindOpenSSL also searches pkg-config's hints, so a root missing headers or
+   # a library could quietly yield parts of another OpenSSL
+   if(APPLE)
+      get_filename_component(_openssl_root "${OPENSSL_ROOT_DIR}" REALPATH)
+      foreach(_openssl_path ${OPENSSL_INCLUDE_DIR} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+         get_filename_component(_openssl_real_path "${_openssl_path}" REALPATH)
+         cmake_path(IS_PREFIX _openssl_root "${_openssl_real_path}" NORMALIZE _openssl_in_root)
+         if(NOT _openssl_in_root)
+            message(FATAL_ERROR
+               "Found OpenSSL at '${_openssl_path}', outside OPENSSL_ROOT_DIR "
+               "'${OPENSSL_ROOT_DIR}'. Check that it holds include/, lib/libcrypto "
+               "and lib/libssl, then reconfigure.")
+         endif()
+      endforeach()
+   endif()
 
    # Add the headers as a normal (non-SYSTEM) include placed BEFORE the others,
    # for the same reason as the bundled {fmt} headers below: on macOS, clang
