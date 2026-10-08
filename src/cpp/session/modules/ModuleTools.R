@@ -86,7 +86,13 @@
       implementation <- get(fullName, envir = .rs.toolsEnv(), inherits = FALSE)
       if (.rs.isLazyModuleProxy(implementation))
          stop("Module did not define ", fullName)
-      implementation(...)
+
+      # Re-issue the caller's own call against the loaded definition rather
+      # than forwarding '...', so substitute(), match.call(), sys.call() and
+      # sys.function() in the implementation see what a direct call would.
+      call <- sys.call()
+      call[[1L]] <- as.name(fullName)
+      eval(call, parent.frame())
    }
 
    attr(proxy, "rs.lazyModuleProxy") <- TRUE

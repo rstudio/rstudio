@@ -549,23 +549,6 @@ FilePath quartoPathsCachePath()
    return module_context::userScratchPath().completeChildPath("quarto-paths-cache.json");
 }
 
-// Whether a quarto --paths answer is worth reusing: the cache key proves the
-// launcher's files are unchanged, not that it can still run, so a hit also
-// needs a launchable executable and the tools directory its launcher runs.
-bool quartoPathsUsable(const std::string& binPath, const std::string& resourcesPath)
-{
-#ifdef _WIN32
-   bool launchable = s_quartoPath.exists();
-#else
-   bool launchable = ::access(s_quartoPath.getAbsolutePath().c_str(), X_OK) == 0;
-#endif
-   FilePath binDir(binPath);
-   return launchable &&
-          binDir.isDirectory() &&
-          binDir.completeChildPath("tools").isDirectory() &&
-          FilePath(resourcesPath).isDirectory();
-}
-
 Error runQuarto(const std::vector<std::string>& args,
                 const core::FilePath& workingDir,
                 core::system::ProcessResult* pResult)
@@ -1053,7 +1036,7 @@ void readQuartoConfig()
       bool cacheable = s_quartoVersion != "99.9.9";
       bool cacheHit = cacheable && cache.read(key, &cached) &&
          !json::readObject(cached, "bin", binPath, "resources", resourcesPath) &&
-         quartoPathsUsable(binPath, resourcesPath);
+         quartoPathsUsable(s_quartoPath, binPath, resourcesPath);
 
       if (!cacheHit)
       {
@@ -1072,7 +1055,7 @@ void readQuartoConfig()
          {
             binPath = string_utils::systemToUtf8(paths[0]);
             resourcesPath = string_utils::systemToUtf8(paths[1]);
-            if (cacheable && quartoPathsUsable(binPath, resourcesPath))
+            if (cacheable && quartoPathsUsable(s_quartoPath, binPath, resourcesPath))
             {
                json::Object value;
                value["bin"] = binPath;
@@ -1139,6 +1122,22 @@ void readQuartoConfig()
 } // anonymous namespace
 
 namespace quarto {
+
+bool quartoPathsUsable(const FilePath& launcher,
+                       const std::string& binPath,
+                       const std::string& resourcesPath)
+{
+#ifdef _WIN32
+   bool launchable = launcher.exists();
+#else
+   bool launchable = ::access(launcher.getAbsolutePath().c_str(), X_OK) == 0;
+#endif
+   FilePath binDir(binPath);
+   return launchable &&
+          binDir.isDirectory() &&
+          binDir.completeChildPath("tools").isDirectory() &&
+          FilePath(resourcesPath).isDirectory();
+}
 
 json::Value quartoCapabilities()
 {

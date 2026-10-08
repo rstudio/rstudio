@@ -53,6 +53,47 @@ TEST(StartupCache, ReusesMatchingEntriesAndRejectsStaleOrDamagedEntries)
    EXPECT_FALSE(root.removeIfExists());
 }
 
+TEST(QuartoPathsCache, HitRequiresLaunchableLauncherAndToolsDirectory)
+{
+   FilePath root;
+   ASSERT_FALSE(FilePath::tempFilePath(root));
+   FilePath bin = root.completeChildPath("bin");
+   FilePath tools = bin.completeChildPath("tools");
+   FilePath resources = root.completeChildPath("share");
+   FilePath launcher = bin.completeChildPath("quarto");
+   ASSERT_FALSE(tools.ensureDirectory());
+   ASSERT_FALSE(resources.ensureDirectory());
+   ASSERT_FALSE(launcher.ensureFile());
+   ASSERT_FALSE(launcher.changeFileMode(FileMode::USER_READ_WRITE_EXECUTE));
+   std::string binPath = bin.getAbsolutePath();
+   std::string resourcesPath = resources.getAbsolutePath();
+
+   EXPECT_TRUE(quartoPathsUsable(launcher, binPath, resourcesPath));
+
+#ifndef _WIN32
+   // the launcher itself can no longer run
+   ASSERT_FALSE(launcher.changeFileMode(FileMode::USER_READ_WRITE));
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+   ASSERT_FALSE(launcher.changeFileMode(FileMode::USER_READ_WRITE_EXECUTE));
+   EXPECT_TRUE(quartoPathsUsable(launcher, binPath, resourcesPath));
+#endif
+
+   // the runtime the launcher starts is gone
+   ASSERT_FALSE(tools.remove());
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+   ASSERT_FALSE(tools.ensureDirectory());
+   EXPECT_TRUE(quartoPathsUsable(launcher, binPath, resourcesPath));
+
+   // cached directories must still exist
+   ASSERT_FALSE(resources.remove());
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+   ASSERT_FALSE(resources.ensureDirectory());
+   ASSERT_FALSE(launcher.remove());
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+
+   EXPECT_FALSE(root.removeIfExists());
+}
+
 class ProjectTypeResolution : public ::testing::Test
 {
 protected:

@@ -57,6 +57,60 @@ test_that("lazy modules derive their proxies from the module's definitions", {
    expect_equal(.rs.startupTest.spaced(), "spaced")
 })
 
+test_that("lazy module proxies invoke the implementation as a direct call would", {
+   path <- tempfile(fileext = ".R")
+   on.exit(unlink(path), add = TRUE)
+   functions <- c("startupTest.nse", "startupTest.missing", "startupTest.choice", "startupTest.self")
+   on.exit(rm(list = paste0(".rs.", functions), envir = .rs.toolsEnv()), add = TRUE)
+
+   writeLines(c(
+      '.rs.addFunction("startupTest.nse", function(x, ...)',
+      '   list(expr = deparse(substitute(x)), call = match.call(), value = x))',
+      '.rs.addFunction("startupTest.missing", function(a, b) missing(b))',
+      '.rs.addFunction("startupTest.choice", function(type = c("first", "second")) match.arg(type))',
+      '.rs.addFunction("startupTest.self", function() sys.function())'
+   ), path)
+   .rs.addLazyModule(path)
+
+   # the first call goes through the proxy; arguments keep their expressions
+   # and evaluate in the caller's frame
+   result <- local({
+      scale <- 3
+      .rs.startupTest.nse(scale * 2, extra = TRUE)
+   })
+   expect_equal(result$expr, "scale * 2")
+   expect_equal(result$call, quote(.rs.startupTest.nse(x = scale * 2, extra = TRUE)))
+   expect_equal(result$value, 6)
+
+   expect_true(.rs.startupTest.missing(1))
+   expect_false(.rs.startupTest.missing(1, 2))
+   expect_equal(.rs.startupTest.choice(), "first")
+   expect_equal(.rs.startupTest.choice("second"), "second")
+   expect_identical(.rs.startupTest.self(), .rs.startupTest.self)
+
+})
+
+test_that("lazy module proxies accept forwarded dots and apply-style calls", {
+   # each case needs its own module: the first call replaces the proxy
+   dots <- tempfile(fileext = ".R")
+   applied <- tempfile(fileext = ".R")
+   on.exit(unlink(c(dots, applied)), add = TRUE)
+   functions <- c("startupTest.dots", "startupTest.applied")
+   on.exit(rm(list = paste0(".rs.", functions), envir = .rs.toolsEnv()), add = TRUE)
+
+   writeLines('.rs.addFunction("startupTest.dots", function(x, ...) list(x = x, dots = list(...)))', dots)
+   writeLines('.rs.addFunction("startupTest.applied", function(x, times = 1) x * times)', applied)
+   .rs.addLazyModule(dots)
+   .rs.addLazyModule(applied)
+
+   forward <- function(...) .rs.startupTest.dots(...)
+   expect_equal(forward(1 + 1, label = "two"), list(x = 2, dots = list(label = "two")))
+
+   expect_true(.rs.isLazyModuleProxy(.rs.startupTest.applied))
+   expect_equal(lapply(1:3, .rs.startupTest.applied, times = 2), list(2, 4, 6))
+   expect_false(.rs.isLazyModuleProxy(.rs.startupTest.applied))
+})
+
 test_that("lazy module proxies report definitions the module omits", {
    path <- tempfile(fileext = ".R")
    on.exit(unlink(path), add = TRUE)

@@ -105,6 +105,13 @@ core::json::Value quartoXRefIndex();
 
 core::FilePath getQuartoExecutionDir(const std::string& docPath);
 
+// Whether a cached 'quarto --paths' answer is worth reusing. The cache key
+// proves the launcher's files are unchanged, not that it can still run, so
+// this also requires a launchable launcher and the tools directory it runs.
+bool quartoPathsUsable(const core::FilePath& launcher,
+                       const std::string& binPath,
+                       const std::string& resourcesPath);
+
 } // namespace quarto
 } // namespace session
 } // namespace rstudio

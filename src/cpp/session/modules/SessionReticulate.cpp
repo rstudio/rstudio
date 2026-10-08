@@ -44,9 +44,7 @@ namespace {
 // has the Python session been initialized by reticulate yet?
 bool s_pythonInitialized = false;
 
-std::string s_reticulatePython;
-bool s_reticulatePythonInited = false;
-bool s_pythonDiscoveryTimedOut = false;
+PythonDiscoveryState s_discovery;
 unsigned int s_pythonDiscoveryGeneration = 0;
 boost::shared_ptr<async_r::AsyncRProcess> s_pythonDiscovery;
 const int kPythonDiscoveryTimeoutSeconds = 30;
@@ -92,8 +90,9 @@ protected:
       std::size_t marker = output_.rfind('\x1e');
       if (exitStatus == EXIT_SUCCESS && marker != std::string::npos)
       {
-         s_reticulatePython = output_.substr(marker + 1);
-         boost::algorithm::trim(s_reticulatePython);
+         std::string python = output_.substr(marker + 1);
+         boost::algorithm::trim(python);
+         s_discovery.recordAnswer(python);
       }
       else if (std::chrono::steady_clock::now() >= deadline_)
       {
@@ -101,19 +100,15 @@ protected:
          // conda install), so leave the answer open: the next terminal retries
          // in the background rather than repeating it synchronously.
          WLOGF("Python discovery did not finish within {} seconds; retrying when a terminal next needs it", kPythonDiscoveryTimeoutSeconds);
-         s_pythonDiscoveryTimedOut = true;
-         s_reticulatePython.clear();
-         return;
+         s_discovery.recordTimeout();
       }
       else
       {
          // Record the miss: otherwise the next terminal repeats this same
          // discovery synchronously, blocking the session for as long again.
          WLOGF("Python discovery exited with status {}; terminals will not set RETICULATE_PYTHON", exitStatus);
-         s_reticulatePython.clear();
+         s_discovery.recordFailure();
       }
-      s_pythonDiscoveryTimedOut = false;
-      s_reticulatePythonInited = true;
    }
 
 private:
@@ -124,7 +119,7 @@ private:
 
 void discoverPythonAsync()
 {
-   if (s_reticulatePythonInited || s_pythonDiscovery)
+   if (s_discovery.resolved() || s_pythonDiscovery)
       return;
 
    // Resolve explicit configuration and an already initialized interpreter
@@ -140,8 +135,7 @@ void discoverPythonAsync()
    }
    if (python != R_NilValue)
    {
-      s_reticulatePython = r::sexp::asString(python);
-      s_reticulatePythonInited = true;
+      s_discovery.recordAnswer(r::sexp::asString(python));
       return;
    }
 
@@ -161,39 +155,44 @@ cat("\x1e", if (is.null(config$python)) "" else config$python, sep = "")
 
 void updateReticulatePython(bool forInit)
 {
-   if (!forInit && s_reticulatePythonInited)
-      return;
-
    if (!ASSERT_MAIN_THREAD())
    {
       return;
    }
 
-   // After a timed-out discovery, terminals go without RETICULATE_PYTHON for
-   // now and retry in the background instead of blocking for as long again.
-   if (!forInit && s_pythonDiscoveryTimedOut)
+   if (!forInit)
    {
-      discoverPythonAsync();
-      return;
+      switch (s_discovery.terminalAction())
+      {
+      case PythonDiscoveryState::TerminalAction::UseRecordedAnswer:
+         return;
+      case PythonDiscoveryState::TerminalAction::RetryInBackground:
+         // After a timed-out discovery, terminals go without RETICULATE_PYTHON
+         // for now and retry in the background instead of blocking for as long again.
+         discoverPythonAsync();
+         return;
+      case PythonDiscoveryState::TerminalAction::ProbeSynchronously:
+         break;
+      }
    }
 
    // Preserve the existing terminal behavior when an answer is needed before
    // asynchronous discovery finishes; discard any later result from the child.
    cancelPythonDiscovery();
 
-   s_reticulatePython = core::system::getenv("RETICULATE_PYTHON");
-   if (s_reticulatePython.empty())
+   std::string python = core::system::getenv("RETICULATE_PYTHON");
+   if (python.empty())
    {
       // Will check if RETICULATE_PYTHON_FALLBACK is set,
       // unless higher priority Python config has already been found
       Error error = r::exec::RFunction(".rs.inferReticulatePython")
-            .call(&s_reticulatePython);
+            .call(&python);
 
       if (error)
          LOG_ERROR(error);
    }
 
-   s_reticulatePythonInited = true;
+   s_discovery.recordAnswer(python);
 }
 
 SEXP rs_reticulateInitialized()
@@ -226,6 +225,35 @@ void onDeferredInit(bool)
 
 } // end anonymous namespace
 
+void PythonDiscoveryState::recordAnswer(const std::string& python)
+{
+   python_ = python;
+   resolved_ = true;
+   timedOut_ = false;
+}
+
+void PythonDiscoveryState::recordFailure()
+{
+   recordAnswer(std::string());
+}
+
+void PythonDiscoveryState::recordTimeout()
+{
+   python_.clear();
+   resolved_ = false;
+   timedOut_ = true;
+}
+
+PythonDiscoveryState::TerminalAction PythonDiscoveryState::terminalAction() const
+{
+   if (resolved_)
+      return TerminalAction::UseRecordedAnswer;
+   else if (timedOut_)
+      return TerminalAction::RetryInBackground;
+   else
+      return TerminalAction::ProbeSynchronously;
+}
+
 bool isPythonInitialized()
 {
    return s_pythonInitialized;
@@ -244,7 +272,7 @@ bool isReplActive()
 std::string reticulatePython()
 {
    updateReticulatePython(false);
-   return s_reticulatePython;
+   return s_discovery.python();
 }
 
 Error initialize()
