@@ -222,3 +222,46 @@ def _rs_test_function(alpha, *, beta=1):
    )
 
 })
+
+test_that("the REPL hook runs buffered code before an unindented quit", {
+
+   skipIfPythonUnavailable()
+
+   # reticulate only honors 'quit' / 'exit' when its buffer is empty; scripted
+   # input can ask to leave the REPL right after a block, without the blank
+   # line that would close it
+   buffer <- reticulate:::stack(mode = "character")
+   buffer$push("def rstudio_hook_test():", "    return 1", "    ")
+
+   expect_false(.rs.reticulate.replHook(buffer, "quit", "quit"))
+   expect_true(buffer$empty())
+   expect_equal(reticulate::py_eval("rstudio_hook_test()"), 1L)
+
+   # an error raised by the buffered code still clears the buffer so the quit goes through
+   buffer$push("for i in range(1):", "    1 / 0")
+   expect_message(expect_false(.rs.reticulate.replHook(buffer, "exit", "exit")))
+   expect_true(buffer$empty())
+
+   # the call spellings reticulate accepts are exit requests too
+   buffer$push("def rstudio_hook_test_2():", "    return 2")
+   expect_false(.rs.reticulate.replHook(buffer, "exit()", "exit()"))
+   expect_true(buffer$empty())
+   expect_equal(reticulate::py_eval("rstudio_hook_test_2()"), 2L)
+
+   # an indented quit inside a block is left to reticulate as before
+   buffer$push("def g():")
+   expect_false(.rs.reticulate.replHook(buffer, "    quit", "quit"))
+   expect_false(buffer$empty())
+   buffer$clear()
+
+   # inside an open string or bracket the line is content, not an exit request
+   buffer$push("msg = \"\"\"")
+   expect_false(.rs.reticulate.replHook(buffer, "exit", "exit"))
+   expect_false(buffer$empty())
+   buffer$clear()
+
+   buffer$push("x = (1 +")
+   expect_false(.rs.reticulate.replHook(buffer, "quit", "quit"))
+   expect_false(buffer$empty())
+
+})

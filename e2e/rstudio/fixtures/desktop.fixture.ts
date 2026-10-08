@@ -601,7 +601,6 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // the config root so a deliberate quit-and-restart (which reuses the
       // config root) still sees its persisted state.
       RSTUDIO_DATA_HOME: tempConfig.dataHome,
-      RSTUDIO_DISABLE_WHATS_NEW: '1',
       // Under PW_DEBUG, have the launched app open Chromium DevTools on
       // startup so the renderer's Performance profiler is ready before
       // waitForUserConsoleInput resumes the test.

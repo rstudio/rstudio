@@ -1183,17 +1183,8 @@ class ParseStatus
    
 public:
    
-   explicit ParseStatus(const FilePath& filePath, const ParseOptions& parseOptions)
-      : pRoot_(ParseNode::createRootNode()),
-        pNode_(pRoot_.get()),
-        lint_(parseOptions),
-        parseOptions_(parseOptions),
-        filePath_(filePath)
-   {
-      parseStateStack_.push(ParseStateTopLevel);
-      functionNames_.push(std::wstring(L""));
-   }
-   
+   explicit ParseStatus(const FilePath& filePath, const ParseOptions& parseOptions);
+
    ParseNode* node() { return pNode_; }
    LintItems& lint() { return lint_; }
    boost::shared_ptr<ParseNode> root() { return pRoot_; }
@@ -1567,7 +1558,33 @@ public:
       return filePath_;
    }
 
+   // Whether the document being parsed belongs to a package project, and
+   // if so, the name of that package. Resolved on first use, at most once
+   // per parse; see resolveLookupContext() for details.
+   bool isPackageProject()
+   {
+      resolveLookupContext();
+      return isPackageProject_;
+   }
+
+   const std::string& packageName()
+   {
+      resolveLookupContext();
+      return packageName_;
+   }
+
+   // The packages inferred by the source index for the document being
+   // parsed (e.g. from library() calls), if any. Resolved on first use,
+   // at most once per parse; see resolveLookupContext() for details.
+   const std::vector<std::string>& inferredPackages()
+   {
+      resolveLookupContext();
+      return inferredPackages_;
+   }
+
 private:
+   void resolveLookupContext();
+
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
    LintItems lint_;
@@ -1584,8 +1601,12 @@ private:
    // this should be the case but should attempt to enforce
    // this.
    Stack<RToken> bracketStack_;
-   
+
    FilePath filePath_;
+   bool lookupContextResolved_;
+   bool isPackageProject_;
+   std::string packageName_;
+   std::vector<std::string> inferredPackages_;
 };
 
 class ParseResults {

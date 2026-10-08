@@ -40,8 +40,8 @@ std::string cppProjectStyleImpl()
 {
    projects::ProjectContext& context = projects::projectContext();
    
-   // ----- not in a project or not in a package: give up
-   if (!context.hasProject() || !context.isPackageProject())
+   // ----- not in a package project: give up
+   if (!context.isPackageProject())
    {
       return "";
    }

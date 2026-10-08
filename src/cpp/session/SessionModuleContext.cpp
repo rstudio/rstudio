@@ -85,6 +85,7 @@
 
 #include "SessionRpc.hpp"
 #include "SessionClientEventQueue.hpp"
+#include "SessionConsoleInput.hpp"
 #include "SessionMainProcess.hpp"
 
 #include <session/projects/SessionProjects.hpp>
@@ -3497,45 +3498,57 @@ std::string getActiveLanguage()
 
 Error adaptToLanguage(const std::string& language)
 {
-   // check to see what language is active in main console
-   using namespace r::exec;
-
-   // check to see what language is currently active (but default to r)
-   std::string activeLanguage = getActiveLanguage();
-
-   // now, detect if we are transitioning languages
-   if (language != activeLanguage)
+   // Work out the language the console will be in once everything already
+   // queued has run, not the one it is in now: input queued behind a batch
+   // that switches languages part-way (e.g. "Run All Chunks Above" over
+   // mixed R and Python chunks) must be judged against where that batch
+   // ends. A switch enqueued by an earlier call reaches the input buffer
+   // through the console input service, so it is visible nowhere until it
+   // lands; remember where it leads, then follow the input the console
+   // pops from there. No prompt fires while buffered input drains, and by
+   // the time the next call arrives a later line may already have undone
+   // the switch (a batch that returns to R), so neither the enqueued
+   // language nor the console's current state can be taken as is. The
+   // next prompt means the console is idle, and its real state takes over.
+   static std::string s_projectedLanguage;
+   static RSTUDIO_BOOST_CONNECTION s_promptConnection;
+   static RSTUDIO_BOOST_CONNECTION s_inputConnection;
+   if (!s_promptConnection.connected())
    {
-      // since it may take some time for the console input to be processed,
-      // we screen out consecutive transition attempts (otherwise we can
-      // get multiple interleaved attempts to launch the REPL with console
-      // input)
-      static RSTUDIO_BOOST_CONNECTION conn;
-      if (conn.connected())
-         return Success();
-
-      // establish the connection, and then simply disconnect once we
-      // receive the signal
-      conn = module_context::events().onConsolePrompt.connect([&](const std::string&) {
-         conn.disconnect();
+      s_promptConnection = module_context::events().onConsolePrompt.connect([](const std::string&) {
+         s_projectedLanguage.clear();
       });
-
-      Error error;
-
-      if (activeLanguage == "R" && language == "Python")
-      {
-         // r -> python: activate the reticulate REPL
-         error = module_context::enqueueConsoleInput("reticulate::repl_python()");
-      }
-      else if (activeLanguage == "Python" && language == "R")
-      {
-         // python -> r: deactivate the reticulate REPL
-         error = module_context::enqueueConsoleInput("quit");
-      }
-
-      if (error)
-         LOG_ERROR(error);
+      s_inputConnection = module_context::events().onConsoleInput.connect([](const std::string& input) {
+         if (!s_projectedLanguage.empty())
+            s_projectedLanguage = console_input::languageAfterInput(s_projectedLanguage, input);
+      });
    }
+
+   std::string activeLanguage = s_projectedLanguage.empty() ? getActiveLanguage() : s_projectedLanguage;
+   activeLanguage = console_input::languageAfterPendingInput(activeLanguage);
+   if (language == activeLanguage)
+      return Success();
+
+   Error error;
+   if (language == "Python")
+   {
+      // r -> python: activate the reticulate REPL
+      error = module_context::enqueueConsoleInput("reticulate::repl_python()");
+   }
+   else if (language == "R")
+   {
+      // python -> r: deactivate the reticulate REPL
+      error = module_context::enqueueConsoleInput("quit");
+   }
+   else
+   {
+      return Success();
+   }
+
+   if (error)
+      LOG_ERROR(error);
+   else
+      s_projectedLanguage = language;
 
    return Success();
 }

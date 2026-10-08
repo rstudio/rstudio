@@ -424,12 +424,11 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    // Search the R source index if this is a simple call, and
    // we're within a package project.
    const std::string& symbol = cursor.contentAsUtf8();
-   if (cursor.isSimpleCall() &&
-       projects::projectContext().isPackageProject())
+   if (cursor.isSimpleCall() && status.isPackageProject())
    {
-      const PackageInformation& info = RSourceIndex::getPackageInformation(
-               projects::projectContext().packageInfo().name());
-      
+      const PackageInformation& info =
+            RSourceIndex::getPackageInformation(status.packageName());
+
       if (info.functionInfo.count(symbol))
       {
          DEBUG("--- Found function in source index");
@@ -443,21 +442,10 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
       
    // Search the whole index.
    bool failed = false;
-   
-   std::vector<std::string> inferredPkgs;
-   if (status.filePath().exists())
-   {
-      boost::shared_ptr<RSourceIndex> pIndex =
-            code_search::rSourceIndex().get(status.filePath());
-      
-      if (pIndex)
-         inferredPkgs = pIndex->getInferredPackages();
-   }
-   
    const FunctionInformation& fnInfo =
          RSourceIndex::getFunctionInformationAnywhere(
             symbol,
-            inferredPkgs,
+            status.inferredPackages(),
             &failed);
 
    if (!failed)
@@ -800,9 +788,9 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       // If we're within a package project, then attempt searching the
       // source index for the formals associated with this function.
       const std::string& fnName = cursor.contentAsUtf8();
-      if (projects::projectContext().isPackageProject())
+      if (status.isPackageProject())
       {
-         std::string pkgName = projects::projectContext().packageInfo().name();
+         const std::string& pkgName = status.packageName();
          DEBUG("***** Checking if package '" << pkgName << "' knows about function '" << fnName << "'");
          if (RSourceIndex::hasFunctionInformation(fnName, pkgName))
          {
@@ -817,18 +805,11 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       
       // Try looking up the symbol by name.
       bool lookupFailed = false;
-      std::vector<std::string> inferredPkgs;
-      if (status.filePath().exists())
-      {
-         boost::shared_ptr<RSourceIndex> pIndex =
-               code_search::rSourceIndex().get(status.filePath());
-
-         if (pIndex)
-            inferredPkgs = pIndex->getInferredPackages();
-      }
-      
       FunctionInformation info =
-            RSourceIndex::getFunctionInformationAnywhere(fnName, inferredPkgs, &lookupFailed);
+            RSourceIndex::getFunctionInformationAnywhere(
+               fnName,
+               status.inferredPackages(),
+               &lookupFailed);
       
       if (!lookupFailed)
       {
@@ -1710,6 +1691,54 @@ void handleString(RTokenCursor& cursor,
 }
 
 } // anonymous namespace
+
+ParseStatus::ParseStatus(const FilePath& filePath, const ParseOptions& parseOptions)
+   : pRoot_(ParseNode::createRootNode()),
+     pNode_(pRoot_.get()),
+     lint_(parseOptions),
+     parseOptions_(parseOptions),
+     filePath_(filePath),
+     lookupContextResolved_(false),
+     isPackageProject_(false)
+{
+   parseStateStack_.push(ParseStateTopLevel);
+   functionNames_.push(std::wstring(L""));
+}
+
+void ParseStatus::resolveLookupContext()
+{
+   if (lookupContextResolved_)
+      return;
+
+   lookupContextResolved_ = true;
+
+   // Resolve the project and source index information used when looking up
+   // functions during the parse. We do this at most once per parse, rather
+   // than for each function call encountered in the document: checking
+   // whether the project is a package, and whether the document exists on
+   // disk, both require filesystem access, and a large document can contain
+   // thousands of function calls. On slow filesystems (e.g. network drives,
+   // or Windows drives mounted within WSL) these repeated checks dominated
+   // the time required to lint a document. Resolving lazily also keeps
+   // parses that never look up a function (e.g. of code fragments) free of
+   // filesystem access altogether.
+   //
+   // https://github.com/rstudio/rstudio/issues/19056
+   if (projects::projectContext().isPackageProject())
+   {
+      isPackageProject_ = true;
+      packageName_ = projects::projectContext().packageInfo().name();
+   }
+
+   if (filePath_.exists())
+   {
+      boost::shared_ptr<RSourceIndex> pIndex =
+            code_search::rSourceIndex().get(filePath_);
+
+      if (pIndex)
+         inferredPackages_ = pIndex->getInferredPackages();
+   }
+}
 
 ParseResults parse(const FilePath& filePath,
                    const std::wstring& rCode,

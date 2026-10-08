@@ -190,16 +190,24 @@ test.describe.serial('Git pane worktrees', () => {
     // Recent Projects shows the directory followed by the primary project's
     // name. Server retries can retain another project with the same directory
     // name, in which case the menu adds a parent-path qualifier.
+    //
+    // The client learns of the new entry from a list_changed event, which on
+    // Windows trails the session's write by a 3-second idle-only scan of the
+    // lists directory (longer when the session is busy), and menu items only
+    // refresh their labels when the menu is shown. Reopen the menu on each
+    // attempt rather than polling a popup whose contents can't change.
     const recentProjectLabel = new RegExp(`^${LINKED_WORKTREE}(?: — .+)? \\(${PROJECT_NAME}\\)$`);
-    await page.locator(PROJECT_MENU).click();
-    await expect
-      .poll(
-        async () =>
-          (await menuItems(page).allInnerTexts()).map((text) => text.replace(/\s+/g, ' ').trim()),
-        { timeout: 10000 },
-      )
-      .toContainEqual(expect.stringMatching(recentProjectLabel));
-    await page.keyboard.press('Escape');
+    await expect(async () => {
+      await page.locator(PROJECT_MENU).click();
+      try {
+        const texts = (await menuItems(page).allInnerTexts()).map((text) =>
+          text.replace(/\s+/g, ' ').trim(),
+        );
+        expect(texts).toContainEqual(expect.stringMatching(recentProjectLabel));
+      } finally {
+        await page.keyboard.press('Escape');
+      }
+    }).toPass({ timeout: 30000, intervals: [1000] });
 
     // from here the main worktree is the "other" one
     const itemsAfter = await openBranchMenu(page, LINKED_BRANCH);
@@ -315,8 +323,9 @@ test.describe.serial('Git pane worktrees', () => {
     await executeCommand(page, 'vcsCommit');
     const satellite = await satellitePromise;
     try {
-      await satellite.waitForLoadState('domcontentloaded');
-      expect(satellite.url()).toContain('view=review_changes');
+      // the page event can fire while the window is still on its initial blank
+      // document, so wait for the satellite URL rather than its first load
+      await satellite.waitForURL(/view=review_changes/);
 
       const button = satellite.locator(REVIEW_BRANCH_BUTTON);
       await expect(button).toContainText(LINKED_BRANCH, { timeout: 60000 });

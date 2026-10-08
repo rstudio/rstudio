@@ -1812,14 +1812,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String enableSplashScreenDescription();
 
    /**
-    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
-    */
-   @DefaultStringValue("Show the What's New window automatically after updating RStudio")
-   String showWhatsNewTitle();
-   @DefaultStringValue("Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.")
-   String showWhatsNewDescription();
-
-   /**
     * The R version to use by default.
     */
    @DefaultStringValue("")
