@@ -470,8 +470,9 @@ if(UNIX)
       if(NOT DEFINED OPENSSL_ROOT_DIR)
          # read the pin rather than source the script, which has side effects
          set(_openssl_pin_file "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh")
+         set(_openssl_pin_regex "^export RSTUDIO_OPENSSL_VERSION=\"([0-9]+\\.[0-9]+\\.[0-9]+)\"$")
          file(STRINGS "${_openssl_pin_file}" _openssl_pin REGEX "^export RSTUDIO_OPENSSL_VERSION=")
-         if(NOT _openssl_pin MATCHES "^export RSTUDIO_OPENSSL_VERSION=\"([0-9]+\\.[0-9]+\\.[0-9]+)\"$")
+         if(NOT _openssl_pin MATCHES "${_openssl_pin_regex}")
             message(FATAL_ERROR
                "Expected one line 'export RSTUDIO_OPENSSL_VERSION=\"<x.y.z>\"' in "
                "'${_openssl_pin_file}', but found '${_openssl_pin}'.")
