@@ -215,12 +215,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       CheckBox enableSplashScreen = checkboxPref(prefs_.enableSplashScreen());
-      CheckBox showWhatsNew = checkboxPref(prefs_.showWhatsNew());
       CheckBox enableMouseWheelZoom = checkboxPref(prefs_.enableMousewheelZoom());
       if (BrowseCap.isElectron())
       {
          basic.add(enableSplashScreen);
-         basic.add(showWhatsNew);
          basic.add(enableMouseWheelZoom);
       }
 

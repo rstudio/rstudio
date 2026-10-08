@@ -160,10 +160,6 @@ public class UserStateAccessor extends Prefs
          return this && typeof this.enableSplashScreen === "boolean" ? this.enableSplashScreen : true;
       }-*/;
 
-      public final native boolean getShowWhatsNew() /*-{
-         return this && typeof this.showWhatsNew === "boolean" ? this.showWhatsNew : true;
-      }-*/;
-
    }
 
    /**

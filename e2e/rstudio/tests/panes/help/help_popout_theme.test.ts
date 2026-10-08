@@ -83,8 +83,9 @@ test.describe.serial('Help popout window theming', () => {
     const satellitePromise = page.context().waitForEvent('page', { timeout: 30000 });
     await executeCommand(page, 'helpPopout');
     satellitePage = await satellitePromise;
-    await satellitePage.waitForLoadState('domcontentloaded');
-    expect(satellitePage.url()).toContain('view=help_popout_');
+    // the page event can fire while the window is still on its initial blank
+    // document, so wait for the satellite URL rather than its first load
+    await satellitePage.waitForURL(/view=help_popout_/);
 
     // the satellite's help iframe should be themed like the Help pane:
     // theme stylesheet injected, theming class applied, dark background
@@ -161,8 +162,9 @@ test.describe.serial('Help popout window theming', () => {
     const satellitePromise = page.context().waitForEvent('page', { timeout: 30000 });
     await executeCommand(page, 'helpPopout');
     vignettePage = await satellitePromise;
-    await vignettePage.waitForLoadState('domcontentloaded');
-    expect(vignettePage.url()).toContain('view=help_popout_');
+    // the page event can fire while the window is still on its initial blank
+    // document, so wait for the satellite URL rather than its first load
+    await vignettePage.waitForURL(/view=help_popout_/);
 
     // wait until the satellite window itself is themed (proof the theming
     // machinery ran in that window) and the vignette document has finished

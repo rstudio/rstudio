@@ -392,14 +392,19 @@ Error generateRsaCertAndKey(const std::string& certCommonName,
 
    X509_set_pubkey(pCert.get(), pCertKey.get());
 
-   X509_name_st* name = X509_get_subject_name(pCert.get());
+   // OpenSSL 4 returns a const subject name from X509_get_subject_name(), so build
+   // the name separately; the setters copy it into the certificate
+   auto pName = make_unique_ptr(X509_NAME_new(), X509_NAME_free);
+   if (!pName)
+      return getLastCryptoError(ERROR_LOCATION);
 
-   X509_NAME_add_entry_by_txt(name, "C",  MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0);
-   X509_NAME_add_entry_by_txt(name, "O",  MBSTRING_ASC, (unsigned char *)"RStudio PBC", -1, -1, 0);
+   X509_NAME_add_entry_by_txt(pName.get(), "C",  MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0);
+   X509_NAME_add_entry_by_txt(pName.get(), "O",  MBSTRING_ASC, (unsigned char *)"RStudio PBC", -1, -1, 0);
    if (certCommonName.size() > 0)
-      X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)certCommonName.c_str(), -1, -1, 0);
+      X509_NAME_add_entry_by_txt(pName.get(), "CN", MBSTRING_ASC, (unsigned char *)certCommonName.c_str(), -1, -1, 0);
 
-   X509_set_issuer_name(pCert.get(), name);
+   X509_set_subject_name(pCert.get(), pName.get());
+   X509_set_issuer_name(pCert.get(), pName.get());
 
    X509_sign(pCert.get(), pCertKey.get(), EVP_sha256());
 
