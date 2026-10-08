@@ -55,7 +55,7 @@ export MACOSX_DEPLOYMENT_TARGET="12.0"
 #
 # In addition to updating the version here, search the entire repo for other instances of
 # RSTUDIO_NODE_VERSION and update to match.
-export RSTUDIO_NODE_VERSION="22.22.2"
+export RSTUDIO_NODE_VERSION="24.21.0"
 
 # version of node.js installed with the product
 #
