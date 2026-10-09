@@ -18,11 +18,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -30,8 +28,6 @@ import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -56,65 +52,26 @@ public class FileTypeCommands
                            final HTMLPreviewServerOperations server)
    {
       session_ = session;
-      server_ = server;
 
-      // HTML package capabilities are optional during client initialization,
-      // so the main window probes as soon as session info exists: at once
-      // when this singleton is created after it, otherwise on SessionInitEvent.
-      // Preview and Compile Report then usually stay synchronous (a window
-      // opened only after a round trip can be popup-blocked). Satellites ask
-      // when an editor first needs the answer.
-      if (!Satellite.isCurrentWindowSatellite())
-      {
-         session.withSessionInfo(info ->
-         {
-            if (htmlCapabilities_ == null && !htmlCapabilitiesRequestPending_)
-               refreshHTMLCapabilities();
-         });
-      }
-      // A package change supersedes any probe still in flight.
-      eventBus.addHandler(PackageStateChangedEvent.TYPE, event -> refreshHTMLCapabilities());
-   }
-
-   private void refreshHTMLCapabilities()
-   {
-      htmlCapabilitiesRetry_.cancel();
-      final int generation = ++htmlCapabilitiesGeneration_;
-      htmlCapabilitiesRequestPending_ = true;
-      server_.getHTMLCapabilities(new ServerRequestCallback<HTMLCapabilities>()
-      {
+      eventBus.addHandler(PackageStateChangedEvent.TYPE,
+                          new PackageStateChangedEvent.Handler() {
          @Override
-         public void onResponseReceived(HTMLCapabilities caps)
+         public void onPackageStateChanged(PackageStateChangedEvent e)
          {
-            if (generation != htmlCapabilitiesGeneration_)
-               return;
+            server.getHTMLCapabilities(
+                  new ServerRequestCallback<HTMLCapabilities>() {
 
-            htmlCapabilitiesRequestPending_ = false;
-            htmlCapabilitiesRetries_ = 0;
-            setHTMLCapabilities(caps);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            if (generation != htmlCapabilitiesGeneration_)
-               return;
-
-            htmlCapabilitiesRequestPending_ = false;
-            Debug.logError(error);
-
-            // Restored editors are waiting on this answer, so retry a few
-            // times; afterwards the next editor or package change asks again.
-            if (htmlCapabilitiesRetries_ < MAX_HTML_CAPABILITIES_RETRIES)
-            {
-               htmlCapabilitiesRetries_++;
-               htmlCapabilitiesRetry_.schedule(HTML_CAPABILITIES_RETRY_MS * htmlCapabilitiesRetries_);
-               return;
-            }
-
-            // Nothing will answer these; dropping them keeps a later probe
-            // from replaying every action attempted during the outage.
-            htmlCapabilitiesCallbacks_.clear();
+                     @Override
+                     public void onResponseReceived(HTMLCapabilities caps)
+                     {
+                        setHTMLCapabilities(caps);
+                     }
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
          }
       });
    }
@@ -156,64 +113,21 @@ public class FileTypeCommands
       return fileTypes;
    }
 
-   // Until the probe answers this is the session's empty placeholder, which
-   // reports nothing as supported; decisions should go through
-   // withHTMLCapabilities() instead.
    public HTMLCapabilities getHTMLCapabiliites()
    {
       if (htmlCapabilities_ == null)
-         return session_.getSessionInfo().getHTMLCapabilities();
+         setHTMLCapabilities(session_.getSessionInfo().getHTMLCapabilities());
 
       return htmlCapabilities_;
-   }
-
-   public boolean hasHTMLCapabilities()
-   {
-      return htmlCapabilities_ != null;
-   }
-
-   public HandlerRegistration withHTMLCapabilities(CommandWithArg<HTMLCapabilities> callback)
-   {
-      if (htmlCapabilities_ != null)
-      {
-         callback.execute(htmlCapabilities_);
-         return () -> {};
-      }
-
-      htmlCapabilitiesCallbacks_.add(callback);
-      if (!htmlCapabilitiesRequestPending_)
-         refreshHTMLCapabilities();
-
-      return () -> htmlCapabilitiesCallbacks_.remove(callback);
    }
 
    public void setHTMLCapabilities(HTMLCapabilities caps)
    {
       htmlCapabilities_ = caps;
-
-      List<CommandWithArg<HTMLCapabilities>> callbacks = new ArrayList<>(htmlCapabilitiesCallbacks_);
-      htmlCapabilitiesCallbacks_.clear();
-      for (CommandWithArg<HTMLCapabilities> callback : callbacks)
-         callback.execute(caps);
    }
 
    private final Session session_;
-   private final HTMLPreviewServerOperations server_;
 
    private HTMLCapabilities htmlCapabilities_;
-   private int htmlCapabilitiesGeneration_;
-   private boolean htmlCapabilitiesRequestPending_;
-   private int htmlCapabilitiesRetries_;
-   private final Timer htmlCapabilitiesRetry_ = new Timer()
-   {
-      @Override
-      public void run()
-      {
-         refreshHTMLCapabilities();
-      }
-   };
-   private final List<CommandWithArg<HTMLCapabilities>> htmlCapabilitiesCallbacks_ = new ArrayList<>();
 
-   public static final int HTML_CAPABILITIES_RETRY_MS = 1000;
-   public static final int MAX_HTML_CAPABILITIES_RETRIES = 3;
 }

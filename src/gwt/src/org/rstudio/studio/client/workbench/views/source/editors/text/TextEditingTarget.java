@@ -143,7 +143,6 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.Assist
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantRange;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
@@ -2306,12 +2305,7 @@ public class TextEditingTarget implements
 
       // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
-      if (fileType_.requiresKnit() || fileType_.isRpres())
-      {
-         // Restored editors precede SessionInitEvent.
-         withHTMLCapabilities(capabilities ->
-               rmarkdownHelper_.verifyPrerequisites(view_, fileType_));
-      }
+      rmarkdownHelper_.verifyPrerequisites(view_, fileType_);
 
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
 
@@ -7845,24 +7839,16 @@ public class TextEditingTarget implements
 
    void previewRpresentation()
    {
-      withHTMLCapabilities(capabilities ->
-      {
-         if (!capabilities.isRMarkdownSupported())
-         {
-            globalDisplay_.showMessage(
-                  MessageDisplay.MSG_WARNING,
-                  constants_.previewRpresentationCaption(),
-                  constants_.previewRpresentationMessage());
-            return;
-         }
-
-         showRpresentation();
-      });
-   }
-
-   private void showRpresentation()
-   {
       SessionInfo sessionInfo = session_.getSessionInfo();
+      if (!fileTypeCommands_.getHTMLCapabiliites().isRMarkdownSupported())
+      {
+         globalDisplay_.showMessage(
+               MessageDisplay.MSG_WARNING,
+               constants_.previewRpresentationCaption(),
+               constants_.previewRpresentationMessage());
+         return;
+      }
+
       PresentationState state = sessionInfo.getPresentationState();
 
       // if this presentation is already showing then just activate
@@ -8193,53 +8179,22 @@ public class TextEditingTarget implements
 
    void previewHTML()
    {
-      Command preview = () ->
-      {
-         // validate pre-reqs
-         if (!rmarkdownHelper_.verifyPrerequisites(view_, fileType_))
-            return;
-
-         doHtmlPreview(new Provider<HTMLPreviewParams>()
-         {
-            @Override
-            public HTMLPreviewParams get()
-            {
-               return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
-                                               docUpdateSentinel_.getEncoding(),
-                                               fileType_.isMarkdown(),
-                                               fileType_.requiresKnit(),
-                                               false);
-            }
-         });
-      };
-
-      // Only knitr-dependent types have prerequisites; other previews stay
-      // inside the user's click so the preview window is never popup-blocked.
-      if (fileType_.requiresKnit() || fileType_.isRpres())
-         withHTMLCapabilities(capabilities -> preview.execute());
-      else
-         preview.execute();
-   }
-
-   // The knitr probe answers after startup; its placeholder reports nothing
-   // as supported, so prerequisite checks wait for the real answer. A probe
-   // still pending when the editor closes is released with it.
-   private void withHTMLCapabilities(CommandWithArg<HTMLCapabilities> callback)
-   {
-      if (fileTypeCommands_.hasHTMLCapabilities())
-      {
-         callback.execute(fileTypeCommands_.getHTMLCapabiliites());
+      // validate pre-reqs
+      if (!rmarkdownHelper_.verifyPrerequisites(view_, fileType_))
          return;
-      }
 
-      // released once answered, so repeated actions don't accumulate here
-      HandlerRegistration[] registration = new HandlerRegistration[1];
-      registration[0] = fileTypeCommands_.withHTMLCapabilities(capabilities ->
+      doHtmlPreview(new Provider<HTMLPreviewParams>()
       {
-         releaseOnDismiss_.remove(registration[0]);
-         callback.execute(capabilities);
+         @Override
+         public HTMLPreviewParams get()
+         {
+            return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                            docUpdateSentinel_.getEncoding(),
+                                            fileType_.isMarkdown(),
+                                            fileType_.requiresKnit(),
+                                            false);
+         }
       });
-      releaseOnDismiss_.add(registration[0]);
    }
 
    private void doHtmlPreview(final Provider<HTMLPreviewParams> pParams)
@@ -8401,27 +8356,24 @@ public class TextEditingTarget implements
       }
       else
       {
-         withHTMLCapabilities(capabilities ->
+         if (!rmarkdownHelper_.verifyPrerequisites("Compile Report",
+               view_,
+               FileTypeRegistry.RMARKDOWN))
          {
-            if (!rmarkdownHelper_.verifyPrerequisites("Compile Report",
-                  view_,
-                  FileTypeRegistry.RMARKDOWN))
-            {
-               return;
-            }
+            return;
+         }
 
-            doHtmlPreview(new Provider<HTMLPreviewParams>()
+         doHtmlPreview(new Provider<HTMLPreviewParams>()
+         {
+            @Override
+            public HTMLPreviewParams get()
             {
-               @Override
-               public HTMLPreviewParams get()
-               {
-                  return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
-                                                  docUpdateSentinel_.getEncoding(),
-                                                  true,
-                                                  true,
-                                                  true);
-               }
-            });
+               return HTMLPreviewParams.create(docUpdateSentinel_.getPath(),
+                                               docUpdateSentinel_.getEncoding(),
+                                               true,
+                                               true,
+                                               true);
+            }
          });
       }
    }

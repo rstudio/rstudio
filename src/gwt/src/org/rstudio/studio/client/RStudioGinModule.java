@@ -322,8 +322,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
-      // eager so HTML capabilities are prefetched on session init
-      bind(FileTypeCommands.class).asEagerSingleton();
+      bind(FileTypeCommands.class).in(Singleton.class);
       bind(Synctex.class).in(Singleton.class);
       bind(PDFViewer.class).in(Singleton.class);
       bind(HTMLPreview.class).in(Singleton.class);      

@@ -356,7 +356,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["tex_capabilities"] = json::Object();
    sessionInfo["compile_pdf_state"] = modules::authoring::compilePdfStateAsJson();
 
-   sessionInfo["html_capabilities"] = json::Object();
+   sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
 
    sessionInfo["find_in_files_state"] = modules::find::findInFilesStateAsJson();
 
