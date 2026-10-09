@@ -105,6 +105,10 @@ function environmentStamp(environment: NodeJS.ProcessEnv): string {
     .digest('hex');
 }
 
+// Known limitation: a wrapper executable that picks an R installation from
+// state outside these files (a version file it reads, a module system) is
+// not detected when that state changes, since only the home it reported last
+// time is stamped. Symlinked installs are covered by the realpath entries.
 function installationStamp(executable: string, home: string): string {
   const files = [
     executable,
