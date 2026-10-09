@@ -236,6 +236,7 @@
 
    <target name="acesupport-watch-windows" if="is.windows">
       <exec executable="cmd" dir="${acesupport.watcher.dir}" spawn="true">
+         <env key="PATH" value="${node.path}"/>
          <arg value="/c"/>
          <arg value="node"/>
          <arg value="watch.js"/>
@@ -243,7 +244,7 @@
    </target>
 
    <target name="acesupport-watch-unix" unless="is.windows">
-      <exec executable="node" dir="${acesupport.watcher.dir}" spawn="true">
+      <exec executable="${node.bin}" dir="${acesupport.watcher.dir}" spawn="true">
          <arg value="watch.js"/>
       </exec>
    </target>
