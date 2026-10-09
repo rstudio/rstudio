@@ -743,10 +743,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_show_splash_screen');
     },
 
-    consoleLog: (output: string) => {
-      ipcRenderer.send('desktop_console_log', output);
-    },
-
     getPathForFile: (file: File) => {
       return webUtils.getPathForFile(file);
     },
