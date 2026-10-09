@@ -411,7 +411,9 @@ jobs:
           # libharfbuzz0b / libfribidi0 (textshaping). Install the runtime
           # libs (not the -dev variants) so rsession's R can load these
           # packages without source compile.
-          sudo apt-get install -y xvfb jq pandoc \
+          # gdb: backtraces of a wedged rsession, taken by
+          # e2e/rstudio/scripts/ci/rsession-diagnostics.sh (see below).
+          sudo apt-get install -y xvfb jq pandoc gdb \
             libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
 
       # Ubuntu 24 restricts unprivileged user namespaces by default, which
@@ -424,6 +426,20 @@ jobs:
         uses: ./.github/actions/os-install-r-unix
         with:
           r-version: ${{ inputs.r_version }}
+
+      # With no interpreter configured, reticulate (1.47) builds itself an
+      # ephemeral uv environment the first time a spec initializes Python:
+      # a standalone Python plus numpy downloaded inside the test, so the
+      # first Python spec of every shard depended on the network and on uv.
+      # Point every rsession at a venv prepared here instead. Renviron.site
+      # is the one place that reaches the sessions, which rserver starts for
+      # the per-run test user with none of this job's environment.
+      - name: Provision Python for reticulate
+        run: |
+          sudo python3 -m venv /opt/e2e-python
+          sudo /opt/e2e-python/bin/python -m pip install --quiet numpy
+          echo "RETICULATE_PYTHON=/opt/e2e-python/bin/python" | sudo tee -a "$(R RHOME)/etc/Renviron.site" >/dev/null
+          /opt/e2e-python/bin/python -c 'import sys, numpy; print(sys.version, "numpy", numpy.__version__)'
 
       # Build-from-source path: extract the .deb artifact produced by the
       # build job above and install it.
@@ -680,6 +696,12 @@ jobs:
           PW_RSTUDIO_MODE: server
           PW_RSTUDIO_EDITION: os
           PW_RSTUDIO_SERVER_URL: http://localhost:8787
+          # When a sign-in never reaches the IDE console, the harness runs
+          # this once before retrying: it records every rsession (threads,
+          # gdb backtraces) under rsession-diagnostics/ and kills them, so a
+          # wedged session costs one spec rather than every spec after it.
+          # Run as root: the sessions belong to the per-run test user.
+          PW_RSTUDIO_SERVER_RECOVER_CMD: sudo bash ${{ github.workspace }}/e2e/rstudio/scripts/ci/rsession-diagnostics.sh --kill ${{ github.workspace }}/rsession-diagnostics
           # Platform-labelled project name; playwright.config.ts uses it both as
           # the project name in reports (so a cross-platform merged report can
           # distinguish these results) and to derive the platform+shard-unique
@@ -781,6 +803,30 @@ jobs:
         with:
           name: pw-sandbox-linux-server-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
+          if-no-files-found: ignore
+
+      # Whatever is still running at the end of a failed shard gets the same
+      # dump the recovery hook takes (threads + gdb backtraces), without the
+      # kill. Collected on every outcome because the hook may already have
+      # written here during a shard that then passed on retry: that is the
+      # case worth reading most, and failure() would drop it.
+      - name: Collect rsession diagnostics
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            sudo bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "${{ github.workspace }}/rsession-diagnostics" || true
+          fi
+          if [ -d rsession-diagnostics ]; then
+            sudo chmod -R a+rX rsession-diagnostics
+            cat rsession-diagnostics/summary.txt || true
+          fi
+
+      - name: Upload rsession diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rsession-diagnostics-linux-server-${{ matrix.shard }}
+          path: rsession-diagnostics/
           if-no-files-found: ignore
 
       - name: Capture rstudio-server logs and diagnostics on failure

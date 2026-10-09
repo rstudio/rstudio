@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
-import { execFileSync, spawn, type ChildProcess } from 'child_process';
+import { execFileSync, execSync, spawn, type ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { createServer } from 'net';
 import * as fs from 'fs';
@@ -368,9 +368,43 @@ export function externalServerUrl(): string | null {
  * one is presented (PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD);
  * servers running with --auth-none (e.g. our spawn) skip straight to the
  * IDE, so credentials are only required when the form appears. Shared by
- * launchServer and the remote-provisioning flows.
+ * launchServer and the remote-provisioning flows. When the console does not
+ * appear in time and PW_RSTUDIO_SERVER_RECOVER_CMD is set, that command is
+ * run once and the sign-in retried (see below).
  */
 export async function signInToServer(page: Page): Promise<void> {
+  await submitLoginFormIfShown(page);
+
+  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
+  const consoleReady = { state: 'visible' as const, timeout: loginTimeout };
+  try {
+    await page.waitForSelector(CONSOLE_INPUT, consoleReady);
+  } catch (err) {
+    // A session whose main thread is wedged never answers client_init, and
+    // the server keeps routing the account to it, so without intervention
+    // every later sign-in in the run times out the same way (run
+    // 37965911829 lost eleven specs plus the teardown to one hang). The
+    // command gets one chance to record and replace that session before the
+    // sign-in is retried; it is the caller's (CI's) hook, since the harness
+    // has no reach into an external server by itself.
+    const recover = process.env.PW_RSTUDIO_SERVER_RECOVER_CMD;
+    if (!recover)
+      throw err;
+    console.warn(`IDE console not ready after ${loginTimeout}ms; running PW_RSTUDIO_SERVER_RECOVER_CMD`);
+    execSync(recover, { stdio: 'inherit', timeout: 300_000 });
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await submitLoginFormIfShown(page);
+    await page.waitForSelector(CONSOLE_INPUT, consoleReady);
+  }
+  console.log('RStudio console is ready');
+}
+
+/**
+ * Fill and submit the login form when the server presents one; servers
+ * running with --auth-none (e.g. our spawn) show the IDE directly.
+ */
+async function submitLoginFormIfShown(page: Page): Promise<void> {
   const username = process.env.PW_RSTUDIO_SERVER_USER || '';
   const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
 
@@ -388,10 +422,6 @@ export async function signInToServer(page: Page): Promise<void> {
   } else {
     console.log('No login form detected (auth-none mode)');
   }
-
-  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
-  console.log('RStudio console is ready');
 }
 
 /**
