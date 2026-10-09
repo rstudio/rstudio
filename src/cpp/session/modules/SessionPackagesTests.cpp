@@ -197,40 +197,78 @@ TEST_F(PackageStateBuilderTest, NestedBuildFailure_DoesNotDropTheOuterList) {
    EXPECT_TRUE(deliverEvent);
 }
 
-TEST_F(PackageStateBuilderTest, FailedBuild_DeliversNothingAndResets) {
+TEST_F(PackageStateBuilderTest, FailedRpc_RetainsFoldedEventUntilASuccessfulBuild) {
    json::Object nestedResult;
    bool nestedDeliverEvent = true;
    onPass_ = [&](int pass) -> Error {
       if (pass == 1)
       {
          builder_.buildForEvent(&nestedResult, &nestedDeliverEvent);
+         EXPECT_FALSE(builder_.needsDeferredBuild());
          return failure();
       }
+      if (pass == 2)
+         return failure();
       return Success();
    };
 
    json::Object result;
    bool deliverEvent = true;
-   Error error = builder_.buildForEvent(&result, &deliverEvent);
+   Error error = builder_.build(&result, &deliverEvent);
 
    EXPECT_TRUE(error);
    EXPECT_EQ(1, passes_);
    EXPECT_FALSE(deliverEvent);
    EXPECT_FALSE(nestedDeliverEvent);
+   EXPECT_TRUE(builder_.needsDeferredBuild());
 
-   // the folded request died with the build; a later build starts clean
-   onPass_ = boost::function<Error(int)>();
+   // A failed idle retry must retain the notification too.
+   error = builder_.buildForEvent(&result, &deliverEvent);
+   EXPECT_TRUE(error);
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   // An intervening successful RPC can satisfy the event before the next
+   // scheduled retry, allowing that callback to skip its scan.
    json::Object laterResult;
-   bool laterDeliverEvent = true;
+   bool laterDeliverEvent = false;
    error = builder_.build(&laterResult, &laterDeliverEvent);
 
    EXPECT_FALSE(error);
-   EXPECT_EQ(2, passes_);
-   EXPECT_EQ(2, laterResult["pass"].getInt());
-   EXPECT_FALSE(laterDeliverEvent);
+   EXPECT_EQ(3, passes_);
+   EXPECT_EQ(3, laterResult["pass"].getInt());
+   EXPECT_TRUE(laterDeliverEvent);
+   EXPECT_FALSE(builder_.needsDeferredBuild());
 }
 
-TEST_F(PackageStateBuilderTest, RebuildPasses_AreCapped) {
+TEST_F(PackageStateBuilderTest, FailedEventBuild_IsRetried) {
+   onPass_ = [&](int pass) -> Error {
+      return pass == 1 ? failure() : Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   EXPECT_TRUE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_EQ(2, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+   EXPECT_FALSE(builder_.needsDeferredBuild());
+}
+
+TEST_F(PackageStateBuilderTest, FailedRpcWithoutAnEvent_DoesNotScheduleABuild) {
+   onPass_ = [&](int) -> Error { return failure(); };
+
+   json::Object result;
+   bool deliverEvent = false;
+   EXPECT_TRUE(builder_.build(&result, &deliverEvent));
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_FALSE(builder_.needsDeferredBuild());
+}
+
+TEST_F(PackageStateBuilderTest, RebuildPasses_AreCappedAndRetainTheEvent) {
    json::Object nestedResult;
    bool nestedDeliverEvent = false;
    onPass_ = [&](int) -> Error {
@@ -245,7 +283,73 @@ TEST_F(PackageStateBuilderTest, RebuildPasses_AreCapped) {
    EXPECT_FALSE(error);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, passes_);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, result["pass"].getInt());
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   // The scheduled idle build runs after the stream of requests stops.
+   onPass_ = boost::function<Error(int)>();
+   error = builder_.buildForEvent(&result, &deliverEvent);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(PackageStateBuilder::kMaxPasses + 1, result["pass"].getInt());
    EXPECT_TRUE(deliverEvent);
+   EXPECT_FALSE(builder_.needsDeferredBuild());
+}
+
+// Each outer pass is superseded by a nested RPC. In particular, the last
+// nested RPC's list must not be overwritten by the capped outer RPC's result.
+TEST_F(PackageStateBuilderTest, CappedRpc_ReturnsNewestNestedResultAndDefersAnEvent) {
+   json::Object nestedResult;
+   onPass_ = [&](int pass) -> Error {
+      if (pass % 2 == 1)
+      {
+         bool nestedDeliverEvent = false;
+         EXPECT_FALSE(builder_.build(&nestedResult, &nestedDeliverEvent));
+         EXPECT_FALSE(nestedDeliverEvent);
+      }
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   EXPECT_FALSE(builder_.build(&result, &deliverEvent));
+   EXPECT_EQ(2 * PackageStateBuilder::kMaxPasses, passes_);
+   EXPECT_EQ(passes_, nestedResult["pass"].getInt());
+   EXPECT_EQ(passes_, result["pass"].getInt());
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   // No event request was made explicitly, but a capped RPC still owes the
+   // client a fresh list once the remaining work can finish.
+   onPass_ = boost::function<Error(int)>();
+   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_EQ(passes_, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+   EXPECT_FALSE(builder_.needsDeferredBuild());
+}
+
+TEST_F(PackageStateBuilderTest, CappedEventBuild_DoesNotOverwriteANestedRpc) {
+   json::Object nestedResult;
+   onPass_ = [&](int pass) -> Error {
+      if (pass % 2 == 1)
+      {
+         bool nestedDeliverEvent = false;
+         EXPECT_FALSE(builder_.build(&nestedResult, &nestedDeliverEvent));
+      }
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_EQ(nestedResult["pass"].getInt(), result["pass"].getInt());
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   onPass_ = boost::function<Error(int)>();
+   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_GT(result["pass"].getInt(), nestedResult["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+   EXPECT_FALSE(builder_.needsDeferredBuild());
 }
 
 } // namespace packages
