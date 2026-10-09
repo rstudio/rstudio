@@ -19,9 +19,12 @@
 
 # Base package names, excluded from "trusted caller" detection
 # because the agent could call them directly to access files.
+# The promise is forced at first chat use, after .RData has been restored,
+# so it must not resolve its callees through the global environment.
 delayedAssign(
    ".rs.chat.basePackages",
-   rownames(installed.packages(priority = "base", lib.loc = .Library)),
+   base::rownames(utils::installed.packages(priority = "base", lib.loc = .Library)),
+   eval.env = baseenv(),
    assign.env = .rs.toolsEnv()
 )
 
