@@ -45,7 +45,12 @@ for pid in $pids; do
     echo "=== threads (tid state utime stime wchan) ==="
     for task in /proc/"$pid"/task/*; do
       tid=$(basename "$task")
-      read -r _ _ state _ _ _ _ _ _ _ _ _ _ utime stime _ < "$task/stat"
+      # A session or thread can exit after enumeration. Skip failed reads
+      # before expanding variables that may be unset (or left from a prior task).
+      if ! read -r _ _ state _ _ _ _ _ _ _ _ _ _ utime stime _ < "$task/stat"; then
+        echo "(could not read $task/stat; skipping thread)"
+        continue
+      fi
       echo "$tid $state $utime $stime $(cat "$task/wchan" 2>/dev/null)"
     done
     echo
@@ -54,7 +59,11 @@ for pid in $pids; do
     echo
     echo "=== gdb: thread apply all bt ==="
     if command -v gdb >/dev/null; then
-      gdb -batch -p "$pid" -ex 'set pagination off' -ex 'thread apply all bt' 2>&1
+      # A debugger stuck attaching or unwinding must not block recovery or
+      # the workflow's final artifact upload. Escalate if it ignores SIGTERM.
+      timeout --kill-after=5s 30s \
+        gdb -batch -p "$pid" -ex 'set pagination off' -ex 'thread apply all bt' 2>&1 \
+        || echo "(gdb failed or timed out; continuing)"
     else
       echo "(gdb not installed)"
     fi
