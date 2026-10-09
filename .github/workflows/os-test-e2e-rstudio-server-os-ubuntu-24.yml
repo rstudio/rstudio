@@ -351,6 +351,32 @@ jobs:
           path: rstudio-server.deb
           retention-days: 7
 
+      # The packaged rsession is stripped, with a .gnu_debuglink naming
+      # rsession.debug: the DWARF that add_stripped_executable split off into
+      # the build tree. Ship it to the e2e job so the backtraces that
+      # rsession-diagnostics.sh takes of a wedged session carry RStudio's own
+      # frames, not just libR's and libc's. Same-run only: it matches this
+      # build and nothing else.
+      - name: Stage rsession debug symbols
+        if: inputs.build_only != true
+        run: |
+          DEBUG=package/linux/build-Server-DEB/src/cpp/session/rsession.debug
+          if [ -f "$DEBUG" ]; then
+            cp "$DEBUG" "${{ github.workspace }}/rsession.debug"
+            ls -la "${{ github.workspace }}/rsession.debug"
+          else
+            echo "::warning::$DEBUG not found; rsession backtraces will be unsymbolized"
+          fi
+
+      - name: Upload rsession debug symbols
+        if: inputs.build_only != true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rsession-debug-ubuntu-24
+          path: rsession.debug
+          if-no-files-found: warn
+          retention-days: 1
+
   e2e-server-ubuntu:
     needs: build
     # build is skipped when build_from_source is false; allow this job to run
@@ -456,6 +482,31 @@ jobs:
           sudo apt-get install -y "${{ github.workspace }}/rstudio-server.deb"
           sudo systemctl stop rstudio-server
           sudo rstudio-server verify-installation
+
+      # gdb resolves the installed rsession's .gnu_debuglink by looking for
+      # rsession.debug next to the binary, so dropping the build job's copy
+      # there is all it takes for rsession-diagnostics.sh backtraces to name
+      # RStudio's frames. The build job warns instead of failing when it
+      # could not stage the file, so this download may legitimately find no
+      # artifact; the daily-download path never has one (different binary).
+      - name: Download rsession debug symbols
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: rsession-debug-ubuntu-24
+          path: ${{ github.workspace }}
+
+      - name: Install rsession debug symbols
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        run: |
+          if [ -f "${{ github.workspace }}/rsession.debug" ]; then
+            sudo install -m 644 "${{ github.workspace }}/rsession.debug" /usr/lib/rstudio-server/bin/rsession.debug
+            # gdb reports "Reading symbols from ..." for a debuglink it accepts
+            gdb -batch -ex 'info line rstudio::session::console_input::rConsoleRead' /usr/lib/rstudio-server/bin/rsession 2>&1 | tail -2
+          else
+            echo "::warning::rsession.debug not available; rsession backtraces will be unsymbolized"
+          fi
 
       # Daily-download path: resolve and install the latest (or specified)
       # .deb. Runs when build_from_source is false (auto-resolve this branch's

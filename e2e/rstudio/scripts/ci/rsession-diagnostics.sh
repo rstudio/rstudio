@@ -13,6 +13,8 @@
 #
 # Backtraces come from gdb, which needs ptrace rights over the target: run
 # as root (sudo) on a runner where the sessions belong to another account.
+# The packaged rsession is stripped; its frames are named only when the
+# build's rsession.debug sits next to the binary (the workflow installs it).
 #
 # Usage: rsession-diagnostics.sh [--kill] <output-dir>
 
