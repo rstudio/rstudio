@@ -15,7 +15,14 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/bind/bind.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
+
 #include "SessionPackages.hpp"
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -54,6 +61,191 @@ TEST(SessionPackagesTest, ContainsCallSyntax_IgnoresCallFreeInput) {
    EXPECT_FALSE(containsCallSyntax("x <- update"));
    EXPECT_FALSE(containsCallSyntax("1 + 2"));
    EXPECT_FALSE(containsCallSyntax("mtcars"));
+}
+
+// PackageStateBuilder serializes package-state builds that nest (a request
+// arriving while the DESCRIPTION scan services polled events). The scan itself
+// needs R, so these tests script it: each pass stamps its sequence number into
+// the list, and a test can have a given pass re-enter the builder -- a nested
+// request -- or fail.
+
+class PackageStateBuilderTest : public ::testing::Test
+{
+protected:
+   PackageStateBuilderTest()
+      : builder_(boost::bind(&PackageStateBuilderTest::runPass, this, boost::placeholders::_1))
+   {
+   }
+
+   Error runPass(json::Object* pJson)
+   {
+      int pass = ++passes_;
+      (*pJson)["pass"] = pass;
+      if (onPass_)
+         return onPass_(pass);
+      return Success();
+   }
+
+   static Error failure()
+   {
+      return systemError(boost::system::errc::io_error, ERROR_LOCATION);
+   }
+
+   int passes_ = 0;
+   boost::function<Error(int)> onPass_;
+   PackageStateBuilder builder_;
+};
+
+TEST_F(PackageStateBuilderTest, Build_ReturnsTheListWithoutAnEvent) {
+   json::Object result;
+   bool deliverEvent = true;
+   Error error = builder_.build(&result, &deliverEvent);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(1, passes_);
+   EXPECT_EQ(1, result["pass"].getInt());
+   EXPECT_FALSE(deliverEvent);
+}
+
+TEST_F(PackageStateBuilderTest, BuildForEvent_DeliversTheEvent) {
+   json::Object result;
+   bool deliverEvent = false;
+   Error error = builder_.buildForEvent(&result, &deliverEvent);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(1, passes_);
+   EXPECT_EQ(1, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+}
+
+// The RPC is scanning when the PPM batch completion requests an event: the
+// nested request doesn't scan, and the RPC runs again and delivers the event
+// on its behalf, so event-only listeners still see the change.
+TEST_F(PackageStateBuilderTest, NestedEventRequest_FoldsIntoTheOuterBuild) {
+   json::Object nestedResult;
+   bool nestedDeliverEvent = true;
+   Error nestedError;
+   onPass_ = [&](int pass) -> Error {
+      if (pass == 1)
+         nestedError = builder_.buildForEvent(&nestedResult, &nestedDeliverEvent);
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   Error error = builder_.build(&result, &deliverEvent);
+
+   EXPECT_FALSE(nestedError);
+   EXPECT_FALSE(nestedDeliverEvent);
+   EXPECT_FALSE(nestedResult.hasMember("pass"));
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(2, passes_);
+   EXPECT_EQ(2, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+}
+
+// An event build is scanning when a get_package_state RPC is dequeued: the RPC
+// needs its own result, so it scans, and the outer build runs again so that
+// the event it delivers is no older than the RPC's list.
+TEST_F(PackageStateBuilderTest, NestedResultRequest_RerunsTheOuterBuild) {
+   json::Object nestedResult;
+   bool nestedDeliverEvent = true;
+   Error nestedError;
+   onPass_ = [&](int pass) -> Error {
+      if (pass == 1)
+         nestedError = builder_.build(&nestedResult, &nestedDeliverEvent);
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   Error error = builder_.buildForEvent(&result, &deliverEvent);
+
+   EXPECT_FALSE(nestedError);
+   EXPECT_FALSE(nestedDeliverEvent);
+   EXPECT_EQ(2, nestedResult["pass"].getInt());
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(3, passes_);
+   EXPECT_EQ(3, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+}
+
+TEST_F(PackageStateBuilderTest, NestedBuildFailure_DoesNotDropTheOuterList) {
+   json::Object nestedResult;
+   bool nestedDeliverEvent = false;
+   Error nestedError;
+   onPass_ = [&](int pass) -> Error {
+      if (pass == 1)
+         nestedError = builder_.build(&nestedResult, &nestedDeliverEvent);
+      else if (pass == 2)
+         return failure();
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   Error error = builder_.buildForEvent(&result, &deliverEvent);
+
+   EXPECT_TRUE(nestedError);
+   EXPECT_FALSE(nestedDeliverEvent);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(3, passes_);
+   EXPECT_EQ(3, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+}
+
+TEST_F(PackageStateBuilderTest, FailedBuild_DeliversNothingAndResets) {
+   json::Object nestedResult;
+   bool nestedDeliverEvent = true;
+   onPass_ = [&](int pass) -> Error {
+      if (pass == 1)
+      {
+         builder_.buildForEvent(&nestedResult, &nestedDeliverEvent);
+         return failure();
+      }
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = true;
+   Error error = builder_.buildForEvent(&result, &deliverEvent);
+
+   EXPECT_TRUE(error);
+   EXPECT_EQ(1, passes_);
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_FALSE(nestedDeliverEvent);
+
+   // the folded request died with the build; a later build starts clean
+   onPass_ = boost::function<Error(int)>();
+   json::Object laterResult;
+   bool laterDeliverEvent = true;
+   error = builder_.build(&laterResult, &laterDeliverEvent);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(2, passes_);
+   EXPECT_EQ(2, laterResult["pass"].getInt());
+   EXPECT_FALSE(laterDeliverEvent);
+}
+
+TEST_F(PackageStateBuilderTest, RebuildPasses_AreCapped) {
+   json::Object nestedResult;
+   bool nestedDeliverEvent = false;
+   onPass_ = [&](int) -> Error {
+      builder_.buildForEvent(&nestedResult, &nestedDeliverEvent);
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   Error error = builder_.build(&result, &deliverEvent);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(PackageStateBuilder::kMaxPasses, passes_);
+   EXPECT_EQ(PackageStateBuilder::kMaxPasses, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
 }
 
 } // namespace packages

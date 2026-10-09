@@ -215,21 +215,22 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 // Package-list builds can nest. The DESCRIPTION scan in
 // .rs.listInstalledPackages() runs long enough for R to service polled events,
 // which run the scheduled-command queue -- including the PPM batch completion,
-// which builds and enqueues a package list of its own (see SessionPPM.cpp).
-// Every build takes the next generation, so a build that finds the counter has
-// moved on knows a newer list was built (and, on this single thread, already
-// delivered) while it was scanning. See rstudio/rstudio-pro#13167.
+// which requests a package list of its own (see SessionPPM.cpp) -- and, while
+// the console is busy, dequeue pending RPCs such as get_package_state. Left to
+// run freely, the nested build finishes and is delivered first, and the outer
+// build then overwrites it with an older list (rstudio/rstudio-pro#13167).
+//
+// Every build therefore goes through s_packageStateBuilder (below), which
+// folds requests that arrive mid-build into the build in progress and runs it
+// again, so that whatever is delivered or returned reflects the last request.
 //
 // Main thread only: every build goes through r::exec, so this is re-entrancy
 // on one thread, not concurrent access.
-unsigned s_packageStateGeneration = 0;
-
-Error getPackageStateJson(json::Object* pJson)
+Error buildPackageStateJson(json::Object* pJson)
 {
    using namespace module_context;
 
    Error error = Success();
-   ++s_packageStateGeneration;
 
    PackratContext packratContext = module_context::packratContext();
    core::json::Value renvContext = module_context::renvContextAsJson();
@@ -289,6 +290,14 @@ Error getPackageStateJson(json::Object* pJson)
    // event.
 
    return Success();
+}
+
+PackageStateBuilder s_packageStateBuilder(buildPackageStateJson);
+
+void enquePackageState(const json::Object& pkgState)
+{
+   ClientEvent event(client_events::kPackageStateChanged, pkgState);
+   module_context::enqueClientEvent(event);
 }
 
 SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
@@ -745,11 +754,17 @@ Error getPackageState(const json::JsonRpcRequest& ,
                       json::JsonRpcResponse* pResponse)
 {
    json::Object result;
-   Error error = getPackageStateJson(&result);
+   bool deliverEvent = false;
+   Error error = s_packageStateBuilder.build(&result, &deliverEvent);
    if (error)
       LOG_ERROR(error);
    else
       pResponse->setResult(result);
+
+   // a package-state change that arrived while we were building is delivered
+   // here, so that event-only listeners see it too
+   if (deliverEvent)
+      enquePackageState(result);
 
    // The package list returns immediately without vulnerability data, which
    // arrives later via kPackageVulnerabilitiesReady. This RPC is the only path
@@ -772,26 +787,80 @@ bool containsCallSyntax(const std::string& input)
 
 void enquePackageStateChanged()
 {
-   // the generation this build will take; see s_packageStateGeneration
-   unsigned generation = s_packageStateGeneration + 1;
-
+   // a request that lands inside another build is folded into it, and that
+   // build delivers the event once it has run again
    json::Object pkgState;
-   Error error = getPackageStateJson(&pkgState);
+   bool deliverEvent = false;
+   Error error = s_packageStateBuilder.buildForEvent(&pkgState, &deliverEvent);
    if (error)
       LOG_ERROR(error);
-
-   // if a newer build ran to completion inside ours, our list is stale and
-   // delivering it would overwrite the fresher one already on the wire
-   bool superseded = generation != s_packageStateGeneration;
-   if (!error && !superseded)
-   {
-      ClientEvent event(client_events::kPackageStateChanged, pkgState);
-      module_context::enqueClientEvent(event);
-   }
+   else if (deliverEvent)
+      enquePackageState(pkgState);
 
    // the package set or active repository may have changed; refresh
    // vulnerability data asynchronously to match
    ppm::refreshVulnerabilitiesAsync();
+}
+
+PackageStateBuilder::PackageStateBuilder(const BuildFunction& build)
+   : build_(build)
+{
+}
+
+Error PackageStateBuilder::build(json::Object* pJson, bool* pDeliverEvent)
+{
+   return run(true, false, pJson, pDeliverEvent);
+}
+
+Error PackageStateBuilder::buildForEvent(json::Object* pJson, bool* pDeliverEvent)
+{
+   return run(false, true, pJson, pDeliverEvent);
+}
+
+Error PackageStateBuilder::run(bool needsResult,
+                               bool wantsEvent,
+                               json::Object* pJson,
+                               bool* pDeliverEvent)
+{
+   *pDeliverEvent = false;
+
+   // fold the request into the build in progress: it runs again before handing
+   // anything back, and delivers the event on our behalf
+   if (depth_ > 0 && !needsResult)
+   {
+      rebuildPending_ = true;
+      eventPending_ = eventPending_ || wantsEvent;
+      return Success();
+   }
+
+   // build, and build again if a request arrived while we were scanning, so
+   // that the list we hand back reflects it. Past kMaxPasses the latest list
+   // we have is handed back; the next request refreshes it.
+   ++depth_;
+   Error error;
+   for (int pass = 0; pass < kMaxPasses; pass++)
+   {
+      rebuildPending_ = false;
+      error = build_(pJson);
+      if (error || !rebuildPending_)
+         break;
+   }
+   --depth_;
+
+   // we built inside another build (we needed a result of our own); its list
+   // is now older than ours, so have it run again
+   if (depth_ > 0)
+   {
+      rebuildPending_ = true;
+      return error;
+   }
+
+   // outermost build: deliver our own event request and any folded into us. A
+   // failed build drops them along with its own; the next request refreshes.
+   *pDeliverEvent = !error && (wantsEvent || eventPending_);
+   rebuildPending_ = false;
+   eventPending_ = false;
+   return error;
 }
 
 Error initialize()
