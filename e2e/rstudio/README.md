@@ -105,6 +105,8 @@ Two caveats. If the run crashes before the teardown, or the server is unreachabl
 
 **Prerequisite for external servers**: the rsession processes the target server spawns must run with `--automation-agent`, otherwise `window.rstudio` is never installed and the very first step of `launchServer()` (which calls `setPref()` through the bridge) will time out. The in-tree spawn handles this by passing `--automation-agent=1` to `rserver-dev`, which forwards the flag to every rsession it launches. External servers have to be configured explicitly -- either start `rserver` with `--automation-agent=1`, or add `automation-agent=1` to `rserver.conf`. Servers that aren't dedicated test instances will not have this set by default.
 
+**Recovering a wedged session**: an external server keeps routing the account to its existing rsession, and the harness has no way to replace one itself. If that session's main thread hangs, it never answers `client_init`, so every later sign-in in the run times out identically (one hang cost a CI shard eleven specs plus the teardown). Set `PW_RSTUDIO_SERVER_RECOVER_CMD` to a shell command that records and kills the account's sessions; when the post-login console wait times out, `signInToServer` runs it once and retries the sign-in. The Linux Server CI workflow points it at `scripts/ci/rsession-diagnostics.sh --kill <dir>`, which dumps each rsession's threads and gdb backtraces into `<dir>` before killing it, and uploads that directory as the `rsession-diagnostics-linux-server-<shard>` artifact.
+
 ```bash
 PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
   PW_RSTUDIO_SERVER_PORT=80 \
@@ -583,6 +585,7 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_RSTUDIO_SERVER_USER` | Server | Conditional | Login username. Required only when the external server presents a login form; ignored for the in-tree spawn (`--auth-none`). |
 | `PW_RSTUDIO_SERVER_PASSWORD` | Server | Conditional | Login password. Same conditional rule as `PW_RSTUDIO_SERVER_USER`. |
 | `PW_RSTUDIO_SERVER_LOGIN_TIMEOUT` | Server | No | Post-login wait for the IDE console, in ms (default: 60000) |
+| `PW_RSTUDIO_SERVER_RECOVER_CMD` | Server | No | Shell command run once when that wait times out, before the sign-in is retried; meant to record and kill a wedged rsession on an external server (see *Recovering a wedged session*). |
 | `PW_RSERVER_BIN` | Server | No | Path to the `rserver` binary used by the in-tree spawn (default: `build/src/cpp/server/rserver` in the repo). |
 | `PW_RSERVER_CONF` | Server | No | Path to the `rserver-dev.conf` used by the in-tree spawn (default: `build/src/cpp/conf/rserver-dev.conf` in the repo). |
 | `RSTUDIO_PROJECT_ROOT` | Server | No | Override the repo-root path passed into the in-tree `rserver-dev`'s environment. Defaults to the resolved repository root. |
