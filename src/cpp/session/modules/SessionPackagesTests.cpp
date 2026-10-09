@@ -172,6 +172,40 @@ TEST_F(PackageStateBuilderTest, NestedResultRequest_RerunsTheOuterBuild) {
    EXPECT_TRUE(deliverEvent);
 }
 
+// A get_package_state RPC is scanning when a second RPC nests inside it, and
+// the PPM completion lands during the nested scan. The folded event has to
+// survive the nested build's return and be delivered by the outermost build,
+// which requested no event of its own.
+TEST_F(PackageStateBuilderTest, EventFoldedIntoANestedBuild_IsDeliveredByTheOuterBuild) {
+   json::Object nestedResult;
+   json::Object foldedResult;
+   bool nestedDeliverEvent = true;
+   bool foldedDeliverEvent = true;
+   onPass_ = [&](int pass) -> Error {
+      if (pass == 1)
+         EXPECT_FALSE(builder_.build(&nestedResult, &nestedDeliverEvent));
+      else if (pass == 2)
+         EXPECT_FALSE(builder_.buildForEvent(&foldedResult, &foldedDeliverEvent));
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = false;
+   EXPECT_FALSE(builder_.build(&result, &deliverEvent));
+
+   // the nested RPC ran again so its own response reflects the folded request,
+   // but delivering the event is the outermost build's job
+   EXPECT_EQ(3, nestedResult["pass"].getInt());
+   EXPECT_FALSE(nestedDeliverEvent);
+   EXPECT_FALSE(foldedDeliverEvent);
+   EXPECT_FALSE(foldedResult.hasMember("pass"));
+
+   EXPECT_EQ(4, passes_);
+   EXPECT_EQ(4, result["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+   EXPECT_FALSE(builder_.eventPending());
+}
+
 TEST_F(PackageStateBuilderTest, NestedBuildFailure_DoesNotDropTheOuterList) {
    json::Object nestedResult;
    bool nestedDeliverEvent = false;
