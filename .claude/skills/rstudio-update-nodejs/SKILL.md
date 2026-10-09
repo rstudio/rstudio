@@ -264,7 +264,7 @@ If one fails, refresh it in that directory with `npm install --package-lock-only
 
 ```bash
 OLD_NPM=$(curl -fsSL https://nodejs.org/dist/index.json | jq -r '.[] | select(.version=="v<OLD_BUILD_VERSION>") | .npm')
-npx --yes "npm@$OLD_NPM" ci --dry-run --ignore-scripts
+npx --yes "npm@${OLD_NPM:?could not find the npm bundled with Node <OLD_BUILD_VERSION>}" ci --dry-run --ignore-scripts
 ```
 
 Commit the refreshed lockfile as its own commit.
