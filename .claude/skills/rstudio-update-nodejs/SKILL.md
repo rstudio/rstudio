@@ -251,6 +251,24 @@ bash install-npm-dependencies
 
 Confirm exit code 0. If the install fails, report the error and stop. This also installs the new Node.js locally for development use.
 
+**If updating build**, also check that the npm bundled with the new Node accepts every lockfile. The Electron package step runs `npm ci` with it, and a new npm major can reject a lockfile the old one accepted (npm 11 rejected the desktop lockfile with `Missing: js-yaml@5.4.3`). With the new Node first on `PATH`, from the repo root:
+
+```bash
+export PATH="$PWD/dependencies/common/node/<BUILD_VERSION>-arm64/bin:$PATH"  # drop -arm64 on Linux/Intel
+for d in $(git ls-files '*package-lock.json' | xargs -n1 dirname); do
+   (cd "$d" && npm ci --dry-run --ignore-scripts >/dev/null 2>&1 && echo "ok: $d" || echo "FAILED: $d")
+done
+```
+
+If one fails, refresh it in that directory with `npm install --package-lock-only --ignore-scripts`. Then confirm the npm bundled with the previous Node still accepts the result; `npx` fetches that npm, so the previous Node doesn't need to be installed:
+
+```bash
+OLD_NPM=$(curl -fsSL https://nodejs.org/dist/index.json | jq -r '.[] | select(.version=="v<OLD_BUILD_VERSION>") | .npm')
+npx --yes "npm@${OLD_NPM:?could not find the npm bundled with Node <OLD_BUILD_VERSION>}" ci --dry-run --ignore-scripts
+```
+
+Commit the refreshed lockfile as its own commit.
+
 ### 8. Commit and open a PR
 
 Commit all modified files and open a pull request.
