@@ -260,7 +260,14 @@ for d in $(git ls-files '*package-lock.json' | xargs -n1 dirname); do
 done
 ```
 
-If one fails, refresh it in that directory with `npm install --package-lock-only --ignore-scripts`, confirm the previous Node's npm still accepts the result with the same `npm ci --dry-run --ignore-scripts`, and commit the refreshed lockfile as its own commit.
+If one fails, refresh it in that directory with `npm install --package-lock-only --ignore-scripts`. Then confirm the npm bundled with the previous Node still accepts the result; `npx` fetches that npm, so the previous Node doesn't need to be installed:
+
+```bash
+OLD_NPM=$(curl -fsSL https://nodejs.org/dist/index.json | jq -r '.[] | select(.version=="v<OLD_BUILD_VERSION>") | .npm')
+npx --yes "npm@$OLD_NPM" ci --dry-run --ignore-scripts
+```
+
+Commit the refreshed lockfile as its own commit.
 
 ### 8. Commit and open a PR
 
