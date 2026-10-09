@@ -204,7 +204,6 @@ TEST_F(PackageStateBuilderTest, FailedRpc_RetainsFoldedEventUntilASuccessfulBuil
       if (pass == 1)
       {
          builder_.buildForEvent(&nestedResult, &nestedDeliverEvent);
-         EXPECT_FALSE(builder_.needsDeferredBuild());
          return failure();
       }
       if (pass == 2)
@@ -220,16 +219,15 @@ TEST_F(PackageStateBuilderTest, FailedRpc_RetainsFoldedEventUntilASuccessfulBuil
    EXPECT_EQ(1, passes_);
    EXPECT_FALSE(deliverEvent);
    EXPECT_FALSE(nestedDeliverEvent);
-   EXPECT_TRUE(builder_.needsDeferredBuild());
+   EXPECT_TRUE(builder_.eventPending());
 
-   // A failed idle retry must retain the notification too.
+   // a later failed build keeps it owed
    error = builder_.buildForEvent(&result, &deliverEvent);
    EXPECT_TRUE(error);
    EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.needsDeferredBuild());
+   EXPECT_TRUE(builder_.eventPending());
 
-   // An intervening successful RPC can satisfy the event before the next
-   // scheduled retry, allowing that callback to skip its scan.
+   // the next successful build, from any trigger, delivers it
    json::Object laterResult;
    bool laterDeliverEvent = false;
    error = builder_.build(&laterResult, &laterDeliverEvent);
@@ -238,10 +236,10 @@ TEST_F(PackageStateBuilderTest, FailedRpc_RetainsFoldedEventUntilASuccessfulBuil
    EXPECT_EQ(3, passes_);
    EXPECT_EQ(3, laterResult["pass"].getInt());
    EXPECT_TRUE(laterDeliverEvent);
-   EXPECT_FALSE(builder_.needsDeferredBuild());
+   EXPECT_FALSE(builder_.eventPending());
 }
 
-TEST_F(PackageStateBuilderTest, FailedEventBuild_IsRetried) {
+TEST_F(PackageStateBuilderTest, FailedEventBuild_DeliversOnTheNextBuild) {
    onPass_ = [&](int pass) -> Error {
       return pass == 1 ? failure() : Success();
    };
@@ -250,22 +248,22 @@ TEST_F(PackageStateBuilderTest, FailedEventBuild_IsRetried) {
    bool deliverEvent = false;
    EXPECT_TRUE(builder_.buildForEvent(&result, &deliverEvent));
    EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.needsDeferredBuild());
+   EXPECT_TRUE(builder_.eventPending());
 
    EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
    EXPECT_EQ(2, result["pass"].getInt());
    EXPECT_TRUE(deliverEvent);
-   EXPECT_FALSE(builder_.needsDeferredBuild());
+   EXPECT_FALSE(builder_.eventPending());
 }
 
-TEST_F(PackageStateBuilderTest, FailedRpcWithoutAnEvent_DoesNotScheduleABuild) {
+TEST_F(PackageStateBuilderTest, FailedRpcWithoutAnEvent_OwesNothing) {
    onPass_ = [&](int) -> Error { return failure(); };
 
    json::Object result;
    bool deliverEvent = false;
    EXPECT_TRUE(builder_.build(&result, &deliverEvent));
    EXPECT_FALSE(deliverEvent);
-   EXPECT_FALSE(builder_.needsDeferredBuild());
+   EXPECT_FALSE(builder_.eventPending());
 }
 
 TEST_F(PackageStateBuilderTest, RebuildPasses_AreCappedAndRetainTheEvent) {
@@ -284,20 +282,21 @@ TEST_F(PackageStateBuilderTest, RebuildPasses_AreCappedAndRetainTheEvent) {
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, passes_);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, result["pass"].getInt());
    EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.needsDeferredBuild());
+   EXPECT_TRUE(builder_.eventPending());
 
-   // The scheduled idle build runs after the stream of requests stops.
+   // the next build, once the stream of requests stops, delivers it
    onPass_ = boost::function<Error(int)>();
    error = builder_.buildForEvent(&result, &deliverEvent);
    EXPECT_FALSE(error);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses + 1, result["pass"].getInt());
    EXPECT_TRUE(deliverEvent);
-   EXPECT_FALSE(builder_.needsDeferredBuild());
+   EXPECT_FALSE(builder_.eventPending());
 }
 
-// Each outer pass is superseded by a nested RPC. In particular, the last
-// nested RPC's list must not be overwritten by the capped outer RPC's result.
-TEST_F(PackageStateBuilderTest, CappedRpc_ReturnsNewestNestedResultAndDefersAnEvent) {
+// Each outer pass is superseded by a nested RPC until the cap. The capped RPC
+// hands back its own last pass, which may be older than the last nested list,
+// so it owes the client an event even though none was requested.
+TEST_F(PackageStateBuilderTest, CappedRpc_OwesAnEvent) {
    json::Object nestedResult;
    onPass_ = [&](int pass) -> Error {
       if (pass % 2 == 1)
@@ -314,42 +313,15 @@ TEST_F(PackageStateBuilderTest, CappedRpc_ReturnsNewestNestedResultAndDefersAnEv
    EXPECT_FALSE(builder_.build(&result, &deliverEvent));
    EXPECT_EQ(2 * PackageStateBuilder::kMaxPasses, passes_);
    EXPECT_EQ(passes_, nestedResult["pass"].getInt());
-   EXPECT_EQ(passes_, result["pass"].getInt());
+   EXPECT_EQ(passes_ - 1, result["pass"].getInt());
    EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.needsDeferredBuild());
+   EXPECT_TRUE(builder_.eventPending());
 
-   // No event request was made explicitly, but a capped RPC still owes the
-   // client a fresh list once the remaining work can finish.
    onPass_ = boost::function<Error(int)>();
    EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
    EXPECT_EQ(passes_, result["pass"].getInt());
    EXPECT_TRUE(deliverEvent);
-   EXPECT_FALSE(builder_.needsDeferredBuild());
-}
-
-TEST_F(PackageStateBuilderTest, CappedEventBuild_DoesNotOverwriteANestedRpc) {
-   json::Object nestedResult;
-   onPass_ = [&](int pass) -> Error {
-      if (pass % 2 == 1)
-      {
-         bool nestedDeliverEvent = false;
-         EXPECT_FALSE(builder_.build(&nestedResult, &nestedDeliverEvent));
-      }
-      return Success();
-   };
-
-   json::Object result;
-   bool deliverEvent = false;
-   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
-   EXPECT_EQ(nestedResult["pass"].getInt(), result["pass"].getInt());
-   EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.needsDeferredBuild());
-
-   onPass_ = boost::function<Error(int)>();
-   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
-   EXPECT_GT(result["pass"].getInt(), nestedResult["pass"].getInt());
-   EXPECT_TRUE(deliverEvent);
-   EXPECT_FALSE(builder_.needsDeferredBuild());
+   EXPECT_FALSE(builder_.eventPending());
 }
 
 } // namespace packages

@@ -27,8 +27,6 @@
 
 #include "SessionPackages.hpp"
 
-#include <algorithm>
-
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/make_shared.hpp>
@@ -224,8 +222,9 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 //
 // Every build therefore goes through s_packageStateBuilder (below), which
 // folds requests that arrive mid-build into the build in progress and runs it
-// again. Failed or capped builds leave a pending event for an idle retry;
-// capped RPCs return the newest successful snapshot, including nested builds.
+// again, so that whatever is delivered or returned reflects the last request.
+// An event that a failed or capped build could not deliver stays owed until
+// the next build, from any trigger, delivers it.
 //
 // Main thread only: every build goes through r::exec, so this is re-entrancy
 // on one thread, not concurrent access.
@@ -301,45 +300,6 @@ void enquePackageState(const json::Object& pkgState)
 {
    ClientEvent event(client_events::kPackageStateChanged, pkgState);
    module_context::enqueClientEvent(event);
-}
-
-bool s_packageStateRefreshScheduled = false;
-
-void schedulePackageStateRefresh(int delaySeconds = 1)
-{
-   if (s_packageStateRefreshScheduled || !s_packageStateBuilder.needsDeferredBuild())
-      return;
-
-   s_packageStateRefreshScheduled = true;
-   module_context::scheduleDelayedWork(
-      boost::posix_time::seconds(delaySeconds),
-      [delaySeconds]() {
-         int nextDelaySeconds = 1;
-         // An intervening RPC or event build may already have delivered it.
-         if (s_packageStateBuilder.needsDeferredBuild())
-         {
-            json::Object result;
-            bool deliverEvent = false;
-            Error error = s_packageStateBuilder.buildForEvent(&result, &deliverEvent);
-            if (error)
-            {
-               LOG_ERROR(error);
-               // A persistent lister error must not cause a tight retry loop.
-               nextDelaySeconds = std::min(delaySeconds * 2, 30);
-            }
-            else if (deliverEvent)
-            {
-               enquePackageState(result);
-            }
-            ppm::refreshVulnerabilitiesAsync();
-         }
-
-         // Keep the flag set throughout the callback: R calls above can
-         // re-enter the enqueue path, which must not queue another retry.
-         s_packageStateRefreshScheduled = false;
-         schedulePackageStateRefresh(nextDelaySeconds);
-      },
-      true);
 }
 
 SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
@@ -808,8 +768,6 @@ Error getPackageState(const json::JsonRpcRequest& ,
    if (deliverEvent)
       enquePackageState(result);
 
-   schedulePackageStateRefresh();
-
    // The package list returns immediately without vulnerability data, which
    // arrives later via kPackageVulnerabilitiesReady. This RPC is the only path
    // for a re-join/reconnect to an already-running session (where onDeferredInit
@@ -841,8 +799,6 @@ void enquePackageStateChanged()
    else if (deliverEvent)
       enquePackageState(pkgState);
 
-   schedulePackageStateRefresh();
-
    // the package set or active repository may have changed; refresh
    // vulnerability data asynchronously to match
    ppm::refreshVulnerabilitiesAsync();
@@ -863,9 +819,9 @@ Error PackageStateBuilder::buildForEvent(json::Object* pJson, bool* pDeliverEven
    return run(false, true, pJson, pDeliverEvent);
 }
 
-bool PackageStateBuilder::needsDeferredBuild() const
+bool PackageStateBuilder::eventPending() const
 {
-   return depth_ == 0 && eventPending_;
+   return eventPending_;
 }
 
 Error PackageStateBuilder::run(bool needsResult,
@@ -884,36 +840,18 @@ Error PackageStateBuilder::run(bool needsResult,
       return Success();
    }
 
-   if (depth_ == 0)
-   {
-      generation_ = 0;
-      latestGeneration_ = 0;
-   }
-
    // build, and build again if a request arrived while we were scanning, so
-   // that the list we hand back reflects it. Track the newest successful scan
-   // separately: at the pass limit a nested RPC may have a newer snapshot than
-   // the outer pass that finishes after it.
+   // that the list we hand back reflects it
    ++depth_;
    Error error;
    for (int pass = 0; pass < kMaxPasses; pass++)
    {
       rebuildPending_ = false;
-      unsigned generation = ++generation_;
-      json::Object result;
-      error = build_(&result);
-      if (!error && generation > latestGeneration_)
-      {
-         latestGeneration_ = generation;
-         latestResult_ = result;
-      }
+      error = build_(pJson);
       if (error || !rebuildPending_)
          break;
    }
    --depth_;
-
-   if (!error)
-      *pJson = latestResult_;
 
    // we built inside another build (we needed a result of our own); its list
    // is now older than ours, so have it run again
@@ -923,8 +861,10 @@ Error PackageStateBuilder::run(bool needsResult,
       return error;
    }
 
-   // At the cap, even an RPC-only build owes the client a later fresh event.
-   // On failure, retain any event already owed so the caller can retry it.
+   // outermost build: deliver our own event request and any folded into us.
+   // The event stays owed past a failed build, and past a capped one (whose
+   // last pass may be older than a nested RPC's list), so that the next build
+   // from any trigger delivers it.
    if (!error && rebuildPending_)
       eventPending_ = true;
 
@@ -933,7 +873,6 @@ Error PackageStateBuilder::run(bool needsResult,
       eventPending_ = false;
 
    rebuildPending_ = false;
-   latestResult_ = json::Object();
    return error;
 }
 
