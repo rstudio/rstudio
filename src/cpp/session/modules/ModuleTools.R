@@ -13,10 +13,17 @@
 #
 #
 
-# The names a module would register when sourced. Startup enumerates RPC
-# handlers once, so every definition needs a proxy before the module loads.
-# Only definitions at the start of a line count: a commented or quoted
-# mention of a helper from another module must not shadow it.
+#' Lazy module definitions
+#'
+#' The names a module would register when sourced. Startup enumerates RPC
+#' handlers once, so every definition needs a proxy before the module loads.
+#' Only definitions at the start of a line count: a commented or quoted
+#' mention of a helper from another module must not shadow it.
+#'
+#' @param module The path to the module's R source file.
+#'
+#' @return The names, without their `.rs.` prefix, that sourcing the module
+#'   would define; RPC handlers carry their `rpc.` prefix.
 .rs.addFunction("lazyModuleDefinitions", function(module)
 {
    lines <- readLines(module, warn = FALSE)
@@ -31,13 +38,22 @@
    ifelse(kinds == "JsonRpcHandler", paste0("rpc.", names), names)
 })
 
+#' Is this a lazy module proxy?
+#'
+#' @param object The object to test.
 .rs.addFunction("isLazyModuleProxy", function(object)
 {
    is.function(object) && isTRUE(attr(object, "rs.lazyModuleProxy", exact = TRUE))
 })
 
-# Sources a lazy module once; 'state' is the environment shared by the
-# module's proxies, holding the module path and whether it has loaded.
+#' Load a lazy module
+#'
+#' Sources a lazy module once.
+#'
+#' @param state The environment shared by the module's proxies, holding the
+#'   module path and whether it has loaded.
+#'
+#' @return `TRUE` if the module was sourced by this call.
 .rs.addFunction("loadLazyModule", function(state)
 {
    if (state$loaded)
@@ -48,6 +64,14 @@
    invisible(TRUE)
 })
 
+#' Add a lazy module
+#'
+#' Registers a module's helpers and RPC handlers as proxies that source the
+#' module on first use.
+#'
+#' @param module The path to the module's R source file.
+#' @param names The names the module defines; derived from the source by
+#'   default.
 .rs.addFunction("addLazyModule", function(module, names = .rs.lazyModuleDefinitions(module))
 {
    state <- new.env(parent = emptyenv())
@@ -74,6 +98,12 @@
    }
 })
 
+#' Make a lazy module proxy
+#'
+#' @param fullName The full name of the definition, including `.rs.`.
+#' @param state The environment shared by the module's proxies.
+#'
+#' @return A function that loads the module and re-issues the call.
 .rs.addFunction("makeLazyModuleProxy", function(fullName, state)
 {
    # the proxy runs long after the caller's loop has moved on
