@@ -56,7 +56,7 @@ public:
 
    // Upper bound on the passes one build makes. Each extra pass needs a fresh
    // request to arrive mid-scan, so this is a guard against a pathological
-   // stream of requests, not a working limit.
+   // stream of requests. Unfinished work is deferred to an idle build.
    static constexpr int kMaxPasses = 3;
 
    explicit PackageStateBuilder(const BuildFunction& build);
@@ -68,19 +68,24 @@ public:
    //
    // *pDeliverEvent is set when the caller should also enqueue *pJson as a
    // kPackageStateChanged event, on behalf of a buildForEvent() request that
-   // was folded into this build, or left owed by an earlier build.
+   // was folded into this build, or left owed by an earlier build. A capped
+   // RPC returns its last scan; a deferred event supplies the fresh state.
    core::Error build(core::json::Object* pJson, bool* pDeliverEvent);
 
    // Build the package state into *pJson for delivery as a kPackageStateChanged
    // event. If a build is already on the stack, the request is folded into it:
    // *pJson is left untouched, *pDeliverEvent is false, and the in-progress
-   // build runs again and delivers the event instead. Otherwise *pDeliverEvent
-   // is set on success.
+   // build runs again and delivers the event instead. *pDeliverEvent is set
+   // only when a successful build has no outstanding refresh requests.
    core::Error buildForEvent(core::json::Object* pJson, bool* pDeliverEvent);
 
    // Whether a kPackageStateChanged event is still owed because the build that
-   // should have delivered it failed. The next build delivers it.
+   // should have delivered it failed or hit the cap. The next build delivers it.
    bool eventPending() const;
+
+   // True after an outer build succeeds but reaches the cap with work pending.
+   // Callers schedule an idle build only for this case, never for failures.
+   bool needsDeferredBuild() const;
 
 private:
    core::Error run(bool needsResult,

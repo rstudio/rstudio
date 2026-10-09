@@ -222,7 +222,9 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 //
 // Every build therefore goes through s_packageStateBuilder (below), which
 // folds requests that arrive mid-build into the build in progress and runs it
-// again, so that whatever is delivered or returned reflects the last request.
+// again. If the pass cap leaves work pending, defer the event to an idle build
+// rather than enqueue a stale list. A capped RPC returns its last scan, and the
+// deferred event supplies the fresh state afterward.
 // An event that a failed build could not deliver stays owed until the next
 // build, from any trigger, delivers it.
 //
@@ -300,6 +302,30 @@ void enquePackageState(const json::Object& pkgState)
 {
    ClientEvent event(client_events::kPackageStateChanged, pkgState);
    module_context::enqueClientEvent(event);
+}
+
+bool s_packageStateRefreshScheduled = false;
+
+void schedulePackageStateRefresh()
+{
+   if (s_packageStateRefreshScheduled || !s_packageStateBuilder.needsDeferredBuild())
+      return;
+
+   s_packageStateRefreshScheduled = true;
+   module_context::scheduleDelayedWork(
+      boost::posix_time::milliseconds(100),
+      []() {
+         // An intervening build may already have satisfied the refresh.
+         // Keep the flag set while scanning to coalesce re-entrant requests.
+         if (s_packageStateBuilder.needsDeferredBuild())
+            enquePackageStateChanged();
+
+         s_packageStateRefreshScheduled = false;
+         // Only another successful capped build needs a follow-up. A failure
+         // leaves the event owed until the next real trigger, with no timer.
+         schedulePackageStateRefresh();
+      },
+      true);
 }
 
 SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
@@ -768,6 +794,8 @@ Error getPackageState(const json::JsonRpcRequest& ,
    if (deliverEvent)
       enquePackageState(result);
 
+   schedulePackageStateRefresh();
+
    // The package list returns immediately without vulnerability data, which
    // arrives later via kPackageVulnerabilitiesReady. This RPC is the only path
    // for a re-join/reconnect to an already-running session (where onDeferredInit
@@ -799,6 +827,8 @@ void enquePackageStateChanged()
    else if (deliverEvent)
       enquePackageState(pkgState);
 
+   schedulePackageStateRefresh();
+
    // the package set or active repository may have changed; refresh
    // vulnerability data asynchronously to match
    ppm::refreshVulnerabilitiesAsync();
@@ -822,6 +852,11 @@ Error PackageStateBuilder::buildForEvent(json::Object* pJson, bool* pDeliverEven
 bool PackageStateBuilder::eventPending() const
 {
    return eventPending_;
+}
+
+bool PackageStateBuilder::needsDeferredBuild() const
+{
+   return depth_ == 0 && rebuildPending_;
 }
 
 Error PackageStateBuilder::run(bool needsResult,
@@ -861,14 +896,18 @@ Error PackageStateBuilder::run(bool needsResult,
       return error;
    }
 
-   // outermost build: deliver our own event request and any folded into us.
-   // After a failed build the event stays owed, so that the next build from
-   // any trigger delivers it.
-   *pDeliverEvent = !error && eventPending_;
+   // Failures keep any owed event, but never request an automatic retry.
+   if (error)
+      rebuildPending_ = false;
+   else if (rebuildPending_)
+      eventPending_ = true; // even an RPC-only build needs a fresh event at the cap
+
+   // A capped build leaves its event and refresh pending for the idle build.
+   // Only a successful scan with no outstanding requests can deliver it.
+   *pDeliverEvent = !error && !rebuildPending_ && eventPending_;
    if (*pDeliverEvent)
       eventPending_ = false;
 
-   rebuildPending_ = false;
    return error;
 }
 

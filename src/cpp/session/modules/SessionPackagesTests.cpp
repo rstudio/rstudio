@@ -244,11 +244,13 @@ TEST_F(PackageStateBuilderTest, FailedBuild_KeepsTheEventOwedUntilTheNextSuccess
    EXPECT_TRUE(builder_.buildForEvent(&result, &deliverEvent));
    EXPECT_FALSE(deliverEvent);
    EXPECT_TRUE(builder_.eventPending());
+   EXPECT_FALSE(builder_.needsDeferredBuild());
 
    // a later failed build keeps it owed
    EXPECT_TRUE(builder_.build(&result, &deliverEvent));
    EXPECT_FALSE(deliverEvent);
    EXPECT_TRUE(builder_.eventPending());
+   EXPECT_FALSE(builder_.needsDeferredBuild());
 
    // the next successful build, from any trigger, delivers it
    EXPECT_FALSE(builder_.build(&result, &deliverEvent));
@@ -263,7 +265,7 @@ TEST_F(PackageStateBuilderTest, FailedBuild_KeepsTheEventOwedUntilTheNextSuccess
    EXPECT_FALSE(builder_.eventPending());
 }
 
-TEST_F(PackageStateBuilderTest, RebuildPasses_AreCapped) {
+TEST_F(PackageStateBuilderTest, RebuildPasses_AreCappedAndDeferTheEvent) {
    json::Object nestedResult;
    bool nestedDeliverEvent = false;
    onPass_ = [&](int) -> Error {
@@ -278,8 +280,97 @@ TEST_F(PackageStateBuilderTest, RebuildPasses_AreCapped) {
    EXPECT_FALSE(error);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, passes_);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, result["pass"].getInt());
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.eventPending());
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   // A successful intervening RPC delivers the fresh event and lets the
+   // already-scheduled callback skip its build.
+   onPass_ = boost::function<Error(int)>();
+   EXPECT_FALSE(builder_.build(&result, &deliverEvent));
+   EXPECT_EQ(PackageStateBuilder::kMaxPasses + 1, result["pass"].getInt());
    EXPECT_TRUE(deliverEvent);
    EXPECT_FALSE(builder_.eventPending());
+   EXPECT_FALSE(builder_.needsDeferredBuild());
+}
+
+class CappedPackageStateBuilderTest : public PackageStateBuilderTest,
+                                    public ::testing::WithParamInterface<bool>
+{
+};
+
+// A nested RPC supersedes every outer pass, including the final allowed pass.
+// Cover both outer entry points: an event must not deliver that stale list,
+// and an RPC with no event request of its own must still arrange a fresh event.
+TEST_P(CappedPackageStateBuilderTest, NestedRpcAtTheCap_IsFollowedByAFreshEvent) {
+   json::Object nestedResult;
+   onPass_ = [&](int pass) -> Error {
+      if (pass % 2 == 1)
+      {
+         bool nestedDeliverEvent = true;
+         EXPECT_FALSE(builder_.build(&nestedResult, &nestedDeliverEvent));
+         EXPECT_FALSE(nestedDeliverEvent);
+         EXPECT_FALSE(builder_.needsDeferredBuild());
+      }
+      return Success();
+   };
+
+   json::Object result;
+   bool deliverEvent = true;
+   Error error = GetParam()
+      ? builder_.build(&result, &deliverEvent)
+      : builder_.buildForEvent(&result, &deliverEvent);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(2 * PackageStateBuilder::kMaxPasses, passes_);
+   EXPECT_EQ(passes_, nestedResult["pass"].getInt());
+   EXPECT_LT(result["pass"].getInt(), nestedResult["pass"].getInt());
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.eventPending());
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   // The idle build corrects the pane without any additional external trigger.
+   onPass_ = boost::function<Error(int)>();
+   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_GT(result["pass"].getInt(), nestedResult["pass"].getInt());
+   EXPECT_TRUE(deliverEvent);
+   EXPECT_FALSE(builder_.eventPending());
+   EXPECT_FALSE(builder_.needsDeferredBuild());
+}
+
+INSTANTIATE_TEST_SUITE_P(OuterRequest, CappedPackageStateBuilderTest, ::testing::Bool());
+
+TEST_F(PackageStateBuilderTest, FailedDeferredBuild_DoesNotScheduleAnotherAttempt) {
+   onPass_ = [&](int) -> Error {
+      json::Object nestedResult;
+      bool nestedDeliverEvent = false;
+      return builder_.buildForEvent(&nestedResult, &nestedDeliverEvent);
+   };
+
+   json::Object result;
+   bool deliverEvent = true;
+   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.needsDeferredBuild());
+
+   // Even if another event lands inside the failed idle scan, it must not
+   // start an error-retry loop. The notification stays owed for a real trigger.
+   onPass_ = [&](int) -> Error {
+      json::Object nestedResult;
+      bool nestedDeliverEvent = false;
+      EXPECT_FALSE(builder_.buildForEvent(&nestedResult, &nestedDeliverEvent));
+      return failure();
+   };
+   EXPECT_TRUE(builder_.buildForEvent(&result, &deliverEvent));
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.eventPending());
+   EXPECT_FALSE(builder_.needsDeferredBuild());
+
+   onPass_ = boost::function<Error(int)>();
+   EXPECT_FALSE(builder_.build(&result, &deliverEvent));
+   EXPECT_TRUE(deliverEvent);
+   EXPECT_FALSE(builder_.eventPending());
+   EXPECT_FALSE(builder_.needsDeferredBuild());
 }
 
 } // namespace packages
