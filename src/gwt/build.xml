@@ -192,6 +192,7 @@
    <target name="acesupport-watch-install" description="Install acesupport watcher dependencies">
       <retry retrycount="3">
          <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
+            <env key="PATH" value="${node.path}"/>
             <arg value="install"/>
             <arg value="--network-timeout"/>
             <arg value="240000"/>
@@ -265,6 +266,11 @@
    <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="C:/rstudio-tools/dependencies/common/node/${node.version}"/>
+   <!-- on Apple Silicon, install-npm-dependencies puts build-time node only in an -arm64 folder -->
+   <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}-arm64"/>
    <set-if-unset  property="node.dir" value="../../dependencies/common/node/${node.version}"/>
 
 
@@ -281,6 +287,22 @@
    <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
    <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
    <set-if-unset  property="node.bin" value="node"/>
+
+   <!-- yarn and npm are scripts that run whichever node is first on PATH, so put the
+        pinned node there; otherwise they use the developer's default node, which may
+        be older than the build requires. Windows env vars arrive as env.Path. -->
+   <condition property="env.PATH" value="${env.Path}">
+      <isset property="env.Path"/>
+   </condition>
+   <condition property="node.bin.dir" value="${node.dir}/bin">
+      <available file="${node.dir}/bin/node"/>
+   </condition>
+   <condition property="node.bin.dir" value="${node.dir}">
+      <available file="${node.dir}/node.exe"/>
+   </condition>
+   <condition property="node.path" value="${node.bin.dir}${path.separator}${env.PATH}" else="${env.PATH}">
+      <isset property="node.bin.dir"/>
+   </condition>
 
    <!-- similar lookup for panmirror -->
    <set-if-exists property="panmirror.dir" value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
@@ -313,6 +335,7 @@
       <mkdir dir="${panmirror.build.dir}"/>
       <retry retrycount="3">
          <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+            <env key="PATH" value="${node.path}"/>
             <arg value="install"/>
             <arg value="--network-timeout"/>
             <arg value="240000"/>
@@ -325,6 +348,7 @@
            caller's own heap setting takes precedence over ours. -->
       <property name="env.NODE_OPTIONS" value=""/>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <env key="PATH" value="${node.path}"/>
          <arg value="build"/>
          <arg value="--minify"/>
          <arg value="${panmirror.minify}"/>
@@ -622,6 +646,7 @@
       </exec>
       <retry retrycount="3">
          <exec executable="${npm.bin}" dir="${testpage.runner.dir}" resolveexecutable="true" failonerror="true">
+            <env key="PATH" value="${node.path}"/>
             <arg value="ci"/>
          </exec>
       </retry>
