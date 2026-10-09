@@ -449,7 +449,75 @@ endif()
 
 if(UNIX)
 
+   if(APPLE)
+
+      # Older configures cached Homebrew's OpenSSL as an INTERNAL value: opt/openssl@3,
+      # opt/openssl, or (before #14718) Cellar/openssl/<version>. A -DOPENSSL_ROOT_DIR
+      # re-types the entry as UNINITIALIZED, so an explicit root is never dropped here.
+      get_property(_openssl_root_type CACHE OPENSSL_ROOT_DIR PROPERTY TYPE)
+      string(FIND "${OPENSSL_ROOT_DIR}" "${HOMEBREW_PREFIX}/" _openssl_brew_index)
+      if(_openssl_root_type STREQUAL "INTERNAL" AND _openssl_brew_index EQUAL 0)
+         string(LENGTH "${HOMEBREW_PREFIX}/" _openssl_brew_length)
+         string(SUBSTRING "${OPENSSL_ROOT_DIR}" ${_openssl_brew_length} -1 _openssl_brew_path)
+         if(_openssl_brew_path MATCHES "^(opt/openssl(@3)?|Cellar/openssl/[^/]+)$")
+            unset(OPENSSL_ROOT_DIR CACHE)
+         endif()
+      endif()
+
+      # link the static OpenSSL that dependencies/osx/build-openssl builds and
+      # install-openssl puts in the tools root, unless -DOPENSSL_ROOT_DIR names
+      # another
+      if(NOT DEFINED OPENSSL_ROOT_DIR)
+         # read the pin rather than source the script, which has side effects
+         set(_openssl_pin_file "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh")
+         set(_openssl_pin_regex "^export RSTUDIO_OPENSSL_VERSION=\"([0-9]+\\.[0-9]+\\.[0-9]+)\"$")
+         file(STRINGS "${_openssl_pin_file}" _openssl_pin REGEX "^export RSTUDIO_OPENSSL_VERSION=")
+         if(NOT _openssl_pin MATCHES "${_openssl_pin_regex}")
+            message(FATAL_ERROR
+               "Expected one line 'export RSTUDIO_OPENSSL_VERSION=\"<x.y.z>\"' in "
+               "'${_openssl_pin_file}', but found '${_openssl_pin}'.")
+         endif()
+         set(RSTUDIO_OPENSSL_VERSION "${CMAKE_MATCH_1}")
+         set(OPENSSL_ROOT_DIR "${RSTUDIO_TOOLS_ROOT}/openssl-${RSTUDIO_OPENSSL_VERSION}")
+         set(OPENSSL_USE_STATIC_LIBS TRUE)
+         if(NOT EXISTS "${OPENSSL_ROOT_DIR}/lib/libcrypto.a")
+            message(FATAL_ERROR
+               "OpenSSL not found at '${OPENSSL_ROOT_DIR}'. "
+               "Install it with dependencies/osx/install-openssl and reconfigure.")
+         endif()
+      endif()
+
+      # find_package keeps paths cached by an earlier configure, which may name
+      # another OpenSSL (e.g. Homebrew's, or an older version of ours). Compare
+      # real paths: the root may hold a /../ (as make-package passes), and the
+      # cached paths don't.
+      get_filename_component(_openssl_root "${OPENSSL_ROOT_DIR}" REALPATH)
+      foreach(_openssl_var OPENSSL_INCLUDE_DIR OPENSSL_CRYPTO_LIBRARY OPENSSL_SSL_LIBRARY)
+         get_filename_component(_openssl_real_path "${${_openssl_var}}" REALPATH)
+         cmake_path(IS_PREFIX _openssl_root "${_openssl_real_path}" NORMALIZE _openssl_in_root)
+         if(NOT _openssl_in_root)
+            unset(${_openssl_var} CACHE)
+         endif()
+      endforeach()
+
+   endif()
+
    find_package(OpenSSL REQUIRED)
+
+   # FindOpenSSL also searches pkg-config's hints, so a root missing headers or
+   # a library could quietly yield parts of another OpenSSL
+   if(APPLE)
+      foreach(_openssl_path ${OPENSSL_INCLUDE_DIR} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+         get_filename_component(_openssl_real_path "${_openssl_path}" REALPATH)
+         cmake_path(IS_PREFIX _openssl_root "${_openssl_real_path}" NORMALIZE _openssl_in_root)
+         if(NOT _openssl_in_root)
+            message(FATAL_ERROR
+               "Found OpenSSL at '${_openssl_path}', outside OPENSSL_ROOT_DIR "
+               "'${OPENSSL_ROOT_DIR}'. Check that it holds include/, lib/libcrypto "
+               "and lib/libssl, then reconfigure.")
+         endif()
+      endforeach()
+   endif()
 
    # Add the headers as a normal (non-SYSTEM) include placed BEFORE the others,
    # for the same reason as the bundled {fmt} headers below: on macOS, clang
@@ -458,12 +526,6 @@ if(UNIX)
    # x86_64 Homebrew on Apple Silicon) would otherwise shadow the headers of
    # the OpenSSL we actually link against.
    include_directories(BEFORE "${OPENSSL_INCLUDE_DIR}")
-
-   # Homebrew's unversioned 'openssl' tracks the newest major release; keep
-   # both slices of a universal macOS package on OpenSSL 3
-   if(APPLE AND RSTUDIO_PACKAGE_BUILD AND NOT OPENSSL_VERSION MATCHES "^3\\.")
-      message(FATAL_ERROR "macOS package builds require OpenSSL 3.x, but found ${OPENSSL_VERSION} at '${OPENSSL_ROOT_DIR}'. Install it with '${HOMEBREW_PREFIX}/bin/brew install openssl@3' and reconfigure.")
-   endif()
 
 endif()
 

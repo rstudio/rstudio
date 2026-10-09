@@ -48,6 +48,14 @@ export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 export MACOSX_DEPLOYMENT_TARGET="12.0"
 
 
+#
+# OpenSSL version that macOS builds link statically; dependencies/osx/build-openssl
+# builds it, install-openssl installs it, and src/cpp/CMakeLists.txt parses this
+# line, so keep its form. Windows pins its own in dependencies/windows/install-dependencies.cmd.
+#
+export RSTUDIO_OPENSSL_VERSION="3.5.9"
+
+
 # version of node.js used for building
 #
 # When changing node version you must upload the corresponding archives to aws s3; use
@@ -531,6 +539,30 @@ is-macos () {
 
 is-darwin () {
 	[ "$(uname)" = "Darwin" ]
+}
+
+# Fail unless this Mac can run code for the architecture named by a script's
+# --arch option. Ask the hardware: uname -m reports x86_64 in a Rosetta shell.
+require-runnable-arch () {
+
+	local ARCH="$1"
+
+	case "${ARCH}" in
+	x86_64|arm64) ;;
+	*) error "unknown architecture '${ARCH}'; expected x86_64 or arm64" ;;
+	esac
+
+	if arch "-${ARCH}" /usr/bin/true 2> /dev/null; then
+		return 0
+	fi
+
+	if [ "${ARCH}" = "arm64" ]; then
+		error "this Mac can't run arm64 code; leave arm64 out of --arch"
+	else
+		error "Rosetta 2 is required to run x86_64 code on Apple Silicon; install it with" \
+			"'softwareupdate --install-rosetta --agree-to-license', or leave x86_64 out of --arch"
+	fi
+
 }
 
 is-linux () {
