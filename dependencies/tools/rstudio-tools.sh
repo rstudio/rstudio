@@ -45,7 +45,7 @@ export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 #
 # https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
 #
-export MACOSX_DEPLOYMENT_TARGET="12.0"
+export MACOSX_DEPLOYMENT_TARGET="13.0"
 
 
 # version of node.js used for building
