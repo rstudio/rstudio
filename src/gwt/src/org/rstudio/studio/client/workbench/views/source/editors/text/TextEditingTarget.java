@@ -8193,7 +8193,7 @@ public class TextEditingTarget implements
 
    void previewHTML()
    {
-      withHTMLCapabilities(capabilities ->
+      Command preview = () ->
       {
          // validate pre-reqs
          if (!rmarkdownHelper_.verifyPrerequisites(view_, fileType_))
@@ -8211,7 +8211,14 @@ public class TextEditingTarget implements
                                                false);
             }
          });
-      });
+      };
+
+      // Only knitr-dependent types have prerequisites; other previews stay
+      // inside the user's click so the preview window is never popup-blocked.
+      if (fileType_.requiresKnit() || fileType_.isRpres())
+         withHTMLCapabilities(capabilities -> preview.execute());
+      else
+         preview.execute();
    }
 
    // The knitr probe answers after startup; its placeholder reports nothing
@@ -8219,7 +8226,20 @@ public class TextEditingTarget implements
    // still pending when the editor closes is released with it.
    private void withHTMLCapabilities(CommandWithArg<HTMLCapabilities> callback)
    {
-      releaseOnDismiss_.add(fileTypeCommands_.withHTMLCapabilities(callback));
+      if (fileTypeCommands_.hasHTMLCapabilities())
+      {
+         callback.execute(fileTypeCommands_.getHTMLCapabiliites());
+         return;
+      }
+
+      // released once answered, so repeated actions don't accumulate here
+      HandlerRegistration[] registration = new HandlerRegistration[1];
+      registration[0] = fileTypeCommands_.withHTMLCapabilities(capabilities ->
+      {
+         releaseOnDismiss_.remove(registration[0]);
+         callback.execute(capabilities);
+      });
+      releaseOnDismiss_.add(registration[0]);
    }
 
    private void doHtmlPreview(final Provider<HTMLPreviewParams> pParams)

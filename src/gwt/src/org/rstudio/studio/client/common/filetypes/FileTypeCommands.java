@@ -109,7 +109,12 @@ public class FileTypeCommands
             {
                htmlCapabilitiesRetries_++;
                htmlCapabilitiesRetry_.schedule(HTML_CAPABILITIES_RETRY_MS * htmlCapabilitiesRetries_);
+               return;
             }
+
+            // Nothing will answer these; dropping them keeps a later probe
+            // from replaying every action attempted during the outage.
+            htmlCapabilitiesCallbacks_.clear();
          }
       });
    }

@@ -176,8 +176,23 @@ public class FileTypeCommandsTests extends GWTTestCase
 
       // each failure is followed by one request from the next editor only
       assertEquals(FileTypeCommands.MAX_HTML_CAPABILITIES_RETRIES + 2, server_.requests_);
+
+      // actions queued before the final failure were dropped with it; only
+      // the editor that asked afterwards is answered
       server_.latest().onResponseReceived(createCapabilities(true));
-      assertEquals(FileTypeCommands.MAX_HTML_CAPABILITIES_RETRIES + 2, received.size());
+      assertEquals(1, received.size());
+   }
+
+   public void testActionsQueuedBeforeARetriedFailureAreStillAnswered()
+   {
+      List<HTMLCapabilities> received = new ArrayList<>();
+      commands_.withHTMLCapabilities(received::add);
+      server_.latest().onError(new ProbeError());
+      commands_.withHTMLCapabilities(received::add);
+      assertEquals(2, server_.requests_);
+
+      server_.latest().onResponseReceived(createCapabilities(true));
+      assertEquals(2, received.size());
    }
 
    private static native SessionInfo createSessionInfo() /*-{
