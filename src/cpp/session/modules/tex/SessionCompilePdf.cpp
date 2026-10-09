@@ -996,12 +996,20 @@ void onDeferredInit(bool)
    module_context::addTinytexToPathIfNecessary();
 }
 
+// deferred init does not run under --run-script, so the R tests call this
+SEXP rs_addTinytexToPath()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(module_context::addTinytexToPathIfNecessary(), &protect);
+}
+
 Error initialize()
 {
    // register suspend handler
    using namespace module_context;
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
    events().onDeferredInit.connect(onDeferredInit);
+   RS_REGISTER_CALL_METHOD(rs_addTinytexToPath);
 
    return Success();
 }
