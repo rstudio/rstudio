@@ -46,14 +46,9 @@ void enquePackageStateChanged();
 // used by onConsolePrompt.
 bool containsCallSyntax(const std::string& input);
 
-// Serializes package-state builds that nest (see the comment above
-// buildPackageStateJson() in SessionPackages.cpp). A build that starts while
-// another is on the stack is folded into it where possible, and a build runs
-// again before handing anything back if a request arrived while it was
-// running, so that whatever is returned or delivered reflects the last
-// request. An event that a failed or capped build could not deliver stays
-// owed until the next build delivers it. Main thread only. Exposed for
-// testing.
+// Serializes package-state builds that nest; see the comment above
+// buildPackageStateJson() in SessionPackages.cpp for the mechanism. Main
+// thread only. Exposed for testing.
 class PackageStateBuilder : boost::noncopyable
 {
 public:
@@ -61,8 +56,7 @@ public:
 
    // Upper bound on the passes one build makes. Each extra pass needs a fresh
    // request to arrive mid-scan, so this is a guard against a pathological
-   // stream of requests, not a working limit. Past it the last pass is handed
-   // back and the event stays owed.
+   // stream of requests, not a working limit.
    static constexpr int kMaxPasses = 3;
 
    explicit PackageStateBuilder(const BuildFunction& build);
@@ -81,11 +75,11 @@ public:
    // event. If a build is already on the stack, the request is folded into it:
    // *pJson is left untouched, *pDeliverEvent is false, and the in-progress
    // build runs again and delivers the event instead. Otherwise *pDeliverEvent
-   // is set on success, unless the build hit the pass cap.
+   // is set on success.
    core::Error buildForEvent(core::json::Object* pJson, bool* pDeliverEvent);
 
-   // Whether a kPackageStateChanged event is still owed: a build failed or hit
-   // the pass cap before it could be delivered. The next build delivers it.
+   // Whether a kPackageStateChanged event is still owed because the build that
+   // should have delivered it failed. The next build delivers it.
    bool eventPending() const;
 
 private:

@@ -223,8 +223,8 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 // Every build therefore goes through s_packageStateBuilder (below), which
 // folds requests that arrive mid-build into the build in progress and runs it
 // again, so that whatever is delivered or returned reflects the last request.
-// An event that a failed or capped build could not deliver stays owed until
-// the next build, from any trigger, delivers it.
+// An event that a failed build could not deliver stays owed until the next
+// build, from any trigger, delivers it.
 //
 // Main thread only: every build goes through r::exec, so this is re-entrancy
 // on one thread, not concurrent access.
@@ -862,13 +862,9 @@ Error PackageStateBuilder::run(bool needsResult,
    }
 
    // outermost build: deliver our own event request and any folded into us.
-   // The event stays owed past a failed build, and past a capped one (whose
-   // last pass may be older than a nested RPC's list), so that the next build
-   // from any trigger delivers it.
-   if (!error && rebuildPending_)
-      eventPending_ = true;
-
-   *pDeliverEvent = !error && !rebuildPending_ && eventPending_;
+   // After a failed build the event stays owed, so that the next build from
+   // any trigger delivers it.
+   *pDeliverEvent = !error && eventPending_;
    if (*pDeliverEvent)
       eventPending_ = false;
 

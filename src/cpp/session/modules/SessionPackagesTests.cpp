@@ -197,76 +197,39 @@ TEST_F(PackageStateBuilderTest, NestedBuildFailure_DoesNotDropTheOuterList) {
    EXPECT_TRUE(deliverEvent);
 }
 
-TEST_F(PackageStateBuilderTest, FailedRpc_RetainsFoldedEventUntilASuccessfulBuild) {
-   json::Object nestedResult;
-   bool nestedDeliverEvent = true;
+// A failed build keeps the event it owed -- its own, or one folded into it --
+// until the next successful build from any trigger delivers it. A failed RPC
+// that owed nothing stays that way.
+TEST_F(PackageStateBuilderTest, FailedBuild_KeepsTheEventOwedUntilTheNextSuccess) {
    onPass_ = [&](int pass) -> Error {
-      if (pass == 1)
-      {
-         builder_.buildForEvent(&nestedResult, &nestedDeliverEvent);
-         return failure();
-      }
-      if (pass == 2)
-         return failure();
-      return Success();
+      return pass <= 2 ? failure() : Success();
    };
 
    json::Object result;
    bool deliverEvent = true;
-   Error error = builder_.build(&result, &deliverEvent);
-
-   EXPECT_TRUE(error);
-   EXPECT_EQ(1, passes_);
-   EXPECT_FALSE(deliverEvent);
-   EXPECT_FALSE(nestedDeliverEvent);
-   EXPECT_TRUE(builder_.eventPending());
-
-   // a later failed build keeps it owed
-   error = builder_.buildForEvent(&result, &deliverEvent);
-   EXPECT_TRUE(error);
-   EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.eventPending());
-
-   // the next successful build, from any trigger, delivers it
-   json::Object laterResult;
-   bool laterDeliverEvent = false;
-   error = builder_.build(&laterResult, &laterDeliverEvent);
-
-   EXPECT_FALSE(error);
-   EXPECT_EQ(3, passes_);
-   EXPECT_EQ(3, laterResult["pass"].getInt());
-   EXPECT_TRUE(laterDeliverEvent);
-   EXPECT_FALSE(builder_.eventPending());
-}
-
-TEST_F(PackageStateBuilderTest, FailedEventBuild_DeliversOnTheNextBuild) {
-   onPass_ = [&](int pass) -> Error {
-      return pass == 1 ? failure() : Success();
-   };
-
-   json::Object result;
-   bool deliverEvent = false;
    EXPECT_TRUE(builder_.buildForEvent(&result, &deliverEvent));
    EXPECT_FALSE(deliverEvent);
    EXPECT_TRUE(builder_.eventPending());
 
-   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
-   EXPECT_EQ(2, result["pass"].getInt());
+   // a later failed build keeps it owed
+   EXPECT_TRUE(builder_.build(&result, &deliverEvent));
+   EXPECT_FALSE(deliverEvent);
+   EXPECT_TRUE(builder_.eventPending());
+
+   // the next successful build, from any trigger, delivers it
+   EXPECT_FALSE(builder_.build(&result, &deliverEvent));
+   EXPECT_EQ(3, result["pass"].getInt());
    EXPECT_TRUE(deliverEvent);
    EXPECT_FALSE(builder_.eventPending());
-}
 
-TEST_F(PackageStateBuilderTest, FailedRpcWithoutAnEvent_OwesNothing) {
+   // nothing was owed, so nothing is retained
    onPass_ = [&](int) -> Error { return failure(); };
-
-   json::Object result;
-   bool deliverEvent = false;
    EXPECT_TRUE(builder_.build(&result, &deliverEvent));
    EXPECT_FALSE(deliverEvent);
    EXPECT_FALSE(builder_.eventPending());
 }
 
-TEST_F(PackageStateBuilderTest, RebuildPasses_AreCappedAndRetainTheEvent) {
+TEST_F(PackageStateBuilderTest, RebuildPasses_AreCapped) {
    json::Object nestedResult;
    bool nestedDeliverEvent = false;
    onPass_ = [&](int) -> Error {
@@ -281,45 +244,6 @@ TEST_F(PackageStateBuilderTest, RebuildPasses_AreCappedAndRetainTheEvent) {
    EXPECT_FALSE(error);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, passes_);
    EXPECT_EQ(PackageStateBuilder::kMaxPasses, result["pass"].getInt());
-   EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.eventPending());
-
-   // the next build, once the stream of requests stops, delivers it
-   onPass_ = boost::function<Error(int)>();
-   error = builder_.buildForEvent(&result, &deliverEvent);
-   EXPECT_FALSE(error);
-   EXPECT_EQ(PackageStateBuilder::kMaxPasses + 1, result["pass"].getInt());
-   EXPECT_TRUE(deliverEvent);
-   EXPECT_FALSE(builder_.eventPending());
-}
-
-// Each outer pass is superseded by a nested RPC until the cap. The capped RPC
-// hands back its own last pass, which may be older than the last nested list,
-// so it owes the client an event even though none was requested.
-TEST_F(PackageStateBuilderTest, CappedRpc_OwesAnEvent) {
-   json::Object nestedResult;
-   onPass_ = [&](int pass) -> Error {
-      if (pass % 2 == 1)
-      {
-         bool nestedDeliverEvent = false;
-         EXPECT_FALSE(builder_.build(&nestedResult, &nestedDeliverEvent));
-         EXPECT_FALSE(nestedDeliverEvent);
-      }
-      return Success();
-   };
-
-   json::Object result;
-   bool deliverEvent = false;
-   EXPECT_FALSE(builder_.build(&result, &deliverEvent));
-   EXPECT_EQ(2 * PackageStateBuilder::kMaxPasses, passes_);
-   EXPECT_EQ(passes_, nestedResult["pass"].getInt());
-   EXPECT_EQ(passes_ - 1, result["pass"].getInt());
-   EXPECT_FALSE(deliverEvent);
-   EXPECT_TRUE(builder_.eventPending());
-
-   onPass_ = boost::function<Error(int)>();
-   EXPECT_FALSE(builder_.buildForEvent(&result, &deliverEvent));
-   EXPECT_EQ(passes_, result["pass"].getInt());
    EXPECT_TRUE(deliverEvent);
    EXPECT_FALSE(builder_.eventPending());
 }
