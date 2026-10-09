@@ -261,17 +261,18 @@
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
    <property name="node.version" value="24.21.0"/>
+   <!-- Apple Silicon installs go in an -arm64 folder (see install-npm-dependencies); check it
+        first so a native arm64 node wins over any x64 install of the same version -->
+   <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}-arm64"/>
    <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="C:/rstudio-tools/dependencies/common/node/${node.version}"/>
-   <!-- on Apple Silicon, install-npm-dependencies puts build-time node only in an -arm64 folder -->
-   <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}-arm64"/>
-   <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}-arm64"/>
-   <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}-arm64"/>
-   <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}-arm64"/>
    <set-if-unset  property="node.dir" value="../../dependencies/common/node/${node.version}"/>
 
 
