@@ -212,11 +212,24 @@ Error availablePackages(const core::json::JsonRpcRequest&,
    return Success();
 }
 
+// Package-list builds can nest. The DESCRIPTION scan in
+// .rs.listInstalledPackages() runs long enough for R to service polled events,
+// which run the scheduled-command queue -- including the PPM batch completion,
+// which builds and enqueues a package list of its own (see SessionPPM.cpp).
+// Every build takes the next generation, so a build that finds the counter has
+// moved on knows a newer list was built (and, on this single thread, already
+// delivered) while it was scanning. See rstudio/rstudio-pro#13167.
+//
+// Main thread only: every build goes through r::exec, so this is re-entrancy
+// on one thread, not concurrent access.
+unsigned s_packageStateGeneration = 0;
+
 Error getPackageStateJson(json::Object* pJson)
 {
    using namespace module_context;
 
    Error error = Success();
+   ++s_packageStateGeneration;
 
    PackratContext packratContext = module_context::packratContext();
    core::json::Value renvContext = module_context::renvContextAsJson();
@@ -759,11 +772,18 @@ bool containsCallSyntax(const std::string& input)
 
 void enquePackageStateChanged()
 {
+   // the generation this build will take; see s_packageStateGeneration
+   unsigned generation = s_packageStateGeneration + 1;
+
    json::Object pkgState;
    Error error = getPackageStateJson(&pkgState);
    if (error)
       LOG_ERROR(error);
-   else
+
+   // if a newer build ran to completion inside ours, our list is stale and
+   // delivering it would overwrite the fresher one already on the wire
+   bool superseded = generation != s_packageStateGeneration;
+   if (!error && !superseded)
    {
       ClientEvent event(client_events::kPackageStateChanged, pkgState);
       module_context::enqueClientEvent(event);
