@@ -2279,9 +2279,17 @@ Error sourceModuleRFile(const std::string& rSourceFile)
 
 SEXP rs_sourceModule(SEXP moduleSEXP)
 {
-   Error error = sourceModuleRFile(r::sexp::asString(moduleSEXP));
-   if (error)
-      r::exec::error(error.getSummary());
+   // r::exec::error longjmps, so nothing with a destructor may be live
+   std::string message;
+   {
+      Error error = sourceModuleRFile(r::sexp::asString(moduleSEXP));
+      if (error)
+         message = error.getSummary();
+   }
+
+   if (!message.empty())
+      r::exec::error(message);
+
    return R_NilValue;
 }
 
