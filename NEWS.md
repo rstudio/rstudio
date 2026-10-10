@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([rstudio/rstudio-pro#13167](https://github.com/rstudio/rstudio-pro/issues/13167)): Fixed an issue where the Packages pane could show a stale package list (e.g. a blank Package Manager metadata column for a just-installed package) when two package-list refreshes overlapped.
 - ([#17196](https://github.com/rstudio/rstudio/issues/17196)): "Run All Chunks Above", "Run All Chunks Below", and "Run All" now run Python chunks, and switch the console between R and Python as needed, when chunk output is sent to the console rather than shown inline.
 - ([#19059](https://github.com/rstudio/rstudio/issues/19059)): RStudio is now compatible with (and can build against) OpenSSL 4.x.
 - ([#17215](https://github.com/rstudio/rstudio/issues/17215)): Fixed an issue where color previews in the editor shifted the cursor and bracket highlighting to the right at fractional zoom levels or display scaling
