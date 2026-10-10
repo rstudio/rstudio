@@ -13,6 +13,122 @@
 #
 #
 
+#' Lazy module definitions
+#'
+#' The names a module would register when sourced. Startup enumerates RPC
+#' handlers once, so every definition needs a proxy before the module loads.
+#' Only definitions at the start of a line count: a commented or quoted
+#' mention of a helper from another module must not shadow it.
+#'
+#' @param module The path to the module's R source file.
+#'
+#' @return The names, without their `.rs.` prefix, that sourcing the module
+#'   would define; RPC handlers carry their `rpc.` prefix.
+.rs.addFunction("lazyModuleDefinitions", function(module)
+{
+   lines <- readLines(module, warn = FALSE)
+   pattern <- '^\\s*\\.rs\\.add(Function|JsonRpcHandler)\\(\\s*"([^"]+)"'
+   matches <- regmatches(lines, regexec(pattern, lines, perl = TRUE))
+   matches <- matches[lengths(matches) > 0L]
+   if (length(matches) == 0L)
+      stop("No definitions found in module '", module, "'")
+
+   kinds <- vapply(matches, `[[`, character(1), 2L)
+   names <- vapply(matches, `[[`, character(1), 3L)
+   ifelse(kinds == "JsonRpcHandler", paste0("rpc.", names), names)
+})
+
+#' Is this a lazy module proxy?
+#'
+#' @param object The object to test.
+.rs.addFunction("isLazyModuleProxy", function(object)
+{
+   is.function(object) && isTRUE(attr(object, "rs.lazyModuleProxy", exact = TRUE))
+})
+
+#' Load a lazy module
+#'
+#' Sources a lazy module once.
+#'
+#' @param state The environment shared by the module's proxies, holding the
+#'   module path and whether it has loaded.
+#'
+#' @return `TRUE` if the module was sourced by this call.
+.rs.addFunction("loadLazyModule", function(state)
+{
+   if (state$loaded)
+      return(invisible(FALSE))
+
+   .Call("rs_sourceModule", state$module, PACKAGE = "(embedding)")
+   state$loaded <- TRUE
+   invisible(TRUE)
+})
+
+#' Add a lazy module
+#'
+#' Registers a module's helpers and RPC handlers as proxies that source the
+#' module on first use.
+#'
+#' @param module The path to the module's R source file.
+#' @param names The names the module defines; derived from the source by
+#'   default.
+.rs.addFunction("addLazyModule", function(module, names = .rs.lazyModuleDefinitions(module))
+{
+   state <- new.env(parent = emptyenv())
+   state$module <- module
+   state$loaded <- FALSE
+
+   # Register callable RPCs and helpers immediately, without parsing their
+   # implementations. Sourcing the module replaces all of these proxies.
+   for (name in names)
+   {
+      fullName <- paste0(".rs.", name)
+
+      # A live definition from another module keeps working until this module
+      # loads and redefines it, as it would have when sourced at startup.
+      existing <- get0(fullName, envir = .rs.toolsEnv(), inherits = FALSE)
+      if (!is.null(existing) && !.rs.isLazyModuleProxy(existing))
+      {
+         .rs.logWarningMessage("Not installing lazy proxy for '%s': already defined", fullName)
+         next
+      }
+
+      proxy <- .rs.makeLazyModuleProxy(fullName, state)
+      assign(fullName, proxy, envir = .rs.toolsEnv())
+   }
+})
+
+#' Make a lazy module proxy
+#'
+#' @param fullName The full name of the definition, including `.rs.`.
+#' @param state The environment shared by the module's proxies.
+#'
+#' @return A function that loads the module and re-issues the call.
+.rs.addFunction("makeLazyModuleProxy", function(fullName, state)
+{
+   # the proxy runs long after the caller's loop has moved on
+   force(fullName)
+   force(state)
+
+   proxy <- function(...)
+   {
+      .rs.loadLazyModule(state)
+      implementation <- get(fullName, envir = .rs.toolsEnv(), inherits = FALSE)
+      if (.rs.isLazyModuleProxy(implementation))
+         stop("Module did not define ", fullName)
+
+      # Re-issue the caller's own call against the loaded definition rather
+      # than forwarding '...', so substitute(), match.call(), sys.call() and
+      # sys.function() in the implementation see what a direct call would.
+      call <- sys.call()
+      call[[1L]] <- as.name(fullName)
+      eval(call, parent.frame())
+   }
+
+   attr(proxy, "rs.lazyModuleProxy") <- TRUE
+   proxy
+})
+
 .rs.addFunction("enqueClientEvent", function(type, data = NULL)
 {
    .Call("rs_enqueClientEvent", type, data, PACKAGE = "(embedding)")

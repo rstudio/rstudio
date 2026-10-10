@@ -535,6 +535,9 @@ core::Error convertToUtf8(const std::string& encodedContent,
 
 // source R files
 core::Error sourceModuleRFile(const std::string& rSourceFile);
+// For modules without startup hooks: install proxies for the module's
+// definitions and source it on first use.
+core::Error sourceModuleRFileOnDemand(const std::string& rSourceFile);
 core::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                         const core::FilePath& workingDir,
                                         core::system::ProcessResult* pResult);

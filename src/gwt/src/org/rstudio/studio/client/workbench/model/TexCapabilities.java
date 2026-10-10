@@ -25,7 +25,7 @@ public class TexCapabilities extends JavaScriptObject
    }
    
    public final native boolean isTexInstalled() /*-{
-      return this.tex_installed;
+      return !!this.tex_installed;
    }-*/;
    
    public final boolean isRnwWeaveAvailable(RnwWeave rnwWeave)
@@ -35,6 +35,6 @@ public class TexCapabilities extends JavaScriptObject
    }
    
    private final native boolean isPackageInstalledNative(String attrib) /*-{
-      return this[attrib];
+      return !!this[attrib];
    }-*/;
 }

@@ -1,7 +1,7 @@
 ## RStudio 2026.11.0 "Montauk Daisy" Release Notes
 
 ### New
--
+- ([#19030](https://github.com/rstudio/rstudio/pull/19030)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
 ### Fixed
 - ([rstudio/rstudio-pro#13167](https://github.com/rstudio/rstudio-pro/issues/13167)): Fixed an issue where the Packages pane could show a stale package list (e.g. a blank Package Manager metadata column for a just-installed package) when two package-list refreshes overlapped.
