@@ -136,8 +136,10 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 #ifndef _WIN32
    // put the postback scripts first so the `rstudio` helper (which opens files in
    // this session) shadows any same-named application binary on the PATH
-   core::system::addToPath(
-            &shellEnv, module_context::rPostbackScriptsDir().getAbsolutePath(), true);
+   std::string postbackScriptsDir =
+         module_context::rPostbackScriptsDir().getAbsolutePath();
+   core::system::addToPath(&shellEnv, postbackScriptsDir, true);
+   core::system::setenv(&shellEnv, "RSTUDIO_POSTBACK_SCRIPTS_DIR", postbackScriptsDir);
 #endif
 
    // set options
