@@ -163,19 +163,22 @@ set(_LIBR_LIBRARY_HINTS "${LIBR_LIB_DIR}")
 
 if(WIN32)
    # Windows: determine architecture and add bin paths
+   # An ARM64 R has no architecture subfolder; its programs live directly in bin.
    if(LIBR_FIND_WINDOWS_32BIT)
-      set(LIBR_ARCH "i386")
+      set(_LIBR_ARCH_BIN "${LIBR_HOME}/bin/i386")
+   elseif(EXISTS "${LIBR_HOME}/bin/x64")
+      set(_LIBR_ARCH_BIN "${LIBR_HOME}/bin/x64")
    else()
-      set(LIBR_ARCH "x64")
+      set(_LIBR_ARCH_BIN "${LIBR_HOME}/bin")
    endif()
    list(APPEND _LIBR_LIBRARY_HINTS
-      "${LIBR_HOME}/bin/${LIBR_ARCH}"
+      "${_LIBR_ARCH_BIN}"
       "${LIBR_HOME}/bin"
    )
 
    # Generate .lib files from DLLs
    execute_process(
-      COMMAND "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe" "dll2lib.R" "${CMAKE_C_COMPILER}"
+      COMMAND "${_LIBR_ARCH_BIN}/Rscript.exe" "dll2lib.R" "${CMAKE_C_COMPILER}"
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
       OUTPUT_VARIABLE _DLL2LIB_STDOUT
       ERROR_VARIABLE _DLL2LIB_STDERR

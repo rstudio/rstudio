@@ -48,7 +48,8 @@ for (dll in dlls) {
    # Call 'lib.exe' to generate the library file.
    outfile <- sub("dll$", "lib", dll)
    fmt <- "lib.exe /def:%s /out:%s /machine:%s"
-   cmd <- sprintf(fmt, def, outfile, .Platform$r_arch)
+   machine <- if (nzchar(.Platform$r_arch)) .Platform$r_arch else toupper(sub("^aarch64$", "arm64", R.version$arch))
+   cmd <- sprintf(fmt, def, outfile, machine)
    system(cmd)
    
 }
