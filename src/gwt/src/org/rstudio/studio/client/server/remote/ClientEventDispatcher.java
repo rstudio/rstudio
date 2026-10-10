@@ -136,6 +136,9 @@ import org.rstudio.studio.client.workbench.events.QuotaStatusEvent;
 import org.rstudio.studio.client.workbench.events.ShowErrorMessageEvent;
 import org.rstudio.studio.client.workbench.events.ShowMessageEvent;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
+import org.rstudio.studio.client.renv.events.ProjectRVersionMismatchEvent;
+import org.rstudio.studio.client.renv.events.RInstallCompletedEvent;
+import org.rstudio.studio.client.renv.events.RenvRestorePromptEvent;
 import org.rstudio.studio.client.workbench.events.UserPromptEvent;
 import org.rstudio.studio.client.workbench.model.AdminNotification;
 import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
@@ -1257,6 +1260,18 @@ public class ClientEventDispatcher
          {
             ConsoleReadCompletedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ConsoleReadCompletedEvent(data.getHistory()));
+         }
+         else if (type == ClientEvent.ProjectRVersionMismatch)
+         {
+            eventBus_.dispatchEvent(new ProjectRVersionMismatchEvent(event.getData()));
+         }
+         else if (type == ClientEvent.RInstallCompleted)
+         {
+            eventBus_.dispatchEvent(new RInstallCompletedEvent(event.getData()));
+         }
+         else if (type == ClientEvent.RenvRestorePrompt)
+         {
+            eventBus_.dispatchEvent(new RenvRestorePromptEvent());
          }
          else
          {
