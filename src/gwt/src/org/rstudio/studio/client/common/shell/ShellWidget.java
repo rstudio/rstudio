@@ -15,10 +15,7 @@
 package org.rstudio.studio.client.common.shell;
 
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
-import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsVector;
@@ -462,28 +459,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       suppressPendingInput_ = suppressPendingInput;
    }
    
-   private String asErrorKey(String error)
-   {
-      return errorKey(error);
-   }
-
-   /**
-    * The key under which the elements emitted for an error are tracked, so
-    * that extended error info arriving later can find them: the error text
-    * with any ANSI codes and its "Error in foo:" prefix removed.
-    *
-    * The prefix pattern must stay anchored. Unanchored, a leading "[^:]*:"
-    * is retried from every position of a string containing no colon at all,
-    * which is quadratic -- and this runs on every stderr chunk, so a few
-    * hundred KB of colon-free progress output (e.g. gert's clone progress)
-    * stalled the UI for many seconds (#19080).
-    */
-   static String errorKey(String error)
-   {
-      String stripped = AnsiCode.strip(error);
-      return stripped.replaceFirst("^[^:]*:\\s*", "").trim();
-   }
-
    public void consoleWriteError(final String error, boolean agent)
    {
       clearPendingInput();
@@ -499,14 +474,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       {
          if (clearErrors_)
          {
-            errorNodes_.clear();
-            errorKeys_.clear();
+            errors_.clear();
             clearErrors_ = false;
          }
-         
-         String key = asErrorKey(error);
-         errorNodes_.put(key, newElements);
-         errorKeys_.put(key, error);
+
+         errors_.add(error, newElements);
       }
    }
 
@@ -515,20 +487,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                          boolean expand,
                                          String command)
    {
-      String key = asErrorKey(error);
-      if (!errorNodes_.containsKey(key))
-         return;
-      
-      List<Element> errorEls = errorNodes_.get(key);
-      if (errorEls == null || errorEls.isEmpty())
+      ConsoleErrorTracker.Entry entry = errors_.take(error);
+      if (entry == null)
          return;
 
-      if (errorKeys_.containsKey(key))
-      {
-         String originalError = errorKeys_.get(key);
-         traceInfo.setErrorMessage(originalError);
-      }
-      
+      List<Element> errorEls = entry.getElements();
+      if (errorEls.isEmpty())
+         return;
+
+      traceInfo.setErrorMessage(entry.getError());
+
       clearPendingInput();
       ConsoleError errorWidget = new ConsoleError(traceInfo, getErrorClass(), command, this, null);
 
@@ -540,8 +508,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
             errorWidget.getElement());
       
       scrollPanel_.onContentSizeChanged();
-      errorNodes_.remove(key);
-      errorKeys_.remove(key);
    }
    
    private void insertErrorWidgetElement(List<Element> errorEls,
@@ -1324,9 +1290,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private int editorWidth_ = -1;
    private boolean scrollIntoViewPending_ = false;
 
-   // A list of errors that have occurred between console prompts.
-   private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
-   private final Map<String, String> errorKeys_ = new TreeMap<>();
+   // The errors that have occurred since the last console prompt.
+   private final ConsoleErrorTracker errors_ = new ConsoleErrorTracker();
    private boolean clearErrors_ = false;
 
    // Injected
