@@ -464,8 +464,24 @@ public class ShellWidget extends Composite implements ShellDisplay,
    
    private String asErrorKey(String error)
    {
+      return errorKey(error);
+   }
+
+   /**
+    * The key under which the elements emitted for an error are tracked, so
+    * that extended error info arriving later can find them: the error text
+    * with any ANSI codes and its "Error in foo:" prefix removed.
+    *
+    * The prefix pattern must stay anchored. Unanchored, a leading "[^:]*:"
+    * is retried from every position of a string containing no colon at all,
+    * which is quadratic -- and this runs on every stderr chunk, so a few
+    * hundred KB of colon-free progress output (e.g. gert's clone progress)
+    * stalled the UI for many seconds.
+    */
+   static String errorKey(String error)
+   {
       String stripped = AnsiCode.strip(error);
-      return stripped.replaceFirst("[^:]*:\\s*", "").trim();
+      return stripped.replaceFirst("^[^:]*:\\s*", "").trim();
    }
 
    public void consoleWriteError(final String error, boolean agent)

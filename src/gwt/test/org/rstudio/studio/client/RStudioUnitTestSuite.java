@@ -33,6 +33,7 @@ import org.rstudio.studio.client.common.debugging.ErrorManagerTests;
 import org.rstudio.studio.client.common.filetypes.FileIconRendererTests;
 import org.rstudio.studio.client.common.filetypes.FileIconTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
+import org.rstudio.studio.client.common.shell.ShellWidgetTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
@@ -83,6 +84,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SessionOpenerTests.class);
       suite.addTestSuite(WorkbenchListManagerTests.class);
       suite.addTestSuite(ErrorManagerTests.class);
+      suite.addTestSuite(ShellWidgetTests.class);
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(FileSystemItemTests.class);
