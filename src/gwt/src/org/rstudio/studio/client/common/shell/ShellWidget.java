@@ -476,7 +476,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
     * is retried from every position of a string containing no colon at all,
     * which is quadratic -- and this runs on every stderr chunk, so a few
     * hundred KB of colon-free progress output (e.g. gert's clone progress)
-    * stalled the UI for many seconds.
+    * stalled the UI for many seconds (#19080).
     */
    static String errorKey(String error)
    {
