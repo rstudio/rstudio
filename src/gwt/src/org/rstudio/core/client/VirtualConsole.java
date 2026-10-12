@@ -762,6 +762,24 @@ public class VirtualConsole
          ClassRange overlap = entry.getValue();
          int l = entry.getKey();
          int r = l + overlap.length;
+
+         // Scrollback trimming can detach ranges while their logical offsets
+         // remain in the buffer. Ignore writes to that discarded prefix: there
+         // is no DOM sibling to insert beside, and the text must not reappear
+         // if the write also reaches a range that is still visible.
+         if (!overlap.isAttached())
+         {
+            int hiddenEnd = Math.min(end, r);
+            if (start >= l && start < hiddenEnd)
+            {
+               range.trimLeft(hiddenEnd - start);
+               start = range.start;
+               if (start == end)
+                  break;
+            }
+            continue;
+         }
+
          boolean matches =
                StringUtil.equals(range.clazz, overlap.clazz) &&
                sameHyperlink(range.hyperlink_, overlap.hyperlink_);

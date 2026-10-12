@@ -826,4 +826,50 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertEquals(2, output.getCurrentLines());
       assertLinesMatchDom(output);
    }
+
+   public void testStyledOverwriteOfTrimmedRangeAfterGroupTruncation()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(3);
+      String[] chunks = {
+         "\033[31my\n\n",
+         "\n\033[F",
+         "\033G3;\n\n\033[F",
+         "\033[0m\033[A\033[F",
+         "\033[Ar",
+      };
+      for (String chunk : chunks)
+      {
+         output.outputToConsole(chunk, myClass, notError, checkLineCount, false);
+         assertLinesMatchDom(output);
+      }
+
+      // The red span has left the scrollback. Rewriting it in another style
+      // must neither insert beside a detached node nor revive its contents.
+      Assert.assertEquals("\n\n\n", output.getElement().getInnerText());
+      output.outputToConsole("\033g\033[99B\033[99Gdone\n", myClass, notError, checkLineCount, false);
+      Assert.assertEquals("\n\ndone\n", output.getElement().getInnerText());
+      assertLinesMatchDom(output);
+   }
+
+   public void testEditsWithinDiscardedRangesStayOffscreen()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(2);
+      output.outputToConsole(
+            "\033[31mabc\033[34mdef\033[0m\nkeep1\nkeep2\n",
+            myClass, notError, checkLineCount, false);
+
+      String[] edits = {
+         "\033[99F\033[32mX", // prefix of a discarded range
+         "\033[2GY",         // inside a discarded range
+         "\033[1GZZZZZZ",    // across both discarded ranges
+      };
+      for (String edit : edits)
+      {
+         output.outputToConsole(edit, myClass, notError, checkLineCount, false);
+         Assert.assertEquals("keep1\nkeep2\n", output.getElement().getInnerText());
+         assertLinesMatchDom(output);
+      }
+   }
 }
