@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <boost/function.hpp>

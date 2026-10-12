@@ -22,15 +22,26 @@ set(RSTUDIO_CMAKE_COMPILER_INCLUDED YES)
 # require position independent code for CMake targets
 set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 
-# use C++20 on Windows; C++17 elsewhere
+# require C++20 on Windows and C++17 elsewhere, with GNU extensions
 #
-# primarily for designated initializer support; other compilers provide it
-# as an extension even in C++17 mode, but MSVC requires us to opt-in to C++20
-if(WIN32)
-  set(CMAKE_CXX_STANDARD 20)
-else()
-  set(CMAKE_CXX_STANDARD 17)
+# C++20 on Windows is primarily for designated initializer support; other
+# compilers provide it as an extension even in C++17 mode, but MSVC requires
+# us to opt-in to C++20.
+#
+# the standard is a minimum, not a pin: when the compiler already defaults to
+# a newer standard CMake adds no -std flag (CMP0128), and a newer standard can
+# be requested with -DCMAKE_CXX_STANDARD=20. that matters when linking against
+# a system Boost: Boost.URL's exported symbols differ between C++17 and C++20
+# builds, so RStudio has to be compiled with the same standard as that Boost.
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  if(WIN32)
+    set(CMAKE_CXX_STANDARD 20)
+  else()
+    set(CMAKE_CXX_STANDARD 17)
+  endif()
 endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 # use colored output by default
 if(NOT DEFINED ENV{JENKINS_URL})
