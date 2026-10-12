@@ -15,6 +15,7 @@
 package org.rstudio.core.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -100,6 +101,7 @@ public class VirtualConsole
    {
       prefs_ = prefs;
       parent_ = parent;
+      root_ = parent;
       ansiColorMode_ = prefs.consoleAnsiMode();
    }
    
@@ -257,9 +259,11 @@ public class VirtualConsole
       output_.setLength(0);
       cursor_ = 0;
       class_.clear();
+      trimmedTrailingNewlines_.clear();
       if (parent_ != null)
       {
-         newlinesWritten_ -= StringUtil.newlineCount(parent_.getInnerText());
+         if (isInConsole(parent_))
+            newlinesWritten_ -= StringUtil.newlineCount(parent_.getInnerText());
          parent_.setInnerHTML("");
       }
    }
@@ -853,6 +857,7 @@ public class VirtualConsole
             else
             {
                String text = overlap.text();
+               int trimmed = trimmedTrailingNewlines_.getOrDefault(overlap.element, 0);
 
                // trim the original range
                int amountTrimmed = overlap.length - (start - l);
@@ -867,12 +872,15 @@ public class VirtualConsole
                }
 
                // add back the remainder
+               int remainderLength = amountTrimmed - range.length;
                ClassRange remainder = new ClassRange(
                      end,
                      overlap.clazz,
-                     StringUtil.substring(text, (text.length() - (amountTrimmed - range.length))),
+                     StringUtil.substring(text, text.length() - Math.max(0, remainderLength - trimmed)),
                      preserveHTML_,
                      overlap.hyperlink_);
+               remainder.length = remainderLength;
+               remainder.setTrimmedTrailingNewlines(Math.min(trimmed, remainderLength));
                insertions.add(remainder);
                if (parent_ != null)
                {
@@ -1497,40 +1505,52 @@ public class VirtualConsole
    
    private void trimLeadingNewlines(Element childEl)
    {
-      Node firstChildNode = childEl.getFirstChild();
-      if (firstChildNode == null)
-         return;
-      
-      while (firstChildNode.getNodeType() != Node.TEXT_NODE)
-      {
-         firstChildNode = firstChildNode.getFirstChild();
-         if (firstChildNode == null)
-            return;
-      }
-
-      String value = firstChildNode.getNodeValue();
-      String trimmed = value.replaceFirst("^\\n+", "");
-      newlinesWritten_ -= value.length() - trimmed.length();
-      firstChildNode.setNodeValue(trimmed);
+      trimNewlines(childEl, true);
    }
-   
+
    private void trimTrailingNewlines(Element childEl)
    {
-      Node lastChildNode = childEl.getLastChild();
-      if (lastChildNode == null)
+      trimNewlines(childEl, false);
+   }
+
+   private void trimNewlines(Element childEl, boolean leading)
+   {
+      Node node = leading ? childEl.getFirstChild() : childEl.getLastChild();
+      if (node == null)
          return;
-      
-      while (lastChildNode.getNodeType() != Node.TEXT_NODE)
+
+      while (node.getNodeType() != Node.TEXT_NODE)
       {
-         lastChildNode = lastChildNode.getLastChild();
-         if (lastChildNode == null)
+         node = leading ? node.getFirstChild() : node.getLastChild();
+         if (node == null)
             return;
       }
 
-      String value = lastChildNode.getNodeValue();
-      String trimmed = value.replaceFirst("\\n+$", "");
-      newlinesWritten_ -= value.length() - trimmed.length();
-      lastChildNode.setNodeValue(trimmed);
+      // A range may span several adjacent text nodes. Continue through empty
+      // nodes until reaching content, while leaving the range element intact.
+      while (node != null && node.getNodeType() == Node.TEXT_NODE)
+      {
+         String value = node.getNodeValue();
+         String trimmed = value.replaceFirst(leading ? "^\\n+" : "\\n+$", "");
+         int removed = value.length() - trimmed.length();
+         if (isInConsole(childEl))
+            newlinesWritten_ -= removed;
+         node.setNodeValue(trimmed);
+
+         // ClassRange.length still includes these logical line separators.
+         // Remember suffix trimming separately from scrollback/prefix trimming
+         // so edits addressed from the end keep their original columns.
+         if (!leading && removed > 0)
+         {
+            Element rangeElement = node.getParentElement();
+            int previous = trimmedTrailingNewlines_.getOrDefault(rangeElement, 0);
+            trimmedTrailingNewlines_.put(rangeElement, previous + removed);
+         }
+
+         if (!trimmed.isEmpty())
+            break;
+         node = leading ? node.getNextSibling() : node.getPreviousSibling();
+      }
    }
 
    /**
@@ -1563,7 +1583,8 @@ public class VirtualConsole
     */
    private void countAttached(ClassRange range)
    {
-      newlinesWritten_ += StringUtil.newlineCount(range.text());
+      if (range.isAttached())
+         newlinesWritten_ += StringUtil.newlineCount(range.text());
    }
 
    /**
@@ -1574,8 +1595,19 @@ public class VirtualConsole
       if (range.element.getParentElement() == null)
          return;
 
-      newlinesWritten_ -= StringUtil.newlineCount(range.text());
+      if (range.isAttached())
+      {
+         // text() flushes pending writes, which must be counted before removal.
+         String text = range.text();
+         newlinesWritten_ -= StringUtil.newlineCount(text);
+      }
       range.element.removeFromParent();
+      trimmedTrailingNewlines_.remove(range.element);
+   }
+
+   private boolean isInConsole(Element element)
+   {
+      return root_ != null && root_.isOrHasChild(element);
    }
 
    // Elements added by last submit call; only captured if forceNewRange was true
@@ -1731,7 +1763,7 @@ public class VirtualConsole
       {
          discardPending();
          setText(newText);
-         if (element.getParentElement() != null)
+         if (isAttached())
             newlinesWritten_ += StringUtil.newlineCount(newText) - StringUtil.newlineCount(oldText);
       }
 
@@ -1746,6 +1778,14 @@ public class VirtualConsole
       public void trimRight(int delta)
       {
          length -= delta;
+         int trimmed = trimmedTrailingNewlines_.getOrDefault(element, 0);
+         if (trimmed > 0)
+         {
+            setTrimmedTrailingNewlines(Math.max(0, trimmed - delta));
+            delta = Math.max(0, delta - trimmed);
+         }
+         if (delta == 0)
+            return;
          replaceTail(delta, delta, "");
       }
 
@@ -1767,6 +1807,8 @@ public class VirtualConsole
        */
       public void appendRight(String content, int delta)
       {
+         if (!content.isEmpty())
+            restoreTrailingNewlines();
          length += content.length() - delta;
          if (delta == 0 && !isHTML_)
          {
@@ -1782,7 +1824,43 @@ public class VirtualConsole
 
       public void overwrite(String content, int pos)
       {
-         replaceTail(length - pos, content.length(), content);
+         int fromEnd = length - pos - trimmedTrailingNewlines_.getOrDefault(element, 0);
+         if (fromEnd < content.length())
+         {
+            // A write reaching the omitted suffix makes those separators
+            // part of the output again; restore them before applying the edit.
+            restoreTrailingNewlines();
+            fromEnd = length - pos;
+         }
+         replaceTail(fromEnd, content.length(), content);
+      }
+
+      private void setTrimmedTrailingNewlines(int count)
+      {
+         if (count == 0)
+            trimmedTrailingNewlines_.remove(element);
+         else
+            trimmedTrailingNewlines_.put(element, count);
+      }
+
+      private void restoreTrailingNewlines()
+      {
+         int count = trimmedTrailingNewlines_.getOrDefault(element, 0);
+         if (count == 0)
+            return;
+
+         setTrimmedTrailingNewlines(0);
+         if (pending_ == null)
+            pending_ = new StringBuilder();
+         for (int i = 0; i < count; i++)
+            pending_.append('\n');
+      }
+
+      private boolean isAttached()
+      {
+         // Having a parent is insufficient: an enclosing condition group may
+         // have been removed while this range still points into that subtree.
+         return isInConsole(element);
       }
 
       /**
@@ -1809,7 +1887,7 @@ public class VirtualConsole
                int offset = nodeLength - fromEnd;
                String removed = count == 0 ? "" : StringUtil.substring(node.getData(), offset, offset + count);
                node.replaceData(offset, count, content);
-               if (element.getParentElement() != null)
+               if (isAttached())
                   newlinesWritten_ += StringUtil.newlineCount(content) - StringUtil.newlineCount(removed);
                return;
             }
@@ -1846,7 +1924,7 @@ public class VirtualConsole
             element.appendChild(Document.get().createTextNode(content));
          }
 
-         if (element.getParentElement() != null)
+         if (isAttached())
             newlinesWritten_ += StringUtil.newlineCount(content);
       }
 
@@ -1865,6 +1943,7 @@ public class VirtualConsole
       public void clearText()
       {
          discardPending();
+         trimmedTrailingNewlines_.remove(element);
          element.setInnerText("");
       }
 
@@ -1932,6 +2011,8 @@ public class VirtualConsole
 
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
+   private final Map<Element, Integer> trimmedTrailingNewlines_ = new HashMap<>();
+   private final Element root_;
    private Element parent_;
    private String ansiColorMode_;
    private int newlinesWritten_ = 0;

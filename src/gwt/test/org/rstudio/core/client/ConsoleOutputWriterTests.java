@@ -812,4 +812,18 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertEquals(maxLines, output.getCurrentLines());
       Assert.assertEquals(maxLines, DomUtils.countLines(output.getElement(), true));
    }
+
+   public void testDiscardedGroupDoesNotTrimVisibleOutput()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(2);
+      output.outputToConsole("\033G3;one\ntwo\n\033g", nullClazz, notError, checkLineCount, false);
+      output.outputToConsole("\033[2A\033G2;\nwarn\n\033g", nullClazz, notError, checkLineCount, false);
+      assertLinesMatchDom(output);
+      output.outputToConsole("next\nlast\n", nullClazz, notError, checkLineCount, false);
+
+      Assert.assertEquals("warnnext\nlast\n", output.getElement().getInnerText());
+      Assert.assertEquals(2, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
 }

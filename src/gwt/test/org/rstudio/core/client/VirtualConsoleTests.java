@@ -2655,4 +2655,129 @@ public class VirtualConsoleTests extends GWTTestCase
          Assert.assertEquals(stream.toString(), DomUtils.countLines(ele, true), vc.getNewlinesWritten());
       }
    }
+
+   public void testNewlinesWrittenExcludesDiscardedGroups()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;one\ntwo\n\033g");
+      vc.submit("\033[2A\033G2;\nwarn\n\033g");
+
+      // Replacing the message group must account for removed ranges and any
+      // buffered newlines before writing the warning group.
+      assertNewlinesMatchDom(ele, vc);
+
+      vc.submit("next\nlast\n");
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testOverwriteAfterTrimmingGroupNewlines()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;abcdef\n\033g");
+      vc.submit("tail");
+      vc.submit("\033[A\033[3GX");
+
+      Assert.assertEquals("abXdeftail", ele.getInnerText());
+      vc.submit("Y");
+      Assert.assertEquals("abXYeftail", ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testOverwriteAfterTrimmingBothEndsOfGroup()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;first\nabcdef\n\033g");
+      vc.submit("tail");
+      Assert.assertEquals(1, DomUtils.trimLines(ele, 1));
+      vc.submit("\033[A\033[3GX");
+
+      Assert.assertEquals("abXdeftail", ele.getInnerText());
+      // Scrollback trimming is accounted for by the caller, not the console.
+      Assert.assertEquals(DomUtils.countLines(ele, true), vc.getNewlinesWritten() - 1);
+   }
+
+   public void testStyledOverwriteAfterTrimmingGroupNewlines()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;abcdef\n\033g");
+      vc.submit("tail");
+      vc.submit("\033[A\033[3G\033[31mX");
+
+      Assert.assertEquals("abXdeftail", ele.getInnerText());
+      vc.submit("\033[0mY");
+      Assert.assertEquals("abXYeftail", ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testWriteRestoresOmittedGroupNewline()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;abcdef\n\033g");
+      vc.submit("tail");
+      vc.submit("\033[A\033[999G\n");
+
+      Assert.assertEquals("abcdef\ntail", ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testClearDetachedGroupDoesNotChangeNewlineCount()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;one\n");
+      int before = vc.getNewlinesWritten();
+      vc.getParent().removeFromParent();
+      vc.submit("two\n");
+      Assert.assertEquals(before, vc.getNewlinesWritten());
+      vc.clear();
+
+      // The caller accounts for removing the group; clearing its detached
+      // contents must not subtract the same newline a second time.
+      Assert.assertEquals(before, vc.getNewlinesWritten());
+   }
+
+   public void testGroupTrailingNewlinesAcrossTextNodes()
+   {
+      StringBuilder text = new StringBuilder();
+      for (int i = 0; i < 65535; i++)
+         text.append('x');
+
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("\033G3;" + text + "\n");
+      vc.submit("\n\033g");
+      vc.normalizePreviousOutput();
+      vc.normalizePreviousOutput();
+
+      Assert.assertEquals(text.toString(), ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+
+      vc.submit("after\n");
+      Assert.assertEquals(text + "after\n", ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testGroupLeadingNewlinesAcrossTextNodes()
+   {
+      StringBuilder newlines = new StringBuilder();
+      for (int i = 0; i < 65536; i++)
+         newlines.append('\n');
+
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      // Start a range inside the group, then erase it so that subsequent
+      // leading newlines are written inside that group as well.
+      vc.submit("\033G3;x\r\033[K");
+      vc.submit(newlines.toString());
+      vc.submit("\nbody\033g");
+      vc.normalizePreviousOutput();
+
+      Assert.assertEquals("body", ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+   }
 }
