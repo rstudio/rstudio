@@ -762,4 +762,54 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertTrue(span.getChildCount() <= 2);
       Assert.assertEquals(10000, output.getCurrentLines());
    }
+
+   public void testFormFeedResetsLineCount()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("one\ntwo\n", nullClazz, notError, ignoreLineCount, false);
+      output.outputToConsole("\fthree\n", nullClazz, notError, ignoreLineCount, false);
+      output.outputToConsole("four\n", nullClazz, notError, ignoreLineCount, false);
+
+      Assert.assertEquals(2, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
+
+   public void testPromptTimeEditsAreCounted()
+   {
+      // at each prompt the shell trims the last group's newlines and makes
+      // sure the next output starts on a fresh line; both change the DOM
+      // without going through outputToConsole
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("\033G3;\nmessage\n\n\033g", myErrorClass, isError, ignoreLineCount, false);
+      output.normalizePreviousOutput();
+      assertLinesMatchDom(output);
+
+      output.ensureStartingOnNewLine();
+      assertLinesMatchDom(output);
+
+      output.outputToConsole("no newline", nullClazz, notError, ignoreLineCount, false);
+      output.normalizePreviousOutput();
+      output.ensureStartingOnNewLine();
+      assertLinesMatchDom(output);
+      Assert.assertTrue(output.getElement().getInnerText().endsWith("no newline\n"));
+   }
+
+   public void testTrimmingStaysExactAcrossPrompts()
+   {
+      // the uncounted newline added at each prompt would otherwise let the
+      // scrollback grow past its limit, one line per command
+      ConsoleOutputWriter output = getCOW();
+      int maxLines = 5;
+      output.setMaxOutputLines(maxLines);
+      for (int i = 0; i < 50; i++)
+      {
+         output.outputToConsole("command " + i + " output", nullClazz, notError, checkLineCount, false);
+         output.normalizePreviousOutput();
+         output.ensureStartingOnNewLine();
+         output.outputToConsole("> ", nullClazz, notError, checkLineCount, false);
+      }
+
+      Assert.assertEquals(maxLines, output.getCurrentLines());
+      Assert.assertEquals(maxLines, DomUtils.countLines(output.getElement(), true));
+   }
 }

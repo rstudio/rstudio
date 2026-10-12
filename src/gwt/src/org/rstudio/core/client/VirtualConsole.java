@@ -544,27 +544,7 @@ public class VirtualConsole
       // Optimization: mode 0 at end of buffer -- truncate instead of writing spaces
       if (mode == 0 && lineEnd == output_.length())
       {
-         // Trim any ClassRange that straddles the cursor position
-         Entry<Integer, ClassRange> floor = class_.floorEntry(cursor_);
-         if (floor != null && floor.getKey() < cursor_)
-         {
-            ClassRange range = floor.getValue();
-            int rangeEnd = floor.getKey() + range.length;
-            if (rangeEnd > cursor_)
-               range.trimRight(rangeEnd - cursor_);
-         }
-
-         // Remove all ClassRanges starting at or after cursor
-         List<Integer> keysToRemove = new ArrayList<>(class_.tailMap(cursor_, true).keySet());
-         for (Integer key : keysToRemove)
-         {
-            ClassRange cr = class_.get(key);
-            if (parent_ != null)
-               removeRange(cr);
-            class_.remove(key);
-         }
-
-         output_.setLength(cursor_);
+         truncateOutput(cursor_);
          return;
       }
 
@@ -588,6 +568,35 @@ public class VirtualConsole
          cursor_ = savedCursor;
          hyperlink_ = savedHyperlink;
       }
+   }
+
+   /**
+    * Drops everything from {@code pos} to the end of the output: from the
+    * text buffer, the class ranges, and the DOM alike.
+    */
+   private void truncateOutput(int pos)
+   {
+      // Trim any ClassRange that straddles the position
+      Entry<Integer, ClassRange> floor = class_.floorEntry(pos);
+      if (floor != null && floor.getKey() < pos)
+      {
+         ClassRange range = floor.getValue();
+         int rangeEnd = floor.getKey() + range.length;
+         if (rangeEnd > pos)
+            range.trimRight(rangeEnd - pos);
+      }
+
+      // Remove all ClassRanges starting at or after it
+      List<Integer> keysToRemove = new ArrayList<>(class_.tailMap(pos, true).keySet());
+      for (Integer key : keysToRemove)
+      {
+         ClassRange cr = class_.get(key);
+         if (parent_ != null)
+            removeRange(cr);
+         class_.remove(key);
+      }
+
+      output_.setLength(pos);
    }
 
    /**
@@ -1043,7 +1052,11 @@ public class VirtualConsole
    {
       try
       {
-         doSubmit(data, clazz, forceNewRange, ariaLiveAnnounce);
+         // a request for a new range (e.g. from a group that just opened) is
+         // only honored by text; if this submit held nothing but control
+         // characters, keep it for the next one rather than dropping it
+         if (doSubmit(data, clazz, forceNewRange, ariaLiveAnnounce))
+            forceNewRange_ = true;
       }
       finally
       {
@@ -1053,7 +1066,11 @@ public class VirtualConsole
       }
    }
 
-   private void doSubmit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
+   /**
+    * @return whether a request to start a new range is still outstanding,
+    * because no text was written to consume it
+    */
+   private boolean doSubmit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
       // If processing text instead of a terminal stream, normalize CR/LF
       // and remove non-formatting control sequences
@@ -1120,7 +1137,7 @@ public class VirtualConsole
       if (match == null)
       {
          text(data, currentClazz, forceNewRange);
-         return;
+         return false;
       }
       
       // Start processing control characters and escapes.
@@ -1184,7 +1201,7 @@ public class VirtualConsole
                      break;
 
                   holdPartialAnsiCode(StringUtil.substring(data, head), clazz);
-                  return;
+                  return forceNewRange;
                }
                
                // String sequences: ESC <introducer> <payload> ST, where ST is BEL or
@@ -1203,7 +1220,7 @@ public class VirtualConsole
                   if (stringEnd == null && !flushingPartialAnsiCode_ && data.length() - head <= MAX_PARTIAL_STRING_LENGTH)
                   {
                      holdPartialAnsiCode(StringUtil.substring(data, head), clazz);
-                     return;
+                     return forceNewRange;
                   }
 
                   char stringEndChar = stringEnd == null ? '\0' : data.charAt(stringEnd.getIndex());
@@ -1254,28 +1271,13 @@ public class VirtualConsole
 
                      // if we're starting a group, but the cursor is not
                      // located at the end of the output (e.g. a carriage
-                     // return or something similar moved the cursor), then
-                     // adjust output appropriately
-                     if (lastNodeEl != null)
-                     {
-                        int numCharsToRemove = output_.length() - cursor_;
-                        if (numCharsToRemove > 0)
-                        {
-                           flushPending();
-                           String text = lastNodeEl.getInnerText();
-                           if (text.length() <= numCharsToRemove)
-                           {
-                              newlinesWritten_ -= StringUtil.newlineCount(text);
-                              lastNodeEl.removeFromParent();
-                           }
-                           else
-                           {
-                              String kept = text.substring(0, text.length() - numCharsToRemove);
-                              newlinesWritten_ -= StringUtil.newlineCount(text) - StringUtil.newlineCount(kept);
-                              lastNodeEl.setInnerText(kept);
-                           }
-                        }
-                     }
+                     // return or something similar moved the cursor), the
+                     // group replaces the rest of the output. Drop it from
+                     // the buffer and ranges too, not just the DOM: a range
+                     // left behind pointing at a detached element breaks the
+                     // next overwrite that reaches it.
+                     if (cursor_ < output_.length())
+                        truncateOutput(cursor_);
 
                      text("", clazz, false);
                      cursor_ = output_.length();
@@ -1401,7 +1403,7 @@ public class VirtualConsole
                if (!flushingPartialAnsiCode_ && AnsiCode.PARTIAL_ESCAPE_PATTERN.test(rest))
                {
                   holdPartialAnsiCode(rest, clazz);
-                  return;
+                  return forceNewRange;
                }
 
                // discard other escape sequences, e.g. ESC '(' 'B'; a malformed one
@@ -1426,7 +1428,12 @@ public class VirtualConsole
 
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
+      {
          text(StringUtil.substring(data, tail), currentClazz, forceNewRange);
+         forceNewRange = false;
+      }
+
+      return forceNewRange;
    }
    
    private Match nextMatch(String data, int offset)

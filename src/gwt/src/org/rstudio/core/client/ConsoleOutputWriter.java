@@ -147,7 +147,10 @@ public class ConsoleOutputWriter
    {
       if (virtualConsole_ != null)
       {
+         // trimming a group's surrounding newlines changes the line count
+         int before = virtualConsole_.getNewlinesWritten();
          virtualConsole_.normalizePreviousOutput();
+         lines_ += virtualConsole_.getNewlinesWritten() - before;
       }
    }
    
@@ -157,8 +160,10 @@ public class ConsoleOutputWriter
       {
          // no more output will reach this console, so show anything it was
          // still waiting on
+         int before = virtualConsole_.getNewlinesWritten();
          virtualConsole_.flushPartialAnsiCode();
          virtualConsole_.ensureStartingOnNewLine();
+         lines_ += virtualConsole_.getNewlinesWritten() - before;
 
          // clear the virtual console so we start with a fresh slate
          virtualConsole_ = null;
