@@ -14,7 +14,8 @@
  */
 package org.rstudio.studio.client.common.shell;
 
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.rstudio.core.client.AnsiCode;
@@ -22,7 +23,7 @@ import org.rstudio.core.client.AnsiCode;
 import com.google.gwt.dom.client.Element;
 
 /**
- * Tracks the elements written to the console for each stderr chunk since the
+ * Tracks the elements written to the console for recent stderr chunks since the
  * last prompt, so that extended error info (an unhandled error event) arriving
  * later can find and replace the plain error output it belongs to.
  *
@@ -69,7 +70,19 @@ public class ConsoleErrorTracker
     */
    public void add(String error, List<Element> elements)
    {
+      // Console trimming does not release the raw strings held here. Bound
+      // both the number of chunks and their total text, without keying them.
+      // Always keep the newest chunk, even if it alone exceeds the budget,
+      // so that a large error can still receive its traceback.
+      while (!entries_.isEmpty() &&
+             (entries_.size() >= MAX_ENTRIES ||
+              error.length() > MAX_RETAINED_CHARS - retainedChars_))
+      {
+         retainedChars_ -= entries_.removeFirst().error_.length();
+      }
+
       entries_.add(new Entry(error, elements));
+      retainedChars_ += error.length();
    }
 
    /**
@@ -79,12 +92,14 @@ public class ConsoleErrorTracker
    public Entry take(String error)
    {
       String key = errorKey(error);
-      for (int i = entries_.size() - 1; i >= 0; i--)
+      Iterator<Entry> it = entries_.descendingIterator();
+      while (it.hasNext())
       {
-         Entry entry = entries_.get(i);
+         Entry entry = it.next();
          if (entry.getKey().equals(key))
          {
-            entries_.remove(i);
+            it.remove();
+            retainedChars_ -= entry.error_.length();
             return entry;
          }
       }
@@ -95,6 +110,7 @@ public class ConsoleErrorTracker
    public void clear()
    {
       entries_.clear();
+      retainedChars_ = 0;
    }
 
    public int size()
@@ -116,5 +132,9 @@ public class ConsoleErrorTracker
       return stripped.replaceFirst("^[^:]*:\\s*", "").trim();
    }
 
-   private final List<Entry> entries_ = new ArrayList<>();
+   static final int MAX_ENTRIES = 256;
+   static final int MAX_RETAINED_CHARS = 1024 * 1024;
+
+   private final LinkedList<Entry> entries_ = new LinkedList<>();
+   private int retainedChars_ = 0;
 }

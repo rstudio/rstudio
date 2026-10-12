@@ -160,9 +160,94 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
       assertNull(tracker.take("Error: boom"));
    }
 
-   // Keying is deferred until an extended error arrives, so recording a flood
-   // of stderr chunks costs nothing beyond holding on to them. Eagerly keying
-   // each chunk (strip + regex + trim + map insert) took seconds here.
+   public void testRepeatedChunksAreBounded()
+   {
+      ConsoleErrorTracker tracker = new ConsoleErrorTracker();
+      tracker.add("Error: oldest", elements(1));
+      List<Element> els = elements(1);
+      for (int i = 0; i < 10000; i++)
+         tracker.add("Warning: repeated", els);
+      List<Element> newest = elements(1);
+      tracker.add("Warning: repeated", newest);
+
+      assertEquals(ConsoleErrorTracker.MAX_ENTRIES, tracker.size());
+      assertNull(tracker.take("Error: oldest"));
+      assertSame(newest, tracker.take("Warning: repeated").getElements());
+      assertEquals(ConsoleErrorTracker.MAX_ENTRIES - 1, tracker.size());
+   }
+
+   public void testLargeChunksAreBoundedByTextSize()
+   {
+      ConsoleErrorTracker tracker = new ConsoleErrorTracker();
+      String flood = progressFlood(12000);
+      int capacity = ConsoleErrorTracker.MAX_RETAINED_CHARS / flood.length();
+      List<Element> els = elements(1);
+      tracker.add("Error: oldest", els);
+      for (int i = 0; i < 200; i++)
+         tracker.add(flood, els);
+      List<Element> newest = elements(1);
+      tracker.add(flood, newest);
+
+      assertEquals(capacity, tracker.size());
+      assertNull(tracker.take("Error: oldest"));
+      assertSame(newest, tracker.take(flood).getElements());
+   }
+
+   public void testOversizedNewestChunkCanStillMatch()
+   {
+      ConsoleErrorTracker tracker = new ConsoleErrorTracker();
+      String flood = progressFlood(40000);
+      assertTrue(flood.length() > ConsoleErrorTracker.MAX_RETAINED_CHARS);
+      List<Element> els = elements(1);
+      tracker.add("Error: oldest", elements(1));
+      tracker.add(flood, els);
+
+      assertEquals(1, tracker.size());
+      assertSame(els, tracker.take(flood).getElements());
+
+      tracker.add(flood, els);
+      tracker.add("Error: newest", elements(1));
+
+      assertEquals(1, tracker.size());
+      assertNull(tracker.take(flood));
+      assertNotNull(tracker.take("Error: newest"));
+   }
+
+   public void testTakeReleasesTextBudget()
+   {
+      ConsoleErrorTracker tracker = new ConsoleErrorTracker();
+      String flood = progressFlood(12000);
+      List<Element> els = elements(1);
+      tracker.add(flood, els);
+      assertNotNull(tracker.take(flood));
+      tracker.add("Error: keep", els);
+      int capacity = ConsoleErrorTracker.MAX_RETAINED_CHARS / flood.length();
+      for (int i = 0; i < capacity; i++)
+         tracker.add(flood, els);
+
+      assertNotNull(tracker.take("Error: keep"));
+      assertEquals(capacity, tracker.size());
+   }
+
+   public void testClearReleasesTextBudget()
+   {
+      ConsoleErrorTracker tracker = new ConsoleErrorTracker();
+      String flood = progressFlood(12000);
+      List<Element> els = elements(1);
+      tracker.add(flood, els);
+      tracker.clear();
+      tracker.add("Error: keep", els);
+      int capacity = ConsoleErrorTracker.MAX_RETAINED_CHARS / flood.length();
+      for (int i = 0; i < capacity; i++)
+         tracker.add(flood, els);
+
+      assertNotNull(tracker.take("Error: keep"));
+      assertEquals(capacity, tracker.size());
+   }
+
+   // Keying is deferred until an extended error arrives, including when old
+   // chunks are evicted. Eagerly keying each chunk (strip + regex + trim + map
+   // insert) took seconds here.
    public void testAddDoesNotKeyChunks()
    {
       ConsoleErrorTracker tracker = new ConsoleErrorTracker();
@@ -173,20 +258,20 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
          tracker.add(flood, elements(1));
       double elapsed = Duration.currentTimeMillis() - start;
 
-      assertEquals(200, tracker.size());
+      assertEquals(ConsoleErrorTracker.MAX_RETAINED_CHARS / flood.length(), tracker.size());
       assertTrue("add took " + elapsed + "ms", elapsed < TIME_LIMIT_MS);
    }
 
-   // The one-time pass when an error does arrive after a flood is linear in
-   // the output, and still finds the right chunk behind the noise.
+   // After a flood, recent errors can still be matched behind newer noise.
    public void testTakeAfterFloodFindsTheError()
    {
       ConsoleErrorTracker tracker = new ConsoleErrorTracker();
       String flood = progressFlood(12000);
       List<Element> els = elements(1);
-      tracker.add("Error in git_clone() : failed\n", els);
       for (int i = 0; i < 200; i++)
          tracker.add(flood, elements(1));
+      tracker.add("Error in git_clone() : failed\n", els);
+      tracker.add("Warning: unrelated\n", elements(1));
 
       double start = Duration.currentTimeMillis();
       ConsoleErrorTracker.Entry entry = tracker.take("Error in git_clone() : failed");
@@ -194,7 +279,7 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
 
       assertNotNull(entry);
       assertSame(els, entry.getElements());
-      assertEquals(200, tracker.size());
+      assertEquals(ConsoleErrorTracker.MAX_RETAINED_CHARS / flood.length() + 1, tracker.size());
       assertTrue("take took " + elapsed + "ms", elapsed < TIME_LIMIT_MS);
    }
 }
