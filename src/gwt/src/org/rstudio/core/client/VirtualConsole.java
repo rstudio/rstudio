@@ -43,6 +43,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -257,7 +258,10 @@ public class VirtualConsole
       cursor_ = 0;
       class_.clear();
       if (parent_ != null)
+      {
+         newlinesWritten_ -= StringUtil.newlineCount(parent_.getInnerText());
          parent_.setInnerHTML("");
+      }
    }
 
    private void clearPartialAnsiCode()
@@ -555,8 +559,8 @@ public class VirtualConsole
          for (Integer key : keysToRemove)
          {
             ClassRange cr = class_.get(key);
-            if (parent_ != null && cr.element.getParentElement() != null)
-               cr.element.removeFromParent();
+            if (parent_ != null)
+               removeRange(cr);
             class_.remove(key);
          }
 
@@ -658,6 +662,9 @@ public class VirtualConsole
       
       if (forceNewRange)
       {
+         // the DOM must be current before we look at it, or add after it
+         range.flush();
+
          // normalize previous bit of output if it was a section
          if (parent_ != null)
          {
@@ -676,6 +683,7 @@ public class VirtualConsole
          // create a new output range with this class
          final ClassRange newRange = new ClassRange(cursor_, clazz, text, preserveHTML_, hyperlink_);
          appendChild(newRange.element);
+         countAttached(newRange);
          class_.put(cursor_, newRange);
       }
       else
@@ -720,7 +728,10 @@ public class VirtualConsole
       {
          class_.put(start, range);
          if (parent_ != null)
+         {
             appendChild(range.element);
+            countAttached(range);
+         }
          return;
       }
 
@@ -758,7 +769,10 @@ public class VirtualConsole
                insertions.add(range);
                haveInsertedRange = true;
                if (parent_ != null)
+               {
                   overlap.element.getParentElement().insertAfter(range.element, overlap.element);
+                  countAttached(range);
+               }
             }
          }
          else if (start <= l && end <= r && end > l)
@@ -774,9 +788,7 @@ public class VirtualConsole
                if (overlap.length == 0)
                {
                   deletions.add(l);
-
-                  if (overlap.element.getParentElement() != null)
-                     overlap.element.removeFromParent();
+                  removeRange(overlap);
                }
                else
                {
@@ -806,10 +818,12 @@ public class VirtualConsole
 
                if (!range.text().isEmpty())
                   insertions.add(range);
-               
-               if (parent_ != null && !range.text().isEmpty())
-                  overlap.element.getParentElement().insertBefore(range.element, overlap.element);
 
+               if (parent_ != null && !range.text().isEmpty())
+               {
+                  overlap.element.getParentElement().insertBefore(range.element, overlap.element);
+                  countAttached(range);
+               }
             }
          }
          else if (l > start && r < end)
@@ -817,7 +831,7 @@ public class VirtualConsole
             // this range is fully overwritten, just delete it
             deletions.add(l);
             if (parent_ != null)
-               overlap.element.removeFromParent();
+               removeRange(overlap);
          }
          else if (start > l && end < r)
          {
@@ -838,7 +852,10 @@ public class VirtualConsole
                // insert the new range
                insertions.add(range);
                if (parent_ != null)
+               {
                   overlap.element.getParentElement().insertAfter(range.element, overlap.element);
+                  countAttached(range);
+               }
 
                // add back the remainder
                ClassRange remainder = new ClassRange(
@@ -849,7 +866,10 @@ public class VirtualConsole
                      overlap.hyperlink_);
                insertions.add(remainder);
                if (parent_ != null)
+               {
                   range.element.getParentElement().insertAfter(remainder.element, range.element);
+                  countAttached(remainder);
+               }
             }
          }
       }
@@ -960,7 +980,8 @@ public class VirtualConsole
       {
          String rText = straddler.text();
          int offset = nlPos - straddler.start;
-         straddler.setText(
+         straddler.rewrite(
+               rText,
                StringUtil.substring(rText, 0, offset)
                      + spacesStr
                      + StringUtil.substring(rText, offset));
@@ -1019,6 +1040,20 @@ public class VirtualConsole
     * output range (span) even if style matches previous output
     */
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
+   {
+      try
+      {
+         doSubmit(data, clazz, forceNewRange, ariaLiveAnnounce);
+      }
+      finally
+      {
+         // text appended to the trailing range is written to the DOM once per
+         // submit rather than once per line (see ClassRange.appendRight)
+         flushPending();
+      }
+   }
+
+   private void doSubmit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
       // If processing text instead of a terminal stream, normalize CR/LF
       // and remove non-formatting control sequences
@@ -1226,15 +1261,18 @@ public class VirtualConsole
                         int numCharsToRemove = output_.length() - cursor_;
                         if (numCharsToRemove > 0)
                         {
+                           flushPending();
                            String text = lastNodeEl.getInnerText();
                            if (text.length() <= numCharsToRemove)
                            {
+                              newlinesWritten_ -= StringUtil.newlineCount(text);
                               lastNodeEl.removeFromParent();
                            }
                            else
                            {
-                              lastNodeEl.setInnerText(
-                                 text.substring(0, text.length() - numCharsToRemove));
+                              String kept = text.substring(0, text.length() - numCharsToRemove);
+                              newlinesWritten_ -= StringUtil.newlineCount(text) - StringUtil.newlineCount(kept);
+                              lastNodeEl.setInnerText(kept);
                            }
                         }
                      }
@@ -1436,7 +1474,8 @@ public class VirtualConsole
    {
       if (parent_ == null)
          return;
-      
+
+      flushPending();
       Node childNode = parent_.getLastChild();
       if (!Element.is(childNode))
          return;
@@ -1461,9 +1500,11 @@ public class VirtualConsole
          if (firstChildNode == null)
             return;
       }
- 
-      firstChildNode.setNodeValue(
-            firstChildNode.getNodeValue().replaceFirst("^\\n+", ""));
+
+      String value = firstChildNode.getNodeValue();
+      String trimmed = value.replaceFirst("^\\n+", "");
+      newlinesWritten_ -= value.length() - trimmed.length();
+      firstChildNode.setNodeValue(trimmed);
    }
    
    private void trimTrailingNewlines(Element childEl)
@@ -1478,9 +1519,56 @@ public class VirtualConsole
          if (lastChildNode == null)
             return;
       }
- 
-      lastChildNode.setNodeValue(
-            lastChildNode.getNodeValue().replaceFirst("\\n+$", ""));
+
+      String value = lastChildNode.getNodeValue();
+      String trimmed = value.replaceFirst("\\n+$", "");
+      newlinesWritten_ -= value.length() - trimmed.length();
+      lastChildNode.setNodeValue(trimmed);
+   }
+
+   /**
+    * Net number of newlines this console has written into its parent element:
+    * those added by submits, less those it has itself removed again through
+    * overwrites, erases, form feeds and group trimming. Lines removed from the
+    * element by anyone else (the console's scrollback limit) are not reflected,
+    * so a caller can track the visible line count incrementally by adding the
+    * change in this value across each submit and subtracting its own trimming,
+    * instead of re-counting the whole element.
+    */
+   public int getNewlinesWritten()
+   {
+      return newlinesWritten_;
+   }
+
+   /**
+    * Writes out any text buffered on the trailing range (see
+    * {@link ClassRange#appendRight}). Only the last range can hold buffered
+    * text: appends go there, and a new range is only started after a flush.
+    */
+   private void flushPending()
+   {
+      if (!class_.isEmpty())
+         class_.lastEntry().getValue().flush();
+   }
+
+   /**
+    * Accounts for a range's text having just been inserted into the DOM.
+    */
+   private void countAttached(ClassRange range)
+   {
+      newlinesWritten_ += StringUtil.newlineCount(range.text());
+   }
+
+   /**
+    * Removes a range's element from the DOM, accounting for its text.
+    */
+   private void removeRange(ClassRange range)
+   {
+      if (range.element.getParentElement() == null)
+         return;
+
+      newlinesWritten_ -= StringUtil.newlineCount(range.text());
+      range.element.removeFromParent();
    }
 
    // Elements added by last submit call; only captured if forceNewRange was true
@@ -1499,6 +1587,8 @@ public class VirtualConsole
 
    public void ensureStartingOnNewLine()
    {
+      flushPending();
+
       Node child = getParent().getLastChild();
       if (child == null)
          return;
@@ -1626,49 +1716,148 @@ public class VirtualConsole
          }
       }
 
+      /**
+       * Replaces the element's whole text, accounting for the change in
+       * newlines if the element is in the DOM.
+       */
+      public void rewrite(String oldText, String newText)
+      {
+         discardPending();
+         setText(newText);
+         if (element.getParentElement() != null)
+            newlinesWritten_ += StringUtil.newlineCount(newText) - StringUtil.newlineCount(oldText);
+      }
+
       public void trimLeft(int delta)
       {
          length -= delta;
          start += delta;
-         setText(StringUtil.substring(element.getInnerText(), delta));
+         String text = text();
+         rewrite(text, StringUtil.substring(text, delta));
       }
 
       public void trimRight(int delta)
       {
          length -= delta;
-         String text = element.getInnerText();
-         setText(StringUtil.substring(text, 0, text.length() - delta));
+         replaceTail(delta, delta, "");
       }
 
       public void appendLeft(String content, int delta)
       {
          length += content.length() - delta;
          start -= (content.length() - delta);
-         setText(content + StringUtil.substring(element.getInnerText(), delta));
+         String text = text();
+         rewrite(text, content + StringUtil.substring(text, delta));
       }
 
+      /**
+       * Appends content after dropping the last {@code delta} characters.
+       *
+       * A plain append (no overlap) is only buffered here; {@link #flush}
+       * writes everything buffered since the last DOM write as one text node.
+       * Rewriting the element's text for each append cost the whole range per
+       * line, and the trailing range holds a command's entire output.
+       */
       public void appendRight(String content, int delta)
       {
          length += content.length() - delta;
-         String text = text();
-         setText(StringUtil.substring(text, 0, text.length() - delta) + content);
+         if (delta == 0 && !isHTML_)
+         {
+            if (pending_ == null)
+               pending_ = new StringBuilder();
+            pending_.append(content);
+         }
+         else
+         {
+            replaceTail(delta, delta, content);
+         }
       }
 
       public void overwrite(String content, int pos)
       {
-         String text = element.getInnerText();
-         setText(
-               StringUtil.substring(text, 0, pos) + content +
-               StringUtil.substring(text, pos + content.length()));
+         replaceTail(length - pos, content.length(), content);
+      }
+
+      /**
+       * Replaces {@code count} characters, starting {@code fromEnd} characters
+       * before the end of the text, with {@code content}.
+       *
+       * When the affected text lies within the trailing text node, only that
+       * node is edited, so a carriage-return overwrite of the last line does
+       * not rewrite the whole range. Working from the end also keeps the edit
+       * in the right place after the scrollback limit has trimmed the front
+       * of the element behind our back.
+       */
+      private void replaceTail(int fromEnd, int count, String content)
+      {
+         flush();
+
+         Node last = element.getLastChild();
+         if (!isHTML_ && last != null && last.getNodeType() == Node.TEXT_NODE)
+         {
+            Text node = Text.as(last);
+            int nodeLength = node.getLength();
+            if (fromEnd <= nodeLength)
+            {
+               int offset = nodeLength - fromEnd;
+               String removed = count == 0 ? "" : StringUtil.substring(node.getData(), offset, offset + count);
+               node.replaceData(offset, count, content);
+               if (element.getParentElement() != null)
+                  newlinesWritten_ += StringUtil.newlineCount(content) - StringUtil.newlineCount(removed);
+               return;
+            }
+         }
+
+         String text = text();
+         int offset = Math.max(0, text.length() - fromEnd);
+         rewrite(text, StringUtil.substring(text, 0, offset) + content + StringUtil.substring(text, offset + count));
+      }
+
+      /**
+       * Writes any text buffered by {@link #appendRight} to the DOM, extending
+       * the trailing text node while it is small and starting a new one
+       * otherwise, so that later edits near the end touch a bounded node.
+       */
+      public void flush()
+      {
+         if (pending_ == null || pending_.length() == 0)
+            return;
+
+         String content = pending_.toString();
+         pending_.setLength(0);
+
+         Node last = element.getLastChild();
+         if (last != null &&
+             last.getNodeType() == Node.TEXT_NODE &&
+             Text.as(last).getLength() + content.length() <= MAX_TEXT_NODE_LENGTH)
+         {
+            Text node = Text.as(last);
+            node.insertData(node.getLength(), content);
+         }
+         else
+         {
+            element.appendChild(Document.get().createTextNode(content));
+         }
+
+         if (element.getParentElement() != null)
+            newlinesWritten_ += StringUtil.newlineCount(content);
+      }
+
+      private void discardPending()
+      {
+         if (pending_ != null)
+            pending_.setLength(0);
       }
 
       public String text()
       {
+         flush();
          return isHTML_ ? element.getInnerHTML() : element.getInnerText();
       }
 
       public void clearText()
       {
+         discardPending();
          element.setInnerText("");
       }
 
@@ -1684,7 +1873,14 @@ public class VirtualConsole
       public final Element element;
       public final HyperlinkInfo hyperlink_;
       private boolean isHTML_;
+
+      // text appended but not yet written to the DOM; see appendRight()
+      private StringBuilder pending_;
    }
+
+   // Appended text extends the trailing text node up to this many characters
+   // before a new node is started; see ClassRange.flush()
+   private static final int MAX_TEXT_NODE_LENGTH = 1 << 16;
 
    private class HyperlinkInfo
    {
@@ -1731,6 +1927,7 @@ public class VirtualConsole
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
    private Element parent_;
    private String ansiColorMode_;
+   private int newlinesWritten_ = 0;
 
    private int cursor_ = 0;
    private AnsiCode ansi_ = new AnsiCode();

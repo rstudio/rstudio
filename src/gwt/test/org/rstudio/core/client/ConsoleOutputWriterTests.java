@@ -660,4 +660,106 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertEquals(1, output.getCurrentLines());
       Assert.assertEquals("<span class=\"myClass\">Message\n</span>", getInnerHTML(output));
    }
+
+   // ---- incremental line counting ----
+
+   private void assertLinesMatchDom(ConsoleOutputWriter output)
+   {
+      Assert.assertEquals(DomUtils.countLines(output.getElement(), true), output.getCurrentLines());
+   }
+
+   public void testLineCountWithInterleavedErrorAndOutput()
+   {
+      // each switch between stdout and stderr is its own chunk; the count
+      // must stay exact without re-counting the scrollback every time
+      ConsoleOutputWriter output = getCOW();
+      for (int i = 0; i < 50; i++)
+      {
+         output.outputToConsole("message " + i + "\n", myErrorClass, isError, ignoreLineCount, false);
+         output.outputToConsole("output " + i + "\n", nullClazz, notError, ignoreLineCount, false);
+      }
+
+      Assert.assertEquals(100, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
+
+   public void testLineCountWithConditionGroups()
+   {
+      // R wraps conditions in group escapes; the group's surrounding newlines
+      // are trimmed from the DOM when the next output starts
+      ConsoleOutputWriter output = getCOW();
+      for (int i = 0; i < 20; i++)
+      {
+         output.outputToConsole("\033G3;\nmessage " + i + "\n\033g", myErrorClass, isError, ignoreLineCount, false);
+         output.outputToConsole("output " + i + "\n", nullClazz, notError, ignoreLineCount, false);
+      }
+      output.normalizePreviousOutput();
+
+      assertLinesMatchDom(output);
+   }
+
+   public void testTrimmingStaysExactAcrossConditionGroups()
+   {
+      // an over-count would trim real lines each time, shrinking the visible
+      // scrollback a little further on every group
+      ConsoleOutputWriter output = getCOW();
+      int maxLines = 10;
+      output.setMaxOutputLines(maxLines);
+      for (int i = 0; i < 100; i++)
+      {
+         output.outputToConsole("\033G3;\nmessage " + i + "\n\033g", myErrorClass, isError, checkLineCount, false);
+         output.outputToConsole("output " + i + "\n", nullClazz, notError, checkLineCount, false);
+      }
+
+      Assert.assertEquals(maxLines, output.getCurrentLines());
+      Assert.assertEquals(maxLines, DomUtils.countLines(output.getElement(), true));
+   }
+
+   public void testLineCountWithCarriageReturnProgress()
+   {
+      ConsoleOutputWriter output = getCOW();
+      for (int i = 0; i < 5; i++)
+         output.outputToConsole("line " + i + "\n", nullClazz, notError, ignoreLineCount, false);
+      for (int i = 0; i < 50; i++)
+         output.outputToConsole("\rprogress " + i, nullClazz, notError, ignoreLineCount, false);
+      output.outputToConsole("\n", nullClazz, notError, ignoreLineCount, false);
+
+      Assert.assertEquals(6, output.getCurrentLines());
+      assertLinesMatchDom(output);
+      Assert.assertTrue(output.getElement().getInnerText().endsWith("line 4\nprogress 49\n"));
+   }
+
+   public void testLineCountAfterTrimmingThenOverwriting()
+   {
+      // the scrollback limit trims the front of the trailing span behind the
+      // virtual console's back; edits at the end must still land correctly
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(3);
+      for (int i = 0; i < 6; i++)
+         output.outputToConsole("line " + i + "\n", nullClazz, notError, checkLineCount, false);
+      output.outputToConsole("progress 1", nullClazz, notError, checkLineCount, false);
+      output.outputToConsole("\rprogress 2\n", nullClazz, notError, checkLineCount, false);
+
+      Assert.assertEquals("line 4\nline 5\nprogress 2\n", output.getElement().getInnerText());
+      Assert.assertEquals(3, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
+
+   public void testBulkOutputIsWrittenInFewTextNodes()
+   {
+      // 10k lines in one chunk used to mean 20k rewrites of the whole span
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < 10000; i++)
+         sb.append("line ").append(i).append("\n");
+
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole(sb.toString(), nullClazz, notError, ignoreLineCount, false);
+
+      // the first segment is written when the span is created; everything
+      // after it arrives in a single flush
+      Element span = output.getElement().getFirstChildElement().getFirstChildElement();
+      Assert.assertEquals(sb.toString(), span.getInnerText());
+      Assert.assertTrue(span.getChildCount() <= 2);
+      Assert.assertEquals(10000, output.getCurrentLines());
+   }
 }

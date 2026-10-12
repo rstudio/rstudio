@@ -4,6 +4,7 @@
 - ([#19030](https://github.com/rstudio/rstudio/pull/19030)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
 ### Fixed
+- ([#19082](https://github.com/rstudio/rstudio/issues/19082)): Fixed an issue where console output slowed down, and the IDE could become unresponsive, as the console scrollback filled up -- most visibly when output alternated between stdout and stderr (e.g. `message()` and `cat()` in a loop).
 - ([rstudio/rstudio-pro#13167](https://github.com/rstudio/rstudio-pro/issues/13167)): Fixed an issue where the Packages pane could show a stale package list (e.g. a blank Package Manager metadata column for a just-installed package) when two package-list refreshes overlapped.
 - ([#17196](https://github.com/rstudio/rstudio/issues/17196)): "Run All Chunks Above", "Run All Chunks Below", and "Run All" now run Python chunks, and switch the console between R and Python as needed, when chunk output is sent to the console rather than shown inline.
 - ([#19059](https://github.com/rstudio/rstudio/issues/19059)): RStudio is now compatible with (and can build against) OpenSSL 4.x.

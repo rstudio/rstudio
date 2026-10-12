@@ -14,10 +14,12 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -2213,5 +2215,173 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = getVC(ele);
       vc.submit("abcdef\nghijkl\033[1FX");
       Assert.assertEquals("Xbcdef\nghijkl", vc.toString());
+   }
+
+   // ---- DOM write batching and newline accounting ----
+
+   private static int textNodeCount(Element el)
+   {
+      int count = 0;
+      for (Node node = el.getFirstChild(); node != null; node = node.getNextSibling())
+      {
+         if (node.getNodeType() == Node.TEXT_NODE)
+            count++;
+      }
+      return count;
+   }
+
+   private static void assertNewlinesMatchDom(PreElement ele, VirtualConsole vc)
+   {
+      Assert.assertEquals(DomUtils.countLines(ele, true), vc.getNewlinesWritten());
+   }
+
+   public void testAppendsWithinSubmitAreWrittenAsOneTextNode()
+   {
+      // each line is two appends (text, then newline), but the DOM is only
+      // touched once per submit
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("one\ntwo\nthree\n");
+
+      Element span = ele.getFirstChildElement();
+      Assert.assertEquals("one\ntwo\nthree\n", span.getInnerText());
+      Assert.assertEquals(1, textNodeCount(span));
+      Assert.assertEquals(1, ele.getChildCount());
+   }
+
+   public void testAppendsAcrossSubmitsExtendTheTrailingTextNode()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("one\n");
+      vc.submit("two\n");
+      vc.submit("three\n");
+
+      Element span = ele.getFirstChildElement();
+      Assert.assertEquals("one\ntwo\nthree\n", span.getInnerText());
+      Assert.assertEquals(1, textNodeCount(span));
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testLargeAppendsStartNewTextNodes()
+   {
+      // the trailing text node is only extended while it is small, so that
+      // edits near the end never have to copy a whole command's output
+      StringBuilder big = new StringBuilder();
+      for (int i = 0; i < 70000; i++)
+         big.append('x');
+
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit(big.toString());
+      vc.submit("tail\n");
+
+      Element span = ele.getFirstChildElement();
+      Assert.assertEquals(2, textNodeCount(span));
+      Assert.assertEquals(big.toString() + "tail\n", span.getInnerText());
+      Assert.assertEquals(1, vc.getNewlinesWritten());
+   }
+
+   public void testNewlinesWrittenCountsAppendedLines()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      Assert.assertEquals(0, vc.getNewlinesWritten());
+
+      vc.submit("one\ntwo");
+      Assert.assertEquals(1, vc.getNewlinesWritten());
+
+      vc.submit("\nthree\n");
+      Assert.assertEquals(3, vc.getNewlinesWritten());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testNewlinesWrittenAfterCarriageReturnOverwrite()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("line\nline\n");
+      for (int i = 0; i < 20; i++)
+         vc.submit("\rprogress " + i);
+      vc.submit("\n");
+
+      Assert.assertEquals("line\nline\nprogress 19\n", vc.toString());
+      Assert.assertEquals("line\nline\nprogress 19\n", ele.getInnerText());
+      Assert.assertEquals(3, vc.getNewlinesWritten());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testNewlinesWrittenAfterOverwriteAcrossColorRanges()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("aaa\n" + setCsiCode(31) + "bbb\nccc\n" + setCsiCode(0) + "ddd\n");
+      vc.submit("\033[3A\rXXXXX\nYYYYY");
+
+      Assert.assertEquals(vc.toString(), ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testNewlinesWrittenAfterEraseInLine()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("one\ntwo\nthree\033[2K\033[1A\033[K");
+
+      Assert.assertEquals(vc.toString(), ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testNewlinesWrittenAfterFormFeed()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("one\ntwo\n");
+      vc.submit("\fthree\n");
+
+      Assert.assertEquals("three\n", ele.getInnerText());
+      Assert.assertEquals(1, vc.getNewlinesWritten());
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testNewlinesWrittenAccountsForGroupTrimming()
+   {
+      // a condition group's leading and trailing newlines are dropped from
+      // the DOM when the next output starts; the count must follow the DOM
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("before\n");
+      vc.submit("\033G3;\n\nmessage one\n\n\033g", "stderr");
+      vc.submit("between\n");
+      vc.submit("\033G2;\nwarning\n\033g", "stderr");
+      vc.submit("after\n");
+      vc.normalizePreviousOutput();
+
+      Assert.assertTrue(vc.getNewlinesWritten() < StringUtil.newlineCount(vc.toString()));
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testNewlinesWrittenWhenGroupStartsMidLine()
+   {
+      // starting a group after a carriage return discards the rest of the
+      // current line from the DOM
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("one\ntwo\nthree\r");
+      vc.submit("\033G3;msg\n\033g", "stderr");
+      vc.submit("four\n");
+
+      assertNewlinesMatchDom(ele, vc);
+   }
+
+   public void testNewlinesWrittenWithHyperlinks()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("see \033]8;;https://example.com\033\\the docs\033]8;;\033\\\nnext\n");
+      vc.submit("\033[2A\rXX");
+
+      Assert.assertEquals(vc.toString(), ele.getInnerText());
+      assertNewlinesMatchDom(ele, vc);
    }
 }
