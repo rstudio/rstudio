@@ -28,19 +28,22 @@ elif [ -f ~/.profile ]; then
 	source ~/.profile
 fi
 
-# the profiles above may have reset PATH (Debian's /etc/profile does); put
-# the postback scripts back in front so 'rstudio' resolves to our helper
+# the profiles above may have reset PATH (Debian's /etc/profile does) or
+# moved the postback scripts dir to the end (macOS path_helper does); drop any
+# existing copies and put it back in front so 'rstudio' resolves to our helper
 # rather than an installed application binary
 if [ -n "${_RS_POSTBACK_DIR}" ]; then
-	case "${PATH}" in
-		"${_RS_POSTBACK_DIR}"|"${_RS_POSTBACK_DIR}":*)
-			;;
-		*)
-			PATH="${_RS_POSTBACK_DIR}:${PATH}"
-			export PATH
-			;;
-	esac
-	unset _RS_POSTBACK_DIR
+	_rs_path=":${PATH}:"
+	_rs_stripped="${_rs_path//":${_RS_POSTBACK_DIR}:"/:}"
+	while [ "${_rs_stripped}" != "${_rs_path}" ]; do
+		_rs_path="${_rs_stripped}"
+		_rs_stripped="${_rs_path//":${_RS_POSTBACK_DIR}:"/:}"
+	done
+	_rs_path="${_rs_path#:}"
+	_rs_path="${_rs_path%:}"
+	PATH="${_RS_POSTBACK_DIR}${_rs_path:+:${_rs_path}}"
+	export PATH
+	unset _rs_path _rs_stripped _RS_POSTBACK_DIR
 fi
 
 # run RStudio terminal hooks
