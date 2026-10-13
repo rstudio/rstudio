@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.shell;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -81,7 +82,10 @@ public class ConsoleErrorTracker
          retainedChars_ -= entries_.removeFirst().error_.length();
       }
 
-      entries_.add(new Entry(error, elements));
+      // VirtualConsole hands out a single list that it clears and refills on
+      // every submit, so copy it; otherwise every entry would alias the
+      // elements of whichever chunk was written last.
+      entries_.add(new Entry(error, new ArrayList<>(elements)));
       retainedChars_ += error.length();
    }
 
@@ -113,9 +117,22 @@ public class ConsoleErrorTracker
       retainedChars_ = 0;
    }
 
-   public int size()
+   int size()
    {
       return entries_.size();
+   }
+
+   // The number of retained chunks whose key has been computed; for tests.
+   int keyedCount()
+   {
+      int count = 0;
+      for (Entry entry : entries_)
+      {
+         if (entry.key_ != null)
+            count++;
+      }
+
+      return count;
    }
 
    /**
