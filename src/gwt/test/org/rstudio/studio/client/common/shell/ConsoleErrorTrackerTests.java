@@ -30,9 +30,8 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
-   // Generous enough for a slow CI machine; the regressions these guard
-   // against (quadratic keying, or keying every chunk eagerly) take many
-   // seconds to minutes on this much input.
+   // Generous enough for a slow CI machine; the regression this guards
+   // against (quadratic keying) takes minutes on this much input.
    private static final double TIME_LIMIT_MS = 5000;
 
    // Roughly one stderr chunk from gert::git_clone(verbose = TRUE): a few
@@ -98,7 +97,7 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
 
       ConsoleErrorTracker.Entry entry = tracker.take("Error in f() : boom");
       assertNotNull(entry);
-      assertSame(els, entry.getElements());
+      assertEquals(els, entry.getElements());
       assertEquals(0, tracker.size());
    }
 
@@ -113,6 +112,26 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
       ConsoleErrorTracker.Entry entry = tracker.take("Error in f() : boom");
       assertNotNull(entry);
       assertEquals(error, entry.getError());
+   }
+
+   // VirtualConsole reuses one element list across submits, so the tracker
+   // must not hold on to the list it was given.
+   public void testAddCopiesElements()
+   {
+      ConsoleErrorTracker tracker = new ConsoleErrorTracker();
+      Element errorEl = Document.get().createSpanElement();
+      List<Element> shared = new ArrayList<>();
+      shared.add(errorEl);
+      tracker.add("Error in f() : boom\n", shared);
+
+      shared.clear();
+      shared.add(Document.get().createSpanElement());
+      tracker.add("Warning message:\nsomething else\n", shared);
+
+      ConsoleErrorTracker.Entry entry = tracker.take("Error in f() : boom");
+      assertNotNull(entry);
+      assertEquals(1, entry.getElements().size());
+      assertEquals(errorEl, entry.getElements().get(0));
    }
 
    public void testTakeReturnsNullWithoutMatch()
@@ -132,8 +151,8 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
       tracker.add("Error in f() : boom\n", first);
       tracker.add("Error in g() : boom\n", second);
 
-      assertSame(second, tracker.take("Error: boom").getElements());
-      assertSame(first, tracker.take("Error: boom").getElements());
+      assertEquals(second, tracker.take("Error: boom").getElements());
+      assertEquals(first, tracker.take("Error: boom").getElements());
       assertNull(tracker.take("Error: boom"));
    }
 
@@ -144,7 +163,7 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
       tracker.add("Error in f() : boom\n", els);
       tracker.add("Warning message:\nsomething else\n", elements(1));
 
-      assertSame(els, tracker.take("Error in f() : boom").getElements());
+      assertEquals(els, tracker.take("Error in f() : boom").getElements());
       assertEquals(1, tracker.size());
    }
 
@@ -172,7 +191,7 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
 
       assertEquals(ConsoleErrorTracker.MAX_ENTRIES, tracker.size());
       assertNull(tracker.take("Error: oldest"));
-      assertSame(newest, tracker.take("Warning: repeated").getElements());
+      assertEquals(newest, tracker.take("Warning: repeated").getElements());
       assertEquals(ConsoleErrorTracker.MAX_ENTRIES - 1, tracker.size());
    }
 
@@ -190,7 +209,7 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
 
       assertEquals(capacity, tracker.size());
       assertNull(tracker.take("Error: oldest"));
-      assertSame(newest, tracker.take(flood).getElements());
+      assertEquals(newest, tracker.take(flood).getElements());
    }
 
    public void testOversizedNewestChunkCanStillMatch()
@@ -203,7 +222,7 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
       tracker.add(flood, els);
 
       assertEquals(1, tracker.size());
-      assertSame(els, tracker.take(flood).getElements());
+      assertEquals(els, tracker.take(flood).getElements());
 
       tracker.add(flood, els);
       tracker.add("Error: newest", elements(1));
@@ -247,22 +266,36 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
 
    // Keying is deferred until an extended error arrives, including when old
    // chunks are evicted. Eagerly keying each chunk (strip + regex + trim + map
-   // insert) took seconds here.
+   // insert) took seconds on floods like this one.
    public void testAddDoesNotKeyChunks()
    {
       ConsoleErrorTracker tracker = new ConsoleErrorTracker();
       String flood = progressFlood(12000);
-
-      double start = Duration.currentTimeMillis();
       for (int i = 0; i < 200; i++)
          tracker.add(flood, elements(1));
-      double elapsed = Duration.currentTimeMillis() - start;
 
       assertEquals(ConsoleErrorTracker.MAX_RETAINED_CHARS / flood.length(), tracker.size());
-      assertTrue("add took " + elapsed + "ms", elapsed < TIME_LIMIT_MS);
+      assertEquals(0, tracker.keyedCount());
    }
 
-   // After a flood, recent errors can still be matched behind newer noise.
+   // take() keys newest first and stops at the match, so entries behind it
+   // are never keyed.
+   public void testTakeKeysOnlyUpToTheMatch()
+   {
+      ConsoleErrorTracker tracker = new ConsoleErrorTracker();
+      tracker.add("Error: oldest\n", elements(1));
+      tracker.add("Error: middle\n", elements(1));
+      tracker.add("Error: newest\n", elements(1));
+
+      assertNotNull(tracker.take("Error: middle"));
+      assertEquals(1, tracker.keyedCount());
+
+      assertNotNull(tracker.take("Error: newest"));
+      assertEquals(0, tracker.keyedCount());
+   }
+
+   // After a flood, recent errors can still be matched behind newer noise,
+   // without keying the flood.
    public void testTakeAfterFloodFindsTheError()
    {
       ConsoleErrorTracker tracker = new ConsoleErrorTracker();
@@ -273,13 +306,11 @@ public class ConsoleErrorTrackerTests extends GWTTestCase
       tracker.add("Error in git_clone() : failed\n", els);
       tracker.add("Warning: unrelated\n", elements(1));
 
-      double start = Duration.currentTimeMillis();
       ConsoleErrorTracker.Entry entry = tracker.take("Error in git_clone() : failed");
-      double elapsed = Duration.currentTimeMillis() - start;
 
       assertNotNull(entry);
-      assertSame(els, entry.getElements());
+      assertEquals(els, entry.getElements());
       assertEquals(ConsoleErrorTracker.MAX_RETAINED_CHARS / flood.length() + 1, tracker.size());
-      assertTrue("take took " + elapsed + "ms", elapsed < TIME_LIMIT_MS);
+      assertEquals(1, tracker.keyedCount());
    }
 }
