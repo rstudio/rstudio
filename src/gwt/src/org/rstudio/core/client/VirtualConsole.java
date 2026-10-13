@@ -760,7 +760,8 @@ public class VirtualConsole
       for (Entry<Integer, ClassRange> entry: view.entrySet())
       {
          ClassRange overlap = entry.getValue();
-         int l = entry.getKey();
+         int key = entry.getKey();
+         int l = key;
          int r = l + overlap.length;
 
          // Scrollback trimming can detach ranges while their logical offsets
@@ -783,6 +784,33 @@ public class VirtualConsole
          boolean matches =
                StringUtil.equals(range.clazz, overlap.clazz) &&
                sameHyperlink(range.hyperlink_, overlap.hyperlink_);
+
+         // The limit may also have trimmed the front of this range's text
+         // while leaving the rest visible. A matching write is clipped by the
+         // range's own edit methods, but a differently styled one would be
+         // inserted beside it as new visible text. Split the hidden part off
+         // as a discarded range first, as if the limit had removed it whole,
+         // and apply the write to what is visible.
+         String text = null;
+         if (!matches)
+         {
+            text = overlap.text();
+            int hidden = overlap.hiddenPrefixLength(text);
+            if (hidden > 0 && start < l + hidden)
+            {
+               insertions.add(discardedRange(l, hidden));
+               overlap.start += hidden;
+               overlap.length -= hidden;
+               moves.put(key, overlap.start);
+               l = overlap.start;
+
+               range.trimLeft(Math.min(end, l) - start);
+               start = range.start;
+               if (start == end)
+                  break;
+            }
+         }
+
          if (start >= l && start < r && end >= r)
          {
             // overlapping on the left side of the new range
@@ -818,7 +846,7 @@ public class VirtualConsole
                // if the original range becomes empty, then delete it
                if (overlap.length == 0)
                {
-                  deletions.add(l);
+                  deletions.add(key);
                   removeRange(overlap);
                }
                else
@@ -833,25 +861,18 @@ public class VirtualConsole
                      haveInsertedRange = false;
                   }
 
-                  moves.put(l, overlap.start);
+                  moves.put(key, overlap.start);
                }
             }
             else
             {
-               // reduce the original range and add ours; whatever we wrote
-               // over its trimmed-off prefix stays off-screen
-               int hidden = overlap.hiddenPrefixLength();
+               // reduce the original range and add ours
                overlap.trimLeft(delta);
-               if (hidden > 0)
-               {
-                  range.trimLeft(Math.min(end, l + hidden) - start);
-                  start = range.start;
-               }
 
                // move the shortened range to its new start position
                // unless it's empty
                if (overlap.length > 0) {
-                  moves.put(l, overlap.start);
+                  moves.put(key, overlap.start);
                }
 
                if (!range.text().isEmpty())
@@ -867,7 +888,7 @@ public class VirtualConsole
          else if (l > start && r < end)
          {
             // this range is fully overwritten, just delete it
-            deletions.add(l);
+            deletions.add(key);
             if (parent_ != null)
                removeRange(overlap);
          }
@@ -881,7 +902,6 @@ public class VirtualConsole
             }
             else
             {
-               String text = overlap.text();
                int trimmed = trimmedTrailingNewlines_.getOrDefault(overlap.element, 0);
 
                // trim the original range
@@ -1604,6 +1624,21 @@ public class VirtualConsole
    }
 
    /**
+    * A range standing in for part of the buffer the scrollback limit has
+    * removed. Like the ranges the limit emptied, it has no element in the
+    * DOM, so writes into it are discarded by {@link #insertText}.
+    */
+   private ClassRange discardedRange(int start, int length)
+   {
+      ClassRange range = new ClassRange(start, null, "", preserveHTML_, null);
+      range.length = length;
+
+      // never reaches the DOM, so it is not new output either
+      newElements_.remove(range.element);
+      return range;
+   }
+
+   /**
     * Removes a range's element from the DOM, accounting for its text.
     */
    private void removeRange(ClassRange range)
@@ -1785,10 +1820,10 @@ public class VirtualConsole
 
       public void trimLeft(int delta)
       {
-         int hidden = hiddenPrefixLength();
+         String text = text();
+         int hidden = hiddenPrefixLength(text);
          length -= delta;
          start += delta;
-         String text = text();
          rewrite(text, StringUtil.substring(text, Math.max(0, delta - hidden)));
       }
 
@@ -1808,7 +1843,8 @@ public class VirtualConsole
 
       public void appendLeft(String content, int delta)
       {
-         int hidden = hiddenPrefixLength();
+         String text = text();
+         int hidden = hiddenPrefixLength(text);
          length += content.length() - delta;
          start -= (content.length() - delta);
 
@@ -1816,7 +1852,6 @@ public class VirtualConsole
          // even text written ahead of the range's old start.
          if (hidden > 0)
             content = StringUtil.substring(content, Math.min(content.length(), content.length() - delta + hidden));
-         String text = text();
          rewrite(text, content + StringUtil.substring(text, Math.max(0, delta - hidden)));
       }
 
@@ -1825,12 +1860,12 @@ public class VirtualConsole
        */
       public void insert(int pos, String content)
       {
-         int offset = pos - hiddenPrefixLength();
+         String text = text();
+         int offset = pos - hiddenPrefixLength(text);
          length += content.length();
          if (offset < 0)
             return;
 
-         String text = text();
          offset = Math.min(offset, text.length());
          rewrite(text, StringUtil.substring(text, 0, offset) + content + StringUtil.substring(text, offset));
       }
@@ -1839,15 +1874,21 @@ public class VirtualConsole
        * Number of characters the scrollback limit has removed from the front
        * of this element's text. The limit edits the DOM directly, so the range
        * still covers them logically, and edits addressed from the front have
-       * to skip them. Costs a read of the element's text, as do all callers.
+       * to skip them. Callers that have already read the element's text pass
+       * it in rather than paying for a second read.
        */
       private int hiddenPrefixLength()
+      {
+         return isHTML_ ? 0 : hiddenPrefixLength(text());
+      }
+
+      private int hiddenPrefixLength(String text)
       {
          // innerHTML is not a faithful copy of the text a range was given
          if (isHTML_)
             return 0;
 
-         int visible = text().length() + trimmedTrailingNewlines_.getOrDefault(element, 0);
+         int visible = text.length() + trimmedTrailingNewlines_.getOrDefault(element, 0);
          return Math.max(0, length - visible);
       }
 

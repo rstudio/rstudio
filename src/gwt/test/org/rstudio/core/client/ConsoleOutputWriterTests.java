@@ -873,31 +873,62 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       }
    }
 
-   public void testEditsIntoTrimmedPrefixOfVisibleRangeStayOffscreen()
+   /**
+    * Output whose first line the limit has trimmed out of the DOM, while the
+    * range still spans it logically.
+    */
+   private ConsoleOutputWriter getTrimmedCOW()
    {
-      // The limit trims the first line out of the DOM, but the range still
-      // spans it logically; edits aimed at that line must not land on l2.
       ConsoleOutputWriter output = getCOW();
       output.setMaxOutputLines(2);
       output.outputToConsole("l1\nl2\nl3\n", nullClazz, notError, checkLineCount, false);
       Assert.assertEquals("l2\nl3\n", output.getElement().getInnerText());
+      return output;
+   }
 
-      String[] edits = {
-         "\033[99F\033[2GZ",             // overwrite(): replaceTail fallback
-         "\033[99F\033[1GZ",             // appendLeft()
-         "\033[99F\033[1G\033[31mZ\033[0m", // trimLeft() plus a new range
-         "\033[99F\033[9GZ",             // past the line's end: extendLineBefore()
+   public void testEditsIntoTrimmedPrefixOfVisibleRangeStayOffscreen()
+   {
+      // edits aimed at the trimmed line must not land on l2
+      String[][] cases = {
+         // edits that stay within the trimmed line
+         { "\033[99F\033[2GZ", "l2\nl3\n" },                 // overwrite(): replaceTail fallback
+         { "\033[99F\033[1GZ", "l2\nl3\n" },                 // appendLeft()
+         { "\033[99F\033[9GZ", "l2\nl3\n" },                 // past the line's end: extendLineBefore()
+         { "\033[99F\033[1G\033[31mZ\033[0m", "l2\nl3\n" },  // styled: split off, then right overlap
+         { "\033[3F\033[1C\033[31mZ\033[0m", "l2\nl3\n" },   // styled: split off, fully contained
+
+         // writes that run from the trimmed line into a visible one
+         { "\033[99F\033[1GXX\nYY", "YY\nl3\n" },
+         { "\033[99F\033[2G\033[31mZ\nW\033[0m", "W2\nl3\n" },
+         { "\033[99F\033[2G\033[31mZ\nZZ\nZZ\nZ\033[0m", "ZZ\nZZ\nZ" },
       };
-      for (String edit : edits)
+      for (String[] testCase : cases)
       {
-         output.outputToConsole(edit, nullClazz, notError, checkLineCount, false);
-         Assert.assertEquals("l2\nl3\n", output.getElement().getInnerText());
+         ConsoleOutputWriter output = getTrimmedCOW();
+         output.outputToConsole(testCase[0], nullClazz, notError, checkLineCount, false);
+         Assert.assertEquals(testCase[0], testCase[1], output.getElement().getInnerText());
          assertLinesMatchDom(output);
       }
+   }
 
-      // a write that runs from the trimmed line into a visible one
-      output.outputToConsole("\033[99F\033[1GXX\nYY", nullClazz, notError, checkLineCount, false);
-      Assert.assertEquals("YY\nl3\n", output.getElement().getInnerText());
-      assertLinesMatchDom(output);
+   public void testEditsIntoSplitOffTrimmedPrefixStayOffscreen()
+   {
+      // Once a styled write has split the trimmed part off the visible range,
+      // later writes into it, plain or styled, single or multi-line, must be
+      // discarded in the same way, and never leak into the visible lines.
+      ConsoleOutputWriter output = getTrimmedCOW();
+      String[][] steps = {
+         { "\033[99F\033[2G\033[31mZ\033[0m", "l2\nl3\n" },
+         { "\033[99F\033[2G\033[31mZ\nW\033[0m", "W2\nl3\n" },
+         { "\033[99F\033[1GXX\nYY", "YY\nl3\n" },
+         { "\033[99F\033[9GZ", "YY\nl3\n" },
+         { "\033[99F\033[1G\033[31mA\nB\033[0m", "BY\nl3\n" },
+      };
+      for (String[] step : steps)
+      {
+         output.outputToConsole(step[0], nullClazz, notError, checkLineCount, false);
+         Assert.assertEquals(step[0], step[1], output.getElement().getInnerText());
+         assertLinesMatchDom(output);
+      }
    }
 }
