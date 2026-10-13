@@ -42,6 +42,7 @@ test_that("packages can be installed", {
    {
       withr::local_options(repos = c(CRAN = "https://cloud.R-project.org"))
       info <- download.packages("rlang", destdir = tempdir(), type = "binary", quiet = TRUE)
+      skip_if(nrow(info) == 0L, "CRAN has no binary packages for this platform")
       expect_install(info[1, 2], repos = NULL, type = "binary")
    }
 
