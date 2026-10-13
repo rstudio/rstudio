@@ -122,7 +122,12 @@ endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "13.0.1")
+   if(RSTUDIO_WINDOWS_ARM64)
+      # LLVM never published a Windows ARM64 build of 13.0.1
+      set(LIBCLANG_VERSION "23.1.3")
+   else()
+      set(LIBCLANG_VERSION "13.0.1")
+   endif()
    set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
    if(NOT EXISTS "${LIBCLANG_DIR}")
       message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
@@ -980,7 +985,11 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    endif()
 
    # install libclang
-   if(WIN32)
+   if(WIN32 AND RSTUDIO_WINDOWS_ARM64)
+      file(GLOB LIBCLANG_ARM64_FILES "${LIBCLANG_DIR}/arm64/*")
+      install(PROGRAMS ${LIBCLANG_ARM64_FILES}
+              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/arm64)
+   elseif(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
       install(PROGRAMS ${LIBCLANG_32_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)

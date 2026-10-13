@@ -51,7 +51,9 @@ namespace {
 
 std::string embeddedLibClangPath()
 {
-#if defined(_WIN64)
+#if defined(_M_ARM64)
+   std::string libclang = "arm64/libclang.dll";
+#elif defined(_WIN64)
    std::string libclang = "x86_64/libclang.dll";
 #elif defined(_WIN32)
    std::string libclang = "x86/libclang.dll";
