@@ -48,6 +48,14 @@ on:
         description: "Post test results as a sticky comment on the PR. Pass true only from PR-triggered callers."
         type: boolean
         default: false
+      a11y:
+        description: "Run the accessibility (axe-core) suite instead of the e2e suite: one shard, @a11y tests only, no Copilot, no test credentials."
+        type: boolean
+        default: false
+      a11y_experimental:
+        description: "With a11y, also run axe's experimental WCAG rules."
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       build_from_source:
@@ -78,6 +86,12 @@ on:
         type: boolean
         default: false
       post_pr_comment:
+        type: boolean
+        default: false
+      a11y:
+        type: boolean
+        default: false
+      a11y_experimental:
         type: boolean
         default: false
       defer_merge:
@@ -399,7 +413,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        # The accessibility suite has a single RStudio-backed test; a second
+        # shard would only add a runner.
+        shard: ${{ fromJSON(inputs.a11y && '[1]' || '[1, 2]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
@@ -598,7 +614,9 @@ jobs:
       # Assistant preference tests that select that option. Enable it here so
       # Server matches Desktop. (Posit Assistant is already available on Server
       # via the open-source overlay, so it needs no equivalent flag.)
+      # Accessibility runs keep stock open-source config, where Copilot is off.
       - name: Enable GitHub Copilot for rsessions
+        if: inputs.a11y != true
         run: |
           echo "copilot-enabled=1" | sudo tee -a /etc/rstudio/rsession.conf >/dev/null
 
@@ -720,8 +738,13 @@ jobs:
       # Fork PRs and any caller that doesn't pass the token land on present=false,
       # which skips the retrieve step below; the auth setup project then falls back
       # to its no-credentials path instead of failing the run.
+      # Skipped for accessibility runs. The token comes from the e2e-playwright
+      # environment however the job was started, so this skip -- not an absent
+      # secret -- is what keeps a11y runs from fetching unused credentials.
+      # "Retrieve test credentials" then skips too (empty present output).
       - name: Check for OP service account token
         id: op_token_check
+        if: inputs.a11y != true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
@@ -767,6 +790,10 @@ jobs:
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          # Accessibility mode (playwright.config.ts). Empty rather than "false"
+          # when off; envFlag accepts both, but empty reads as unset in logs.
+          PW_A11Y: ${{ inputs.a11y && '1' || '' }}
+          PW_A11Y_EXPERIMENTAL: ${{ inputs.a11y_experimental && '1' || '' }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
