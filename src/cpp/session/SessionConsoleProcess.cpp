@@ -1118,6 +1118,13 @@ void useTerminalHooks(ConsoleProcessPtr cp)
             realEnv = env;
       }
 
+#ifndef _WIN32
+      // the system or user profiles sourced by our .bash_profile may reset PATH
+      // (Debian's /etc/profile does), dropping the postback dir prepended above;
+      // the hook script puts it back in front so `rstudio` still finds our helper
+      cp->setenv("_RS_POSTBACK_DIR", module_context::rPostbackScriptsDir().getAbsolutePath());
+#endif
+
 #ifdef __APPLE__
       if (cp->getShellType() == TerminalShell::ShellType::PosixBash)
       {
