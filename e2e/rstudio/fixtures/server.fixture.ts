@@ -425,8 +425,9 @@ async function submitLoginFormIfShown(page: Page): Promise<void> {
 }
 
 /**
- * Connect to RStudio Server, log in, and return a ready session. When
- * PW_RSTUDIO_SERVER_URL is unset, a private rserver-dev is spawned per
+ * Connect to RStudio Server, log in, and return the session once the console
+ * input is visible -- before window.rstudio.ready, and with no pane setup
+ * (launchServer adds that). When PW_RSTUDIO_SERVER_URL is unset, a private rserver-dev is spawned per
  * worker with sandboxed env so HOME / data dirs / config dirs are isolated
  * the same way the Desktop fixture isolates them. Set PW_RSTUDIO_SERVER_URL
  * to point at an external server (e.g. CI) to skip the spawn.
