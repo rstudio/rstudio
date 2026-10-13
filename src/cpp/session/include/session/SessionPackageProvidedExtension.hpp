@@ -30,7 +30,6 @@ namespace rstudio {
 namespace core {
 
 class Error;
-class FilePath;
 
 } // end namespace core
 } // end namespace rstudio

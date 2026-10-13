@@ -28,18 +28,33 @@ set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 # compilers provide it as an extension even in C++17 mode, but MSVC requires
 # us to opt-in to C++20.
 #
-# the standard is a minimum, not a pin: when the compiler already defaults to
-# a newer standard CMake adds no -std flag (CMP0128), and a newer standard can
-# be requested with -DCMAKE_CXX_STANDARD=20. that matters when linking against
-# a system Boost: Boost.URL's exported symbols differ between C++17 and C++20
-# builds, so RStudio has to be compiled with the same standard as that Boost.
-if(NOT DEFINED CMAKE_CXX_STANDARD)
-  if(WIN32)
-    set(CMAKE_CXX_STANDARD 20)
-  else()
-    set(CMAKE_CXX_STANDARD 17)
-  endif()
+# the required standard is a minimum, not a pin: when the compiler defaults to
+# a newer standard we build with that default, and a newer standard can be
+# requested explicitly with -DCMAKE_CXX_STANDARD=20. that matters when linking
+# against a system Boost: Boost.URL's exported symbols differ between C++17 and
+# C++20 builds, so RStudio has to be compiled with the same standard as that
+# Boost. CMake always emits the -std flag for CMAKE_CXX_STANDARD, even when the
+# compiler's own default is newer, so the raise has to be done here.
+if(WIN32)
+  set(RSTUDIO_CXX_STANDARD_MINIMUM 20)
+else()
+  set(RSTUDIO_CXX_STANDARD_MINIMUM 17)
 endif()
+
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD ${RSTUDIO_CXX_STANDARD_MINIMUM})
+  # CMAKE_CXX_STANDARD_DEFAULT is "98" for C++98, which a numeric comparison
+  # would rank above every later standard
+  if(CMAKE_CXX_STANDARD_DEFAULT AND
+     NOT CMAKE_CXX_STANDARD_DEFAULT STREQUAL "98" AND
+     CMAKE_CXX_STANDARD_DEFAULT GREATER CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD_DEFAULT})
+  endif()
+elseif(CMAKE_CXX_STANDARD STREQUAL "98" OR
+       CMAKE_CXX_STANDARD LESS RSTUDIO_CXX_STANDARD_MINIMUM)
+  message(FATAL_ERROR "RStudio requires at least C++${RSTUDIO_CXX_STANDARD_MINIMUM}, but CMAKE_CXX_STANDARD is ${CMAKE_CXX_STANDARD}")
+endif()
+message(STATUS "Using C++${CMAKE_CXX_STANDARD}")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
