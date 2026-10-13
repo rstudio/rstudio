@@ -68,10 +68,11 @@ if(RSTUDIO_SESSION_WIN32 AND NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
       "Use the 'x86 Native Tools Command Prompt for VS'.")
 elseif(NOT RSTUDIO_SESSION_WIN32 AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
    message(FATAL_ERROR
-      "The Windows build needs a 64-bit (x64) MSVC compiler, but a "
+      "The Windows build needs a 64-bit (x64 or ARM64) MSVC compiler, but a "
       "${CMAKE_SIZEOF_VOID_P}-pointer-byte compiler was detected.\n"
       "Use the 'x64 Native Tools Command Prompt for VS 2026', or run "
-      "src/cpp/tools/windows-dev.cmd (which sets -arch=amd64).")
+      "src/cpp/tools/windows-dev.cmd (which sets -arch=amd64). For ARM64, "
+      "use VsDevCmd.bat -arch=arm64 -host_arch=arm64.")
 endif()
 
 # 4. Ninja is the supported, CI-tested generator. The Visual Studio multi-config
