@@ -431,7 +431,7 @@ async function submitLoginFormIfShown(page: Page): Promise<void> {
  * the same way the Desktop fixture isolates them. Set PW_RSTUDIO_SERVER_URL
  * to point at an external server (e.g. CI) to skip the spawn.
  */
-export async function launchServer(): Promise<ServerSession> {
+export async function openServerSession(): Promise<ServerSession> {
   const externalUrl = externalServerUrl();
 
   let rserverProcess: ChildProcess | undefined;
@@ -489,6 +489,18 @@ export async function launchServer(): Promise<ServerSession> {
   await page.goto(serverUrl, { waitUntil: 'domcontentloaded' });
   await signInToServer(page);
 
+  return { page, browser, rserverProcess, rserverCleanupDirs };
+}
+
+/**
+ * openServerSession(), plus the setup the e2e suite expects of every session:
+ * a stale save dialog dismissed, the Files pane showing, save_workspace and
+ * reduced_motion set, a clear console, and request interception kept on.
+ */
+export async function launchServer(): Promise<ServerSession> {
+  const session = await openServerSession();
+  const { page } = session;
+
   // Dismiss any "save changes" modal from a previous interrupted run.
   // Use isVisible() (snapshot, no wait) to gate the click -- click({ timeout })
   // would spend the full timeout when no dialog exists.
@@ -520,9 +532,9 @@ export async function launchServer(): Promise<ServerSession> {
   await sleep(500);
   console.log('Console cleared');
 
-  await keepRequestInterceptionOn(context);
+  await keepRequestInterceptionOn(page.context());
 
-  return { page, browser, rserverProcess, rserverCleanupDirs };
+  return session;
 }
 
 /** Close open buffers and quit the R session, waiting for it to end. */
