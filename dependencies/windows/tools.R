@@ -242,7 +242,9 @@ initialize <- function() {
       output <- suppressWarnings(system2(
          vswhere,
          c("-latest", "-products", "*",
+           "-requiresAny",
            "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+           "Microsoft.VisualStudio.Component.VC.Tools.ARM64",
            "-property", "installationPath"),
          stdout = TRUE, stderr = FALSE
       ))

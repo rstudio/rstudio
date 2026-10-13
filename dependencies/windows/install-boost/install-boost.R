@@ -102,17 +102,17 @@ section("Bootstrapping boost")
 run("bootstrap.bat", paste0("vc", MSVC_TOOLSET_VERSION))
 
 # construct common arguments for 32bit, 64bit boost builds
-build <- function(bitness) {
+build <- function(bitness, arch = NULL, folder = sprintf("boost%s", bitness)) {
 
    buildroot <- "C:/rstudio-tools/boost"
    buildname <- tools::file_path_sans_ext(output_name)
    builddir <- file.path(buildroot, buildname)
-   
+
    unlink(builddir, recursive = TRUE)
    dir.create(builddir, recursive = TRUE, showWarnings = FALSE)
    builddir <- utils::shortPathName(builddir)
-   
-   prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "/")
+
+   prefix <- file.path(install_dir, folder, fsep = "/")
    unlink(prefix, recursive = TRUE)
    dir.create(prefix, recursive = TRUE, showWarnings = FALSE)
    prefix <- utils::shortPathName(prefix)
@@ -133,6 +133,7 @@ build <- function(bitness) {
       sprintf("--build-dir=%s", builddir),
       sprintf("--prefix=%s", prefix),
       sprintf("address-model=%s", bitness),
+      if (!is.null(arch)) sprintf("architecture=%s", arch),
       sprintf("toolset=%s", BOOST_TOOLSET),
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
@@ -148,12 +149,22 @@ build <- function(bitness) {
    
 }
 
-# build 32bit Boost
-section("Building Boost 32bit")
-build(bitness = "32")
+if (identical(Sys.getenv("BOOST_ARCH"), "arm64")) {
 
-# build 64bit Boost
-section("Building Boost 64bit")
-build(bitness = "64")
+   # build ARM64 Boost only; there is no 32bit ARM build
+   section("Building Boost ARM64")
+   build(bitness = "64", arch = "arm", folder = "boostarm64")
+
+} else {
+
+   # build 32bit Boost
+   section("Building Boost 32bit")
+   build(bitness = "32")
+
+   # build 64bit Boost
+   section("Building Boost 64bit")
+   build(bitness = "64")
+
+}
 # rejoice
 progress("Boost built successfully!")

@@ -65,7 +65,9 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
    unzip(outputFile, exdir = extractDir)
 }
 
-soci_core_lib <- file.path(soci_build_dir, "x64/lib/Release/libsoci_core_4_0.lib")
+soci_arm64 <- identical(Sys.getenv("SOCI_ARCH"), "arm64")
+soci_check_arch <- if (soci_arm64) "arm64" else "x64"
+soci_core_lib <- file.path(soci_build_dir, soci_check_arch, "lib/Release/libsoci_core_4_0.lib")
 if (file.exists(soci_core_lib)) {
    progress("SOCI is already installed; nothing to do.")
    if (!interactive()) quit()
@@ -107,10 +109,10 @@ setwd("build")
 build <- function(arch, config) {
 
    # compute architecture
-   winarch <- if (arch == "x86") "Win32" else "x64"
+   winarch <- switch(arch, x86 = "Win32", arm64 = "ARM64", "x64")
 
    # build cmake arguments
-   boost_arch <- if (arch == "x86") "boost32" else "boost64"
+   boost_arch <- switch(arch, x86 = "boost32", arm64 = "boostarm64", "boost64")
    boost_name <- sprintf("boost-%s-win-msvc%s-%s-static", BOOST_VERSION, MSVC_TOOLSET_VERSION, tolower(config))
    boost_root <- file.path(output_dir, boost_name, boost_arch)
 
@@ -163,8 +165,17 @@ build <- function(arch, config) {
 
 }
 
-build("x86", "Debug")
-build("x86", "Release")
+if (soci_arm64) {
 
-build("x64", "Debug")
-build("x64", "Release")
+   build("arm64", "Debug")
+   build("arm64", "Release")
+
+} else {
+
+   build("x86", "Debug")
+   build("x86", "Release")
+
+   build("x64", "Debug")
+   build("x64", "Release")
+
+}

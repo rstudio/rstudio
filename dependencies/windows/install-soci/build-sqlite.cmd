@@ -1,3 +1,15 @@
+if /I "%SOCI_ARCH%"=="arm64" (
+  call vcvarsall.bat arm64
+  cd sqlite
+  cd sqlite-*
+  cl /c /EHsc /MDd sqlite3.c
+  lib /OUT:sqlite3-debug-arm64.lib sqlite3.obj
+  move sqlite3-debug-arm64.lib ..
+  cl /c /EHsc /MD sqlite3.c
+  lib /OUT:sqlite3-release-arm64.lib sqlite3.obj
+  move sqlite3-release-arm64.lib ..
+  exit /b 0
+)
 call vcvarsall.bat amd64
 cd sqlite
 cd sqlite-*
