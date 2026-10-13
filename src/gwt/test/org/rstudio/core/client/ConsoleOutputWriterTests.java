@@ -872,4 +872,32 @@ public class ConsoleOutputWriterTests extends GWTTestCase
          assertLinesMatchDom(output);
       }
    }
+
+   public void testEditsIntoTrimmedPrefixOfVisibleRangeStayOffscreen()
+   {
+      // The limit trims the first line out of the DOM, but the range still
+      // spans it logically; edits aimed at that line must not land on l2.
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(2);
+      output.outputToConsole("l1\nl2\nl3\n", nullClazz, notError, checkLineCount, false);
+      Assert.assertEquals("l2\nl3\n", output.getElement().getInnerText());
+
+      String[] edits = {
+         "\033[99F\033[2GZ",             // overwrite(): replaceTail fallback
+         "\033[99F\033[1GZ",             // appendLeft()
+         "\033[99F\033[1G\033[31mZ\033[0m", // trimLeft() plus a new range
+         "\033[99F\033[9GZ",             // past the line's end: extendLineBefore()
+      };
+      for (String edit : edits)
+      {
+         output.outputToConsole(edit, nullClazz, notError, checkLineCount, false);
+         Assert.assertEquals("l2\nl3\n", output.getElement().getInnerText());
+         assertLinesMatchDom(output);
+      }
+
+      // a write that runs from the trimmed line into a visible one
+      output.outputToConsole("\033[99F\033[1GXX\nYY", nullClazz, notError, checkLineCount, false);
+      Assert.assertEquals("YY\nl3\n", output.getElement().getInnerText());
+      assertLinesMatchDom(output);
+   }
 }

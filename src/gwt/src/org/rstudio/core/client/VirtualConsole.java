@@ -838,8 +838,15 @@ public class VirtualConsole
             }
             else
             {
-               // reduce the original range and add ours
+               // reduce the original range and add ours; whatever we wrote
+               // over its trimmed-off prefix stays off-screen
+               int hidden = overlap.hiddenPrefixLength();
                overlap.trimLeft(delta);
+               if (hidden > 0)
+               {
+                  range.trimLeft(Math.min(end, l + hidden) - start);
+                  start = range.start;
+               }
 
                // move the shortened range to its new start position
                // unless it's empty
@@ -1012,16 +1019,7 @@ public class VirtualConsole
       }
 
       if (straddler != null)
-      {
-         String rText = straddler.text();
-         int offset = nlPos - straddler.start;
-         straddler.rewrite(
-               rText,
-               StringUtil.substring(rText, 0, offset)
-                     + spacesStr
-                     + StringUtil.substring(rText, offset));
-         straddler.length += count;
-      }
+         straddler.insert(nlPos - straddler.start, spacesStr);
 
       List<Integer> shiftKeys = new ArrayList<>(class_.tailMap(nlPos + 1).keySet());
       List<ClassRange> shifted = new ArrayList<>(shiftKeys.size());
@@ -1787,10 +1785,11 @@ public class VirtualConsole
 
       public void trimLeft(int delta)
       {
+         int hidden = hiddenPrefixLength();
          length -= delta;
          start += delta;
          String text = text();
-         rewrite(text, StringUtil.substring(text, delta));
+         rewrite(text, StringUtil.substring(text, Math.max(0, delta - hidden)));
       }
 
       public void trimRight(int delta)
@@ -1809,10 +1808,47 @@ public class VirtualConsole
 
       public void appendLeft(String content, int delta)
       {
+         int hidden = hiddenPrefixLength();
          length += content.length() - delta;
          start -= (content.length() - delta);
+
+         // Nothing before the end of a trimmed-off prefix is visible, not
+         // even text written ahead of the range's old start.
+         if (hidden > 0)
+            content = StringUtil.substring(content, Math.min(content.length(), content.length() - delta + hidden));
          String text = text();
-         rewrite(text, content + StringUtil.substring(text, delta));
+         rewrite(text, content + StringUtil.substring(text, Math.max(0, delta - hidden)));
+      }
+
+      /**
+       * Inserts content at a logical offset into the range.
+       */
+      public void insert(int pos, String content)
+      {
+         int offset = pos - hiddenPrefixLength();
+         length += content.length();
+         if (offset < 0)
+            return;
+
+         String text = text();
+         offset = Math.min(offset, text.length());
+         rewrite(text, StringUtil.substring(text, 0, offset) + content + StringUtil.substring(text, offset));
+      }
+
+      /**
+       * Number of characters the scrollback limit has removed from the front
+       * of this element's text. The limit edits the DOM directly, so the range
+       * still covers them logically, and edits addressed from the front have
+       * to skip them. Costs a read of the element's text, as do all callers.
+       */
+      private int hiddenPrefixLength()
+      {
+         // innerHTML is not a faithful copy of the text a range was given
+         if (isHTML_)
+            return 0;
+
+         int visible = text().length() + trimmedTrailingNewlines_.getOrDefault(element, 0);
+         return Math.max(0, length - visible);
       }
 
       /**
@@ -1912,7 +1948,18 @@ public class VirtualConsole
          }
 
          String text = text();
-         int offset = Math.max(0, text.length() - fromEnd);
+         int visible = text.length();
+         if (fromEnd > visible)
+         {
+            // The edit starts in a prefix the scrollback limit has trimmed
+            // away; that part of it stays off-screen.
+            int hidden = fromEnd - visible;
+            count = Math.max(0, count - hidden);
+            content = StringUtil.substring(content, hidden);
+            fromEnd = visible;
+         }
+
+         int offset = visible - fromEnd;
          rewrite(text, StringUtil.substring(text, 0, offset) + content + StringUtil.substring(text, offset + count));
       }
 
