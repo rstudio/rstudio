@@ -1007,10 +1007,11 @@ jobs:
 
       # Publish a browsable copy of the report to S3 on failure only, so
       # reviewers can inspect it without downloading the zip. Best-effort: a
-      # no-op on fork PRs (no secret) and never fails the job.
+      # no-op on fork PRs (no secret) and never fails the job. Accessibility
+      # results stay off the public bucket however the run was started.
       - name: Publish report to S3
         id: publish-report
-        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        if: always() && inputs.a11y != true && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
         uses: ./.github/actions/os-publish-e2e-report
         with:
           role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
