@@ -362,6 +362,14 @@ export function externalServerUrl(): string | null {
   return url.toString().replace(/\/$/, '');
 }
 
+/** How long each sign-in attempt waits for the IDE console. */
+export function serverLoginTimeout(): number {
+  return Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
+}
+
+/** Bound on PW_RSTUDIO_SERVER_RECOVER_CMD, run between sign-in attempts. */
+export const RECOVER_CMD_TIMEOUT = 300_000;
+
 /**
  * Complete the RStudio Server login on `page` (already navigated to the
  * server) and wait until the R console is ready. Fills the login form when
@@ -375,7 +383,7 @@ export function externalServerUrl(): string | null {
 export async function signInToServer(page: Page): Promise<void> {
   await submitLoginFormIfShown(page);
 
-  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
+  const loginTimeout = serverLoginTimeout();
   const consoleReady = { state: 'visible' as const, timeout: loginTimeout };
   try {
     await page.waitForSelector(CONSOLE_INPUT, consoleReady);
@@ -391,7 +399,7 @@ export async function signInToServer(page: Page): Promise<void> {
     if (!recover)
       throw err;
     console.warn(`IDE console not ready after ${loginTimeout}ms; running PW_RSTUDIO_SERVER_RECOVER_CMD`);
-    execSync(recover, { stdio: 'inherit', timeout: 300_000 });
+    execSync(recover, { stdio: 'inherit', timeout: RECOVER_CMD_TIMEOUT });
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await submitLoginFormIfShown(page);

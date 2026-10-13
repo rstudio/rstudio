@@ -1,7 +1,13 @@
 import { test as base, type Page } from '@playwright/test';
 import { CONSOLE_INPUT } from '../pages/console_pane.page';
+import { withDeadline } from '../utils/deadline';
 import { collectRunVersions, publishRunVersions } from '../utils/versions';
-import { openServerSession, shutdownServer } from './server.fixture';
+import {
+  openServerSession,
+  RECOVER_CMD_TIMEOUT,
+  serverLoginTimeout,
+  shutdownServer,
+} from './server.fixture';
 
 /**
  * Fixture for accessibility scans: a new Server session per test, left as
@@ -11,6 +17,19 @@ import { openServerSession, shutdownServer } from './server.fixture';
  */
 
 const SETTLE_TIMEOUT = 120_000;
+const VERSIONS_TIMEOUT = 30_000;
+// The rserver spawn (30 s), browser launch and navigation, the login-form
+// probe, and shutdownServer (45 s graceful phase plus process cleanup).
+const OVERHEAD = 180_000;
+
+/**
+ * Playwright gives a fixture one timeout slot for setup and teardown together.
+ * It sums each phase's own bound, so a stuck phase fails with its own message:
+ * sign-in, including CI's recovery command between two console waits, then
+ * the settle waits and the version read.
+ */
+const FIXTURE_TIMEOUT = 2 * serverLoginTimeout() + RECOVER_CMD_TIMEOUT
+  + 3 * SETTLE_TIMEOUT + VERSIONS_TIMEOUT + OVERHEAD;
 
 /** Wait on concrete signals that the initial UI has settled; no fixed sleeps. */
 async function waitForInitialState(page: Page): Promise<void> {
@@ -26,7 +45,8 @@ async function waitForInitialState(page: Page): Promise<void> {
  */
 async function recordVersions(page: Page): Promise<void> {
   try {
-    publishRunVersions(await collectRunVersions(page, 'server'));
+    publishRunVersions(
+      await withDeadline(collectRunVersions(page, 'server'), VERSIONS_TIMEOUT, 'version read'));
   } catch (err) {
     console.warn(`WARNING: could not record run versions: ${(err as Error).message}`);
   }
@@ -42,7 +62,7 @@ export const test = base.extend<{ a11yPage: Page }>({
     } finally {
       await shutdownServer(session);
     }
-  }, { timeout: 180_000 }],
+  }, { timeout: FIXTURE_TIMEOUT }],
 });
 
 export { expect } from '@playwright/test';
