@@ -1874,14 +1874,9 @@ public class VirtualConsole
        * Number of characters the scrollback limit has removed from the front
        * of this element's text. The limit edits the DOM directly, so the range
        * still covers them logically, and edits addressed from the front have
-       * to skip them. Callers that have already read the element's text pass
-       * it in rather than paying for a second read.
+       * to skip them. Callers pass the element's text they have already read
+       * rather than paying for a second read.
        */
-      private int hiddenPrefixLength()
-      {
-         return isHTML_ ? 0 : hiddenPrefixLength(text());
-      }
-
       private int hiddenPrefixLength(String text)
       {
          // innerHTML is not a faithful copy of the text a range was given
