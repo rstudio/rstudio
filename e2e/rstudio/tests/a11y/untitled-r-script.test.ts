@@ -11,13 +11,16 @@ import { TIMEOUTS } from '@utils/constants';
  */
 test('untitled R script has no WCAG 2.2 AA violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
+    // Teardown may leave an untitled tab behind for the next session, so
+    // "an untitled doc is active" alone could match before the new one exists.
+    const previousId = await page.evaluate(() => window.rstudio?.documents.active()?.id ?? null);
     await executeCommand(page, 'newSourceDoc');
     // The document is created over an RPC and laid out afterwards; wait for
     // it to be active and its editor painted.
-    await page.waitForFunction(() => {
+    await page.waitForFunction((prevId) => {
       const doc = window.rstudio?.documents.active() ?? null;
-      return doc !== null && doc.path === null;
-    }, null, { timeout: TIMEOUTS.fileOpen });
+      return doc !== null && doc.id !== prevId && doc.path === null;
+    }, previousId, { timeout: TIMEOUTS.fileOpen });
     await expect(new SourcePane(page).contentPane).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
     const results = await scanA11y(page, testInfo);
