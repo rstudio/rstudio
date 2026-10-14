@@ -102,7 +102,6 @@ Common components
 * getpass (MIT license)
 * good-listener (MIT license)
 * Google Web Toolkit (Apache license)
-* GoogleTest (BSD license)
 * gsl-lite (MIT license)
 * gwt-websockets (Apache license)
 * gzlog (zlib license)
@@ -187,6 +186,7 @@ Common components
 * pinkie (MIT license)
 * pinkie-promise (MIT license)
 * pinyin (MIT license)
+* Popper (MIT license)
 * prelude-ls (MIT license)
 * process-nextick-args (MIT license)
 * Prometheus Client Library for Modern C++ (MIT license)
@@ -3205,20 +3205,6 @@ the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
-ISC License
------------
-Permission to use, copy, modify, and/or distribute this software for any purpose
-with or without fee is hereby granted, provided that the above copyright notice
-and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-THIS SOFTWARE.
-
 GNU Lesser General Public License version 3.0
 ---------------------------------------------
 GNU LESSER GENERAL PUBLIC LICENSE
@@ -3507,7 +3493,7 @@ THE SOFTWARE.
 
 Ajax.org Code Editor
 --------------------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/gwt/acesupport
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/gwt/acesupport
 
 Copyright (C) 2010 Ajax.org B.V.
 Distributed under the GNU Affero General Public License version 3.0
@@ -4387,30 +4373,6 @@ Source: https://github.com/twbs/bootstrap
 Copyright 2011-2026 The Bootstrap Authors
 Distributed under the MIT License
 
-MIT License text:
-
-The MIT License (MIT)
-
-Copyright (c) 2011-2026 The Bootstrap Authors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
 
 boundary
 --------
@@ -4522,7 +4484,7 @@ Distributed under the Apache License version 2.0
 
 Catch2
 ------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/cpp/tests/cpp/tests/vendor/catch.hpp
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/cpp/tests/cpp/tests/vendor/catch.hpp
 
 Copyright (c) 2022 Two Blue Cubes Ltd.
 Distributed under the Boost Software License
@@ -7058,48 +7020,6 @@ Copyright Google, Inc.
 Distributed under the Apache License version 2.0
 
 
-GoogleTest
-----------
-Source: https://github.com/google/googletest
-
-Copyright 2008, Google Inc.
-Distributed under the BSD 3-Clause license
-
-BSD 3-Clause license text:
-
-Copyright 2008, Google Inc.
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-* Redistributions of source code must retain the above copyright
-  notice, this list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above
-  copyright notice, this list of conditions and the following disclaimer
-  in the documentation and/or other materials provided with the
-  distribution.
-
-* Neither the name of Google Inc. nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
 grep
 ----
 Source: https://cgit.git.savannah.gnu.org/cgit/grep.git/plain
@@ -7148,7 +7068,7 @@ SOFTWARE.
 
 gwt-websockets
 --------------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/gwt/src/com/sksamuel/gwt
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/gwt/src/com/sksamuel/gwt
 
 Copyright 2013 Stephen Samuel
 Distributed under the Apache License version 2.0
@@ -10795,8 +10715,9 @@ lodash
 ------
 Source: https://github.com/lodash/lodash
 
-Copyright OpenJS Foundation and other contributors <https:openjsf.org/>
-Copyright jQuery Foundation and other contributors <https:jquery.org/>
+Copyright 2012-2016 The Dojo Foundation http://dojofoundation.org/
+Copyright OpenJS Foundation and other contributors https://openjsf.org/
+Copyright jQuery Foundation and other contributors https://jquery.org/
 Distributed under the MIT License
 
 MIT License text:
@@ -15848,6 +15769,14 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 
+Popper
+------
+Source: https://github.com/popperjs/popper-core
+
+Copyright (c) 2019 Federico Zivolo
+Distributed under the MIT License
+
+
 postcss
 -------
 Source: https://github.com/postcss/postcss
@@ -15979,7 +15908,7 @@ SOFTWARE.**
 
 Prometheus Client Library for Modern C++
 ----------------------------------------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/cpp/ext/prometheus-cpp
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/cpp/ext/prometheus-cpp
 
 Copyright 2016-2021 Jupp Mueller
 Copyright 2017-2022 Gregor Jasny
@@ -16359,7 +16288,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 RapidXML
 --------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/cpp/core/include/core/rapidxml
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/cpp/core/include/core/rapidxml
 
 Copyright (C) 2006, 2009 Marcin Kalicinski
 
@@ -16686,7 +16615,6 @@ readable-stream
 ---------------
 Source: https://github.com/nodejs/readable-stream
 
-Copyright Joyent, Inc. and other Node contributors.
 Copyright Node.js contributors.
 Distributed under the MIT License
 
@@ -17510,7 +17438,7 @@ THE SOFTWARE.
 
 Stan Highlight Rules
 --------------------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/gwt/acesupport/acemode/stan_highlight_rules.js
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/gwt/acesupport/acemode/stan_highlight_rules.js
 
 Copyright (C) 2014 Jeffrey Arnold
 Distributed under the GNU Lesser General Public License version 2.1 or later
@@ -18597,7 +18525,6 @@ string_decoder
 --------------
 Source: https://github.com/nodejs/string_decoder
 
-Copyright Joyent, Inc. and other Node contributors.
 Copyright Node.js contributors.
 Distributed under the MIT License
 
@@ -18810,7 +18737,7 @@ Distributed under the GNU General Public License version 3.0
 
 Sundown
 -------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/cpp/core/markdown/sundown
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/cpp/core/markdown/sundown
 
 Copyright 2011, Vicent Marti
 Distributed under the ISC License
@@ -19209,7 +19136,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 tree.hh
 -------
-Source: https://github.com/rstudio/rstudio/tree/rel-yellow-yarrow/src/cpp/core/include/core/collection/Tree.hpp
+Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/cpp/core/include/core/collection/Tree.hpp
 
 Derived from tree.hh, copyright (C) 2001-2024 Kasper Peeters
 Distributed under the GNU General Public License version 3.0
@@ -20655,7 +20582,7 @@ yargs
 -----
 Source: https://github.com/yargs/yargs
 
-Copyright 2010 James Halliday (mail@substack.net); Modified work
+Copyright 2010 James Halliday (mail@substack.net)
 Copyright 2014 Contributors (ben@npmjs.com)
 Distributed under the MIT License
 
