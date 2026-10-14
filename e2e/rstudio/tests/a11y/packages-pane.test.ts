@@ -6,27 +6,40 @@ import { TIMEOUTS } from '@utils/constants';
 
 const PACKAGES_PANEL = '#rstudio_workbench_panel_packages';
 const FILES_TOOLBAR_BUTTON = '#rstudio_mb_files_touch_file';
-// A pane's selected tab is saved under this client-state group, which
-// outlives the session -- see PaneManager.SelectedTabStateValue.
-const TAB_STATE = '"workbench-pane"';
 // The tab switch only schedules a passive save, 5 s out (ClientStateUpdater).
 const TAB_STATE_SAVE_TIMEOUT = 15_000;
 
-const isTabStateSave = (r: Request) =>
-  r.url().includes('set_client_state') && (r.postData() ?? '').includes(TAB_STATE);
+/** Selected tab index by tabset, e.g. { TabSet2: 2 }. */
+type TabState = Record<string, number>;
 
 /**
- * Switch back to Files and make sure the server has it. The client only
- * sends tab state that changed since its last save, so if Packages was never
- * sent, Files is still what's stored. If it was, wait for the save that
- * replaces it: the next state's session would otherwise open on Packages.
+ * The tab selections a request saves, if any. A pane's selected tab is
+ * project-persistent client state (the third set_client_state parameter)
+ * that outlives the session -- see PaneManager.SelectedTabStateValue.
  */
-async function restoreFilesTab(page: Page, packagesSaved: () => boolean): Promise<void> {
-  await executeCommand(page, 'activateFiles');
-  await page.locator(FILES_TOOLBAR_BUTTON).waitFor({ state: 'visible', timeout: TIMEOUTS.consoleReady });
-  if (!packagesSaved())
-    return;
-  const request = await page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT });
+function savedTabState(r: Request): TabState | undefined {
+  if (!r.url().includes('set_client_state'))
+    return undefined;
+  return r.postDataJSON()?.params?.[2]?.['workbench-pane'];
+}
+
+/**
+ * Switch back to Files and wait for the save that replaces the Packages
+ * selection: the next state's session would otherwise open on Packages. The
+ * client sends only values that changed, so that save is the next one to
+ * carry a different index for a tabset the Packages save set.
+ */
+async function restoreFilesTab(page: Page, packagesSave: Promise<Request>): Promise<void> {
+  const packages = savedTabState(await packagesSave)!;
+  const filesSave = page.waitForRequest((r) => {
+    const saved = savedTabState(r);
+    return saved !== undefined
+      && Object.entries(packages).some(([tabset, index]) => tabset in saved && saved[tabset] !== index);
+  }, { timeout: TAB_STATE_SAVE_TIMEOUT });
+  const [request] = await Promise.all([filesSave, (async () => {
+    await executeCommand(page, 'activateFiles');
+    await page.locator(FILES_TOOLBAR_BUTTON).waitFor({ state: 'visible', timeout: TIMEOUTS.consoleReady });
+  })()]);
   const response = await request.response();
   // A rejected RPC still answers HTTP 200, with an error member.
   expect(await response?.text(), 'saving the Files tab selection').not.toContain('"error"');
@@ -35,11 +48,15 @@ async function restoreFilesTab(page: Page, packagesSaved: () => boolean): Promis
 /** The initial state with the Packages pane shown in place of Files (Ctrl+7). */
 test('packages pane has no WCAG 2.2 AA violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
-    let packagesSaved = false;
-    const onRequest = (r: Request) => { packagesSaved ||= isTabStateSave(r); };
-    page.on('request', onRequest);
-
     await executeCommand(page, 'activatePackages');
+    // The command selects the tab synchronously, so any tab-state save from
+    // here on carries Packages. Waiting for one costs up to a timer tick, but
+    // tells the restore which value it must see replaced.
+    const packagesSave = page.waitForRequest(
+      (r) => savedTabState(r) !== undefined, { timeout: TAB_STATE_SAVE_TIMEOUT });
+    // Awaited in restoreFilesTab; this keeps a timeout during the scan from
+    // surfacing as an unhandled rejection first.
+    packagesSave.catch(() => {});
     let results;
     try {
       // stats is always attached, so its checked box means the list has loaded.
@@ -47,8 +64,7 @@ test('packages pane has no WCAG 2.2 AA violations', { tag: ['@a11y', '@server_on
         .toBeChecked({ timeout: TIMEOUTS.consoleReady });
       results = await scanA11y(page, testInfo);
     } finally {
-      page.off('request', onRequest);
-      await restoreFilesTab(page, () => packagesSaved);
+      await restoreFilesTab(page, packagesSave);
     }
     expect(violationSummary(results)).toEqual([]);
   });
