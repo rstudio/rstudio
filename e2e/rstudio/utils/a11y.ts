@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { AxeResults, NodeResult, Result } from 'axe-core';
 import type { Page, TestInfo } from '@playwright/test';
 import * as fs from 'fs';
+import * as path from 'path';
 import { envFlag } from './env';
 
 /**
@@ -11,8 +12,16 @@ import { envFlag } from './env';
  */
 export const WCAG_22_AA_TAGS: readonly string[] = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
+/**
+ * Files each state test leaves in its output dir, read by utils/a11y-report.ts.
+ * The fixture writes the marker before the session starts, so a state whose
+ * test ends before its scan still shows up in the report, as not scanned.
+ */
+export const STATE_MARKER = 'a11y-state.json';
+export const RESULTS_FILE = 'axe-results.json';
+export const SCREENSHOT_FILE = 'a11y-state.png';
+
 const SNIPPET_MAX = 300;
-const SUMMARY_NODES_MAX = 10;
 
 const isWcagAA = (r: Result) => r.tags.some((t) => WCAG_22_AA_TAGS.includes(t));
 
@@ -52,11 +61,11 @@ function trimSnippet(html: string): string {
   return flat.length > SNIPPET_MAX ? `${flat.slice(0, SNIPPET_MAX)}...` : flat;
 }
 
-function wcagTags(v: Result): string {
+export function wcagTags(v: Result): string {
   return v.tags.filter((t) => t.startsWith('wcag')).join(', ');
 }
 
-function formatNode(n: NodeResult): string {
+export function formatNode(n: NodeResult): string {
   return [
     `  - ${trimSnippet(n.html)}`,
     ...(n.failureSummary ?? '').split('\n').filter((l) => l.trim()).map((l) => `      ${l.trim()}`),
@@ -81,107 +90,30 @@ export function formatViolations(results: AxeResults): string {
   return `${blocks.join('\n\n')}\n`;
 }
 
-/**
- * For rule lines in the summary: help text can contain markup, e.g.
- * "<html> element must have a lang attribute".
- */
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+/** A state is named after its test file: tests/a11y/packages-pane.test.ts is "packages-pane". */
+export function a11yStateName(testFile: string): string {
+  return path.basename(testFile).replace(/\.test\.ts$/, '');
 }
 
-/**
- * A rule's help link and nodes. Node lines are indented, so none can close
- * the code fence early. The node cap keeps many states under GitHub's 1 MiB
- * per-step summary limit, past which the whole summary is dropped.
- */
-function ruleBody(v: Result, fullList: string): string[] {
-  const shown = v.nodes.slice(0, SUMMARY_NODES_MAX);
-  const hidden = v.nodes.length - shown.length;
-  return [
-    `[Rule help](${v.helpUrl}) - ${wcagTags(v)}`,
-    '',
-    '```',
-    ...shown.map(formatNode),
-    '```',
-    ...(hidden > 0 ? ['', `${hidden} more node(s) in ${fullList}`] : []),
-  ];
-}
-
-function violationDetails(v: Result): string {
-  return [
-    '<details>',
-    `<summary>${escapeHtml(violationLine(v))}</summary>`,
-    '',
-    ...ruleBody(v, 'axe-violations.txt'),
-    '',
-    '</details>',
-  ].join('\n');
-}
-
-/** One collapsed section for all incomplete results, apart from the violations. */
-function needsReviewSection(incomplete: Result[]): string {
-  const heading = `Needs review (incomplete): ${incomplete.length}`;
-  if (incomplete.length === 0)
-    return heading;
-  return [
-    '<details>',
-    `<summary>${heading}</summary>`,
-    '',
-    ...incomplete.flatMap((v) => [
-      `**${escapeHtml(violationLine(v))}**`,
-      '',
-      ...ruleBody(v, 'axe-results.json'),
-      '',
-    ]),
-    '</details>',
-  ].join('\n');
-}
-
-/** The block scanA11y adds to the GitHub job summary for one scan. */
-export function stepSummaryBlock(title: string, ruleSet: string, results: AxeResults): string {
-  return [
-    `### Accessibility: ${title}`,
-    '',
-    `Rules: ${ruleSet}`,
-    '',
-    ...(results.violations.length > 0
-      ? results.violations.map(violationDetails)
-      : ['No violations']),
-    '',
-    needsReviewSection(results.incomplete),
-    '',
-    '',
-  ].join('\n');
-}
-
-/**
- * Best-effort append to the job summary: sharded CI runs replace every
- * reporter that would surface violations on the run's Summary page, so this
- * is how they get there. A write failure must never fail the test.
- */
-export function appendStepSummary(block: string, file: string | undefined): void {
-  if (!file)
-    return;
-  try {
-    fs.appendFileSync(file, block);
-  } catch (err) {
-    console.warn(`WARNING: could not write the accessibility step summary: ${(err as Error).message}`);
-  }
+/** Mark the test's output dir as holding one accessibility state. */
+export function writeStateMarker(testInfo: TestInfo): void {
+  fs.mkdirSync(testInfo.outputDir, { recursive: true });
+  fs.writeFileSync(testInfo.outputPath(STATE_MARKER), JSON.stringify({ state: a11yStateName(testInfo.file) }));
 }
 
 /**
  * Scan the page as it is now and report the results on the test: a
  * screenshot of what was scanned, rule-set and incomplete-count annotations,
- * the raw results, a readable violations list, and the job summary block.
- * Files go to the test's output dir, so local runs can compare them.
+ * the raw results, and a readable violations list. Files go to the test's
+ * output dir, where CI's merge job reads them for the cross-state report.
  */
 export async function scanA11y(page: Page, testInfo: TestInfo): Promise<AxeResults> {
   const experimental = envFlag('PW_A11Y_EXPERIMENTAL');
   const ruleSet = ruleSetLabel(experimental);
 
-  const screenshot = testInfo.outputPath('a11y-state.png');
+  const screenshot = testInfo.outputPath(SCREENSHOT_FILE);
   await page.screenshot({ path: screenshot });
-  await testInfo.attach('a11y-state.png', { path: screenshot, contentType: 'image/png' });
+  await testInfo.attach(SCREENSHOT_FILE, { path: screenshot, contentType: 'image/png' });
 
   const results = await runAxe(page, { experimental });
 
@@ -190,7 +122,7 @@ export async function scanA11y(page: Page, testInfo: TestInfo): Promise<AxeResul
     { type: 'a11y-incomplete', description: String(results.incomplete.length) },
   );
 
-  const json = testInfo.outputPath('axe-results.json');
+  const json = testInfo.outputPath(RESULTS_FILE);
   fs.writeFileSync(json, JSON.stringify({
     ruleSet,
     url: results.url,
@@ -200,12 +132,10 @@ export async function scanA11y(page: Page, testInfo: TestInfo): Promise<AxeResul
     violations: results.violations,
     incomplete: results.incomplete,
   }, null, 2));
-  await testInfo.attach('axe-results.json', { path: json, contentType: 'application/json' });
+  await testInfo.attach(RESULTS_FILE, { path: json, contentType: 'application/json' });
 
   const text = testInfo.outputPath('axe-violations.txt');
   fs.writeFileSync(text, formatViolations(results));
   await testInfo.attach('axe-violations.txt', { path: text, contentType: 'text/plain' });
-
-  appendStepSummary(stepSummaryBlock(testInfo.title, ruleSet, results), process.env.GITHUB_STEP_SUMMARY);
   return results;
 }
