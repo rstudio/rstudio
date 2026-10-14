@@ -64,6 +64,12 @@ bool suspendedForcibly();
 bool sessionResumed();
 void setSessionResumed(bool resumed);
 
+// whether this session was resumed from a suspend for restart (Restart R,
+// rstudioapi::restartSession()), rather than from an ordinary suspend (e.g.
+// for inactivity); only meaningful when sessionResumed()
+bool sessionResumedForRestart();
+void setSessionResumedForRestart(bool resumedForRestart);
+
 } // namespace suspend
 } // namespace session
 } // namespace rstudio

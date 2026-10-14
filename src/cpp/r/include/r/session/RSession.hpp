@@ -113,14 +113,18 @@ struct ROptions
 struct RInitInfo
 {
    RInitInfo()
-      : resumed(false)
+      : resumed(false), resumedForRestart(false)
    {
    }
-   RInitInfo(bool resumed)
-      : resumed(resumed) 
+   RInitInfo(bool resumed, bool resumedForRestart = false)
+      : resumed(resumed), resumedForRestart(resumedForRestart)
    {
    }
    bool resumed;
+
+   // resumed from a suspend for restart (Restart R), rather than from an
+   // ordinary suspend; only meaningful when resumed
+   bool resumedForRestart;
 };
       
 struct RConsoleInput

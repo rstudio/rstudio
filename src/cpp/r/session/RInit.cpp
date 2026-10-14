@@ -375,6 +375,7 @@ Error initialize()
 
    // restore suspended session if we have one
    bool wasResumed = false;
+   bool wasResumedForRestart = false;
    
    // first check for a pending restart
    if (restartContext().hasSessionState())
@@ -387,8 +388,9 @@ Error initialize()
       if (!errorMessages.empty())
          REprintf("%s\n", errorMessages.c_str());
 
-      // note we were resumed
+      // note we were resumed, from a suspend for restart
       wasResumed = true;
+      wasResumedForRestart = true;
    }
    else if (suspendedSessionPath().exists())
    {  
@@ -418,7 +420,7 @@ Error initialize()
    core::startup_timing::checkpoint("r-state-restored");
 
    // initialize client
-   RInitInfo rInitInfo(wasResumed);
+   RInitInfo rInitInfo(wasResumed, wasResumedForRestart);
    error = rCallbacks().init(rInitInfo);
    if (error)
       return error;
