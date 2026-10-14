@@ -165,7 +165,7 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
     // Re-open the chat pane (toggleSidebar may have hidden it during restart)
     await ensureChatPaneVisible(page, chatActions);
 
-    // Best-effort wait for the swap, so the body sampled below is the
+    // Best-effort wait for the swap, so the body checked below is the
     // post-restart document rather than the preserved pre-restart one. If the
     // resumed frame stalls, ChatPane reclaims it after FRAME_LOAD_TIMEOUT_MS
     // and reloads the original element instead -- the pane stays populated
@@ -185,8 +185,9 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
 
     // The iframe should render text -- either the chat app or the "Not
     // Installed" page. Retry rather than sample once: the resumed chat app
-    // first shows a skeleton with no text while it connects (#19104).
-    await expect(
+    // first shows a skeleton with no text while it connects (#19104). Soft,
+    // so a failure still records the frame counts and annotations below.
+    await expect.soft(
       page.locator(CHAT_IFRAME).contentFrame().locator('body'),
       'chat iframe body should not be empty after restart',
     ).toHaveText(/\S/, { useInnerText: true, timeout: TIMEOUTS.consoleReady });
