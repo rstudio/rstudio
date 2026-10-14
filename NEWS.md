@@ -19,6 +19,7 @@
 
 ### Dependencies
 - Electron 44.7.0
+- GWT 2.13.1
 - Quarto 1.10.19
 - RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
 - Updated OpenSSL on Windows from 3.1.4 to 3.5.9
