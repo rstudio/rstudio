@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <boost/function.hpp>
@@ -29,7 +30,6 @@ namespace rstudio {
 namespace core {
 
 class Error;
-class FilePath;
 
 } // end namespace core
 } // end namespace rstudio

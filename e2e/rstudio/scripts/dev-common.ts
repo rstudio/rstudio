@@ -12,7 +12,7 @@ export const BUILD_DIR = path.join(REPO_ROOT, 'build');
 
 // The pinned node toolchain version (keep in sync with RSTUDIO_NODE_VERSION in
 // dependencies/tools/rstudio-tools.sh and the cmake/ant builds).
-const PINNED_NODE_VERSION = '22.22.2';
+const PINNED_NODE_VERSION = '24.21.0';
 
 // Resolve the primary git worktree (main checkout). Downloaded deps are
 // gitignored, so a secondary worktree must borrow them from the primary --

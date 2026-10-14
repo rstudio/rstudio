@@ -30,10 +30,15 @@
 - ([#18774](https://github.com/rstudio/rstudio/issues/18774)): RStudio now runs the newest compatible Posit Assistant installation, whether bundled with RStudio, installed system-wide, or installed per-user, instead of always preferring the user's own. A per-user installation no longer shadows a newer bundled or system-wide copy.
 - ([#18803](https://github.com/rstudio/rstudio/issues/18803)): RStudio Desktop now logs detailed renderer, GPU, and utility process failures to help diagnose crashes.
 -
+- ([#19030](https://github.com/rstudio/rstudio/pull/19030)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
 ### Fixed
+- ([#19082](https://github.com/rstudio/rstudio/issues/19082)): Fixed an issue where console output slowed down, and the IDE could become unresponsive, as the console scrollback filled up -- most visibly when output alternated between stdout and stderr (e.g. `message()` and `cat()` in a loop).
+- ([#19080](https://github.com/rstudio/rstudio/issues/19080)): Fixed an issue where the console could stall for many seconds while large amounts of stderr output with no colon in it (e.g. gert's `git_clone()` progress) arrived.
+- ([rstudio/rstudio-pro#13167](https://github.com/rstudio/rstudio-pro/issues/13167)): Fixed an issue where the Packages pane could show a stale package list (e.g. a blank Package Manager metadata column for a just-installed package) when two package-list refreshes overlapped.
 - ([#17196](https://github.com/rstudio/rstudio/issues/17196)): "Run All Chunks Above", "Run All Chunks Below", and "Run All" now run Python chunks, and switch the console between R and Python as needed, when chunk output is sent to the console rather than shown inline.
 - ([#19059](https://github.com/rstudio/rstudio/issues/19059)): RStudio is now compatible with (and can build against) OpenSSL 4.x.
+- ([#19079](https://github.com/rstudio/rstudio/issues/19079)): RStudio can now be built against a system Boost that was compiled as C++20 (e.g. with GCC 16, whose default is C++20): the build uses the compiler's default C++ standard when that is newer than the required minimum, and a newer standard can also be requested explicitly with `-DCMAKE_CXX_STANDARD=20`.
 - ([#17215](https://github.com/rstudio/rstudio/issues/17215)): Fixed an issue where color previews in the editor shifted the cursor and bracket highlighting to the right at fractional zoom levels or display scaling
 - ([#19054](https://github.com/rstudio/rstudio/issues/19054)): Fixed an issue where saving a document could clear its spelling and diagnostic markers; the R Markdown toolbar now also picks up output format changes when autosave is enabled
 - ([#19056](https://github.com/rstudio/rstudio/issues/19056)): Fixed an issue where R diagnostics were very slow for large documents when the document or the working directory was on a slow filesystem (e.g. a network drive, or a Windows drive mounted within WSL), as the filesystem was consulted for every function call in the document
@@ -43,7 +48,9 @@
 
 ### Dependencies
 - Electron 44.7.0
+- GWT 2.13.1
 - Quarto 1.10.19
 - RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
 - Updated OpenSSL on Windows from 3.1.4 to 3.5.9
+- Updated OpenSSL on macOS from 3.6.3 to 3.5.9, the long-term support release
 

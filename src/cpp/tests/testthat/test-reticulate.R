@@ -15,6 +15,31 @@
 
 context("reticulate")
 
+test_that("startup resolves explicit Python configuration without discovery", {
+   withr::local_envvar(c(RETICULATE_PYTHON = "/opt/testthat/python"))
+   expect_identical(.rs.inferReticulatePython(discover = FALSE), "/opt/testthat/python")
+})
+
+test_that("startup preserves an explicitly empty Python configuration", {
+   withr::local_envvar(c(RETICULATE_PYTHON = ""))
+   expect_identical(.rs.inferReticulatePython(discover = FALSE), "")
+})
+
+test_that("startup leaves automatic Python discovery pending", {
+   skip_if_not_installed("reticulate")
+   withr::local_envvar(c(RETICULATE_PYTHON = NA, RETICULATE_PYTHON_FALLBACK = NA))
+   skip_if(nzchar(.rs.readUiPref("python_path")))
+   skip_if("reticulate" %in% loadedNamespaces() && reticulate::py_available(initialize = FALSE))
+   expect_null(.rs.inferReticulatePython(discover = FALSE))
+})
+
+test_that("startup respects the Python fallback without discovery", {
+   withr::local_envvar(c(RETICULATE_PYTHON = NA, RETICULATE_PYTHON_FALLBACK = "/opt/testthat/fallback"))
+   skip_if(nzchar(.rs.readUiPref("python_path")))
+   skip_if("reticulate" %in% loadedNamespaces() && reticulate::py_available(initialize = FALSE))
+   expect_identical(.rs.inferReticulatePython(discover = FALSE), "/opt/testthat/fallback")
+})
+
 test_that("RETICULATE_PYTHON environment variable is respected", {
    # save old value and set a dummy value
    oldPython <- Sys.getenv("RETICULATE_PYTHON")

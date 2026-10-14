@@ -1,0 +1,42 @@
+name: "Test: E2E Playwright RStudio Accessibility (Server, Ubuntu 24, Open Source)"
+
+# Manually dispatched axe-core scan of RStudio Server (e2e/rstudio/tests/a11y).
+# Results: the merged playwright-report-linux-server artifact and a violation
+# block on the run's Summary page.
+on:
+  workflow_dispatch:
+    inputs:
+      build_from_source:
+        description: "Build RStudio Server from this branch's source. When false, downloads the latest daily .deb installer (or the URL in rstudio_installer_url, if provided)."
+        type: boolean
+        default: true
+      rstudio_installer_url:
+        description: "Optional .deb URL to test against. Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
+        type: string
+        default: ""
+      include_experimental:
+        description: "Also run axe's experimental WCAG rules (e.g. label-content-name-mismatch)."
+        type: boolean
+        default: false
+
+# Must cover the called workflow's own permissions, which GitHub checks
+# against the caller's.
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  a11y-server-ubuntu24:
+    uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
+    # Only the build cache role: in a11y mode nothing else uses a secret.
+    # Results reach neither the e2e dashboard nor S3; the HTML report stays a
+    # run artifact.
+    secrets:
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      project: server
+      a11y: true
+      a11y_experimental: ${{ inputs.include_experimental }}
+      build_from_source: ${{ inputs.build_from_source }}
+      rstudio_installer_url: ${{ inputs.rstudio_installer_url }}

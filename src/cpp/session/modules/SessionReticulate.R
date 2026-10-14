@@ -2205,7 +2205,7 @@ options(reticulate.repl.teardown = function()
 })
 
 # Attempts to infer the current Python interpreter used by reticulate
-.rs.addFunction("inferReticulatePython", function() {
+.rs.addFunction("inferReticulatePython", function(discover = TRUE) {
    
    # Use existing RETICULATE_PYTHON if set
    python <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
@@ -2238,6 +2238,10 @@ options(reticulate.repl.teardown = function()
    if (!is.na(python))
       return(python)
    if (.rs.isPackageInstalled("reticulate")) {
+      # NULL distinguishes pending automatic discovery from an explicitly
+      # configured empty path. Startup performs this discovery asynchronously.
+      if (!discover)
+         return(NULL)
       
       # avoid miniconda prompts
       prev_miniconda <- Sys.getenv("RETICULATE_MINICONDA_ENABLED")
@@ -2246,13 +2250,16 @@ options(reticulate.repl.teardown = function()
       # Then perform a Python version scan/discovery
       # do this in child process so we don't pollute the namespace
       # callback must be passed as a func within a func to avoid loading reticulate
+      # discovery looks for project environments (.venv, Pipfile) relative
+      # to the working directory, so match the asynchronous startup probe
       py_config <- NULL
       tryCatch({
          py_config <- .rs.executeFunctionInChildProcess(
             callback = function() {
                suppressWarnings(tryCatch(reticulate::py_discover_config(),
                                          error = function(e) NULL))
-      })
+            },
+            workingDir = getwd())
        }, finally = {
          Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
       })

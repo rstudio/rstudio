@@ -64,7 +64,7 @@ call :add-vstools-to-path
 call :set-java-home
 
 :: Node version used when building the product
-set RSTUDIO_NODE_VERSION=22.22.2
+set RSTUDIO_NODE_VERSION=24.21.0
 
 :: Node version installed with the product
 set RSTUDIO_INSTALLED_NODE_VERSION=24.21.0

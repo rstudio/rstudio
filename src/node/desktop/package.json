@@ -102,6 +102,7 @@
   "allowScripts": {
     "electron@44.7.0": true,
     "msgpackr-extract@3.0.3": true,
-    "unix-dgram@2.0.6": true
+    "unix-dgram@2.0.6": true,
+    "fsevents": false
   }
 }

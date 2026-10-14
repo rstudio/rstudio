@@ -29,12 +29,7 @@ namespace sql {
 Error initialize()
 {
    using namespace module_context;
-   using boost::bind;
-   
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionSql.R"));
-   return initBlock.execute();
+   return sourceModuleRFileOnDemand("SessionSql.R");
 }
 
 } // end namespace sql

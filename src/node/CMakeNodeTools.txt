@@ -19,13 +19,20 @@ set(RSTUDIO_CMAKE_NODE_TOOLS_INCLUDED YES)
 
 # set the node version
 if(NOT DEFINED RSTUDIO_NODE_VERSION)
-   set(RSTUDIO_NODE_VERSION "22.22.2")
+   set(RSTUDIO_NODE_VERSION "24.21.0")
 endif()
 if(DEFINED ENV{RSTUDIO_NODE_VERSION})
    set(RSTUDIO_NODE_VERSION $ENV{RSTUDIO_NODE_VERSION})
 endif()
 
 # set cmake env vars for node (NODEJS) and node tools, like YARN, and NPM
+
+# find_program() skips the search when its result is already cached, so an
+# existing build tree would keep the previous node after a version bump;
+# clear the cached results and resolve them again on every configure
+foreach(_var NODEJS NPM NPX YARN NODEJS_PATH NPM_PATH NPX_PATH YARN_PATH)
+   unset(${_var} CACHE)
+endforeach()
 
 # resolve the primary git worktree so a secondary worktree (whose downloaded
 # deps are gitignored and hence empty) can borrow the primary checkout's node

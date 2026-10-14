@@ -190,6 +190,8 @@ public class TextEditingTargetCompilePdfHelper
       }
             
        
+      // Startup ships an empty placeholder; the first probe fills it in so
+      // later editors skip the server round trip when everything is installed.
       final SessionInfo sessionInfo = session_.getSessionInfo();
       TexCapabilities texCap = sessionInfo.getTexCapabilities();
 
@@ -205,7 +207,7 @@ public class TextEditingTargetCompilePdfHelper
          final boolean hasRnwWeaveDirective = rnwWeaveDirective != null;
          final RnwWeave fRnwWeave = rnwWeave;
          
-         server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
+         getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
          {
             @Override
             public void onResponseReceived(TexCapabilities response)
@@ -255,6 +257,41 @@ public class TextEditingTargetCompilePdfHelper
       }
    }
    
+   // Editors restored at startup all see the empty placeholder, so they
+   // share one probe rather than each sending their own.
+   private void getTexCapabilities(ServerRequestCallback<TexCapabilities> callback)
+   {
+      texCapabilitiesWaiters_.add(callback);
+      if (texCapabilitiesWaiters_.size() > 1)
+         return;
+
+      final SessionInfo sessionInfo = session_.getSessionInfo();
+      server_.getTexCapabilities(new ServerRequestCallback<TexCapabilities>()
+      {
+         @Override
+         public void onResponseReceived(TexCapabilities response)
+         {
+            sessionInfo.setTexCapabilities(response);
+            for (ServerRequestCallback<TexCapabilities> waiter : takeTexCapabilitiesWaiters())
+               waiter.onResponseReceived(response);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            for (ServerRequestCallback<TexCapabilities> waiter : takeTexCapabilitiesWaiters())
+               waiter.onError(error);
+         }
+      });
+   }
+
+   private static ArrayList<ServerRequestCallback<TexCapabilities>> takeTexCapabilitiesWaiters()
+   {
+      ArrayList<ServerRequestCallback<TexCapabilities>> waiters = new ArrayList<>(texCapabilitiesWaiters_);
+      texCapabilitiesWaiters_.clear();
+      return waiters;
+   }
+
    public FileSystemItem getTargetFile(FileSystemItem editorFile)
    {
       ArrayList<TexMagicComment> magicComments = 
@@ -463,6 +500,7 @@ public class TextEditingTargetCompilePdfHelper
    }
    
    private final DocDisplay docDisplay_;
+   private static final ArrayList<ServerRequestCallback<TexCapabilities>> texCapabilitiesWaiters_ = new ArrayList<>();
    private boolean isWarningShowing_ = false;
    
    private UserPrefs prefs_;

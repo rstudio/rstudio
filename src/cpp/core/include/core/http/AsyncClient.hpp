@@ -75,6 +75,34 @@ typedef boost::function<void(const http::Response&)> ResponseHandler;
 typedef boost::function<void(const core::Error&)> ErrorHandler;
 typedef boost::function<void(void)> ConnectHandler;
 
+// Applied to the response as soon as its headers are parsed, exactly once per
+// upstream attempt, for every response -- buffered, chunked, or streamed. This
+// is where a proxy site puts its per-response side effects and its non-framing
+// header rewrites, so that it has one implementation of them rather than one
+// per body strategy: closeAndRespond() does not invoke the ResponseHandler at
+// all once the body is being streamed (see the
+// `!(useFixedBuffer && (chunkedEncoding_ || streamResponse_))` gate there), and
+// by completion time a streamed response's headers are long gone.
+//
+// Two contract rules, both load-bearing:
+//
+//  - It MUST NOT touch the framing headers (Content-Length, Transfer-Encoding,
+//    Connection). This runs *before* the framing decisions that read them off
+//    this same live response: responseBodyComplete()/streamedBodyComplete()
+//    below compare against Content-Length, and FixedBufferProxy::decideFraming()
+//    re-derives the client-facing framing from Transfer-Encoding and
+//    Content-Length at its first queueChunk(). Rewrites that must change
+//    framing belong to the buffered path's own normalization step, after the
+//    whole body is in hand (see prepareLocalhostResponse in
+//    ServerSessionProxy.cpp).
+//
+//  - It fires once per upstream *attempt*, not once per client request. A site
+//    that retries another endpoint or node builds a fresh client per attempt
+//    (as the load balancer and launcher proxy in rstudio-pro do), so anything
+//    done here must be idempotent, or harmless, on a response that is
+//    subsequently discarded in favor of a retry.
+typedef boost::function<void(http::Response&)> ResponseHeadersHandler;
+
 class IAsyncClient : public Socket
 {
 public:
@@ -87,6 +115,11 @@ public:
                         const ErrorHandler& errorHandler,
                         const FixedBufferHandler& fixedBufferHandler = FixedBufferHandler()) = 0;
    virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler) = 0;
+
+   // Register the headers-received handler described at ResponseHeadersHandler
+   // above. Must be called before execute(); there is no unregister (it is
+   // detached with the rest by disableHandlers()).
+   virtual void setResponseHeadersHandler(const ResponseHeadersHandler& handler) = 0;
 
    // Opt in to streaming non-chunked (Content-Length/EOF-delimited) response
    // bodies piece-wise to the FixedBufferHandler instead of accumulating them in
@@ -383,6 +416,7 @@ public:
       ResponseHandler oldResponseHandler;
       ErrorHandler oldErrorHandler;
       FixedBufferHandler oldFixedBufferHandler;
+      ResponseHeadersHandler oldResponseHeadersHandler;
       ConnectHandler oldConnectHandler;
       ConnectHandler oldDownstreamClosedHandler;
       bool reportDownstreamClosed = false;
@@ -392,6 +426,7 @@ public:
          oldResponseHandler.swap(responseHandler_);
          oldErrorHandler.swap(errorHandler_);
          oldFixedBufferHandler.swap(fixedBufferHandler_);
+         oldResponseHeadersHandler.swap(responseHeadersHandler_);
          oldConnectHandler.swap(connectHandler_);
          oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
 
@@ -546,6 +581,19 @@ public:
          boost::lock_guard<boost::mutex> lock(socketMutex_);
          fixedBufferHandler_.swap(newFixedBufferHandler);
       }
+   }
+
+   virtual void setResponseHeadersHandler(const ResponseHeadersHandler& handler)
+   {
+      // Copy before taking the lock, for the reason execute() documents at
+      // length: copying a boost::function is the fallible part of installing
+      // it, and a failure must not leave the client half-configured.
+      ResponseHeadersHandler newHandler = handler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         responseHeadersHandler_.swap(newHandler);
+      }
+      END_LOCK_MUTEX
    }
 
    virtual void setStreamNonChunkedResponses(bool stream)
@@ -1179,7 +1227,16 @@ private:
       // the subsequent call to handleReadContent will perform
       // the close and respond when it gets a shutdown error (as
       // a result of the server shutting down)
-      if (stopReadingAndRespond())
+      //
+      // The hook is only consulted for a buffered, non-chunked body, the one
+      // case where response_.body() holds what has been received so far.
+      // Chunked and streamed bodies are never accumulated there -- they detect
+      // their own completion (the chunk parser, streamedBodyComplete()) or end
+      // at EOF -- so an override comparing response_.body() against
+      // contentLength() would see "0 of 0" for a body with no Content-Length
+      // and end the response before relaying any of it. Guarding here keeps
+      // overrides from having to know about either mode.
+      if (!chunkedEncoding_ && !streamResponse_ && stopReadingAndRespond())
       {
          closeAndRespond();
          return;
@@ -1195,6 +1252,7 @@ private:
                           boost::asio::placeholders::error)));
    }
 
+   // Only called for a buffered, non-chunked body; see readSomeContent().
    virtual bool stopReadingAndRespond()
    {
       return false;
@@ -1413,6 +1471,41 @@ private:
                                           response_.headerValue(kTransferEncoding),
                                        ERROR_LOCATION));
                return;
+            }
+
+            // The site's headers-received handler: its per-response side effects
+            // and header rewrites, run here so they are identical for a
+            // buffered, chunked and streamed body. Placed after
+            // bufferFullResponse_ (so the site could consult the same decision
+            // we did) and before the chunked early-return below, which is the
+            // last point every strategy still shares. See
+            // ResponseHeadersHandler for why it may not touch framing headers.
+            //
+            // Snapshot-copied under socketMutex_ like every other handler
+            // invocation (see disableHandlers()' contract): a copy failure here
+            // would silently skip the site's hooks for this response, so it is
+            // reported rather than stepped over.
+            {
+               ResponseHeadersHandler headersHandler;
+               SnapshotStatus status = snapshotHandlers(
+                  [&]()
+                  {
+                     if (handlersDisabled_)
+                        return false;
+
+                     headersHandler = responseHeadersHandler_;
+                     return true;
+                  });
+
+               if (status == SnapshotStatus::Failed)
+               {
+                  handleHandlerSnapshotError("Failed to copy response headers handler",
+                                             ERROR_LOCATION);
+                  return;
+               }
+
+               if (status == SnapshotStatus::Ready && headersHandler)
+                  headersHandler(response_);
             }
 
             // if this is chunked encoding, start processing chunks
@@ -1917,6 +2010,7 @@ private:
    boost::asio::streambuf responseBuffer_;
    boost::shared_ptr<ChunkParser> chunkParser_;
    FixedBufferHandler fixedBufferHandler_;
+   ResponseHeadersHandler responseHeadersHandler_;
    boost::function<bool(const http::Response&)> bufferPredicate_;
    bool streamNonChunkedResponses_ = false; // opt-in, set by wiring site
    bool fixedBufferHandlerSupportsPause_ = false; // opt-in, set by FixedBufferProxy::proxy()
