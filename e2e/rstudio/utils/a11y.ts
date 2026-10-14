@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import type { AxeResults, Result } from 'axe-core';
+import type { AxeResults, NodeResult, Result } from 'axe-core';
 import type { Page, TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import { envFlag } from './env';
@@ -12,6 +12,7 @@ import { envFlag } from './env';
 export const WCAG_22_AA_TAGS: readonly string[] = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 const SNIPPET_MAX = 300;
+const SUMMARY_NODES_MAX = 10;
 
 const isWcagAA = (r: Result) => r.tags.some((t) => WCAG_22_AA_TAGS.includes(t));
 
@@ -37,15 +38,30 @@ export async function runAxe(page: Page, { experimental }: { experimental: boole
   };
 }
 
-/** One line per violation, for assertion messages and the step summary. */
+function violationLine(v: Result): string {
+  return `${v.id} [${v.impact ?? 'unknown'}] ${v.nodes.length} node(s): ${v.help}`;
+}
+
+/** One line per violation, for assertion messages. */
 export function violationSummary(results: AxeResults): string[] {
-  return results.violations.map(
-    (v) => `${v.id} [${v.impact ?? 'unknown'}] ${v.nodes.length} node(s): ${v.help}`);
+  return results.violations.map(violationLine);
 }
 
 function trimSnippet(html: string): string {
   const flat = html.replace(/\s+/g, ' ').trim();
   return flat.length > SNIPPET_MAX ? `${flat.slice(0, SNIPPET_MAX)}...` : flat;
+}
+
+function wcagTags(v: Result): string {
+  return v.tags.filter((t) => t.startsWith('wcag')).join(', ');
+}
+
+function formatNode(n: NodeResult): string {
+  return [
+    `  - ${trimSnippet(n.html)}`,
+    ...(n.failureSummary ?? '').split('\n').filter((l) => l.trim()).map((l) => `      ${l.trim()}`),
+    `      target: ${JSON.stringify(n.target)}`,
+  ].join('\n');
 }
 
 /**
@@ -59,29 +75,80 @@ export function formatViolations(results: AxeResults): string {
   const blocks = results.violations.map((v) => [
     `${v.id} [${v.impact ?? 'unknown'}] ${v.help}`,
     `  ${v.helpUrl}`,
-    `  tags: ${v.tags.filter((t) => t.startsWith('wcag')).join(', ')}`,
-    ...v.nodes.map((n) => [
-      `  - ${trimSnippet(n.html)}`,
-      ...(n.failureSummary ?? '').split('\n').filter((l) => l.trim()).map((l) => `      ${l.trim()}`),
-      `      target: ${JSON.stringify(n.target)}`,
-    ].join('\n')),
+    `  tags: ${wcagTags(v)}`,
+    ...v.nodes.map(formatNode),
   ].join('\n'));
   return `${blocks.join('\n\n')}\n`;
 }
 
+/**
+ * For rule lines in the summary: help text can contain markup, e.g.
+ * "<html> element must have a lang attribute".
+ */
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * A rule's help link and nodes. Node lines are indented, so none can close
+ * the code fence early. The node cap keeps many states under GitHub's 1 MiB
+ * per-step summary limit, past which the whole summary is dropped.
+ */
+function ruleBody(v: Result, fullList: string): string[] {
+  const shown = v.nodes.slice(0, SUMMARY_NODES_MAX);
+  const hidden = v.nodes.length - shown.length;
+  return [
+    `[Rule help](${v.helpUrl}) - ${wcagTags(v)}`,
+    '',
+    '```',
+    ...shown.map(formatNode),
+    '```',
+    ...(hidden > 0 ? ['', `${hidden} more node(s) in ${fullList}`] : []),
+  ];
+}
+
+function violationDetails(v: Result): string {
+  return [
+    '<details>',
+    `<summary>${escapeHtml(violationLine(v))}</summary>`,
+    '',
+    ...ruleBody(v, 'axe-violations.txt'),
+    '',
+    '</details>',
+  ].join('\n');
+}
+
+/** One collapsed section for all incomplete results, apart from the violations. */
+function needsReviewSection(incomplete: Result[]): string {
+  const heading = `Needs review (incomplete): ${incomplete.length}`;
+  if (incomplete.length === 0)
+    return heading;
+  return [
+    '<details>',
+    `<summary>${heading}</summary>`,
+    '',
+    ...incomplete.flatMap((v) => [
+      `**${escapeHtml(violationLine(v))}**`,
+      '',
+      ...ruleBody(v, 'axe-results.json'),
+      '',
+    ]),
+    '</details>',
+  ].join('\n');
+}
+
 /** The block scanA11y adds to the GitHub job summary for one scan. */
 export function stepSummaryBlock(title: string, ruleSet: string, results: AxeResults): string {
-  const lines = violationSummary(results);
   return [
     `### Accessibility: ${title}`,
     '',
     `Rules: ${ruleSet}`,
     '',
-    '```',
-    ...(lines.length > 0 ? lines : ['No violations']),
-    '```',
+    ...(results.violations.length > 0
+      ? results.violations.map(violationDetails)
+      : ['No violations']),
     '',
-    `Needs review (incomplete): ${results.incomplete.length}`,
+    needsReviewSection(results.incomplete),
     '',
     '',
   ].join('\n');

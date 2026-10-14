@@ -102,17 +102,94 @@ test.describe('formatViolations', () => {
 });
 
 test.describe('stepSummaryBlock', () => {
-  test('lists the violation lines in a fenced block with the incomplete count', () => {
+  test('gives each rule a collapsible section with its help link and nodes', () => {
     const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([violation()], [violation()]));
-    expect(block).toContain('initial state');
-    expect(block).toContain('WCAG 2.2 AA');
-    expect(block).toContain('```\nimage-alt [critical] 1 node(s): Images must have alternative text\n```');
+    expect(block).toContain('### Accessibility: initial state');
+    expect(block).toContain('Rules: WCAG 2.2 AA');
+    expect(block).toContain(
+      '<summary>image-alt [critical] 1 node(s): Images must have alternative text</summary>');
+    expect(block).toContain(
+      '[Rule help](https://dequeuniversity.com/rules/axe/4.13/image-alt) - wcag2a, wcag111');
+    expect(block).toContain('```\n  - <img src="logo.png">\n');
+    expect(block).toContain('      Element does not have an alt attribute\n');
+    expect(block).toContain('      target: ["img"]\n```');
     expect(block).toContain('Needs review (incomplete): 1');
+  });
+
+  test('closes every section it opens, one per rule', () => {
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([
+      violation(),
+      violation({ id: 'target-size', help: 'Targets must be big enough' }),
+    ]));
+    expect(block.match(/<details>/g)).toHaveLength(2);
+    expect(block.match(/<\/details>/g)).toHaveLength(2);
+    expect(block.match(/^```$/gm)).toHaveLength(4);
+  });
+
+  test('escapes markup in the rule help so it shows as text', () => {
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([violation({
+      id: 'html-has-lang', help: '<html> element must have a lang attribute',
+    })]));
+    expect(block).toContain('&lt;html&gt; element must have a lang attribute</summary>');
+  });
+
+  test('caps the nodes shown per rule and points to the full list', () => {
+    const nodes = Array.from({ length: 12 }, (_, i) => node({ html: `<img id="n${i}">` }));
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([violation({ nodes })]));
+    expect(block).toContain('12 node(s)');
+    expect(block).toContain('<img id="n9">');
+    expect(block).not.toContain('<img id="n10">');
+    expect(block).toContain('2 more node(s) in axe-violations.txt');
+  });
+
+  test('omits the overflow note when every node fits', () => {
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([violation()]));
+    expect(block).not.toContain('more node(s)');
+  });
+
+  test('lists incomplete results in one collapsed section after the violations', () => {
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([violation()], [
+      violation({ id: 'th-has-data-cells', help: 'Table headers must refer to data cells',
+        nodes: [node({ html: '<table>' })] }),
+      violation({ id: 'color-contrast', help: 'Elements must meet minimum contrast',
+        nodes: [node({ html: '<span>' })] }),
+    ]));
+    const section = block.slice(block.indexOf('<summary>Needs review (incomplete): 2</summary>'));
+    expect(section).not.toBe(block);
+    expect(section).not.toContain('Images must have alternative text');
+    expect(section).toContain(
+      '**th-has-data-cells [critical] 1 node(s): Table headers must refer to data cells**');
+    expect(section).toContain(
+      '**color-contrast [critical] 1 node(s): Elements must meet minimum contrast**');
+    expect(section).toContain('```\n  - <table>\n');
+    expect(section.match(/<\/details>/g)).toHaveLength(1);
+  });
+
+  test('points incomplete overflow at axe-results.json', () => {
+    const nodes = Array.from({ length: 11 }, () => node());
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA',
+      results([], [violation({ nodes })]));
+    expect(block).toContain('1 more node(s) in axe-results.json');
+    expect(block).not.toContain('axe-violations.txt');
+  });
+
+  test('escapes markup in incomplete rule lines', () => {
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([], [violation({
+      id: 'html-has-lang', help: '<html> element must have a lang attribute',
+    })]));
+    expect(block).toContain('**html-has-lang [critical] 1 node(s): &lt;html&gt; element must');
+  });
+
+  test('gives a plain zero count, not a section, when nothing needs review', () => {
+    const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([violation()]));
+    expect(block).toContain('</details>\n\nNeeds review (incomplete): 0\n');
+    expect(block.match(/<details>/g)).toHaveLength(1);
   });
 
   test('says "No violations" for a clean scan and still reports incomplete', () => {
     const block = stepSummaryBlock('initial state', 'WCAG 2.2 AA', results([], [violation(), violation()]));
-    expect(block).toContain('```\nNo violations\n```');
+    expect(block).toContain(
+      'Rules: WCAG 2.2 AA\n\nNo violations\n\n<details>\n<summary>Needs review');
     expect(block).toContain('Needs review (incomplete): 2');
   });
 });
