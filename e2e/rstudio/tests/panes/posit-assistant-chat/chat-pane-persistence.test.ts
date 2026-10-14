@@ -183,13 +183,13 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
       .then(() => true)
       .catch(() => false);
 
-    // The iframe should have rendered content -- either the chat app root
-    // or the "Not Installed" page. Both share a non-empty body.
-    const bodyText = await page
-      .locator(CHAT_IFRAME)
-      .contentFrame()
-      .locator('body')
-      .innerText({ timeout: TIMEOUTS.consoleReady });
+    // The iframe should render text -- either the chat app or the "Not
+    // Installed" page. Retry rather than sample once: the resumed chat app
+    // first shows a skeleton with no text while it connects (#19104).
+    await expect(
+      page.locator(CHAT_IFRAME).contentFrame().locator('body'),
+      'chat iframe body should not be empty after restart',
+    ).toHaveText(/\S/, { useInnerText: true, timeout: TIMEOUTS.consoleReady });
 
     // Read the counts only now: the resume load is independent of
     // window.rstudio.ready, so on a slow worker the pending frame can be
@@ -218,8 +218,6 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
       console.log(note);
       testInfo.annotations.push({ type: 'coverage-gap', description: note });
     }
-
-    expect(bodyText.trim().length, 'chat iframe body should not be empty after restart').toBeGreaterThan(0);
 
     expect(counts.maxTitled, 'iframes titled "Posit Assistant" attached at once during resume').toBe(1);
   });
