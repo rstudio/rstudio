@@ -97,7 +97,7 @@ test_that("the lockfile is found where renv looks for it", {
    dir.create(project)
    on.exit(unlink(project, recursive = TRUE), add = TRUE)
    
-   vars <- c("RENV_PATHS_LOCKFILE", "RENV_PROFILE")
+   vars <- c("RENV_PATHS_LOCKFILE", "RENV_PROFILE", "RENV_PATHS_RENV")
    old <- Sys.getenv(vars, unset = NA, names = TRUE)
    Sys.unsetenv(vars)
    on.exit({
@@ -139,6 +139,85 @@ test_that("the lockfile is found where renv looks for it", {
    # the default profile uses the project's own lockfile
    writeLines("default", file.path(project, "renv", "profile"))
    expect_identical(.rs.renv.lockfilePath(project), file.path(project, "renv.lock"))
+   
+   # the renv directory can be moved, and the lockfile (and profile) move with it
+   Sys.setenv(RENV_PATHS_RENV = "foo/renv")
+   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "foo", "renv.lock"))
+   
+   dir.create(file.path(project, "foo", "renv"), recursive = TRUE)
+   writeLines("dev", file.path(project, "foo", "renv", "profile"))
+   expect_identical(
+      .rs.renv.lockfilePath(project),
+      file.path(project, "foo", "renv", "profiles", "dev", "renv.lock")
+   )
+   
+   elsewhere <- file.path(project, "elsewhere", "renv")
+   Sys.setenv(RENV_PATHS_RENV = elsewhere)
+   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "elsewhere", "renv.lock"))
+   
+})
+
+test_that("the lockfile is found where renv itself would look", {
+   
+   skip_if_not_installed("renv")
+   
+   project <- tempfile("renv-project-")
+   dir.create(project)
+   on.exit(unlink(project, recursive = TRUE), add = TRUE)
+   project <- normalizePath(project, winslash = "/")
+   
+   vars <- c("RENV_PATHS_LOCKFILE", "RENV_PROFILE", "RENV_PATHS_RENV")
+   old <- Sys.getenv(vars, unset = NA, names = TRUE)
+   Sys.unsetenv(vars)
+   on.exit({
+      set <- old[!is.na(old)]
+      Sys.unsetenv(vars)
+      if (length(set))
+         do.call(Sys.setenv, as.list(set))
+   }, add = TRUE)
+   
+   # renv's own answer is used when renv is active, and the fallback agrees
+   # with it in the cases both handle
+   agree <- function() {
+      expected <- renv::paths$lockfile(project = project)
+      expect_identical(.rs.renv.lockfilePath(project, useRenv = TRUE), expected)
+      expect_identical(.rs.renv.lockfilePath(project, useRenv = FALSE), expected)
+   }
+   
+   agree()
+   
+   Sys.setenv(RENV_PATHS_RENV = "foo/renv")
+   agree()
+   
+   Sys.setenv(RENV_PROFILE = "dev")
+   agree()
+   
+   Sys.setenv(RENV_PATHS_RENV = file.path(project, "elsewhere", "renv"))
+   agree()
+   
+   Sys.setenv(RENV_PATHS_LOCKFILE = "lockfiles/")
+   agree()
+   
+})
+
+test_that("an empty renv library is recognized", {
+   
+   skip_if_not_installed("renv")
+   
+   project <- tempfile("renv-project-")
+   dir.create(project)
+   on.exit(unlink(project, recursive = TRUE), add = TRUE)
+   
+   library <- renv:::renv_paths_library(project = project)
+   skip_if_not(startsWith(normalizePath(library, mustWork = FALSE), normalizePath(project)))
+   
+   # no library yet, or one holding only renv itself
+   expect_true(.rs.renv.projectLibraryIsEmpty(project))
+   dir.create(file.path(library, "renv"), recursive = TRUE)
+   expect_true(.rs.renv.projectLibraryIsEmpty(project))
+   
+   dir.create(file.path(library, "jsonlite"))
+   expect_false(.rs.renv.projectLibraryIsEmpty(project))
    
 })
 

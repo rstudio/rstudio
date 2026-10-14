@@ -27,6 +27,7 @@ import {
   rDetectionReady,
   rQueryCommand,
   startRDetection,
+  windowsSessionPath,
 } from '../../../src/main/detect-r';
 
 describe('DetectR', () => {
@@ -106,6 +107,17 @@ describe('DetectR', () => {
       } else {
         process.env[variable] = launched;
       }
+    }
+  });
+
+  it('puts an R on the PATH RStudio was launched with, not behind an R prepared earlier', () => {
+    const launched = process.env.PATH;
+    process.env.PATH = `C:\\R\\R-4.4.1\\bin\\x64;${launched}`;
+    try {
+      const expected = launched ? `C:\\R\\R-4.5.0\\bin\\x64;${launched}` : 'C:\\R\\R-4.5.0\\bin\\x64';
+      assert.equal(windowsSessionPath('C:\\R\\R-4.5.0\\bin\\x64'), expected);
+    } finally {
+      process.env.PATH = launched;
     }
   });
 

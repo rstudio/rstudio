@@ -199,7 +199,7 @@
    {
       # renv's activate script reads the profile from this file when the
       # environment doesn't name one
-      file <- file.path(project, "renv", "profile")
+      file <- file.path(.rs.renv.renvDirectory(project), "profile")
       contents <- if (file.exists(file))
          .rs.tryCatch(readLines(file, n = 1L, warn = FALSE))
 
@@ -210,11 +210,32 @@
    if (identical(profile, "default")) "" else profile
 })
 
-#' The path to the project's renv lockfile, found as renv finds it: an
-#' RENV_PATHS_LOCKFILE override (a trailing slash names a directory holding
-#' renv.lock), else the lockfile of the active profile.
-.rs.addFunction("renv.lockfilePath", function(project)
+#' The directory renv keeps a project's files in (RENV_PATHS_RENV, or
+#' 'renv'): an absolute path, or one relative to the project. A profile,
+#' when given, has its own directory below it, as renv lays profiles out.
+.rs.addFunction("renv.renvDirectory", function(project, profile = "")
 {
+   renv <- Sys.getenv("RENV_PATHS_RENV", unset = "renv")
+   root <- if (.rs.isAbsolutePath(renv)) NULL else project
+   prefix <- if (nzchar(profile)) c("profiles", profile, "renv")
+   paste(c(root, renv, prefix), collapse = "/")
+})
+
+#' The path to the project's renv lockfile. Once renv is active it resolves
+#' the path itself, so that its path overrides, profile and settings all
+#' apply. Otherwise the lockfile is found as renv would find it: an
+#' RENV_PATHS_LOCKFILE override (a trailing slash names a directory holding
+#' renv.lock), else next to the renv directory of the active profile.
+.rs.addFunction("renv.lockfilePath", function(project,
+                                              useRenv = nzchar(Sys.getenv("RENV_PROJECT")))
+{
+   if (useRenv)
+   {
+      lockfile <- .rs.tryCatch(renv::paths$lockfile(project = project))
+      if (is.character(lockfile) && length(lockfile) == 1L && nzchar(lockfile))
+         return(lockfile)
+   }
+
    lockfile <- Sys.getenv("RENV_PATHS_LOCKFILE", unset = "")
    if (nzchar(lockfile))
    {
@@ -224,10 +245,7 @@
    else
    {
       profile <- .rs.renv.activeProfile(project)
-      lockfile <- if (nzchar(profile))
-         file.path("renv", "profiles", profile, "renv.lock")
-      else
-         "renv.lock"
+      lockfile <- file.path(dirname(.rs.renv.renvDirectory(project, profile)), "renv.lock")
    }
 
    if (!.rs.isAbsolutePath(lockfile))
@@ -274,10 +292,15 @@
 
 #' Whether the project's renv library contains no packages (other than renv
 #' itself), as it does right after switching to a different version of R.
+#' A library whose location can't be determined is not reported as empty,
+#' so that no restore is offered on a guess.
 .rs.addFunction("renv.projectLibraryIsEmpty", function(project)
 {
    library <- .rs.tryCatch(renv:::renv_paths_library(project = project))
-   if (inherits(library, "error") || !dir.exists(library))
+   if (inherits(library, "error"))
+      return(FALSE)
+
+   if (!dir.exists(library))
       return(TRUE)
 
    packages <- setdiff(list.files(library), "renv")
@@ -293,6 +316,8 @@
 #' @param renvActive Whether renv is active in the project.
 #' @param findInstalled Whether to look for an installed R matching a
 #'   mismatched request (only useful where the session can switch R).
+#' @param refreshInstalled Whether to list the installed versions of R
+#'   afresh, rather than reuse the list from an earlier check this session.
 #' @param current The version of R in use.
 #'
 #' @return A list whose 'type' says what to tell the user: "none"; "restore"
@@ -305,6 +330,7 @@
                                                  minimum,
                                                  renvActive,
                                                  findInstalled,
+                                                 refreshInstalled = TRUE,
                                                  current = getRversion())
 {
    lockfile <- NULL
@@ -339,7 +365,7 @@
    installed <- NULL
    if (findInstalled)
    {
-      installed <- .rs.tryCatch(.rs.findInstalledRVersion(requested))
+      installed <- .rs.tryCatch(.rs.findInstalledRVersion(requested, refresh = refreshInstalled))
       if (inherits(installed, "error"))
       {
          .rs.logWarningMessage(

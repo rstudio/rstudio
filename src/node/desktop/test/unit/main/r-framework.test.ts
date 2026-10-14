@@ -88,6 +88,22 @@ describe('RFramework', () => {
       }
     });
 
+    it('treats the current version as running as itself', () => {
+      const version = frameworkVersion(join(root, 'Versions', '4.4-arm64', 'Resources'), root);
+      assert.isNotNull(version);
+      assert.isFalse(isOrthogonal(version));
+
+      // the shared paths its launcher names resolve to it
+      symlinkSync('4.4-arm64', join(root, 'Versions', 'Current'));
+      assert.isTrue(isOrthogonal(version));
+
+      // but not once another version is current
+      rmSync(join(root, 'Versions', 'Current'));
+      mkdirSync(join(root, 'Versions', '4.5-arm64'));
+      symlinkSync('4.5-arm64', join(root, 'Versions', 'Current'));
+      assert.isFalse(isOrthogonal(version));
+    });
+
     it('points a version at its own directory, as rig does', async () => {
       const version = frameworkVersion(join(root, 'Versions', '4.4-arm64', 'Resources'), root);
       assert.isNotNull(version);

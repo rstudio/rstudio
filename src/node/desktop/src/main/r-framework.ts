@@ -32,6 +32,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -96,13 +97,30 @@ export function frameworkVersion(home: string, root = kRFrameworkRoot): Framewor
   return { name, dir, home: `${dir}/Resources` };
 }
 
-/** Whether the framework version runs as itself when it isn't the default. */
+/**
+ * Whether the framework version runs as itself when it isn't the default.
+ * The default version is what the shared paths resolve to, so it does as it
+ * is, whatever its launcher names.
+ */
 export function isOrthogonal(version: FrameworkVersion): boolean {
+  if (isCurrentVersion(version)) {
+    return true;
+  }
+
   try {
     return !readFileSync(`${version.home}/bin/R`, 'utf-8').includes(kSharedHome);
   } catch {
     // an unreadable launcher can't be judged (nor fixed); running it fails on its own
     return true;
+  }
+}
+
+/** Whether the framework's 'Current' link points to this version. */
+function isCurrentVersion(version: FrameworkVersion): boolean {
+  try {
+    return realpathSync(path.join(path.dirname(version.dir), 'Current')) === realpathSync(version.dir);
+  } catch {
+    return false;
   }
 }
 

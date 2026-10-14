@@ -49,6 +49,11 @@ if (process.platform === 'darwin') {
 // switched to later, whose paths must not follow those of the previous R.
 const kUserLdLibraryPath = getenv(kLdLibraryPathVariable);
 
+// The PATH RStudio was launched with, kept aside for the same reason: on
+// Windows the session's R goes in front of it, and an R switched to later
+// must not leave the previous R's directory behind it.
+const kUserPath = getenv('PATH');
+
 interface REnvironment {
   rScriptPath: string;
   version: string;
@@ -285,11 +290,18 @@ function prepareEnvironmentImpl(rPath: string): Err {
   // in the same directory can be resolved
   const scriptPath = rEnvironment.rScriptPath;
   if (process.platform === 'win32') {
-    const binDir = path.dirname(scriptPath);
-    process.env.PATH = `${binDir};${process.env.PATH}`;
+    process.env.PATH = windowsSessionPath(path.dirname(scriptPath));
   }
 
   return success();
+}
+
+/**
+ * The PATH a session runs with on Windows: the R's bin directory ahead of
+ * the PATH RStudio was launched with, whichever R was prepared before.
+ */
+export function windowsSessionPath(binDir: string): string {
+  return kUserPath ? `${binDir};${kUserPath}` : binDir;
 }
 
 // Querying R costs a process launch (~150ms or more). The same executable is
@@ -323,12 +335,12 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
   }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
 
-  const query = rQueryCommand(rExecutable.getAbsolutePath(), environment);
+  const launch = rQueryCommand(rExecutable.getAbsolutePath(), environment);
   const [spawned, spawnError] = expect(() => {
-    return spawnSync(query.command, query.args, {
+    return spawnSync(launch.command, launch.args, {
       encoding: 'utf-8',
       input: rQueryScript(),
-      env: query.env,
+      env: launch.env,
     });
   });
   if (spawnError) {
@@ -364,12 +376,12 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
   }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable} (in background)`);
 
-  const query = rQueryCommand(rExecutable.getAbsolutePath(), environment);
+  const launch = rQueryCommand(rExecutable.getAbsolutePath(), environment);
   const result = await new Promise<RQueryResult>((resolve) => {
     let stdout = '';
     let stderr = '';
-    const child = spawn(query.command, query.args, {
-      env: query.env,
+    const child = spawn(launch.command, launch.args, {
+      env: launch.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     child.stdout.on('data', (data) => (stdout += data));

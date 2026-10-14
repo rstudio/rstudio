@@ -240,23 +240,15 @@ private:
                   ERROR_LOCATION);
       }
 
-      std::string contents, actual;
-      error = readStringFromFile(archive, &contents);
-      if (!error)
-         error = core::system::crypto::sha256Hex(contents, &actual);
+      error = verifyArchiveDigest(archive, expected);
       if (error)
-         return error;
-
-      if (!boost::algorithm::iequals(actual, expected))
       {
-         log("SHA-256 mismatch: expected " + expected + ", got " + actual + "\n");
-         return systemError(
-                  boost::system::errc::illegal_byte_sequence,
-                  "the downloaded rig archive failed verification",
-                  ERROR_LOCATION);
+         std::string actual = error.getProperty("actual");
+         if (!actual.empty())
+            log("SHA-256 mismatch: expected " + expected + ", got " + actual + "\n");
       }
 
-      return Success();
+      return error;
    }
 
    // Step: have rig install the requested version of R. Installing in
@@ -327,7 +319,7 @@ private:
          finish(false, "cancelled");
    }
 
-   void finish(bool ok, const std::string& error)
+   void finish(bool ok, std::string error)
    {
       if (pJob_->complete())
          return;
@@ -342,7 +334,8 @@ private:
          if (!installed.isObject())
          {
             ok = false;
-            log("R " + version_ + " was not found after installation\n");
+            error = "R " + version_ + " was not found after installation";
+            log(error + "\n");
          }
       }
       else
@@ -413,6 +406,37 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
 }
 
 } // anonymous namespace
+
+Error verifyArchiveDigest(const FilePath& archive, const std::string& expected)
+{
+   if (expected.empty())
+   {
+      return systemError(
+               boost::system::errc::operation_not_permitted,
+               "no checksum is known for " + archive.getFilename(),
+               ERROR_LOCATION);
+   }
+
+   std::string contents, actual;
+   Error error = readStringFromFile(archive, &contents);
+   if (!error)
+      error = core::system::crypto::sha256Hex(contents, &actual);
+   if (error)
+      return error;
+
+   if (!boost::algorithm::iequals(actual, expected))
+   {
+      error = systemError(
+               boost::system::errc::illegal_byte_sequence,
+               "the downloaded archive failed verification",
+               ERROR_LOCATION);
+      error.addProperty("expected", expected);
+      error.addProperty("actual", actual);
+      return error;
+   }
+
+   return Success();
+}
 
 Error findInstalledRVersion(const std::string& version, json::Value* pInstalled)
 {

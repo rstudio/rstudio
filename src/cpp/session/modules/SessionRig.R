@@ -202,11 +202,15 @@
 
    unlink(root, recursive = TRUE)
    dir.create(dirname(root), recursive = TRUE, showWarnings = FALSE)
-   if (!file.rename(staging, root))
+   if (!suppressWarnings(file.rename(staging, root)))
    {
       # a rename can fail across filesystems; fall back to a copy
-      dir.create(root, recursive = TRUE, showWarnings = FALSE)
-      file.copy(list.files(staging, full.names = TRUE), root, recursive = TRUE)
+      if (!dir.create(root, recursive = TRUE, showWarnings = FALSE))
+         stop(sprintf("failed to create '%s'", root))
+
+      copied <- file.copy(list.files(staging, full.names = TRUE), root, recursive = TRUE)
+      if (!all(copied))
+         stop(sprintf("failed to copy rig into '%s'", root))
    }
 
    rig <- file.path(root, "bin", .rs.rig.exeName())
@@ -408,6 +412,20 @@
    installed[!duplicated(key), , drop = FALSE]
 })
 
+.rs.setVar("rInstallationsCache", new.env(parent = emptyenv()))
+
+#' The R installations on this machine, as last listed this session.
+#' Listing them runs rig (and possibly R) several times, so the list is
+#' reused until a refresh is asked for.
+.rs.addFunction("rInstallations.cached", function(refresh = FALSE)
+{
+   cache <- .rs.rInstallationsCache
+   if (refresh || is.null(cache$installed))
+      cache$installed <- .rs.rInstallations.list()
+
+   cache$installed
+})
+
 #' The architectures a macOS R installation's libR.dylib was built for
 #' ("arm64", "x86_64"), read from its Mach-O header; empty when unreadable.
 .rs.addFunction("rInstallations.architectures", function(home)
@@ -461,10 +479,15 @@
 #' a version, or any R process it starts, runs the current version instead.
 #' rig makes a version "orthogonal" by rewriting those paths to its own
 #' directory (see 'rig system make-orthogonal'); the launcher script tells
-#' whether that happened. Other installations are always orthogonal.
+#' whether that happened. The current version itself is what the shared
+#' paths resolve to, so it runs as itself as it is. Other installations are
+#' always orthogonal.
 .rs.addFunction("rInstallations.isOrthogonal", function(home)
 {
    if (!grepl("/R[.]framework/Versions/[^/]+/Resources$", home))
+      return(TRUE)
+
+   if (.rs.rInstallations.isCurrentFrameworkVersion(home))
       return(TRUE)
 
    launcher <- .rs.tryCatch(readLines(file.path(home, "bin", "R"), warn = FALSE))
@@ -474,13 +497,31 @@
    !any(grepl("R.framework/Resources", launcher, fixed = TRUE))
 })
 
+#' Whether a macOS framework version, given by its home, is the one the
+#' framework's 'Current' link points to.
+.rs.addFunction("rInstallations.isCurrentFrameworkVersion", function(home)
+{
+   dir <- dirname(home)
+   current <- file.path(dirname(dir), "Current")
+   if (!file.exists(current))
+      return(FALSE)
+
+   identical(
+      normalizePath(current, winslash = "/", mustWork = FALSE),
+      normalizePath(dir, winslash = "/", mustWork = FALSE)
+   )
+})
+
 #' Find an installed R matching the requested version. Versions sharing the
 #' requested major.minor are considered a match; an exact match is preferred,
 #' then the newest patch release. A build for the preferred architecture is
-#' chosen over others. Returns NULL when nothing matches.
+#' chosen over others. Returns NULL when nothing matches. The installations
+#' are listed afresh unless 'refresh' is FALSE, when the list from an
+#' earlier lookup this session is reused.
 .rs.addFunction("findInstalledRVersion", function(version,
-                                                  installed = .rs.rInstallations.list(),
-                                                  architecture = .rs.rInstallations.preferredArchitecture())
+                                                  installed = .rs.rInstallations.cached(refresh),
+                                                  architecture = .rs.rInstallations.preferredArchitecture(),
+                                                  refresh = TRUE)
 {
    if (nrow(installed) == 0L)
       return(NULL)

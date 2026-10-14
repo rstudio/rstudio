@@ -265,6 +265,37 @@ test_that("a rig archive is extracted into the install root", {
 
 })
 
+test_that("a rig archive that can't be installed is reported", {
+
+   skip_on_os("windows")
+   skip_if(identical(Sys.info()[["effective_user"]], "root"))
+
+   staging <- tempfile("rig-archive-")
+   dir.create(file.path(staging, "bin"), recursive = TRUE)
+   writeLines("#!/bin/sh\necho rig", file.path(staging, "bin", "rig"))
+
+   archive <- tempfile(fileext = ".tar.gz")
+   owd <- setwd(staging)
+   on.exit(setwd(owd), add = TRUE)
+   utils::tar(archive, files = "bin", compression = "gzip", tar = "internal")
+   setwd(owd)
+
+   # an install root that can't be created: neither the rename nor the copy
+   # it falls back to can succeed, and neither failure passes silently
+   parent <- tempfile("rig-root-")
+   dir.create(parent)
+   on.exit({
+      Sys.chmod(parent, mode = "0755")
+      unlink(parent, recursive = TRUE)
+   }, add = TRUE)
+   Sys.chmod(parent, mode = "0555")
+
+   root <- file.path(parent, "rig")
+   expect_error(.rs.rig.installArchive(archive, root = root))
+   expect_false(file.exists(file.path(root, "bin", "rig")))
+
+})
+
 test_that("listing installed R versions without rig gives an empty table", {
 
    installed <- .rs.rig.list(rig = "")
@@ -325,6 +356,60 @@ test_that("macOS framework versions that run the default R are recognized", {
 
    # other installations are unaffected
    expect_true(.rs.rInstallations.isOrthogonal("/opt/R/4.4.1/lib/R"))
+
+})
+
+test_that("the current macOS framework version runs as itself", {
+
+   skip_on_os("windows")
+
+   root <- tempfile("r-framework-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   versions <- file.path(root, "R.framework", "Versions")
+   for (name in c("4.4-arm64", "4.5-arm64"))
+   {
+      home <- file.path(versions, name, "Resources")
+      dir.create(file.path(home, "bin"), recursive = TRUE)
+      writeLines(
+         c("#!/bin/sh", "R_HOME_DIR=/Library/Frameworks/R.framework/Resources"),
+         file.path(home, "bin", "R")
+      )
+   }
+
+   # the shared paths resolve to the current version, so it needs no rewrite
+   file.symlink("4.5-arm64", file.path(versions, "Current"))
+   expect_true(.rs.rInstallations.isOrthogonal(file.path(versions, "4.5-arm64", "Resources")))
+   expect_false(.rs.rInstallations.isOrthogonal(file.path(versions, "4.4-arm64", "Resources")))
+
+   # also when the current version is asked about through the link
+   expect_true(.rs.rInstallations.isOrthogonal(file.path(versions, "Current", "Resources")))
+
+})
+
+test_that("installed R versions are listed once per session unless refreshed", {
+
+   cache <- .rs.rInstallationsCache
+   old <- cache$installed
+   on.exit({
+      if (is.null(old))
+         rm(list = "installed", envir = cache)
+      else
+         cache$installed <- old
+   }, add = TRUE)
+
+   installed <- data.frame(
+      version = "4.4.1",
+      path    = "/opt/R/4.4.1",
+      binary  = "/opt/R/4.4.1/bin/R",
+      home    = "/opt/R/4.4.1/lib/R",
+      stringsAsFactors = FALSE
+   )
+   cache$installed <- installed
+
+   expect_identical(.rs.rInstallations.cached(), installed)
+   match <- .rs.findInstalledRVersion("4.4", architecture = NULL, refresh = FALSE)
+   expect_equal(match$binary, .rs.scalar("/opt/R/4.4.1/bin/R"))
 
 })
 

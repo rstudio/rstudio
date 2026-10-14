@@ -117,8 +117,10 @@ void onConsolePrompt(const std::string& /* prompt */)
 // Compare the version of R the project asks for with the running one. The
 // client is told when they differ, so it can offer to switch, or when they
 // match but the renv library is empty (as it is right after a switch), so
-// it can offer to restore it.
-void checkProjectRVersion()
+// it can offer to restore it. Looking for an installed match lists the
+// installed versions of R (which runs rig); when nothing can have changed
+// since the last check, the list it made is reused instead.
+void checkProjectRVersion(bool refreshInstalled)
 {
    if (!prefs::userPrefs().checkProjectRVersion())
       return;
@@ -144,6 +146,7 @@ void checkProjectRVersion()
          .addParam("minimum", RSTUDIO_R_VERSION_REQUIRED)
          .addParam("renvActive", module_context::isRenvActive())
          .addParam("findInstalled", desktop)
+         .addParam("refreshInstalled", refreshInstalled)
          .call(&resultJson);
    if (error)
    {
@@ -206,19 +209,25 @@ void checkProjectRVersion()
 // that is one reconnecting to it (e.g. after a browser refresh)
 bool s_sessionStarted = false;
 
-// whether a check is waiting to run
+// whether a check is waiting to run, and whether it is to list the
+// installed versions of R afresh
 bool s_checkScheduled = false;
+bool s_refreshInstalled = false;
 
 void runScheduledCheck()
 {
+   bool refreshInstalled = s_refreshInstalled;
    s_checkScheduled = false;
-   checkProjectRVersion();
+   s_refreshInstalled = false;
+   checkProjectRVersion(refreshInstalled);
 }
 
 // Looking for installed versions of R runs rig, which takes a moment, so the
-// check runs once the session is idle rather than holding anything up.
-void scheduleProjectRVersionCheck()
+// check runs once the session is idle rather than holding anything up. Checks
+// scheduled together run once; one that wants a fresh list gets it.
+void scheduleProjectRVersionCheck(bool refreshInstalled)
 {
+   s_refreshInstalled = s_refreshInstalled || refreshInstalled;
    if (s_checkScheduled)
       return;
 
@@ -240,15 +249,16 @@ void onDeferredInit(bool newSession)
    if (!newSession && !suspend::sessionResumedForRestart())
       return;
 
-   scheduleProjectRVersionCheck();
+   scheduleProjectRVersionCheck(true);
 }
 
 // A reconnecting client (e.g. after a browser refresh) starts without the
-// warning the previous page showed.
+// warning the previous page showed. The session hasn't restarted, so the
+// installed versions of R it listed before still serve.
 void onClientInit()
 {
    if (s_sessionStarted)
-      scheduleProjectRVersionCheck();
+      scheduleProjectRVersionCheck(false);
 }
 
 } // end anonymous namespace
