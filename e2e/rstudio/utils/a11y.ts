@@ -81,30 +81,58 @@ export function formatViolations(results: AxeResults): string {
   return `${blocks.join('\n\n')}\n`;
 }
 
+/**
+ * For rule lines in the summary: help text can contain markup, e.g.
+ * "<html> element must have a lang attribute".
+ */
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
- * One collapsible section per rule. Node lines are indented, so none can
- * close the code fence early. The node cap keeps many states under GitHub's
- * 1 MiB per-step summary limit, past which the whole summary is dropped.
+ * A rule's help link and nodes. Node lines are indented, so none can close
+ * the code fence early. The node cap keeps many states under GitHub's 1 MiB
+ * per-step summary limit, past which the whole summary is dropped.
  */
-function summaryDetails(v: Result): string {
+function ruleBody(v: Result, fullList: string): string[] {
   const shown = v.nodes.slice(0, SUMMARY_NODES_MAX);
   const hidden = v.nodes.length - shown.length;
   return [
-    '<details>',
-    // Raw HTML: help text can contain markup, e.g. "<html> element must have a lang attribute".
-    `<summary>${escapeHtml(violationLine(v))}</summary>`,
-    '',
     `[Rule help](${v.helpUrl}) - ${wcagTags(v)}`,
     '',
     '```',
     ...shown.map(formatNode),
     '```',
-    ...(hidden > 0 ? ['', `${hidden} more node(s) in axe-violations.txt`] : []),
+    ...(hidden > 0 ? ['', `${hidden} more node(s) in ${fullList}`] : []),
+  ];
+}
+
+function violationDetails(v: Result): string {
+  return [
+    '<details>',
+    `<summary>${escapeHtml(violationLine(v))}</summary>`,
     '',
+    ...ruleBody(v, 'axe-violations.txt'),
+    '',
+    '</details>',
+  ].join('\n');
+}
+
+/** One collapsed section for all incomplete results, apart from the violations. */
+function needsReviewSection(incomplete: Result[]): string {
+  const heading = `Needs review (incomplete): ${incomplete.length}`;
+  if (incomplete.length === 0)
+    return heading;
+  return [
+    '<details>',
+    `<summary>${heading}</summary>`,
+    '',
+    ...incomplete.flatMap((v) => [
+      `**${escapeHtml(violationLine(v))}**`,
+      '',
+      ...ruleBody(v, 'axe-results.json'),
+      '',
+    ]),
     '</details>',
   ].join('\n');
 }
@@ -116,9 +144,11 @@ export function stepSummaryBlock(title: string, ruleSet: string, results: AxeRes
     '',
     `Rules: ${ruleSet}`,
     '',
-    ...(results.violations.length > 0 ? results.violations.map(summaryDetails) : ['No violations']),
+    ...(results.violations.length > 0
+      ? results.violations.map(violationDetails)
+      : ['No violations']),
     '',
-    `Needs review (incomplete): ${results.incomplete.length}`,
+    needsReviewSection(results.incomplete),
     '',
     '',
   ].join('\n');
