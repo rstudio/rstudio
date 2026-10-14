@@ -105,6 +105,8 @@ Two caveats. If the run crashes before the teardown, or the server is unreachabl
 
 **Prerequisite for external servers**: the rsession processes the target server spawns must run with `--automation-agent`, otherwise `window.rstudio` is never installed and the very first step of `launchServer()` (which calls `setPref()` through the bridge) will time out. The in-tree spawn handles this by passing `--automation-agent=1` to `rserver-dev`, which forwards the flag to every rsession it launches. External servers have to be configured explicitly -- either start `rserver` with `--automation-agent=1`, or add `automation-agent=1` to `rserver.conf`. Servers that aren't dedicated test instances will not have this set by default.
 
+**Recovering a wedged session**: an external server keeps routing the account to its existing rsession, and the harness has no way to replace one itself. If that session's main thread hangs, it never answers `client_init`, so every later sign-in in the run times out identically (one hang cost a CI shard eleven specs plus the teardown). Set `PW_RSTUDIO_SERVER_RECOVER_CMD` to a shell command that records and kills the account's sessions; when the post-login console wait times out, `signInToServer` runs it once and retries the sign-in. The Linux Server CI workflow points it at `scripts/ci/rsession-diagnostics.sh --kill <dir>`, which dumps each rsession's threads and gdb backtraces into `<dir>` before killing it, and uploads that directory as the `rsession-diagnostics-linux-server-<shard>` artifact.
+
 ```bash
 PW_RSTUDIO_SERVER_URL=http://10.0.0.1 \
   PW_RSTUDIO_SERVER_PORT=80 \
@@ -485,6 +487,25 @@ PW_DB_POSTGRES="host=db.example.com;port=5432;database=x;user=y;password=z" \
   npm run test:server ...
 ```
 
+## Accessibility Tests
+
+`tests/a11y/` scans RStudio Server with [axe-core](https://github.com/dequelabs/axe-core) for WCAG 2.2 Level A and AA problems. Only the initial state is scanned today: a new session with default preferences, once `window.rstudio.ready` is true and the console input and Files pane toolbar are visible. Any violation fails the test. axe's `incomplete` ("needs review") results are reported and counted but never fail it.
+
+```bash
+PW_A11Y=1 npx playwright test --project=server                          # spawns the in-tree rserver-dev
+PW_A11Y=1 PW_A11Y_EXPERIMENTAL=1 npx playwright test --project=server   # plus experimental rules
+```
+
+`PW_A11Y=1` runs only `@a11y` tests, in Server mode only (any other mode is an error), without the `setup`/`auth-teardown` projects and with retries off. Without it, `@a11y` tests are excluded from every run, so no automatic workflow runs them. On CI, dispatch *Test: E2E Playwright RStudio Accessibility (Server, Ubuntu 24, Open Source)*, or the Server workflow with `a11y` checked. Both switches accept `1`/`true` (on) and `0`/`false`/empty/unset (off), case-insensitively; anything else stops the run (`PW_A11Y_EXPERIMENTAL` is read only when `PW_A11Y` is on).
+
+**Rule set.** Scans select axe's WCAG A/AA tags (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`). Selecting by tag is what runs `target-size`, the WCAG 2.2 AA rule axe leaves off by default. axe's experimental rules are excluded unless `PW_A11Y_EXPERIMENTAL` is on, which adds the WCAG ones (e.g. `label-content-name-mismatch`, 2.5.3 Level A) and filters out the non-WCAG ones it would otherwise bring in. `tests/a11y/scan-config.test.ts` pins this behavior against a synthetic page. axe and `@axe-core/playwright` are pinned exactly, so the rule set only changes when they are bumped; bump both together and run the suite, self-test included.
+
+**Results.** Each scan attaches `a11y-state.png` (the page as scanned), `axe-results.json` (violations and incomplete results) and `axe-violations.txt`, and adds `a11y-rules` and `a11y-incomplete` annotations. In `axe-violations.txt` each node leads with its HTML snippet: CI builds obfuscate GWT CSS class names, so the CSS target is the least readable part. On GitHub Actions each scan also appends its violations to the run's Summary page, one collapsible section per rule with its help link and up to 10 nodes in the `axe-violations.txt` format; that file has the rest. Incomplete results follow in one collapsed *Needs review* section in the same format, with `axe-results.json` holding any nodes past the cap.
+
+**Adding a state.** Add a test under `tests/a11y/` tagged `@a11y @server_only`, using the `a11yPage` fixture from `fixtures/a11y.fixture.ts`: drive the UI from the fresh session, then `scanA11y(a11yPage, testInfo)` and `expect(violationSummary(results)).toEqual([])`. Each test gets a new rsession, which is not the same as default user state. On CI (one installed server, one test user) both prefs and user state persist across tests. Locally, prefs do not persist (each spawned rserver gets a fresh config home) but user state does (every spawn in a run shares the sandbox data home). So a state test that changes prefs or layout must restore them: one that forgets passes locally and leaks into later tests on CI.
+
+**Limits.** axe checks only the automatable subset of WCAG; a clean scan is not WCAG 2.2 AA conformance. The scanned session also differs from a stock first session in two ways: `--automation-agent` is on (needed for `window.rstudio.ready`), and on CI the test user's home contains `R/` (the provisioned R library).
+
 ## Tags
 
 Tests use [Playwright tags](https://playwright.dev/docs/test-annotations#tag-tests) to indicate platform, edition, and product tier constraints. Apply tags via the `tag` option on `test()` or `test.describe()`:
@@ -510,6 +531,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 | `@ai` | Test exercises an AI feature (Copilot ghost text / NES, Posit Assistant chat). Useful for skipping AI-dependent suites in offline or no-credential runs. |
 | `@chat` | Test covers the Posit Assistant chat pane (everything under `tests/panes/posit-assistant-chat/`). A narrower selector than `@ai`: use it to run the Assistant suite without the Copilot/NES code-suggestion tests. Most `@chat` tests are also `@ai`; the exception is `chat-guardrails-paths.test.ts`, which exercises the guardrails from the R console with no AI provider in the loop. |
 | `@smoke` | Long, low-information liveness check. Excluded by default (redundant alongside the full suite); opt in with `PW_RUN_SMOKE=1`. |
+| `@a11y` | Accessibility (axe-core) scan or its self-test, under `tests/a11y/`. Runs only with `PW_A11Y=1` (Server); excluded from every other run. See *Accessibility Tests*. |
 
 ### Filtering by Tag
 
@@ -583,6 +605,7 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_RSTUDIO_SERVER_USER` | Server | Conditional | Login username. Required only when the external server presents a login form; ignored for the in-tree spawn (`--auth-none`). |
 | `PW_RSTUDIO_SERVER_PASSWORD` | Server | Conditional | Login password. Same conditional rule as `PW_RSTUDIO_SERVER_USER`. |
 | `PW_RSTUDIO_SERVER_LOGIN_TIMEOUT` | Server | No | Post-login wait for the IDE console, in ms (default: 60000) |
+| `PW_RSTUDIO_SERVER_RECOVER_CMD` | Server | No | Shell command run once when that wait times out, before the sign-in is retried; meant to record and kill a wedged rsession on an external server (see *Recovering a wedged session*). |
 | `PW_RSERVER_BIN` | Server | No | Path to the `rserver` binary used by the in-tree spawn (default: `build/src/cpp/server/rserver` in the repo). |
 | `PW_RSERVER_CONF` | Server | No | Path to the `rserver-dev.conf` used by the in-tree spawn (default: `build/src/cpp/conf/rserver-dev.conf` in the repo). |
 | `RSTUDIO_PROJECT_ROOT` | Server | No | Override the repo-root path passed into the in-tree `rserver-dev`'s environment. Defaults to the resolved repository root. |
@@ -613,6 +636,8 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_DEBUG_AUTH_STEPS` | Both | No | Set to `1`/`true` to emit the sign-in flows' step-level console output: the browser narration (`[authorize-github]`, `[authorize-posit]`: which page is showing, which field is being filled, button state) and the Copilot agent's raw diagnostics (`[copilot-agent]`: LSP notifications, spawn/exit, `checkStatus` polling), and the final page line. Off by default, so a normal run reports only the `[auth-setup]` outcome milestones (started, complete, skipped, failed); the detail is opt-in for troubleshooting a flow. The output is authored text kept free of account identifiers (no username or device code), which is why it's a separate switch from `PW_DEBUG_AUTH_CAPTURE`. |
 | `PW_ENV_FILE` | Both | No | Path (relative to `e2e/rstudio/`) to a dotenv file loaded by `playwright.config.ts` before any env reads. Default: `.env.local`. Setting this to a missing file is a hard error (so typos surface immediately). See *`.env.local` (dotenv)* below. |
 | `PW_RUN_SMOKE` | Both | No | Set to `1`/`true` to include `@smoke` tests, which are excluded by default (they idle long enough to be flaky under parallel load). |
+| `PW_A11Y` | Server | No | `1`/`true` runs the accessibility suite instead of the e2e suite: `@a11y` tests only, no setup projects, no retries. Requires `--project=server`. `0`/`false`/unset is off; any other value is an error. |
+| `PW_A11Y_EXPERIMENTAL` | Server | No | `1`/`true` adds axe's experimental WCAG rules to accessibility scans. Same accepted values as `PW_A11Y`. |
 | `PW_TRACE` | Both | No | Playwright trace mode (`on`, `off`, `retain-on-failure`, etc.). Default: `retain-on-failure`. Validated against an allow-list so a typo fails loud instead of silently disabling capture. |
 | `PW_SCREENSHOT` | Both | No | Playwright screenshot mode (`on`, `off`, `only-on-failure`). Default: `only-on-failure`. Same allow-list validation as `PW_TRACE`. |
 | `PW_DEBUG` | Both | No | Set to `1`/`true` to enable the interactive debug harness: `waitForUserConsoleInput()` pauses the test with DevTools open for profiling instead of running through. |

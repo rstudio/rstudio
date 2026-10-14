@@ -212,7 +212,25 @@ Error availablePackages(const core::json::JsonRpcRequest&,
    return Success();
 }
 
-Error getPackageStateJson(json::Object* pJson)
+// Package-list builds can nest. The DESCRIPTION scan in
+// .rs.listInstalledPackages() runs long enough for R to service polled events,
+// which run the scheduled-command queue -- including the PPM batch completion,
+// which requests a package list of its own (see SessionPPM.cpp) -- and, while
+// the console is busy, dequeue pending RPCs such as get_package_state. Left to
+// run freely, the nested build finishes and is delivered first, and the outer
+// build then overwrites it with an older list (rstudio/rstudio-pro#13167).
+//
+// Every build therefore goes through s_packageStateBuilder (below), which
+// folds requests that arrive mid-build into the build in progress and runs it
+// again. If the pass cap leaves work pending, defer the event to an idle build
+// rather than enqueue a stale list. A capped RPC returns its last scan, and the
+// deferred event supplies the fresh state afterward.
+// An event that a failed build could not deliver stays owed until the next
+// build, from any trigger, delivers it.
+//
+// Main thread only: every build goes through r::exec, so this is re-entrancy
+// on one thread, not concurrent access.
+Error buildPackageStateJson(json::Object* pJson)
 {
    using namespace module_context;
 
@@ -276,6 +294,38 @@ Error getPackageStateJson(json::Object* pJson)
    // event.
 
    return Success();
+}
+
+PackageStateBuilder s_packageStateBuilder(buildPackageStateJson);
+
+void enquePackageState(const json::Object& pkgState)
+{
+   ClientEvent event(client_events::kPackageStateChanged, pkgState);
+   module_context::enqueClientEvent(event);
+}
+
+bool s_packageStateRefreshScheduled = false;
+
+void schedulePackageStateRefresh()
+{
+   if (s_packageStateRefreshScheduled || !s_packageStateBuilder.needsDeferredBuild())
+      return;
+
+   s_packageStateRefreshScheduled = true;
+   module_context::scheduleDelayedWork(
+      boost::posix_time::milliseconds(100),
+      []() {
+         // An intervening build may already have satisfied the refresh.
+         // Keep the flag set while scanning to coalesce re-entrant requests.
+         if (s_packageStateBuilder.needsDeferredBuild())
+            enquePackageStateChanged();
+
+         s_packageStateRefreshScheduled = false;
+         // Only another successful capped build needs a follow-up. A failure
+         // leaves the event owed until the next real trigger, with no timer.
+         schedulePackageStateRefresh();
+      },
+      true);
 }
 
 SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
@@ -732,11 +782,19 @@ Error getPackageState(const json::JsonRpcRequest& ,
                       json::JsonRpcResponse* pResponse)
 {
    json::Object result;
-   Error error = getPackageStateJson(&result);
+   bool deliverEvent = false;
+   Error error = s_packageStateBuilder.build(&result, &deliverEvent);
    if (error)
       LOG_ERROR(error);
    else
       pResponse->setResult(result);
+
+   // a package-state change that arrived while we were building is delivered
+   // here, so that event-only listeners see it too
+   if (deliverEvent)
+      enquePackageState(result);
+
+   schedulePackageStateRefresh();
 
    // The package list returns immediately without vulnerability data, which
    // arrives later via kPackageVulnerabilitiesReady. This RPC is the only path
@@ -759,19 +817,98 @@ bool containsCallSyntax(const std::string& input)
 
 void enquePackageStateChanged()
 {
+   // a request that lands inside another build is folded into it, and that
+   // build delivers the event once it has run again
    json::Object pkgState;
-   Error error = getPackageStateJson(&pkgState);
+   bool deliverEvent = false;
+   Error error = s_packageStateBuilder.buildForEvent(&pkgState, &deliverEvent);
    if (error)
       LOG_ERROR(error);
-   else
-   {
-      ClientEvent event(client_events::kPackageStateChanged, pkgState);
-      module_context::enqueClientEvent(event);
-   }
+   else if (deliverEvent)
+      enquePackageState(pkgState);
+
+   schedulePackageStateRefresh();
 
    // the package set or active repository may have changed; refresh
    // vulnerability data asynchronously to match
    ppm::refreshVulnerabilitiesAsync();
+}
+
+PackageStateBuilder::PackageStateBuilder(const BuildFunction& build)
+   : build_(build)
+{
+}
+
+Error PackageStateBuilder::build(json::Object* pJson, bool* pDeliverEvent)
+{
+   return run(true, false, pJson, pDeliverEvent);
+}
+
+Error PackageStateBuilder::buildForEvent(json::Object* pJson, bool* pDeliverEvent)
+{
+   return run(false, true, pJson, pDeliverEvent);
+}
+
+bool PackageStateBuilder::eventPending() const
+{
+   return eventPending_;
+}
+
+bool PackageStateBuilder::needsDeferredBuild() const
+{
+   return depth_ == 0 && rebuildPending_;
+}
+
+Error PackageStateBuilder::run(bool needsResult,
+                               bool wantsEvent,
+                               json::Object* pJson,
+                               bool* pDeliverEvent)
+{
+   *pDeliverEvent = false;
+   eventPending_ = eventPending_ || wantsEvent;
+
+   // fold the request into the build in progress: it runs again before handing
+   // anything back, and delivers the event on our behalf
+   if (depth_ > 0 && !needsResult)
+   {
+      rebuildPending_ = true;
+      return Success();
+   }
+
+   // build, and build again if a request arrived while we were scanning, so
+   // that the list we hand back reflects it
+   ++depth_;
+   Error error;
+   for (int pass = 0; pass < kMaxPasses; pass++)
+   {
+      rebuildPending_ = false;
+      error = build_(pJson);
+      if (error || !rebuildPending_)
+         break;
+   }
+   --depth_;
+
+   // we built inside another build (we needed a result of our own); its list
+   // is now older than ours, so have it run again
+   if (depth_ > 0)
+   {
+      rebuildPending_ = true;
+      return error;
+   }
+
+   // Failures keep any owed event, but never request an automatic retry.
+   if (error)
+      rebuildPending_ = false;
+   else if (rebuildPending_)
+      eventPending_ = true; // even an RPC-only build needs a fresh event at the cap
+
+   // A capped build leaves its event and refresh pending for the idle build.
+   // Only a successful scan with no outstanding requests can deliver it.
+   *pDeliverEvent = !error && !rebuildPending_ && eventPending_;
+   if (*pDeliverEvent)
+      eventPending_ = false;
+
+   return error;
 }
 
 Error initialize()

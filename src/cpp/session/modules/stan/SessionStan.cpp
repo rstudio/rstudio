@@ -29,12 +29,7 @@ namespace stan {
 Error initialize()
 {
    using namespace module_context;
-   using boost::bind;
-   
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionStan.R"));
-   return initBlock.execute();
+   return sourceModuleRFileOnDemand("SessionStan.R");
 }
 
 } // end namespace stan

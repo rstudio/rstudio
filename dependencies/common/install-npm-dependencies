@@ -39,9 +39,8 @@ function install-node() {
    export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
    export NODE_BASE_URL="${RSTUDIO_BUILDTOOLS}/node/v${NODE_VERSION}/"
 
-   # special case for building on Apple arm64: install x64 node in the 
-   # default location (so GWT build can easily find it), but also a
-   # separate arm64 node install (for the Electron build to use)
+   # special case for building on Apple arm64: install arm64 node in an
+   # -arm64 folder, which is where the Electron and GWT builds look for it
    if is-m1-mac; then
       export NODE_FOLDER="${NODE_VERSION}-arm64${NODE_FOLDER_SUFFIX}"
       export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
