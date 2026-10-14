@@ -231,8 +231,12 @@
    # don't get (hopefully spurious) libclang warnings
    if (.rs.platform.isWindows && isCpp)
    {
+      # the header only exists in GCC's libstdc++ (not in LLVM's libc++, which
+      # Rtools for ARM64 uses)
       formatted <- c(
-         "#include <bits/c++config.h>",
+         "#if __has_include(<bits/c++config.h>)",
+         "# include <bits/c++config.h>",
+         "#endif",
          "",
          formatted,
          "",

@@ -641,6 +641,9 @@ if(WIN32)
    # mark rsessionMain() for export from the DLL (vs import in the stubs)
    target_compile_definitions(rsession-shared PRIVATE RSESSION_BUILDING_SHARED)
 
+   # libclang folder version for development builds (see SessionOptions.cpp)
+   target_compile_definitions(rsession-shared PRIVATE RSTUDIO_LIBCLANG_VERSION="${LIBCLANG_VERSION}")
+
    target_link_libraries(rsession-shared ${SESSION_LIBRARIES} "${LIBR_LIBRARIES}")
 
    # thin launcher stub; identical code, manifest embedded via the .rc differs

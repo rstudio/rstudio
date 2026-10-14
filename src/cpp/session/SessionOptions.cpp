@@ -50,6 +50,11 @@
 
 #include "session-config.h"
 
+// libclang version folder for development builds; set by CMake on Windows
+#ifndef RSTUDIO_LIBCLANG_VERSION
+# define RSTUDIO_LIBCLANG_VERSION "13.0.1"
+#endif
+
 #ifdef _WIN32
 # define kPandocExe "pandoc.exe"
 #else
@@ -339,7 +344,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
    {
-      libclangPath_ += "/13.0.1";
+      libclangPath_ += "/" RSTUDIO_LIBCLANG_VERSION;
    }
    resolveRsclangPath(resourcePath_, &libclangPath_);
 

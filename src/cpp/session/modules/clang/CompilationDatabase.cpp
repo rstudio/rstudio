@@ -308,6 +308,26 @@ void deduplicateStdArgs(std::vector<std::string>& args)
    args.push_back(lastStd);
 }
 
+#if defined(_M_ARM64)
+// Drop -I folders that repeat a system include folder (those after -nostdinc), as
+// the compiler does; libc++ in Rtools for ARM64 breaks if they come first.
+void deduplicateSystemIncludeArgs(std::vector<std::string>& args)
+{
+   auto nostdinc = std::find(args.begin(), args.end(), "-nostdinc");
+   if (nostdinc == args.end())
+      return;
+
+   auto isSystemInclude = [&](const std::string& arg) {
+      return boost::algorithm::starts_with(arg, "-I") &&
+             std::any_of(nostdinc + 1, args.end(), [&](const std::string& systemArg) {
+                return boost::algorithm::iequals(arg, systemArg);
+             });
+   };
+
+   args.erase(std::remove_if(args.begin(), nostdinc, isSystemInclude), nostdinc);
+}
+#endif
+
 std::string buildFileHash(const FilePath& filePath)
 {
    if (filePath.exists())
@@ -1163,6 +1183,10 @@ ClangCompilationDatabase::CompilationConfig
    // deduplicate '-std=' flags
    deduplicateStdArgs(args);
 
+#if defined(_M_ARM64)
+   deduplicateSystemIncludeArgs(args);
+#endif
+
    CompilationConfig config;
    config.args = args;
    config.PCH = cppPkg;
@@ -1228,6 +1252,12 @@ std::vector<std::string> ClangCompilationDatabase::baseCompilationArgs(bool isCp
    // an installation of Visual Studio (if available), and those headers
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
+
+#if defined(_M_ARM64)
+   // match the target of R and its Rtools compiler; libclang otherwise
+   // assumes the Microsoft compiler (aarch64-pc-windows-msvc)
+   args.push_back("--target=aarch64-w64-mingw32");
+#endif
 
    if (version < r_util::RVersionNumber(4, 2, 0))
    {
@@ -1371,6 +1401,10 @@ std::vector<std::string> ClangCompilationDatabase::packageCompilationArgs(
 
    // deduplicate '-std=' flags
    deduplicateStdArgs(args);
+
+#if defined(_M_ARM64)
+   deduplicateSystemIncludeArgs(args);
+#endif
 
    if (pPkgInfo)
       *pPkgInfo = pkgInfo;
@@ -1561,7 +1595,10 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
                             gsl::narrow_cast<int>(argsArray.argCount()),
                             nullptr,
                             0,
-                            CXTranslationUnit_ForSerialization);
+                            // must match the parse options in SourceIndex.cpp,
+                            // or newer libclang refuses to load the PCH
+                            CXTranslationUnit_ForSerialization |
+                            CXTranslationUnit_DetailedPreprocessingRecord);
 
       if (tu == nullptr)
       {
