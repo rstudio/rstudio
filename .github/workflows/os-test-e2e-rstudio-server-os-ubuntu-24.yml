@@ -413,8 +413,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The accessibility suite has a single RStudio-backed test; a second
-        # shard would only add a runner.
+        # The accessibility suite is a few state scans, each in its own
+        # session; one shard runs them all.
         shard: ${{ fromJSON(inputs.a11y && '[1]' || '[1, 2]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
@@ -1004,6 +1004,42 @@ jobs:
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
+
+      # Accessibility runs: one job-summary entry per distinct problem across
+      # every scanned state (scripts/a11y-report.ts), read from the files the
+      # state tests left in the shards' test-results artifacts.
+      - name: Download accessibility scan results
+        if: always() && inputs.a11y == true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: test-results-linux-server-*
+          path: e2e/rstudio/test-results
+          merge-multiple: true
+
+      - name: Build accessibility screenshots page
+        if: always() && inputs.a11y == true
+        working-directory: e2e/rstudio
+        run: npx tsx scripts/a11y-report.ts screenshots
+
+      # Unzipped, so it opens in the browser. GitHub drops a #fragment on the
+      # artifact link, so the summary links each state to the page's top,
+      # which lists the states.
+      - name: Upload accessibility screenshots page
+        id: a11y-screenshots
+        if: always() && inputs.a11y == true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: e2e/rstudio/a11y-screenshots.html
+          archive: false
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Summarize accessibility problems
+        if: always() && inputs.a11y == true
+        working-directory: e2e/rstudio
+        env:
+          A11Y_SCREENSHOTS_URL: ${{ steps.a11y-screenshots.outputs.artifact-url }}
+        run: npx tsx scripts/a11y-report.ts summary
 
       # Publish a browsable copy of the report to S3 on failure only, so
       # reviewers can inspect it without downloading the zip. Best-effort: a
