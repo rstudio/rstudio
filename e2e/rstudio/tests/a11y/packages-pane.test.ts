@@ -28,7 +28,8 @@ function isTabStateSave(r: Request): boolean {
 async function restoreFilesTab(page: Page, packagesSave: Promise<Request>): Promise<void> {
   // The timer sends a pending change within 5 s, so a timeout here means the
   // Packages save went out before the wait began. Restore either way; a
-  // stalled timer fails the Files wait below instead.
+  // stalled timer fails the Files wait below instead (unless its late
+  // Packages save lands just before Files is activated, and is taken for it).
   await packagesSave.catch((err: Error) => console.warn(`Packages save not seen: ${err.message}`));
   const filesSave = page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT });
   const [request] = await Promise.all([filesSave, (async () => {
