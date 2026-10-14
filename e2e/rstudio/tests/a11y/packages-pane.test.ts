@@ -40,12 +40,15 @@ test('packages pane has no WCAG 2.2 AA violations', { tag: ['@a11y', '@server_on
     page.on('request', onRequest);
 
     await executeCommand(page, 'activatePackages');
-    // stats is always attached, so its checked box means the list has loaded.
-    await expect(page.locator(`${PACKAGES_PANEL} input[type='checkbox'][aria-label='stats']`).first())
-      .toBeChecked({ timeout: TIMEOUTS.consoleReady });
-    const results = await scanA11y(page, testInfo);
-
-    page.off('request', onRequest);
-    await restoreFilesTab(page, () => packagesSaved);
+    let results;
+    try {
+      // stats is always attached, so its checked box means the list has loaded.
+      await expect(page.locator(`${PACKAGES_PANEL} input[type='checkbox'][aria-label='stats']`).first())
+        .toBeChecked({ timeout: TIMEOUTS.consoleReady });
+      results = await scanA11y(page, testInfo);
+    } finally {
+      page.off('request', onRequest);
+      await restoreFilesTab(page, () => packagesSaved);
+    }
     expect(violationSummary(results)).toEqual([]);
   });
