@@ -24,13 +24,14 @@ import {
 // is tabbable, and Up/Down moves and activates sections.
 //
 // Like a native modal <dialog>, Tab off either end is left to the browser, and
-// the inert IDE behind the dialog can't take focus. Headless browsers cycle back
-// into the page rather than reaching browser UI, so the tests check that the
-// keydown isn't prevented and that focus never reaches the IDE.
+// nothing behind the dialog can take focus. Headless browsers cycle back into the
+// page rather than reaching browser UI, so the tests check that the keydown isn't
+// prevented and that focus stays in the dialog or leaves the page.
 
 // Press `key` on `selector`, then report whether the keydown was seen, whether
-// anything prevented its default action, and whether focus landed in the IDE.
-// The event is read after dispatch, so listener order doesn't matter.
+// anything prevented its default action, and where focus went: 'dialog', 'left
+// page' (focus on <body>), or the element that took it. The event is read after
+// dispatch, so listener order doesn't matter.
 async function pressAndInspect(page: Page, selector: string, key: string) {
   await page.evaluate(() => {
     const w = window as unknown as Record<string, any>;
@@ -40,15 +41,28 @@ async function pressAndInspect(page: Page, selector: string, key: string) {
     };
     window.addEventListener('keydown', w.__pwTabListener, true);
   });
-  await page.locator(selector).press(key);
+  try {
+    await page.locator(selector).press(key);
+  } finally {
+    await page.evaluate(() => {
+      const w = window as unknown as Record<string, any>;
+      window.removeEventListener('keydown', w.__pwTabListener, true);
+    });
+  }
   return await page.evaluate(() => {
-    const w = window as unknown as Record<string, any>;
-    window.removeEventListener('keydown', w.__pwTabListener, true);
-    const event = w.__pwTabEvent as KeyboardEvent | undefined;
+    const event = (window as unknown as Record<string, any>).__pwTabEvent as KeyboardEvent | undefined;
+    const el = document.activeElement;
+    let focus: string;
+    if (el === null || el === document.body)
+      focus = 'left page';
+    else if (el.closest('.gwt-DialogBox') !== null)
+      focus = 'dialog';
+    else
+      focus = `${el.tagName}#${el.id}`;
     return {
       seen: event !== undefined,
       prevented: event?.defaultPrevented ?? false,
-      focusInIde: document.activeElement?.closest('#rstudio_container') != null,
+      focus,
     };
   });
 }
@@ -88,7 +102,8 @@ test.describe('Global Options keyboard accessibility', () => {
     await openGlobalOptions(page);
 
     const result = await pressAndInspect(page, OPTIONS_APPLY, 'Tab');
-    expect(result).toEqual({ seen: true, prevented: false, focusInIde: false });
+    expect(result).toMatchObject({ seen: true, prevented: false });
+    expect(['dialog', 'left page']).toContain(result.focus);
 
     await closeGlobalOptions(page);
   });
@@ -97,7 +112,8 @@ test.describe('Global Options keyboard accessibility', () => {
     await openGlobalOptions(page);
 
     const result = await pressAndInspect(page, GENERAL_TAB, 'Shift+Tab');
-    expect(result).toEqual({ seen: true, prevented: false, focusInIde: false });
+    expect(result).toMatchObject({ seen: true, prevented: false });
+    expect(['dialog', 'left page']).toContain(result.focus);
 
     await closeGlobalOptions(page);
   });
