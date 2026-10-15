@@ -28,6 +28,8 @@ import {
 // page rather than reaching browser UI, so the tests check that the keydown isn't
 // prevented and that focus stays in the dialog or leaves the page.
 
+const STRAY_POPUP = 'pw_stray_popup';
+
 // Press `key` on `selector`, then report whether the keydown was seen, whether
 // anything prevented its default action, and where focus went: 'dialog', 'left
 // page' (focus on <body>), or the element that took it. The event is read after
@@ -116,5 +118,27 @@ test.describe('Global Options keyboard accessibility', () => {
     expect(['dialog', 'left page']).toContain(result.focus);
 
     await closeGlobalOptions(page);
+  });
+
+  test('a popup shown before the dialog opens is out of reach', async ({ rstudioPage: page }) => {
+    // Stands in for a non-modal popup (e.g. the manipulate() controls), which
+    // GWT attaches to <body>, outside the IDE container, ahead of the dialog.
+    await page.evaluate((id) => {
+      const button = document.createElement('button');
+      button.id = id;
+      button.textContent = 'stray popup';
+      document.body.appendChild(button);
+    }, STRAY_POPUP);
+    try {
+      await openGlobalOptions(page);
+
+      const result = await pressAndInspect(page, GENERAL_TAB, 'Shift+Tab');
+      expect(['dialog', 'left page']).toContain(result.focus);
+
+      await closeGlobalOptions(page);
+      await expect(page.locator(`#${STRAY_POPUP}`)).not.toHaveAttribute('inert');
+    } finally {
+      await page.evaluate((id) => document.getElementById(id)?.remove(), STRAY_POPUP);
+    }
   });
 });
