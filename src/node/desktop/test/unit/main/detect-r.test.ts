@@ -15,9 +15,9 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 import {
   detectREnvironment,
@@ -25,7 +25,9 @@ import {
   parseRQueryResult,
   promptUserForR,
   rDetectionReady,
+  rFromRStudioWhichR,
   rQueryCommand,
+  resolveRHome,
   startRDetection,
   windowsSessionPath,
 } from '../../../src/main/detect-r';
@@ -127,6 +129,34 @@ describe('DetectR', () => {
 
     const [, noOutputError] = parseRQueryResult('/opt/R/bin/R', { stdout: '', stderr: '', status: 127 });
     assert.isNotNull(noOutputError);
+  });
+
+  it('resolves an R home directory in RSTUDIO_WHICH_R to its executable', () => {
+    const home = mkdtempSync(join(tmpdir(), 'detect-r-home-'));
+    const executable = join(home, 'bin', process.platform === 'win32' ? 'x64/Rterm.exe' : 'R');
+    mkdirSync(dirname(executable), { recursive: true });
+    writeFileSync(executable, '');
+    const empty = mkdtempSync(join(tmpdir(), 'detect-r-empty-'));
+
+    try {
+      process.env.RSTUDIO_WHICH_R = home;
+      assert.equal(rFromRStudioWhichR(), executable);
+
+      // an executable is used as given, and so are a directory holding no R
+      // and a path that doesn't exist, so that validation reports them
+      assert.equal(resolveRHome(executable), executable);
+      assert.equal(resolveRHome(empty), empty);
+      assert.equal(resolveRHome(join(home, 'missing')), join(home, 'missing'));
+
+      // on Windows, the 32-bit executable is the fallback
+      const i386 = join(home, 'bin', 'i386', 'Rterm.exe');
+      mkdirSync(dirname(i386), { recursive: true });
+      writeFileSync(i386, '');
+      assert.equal(resolveRHome(home, 'win32'), process.platform === 'win32' ? executable : i386);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(empty, { recursive: true, force: true });
+    }
   });
 
   it('the background query fills the cache the synchronous path reads', async function () {
