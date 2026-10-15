@@ -122,6 +122,27 @@ test_that("reticulate's error hint is cached when Python is initialized", {
    expect_identical(calls, 0L)
 })
 
+test_that("errors caching reticulate's error hint are logged, not raised", {
+
+   # the implementation reaches into reticulate internals, which may change
+   rsEnv <- as.environment("tools:rstudio")
+   impl <- get(".rs.reticulate.cacheErrorHintImpl", envir = rsEnv)
+   emit <- get(".rs.logMessageEmit", envir = rsEnv)
+   on.exit({
+      assign(".rs.reticulate.cacheErrorHintImpl", impl, envir = rsEnv)
+      assign(".rs.logMessageEmit", emit, envir = rsEnv)
+   }, add = TRUE)
+
+   logged <- character()
+   assign(".rs.reticulate.cacheErrorHintImpl", function(builtins) stop("boom"), envir = rsEnv)
+   assign(".rs.logMessageEmit", function(method, message) {
+      logged <<- c(logged, message)
+   }, envir = rsEnv)
+
+   expect_false(.rs.reticulate.cacheErrorHint(NULL))
+   expect_identical(logged, "Error caching reticulate's error hint: boom")
+})
+
 test_that("Python function arguments are discovered with inspect.signature()", {
 
    skipIfPythonUnavailable()

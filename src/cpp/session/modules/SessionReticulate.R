@@ -145,15 +145,27 @@
 #'
 #' @param builtins The Python builtins module, unconverted.
 #'
-#' @return Whether an error message was formatted.
+#' @return Whether an error message was formatted. Errors are logged rather
+#'   than raised, since Python initialization must not fail on their account.
 .rs.addFunction("reticulate.cacheErrorHint", function(builtins)
+{
+   tryCatch(
+      .rs.reticulate.cacheErrorHintImpl(builtins),
+      error = function(e) {
+         .rs.logErrorMessage("Error caching reticulate's error hint: %s", conditionMessage(e))
+         FALSE
+      }
+   )
+})
+
+.rs.addFunction("reticulate.cacheErrorHintImpl", function(builtins)
 {
    ns <- asNamespace("reticulate")
    if (!exists("conditionMessage_from_py_exception", envir = ns, inherits = FALSE))
       return(FALSE)
 
    formatter <- get("conditionMessage_from_py_exception", envir = ns, inherits = FALSE)
-   message <- .rs.tryCatch(formatter(builtins$Exception("")))
+   message <- formatter(builtins$Exception(""))
    is.character(message)
 })
 
