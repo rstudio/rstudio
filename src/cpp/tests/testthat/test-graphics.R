@@ -194,13 +194,18 @@ test_that("saved TIFFs are compressed as asked, with LZW by default (#19114)", {
 
    # the compression tag's value for each type the session offers
    tags <- c(none = 1, lzw = 5, zip = 8, "lzw+p" = 5, "zip+p" = 8)
-   types <- .rs.graphics.tiffCompressionTypes()
-   expect_true(all(c("none", "lzw") %in% types))
-   for (type in types) {
+   offered <- .rs.graphics.offeredTiffCompressionTypes()
+   expect_true(all(c("none", "lzw") %in% offered))
+   for (type in offered) {
       file <- saveTiff(type)
       on.exit(unlink(file), add = TRUE)
       expect_equal(tiffCompression(file), tags[[type]], info = type)
    }
+
+   # a type R knows but the device can't apply (the predictor variants on
+   # Quartz, which writes through ImageIO) is an error, not a silent fallback
+   for (type in setdiff(.rs.graphics.tiffCompressionTypes(), offered))
+      expect_error(saveTiff(type), "Invalid TIFF compression", info = type)
 
    default <- saveTiff()
    on.exit(unlink(default), add = TRUE)

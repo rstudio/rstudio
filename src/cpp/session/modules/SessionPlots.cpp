@@ -1026,6 +1026,12 @@ SEXP rs_emitBeforeNewGridPage()
    return R_NilValue;
 }
 
+SEXP rs_tiffCompressionTypes()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(r::session::graphics::tiffCompressionTypes(), &protect);
+}
+
 SEXP rs_savePlotAsImage(SEXP fileSEXP,
                         SEXP formatSEXP,
                         SEXP widthSEXP,
@@ -1116,6 +1122,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewGridPage, 0);
    RS_REGISTER_CALL_METHOD(rs_emitNewPlot, 0);
    RS_REGISTER_CALL_METHOD(rs_savePlotAsImage, 6);
+   RS_REGISTER_CALL_METHOD(rs_tiffCompressionTypes, 0);
 
    // connect to onShowManipulator
    using namespace rstudio::r::session;

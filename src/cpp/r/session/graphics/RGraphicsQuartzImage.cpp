@@ -47,11 +47,13 @@ namespace graphics {
 
 int tiffCompressionTag(const std::string& compression)
 {
+   // the predictor variants (lzw+p, zip+p) are left out: ImageIO has no
+   // predictor option, so they would be written as plain LZW / ZIP
    if (compression == "none")
       return 1;
-   else if (compression == "lzw" || compression == "lzw+p")
+   else if (compression == "lzw")
       return 5;
-   else if (compression == "zip" || compression == "zip+p")
+   else if (compression == "zip")
       return 8;
    else
       return 0;

@@ -55,8 +55,8 @@ bool usesQuartzBitmapDevice();
 
 // The value of a TIFF's compression tag for a compression as named by
 // grDevices::tiff()'s compression argument, as the ImageIO rewrite applies
-// it; 0 for one it can't apply. The predictor variants compress the same way,
-// as ImageIO has no predictor option.
+// it; 0 for one it can't apply (ImageIO has no predictor option, so that
+// includes the predictor variants).
 int tiffCompressionTag(const std::string& compression);
 
 // Finishes a bitmap written by R's Quartz devices on macOS, which record no

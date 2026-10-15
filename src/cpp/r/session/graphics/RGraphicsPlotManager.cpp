@@ -398,6 +398,11 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    // warn about the latter), so a JPEG is drawn as a PNG and encoded at the
    // quality afterwards, and a TIFF is compressed afterwards
    bool quartz = usesQuartzBitmapDevice();
+   if (quartz && bitmapFileType == kTiffFormat && tiffCompressionTag(compression) == 0)
+   {
+      return systemError(boost::system::errc::invalid_argument, "Invalid TIFF compression: " + compression, ERROR_LOCATION);
+   }
+
    std::string deviceType = bitmapFileType;
    FilePath devicePath = targetPath;
    if (quartz && bitmapFileType == kJpegFormat)
