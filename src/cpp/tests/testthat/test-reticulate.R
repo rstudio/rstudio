@@ -21,6 +21,9 @@ test_that("startup resolves explicit Python configuration without discovery", {
 })
 
 test_that("startup preserves an explicitly empty Python configuration", {
+   # Setting an environment variable to "" on Windows removes it, so an
+   # explicitly empty RETICULATE_PYTHON can't be represented there.
+   skip_on_os("windows")
    withr::local_envvar(c(RETICULATE_PYTHON = ""))
    expect_identical(.rs.inferReticulatePython(discover = FALSE), "")
 })
