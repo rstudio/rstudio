@@ -213,6 +213,25 @@ test_that("saved TIFFs are compressed as asked, with LZW by default (#19114)", {
    expect_error(saveTiff("bogus; stop()"), "Invalid TIFF compression")
 })
 
+test_that("savePlotAsImage() rejects invalid compression and quality arguments (#19114)", {
+   .rs.activateGraphicsDevice()
+   plot(1:10)
+
+   file <- tempfile(fileext = ".png")
+   on.exit(unlink(file), add = TRUE)
+
+   expect_error(.rs.api.savePlotAsImage(file, "tiff", 480, 288, compression = 1), "compression argument")
+   expect_error(.rs.api.savePlotAsImage(file, "tiff", 480, 288, compression = c("lzw", "zip")), "compression argument")
+   expect_error(.rs.api.savePlotAsImage(file, "tiff", 480, 288, compression = NA_character_), "compression argument")
+   for (quality in list("high", NA_real_, 0, 150, 95.7, c(90, 95)))
+      expect_error(.rs.api.savePlotAsImage(file, "jpeg", 480, 288, quality = quality), "quality argument")
+   expect_false(file.exists(file))
+
+   # the compression only matters for TIFFs
+   .rs.api.savePlotAsImage(file, "png", 480, 288, compression = "LZW")
+   expect_true(file.exists(file))
+})
+
 test_that("saved JPEGs are encoded at the asked quality (#19114)", {
    .rs.activateGraphicsDevice()
    plot(1:10)

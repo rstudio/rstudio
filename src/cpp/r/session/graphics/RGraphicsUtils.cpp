@@ -245,13 +245,12 @@ std::vector<std::string> tiffCompressionTypes()
    }
 
    // the Quartz device ignores the argument, and the TIFF is compressed
-   // through ImageIO instead, which has no predictor option
+   // through ImageIO instead, which knows some of the types only
    if (usesQuartzBitmapDevice())
    {
-      const std::vector<std::string> quartzTypes = { "none", "lzw", "zip" };
       types.erase(
-               std::remove_if(types.begin(), types.end(), [&](const std::string& type) {
-                  return std::find(quartzTypes.begin(), quartzTypes.end(), type) == quartzTypes.end();
+               std::remove_if(types.begin(), types.end(), [](const std::string& type) {
+                  return tiffCompressionTag(type) == 0;
                }),
                types.end());
    }

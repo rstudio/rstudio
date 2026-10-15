@@ -53,6 +53,12 @@ void reportError(const core::Error& error);
 // given the graphics backend option; always false off macOS.
 bool usesQuartzBitmapDevice();
 
+// The value of a TIFF's compression tag for a compression as named by
+// grDevices::tiff()'s compression argument, as the ImageIO rewrite applies
+// it; 0 for one it can't apply. The predictor variants compress the same way,
+// as ImageIO has no predictor option.
+int tiffCompressionTag(const std::string& compression);
+
 // Finishes a bitmap written by R's Quartz devices on macOS, which record no
 // resolution and ignore tiff()'s compression argument: records the resolution
 // (in DPI, when not 0), and compresses a TIFF as that argument names (when

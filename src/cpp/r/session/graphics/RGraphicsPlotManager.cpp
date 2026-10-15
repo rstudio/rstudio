@@ -335,11 +335,14 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    height = gsl::narrow_cast<int>(scaledHeight);
    res = gsl::narrow_cast<int>(std::lround(res * pixelRatio));
 
-   // the compression is interpolated into R code below; an empty one (from
-   // an older stored option) means the default
-   std::string compression = options.tiffCompression.empty() ? "lzw" : options.tiffCompression;
-   if (compression.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789+") != std::string::npos)
+   // the compression is interpolated into R code below
+   const std::string& compression = options.tiffCompression;
+   if (bitmapFileType == kTiffFormat &&
+       (compression.empty() ||
+        compression.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789+") != std::string::npos))
+   {
       return systemError(boost::system::errc::invalid_argument, "Invalid TIFF compression: " + compression, ERROR_LOCATION);
+   }
    int quality = std::max(1, std::min(100, options.jpegQuality));
 
    // handle ragg specially
@@ -400,7 +403,9 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    if (quartz && bitmapFileType == kJpegFormat)
    {
       deviceType = kPngFormat;
-      devicePath = targetPath.getParent().completeChildPath("." + targetPath.getFilename() + ".png");
+      Error tempError = FilePath::tempFilePath(".png", devicePath);
+      if (tempError)
+         return tempError;
    }
 
    // optional format specific extra params
@@ -426,24 +431,33 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
 
    // save the file
    Error error = savePlotAsFile(deviceCreationCode);
-   if (error || !quartz)
+   if (!quartz)
       return error;
 
-   // encode the JPEG from the PNG
+   // encode the JPEG from the PNG, which is removed either way
    if (bitmapFileType == kJpegFormat)
    {
-      error = writeJpegFromPng(devicePath, targetPath, quality, recordResolution ? res : 0);
+      if (!error)
+         error = writeJpegFromPng(devicePath, targetPath, quality, recordResolution ? res : 0);
       Error removeError = devicePath.removeIfExists();
       if (removeError)
          LOG_ERROR(removeError);
       return error;
    }
 
+   if (error)
+      return error;
+
+   // RStudio's own images (the pane, the zoom window, RPubs) want neither the
+   // resolution nor a compression, so leave them as the device wrote them
+   int dpi = recordResolution ? res : 0;
+   std::string tiffCompression = bitmapFileType == kTiffFormat ? compression : std::string();
+   if (dpi == 0 && tiffCompression.empty())
+      return Success();
+
    // the image is usable without the resolution or the compression, so don't
    // fail the save
-   error = finishQuartzImage(targetPath,
-                             recordResolution ? res : 0,
-                             bitmapFileType == kTiffFormat ? compression : std::string());
+   error = finishQuartzImage(targetPath, dpi, tiffCompression);
    if (error)
       LOG_ERROR(error);
 

@@ -45,6 +45,18 @@ namespace graphics {
 // compression and quality arguments of tiff() and jpeg(). The functions here
 // finish those files through ImageIO. They are no-ops for the other devices.
 
+int tiffCompressionTag(const std::string& compression)
+{
+   if (compression == "none")
+      return 1;
+   else if (compression == "lzw" || compression == "lzw+p")
+      return 5;
+   else if (compression == "zip" || compression == "zip+p")
+      return 8;
+   else
+      return 0;
+}
+
 #ifdef __APPLE__
 
 namespace {
@@ -106,21 +118,6 @@ Error openImage(const FilePath& imagePath, CGImageSourceRef* pSource)
       return imageIOError("Unable to read image", imagePath);
 
    return Success();
-}
-
-// The value of a TIFF's compression tag for a compression as named by tiff()'s
-// compression argument; 0 for one that isn't known. The predictor variants
-// compress the same way, as ImageIO has no predictor option.
-int tiffCompressionTag(const std::string& compression)
-{
-   if (compression == "none")
-      return 1;
-   else if (compression == "lzw" || compression == "lzw+p")
-      return 5;
-   else if (compression == "zip" || compression == "zip+p")
-      return 8;
-   else
-      return 0;
 }
 
 double readNumber(CFDictionaryRef properties, CFStringRef key)

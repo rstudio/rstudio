@@ -224,10 +224,11 @@
       stop("width argument mut be numeric", call. = FALSE)
    if (!is.numeric(height))
       stop("height argument mut be numeric", call. = FALSE)
-   if (!is.null(compression) && (!is.character(compression) || length(compression) != 1L))
+   if (!is.null(compression) && (!is.character(compression) || length(compression) != 1L || is.na(compression)))
       stop("compression argument must be a single string", call. = FALSE)
-   if (!is.null(quality) && (!is.numeric(quality) || length(quality) != 1L))
-      stop("quality argument must be a single number", call. = FALSE)
+   if (!is.null(quality) && (!is.numeric(quality) || length(quality) != 1L || is.na(quality) ||
+                             quality != trunc(quality) || quality < 1 || quality > 100))
+      stop("quality argument must be a whole number from 1 to 100", call. = FALSE)
 
    invisible(.Call("rs_savePlotAsImage", file, format, width, height, compression, quality, PACKAGE = "(embedding)"))
 })
