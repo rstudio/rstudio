@@ -3,14 +3,46 @@ import type { AxeResults, NodeResult, Result } from 'axe-core';
 import type { Page, TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { envFlag } from './env';
+import { envChoice, envFlag } from './env';
+
+export const A11Y_LEVELS = ['A', 'AA', 'AAA'] as const;
+export const WCAG_VERSIONS = ['2.1', '2.2'] as const;
+export type A11yLevel = typeof A11Y_LEVELS[number];
+export type WcagVersion = typeof WCAG_VERSIONS[number];
+
+export interface RuleSet {
+  level: A11yLevel;
+  version: WcagVersion;
+  experimental: boolean;
+}
+
+// axe's tag for each WCAG version and level it has rules for; it has no
+// wcag22a, wcag21aaa or wcag22aaa, and logs a warning for unknown tags.
+const AXE_WCAG_TAGS: Record<'2.0' | WcagVersion, Partial<Record<A11yLevel, string>>> = {
+  '2.0': { A: 'wcag2a', AA: 'wcag2aa', AAA: 'wcag2aaa' },
+  '2.1': { A: 'wcag21a', AA: 'wcag21aa' },
+  '2.2': { AA: 'wcag22aa' },
+};
 
 /**
- * All of axe's WCAG Level A and AA tags (there is no wcag22a). Selecting by
- * tag also runs target-size, which axe's default rule set leaves off -- that
- * is how WCAG 2.2 stays in scope.
+ * axe's tags for every success criterion at or below `level`, from WCAG 2.0
+ * through `version`. Selecting by tag also runs target-size (2.2 AA), which
+ * axe's default rule set leaves off -- that is how WCAG 2.2 stays in scope.
  */
-export const WCAG_22_AA_TAGS: readonly string[] = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+export function ruleSetTags({ level, version }: Pick<RuleSet, 'level' | 'version'>): string[] {
+  const levels = A11Y_LEVELS.slice(0, A11Y_LEVELS.indexOf(level) + 1);
+  const versions = (['2.0', ...WCAG_VERSIONS] as const).slice(0, WCAG_VERSIONS.indexOf(version) + 2);
+  return versions.flatMap((v) => levels.flatMap((l) => AXE_WCAG_TAGS[v][l] ?? []));
+}
+
+/** The rule set picked by PW_A11Y_LEVEL, PW_A11Y_WCAG_VERSION and PW_A11Y_EXPERIMENTAL. */
+export function ruleSetFromEnv(): RuleSet {
+  return {
+    level: envChoice('PW_A11Y_LEVEL', A11Y_LEVELS, 'AA'),
+    version: envChoice('PW_A11Y_WCAG_VERSION', WCAG_VERSIONS, '2.2'),
+    experimental: envFlag('PW_A11Y_EXPERIMENTAL'),
+  };
+}
 
 /**
  * Files each state test leaves in its output dir, read by utils/a11y-report.ts.
@@ -23,27 +55,28 @@ export const SCREENSHOT_FILE = 'a11y-state.png';
 
 const SNIPPET_MAX = 300;
 
-const isWcagAA = (r: Result) => r.tags.some((t) => WCAG_22_AA_TAGS.includes(t));
-
-function ruleSetLabel(experimental: boolean): string {
-  return experimental ? 'WCAG 2.2 AA + experimental' : 'WCAG 2.2 AA';
+export function ruleSetLabel({ level, version, experimental }: RuleSet): string {
+  const label = `WCAG ${version} ${level}`;
+  return experimental ? `${label} + experimental` : label;
 }
 
 /**
- * Scan the page (frames included) with the WCAG A/AA rule set. With
+ * Scan the page (frames included) with the rule set's WCAG tags. With
  * `experimental`, axe's experimental rules are added; tag selection is OR-only,
- * so results are then filtered back to WCAG A/AA tags to drop the non-WCAG
- * experimental rules it brings in.
+ * so results are then filtered back to the selected WCAG tags to drop the
+ * experimental rules outside them.
  */
-export async function runAxe(page: Page, { experimental }: { experimental: boolean }): Promise<AxeResults> {
-  const tags = experimental ? [...WCAG_22_AA_TAGS, 'experimental'] : [...WCAG_22_AA_TAGS];
+export async function runAxe(page: Page, ruleSet: RuleSet): Promise<AxeResults> {
+  const wcag = ruleSetTags(ruleSet);
+  const tags = ruleSet.experimental ? [...wcag, 'experimental'] : wcag;
   const results = await new AxeBuilder({ page }).withTags(tags).analyze();
-  if (!experimental)
+  if (!ruleSet.experimental)
     return results;
+  const inScope = (r: Result) => r.tags.some((t) => wcag.includes(t));
   return {
     ...results,
-    violations: results.violations.filter(isWcagAA),
-    incomplete: results.incomplete.filter(isWcagAA),
+    violations: results.violations.filter(inScope),
+    incomplete: results.incomplete.filter(inScope),
   };
 }
 
@@ -108,14 +141,14 @@ export function writeStateMarker(testInfo: TestInfo): void {
  * output dir, where CI's merge job reads them for the cross-state report.
  */
 export async function scanA11y(page: Page, testInfo: TestInfo): Promise<AxeResults> {
-  const experimental = envFlag('PW_A11Y_EXPERIMENTAL');
-  const ruleSet = ruleSetLabel(experimental);
+  const selected = ruleSetFromEnv();
+  const ruleSet = ruleSetLabel(selected);
 
   const screenshot = testInfo.outputPath(SCREENSHOT_FILE);
   await page.screenshot({ path: screenshot });
   await testInfo.attach(SCREENSHOT_FILE, { path: screenshot, contentType: 'image/png' });
 
-  const results = await runAxe(page, { experimental });
+  const results = await runAxe(page, selected);
 
   testInfo.annotations.push(
     { type: 'a11y-rules', description: ruleSet },

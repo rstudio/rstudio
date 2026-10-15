@@ -18,6 +18,16 @@ on:
         description: "Also run axe's experimental WCAG rules (e.g. label-content-name-mismatch)."
         type: boolean
         default: false
+      level:
+        description: "Highest WCAG conformance level to check (lower levels are included)."
+        type: choice
+        options: [A, AA, AAA]
+        default: AA
+      wcag_version:
+        description: "WCAG version to check against (earlier versions' criteria are included)."
+        type: choice
+        options: ["2.1", "2.2"]
+        default: "2.2"
 
 # Must cover the called workflow's own permissions, which GitHub checks
 # against the caller's.
@@ -38,5 +48,7 @@ jobs:
       project: server
       a11y: true
       a11y_experimental: ${{ inputs.include_experimental }}
+      a11y_level: ${{ inputs.level }}
+      a11y_wcag_version: ${{ inputs.wcag_version }}
       build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ inputs.rstudio_installer_url }}

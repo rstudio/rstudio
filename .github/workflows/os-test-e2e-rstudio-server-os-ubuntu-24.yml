@@ -56,6 +56,16 @@ on:
         description: "With a11y, also run axe's experimental WCAG rules."
         type: boolean
         default: false
+      a11y_level:
+        description: "With a11y, the highest WCAG conformance level to check (lower levels are included)."
+        type: choice
+        options: [A, AA, AAA]
+        default: AA
+      a11y_wcag_version:
+        description: "With a11y, the WCAG version to check against (earlier versions' criteria are included)."
+        type: choice
+        options: ["2.1", "2.2"]
+        default: "2.2"
   workflow_call:
     inputs:
       build_from_source:
@@ -94,6 +104,12 @@ on:
       a11y_experimental:
         type: boolean
         default: false
+      a11y_level:
+        type: string
+        default: AA
+      a11y_wcag_version:
+        type: string
+        default: "2.2"
       defer_merge:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
@@ -794,6 +810,8 @@ jobs:
           # when off; envFlag accepts both, but empty reads as unset in logs.
           PW_A11Y: ${{ inputs.a11y && '1' || '' }}
           PW_A11Y_EXPERIMENTAL: ${{ inputs.a11y_experimental && '1' || '' }}
+          PW_A11Y_LEVEL: ${{ inputs.a11y_level }}
+          PW_A11Y_WCAG_VERSION: ${{ inputs.a11y_wcag_version }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
