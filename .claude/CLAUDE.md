@@ -298,6 +298,20 @@ data homes (pass `--user-config` to use yours), so preferences changed while
 testing stay out of `~/.config/rstudio`. See `tasks/README.md` for the options.
 
 
+### Git Worktrees
+
+A new worktree has no gitignored dependencies. The GWT and CMake builds fall back
+to the primary checkout's `dependencies/`, so install and build there only. Then
+run this once per worktree, from inside it:
+
+    scripts/bootstrap-worktree.sh --with-build-dir
+
+It clones `node_modules` from the primary checkout (or runs `npm ci` when the
+lockfile differs) and configures a fresh `build/`. Never copy or symlink the
+primary checkout's `build/` -- its absolute paths would build and serve the
+primary checkout's code. After that, build and test as usual from the worktree.
+
+
 ## Writing Automated Tests
 
 End-to-end tests are written in TypeScript with Playwright, under `e2e/rstudio/`. They drive the IDE through a JS automation bridge at `window.rstudio`, documented in `e2e/rstudio/CLAUDE.md`. See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guidance on writing Playwright tests, and `.claude/skills/rstudio-run-playwright-tests/SKILL.md` for how to run them.
