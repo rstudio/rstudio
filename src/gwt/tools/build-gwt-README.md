@@ -64,20 +64,22 @@ revision it was built from.
 
 To build RStudio against an unpublished SDK, override the `gwt.sdk` Ant property with the
 staging directory. The other libraries, such as `elemental2` and `gin`, still come from the
-installed `gwtproject`, so run `install-gwt` first.
+installed `gwtproject`, so run `install-gwt` first. From the `gwt` checkout, where `RSTUDIO`
+is your rstudio checkout:
 
-	GWT_DEV_SDK=/path/to/gwt/build/staging/gwt-2.13.1
-	cd src/gwt
+	GWT_DEV_SDK="$(pwd)/build/staging/gwt-${GWT_VERSION}"
+	cd "${RSTUDIO}/src/gwt"
 	ant -Dgwt.sdk="${GWT_DEV_SDK}" draft
 
 `npm run rserver-dev` doesn't pass arguments through to `ant`, so set `ANT_ARGS` instead,
-which the `ant` launcher appends to its command line:
+which the `ant` launcher appends to its command line. Run it from the rstudio checkout:
 
-	ANT_ARGS="-Dgwt.sdk=${GWT_DEV_SDK}" npm run rserver-dev
+	cd "${RSTUDIO}"
+	ANT_ARGS="-Dgwt.sdk=${GWT_DEV_SDK}" npm run rserver-dev -- --restart
 
 The override applies only to that command, so other checkouts and worktrees keep using the
-installed SDK. After rebuilding the SDK, restart `ant devmode`; it picks up the new jars only
-at startup.
+installed SDK. `ant devmode` loads the SDK jars only at startup, and `rserver-dev` reuses a
+running instance unless given `--restart`, so rerun the command above after rebuilding the SDK.
 
 ## Publishing
 
