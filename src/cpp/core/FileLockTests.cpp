@@ -313,6 +313,32 @@ std::string extendedAclText(const FilePath& path)
 
 #endif
 
+#if defined(__APPLE__) || defined(__linux__)
+
+// Gives 'path' an ACL for a claim directory to copy, so tests that force the
+// copy to fail actually reach it. Returns 0, ENOTSUP when the filesystem has
+// no ACL support, or another errno.
+int ensureCopyableAcl(const FilePath& path)
+{
+   int aclError = 0;
+#ifdef __APPLE__
+   // Darwin only writes an ACL when the parent carries one.
+   setExtendedAcl(path, &aclError);
+   if (aclError == EOPNOTSUPP)
+      aclError = ENOTSUP;
+#else
+   // Linux skips the write when it cannot read the parent's ACL.
+   acl_t acl = ::acl_get_file(path.getAbsolutePath().c_str(), ACL_TYPE_ACCESS);
+   if (acl)
+      ::acl_free(acl);
+   else
+      aclError = errno;
+#endif
+   return aclError;
+}
+
+#endif
+
 class FileLockingTest : public ::testing::Test
 {
 protected:
@@ -341,6 +367,7 @@ protected:
       LinkBasedFileLock::setForceClaimDirectoryChownFailureForTesting(false);
       LinkBasedFileLock::setForceFallbackForTesting(false);
       LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(0);
+      LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(false);
    }
 
    // The wall-clock start time of this test process, which the staleness
@@ -423,6 +450,7 @@ protected:
       LinkBasedFileLock::setForceClaimDirectoryChownFailureForTesting(false);
       LinkBasedFileLock::setForceFallbackForTesting(false);
       LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(0);
+      LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(false);
       FileLock::cleanUp();
       FileLock::setTimeoutInterval(oldTimeout_);
       FileLock::setLiveOwnerGraceMultiplierForTesting(oldGraceMultiplier_);
@@ -1939,18 +1967,18 @@ TEST_F(FileLockingTest, ClaimDirectoryMapsParentGroupWhenChownIsDenied)
 #endif
 
 // Filesystems that do not honor POSIX ownership (ntfs-3g without uid= or
-// permissions options) refuse ACL writes on a fresh directory with EPERM
-// while still accepting its mode bits (rstudio/rstudio#19118).
+// permissions options) report a fresh directory as owned by root and refuse
+// ACL writes on it with EPERM, while still accepting its mode bits
+// (rstudio/rstudio#19118).
 TEST_F(FileLockingTest, ClaimCreationFallsBackToModeWhenAclWriteIsDenied)
 {
 #if defined(__APPLE__) || defined(__linux__)
-#ifdef __APPLE__
-   // Darwin only writes an ACL when the parent carries one.
-   int aclError = 0;
-   if (!setExtendedAcl(root_, &aclError))
-      GTEST_SKIP() << "cannot set an extended ACL: " << aclError;
-#endif
+   int aclError = ensureCopyableAcl(root_);
+   if (aclError == ENOTSUP)
+      GTEST_SKIP() << "filesystem has no ACL support";
+   ASSERT_EQ(0, aclError) << "could not prepare parent ACL";
    LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(EPERM);
+   LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(true);
 
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
@@ -1966,21 +1994,46 @@ TEST_F(FileLockingTest, ClaimCreationFallsBackToModeWhenAclWriteIsDenied)
 #endif
 }
 
-TEST_F(FileLockingTest, ClaimCreationStillFailsOnUnexpectedAclError)
+// On a directory this process owns, EPERM is not that ownership quirk (it
+// may be a security policy denying the write), so the ACL is not dropped.
+TEST_F(FileLockingTest, ClaimCreationFailsWhenOwnedAclWriteIsDenied)
 {
 #if defined(__APPLE__) || defined(__linux__)
-#ifdef __APPLE__
-   int aclError = 0;
-   if (!setExtendedAcl(root_, &aclError))
-      GTEST_SKIP() << "cannot set an extended ACL: " << aclError;
-#endif
-   LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(EIO);
+   int aclError = ensureCopyableAcl(root_);
+   if (aclError == ENOTSUP)
+      GTEST_SKIP() << "filesystem has no ACL support";
+   ASSERT_EQ(0, aclError) << "could not prepare parent ACL";
+   LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(EPERM);
 
    LinkBasedFileLock lock;
    Error error = lock.acquire(lockFilePath_);
    ASSERT_TRUE(error);
-   EXPECT_EQ(EIO, error.getCode());
+   EXPECT_EQ(EPERM, error.getCode());
    EXPECT_FALSE(claimPathFor(lockFilePath_).getParent().exists());
+#else
+   GTEST_SKIP() << "platform does not copy ACLs onto claim directories";
+#endif
+}
+
+TEST_F(FileLockingTest, ClaimCreationStillFailsOnUnexpectedAclError)
+{
+#if defined(__APPLE__) || defined(__linux__)
+   int aclError = ensureCopyableAcl(root_);
+   if (aclError == ENOTSUP)
+      GTEST_SKIP() << "filesystem has no ACL support";
+   ASSERT_EQ(0, aclError) << "could not prepare parent ACL";
+   LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(true);
+
+   for (int errorNumber : {EACCES, EIO})
+   {
+      LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(errorNumber);
+
+      LinkBasedFileLock lock;
+      Error error = lock.acquire(lockFilePath_);
+      ASSERT_TRUE(error);
+      EXPECT_EQ(errorNumber, error.getCode());
+      EXPECT_FALSE(claimPathFor(lockFilePath_).getParent().exists());
+   }
 #else
    GTEST_SKIP() << "platform does not copy ACLs onto claim directories";
 #endif

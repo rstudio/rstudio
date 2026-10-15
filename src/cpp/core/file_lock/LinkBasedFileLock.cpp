@@ -110,6 +110,7 @@ boost::function<void(const FilePath&)>& s_afterRename = make_leaked<boost::funct
 bool s_forceClaimDirectoryChownFailure = false;
 bool s_forceFallback = false;
 int s_forceClaimDirectoryAclError = 0;
+bool s_forceClaimDirectoryForeignOwner = false;
 #endif
 
 // Shared by the owner and registry snapshots. This mutex is never held by
@@ -1569,12 +1570,19 @@ bool isAclUnsupported(int errorNumber)
 // give way to plain mode bits. Filesystems that do not track POSIX ownership
 // (e.g. ntfs-3g mounted without uid= or permissions options) report the new
 // directory as owned by root, so the kernel refuses the ACL with EPERM even
-// though it accepts the mode bits (rstudio/rstudio#19118).
-bool isAclUnapplicable(int errorNumber)
+// though it accepts the mode bits (rstudio/rstudio#19118). Requiring that
+// foreign owner keeps other refusals, such as a security policy denying the
+// write, from silently dropping the parent's ACL.
+bool isAclUnapplicable(int errorNumber, const struct stat& preparedInfo)
 {
-   return isAclUnsupported(errorNumber) ||
-          errorNumber == EPERM ||
-          errorNumber == EACCES;
+   if (isAclUnsupported(errorNumber))
+      return true;
+
+   bool foreignOwner = preparedInfo.st_uid != ::geteuid();
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   foreignOwner = foreignOwner || s_forceClaimDirectoryForeignOwner;
+#endif
+   return errorNumber == EPERM && foreignOwner;
 }
 
 // Returns the acl_set_fd() status, or the failure a test asked to simulate.
@@ -1933,7 +1941,7 @@ Error applyTranslatedPosixAcl(const FilePath& parent,
       int errorNumber;
       if (setDescriptorAcl(descriptor, childAcl, &errorNumber) == 0)
          *pApplied = true;
-      else if (!isAclUnapplicable(errorNumber))
+      else if (!isAclUnapplicable(errorNumber, preparedInfo))
          error = systemCallError("acl_set_fd", errorNumber, ERROR_LOCATION);
    }
 
@@ -2218,7 +2226,7 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
       int errorNumber;
       int status = setDescriptorAcl(descriptor, parentAcl, &errorNumber);
       ::acl_free(parentAcl);
-      if (status == -1 && !isAclUnapplicable(errorNumber))
+      if (status == -1 && !isAclUnapplicable(errorNumber, preparedInfo))
       {
          Error error = systemCallError(
             "acl_set_fd",
@@ -3131,6 +3139,12 @@ void LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(
    int errorNumber)
 {
    s_forceClaimDirectoryAclError = errorNumber;
+}
+
+void LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(
+   bool foreignOwner)
+{
+   s_forceClaimDirectoryForeignOwner = foreignOwner;
 }
 #endif
 
