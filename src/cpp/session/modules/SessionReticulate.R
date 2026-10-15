@@ -133,10 +133,37 @@
    
 })
 
+#' Cache reticulate's Python Error Hint
+#'
+#' reticulate (1.29 to 1.47) computes the hint appended to Python error
+#' messages in a function-local static's initializer, by calling R. RStudio
+#' answers RPCs while that R code runs, and an Environment pane listing of
+#' Python objects can format another Python error from there; re-entering the
+#' initializer deadlocks (libstdc++) or aborts (libc++). Formatting one error
+#' now, before the client knows that Python is available, caches the hint so
+#' that no later error computes it (rstudio/reticulate#1935).
+#'
+#' @param builtins The Python builtins module, unconverted.
+#'
+#' @return Whether an error message was formatted.
+.rs.addFunction("reticulate.cacheErrorHint", function(builtins)
+{
+   ns <- asNamespace("reticulate")
+   if (!exists("conditionMessage_from_py_exception", envir = ns, inherits = FALSE))
+      return(FALSE)
+
+   formatter <- get("conditionMessage_from_py_exception", envir = ns, inherits = FALSE)
+   message <- .rs.tryCatch(formatter(builtins$Exception("")))
+   is.character(message)
+})
+
 .rs.addFunction("reticulate.onPythonInitialized", function()
 {
    builtins <- reticulate::import_builtins(convert = FALSE)
-   
+
+   # do this before the client learns that Python is available
+   .rs.reticulate.cacheErrorHint(builtins)
+
    # override help method (Python's interactive help does
    # not play well with RStudio)
    help <- builtins$help
