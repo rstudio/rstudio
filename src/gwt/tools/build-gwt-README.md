@@ -35,9 +35,23 @@ For example, to move from Montauk Daisy to a new release on GWT 2.13.1:
 
 Commit GWT patches for that release to this branch.
 
+## Build names
+
+Each published SDK has a build name, which is used for the tag in the fork, the tarball name,
+and `GWT_VERSION` in the install scripts. The first build for a release is
+`<upstream version>-<release>`, e.g. `2.13.1-montauk-daisy`; later builds for the same release
+add a counter: `2.13.1-montauk-daisy-1`, `2.13.1-montauk-daisy-2`, and so on. The install
+scripts only download a build whose name they haven't installed before, so a name is never
+reused: any change to the tarball gets the next number. The tag records which commit of the
+fork went into each tarball.
+
+Only one person should prepare a build at a time. Pushing the tag claims the name; if someone
+else has already pushed it, the push is rejected.
+
 ## Building
 
-The build may fail with JDKs newer than 17.
+The build may fail with JDKs newer than 17. `GWT_VERSION` here is the upstream version, which
+is used to brand the SDK.
 
 	export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 	GWT_VERSION=2.13.1
@@ -56,17 +70,34 @@ the installed SDK, where `RSTUDIO` is your rstudio checkout. This assumes you ha
 
 ## Publishing
 
+Once your changes are pushed to the release branch, find the latest build name and tag the
+branch with the next one:
+
+	git fetch origin --tags
+	git tag -l "${GWT_VERSION}-montauk-daisy*"
+	GWT_BUILD=2.13.1-montauk-daisy-1
+	git checkout rstudio/montauk-daisy
+	git pull
+	git tag -a "${GWT_BUILD}" -m "${GWT_BUILD}"
+	git push origin "${GWT_BUILD}"
+
+Build from the tag with a clean working tree and copy the SDK into your rstudio checkout, as
+described above.
+
 The tarball contains the whole `gwtproject` directory, including the other libraries, not
-just GWT. Remove the `gwt-<version>` marker files that `install-gwt` creates before packaging:
+just GWT. Package it on macOS or Linux, after removing the `gwt-<build name>` marker files that
+`install-gwt` creates. Check that the name isn't already in the bucket (`aws s3 ls` should
+print nothing), then upload:
 
 	cd "${RSTUDIO}/dependencies/common/gwtproject"
 	rm -f gwt-*
 	tar czf ../gwt.tar.gz *
-	aws s3 cp ../gwt.tar.gz \
-		"s3://rstudio-buildtools/gwt/gwt-${GWT_VERSION}-<new-release>.tar.gz" --acl public-read
+	aws s3 ls "s3://rstudio-buildtools/gwt/gwt-${GWT_BUILD}.tar.gz"
+	aws s3 cp ../gwt.tar.gz "s3://rstudio-buildtools/gwt/gwt-${GWT_BUILD}.tar.gz" \
+		--acl public-read
 	rm ../gwt.tar.gz
 
-Then update `GWT_VERSION` in both `dependencies/common/install-gwt` and
-`dependencies/windows/install-dependencies.cmd`, and `VERSION` in
-`dependencies/metadata/gwt.txt`. If any jar paths changed, also update `src/gwt/.classpath`,
-which IDEs use to resolve RStudio's Java libraries.
+Then set `GWT_VERSION` to the build name in both `dependencies/common/install-gwt` and
+`dependencies/windows/install-dependencies.cmd`, and set `VERSION` in
+`dependencies/metadata/gwt.txt` to the upstream version. If any jar paths changed, also update
+`src/gwt/.classpath`, which IDEs use to resolve RStudio's Java libraries.
