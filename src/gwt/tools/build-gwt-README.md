@@ -64,9 +64,10 @@ revision it was built from.
 
 To build RStudio against an unpublished SDK, override the `gwt.sdk` Ant property with the
 staging directory. The other libraries, such as `elemental2` and `gin`, still come from the
-installed `gwtproject`, so run `install-gwt` first. From the `gwt` checkout, where `RSTUDIO`
-is your rstudio checkout:
+installed `gwtproject`, so run `install-gwt` first. From the `gwt` checkout, setting `RSTUDIO`
+to your rstudio checkout:
 
+	RSTUDIO=/path/to/rstudio
 	GWT_DEV_SDK="$(pwd)/build/staging/gwt-${GWT_VERSION}"
 	cd "${RSTUDIO}/src/gwt"
 	ant -Dgwt.sdk="${GWT_DEV_SDK}" draft
@@ -94,9 +95,10 @@ branch with the next one:
 	git tag -a "${GWT_BUILD}" -m "${GWT_BUILD}"
 	git push origin "${GWT_BUILD}"
 
-Build from the tag with a clean working tree, then copy the SDK over the installed one, where
-`RSTUDIO` is your rstudio checkout:
+Build from the tag with a clean working tree, then copy the SDK over the installed one, setting
+`RSTUDIO` to your rstudio checkout:
 
+	RSTUDIO=/path/to/rstudio
 	rm -rf "${RSTUDIO}/dependencies/common/gwtproject/gwt/gwt-rstudio"
 	cp -R "build/staging/gwt-${GWT_VERSION}" \
 		"${RSTUDIO}/dependencies/common/gwtproject/gwt/gwt-rstudio"
