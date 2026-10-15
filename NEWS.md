@@ -19,6 +19,7 @@
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
+- Modal dialogs no longer wrap keyboard focus from the last control back to the first (or from the first to the last with Shift+Tab). As with native browser dialogs, Tab past either end moves focus to the browser's own controls, or to the host page when RStudio is embedded in another page; the rest of the IDE remains unreachable while a dialog is open.
 
 ### Dependencies
 - Electron 44.7.2
