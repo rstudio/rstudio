@@ -18,15 +18,21 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class SavePlotAsImageContext extends JavaScriptObject
 {
    protected SavePlotAsImageContext()
    {
    }
-   
+
    public final native JsArray<SavePlotAsImageFormat> getFormats() /*-{
       return this.formats;
+   }-*/;
+
+   // the compressions offered for TIFFs, as named by R's tiff() device
+   public final native JsArrayString getTiffCompressionTypes() /*-{
+      return this.tiffCompressionTypes;
    }-*/;
    
    public final native FileSystemItem getDirectory() /*-{

@@ -555,6 +555,10 @@ public class ElementIds
    public static String getExportPlotResolution() { return getElementId(EXPORT_PLOT_RESOLUTION); }
    public final static String EXPORT_PLOT_SIZE_TEXT = "export_plot_size_text";
    public static String getExportPlotSizeText() { return getElementId(EXPORT_PLOT_SIZE_TEXT); }
+   public final static String EXPORT_PLOT_TIFF_COMPRESSION = "export_plot_tiff_compression";
+   public static String getExportPlotTiffCompression() { return getElementId(EXPORT_PLOT_TIFF_COMPRESSION); }
+   public final static String EXPORT_PLOT_JPEG_QUALITY = "export_plot_jpeg_quality";
+   public static String getExportPlotJpegQuality() { return getElementId(EXPORT_PLOT_JPEG_QUALITY); }
 
    // FixedPlotSizeDialog
    public final static String FIXED_PLOT_SIZE_WIDTH = "fixed_plot_size_width";

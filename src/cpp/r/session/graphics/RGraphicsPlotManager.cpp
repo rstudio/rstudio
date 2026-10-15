@@ -266,11 +266,12 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    int widthPx,
                                    int heightPx,
                                    bool useDevicePixelRatio,
-                                   bool recordResolution)
+                                   bool recordResolution,
+                                   const BitmapOptions& options)
 {
    double pixelRatio = useDevicePixelRatio ?
                          r::session::graphics::device::devicePixelRatio() : 1;
-   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
+   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio, recordResolution, options);
 }
 
 
@@ -279,14 +280,15 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    int widthPx,
                                    int heightPx,
                                    double pixelRatio,
-                                   bool recordResolution)
+                                   bool recordResolution,
+                                   const BitmapOptions& options)
 {
    if (format == kPngFormat ||
        format == kBmpFormat ||
        format == kJpegFormat ||
        format == kTiffFormat)
    {
-      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
+      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio, recordResolution, options);
    }
    else if (format == kSvgFormat)
    {
@@ -311,7 +313,8 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                         int width,
                                         int height,
                                         double pixelRatio,
-                                        bool recordResolution)
+                                        bool recordResolution,
+                                        const BitmapOptions& options)
 {
    // default res
    int res = 96;
@@ -331,7 +334,14 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    width = gsl::narrow_cast<int>(scaledWidth);
    height = gsl::narrow_cast<int>(scaledHeight);
    res = gsl::narrow_cast<int>(std::lround(res * pixelRatio));
-   
+
+   // the compression is interpolated into R code below; an empty one (from
+   // an older stored option) means the default
+   std::string compression = options.tiffCompression.empty() ? "lzw" : options.tiffCompression;
+   if (compression.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789+") != std::string::npos)
+      return systemError(boost::system::errc::invalid_argument, "Invalid TIFF compression: " + compression, ERROR_LOCATION);
+   int quality = std::max(1, std::min(100, options.jpegQuality));
+
    // handle ragg specially
    std::string backend = getDefaultBackend();
    if (backend == "ragg" &&
@@ -357,7 +367,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                   .addParam("width", width)
                   .addParam("height", height)
                   .addParam("res", res)
-                  .addParam("quality", 100)
+                  .addParam("quality", quality)
                   .call();
          }
          else if (bitmapFileType == kTiffFormat)
@@ -367,6 +377,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                   .addParam("width", width)
                   .addParam("height", height)
                   .addParam("res", res)
+                  .addParam("compression", compression)
                   .call();
          }
          else
@@ -380,12 +391,24 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
       return savePlotAsFile(deviceFunction);
    }
 
+   // the Quartz devices ignore jpeg()'s quality and tiff()'s compression (and
+   // warn about the latter), so a JPEG is drawn as a PNG and encoded at the
+   // quality afterwards, and a TIFF is compressed afterwards
+   bool quartz = usesQuartzBitmapDevice();
+   std::string deviceType = bitmapFileType;
+   FilePath devicePath = targetPath;
+   if (quartz && bitmapFileType == kJpegFormat)
+   {
+      deviceType = kPngFormat;
+      devicePath = targetPath.getParent().completeChildPath("." + targetPath.getFilename() + ".png");
+   }
+
    // optional format specific extra params
    std::string extraParams;
-
-   // add extra quality parameter for jpegs
-   if (bitmapFileType == kJpegFormat)
-      extraParams = ", quality = 100";
+   if (deviceType == kJpegFormat)
+      extraParams = ", quality = " + std::to_string(quality);
+   else if (deviceType == kTiffFormat && !quartz)
+      extraParams = ", compression = \"" + compression + "\"";
 
    // add extra bitmap params
    extraParams += r::session::graphics::extraBitmapParams();
@@ -394,8 +417,8 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    boost::format fmt(
       "{ require(grDevices, quietly=TRUE); "
       "  %1%(filename=\"%2%\", width=%3%, height=%4%, res = %5% %6%); }");
-   std::string deviceCreationCode = boost::str(fmt % bitmapFileType %
-                                               string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % deviceType %
+                                               string_utils::utf8ToSystem(devicePath.getAbsolutePath()) %
                                                width %
                                                height %
                                                res %
@@ -403,11 +426,24 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
 
    // save the file
    Error error = savePlotAsFile(deviceCreationCode);
-   if (error || !recordResolution || !usesQuartzBitmapDevice())
+   if (error || !quartz)
       return error;
 
-   // the image is usable without the resolution, so don't fail the save
-   error = ensureImageResolution(targetPath, res);
+   // encode the JPEG from the PNG
+   if (bitmapFileType == kJpegFormat)
+   {
+      error = writeJpegFromPng(devicePath, targetPath, quality, recordResolution ? res : 0);
+      Error removeError = devicePath.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+      return error;
+   }
+
+   // the image is usable without the resolution or the compression, so don't
+   // fail the save
+   error = finishQuartzImage(targetPath,
+                             recordResolution ? res : 0,
+                             bitmapFileType == kTiffFormat ? compression : std::string());
    if (error)
       LOG_ERROR(error);
 

@@ -37,6 +37,8 @@ public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOpe
                            final boolean viewAfterSave,
                            final boolean useDevicePixelRatio,
                            final int resolution,
+                           final String tiffCompression,
+                           final int jpegQuality,
                            final Operation onCompleted)
    {
       DesktopExport.export(

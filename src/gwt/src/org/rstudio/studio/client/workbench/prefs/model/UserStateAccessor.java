@@ -340,6 +340,14 @@ public class UserStateAccessor extends Prefs
          return this && this.resolution || 0;
       }-*/;
 
+      public final native String getTiffCompression() /*-{
+         return this && this.tiffCompression || "lzw";
+      }-*/;
+
+      public final native int getJpegQuality() /*-{
+         return this && this.jpegQuality || 100;
+      }-*/;
+
    }
 
    /**

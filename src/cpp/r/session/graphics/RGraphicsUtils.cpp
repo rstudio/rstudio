@@ -15,6 +15,8 @@
 
 #include "RGraphicsUtils.hpp"
 
+#include <algorithm>
+
 #include <boost/format.hpp>
 
 #include <shared_core/Error.hpp>
@@ -27,6 +29,7 @@
 #include <r/RUtil.hpp>
 #include <r/RErrorCategory.hpp>
 
+#include <r/session/RGraphics.hpp>
 #include <r/session/RGraphicsConstants.h>
 
 #define R_USE_PROTOTYPES 1
@@ -229,6 +232,31 @@ bool usesQuartzBitmapDevice()
 #else
    return false;
 #endif
+}
+
+std::vector<std::string> tiffCompressionTypes()
+{
+   std::vector<std::string> types;
+   Error error = r::exec::RFunction(".rs.graphics.tiffCompressionTypes").call(&types);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return { "none" };
+   }
+
+   // the Quartz device ignores the argument, and the TIFF is compressed
+   // through ImageIO instead, which has no predictor option
+   if (usesQuartzBitmapDevice())
+   {
+      const std::vector<std::string> quartzTypes = { "none", "lzw", "zip" };
+      types.erase(
+               std::remove_if(types.begin(), types.end(), [&](const std::string& type) {
+                  return std::find(quartzTypes.begin(), quartzTypes.end(), type) == quartzTypes.end();
+               }),
+               types.end());
+   }
+
+   return types;
 }
 
 struct RestorePreviousGraphicsDeviceScope::Impl
