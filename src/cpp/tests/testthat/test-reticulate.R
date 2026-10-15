@@ -99,6 +99,53 @@ skipIfPythonUnavailable <- function()
    skip_if_not(available, "Python is not available")
 }
 
+test_that("reticulate's error hint is cached when Python is initialized", {
+
+   skipIfPythonUnavailable()
+
+   # computing the hint while formatting a later error is what could re-enter
+   # reticulate (rstudio/reticulate#1935), so a later error must not call it
+   ns <- asNamespace("reticulate")
+   hint <- get(".py_last_error_hint", envir = ns)
+   calls <- 0L
+   counting <- function() {
+      calls <<- calls + 1L
+      hint()
+   }
+
+   unlockBinding(".py_last_error_hint", ns)
+   assign(".py_last_error_hint", counting, envir = ns)
+   on.exit({
+      assign(".py_last_error_hint", hint, envir = ns)
+      lockBinding(".py_last_error_hint", ns)
+   }, add = TRUE)
+
+   message <- tryCatch(reticulate::py_eval("None.missing"), error = conditionMessage)
+   expect_match(message, "AttributeError")
+   expect_identical(calls, 0L)
+})
+
+test_that("errors caching reticulate's error hint are logged, not raised", {
+
+   # the implementation reaches into reticulate internals, which may change
+   rsEnv <- as.environment("tools:rstudio")
+   impl <- get(".rs.reticulate.cacheErrorHintImpl", envir = rsEnv)
+   emit <- get(".rs.logMessageEmit", envir = rsEnv)
+   on.exit({
+      assign(".rs.reticulate.cacheErrorHintImpl", impl, envir = rsEnv)
+      assign(".rs.logMessageEmit", emit, envir = rsEnv)
+   }, add = TRUE)
+
+   logged <- character()
+   assign(".rs.reticulate.cacheErrorHintImpl", function(builtins) stop("boom"), envir = rsEnv)
+   assign(".rs.logMessageEmit", function(method, message) {
+      logged <<- c(logged, message)
+   }, envir = rsEnv)
+
+   expect_false(.rs.reticulate.cacheErrorHint(NULL))
+   expect_identical(logged, "Error caching reticulate's error hint: boom")
+})
+
 test_that("Python function arguments are discovered with inspect.signature()", {
 
    skipIfPythonUnavailable()
