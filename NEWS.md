@@ -2,6 +2,7 @@
 
 ### New
 - ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed is installed first, via [rig](https://github.com/r-lib/rig), in a background job; rig itself is downloaded when it is not already available. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
+- The `RSTUDIO_WHICH_R` environment variable, which tells RStudio Desktop which R to run, now accepts an R home directory (e.g. `C:\R\R-4.5.3`) as well as the path of the R executable.
 -
 - ([#19030](https://github.com/rstudio/rstudio/pull/19030)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
