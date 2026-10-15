@@ -255,6 +255,10 @@ td {
       the bottom for each rendered row (#18378). */
    line-height: 14px;
    overflow: hidden;
+   /* Keep every cell on one line while preserving runs of spaces, so the
+      displayed value matches the data (#19117). Newlines and tabs are escaped
+      by .rs.formatDataColumn, so pre cannot grow a row. */
+   white-space: pre;
 }
 
 tbody tr:hover td:not(.first-child) {
@@ -416,7 +420,7 @@ th:hover .pin-icon {
 }
 
 .largeCell {
-   white-space: nowrap;
+   white-space: pre;
    overflow: hidden;
    text-overflow: ellipsis;
    position: relative;
@@ -1487,6 +1491,9 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
       hover highlight) shows through; otherwise the global "td" rule paints
       an opaque --grid-bg over the stats widget. */
    background-color: transparent;
+   /* Stats values are free to wrap; the global td rule's 'pre' is for the
+      fixed-height grid rows. */
+   white-space: normal;
 }
 
 .stats-label {

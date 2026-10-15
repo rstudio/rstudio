@@ -1746,6 +1746,36 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/19117
+  test('cell values keep runs of spaces and escape line breaks', async () => {
+    // Cells use white-space: pre so a run of spaces is drawn (and copied)
+    // intact. The session escapes newlines and tabs before they reach the
+    // grid, so a multi-line value still occupies a single row.
+    const setup = `{ .rs.ws_test_df <- data.frame(a = c("test     this", "line1\\nline2\\tend"), stringsAsFactors = FALSE); View(.rs.ws_test_df) }`;
+    await consoleActions.executeInConsole(setup);
+    try {
+      await waitForViewer(dataViewer);
+
+      const cells = dataViewer.frame.locator('#gridBody .textCell');
+      await expect(cells).toHaveCount(2);
+
+      // innerText reflects the rendered text (after CSS white-space
+      // processing), unlike textContent, so it is what a copy would yield.
+      const rendered = await cells.evaluateAll((tds) =>
+        (tds as HTMLElement[]).map((td) => td.innerText));
+      expect(rendered).toEqual(['test     this', 'line1\\nline2\\tend']);
+
+      // The escaped value did not wrap onto a second line and grow its row.
+      const heights = await cells.evaluateAll((tds) =>
+        (tds as HTMLElement[]).map((td) => td.getBoundingClientRect().height));
+      expect(heights[1]).toBe(heights[0]);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.ws_test_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // https://github.com/rstudio/rstudio/issues/17800
   //
   // The grid intercepts Ctrl/Cmd+C while the viewport is focused to copy the

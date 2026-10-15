@@ -6,6 +6,7 @@
 - ([#19030](https://github.com/rstudio/rstudio/pull/19030)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
 ### Fixed
+- ([#19117](https://github.com/rstudio/rstudio/issues/19117)): Inline data frame output in R Markdown and Quarto documents, and the Data Viewer, now display runs of spaces in cell values as-is instead of collapsing them to a single space; the Data Viewer also shows embedded newlines and tabs escaped (`\n`, `\t`) rather than as a space.
 - ([#19082](https://github.com/rstudio/rstudio/issues/19082)): Fixed an issue where console output slowed down, and the IDE could become unresponsive, as the console scrollback filled up -- most visibly when output alternated between stdout and stderr (e.g. `message()` and `cat()` in a loop).
 - ([#19080](https://github.com/rstudio/rstudio/issues/19080)): Fixed an issue where the console could stall for many seconds while large amounts of stderr output with no colon in it (e.g. gert's `git_clone()` progress) arrived.
 - ([rstudio/rstudio-pro#13167](https://github.com/rstudio/rstudio-pro/issues/13167)): Fixed an issue where the Packages pane could show a stale package list (e.g. a blank Package Manager metadata column for a just-installed package) when two package-list refreshes overlapped.
