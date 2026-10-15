@@ -57,16 +57,30 @@ is used to brand the SDK.
 	GWT_VERSION=2.13.1
 	ant clean dist-dev "-Dgwt.version=${GWT_VERSION}"
 
-The SDK is written to `build/staging/gwt-${GWT_VERSION}`. To try it locally, copy it over
-the installed SDK, where `RSTUDIO` is your rstudio checkout. This assumes you have already run
-`install-gwt`, which also installs the libraries GWT is used with, such as `elemental2` and
-`gin`.
+The SDK is written to `build/staging/gwt-${GWT_VERSION}`. Its `about.txt` records the git
+revision it was built from.
 
-	rm -rf "${RSTUDIO}/dependencies/common/gwtproject/gwt/gwt-rstudio"
-	cp -R "build/staging/gwt-${GWT_VERSION}" \
-		"${RSTUDIO}/dependencies/common/gwtproject/gwt/gwt-rstudio"
+## Testing with RStudio
 
-`gwt-rstudio/about.txt` records the git revision the SDK was built from.
+To build RStudio against an unpublished SDK, override the `gwt.sdk` Ant property with the
+staging directory. The other libraries, such as `elemental2` and `gin`, still come from the
+installed `gwtproject`, so run `install-gwt` first. From the `gwt` checkout, setting `RSTUDIO`
+to your rstudio checkout:
+
+	RSTUDIO=/path/to/rstudio
+	GWT_DEV_SDK="$(pwd)/build/staging/gwt-${GWT_VERSION}"
+	cd "${RSTUDIO}/src/gwt"
+	ant -Dgwt.sdk="${GWT_DEV_SDK}" draft
+
+`npm run rserver-dev` doesn't pass arguments through to `ant`, so set `ANT_ARGS` instead,
+which the `ant` launcher appends to its command line. Run it from the rstudio checkout:
+
+	cd "${RSTUDIO}"
+	ANT_ARGS="-Dgwt.sdk=${GWT_DEV_SDK}" npm run rserver-dev -- --restart
+
+The override applies only to that command, so other checkouts and worktrees keep using the
+installed SDK. `ant devmode` loads the SDK jars only at startup, and `rserver-dev` reuses a
+running instance unless given `--restart`, so rerun the command above after rebuilding the SDK.
 
 ## Publishing
 
@@ -81,8 +95,13 @@ branch with the next one:
 	git tag -a "${GWT_BUILD}" -m "${GWT_BUILD}"
 	git push origin "${GWT_BUILD}"
 
-Build from the tag with a clean working tree and copy the SDK into your rstudio checkout, as
-described above.
+Build from the tag with a clean working tree, then copy the SDK over the installed one, setting
+`RSTUDIO` to your rstudio checkout:
+
+	RSTUDIO=/path/to/rstudio
+	rm -rf "${RSTUDIO}/dependencies/common/gwtproject/gwt/gwt-rstudio"
+	cp -R "build/staging/gwt-${GWT_VERSION}" \
+		"${RSTUDIO}/dependencies/common/gwtproject/gwt/gwt-rstudio"
 
 The tarball contains the whole `gwtproject` directory, including the other libraries, not
 just GWT. Package it on macOS or Linux, after removing the `gwt-<build name>` marker files that
