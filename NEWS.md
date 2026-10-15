@@ -16,10 +16,10 @@
 - ([#17215](https://github.com/rstudio/rstudio/issues/17215)): Fixed an issue where color previews in the editor shifted the cursor and bracket highlighting to the right at fractional zoom levels or display scaling
 - ([#19054](https://github.com/rstudio/rstudio/issues/19054)): Fixed an issue where saving a document could clear its spelling and diagnostic markers; the R Markdown toolbar now also picks up output format changes when autosave is enabled
 - ([#19056](https://github.com/rstudio/rstudio/issues/19056)): Fixed an issue where R diagnostics were very slow for large documents when the document or the working directory was on a slow filesystem (e.g. a network drive, or a Windows drive mounted within WSL), as the filesystem was consulted for every function call in the document
+- ([#19134](https://github.com/rstudio/rstudio/issues/19134)): Modal dialogs no longer wrap keyboard focus from the last control back to the first (or from the first to the last with Shift+Tab). As with native browser dialogs, Tab past either end moves focus to the browser's own controls, or to the host page when RStudio is embedded in another page; the rest of the IDE remains unreachable while a dialog is open.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
-- Modal dialogs no longer wrap keyboard focus from the last control back to the first (or from the first to the last with Shift+Tab). As with native browser dialogs, Tab past either end moves focus to the browser's own controls, or to the host page when RStudio is embedded in another page; the rest of the IDE remains unreachable while a dialog is open.
 
 ### Dependencies
 - Electron 44.7.2
