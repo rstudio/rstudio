@@ -259,6 +259,9 @@ If you modify JavaScript components (e.g. in `src/gwt/acesupport`), also run:
 
     cd src/gwt && ant acesupport
 
+RStudio builds against a fork of GWT. To change the fork or update the GWT version, see
+`src/gwt/tools/build-gwt-README.md`.
+
 
 ### Backend
 
