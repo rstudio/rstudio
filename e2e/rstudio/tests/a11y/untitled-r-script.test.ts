@@ -9,7 +9,7 @@ import { TIMEOUTS } from '@utils/constants';
  * No restore step: the fixture's teardown closes every document unsaved
  * before quitting the session.
  */
-test('untitled R script has no WCAG 2.2 AA violations', { tag: ['@a11y', '@server_only'] },
+test('untitled R script has no accessibility violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
     // Teardown may leave an untitled tab behind for the next session, so
     // "an untitled doc is active" alone could match before the new one exists.
