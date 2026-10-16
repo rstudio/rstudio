@@ -75,10 +75,18 @@
       return(NULL)
    
    formatted <- formatter(col, trim = TRUE, justify = "none", ...)
-   
+
    if (is.character(formatted) && length(formatted) == length(col))
+   {
+      # some methods (e.g. hms, survival's Surv) ignore 'trim' and pad values
+      # to a common width, which the grid's 'white-space: pre' cells would
+      # show; only character data's own leading and trailing spaces are kept
+      if (!is.character(col) && !is.factor(col))
+         formatted <- trimws(formatted)
+
       formatted[is.na(col)] <- NA
-   
+   }
+
    formatted
    
 })
