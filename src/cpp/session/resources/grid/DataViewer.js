@@ -277,6 +277,10 @@ var sidebarDefaultResolved = false;
 // the recorded postInitActions entry keyed by this marker).
 var FILTER_UI_MARKER = "filter-injected-ui";
 
+// Marker class for the data import dialog's per-column type labels, used the
+// same way (setColumnDefinitionsUIVisible / isColumnTypesUIVisible).
+var COLUMN_TYPES_UI_MARKER = "column-types-injected-ui";
+
 // Active cell coordinates. activeRow is the 0-based index into the
 // currently displayed (filtered/sorted) rows; activeCol is the 0-based
 // position in columnOrder (display order, accounting for pinning).
@@ -1754,7 +1758,8 @@ var effectiveMaxDisplayColumns = function() {
 };
 
 // Returns the column render order: pinned columns first (in original order),
-// then unpinned columns (in original order). Column 0 (rownames) is always first.
+// then unpinned columns (in original order). Column 0 (rownames) is always first,
+// or left out entirely when row numbers are off.
 // The server returns exactly the columns we asked for (pinned + window), so we
 // order the whole fetched set rather than capping at maxDisplayColumns. Hidden
 // columns are left out even when fetched (a column hidden after its fetch stays
@@ -1764,7 +1769,12 @@ var getColumnOrder = function() {
    var pinned = [];
    var unpinned = [];
    for (var i = 0; i < colCount; i++) {
-      if (isColumnHidden(absColIndex(i))) {
+      // Hosts that turn row numbers off (the data import preview, the data
+      // output pane) don't want the rownames column at all; rendering it gave
+      // the import dialog a nameless column to assign a type to (#19138).
+      if (i === 0 && !rowNumbers) {
+         continue;
+      } else if (isColumnHidden(absColIndex(i))) {
          continue;
       } else if (isColumnPinned(i)) {
          pinned.push(i);
@@ -2782,9 +2792,15 @@ var autoSizeColumns = function() {
    //   .first-child (rownames): +4px padding each side beyond the base 5px
    var TD_EXTRA      = 11 + 2;            // chrome + sub-pixel safety
    var TD_DATA_EXTRA = 22 + 2;
+   //   .columnTypeHeader (import dialog): th chrome, plus the 15px
+   //     padding-right that th.columnClickable div gives both the label and
+   //     its wrapper
    var TH_EXTRA      = 11 + 18 + 2;
+   var TYPE_LABEL_EXTRA = 11 + 15 + 15 + 2;
    var PIN_ICON_W    = 15;
    var ROWNAMES_PAD  = 8;
+
+   var showTypeLabels = isColumnTypesUIVisible();
 
    // Measure from data (col metadata + cached cell values), not from rendered
    // <th>/<td>. With column virtualization only a window of headers is in the
@@ -2802,6 +2818,13 @@ var autoSizeColumns = function() {
       var pinChrome = isRowNames ? 0 : PIN_ICON_W;
       var maxW = measureTextWidth(col.col_name || "", true) +
                  TH_EXTRA + pinChrome + rowNamesPad;
+
+      // The type label sits on its own line under the name; it's italic, but
+      // oblique glyphs keep the regular advance widths.
+      if (showTypeLabels) {
+         var typeW = measureTextWidth(columnTypeLabel(col), false) + TYPE_LABEL_EXTRA;
+         if (typeW > maxW) maxW = typeW;
+      }
 
       // Cell chrome depends on the cell class
       var colClass = getColClass(col);
@@ -3825,18 +3848,27 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
 // Column Type UI (data import mode)
 // ==========================================================================
 
+// The label under each header name: the user's assigned type if they picked
+// one in the import dialog, otherwise the detected R class. autoSizeColumns
+// measures the same string.
+var columnTypeLabel = function(col) {
+   return "(" + (col.col_type_assigned || colClassLabel(col)) + ")";
+};
+
 var createColumnTypesUI = function(th, idx, col) {
    var host = document.createElement("div");
    host.className = "columnTypeWrapper";
 
    var val = document.createElement("div");
-   // show the user's assigned type if they picked one in the import dialog,
-   // otherwise fall back to the detected R class
-   val.textContent = "(" + (col.col_type_assigned || colClassLabel(col)) + ")";
+   val.textContent = columnTypeLabel(col);
    val.className = "columnTypeHeader";
 
    th.classList.add("columnClickable");
-   th.addEventListener("click", function(evt) {
+   // Assigned, not added: on a refresh, setHeaderUIVisible decorates the same
+   // headers twice (the postInitActions replay, then the host's own call after
+   // setData), and a second handler would dismiss the menu on the same click
+   // that opened it (#19138).
+   th.onclick = function(evt) {
       if (columnsPopup !== th) {
          columnsPopup = th;
          var rect = host.getBoundingClientRect();
@@ -3855,7 +3887,7 @@ var createColumnTypesUI = function(th, idx, col) {
          columnsPopup = null;
          if (onColumnDismiss) onColumnDismiss();
       }
-   });
+   };
 
    host.appendChild(val);
    return host;
@@ -8779,11 +8811,17 @@ window.setFilterUIVisible = function(visible) {
    );
 };
 
+// True when the import dialog's type labels are shown; see isFilterUIVisible.
+var isColumnTypesUIVisible = function() {
+   return !!postInitActions["setHeaderUIVisible:" + COLUMN_TYPES_UI_MARKER];
+};
+
 window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismiss_) {
    onColumnOpen = onColOpen_ || onColumnOpen;
    onColumnDismiss = onColDismiss_ || onColumnDismiss;
 
-   return setHeaderUIVisible(
+   var wasVisible = isColumnTypesUIVisible();
+   var applied = setHeaderUIVisible(
       visible,
       function(th, col, i) {
          return createColumnTypesUI(th, i, col);
@@ -8792,8 +8830,23 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
          var wrappers = thead.querySelectorAll(".columnTypeWrapper");
          wrappers.forEach(function(w) { w.remove(); });
       },
-      "column-types-injected-ui"
+      COLUMN_TYPES_UI_MARKER
    );
+
+   // The host first turns the labels on after setData, once the grid has
+   // already been sized without them, so size the columns again to fit them.
+   // Later setData calls need no second pass: the visibility stays recorded in
+   // postInitActions, so initGrid already sizes for the labels. Wider columns
+   // can narrow the column window, so the rows, pinned offsets, and scrollbars
+   // must follow (as after a column resize).
+   if (applied && isColumnTypesUIVisible() !== wasVisible) {
+      autoSizeColumns();
+      renderVisibleRows(true);
+      applyPinnedColumns();
+      updateCustomScrollbars();
+   }
+
+   return applied;
 };
 
 window.refreshData = function() {
