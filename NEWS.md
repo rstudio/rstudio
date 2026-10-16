@@ -18,6 +18,7 @@
 - ([#19134](https://github.com/rstudio/rstudio/issues/19134)): Modal dialogs no longer wrap keyboard focus from the last control back to the first (or from the first to the last with Shift+Tab). As with native browser dialogs, Tab past either end moves focus to the browser's own controls, or to the host page when RStudio is embedded in another page; the rest of the IDE remains unreachable while a dialog is open.
 - ([#19130](https://github.com/rstudio/rstudio/issues/19130)): Fixed an issue where the R session could hang (Linux) or crash (macOS) when the Environment pane listed Python objects while reticulate was reporting the session's first Python error, e.g. as the Python REPL started.
 - ([#19141](https://github.com/rstudio/rstudio/issues/19141)): The separator after the Posit Assistant button in the main toolbar is now marked as decorative, so screen readers skip it.
+- ([#19139](https://github.com/rstudio/rstudio/issues/19139)): The banner and main landmarks are no longer nested inside the page-wide application landmark; the application role now covers only the pane area, inside the main landmark.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.

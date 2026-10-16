@@ -17,6 +17,7 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
@@ -195,6 +196,9 @@ public class ApplicationWindow extends Composite
 
       applicationHeader_.asWidget().setVisible(true);
       applicationPanel_.add(workbenchScreen_);
+      Element mainEl = applicationPanel_.getWidgetContainerElement(workbenchScreen_);
+      Roles.getMainRole().set(mainEl);
+      Roles.getMainRole().setAriaLabelProperty(mainEl, constants_.workbenchLabel());
       updateWorkbenchTopBottom();
       applicationPanel_.setWidgetLeftRight(workbenchScreen_,
                                            COMPONENT_SPACING,

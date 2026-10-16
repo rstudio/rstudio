@@ -6,6 +6,7 @@ import {
   a11yStateName,
   formatViolations,
   RESULTS_FILE,
+  ruleSetLabel,
   SCREENSHOT_FILE,
   STATE_MARKER,
   violationSummary,
@@ -91,6 +92,14 @@ test.describe('formatViolations', () => {
     expect(target).toBeGreaterThan(summary);
   });
 
+  test('tags best-practice rules as such', () => {
+    const text = formatViolations(results([violation({
+      id: 'region', tags: ['cat.keyboard', 'best-practice'],
+    })]));
+    expect(text).toContain('tags: best-practice');
+    expect(text).not.toContain('cat.keyboard');
+  });
+
   test('collapses and trims a huge snippet to one bounded line', () => {
     const html = `<div id="rstudio_container">\n${'<span>x</span>\n'.repeat(500)}</div>`;
     const text = formatViolations(results([violation({ nodes: [node({ html })] })]));
@@ -115,6 +124,17 @@ test.describe('formatViolations', () => {
 
   test('says so when there are no violations', () => {
     expect(formatViolations(results([]))).toBe('No violations\n');
+  });
+});
+
+test.describe('ruleSetLabel', () => {
+  test('names the WCAG version and level, then any extra rule groups', () => {
+    const base = { level: 'AA', version: '2.2', bestPractices: false, experimental: false } as const;
+    expect(ruleSetLabel(base)).toBe('WCAG 2.2 AA');
+    expect(ruleSetLabel({ ...base, bestPractices: true })).toBe('WCAG 2.2 AA + best practices');
+    expect(ruleSetLabel({ ...base, experimental: true })).toBe('WCAG 2.2 AA + experimental');
+    expect(ruleSetLabel({ ...base, bestPractices: true, experimental: true }))
+      .toBe('WCAG 2.2 AA + best practices + experimental');
   });
 });
 
