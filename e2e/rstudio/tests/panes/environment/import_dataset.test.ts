@@ -297,6 +297,14 @@ test.describe('Import Dataset (readr)', () => {
       await expect(header).toContainText('(character)', { timeout: 30000 });
     }
 
+    // The other half of the toggle: clicking the open column's header again
+    // closes the menu.
+    const typeLabel = previewFrame.locator('th[data-col-idx="2"] .columnTypeHeader');
+    await typeLabel.click();
+    await expect(menu).toBeVisible({ timeout: 5000 });
+    await typeLabel.click();
+    await expect(menu).not.toBeVisible({ timeout: 5000 });
+
     // "(character)" is longer than the "(numeric)" the columns started with.
     await expectTypeLabelsFit(previewFrame);
 

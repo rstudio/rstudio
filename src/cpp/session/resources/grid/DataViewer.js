@@ -3848,13 +3848,6 @@ var invokeFilterPopup = function(ele, buildPopup, onDismiss) {
 // Column Type UI (data import mode)
 // ==========================================================================
 
-// The click handler createColumnTypesUI last attached to each header.
-// setHeaderUIVisible re-runs it on headers that already have one (the
-// postInitActions replay, then the host's own call after setData), and a
-// second handler would dismiss the menu on the same click that opened it
-// (#19138), so each run replaces the previous handler.
-var columnTypesClickHandlers = new WeakMap();
-
 // The label under each header name: the user's assigned type if they picked
 // one in the import dialog, otherwise the detected R class. autoSizeColumns
 // measures the same string.
@@ -3870,11 +3863,12 @@ var createColumnTypesUI = function(th, idx, col) {
    val.textContent = columnTypeLabel(col);
    val.className = "columnTypeHeader";
 
-   var previousHandler = columnTypesClickHandlers.get(th);
-   if (previousHandler)
-      th.removeEventListener("click", previousHandler);
-
-   var onHeaderClick = function(evt) {
+   th.classList.add("columnClickable");
+   // Assigned, not added: on a refresh, setHeaderUIVisible decorates the same
+   // headers twice (the postInitActions replay, then the host's own call after
+   // setData), and a second handler would dismiss the menu on the same click
+   // that opened it (#19138).
+   th.onclick = function(evt) {
       if (columnsPopup !== th) {
          columnsPopup = th;
          var rect = host.getBoundingClientRect();
@@ -3894,10 +3888,6 @@ var createColumnTypesUI = function(th, idx, col) {
          if (onColumnDismiss) onColumnDismiss();
       }
    };
-
-   th.classList.add("columnClickable");
-   th.addEventListener("click", onHeaderClick);
-   columnTypesClickHandlers.set(th, onHeaderClick);
 
    host.appendChild(val);
    return host;
@@ -8830,6 +8820,7 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
    onColumnOpen = onColOpen_ || onColumnOpen;
    onColumnDismiss = onColDismiss_ || onColumnDismiss;
 
+   var wasVisible = isColumnTypesUIVisible();
    var applied = setHeaderUIVisible(
       visible,
       function(th, col, i) {
@@ -8842,11 +8833,13 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
       COLUMN_TYPES_UI_MARKER
    );
 
-   // The host turns the labels on after setData, once the grid has already
-   // been sized without them, so size the columns again to fit them. Wider
-   // columns can narrow the column window, so the rows, pinned offsets, and
-   // scrollbars must follow (as after a column resize).
-   if (applied) {
+   // The host first turns the labels on after setData, once the grid has
+   // already been sized without them, so size the columns again to fit them.
+   // Later setData calls need no second pass: the visibility stays recorded in
+   // postInitActions, so initGrid already sizes for the labels. Wider columns
+   // can narrow the column window, so the rows, pinned offsets, and scrollbars
+   // must follow (as after a column resize).
+   if (applied && isColumnTypesUIVisible() !== wasVisible) {
       autoSizeColumns();
       renderVisibleRows(true);
       applyPinnedColumns();
