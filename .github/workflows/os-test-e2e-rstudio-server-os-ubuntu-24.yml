@@ -52,6 +52,10 @@ on:
         description: "Run the accessibility (axe-core) suite instead of the e2e suite: one shard, @a11y tests only, no Copilot, no test credentials."
         type: boolean
         default: false
+      a11y_best_practices:
+        description: "With a11y, also run axe's best-practice rules."
+        type: boolean
+        default: false
       a11y_experimental:
         description: "With a11y, also run axe's experimental WCAG rules."
         type: boolean
@@ -99,6 +103,9 @@ on:
         type: boolean
         default: false
       a11y:
+        type: boolean
+        default: false
+      a11y_best_practices:
         type: boolean
         default: false
       a11y_experimental:
@@ -809,6 +816,7 @@ jobs:
           # Accessibility mode (playwright.config.ts). Empty rather than "false"
           # when off; envFlag accepts both, but empty reads as unset in logs.
           PW_A11Y: ${{ inputs.a11y && '1' || '' }}
+          PW_A11Y_BEST_PRACTICES: ${{ inputs.a11y_best_practices && '1' || '' }}
           PW_A11Y_EXPERIMENTAL: ${{ inputs.a11y_experimental && '1' || '' }}
           PW_A11Y_LEVEL: ${{ inputs.a11y_level }}
           PW_A11Y_WCAG_VERSION: ${{ inputs.a11y_wcag_version }}

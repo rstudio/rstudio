@@ -1,7 +1,7 @@
 import type { NodeResult, Result } from 'axe-core';
 import * as fs from 'fs';
 import * as path from 'path';
-import { formatNode, RESULTS_FILE, SCREENSHOT_FILE, STATE_MARKER, wcagTags } from './a11y';
+import { formatNode, RESULTS_FILE, SCREENSHOT_FILE, STATE_MARKER, ruleTags } from './a11y';
 
 /**
  * The cross-state accessibility report: one entry per distinct problem, with
@@ -155,7 +155,7 @@ function ruleBody(g: RuleProblems, url: string | undefined, fullList: string): s
   const shown = g.problems.slice(0, SUMMARY_PROBLEMS_MAX);
   const hidden = g.problems.length - shown.length;
   return [
-    `[Rule help](${g.rule.helpUrl}) - ${wcagTags(g.rule)}`,
+    `[Rule help](${g.rule.helpUrl}) - ${ruleTags(g.rule)}`,
     '',
     ...shown.flatMap((p) => [
       `**Seen in:** ${stateList(p.states, url)}`,

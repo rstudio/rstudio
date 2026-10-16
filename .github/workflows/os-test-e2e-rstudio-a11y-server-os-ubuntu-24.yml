@@ -14,6 +14,10 @@ on:
         description: "Optional .deb URL to test against. Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
         type: string
         default: ""
+      include_best_practices:
+        description: "Also run axe's best-practice rules (e.g. landmark-main-is-top-level), which map to no WCAG success criterion."
+        type: boolean
+        default: false
       include_experimental:
         description: "Also run axe's experimental WCAG rules (e.g. label-content-name-mismatch)."
         type: boolean
@@ -47,6 +51,7 @@ jobs:
     with:
       project: server
       a11y: true
+      a11y_best_practices: ${{ inputs.include_best_practices }}
       a11y_experimental: ${{ inputs.include_experimental }}
       a11y_level: ${{ inputs.level }}
       a11y_wcag_version: ${{ inputs.wcag_version }}
