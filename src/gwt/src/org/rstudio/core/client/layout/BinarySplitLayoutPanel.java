@@ -311,7 +311,10 @@ public class BinarySplitLayoutPanel extends LayoutPanel
          return; // detached or hidden, so there is no position to report
 
       int top = topIsFixed_ ? splitterPos_ : range - splitterPos_;
-      Property.VALUENOW.set(splitter_.getElement(), Math.round(100.0 * top / range));
+      long percent = Math.round(100.0 * top / range);
+      // setSplitterPos() keeps splitterPos_ at least the splitter's height, which is outside
+      // the range in a panel shorter than two splitters.
+      Property.VALUENOW.set(splitter_.getElement(), Math.max(0, Math.min(100, percent)));
    }
 
    public void onMouseDown(MouseDownEvent event)
