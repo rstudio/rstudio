@@ -50,10 +50,9 @@ json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
    for (std::string line; std::getline(output, line); )
    {
       size_t pos = line.find('=');
-      if (pos > 0)
+      if (pos != std::string::npos && pos > 0)
       {
-         obj[line.substr(0, pos)] = line.substr(pos + 1,
-                                                line.length() - (pos + 1));
+         obj[line.substr(0, pos)] = line.substr(pos + 1);
       }
    }
    return obj;
