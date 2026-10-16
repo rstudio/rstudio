@@ -70,27 +70,60 @@ async function awaitPreview(
 }
 
 // Each preview header carries a "(type)" label under its name; the column must
-// be wide enough that the label's text ends inside the header cell.
+// be wide enough that the label's text lies inside the header cell. Both edges
+// are checked, since the label is right-aligned in its wrapper.
 async function expectTypeLabelsFit(previewFrame: FrameLocator): Promise<void> {
-  const overflows = await previewFrame.locator('thead th[data-col-idx]').evaluateAll((ths) =>
-    ths.flatMap((th) => {
+  const problems = await previewFrame.locator('thead th[data-col-idx]').evaluateAll((ths) => {
+    if (ths.length === 0)
+      return ['no headers'];
+
+    return ths.flatMap((th) => {
       const label = th.querySelector('.columnTypeHeader');
       if (!label)
-        return [];
+        return [`${th.textContent} has no type label`];
 
       const range = document.createRange();
       range.selectNodeContents(label);
-      const overflow = range.getBoundingClientRect().right - th.getBoundingClientRect().right;
+      const text = range.getBoundingClientRect();
+      const cell = th.getBoundingClientRect();
+      const overflow = Math.max(cell.left - text.left, text.right - cell.right);
       return overflow > 0 ? [`${label.textContent} by ${overflow.toFixed(1)}px`] : [];
-    }));
+    });
+  });
 
-  expect(overflows).toEqual([]);
+  expect(problems).toEqual([]);
 }
 
+// The preview's body columns must line up with its headers: the column window
+// the rendered rows hold must be the one the header row was built for. Pairs
+// each data header with the first row's cell in DOM order and compares their
+// left edges.
+async function expectBodyMatchesHeaders(previewFrame: FrameLocator): Promise<void> {
+  const mismatches = await previewFrame.locator('#gridViewport').evaluate((viewport) => {
+    const headers = Array.from(viewport.querySelectorAll('thead th[data-col-idx]'));
+    const firstRow = viewport.querySelector('tbody tr:not(.spacer-row)');
+    const cells = firstRow ? Array.from(firstRow.querySelectorAll('td[data-col-pos]')) : [];
+    if (headers.length === 0 || headers.length !== cells.length)
+      return [`${headers.length} headers vs ${cells.length} cells`];
+
+    return headers.flatMap((th, i) => {
+      const thLeft = th.getBoundingClientRect().left;
+      const tdLeft = cells[i].getBoundingClientRect().left;
+      return Math.abs(thLeft - tdLeft) > 1
+        ? [`${th.textContent} at ${thLeft.toFixed(1)} vs cell at ${tdLeft.toFixed(1)}`]
+        : [];
+    });
+  });
+
+  expect(mismatches).toEqual([]);
+}
+
+// rCsvLines is an R expression for the file's lines, evaluated in the session.
 async function openReadrCsvPreview(
   page: Page,
   consoleActions: ConsolePaneActions,
   csvPath: string,
+  rCsvLines = 'c("a,b,c","1,2,3","4,5,6")',
 ): Promise<{ dialog: Locator; previewFrame: FrameLocator }> {
   // Write the CSV via the R session so the path is valid on the rsession host
   // (matters for Server mode where runner and session can differ). The preview
@@ -104,7 +137,7 @@ async function openReadrCsvPreview(
   // hard parse error), so the writeLines never runs. rPathLiteral normalizes to
   // forward slashes (which R accepts on Windows) and quotes safely.
   await consoleActions.executeInConsole(
-    `writeLines(c("a,b,c","1,2,3","4,5,6"), ${rPathLiteral(csvPath)})`,
+    `writeLines(${rCsvLines}, ${rPathLiteral(csvPath)})`,
     { wait: true },
   );
 
@@ -266,6 +299,27 @@ test.describe('Import Dataset (readr)', () => {
 
     // "(character)" is longer than the "(numeric)" the columns started with.
     await expectTypeLabelsFit(previewFrame);
+
+    await dialog.locator('#rstudio_dlg_cancel').click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19138
+  test('wide preview keeps its rows aligned with its headers', async ({ rstudioPage: page }) => {
+    // 80 short-named columns: too many to render at once, so the grid renders
+    // a window of them, and the type labels are wider than the names.
+    const { dialog, previewFrame } = await openReadrCsvPreview(
+      page, consoleActions, `${sandbox.dir}/wide.csv`,
+      'c(paste0("v", 1:80, collapse = ","), paste(1:80, collapse = ","), paste(81:160, collapse = ","))',
+    );
+
+    await awaitPreview(dialog, previewFrame);
+    await expect(previewFrame.locator('.columnTypeHeader').first()).toBeVisible();
+
+    // Sizing the columns for the labels happens after the rows are rendered,
+    // and narrows the window; the rows must be re-rendered to match.
+    await expectTypeLabelsFit(previewFrame);
+    await expectBodyMatchesHeaders(previewFrame);
 
     await dialog.locator('#rstudio_dlg_cancel').click();
     await expect(dialog).not.toBeVisible({ timeout: 5000 });

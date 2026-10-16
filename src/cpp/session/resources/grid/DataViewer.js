@@ -8843,9 +8843,15 @@ window.setColumnDefinitionsUIVisible = function(visible, onColOpen_, onColDismis
    );
 
    // The host turns the labels on after setData, once the grid has already
-   // been sized without them, so size the columns again to fit them.
-   if (applied)
+   // been sized without them, so size the columns again to fit them. Wider
+   // columns can narrow the column window, so the rows, pinned offsets, and
+   // scrollbars must follow (as after a column resize).
+   if (applied) {
       autoSizeColumns();
+      renderVisibleRows(true);
+      applyPinnedColumns();
+      updateCustomScrollbars();
+   }
 
    return applied;
 };
