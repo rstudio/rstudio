@@ -159,6 +159,62 @@ test.describe.serial('Plots pane', { tag: ['@serial'] }, () => {
     ).toBe(true);
   });
 
+  test('save plot as image offers a compression for TIFFs and a quality for JPEGs', async ({ rstudioPage: page }) => {
+    await createPlot(page);
+
+    try {
+      await plotsPane.exportMenu.click();
+      await plotsPane.saveAsImageItem.click();
+      const dialog = plotsPane.saveAsImageDialog;
+      await expect(dialog).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // each option is shown for its format only
+      const format = dialog.getByLabel('Image format:');
+      const compression = dialog.locator('#rstudio_export_plot_tiff_compression');
+      const quality = dialog.locator('#rstudio_export_plot_jpeg_quality');
+      await format.selectOption('png');
+      await expect(compression).toBeHidden();
+      await expect(quality).toBeHidden();
+      await format.selectOption('jpeg');
+      await expect(quality).toBeVisible();
+      await expect(quality).toHaveValue('100');
+      await expect(compression).toBeHidden();
+      await format.selectOption('tiff');
+      await expect(compression).toBeVisible();
+      await expect(compression).toHaveValue('lzw');
+      await expect(quality).toBeHidden();
+
+      await page.locator(CONFIRM_BTN).click();
+      await page.locator(FILE_NAME_PROMPT).fill(`${sandbox.dir}/Rplot.tiff`);
+      await page.locator(FILE_ACCEPT_SAVE).click();
+      await expect(dialog).toBeHidden();
+
+      // the saved TIFF's compression tag (259) is 5, LZW (the same parser as
+      // tiffCompression() in test-graphics.R, which this session can't reach)
+      const checkSavedImage = 'local({' +
+        'f <- file.path(getwd(), "Rplot.tiff"); ' +
+        'if (!file.exists(f)) return(FALSE); ' +
+        'b <- readBin(f, "raw", file.size(f)); ' +
+        'le <- rawToChar(b[1:2]) == "II"; ' +
+        'n <- function(i, k) { v <- as.integer(b[i + seq_len(k)]); if (le) v <- rev(v); sum(v * 256^((k - 1):0)) }; ' +
+        'd <- n(4, 4); ' +
+        'tags <- vapply(seq_len(n(d, 2)), function(j) n(d + 2 + (j - 1) * 12, 2), numeric(1)); ' +
+        'n(d + 2 + (match(259, tags) - 1) * 12 + 8, 2) == 5' +
+        '})';
+      await expect.poll(() => consoleActions.evalRLogical(checkSavedImage), {
+        timeout: TIMEOUTS.fileOpen,
+      }).toBe(true);
+    } finally {
+      // the dialog remembers the format, and the later tests (and, in Server
+      // mode, later specs sharing this data home) expect their default save
+      // to write a PNG
+      await consoleActions.executeInConsole(
+        'local({ o <- .rs.readUserState("export_plot_options"); o$format <- "png"; ' +
+        'invisible(.rs.writeUserState("export_plot_options", lapply(o, .rs.scalar))) })',
+      );
+    }
+  });
+
   test('file chooser accepted before its listing arrives saves once it does', async ({ rstudioPage: page }) => {
     await createPlot(page);
     await consoleActions.executeInConsole('.pngs_before <- list.files(getwd(), pattern = "Rplot.*\\\\.png$")');

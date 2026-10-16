@@ -43,6 +43,8 @@ public class PlotsPaneSaveAsImageOperation implements SavePlotAsImageOperation
                            boolean viewAfterSave,
                            boolean useDevicePixelRatio,
                            int resolution,
+                           String tiffCompression,
+                           int jpegQuality,
                            Operation onCompleted)
    {
       // create handler
@@ -64,6 +66,8 @@ public class PlotsPaneSaveAsImageOperation implements SavePlotAsImageOperation
                                      overwrite,
                                      useDevicePixelRatio,
                                      resolution,
+                                     tiffCompression,
+                                     jpegQuality,
                                      requestCallback);
                }
 
