@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 import os from 'os';
 import path from 'path';
 import { TIMEOUTS } from './utils/constants';
-import { envFlag } from './utils/env';
+import { ruleSetFromEnv } from './utils/a11y';
+import { envChoice, envFlag } from './utils/env';
 
 type ProjectOptions = { mode: 'desktop' | 'server' };
 
@@ -11,20 +12,6 @@ type ProjectOptions = { mode: 'desktop' | 'server' };
 // of Playwright's string options, which is all we expose).
 const TRACE_MODES = ['off', 'on', 'retain-on-failure', 'on-first-retry', 'on-all-retries'] as const;
 const SCREENSHOT_MODES = ['off', 'on', 'only-on-failure'] as const;
-
-// Resolve an env override against its allowed values, falling back to the
-// default when unset. An unrecognized value is a hard error (matching the
-// PW_RSTUDIO_* env handling below) rather than being passed through to
-// Playwright, where a typo like PW_TRACE=retain-on-falure would otherwise turn
-// a debugging aid into a config error at startup.
-function resolveEnvMode<T extends string>(name: string, allowed: readonly T[], fallback: T): T {
-  const value = process.env[name];
-  if (value === undefined || value === '')
-    return fallback;
-  if (!allowed.includes(value as T))
-    throw new Error(`${name}="${value}" -- expected one of: ${allowed.join(', ')}`);
-  return value as T;
-}
 
 // Load env vars from a dotenv file before any process.env reads below.
 // Path is anchored to this config's directory so it works regardless of cwd.
@@ -103,10 +90,11 @@ const smokeExclusions = process.env.PW_RUN_SMOKE ? [] : ['@smoke'];
 // @a11y out.
 const a11y = envFlag('PW_A11Y');
 const a11yExclusions = a11y ? [] : ['@a11y'];
-// scanA11y reads this switch only inside the RStudio-backed test, after the
-// server has started and signed in; parse it here too so a typo fails at load.
+// scanA11y reads the rule-set switches only inside the RStudio-backed test,
+// after the server has started and signed in; parse them here too so a typo
+// fails at load.
 if (a11y)
-  envFlag('PW_A11Y_EXPERIMENTAL');
+  ruleSetFromEnv();
 
 const allProjects = [
   {
@@ -268,8 +256,8 @@ export default defineConfig<{}, ProjectOptions>({
     // Both can be escalated via env for a run that passes but behaves oddly
     // (e.g. leaves a modal that only breaks a *later* test), where the
     // on-failure default captures nothing: PW_TRACE=on / PW_SCREENSHOT=on.
-    screenshot: resolveEnvMode('PW_SCREENSHOT', SCREENSHOT_MODES, 'only-on-failure'),
-    trace: resolveEnvMode('PW_TRACE', TRACE_MODES, 'retain-on-failure'),
+    screenshot: envChoice('PW_SCREENSHOT', SCREENSHOT_MODES, 'only-on-failure'),
+    trace: envChoice('PW_TRACE', TRACE_MODES, 'retain-on-failure'),
     actionTimeout: TIMEOUTS.action,
   },
   projects,

@@ -42,7 +42,7 @@ async function restoreFilesTab(page: Page, packagesSave: Promise<Request>): Prom
 }
 
 /** The initial state with the Packages pane shown in place of Files (Ctrl+7). */
-test('packages pane has no WCAG 2.2 AA violations', { tag: ['@a11y', '@server_only'] },
+test('packages pane has no accessibility violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
     await executeCommand(page, 'activatePackages');
     // The command selects the tab synchronously, so any tab-state save from

@@ -259,6 +259,9 @@ If you modify JavaScript components (e.g. in `src/gwt/acesupport`), also run:
 
     cd src/gwt && ant acesupport
 
+RStudio builds against a fork of GWT. To change the fork or update the GWT version, see
+`src/gwt/tools/build-gwt-README.md`.
+
 
 ### Backend
 
@@ -296,6 +299,20 @@ localhost URL. The processes outlive the task; logs and state land in
 `<checkout>/.rstudio-dev/`, including the sessions' own RStudio config and
 data homes (pass `--user-config` to use yours), so preferences changed while
 testing stay out of `~/.config/rstudio`. See `tasks/README.md` for the options.
+
+
+### Git Worktrees
+
+A new worktree has no gitignored dependencies. The GWT and CMake builds fall back
+to the primary checkout's `dependencies/`, so install and build there only. Then
+run this once per worktree, from inside it:
+
+    scripts/bootstrap-worktree.sh --with-build-dir
+
+It clones `node_modules` from the primary checkout (or runs `npm ci` when the
+lockfile differs) and configures a fresh `build/`. Never copy or symlink the
+primary checkout's `build/` -- its absolute paths would build and serve the
+primary checkout's code. After that, build and test as usual from the worktree.
 
 
 ## Writing Automated Tests

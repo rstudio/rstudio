@@ -3,6 +3,7 @@
 ### New
 - ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed is installed first, via [rig](https://github.com/r-lib/rig), in a background job; rig itself is downloaded when it is not already available. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
 - ([#19114](https://github.com/rstudio/rstudio/issues/19114)): Save Plot as Image can now compress TIFF images (with LZW, the default, or ZIP, each with or without a predictor where R supports it) and choose the quality of JPEG images. TIFFs were previously uncompressed, e.g. 36 MB for a 7 x 5 in plot saved at 600 DPI, and are now typically under 1 MB.
+- The `RSTUDIO_WHICH_R` environment variable, which tells RStudio Desktop which R to run, now accepts an R home directory (e.g. `C:\R\R-4.5.3`) as well as the path of the R executable.
 -
 - ([#19030](https://github.com/rstudio/rstudio/pull/19030)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
@@ -16,12 +17,14 @@
 - ([#17215](https://github.com/rstudio/rstudio/issues/17215)): Fixed an issue where color previews in the editor shifted the cursor and bracket highlighting to the right at fractional zoom levels or display scaling
 - ([#19054](https://github.com/rstudio/rstudio/issues/19054)): Fixed an issue where saving a document could clear its spelling and diagnostic markers; the R Markdown toolbar now also picks up output format changes when autosave is enabled
 - ([#19056](https://github.com/rstudio/rstudio/issues/19056)): Fixed an issue where R diagnostics were very slow for large documents when the document or the working directory was on a slow filesystem (e.g. a network drive, or a Windows drive mounted within WSL), as the filesystem was consulted for every function call in the document
+- ([#19134](https://github.com/rstudio/rstudio/issues/19134)): Modal dialogs no longer wrap keyboard focus from the last control back to the first (or from the first to the last with Shift+Tab). As with native browser dialogs, Tab past either end moves focus to the browser's own controls, or to the host page when RStudio is embedded in another page; the rest of the IDE remains unreachable while a dialog is open.
+- ([#19130](https://github.com/rstudio/rstudio/issues/19130)): Fixed an issue where the R session could hang (Linux) or crash (macOS) when the Environment pane listed Python objects while reticulate was reporting the session's first Python error, e.g. as the Python REPL started
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
 
 ### Dependencies
-- Electron 44.7.0
+- Electron 44.7.2
 - GWT 2.13.1
 - Quarto 1.10.19
 - RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux

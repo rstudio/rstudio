@@ -27,6 +27,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
@@ -127,9 +128,17 @@ public class ModalDialogTracker
       assert(numModalsShowing() >= 0);
 
       if (numModalsShowing() == 0)
-         setInertMainWindow(false); // closed last popup, reenable main window
+      {
+         // closed last popup, reenable main window
+         restoreBodyChildren();
+         setInertMainWindow(false);
+      }
       else if (numModalsShowing() == 1 && addedPopup)
-         setInertMainWindow(true); // added first popup, disable main window
+      {
+         // added first popup, disable main window
+         setInertMainWindow(true);
+         setInertBodyChildren(getTopMostElement());
+      }
       else if (addedPopup)
          A11y.setInert(getSecondTopMostElement(), true); // disable previous topmost
       else
@@ -164,6 +173,33 @@ public class ModalDialogTracker
          A11y.setInert(satWrapper, inert);
    }
 
+   /**
+    * Non-modal popups are attached to the body, outside the main window's containers,
+    * so make any already showing inert too. Only `inert` is set because it also hides
+    * them from assistive technology, and restoring it can't clobber an existing
+    * aria-hidden. Popups opened later, e.g. from the dialog itself, stay usable.
+    */
+   private static void setInertBodyChildren(Element dialog)
+   {
+      Element child = Document.get().getBody().getFirstChildElement();
+      while (child != null)
+      {
+         if (child != dialog && !child.hasAttribute("inert"))
+         {
+            child.setAttribute("inert", "");
+            inertBodyChildren_.add(child);
+         }
+         child = child.getNextSiblingElement();
+      }
+   }
+
+   private static void restoreBodyChildren()
+   {
+      for (Element child : inertBodyChildren_)
+         child.removeAttribute("inert");
+      inertBodyChildren_.clear();
+   }
+
    private static void ensureVisible(Panel panel)
    {
       try
@@ -184,4 +220,5 @@ public class ModalDialogTracker
    }
 
    private static final List<PopupPanel> dialogStack_ = new ArrayList<>();
+   private static final List<Element> inertBodyChildren_ = new ArrayList<>();
 }
