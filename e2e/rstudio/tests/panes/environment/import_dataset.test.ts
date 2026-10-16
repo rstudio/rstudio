@@ -13,6 +13,12 @@
 //   server-side cached frame). The column-summary sidebar fetches stats from
 //   the grid_data endpoint and so has nothing to summarize in this host; it
 //   must be hidden. GridViewerFrame now requests show_summary=0.
+// - #19138: the dialog turns the grid's row numbers off, so the preview must
+//   not render the nameless rownames column; assigning it a type generated
+//   `cols("" = ...)`, which R rejects with "attempt to use zero-length
+//   variable name". Changing a column's type also re-renders the preview,
+//   after which the column-type menu must still open, and every column must
+//   be wide enough for its "(type)" label.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page, FrameLocator, Locator } from 'playwright';
@@ -30,6 +36,10 @@ const IMPORT_DIALOG = '.gwt-DialogBox[aria-label="Import Text Data"]';
 
 // The preview iframe is a GridViewerFrame titled with constants_.dataPreview().
 const PREVIEW_FRAME = 'iframe[title="Data Preview"]';
+
+// DataImportColTypesMenu is a default-styled PopupPanel; hiding it detaches it,
+// so visibility is presence. "Guess" tells it apart from other popups.
+const COLUMN_TYPES_MENU = '.gwt-PopupPanel';
 
 // Wait for the readr preview iframe to render its first column header. On
 // failure, scrape the top-level "Error" dialog into the thrown message: when
@@ -57,6 +67,24 @@ async function awaitPreview(
     'readr CSV preview did not render its column headers within 45s' +
     (errorText ? ` (Error dialog: ${errorText.trim()})` : ''),
   );
+}
+
+// Each preview header carries a "(type)" label under its name; the column must
+// be wide enough that the label's text ends inside the header cell.
+async function expectTypeLabelsFit(previewFrame: FrameLocator): Promise<void> {
+  const overflows = await previewFrame.locator('thead th[data-col-idx]').evaluateAll((ths) =>
+    ths.flatMap((th) => {
+      const label = th.querySelector('.columnTypeHeader');
+      if (!label)
+        return [];
+
+      const range = document.createRange();
+      range.selectNodeContents(label);
+      const overflow = range.getBoundingClientRect().right - th.getBoundingClientRect().right;
+      return overflow > 0 ? [`${label.textContent} by ${overflow.toFixed(1)}px`] : [];
+    }));
+
+  expect(overflows).toEqual([]);
 }
 
 async function openReadrCsvPreview(
@@ -189,6 +217,55 @@ test.describe('Import Dataset (readr)', () => {
     // mode) summary sidebar was expanded.
     await expect(previewFrame.locator('#sidebarPanel')).not.toHaveClass(/\bexpanded\b/);
     await expect(previewFrame.locator('#sidebarToggle')).toHaveAttribute('aria-expanded', 'false');
+
+    await dialog.locator('#rstudio_dlg_cancel').click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19138
+  test('preview has no row-number column', async ({ rstudioPage: page }) => {
+    const { dialog, previewFrame } = await openReadrCsvPreview(
+      page, consoleActions, `${sandbox.dir}/rownames.csv`,
+    );
+
+    await awaitPreview(dialog, previewFrame);
+
+    // Column 0 is the rownames entry, whose name is empty. Pre-fix it
+    // rendered as a "(rownames)" header with a column-type menu.
+    await expect(previewFrame.locator('th[data-col-idx="0"]')).toHaveCount(0);
+    await expect(previewFrame.locator('thead th[data-col-idx]').first()).toHaveText(/^a/);
+
+    // The one-letter names are narrower than "(numeric)", so the columns must
+    // be sized for the type labels, not just the names and values.
+    await expectTypeLabelsFit(previewFrame);
+
+    await dialog.locator('#rstudio_dlg_cancel').click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19138
+  test('column-type menu opens again after a type change', async ({ rstudioPage: page }) => {
+    const { dialog, previewFrame } = await openReadrCsvPreview(
+      page, consoleActions, `${sandbox.dir}/coltypes.csv`,
+    );
+
+    await awaitPreview(dialog, previewFrame);
+
+    // Each type change re-renders the preview and re-applies the header UI.
+    // Pre-fix that stacked a second click handler on every header, so the
+    // menu for the second column opened and closed on the same click.
+    const menu = page.locator(COLUMN_TYPES_MENU).filter({ hasText: 'Guess' });
+    for (const colIdx of [2, 3]) {
+      const header = previewFrame.locator(`th[data-col-idx="${colIdx}"]`);
+      await header.locator('.columnTypeHeader').click();
+      await expect(menu).toBeVisible({ timeout: 5000 });
+
+      await menu.getByText('Character', { exact: true }).click();
+      await expect(header).toContainText('(character)', { timeout: 30000 });
+    }
+
+    // "(character)" is longer than the "(numeric)" the columns started with.
+    await expectTypeLabelsFit(previewFrame);
 
     await dialog.locator('#rstudio_dlg_cancel').click();
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
