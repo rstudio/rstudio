@@ -45,25 +45,11 @@ test_that(".rs.formatDataColumn() truncates lists", {
 })
 
 # https://github.com/rstudio/rstudio/issues/19117
-test_that(".rs.formatDataColumn() keeps spaces and escapes line breaks and tabs", {
-   x <- c("test     this", "a\nb", "c\rd", "e\tf", "C:\\Users", NA)
-   expect_equal(
-      .rs.formatDataColumn(x, 1, length(x)),
-      c("test     this", "a\\nb", "c\\rd", "e\\tf", "C:\\Users", NA)
-   )
-
-   # values produced by a class's own format method are escaped too
-   registerS3method("[", "newliney", function(x, ...) {
-      structure(NextMethod(), class = class(x))
-   })
-   registerS3method("format", "newliney", function(x, ...) {
-      rep("one\ntwo", length(x))
-   })
-   x <- structure("x", class = c("newliney", "character"))
-   expect_equal(.rs.formatDataColumn(x, 1, 1), "one\\ntwo")
-
-   # non-character columns pass through unchanged
-   expect_equal(.rs.formatDataColumn(c(1.5, NA), 1, 2), c("1.5", NA))
+test_that(".rs.formatDataColumn() sends character values as-is", {
+   # the grid escapes control characters for display only; the values it
+   # receives are the data, which its tooltip and cell copy rely on
+   x <- c("test     this", "a\nb", "e\tf", "C:\\Users", NA)
+   expect_equal(.rs.formatDataColumn(x, 1, length(x)), x)
 })
 
 test_that(".rs.flattenFrame() handles matrices and data frames", {

@@ -45,41 +45,16 @@
    # if this object has a format method, use it. catch errors
    # and validate that the format method has given us something 'sane'
    formatted <- .rs.tryCatch(.rs.formatDataColumnDispatch(col, ...))
-   if (!is.character(formatted) || length(formatted) != length(col))
-   {
-      # otherwise, delegate to internal methods
-      formatted <- if (is.numeric(col))
-         .rs.formatDataColumnNumeric(col, ...)
-      else if (is.list(col) && !is.data.frame(col))
-         .rs.formatDataColumnList(col, ...)
-      else
-         .rs.formatDataColumnDefault(col, ...)
-   }
-   
-   .rs.formatDataColumnEscape(formatted)
-})
+   if (is.character(formatted) && length(formatted) == length(col))
+      return(formatted)
 
-# Escape the control characters that would break a grid cell across lines.
-# Cells use 'white-space: pre' so that runs of spaces are displayed as-is
-# (#19117), which means a literal newline or tab would otherwise be rendered
-# too; show them escaped, as R's own print methods do. Other characters
-# (backslashes included) are left alone so e.g. Windows paths read naturally.
-.rs.addFunction("formatDataColumnEscape", function(x)
-{
-   if (!is.character(x))
-      return(x)
-   
-   # grepl() is FALSE for NA, so missing values are left untouched
-   idx <- which(grepl("[\t\r\n]", x))
-   if (length(idx) == 0L)
-      return(x)
-   
-   escaped <- x[idx]
-   escaped <- gsub("\t", "\\t", escaped, fixed = TRUE)
-   escaped <- gsub("\r", "\\r", escaped, fixed = TRUE)
-   escaped <- gsub("\n", "\\n", escaped, fixed = TRUE)
-   x[idx] <- escaped
-   x
+   # otherwise, delegate to internal methods
+   if (is.numeric(col))
+      .rs.formatDataColumnNumeric(col, ...)
+   else if (is.list(col) && !is.data.frame(col))
+      .rs.formatDataColumnList(col, ...)
+   else
+      .rs.formatDataColumnDefault(col, ...)
 })
 
 .rs.addFunction("formatDataColumnDispatch", function(col, ...)

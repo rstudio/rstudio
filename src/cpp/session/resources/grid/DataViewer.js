@@ -535,12 +535,29 @@ var escapeHtml = function(html) {
    return s.replace(/[&<>"']/g, function(ch) { return replacements[ch]; });
 };
 
+// Cells use 'white-space: pre' so that runs of spaces are drawn as-is
+// (#19117); a newline or tab would be drawn too and grow the row, so cells
+// show those escaped instead, the way R prints them. Only the display is
+// escaped: the tooltip and copyActiveCell keep the value itself.
+var controlCharPattern = /[\t\r\n]/;
+var controlCharEscapes = { "\t": "\\t", "\r": "\\r", "\n": "\\n" };
+
+var escapeControlChars = function(text) {
+   return text.replace(/[\t\r\n]/g, function(ch) { return controlCharEscapes[ch]; });
+};
+
+var escapeCellHtml = function(text) {
+   return escapeHtml(escapeControlChars(text));
+};
+
+// 'pos' indexes the unescaped value (which is what the server searched), so
+// each piece is escaped after splitting.
 var highlightSearchMatch = function(data, search, pos) {
-   return escapeHtml(data.substring(0, pos)) +
+   return escapeCellHtml(data.substring(0, pos)) +
       '<span class="searchMatch">' +
-      escapeHtml(data.substring(pos, pos + search.length)) +
+      escapeCellHtml(data.substring(pos, pos + search.length)) +
       '</span>' +
-      escapeHtml(data.substring(pos + search.length, data.length));
+      escapeCellHtml(data.substring(pos + search.length, data.length));
 };
 
 var showError = function(msg) {
@@ -1229,6 +1246,11 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
       }
    }
 
+   // The cell shows control characters escaped; copy the value itself.
+   if (controlCharPattern.test(data)) {
+      td.copyText = data;
+   }
+
    // Search highlighting (produces HTML)
    var didHighlight = false;
    if (clazz !== "dataCell" && cachedSearch.length > 0) {
@@ -1255,7 +1277,7 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
    // Data/list cell links: build the link with a real click handler so
    // user-controlled row names never get concatenated into a javascript: URL.
    if (clazz === "dataCell" || clazz === "listCell") {
-      var escaped = didHighlight ? data : escapeHtml(data);
+      var escaped = didHighlight ? data : escapeCellHtml(data);
       td.innerHTML = "<i>" + escaped + "</i> ";
 
       var cbName = clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback";
@@ -1291,7 +1313,7 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
    if (didHighlight) {
       td.innerHTML = data;
    } else {
-      td.textContent = data;
+      td.textContent = escapeControlChars(data);
    }
 };
 
@@ -6828,7 +6850,7 @@ var setActiveHeader = function(col, scrollIntoView) {
 var copyActiveCell = function() {
    var td = getActiveCellTd();
    if (!td) return false;
-   var text = td.textContent || "";
+   var text = td.copyText !== undefined ? td.copyText : (td.textContent || "");
    if (navigator.clipboard && navigator.clipboard.writeText) {
       // Async path: optimistically claim success and let the caller
       // preventDefault() the keystroke; the .catch() is for diagnostics

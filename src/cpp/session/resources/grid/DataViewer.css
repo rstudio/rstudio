@@ -256,8 +256,8 @@ td {
    line-height: 14px;
    overflow: hidden;
    /* Keep every cell on one line while preserving runs of spaces, so the
-      displayed value matches the data (#19117). Newlines and tabs are escaped
-      by .rs.formatDataColumn, so pre cannot grow a row. */
+      displayed value matches the data (#19117). Newlines and tabs are drawn
+      escaped (renderCellContents), so pre cannot grow a row. */
    white-space: pre;
 }
 
