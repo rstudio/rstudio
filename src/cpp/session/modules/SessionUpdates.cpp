@@ -37,12 +37,11 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace updates {
-namespace {
 
-json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
+json::Object parseUpdateCheckOutput(const std::string& stdOut)
 {
    json::Object obj;
-   std::stringstream output(result.stdOut);
+   std::stringstream output(stdOut);
    // The output looks like:
    // key1=value1
    // key2=value2
@@ -57,6 +56,8 @@ json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
    }
    return obj;
 }
+
+namespace {
 
 void beginUpdateCheck(bool manual,
    const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
@@ -132,7 +133,7 @@ void endRPCUpdateCheck(const json::JsonRpcFunctionContinuation& cont,
                        const core::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
-   response.setResult(jsonFromProcessResult(result));
+   response.setResult(parseUpdateCheckOutput(result.stdOut));
    if (result.stdErr.empty())
    {
       cont(Success(), &response);
