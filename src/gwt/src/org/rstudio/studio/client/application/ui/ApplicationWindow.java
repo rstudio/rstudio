@@ -198,7 +198,7 @@ public class ApplicationWindow extends Composite
       applicationPanel_.add(workbenchScreen_);
       Element mainEl = applicationPanel_.getWidgetContainerElement(workbenchScreen_);
       Roles.getMainRole().set(mainEl);
-      Roles.getMainRole().setAriaLabelProperty(mainEl, "Workbench");
+      Roles.getMainRole().setAriaLabelProperty(mainEl, constants_.workbenchLabel());
       updateWorkbenchTopBottom();
       applicationPanel_.setWidgetLeftRight(workbenchScreen_,
                                            COMPONENT_SPACING,
