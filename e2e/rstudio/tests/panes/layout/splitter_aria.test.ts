@@ -85,16 +85,18 @@ test.describe('Pane splitter aria-valuenow (#19151)', () => {
     // Zooming sizes the columns programmatically rather than through the splitter.
     const splitter = page.locator(COLUMN_SPLITTER);
     await expectValueNowMatchesPosition(splitter);
-    const before = await valueNow(splitter);
+    expect(await valueNow(splitter)).toBeLessThan(100);
 
+    // The zoomed left column fills the panel, so the zoom animation has finished once the
+    // splitter reaches the right edge.
     await executeCommand(page, 'layoutZoomLeftColumn');
-    await expect.poll(() => valueNow(splitter)).toBeGreaterThan(before);
+    await expect.poll(() => valueNow(splitter)).toBe(100);
     await expectValueNowMatchesPosition(splitter);
-    const zoomed = await valueNow(splitter);
 
+    // Ends the zoom like layoutEndZoom, but resolves only once the relayout has finished.
     // Ending the zoom restores the default column widths, not the pre-zoom ones.
-    await executeCommand(page, 'layoutEndZoom');
-    await expect.poll(() => valueNow(splitter)).toBeLessThan(zoomed);
+    await resetLayoutZoom(page);
+    await expect.poll(() => valueNow(splitter)).toBeLessThan(100);
     await expectValueNowMatchesPosition(splitter);
   });
 });
