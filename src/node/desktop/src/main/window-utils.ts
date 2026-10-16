@@ -13,8 +13,9 @@
  *
  */
 
-import { screen, BrowserWindow, webContents, WebContents, Rectangle } from 'electron';
+import { app, screen, BrowserWindow, webContents, WebContents, Rectangle } from 'electron';
 import { appState } from './app-state';
+import { kOzonePlatformSwitch } from './electron-flags';
 import { PendingSatelliteWindow, PendingSecondaryWindow } from './pending-window';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
@@ -127,6 +128,22 @@ export interface WindowBounds {
   maximized: boolean;
 }
 
+/** The smallest size a window is restored at. */
+export const kMinWindowWidth = 300;
+export const kMinWindowHeight = 200;
+
+/**
+ * Whether windows are native Wayland windows. Electron records the Ozone
+ * backend it picked as --ozone-platform, which is set only on Linux.
+ *
+ * Wayland clients cannot place their own windows, and the compositor decides
+ * their size and state through configure events, so window geometry calls
+ * there don't behave as they do on X11, Windows, or macOS.
+ */
+export function isWayland(): boolean {
+  return process.platform === 'linux' && app.commandLine.getSwitchValue(kOzonePlatformSwitch) === 'wayland';
+}
+
 /**
  * Check if two Rectangles intersect.
  *
@@ -170,9 +187,6 @@ export function positionAndEnsureVisible(
   defaultHeight: number) {
 
   try {
-    const minWidth = 300;
-    const minHeight = 200;
-    
     // Shrink the window rectangle a bit just to capture cases like RStudio
     // too close to edge of window and hardly showing at all.
     const checkRect = {
@@ -210,7 +224,7 @@ export function positionAndEnsureVisible(
       
     // ensure a minimum size for the window on restore
     const currSize = window.getSize();
-    window.setSize(Math.max(minWidth, currSize[0]), Math.max(minHeight, currSize[1]));
+    window.setSize(Math.max(kMinWindowWidth, currSize[0]), Math.max(kMinWindowHeight, currSize[1]));
 
   } catch (err: unknown) {
     logger().logError(safeError(err));
