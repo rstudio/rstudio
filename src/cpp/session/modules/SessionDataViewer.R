@@ -47,7 +47,7 @@
    formatted <- .rs.tryCatch(.rs.formatDataColumnDispatch(col, ...))
    if (is.character(formatted) && length(formatted) == length(col))
       return(formatted)
-
+   
    # otherwise, delegate to internal methods
    if (is.numeric(col))
       .rs.formatDataColumnNumeric(col, ...)
@@ -75,7 +75,7 @@
       return(NULL)
    
    formatted <- formatter(col, trim = TRUE, justify = "none", ...)
-
+   
    if (is.character(formatted) && length(formatted) == length(col))
    {
       # some methods (e.g. hms, survival's Surv) ignore 'trim' and pad values
@@ -83,10 +83,10 @@
       # show; only character data's own leading and trailing spaces are kept
       if (!is.character(col) && !is.factor(col))
          formatted <- trimws(formatted)
-
+      
       formatted[is.na(col)] <- NA
    }
-
+   
    formatted
    
 })
