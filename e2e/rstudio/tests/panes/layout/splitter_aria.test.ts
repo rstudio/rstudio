@@ -11,10 +11,11 @@ const ROW_SPLITTER = '[role="separator"][aria-label="right splitter"]';
 const KEY_PRESSES = 3;
 
 /**
- * The splitter's aria-valuenow minus its rendered position, as a percentage of the distance
- * it can travel across its panel (0 at the left or top edge). NaN when aria-valuenow is unset.
+ * The splitter's aria-valuenow (NaN when unset) and its rendered position, as a percentage of
+ * the distance it can travel across its panel (0 at the left or top edge). Read together, so
+ * both come from the same frame of a layout animation.
  */
-async function valueNowError(splitter: Locator): Promise<number> {
+async function readSplitter(splitter: Locator): Promise<{ valueNow: number; position: number }> {
   return splitter.evaluate(el => {
     const vertical = el.getAttribute('aria-orientation') === 'vertical';
     // splitter -> layout layer container -> split panel
@@ -23,13 +24,17 @@ async function valueNowError(splitter: Locator): Promise<number> {
     const p = panel.getBoundingClientRect();
     const offset = vertical ? r.left - p.left - panel.clientLeft : r.top - p.top - panel.clientTop;
     const range = vertical ? panel.clientWidth - r.width : panel.clientHeight - r.height;
-    return Number(el.getAttribute('aria-valuenow') ?? NaN) - (100 * offset) / range;
+    const valueNow = Number(el.getAttribute('aria-valuenow') ?? NaN);
+    return { valueNow, position: (100 * offset) / range };
   });
 }
 
 async function expectValueNowMatchesPosition(splitter: Locator): Promise<void> {
   // Rounding to a whole percentage leaves up to half a point of difference.
-  await expect.poll(async () => Math.abs(await valueNowError(splitter))).toBeLessThanOrEqual(0.5);
+  await expect.poll(async () => {
+    const { valueNow, position } = await readSplitter(splitter);
+    return Math.abs(valueNow - position);
+  }).toBeLessThanOrEqual(0.5);
 }
 
 async function valueNow(splitter: Locator): Promise<number> {
@@ -88,10 +93,10 @@ test.describe('Pane splitter aria-valuenow (#19151)', () => {
     expect(await valueNow(splitter)).toBeLessThan(100);
 
     // The zoomed left column fills the panel, so the zoom animation has finished once the
-    // splitter reaches the right edge.
+    // splitter is drawn at the right edge. aria-valuenow rounds to 100 a little before that.
     await executeCommand(page, 'layoutZoomLeftColumn');
-    await expect.poll(() => valueNow(splitter)).toBe(100);
-    await expectValueNowMatchesPosition(splitter);
+    await expect.poll(async () => (await readSplitter(splitter)).position).toBeCloseTo(100, 2);
+    expect(await valueNow(splitter)).toBe(100);
 
     // Ends the zoom like layoutEndZoom, but resolves only once the relayout has finished.
     // Ending the zoom restores the default column widths, not the pre-zoom ones.
