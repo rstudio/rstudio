@@ -15,6 +15,31 @@
 
 context("rig")
 
+test_that("the bundled rig follows an explicit override and precedes system copies", {
+
+   bundled <- file.path(tempdir(), "RStudio", "bin", "rig")
+   override <- file.path(tempdir(), "custom", .rs.rig.exeName())
+   candidates <- .rs.rig.candidatePaths(override = override, bundled = bundled)
+   expect_identical(candidates[1:2], c(override, file.path(bundled, "bin", .rs.rig.exeName())))
+   expect_identical(
+      .rs.rig.candidatePaths(override = "", bundled = bundled)[[1L]],
+      file.path(bundled, "bin", .rs.rig.exeName())
+   )
+
+})
+
+test_that("the configured bundled rig is usable without an external installation", {
+
+   bundled <- file.path(.Call("rs_rigPath", PACKAGE = "(embedding)"), "bin", .rs.rig.exeName())
+   expect_true(file.exists(bundled))
+   expect_equal(.rs.rig.version(bundled), package_version(.rs.rig.pinnedVersion))
+   expect_identical(
+      .rs.rig.find(paths = c(tempfile("missing-rig-"), bundled)),
+      normalizePath(bundled, winslash = "/")
+   )
+
+})
+
 test_that("the rig download URL matches the platform and architecture", {
 
    url <- function(...) .rs.rig.downloadUrl(version = "0.10.0", ...)
@@ -415,21 +440,26 @@ test_that("installed R versions are listed once per session unless refreshed", {
 
 test_that("rig older than the pinned release is passed over", {
 
-   skip_on_os("windows")
-
    dir <- tempfile("rig-bin-")
    dir.create(dir)
    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-   rig <- file.path(dir, "rig")
-   writeLines(c("#!/bin/sh", "echo 'RIG -- The R Installation Manager 0.9.1'"), rig)
-   Sys.chmod(rig, "0755")
+   rig <- file.path(dir, if (.rs.platform.isWindows) "rig.cmd" else "rig")
+   writeRig <- function(output)
+   {
+      writeLines(c(if (.rs.platform.isWindows) "@echo off" else "#!/bin/sh",
+                   paste("echo", output)), rig)
+      Sys.chmod(rig, "0755")
+   }
+   writeRig("RIG -- The R Installation Manager 0.9.1")
    expect_equal(.rs.rig.version(rig), package_version("0.9.1"))
+   expect_identical(.rs.rig.find(paths = rig), "")
 
-   writeLines(c("#!/bin/sh", "echo 'RIG -- The R Installation Manager 0.10.2'"), rig)
-   expect_equal(.rs.rig.version(rig), package_version("0.10.2"))
+   writeRig(paste("RIG -- The R Installation Manager", .rs.rig.pinnedVersion))
+   expect_equal(.rs.rig.version(rig), package_version(.rs.rig.pinnedVersion))
+   expect_identical(.rs.rig.find(paths = rig), normalizePath(rig, winslash = "/"))
 
-   writeLines(c("#!/bin/sh", "echo 'not rig'"), rig)
+   writeRig("not rig")
    expect_null(.rs.rig.version(rig))
 
 })

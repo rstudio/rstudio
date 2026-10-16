@@ -32,6 +32,7 @@
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -47,6 +48,12 @@ namespace modules {
 namespace rig {
 
 namespace {
+
+SEXP rs_rigPath()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(options().rigPath().getAbsolutePath(), &rProtect);
+}
 
 // Installing R runs as a sequence of steps (download rig, extract rig, run
 // 'rig add'), each reporting its outcome through a callback exactly once.
@@ -454,6 +461,8 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   RS_REGISTER_CALL_METHOD(rs_rigPath);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

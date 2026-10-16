@@ -17,18 +17,19 @@
 # RStudio uses to discover and install versions of R, and for finding the
 # versions of R installed on this machine.
 
-# The rig release RStudio downloads when no rig installation can be found.
-.rs.setVar("rig.pinnedVersion", "0.10.0")
+# The rig release RStudio bundles (and downloads as a fallback).
+# Keep dependencies/tools/rig.cmake in sync.
+.rs.setVar("rig.pinnedVersion", "0.11.0")
 
 # The SHA-256 digests of the pinned release's archives (as published with the
 # GitHub release); a download is only installed when its digest matches.
 .rs.setVar("rig.archiveChecksums", c(
-   "rig-macos-arm64-0.10.0.tar.gz"   = "a9cca738585eb132818a6750f9edcfc647ca87af781309d3296827a1a851cc4b",
-   "rig-macos-x86_64-0.10.0.tar.gz"  = "6906f42e3fab8161b7187291dc69c48726ac48f91a37d9b49bfbb4f8bf94e47b",
-   "rig-linux-x86_64-0.10.0.tar.gz"  = "a3ac2dd9c675247c8d5de1c8d650090df9c99e0e28e449e0546e3a54c80107cd",
-   "rig-linux-aarch64-0.10.0.tar.gz" = "46cd85e5dcbe3748c0a13e19c67333ccc9c52b07e0642a07c00cb8e7d9e6824c",
-   "rig-windows-x86_64-0.10.0.zip"   = "fdab4e576d51d54f01cc3bea3854f529f7c9b10a17c4a428ad3fb16661620356",
-   "rig-windows-arm64-0.10.0.zip"    = "88f30df2fa2bf40b71ac82f5fe02ea7c6c07d7947794b44ebdee313fe99c4f7a"
+   "rig-macos-arm64-0.11.0.tar.gz"   = "abf557e9ed51a4f64b6584fee3451fcad2b4d2d091a1ae46dc19cbe10ac6d8b0",
+   "rig-macos-x86_64-0.11.0.tar.gz"  = "e6683110d04eb88ecf57a0c8862a6806b9ec367e23fff57b16e55e383ad57822",
+   "rig-linux-x86_64-0.11.0.tar.gz"  = "27e063df84b6dadb325fa96d13951676b44b69103bb4237b061518fbf564fcf1",
+   "rig-linux-aarch64-0.11.0.tar.gz" = "bb0e74fd5a8c0b7138b417fd71b0ed166bf144f9b713888ef3bdc08b2f1396f6",
+   "rig-windows-x86_64-0.11.0.zip"   = "81218ebc88d24f100686106542ac487fa9b2755f905539b450e0eb87a5364f9d",
+   "rig-windows-arm64-0.11.0.zip"    = "39dcf76cb8b6d4973ef6cec4dde63fea2e33c1b9c48762a315da9a4091691baa"
 ))
 
 .rs.addFunction("rig.exeName", function()
@@ -43,14 +44,17 @@
 })
 
 #' The locations searched for a rig binary, in order of preference: an
-#' explicit override, the PATH, the platform's standard install locations,
+#' explicit override, the bundled copy, the PATH, standard install locations,
 #' and finally the copy RStudio downloaded itself.
-.rs.addFunction("rig.candidatePaths", function()
+.rs.addFunction("rig.candidatePaths", function(
+   override = Sys.getenv("RSTUDIO_RIG", unset = ""),
+   bundled = .Call("rs_rigPath", PACKAGE = "(embedding)"))
 {
    exe <- .rs.rig.exeName()
 
    paths <- c(
-      Sys.getenv("RSTUDIO_RIG", unset = ""),
+      override,
+      file.path(bundled, "bin", exe),
       unname(Sys.which("rig"))
    )
 
@@ -79,10 +83,10 @@
 
 #' Locate a rig binary, or return "" if none is available. A rig older than
 #' the pinned release may lack the commands and flags RStudio uses, so it is
-#' passed over (in favor of the copy RStudio downloads).
-.rs.addFunction("rig.find", function()
+#' passed over (in favor of a bundled or downloaded copy).
+.rs.addFunction("rig.find", function(paths = .rs.rig.candidatePaths())
 {
-   for (path in .rs.rig.candidatePaths())
+   for (path in paths)
    {
       if (!file.exists(path))
          next
@@ -98,7 +102,7 @@
 #' The version of the rig binary at 'path', or NULL when it can't be told.
 .rs.addFunction("rig.version", function(path)
 {
-   # e.g. "RIG -- The R Installation Manager 0.10.0"
+   # e.g. "RIG -- The R Installation Manager 0.11.0"
    output <- .rs.tryCatch(suppressWarnings(
       system2(path, "--version", stdout = TRUE, stderr = FALSE)
    ))

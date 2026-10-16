@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+#
+# install-rig
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# Install the pinned rig distribution, including its supporting files.
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../tools/rstudio-tools.sh"
+section "Installing rig"
+
+case "$(uname -s)-$(uname -m)" in
+   Darwin-*)
+      RIG_PLATFORM=macos
+      # The same dependency can be used by thin and universal RStudio builds.
+      RIG_ARCH=universal
+      ;;
+   Linux-x86_64) RIG_PLATFORM=linux; RIG_ARCH=x86_64 ;;
+   Linux-aarch64|Linux-arm64) RIG_PLATFORM=linux; RIG_ARCH=aarch64 ;;
+   *) echo "rig binaries unavailable for $(uname -s)-$(uname -m)"; exit 1 ;;
+esac
+
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cmake "-DRIG_ROOT=${RSTUDIO_TOOLS_ROOT}" \
+   "-DRIG_PLATFORM=${RIG_PLATFORM}" "-DRIG_ARCH=${RIG_ARCH}" \
+   -P "${SCRIPT_DIR}/../tools/install-rig.cmake"
