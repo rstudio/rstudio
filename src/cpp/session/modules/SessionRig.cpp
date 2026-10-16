@@ -29,6 +29,7 @@
 #include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Crypto.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
@@ -63,9 +64,10 @@ struct Step
 class RInstallJob : public boost::enable_shared_from_this<RInstallJob>
 {
 public:
-   static boost::shared_ptr<RInstallJob> create(const std::string& version)
+   static boost::shared_ptr<RInstallJob> create(const std::string& version,
+                                               const std::string& directory)
    {
-      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version));
+      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version, directory));
       pJob->initialize();
       return pJob;
    }
@@ -86,8 +88,8 @@ public:
    }
 
 private:
-   explicit RInstallJob(const std::string& version)
-      : version_(version)
+   RInstallJob(const std::string& version, const std::string& directory)
+      : version_(version), directory_(directory)
    {
    }
 
@@ -253,17 +255,19 @@ private:
 
    // Step: have rig install the requested version of R. Installing in
    // admin mode needs sudo, which can't be answered from here, so R is
-   // always installed in user mode (into the home directory), even when rig
-   // itself is configured for admin mode.
+   // always installed in user mode, at the confirmed destination, even when
+   // rig itself is configured for admin mode.
    void installR(StepCallback callback)
    {
       std::vector<std::string> args = { "add", version_, "--user" };
-      runProgram(rigPath_, args, callback);
+      log("Installing into " + directory_ + "\n");
+      runProgram(rigPath_, args, callback, directory_);
    }
 
    void runProgram(const std::string& program,
                    const std::vector<std::string>& args,
-                   StepCallback callback)
+                   StepCallback callback,
+                   const std::string& installDirectory = std::string())
    {
       log("$ " + program + " " + core::algorithm::join(args, " ") + "\n");
 
@@ -299,6 +303,14 @@ private:
       options.terminateChildren = true;
       options.exitWithParent = true;
 
+      if (!installDirectory.empty())
+      {
+         core::system::Options environment;
+         core::system::environment(&environment);
+         core::system::setenv(&environment, "RIG_R_INSTALL_DIR", installDirectory);
+         options.environment = environment;
+      }
+
       Error error = module_context::processSupervisor().runProgram(program, args, options, callbacks);
       if (error)
       {
@@ -327,7 +339,10 @@ private:
       json::Value installed;
       if (ok)
       {
-         Error lookupError = findInstalledRVersion(version_, &installed);
+         Error lookupError = r::exec::RFunction(".rs.rig.installedRVersion")
+               .addParam("version", version_)
+               .addParam("directory", directory_)
+               .call(&installed);
          if (lookupError)
             LOG_ERROR(lookupError);
 
@@ -369,6 +384,7 @@ private:
 
 private:
    std::string version_;
+   std::string directory_;
    std::string url_;
    std::string rigPath_;
    std::string archivePath_;
@@ -381,6 +397,20 @@ private:
 // only one installation runs at a time
 boost::shared_ptr<RInstallJob> s_pInstallJob;
 
+Error rigGetInstallDir(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   if (options().programMode() != kSessionProgramModeDesktop)
+      return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
+
+   std::string directory;
+   Error error = r::exec::RFunction(".rs.rig.defaultInstallDir").call(&directory);
+   if (error)
+      return error;
+   pResponse->setResult(directory);
+   return Success();
+}
+
 Error rigInstallRVersion(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -389,8 +419,8 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (options().programMode() != kSessionProgramModeDesktop)
       return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
 
-   std::string version;
-   Error error = json::readParams(request.params, &version);
+   std::string version, directory;
+   Error error = json::readParams(request.params, &version, &directory);
    if (error)
       return error;
 
@@ -400,7 +430,20 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (s_pInstallJob && s_pInstallJob->running())
       return Error("RInstallInProgress", 1, "An R installation is already in progress", ERROR_LOCATION);
 
-   s_pInstallJob = RInstallJob::create(version);
+   std::string normalizedDirectory;
+   error = r::exec::RFunction(".rs.rig.validateInstallDir")
+         .addParam("directory", directory)
+         .call(&normalizedDirectory);
+   if (error)
+      return error;
+
+   error = r::exec::RFunction(".rs.rig.rememberInstallDir")
+         .addParam("directory", normalizedDirectory)
+         .call();
+   if (error)
+      return error;
+
+   s_pInstallJob = RInstallJob::create(version, normalizedDirectory);
    pResponse->setResult(s_pInstallJob->jobId());
    return Success();
 }
@@ -458,6 +501,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "rig_install_r_version", rigInstallRVersion))
+      (bind(registerRpcMethod, "rig_get_install_dir", rigGetInstallDir))
       (bind(sourceModuleRFile, "SessionRig.R"));
 
    return initBlock.execute();

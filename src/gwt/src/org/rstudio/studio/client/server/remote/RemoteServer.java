@@ -6309,14 +6309,21 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void rigInstallRVersion(String version,
+   public void rigInstallRVersion(String version, String directory,
                                   ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(version)
+            .add(directory)
             .get();
 
       sendRequest(RPC_SCOPE, RIG_INSTALL_R_VERSION, params, requestCallback);
+   }
+
+   @Override
+   public void rigGetInstallDir(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "rig_get_install_dir", requestCallback);
    }
 
    @Override

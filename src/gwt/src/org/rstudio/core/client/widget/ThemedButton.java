@@ -133,6 +133,12 @@ public class ThemedButton extends FocusWidget
       return isDefault_;
    }
 
+   // Allow buttons outside dialogs to follow the surrounding workbench theme.
+   public void setThemeAware(boolean themeAware)
+   {
+      setStyleDependentName("ThemeAware", themeAware);
+   }
+
    public void setText(String text)
    {
       content_.setInnerText(text);

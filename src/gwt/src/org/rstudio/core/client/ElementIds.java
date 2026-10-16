@@ -369,6 +369,7 @@ public class ElementIds
       RMD_OPTION("rmd_option"),
       RMD_TEMPLATE_DIR("rmd_template_dir"),
       R_VERSION("r_version"),
+      R_INSTALL_DIR("r_install_dir"),
       SHINY_DIR("shiny_dir"),
       SVN("svn"),
       TERMINAL("terminal"),
