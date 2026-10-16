@@ -11,6 +11,7 @@ import { readFileSync } from "fs";
 import type { Page } from "playwright";
 
 const PROJECT_MENU = "#rstudio_project_menubutton_toolbar";
+const CONSOLE_PANE = "#rstudio_workbench_panel_console";
 
 interface InstalledR {
   version: string;
@@ -77,10 +78,9 @@ function otherR(current: string, orthogonal: boolean): InstalledR | undefined {
     .sort((a, b) => compareVersions(b.version, a.version))[0];
 }
 
-// The warning bar repeats its message in a screen-reader live region, so
-// match the visible label alone.
-function warningBarMessage(page: Page, text: string) {
-  return page.getByText(text).and(page.locator("span[aria-hidden='true']"));
+// Scope to the Console notice to exclude the screen-reader live region.
+function consoleNoticeMessage(page: Page, text: string) {
+  return page.locator(CONSOLE_PANE).getByText(text);
 }
 
 // The version of R that an R process started by the session runs (as R CMD
@@ -111,7 +111,7 @@ async function openProjectRequestingR(page: Page, dir: string, version: string):
 }
 
 // A project whose renv lockfile records a different (installed) version of R
-// gets a warning bar offering to switch; taking the offer restarts the
+// gets a Console notice offering to switch; taking the offer restarts the
 // session with that R. Needs rig and a second R on the machine, so the tests
 // skip elsewhere. Desktop only: switching R relaunches the session process,
 // which only the desktop can do.
@@ -157,18 +157,19 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
 
     await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-switch`, target!.version);
 
-    // the warning bar names both versions and offers the switch
+    // the Console notice names both versions and offers the switch
     await expect(
-      warningBarMessage(page, `created with R ${target!.version}, but R ${current} is in use`),
+      consoleNoticeMessage(page, `created with R ${target!.version}, but R ${current} is in use`),
     ).toBeVisible({
       timeout: 60000,
     });
-    const switchLink = page.getByText(`Switch to R ${target!.version}`, { exact: true });
-    await expect(switchLink).toBeVisible();
+    const switchButton = page.locator(CONSOLE_PANE).getByRole("button", { name: `Switch to R ${target!.version}`, exact: true });
+    await expect(switchButton).toBeVisible();
+    await expect(page.locator(CONSOLE_PANE).getByRole("button", { name: /^Install and Switch to R / })).toHaveCount(0);
 
     originalR ||= await captureResult(page, SESSION_R);
 
-    await switchLink.click();
+    await switchButton.click();
     await waitForSessionRestart(page);
 
     // the project is still open, now under the requested R
@@ -184,6 +185,69 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     expect(await captureResult(page, CHILD_R_VERSION)).toBe(target!.version);
   });
 
+  test("offers to install the requested patch or switch to a nearby installed R", async ({
+    rstudioPage: page,
+  }) => {
+    test.setTimeout(180000);
+
+    const current = (await getVersion(page)).r;
+    const target = otherR(current, true);
+    test.skip(!target, "needs rig and a second installed R version that runs as itself");
+
+    // Ask for a patch above every installed version in this series, so the
+    // requested version is absent and the newest installed patch is offered.
+    const series = majorMinor(target!.version);
+    const installed = installedRVersions().filter((entry) => majorMinor(entry.version) === series);
+    test.skip(installed.some((entry) => compareVersions(entry.version, target!.version) > 0),
+      "needs the newest installed patch in this series to run as itself");
+    const patch = Math.max(...installed.map((entry) => Number(entry.version.split(".")[2]))) + 1;
+    const requested = `${series}.${patch}`;
+    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-nearby`, requested);
+
+    const notice = page.locator(CONSOLE_PANE);
+    const installButton = notice.getByRole("button", { name: `Install and Switch to R ${requested}`, exact: true });
+    const switchButton = notice.getByRole("button", { name: `Switch to R ${target!.version}`, exact: true });
+    await expect(installButton).toBeVisible({ timeout: 60000 });
+    await expect(switchButton).toBeVisible();
+    await expect(notice.getByRole("button", { name: /^(Install and Switch|Switch) to R / }))
+      .toHaveText([`Install and Switch to R ${requested}`, `Switch to R ${target!.version}`]);
+
+    // Opening and cancelling the destination dialog must not start a job.
+    const installRequests: string[] = [];
+    const onRequest = (request: import("playwright").Request) => {
+      if (/\/rpc\/rig_install_r_version(?:\?|$)/.test(request.url()))
+        installRequests.push(request.postData() ?? "");
+    };
+    page.on("request", onRequest);
+    try {
+      await installButton.click();
+      const dialog = page.getByRole("dialog", { name: `Install R ${requested}`, exact: true });
+      await expect(dialog).toBeVisible();
+      const directory = dialog.getByRole("textbox", { name: "Install in:" });
+      await expect(directory).not.toHaveValue("");
+      await expect(directory).toBeEditable();
+      const confirm = dialog.getByRole("button", { name: `Install and Switch to R ${requested}`, exact: true });
+      await directory.fill("");
+      await expect(confirm).toBeDisabled();
+      await directory.fill(`${sandbox.dir.replace(/\\/g, "/")}/custom R`);
+      await expect(confirm).toBeEnabled();
+      await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expect(installButton).toBeVisible();
+      expect(installRequests).toEqual([]);
+    } finally {
+      page.off("request", onRequest);
+    }
+
+    originalR ||= await captureResult(page, SESSION_R);
+    await switchButton.click();
+    await waitForSessionRestart(page);
+
+    await expect(page.locator(PROJECT_MENU)).toContainText("renv-r-nearby", { timeout: 30000 });
+    await expect.poll(async () => (await getVersion(page)).r).toBe(target!.version);
+    expect(await captureResult(page, CHILD_R_VERSION)).toBe(target!.version);
+  });
+
   test("asks before updating an R that would run the default version", async ({
     rstudioPage: page,
   }) => {
@@ -195,9 +259,9 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
 
     await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-update`, target!.version);
 
-    const switchLink = page.getByText(`Switch to R ${target!.version}`, { exact: true });
-    await expect(switchLink).toBeVisible({ timeout: 60000 });
-    await switchLink.click();
+    const switchButton = page.locator(CONSOLE_PANE).getByRole("button", { name: `Switch to R ${target!.version}`, exact: true });
+    await expect(switchButton).toBeVisible({ timeout: 60000 });
+    await switchButton.click();
 
     // the update is explained, and declining it leaves the installation and
     // the session as they were, with the offer still up
@@ -206,7 +270,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     await page.locator(NO_BTN).click();
 
     await expect(page.locator(NO_BTN)).toHaveCount(0);
-    await expect(switchLink).toBeVisible();
+    await expect(switchButton).toBeVisible();
     expect(isOrthogonal(target!.binary)).toBe(false);
     expect((await getVersion(page)).r).toBe(current);
   });
@@ -228,12 +292,12 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
 
     await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-orthogonal`, target!.version);
 
-    const switchLink = page.getByText(`Switch to R ${target!.version}`, { exact: true });
-    await expect(switchLink).toBeVisible({ timeout: 60000 });
+    const switchButton = page.locator(CONSOLE_PANE).getByRole("button", { name: `Switch to R ${target!.version}`, exact: true });
+    await expect(switchButton).toBeVisible({ timeout: 60000 });
 
     originalR ||= await captureResult(page, SESSION_R);
 
-    await switchLink.click();
+    await switchButton.click();
     await page.locator(YES_BTN).click();
     await waitForSessionRestart(page);
 
@@ -267,10 +331,10 @@ test.describe("renv lockfile R version after a restart or refresh", () => {
 
     await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-restart`, requested);
 
-    const warning = warningBarMessage(page, `created with R ${requested}, but R ${current} is in use`);
+    const warning = consoleNoticeMessage(page, `created with R ${requested}, but R ${current} is in use`);
     await expect(warning).toBeVisible({ timeout: 60000 });
 
-    await page.getByRole("button", { name: "Dismiss Warning Bar" }).click();
+    await page.locator(CONSOLE_PANE).getByRole("button", { name: "Dismiss project notice" }).click();
     await expect(warning).toBeHidden();
 
     await restartSessionWithSentinel(page);
@@ -285,10 +349,10 @@ test.describe("renv lockfile R version after a restart or refresh", () => {
 
     await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-refresh`, requested);
 
-    const warning = warningBarMessage(page, `created with R ${requested}, but R ${current} is in use`);
+    const warning = consoleNoticeMessage(page, `created with R ${requested}, but R ${current} is in use`);
     await expect(warning).toBeVisible({ timeout: 60000 });
 
-    await page.getByRole("button", { name: "Dismiss Warning Bar" }).click();
+    await page.locator(CONSOLE_PANE).getByRole("button", { name: "Dismiss project notice" }).click();
     await expect(warning).toBeHidden();
 
     await page.reload();

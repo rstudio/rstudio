@@ -15,6 +15,76 @@
 
 context("rig")
 
+test_that("the default R install directory follows the platform and override", {
+
+   default <- function(...) .rs.rig.defaultInstallDir(rig = "", ...)
+   expect_identical(default(windows = FALSE, override = "", home = "/home/test"),
+                    "/home/test/.local/share/rig/r")
+   expect_identical(default(windows = TRUE, override = "", appdata = "C:/Users/test/AppData/Roaming"),
+                    "C:/Users/test/AppData/Roaming/rig/data/r")
+   expect_identical(default(windows = FALSE, override = "/custom/R"), "/custom/R")
+   expect_identical(default(windows = TRUE, override = "D:/custom R"), "D:/custom R")
+   expect_error(default(windows = TRUE, override = "", appdata = ""), "application data")
+
+})
+
+test_that("R installation paths are checked before starting an installation", {
+
+   root <- tempfile("r-install-path-")
+   dir.create(root)
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   expect_identical(.rs.rig.validateInstallDir(root), normalizePath(root, winslash = "/"))
+   target <- file.path(root, "R versions", "new")
+   expect_identical(.rs.rig.validateInstallDir(target), normalizePath(target, winslash = "/", mustWork = FALSE))
+   expect_false(dir.exists(target))
+   expect_error(.rs.rig.validateInstallDir(""), "Choose")
+   expect_error(.rs.rig.validateInstallDir(NA_character_), "Choose")
+   expect_error(.rs.rig.validateInstallDir("relative/path"), "absolute path")
+   expect_error(.rs.rig.validateInstallDir(paste0(root, "\nother")), "Choose")
+
+   file <- file.path(root, "file")
+   file.create(file)
+   expect_error(.rs.rig.validateInstallDir(file), "must be a directory")
+   expect_error(.rs.rig.validateInstallDir(file.path(file, "R")), "must be a directory")
+
+})
+
+test_that("custom installation roots remain discoverable and select the exact R", {
+
+   root <- tempfile("custom R-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+   registry <- file.path(root, "settings", "r-install-dirs")
+   installs <- file.path(root, "R versions")
+   expect_identical(.rs.rig.installDirs(registry), character())
+   .rs.rig.rememberInstallDir(installs, registry)
+   .rs.rig.rememberInstallDir(installs, registry)
+   expect_identical(.rs.rig.installDirs(registry), installs)
+
+   # Exercise the user-mode layouts used by Windows, macOS and Linux.
+   for (layout in c(".", "Resources", "lib/R"))
+   {
+      prefix <- file.path(installs, gsub("[/\\.]", "_", layout))
+      home <- file.path(prefix, layout)
+      dir.create(file.path(home, "library", "base"), recursive = TRUE)
+      dir.create(file.path(home, "include"), recursive = TRUE)
+      writeLines(c('#define R_MAJOR "4"', '#define R_MINOR "5.2"'),
+                 file.path(home, "include", "Rversion.h"))
+      dir.create(file.path(prefix, "bin"), showWarnings = FALSE)
+      file.create(file.path(prefix, "bin", if (.rs.platform.isWindows) "R.exe" else "R"))
+   }
+
+   installed <- .rs.rInstallations.scanRoots(.rs.rig.installDirs(registry))
+   expect_equal(nrow(installed), 3L)
+   expect_true(all(installed$version == "4.5.2"))
+   expect_true(all(file.exists(installed$binary)))
+   expect_equal(.rs.rig.installedRVersion("4.5.2", installs)$version, .rs.scalar("4.5.2"))
+   expect_null(.rs.rig.installedRVersion("4.5.3", installs))
+   expect_equal(.rs.rig.installedRVersion("4.5", installs)$version, .rs.scalar("4.5.2"))
+   expect_equal(nrow(.rs.rInstallations.scanRoots(file.path(root, "missing"))), 0L)
+
+})
+
 test_that("the rig download URL matches the platform and architecture", {
 
    url <- function(...) .rs.rig.downloadUrl(version = "0.10.0", ...)
