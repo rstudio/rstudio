@@ -121,12 +121,12 @@ public class WebApplicationHeader extends Composite
 
       // large logo
       logoLarge_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio2x()));
-      ((ImageElement)logoLarge_.getElement().cast()).setAlt("");
+      ((ImageElement)logoLarge_.getElement().cast()).setAlt(constants_.rStudioLogoAltText());
       logoLarge_.getElement().getStyle().setBorderWidth(0, Unit.PX);
 
       // small logo
       logoSmall_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio_small2x()));
-      ((ImageElement)logoSmall_.getElement().cast()).setAlt("");
+      ((ImageElement)logoSmall_.getElement().cast()).setAlt(constants_.rStudioLogoAltText());
       logoSmall_.getElement().getStyle().setBorderWidth(0, Unit.PX);
 
       // link target for logo
@@ -208,6 +208,11 @@ public class WebApplicationHeader extends Composite
          {
             logoAnchor_.setHref(logoTargetUrl_);
             logoAnchor_.setTitle(constants_.rStudioServerHomeTitle());
+
+            // the logo is the link's only content, so its alt text names the link
+            // and must describe the destination rather than the product
+            ((ImageElement)logoLarge_.getElement().cast()).setAlt(constants_.rStudioServerHomeTitle());
+            ((ImageElement)logoSmall_.getElement().cast()).setAlt(constants_.rStudioServerHomeTitle());
          }
          else
          {
