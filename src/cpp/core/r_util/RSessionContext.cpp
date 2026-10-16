@@ -674,7 +674,7 @@ std::string obfuscatedUserId(uid_t uid)
    {
       // if large uids are being used, we want to wrap them back to a value lower than
       // the maximum allowed uid to prevent duplicate ID strings
-      // if the difference between this uid and the minimum allowed value is less than
+      // if the difference between this uid and the minimum allowed value is at most
       // the maximum allowed uid, use it instead so we do not have to worry about duplicates
       // as the resulting obfuscated ID will not have to be truncated
       //
@@ -684,7 +684,7 @@ std::string obfuscatedUserId(uid_t uid)
       // keep minUid on the left of the first comparison: Snyk Code treats only this order
       // as a guard for 'uid - minUid', and reports 'uid >= minUid' as a possible integer overflow
       uid_t minUid = getMinUid();
-      if (minUid <= uid && (uid - minUid < MAX_UID))
+      if (minUid <= uid && (uid - minUid <= MAX_UID))
          uid -= minUid;
    }
 

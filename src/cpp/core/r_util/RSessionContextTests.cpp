@@ -14,6 +14,7 @@
  */
 
 #include <core/r_util/RSessionContext.hpp>
+#include <core/system/Environment.hpp>
 
 #include <gtest/gtest.h>
 
@@ -34,6 +35,18 @@ std::string makeUrl(const std::string& prefix)
 }
 
 } // anonymous namespace
+
+TEST(RSessionContextTests, ObfuscatedUserIdRemapsLargeUidsUpToMaxUid)
+{
+   // obfuscatedUserId() reads the minimum uid from this variable when it is set
+   core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
+   const uid_t kMaxUid = 0xFFFFF;
+
+   // a large uid at most kMaxUid above the minimum is remapped to that
+   // difference, so it gets the same ID as a uid equal to the difference
+   EXPECT_EQ(obfuscatedUserId(1000 + kMaxUid - 1), obfuscatedUserId(kMaxUid - 1));
+   EXPECT_EQ(obfuscatedUserId(1000 + kMaxUid), obfuscatedUserId(kMaxUid));
+}
 
 TEST(RSessionContextTests, ParseSessionUrlPrefixS)
 {
