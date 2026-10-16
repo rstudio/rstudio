@@ -350,6 +350,11 @@ std::string utf8ToSystemImpl(const std::string& str,
           wide[i + 1] >= 0xDC00 && wide[i + 1] <= 0xDFFF)
       {
          wideChars = 2;
+
+         // The range checks above make '& 0x3FF' equal to subtracting 0xD800
+         // or 0xDC00, and the two halves occupy separate bits, so '|' equals
+         // '+'. Keep this form: Snyk Code reports the subtraction form as a
+         // possible integer overflow.
          codepoint = 0x10000 +
                (((static_cast<uint32_t>(wide[i]) & 0x3FF) << 10) |
                 (static_cast<uint32_t>(wide[i + 1]) & 0x3FF));

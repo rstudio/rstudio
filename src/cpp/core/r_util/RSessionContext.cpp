@@ -680,6 +680,9 @@ std::string obfuscatedUserId(uid_t uid)
       //
       // if the difference is still greater than the max uid, we will have to live with truncation
       // so do not bother remapping the uid
+      //
+      // keep minUid on the left of the first comparison: Snyk Code treats only this order
+      // as a guard for 'uid - minUid', and reports 'uid >= minUid' as a possible integer overflow
       uid_t minUid = getMinUid();
       if (minUid <= uid && (uid - minUid < MAX_UID))
          uid -= minUid;

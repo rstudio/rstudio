@@ -310,7 +310,9 @@ inline StringType substring(const StringType& string,
                             std::size_t startPos,
                             std::size_t endPos)
 {
-   // an end before the start yields the rest of the string, as it always has
+   // An inverted range returns the rest of the string. That is what the
+   // unguarded 'endPos - startPos' returned once its count wrapped, so this
+   // keeps the result for existing callers without relying on wraparound.
    if (endPos < startPos)
       return string.substr(startPos);
 
