@@ -431,6 +431,11 @@ th:hover .pin-icon {
    font-style: italic;
 }
 
+/* An escaped newline or tab (escapeCellHtml), set apart from the value. */
+.escapedChar {
+   color: var(--grid-na-color);
+}
+
 .searchMatch {
    background-color: var(--grid-selection-bg);
 }

@@ -542,12 +542,12 @@ var escapeHtml = function(html) {
 var controlCharPattern = /[\t\r\n]/;
 var controlCharEscapes = { "\t": "\\t", "\r": "\\r", "\n": "\\n" };
 
-var escapeControlChars = function(text) {
-   return text.replace(/[\t\r\n]/g, function(ch) { return controlCharEscapes[ch]; });
-};
-
+// The escapes are styled apart from the value (like the NA marker), so a real
+// newline can't be mistaken for a literal backslash-n in the data.
 var escapeCellHtml = function(text) {
-   return escapeHtml(escapeControlChars(text));
+   return escapeHtml(text).replace(/[\t\r\n]/g, function(ch) {
+      return '<span class="escapedChar">' + controlCharEscapes[ch] + '</span>';
+   });
 };
 
 // 'pos' indexes the unescaped value (which is what the server searched), so
@@ -1247,7 +1247,8 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
    }
 
    // The cell shows control characters escaped; copy the value itself.
-   if (controlCharPattern.test(data)) {
+   var hasControlChars = controlCharPattern.test(data);
+   if (hasControlChars) {
       td.copyText = data;
    }
 
@@ -1312,8 +1313,10 @@ var renderCellContents = function(td, data, colIdx, rowData, clazz) {
 
    if (didHighlight) {
       td.innerHTML = data;
+   } else if (hasControlChars) {
+      td.innerHTML = escapeCellHtml(data);
    } else {
-      td.textContent = escapeControlChars(data);
+      td.textContent = data;
    }
 };
 
