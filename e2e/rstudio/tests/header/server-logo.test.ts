@@ -9,10 +9,8 @@ test.describe('Server header logo', { tag: ['@server_only'] }, () => {
     const logo = anchor.locator('img');
     await expect(logo).toBeVisible();
 
-    if (await anchor.getAttribute('href') === null) {
-      await expect(logo).toHaveAccessibleName('RStudio');
-    } else {
-      await expect(page.getByRole('link', { name: 'Posit Workbench' })).toBeVisible();
-    }
+    // assert on the image, not the link: the link's title would name it anyway
+    const linked = await anchor.getAttribute('href') !== null;
+    await expect(logo).toHaveAccessibleName(linked ? 'Posit Workbench' : 'RStudio');
   });
 });
