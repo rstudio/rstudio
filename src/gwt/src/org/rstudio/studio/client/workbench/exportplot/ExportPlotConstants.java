@@ -44,4 +44,11 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
     String exportSizeText(String widthInches, String heightInches, String widthPixels, String heightPixels);
     String exportSizeInchesText(String widthInches, String heightInches);
     String exportSizeTooLargeText(String widthInches, String heightInches, String widthPixels, String heightPixels);
+    String tiffCompressionLabel();
+    String tiffCompressionNoneText();
+    String tiffCompressionLzwText();
+    String tiffCompressionZipText();
+    String tiffCompressionLzwPredictorText();
+    String tiffCompressionZipPredictorText();
+    String jpegQualityLabel();
 }

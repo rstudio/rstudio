@@ -159,6 +159,104 @@ test_that("saving a plot image refuses sizes that would exhaust memory", {
    expect_false(file.exists(file))
 })
 
+# Reads the value of the compression tag (259) in a TIFF's first image
+# directory; NA when there is none.
+tiffCompression <- function(path) {
+   bytes <- readBin(path, "raw", file.size(path))
+   littleEndian <- rawToChar(bytes[1:2]) == "II"
+   readInt <- function(offset, size) {
+      values <- as.integer(bytes[offset + seq_len(size)])
+      if (littleEndian)
+         values <- rev(values)
+      sum(values * 256^((size - 1):0))
+   }
+
+   # each 12-byte entry is a tag, a type, a count, then the value (a short
+   # is stored in the value's first two bytes)
+   directory <- readInt(4, 4)
+   for (i in seq_len(readInt(directory, 2))) {
+      entry <- directory + 2 + (i - 1) * 12
+      if (readInt(entry, 2) == 259)
+         return(readInt(entry + 8, 2))
+   }
+   NA
+}
+
+test_that("saved TIFFs are compressed as asked, with LZW by default (#19114)", {
+   .rs.activateGraphicsDevice()
+   plot(1:10)
+
+   saveTiff <- function(compression = NULL) {
+      file <- tempfile(fileext = ".tiff")
+      .rs.api.savePlotAsImage(file, "tiff", 480, 288, compression = compression)
+      file
+   }
+
+   # the compression tag's value for each type the session offers
+   tags <- c(none = 1, lzw = 5, zip = 8, "lzw+p" = 5, "zip+p" = 8)
+   offered <- .rs.graphics.offeredTiffCompressionTypes()
+   expect_true(all(c("none", "lzw") %in% offered))
+   for (type in offered) {
+      file <- saveTiff(type)
+      on.exit(unlink(file), add = TRUE)
+      expect_equal(tiffCompression(file), tags[[type]], info = type)
+   }
+
+   # a type R knows but the device can't apply (the predictor variants on
+   # Quartz, which writes through ImageIO) is an error, not a silent fallback
+   for (type in setdiff(.rs.graphics.tiffCompressionTypes(), offered))
+      expect_error(saveTiff(type), "Invalid TIFF compression", info = type)
+
+   default <- saveTiff()
+   on.exit(unlink(default), add = TRUE)
+   expect_equal(tiffCompression(default), 5)
+
+   none <- saveTiff("none")
+   on.exit(unlink(none), add = TRUE)
+   expect_lt(file.size(default), file.size(none) / 2)
+
+   expect_error(saveTiff("bogus; stop()"), "Invalid TIFF compression")
+})
+
+test_that("savePlotAsImage() rejects invalid compression and quality arguments (#19114)", {
+   .rs.activateGraphicsDevice()
+   plot(1:10)
+
+   file <- tempfile(fileext = ".png")
+   on.exit(unlink(file), add = TRUE)
+
+   expect_error(.rs.api.savePlotAsImage(file, "tiff", 480, 288, compression = 1), "compression argument")
+   expect_error(.rs.api.savePlotAsImage(file, "tiff", 480, 288, compression = c("lzw", "zip")), "compression argument")
+   expect_error(.rs.api.savePlotAsImage(file, "tiff", 480, 288, compression = NA_character_), "compression argument")
+   for (quality in list("high", NA_real_, 0, 150, 95.7, c(90, 95)))
+      expect_error(.rs.api.savePlotAsImage(file, "jpeg", 480, 288, quality = quality), "quality argument")
+   expect_false(file.exists(file))
+
+   # the compression only matters for TIFFs
+   .rs.api.savePlotAsImage(file, "png", 480, 288, compression = "LZW")
+   expect_true(file.exists(file))
+})
+
+test_that("saved JPEGs are encoded at the asked quality (#19114)", {
+   .rs.activateGraphicsDevice()
+   plot(1:10)
+
+   saveJpeg <- function(quality = NULL) {
+      file <- tempfile(fileext = ".jpeg")
+      .rs.api.savePlotAsImage(file, "jpeg", 480, 288, quality = quality)
+      file
+   }
+
+   best <- saveJpeg()
+   on.exit(unlink(best), add = TRUE)
+   low <- saveJpeg(50)
+   on.exit(unlink(low), add = TRUE)
+   expect_gt(file.size(best), file.size(low))
+
+   # the resolution is recorded whichever way the JPEG is encoded
+   expect_equal(imageResolution(low), 96)
+})
+
 # Reads the width and height, in pixels, from a PNG's IHDR chunk.
 pngDimensions <- function(path) {
    bytes <- readBin(path, "raw", 24)

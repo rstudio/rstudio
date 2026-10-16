@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -111,6 +112,37 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       }
       resolutionListBox_.addChangeHandler(event -> updateSizeText());
 
+      // the compression of TIFFs, as named by R's tiff() device
+      tiffCompressionListBox_ = new ListBox();
+      tiffCompressionListBox_.getElement().setId(ElementIds.getElementId(ElementIds.EXPORT_PLOT_TIFF_COMPRESSION));
+      // (the Viewer pane's context has none; its dialog doesn't offer them)
+      JsArrayString compressionTypes = context.getTiffCompressionTypes();
+      int selectedCompression = -1;
+      for (int i = 0; compressionTypes != null && i < compressionTypes.length(); i++)
+      {
+         String type = compressionTypes.get(i);
+         tiffCompressionListBox_.addItem(tiffCompressionText(type), type);
+         if (type.equals(options.getTiffCompression()))
+            selectedCompression = i;
+         else if (selectedCompression < 0 && type.equals(DEFAULT_TIFF_COMPRESSION))
+            selectedCompression = i;
+      }
+      tiffCompressionListBox_.setSelectedIndex(Math.max(0, selectedCompression));
+      tiffCompressionLabel_ = new FormLabel(constants_.tiffCompressionLabel(), tiffCompressionListBox_);
+
+      // the quality of JPEGs
+      jpegQualityListBox_ = new ListBox();
+      jpegQualityListBox_.getElement().setId(ElementIds.getElementId(ElementIds.EXPORT_PLOT_JPEG_QUALITY));
+      for (int quality : JPEG_QUALITIES)
+         jpegQualityListBox_.addItem(Integer.toString(quality), Integer.toString(quality));
+      jpegQualityListBox_.setSelectedIndex(0);
+      for (int i = 0; i < jpegQualityListBox_.getItemCount(); i++)
+      {
+         if (jpegQualityListBox_.getValue(i).equals(Integer.toString(options.getJpegQuality())))
+            jpegQualityListBox_.setSelectedIndex(i);
+      }
+      jpegQualityLabel_ = new FormLabel(constants_.jpegQualityLabel(), jpegQualityListBox_);
+
       sizeText_ = new Label();
       sizeText_.getElement().setId(ElementIds.getElementId(ElementIds.EXPORT_PLOT_SIZE_TEXT));
       sizeText_.getElement().getStyle().setMarginLeft(10, Unit.PX);
@@ -158,12 +190,55 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       resolutionLabel.getElement().getStyle().setMarginRight(5, Unit.PX);
       panel.add(resolutionLabel);
       panel.add(resolutionListBox_);
+
+      // the options of the selected format (see updateFormatOptions)
+      for (FormLabel label : new FormLabel[] { tiffCompressionLabel_, jpegQualityLabel_ })
+      {
+         label.getElement().getStyle().setMarginLeft(16, Unit.PX);
+         label.getElement().getStyle().setMarginRight(5, Unit.PX);
+      }
+      panel.add(tiffCompressionLabel_);
+      panel.add(tiffCompressionListBox_);
+      panel.add(jpegQualityLabel_);
+      panel.add(jpegQualityListBox_);
       panel.add(sizeText_);
 
       getSizeEditor().addSizeChangedHandler(() -> updateSizeText());
-      saveAsTarget_.addChangeHandler(event -> updateSizeText());
+      saveAsTarget_.addChangeHandler(event ->
+      {
+         updateFormatOptions();
+         updateSizeText();
+      });
+      updateFormatOptions();
       updateSizeText();
       return panel;
+   }
+
+   // Shows the options of the selected format: the compression for TIFFs,
+   // and the quality for JPEGs.
+   private void updateFormatOptions()
+   {
+      String format = saveAsTarget_.getFormat();
+      boolean tiff = format.equals("tiff");
+      tiffCompressionLabel_.setVisible(tiff);
+      tiffCompressionListBox_.setVisible(tiff);
+      boolean jpeg = format.equals("jpeg");
+      jpegQualityLabel_.setVisible(jpeg);
+      jpegQualityListBox_.setVisible(jpeg);
+   }
+
+   // The name shown for a TIFF compression, as named by R's tiff() device.
+   private static String tiffCompressionText(String type)
+   {
+      switch (type)
+      {
+      case "none":  return constants_.tiffCompressionNoneText();
+      case "lzw":   return constants_.tiffCompressionLzwText();
+      case "zip":   return constants_.tiffCompressionZipText();
+      case "lzw+p": return constants_.tiffCompressionLzwPredictorText();
+      case "zip+p": return constants_.tiffCompressionZipPredictorText();
+      default:      return type.toUpperCase();
+      }
    }
 
    /**
@@ -188,6 +263,22 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       if (!supportsResolution())
          return useDevicePixelRatioCheckBox_.getValue();
       return getResolution() == 0;
+   }
+
+   // The selected TIFF compression, as named by R's tiff() device.
+   private String getTiffCompression()
+   {
+      if (!supportsResolution() || tiffCompressionListBox_.getItemCount() == 0)
+         return DEFAULT_TIFF_COMPRESSION;
+      return tiffCompressionListBox_.getSelectedValue();
+   }
+
+   // The selected JPEG quality, from 1 to 100.
+   private int getJpegQuality()
+   {
+      if (!supportsResolution())
+         return DEFAULT_JPEG_QUALITY;
+      return StringUtil.parseInt(jpegQualityListBox_.getSelectedValue(), DEFAULT_JPEG_QUALITY);
    }
 
    private static int screenResolution()
@@ -245,7 +336,9 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
                                       viewAfterSaveCheckBox_.getValue(),
                                       getUseDevicePixelRatio(),
                                       previous.getCopyAsMetafile(),
-                                      supportsResolution() ? getResolution() : previous.getResolution());
+                                      supportsResolution() ? getResolution() : previous.getResolution(),
+                                      supportsResolution() ? getTiffCompression() : previous.getTiffCompression(),
+                                      supportsResolution() ? getJpegQuality() : previous.getJpegQuality());
    }
 
    private void attemptSavePlot(final Operation onCompleted)
@@ -291,6 +384,8 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
                      viewAfterSaveCheckBox_.getValue(),
                      getUseDevicePixelRatio(),
                      getResolution(),
+                     getTiffCompression(),
+                     getJpegQuality(),
                      onCompleted);
             }
          });
@@ -304,9 +399,16 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    private CheckBox viewAfterSaveCheckBox_;
    private CheckBox useDevicePixelRatioCheckBox_;
    private ListBox resolutionListBox_;
+   private FormLabel tiffCompressionLabel_;
+   private ListBox tiffCompressionListBox_;
+   private FormLabel jpegQualityLabel_;
+   private ListBox jpegQualityListBox_;
    private Label sizeText_;
 
    private static final int[] RESOLUTIONS = { 96, 150, 300, 600 };
+   private static final int[] JPEG_QUALITIES = { 100, 95, 90, 80, 75 };
+   private static final String DEFAULT_TIFF_COMPRESSION = "lzw";
+   private static final int DEFAULT_JPEG_QUALITY = 100;
 
    // the session refuses to draw bitmaps larger than this (kMaxBitmapPixels
    // in RGraphicsPlotManager.cpp); the save then fails with the same advice
