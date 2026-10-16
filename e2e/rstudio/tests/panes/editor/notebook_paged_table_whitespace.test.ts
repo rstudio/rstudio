@@ -37,17 +37,19 @@ test.describe('Notebook paged table whitespace', () => {
   test('runs of spaces in cell values are preserved when rendered', async ({ rstudioPage: page }) => {
     const fileName = 'paged-table-whitespace.Rmd';
     await writeAndOpenFile(page, sandbox.dir, fileName, notebook(`data.frame(text = "${VALUE}")`));
-    await sourceActions.ensureSourceMode();
-    await sourceActions.navigateToChunkByIndex(1);
-    await executeCommand(page, 'executeCurrentChunk');
+    try {
+      await sourceActions.ensureSourceMode();
+      await sourceActions.navigateToChunkByIndex(1);
+      await executeCommand(page, 'executeCurrentChunk');
 
-    // toHaveText() normalizes whitespace, so it only gates on the output
-    // having arrived; the real assertion reads innerText, which reflects the
-    // rendered (CSS white-space) text and is what a copy of the cell yields.
-    const cell = page.locator(PAGED_TABLE_CELL).first();
-    await expect(cell).toHaveText(VALUE, { timeout: 30000 });
-    expect(await cell.evaluate((el) => (el as HTMLElement).innerText)).toBe(VALUE);
-
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+      // toHaveText() normalizes whitespace, so it only gates on the output
+      // having arrived; the real assertion reads innerText, which reflects the
+      // rendered (CSS white-space) text and is what a copy of the cell yields.
+      const cell = page.locator(PAGED_TABLE_CELL).first();
+      await expect(cell).toHaveText(VALUE, { timeout: 30000 });
+      expect(await cell.evaluate((el) => (el as HTMLElement).innerText)).toBe(VALUE);
+    } finally {
+      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+    }
   });
 });
