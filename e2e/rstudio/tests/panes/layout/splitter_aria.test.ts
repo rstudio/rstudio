@@ -37,6 +37,27 @@ async function expectValueNowMatchesPosition(splitter: Locator): Promise<void> {
   }).toBeLessThanOrEqual(0.5);
 }
 
+/**
+ * Resolves once the splitter has been drawn in the same place for several consecutive frames,
+ * i.e. once any layout animation moving it has finished.
+ */
+async function waitForSplitterToSettle(splitter: Locator): Promise<void> {
+  await splitter.evaluate(el => new Promise<void>(resolve => {
+    const stableFramesNeeded = 5;
+    let last = '';
+    let stableFrames = 0;
+    const check = () => {
+      const r = el.getBoundingClientRect();
+      const position = `${r.left},${r.top}`;
+      stableFrames = position === last ? stableFrames + 1 : 0;
+      last = position;
+      if (stableFrames >= stableFramesNeeded) resolve();
+      else requestAnimationFrame(check);
+    };
+    requestAnimationFrame(check);
+  }));
+}
+
 async function valueNow(splitter: Locator): Promise<number> {
   return Number(await splitter.getAttribute('aria-valuenow'));
 }
@@ -90,18 +111,21 @@ test.describe('Pane splitter aria-valuenow (#19151)', () => {
     // Zooming sizes the columns programmatically rather than through the splitter.
     const splitter = page.locator(COLUMN_SPLITTER);
     await expectValueNowMatchesPosition(splitter);
-    expect(await valueNow(splitter)).toBeLessThan(100);
+    const before = (await readSplitter(splitter)).position;
 
-    // The zoomed left column fills the panel, so the zoom animation has finished once the
-    // splitter is drawn at the right edge. aria-valuenow rounds to 100 a little before that.
+    // Where the splitter stops depends on what else is visible (e.g. a sidebar on the right),
+    // so wait for the zoom to move it and then to stop moving it.
     await executeCommand(page, 'layoutZoomLeftColumn');
-    await expect.poll(async () => (await readSplitter(splitter)).position).toBeCloseTo(100, 2);
-    expect(await valueNow(splitter)).toBe(100);
+    await expect.poll(async () => (await readSplitter(splitter)).position)
+      .toBeGreaterThan(before + 1);
+    await waitForSplitterToSettle(splitter);
+    await expectValueNowMatchesPosition(splitter);
+    const zoomed = await valueNow(splitter);
 
     // Ends the zoom like layoutEndZoom, but resolves only once the relayout has finished.
     // Ending the zoom restores the default column widths, not the pre-zoom ones.
     await resetLayoutZoom(page);
-    await expect.poll(() => valueNow(splitter)).toBeLessThan(100);
+    await expect.poll(() => valueNow(splitter)).toBeLessThan(zoomed);
     await expectValueNowMatchesPosition(splitter);
   });
 });
