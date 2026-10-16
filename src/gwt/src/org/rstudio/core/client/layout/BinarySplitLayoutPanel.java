@@ -17,6 +17,7 @@ package org.rstudio.core.client.layout;
 import org.rstudio.core.client.AnimationFrameThrottledCommand;
 
 import com.google.gwt.aria.client.OrientationValue;
+import com.google.gwt.aria.client.Property;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -297,6 +298,20 @@ public class BinarySplitLayoutPanel extends LayoutPanel
          int newPos = (int) Math.round(getOffsetHeight() * pct);
          setSplitterPos(newPos, topIsFixed_);
       }
+      updateAriaValueNow();
+   }
+
+   // A focusable separator must report its position. Report it as a percentage of the
+   // distance the splitter can travel, from 0 at the top of the panel to 100 at the bottom.
+   // onResize() runs after every layout, including the one each setSplitterPos() triggers.
+   private void updateAriaValueNow()
+   {
+      int range = getOffsetHeight() - splitterHeight_;
+      if (range <= 0)
+         return; // detached or hidden, so there is no position to report
+
+      int top = topIsFixed_ ? splitterPos_ : range - splitterPos_;
+      Property.VALUENOW.set(splitter_.getElement(), Math.round(100.0 * top / range));
    }
 
    public void onMouseDown(MouseDownEvent event)
