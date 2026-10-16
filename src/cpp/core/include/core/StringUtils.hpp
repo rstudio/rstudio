@@ -310,6 +310,10 @@ inline StringType substring(const StringType& string,
                             std::size_t startPos,
                             std::size_t endPos)
 {
+   // an end before the start yields the rest of the string, as it always has
+   if (endPos < startPos)
+      return string.substr(startPos);
+
    return string.substr(startPos, endPos - startPos);
 }
 

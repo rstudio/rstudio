@@ -681,7 +681,7 @@ std::string obfuscatedUserId(uid_t uid)
       // if the difference is still greater than the max uid, we will have to live with truncation
       // so do not bother remapping the uid
       uid_t minUid = getMinUid();
-      if (uid >= minUid && (uid - minUid < MAX_UID))
+      if (minUid <= uid && (uid - minUid < MAX_UID))
          uid -= minUid;
    }
 

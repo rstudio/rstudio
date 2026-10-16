@@ -351,8 +351,8 @@ std::string utf8ToSystemImpl(const std::string& str,
       {
          wideChars = 2;
          codepoint = 0x10000 +
-               ((static_cast<uint32_t>(wide[i]) - 0xD800) << 10) +
-               (static_cast<uint32_t>(wide[i + 1]) - 0xDC00);
+               (((static_cast<uint32_t>(wide[i]) & 0x3FF) << 10) |
+                (static_cast<uint32_t>(wide[i + 1]) & 0x3FF));
       }
 
       int n;
