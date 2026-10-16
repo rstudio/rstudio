@@ -73,7 +73,7 @@ export function ruleSetLabel({ level, version, bestPractices, experimental }: Ru
  * filtered back to the selected tags to drop the experimental rules outside them.
  */
 export async function runAxe(page: Page, ruleSet: RuleSet): Promise<AxeResults> {
-  const selected = ruleSet.bestPractices ? [...ruleSetTags(ruleSet), 'best-practice'] : ruleSetTags(ruleSet);
+  const selected = [...ruleSetTags(ruleSet), ...(ruleSet.bestPractices ? ['best-practice'] : [])];
   const tags = ruleSet.experimental ? [...selected, 'experimental'] : selected;
   const results = await new AxeBuilder({ page }).withTags(tags).analyze();
   if (!ruleSet.experimental)
