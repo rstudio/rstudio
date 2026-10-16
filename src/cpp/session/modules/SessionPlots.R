@@ -28,6 +28,15 @@ setHook(
   },
   action = "append")
 
+#' Offered TIFF compression types
+#'
+#' The compressions the Save Plot as Image dialog offers for TIFFs: those of
+#' .rs.graphics.tiffCompressionTypes() that the device in use can apply.
+.rs.addFunction("graphics.offeredTiffCompressionTypes", function()
+{
+   .Call("rs_tiffCompressionTypes", PACKAGE = "(embedding)")
+})
+
 # register hook to be invoked when a new plot has been created
 setHook(
   hookName = "plot.new", 
