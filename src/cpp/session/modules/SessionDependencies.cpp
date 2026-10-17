@@ -499,8 +499,6 @@ namespace {
 // and also gives us greater control over installation order.
 std::string buildIndividualInstallScript(const std::vector<Dependency>& dependencies)
 {
-   bool isRenv = module_context::isRenvActive();
-
    // Convert dependencies list to an R list
    r::sexp::Protect protect;
    r::sexp::ListBuilder list(&protect);
@@ -530,12 +528,6 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
 
    std::string script;
 
-   if (isRenv)
-   {
-      // For renv, remember default setting for package type
-      script += "defaultPkgType <- getOption('pkgType')\n";
-   }
-
    // Loop over each dependency and add it to the installation script
    for (size_t i = 0; i < deps.size(); i++)
    {
@@ -558,37 +550,16 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
 
       if (dep.location == kCRANPackageDependency)
       {
-         if (isRenv)
-         {
-            // renv used the 'pkgType' option to decide whether to install a package
-            // from sources or not; set it to source explicitly to force source installs
-            if (dep.source)
-            {
-               script += "options(pkgType = 'source'); ";
-            }
-            else
-            {
-               script += "options(pkgType = defaultPkgType); ";
-            }
-            
-            // NOTE: renv will use the repositories as set in the lockfile here;
-            // should we override this based on the current repositories set in
-            // the session?
-            script += "renv::install('" + dep.name + "')";
-         }
-         else
-         {
-            // Build install command for CRAN. 
-            script += "utils::install.packages('" + dep.name + "'";
+         // Build install command for CRAN.
+         script += "utils::install.packages('" + dep.name + "'";
 
-            if (dep.source) 
-            {
-               // Install from source if requested
-               script += ", type = 'source'";
-            }
-
-            script += ")";
+         if (dep.source)
+         {
+            // Install from source if requested
+            script += ", type = 'source'";
          }
+
+         script += ")";
       }
       else if (dep.location == kEmbeddedPackageDependency)
       {
@@ -664,8 +635,9 @@ Error installDependencies(const json::JsonRpcRequest& request,
             "...\\n\\n')\n";
    }
 
-   // Build an installation script to install the required packages.
-   if (prefs::userPrefs().installPkgDepsIndividually())
+   // Let renv resolve dependencies and install packages together so it can use
+   // parallel installation, regardless of the individual-install preference.
+   if (!isRenv && prefs::userPrefs().installPkgDepsIndividually())
    {
       script += buildIndividualInstallScript(deps);
    }
