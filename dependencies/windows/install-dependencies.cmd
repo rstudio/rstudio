@@ -35,7 +35,7 @@ set PATH=%WINDOWS_SCRIPTS_DIR%tools;%PATH%
 set BOOST_VERSION=1.91.0
 set GNUGREP_VERSION=3.0
 :: Build name of RStudio's GWT fork SDK; see src/gwt/tools/build-gwt-README.md.
-set GWT_VERSION=2.13.1-montauk-daisy-1
+set GWT_VERSION=2.13.1-montauk-daisy-2
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
 set MATHJAX4_VERSION=4.1.3
