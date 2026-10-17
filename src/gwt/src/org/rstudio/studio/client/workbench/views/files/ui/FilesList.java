@@ -181,8 +181,8 @@ public class FilesList extends Composite
 
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-      // the column is too narrow for visible header text, so give assistive
-      // technology a hidden header to announce for the checkbox cells
+      // the column is too narrow for visible header text, so give its header
+      // cell hidden text; an empty <th> leaves the column header unnamed
       SafeHtmlBuilder header = new SafeHtmlBuilder();
       header.appendHtmlConstant("<span class=\"" + ThemeStyles.INSTANCE.visuallyHidden() + "\">");
       header.appendEscaped(constants_.selectedHeaderText());
