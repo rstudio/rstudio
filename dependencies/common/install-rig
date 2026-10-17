@@ -36,4 +36,4 @@ esac
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cmake "-DRIG_ROOT=${RSTUDIO_TOOLS_ROOT}" \
    "-DRIG_PLATFORM=${RIG_PLATFORM}" "-DRIG_ARCH=${RIG_ARCH}" \
-   -P "${SCRIPT_DIR}/../tools/install-rig.cmake"
+   -P "${SCRIPT_DIR}/install-rig.cmake"

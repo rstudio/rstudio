@@ -18,7 +18,7 @@
 # versions of R installed on this machine.
 
 # The rig release RStudio bundles (and downloads as a fallback).
-# Keep dependencies/tools/rig.cmake in sync.
+# Keep dependencies/common/rig.cmake in sync.
 .rs.setVar("rig.pinnedVersion", "0.11.0")
 
 # The SHA-256 digests of the pinned release's archives (as published with the

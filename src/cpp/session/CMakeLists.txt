@@ -28,7 +28,7 @@ if(RSTUDIO_DISABLE_CHECK_FOR_UPDATES)
 endif()
 
 # Verify the dependency installers have been run as required.
-include("${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rig.cmake")
+include("${RSTUDIO_PROJECT_ROOT}/dependencies/common/rig.cmake")
 
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
