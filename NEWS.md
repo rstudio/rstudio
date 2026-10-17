@@ -22,6 +22,7 @@
 - ([#19151](https://github.com/rstudio/rstudio/issues/19151)): Pane splitters now report their position to screen readers (`aria-valuenow`), as a percentage from the left or top edge, and update it as the panes are resized.
 - ([#19146](https://github.com/rstudio/rstudio/issues/19146)): The RStudio logo in the RStudio Server header now has alt text ("RStudio", or "Posit Workbench" when it links to the Workbench home page), so screen readers no longer find the banner landmark empty.
 - ([#19156](https://github.com/rstudio/rstudio/issues/19156)): The Files pane's select-all checkbox now carries its accessible name ("Select all files") itself, rather than through an `aria-label` on its `<label>`, where ARIA does not permit it.
+- ([#19169](https://github.com/rstudio/rstudio/issues/19169)): The Files pane's checkbox column now has a header that only screen readers see ("Selected"), so they announce a column header when moving through the checkboxes.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
