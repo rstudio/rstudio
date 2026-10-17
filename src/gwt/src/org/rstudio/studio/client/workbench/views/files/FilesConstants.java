@@ -112,6 +112,7 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     String fileText();
     String nameHeaderText();
     String fileTypeHeaderText();
+    String selectedHeaderText();
     String symbolicLinkBadgeLabel();
     String aliasBadgeLabel();
     String shortcutBadgeLabel();
