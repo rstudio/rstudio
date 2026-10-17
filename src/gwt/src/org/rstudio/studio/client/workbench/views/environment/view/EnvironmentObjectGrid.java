@@ -301,7 +301,9 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                cell.attribute("aria-sort", host_.getAscendingSort() ? "ascending" : "descending");
 
             // Like GWT's DefaultHeaderOrFooterBuilder, put the sort button inside the th
-            // so the th keeps the columnheader role that carries aria-sort.
+            // so the th keeps the columnheader role that carries aria-sort. The header
+            // cell does the sorting, so clicks anywhere in the th must reach it.
+            enableHeaderHandlers(cell, col.getHeader());
             DivBuilder sortButton = cell.startDiv().attribute("role", "button").tabIndex(-1);
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(sortButton, context, col.getHeader(),
