@@ -27,6 +27,7 @@ import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.studio.client.ResizableHeader;
@@ -180,7 +181,13 @@ public class FilesList extends Composite
 
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-      filesDataGrid_.addColumn(checkColumn);
+      // the column is too narrow for visible header text, so give its header
+      // cell hidden text; an empty <th> leaves the column header unnamed
+      SafeHtmlBuilder header = new SafeHtmlBuilder();
+      header.appendHtmlConstant("<span class=\"" + ThemeStyles.INSTANCE.visuallyHidden() + "\">");
+      header.appendEscaped(constants_.selectedHeaderText());
+      header.appendHtmlConstant("</span>");
+      filesDataGrid_.addColumn(checkColumn, header.toSafeHtml());
       filesDataGrid_.setColumnWidth(checkColumn, CHECK_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       return checkColumn;
