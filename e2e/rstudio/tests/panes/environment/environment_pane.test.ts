@@ -109,4 +109,39 @@ test.describe('Environment pane', () => {
     // Free the big vector so the shared session doesn't carry ~76 MiB onward.
     await consoleActions.executeInConsole('rm(bigval)');
   });
+
+  // The grid view builds its own header markup (#19170). An empty environment
+  // also covers the header redraw, since sorting no rows pushes none.
+  test('grid view headers report the sort direction', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.gridViewOption.click();
+
+    try {
+      await expect(envPane.panel).toContainText('Environment is empty');
+      const header = (name: string) =>
+        envPane.panel.getByRole('columnheader', { name, exact: true });
+      const sortButton = (name: string) =>
+        header(name).getByRole('button', { name, exact: true });
+      for (const name of ['Name', 'Type', 'Length', 'Size', 'Value'])
+        await expect(header(name)).toBeVisible();
+
+      // Clicking an unsorted column sorts by it, keeping the current direction.
+      // Clicking the sorted column reverses the direction.
+      await sortButton('Type').click();
+      await expect(header('Type')).toHaveAttribute('aria-sort', /^(ascending|descending)$/);
+      await sortButton('Name').click();
+      await expect(header('Name')).toHaveAttribute('aria-sort', /^(ascending|descending)$/);
+      await expect(header('Type')).not.toHaveAttribute('aria-sort');
+
+      const before = await header('Name').getAttribute('aria-sort');
+      await sortButton('Name').click();
+      await expect(header('Name')).toHaveAttribute('aria-sort',
+        before === 'ascending' ? 'descending' : 'ascending');
+      await expect(envPane.panel.locator('th[aria-sort]')).toHaveCount(1);
+    } finally {
+      await envPane.viewMenu.click();
+      await envPane.listViewOption.click();
+    }
+  });
 });
