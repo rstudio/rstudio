@@ -128,7 +128,9 @@ test.describe.serial('Console pane stays minimized across a render', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await clearPref(page, 'reduced_motion');
+    // Restore the fixture's value rather than clearing: the default is false,
+    // which would leave animations on for every later spec in this worker.
+    await setPref(page, 'reduced_motion', true);
     // un-minimize the Console pane for whatever runs next
     await executeCommand(page, 'activateConsolePane');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
