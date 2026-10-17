@@ -48,6 +48,17 @@ TEST(RSessionContextTests, ObfuscatedUserIdRemapsLargeUidsUpToMaxUid)
    EXPECT_EQ(obfuscatedUserId(1000 + kMaxUid), obfuscatedUserId(kMaxUid));
 }
 
+TEST(RSessionContextTests, LegacyObfuscatedUserIdPreservesPreviousBoundary)
+{
+   core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
+   const uid_t kMaxUid = 0xFFFFF;
+
+   EXPECT_EQ(legacyObfuscatedUserId(1000 + kMaxUid), "1003e");
+   EXPECT_EQ(obfuscatedUserId(1000 + kMaxUid), "fffff");
+   for (uid_t uid : {0u, 1000u, kMaxUid, 1000 + kMaxUid - 1, 1000 + kMaxUid + 1})
+      EXPECT_EQ(legacyObfuscatedUserId(uid), obfuscatedUserId(uid));
+}
+
 TEST(RSessionContextTests, ParseSessionUrlPrefixS)
 {
    SessionScope scope;
