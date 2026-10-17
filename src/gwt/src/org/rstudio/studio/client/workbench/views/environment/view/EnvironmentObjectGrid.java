@@ -28,6 +28,7 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.builder.shared.DivBuilder;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.dom.client.Style.Unit;
@@ -295,10 +296,18 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             cell.className(style_.objectGridHeader() + " " +
                            "rstudio-themes-background" + " " +
                            sortClassName);
+            boolean isSorted = i == host_.getSortColumn();
+            if (isSorted)
+               cell.attribute("aria-sort", host_.getAscendingSort() ? "ascending" : "descending");
+
+            // Like GWT's DefaultHeaderOrFooterBuilder, put the sort button inside the th
+            // so the th keeps the columnheader role that carries aria-sort.
+            DivBuilder sortButton = cell.startDiv().attribute("role", "button").tabIndex(-1);
             Cell.Context context = new Cell.Context(0, i, null);
-            renderSortableHeader(cell, context, col.getHeader(),
-                  i == host_.getSortColumn(),
+            renderSortableHeader(sortButton, context, col.getHeader(),
+                  isSorted,
                   host_.getAscendingSort());
+            sortButton.endDiv();
             cell.endTH();
          }
          row.end();

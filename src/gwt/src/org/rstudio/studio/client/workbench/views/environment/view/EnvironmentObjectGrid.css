@@ -16,6 +16,13 @@
    padding-left: 4px;
 }
 
+/* text-overflow on the th doesn't reach text inside its sort button. */
+th.objectGridHeader > [role="button"]
+{
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
 th.objectGridHeader
 {
    font-family: proportionalFont;
