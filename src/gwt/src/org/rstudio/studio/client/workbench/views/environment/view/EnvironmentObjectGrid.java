@@ -287,8 +287,10 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          // Render a header for each column
          for (int i = 0; i < columns_.size(); i++)
          {
-            String sortClassName = i == host_.getSortColumn() ?
-              (host_.getAscendingSort() ? "dataGridSortedHeaderAscending" : "dataGridSortedHeaderDescending") :
+            boolean isSorted = i == host_.getSortColumn();
+            boolean ascending = host_.getAscendingSort();
+            String sortClassName = isSorted ?
+              (ascending ? "dataGridSortedHeaderAscending" : "dataGridSortedHeaderDescending") :
               "";
 
             ObjectGridColumn col = columns_.get(i);
@@ -296,9 +298,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             cell.className(style_.objectGridHeader() + " " +
                            "rstudio-themes-background" + " " +
                            sortClassName);
-            boolean isSorted = i == host_.getSortColumn();
             if (isSorted)
-               cell.attribute("aria-sort", host_.getAscendingSort() ? "ascending" : "descending");
+               cell.attribute("aria-sort", ascending ? "ascending" : "descending");
 
             // Like GWT's DefaultHeaderOrFooterBuilder, put the sort button inside the th
             // so the th keeps the columnheader role that carries aria-sort. The header
@@ -308,7 +309,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(sortButton, context, col.getHeader(),
                   isSorted,
-                  host_.getAscendingSort());
+                  ascending);
             sortButton.endDiv();
             cell.endTH();
          }
