@@ -420,6 +420,10 @@ public class FilesList extends Composite
 
             // delegate the sort
             sortHandler_.onColumnSort(event);
+
+            // The table redraws its headers only when rows are pushed, and sorting an empty
+            // list pushes none, so redraw them here or the sort icon and aria-sort go stale.
+            filesDataGrid_.redrawHeaders();
          }
 
          private native final JsArray<ColumnSortInfo> newSortOrderArray()
