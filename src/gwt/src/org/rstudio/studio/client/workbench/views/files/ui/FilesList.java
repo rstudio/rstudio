@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
@@ -207,8 +208,8 @@ public class FilesList extends Composite
          };
       iconColumn.setSortable(true);
       SafeHtmlBuilder iconHeader = new SafeHtmlBuilder();
-      iconHeader.appendHtmlConstant(
-            "<span class=\"" + ThemeStyles.INSTANCE.visuallyHidden() + "\">");
+      iconHeader.append(SafeHtmlUtil.createOpenTag(
+            "span", "class", ThemeStyles.INSTANCE.visuallyHidden()));
       iconHeader.appendEscaped(constants_.fileTypeHeaderText());
       // The <br> gives the sort button a line of height; the hidden span takes up none.
       iconHeader.appendHtmlConstant("</span><br/>");
