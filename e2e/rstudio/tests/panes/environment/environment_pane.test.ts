@@ -112,19 +112,29 @@ test.describe('Environment pane', () => {
 
   // The grid view builds its own header markup (#19170). An empty environment
   // also covers the header redraw, since sorting no rows pushes none.
-  test('grid view headers report the sort direction', async ({ rstudioPage: page }) => {
+  test('grid view headers report the sort direction', async () => {
+    const header = (name: string) =>
+      envPane.panel.getByRole('columnheader', { name, exact: true });
+    const sortButton = (name: string) =>
+      header(name).getByRole('button', { name, exact: true });
+    const sortedHeader = envPane.panel.locator('th[aria-sort]');
+
     await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
     await envPane.viewMenu.click();
     await envPane.gridViewOption.click();
 
+    // The list and grid views share the sort, and later specs in this worker
+    // inherit it, so note it here and put it back at the end.
+    let initial: { column: string; direction: string } | undefined;
     try {
       await expect(envPane.panel).toContainText('Environment is empty');
-      const header = (name: string) =>
-        envPane.panel.getByRole('columnheader', { name, exact: true });
-      const sortButton = (name: string) =>
-        header(name).getByRole('button', { name, exact: true });
       for (const name of ['Name', 'Type', 'Length', 'Size', 'Value'])
         await expect(header(name)).toBeVisible();
+      await expect(sortedHeader).toHaveCount(1);
+      initial = {
+        column: (await sortedHeader.textContent())!.trim(),
+        direction: (await sortedHeader.getAttribute('aria-sort'))!,
+      };
 
       // Clicking an unsorted column sorts by it, keeping the current direction.
       // Clicking the sorted column reverses the direction.
@@ -138,8 +148,17 @@ test.describe('Environment pane', () => {
       await sortButton('Name').click();
       await expect(header('Name')).toHaveAttribute('aria-sort',
         before === 'ascending' ? 'descending' : 'ascending');
-      await expect(envPane.panel.locator('th[aria-sort]')).toHaveCount(1);
+      await expect(sortedHeader).toHaveCount(1);
     } finally {
+      if (initial) {
+        const { column, direction } = initial;
+        if (await header(column).getAttribute('aria-sort') === null)
+          await sortButton(column).click();
+        await expect(header(column)).toHaveAttribute('aria-sort', /^(ascending|descending)$/);
+        if (await header(column).getAttribute('aria-sort') !== direction)
+          await sortButton(column).click();
+        await expect(header(column)).toHaveAttribute('aria-sort', direction);
+      }
       await envPane.viewMenu.click();
       await envPane.listViewOption.click();
     }
