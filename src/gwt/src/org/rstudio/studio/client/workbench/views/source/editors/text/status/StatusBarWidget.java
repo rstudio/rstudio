@@ -258,24 +258,21 @@ public class StatusBarWidget extends Composite
 
       switch (type)
       {
-      case TYPE_OK:
-         resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
-         altText = constants_.statusIconInformation();
-         break;
       case TYPE_LOADING:
          // uses SVG spinner instead of image; handled below
          break;
+      case TYPE_OK:
       case TYPE_INFO:
          resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
-         altText = constants_.statusIconInformation();
+         altText = constants_.informationCapitalized();
          break;
       case TYPE_WARNING:
          resource = new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x());
-         altText = constants_.statusIconWarning();
+         altText = constants_.warningCapitalized();
          break;
       case TYPE_ERROR:
          resource = new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x());
-         altText = constants_.statusIconError();
+         altText = constants_.errorCapitalized();
          break;
       }
 
