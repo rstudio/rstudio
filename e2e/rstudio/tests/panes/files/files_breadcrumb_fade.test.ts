@@ -10,7 +10,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeCommand, getPref } from '@utils/commands';
+import { executeCommand, getPref, setPref } from '@utils/commands';
 import { DARK_THEME, DARK_THEME_HREF, LIGHT_THEME, expectThemeStylesheet } from '@utils/theme';
 
 const DEEP_DIR = 'file.path(tempdir(), "breadcrumb_fade_19172", '
@@ -69,8 +69,10 @@ test.describe('Files pane breadcrumb fade (#19172)', () => {
     async ({ rstudioPage: page }) => {
       const consolePane = new ConsolePaneActions(page);
       const originalTheme = (await getPref(page, 'editor_theme')) as string | null;
-      const dialog = page.locator('.gwt-DialogBox.rstudio-themes-dark');
+      const originalDarkDialogs = await getPref(page, 'use_dark_theme_modal_dialogs');
+      const dialog = page.getByRole('dialog', { name: 'Select File', exact: true });
       try {
+        await setPref(page, 'use_dark_theme_modal_dialogs', true);
         await consolePane.executeInConsole(
           `invisible(dir.create(${DEEP_DIR}, recursive = TRUE)); .rs.api.applyTheme(${JSON.stringify(DARK_THEME)})`,
           { wait: true },
@@ -82,6 +84,7 @@ test.describe('Files pane breadcrumb fade (#19172)', () => {
           `.rs.api.selectFile(path = paste0(${DEEP_DIR}, "/"))`,
           { wait: false },
         );
+        await expect(dialog).toHaveClass(/\brstudio-themes-dark\b/);
         const breadcrumb = dialog.locator('.breadcrumb');
         await expect(breadcrumb.locator('[aria-current="location"]'))
           .toHaveText(/^another_long_directory_name_/);
@@ -100,6 +103,7 @@ test.describe('Files pane breadcrumb fade (#19172)', () => {
           `.rs.api.applyTheme(${JSON.stringify(originalTheme ?? LIGHT_THEME)})`,
           { wait: true },
         );
+        await setPref(page, 'use_dark_theme_modal_dialogs', originalDarkDialogs ?? true);
       }
     });
 });
