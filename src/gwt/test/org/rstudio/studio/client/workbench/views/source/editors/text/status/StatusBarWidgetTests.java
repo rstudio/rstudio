@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.StatusBarIconType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -33,24 +35,26 @@ public class StatusBarWidgetTests extends GWTTestCase
 
    public void testStatusIconAltTextNamesItsType()
    {
+      // GWT.create() only works once the test is running in the GWT environment.
+      ViewsSourceConstants constants = GWT.create(ViewsSourceConstants.class);
       StatusBarWidget statusBar = new StatusBarWidget();
 
       statusBar.showStatus(StatusBarIconType.TYPE_ERROR, "Copilot: Request failed");
-      assertTrue(altTexts(statusBar).contains("Error"));
+      assertTrue(altTexts(statusBar).contains(constants.statusIconError()));
 
       statusBar.showStatus(StatusBarIconType.TYPE_WARNING, "Copilot: Warning text");
-      assertTrue(altTexts(statusBar).contains("Warning"));
-      assertFalse(altTexts(statusBar).contains("Error"));
+      assertTrue(altTexts(statusBar).contains(constants.statusIconWarning()));
+      assertFalse(altTexts(statusBar).contains(constants.statusIconError()));
 
       statusBar.showStatus(StatusBarIconType.TYPE_INFO, "Copilot: No completions available.");
-      assertTrue(altTexts(statusBar).contains("Information"));
-      assertFalse(altTexts(statusBar).contains("Warning"));
+      assertTrue(altTexts(statusBar).contains(constants.statusIconInformation()));
+      assertFalse(altTexts(statusBar).contains(constants.statusIconWarning()));
 
       // TYPE_OK shows the same icon as TYPE_INFO, so it gets the same text.
       statusBar.showStatus(StatusBarIconType.TYPE_ERROR, "Copilot: Request failed");
       statusBar.showStatus(StatusBarIconType.TYPE_OK, "Copilot: Completion response received.");
-      assertTrue(altTexts(statusBar).contains("Information"));
-      assertFalse(altTexts(statusBar).contains("Error"));
+      assertTrue(altTexts(statusBar).contains(constants.statusIconInformation()));
+      assertFalse(altTexts(statusBar).contains(constants.statusIconError()));
    }
 
    public void testLoadingSpinnerIsDecorative()
