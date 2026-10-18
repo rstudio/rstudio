@@ -93,17 +93,24 @@ test.describe('Files pane breadcrumb fade (#19172)', () => {
       } finally {
         // Cancel answers selectFile(), freeing the console; dismissing the
         // dialog any other way would leave R waiting on it.
-        const cancel = dialog.getByRole('button', { name: 'Cancel', exact: true });
-        if (await cancel.isVisible()) {
-          await cancel.click();
-          await expect(dialog).toBeHidden();
+        // Each restore runs even if an earlier step throws.
+        try {
+          const cancel = dialog.getByRole('button', { name: 'Cancel', exact: true });
+          if (await cancel.isVisible()) {
+            await cancel.click();
+            await expect(dialog).toBeHidden();
+          }
+        } finally {
+          try {
+            // applyTheme, not setPref: a live session is not re-themed off the pref.
+            await consolePane.executeInConsole(
+              `.rs.api.applyTheme(${JSON.stringify(originalTheme ?? LIGHT_THEME)})`,
+              { wait: true },
+            );
+          } finally {
+            await setPref(page, 'use_dark_theme_modal_dialogs', originalDarkDialogs ?? true);
+          }
         }
-        // applyTheme, not setPref: a live session is not re-themed off the pref.
-        await consolePane.executeInConsole(
-          `.rs.api.applyTheme(${JSON.stringify(originalTheme ?? LIGHT_THEME)})`,
-          { wait: true },
-        );
-        await setPref(page, 'use_dark_theme_modal_dialogs', originalDarkDialogs ?? true);
       }
     });
 });
