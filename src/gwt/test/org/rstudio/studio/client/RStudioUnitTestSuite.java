@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketT
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
 import org.rstudio.studio.client.rmarkdown.model.YamlTreeTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.DefaultChunkOptionsPopupPanelTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidgetTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -73,6 +74,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
       suite.addTestSuite(BinarySplitLayoutPanelTests.class);
+      suite.addTestSuite(StatusBarWidgetTests.class);
       suite.addTestSuite(AnsiCodeTests.class);
       suite.addTestSuite(TerminalLocalEchoTests.class);
       suite.addTestSuite(TerminalSessionSocketTests.class);

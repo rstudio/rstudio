@@ -245,6 +245,9 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String chunkCapitalized();
     String sectionCapitalized();
     String slideCapitalized();
+    String statusIconInformation();
+    String statusIconWarning();
+    String statusIconError();
     String tomorrowNight();
     String textmateDefaultParentheses();
     String specifiedThemeDoesNotExist();
