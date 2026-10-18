@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
@@ -23,6 +24,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.junit.client.GWTTestCase;
 
 public class StatusBarWidgetTests extends GWTTestCase
@@ -40,47 +42,67 @@ public class StatusBarWidgetTests extends GWTTestCase
       StatusBarWidget statusBar = new StatusBarWidget();
 
       statusBar.showStatus(StatusBarIconType.TYPE_ERROR, "Copilot: Request failed");
-      assertTrue(altTexts(statusBar).contains(constants.statusIconError()));
+      assertVisibleAltTexts(statusBar, constants.errorCapitalized());
 
       statusBar.showStatus(StatusBarIconType.TYPE_WARNING, "Copilot: Warning text");
-      assertTrue(altTexts(statusBar).contains(constants.statusIconWarning()));
-      assertFalse(altTexts(statusBar).contains(constants.statusIconError()));
+      assertVisibleAltTexts(statusBar, constants.warningCapitalized());
 
       statusBar.showStatus(StatusBarIconType.TYPE_INFO, "Copilot: No completions available.");
-      assertTrue(altTexts(statusBar).contains(constants.statusIconInformation()));
-      assertFalse(altTexts(statusBar).contains(constants.statusIconWarning()));
+      assertVisibleAltTexts(statusBar, constants.informationCapitalized());
 
       // TYPE_OK shows the same icon as TYPE_INFO, so it gets the same text.
       statusBar.showStatus(StatusBarIconType.TYPE_ERROR, "Copilot: Request failed");
       statusBar.showStatus(StatusBarIconType.TYPE_OK, "Copilot: Completion response received.");
-      assertTrue(altTexts(statusBar).contains(constants.statusIconInformation()));
-      assertFalse(altTexts(statusBar).contains(constants.statusIconError()));
+      assertVisibleAltTexts(statusBar, constants.informationCapitalized());
+
+      statusBar.showMessage("Plain message");
+      assertVisibleAltTexts(statusBar);
    }
 
    public void testLoadingSpinnerIsDecorative()
    {
+      ViewsSourceConstants constants = GWT.create(ViewsSourceConstants.class);
       StatusBarWidget statusBar = new StatusBarWidget();
+
       statusBar.showStatus(StatusBarIconType.TYPE_LOADING, "Rendering notebook...");
+      List<Element> images = visibleMessageImages(statusBar);
+      assertEquals(1, images.size());
+      assertTrue(images.get(0).hasAttribute("alt"));
+      assertEquals("", images.get(0).getAttribute("alt"));
 
-      Element spinner = null;
-      NodeList<Element> images = statusBar.getElement().getElementsByTagName("img");
-      for (int i = 0; i < images.getLength(); i++)
-      {
-         if (images.getItem(i).getAttribute("src").startsWith("data:image/svg+xml"))
-            spinner = images.getItem(i);
-      }
-
-      assertNotNull(spinner);
-      assertTrue(spinner.hasAttribute("alt"));
-      assertEquals("", spinner.getAttribute("alt"));
+      // The spinner is hidden, not removed, when an icon replaces it.
+      statusBar.showStatus(StatusBarIconType.TYPE_ERROR, "Error creating notebook");
+      assertVisibleAltTexts(statusBar, constants.errorCapitalized());
    }
 
-   private static List<String> altTexts(StatusBarWidget statusBar)
+   private static void assertVisibleAltTexts(StatusBarWidget statusBar, String... expected)
    {
-      List<String> result = new ArrayList<>();
-      NodeList<Element> images = statusBar.getElement().getElementsByTagName("img");
+      List<String> altTexts = new ArrayList<>();
+      for (Element image : visibleMessageImages(statusBar))
+         altTexts.add(image.getAttribute("alt"));
+      assertEquals(Arrays.asList(expected), altTexts);
+   }
+
+   private static List<Element> visibleMessageImages(StatusBarWidget statusBar)
+   {
+      Element message = statusBar.message_.getElement();
+      List<Element> result = new ArrayList<>();
+      NodeList<Element> images = message.getElementsByTagName("img");
       for (int i = 0; i < images.getLength(); i++)
-         result.add(images.getItem(i).getAttribute("alt"));
+      {
+         if (isShownWithin(images.getItem(i), message))
+            result.add(images.getItem(i));
+      }
       return result;
+   }
+
+   private static boolean isShownWithin(Element element, Element container)
+   {
+      for (Element el = element; el != container; el = el.getParentElement())
+      {
+         if (Display.NONE.getCssName().equals(el.getStyle().getDisplay()))
+            return false;
+      }
+      return true;
    }
 }
