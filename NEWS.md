@@ -24,6 +24,7 @@
 - ([#19156](https://github.com/rstudio/rstudio/issues/19156)): [Accessibility] The Files pane's select-all checkbox now carries its accessible name ("Select all files") itself, rather than through an `aria-label` on its `<label>`, where ARIA does not permit it.
 - ([#19169](https://github.com/rstudio/rstudio/issues/19169)): [Accessibility] The Files pane's checkbox column header is no longer empty: it now has text that only screen readers see ("Selected").
 - ([#19170](https://github.com/rstudio/rstudio/issues/19170)): [Accessibility] Sortable column headers (in the Files pane, Git and SVN changelists, Environment grid view, and the Keyboard Shortcuts and Addins dialogs) are now exposed to screen readers as column headers that report their sort direction, with the sort control as a button inside the header. The Files pane's file-type column header is now named "File type".
+- ([#19176](https://github.com/rstudio/rstudio/issues/19176)): [Accessibility] The icon before editor status bar messages, such as "Copilot: No completions available.", now has alt text naming the message type ("Information", "Warning", or "Error"). The loading spinner shown while a notebook renders is marked as decorative.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
