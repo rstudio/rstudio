@@ -51,16 +51,19 @@ test.describe('Files pane column headers (#19170)', () => {
 test.describe('Files pane table structure (#19173)', () => {
   test('headers and file cells form one table', async ({ rstudioPage: page }) => {
     const consoleActions = new ConsolePaneActions(page);
-    // Enough files that the virtualized grid pads for the unrendered ones.
-    await consoleActions.executeInConsole(
-      'd <- file.path(tempdir(), "a11y-grid"); dir.create(d, showWarnings = FALSE); ' +
-      'invisible(file.create(file.path(d, sprintf("file-%03d.txt", 1:300)))); ' +
-      '.rs.api.filesPaneNavigate(d)',
-      { wait: true },
-    );
-    await executeCommand(page, 'activateFiles');
+    const dir = 'file.path(tempdir(), "a11y-grid")';
 
     try {
+      // Enough files that the virtualized grid pads for the unrendered ones.
+      // local() keeps the setup's variable out of the global environment.
+      await consoleActions.executeInConsole(
+        `local({ d <- ${dir}; dir.create(d, showWarnings = FALSE); ` +
+        'invisible(file.create(file.path(d, sprintf("file-%03d.txt", 1:300)))); ' +
+        '.rs.api.filesPaneNavigate(d) })',
+        { wait: true },
+      );
+      await executeCommand(page, 'activateFiles');
+
       const filesPanel = page.locator('#rstudio_workbench_panel_files');
       const table = filesPanel.getByRole('table');
       await expect(table.getByRole('cell', { name: /^file-\d{3}\.txt$/ }).first()).toBeVisible();
@@ -91,7 +94,7 @@ test.describe('Files pane table structure (#19173)', () => {
       expect(await table.getByRole('row').count()).toBe(await contentRows.count());
     } finally {
       await consoleActions.executeInConsole(
-        'unlink(d, recursive = TRUE); .rs.api.filesPaneNavigate(path.expand("~"))',
+        `unlink(${dir}, recursive = TRUE); .rs.api.filesPaneNavigate(path.expand("~"))`,
         { wait: true },
       );
     }
