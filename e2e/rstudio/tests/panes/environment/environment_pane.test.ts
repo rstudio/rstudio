@@ -196,9 +196,9 @@ test.describe('Environment pane', () => {
     }
   });
 
-  // The empty-environment message replaces the grid's body table; it must not
-  // read as a table nested in the grid.
-  test('empty grid view has no nested table', async () => {
+  // The empty-environment message replaces the grid's body table; it reads as
+  // a row of the grid, not as a table nested in it or as text outside any row.
+  test('empty grid view shows its message as a row of the table', async () => {
     await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
     await envPane.viewMenu.click();
     await envPane.gridViewOption.click();
@@ -208,7 +208,9 @@ test.describe('Environment pane', () => {
       const table = envPane.panel.getByRole('table');
       await expect(table).toHaveCount(1);
       await expect(table.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
-      await expect(table.getByRole('row')).toHaveCount(1);
+      await expect(table.getByRole('row')).toHaveCount(2);
+      await expect(table.getByRole('row').nth(1).getByRole('cell', { name: 'Environment is empty' }))
+        .toBeVisible();
     } finally {
       await envPane.viewMenu.click();
       await envPane.listViewOption.click();
