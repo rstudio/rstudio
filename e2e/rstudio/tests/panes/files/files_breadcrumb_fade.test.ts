@@ -40,13 +40,15 @@ test.describe('Files pane breadcrumb fade (#19172)', () => {
 
     const fadeImage = breadcrumb.locator('img');
     await expect(fadeImage).toHaveAttribute('alt', '');
-    // Dark editor themes hide the image and fade with the wrapper's own
-    // background, so check the wrapper, which is shown in every theme.
+    // In the main window every theme fades with the wrapper's gradient, which
+    // the fixed-color image would only tint, so the image stays hidden.
     const fade = fadeImage.locator('..');
 
     // Scrolled to the current folder: the fade sits at the visible left edge.
     await expect.poll(() => breadcrumb.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
     await expect(fade).toBeVisible();
+    await expect(fadeImage).toBeHidden();
+    await expect(fade).toHaveCSS('background-image', /linear-gradient/);
     const barBox = await breadcrumb.boundingBox();
     const fadeBox = await fade.boundingBox();
     expect(Math.abs(fadeBox!.x - barBox!.x)).toBeLessThanOrEqual(1);
