@@ -163,4 +163,76 @@ test.describe('Environment pane', () => {
       await envPane.listViewOption.click();
     }
   });
+
+  // The list view draws a row of empty cells first, only to fix column widths.
+  // It is marked presentational, so the first row the table exposes is the
+  // category header, not a blank row (#19173).
+  test('list view exposes no blank layout row', async () => {
+    await consoleActions.executeInConsole('rm(list = ls()); x <- 1:3', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.listViewOption.click();
+
+    try {
+      // Only the list view has category header rows, so this also confirms the
+      // view switch finished before the check.
+      const table = envPane.panel.getByRole('table');
+      await expect(table).toHaveCount(1);
+      await expect(table.getByRole('row').first()).toHaveText('Values');
+    } finally {
+      await consoleActions.executeInConsole('rm(x)', { wait: true });
+    }
+  });
+
+  // The grid view's header and body are separate <table>s; they are exposed
+  // as one ARIA table so body cells have column headers (#19173).
+  test('grid view is one table whose cells have column headers', async () => {
+    await consoleActions.executeInConsole('rm(list = ls()); x <- 1:3', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.gridViewOption.click();
+
+    try {
+      const table = envPane.panel.getByRole('table');
+      await expect(table.getByRole('cell', { name: 'integer', exact: true })).toBeVisible();
+      await expect(table).toHaveCount(1);
+      await expect(table).toMatchAriaSnapshot(`
+        - table:
+          - rowgroup:
+            - row:
+              - columnheader "Name"
+              - columnheader "Type"
+              - columnheader "Length"
+              - columnheader "Size"
+              - columnheader "Value"
+          - rowgroup:
+            - row:
+              - cell "x"
+              - cell "integer"
+      `);
+    } finally {
+      await consoleActions.executeInConsole('rm(x)', { wait: true });
+      await envPane.viewMenu.click();
+      await envPane.listViewOption.click();
+    }
+  });
+
+  // The empty-environment message replaces the grid's body table; it reads as
+  // a row of the grid, not as a table nested in it or as text outside any row.
+  test('empty grid view shows its message as a row of the table', async () => {
+    await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.gridViewOption.click();
+
+    try {
+      await expect(envPane.panel).toContainText('Environment is empty');
+      const table = envPane.panel.getByRole('table');
+      await expect(table).toHaveCount(1);
+      await expect(table.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
+      await expect(table.getByRole('row')).toHaveCount(2);
+      await expect(table.getByRole('row').nth(1).getByRole('cell', { name: 'Environment is empty' }))
+        .toBeVisible();
+    } finally {
+      await envPane.viewMenu.click();
+      await envPane.listViewOption.click();
+    }
+  });
 });

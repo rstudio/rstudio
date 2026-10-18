@@ -43,3 +43,60 @@ test.describe('Files pane column headers (#19170)', () => {
     }
   });
 });
+
+// DataGrid renders its header and body as separate <table>s so the header can
+// stay fixed while the body scrolls, which read as a headers-only table and a
+// headerless data table (#19173). They are now exposed as one ARIA table, and
+// the rows that only reserve scroll height for unrendered files are not rows.
+test.describe('Files pane table structure (#19173)', () => {
+  test('headers and file cells form one table', async ({ rstudioPage: page }) => {
+    const consoleActions = new ConsolePaneActions(page);
+    const dir = 'file.path(tempdir(), "a11y-grid")';
+
+    try {
+      // Enough files that the virtualized grid pads for the unrendered ones.
+      // local() keeps the setup's variable out of the global environment.
+      await consoleActions.executeInConsole(
+        `local({ d <- ${dir}; dir.create(d, showWarnings = FALSE); ` +
+        'invisible(file.create(file.path(d, sprintf("file-%03d.txt", 1:300)))); ' +
+        '.rs.api.filesPaneNavigate(d) })',
+        { wait: true },
+      );
+      await executeCommand(page, 'activateFiles');
+
+      const filesPanel = page.locator('#rstudio_workbench_panel_files');
+      const table = filesPanel.getByRole('table');
+      await expect(table.getByRole('cell', { name: /^file-\d{3}\.txt$/ }).first()).toBeVisible();
+      await expect(table).toHaveCount(1);
+      await expect(table).toMatchAriaSnapshot(`
+        - table:
+          - rowgroup:
+            - row:
+              - columnheader "Selected"
+              - columnheader "File type"
+              - columnheader "Name"
+              - columnheader "Size"
+              - columnheader "Modified"
+          - rowgroup:
+            - row:
+              - cell
+              - cell
+              - cell /file-\\d{3}\\.txt/
+      `);
+
+      // Padding rows reserve scroll height but are not rows: every row the
+      // table exposes is a header or file row.
+      const paddingRows = filesPanel.locator('tbody tr[height]');
+      await expect(paddingRows).not.toHaveCount(0);
+      for (const row of await paddingRows.all())
+        await expect(row).toHaveAttribute('role', 'presentation');
+      const contentRows = table.locator('tr:not([height])');
+      expect(await table.getByRole('row').count()).toBe(await contentRows.count());
+    } finally {
+      await consoleActions.executeInConsole(
+        `unlink(${dir}, recursive = TRUE); .rs.api.filesPaneNavigate(path.expand("~"))`,
+        { wait: true },
+      );
+    }
+  });
+});
