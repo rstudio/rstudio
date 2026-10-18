@@ -4,12 +4,14 @@
 // current folder and a fade image marks its left edge. The fade had no alt
 // text, and it was only placed when the widget scrolled itself: scrolling the
 // bar any other way (e.g. by focusing the root link) left it shown, covering
-// the root link and taking its clicks.
+// the root link and taking its clicks. Dark file dialogs hide the fade
+// altogether, which an inline display style used to override.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, getPref } from '@utils/commands';
+import { DARK_THEME, DARK_THEME_HREF, LIGHT_THEME, expectThemeStylesheet } from '@utils/theme';
 
 const DEEP_DIR = 'file.path(tempdir(), "breadcrumb_fade_19172", '
   + 'strrep("a_long_directory_name_", 3), strrep("another_long_directory_name_", 3))';
@@ -61,4 +63,43 @@ test.describe('Files pane breadcrumb fade (#19172)', () => {
     });
     expect(rootIsHit).toBe(true);
   });
+
+  // Desktop opens native file dialogs, which have no breadcrumb.
+  test('fade stays hidden in a dark file dialog', { tag: ['@server_only'] },
+    async ({ rstudioPage: page }) => {
+      const consolePane = new ConsolePaneActions(page);
+      const originalTheme = (await getPref(page, 'editor_theme')) as string | null;
+      const dialog = page.locator('.gwt-DialogBox.rstudio-themes-dark');
+      try {
+        await consolePane.executeInConsole(
+          `invisible(dir.create(${DEEP_DIR}, recursive = TRUE)); .rs.api.applyTheme(${JSON.stringify(DARK_THEME)})`,
+          { wait: true },
+        );
+        await expectThemeStylesheet(page, DARK_THEME_HREF);
+
+        // selectFile() blocks R until the dialog closes.
+        await consolePane.executeInConsole(
+          `.rs.api.selectFile(path = paste0(${DEEP_DIR}, "/"))`,
+          { wait: false },
+        );
+        const breadcrumb = dialog.locator('.breadcrumb');
+        await expect(breadcrumb.locator('[aria-current="location"]'))
+          .toHaveText(/^another_long_directory_name_/);
+        await expect.poll(() => breadcrumb.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+        await expect(breadcrumb.locator('img').locator('..')).toBeHidden();
+      } finally {
+        // Cancel answers selectFile(), freeing the console; dismissing the
+        // dialog any other way would leave R waiting on it.
+        const cancel = dialog.getByRole('button', { name: 'Cancel', exact: true });
+        if (await cancel.isVisible()) {
+          await cancel.click();
+          await expect(dialog).toBeHidden();
+        }
+        // applyTheme, not setPref: a live session is not re-themed off the pref.
+        await consolePane.executeInConsole(
+          `.rs.api.applyTheme(${JSON.stringify(originalTheme ?? LIGHT_THEME)})`,
+          { wait: true },
+        );
+      }
+    });
 });
