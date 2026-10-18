@@ -173,10 +173,11 @@ test.describe('Environment pane', () => {
     await envPane.listViewOption.click();
 
     try {
+      // Only the list view has category header rows, so this also confirms the
+      // view switch finished before the check.
       const table = envPane.panel.getByRole('table');
-      await expect(table.getByRole('cell', { name: 'x', exact: true })).toBeVisible();
       await expect(table).toHaveCount(1);
-      await expect(table.getByRole('row').first()).toHaveText(/\S/);
+      await expect(table.getByRole('row').first()).toHaveText('Values');
     } finally {
       await consoleActions.executeInConsole('rm(x)', { wait: true });
     }
