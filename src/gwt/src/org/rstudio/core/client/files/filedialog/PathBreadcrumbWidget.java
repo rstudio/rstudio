@@ -169,16 +169,12 @@ public class PathBreadcrumbWidget
 
    private void updateFade()
    {
+      // Shown with a class rather than an inline display, so that themes
+      // which hide the fade (e.g. dark file dialogs) can still hide it.
       int scrollPos = outer_.getElement().getPropertyInt("scrollLeft");
+      fadeWrapper_.setStyleName(STYLES.fadeShown(), scrollPos > 0);
       if (scrollPos > 0)
-      {
-         fadeWrapper_.getElement().getStyle().setDisplay(Style.Display.BLOCK);
          fadeWrapper_.getElement().getStyle().setLeft(scrollPos, Style.Unit.PX);
-      }
-      else
-      {
-         fadeWrapper_.getElement().getStyle().setDisplay(Style.Display.NONE);
-      }
    }
 
    private Widget addAnchor(final FileSystemItem item, boolean browseable)

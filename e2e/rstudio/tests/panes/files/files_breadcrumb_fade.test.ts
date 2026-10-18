@@ -36,8 +36,11 @@ test.describe('Files pane breadcrumb fade (#19172)', () => {
     const lastCrumb = breadcrumb.locator('[aria-current="location"]');
     await expect(lastCrumb).toHaveText(/^another_long_directory_name_/);
 
-    const fade = breadcrumb.locator('img');
-    await expect(fade).toHaveAttribute('alt', '');
+    const fadeImage = breadcrumb.locator('img');
+    await expect(fadeImage).toHaveAttribute('alt', '');
+    // Dark editor themes hide the image and fade with the wrapper's own
+    // background, so check the wrapper, which is shown in every theme.
+    const fade = fadeImage.locator('..');
 
     // Scrolled to the current folder: the fade sits at the visible left edge.
     await expect.poll(() => breadcrumb.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
