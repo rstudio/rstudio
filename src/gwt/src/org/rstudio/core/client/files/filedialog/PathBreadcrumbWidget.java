@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -65,6 +66,7 @@ public class PathBreadcrumbWidget
       Roles.getGroupRole().setAriaLabelProperty(outer_.getElement(), constants_.pathBreadCrumbSelectPath());
 
       Image fade = new Image(RES.fade());
+      fade.setAltText("");
       fade.setStylePrimaryName(STYLES.fade());
       fade_ = fade.getElement();
 
@@ -73,6 +75,10 @@ public class PathBreadcrumbWidget
       fadeWrapper_.getElement().appendChild(fade_);
 
       outer_.getElement().appendChild(fadeWrapper_.getElement());
+
+      // The bar also scrolls when focus moves to a hidden crumb, so place
+      // the fade on every scroll rather than only when we scroll it.
+      outer_.addDomHandler(event -> updateFade(), ScrollEvent.getType());
 
       frame_ = new DockLayoutPanel(Unit.PX);
       eastFrame_ = new FlowPanel();
@@ -158,7 +164,11 @@ public class PathBreadcrumbWidget
       outer_.getElement().setPropertyInt(
             "scrollLeft",
             outer_.getElement().getPropertyInt("scrollWidth"));
+      updateFade();
+   }
 
+   private void updateFade()
+   {
       int scrollPos = outer_.getElement().getPropertyInt("scrollLeft");
       if (scrollPos > 0)
       {

@@ -184,16 +184,15 @@ body.windows .breadcrumb table.path span {
    height: 24px;
 }
 
-.fadeWrapper {
-
-}
-
-.editor_dark .ace_editor_theme .breadcrumb .fadeWrapper {
+/* Positioned so its left offset tracks the scroll position, and clicks
+   pass through to the breadcrumb links beneath it. */
+.breadcrumb .fadeWrapper {
    position: absolute;
    left: 0;
    top: 0;
    width: 25px;
    height: 24px;
+   pointer-events: none;
 }
 
 .editor_dark .ace_editor_theme .breadcrumb .fadeWrapper img {
