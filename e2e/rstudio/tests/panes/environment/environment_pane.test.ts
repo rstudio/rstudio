@@ -164,6 +164,24 @@ test.describe('Environment pane', () => {
     }
   });
 
+  // The list view draws a row of empty cells first, only to fix column widths.
+  // It is marked presentational, so the first row the table exposes is the
+  // category header, not a blank row (#19173).
+  test('list view exposes no blank layout row', async () => {
+    await consoleActions.executeInConsole('rm(list = ls()); x <- 1:3', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.listViewOption.click();
+
+    try {
+      const table = envPane.panel.getByRole('table');
+      await expect(table.getByRole('cell', { name: 'x', exact: true })).toBeVisible();
+      await expect(table).toHaveCount(1);
+      await expect(table.getByRole('row').first()).toHaveText(/\S/);
+    } finally {
+      await consoleActions.executeInConsole('rm(x)', { wait: true });
+    }
+  });
+
   // The grid view's header and body are separate <table>s; they are exposed
   // as one ARIA table so body cells have column headers (#19173).
   test('grid view is one table whose cells have column headers', async () => {
