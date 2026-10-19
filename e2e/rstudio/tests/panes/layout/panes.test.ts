@@ -33,6 +33,7 @@ const CONSOLE_MAX_BTN = `${CONSOLE_PANE} .rstudio_panel_max_btn_console`;
 
 // Pane Layout dialog selectors
 const PL_RIGHT_TOP = '#rstudio_pane_layout_right_top';
+const PL_RIGHT_BOTTOM = '#rstudio_pane_layout_right_bottom';
 const PL_SIDEBAR = '#rstudio_pane_layout_sidebar';
 const PL_SIDEBAR_VISIBLE = '#rstudio_pane_layout_sidebar_visible';
 const PREFERENCES_CONFIRM = '#rstudio_preferences_confirm';
@@ -1049,6 +1050,34 @@ test.describe('Pane and column management', () => {
       await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
       await expect.poll(
         () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
+  });
+
+  // With every tab moved out of the right column, TabSet1 stays open with no
+  // tab and no empty state to focus; its frame buttons are all that is left.
+  test('A column zoom onto a column of empty tabsets focuses a frame button (#19181)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_RIGHT_TOP);
+      await uncheckVisibleTabs(page, PL_RIGHT_BOTTOM);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await expect(page.locator(`${TABSET1_PANE} [role="tab"]`)).toHaveCount(0);
+      await expect(page.locator(`${TABSET2_PANE} [role="tab"]`)).toHaveCount(0);
+      // Emptying both leaves TabSet1 open, holding the whole column.
+      await expect.poll(() => getOffsetHeight(page, TABSET1_PANE)).toBeGreaterThan(50);
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomRightColumn');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect.poll(
+        () => page.locator(TABSET1_PANE).evaluate(el => el.contains(document.activeElement)),
       ).toBe(true);
     } finally {
       await restoreDefaultPaneLayout(page);

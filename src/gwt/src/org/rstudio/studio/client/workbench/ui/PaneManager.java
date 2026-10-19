@@ -2712,8 +2712,11 @@ public class PaneManager
       }
 
       // A sidebar with no tabs (the default when Posit Assistant is off) shows
-      // only its empty state; focus its Configure Panes button.
+      // only its empty state; focus its Configure Panes button. An emptied
+      // tabset shows nothing, but its frame still has its buttons.
       ArrayList<Element> controls = DomUtils.getFocusableElements(panel.getElement());
+      if (controls.isEmpty())
+         controls = DomUtils.getFocusableElements(window.getNormal().getElement());
       if (!controls.isEmpty())
          controls.get(0).focus();
    }
