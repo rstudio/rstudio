@@ -215,6 +215,37 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     }
   });
 
+  // A resize first lays out the old column widths at the new window width,
+  // which can squeeze the fill column shut until the proportional widths land.
+  test('shrinking the window keeps focus in a narrow column that stays open', async ({ rstudioPage: page }) => {
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    const box = await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox();
+    if (!box)
+      throw new Error('Middle column splitter has no bounding box; is it rendered?');
+    const splitterY = box.y + box.height / 2;
+
+    try {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, 200, splitterY);
+      await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeLessThan(250);
+      await focusConsole(page);
+
+      await page.setViewportSize({ width: Math.round(viewport.width / 2), height: viewport.height });
+      await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, CONSOLE_PANE);
+      // Focus must not move after the layout settles, so sample for a while.
+      for (let i = 0; i < 10; i++) {
+        expect(await hasFocusWithin(page, CONSOLE_PANE), `focus in Console, sample ${i}`).toBe(true);
+        await page.waitForTimeout(50);
+      }
+    } finally {
+      await page.setViewportSize(viewport);
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+    }
+  });
+
   // The zoom moves to Source while its column is still collapsed, and the new
   // editor must still get focus.
   test('opening a document while a pane is zoomed focuses the editor', async ({ rstudioPage: page }) => {

@@ -761,7 +761,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    public void onResize()
    {
       super.onResize();
-      updateCollapsedColumns();
 
       int offsetWidth = getOffsetWidth();
       if ((previousOffsetWidth_ == null || offsetWidth != previousOffsetWidth_.intValue())
@@ -793,6 +792,12 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
            Scheduler.get().scheduleDeferred(layoutCommand_);
          }
       }
+
+      // A width change first lays out the old column sizes at the new width,
+      // which can squeeze the fill column shut; the pending layout above
+      // applies the proportional sizes and comes back here.
+      if (layoutCommand_ == null)
+         updateCollapsedColumns();
    }
 
    /**
