@@ -1553,7 +1553,8 @@ public class PaneManager
       final boolean activateHelp = maximizedTab_.equals(Tab.Help);
       Command onActivation = () ->
       {
-         focusPaneIfZoomHidFocus(focusedBeforeZoom, window);
+         if (zoomHidFocus(focusedBeforeZoom))
+            focusPane(window);
          if (activateHelp)
             commands_.activateHelp().execute();
       };
@@ -2611,13 +2612,16 @@ public class PaneManager
       Command afterZoom = () ->
       {
          manageLayoutCommands();
-         focusPaneIfZoomHidFocus(focusedBeforeZoom, getFocusTargetIn(zoomedColumn));
+         if (zoomHidFocus(focusedBeforeZoom))
+            focusPane(getFocusTargetIn(zoomedColumn));
       };
 
       if (sidebarOnRight)
-         resizeHorizontallyWithSidebarOnRight(rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
+         resizeHorizontallyWithSidebarOnRight(
+               rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
       else if (sidebarOnLeft)
-         resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
+         resizeHorizontallyWithSidebarOnLeft(
+               rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
       else
          resizeHorizontally(rightTargetSize, leftTargetSize, afterZoom);
    }
@@ -2643,6 +2647,8 @@ public class PaneManager
       if (column == null)
          return null;
 
+      // panes_ can hold a sidebar window that showSidebar() has since replaced;
+      // panesByName_ has the live one.
       ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
       windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
       LogicalWindow topmost = null;
@@ -2667,40 +2673,49 @@ public class PaneManager
    }
 
    /**
-    * Move focus into a zoomed pane if the zoom hid the element that had it:
-    * the columns a zoom collapses are inert (#19181) and the quadrants it
-    * hides are not rendered, so the browser would drop focus to the page
-    * body. Leaves focus alone if anything has moved it since the zoom began.
+    * Whether a zoom hid the element that had focus when it began, so focus
+    * should move into the zoomed pane: the columns a zoom collapses are inert
+    * (#19181) and the quadrants it hides are not rendered, so the browser
+    * would drop focus to the page body. False if anything has moved focus
+    * since the zoom began.
     */
-   private void focusPaneIfZoomHidFocus(Element focusedBeforeZoom, LogicalWindow target)
+   private boolean zoomHidFocus(Element focusedBeforeZoom)
    {
-      if (focusedBeforeZoom == null || target == null)
-         return;
+      if (focusedBeforeZoom == null)
+         return false;
 
       Element active = DomUtils.getActiveElement();
       if (active != focusedBeforeZoom && active != Document.get().getBody())
-         return;
+         return false;
 
-      if (A11y.isInert(focusedBeforeZoom) || !DomUtils.hasLayoutBox(focusedBeforeZoom))
-         focusPane(target);
+      return A11y.isInert(focusedBeforeZoom) || !DomUtils.hasLayoutBox(focusedBeforeZoom);
    }
 
    /**
-    * Focus a pane that is already showing. focusWindow() handles the Console
-    * and source columns; it takes any other pane, the sidebar included, for
+    * Focus a pane that is already showing, without changing its selected tab.
+    * focusWindow() handles source columns; it would switch the Console pane
+    * to its Console tab, and takes any other pane, the sidebar included, for
     * TabSet2. A tabbed pane gets its selected tab focused.
     */
    private void focusPane(LogicalWindow window)
    {
+      if (window == null)
+         return;
+
       String name = window.getNormal().getName();
-      if (StringUtil.equals(name, CONSOLE_PANE) ||
-          name.contains(SourceColumnManager.COLUMN_PREFIX))
+      if (name.contains(SourceColumnManager.COLUMN_PREFIX))
       {
          focusWindow(name);
          return;
       }
 
+      // The Console pane has a tab bar only when it holds other tabs too.
       Widget content = window.getNormal().getFillWidget();
+      if (window == getConsoleLogicalWindow() && !(content instanceof WorkbenchTabPanel))
+      {
+         consolePane_.focus();
+         return;
+      }
       if (!(content instanceof WorkbenchTabPanel))
          return;
 
