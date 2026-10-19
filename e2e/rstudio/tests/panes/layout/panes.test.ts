@@ -3,7 +3,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { executeCommand, isCommandChecked } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
 import { VIEWER_MAXIMIZE_R, VIEWER_TAB } from '@pages/viewer_pane.page';
 import type { Locator, Page } from 'playwright';
@@ -968,6 +968,46 @@ test.describe('Pane and column management', () => {
     ).toBe(false);
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+  });
+
+  // A sidebar shown with no tabs is the Workbench default, where Posit
+  // Assistant is off. Zooming it hides the focused Console, and with no tab to
+  // focus, focus must go to the empty state's Configure Panes button rather
+  // than drop to the page body.
+  test('Zooming an empty sidebar from the Console focuses Configure Panes (#19181)', async ({ rstudioPage: page }) => {
+    await openPaneLayoutOptions(page);
+    await resetPaneLayoutInDialog(page);
+    await toggleTab(page, PL_SIDEBAR, 'Posit Assistant');
+    expect(await isTabChecked(page, PL_SIDEBAR, 'Posit Assistant')).toBe(false);
+    await page.locator(PREFERENCES_CONFIRM).click();
+    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+    try {
+      await showSidebar(page);
+      await expect(page.locator(`${SIDEBAR_PANE} [role="tab"]`)).toHaveCount(0);
+      const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
+      await expect(configurePanes).toBeVisible();
+
+      await executeCommand(page, 'activateConsole');
+      await expect.poll(
+        () => page.locator(CONSOLE_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+
+      await executeCommand(page, 'layoutZoomSidebar');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect(configurePanes).toBeFocused();
+    } finally {
+      await resetLayoutZoom(page);
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+      if (await sidebarVisibleCheckbox.isChecked()) {
+        await sidebarVisibleCheckbox.click();
+        await sleep(TIMEOUTS.layoutSettle);
+      }
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    }
   });
 
   // Not redundant: refreshSidebar implements the location toggle as

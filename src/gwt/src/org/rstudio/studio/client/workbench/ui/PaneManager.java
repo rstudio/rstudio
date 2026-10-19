@@ -2676,7 +2676,7 @@ public class PaneManager
    /**
     * Focus a pane that is already showing. focusWindow() handles the Console
     * and source columns; it takes any other pane, the sidebar included, for
-    * TabSet2. A tabbed pane gets its selected tab focused, if it has one.
+    * TabSet2. A tabbed pane gets its selected tab focused.
     */
    private void focusPane(LogicalWindow window)
    {
@@ -2688,14 +2688,22 @@ public class PaneManager
          return;
       }
 
-      for (WorkbenchTabPanel panel : tabToPanel_.values())
+      Widget content = window.getNormal().getFillWidget();
+      if (!(content instanceof WorkbenchTabPanel))
+         return;
+
+      WorkbenchTabPanel panel = (WorkbenchTabPanel) content;
+      if (panel.getSelectedIndex() >= 0)
       {
-         if (panel.getParentWindow() == window && panel.getSelectedIndex() >= 0)
-         {
-            panel.getSelectedTab().setFocus();
-            return;
-         }
+         panel.getSelectedTab().setFocus();
+         return;
       }
+
+      // A sidebar with no tabs (the default when Posit Assistant is off) shows
+      // only its empty state; focus its Configure Panes button.
+      ArrayList<Element> controls = DomUtils.getFocusableElements(panel.getElement());
+      if (!controls.isEmpty())
+         controls.get(0).focus();
    }
 
    public LogicalWindow getZoomedWindow()
