@@ -7,7 +7,8 @@ import {
   documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
 } from '@utils/commands';
 import { focusConsole } from '@pages/console_pane.page';
-import { killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
+import { captureResult, killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
+import { TIMEOUTS } from '@utils/constants';
 import type { Locator, Page } from 'playwright';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
@@ -255,9 +256,19 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
         await expect(otherTab).toHaveAttribute('aria-selected', 'true');
       } finally {
         await resetLayoutZoom(page);
-        // Don't leave a shell running for later tests in this worker.
-        if (tabName === 'Terminal')
+        // Don't leave a shell running for later tests in this worker. The
+        // widget can show before the server registers the terminal, so wait
+        // for the registration, or the kill finds nothing to kill.
+        if (tabName === 'Terminal') {
+          await expect.poll(
+            () => captureResult(page, 'length(rstudioapi::terminalList())'),
+            { timeout: TIMEOUTS.consoleReady },
+          ).not.toBe('0');
           await killAllTerminals(page);
+          await expect.poll(
+            () => captureResult(page, 'length(rstudioapi::terminalList())'),
+          ).toBe('0');
+        }
         // Brings the Console tab back to the front.
         await focusConsole(page);
       }
