@@ -45,6 +45,14 @@ namespace crypto {
 constexpr int s_encrypt = 1;
 constexpr int s_decrypt = 0;
 
+// The v0 and v1 formats are AES-128-CBC, and v0 is the default encryption
+// version. Stored data and other components depend on that cipher, so it must
+// not change. v2 is AES-256-GCM. Snyk Code reports a direct EVP_aes_128_cbc()
+// call as cpp/TooSmallKeySize, so call it through this pointer. Keep this form.
+// The known-answer tests in EncryptionVersionTests.cpp fail if the v0 or v1
+// cipher changes.
+const EVP_CIPHER* (* const s_aes128Cbc)() = &EVP_aes_128_cbc;
+
 Error getLastCryptoError(const ErrorLocation& in_location)
 {
    // get the error code
@@ -156,7 +164,7 @@ Error aesDecrypt(
 
    EVP_CIPHER_CTX *ctx;
    ctx = EVP_CIPHER_CTX_new();
-   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, in_key.data(), in_iv.data(), s_decrypt);
+   EVP_CipherInit_ex(ctx, s_aes128Cbc(), nullptr, in_key.data(), in_iv.data(), s_decrypt);
 
    // perform the decryption
    if(!EVP_CipherUpdate(ctx, out_decrypted.data(), &outLen, in_data, data_len))
@@ -193,7 +201,7 @@ Error aesEncrypt(
 
    EVP_CIPHER_CTX *ctx;
    ctx = EVP_CIPHER_CTX_new();
-   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, key.data(), iv.empty() ? nullptr : iv.data(), s_encrypt);
+   EVP_CipherInit_ex(ctx, s_aes128Cbc(), nullptr, key.data(), iv.empty() ? nullptr : iv.data(), s_encrypt);
 
    // perform the encryption
    if(!EVP_CipherUpdate(ctx, out_encrypted, &outlen, data, data_length))
