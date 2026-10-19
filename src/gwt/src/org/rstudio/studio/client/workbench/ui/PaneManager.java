@@ -1099,11 +1099,15 @@ public class PaneManager
 
             // Special handling for Console; Console does not have a WorkbenchTab when there are
             // no other Console tabs open on start up and none have been added.
-            if (selected == null || StringUtil.equals(selected.getTitle(), consoleConstants_.consoleLabel()));
+            if (selected == null || StringUtil.equals(selected.getTitle(), consoleConstants_.consoleLabel()))
             {
                commands_.activateConsole().execute();
                return;
             }
+
+            // Restores a minimized pane and reselects the selected tab. Terminal
+            // ignores setFocus(); it focuses itself when its tab is selected.
+            commands_.activateConsolePane().execute();
          }
          else
          {
