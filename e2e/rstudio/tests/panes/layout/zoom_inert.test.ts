@@ -6,6 +6,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import {
   documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
 } from '@utils/commands';
+import { focusConsole } from '@pages/console_pane.page';
 import type { Locator, Page } from 'playwright';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
@@ -177,8 +178,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
   // Without this, the browser drops focus to the page body when the element
   // that had it becomes inert or stops being rendered.
   test('a pane zoom that hides the focused column focuses the zoomed pane', async ({ rstudioPage: page }) => {
-    await executeCommand(page, 'activateConsole');
-    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+    await focusConsole(page);
 
     await executeCommand(page, 'layoutZoomFiles');
     await expectHidden(page, CONSOLE_PANE);
@@ -186,8 +186,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
   });
 
   test('a column zoom that hides the focused column focuses the zoomed column', async ({ rstudioPage: page }) => {
-    await executeCommand(page, 'activateConsole');
-    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+    await focusConsole(page);
 
     await executeCommand(page, 'layoutZoomRightColumn');
     await expectHidden(page, CONSOLE_PANE);
@@ -205,8 +204,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
 
   test('a sidebar pane zoom that hides the focused column focuses the sidebar', async ({ rstudioPage: page }) => {
     await setSidebarVisible(page, true);
-    await executeCommand(page, 'activateConsole');
-    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+    await focusConsole(page);
 
     await executeCommand(page, 'layoutZoomChat');
     await expectHidden(page, CONSOLE_PANE);
@@ -232,8 +230,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
   });
 
   test('a zoom leaves focus alone when the focused pane stays visible', async ({ rstudioPage: page }) => {
-    await executeCommand(page, 'activateConsole');
-    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+    await focusConsole(page);
 
     await executeCommand(page, 'layoutZoomLeftColumn');
     await expectHidden(page, TABSET1_PANE);

@@ -6,6 +6,7 @@ import { sleep, TIMEOUTS } from '@utils/constants';
 import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
 import { VIEWER_MAXIMIZE_R, VIEWER_TAB } from '@pages/viewer_pane.page';
+import { focusConsole } from '@pages/console_pane.page';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -988,10 +989,7 @@ test.describe('Pane and column management', () => {
       const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
       await expect(configurePanes).toBeVisible();
 
-      await executeCommand(page, 'activateConsole');
-      await expect.poll(
-        () => page.locator(CONSOLE_PANE).evaluate(el => el.contains(document.activeElement)),
-      ).toBe(true);
+      await focusConsole(page);
 
       await executeCommand(page, 'layoutZoomSidebar');
       await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
@@ -1005,6 +1003,44 @@ test.describe('Pane and column management', () => {
         await sidebarVisibleCheckbox.click();
         await sleep(TIMEOUTS.layoutSettle);
       }
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    }
+  });
+
+  // An emptied tabset minimizes, but its restore button reopens it with no
+  // tab to focus. A column zoom must then move focus to the column's other
+  // tabset rather than to the empty one, which would leave it on the body.
+  test('A column zoom from the Console skips an open empty tabset (#19181)', async ({ rstudioPage: page }) => {
+    await openPaneLayoutOptions(page);
+    await resetPaneLayoutInDialog(page);
+    // Suppressed tabs (e.g. Presentation) have hidden checkboxes; leaving them
+    // in TabSet1 is fine, since they never show as tabs.
+    const checkedTabs = page.locator(`${PL_RIGHT_TOP} input[type="checkbox"]:checked:visible`);
+    for (let i = 0; i < 20 && (await checkedTabs.count()) > 0; i++) {
+      await checkedTabs.first().scrollIntoViewIfNeeded();
+      await checkedTabs.first().click();
+    }
+    await expect(checkedTabs).toHaveCount(0);
+    await page.locator(PREFERENCES_CONFIRM).click();
+    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+    try {
+      await expect(page.locator(`${TABSET1_PANE} [role="tab"]`)).toHaveCount(0);
+      await page.locator('.rstudio_panel_min_btn_tabset1:visible').click();
+      await expect.poll(() => getOffsetHeight(page, TABSET1_PANE)).toBeGreaterThan(50);
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomRightColumn');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect.poll(
+        () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+    } finally {
+      await resetLayoutZoom(page);
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
       await page.locator(PREFERENCES_CONFIRM).click();
       await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
     }

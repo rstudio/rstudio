@@ -2611,7 +2611,7 @@ public class PaneManager
       Command afterZoom = () ->
       {
          manageLayoutCommands();
-         focusPaneIfZoomHidFocus(focusedBeforeZoom, getTopVisibleWindowIn(zoomedColumn));
+         focusPaneIfZoomHidFocus(focusedBeforeZoom, getFocusTargetIn(zoomedColumn));
       };
 
       if (sidebarOnRight)
@@ -2634,24 +2634,36 @@ public class PaneManager
    }
 
    /**
-    * The topmost pane showing in a column, or null if none is.
+    * The topmost pane showing in a column that has a tab to focus, else the
+    * topmost pane showing at all, or null if none is. A tabset with no tabs
+    * can be left open, e.g. by dragging its row splitter.
     */
-   private LogicalWindow getTopVisibleWindowIn(Widget column)
+   private LogicalWindow getFocusTargetIn(Widget column)
    {
       if (column == null)
          return null;
 
       ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
       windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
+      LogicalWindow topmost = null;
       for (LogicalWindow window : windows)
       {
-         if (window != null && window.visible() &&
-             DomUtils.contains(column.getElement(), window.getNormal().getElement()))
+         if (window == null || !window.visible() ||
+             !DomUtils.contains(column.getElement(), window.getNormal().getElement()))
+         {
+            continue;
+         }
+
+         Widget content = window.getNormal().getFillWidget();
+         if (!(content instanceof WorkbenchTabPanel) ||
+             ((WorkbenchTabPanel) content).getSelectedIndex() >= 0)
          {
             return window;
          }
+         if (topmost == null)
+            topmost = window;
       }
-      return null;
+      return topmost;
    }
 
    /**
