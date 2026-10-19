@@ -683,36 +683,27 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       if (center_ == null || getOffsetWidth() == 0)
          return;
 
-      // This runs on every layout pass, splitter drags included; write the
-      // attributes only when a column's state changes.
-      for (Widget column : getColumns())
-      {
-         Element container = getWidgetContainerElement(column);
-         boolean collapsed = column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
-         if (container.hasAttribute("inert") != collapsed)
-            A11y.setInert(container, collapsed);
-      }
+      for (Widget column : leftList_)
+         updateCollapsedColumn(column);
+      updateCollapsedColumn(center_);
+      updateCollapsedColumn(right_);
+      updateCollapsedColumn(sidebar_);
    }
 
-   /**
-    * The columns currently in the panel. insert() and remove() lay out while
-    * initialize() or a sidebar change is partway through, when some of the
-    * fields name widgets that are not, or no longer, children.
-    */
-   private ArrayList<Widget> getColumns()
+   private void updateCollapsedColumn(Widget column)
    {
-      ArrayList<Widget> candidates = new ArrayList<>(leftList_);
-      candidates.add(center_);
-      candidates.add(right_);
-      candidates.add(sidebar_);
+      // insert() and remove() lay out while initialize() or a sidebar change
+      // is partway through, when a field can name a widget that is not, or no
+      // longer, a child.
+      if (column == null || column.getParent() != this)
+         return;
 
-      ArrayList<Widget> columns = new ArrayList<>();
-      for (Widget w : candidates)
-      {
-         if (w != null && w.getParent() == this)
-            columns.add(w);
-      }
-      return columns;
+      // This runs on every layout pass, splitter drags included; write the
+      // attributes only when the column's state changes.
+      Element container = getWidgetContainerElement(column);
+      boolean collapsed = column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
+      if (container.hasAttribute("inert") != collapsed)
+         A11y.setInert(container, collapsed);
    }
 
    @Override
