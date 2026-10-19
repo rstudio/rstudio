@@ -683,10 +683,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       if (center_ == null || getOffsetWidth() == 0)
          return;
 
+      // This runs on every layout pass, splitter drags included; write the
+      // attributes only when a column's state changes.
       for (Widget column : getColumns())
       {
-         A11y.setInert(getWidgetContainerElement(column),
-                       column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH);
+         Element container = getWidgetContainerElement(column);
+         boolean collapsed = column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
+         if (container.hasAttribute("inert") != collapsed)
+            A11y.setInert(container, collapsed);
       }
    }
 
