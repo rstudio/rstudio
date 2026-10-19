@@ -3,7 +3,9 @@
 // or a splitter snap are display:none; they are covered here so they stay so.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { documentCloseAllNoSave, executeCommand, resetLayoutZoom } from '@utils/commands';
+import {
+  documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
+} from '@utils/commands';
 import type { Locator, Page } from 'playwright';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
@@ -159,6 +161,56 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await expect.poll(() => hasFocusWithin(page, SOURCE_PANE)).toBe(true);
 
     await documentCloseAllNoSave(page);
+  });
+
+  // Without this, the browser drops focus to the page body when the element
+  // that had it becomes inert or stops being rendered.
+  test('a pane zoom that hides the focused column focuses the zoomed pane', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'activateConsole');
+    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+  });
+
+  test('a column zoom that hides the focused column focuses the zoomed column', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'activateConsole');
+    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomRightColumn');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
+  });
+
+  test('a pane zoom that hides the focused quadrant focuses the zoomed pane', async ({ rstudioPage: page }) => {
+    await page.locator(`${TABSET1_PANE} [role="tab"]`).first().focus();
+    await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, TABSET1_PANE);
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+  });
+
+  test('a sidebar pane zoom that hides the focused column focuses the sidebar', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    await executeCommand(page, 'activateConsole');
+    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomChat');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect.poll(() => hasFocusWithin(page, SIDEBAR_PANE)).toBe(true);
+    // Focusing the sidebar must not raise another pane and end the zoom.
+    expect(await isCommandChecked(page, 'layoutZoomChat')).toBe(true);
+  });
+
+  test('a zoom leaves focus alone when the focused pane stays visible', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'activateConsole');
+    await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomLeftColumn');
+    await expectHidden(page, TABSET1_PANE);
+    expect(await hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
   });
 
   test('maximizing or snapping a quadrant hides its sibling', async ({ rstudioPage: page }) => {

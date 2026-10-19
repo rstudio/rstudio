@@ -78,6 +78,14 @@ public class DomUtils
    public static native Element getActiveElement() /*-{
       return $doc.activeElement;
    }-*/;
+
+   /**
+    * Whether the element is rendered: false when it or an ancestor is
+    * display:none (or it is detached), whatever its own style says.
+    */
+   public static native boolean hasLayoutBox(Element el) /*-{
+      return el.getClientRects().length > 0;
+   }-*/;
    
    public static native void setFocus(Element el, boolean preventScroll)
    /*-{

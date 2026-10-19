@@ -25,6 +25,7 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Triad;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -77,6 +78,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -1476,6 +1478,8 @@ public class PaneManager
 
    private void fullyMaximizeWindow(final LogicalWindow window, final Tab tab)
    {
+      final Element focusedBeforeZoom = DomUtils.getActiveElement();
+
       if (window.equals(getSourceLogicalWindow()))
          maximizedTab_ = Tab.Source;
       else if (window.equals(getConsoleLogicalWindow()))
@@ -1546,11 +1550,13 @@ public class PaneManager
          rightTargetSize = 0;
 
       // Ensure focus is sent to Help iframe on activation.
-      Command onActivation = null;
-      if (maximizedTab_.equals(Tab.Help))
+      final boolean activateHelp = maximizedTab_.equals(Tab.Help);
+      Command onActivation = () ->
       {
-         onActivation = () -> commands_.activateHelp().execute();
-      }
+         focusPaneIfZoomHidFocus(focusedBeforeZoom, window);
+         if (activateHelp)
+            commands_.activateHelp().execute();
+      };
 
       // If sidebar is visible, we need to handle it during zoom
       if (sidebarOnRight || sidebarOnLeft)
@@ -2476,6 +2482,7 @@ public class PaneManager
 
       String currentZoomedColumn = getZoomedColumn();
       boolean unZooming = false;
+      final Element focusedBeforeZoom = DomUtils.getActiveElement();
 
       // A tracked pane zoom makes its column read as zoomed, and the
       // same-column branch below ends it through restoreLayout(). A request
@@ -2600,12 +2607,93 @@ public class PaneManager
          }
       }
 
+      final Widget zoomedColumn = getColumnWidget(columnId);
+      Command afterZoom = () ->
+      {
+         manageLayoutCommands();
+         focusPaneIfZoomHidFocus(focusedBeforeZoom, getTopVisibleWindowIn(zoomedColumn));
+      };
+
       if (sidebarOnRight)
-         resizeHorizontallyWithSidebarOnRight(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
+         resizeHorizontallyWithSidebarOnRight(rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
       else if (sidebarOnLeft)
-         resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
+         resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
       else
-         resizeHorizontally(rightTargetSize, leftTargetSize, () -> manageLayoutCommands());
+         resizeHorizontally(rightTargetSize, leftTargetSize, afterZoom);
+   }
+
+   private Widget getColumnWidget(String columnId)
+   {
+      if (StringUtil.equals(columnId, LEFT_COLUMN))
+         return center_;
+      if (StringUtil.equals(columnId, RIGHT_COLUMN))
+         return right_;
+      if (StringUtil.equals(columnId, SIDEBAR_COLUMN))
+         return sidebar_;
+      return null;
+   }
+
+   /**
+    * The topmost pane showing in a column, or null if none is.
+    */
+   private LogicalWindow getTopVisibleWindowIn(Widget column)
+   {
+      if (column == null)
+         return null;
+
+      ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
+      windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
+      for (LogicalWindow window : windows)
+      {
+         if (window != null && window.visible() &&
+             DomUtils.contains(column.getElement(), window.getNormal().getElement()))
+         {
+            return window;
+         }
+      }
+      return null;
+   }
+
+   /**
+    * Move focus into a zoomed pane if the zoom hid the element that had it:
+    * the columns a zoom collapses are inert (#19181) and the quadrants it
+    * hides are not rendered, so the browser would drop focus to the page
+    * body. Leaves focus alone if anything has moved it since the zoom began.
+    */
+   private void focusPaneIfZoomHidFocus(Element focusedBeforeZoom, LogicalWindow target)
+   {
+      if (focusedBeforeZoom == null || target == null)
+         return;
+
+      Element active = DomUtils.getActiveElement();
+      if (active != focusedBeforeZoom && active != Document.get().getBody())
+         return;
+
+      if (A11y.isInert(focusedBeforeZoom) || !DomUtils.hasLayoutBox(focusedBeforeZoom))
+         focusPane(target);
+   }
+
+   /**
+    * Focus a pane's selected tab. focusWindow() covers the quadrants and
+    * source columns, but it takes any other pane, the sidebar included, for
+    * TabSet2.
+    */
+   private void focusPane(LogicalWindow window)
+   {
+      if (window != panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      {
+         focusWindow(window.getNormal().getName());
+         return;
+      }
+
+      for (WorkbenchTabPanel panel : tabToPanel_.values())
+      {
+         if (panel.getParentWindow() == window && !panel.isEmpty())
+         {
+            panel.getSelectedTab().setFocus();
+            return;
+         }
+      }
    }
 
    public LogicalWindow getZoomedWindow()
