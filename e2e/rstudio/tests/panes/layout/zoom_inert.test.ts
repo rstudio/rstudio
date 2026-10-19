@@ -229,28 +229,32 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
   });
 
-  test('a column zoom that focuses the Console pane keeps its selected tab', async ({ rstudioPage: page }) => {
-    // With no documents open, the Console is the only pane in its column.
-    await documentCloseAllNoSave(page);
-    await expect(page.locator(SOURCE_PANE)).toBeHidden();
-    // The last tab is a closeable one such as Terminal or Background Jobs.
-    const otherTab = page.locator(`${CONSOLE_PANE} [role="tab"]`).last();
-    await otherTab.click();
-    await expect(otherTab).toHaveAttribute('aria-selected', 'true');
-    try {
-      await page.locator(`${TABSET1_PANE} [role="tab"][aria-selected="true"]`).focus();
-      await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
-
-      await executeCommand(page, 'layoutZoomLeftColumn');
-      await expectHidden(page, TABSET1_PANE);
-      await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+  // Terminal focuses itself only on selection, so its pane needs the fallback
+  // to a control; Background Jobs (or whichever tab is last) takes focus.
+  for (const [label, tabName] of [['Terminal', 'Terminal'], ['its last', null]] as const) {
+    test(`a column zoom that focuses the Console pane keeps ${label} tab selected`, async ({ rstudioPage: page }) => {
+      // With no documents open, the Console is the only pane in its column.
+      await documentCloseAllNoSave(page);
+      await expect(page.locator(SOURCE_PANE)).toBeHidden();
+      const tabs = page.locator(`${CONSOLE_PANE} [role="tab"]`);
+      const otherTab = tabName ? tabs.filter({ hasText: tabName }) : tabs.last();
+      await otherTab.click();
       await expect(otherTab).toHaveAttribute('aria-selected', 'true');
-    } finally {
-      // Brings the Console tab back to the front.
-      await resetLayoutZoom(page);
-      await focusConsole(page);
-    }
-  });
+      try {
+        await page.locator(`${TABSET1_PANE} [role="tab"][aria-selected="true"]`).focus();
+        await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
+
+        await executeCommand(page, 'layoutZoomLeftColumn');
+        await expectHidden(page, TABSET1_PANE);
+        await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+        await expect(otherTab).toHaveAttribute('aria-selected', 'true');
+      } finally {
+        // Brings the Console tab back to the front.
+        await resetLayoutZoom(page);
+        await focusConsole(page);
+      }
+    });
+  }
 
   test('a zoom leaves focus alone when the focused pane stays visible', async ({ rstudioPage: page }) => {
     await focusConsole(page);
