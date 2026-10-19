@@ -4347,8 +4347,10 @@ synctex_updater_t synctex_updater_new_with_output_file(const char * output, cons
 	char * synctex = NULL;
 	synctex_io_mode_t io_mode = 0;
 	const char * mode = NULL;
-	/*  prepare the updater, the memory is the only one dynamically allocated */
-	updater = (synctex_updater_t)_synctex_malloc(sizeof(synctex_updater_t));
+	/*  prepare the updater, the memory is the only one dynamically allocated.
+	 *  RStudio: allocate the struct. synctex_updater_t is a pointer type, so
+	 *  sizeof(synctex_updater_t) is too small for the fields set below. */
+	updater = (synctex_updater_t)_synctex_malloc(sizeof(_synctex_updater_t));
 	if (NULL == updater) {
 		_synctex_error("!  synctex_updater_new_with_file: malloc problem");
 		return NULL;
