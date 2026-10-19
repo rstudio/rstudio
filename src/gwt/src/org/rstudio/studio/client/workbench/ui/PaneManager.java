@@ -2674,21 +2674,23 @@ public class PaneManager
    }
 
    /**
-    * Focus a pane's selected tab. focusWindow() covers the quadrants and
-    * source columns, but it takes any other pane, the sidebar included, for
-    * TabSet2.
+    * Focus a pane that is already showing. focusWindow() handles the Console
+    * and source columns; it takes any other pane, the sidebar included, for
+    * TabSet2. A tabbed pane gets its selected tab focused, if it has one.
     */
    private void focusPane(LogicalWindow window)
    {
-      if (window != panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      String name = window.getNormal().getName();
+      if (StringUtil.equals(name, CONSOLE_PANE) ||
+          name.contains(SourceColumnManager.COLUMN_PREFIX))
       {
-         focusWindow(window.getNormal().getName());
+         focusWindow(name);
          return;
       }
 
       for (WorkbenchTabPanel panel : tabToPanel_.values())
       {
-         if (panel.getParentWindow() == window && !panel.isEmpty())
+         if (panel.getParentWindow() == window && panel.getSelectedIndex() >= 0)
          {
             panel.getSelectedTab().setFocus();
             return;

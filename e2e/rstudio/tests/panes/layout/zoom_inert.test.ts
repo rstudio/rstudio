@@ -130,23 +130,34 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
       throw new Error('Middle column splitter has no bounding box; is it rendered?');
     const windowWidth = await page.evaluate(() => window.innerWidth);
 
-    // Mouse: drag the right column shut against the window edge, then back.
-    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 1, box.y + box.height / 2);
-    await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeLessThan(20);
-    await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+    const splitterX = box.x + box.width / 2;
+    const splitterY = box.y + box.height / 2;
 
-    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x, box.y + box.height / 2);
-    await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+    // A custom, unzoomed layout survives resetLayoutZoom(), so put the
+    // splitter back however the test ends.
+    try {
+      // Mouse: drag the right column shut against the window edge, then back.
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 1, splitterY);
+      await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeLessThan(20);
+      await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
 
-    // Keyboard: walk the splitter left until the Console column is shut.
-    await splitter.focus();
-    for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) > 0; i++)
-      await page.keyboard.press('ArrowLeft');
-    await expectHidden(page, CONSOLE_PANE);
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterX, splitterY);
+      await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
 
-    for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) < 100; i++)
-      await page.keyboard.press('ArrowRight');
-    await expectExposed(page, CONSOLE_PANE);
+      // Keyboard: walk the splitter left until the Console column is shut.
+      await splitter.focus();
+      for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) > 0; i++)
+        await page.keyboard.press('ArrowLeft');
+      await expectHidden(page, CONSOLE_PANE);
+
+      for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) < 100; i++)
+        await page.keyboard.press('ArrowRight');
+      await expectExposed(page, CONSOLE_PANE);
+    } finally {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterX, splitterY);
+      await expect.poll(async () => Math.abs(((await splitter.boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+    }
   });
 
   // The zoom moves to Source while its column is still collapsed, and the new
@@ -202,6 +213,22 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await expect.poll(() => hasFocusWithin(page, SIDEBAR_PANE)).toBe(true);
     // Focusing the sidebar must not raise another pane and end the zoom.
     expect(await isCommandChecked(page, 'layoutZoomChat')).toBe(true);
+  });
+
+  // Zoom Files first selects the Files tab, which hides the Plots content that
+  // had focus, and only then zooms.
+  test('zooming a tab from another tab in its pane focuses the zoomed pane', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'activatePlots');
+    const plotsButtonId = await page.locator(`${TABSET2_PANE} button[id]:not([disabled]):visible`)
+      .first().getAttribute('id');
+    const plotsButton = page.locator(`#${plotsButtonId}`);
+    await plotsButton.focus();
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect(plotsButton).toBeHidden();
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
   });
 
   test('a zoom leaves focus alone when the focused pane stays visible', async ({ rstudioPage: page }) => {
