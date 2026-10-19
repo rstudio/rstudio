@@ -119,7 +119,10 @@ export namespace Ace {
     commands: { byName: Record<string, { scrollIntoView?: string; [key: string]: unknown }> };
     renderer: {
       scrollTop: number;
+      lineHeight: number;
       scrollBy(deltaX: number, deltaY: number): void;
+      getFirstFullyVisibleRow(): number;
+      getLastFullyVisibleRow(): number;
       $scrollAnimation?: { from: number; to: number } | null;
     };
     session: Session;

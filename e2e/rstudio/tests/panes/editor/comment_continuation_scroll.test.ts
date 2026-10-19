@@ -10,6 +10,8 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { clearPref, setPref, waitForSourcePaneReset } from '@utils/commands';
 
 interface Viewport {
+  scrollTop: number;
+  lineHeight: number;
   firstRow: number;
   firstFullyVisibleRow: number;
   lastFullyVisibleRow: number;
@@ -20,6 +22,8 @@ async function readViewport(page: Page): Promise<Viewport> {
   return page.evaluate(() => {
     const editor = window.rstudio!.documents.activeEditor()!;
     return {
+      scrollTop: editor.renderer.scrollTop,
+      lineHeight: editor.renderer.lineHeight,
       firstRow: editor.getFirstVisibleRow(),
       firstFullyVisibleRow: editor.renderer.getFirstFullyVisibleRow(),
       lastFullyVisibleRow: editor.renderer.getLastFullyVisibleRow(),
@@ -93,11 +97,17 @@ test.describe.serial('Comment continuation keeps the new line in view', () => {
       )).toBe(before.cursorRow + 1);
       expect(await currentLine(page)).toBe(newLine);
 
-      // The scroll lands on Ace's next render, so poll rather than read once.
-      await expect.poll(() => readViewport(page).then(v => v.firstRow)).toBe(before.firstRow + 1);
+      // The visible-row bookkeeping updates on Ace's next render, so poll until
+      // the new line is fully in view before judging how far the view moved.
+      await expect.poll(() => readViewport(page).then(v => v.lastFullyVisibleRow)).toBeGreaterThanOrEqual(before.cursorRow + 1);
       const after = await readViewport(page);
       expect(after.cursorRow).toBeGreaterThanOrEqual(after.firstFullyVisibleRow);
-      expect(after.cursorRow).toBeLessThanOrEqual(after.lastFullyVisibleRow);
+
+      // The viewport need not sit on a row boundary, so a minimal scroll moves
+      // by at most one line height and the first row by at most one.
+      expect(after.scrollTop).toBeGreaterThan(before.scrollTop);
+      expect(after.scrollTop - before.scrollTop).toBeLessThanOrEqual(before.lineHeight + 1);
+      expect(after.firstRow - before.firstRow).toBeLessThanOrEqual(1);
     });
   }
 });
