@@ -2688,7 +2688,8 @@ public class PaneManager
       if (active != focusedBeforeZoom && active != Document.get().getBody())
          return false;
 
-      return A11y.isInert(focusedBeforeZoom) || !DomUtils.hasLayoutBox(focusedBeforeZoom);
+      return A11y.isInert(focusedBeforeZoom) ||
+             !DomUtils.isEffectivelyVisible(focusedBeforeZoom);
    }
 
    /**
