@@ -274,6 +274,36 @@ async function toggleTab(page: Page, container: string, tabLabel: string): Promi
   await sleep(TIMEOUTS.layoutSettle);
 }
 
+// Uncheck every tab the Pane Layout dialog shows as checked in `container`.
+// Tabs that are unavailable (e.g. Posit Assistant when the server disables it,
+// or a suppressed Presentation tab) have hidden checkboxes and are left alone;
+// they never show as tabs either way.
+async function uncheckVisibleTabs(page: Page, container: string): Promise<void> {
+  const checked = page.locator(
+    `${container} input[type="checkbox"]:checked:visible:not(${PL_SIDEBAR_VISIBLE})`);
+  for (let i = 0; i < 20 && (await checked.count()) > 0; i++) {
+    await checked.first().scrollIntoViewIfNeeded();
+    await checked.first().click();
+  }
+  await expect(checked).toHaveCount(0);
+}
+
+// Reset the pane layout and hide the sidebar, whether or not a failed test
+// left the Pane Layout dialog open.
+async function restoreDefaultPaneLayout(page: Page): Promise<void> {
+  await resetLayoutZoom(page);
+  if ((await page.locator(DIALOG_BOX).count()) === 0)
+    await openPaneLayoutOptions(page);
+  await resetPaneLayoutInDialog(page);
+  const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+  if (await sidebarVisibleCheckbox.isChecked()) {
+    await sidebarVisibleCheckbox.click();
+    await sleep(TIMEOUTS.layoutSettle);
+  }
+  await page.locator(PREFERENCES_CONFIRM).click();
+  await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -976,14 +1006,13 @@ test.describe('Pane and column management', () => {
   // focus, focus must go to the empty state's Configure Panes button rather
   // than drop to the page body.
   test('Zooming an empty sidebar from the Console focuses Configure Panes (#19181)', async ({ rstudioPage: page }) => {
-    await openPaneLayoutOptions(page);
-    await resetPaneLayoutInDialog(page);
-    await toggleTab(page, PL_SIDEBAR, 'Posit Assistant');
-    expect(await isTabChecked(page, PL_SIDEBAR, 'Posit Assistant')).toBe(false);
-    await page.locator(PREFERENCES_CONFIRM).click();
-    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
-
     try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_SIDEBAR);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
       await showSidebar(page);
       await expect(page.locator(`${SIDEBAR_PANE} [role="tab"]`)).toHaveCount(0);
       const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
@@ -995,16 +1024,7 @@ test.describe('Pane and column management', () => {
       await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
       await expect(configurePanes).toBeFocused();
     } finally {
-      await resetLayoutZoom(page);
-      await openPaneLayoutOptions(page);
-      await resetPaneLayoutInDialog(page);
-      const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
-      if (await sidebarVisibleCheckbox.isChecked()) {
-        await sidebarVisibleCheckbox.click();
-        await sleep(TIMEOUTS.layoutSettle);
-      }
-      await page.locator(PREFERENCES_CONFIRM).click();
-      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+      await restoreDefaultPaneLayout(page);
     }
   });
 
@@ -1012,20 +1032,13 @@ test.describe('Pane and column management', () => {
   // tab to focus. A column zoom must then move focus to the column's other
   // tabset rather than to the empty one, which would leave it on the body.
   test('A column zoom from the Console skips an open empty tabset (#19181)', async ({ rstudioPage: page }) => {
-    await openPaneLayoutOptions(page);
-    await resetPaneLayoutInDialog(page);
-    // Suppressed tabs (e.g. Presentation) have hidden checkboxes; leaving them
-    // in TabSet1 is fine, since they never show as tabs.
-    const checkedTabs = page.locator(`${PL_RIGHT_TOP} input[type="checkbox"]:checked:visible`);
-    for (let i = 0; i < 20 && (await checkedTabs.count()) > 0; i++) {
-      await checkedTabs.first().scrollIntoViewIfNeeded();
-      await checkedTabs.first().click();
-    }
-    await expect(checkedTabs).toHaveCount(0);
-    await page.locator(PREFERENCES_CONFIRM).click();
-    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
-
     try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_RIGHT_TOP);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
       await expect(page.locator(`${TABSET1_PANE} [role="tab"]`)).toHaveCount(0);
       await page.locator('.rstudio_panel_min_btn_tabset1:visible').click();
       await expect.poll(() => getOffsetHeight(page, TABSET1_PANE)).toBeGreaterThan(50);
@@ -1038,11 +1051,7 @@ test.describe('Pane and column management', () => {
         () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
       ).toBe(true);
     } finally {
-      await resetLayoutZoom(page);
-      await openPaneLayoutOptions(page);
-      await resetPaneLayoutInDialog(page);
-      await page.locator(PREFERENCES_CONFIRM).click();
-      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+      await restoreDefaultPaneLayout(page);
     }
   });
 
