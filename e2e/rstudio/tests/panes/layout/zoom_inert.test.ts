@@ -283,6 +283,23 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
   });
 
+  // With Files already zoomed, Zoom Plots only switches the tab, which hides
+  // the Files content that had focus.
+  test('zooming another tab of the zoomed pane keeps focus in the pane', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE);
+    const filesButtonId = await page.locator(`${TABSET2_PANE} button[id]:not([disabled]):visible`)
+      .first().getAttribute('id');
+    const filesButton = page.locator(`#${filesButtonId}`);
+    await filesButton.focus();
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomPlots');
+    await expect(filesButton).toBeHidden();
+    expect(await isCommandChecked(page, 'layoutZoomPlots')).toBe(true);
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+  });
+
   // Terminal focuses itself only on selection, so its pane needs the fallback
   // to a control; Background Jobs (or whichever tab is last) takes focus.
   for (const [label, tabName] of [['Terminal', 'Terminal'], ['its last', null]] as const) {

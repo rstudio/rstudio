@@ -1434,9 +1434,18 @@ public class PaneManager
             // just activate that tab.
             else
             {
+               final Element focusedBeforeSwitch = DomUtils.getActiveElement();
                maximizedTab_ = tab;
                manageLayoutCommands();
                activateTab(tab);
+
+               // The tab panel hides the previous tab in a layout pass that
+               // runs after this event, not during activateTab().
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  if (zoomHidFocus(focusedBeforeSwitch))
+                     focusPane(window);
+               });
             }
          }
          else
