@@ -18,6 +18,7 @@
 
 // header-only file for access to r version settings from many contexts
 
+#include <core/Log.hpp>
 #include <core/SharedSettings.hpp>
 
 #include <session/SessionScopes.hpp>
@@ -34,6 +35,36 @@
 
 namespace rstudio {
 namespace session {
+
+namespace detail {
+
+inline void readProjectRVersionSettings(const core::FilePath& settingsPath,
+                                       const std::string& projectId,
+                                       const std::string& legacyProjectId,
+                                       std::string* pVersion,
+                                       std::string* pVersionHome,
+                                       std::string* pVersionLabel)
+{
+   std::string settingsId = projectId;
+   // Select the whole record, rather than mixing old and new fields. Even an
+   // empty setting under the current ID is an explicit choice and must win.
+   if (legacyProjectId != projectId &&
+       !settingsPath.completePath(projectId + kRVersionSuffix).exists() &&
+       !settingsPath.completePath(projectId + kRVersionHomeSuffix).exists() &&
+       !settingsPath.completePath(projectId + kRVersionLabelSuffix).exists())
+   {
+      settingsId = legacyProjectId;
+   }
+
+   *pVersion = core::SharedSettings::readSettingFromPath(
+         settingsPath, settingsId + kRVersionSuffix);
+   *pVersionHome = core::SharedSettings::readSettingFromPath(
+         settingsPath, settingsId + kRVersionHomeSuffix);
+   *pVersionLabel = core::SharedSettings::readSettingFromPath(
+         settingsPath, settingsId + kRVersionLabelSuffix);
+}
+
+} // namespace detail
 
 class RVersionSettings : public core::SharedSettings
 {
@@ -117,12 +148,19 @@ public:
                                                         sharedStoragePath_);
       core::r_util::ProjectId projectId = filePathToProjectId(projectDir);
 
-      *pVersion = readProjectSetting(projectId.asString(),
-                                     kRVersionSuffix);
-      *pVersionHome = readProjectSetting(projectId.asString(),
-                                         kRVersionHomeSuffix);
-      *pVersionLabel = readProjectSetting(projectId.asString(),
-                                          kRVersionLabelSuffix);
+      std::string legacyProjectId = projectId.asString();
+      const std::string currentUserId = core::r_util::obfuscatedUserId(::geteuid());
+      const std::string legacyUserId = core::r_util::legacyObfuscatedUserId(::geteuid());
+      if (legacyUserId != currentUserId && projectId.userId() == currentUserId &&
+          lookupProjectId(projectDir, userScratchPath_, sharedStoragePath_).length() == kProjectIdLen)
+      {
+         // Only our own, unqualified project mappings acquire this user's new
+         // ID. Qualified shared-project IDs retain their recorded owner ID.
+         legacyProjectId = legacyUserId + projectId.id();
+      }
+
+      detail::readProjectRVersionSettings(rVersionSettingsPath(userScratchPath_),
+            projectId.asString(), legacyProjectId, pVersion, pVersionHome, pVersionLabel);
 
       // if no local setting for R version, check for hint in .Rproj.user
       if ((pVersion->empty() || pVersionHome->empty()) && !sharedProjectScratchPath.isEmpty())
@@ -138,13 +176,6 @@ private:
                             const std::string& value)
    {
       writeSetting((projectId + name).c_str(), value);
-   }
-
-   std::string readProjectSetting(const std::string& projectId,
-                                  const char* name)
-
-   {
-      return readSetting((projectId + name).c_str());
    }
 
 private:
