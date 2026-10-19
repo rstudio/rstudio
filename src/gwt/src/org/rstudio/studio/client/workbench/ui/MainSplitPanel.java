@@ -784,7 +784,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       // Check for left column zoom: right-side columns are collapsed
       // Right widget is always the last stored width
       int rightWidth = widths[widths.length - 1];
-      boolean rightCollapsed = rightWidth < 20;
+      boolean rightCollapsed = rightWidth < COLLAPSED_COLUMN_WIDTH;
 
       // If sidebar is on the right, it's the second-to-last width
       boolean sidebarOnRight = sidebar_ != null && !"left".equals(sidebarLocation_);
@@ -793,7 +793,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       if (sidebarOnRight && widths.length >= 2)
       {
          int sidebarWidth = widths[widths.length - 2];
-         sidebarCollapsed = sidebarWidth < 20;
+         sidebarCollapsed = sidebarWidth < COLLAPSED_COLUMN_WIDTH;
       }
 
       // If right (and sidebar if on right) are collapsed, left column is zoomed
