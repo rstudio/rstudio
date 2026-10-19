@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -32,6 +33,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
@@ -646,9 +649,73 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    }
 
    @Override
+   public void animate(int duration, final AnimationCallback callback)
+   {
+      // Zooms resize the columns through an animation rather than forceLayout(),
+      // so the widths are final only once it completes.
+      super.animate(duration, new AnimationCallback()
+      {
+         public void onAnimationComplete()
+         {
+            updateCollapsedColumns();
+            if (callback != null)
+               callback.onAnimationComplete();
+         }
+
+         public void onLayout(Layer layer, double progress)
+         {
+            if (callback != null)
+               callback.onLayout(layer, progress);
+         }
+      });
+   }
+
+   /**
+    * Make each column too narrow to show anything inert, taking its panes out
+    * of the accessibility tree and the Tab order (#19181). Zoom commands and
+    * splitter drags both collapse columns, so this reads the laid-out widths
+    * rather than any zoom state. forceLayout() ends in onResize(), so every
+    * non-animated layout pass arrives here.
+    */
+   private void updateCollapsedColumns()
+   {
+      // Before the first layout pass every column reads 0px wide.
+      if (center_ == null || getOffsetWidth() == 0)
+         return;
+
+      for (Widget column : getColumns())
+      {
+         A11y.setInert(getWidgetContainerElement(column),
+                       column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH);
+      }
+   }
+
+   /**
+    * The columns currently in the panel. insert() and remove() lay out while
+    * initialize() or a sidebar change is partway through, when some of the
+    * fields name widgets that are not, or no longer, children.
+    */
+   private ArrayList<Widget> getColumns()
+   {
+      ArrayList<Widget> candidates = new ArrayList<>(leftList_);
+      candidates.add(center_);
+      candidates.add(right_);
+      candidates.add(sidebar_);
+
+      ArrayList<Widget> columns = new ArrayList<>();
+      for (Widget w : candidates)
+      {
+         if (w != null && w.getParent() == this)
+            columns.add(w);
+      }
+      return columns;
+   }
+
+   @Override
    public void onResize()
    {
       super.onResize();
+      updateCollapsedColumns();
 
       int offsetWidth = getOffsetWidth();
       if ((previousOffsetWidth_ == null || offsetWidth != previousOffsetWidth_.intValue())
@@ -772,6 +839,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    // below this; if it would, the other columns are reset to default widths so
    // Source/Console can't be left at ~0 width (invisible).
    private static final int MINIMUM_CENTER_WIDTH = 50;
+   // Below this width a column shows no usable part of its panes. Zooms leave
+   // collapsed columns at 0 or 1px; isZoomedColumnState uses the same cutoff.
+   private static final int COLLAPSED_COLUMN_WIDTH = 20;
    private Command layoutCommand_;
 
    /**
