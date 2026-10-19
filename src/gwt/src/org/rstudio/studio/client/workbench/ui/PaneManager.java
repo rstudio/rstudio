@@ -2722,8 +2722,11 @@ public class PaneManager
       WorkbenchTabPanel panel = (WorkbenchTabPanel) content;
       if (panel.getSelectedIndex() >= 0)
       {
+         // Some tabs take no focus here: Terminal focuses itself only when
+         // its tab is selected. Those fall through to the selected tab.
          panel.getSelectedTab().setFocus();
-         return;
+         if (DomUtils.contains(window.getNormal().getElement(), DomUtils.getActiveElement()))
+            return;
       }
 
       // A sidebar with no tabs (the default when Posit Assistant is off) shows

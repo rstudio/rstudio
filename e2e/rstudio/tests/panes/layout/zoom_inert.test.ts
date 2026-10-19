@@ -7,6 +7,7 @@ import {
   documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
 } from '@utils/commands';
 import { focusConsole } from '@pages/console_pane.page';
+import { killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
 import type { Locator, Page } from 'playwright';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
@@ -241,6 +242,10 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
       await otherTab.click();
       await expect(otherTab).toHaveAttribute('aria-selected', 'true');
       try {
+        // Selecting Terminal on a fresh session starts a shell.
+        if (tabName === 'Terminal')
+          await expect(page.locator(`${CONSOLE_PANE} ${XTERM_SELECTOR}`)).toBeVisible();
+
         await page.locator(`${TABSET1_PANE} [role="tab"][aria-selected="true"]`).focus();
         await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
 
@@ -249,8 +254,11 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
         await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
         await expect(otherTab).toHaveAttribute('aria-selected', 'true');
       } finally {
-        // Brings the Console tab back to the front.
         await resetLayoutZoom(page);
+        // Don't leave a shell running for later tests in this worker.
+        if (tabName === 'Terminal')
+          await killAllTerminals(page);
+        // Brings the Console tab back to the front.
         await focusConsole(page);
       }
     });
