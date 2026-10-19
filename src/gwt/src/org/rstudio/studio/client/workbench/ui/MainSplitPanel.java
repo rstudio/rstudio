@@ -18,9 +18,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -683,27 +685,76 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       if (center_ == null || getOffsetWidth() == 0)
          return;
 
+      boolean hidFocus = false;
       for (Widget column : leftList_)
-         updateCollapsedColumn(column);
-      updateCollapsedColumn(center_);
-      updateCollapsedColumn(right_);
-      updateCollapsedColumn(sidebar_);
+         hidFocus |= updateCollapsedColumn(column);
+      hidFocus |= updateCollapsedColumn(center_);
+      hidFocus |= updateCollapsedColumn(right_);
+      hidFocus |= updateCollapsedColumn(sidebar_);
+
+      if (hidFocus && focusedColumnCollapsedHandler_ != null)
+         focusedColumnCollapsedHandler_.accept(getWidestColumn());
    }
 
-   private void updateCollapsedColumn(Widget column)
+   /**
+    * Update one column's inert state. Returns true if the column has just
+    * become inert while holding focus, which the browser will drop to the page
+    * body -- e.g. a mouse drag of a splitter leaves focus in the column it shuts.
+    */
+   private boolean updateCollapsedColumn(Widget column)
    {
-      // insert() and remove() lay out while initialize() or a sidebar change
-      // is partway through, when a field can name a widget that is not, or no
-      // longer, a child.
-      if (column == null || column.getParent() != this)
-         return;
+      if (!isColumn(column))
+         return false;
 
       // This runs on every layout pass, splitter drags included; write the
       // attributes only when the column's state changes.
       Element container = getWidgetContainerElement(column);
       boolean collapsed = column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
-      if (container.hasAttribute("inert") != collapsed)
-         A11y.setInert(container, collapsed);
+      if (container.hasAttribute("inert") == collapsed)
+         return false;
+
+      boolean hidFocus = collapsed &&
+                         DomUtils.contains(container, DomUtils.getActiveElement());
+      A11y.setInert(container, collapsed);
+      return hidFocus;
+   }
+
+   private Widget getWidestColumn()
+   {
+      ArrayList<Widget> columns = new ArrayList<>(leftList_);
+      columns.add(center_);
+      columns.add(right_);
+      columns.add(sidebar_);
+
+      Widget widest = null;
+      for (Widget column : columns)
+      {
+         if (isColumn(column) &&
+             (widest == null || column.getOffsetWidth() > widest.getOffsetWidth()))
+         {
+            widest = column;
+         }
+      }
+      return widest;
+   }
+
+   /**
+    * insert() and remove() lay out while initialize() or a sidebar change is
+    * partway through, when a field can name a widget that is not, or no
+    * longer, a child.
+    */
+   private boolean isColumn(Widget widget)
+   {
+      return widget != null && widget.getParent() == this;
+   }
+
+   /**
+    * Called with the widest column when a layout pass collapses the column
+    * holding focus, so focus can move somewhere still showing.
+    */
+   public void setFocusedColumnCollapsedHandler(Consumer<Widget> handler)
+   {
+      focusedColumnCollapsedHandler_ = handler;
    }
 
    @Override
@@ -838,6 +889,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    // collapsed columns at 0 or 1px; isZoomedColumnState uses the same cutoff.
    private static final int COLLAPSED_COLUMN_WIDTH = 20;
    private Command layoutCommand_;
+   private Consumer<Widget> focusedColumnCollapsedHandler_;
 
    /**
     * Check if the saved state has a sidebar width below the minimum allowed.

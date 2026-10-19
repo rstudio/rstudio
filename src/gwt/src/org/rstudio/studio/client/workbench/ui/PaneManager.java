@@ -377,6 +377,7 @@ public class PaneManager
       center_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
       panel_ = pSplitPanel.get();
+      panel_.setFocusedColumnCollapsedHandler(this::onFocusedColumnCollapsed);
 
       // get the widgets for the extra source columns to be displayed
       additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
@@ -2483,7 +2484,6 @@ public class PaneManager
 
       String currentZoomedColumn = getZoomedColumn();
       boolean unZooming = false;
-      final Element focusedBeforeZoom = DomUtils.getActiveElement();
 
       // A tracked pane zoom makes its column read as zoomed, and the
       // same-column branch below ends it through restoreLayout(). A request
@@ -2608,33 +2608,27 @@ public class PaneManager
          }
       }
 
-      final Widget zoomedColumn = getColumnWidget(columnId);
-      Command afterZoom = () ->
-      {
-         manageLayoutCommands();
-         if (zoomHidFocus(focusedBeforeZoom))
-            focusPane(getFocusTargetIn(zoomedColumn));
-      };
-
       if (sidebarOnRight)
-         resizeHorizontallyWithSidebarOnRight(
-               rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
+         resizeHorizontallyWithSidebarOnRight(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
       else if (sidebarOnLeft)
-         resizeHorizontallyWithSidebarOnLeft(
-               rightTargetSize, leftTargetSize, sidebarTargetSize, afterZoom);
+         resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
       else
-         resizeHorizontally(rightTargetSize, leftTargetSize, afterZoom);
+         resizeHorizontally(rightTargetSize, leftTargetSize, () -> manageLayoutCommands());
    }
 
-   private Widget getColumnWidget(String columnId)
+   /**
+    * A layout pass made the column holding focus inert (#19181): a zoom, a
+    * splitter drag, or a window resize. Move focus into the widest column,
+    * unless something else has placed it by the time the layout settles.
+    */
+   private void onFocusedColumnCollapsed(Widget widestColumn)
    {
-      if (StringUtil.equals(columnId, LEFT_COLUMN))
-         return center_;
-      if (StringUtil.equals(columnId, RIGHT_COLUMN))
-         return right_;
-      if (StringUtil.equals(columnId, SIDEBAR_COLUMN))
-         return sidebar_;
-      return null;
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         Element active = DomUtils.getActiveElement();
+         if (active == null || active == Document.get().getBody() || A11y.isInert(active))
+            focusPane(getFocusTargetIn(widestColumn));
+      });
    }
 
    /**
@@ -2651,6 +2645,7 @@ public class PaneManager
       // panesByName_ has the live one.
       ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
       windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
+      windows.addAll(sourceLogicalWindows_);
       LogicalWindow topmost = null;
       for (LogicalWindow window : windows)
       {

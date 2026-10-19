@@ -51,6 +51,26 @@ async function hasFocusWithin(page: Page, pane: string): Promise<boolean> {
   return page.locator(pane).evaluate(el => el.contains(document.activeElement));
 }
 
+// Whether focus is on something the user can still reach, rather than dropped
+// to the page body or left inside a hidden column.
+async function hasReachableFocus(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const el = document.activeElement;
+    return el !== null && el !== document.body &&
+      el.closest('[inert]') === null && el.checkVisibility();
+  });
+}
+
+// Re-focuses on each poll: a terminal that is still starting can take focus
+// after the first attempt.
+async function focusSelectedTab(page: Page, pane: string): Promise<void> {
+  const tab = page.locator(`${pane} [role="tab"][aria-selected="true"]`);
+  await expect.poll(async () => {
+    await tab.focus();
+    return hasFocusWithin(page, pane);
+  }).toBe(true);
+}
+
 async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
 }
@@ -126,7 +146,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await expectExposed(page, CONSOLE_PANE);
   });
 
-  test('dragging a column splitter closed hides the column', async ({ rstudioPage: page }) => {
+  test('dragging a column splitter closed hides the column and moves focus out', async ({ rstudioPage: page }) => {
     const splitter = page.locator(MIDDLE_COLUMN_SPLITTER);
     const box = await splitter.boundingBox();
     if (!box)
@@ -140,9 +160,13 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     // splitter back however the test ends.
     try {
       // Mouse: drag the right column shut against the window edge, then back.
+      // The splitter takes no focus on mousedown, so focus is still in the
+      // column it shuts and has to move out.
+      await focusSelectedTab(page, TABSET1_PANE);
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 1, splitterY);
       await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeLessThan(20);
       await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(() => hasReachableFocus(page)).toBe(true);
 
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterX, splitterY);
       await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
@@ -159,6 +183,34 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     } finally {
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterX, splitterY);
       await expect.poll(async () => Math.abs(((await splitter.boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+    }
+  });
+
+  // Columns keep their share of the window as it resizes, so a shrink collapses
+  // only a column that was already narrow.
+  test('shrinking the window past a narrow column hides it and moves focus out', async ({ rstudioPage: page }) => {
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    const box = await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox();
+    if (!box)
+      throw new Error('Middle column splitter has no bounding box; is it rendered?');
+    const splitterY = box.y + box.height / 2;
+
+    try {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, viewport.width - 40, splitterY);
+      await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, TABSET1_PANE);
+      await focusSelectedTab(page, TABSET1_PANE);
+
+      await page.setViewportSize({ width: Math.round(viewport.width / 3), height: viewport.height });
+      await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeLessThan(20);
+      await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(() => hasReachableFocus(page)).toBe(true);
+    } finally {
+      await page.setViewportSize(viewport);
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
         .toBeLessThanOrEqual(2);
     }
   });
@@ -247,8 +299,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
         if (tabName === 'Terminal')
           await expect(page.locator(`${CONSOLE_PANE} ${XTERM_SELECTOR}`)).toBeVisible();
 
-        await page.locator(`${TABSET1_PANE} [role="tab"][aria-selected="true"]`).focus();
-        await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
+        await focusSelectedTab(page, TABSET1_PANE);
 
         await executeCommand(page, 'layoutZoomLeftColumn');
         await expectHidden(page, TABSET1_PANE);
