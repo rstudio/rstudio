@@ -1018,9 +1018,9 @@ public class PaneManager
 
    /**
     * The panes Focus Next/Previous Pane cycles through: the quadrants, then the
-    * sidebar when it is showing. panes_ can't be used as is: it lists the
-    * sidebar only when the quadrants pref does, and keeps a sidebar window that
-    * showSidebar() has since replaced.
+    * sidebar unless it is hidden or shut by a zoom or splitter drag. panes_
+    * can't be used as is: it lists the sidebar only when the quadrants pref
+    * does, and keeps a sidebar window that showSidebar() has since replaced.
     */
    private ArrayList<LogicalWindow> getFocusCycle()
    {
@@ -1030,7 +1030,7 @@ public class PaneManager
          if (!isSidebarWindow(window))
             cycle.add(window);
       }
-      if (sidebar_ != null)
+      if (sidebar_ != null && !panel_.isSidebarCollapsed())
          cycle.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
       return cycle;
    }

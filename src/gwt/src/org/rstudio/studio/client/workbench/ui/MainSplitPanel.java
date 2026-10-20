@@ -526,6 +526,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return sidebar_ != null;
    }
 
+   /**
+    * Whether the sidebar is showing but too narrow to show anything -- shut by
+    * a zoom or a splitter drag -- so its panes are inert.
+    */
+   public boolean isSidebarCollapsed()
+   {
+      return sidebar_ != null && isCollapsed(sidebar_);
+   }
+
    public int getSidebarWidth()
    {
       if (sidebar_ != null && sidebar_.getOffsetWidth() > 0)
@@ -709,7 +718,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       // This runs on every layout pass, splitter drags included; write the
       // attributes only when the column's state changes.
       Element container = getWidgetContainerElement(column);
-      boolean collapsed = column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
+      boolean collapsed = isCollapsed(column);
       if (container.hasAttribute("inert") == collapsed)
          return false;
 
@@ -717,6 +726,11 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                          DomUtils.contains(container, DomUtils.getActiveElement());
       A11y.setInert(container, collapsed);
       return hidFocus;
+   }
+
+   private boolean isCollapsed(Widget column)
+   {
+      return column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
    }
 
    private Widget getWidestColumn()

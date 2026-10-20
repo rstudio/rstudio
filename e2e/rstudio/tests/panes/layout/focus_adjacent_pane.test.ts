@@ -236,4 +236,17 @@ test.describe.serial('Focus adjacent pane', () => {
     expect(forward).toEqual(QUADRANT_PANE_IDS);
     expect(backward).toEqual([...QUADRANT_PANE_IDS].reverse());
   });
+
+  test('skips a sidebar shut by a zoom', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    await focusEnvironmentPane(page);
+    await executeCommand(page, 'layoutZoomEnvironment');
+    await expect.poll(() => page.locator(SIDEBAR_PANE).evaluate(el => (el as HTMLElement).offsetWidth))
+      .toBe(0);
+    await page.locator(LOAD_WORKSPACE_BUTTON).focus();
+
+    const forward = await cyclePanes(page, 'F6');
+
+    expect(forward).toEqual(['rstudio_TabSet2_pane', 'rstudio_Source_pane', CONSOLE_PANE_ID]);
+  });
 });
