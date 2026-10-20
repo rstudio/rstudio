@@ -682,10 +682,12 @@ public class PaneManager
       return getParentLogicalWindow(activeEl);
    }
 
-   @Handler
-   public void onActivateConsolePane()
+   /**
+    * Restore the Console pane if it is minimized, as an explicit activation:
+    * a pane that a task raised on its own stays open afterward.
+    */
+   private LogicalWindow restoreConsoleWindow()
    {
-      // Ensure that the console window is activated
       LogicalWindow consoleWindow = getConsoleLogicalWindow();
       if (consoleWindow.getState().equals(WindowState.MINIMIZE))
       {
@@ -694,6 +696,13 @@ public class PaneManager
          consoleWindow.onWindowStateChange(event);
       }
       consoleWindow.clearAutoRaisedFromMinimize();
+      return consoleWindow;
+   }
+
+   @Handler
+   public void onActivateConsolePane()
+   {
+      LogicalWindow consoleWindow = restoreConsoleWindow();
 
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only
@@ -1105,9 +1114,9 @@ public class PaneManager
                return;
             }
 
-            // Restores a minimized pane and reselects the selected tab. Terminal
-            // ignores setFocus(); it focuses itself when its tab is selected.
-            commands_.activateConsolePane().execute();
+            // The selected tab is already showing. Selecting it again would rerun
+            // its onSelected(), and Terminal's starts a shell when none is open.
+            restoreConsoleWindow();
          }
          else
          {
@@ -1116,9 +1125,9 @@ public class PaneManager
             else
                selected = tabSet2TabPanel_.getSelectedTab();
             activateTab(wbTabToTab_.get(selected));
+            if (selected instanceof DelayLoadWorkbenchTab)
+               ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
          }
-         if (selected instanceof DelayLoadWorkbenchTab)
-            ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
          selected.setFocus();
       }
    }

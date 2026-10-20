@@ -233,8 +233,14 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-      // Terminal Pane automatically directs focus to xterm.js so this method is intentionally
-      // left blank
+      // Selecting the tab focuses the terminal on its own; this covers the tab
+      // already being selected. Without a loaded terminal, focus the pane's
+      // controls: moving focus must not start a shell.
+      TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal != null && visibleTerminal.terminalEmulatorLoaded())
+         visibleTerminal.setFocus(true);
+      else
+         super.setFocus();
    }
 
    @Override
