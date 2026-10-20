@@ -233,7 +233,7 @@
       if ("matplotlib.backends" %in% names(sys$modules))
          matplotlib$pyplot$switch_backend("agg")
       else
-         matplotlib$use("agg", warn = FALSE, force = TRUE)
+         matplotlib$use("agg", force = TRUE)
    }
    
    moduleNames <- c("matplotlib.pyplot", "matplotlib.pylab")
