@@ -198,20 +198,38 @@ async function collapseCenterColumn(page: Page): Promise<number> {
   return getOffsetWidth(page, CONSOLE_PANE);
 }
 
+// Press `key` on the focused middle splitter and return the Console width once
+// it has moved and settled, or null if it didn't move (e.g. the splitter is at
+// its limit). The splitter lays out on a later turn, so a settled reading
+// taken before the width first changes could still be the old width.
+async function stepSplitter(
+  page: Page,
+  key: 'ArrowLeft' | 'ArrowRight',
+  before: number,
+): Promise<number | null> {
+  await page.keyboard.press(key);
+  try {
+    await expect
+      .poll(() => getOffsetWidth(page, CONSOLE_PANE), { timeout: 1000, intervals: [25] })
+      .not.toBe(before);
+  } catch {
+    return null;
+  }
+  return waitForStableWidth(page, CONSOLE_PANE, { min: 0 });
+}
+
 // Move the middle splitter until the Console column is back within one
-// keyboard step of `width`, waiting out each step's layout before reading the
-// width again. Ending a sidebar zoom can leave the column collapsed (#19201),
-// and the collapsed width persists into later tests. Returns the final width.
+// keyboard step of `width`. Ending a sidebar zoom can leave the column
+// collapsed (#19201), and the collapsed width persists into later tests.
+// Returns the final width.
 async function restoreConsoleWidth(page: Page, width: number): Promise<number> {
-  const stableWidth = () => waitForStableWidth(page, CONSOLE_PANE, { min: 0 });
   await focusSplitter(page);
-  for (let i = 0; i < 100 && (await stableWidth()) < width; i++) {
-    await page.keyboard.press('ArrowRight');
-  }
-  for (let i = 0; i < 100 && (await stableWidth()) > width; i++) {
-    await page.keyboard.press('ArrowLeft');
-  }
-  return stableWidth();
+  let current: number | null = await getOffsetWidth(page, CONSOLE_PANE);
+  for (let i = 0; i < 100 && current !== null && current < width; i++)
+    current = await stepSplitter(page, 'ArrowRight', current);
+  for (let i = 0; i < 100 && current !== null && current > width; i++)
+    current = await stepSplitter(page, 'ArrowLeft', current);
+  return getOffsetWidth(page, CONSOLE_PANE);
 }
 
 // Resize the middle splitter and assert it actually moved at least one column.
