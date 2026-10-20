@@ -13,7 +13,8 @@ import {
 } from '@utils/terminal';
 import type { Page } from 'playwright';
 
-const CONSOLE_PANE = '#rstudio_Console_pane';
+const CONSOLE_PANE_ID = 'rstudio_Console_pane';
+const CONSOLE_PANE = `#${CONSOLE_PANE_ID}`;
 const CONSOLE_MIN_BTN = `${CONSOLE_PANE} .rstudio_panel_min_btn_console`;
 const BACKGROUND_JOBS_TAB = '#rstudio_workbench_tab_background_jobs';
 const BACKGROUND_JOBS_PANEL = '#rstudio_workbench_panel_background_jobs';
@@ -51,7 +52,7 @@ async function focusEnvironmentPane(page: Page): Promise<void> {
   // Clicking the tab leaves focus in a terminal, so focus a pane control.
   await page.locator(ENVIRONMENT_TAB).click();
   await page.locator(LOAD_WORKSPACE_BUTTON).focus();
-  await expect.poll(() => focusedPane(page)).not.toBe(CONSOLE_PANE.slice(1));
+  await expect.poll(() => focusedPane(page)).not.toBe(CONSOLE_PANE_ID);
 }
 
 /**
@@ -67,7 +68,7 @@ async function previousPaneUntilConsolePane(page: Page): Promise<void> {
     await expect
       .poll(() => focusedPane(page), { message: `Shift+F6 did not move focus from ${from}` })
       .not.toBe(from);
-    if (await focusedPane(page) === CONSOLE_PANE.slice(1))
+    if (await focusedPane(page) === CONSOLE_PANE_ID)
       return;
   }
   throw new Error(`Shift+F6 did not reach the Console pane in ${paneCount} steps`);

@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
-import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -1100,7 +1099,7 @@ public class PaneManager
 
             // Special handling for Console; Console does not have a WorkbenchTab when there are
             // no other Console tabs open on start up and none have been added.
-            if (selected == null || StringUtil.equals(selected.getTitle(), consoleConstants_.consoleLabel()))
+            if (selected == null || selected == consolePane_)
             {
                commands_.activateConsole().execute();
                return;
@@ -3350,7 +3349,6 @@ public class PaneManager
    private int additionalSourceCount_; // this does not include the main source
    public final static int MAX_COLUMN_COUNT = 3;
    private static final UIConstants constants_ = GWT.create(UIConstants.class);
-   private static final ConsoleConstants consoleConstants_ = GWT.create(ConsoleConstants.class);
 
    // Internal identifiers for the workbench tabs
    public static final String CONSOLE_PANE = "Console"; //$NON-NLS-1$
