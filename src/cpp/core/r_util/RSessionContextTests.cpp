@@ -50,12 +50,22 @@ TEST(RSessionContextTests, ObfuscatedUserIdRemapsLargeUidsUpToMaxUid)
 
 TEST(RSessionContextTests, LegacyObfuscatedUserIdPreservesPreviousBoundary)
 {
-   core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
    const uid_t kMaxUid = 0xFFFFF;
+   const uid_t kBoundaryUid = 1000 + kMaxUid;
 
-   EXPECT_EQ(legacyObfuscatedUserId(1000 + kMaxUid), "1003e");
-   EXPECT_EQ(obfuscatedUserId(1000 + kMaxUid), "fffff");
-   for (uid_t uid : {0u, 1000u, kMaxUid, 1000 + kMaxUid - 1, 1000 + kMaxUid + 1})
+   // with a minimum uid of 0, no uid above kMaxUid is remapped, so this is the ID
+   // that kBoundaryUid got before the boundary fix; server builds obfuscate IDs,
+   // so the expected values are computed rather than written as literals
+   std::string unremappedId;
+   {
+      core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "0");
+      unremappedId = obfuscatedUserId(kBoundaryUid);
+   }
+
+   core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
+   EXPECT_EQ(legacyObfuscatedUserId(kBoundaryUid), unremappedId);
+   EXPECT_NE(legacyObfuscatedUserId(kBoundaryUid), obfuscatedUserId(kBoundaryUid));
+   for (uid_t uid : {0u, 1000u, kMaxUid, kBoundaryUid - 1, kBoundaryUid + 1})
       EXPECT_EQ(legacyObfuscatedUserId(uid), obfuscatedUserId(uid));
 }
 
