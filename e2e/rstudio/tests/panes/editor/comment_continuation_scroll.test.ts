@@ -11,30 +11,45 @@ import { clearPref, setPref, waitForSourcePaneReset } from '@utils/commands';
 
 interface Viewport {
   scrollTop: number;
+  scrollerHeight: number;
   lineHeight: number;
-  firstRow: number;
-  firstFullyVisibleRow: number;
-  lastFullyVisibleRow: number;
   cursorRow: number;
 }
 
 async function readViewport(page: Page): Promise<Viewport> {
   return page.evaluate(() => {
     const editor = window.rstudio!.documents.activeEditor()!;
+    const renderer = editor.renderer;
     return {
-      scrollTop: editor.renderer.scrollTop,
-      lineHeight: editor.renderer.lineHeight,
-      firstRow: editor.getFirstVisibleRow(),
-      firstFullyVisibleRow: editor.renderer.getFirstFullyVisibleRow(),
-      lastFullyVisibleRow: editor.renderer.getLastFullyVisibleRow(),
+      scrollTop: renderer.scrollTop,
+      scrollerHeight: renderer.$size.scrollerHeight,
+      lineHeight: renderer.lineHeight,
       cursorRow: editor.getCursorPosition().row,
     };
   });
 }
 
+// Row geometry in pixels. Ace's getLastFullyVisibleRow() is off by one when
+// the viewport is not aligned to a row boundary, so compute from these instead.
+function rowTop(v: Viewport, row: number): number {
+  return row * v.lineHeight;
+}
+
+function rowBottom(v: Viewport, row: number): number {
+  return (row + 1) * v.lineHeight;
+}
+
+function viewportBottom(v: Viewport): number {
+  return v.scrollTop + v.scrollerHeight;
+}
+
+function isRowFullyVisible(v: Viewport, row: number): boolean {
+  return rowTop(v, row) >= v.scrollTop && rowBottom(v, row) <= viewportBottom(v);
+}
+
 // Fills the editor, scrolls into the middle of it, and parks the cursor at the
 // end of `lineText` placed on the last fully visible row, so that a new line
-// below the cursor is off screen until something scrolls.
+// below the cursor is at least partly off screen until something scrolls.
 async function parkCursorOnLastVisibleRow(page: Page, lineText: string): Promise<Viewport> {
   await page.evaluate(() => {
     const editor = window.rstudio!.documents.activeEditor()!;
@@ -45,17 +60,27 @@ async function parkCursorOnLastVisibleRow(page: Page, lineText: string): Promise
     window.rstudio!.documents.activeEditor()!.getFirstVisibleRow()
   )).toBeGreaterThan(0);
 
-  await page.evaluate((text) => {
+  // Leave the viewport off a row boundary, as it is after real scrolling, so
+  // the test covers the geometry that row-based bookkeeping gets wrong.
+  await page.evaluate(() => {
     const editor = window.rstudio!.documents.activeEditor()!;
-    const row = editor.renderer.getLastFullyVisibleRow();
+    editor.session.setScrollTop(editor.renderer.scrollTop + editor.renderer.lineHeight / 3);
+  });
+
+  const centered = await readViewport(page);
+  const row = Math.floor(viewportBottom(centered) / centered.lineHeight) - 1;
+  await page.evaluate(({ row, text }) => {
+    const editor = window.rstudio!.documents.activeEditor()!;
     const end = editor.session.getLine(row).length;
     editor.session.replace({ start: { row, column: 0 }, end: { row, column: end } }, text);
     editor.selection.setRange({ start: { row, column: text.length }, end: { row, column: text.length } });
     editor.focus();
-  }, lineText);
+  }, { row, text: lineText });
 
   const viewport = await readViewport(page);
-  expect(viewport.cursorRow).toBe(viewport.lastFullyVisibleRow);
+  expect(viewport.cursorRow).toBe(row);
+  expect(isRowFullyVisible(viewport, row)).toBe(true);
+  expect(isRowFullyVisible(viewport, row + 1)).toBe(false);
   return viewport;
 }
 
@@ -97,17 +122,15 @@ test.describe.serial('Comment continuation keeps the new line in view', () => {
       )).toBe(before.cursorRow + 1);
       expect(await currentLine(page)).toBe(newLine);
 
-      // The visible-row bookkeeping updates on Ace's next render, so poll until
-      // the new line is fully in view before judging how far the view moved.
-      await expect.poll(() => readViewport(page).then(v => v.lastFullyVisibleRow)).toBeGreaterThanOrEqual(before.cursorRow + 1);
-      const after = await readViewport(page);
-      expect(after.cursorRow).toBeGreaterThanOrEqual(after.firstFullyVisibleRow);
+      // The scroll may animate, so wait for the new line to be fully in view
+      // before judging how far the view moved.
+      await expect.poll(() => readViewport(page).then(v => isRowFullyVisible(v, v.cursorRow))).toBe(true);
 
-      // The viewport need not sit on a row boundary, so a minimal scroll moves
-      // by at most one line height and the first row by at most one.
+      // A minimal scroll leaves the new line flush with the bottom of the
+      // viewport, exactly where a plain Return would put it.
+      const after = await readViewport(page);
       expect(after.scrollTop).toBeGreaterThan(before.scrollTop);
-      expect(after.scrollTop - before.scrollTop).toBeLessThanOrEqual(before.lineHeight + 1);
-      expect(after.firstRow - before.firstRow).toBeLessThanOrEqual(1);
+      expect(after.scrollTop).toBeCloseTo(rowBottom(after, after.cursorRow) - after.scrollerHeight, 1);
     });
   }
 });
