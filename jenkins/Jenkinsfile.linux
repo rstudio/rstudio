@@ -424,8 +424,8 @@ pipeline {
 
         stage('Trigger Automation Testing') {
           steps {
-            // Best-effort: a failed trigger marks this stage red but must not skip the GHA dispatch below
-            catchError(buildResult: null, stageResult: 'FAILURE') {
+            // A failed trigger marks the build unstable but must not skip the GHA dispatch below
+            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
               build wait: false,
               job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
               parameters: [
