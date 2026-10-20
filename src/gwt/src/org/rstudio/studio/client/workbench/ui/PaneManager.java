@@ -29,6 +29,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
@@ -682,12 +683,10 @@ public class PaneManager
       return getParentLogicalWindow(activeEl);
    }
 
-   /**
-    * Restore the Console pane if it is minimized, as an explicit activation:
-    * a pane that a task raised on its own stays open afterward.
-    */
-   private LogicalWindow restoreConsoleWindow()
+   @Handler
+   public void onActivateConsolePane()
    {
+      // Ensure that the console window is activated
       LogicalWindow consoleWindow = getConsoleLogicalWindow();
       if (consoleWindow.getState().equals(WindowState.MINIMIZE))
       {
@@ -696,13 +695,6 @@ public class PaneManager
          consoleWindow.onWindowStateChange(event);
       }
       consoleWindow.clearAutoRaisedFromMinimize();
-      return consoleWindow;
-   }
-
-   @Handler
-   public void onActivateConsolePane()
-   {
-      LogicalWindow consoleWindow = restoreConsoleWindow();
 
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only
@@ -1114,9 +1106,12 @@ public class PaneManager
                return;
             }
 
-            // The selected tab is already showing. Selecting it again would rerun
+            // Raise the pane as a tab asking to be seen does -- out of minimized,
+            // or taking over a zoom -- but don't select the tab again: that reruns
             // its onSelected(), and Terminal's starts a shell when none is open.
-            restoreConsoleWindow();
+            LogicalWindow consoleWindow = getConsoleLogicalWindow();
+            consoleWindow.getNormal().onEnsureVisible(new EnsureVisibleEvent(false));
+            consoleWindow.clearAutoRaisedFromMinimize();
          }
          else
          {

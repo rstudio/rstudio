@@ -2,7 +2,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, resetLayoutZoom } from '@utils/commands';
 import { CONSOLE_INPUT, CONSOLE_TAB } from '@pages/console_pane.page';
 import {
   TERMINAL_TAB,
@@ -73,6 +73,7 @@ async function previousPaneUntilConsolePane(page: Page): Promise<void> {
 
 test.describe.serial('Focus adjacent pane', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
+    await resetLayoutZoom(page);
     await killAllTerminals(page);
     await executeCommand(page, 'activateConsole');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible();
@@ -110,6 +111,24 @@ test.describe.serial('Focus adjacent pane', () => {
     await previousPaneUntilConsolePane(page);
 
     await expect(page.locator(CONSOLE_PANE)).toBeVisible();
+    await expect(page.locator(TERMINAL_TAB)).toHaveAttribute('aria-selected', 'true');
+    await expect
+      .poll(() => focusIsIn(page, XTERM_SELECTOR), { timeout: TIMEOUTS.consoleReady })
+      .toBe(true);
+  });
+
+  test('moves a zoom to the Console pane', async ({ rstudioPage: page }) => {
+    await openTerminal(page);
+    await focusEnvironmentPane(page);
+    await executeCommand(page, 'layoutZoomEnvironment');
+    await expect.poll(() => page.locator(CONSOLE_PANE).evaluate(el => (el as HTMLElement).offsetWidth))
+      .toBe(0);
+    await page.locator(LOAD_WORKSPACE_BUTTON).focus();
+
+    await previousPaneUntilConsolePane(page);
+
+    await expect.poll(() => page.locator(CONSOLE_PANE).evaluate(el => (el as HTMLElement).offsetWidth))
+      .toBeGreaterThan(0);
     await expect(page.locator(TERMINAL_TAB)).toHaveAttribute('aria-selected', 'true');
     await expect
       .poll(() => focusIsIn(page, XTERM_SELECTOR), { timeout: TIMEOUTS.consoleReady })
