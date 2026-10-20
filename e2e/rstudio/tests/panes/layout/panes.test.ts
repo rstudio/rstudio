@@ -529,7 +529,6 @@ test.describe('Pane and column management', () => {
   test('Zoomed left column with sidebar hidden works as expected', async ({ rstudioPage: page }) => {
     expect(await elementExists(page, SIDEBAR_PANE)).toBe(false);
 
-    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
     const initialTabSet1Width = await getOffsetWidth(page, TABSET1_PANE);
     const initialTabSet2Width = await getOffsetWidth(page, TABSET2_PANE);
 
@@ -1007,6 +1006,7 @@ test.describe('Pane and column management', () => {
   // focus, focus must go to the empty state's Configure Panes button rather
   // than drop to the page body.
   test('Zooming an empty sidebar from the Console focuses Configure Panes (#19181)', async ({ rstudioPage: page }) => {
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
     try {
       await openPaneLayoutOptions(page);
       await resetPaneLayoutInDialog(page);
@@ -1024,6 +1024,33 @@ test.describe('Pane and column management', () => {
       await executeCommand(page, 'layoutZoomSidebar');
       await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
       await expect(configurePanes).toBeFocused();
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
+  });
+
+  // Focus Next Pane must reach an empty sidebar too, and leave it (#19191).
+  test('F6 moves focus into and out of an empty sidebar (#19191)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_SIDEBAR);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await showSidebar(page);
+      await expect(page.locator(`${SIDEBAR_PANE} [role="tab"]`)).toHaveCount(0);
+      const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
+      await expect(configurePanes).toBeVisible();
+
+      await page.locator(`${TABSET2_PANE} [role="tab"][aria-selected="true"]`).focus();
+      await page.keyboard.press('F6');
+      await expect(configurePanes).toBeFocused();
+
+      await page.keyboard.press('Shift+F6');
+      await expect.poll(
+        () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
     } finally {
       await restoreDefaultPaneLayout(page);
     }

@@ -24,7 +24,10 @@ const LOAD_WORKSPACE_BUTTON = '#rstudio_tb_loadworkspace';
 const PANES = '[id^="rstudio_"][id$="_pane"]';
 const SIDEBAR_PANE_ID = 'rstudio_Sidebar_pane';
 const SIDEBAR_PANE = `#${SIDEBAR_PANE_ID}`;
-const SIDEBAR_TAB = `${SIDEBAR_PANE} [role="tab"]`;
+// The sidebar's first tab, or its Configure Panes button when it has none --
+// the Workbench default, where Posit Assistant is off.
+const SIDEBAR_START =
+  `${SIDEBAR_PANE} [role="tab"], ${SIDEBAR_PANE} #rstudio_customize_panes`;
 const QUADRANT_PANE_IDS = [
   'rstudio_Source_pane',
   CONSOLE_PANE_ID,
@@ -227,7 +230,7 @@ test.describe.serial('Focus adjacent pane', () => {
   test('cycles into and out of a sidebar shown after load', async ({ rstudioPage: page }) => {
     await setSidebarVisible(page, false);
     await setSidebarVisible(page, true);
-    await page.locator(SIDEBAR_TAB).first().focus();
+    await page.locator(SIDEBAR_START).first().focus();
     await expect.poll(() => focusedPane(page)).toBe(SIDEBAR_PANE_ID);
 
     const forward = await cyclePanes(page, 'F6');
