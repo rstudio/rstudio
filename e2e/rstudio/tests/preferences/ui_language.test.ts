@@ -2,13 +2,10 @@ import type { Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { getPref, setPref } from '@utils/commands';
 
-// The root element's lang must name the UI language actually displayed, so
-// screen readers pick the right voice. index.htm ships lang="en"; the page
-// takes the language GWT loaded.
-//
-// After the pref changes, the first reload still shows the old language (GWT
-// picks it from the LOCALE cookie); that page updates the cookie and reloads
-// again. So poll across both loads until the expected language is up.
+// The root lang must name the displayed UI language so screen readers pick the
+// right voice. After the pref changes, the first reload still shows the old
+// language (GWT reads the LOCALE cookie), then updates the cookie and reloads
+// again, so poll across both loads.
 
 const PREF = 'ui_language';
 
