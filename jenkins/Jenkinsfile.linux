@@ -437,6 +437,25 @@ pipeline {
           }
         }
 
+        // Dispatches the GHA docker e2e suite for this build (rstudio-ide-automation#6105)
+        stage('Trigger Docker E2E (GHA)') {
+          when {
+            allOf {
+              expression { env.BRANCH_NAME == 'main' }
+              expression { params.OS_FILTER in ['all', 'jammy'] }
+              expression { params.ARCH_FILTER in ['all', 'x86_64'] }
+              expression { params.FLAVOR_FILTER in ['all', 'Server'] }
+            }
+          }
+          steps {
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+              script {
+                utils.triggerGitHubWorkflow('rstudio', 'rstudio-ide-automation', 'e2e-docker.yaml', 'main', [product: IS_PRO ? 'pro' : 'os', version: "${RSTUDIO_VERSION}", product_branch: "${env.BRANCH_NAME}"], 60)
+              }
+            }
+          }
+        }
+
       }
     }
   }
