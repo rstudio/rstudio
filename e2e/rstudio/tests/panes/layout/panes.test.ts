@@ -199,18 +199,19 @@ async function collapseCenterColumn(page: Page): Promise<number> {
 }
 
 // Move the middle splitter until the Console column is back within one
-// keyboard step of `width`. Ending a sidebar zoom can leave the column
-// collapsed (#19201), and the collapsed width persists into later tests.
-async function restoreConsoleWidth(page: Page, width: number): Promise<void> {
+// keyboard step of `width`, waiting out each step's layout before reading the
+// width again. Ending a sidebar zoom can leave the column collapsed (#19201),
+// and the collapsed width persists into later tests. Returns the final width.
+async function restoreConsoleWidth(page: Page, width: number): Promise<number> {
+  const stableWidth = () => waitForStableWidth(page, CONSOLE_PANE, { min: 0 });
   await focusSplitter(page);
-  for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) < width; i++) {
+  for (let i = 0; i < 100 && (await stableWidth()) < width; i++) {
     await page.keyboard.press('ArrowRight');
   }
-  for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) > width; i++) {
+  for (let i = 0; i < 100 && (await stableWidth()) > width; i++) {
     await page.keyboard.press('ArrowLeft');
   }
-  await sleep(TIMEOUTS.layoutSettle);
-  expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), width, 0.1, 'restored Console');
+  return stableWidth();
 }
 
 // Resize the middle splitter and assert it actually moved at least one column.
@@ -1023,6 +1024,7 @@ test.describe('Pane and column management', () => {
   // than drop to the page body.
   test('Zooming an empty sidebar from the Console focuses Configure Panes (#19181)', async ({ rstudioPage: page }) => {
     const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+    let restoredConsoleWidth = initialConsoleWidth;
     try {
       await openPaneLayoutOptions(page);
       await resetPaneLayoutInDialog(page);
@@ -1042,8 +1044,10 @@ test.describe('Pane and column management', () => {
       await expect(configurePanes).toBeFocused();
     } finally {
       await restoreDefaultPaneLayout(page);
-      await restoreConsoleWidth(page, initialConsoleWidth);
+      restoredConsoleWidth = await restoreConsoleWidth(page, initialConsoleWidth);
     }
+    // Checked after the finally so a failed restore can't mask a body failure.
+    expectWidthClose(restoredConsoleWidth, initialConsoleWidth, 0.1, 'restored Console');
   });
 
   // Focus Next Pane must reach an empty sidebar too, and leave it (#19191).
