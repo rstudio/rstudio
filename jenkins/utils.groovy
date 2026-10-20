@@ -423,10 +423,10 @@ def prApiUrl() {
   * Retries on HTTP 401 (fresh credentials each attempt) with exponential backoff.
   *
   * Args:
-  *    method:     HTTP method (e.g. 'GET', 'POST')
-  *    url:        Full request URL
-  *    payload:    Request body for non-GET requests (optional)
-  *    maxRetries: Attempts on 401 before giving up (default 3)
+  *    method:      HTTP method (e.g. 'GET', 'POST')
+  *    url:         Full request URL
+  *    payload:     Request body for non-GET requests (optional)
+  *    maxRetries:  Attempts on 401 before giving up (default 3)
   *    timeoutSecs: httpRequest connect/read timeout in seconds (default 0 = no timeout)
   * Returns: the last httpRequest response object.
   */
@@ -485,12 +485,12 @@ def checkRunsRequestWithRetry(String method, String payload = "", String url = p
   * Dispatches a GitHub Actions workflow via the workflow_dispatch API.
   *
   * Args:
-  *    owner:    GitHub owner (e.g. 'rstudio')
-  *    repo:     GitHub repository name (e.g. 'rstudio-pro')
-  *    workflow: Workflow filename or ID (e.g. 'trigger-workbench-image-build.yml')
-  *    ref:      Git ref to dispatch on (e.g. 'main')
-  *    inputs:   Map of workflow_dispatch inputs (optional)
-  *    timeoutSecs: httpRequest timeout in seconds (optional, default 0 = no timeout)
+  *    owner:       GitHub owner (e.g. 'rstudio')
+  *    repo:        GitHub repository name (e.g. 'rstudio-pro')
+  *    workflow:    Workflow filename or ID (e.g. 'trigger-workbench-image-build.yml')
+  *    ref:         Git ref to dispatch on (e.g. 'main')
+  *    inputs:      Map of workflow_dispatch inputs (optional)
+  *    timeoutSecs: httpRequest connect/read timeout in seconds (optional, default 0 = no timeout)
   */
 def triggerGitHubWorkflow(String owner, String repo, String workflow, String ref, Map inputs = [:], int timeoutSecs = 0) {
   def inputsJson = groovy.json.JsonOutput.toJson(inputs)
