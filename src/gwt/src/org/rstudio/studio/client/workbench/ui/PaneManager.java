@@ -30,6 +30,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
@@ -60,7 +61,6 @@ import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
-import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -1102,11 +1102,18 @@ public class PaneManager
 
             // Special handling for Console; Console does not have a WorkbenchTab when there are
             // no other Console tabs open on start up and none have been added.
-            if (selected == null || StringUtil.equals(selected.getTitle(), consoleConstants_.consoleLabel()));
+            if (selected == null || selected == consolePane_)
             {
                commands_.activateConsole().execute();
                return;
             }
+
+            // Raise the pane as a tab asking to be seen does -- out of minimized,
+            // or taking over a zoom -- but don't select the tab again: that reruns
+            // its onSelected(), and Terminal's starts a shell when none is open.
+            LogicalWindow consoleWindow = getConsoleLogicalWindow();
+            consoleWindow.getNormal().onEnsureVisible(new EnsureVisibleEvent(false));
+            consoleWindow.clearAutoRaisedFromMinimize();
          }
          else
          {
@@ -1115,9 +1122,9 @@ public class PaneManager
             else
                selected = tabSet2TabPanel_.getSelectedTab();
             activateTab(wbTabToTab_.get(selected));
+            if (selected instanceof DelayLoadWorkbenchTab)
+               ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
          }
-         if (selected instanceof DelayLoadWorkbenchTab)
-            ((DelayLoadWorkbenchTab)selected).ensureVisible(true);
          selected.setFocus();
       }
    }
@@ -3478,7 +3485,6 @@ public class PaneManager
    private int additionalSourceCount_; // this does not include the main source
    public final static int MAX_COLUMN_COUNT = 3;
    private static final UIConstants constants_ = GWT.create(UIConstants.class);
-   private static final ConsoleConstants consoleConstants_ = GWT.create(ConsoleConstants.class);
 
    // Internal identifiers for the workbench tabs
    public static final String CONSOLE_PANE = "Console"; //$NON-NLS-1$

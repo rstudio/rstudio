@@ -184,6 +184,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       await sourceActions.selectInEditor('calculate_total', 6, 0, 6);
       await sourcePane.aceTextInput.pressSequentially('final_result');
@@ -210,11 +211,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
-
-      // Check for stale NES gutter icon — known RStudio bug where gutter persists across files
-      if (await sourcePane.nesGutter.first().isVisible().catch(() => false)) {
-        console.log('  WARNING: Stale NES gutter icon visible before any edits (known bug, https://github.com/rstudio/rstudio/issues/17108)');
-      }
+      await sourceActions.dismissSuggestionsFromOpen();
 
       await sourceActions.selectInEditor('total_price', 6, 0, 11);
 
@@ -248,6 +245,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       await sourceActions.selectInEditor('order_total', 6, 0, 11);
 
@@ -282,6 +280,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       await sourceActions.selectInEditor('summary(score)', 6, 0, 5);
 
@@ -350,6 +349,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       // Rename parameter in signature to trigger multiline NES in body
       await sourceActions.selectInEditor('nums', 1, 22, 26);
@@ -400,6 +400,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       // Rename parameter in signature to trigger multiline NES in body
       // 'nums' starts at column 22: summarize <- function(nums) {
@@ -525,6 +526,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       // Rename to trigger NES
       await sourceActions.selectInEditor('calculate_total', 6, 0, 6);
@@ -570,6 +572,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       // Rename variable on line 7 to trigger NES on line 10
       await sourceActions.selectInEditor('order_total', 7, 0, 11);
@@ -617,6 +620,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // --- File A: trigger and accept NES ---
       await sourceActions.createAndOpenFile(fileNameA, originalCode);
       await sleep(5000);
+      await sourceActions.dismissSuggestionsFromOpen();
 
       // Pre-edit: rename order_total on line 1
       await sourceActions.selectInEditor('order_total', 1, 0, 11);

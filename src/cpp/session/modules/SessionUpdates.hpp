@@ -16,6 +16,10 @@
 #ifndef SESSION_UPDATES_HPP
 #define SESSION_UPDATES_HPP
 
+#include <string>
+
+#include <shared_core/json/Json.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -26,6 +30,10 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace updates {
+
+// Parse the key=value lines that SessionUpdates.R prints. Lines without a
+// key (no '=' or a leading '=') are skipped.
+core::json::Object parseUpdateCheckOutput(const std::string& stdOut);
 
 core::Error initialize();
    
