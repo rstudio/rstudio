@@ -199,9 +199,10 @@ async function collapseCenterColumn(page: Page): Promise<number> {
 }
 
 // Press `key` on the focused middle splitter and return the Console width once
-// it has moved and settled, or null if it didn't move (e.g. the splitter is at
-// its limit). The splitter lays out on a later turn, so a settled reading
-// taken before the width first changes could still be the old width.
+// it has moved and settled, or null if it didn't move within the layout timeout
+// waitForStableWidth allows (e.g. the splitter is at its limit). The splitter
+// lays out on a later turn, so a settled reading taken before the width first
+// changes could still be the old width.
 async function stepSplitter(
   page: Page,
   key: 'ArrowLeft' | 'ArrowRight',
@@ -210,7 +211,7 @@ async function stepSplitter(
   await page.keyboard.press(key);
   try {
     await expect
-      .poll(() => getOffsetWidth(page, CONSOLE_PANE), { timeout: 1000, intervals: [25] })
+      .poll(() => getOffsetWidth(page, CONSOLE_PANE), { timeout: 5000, intervals: [25] })
       .not.toBe(before);
   } catch {
     return null;
