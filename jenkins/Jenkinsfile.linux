@@ -441,7 +441,7 @@ pipeline {
         stage('Trigger Docker E2E (GHA)') {
           when {
             allOf {
-              expression { env.BRANCH_NAME == 'main' }
+              expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME.startsWith('rel-') }
               expression { params.OS_FILTER in ['all', 'jammy'] }
               expression { params.ARCH_FILTER in ['all', 'x86_64'] }
               expression { params.FLAVOR_FILTER in ['all', 'Server'] }
