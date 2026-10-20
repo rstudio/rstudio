@@ -198,6 +198,21 @@ async function collapseCenterColumn(page: Page): Promise<number> {
   return getOffsetWidth(page, CONSOLE_PANE);
 }
 
+// Move the middle splitter until the Console column is back within one
+// keyboard step of `width`. Ending a sidebar zoom can leave the column
+// collapsed (#19201), and the collapsed width persists into later tests.
+async function restoreConsoleWidth(page: Page, width: number): Promise<void> {
+  await focusSplitter(page);
+  for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) < width; i++) {
+    await page.keyboard.press('ArrowRight');
+  }
+  for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) > width; i++) {
+    await page.keyboard.press('ArrowLeft');
+  }
+  await sleep(TIMEOUTS.layoutSettle);
+  expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), width, 0.1, 'restored Console');
+}
+
 // Resize the middle splitter and assert it actually moved at least one column.
 // Without this guard, a no-op resize would silently turn the preservation
 // tests into no-op cycles that can never fail.
@@ -529,6 +544,7 @@ test.describe('Pane and column management', () => {
   test('Zoomed left column with sidebar hidden works as expected', async ({ rstudioPage: page }) => {
     expect(await elementExists(page, SIDEBAR_PANE)).toBe(false);
 
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
     const initialTabSet1Width = await getOffsetWidth(page, TABSET1_PANE);
     const initialTabSet2Width = await getOffsetWidth(page, TABSET2_PANE);
 
@@ -1026,6 +1042,7 @@ test.describe('Pane and column management', () => {
       await expect(configurePanes).toBeFocused();
     } finally {
       await restoreDefaultPaneLayout(page);
+      await restoreConsoleWidth(page, initialConsoleWidth);
     }
   });
 
