@@ -231,9 +231,17 @@
    {
       sys <- reticulate::import("sys", convert = TRUE)
       if ("matplotlib.backends" %in% names(sys$modules))
+      {
          matplotlib$pyplot$switch_backend("agg")
+      }
       else
-         matplotlib$use("agg", force = TRUE)
+      {
+         # the 'warn' argument was removed in matplotlib 3.3.0
+         args <- list("agg", force = TRUE)
+         if ("warn" %in% .rs.reticulate.pyFormalNames(matplotlib$use))
+            args$warn <- FALSE
+         do.call(matplotlib$use, args)
+      }
    }
    
    moduleNames <- c("matplotlib.pyplot", "matplotlib.pylab")
@@ -255,6 +263,17 @@
       
    }
    
+})
+
+# Returns the parameter names of a Python callable, or NULL if they
+# cannot be determined (e.g. for builtins without a signature).
+.rs.addFunction("reticulate.pyFormalNames", function(fn)
+{
+   tryCatch({
+      inspect <- reticulate::import("inspect", convert = FALSE)
+      builtins <- reticulate::import_builtins(convert = TRUE)
+      builtins$list(inspect$signature(fn)$parameters)
+   }, error = function(e) NULL)
 })
 
 .rs.addFunction("reticulate.matplotlib.showHook", function(...)

@@ -6,6 +6,7 @@
 - ([#19142](https://github.com/rstudio/rstudio/issues/19142)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
 ### Fixed
+- ([#19195](https://github.com/rstudio/rstudio/pull/19195)): Fixed an issue where loading matplotlib via reticulate failed with `TypeError: use() got an unexpected keyword argument 'warn'` on matplotlib 3.3.0 and newer, which could also prevent TensorFlow and Keras from initializing in RStudio.
 - ([#19185](https://github.com/rstudio/rstudio/issues/19185)): Fixed an issue where pressing Return on a comment line near the bottom of the editor, with "Continue comments on new lines" enabled, jumped the editor so the cursor sat near the top of the viewport instead of scrolling by one line. Shift+Return in the same configuration now scrolls the new line into view too.
 - ([#19189](https://github.com/rstudio/rstudio/issues/19189)): Fixed an issue where, on R < 4.6, delayed bindings in the base environment were reported as plain values (and so were forced by the Environment pane when listing `package:base`).
 - ([#19082](https://github.com/rstudio/rstudio/issues/19082)): Fixed an issue where console output slowed down, and the IDE could become unresponsive, as the console scrollback filled up -- most visibly when output alternated between stdout and stderr (e.g. `message()` and `cat()` in a loop).
