@@ -108,12 +108,14 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.StyleInjector;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -129,6 +131,10 @@ public class RStudio implements EntryPoint
    {
       StartupTiming.mark("module-load");
       Debug.injectDebug();
+
+      // index.htm ships lang="en"; GWT chose this permutation from the LOCALE cookie, so the
+      // permutation's locale is the language actually displayed.
+      Document.get().getDocumentElement().setLang(LocaleInfo.getCurrentLocale().getLocaleName());
       maybeSetWindowName("rstudio-" + StringUtil.makeRandomId(16));
       maybeDelayLoadApplication(this);
    }
