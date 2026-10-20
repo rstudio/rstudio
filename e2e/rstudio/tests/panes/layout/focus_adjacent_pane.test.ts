@@ -15,6 +15,8 @@ import type { Page } from 'playwright';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
 const CONSOLE_MIN_BTN = `${CONSOLE_PANE} .rstudio_panel_min_btn_console`;
+const BACKGROUND_JOBS_TAB = '#rstudio_workbench_tab_background_jobs';
+const BACKGROUND_JOBS_PANEL = '#rstudio_workbench_panel_background_jobs';
 const ENVIRONMENT_TAB = '#rstudio_workbench_tab_environment';
 const LOAD_WORKSPACE_BUTTON = '#rstudio_tb_loadworkspace';
 const PANES = '[id^="rstudio_"][id$="_pane"]';
@@ -100,6 +102,16 @@ test.describe.serial('Focus adjacent pane', () => {
 
     await expect(page.locator(CONSOLE_TAB)).toHaveAttribute('aria-selected', 'true');
     await expect.poll(() => focusIsIn(page, CONSOLE_INPUT)).toBe(true);
+  });
+
+  test('keeps the Background Jobs tab selected and focuses it', async ({ rstudioPage: page }) => {
+    await page.locator(BACKGROUND_JOBS_TAB).click();
+    await focusEnvironmentPane(page);
+
+    await previousPaneUntilConsolePane(page);
+
+    await expect(page.locator(BACKGROUND_JOBS_TAB)).toHaveAttribute('aria-selected', 'true');
+    await expect.poll(() => focusIsIn(page, BACKGROUND_JOBS_PANEL)).toBe(true);
   });
 
   test('restores a minimized Console pane', async ({ rstudioPage: page }) => {
