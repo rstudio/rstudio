@@ -3,7 +3,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { executeCommand, resetLayoutZoom } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
 import { CONSOLE_INPUT, CONSOLE_TAB } from '@pages/console_pane.page';
 import {
   TERMINAL_TAB,
@@ -110,8 +110,13 @@ async function cyclePanes(page: Page, key: string): Promise<string[]> {
   throw new Error(`${key} did not return to ${start} in ${maxSteps} steps: ${visited.join(', ')}`);
 }
 
+/**
+ * Show or hide the sidebar. Reads the toggleSidebar command's checked state,
+ * which follows the saved preference, because a zoom can shut a sidebar that
+ * is showing and make it read as hidden.
+ */
 async function setSidebarVisible(page: Page, visible: boolean): Promise<void> {
-  if (await page.locator(SIDEBAR_PANE).isVisible() !== visible)
+  if (await isCommandChecked(page, 'toggleSidebar') !== visible)
     await executeCommand(page, 'toggleSidebar');
   if (visible)
     await expect(page.locator(SIDEBAR_PANE)).toBeVisible();
@@ -125,7 +130,7 @@ test.describe.serial('Focus adjacent pane', () => {
   let sidebarInitiallyVisible = false;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    sidebarInitiallyVisible = await page.locator(SIDEBAR_PANE).isVisible();
+    sidebarInitiallyVisible = await isCommandChecked(page, 'toggleSidebar');
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
