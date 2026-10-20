@@ -655,6 +655,12 @@ public class PaneManager
       ArrayList<LogicalWindow> windowList = new ArrayList<>(panes_);
       windowList.addAll(sourceLogicalWindows_);
 
+      // panes_ can hold a sidebar window that showSidebar() has since replaced,
+      // or none at all; panesByName_ has the live one.
+      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      if (sidebarWindow != null)
+         windowList.add(sidebarWindow);
+
       while (el != null && targetWindow == null)
       {
          el = el.getParentElement();
@@ -1010,26 +1016,52 @@ public class PaneManager
       return true;
    }
 
+   /**
+    * The panes Focus Next/Previous Pane cycles through: the quadrants, then the
+    * sidebar when it is showing. panes_ can't be used as is: it lists the
+    * sidebar only when the quadrants pref does, and keeps a sidebar window that
+    * showSidebar() has since replaced.
+    */
+   private ArrayList<LogicalWindow> getFocusCycle()
+   {
+      ArrayList<LogicalWindow> cycle = new ArrayList<>();
+      for (LogicalWindow window : panes_)
+      {
+         if (!isSidebarWindow(window))
+            cycle.add(window);
+      }
+      if (sidebar_ != null)
+         cycle.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
+      return cycle;
+   }
+
+   private boolean isSidebarWindow(LogicalWindow window)
+   {
+      return window.getNormal() != null &&
+         StringUtil.equals(window.getNormal().getName(), UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+   }
+
    private String getAdjacentWindow(LogicalWindow window, boolean before)
    {
       if (window.getNormal() == null)
          return "";
 
       String name = window.getNormal().getName();
-      int lastIndex = panes_.size() - 1;
+      ArrayList<LogicalWindow> panes = getFocusCycle();
+      int lastIndex = panes.size() - 1;
 
       // if we're the last (!before or first (before) window in the display, wrap around to the
       // front
-      if (!before && window == panes_.get(lastIndex))
+      if (!before && window == panes.get(lastIndex))
          return additionalSourceCount_ > 0 ? sourceColumnManager_.getLeftColumnName() :
-            panes_.get(0).getNormal().getName();
+            panes.get(0).getNormal().getName();
       else if (before)
       {
          if ((additionalSourceCount_ > 0 &&
             StringUtil.equals(name, sourceColumnManager_.getLeftColumnName())) ||
-            (additionalSourceCount_ == 0 && window == panes_.get(0)))
-            return panes_.get(lastIndex).getNormal().getName();
-         else if (window == panes_.get(0))
+            (additionalSourceCount_ == 0 && window == panes.get(0)))
+            return panes.get(lastIndex).getNormal().getName();
+         else if (window == panes.get(0))
             return sourceColumnManager_.get(1).getName();
       }
 
@@ -1044,17 +1076,17 @@ public class PaneManager
             String nextName = sourceColumnManager_.getNextColumnName();
             if (!StringUtil.equals(nextName, SourceColumnManager.MAIN_SOURCE_NAME))
                return nextName;
-            return panes_.get(0).getNormal().getName();
+            return panes.get(0).getNormal().getName();
          }
       }
 
-      for (int i = 0; i < panes_.size(); i++)
+      for (int i = 0; i < panes.size(); i++)
       {
-         if (window.equals(panes_.get(i)))
+         if (window.equals(panes.get(i)))
          {
             if (before)
-               return panes_.get(i - 1).getNormal().getName();
-            return panes_.get(i + 1).getNormal().getName();
+               return panes.get(i - 1).getNormal().getName();
+            return panes.get(i + 1).getNormal().getName();
          }
       }
 
@@ -1091,6 +1123,8 @@ public class PaneManager
       // activate next pane
       if (name.contains(SourceColumnManager.COLUMN_PREFIX))
          sourceColumnManager_.activateColumn(name, null);
+      else if (StringUtil.equals(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, name))
+         focusPane(panesByName_.get(name));
       else
       {
          WorkbenchTab selected;

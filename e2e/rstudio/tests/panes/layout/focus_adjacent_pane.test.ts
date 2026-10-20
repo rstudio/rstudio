@@ -1,4 +1,5 @@
-// Focus Previous Pane (Shift+F6) into the Console pane (#19183).
+// Focus Previous Pane (Shift+F6) into the Console pane (#19183), and Focus
+// Next/Previous Pane (F6/Shift+F6) around the sidebar (#19191).
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
@@ -21,6 +22,15 @@ const BACKGROUND_JOBS_PANEL = '#rstudio_workbench_panel_background_jobs';
 const ENVIRONMENT_TAB = '#rstudio_workbench_tab_environment';
 const LOAD_WORKSPACE_BUTTON = '#rstudio_tb_loadworkspace';
 const PANES = '[id^="rstudio_"][id$="_pane"]';
+const SIDEBAR_PANE_ID = 'rstudio_Sidebar_pane';
+const SIDEBAR_PANE = `#${SIDEBAR_PANE_ID}`;
+const SIDEBAR_TAB = `${SIDEBAR_PANE} [role="tab"]`;
+const QUADRANT_PANE_IDS = [
+  'rstudio_Source_pane',
+  CONSOLE_PANE_ID,
+  'rstudio_TabSet1_pane',
+  'rstudio_TabSet2_pane',
+];
 
 // A terminal is created by an RPC round trip; watch this long for one to appear.
 const NO_NEW_TERMINAL_WINDOW_MS = 3000;
@@ -74,9 +84,42 @@ async function previousPaneUntilConsolePane(page: Page): Promise<void> {
   throw new Error(`Shift+F6 did not reach the Console pane in ${paneCount} steps`);
 }
 
+/**
+ * Press key until focus is back in the pane it started in, and return the
+ * panes visited in order. Each step must move focus to another pane, and a
+ * full cycle takes at most one step per pane.
+ */
+async function cyclePanes(page: Page, key: string): Promise<string[]> {
+  const start = await focusedPane(page);
+  const visited: string[] = [];
+  const maxSteps = QUADRANT_PANE_IDS.length + 1;
+  for (let step = 0; step < maxSteps; step++) {
+    const from = await focusedPane(page);
+    await page.keyboard.press(key);
+    await expect
+      .poll(() => focusedPane(page), { message: `${key} did not move focus from ${from}` })
+      .not.toBe(from);
+    const to = await focusedPane(page);
+    if (to === start)
+      return visited;
+    visited.push(to);
+  }
+  throw new Error(`${key} did not return to ${start} in ${maxSteps} steps: ${visited.join(', ')}`);
+}
+
+async function setSidebarVisible(page: Page, visible: boolean): Promise<void> {
+  if (await page.locator(SIDEBAR_PANE).isVisible() !== visible)
+    await executeCommand(page, 'toggleSidebar');
+  if (visible)
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible();
+  else
+    await expect(page.locator(SIDEBAR_PANE)).toBeHidden();
+}
+
 test.describe.serial('Focus adjacent pane', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     await resetLayoutZoom(page);
+    await setSidebarVisible(page, false);
     await killAllTerminals(page);
     await executeCommand(page, 'activateConsole');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible();
@@ -167,5 +210,30 @@ test.describe.serial('Focus adjacent pane', () => {
       await page.waitForTimeout(250);
     }
     expect(await captureResult(page, 'length(rstudioapi::terminalList())')).toBe('0');
+  });
+
+  test('skips a hidden sidebar without showing it', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, false);
+    await focusEnvironmentPane(page);
+
+    const forward = await cyclePanes(page, 'F6');
+    const backward = await cyclePanes(page, 'Shift+F6');
+
+    expect(forward).toEqual(['rstudio_TabSet2_pane', 'rstudio_Source_pane', CONSOLE_PANE_ID]);
+    expect(backward).toEqual([CONSOLE_PANE_ID, 'rstudio_Source_pane', 'rstudio_TabSet2_pane']);
+    await expect(page.locator(SIDEBAR_PANE)).toBeHidden();
+  });
+
+  test('cycles into and out of a sidebar shown after load', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, false);
+    await setSidebarVisible(page, true);
+    await page.locator(SIDEBAR_TAB).first().focus();
+    await expect.poll(() => focusedPane(page)).toBe(SIDEBAR_PANE_ID);
+
+    const forward = await cyclePanes(page, 'F6');
+    const backward = await cyclePanes(page, 'Shift+F6');
+
+    expect(forward).toEqual(QUADRANT_PANE_IDS);
+    expect(backward).toEqual([...QUADRANT_PANE_IDS].reverse());
   });
 });
