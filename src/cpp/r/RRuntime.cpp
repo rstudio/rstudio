@@ -238,18 +238,39 @@ Error initialize()
 
          static constexpr unsigned int ACTIVE_BINDING_MASK = 1 << 15;
 
-         SEXP loc = R_findVarLocInFrame(envSEXP, symSEXP);
-         if (loc == nullptr || loc == R_NilValue)
-            return kBindingTypeNotFound;
+         SEXP loc = R_NilValue;
+         SEXP val = R_NilValue;
+         if (envSEXP == R_BaseEnv || envSEXP == R_BaseNamespace)
+         {
+            // Base bindings live on the symbol itself rather than in a frame
+            // cell: R_findVarLocInFrame returns the symbol here (R >= 3.6)
+            // or raises an R error (R < 3.6), so read the symbol directly.
+            SEXPREC* symbol = reinterpret_cast<SEXPREC*>(symSEXP);
+            val = reinterpret_cast<SEXP>(symbol->u.symsxp.value);
+            if (val == *s_pUnboundValue)
+               return kBindingTypeNotFound;
 
+            loc = symSEXP;
+         }
+         else
+         {
+            loc = R_findVarLocInFrame(envSEXP, symSEXP);
+            if (loc == nullptr || loc == R_NilValue)
+               return kBindingTypeNotFound;
+
+            // immediate (unboxed) binding cells always hold a plain value
+            sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(loc);
+            if (info.extra != 0)
+               return kBindingTypeValue;
+
+            val = CAR(loc);
+         }
+
+         // the active binding bit is the same for symbols and frame cells
          sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(loc);
          if (info.gp & ACTIVE_BINDING_MASK)
             return kBindingTypeActive;
 
-         if (info.extra != 0)
-            return kBindingTypeValue;
-
-         SEXP val = CAR(loc);
          if (val == R_MissingArg)
             return kBindingTypeMissing;
 

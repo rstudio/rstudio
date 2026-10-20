@@ -7,6 +7,7 @@
 
 ### Fixed
 - ([#19185](https://github.com/rstudio/rstudio/issues/19185)): Fixed an issue where pressing Return on a comment line near the bottom of the editor, with "Continue comments on new lines" enabled, jumped the editor so the cursor sat near the top of the viewport instead of scrolling by one line. Shift+Return in the same configuration now scrolls the new line into view too.
+- ([#19189](https://github.com/rstudio/rstudio/issues/19189)): Fixed an issue where, on R < 4.6, delayed bindings in the base environment were reported as plain values (and so were forced by the Environment pane when listing `package:base`).
 - ([#19082](https://github.com/rstudio/rstudio/issues/19082)): Fixed an issue where console output slowed down, and the IDE could become unresponsive, as the console scrollback filled up -- most visibly when output alternated between stdout and stderr (e.g. `message()` and `cat()` in a loop).
 - ([#19080](https://github.com/rstudio/rstudio/issues/19080)): Fixed an issue where the console could stall for many seconds while large amounts of stderr output with no colon in it (e.g. gert's `git_clone()` progress) arrived.
 - ([rstudio/rstudio-pro#13167](https://github.com/rstudio/rstudio-pro/issues/13167)): Fixed an issue where the Packages pane could show a stale package list (e.g. a blank Package Manager metadata column for a just-installed package) when two package-list refreshes overlapped.
