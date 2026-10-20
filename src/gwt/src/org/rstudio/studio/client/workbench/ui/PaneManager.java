@@ -25,6 +25,7 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Triad;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -77,6 +78,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -375,6 +377,7 @@ public class PaneManager
       center_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
       panel_ = pSplitPanel.get();
+      panel_.setFocusedColumnCollapsedHandler(this::onFocusedColumnCollapsed);
 
       // get the widgets for the extra source columns to be displayed
       additionalSourceCount_ = userPrefs_.panes().getValue().getAdditionalSourceColumns();
@@ -1438,9 +1441,18 @@ public class PaneManager
             // just activate that tab.
             else
             {
+               final Element focusedBeforeSwitch = DomUtils.getActiveElement();
                maximizedTab_ = tab;
                manageLayoutCommands();
                activateTab(tab);
+
+               // The tab panel hides the previous tab in a layout pass that
+               // runs after this event, not during activateTab().
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  if (zoomHidFocus(focusedBeforeSwitch))
+                     focusPane(window);
+               });
             }
          }
          else
@@ -1483,6 +1495,8 @@ public class PaneManager
 
    private void fullyMaximizeWindow(final LogicalWindow window, final Tab tab)
    {
+      final Element focusedBeforeZoom = DomUtils.getActiveElement();
+
       if (window.equals(getSourceLogicalWindow()))
          maximizedTab_ = Tab.Source;
       else if (window.equals(getConsoleLogicalWindow()))
@@ -1553,11 +1567,14 @@ public class PaneManager
          rightTargetSize = 0;
 
       // Ensure focus is sent to Help iframe on activation.
-      Command onActivation = null;
-      if (maximizedTab_.equals(Tab.Help))
+      final boolean activateHelp = maximizedTab_.equals(Tab.Help);
+      Command onActivation = () ->
       {
-         onActivation = () -> commands_.activateHelp().execute();
-      }
+         if (zoomHidFocus(focusedBeforeZoom))
+            focusPane(window);
+         if (activateHelp)
+            commands_.activateHelp().execute();
+      };
 
       // If sidebar is visible, we need to handle it during zoom
       if (sidebarOnRight || sidebarOnLeft)
@@ -2613,6 +2630,125 @@ public class PaneManager
          resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
       else
          resizeHorizontally(rightTargetSize, leftTargetSize, () -> manageLayoutCommands());
+   }
+
+   /**
+    * A layout pass made the column holding focus inert (#19181): a zoom, a
+    * splitter drag, or a window resize. Move focus into the widest column,
+    * unless something else has placed it by the time the layout settles.
+    */
+   private void onFocusedColumnCollapsed(Widget widestColumn)
+   {
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         Element active = DomUtils.getActiveElement();
+         if (active == null || active == Document.get().getBody() || A11y.isInert(active))
+            focusPane(getFocusTargetIn(widestColumn));
+      });
+   }
+
+   /**
+    * The topmost pane showing in a column that has a tab to focus, else the
+    * topmost pane showing at all, or null if none is. A tabset with no tabs
+    * can be left open, e.g. by dragging its row splitter.
+    */
+   private LogicalWindow getFocusTargetIn(Widget column)
+   {
+      if (column == null)
+         return null;
+
+      // panes_ can hold a sidebar window that showSidebar() has since replaced;
+      // panesByName_ has the live one.
+      ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
+      windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
+      windows.addAll(sourceLogicalWindows_);
+      LogicalWindow topmost = null;
+      for (LogicalWindow window : windows)
+      {
+         if (window == null || !window.visible() ||
+             !DomUtils.contains(column.getElement(), window.getNormal().getElement()))
+         {
+            continue;
+         }
+
+         Widget content = window.getNormal().getFillWidget();
+         if (!(content instanceof WorkbenchTabPanel) ||
+             ((WorkbenchTabPanel) content).getSelectedIndex() >= 0)
+         {
+            return window;
+         }
+         if (topmost == null)
+            topmost = window;
+      }
+      return topmost;
+   }
+
+   /**
+    * Whether a zoom hid the element that had focus when it began, so focus
+    * should move into the zoomed pane: the columns a zoom collapses are inert
+    * (#19181) and the quadrants it hides are not rendered, so the browser
+    * would drop focus to the page body. False if anything has moved focus
+    * since the zoom began.
+    */
+   private boolean zoomHidFocus(Element focusedBeforeZoom)
+   {
+      if (focusedBeforeZoom == null)
+         return false;
+
+      Element active = DomUtils.getActiveElement();
+      if (active != focusedBeforeZoom && active != Document.get().getBody())
+         return false;
+
+      return A11y.isInert(focusedBeforeZoom) ||
+             !DomUtils.isEffectivelyVisible(focusedBeforeZoom);
+   }
+
+   /**
+    * Focus a pane that is already showing, without changing its selected tab.
+    * focusWindow() handles source columns; it would switch the Console pane
+    * to its Console tab, and takes any other pane, the sidebar included, for
+    * TabSet2. A tabbed pane gets its selected tab focused.
+    */
+   private void focusPane(LogicalWindow window)
+   {
+      if (window == null)
+         return;
+
+      String name = window.getNormal().getName();
+      if (name.contains(SourceColumnManager.COLUMN_PREFIX))
+      {
+         focusWindow(name);
+         return;
+      }
+
+      // The Console pane has a tab bar only when it holds other tabs too.
+      Widget content = window.getNormal().getFillWidget();
+      if (window == getConsoleLogicalWindow() && !(content instanceof WorkbenchTabPanel))
+      {
+         consolePane_.focus();
+         return;
+      }
+      if (!(content instanceof WorkbenchTabPanel))
+         return;
+
+      WorkbenchTabPanel panel = (WorkbenchTabPanel) content;
+      if (panel.getSelectedIndex() >= 0)
+      {
+         // Some tabs take no focus here: Terminal focuses itself only when
+         // its tab is selected. Those fall through to the selected tab.
+         panel.getSelectedTab().setFocus();
+         if (DomUtils.contains(window.getNormal().getElement(), DomUtils.getActiveElement()))
+            return;
+      }
+
+      // A sidebar with no tabs (the default when Posit Assistant is off) shows
+      // only its empty state; focus its Configure Panes button. An emptied
+      // tabset shows nothing, but its frame still has its buttons.
+      ArrayList<Element> controls = DomUtils.getFocusableElements(panel.getElement());
+      if (controls.isEmpty())
+         controls = DomUtils.getFocusableElements(window.getNormal().getElement());
+      if (!controls.isEmpty())
+         controls.get(0).focus();
    }
 
    public LogicalWindow getZoomedWindow()

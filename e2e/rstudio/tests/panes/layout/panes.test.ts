@@ -3,9 +3,10 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { executeCommand, isCommandChecked } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
 import { VIEWER_MAXIMIZE_R, VIEWER_TAB } from '@pages/viewer_pane.page';
+import { focusConsole } from '@pages/console_pane.page';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -32,6 +33,7 @@ const CONSOLE_MAX_BTN = `${CONSOLE_PANE} .rstudio_panel_max_btn_console`;
 
 // Pane Layout dialog selectors
 const PL_RIGHT_TOP = '#rstudio_pane_layout_right_top';
+const PL_RIGHT_BOTTOM = '#rstudio_pane_layout_right_bottom';
 const PL_SIDEBAR = '#rstudio_pane_layout_sidebar';
 const PL_SIDEBAR_VISIBLE = '#rstudio_pane_layout_sidebar_visible';
 const PREFERENCES_CONFIRM = '#rstudio_preferences_confirm';
@@ -271,6 +273,36 @@ async function toggleTab(page: Page, container: string, tabLabel: string): Promi
   await checkbox.scrollIntoViewIfNeeded();
   await checkbox.click();
   await sleep(TIMEOUTS.layoutSettle);
+}
+
+// Uncheck every tab the Pane Layout dialog shows as checked in `container`.
+// Tabs that are unavailable (e.g. Posit Assistant when the server disables it,
+// or a suppressed Presentation tab) have hidden checkboxes and are left alone;
+// they never show as tabs either way.
+async function uncheckVisibleTabs(page: Page, container: string): Promise<void> {
+  const checked = page.locator(
+    `${container} input[type="checkbox"]:checked:visible:not(${PL_SIDEBAR_VISIBLE})`);
+  for (let i = 0; i < 20 && (await checked.count()) > 0; i++) {
+    await checked.first().scrollIntoViewIfNeeded();
+    await checked.first().click();
+  }
+  await expect(checked).toHaveCount(0);
+}
+
+// Reset the pane layout and hide the sidebar, whether or not a failed test
+// left the Pane Layout dialog open.
+async function restoreDefaultPaneLayout(page: Page): Promise<void> {
+  await resetLayoutZoom(page);
+  if ((await page.locator(DIALOG_BOX).count()) === 0)
+    await openPaneLayoutOptions(page);
+  await resetPaneLayoutInDialog(page);
+  const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+  if (await sidebarVisibleCheckbox.isChecked()) {
+    await sidebarVisibleCheckbox.click();
+    await sleep(TIMEOUTS.layoutSettle);
+  }
+  await page.locator(PREFERENCES_CONFIRM).click();
+  await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
 }
 
 // ---------------------------------------------------------------------------
@@ -968,6 +1000,88 @@ test.describe('Pane and column management', () => {
     ).toBe(false);
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+  });
+
+  // A sidebar shown with no tabs is the Workbench default, where Posit
+  // Assistant is off. Zooming it hides the focused Console, and with no tab to
+  // focus, focus must go to the empty state's Configure Panes button rather
+  // than drop to the page body.
+  test('Zooming an empty sidebar from the Console focuses Configure Panes (#19181)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_SIDEBAR);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await showSidebar(page);
+      await expect(page.locator(`${SIDEBAR_PANE} [role="tab"]`)).toHaveCount(0);
+      const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
+      await expect(configurePanes).toBeVisible();
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomSidebar');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect(configurePanes).toBeFocused();
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
+  });
+
+  // An emptied tabset minimizes, but its restore button reopens it with no
+  // tab to focus. A column zoom must then move focus to the column's other
+  // tabset rather than to the empty one, which would leave it on the body.
+  test('A column zoom from the Console skips an open empty tabset (#19181)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_RIGHT_TOP);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await expect(page.locator(`${TABSET1_PANE} [role="tab"]`)).toHaveCount(0);
+      await page.locator('.rstudio_panel_min_btn_tabset1:visible').click();
+      await expect.poll(() => getOffsetHeight(page, TABSET1_PANE)).toBeGreaterThan(50);
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomRightColumn');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect.poll(
+        () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
+  });
+
+  // With every tab moved out of the right column, TabSet1 stays open with no
+  // tab and no empty state to focus; its frame buttons are all that is left.
+  test('A column zoom onto a column of empty tabsets focuses a frame button (#19181)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_RIGHT_TOP);
+      await uncheckVisibleTabs(page, PL_RIGHT_BOTTOM);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await expect(page.locator(`${TABSET1_PANE} [role="tab"]`)).toHaveCount(0);
+      await expect(page.locator(`${TABSET2_PANE} [role="tab"]`)).toHaveCount(0);
+      // Emptying both leaves TabSet1 open, holding the whole column.
+      await expect.poll(() => getOffsetHeight(page, TABSET1_PANE)).toBeGreaterThan(50);
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomRightColumn');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect.poll(
+        () => page.locator(TABSET1_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
   });
 
   // Not redundant: refreshSidebar implements the location toggle as

@@ -147,6 +147,14 @@ public class A11y
       }
    }
 
+   /**
+    * Whether the element is inert or inside an inert element, i.e. out of the
+    * accessibility tree and out of reach of Tab and clicks.
+    */
+   public static native boolean isInert(Element el) /*-{
+      return el.closest("[inert]") !== null;
+   }-*/;
+
    public static void setARIAAutocomplete(Element el, String val)
    {
       el.setAttribute("aria-autocomplete", val);
