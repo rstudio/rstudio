@@ -120,9 +120,17 @@ async function setSidebarVisible(page: Page, visible: boolean): Promise<void> {
 }
 
 test.describe.serial('Focus adjacent pane', () => {
+  // Showing or hiding the sidebar saves the preference, so put it back the way
+  // the suite found it rather than leave later spec files a hidden sidebar.
+  let sidebarInitiallyVisible = false;
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    sidebarInitiallyVisible = await page.locator(SIDEBAR_PANE).isVisible();
+  });
+
   test.afterEach(async ({ rstudioPage: page }) => {
     await resetLayoutZoom(page);
-    await setSidebarVisible(page, false);
+    await setSidebarVisible(page, sidebarInitiallyVisible);
     await killAllTerminals(page);
     await executeCommand(page, 'activateConsole');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible();
