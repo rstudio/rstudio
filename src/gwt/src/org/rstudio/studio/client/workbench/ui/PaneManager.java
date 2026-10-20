@@ -1030,8 +1030,9 @@ public class PaneManager
          if (!isSidebarWindow(window))
             cycle.add(window);
       }
-      if (sidebar_ != null && !panel_.isSidebarCollapsed())
-         cycle.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
+      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      if (sidebar_ != null && sidebarWindow != null && !panel_.isSidebarCollapsed())
+         cycle.add(sidebarWindow);
       return cycle;
    }
 
