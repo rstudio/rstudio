@@ -130,6 +130,9 @@ test.describe.serial('Focus adjacent pane', () => {
   let sidebarInitiallyVisible = false;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // beforeAll runs ahead of the per-test reset's readiness gate, and a
+    // previous spec's reload can still be initializing the workbench.
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000 });
     sidebarInitiallyVisible = await isCommandChecked(page, 'toggleSidebar');
   });
 
