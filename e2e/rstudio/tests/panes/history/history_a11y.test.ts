@@ -112,6 +112,9 @@ test.describe('History pane accessibility', () => {
   let fixtureReducedMotion: boolean;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // Unlike setPref, getPref doesn't wait out a session reload a previous
+    // spec left in flight, during which the bridge's prefs are absent.
+    await page.waitForFunction(() => window.rstudio?.prefs?.reducedMotion !== undefined);
     fixtureReducedMotion = await getPref(page, 'reduced_motion') as boolean;
     for (const command of COMMANDS)
       await executeInConsole(page, command);
