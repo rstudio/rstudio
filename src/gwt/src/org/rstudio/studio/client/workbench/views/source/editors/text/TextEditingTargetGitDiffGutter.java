@@ -81,6 +81,7 @@ public class TextEditingTargetGitDiffGutter
       releaseOnDismiss.add(() ->
       {
          dismissed_ = true;
+         setSplitEditor(null);
          detach();
       });
 
@@ -97,8 +98,20 @@ public class TextEditingTargetGitDiffGutter
          splitGutter_ = null;
       }
 
+      if (splitFocusRegistration_ != null)
+      {
+         splitFocusRegistration_.removeHandler();
+         splitFocusRegistration_ = null;
+      }
+
       splitEditor_ = editor;
-      if (splitEditor_ != null && gutter_ != null)
+      if (splitEditor_ == null)
+         return;
+
+      // the same re-fetch on focus as the primary view: a commit made in the
+      // Terminal is picked up by clicking into either view
+      splitFocusRegistration_ = splitEditor_.addEditorFocusHandler(event -> scheduleRefresh());
+      if (gutter_ != null)
          attachSplit();
    }
 
@@ -270,6 +283,7 @@ public class TextEditingTargetGitDiffGutter
    private GitDiffGutterNative gutter_;
    private GitDiffGutterNative splitGutter_;
    private AceEditor splitEditor_;
+   private HandlerRegistration splitFocusRegistration_;
    private String basePath_;
    private String baseContents_;
    private boolean attaching_;

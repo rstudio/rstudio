@@ -2715,15 +2715,38 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
       return Success();
 
    // Only a regular file has contents to diff against: a symlink's index
-   // entry holds its target path, and a submodule's a commit id. An empty
-   // listing means the path isn't in the index at all, which is the normal
-   // case for new files and not worth logging.
+   // entry holds its target path, and a submodule's a commit id. The path
+   // is matched literally (a name like "report[1].R" is otherwise a glob)
+   // and the entry for exactly that path is the one checked; no entry means
+   // the path isn't in the index, the normal case for new files.
    core::system::ProcessResult stageResult;
-   error = gitExec(gitArgs() << "ls-files" << "--stage" << "--" << relativePath, root, &stageResult);
+   error = gitExec(gitArgs() << "ls-files" << "--stage" << "-z" << "--" << ":(literal)" + relativePath,
+                   root,
+                   &stageResult);
    if (error)
       return error;
 
-   if (stageResult.exitStatus != EXIT_SUCCESS || !boost::algorithm::starts_with(stageResult.stdOut, "100"))
+   if (stageResult.exitStatus != EXIT_SUCCESS)
+      return Success();
+
+   // entries are "<mode> <sha> <stage>\t<path>", NUL-terminated
+   bool regularFile = false;
+   std::vector<std::string> entries;
+   boost::algorithm::split(entries, stageResult.stdOut, boost::is_any_of(std::string(1, '\0')));
+   for (const std::string& entry : entries)
+   {
+      std::size_t tab = entry.find('\t');
+      if (tab == std::string::npos)
+         continue;
+
+      if (entry.substr(tab + 1) == relativePath)
+      {
+         regularFile = boost::algorithm::starts_with(entry, "100");
+         break;
+      }
+   }
+
+   if (!regularFile)
       return Success();
 
    core::system::ProcessResult procResult;

@@ -506,8 +506,36 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
 
     await documentCloseAllNoSave(page);
-    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(aliasPath)}))`);
-    await commitAll(page, 'remove alias', [aliasPath]);
+
+    // A symlink whose name reads as a glob, next to a regular file the glob
+    // matches: the index lookup has to be literal and exact, or the regular
+    // file's entry would vouch for the symlink.
+    const globLinkPath = `${projectDir()}/report[1].R`;
+    const globFilePath = `${projectDir()}/report1.R`;
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          writeLines("r <- 1", ${rPathLiteral(globFilePath)})
+          stopifnot(file.symlink("script.R", ${rPathLiteral(globLinkPath)}))
+        }
+      `,
+    );
+    await commitAll(page, 'glob alias', [globFilePath, globLinkPath]);
+    await openFile(page, globLinkPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+    const globDeadline = Date.now() + 3000;
+    while (Date.now() < globDeadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(
+      page,
+      `invisible(file.remove(c(${rPathLiteral(aliasPath)}, ${rPathLiteral(globLinkPath)}, ${rPathLiteral(globFilePath)})))`,
+    );
+    await commitAll(page, 'remove aliases', [aliasPath, globLinkPath, globFilePath]);
   });
 
   test('keeps control characters the editor keeps', async ({ rstudioPage: page }) => {
@@ -580,7 +608,37 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect
         .poll(() => split.evaluate((el) => (el as AceEditorElement).env?.editor?.getCursorPosition().row))
         .toBe(6);
+
+      // Clicking into the split view re-fetches the base like the primary
+      // does, so an index moved from outside the IDE is picked up there too.
+      // Replace the index entry (without touching the working copy) with the
+      // buffer's current contents except `d <- 41` for the reverted `d <- 4`.
+      await primary.locator('.ace_content').click({ force: true });
+      const indexLines = ['a <- 1', 'a2 <- 1.5', 'b <- 2', 'c <- 3', 'd <- 41', 'e <- 5', 'g <- 7', 'h <- 8'];
+      await executeInConsoleChecked(
+        page,
+        heredoc`
+          {
+            blob <- system2(
+              "git", c(${gitC()}, "hash-object", "-w", "--stdin"),
+              input = c(${indexLines.map(rStringLiteral).join(', ')}), stdout = TRUE
+            )
+            s <- system2("git", c(${gitC()}, "update-index", "--cacheinfo",
+                                  paste0("100644,", blob, ",script.R")))
+            if (s != 0)
+              stop("git update-index failed (exit status: ", s, ")")
+          }
+        `,
+        { timeout: 60000 },
+      );
+      await split.locator('.ace_content').click({ force: true });
+      await expect.poll(() => viewMarkers(split), { timeout: 30000 }).toEqual({ 4: [MODIFIED] });
+      await expect.poll(() => viewMarkers(primary), { timeout: 30000 }).toEqual({ 4: [MODIFIED] });
     } finally {
+      await executeInConsoleChecked(
+        page,
+        `invisible(system2("git", c(${gitC()}, "reset", "-q", "--", "script.R")))`,
+      );
       await executeCommand(page, 'removeEditorSplit');
       await expect(views).toHaveCount(1);
       await documentCloseAllNoSave(page);
