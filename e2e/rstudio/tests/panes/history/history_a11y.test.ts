@@ -3,7 +3,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole } from '@pages/console_pane.page';
-import { executeCommand } from '@utils/commands';
+import { clearPref, executeCommand, setPref } from '@utils/commands';
 import type { Locator, Page } from 'playwright';
 
 const HISTORY_PANEL = '#rstudio_workbench_panel_history';
@@ -90,109 +90,156 @@ async function focusIsOnScreen(page: Page): Promise<boolean> {
   });
 }
 
+// Resolves on the first frame in which the context view is exposed, reporting
+// whether the search results had already turned inert by then.
+async function waitForContextShown(page: Page): Promise<{ searchResultsInert: boolean }> {
+  const handle = await page.waitForFunction((panelSelector) => {
+    const tables = document.querySelectorAll(`${panelSelector} table[role="listbox"]`);
+    const byName = (name: string) =>
+      [...tables].find(t => t.getAttribute('aria-label') === name);
+    const context = byName('Console History Context');
+    const results = byName('Console History Search Results');
+    if (!context || !results || context.closest('[inert]'))
+      return false;
+    return { searchResultsInert: results.closest('[inert]') !== null };
+  }, HISTORY_PANEL, { polling: 'raf' });
+  return handle.jsonValue() as Promise<{ searchResultsInert: boolean }>;
+}
+
 test.describe('History pane accessibility', () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     for (const command of COMMANDS)
       await executeInConsole(page, command);
   });
 
-  test.beforeEach(async ({ rstudioPage: page }) => {
-    await executeCommand(page, 'activateHistory');
-    await returnToRecent(page);
-  });
+  // The search and context views slide in unless reduced motion is on.
+  for (const reducedMotion of [false, true]) {
+    test.describe(`reduced motion ${reducedMotion ? 'on' : 'off'}`, () => {
+      test.beforeAll(async ({ rstudioPage: page }) => {
+        await setPref(page, 'reduced_motion', reducedMotion);
+      });
 
-  test('each history view is a named listbox', async ({ rstudioPage: page }) => {
-    const recent = listbox(page, 'Console History');
-    await expect(recent).toHaveAttribute('aria-multiselectable', 'true');
-    await expect(recent.getByRole('option', { name: COMMANDS[2] })).toHaveCount(1);
+      test.afterAll(async ({ rstudioPage: page }) => {
+        await clearPref(page, 'reduced_motion');
+      });
 
-    await search(page, MARKER);
-    // Exact: the disclosure button's tooltip must stay out of the name.
-    await expect(listbox(page, 'Console History Search Results')
-      .getByRole('option', { name: COMMANDS[0], exact: true })).toHaveCount(1);
+      test.beforeEach(async ({ rstudioPage: page }) => {
+        await executeCommand(page, 'activateHistory');
+        await returnToRecent(page);
+      });
 
-    await showContext(page);
-    await expect(listbox(page, 'Console History Context')
-      .getByRole('option', { name: COMMANDS[0] })).toHaveCount(1);
-  });
+      test('each history view is a named listbox', async ({ rstudioPage: page }) => {
+        const recent = listbox(page, 'Console History');
+        await expect(recent).toHaveAttribute('aria-multiselectable', 'true');
+        await expect(recent.getByRole('option', { name: COMMANDS[2] })).toHaveCount(1);
 
-  test('views that are not shown are inert', async ({ rstudioPage: page }) => {
-    await expect(listbox(page, 'Console History Search Results')).toHaveCount(0);
-    await expect(listbox(page, 'Console History Context')).toHaveCount(0);
-    await expect(exposedButtons(page, 'Done')).toHaveCount(0);
-    await expect(exposedButtons(page, 'Back')).toHaveCount(0);
+        await search(page, MARKER);
+        // Exact: the disclosure button's tooltip must stay out of the name.
+        await expect(listbox(page, 'Console History Search Results')
+          .getByRole('option', { name: COMMANDS[0], exact: true })).toHaveCount(1);
 
-    await search(page, MARKER);
-    await expect(listbox(page, 'Console History')).toHaveCount(0);
-    await expect(exposedButtons(page, 'Done')).toHaveCount(1);
-    await expect(exposedButtons(page, 'Back')).toHaveCount(0);
+        await showContext(page);
+        await expect(listbox(page, 'Console History Context')
+          .getByRole('option', { name: COMMANDS[0] })).toHaveCount(1);
+      });
 
-    await showContext(page);
-    await expect(listbox(page, 'Console History Search Results')).toHaveCount(0);
-    await expect(exposedButtons(page, 'Done')).toHaveCount(1);
-    await expect(exposedButtons(page, 'Back')).toHaveCount(1);
-  });
+      test('views that are not shown are inert', async ({ rstudioPage: page }) => {
+        await expect(listbox(page, 'Console History Search Results')).toHaveCount(0);
+        await expect(listbox(page, 'Console History Context')).toHaveCount(0);
+        await expect(exposedButtons(page, 'Done')).toHaveCount(0);
+        await expect(exposedButtons(page, 'Back')).toHaveCount(0);
 
-  test('Tab from the list skips the hidden views', async ({ rstudioPage: page }) => {
-    // Showing the context view once leaves its scroller with content, which
-    // Chrome makes a Tab stop unless the view is inert.
-    await showContext(page);
-    await returnToRecent(page);
+        await search(page, MARKER);
+        await expect(listbox(page, 'Console History')).toHaveCount(0);
+        await expect(exposedButtons(page, 'Done')).toHaveCount(1);
+        await expect(exposedButtons(page, 'Back')).toHaveCount(0);
 
-    await listbox(page, 'Console History').focus();
-    await page.keyboard.press('Tab');
-    expect(await focusIsOnScreen(page)).toBe(true);
-  });
+        await showContext(page);
+        await expect(listbox(page, 'Console History Search Results')).toHaveCount(0);
+        await expect(exposedButtons(page, 'Done')).toHaveCount(1);
+        await expect(exposedButtons(page, 'Back')).toHaveCount(1);
+      });
 
-  test('Done and Back keep keyboard focus in the pane', async ({ rstudioPage: page }) => {
-    await search(page, MARKER);
-    await exposedButtons(page, 'Done').focus();
-    await page.keyboard.press('Enter');
-    await expect(listbox(page, 'Console History')).toBeFocused();
+      test('Tab from the list skips the hidden views', async ({ rstudioPage: page }) => {
+        // Showing the context view once leaves its scroller with content, which
+        // Chrome makes a Tab stop unless the view is inert.
+        await showContext(page);
+        await returnToRecent(page);
 
-    await showContext(page);
-    await exposedButtons(page, 'Back').focus();
-    await page.keyboard.press('Enter');
-    await expect(listbox(page, 'Console History Search Results')).toBeFocused();
+        await listbox(page, 'Console History').focus();
+        await page.keyboard.press('Tab');
+        expect(await focusIsOnScreen(page)).toBe(true);
+      });
 
-    await showContext(page);
-    await exposedButtons(page, 'Done').focus();
-    await page.keyboard.press('Enter');
-    await expect(listbox(page, 'Console History')).toBeFocused();
-  });
+      test('Done and Back keep keyboard focus in the pane', async ({ rstudioPage: page }) => {
+        await search(page, MARKER);
+        await exposedButtons(page, 'Done').focus();
+        await page.keyboard.press('Enter');
+        await expect(listbox(page, 'Console History')).toBeFocused();
 
-  test('arrow keys move an announced, multi-select selection', async ({ rstudioPage: page }) => {
-    const recent = listbox(page, 'Console History');
-    await recent.getByRole('option', { name: COMMANDS[2] }).click();
-    await expect.poll(() => activeOption(recent))
-      .toEqual({ text: COMMANDS[2], selected: 'true' });
+        await showContext(page);
+        await exposedButtons(page, 'Back').focus();
+        await page.keyboard.press('Enter');
+        await expect(listbox(page, 'Console History Search Results')).toBeFocused();
 
-    await page.keyboard.press('Shift+ArrowUp');
-    await expect.poll(() => activeOption(recent))
-      .toEqual({ text: COMMANDS[1], selected: 'true' });
-    expect(await selectedOptionTexts(recent)).toEqual([COMMANDS[1], COMMANDS[2]]);
+        await showContext(page);
+        await exposedButtons(page, 'Done').focus();
+        await page.keyboard.press('Enter');
+        await expect(listbox(page, 'Console History')).toBeFocused();
+      });
 
-    await page.keyboard.press('ArrowUp');
-    await expect.poll(() => activeOption(recent))
-      .toEqual({ text: COMMANDS[0], selected: 'true' });
-    expect(await selectedOptionTexts(recent)).toEqual([COMMANDS[0]]);
-    await expect(recent.getByRole('option', { name: COMMANDS[2] }))
-      .toHaveAttribute('aria-selected', 'false');
-  });
+      test('arrow keys move an announced, multi-select selection', async ({
+        rstudioPage: page,
+      }) => {
+        const recent = listbox(page, 'Console History');
+        await recent.getByRole('option', { name: COMMANDS[2] }).click();
+        await expect.poll(() => activeOption(recent))
+          .toEqual({ text: COMMANDS[2], selected: 'true' });
 
-  test('context options are described by their timestamp', async ({ rstudioPage: page }) => {
-    await showContext(page);
-    const context = listbox(page, 'Console History Context');
-    const option = context.getByRole('option', { name: COMMANDS[0] });
+        await page.keyboard.press('Shift+ArrowUp');
+        await expect.poll(() => activeOption(recent))
+          .toEqual({ text: COMMANDS[1], selected: 'true' });
+        expect(await selectedOptionTexts(recent)).toEqual([COMMANDS[1], COMMANDS[2]]);
 
-    // The timestamp heading the option's group: the nearest non-option row above it.
-    const timestamp = await option.evaluate(el => {
-      const rows = [...el.closest('table')!.rows];
-      const header = rows.slice(0, rows.indexOf(el as HTMLTableRowElement)).reverse()
-        .find(row => row.getAttribute('role') !== 'option');
-      return (header?.textContent ?? '').trim();
+        await page.keyboard.press('ArrowUp');
+        await expect.poll(() => activeOption(recent))
+          .toEqual({ text: COMMANDS[0], selected: 'true' });
+        expect(await selectedOptionTexts(recent)).toEqual([COMMANDS[0]]);
+        await expect(recent.getByRole('option', { name: COMMANDS[2] }))
+          .toHaveAttribute('aria-selected', 'false');
+      });
+
+      test('context options are described by their timestamp', async ({ rstudioPage: page }) => {
+        await showContext(page);
+        const context = listbox(page, 'Console History Context');
+        const option = context.getByRole('option', { name: COMMANDS[0] });
+
+        // The timestamp heading the option's group: the nearest non-option row above it.
+        const timestamp = await option.evaluate(el => {
+          const rows = [...el.closest('table')!.rows];
+          const header = rows.slice(0, rows.indexOf(el as HTMLTableRowElement)).reverse()
+            .find(row => row.getAttribute('role') !== 'option');
+          return (header?.textContent ?? '').trim();
+        });
+        expect(timestamp).not.toBe('');
+        await expect(option).toHaveAccessibleDescription(timestamp);
+      });
     });
-    expect(timestamp).not.toBe('');
-    await expect(option).toHaveAccessibleDescription(timestamp);
+  }
+
+  test('reduced motion shows the context view without a slide', async ({ rstudioPage: page }) => {
+    await setPref(page, 'reduced_motion', true);
+    try {
+      await executeCommand(page, 'activateHistory');
+      await returnToRecent(page);
+      await search(page, MARKER);
+      await listbox(page, 'Console History Search Results').getByRole('option').first().click();
+      const showing = waitForContextShown(page);
+      await executeCommand(page, 'historyShowContext');
+      // A slide leaves the search results exposed for its 300ms.
+      expect(await showing).toEqual({ searchResultsInert: true });
+    } finally {
+      await clearPref(page, 'reduced_motion');
+    }
   });
 });

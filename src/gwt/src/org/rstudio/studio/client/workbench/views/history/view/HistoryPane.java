@@ -40,6 +40,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
 import org.rstudio.studio.client.workbench.views.history.History.SearchBoxDisplay;
@@ -85,10 +86,11 @@ public class HistoryPane extends WorkbenchPane
    }
 
    @Inject
-   public HistoryPane(Commands commands, EventBus events)
+   public HistoryPane(Commands commands, EventBus events, UserPrefs userPrefs)
    {
       super(constants_.historyTitle(), events);
       commands_ = commands;
+      userPrefs_ = userPrefs;
       ensureWidget();
    }
 
@@ -295,7 +297,8 @@ public class HistoryPane extends WorkbenchPane
                                     0, Unit.PX,
                                     width, Unit.PX);
 
-      mainPanel_.animate(300, new AnimationCallback()
+      int duration = userPrefs_.reducedMotion().getValue() ? 0 : 300;
+      mainPanel_.animate(duration, new AnimationCallback()
       {
          public void onAnimationComplete()
          {
@@ -634,6 +637,7 @@ public class HistoryPane extends WorkbenchPane
    private HistoryTableWithToolbar contextResults_;
    private HistoryTableWithToolbar searchResults_;
    private final Commands commands_;
+   private final UserPrefs userPrefs_;
    private Anchor loadMore_;
    private SearchWidget searchWidget_;
    private Styles styles_ = ((Resources) GWT.create(Resources.class)).styles();
