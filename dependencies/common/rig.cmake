@@ -13,7 +13,7 @@
 #
 #
 
-# The bundled rig release. Keep SessionRig.R's runtime fallback in sync.
+# The bundled rig release. Keep SessionRig.R's pinned version in sync.
 set(RSTUDIO_RIG_VERSION "0.11.0")
 
 # SHA-256 digests published with https://github.com/r-lib/rig/releases/tag/v0.11.0

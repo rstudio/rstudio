@@ -43,27 +43,6 @@ test_that("the configured bundled rig is usable without an external installation
 
 })
 
-test_that("the rig download URL matches the platform and architecture", {
-
-   url <- function(...) .rs.rig.downloadUrl(version = "0.10.0", ...)
-
-   expect_match(url(sysname = "Darwin", machine = "arm64"),
-                "/v0.10.0/rig-macos-arm64-0.10.0.tar.gz$")
-   expect_match(url(sysname = "Darwin", machine = "x86_64"),
-                "/rig-macos-x86_64-0.10.0.tar.gz$")
-   expect_match(url(sysname = "Linux", machine = "x86_64"),
-                "/rig-linux-x86_64-0.10.0.tar.gz$")
-   expect_match(url(sysname = "Linux", machine = "aarch64"),
-                "/rig-linux-aarch64-0.10.0.tar.gz$")
-
-   # on Windows, the machine architecture comes from the environment
-   expect_match(url(sysname = "Windows", machine = "x86-64", processorArch = "AMD64"),
-                "/rig-windows-x86_64-0.10.0.zip$")
-   expect_match(url(sysname = "Windows", machine = "x86-64", processorArch = "ARM64"),
-                "/rig-windows-arm64-0.10.0.zip$")
-
-})
-
 test_that("R versions match on major.minor only", {
 
    expect_true(.rs.rVersionMatches("4.4.1", "4.4.1"))
@@ -190,27 +169,7 @@ test_that("only version numbers are accepted as R versions", {
 
 })
 
-test_that("the pinned rig archives have known checksums", {
-
-   for (sysname in c("Darwin", "Linux", "Windows"))
-   {
-      for (machine in c("x86_64", "arm64"))
-      {
-         url <- .rs.rig.downloadUrl(
-            sysname = sysname,
-            machine = machine,
-            processorArch = if (machine == "arm64") "ARM64" else "AMD64"
-         )
-         expect_match(.rs.rig.archiveChecksum(url), "^[0-9a-f]{64}$", info = url)
-      }
-   }
-
-   # other releases are unknown
-   expect_identical(.rs.rig.archiveChecksum(.rs.rig.downloadUrl(version = "0.9.0")), "")
-
-})
-
-test_that("the pinned rig release matches the bundled one", {
+test_that("the pinned rig version is the bundled one", {
 
    # the bundled release is pinned in dependencies/common/rig.cmake, reached
    # from the source tree the tests are run from
@@ -223,20 +182,6 @@ test_that("the pinned rig release matches the bundled one", {
    version <- grep("^set\\(RSTUDIO_RIG_VERSION ", contents, value = TRUE)
    expect_length(version, 1L)
    expect_identical(sub('.*"(.*)".*', "\\1", version), as.character(.rs.rig.pinnedVersion))
-
-   # each digest is named for its platform and architecture, as the archives are
-   pattern <- '^set\\(RIG_SHA256_([a-z]+)_([a-z0-9_]+) +"([0-9a-f]{64})"\\)'
-   matches <- Filter(length, regmatches(contents, regexec(pattern, contents)))
-   checksums <- vapply(matches, `[[`, character(1), 4L)
-   names(checksums) <- vapply(matches, function(match) {
-      extension <- if (identical(match[[2L]], "windows")) "zip" else "tar.gz"
-      sprintf("rig-%s-%s-%s.%s", match[[2L]], match[[3L]], .rs.rig.pinnedVersion, extension)
-   }, character(1))
-
-   expect_identical(
-      checksums[order(names(checksums))],
-      .rs.rig.archiveChecksums[order(names(.rs.rig.archiveChecksums))]
-   )
 
 })
 
@@ -275,82 +220,6 @@ test_that("R installations found without rig are well-formed", {
    expect_identical(names(installed), c("version", "path", "binary", "home"))
    expect_true(all(vapply(installed$version, .rs.rVersionIsValid, logical(1))))
    expect_true(all(file.exists(installed$binary)))
-
-})
-
-test_that("a rig archive is extracted into the install root", {
-
-   skip_on_os("windows")
-
-   # build an archive with the layout of a rig release
-   staging <- tempfile("rig-archive-")
-   dir.create(file.path(staging, "bin"), recursive = TRUE)
-   dir.create(file.path(staging, "share"), recursive = TRUE)
-   writeLines("#!/bin/sh\necho rig", file.path(staging, "bin", "rig"))
-
-   archive <- tempfile(fileext = ".tar.gz")
-   owd <- setwd(staging)
-   on.exit(setwd(owd), add = TRUE)
-   utils::tar(archive, files = c("bin", "share"), compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   root <- file.path(tempfile("rig-root-"), "rig")
-   on.exit(unlink(dirname(root), recursive = TRUE), add = TRUE)
-
-   rig <- .rs.rig.installArchive(archive, root = root)
-   expect_true(file.exists(rig))
-   expect_equal(basename(rig), "rig")
-   expect_equal(normalizePath(dirname(dirname(rig))), normalizePath(root))
-   expect_true(file.access(rig, mode = 1L) == 0L)
-
-   # reinstalling replaces the previous copy
-   writeLines("#!/bin/sh\necho rig2", file.path(staging, "bin", "rig"))
-   setwd(staging)
-   utils::tar(archive, files = c("bin", "share"), compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   rig <- .rs.rig.installArchive(archive, root = root)
-   expect_match(readLines(rig)[[2]], "rig2")
-
-   # an archive without a rig binary is rejected, leaving the install intact
-   bad <- tempfile(fileext = ".tar.gz")
-   setwd(staging)
-   utils::tar(bad, files = "share", compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   expect_error(.rs.rig.installArchive(bad, root = root))
-   expect_true(file.exists(rig))
-
-})
-
-test_that("a rig archive that can't be installed is reported", {
-
-   skip_on_os("windows")
-   skip_if(identical(Sys.info()[["effective_user"]], "root"))
-
-   staging <- tempfile("rig-archive-")
-   dir.create(file.path(staging, "bin"), recursive = TRUE)
-   writeLines("#!/bin/sh\necho rig", file.path(staging, "bin", "rig"))
-
-   archive <- tempfile(fileext = ".tar.gz")
-   owd <- setwd(staging)
-   on.exit(setwd(owd), add = TRUE)
-   utils::tar(archive, files = "bin", compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   # an install root that can't be created: neither the rename nor the copy
-   # it falls back to can succeed, and neither failure passes silently
-   parent <- tempfile("rig-root-")
-   dir.create(parent)
-   on.exit({
-      Sys.chmod(parent, mode = "0755")
-      unlink(parent, recursive = TRUE)
-   }, add = TRUE)
-   Sys.chmod(parent, mode = "0555")
-
-   root <- file.path(parent, "rig")
-   expect_error(.rs.rig.installArchive(archive, root = root))
-   expect_false(file.exists(file.path(root, "bin", "rig")))
 
 })
 

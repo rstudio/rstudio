@@ -17,35 +17,17 @@
 # RStudio uses to discover and install versions of R, and for finding the
 # versions of R installed on this machine.
 
-# The rig release RStudio bundles (and downloads as a fallback).
-# Keep dependencies/common/rig.cmake in sync.
+# The rig release RStudio bundles. Keep dependencies/common/rig.cmake in sync.
 .rs.setVar("rig.pinnedVersion", "0.11.0")
-
-# The SHA-256 digests of the pinned release's archives (as published with the
-# GitHub release); a download is only installed when its digest matches.
-.rs.setVar("rig.archiveChecksums", c(
-   "rig-macos-arm64-0.11.0.tar.gz"   = "abf557e9ed51a4f64b6584fee3451fcad2b4d2d091a1ae46dc19cbe10ac6d8b0",
-   "rig-macos-x86_64-0.11.0.tar.gz"  = "e6683110d04eb88ecf57a0c8862a6806b9ec367e23fff57b16e55e383ad57822",
-   "rig-linux-x86_64-0.11.0.tar.gz"  = "27e063df84b6dadb325fa96d13951676b44b69103bb4237b061518fbf564fcf1",
-   "rig-linux-aarch64-0.11.0.tar.gz" = "bb0e74fd5a8c0b7138b417fd71b0ed166bf144f9b713888ef3bdc08b2f1396f6",
-   "rig-windows-x86_64-0.11.0.zip"   = "81218ebc88d24f100686106542ac487fa9b2755f905539b450e0eb87a5364f9d",
-   "rig-windows-arm64-0.11.0.zip"    = "39dcf76cb8b6d4973ef6cec4dde63fea2e33c1b9c48762a315da9a4091691baa"
-))
 
 .rs.addFunction("rig.exeName", function()
 {
    if (.rs.platform.isWindows) "rig.exe" else "rig"
 })
 
-#' The directory RStudio installs its own copy of rig into.
-.rs.addFunction("rig.userInstallRoot", function()
-{
-   file.path(.Call("rs_userDataDir", PACKAGE = "(embedding)"), "rig")
-})
-
 #' The locations searched for a rig binary, in order of preference: an
-#' explicit override, the bundled copy, the PATH, standard install locations,
-#' and finally the copy RStudio downloaded itself.
+#' explicit override, the bundled copy, the PATH, and standard install
+#' locations.
 .rs.addFunction("rig.candidatePaths", function(
    override = Sys.getenv("RSTUDIO_RIG", unset = ""),
    bundled = .Call("rs_rigPath", PACKAGE = "(embedding)"))
@@ -77,13 +59,12 @@
       )
    }
 
-   paths <- c(paths, file.path(.rs.rig.userInstallRoot(), "bin", exe))
    paths[nzchar(paths)]
 })
 
 #' Locate a rig binary, or return "" if none is available. A rig older than
 #' the pinned release may lack the commands and flags RStudio uses, so it is
-#' passed over (in favor of a bundled or downloaded copy).
+#' passed over (in favor of the bundled copy).
 .rs.addFunction("rig.find", function(paths = .rs.rig.candidatePaths())
 {
    for (path in paths)
@@ -133,93 +114,6 @@
       return("arm64")
 
    machine
-})
-
-#' The URL of the rig release archive for this platform.
-.rs.addFunction("rig.downloadUrl", function(version = .rs.rig.pinnedVersion,
-                                            sysname = Sys.info()[["sysname"]],
-                                            machine = .rs.rig.machine(),
-                                            processorArch = Sys.getenv("PROCESSOR_ARCHITECTURE"))
-{
-   isArm <- tolower(machine) %in% c("arm64", "aarch64")
-
-   file <- if (identical(sysname, "Darwin"))
-   {
-      sprintf("rig-macos-%s-%s.tar.gz", if (isArm) "arm64" else "x86_64", version)
-   }
-   else if (identical(sysname, "Windows"))
-   {
-      # on Windows, Sys.info() reports the architecture of R rather than
-      # of the machine, which matters when running x86_64 R on ARM
-      isArm <- identical(toupper(processorArch), "ARM64")
-      sprintf("rig-windows-%s-%s.zip", if (isArm) "arm64" else "x86_64", version)
-   }
-   else
-   {
-      sprintf("rig-linux-%s-%s.tar.gz", if (isArm) "aarch64" else "x86_64", version)
-   }
-
-   sprintf("https://github.com/r-lib/rig/releases/download/v%s/%s", version, file)
-})
-
-#' The expected SHA-256 digest of the rig archive at the given URL, or "" for
-#' an archive RStudio has no digest for.
-.rs.addFunction("rig.archiveChecksum", function(url, checksums = .rs.rig.archiveChecksums)
-{
-   checksum <- checksums[basename(url)]
-   if (is.na(checksum)) "" else unname(checksum)
-})
-
-#' Download the rig release archive to a temporary file. Used only when no
-#' curl binary is available to download it in the background.
-.rs.addFunction("rig.downloadArchive", function(url = .rs.rig.downloadUrl())
-{
-   destfile <- tempfile("rig-", fileext = if (grepl("[.]zip$", url)) ".zip" else ".tar.gz")
-
-   # large downloads can exceed R's default 60 second timeout
-   timeout <- getOption("timeout")
-   options(timeout = max(600L, timeout))
-   on.exit(options(timeout = timeout), add = TRUE)
-
-   download.file(url, destfile = destfile, quiet = TRUE, mode = "wb")
-   destfile
-})
-
-#' Extract a rig release archive into the RStudio-managed install root,
-#' returning the path to the extracted rig binary.
-.rs.addFunction("rig.installArchive", function(archive, root = .rs.rig.userInstallRoot())
-{
-   # extract into a staging directory so a failed extraction never leaves a
-   # half-written install behind
-   staging <- tempfile("rig-extract-")
-   dir.create(staging, recursive = TRUE, showWarnings = FALSE)
-   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
-
-   if (grepl("[.]zip$", archive))
-      unzip(archive, exdir = staging)
-   else
-      untar(archive, exdir = staging)
-
-   rig <- file.path(staging, "bin", .rs.rig.exeName())
-   if (!file.exists(rig))
-      stop("rig archive does not contain a rig binary")
-
-   unlink(root, recursive = TRUE)
-   dir.create(dirname(root), recursive = TRUE, showWarnings = FALSE)
-   if (!suppressWarnings(file.rename(staging, root)))
-   {
-      # a rename can fail across filesystems; fall back to a copy
-      if (!dir.create(root, recursive = TRUE, showWarnings = FALSE))
-         stop(sprintf("failed to create '%s'", root))
-
-      copied <- file.copy(list.files(staging, full.names = TRUE), root, recursive = TRUE)
-      if (!all(copied))
-         stop(sprintf("failed to copy rig into '%s'", root))
-   }
-
-   rig <- file.path(root, "bin", .rs.rig.exeName())
-   Sys.chmod(rig, mode = "0755")
-   normalizePath(rig, winslash = "/")
 })
 
 #' Run rig with the given arguments, returning its parsed JSON output.

@@ -15,9 +15,6 @@
 
 #include "SessionRig.hpp"
 
-#include <deque>
-
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/regex.hpp>
@@ -25,10 +22,8 @@
 #include <shared_core/Error.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
-#include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/system/Crypto.hpp>
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
@@ -55,18 +50,8 @@ SEXP rs_rigPath()
    return r::sexp::create(options().rigPath().getAbsolutePath(), &rProtect);
 }
 
-// Installing R runs as a sequence of steps (download rig, extract rig, run
-// 'rig add'), each reporting its outcome through a callback exactly once.
-// Steps that run a program complete when the program exits; steps that call
-// into R complete synchronously.
-typedef boost::function<void(bool, const std::string&)> StepCallback;
-
-struct Step
-{
-   std::string label;
-   boost::function<void(StepCallback)> run;
-};
-
+// Installing R runs 'rig add' as a job, reporting its outcome through a
+// client event exactly once.
 class RInstallJob : public boost::enable_shared_from_this<RInstallJob>
 {
 public:
@@ -127,152 +112,32 @@ private:
                true,
                {});
 
-      queueSteps();
-      runNextStep();
-   }
-
-   // the steps are owned by this object, so they can refer to it directly
-   void queueSteps()
-   {
-      Error error = r::exec::RFunction(".rs.rig.find").call(&rigPath_);
+      // rig is bundled with the desktop, so it is only missing when the
+      // installation is damaged
+      std::string rigPath;
+      Error error = r::exec::RFunction(".rs.rig.find").call(&rigPath);
       if (error)
          LOG_ERROR(error);
 
-      if (rigPath_.empty())
+      if (rigPath.empty())
       {
-         steps_.push_back({ "Downloading rig", boost::bind(&RInstallJob::downloadRig, this, _1) });
-         steps_.push_back({ "Installing rig", boost::bind(&RInstallJob::installRig, this, _1) });
-      }
-
-      steps_.push_back({ "Installing R " + version_, boost::bind(&RInstallJob::installR, this, _1) });
-   }
-
-   void runNextStep()
-   {
-      if (stopped_)
-      {
-         finish(false, "cancelled");
+         finish(false, "rig was not found");
          return;
       }
 
-      if (steps_.empty())
-      {
-         finish(true, "");
-         return;
-      }
-
-      Step step = steps_.front();
-      steps_.pop_front();
-
-      jobs::setJobStatus(pJob_, step.label);
-      log("==> " + step.label + "\n");
-      step.run(boost::bind(&RInstallJob::onStepCompleted, shared_from_this(), _1, _2));
+      installR(rigPath);
    }
 
-   void onStepCompleted(bool ok, const std::string& error)
+   // Have rig install the requested version of R. Installing in admin mode
+   // needs sudo, which can't be answered from here, so R is always installed
+   // in user mode (into the home directory), even when rig itself is
+   // configured for admin mode.
+   void installR(const std::string& rigPath)
    {
-      if (ok)
-         runNextStep();
-      else
-         finish(false, error);
-   }
+      jobs::setJobStatus(pJob_, "Installing R " + version_);
 
-   // Step: download the rig release archive. curl is preferred as it runs
-   // in the background with its output in the job; when it is unavailable
-   // the download happens in R and blocks the session briefly.
-   void downloadRig(StepCallback callback)
-   {
-      Error error = r::exec::RFunction(".rs.rig.downloadUrl").call(&url_);
-      if (error)
-      {
-         callback(false, error.getSummary());
-         return;
-      }
-
-      log(url_ + "\n");
-
-      FilePath curl = module_context::findProgram("curl");
-      if (curl.isEmpty())
-      {
-         error = r::exec::RFunction(".rs.rig.downloadArchive")
-               .addParam("url", url_)
-               .call(&archivePath_);
-         callback(!error, error ? error.getSummary() : "");
-         return;
-      }
-
-      std::string extension = url_.find(".zip") != std::string::npos ? "zip" : "tar.gz";
-      archivePath_ = module_context::tempFile("rig-", extension).getAbsolutePath();
-      std::vector<std::string> args = { "-fSL", "--retry", "3", "-o", archivePath_, url_ };
-      runProgram(curl.getAbsolutePath(), args, callback);
-   }
-
-   // Step: check the downloaded archive against the digest published for
-   // it, then extract it into RStudio's data directory.
-   void installRig(StepCallback callback)
-   {
-      FilePath archive(archivePath_);
-      Error error = verifyArchive(archive);
-      if (!error)
-      {
-         error = r::exec::RFunction(".rs.rig.installArchive")
-               .addParam("archive", archivePath_)
-               .call(&rigPath_);
-      }
-
-      Error removeError = archive.removeIfExists();
-      if (removeError)
-         LOG_ERROR(removeError);
-
-      if (!error)
-         log("rig installed to " + rigPath_ + "\n");
-
-      callback(!error, error ? error.getSummary() : "");
-   }
-
-   Error verifyArchive(const FilePath& archive)
-   {
-      std::string expected;
-      Error error = r::exec::RFunction(".rs.rig.archiveChecksum")
-            .addParam("url", url_)
-            .call(&expected);
-      if (error)
-         return error;
-
-      if (expected.empty())
-      {
-         return systemError(
-                  boost::system::errc::operation_not_permitted,
-                  "no checksum is known for " + url_,
-                  ERROR_LOCATION);
-      }
-
-      error = verifyArchiveDigest(archive, expected);
-      if (error)
-      {
-         std::string actual = error.getProperty("actual");
-         if (!actual.empty())
-            log("SHA-256 mismatch: expected " + expected + ", got " + actual + "\n");
-      }
-
-      return error;
-   }
-
-   // Step: have rig install the requested version of R. Installing in
-   // admin mode needs sudo, which can't be answered from here, so R is
-   // always installed in user mode (into the home directory), even when rig
-   // itself is configured for admin mode.
-   void installR(StepCallback callback)
-   {
       std::vector<std::string> args = { "add", version_, "--user" };
-      runProgram(rigPath_, args, callback);
-   }
-
-   void runProgram(const std::string& program,
-                   const std::vector<std::string>& args,
-                   StepCallback callback)
-   {
-      log("$ " + program + " " + core::algorithm::join(args, " ") + "\n");
+      log("$ " + rigPath + " " + core::algorithm::join(args, " ") + "\n");
 
       boost::shared_ptr<RInstallJob> self = shared_from_this();
 
@@ -291,25 +156,25 @@ private:
       {
          self->log(output);
       };
-      callbacks.onExit = [self, callback](int status)
+      callbacks.onExit = [self](int status)
       {
          self->processRunning_ = false;
          if (self->stopped_)
             self->finish(false, "cancelled");
          else if (status == EXIT_SUCCESS)
-            callback(true, "");
+            self->finish(true, "");
          else
-            callback(false, "exited with status " + std::to_string(status));
+            self->finish(false, "exited with status " + std::to_string(status));
       };
 
       core::system::ProcessOptions options;
       options.terminateChildren = true;
       options.exitWithParent = true;
 
-      Error error = module_context::processSupervisor().runProgram(program, args, options, callbacks);
+      Error error = module_context::processSupervisor().runProgram(rigPath, args, options, callbacks);
       if (error)
       {
-         callback(false, error.getSummary());
+         finish(false, error.getSummary());
          return;
       }
 
@@ -376,10 +241,6 @@ private:
 
 private:
    std::string version_;
-   std::string url_;
-   std::string rigPath_;
-   std::string archivePath_;
-   std::deque<Step> steps_;
    boost::shared_ptr<jobs::Job> pJob_;
    bool processRunning_ = false;
    bool stopped_ = false;
@@ -413,37 +274,6 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
 }
 
 } // anonymous namespace
-
-Error verifyArchiveDigest(const FilePath& archive, const std::string& expected)
-{
-   if (expected.empty())
-   {
-      return systemError(
-               boost::system::errc::operation_not_permitted,
-               "no checksum is known for " + archive.getFilename(),
-               ERROR_LOCATION);
-   }
-
-   std::string contents, actual;
-   Error error = readStringFromFile(archive, &contents);
-   if (!error)
-      error = core::system::crypto::sha256Hex(contents, &actual);
-   if (error)
-      return error;
-
-   if (!boost::algorithm::iequals(actual, expected))
-   {
-      error = systemError(
-               boost::system::errc::illegal_byte_sequence,
-               "the downloaded archive failed verification",
-               ERROR_LOCATION);
-      error.addProperty("expected", expected);
-      error.addProperty("actual", actual);
-      return error;
-   }
-
-   return Success();
-}
 
 Error findInstalledRVersion(const std::string& version, json::Value* pInstalled)
 {
