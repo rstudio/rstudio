@@ -453,7 +453,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          else
          {
             Roles.getPresentationRole().set(row);
-            headerId = ensureId(row);
+            headerId = DomUtils.ensureHasId(row);
          }
       }
    }
@@ -471,17 +471,10 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          for (int i = rows.getLength() - 1; i >= 0; i--)
          {
             if (!codec_.isValueRow(rows.getItem(i)))
-               return ensureId(rows.getItem(i));
+               return DomUtils.ensureHasId(rows.getItem(i));
          }
       }
       return null;
-   }
-
-   private static String ensureId(Element el)
-   {
-      if (el.getId().isEmpty())
-         el.setId(DOM.createUniqueId());
-      return el.getId();
    }
 
    // Focus stays on the table, so aria-activedescendant is how assistive
@@ -492,7 +485,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       if (row == null)
          table_.removeAttribute("aria-activedescendant");
       else
-         table_.setAttribute("aria-activedescendant", ensureId(row));
+         table_.setAttribute("aria-activedescendant", DomUtils.ensureHasId(row));
    }
 
    protected void addToTop(TableSectionElement tbody)
