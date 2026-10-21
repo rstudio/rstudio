@@ -36,6 +36,11 @@ public class FastSelectTableTests extends GWTTestCase
    // controls exactly which rows exist.
    private static class Codec implements FastSelectTable.ItemCodec<String, String, String>
    {
+      Codec(boolean hasHeaders)
+      {
+         hasHeaders_ = hasHeaders;
+      }
+
       public TableRowElement getRowForItem(String item)
       {
          TableRowElement tr = Document.get().createTRElement();
@@ -66,7 +71,7 @@ public class FastSelectTableTests extends GWTTestCase
 
       public boolean hasNonValueRows()
       {
-         return true;
+         return hasHeaders_;
       }
 
       public Integer logicalOffsetToPhysicalOffset(TableElement table, int offset)
@@ -95,12 +100,20 @@ public class FastSelectTableTests extends GWTTestCase
       {
          return physicalOffsetToLogicalOffset(table, table.getRows().getLength());
       }
+
+      private final boolean hasHeaders_;
    }
 
    private FastSelectTable<String, String, String> createTable(String[]... bodies)
    {
+      return createTable(true, bodies);
+   }
+
+   private FastSelectTable<String, String, String> createTable(boolean hasHeaders,
+                                                                String[]... bodies)
+   {
       FastSelectTable<String, String, String> table =
-            new FastSelectTable<>(new Codec(), "selected", true, true, "test");
+            new FastSelectTable<>(new Codec(hasHeaders), "selected", true, true, "test");
       for (String[] body : bodies)
          table.addItems(Arrays.asList(body), false);
       return table;
@@ -153,5 +166,19 @@ public class FastSelectTableTests extends GWTTestCase
 
       assertEquals("v2", rowText(table));
       assertFalse(el.getRows().getItem(0).hasAttribute("aria-describedby"));
+   }
+
+   public void testSelectRangePastEndIgnoresMissingRows()
+   {
+      // Without header rows, offsets are used as row indexes unchecked.
+      FastSelectTable<String, String, String> table =
+            createTable(false, new String[] {"a1", "a2"});
+
+      table.setSelected(1, 5, true);
+
+      assertEquals(Arrays.asList("a2"), table.getSelectedValues());
+      TableElement el = table.getElement().cast();
+      assertEquals(el.getRows().getItem(1).getId(),
+                   el.getAttribute("aria-activedescendant"));
    }
 }

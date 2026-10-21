@@ -601,8 +601,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       for (int i = 0; i < length; i++)
       {
          TableRowElement row = getRow(offset + i);
-         setSelected(row, selected, false);
-         if (selected && isSelected(row))
+         if (setSelected(row, selected, false) && selected)
             last = row;
       }
       if (last != null)
@@ -614,28 +613,30 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       setSelected(row, selected, true);
    }
 
-   private void setSelected(TableRowElement row, boolean selected, boolean updateActive)
+   // Returns whether the row is a selected row of this table afterwards; a row
+   // not in the table, such as one past the end, is ignored.
+   private boolean setSelected(TableRowElement row, boolean selected, boolean updateActive)
    {
       try
       {
          if (row.getParentElement().getParentElement() != table_)
-            return;
+            return false;
       }
       catch (NullPointerException npe)
       {
-         return;
+         return false;
       }
       catch (JavaScriptException ex)
       {
-         return;
+         return false;
       }
 
       boolean isCurrentlySelected = isSelected(row);
       if (isCurrentlySelected == selected)
-         return;
+         return isCurrentlySelected;
 
       if (selected && !codec_.isValueRow(row))
-         return;
+         return false;
 
       setStyleName(row, selectedClassName_, selected);
       Roles.getOptionRole().setAriaSelectedState(row, SelectedValue.of(selected));
@@ -658,6 +659,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
             }
          });
       }
+      return selected;
    }
 
    public ArrayList<TItemOutput> getSelectedValues()
