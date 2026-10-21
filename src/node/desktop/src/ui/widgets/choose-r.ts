@@ -28,7 +28,7 @@ import { normalize } from 'path';
 import { kWindowsRExe } from '../utils';
 import { appState } from '../../main/app-state';
 import { loadRWebsite } from '../../main/utils';
-import { rArchitectureWin32, rExecutablePathWin32 } from '../../main/r-installation-win32';
+import { isArm64MachineWin32, rArchitectureWin32, rExecutablePathWin32 } from '../../main/r-installation-win32';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
@@ -108,6 +108,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
       rInstalls: this.rInstalls,
       renderingEngine: options.renderingEngine(),
       selectedRVersion: options.rExecutablePath(),
+      preferArm64: isArm64MachineWin32(),
     };
 
     this.webContents.send('initialize', initData);

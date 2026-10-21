@@ -19,7 +19,9 @@ import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
+import { readPeMachine } from '../../../src/core/pe';
 import {
+  isArm64MachineWin32,
   rArchitectureWin32,
   rExecutablePathWin32,
   rTermInBinFolderWin32,
@@ -74,5 +76,14 @@ describe('r-installation-win32', () => {
 
   it('reports no architecture when R.dll is missing', () => {
     assert.isUndefined(rArchitectureWin32(join(rHome, 'bin')));
+  });
+
+  it('tells an ARM64 machine from kernel32.dll on Windows, and is false elsewhere', () => {
+    if (process.platform === 'win32') {
+      const kernel32 = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'kernel32.dll');
+      assert.strictEqual(isArm64MachineWin32(), readPeMachine(kernel32) === 'arm64');
+    } else {
+      assert.isFalse(isArm64MachineWin32());
+    }
   });
 });

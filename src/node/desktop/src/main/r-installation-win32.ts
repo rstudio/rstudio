@@ -37,6 +37,21 @@ export function rArchitectureWin32(binDir: string): string | undefined {
 }
 
 /**
+ * True on ARM64 Windows, even in an x64 process under emulation, where
+ * process.arch, os.arch() and os.machine() all report x64: reads the machine
+ * type of System32's kernel32.dll.
+ */
+export function isArm64MachineWin32(): boolean {
+  const kernel32 = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'kernel32.dll');
+  try {
+    return readPeMachine(kernel32) === 'arm64';
+  } catch (error: unknown) {
+    logger().logDebug(`Could not read machine type from ${kernel32}: ${String(error)}`);
+    return false;
+  }
+}
+
+/**
  * True when the 64-bit R at `rHome` should run from bin\Rterm.exe rather than
  * bin\x64\Rterm.exe: an ARM64 R has no architecture subfolder. When both exist,
  * bin\Rterm.exe wins only if its R.dll is ARM64.

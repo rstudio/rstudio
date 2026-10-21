@@ -90,7 +90,10 @@ ipcRenderer.on('initialize', (_event, data) => {
   const selectWidget = document.getElementById('select') as HTMLSelectElement;
   selectWidget.disabled = !(rInstalls.length > 0 && useCustomEl.checked);
 
-  rInstalls.forEach(async (rInstall) => {
+  // the entry selected from the saved choice, if any
+  let preselectedOption: HTMLOptionElement | undefined;
+
+  const listed = rInstalls.map(async (rInstall) => {
     // normalize separators, etc
     rInstall = normalizeSeparatorsNative(await ipcRenderer.invoke('path_normalize', rInstall));
 
@@ -114,6 +117,7 @@ ipcRenderer.on('initialize', (_event, data) => {
       const optionEl = window.document.createElement('option');
       optionEl.value = rBin;
       optionEl.innerText = label !== undefined ? `${label} ${rInstall}` : rInstall;
+      optionEl.dataset.arch = arch;
       selectEl.appendChild(optionEl);
 
       if (!useDefault64BitR && isRVersionSelected(data.selectedRVersion as string, rBin)) {
@@ -123,6 +127,7 @@ ipcRenderer.on('initialize', (_event, data) => {
         selectWidget.disabled = false;
         selectWidget.selectedIndex = selectEl.childElementCount - 1;
         selectWidget.focus();
+        preselectedOption = optionEl;
       }
     }
 
@@ -143,6 +148,7 @@ ipcRenderer.on('initialize', (_event, data) => {
         selectWidget.disabled = false;
         selectWidget.selectedIndex = selectEl.childElementCount - 1;
         selectWidget.focus();
+        preselectedOption = optionEl;
       }
     }
 
@@ -162,9 +168,25 @@ ipcRenderer.on('initialize', (_event, data) => {
         selectWidget.disabled = false;
         selectWidget.selectedIndex = selectEl.childElementCount - 1;
         selectWidget.focus();
+        preselectedOption = optionEl;
       }
     }
   });
+
+  // on an ARM64 machine, list the native (ARM64) installations first, in their order
+  if (data.preferArm64 as boolean) {
+    void Promise.all(listed).then(() => {
+      const arm64Options = Array.from(selectEl.options).filter((option) => option.dataset.arch === 'arm64');
+      for (const option of arm64Options.reverse()) {
+        selectEl.insertBefore(option, selectEl.firstChild);
+      }
+      if (preselectedOption !== undefined) {
+        preselectedOption.selected = true;
+      } else {
+        selectEl.selectedIndex = 0;
+      }
+    });
+  }
 
   useCustomEl.checked = !default32BitPath && !default64BitPath && rInstalls.length > 0;
   selectWidget.disabled = !useCustomEl.checked;
