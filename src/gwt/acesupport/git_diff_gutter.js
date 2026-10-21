@@ -634,8 +634,10 @@ var GitDiffGutter = function(editor, strings) {
       else
          label = this.strings.changedLines(newCount);
 
+      // the kind picks the accent colour, matching the marker it came from
+      var kind = isDeletion(chunk) ? "deleted" : isAddition(chunk) ? "added" : "modified";
       var el = document.createElement("div");
-      el.className = PEEK_CLASS;
+      el.className = PEEK_CLASS + " " + PEEK_CLASS + "-" + kind;
 
       var header = document.createElement("div");
       header.className = PEEK_CLASS + "-header";

@@ -14,7 +14,7 @@
 @external ace_nes-offscreen-gutter, ace_nes-offscreen-gutter-up, ace_nes-offscreen-gutter-down;
 @external ace_diff-added, ace_diff-removed;
 @external ace_git-gutter, ace_git-added, ace_git-modified, ace_git-deleted, ace_git-deleted-below, ace_folding-enabled, ace_gutter-cell_svg-icons;
-@external ace_git-peek, ace_git-peek-header, ace_git-peek-label, ace_git-peek-button, ace_git-peek-revert, ace_git-peek-close, ace_git-peek-lines, ace_git-peek-line;
+@external ace_git-peek, ace_git-peek-added, ace_git-peek-modified, ace_git-peek-deleted, ace_git-peek-header, ace_git-peek-label, ace_git-peek-button, ace_git-peek-revert, ace_git-peek-close, ace_git-peek-lines, ace_git-peek-line;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -3386,6 +3386,9 @@ body .rstudio-themes-alternate {
    padding-right: 19px;
 }
 
+/* The bar is 3px; a transparent border widens its box to the click target
+   (MARKER_HIT_WIDTH in git_diff_gutter.js) so the pointer cursor covers
+   exactly what a click opens. */
 .ace_git-gutter .ace_gutter-cell.ace_git-added::after,
 .ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
    content: "";
@@ -3394,6 +3397,9 @@ body .rstudio-themes-alternate {
    bottom: 0;
    right: 0;
    width: 3px;
+   border-left: 3px solid transparent;
+   background-clip: content-box;
+   cursor: pointer;
 }
 
 .ace_git-gutter .ace_gutter-cell.ace_git-added::after {
@@ -3413,6 +3419,7 @@ body .rstudio-themes-alternate {
    height: 0;
    border-right: 5px solid #cf222e;
    z-index: 1;
+   cursor: pointer;
 }
 
 .ace_git-gutter .ace_gutter-cell.ace_git-deleted::before {
@@ -3439,13 +3446,25 @@ body .rstudio-themes-alternate {
 }
 
 /* Peek at a Git change: a line widget below the changed lines showing the
-   index version, with a button to revert. Inherits the editor font. */
+   index version, with a button to revert. Inherits the editor font. The
+   frame is neutral, with a left accent in the colour of the marker it was
+   opened from; only the previous lines themselves are tinted, as removed
+   lines are in a diff. */
 .ace_git-peek {
    box-sizing: border-box;
-   border-top: 1px solid rgba(207, 34, 46, 0.4);
-   border-bottom: 1px solid rgba(207, 34, 46, 0.4);
-   background-color: rgba(207, 34, 46, 0.06);
+   border-top: 1px solid rgba(0, 0, 0, 0.12);
+   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+   border-left: 3px solid #0969da;
+   background-color: rgba(0, 0, 0, 0.035);
    overflow: hidden;
+}
+
+.ace_git-peek-added {
+   border-left-color: #2da44e;
+}
+
+.ace_git-peek-deleted {
+   border-left-color: #cf222e;
 }
 
 .ace_git-peek-header {
@@ -3478,12 +3497,21 @@ body .rstudio-themes-alternate {
 }
 
 .ace_git-peek-line {
-   background-color: rgba(207, 34, 46, 0.12);
+   background-color: rgba(207, 34, 46, 0.1);
 }
 
 .editor_dark .ace_git-peek {
-   border-color: rgba(248, 81, 73, 0.5);
-   background-color: rgba(248, 81, 73, 0.1);
+   border-color: rgba(255, 255, 255, 0.12);
+   border-left-color: #58a6ff;
+   background-color: rgba(255, 255, 255, 0.05);
+}
+
+.editor_dark .ace_git-peek-added {
+   border-left-color: #3fb950;
+}
+
+.editor_dark .ace_git-peek-deleted {
+   border-left-color: #f85149;
 }
 
 .editor_dark .ace_git-peek-button {
@@ -3492,5 +3520,5 @@ body .rstudio-themes-alternate {
 }
 
 .editor_dark .ace_git-peek-line {
-   background-color: rgba(248, 81, 73, 0.18);
+   background-color: rgba(248, 81, 73, 0.15);
 }
