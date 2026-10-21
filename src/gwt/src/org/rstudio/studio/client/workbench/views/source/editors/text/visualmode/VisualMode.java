@@ -832,7 +832,13 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.splitEditorDown(),
         commands_.removeEditorSplit(),
         commands_.toggleEditorSplit(),
-        commands_.focusOtherEditorSplit()
+        commands_.focusOtherEditorSplit(),
+
+        // The Git gutter is a source-editor feature; these would act on the
+        // hidden source editor's cursor
+        commands_.vcsNextChange(),
+        commands_.vcsPreviousChange(),
+        commands_.vcsRevertChange()
       );
       
       // initially disable code commands (they will be re-enabled later when an

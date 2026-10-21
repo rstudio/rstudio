@@ -40,6 +40,7 @@ import com.google.inject.Provider;
 // Marks lines changed relative to the Git index in a document's gutter. The
 // base version is fetched once and whenever the index may have moved; the
 // diff against the live buffer is computed client-side as the user types.
+// A split editor view gets a gutter of its own, fed the same base.
 public class TextEditingTargetGitDiffGutter
 {
    public TextEditingTargetGitDiffGutter(DocDisplay docDisplay,
@@ -74,6 +75,8 @@ public class TextEditingTargetGitDiffGutter
       {
          if (gutter_ != null)
             gutter_.setIgnoreWhitespace(event.getValue());
+         if (splitGutter_ != null)
+            splitGutter_.setIgnoreWhitespace(event.getValue());
       }));
       releaseOnDismiss.add(() ->
       {
@@ -84,22 +87,46 @@ public class TextEditingTargetGitDiffGutter
       sync();
    }
 
-   public void goToNextChange()
+   // The split view comes and goes independently of the gutter; it gets its
+   // own decorator once both exist.
+   public void setSplitEditor(AceEditor editor)
    {
-      if (gutter_ != null)
-         gutter_.goToNextChange();
+      if (splitGutter_ != null)
+      {
+         splitGutter_.dispose();
+         splitGutter_ = null;
+      }
+
+      splitEditor_ = editor;
+      if (splitEditor_ != null && gutter_ != null)
+         attachSplit();
    }
 
-   public void goToPreviousChange()
+   // The cursor-driven actions act on the view that holds the cursor.
+   public void goToNextChange(DocDisplay display)
    {
-      if (gutter_ != null)
-         gutter_.goToPreviousChange();
+      GitDiffGutterNative gutter = gutterFor(display);
+      if (gutter != null)
+         gutter.goToNextChange();
    }
 
-   public void revertChangeAtCursor()
+   public void goToPreviousChange(DocDisplay display)
    {
-      if (gutter_ != null)
-         gutter_.revertChangeAtCursor();
+      GitDiffGutterNative gutter = gutterFor(display);
+      if (gutter != null)
+         gutter.goToPreviousChange();
+   }
+
+   public void revertChangeAtCursor(DocDisplay display)
+   {
+      GitDiffGutterNative gutter = gutterFor(display);
+      if (gutter != null)
+         gutter.revertChangeAtCursor();
+   }
+
+   private GitDiffGutterNative gutterFor(DocDisplay display)
+   {
+      return (display == splitEditor_) ? splitGutter_ : gutter_;
    }
 
    @Inject
@@ -153,11 +180,24 @@ public class TextEditingTargetGitDiffGutter
          if (dismissed_ || gutter_ != null || !isEnabled())
             return;
 
-         AceEditor editor = (AceEditor) docDisplay_;
-         gutter_ = GitDiffGutterNative.create(editor.getWidget().getEditor());
-         gutter_.setIgnoreWhitespace(prefs_.gitDiffIgnoreWhitespace().getValue());
+         gutter_ = createGutter((AceEditor) docDisplay_);
+         if (splitEditor_ != null)
+            attachSplit();
          refresh();
       });
+   }
+
+   private void attachSplit()
+   {
+      splitGutter_ = createGutter(splitEditor_);
+      splitGutter_.setBase(baseContents_);
+   }
+
+   private GitDiffGutterNative createGutter(AceEditor editor)
+   {
+      GitDiffGutterNative gutter = GitDiffGutterNative.create(editor.getWidget().getEditor());
+      gutter.setIgnoreWhitespace(prefs_.gitDiffIgnoreWhitespace().getValue());
+      return gutter;
    }
 
    private void detach()
@@ -165,11 +205,18 @@ public class TextEditingTargetGitDiffGutter
       refreshTimer_.cancel();
       invalidation_.invalidate();
       basePath_ = null;
+      baseContents_ = null;
 
       if (gutter_ != null)
       {
          gutter_.dispose();
          gutter_ = null;
+      }
+
+      if (splitGutter_ != null)
+      {
+         splitGutter_.dispose();
+         splitGutter_ = null;
       }
    }
 
@@ -203,7 +250,10 @@ public class TextEditingTargetGitDiffGutter
                   if (token.isInvalid() || gutter_ == null)
                      return;
 
-                  gutter_.setBase(response.isTracked() ? response.getContents() : null);
+                  baseContents_ = response.isTracked() ? response.getContents() : null;
+                  gutter_.setBase(baseContents_);
+                  if (splitGutter_ != null)
+                     splitGutter_.setBase(baseContents_);
                }
 
                @Override
@@ -218,7 +268,10 @@ public class TextEditingTargetGitDiffGutter
    private final DocUpdateSentinel sentinel_;
 
    private GitDiffGutterNative gutter_;
+   private GitDiffGutterNative splitGutter_;
+   private AceEditor splitEditor_;
    private String basePath_;
+   private String baseContents_;
    private boolean attaching_;
    private boolean dismissed_;
 

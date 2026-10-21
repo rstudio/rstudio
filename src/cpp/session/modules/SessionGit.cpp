@@ -2714,13 +2714,23 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
    if (relativePath.empty())
       return Success();
 
+   // Only a regular file has contents to diff against: a symlink's index
+   // entry holds its target path, and a submodule's a commit id. An empty
+   // listing means the path isn't in the index at all, which is the normal
+   // case for new files and not worth logging.
+   core::system::ProcessResult stageResult;
+   error = gitExec(gitArgs() << "ls-files" << "--stage" << "--" << relativePath, root, &stageResult);
+   if (error)
+      return error;
+
+   if (stageResult.exitStatus != EXIT_SUCCESS || !boost::algorithm::starts_with(stageResult.stdOut, "100"))
+      return Success();
+
    core::system::ProcessResult procResult;
    error = gitExec(gitArgs() << "show" << ":" + relativePath, root, &procResult);
    if (error)
       return error;
 
-   // a non-zero exit means the index has no such path; that's expected for
-   // new files and not worth logging
    if (procResult.exitStatus != EXIT_SUCCESS)
       return Success();
 
@@ -2736,8 +2746,10 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
    // loaded, so the base gets the same treatment or every line would differ
    string_utils::convertLineEndings(&contents, session::options().sourceLineEnding());
 
+   // control characters are kept: the editor keeps them too, and JSON
+   // escapes them fine
    result["tracked"] = true;
-   result["contents"] = string_utils::filterControlChars(contents);
+   result["contents"] = contents;
    pResponse->setResult(result);
 
    return Success();

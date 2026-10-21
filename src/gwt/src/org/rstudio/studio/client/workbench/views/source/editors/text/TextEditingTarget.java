@@ -4178,8 +4178,15 @@ public class TextEditingTarget implements
 
    // Called by the view when the split editor view is destroyed; drop any
    // executor bound to it so re-run-last-code falls back to the primary view.
+   void splitEditorCreated(AceEditor editor)
+   {
+      gitDiffGutter_.setSplitEditor(editor);
+   }
+
    void splitEditorRemoved()
    {
+      gitDiffGutter_.setSplitEditor(null);
+
       if (lastCodeExecution_ == splitCodeExecution_)
          lastCodeExecution_ = codeExecution_;
 
@@ -4890,22 +4897,23 @@ public class TextEditingTarget implements
             FileSystemItem.createFile(docUpdateSentinel_.getPath())));
    }
 
+   // these follow the cursor, so they go to whichever editor view has it
    @Handler
    void onVcsNextChange()
    {
-      gitDiffGutter_.goToNextChange();
+      gitDiffGutter_.goToNextChange(activeDisplay());
    }
 
    @Handler
    void onVcsPreviousChange()
    {
-      gitDiffGutter_.goToPreviousChange();
+      gitDiffGutter_.goToPreviousChange(activeDisplay());
    }
 
    @Handler
    void onVcsRevertChange()
    {
-      gitDiffGutter_.revertChangeAtCursor();
+      gitDiffGutter_.revertChangeAtCursor(activeDisplay());
    }
 
    @Handler

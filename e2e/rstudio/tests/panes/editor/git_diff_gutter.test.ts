@@ -8,7 +8,9 @@
 // R-side so this also works in Server mode, where the rsession may not share a
 // filesystem with the test runner.
 import { test, expect } from '@fixtures/rstudio.fixture';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
 import { documentCloseAllNoSave, executeCommand, isCommandEnabled, openProject, setPref } from '@utils/commands';
@@ -17,6 +19,7 @@ import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
+import type { AceEditorElement } from '@utils/ace';
 
 const PROJECT_NAME = 'GitGutter';
 const PREF = 'show_git_diff_gutter';
@@ -95,6 +98,26 @@ async function gutterMarkers(page: Page): Promise<Record<number, string[]>> {
 /** 0-based cursor row of the active editor. */
 async function cursorRow(page: Page): Promise<number> {
   return new AceEditor(page, '').getCursorPosition().then((pos) => pos.row);
+}
+
+/** gutterMarkers, for one editor view's element rather than the active editor. */
+async function viewMarkers(view: Locator): Promise<Record<number, string[]>> {
+  return view.evaluate((el) => {
+    type Cell = { row: number; element: HTMLElement };
+    type GutterEditor = { renderer: { $gutterLayer: { $lines: { cells: Cell[] } } } };
+
+    const editor = (el as AceEditorElement).env?.editor as unknown as GutterEditor | undefined;
+    if (!editor) return {};
+
+    const markers: Record<number, string[]> = {};
+    for (const cell of editor.renderer.$gutterLayer.$lines.cells) {
+      const classes = Array.from(cell.element.classList)
+        .filter((cls) => cls.startsWith('ace_git-'))
+        .sort();
+      if (classes.length > 0) markers[cell.row] = classes;
+    }
+    return markers;
+  });
 }
 
 /** Whether the active editor's gutter layer has a GitDiffGutter attached. */
@@ -460,6 +483,138 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
 
     await documentCloseAllNoSave(page);
+  });
+
+  test('leaves a symlinked index entry alone', async ({ rstudioPage: page }) => {
+    test.skip(process.platform === 'win32', 'creating symlinks needs extra privileges on Windows');
+
+    // git show gives a symlink's target path as its contents, while the editor
+    // shows the target file; diffing the two would mark every line
+    const aliasPath = `${projectDir()}/alias.R`;
+    await executeInConsoleChecked(
+      page,
+      `stopifnot(file.symlink("script.R", ${rPathLiteral(aliasPath)}))`,
+    );
+    await commitAll(page, 'alias', [aliasPath]);
+
+    await openFile(page, aliasPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(aliasPath)}))`);
+    await commitAll(page, 'remove alias', [aliasPath]);
+  });
+
+  test('keeps control characters the editor keeps', async ({ rstudioPage: page }) => {
+    // U+001F survives document loading, so it has to survive the base too,
+    // or the line reads as modified and a revert would drop the character
+    const ctrlPath = `${projectDir()}/ctrl.txt`;
+    await executeInConsoleChecked(
+      page,
+      `writeBin(charToRaw("a\u001fb\nc\n"), ${rPathLiteral(ctrlPath)})`,
+    );
+    await commitAll(page, 'ctrl', [ctrlPath]);
+
+    await openFile(page, ctrlPath);
+    const editor = new AceEditor(page, '');
+    await expect.poll(() => editor.getLine(0)).toBe('a\u001fb');
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+
+    // and a revert restores it rather than the filtered line
+    await editor.gotoLine(1);
+    await editor.navigateLineEnd();
+    await editor.insert('!');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => editor.getLine(0)).toBe('a\u001fb');
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('acts on the editor view holding the cursor when the editor is split', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    await executeCommand(page, 'splitEditorRight');
+    const views = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor")
+      .filter({ hasText: 'a2 <- 1.5' });
+    await expect(views).toHaveCount(2);
+    const primary = views.first();
+    const split = views.nth(1);
+
+    try {
+      // both views carry the markers
+      await expect.poll(() => viewMarkers(split), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+      expect(await viewMarkers(primary)).toEqual(EDITED_MARKERS);
+
+      // primary cursor on the added line, split cursor on the modified one,
+      // split focused last: the revert must take the modified line
+      await primary.locator('.ace_content').click({ force: true });
+      await primary.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(2, 0));
+      await split.locator('.ace_content').click({ force: true });
+      await split.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(5, 0));
+      await expect.poll(() => split.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
+      await executeCommand(page, 'vcsRevertChange');
+      const editor = new AceEditor(page, '');
+      await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
+      expect(await editor.getLine(1)).toBe('a2 <- 1.5');
+      await expect.poll(() => viewMarkers(split), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+      await expect.poll(() => viewMarkers(primary), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+
+      // and Next Change moves the split view's cursor, from its own position
+      await executeCommand(page, 'vcsNextChange');
+      await expect
+        .poll(() => split.evaluate((el) => (el as AceEditorElement).env?.editor?.getCursorPosition().row))
+        .toBe(6);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(views).toHaveCount(1);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('disables the commands in visual mode', async ({ rstudioPage: page }) => {
+    // the gutter belongs to the source editor, which visual mode hides
+    const rmdPath = `${projectDir()}/doc.Rmd`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("---", "title: x", "---", "", "One.", "", "Two."), ${rPathLiteral(rmdPath)})`,
+    );
+    await commitAll(page, 'rmd', [rmdPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("---", "title: x", "---", "", "One!", "", "Two."), ${rPathLiteral(rmdPath)})`,
+    );
+
+    await openFile(page, rmdPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [MODIFIED] });
+    await expect.poll(() => isCommandEnabled(page, 'vcsRevertChange')).toBe(true);
+
+    const sourceActions = new SourcePaneActions(page, new ConsolePaneActions(page));
+    await sourceActions.ensureVisualMode();
+    await expect.poll(() => isCommandEnabled(page, 'vcsRevertChange')).toBe(false);
+    await expect.poll(() => isCommandEnabled(page, 'vcsNextChange')).toBe(false);
+
+    await sourceActions.ensureSourceMode();
+    await expect.poll(() => isCommandEnabled(page, 'vcsRevertChange')).toBe(true);
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(rmdPath)}))`);
+    await commitAll(page, 'remove rmd', [rmdPath]);
   });
 
   test('closes the peek when the index version it shows is replaced', async ({
