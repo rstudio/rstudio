@@ -93,6 +93,7 @@ var GitDiffGutter = function(editor) {
    this.peek = null;
    this.baseRefresher = null;
    this.revision = 0;
+   this.splitView = null;
 
    this.onAfterRender = this.onAfterRender.bind(this);
    this.onChange = this.onChange.bind(this);
@@ -137,6 +138,8 @@ var GitDiffGutter = function(editor) {
       this.closePeek();
       this.baseText = text;
       this.baseLines = (text == null) ? null : splitLines(text);
+      if (this.splitView)
+         this.splitView.setBaseLines(this.baseLines);
       this.update();
    };
 
@@ -159,6 +162,20 @@ var GitDiffGutter = function(editor) {
    // if that base turned out to be the one already in use.
    this.setBaseRefresher = function(refresher) {
       this.baseRefresher = refresher;
+   };
+
+   // A side-by-side view (see git_diff_split.js) shows the base beside the
+   // document and follows this gutter's diff. While one is attached the peek
+   // stays closed: the view shows what it would, and its alignment padding
+   // sits where the peek would go.
+   this.setSplitView = function(view) {
+      this.splitView = view;
+      if (!view)
+         return;
+
+      this.closePeek();
+      view.setBaseLines(this.baseLines);
+      view.setChunks(this.chunks, this.ignoreWhitespace);
    };
 
    // Runs the callback once the base is current. The base is also re-fetched
@@ -297,6 +314,9 @@ var GitDiffGutter = function(editor) {
       });
 
       this.rowClasses = rowClasses;
+
+      if (this.splitView)
+         this.splitView.setChunks(chunks, this.ignoreWhitespace);
 
       // An open peek survives only if its change is still there unchanged.
       if (this.peek)
@@ -528,6 +548,8 @@ var GitDiffGutter = function(editor) {
    // button to revert the change. Returns false if there is no room for it.
    this.showPeek = function(chunk) {
       this.closePeek();
+      if (this.splitView)
+         return false;
 
       var row = this.peekRow(chunk);
       if (row == null)
@@ -683,7 +705,10 @@ var GitDiffGutter = function(editor) {
       e.stopImmediatePropagation();
       this.focusEditor();
 
-      if (this.peek && this.peek.chunk === chunk)
+      // with the base on screen already, a marker click just goes there
+      if (this.splitView)
+         this.goToChunk(chunk);
+      else if (this.peek && this.peek.chunk === chunk)
          this.closePeek();
       else
          this.showPeek(chunk);
@@ -706,6 +731,8 @@ var GitDiffGutter = function(editor) {
          this.updateTimer = null;
       }
 
+      if (this.splitView)
+         this.splitView.dispose();
       this.closePeek();
       this.editor.off("change", this.onChange);
 

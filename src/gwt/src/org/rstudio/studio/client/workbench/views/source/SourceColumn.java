@@ -848,12 +848,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       getSourceCommand(commands_.vcsNextChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
       getSourceCommand(commands_.vcsPreviousChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
       getSourceCommand(commands_.vcsRevertChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsShowChangesSideBySide()).setVisible(active, gutterCmdEnabled, gutterEnabled);
       getSourceCommand(commands_.vcsFileLog()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileDiff()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileRevert()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsNextChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
       getSourceCommand(commands_.vcsPreviousChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
       getSourceCommand(commands_.vcsRevertChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsShowChangesSideBySide()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
 
       if (cmdEnabled)
       {

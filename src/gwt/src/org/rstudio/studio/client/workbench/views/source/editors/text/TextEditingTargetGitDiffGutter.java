@@ -29,6 +29,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiffGutterNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiffSplitNative;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -43,7 +44,9 @@ import com.google.inject.Provider;
 // Marks lines changed relative to the Git index in a document's gutter. The
 // base version is fetched once and whenever the index may have moved; the
 // diff against the live buffer is computed client-side as the user types.
-// A split editor view gets a gutter of its own, fed the same base.
+// A split editor view gets a gutter of its own, fed the same base, and a
+// side-by-side diff view shows the base in a pane of its own, driven by the
+// primary gutter's diff.
 public class TextEditingTargetGitDiffGutter
 {
    public TextEditingTargetGitDiffGutter(DocDisplay docDisplay,
@@ -123,6 +126,24 @@ public class TextEditingTargetGitDiffGutter
       splitFocusRegistration_ = splitEditor_.addEditorFocusHandler(event -> scheduleRefresh());
       if (gutter_ != null)
          attachSplit();
+   }
+
+   // The side-by-side pane comes and goes with the editor split state; the
+   // base editor inside it is created once the gutter exists to drive it.
+   public void setDiffSplitWidget(GitDiffSplitWidget widget)
+   {
+      disposeDiffSplit();
+
+      diffSplitWidget_ = widget;
+      if (diffSplitWidget_ != null && gutter_ != null)
+         attachDiffSplit();
+   }
+
+   // Whether a side-by-side view can be shown for this document at all: the
+   // gutter has to be in play (Git project, file on disk, markers enabled).
+   public boolean isAvailable()
+   {
+      return isEnabled();
    }
 
    // The cursor-driven actions act on the view that holds the cursor.
@@ -221,8 +242,26 @@ public class TextEditingTargetGitDiffGutter
          gutter_ = createGutter((AceEditor) docDisplay_);
          if (splitEditor_ != null)
             attachSplit();
+         if (diffSplitWidget_ != null)
+            attachDiffSplit();
          refresh();
       });
+   }
+
+   private void attachDiffSplit()
+   {
+      diffSplit_ = GitDiffSplitNative.create(gutter_, diffSplitWidget_.getElement());
+      diffSplitWidget_.setView(diffSplit_);
+   }
+
+   private void disposeDiffSplit()
+   {
+      if (diffSplit_ == null)
+         return;
+
+      diffSplitWidget_.setView(null);
+      diffSplit_.dispose();
+      diffSplit_ = null;
    }
 
    private void attachSplit()
@@ -281,6 +320,17 @@ public class TextEditingTargetGitDiffGutter
       invalidation_.invalidate();
       basePath_ = null;
       baseContents_ = null;
+
+      disposeDiffSplit();
+
+      // Without a gutter there is no diff to show side by side, so an open
+      // view closes along with it (e.g. the markers turned off in Global
+      // Options). Not on dismiss, where the split is torn down regardless.
+      if (diffSplitWidget_ != null && !dismissed_)
+      {
+         sentinel_.setProperty(TextEditingTarget.EDITOR_SPLIT,
+                               TextEditingTarget.EDITOR_SPLIT_NONE);
+      }
 
       if (gutter_ != null)
       {
@@ -377,6 +427,8 @@ public class TextEditingTargetGitDiffGutter
 
    private GitDiffGutterNative gutter_;
    private GitDiffGutterNative splitGutter_;
+   private GitDiffSplitNative diffSplit_;
+   private GitDiffSplitWidget diffSplitWidget_;
    private AceEditor splitEditor_;
    private HandlerRegistration splitFocusRegistration_;
    private String basePath_;

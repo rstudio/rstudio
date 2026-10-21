@@ -310,6 +310,7 @@ public class TextEditingTarget implements
    public static final String EDITOR_SPLIT_NONE  = "none";
    public static final String EDITOR_SPLIT_RIGHT = "right";
    public static final String EDITOR_SPLIT_DOWN  = "down";
+   public static final String EDITOR_SPLIT_DIFF  = "diff";
    
    public static final String QUARTO_PREVIEW_FORMAT = "quartoPreviewFormat";
 
@@ -370,7 +371,9 @@ public class TextEditingTarget implements
 
       // Editor splits: a tab can show a second view of its document
       // (EDITOR_SPLIT_RIGHT / EDITOR_SPLIT_DOWN), sharing the document and
-      // undo history but with per-view selection, scrolling, and folds.
+      // undo history but with per-view selection, scrolling, and folds; or
+      // the Git index version of the document beside it (EDITOR_SPLIT_DIFF),
+      // read-only and aligned with it.
       //
       // Note the distinction between the "active tab" and the "active editor
       // view". Command routing selects the active tab (this editing target);
@@ -3126,6 +3129,7 @@ public class TextEditingTarget implements
          commandHandlerReg_ = null;
       }
       commandHandlerReg_ = commandBinder.bind(commands_, this);
+      syncDiffSplitCommand();
 
       // show outline if not yet rendered (deferred so that widget itself can
       // be sized first)
@@ -4069,6 +4073,27 @@ public class TextEditingTarget implements
       view_.focusOtherEditorSplit();
    }
 
+   @Handler
+   void onVcsShowChangesSideBySide()
+   {
+      String desired = isDiffSplitActive() ? EDITOR_SPLIT_NONE : EDITOR_SPLIT_DIFF;
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, desired);
+   }
+
+   private boolean isDiffSplitActive()
+   {
+      return StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_DIFF);
+   }
+
+   // The command is shared by every tab, so its checked state follows the
+   // active document: on activation, and whenever its split state changes
+   // (a restored document applies its split before any tab is active).
+   private void syncDiffSplitCommand()
+   {
+      if (commandHandlerReg_ != null)
+         commands_.vcsShowChangesSideBySide().setChecked(isDiffSplitActive());
+   }
+
    // If an editor split is active and one of this editor's views currently
    // holds focus, move focus to the other view and return true. Used by
    // activateSource (Ctrl+1), so that repeated presses toggle between the
@@ -4095,17 +4120,27 @@ public class TextEditingTarget implements
 
    private void applyEditorSplit(String type)
    {
-      // tolerate stale or unrecognized property values
-      if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
-          !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      if (StringUtil.equals(type, EDITOR_SPLIT_DIFF))
       {
+         // a restored diff split for a document that can no longer show one
+         // (e.g. the markers since turned off) falls back to a single view
+         if (!gitDiffGutter_.isAvailable())
+            type = EDITOR_SPLIT_NONE;
+      }
+      else if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
+               !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      {
+         // tolerate stale or unrecognized property values
          type = EDITOR_SPLIT_NONE;
       }
-
-      if (!StringUtil.equals(type, EDITOR_SPLIT_NONE))
+      else
+      {
+         // the kind of split that Toggle Editor Split brings back
          lastEditorSplit_ = type;
+      }
 
       view_.setEditorSplit(type);
+      syncDiffSplitCommand();
    }
 
    // The editor view holding the user's cursor -- the primary editor, or the
@@ -4181,6 +4216,18 @@ public class TextEditingTarget implements
    void splitEditorCreated(AceEditor editor)
    {
       gitDiffGutter_.setSplitEditor(editor);
+   }
+
+   // Called by the view as the side-by-side diff pane comes and goes; the
+   // gutter owns the base editor shown inside it.
+   void diffSplitCreated(GitDiffSplitWidget widget)
+   {
+      gitDiffGutter_.setDiffSplitWidget(widget);
+   }
+
+   void diffSplitRemoved()
+   {
+      gitDiffGutter_.setDiffSplitWidget(null);
    }
 
    void splitEditorRemoved()

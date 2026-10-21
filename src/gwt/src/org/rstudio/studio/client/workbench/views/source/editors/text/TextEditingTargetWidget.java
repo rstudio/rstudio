@@ -374,6 +374,17 @@ public class TextEditingTargetWidget
    @Override
    public boolean focusOtherEditorSplit()
    {
+      // the side-by-side diff has a read-only base editor to move between
+      if (diffSplitWidget_ != null)
+      {
+         if (diffSplitWidget_.isFocused())
+            editor_.focus();
+         else
+            diffSplitWidget_.focus();
+
+         return true;
+      }
+
       // a requested split may not have materialized yet (see
       // desiredSplitState_); report failure so callers can fall through to
       // their default behavior instead of swallowing the gesture
@@ -392,7 +403,8 @@ public class TextEditingTargetWidget
    public boolean isEditorViewFocused()
    {
       return editor_.isFocused() ||
-             (splitEditor_ != null && splitEditor_.isFocused());
+             (splitEditor_ != null && splitEditor_.isFocused()) ||
+             (diffSplitWidget_ != null && diffSplitWidget_.isFocused());
    }
 
    private void manageEditorSplit(String type)
@@ -429,13 +441,21 @@ public class TextEditingTargetWidget
          height = splitPanel_.getOffsetHeight();
 
          splitPanel_.remove(editorWidget);
-         splitPanel_.remove(splitEditor_.asWidget());
+         if (splitEditor_ != null)
+            splitPanel_.remove(splitEditor_.asWidget());
+         if (diffSplitWidget_ != null)
+            splitPanel_.remove(diffSplitWidget_);
          editorPanel_.remove(splitPanel_);
          splitPanel_ = null;
 
          if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_NONE))
             editorPanel_.add(editorWidget);
       }
+
+      // the two kinds of secondary pane are exclusive
+      boolean diff = StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_DIFF);
+      if (!diff)
+         destroyDiffSplit();
 
       if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_NONE))
       {
@@ -446,6 +466,20 @@ public class TextEditingTargetWidget
          // shouldn't steal focus
          if (editorHadFocus)
             editor_.focus();
+      }
+      else if (diff)
+      {
+         destroySplitEditor();
+         ensureDiffSplit();
+
+         editorPanel_.remove(editorWidget);
+
+         // the base version reads on the left, the live document on the right
+         splitPanel_ = new NotifyingSplitLayoutPanel(SPLITTER_SIZE, events_);
+         splitPanel_.addWest(diffSplitWidget_, width / 2.0);
+         splitPanel_.add(editorWidget);
+
+         editorPanel_.add(splitPanel_);
       }
       else
       {
@@ -468,6 +502,28 @@ public class TextEditingTargetWidget
       editor_.onResize();
       if (splitEditor_ != null)
          splitEditor_.onResize();
+      if (diffSplitWidget_ != null)
+         diffSplitWidget_.onResize();
+   }
+
+   // The side-by-side diff pane; the editor inside it belongs to the editing
+   // target's Git diff gutter, which fills it in once the pane exists.
+   private void ensureDiffSplit()
+   {
+      if (diffSplitWidget_ != null)
+         return;
+
+      diffSplitWidget_ = new GitDiffSplitWidget();
+      target_.diffSplitCreated(diffSplitWidget_);
+   }
+
+   private void destroyDiffSplit()
+   {
+      if (diffSplitWidget_ == null)
+         return;
+
+      target_.diffSplitRemoved();
+      diffSplitWidget_ = null;
    }
 
    private void applyWrapMode(DocDisplay display, boolean wrap)
@@ -552,6 +608,7 @@ public class TextEditingTargetWidget
    public void destroyEditorSplit()
    {
       destroySplitEditor();
+      destroyDiffSplit();
    }
 
    private void destroySplitEditor()
@@ -2518,6 +2575,7 @@ public class TextEditingTargetWidget
    private DockLayoutPanel editorPanel_;
    private NotifyingSplitLayoutPanel splitPanel_;
    private AceEditor splitEditor_;
+   private GitDiffSplitWidget diffSplitWidget_;
    private final ArrayList<HandlerRegistration> splitEditorRegistrations_ = new ArrayList<>();
    private String splitState_ = TextEditingTarget.EDITOR_SPLIT_NONE;
    private String desiredSplitState_ = null;

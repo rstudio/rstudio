@@ -13,7 +13,15 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
-import { clearPref, documentCloseAllNoSave, executeCommand, isCommandEnabled, openProject, setPref } from '@utils/commands';
+import {
+  clearPref,
+  documentCloseAllNoSave,
+  executeCommand,
+  isCommandChecked,
+  isCommandEnabled,
+  openProject,
+  setPref,
+} from '@utils/commands';
 import { openFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
@@ -36,6 +44,19 @@ const PEEK = '.ace_git-peek';
 const PEEK_LABEL = '.ace_git-peek-label';
 const PEEK_LINE = '.ace_git-peek-line';
 const PEEK_REVERT = '.ace_git-peek-revert';
+
+// The side-by-side diff: the pane (see ClassIds.EDITOR_DIFF_VIEW), the base
+// editor inside it, and its notice for a file with no base; see
+// git_diff_split.js.
+const DIFF_VIEW = "[class*='editor_diff_view']";
+const BASE_EDITOR = `${DIFF_VIEW} .ace_git-diff-base`;
+const BASE_EMPTY = `${DIFF_VIEW} .ace_git-diff-base-empty`;
+
+// Ace's ext/diff change highlights, drawn in each editor's marker layer:
+// whole changed lines (and, with .inline, the characters within them).
+const LINE_DELETED = '.ace_diff.delete:not(.inline)';
+const LINE_INSERTED = '.ace_diff.insert:not(.inline)';
+const ALIGNMENT = '.ace_diff.aligned_diff';
 
 const SEED_LINES = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5', 'f <- 6', 'g <- 7', 'h <- 8'];
 
@@ -127,6 +148,47 @@ async function gutterAttached(page: Page): Promise<boolean> {
     const editor = window.rstudio?.documents.activeEditor() as unknown as GutterEditor | null;
     return editor?.renderer.$gutterLayer.element.classList.contains(attachedClass) ?? false;
   }, GUTTER_ATTACHED);
+}
+
+// The parts of an Ace editor the side-by-side checks reach into, beyond the
+// slice the shared Ace typings describe.
+type DiffViewEditor = {
+  getReadOnly(): boolean;
+  session: {
+    doc: { getAllLines(): string[] };
+    documentToScreenRow(row: number, column: number): number;
+    getMode(): { $id: string };
+  };
+};
+
+/**
+ * The editor views of the open document: those showing the given text, which
+ * leaves out the base editor of a side-by-side diff (it is excluded outright,
+ * since it shows much the same text) and the source pane's hidden editors.
+ */
+function liveEditors(page: Page, text: string): Locator {
+  return page
+    .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+    .filter({ hasText: text });
+}
+
+/** The lines held by an editor view's session (the base editor, say). */
+async function viewLines(view: Locator): Promise<string[]> {
+  return view.evaluate((el) => {
+    const editor = (el as AceEditorElement).env?.editor as unknown as DiffViewEditor | undefined;
+    return editor ? editor.session.doc.getAllLines() : [];
+  });
+}
+
+/**
+ * Screen rows of the given document rows in an editor view, which count the
+ * alignment padding the side-by-side diff inserts above them.
+ */
+async function screenRows(view: Locator, rows: number[]): Promise<number[]> {
+  return view.evaluate((el, rows) => {
+    const editor = (el as AceEditorElement).env?.editor as unknown as DiffViewEditor | undefined;
+    return editor ? rows.map((row) => editor.session.documentToScreenRow(row, 0)) : [];
+  }, rows);
 }
 
 test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
@@ -780,6 +842,156 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('shows the index version beside the document, aligned and highlighted (#19208)', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    expect(await isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(false);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'a2 <- 1.5');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    await expect(live).toHaveCount(1);
+    await expect.poll(() => isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(true);
+
+    try {
+      // the base pane holds the index version, read-only, in the file's mode
+      // (with the empty last line its trailing newline gives it, as in the
+      // document)
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...SEED_LINES, '']);
+      const modeOf = (view: Locator) =>
+        view.evaluate(
+          (el) => ((el as AceEditorElement).env?.editor as unknown as DiffViewEditor | undefined)?.session.getMode().$id,
+        );
+      expect(
+        await base.evaluate(
+          (el) => ((el as AceEditorElement).env?.editor as unknown as DiffViewEditor | undefined)?.getReadOnly(),
+        ),
+      ).toBe(true);
+      expect(await modeOf(base)).toBe(await modeOf(live));
+
+      // the changed lines are highlighted on each side: the modified and the
+      // removed line in the base, the added and the modified line in the
+      // document -- while the gutter keeps its markers
+      await expect(base.locator(LINE_DELETED)).toHaveCount(2);
+      await expect(live.locator(LINE_INSERTED)).toHaveCount(2);
+      expect(await viewMarkers(live)).toEqual(EDITED_MARKERS);
+
+      // Unchanged lines sit level: padding stands in for the other side's
+      // added line (in the base, below `a <- 1`) and removed line (in the
+      // document, below `e <- 5`). Pairs of (base row, document row).
+      const unchanged = [[0, 0], [1, 2], [2, 3], [4, 5], [6, 6], [7, 7]];
+      await expect
+        .poll(async () => {
+          const baseRows = await screenRows(base, unchanged.map(([row]) => row));
+          const liveRows = await screenRows(live, unchanged.map(([, row]) => row));
+          return baseRows.map((row, i) => row - liveRows[i]);
+        }, { timeout: 10000 })
+        .toEqual(unchanged.map(() => 0));
+      await expect(base.locator(ALIGNMENT)).toHaveCount(1);
+      await expect(live.locator(ALIGNMENT)).toHaveCount(1);
+
+      // with the base on screen, a marker click goes to the change instead
+      // of opening a peek
+      const cell = live.locator('.ace_gutter-cell.ace_git-modified').first();
+      const box = (await cell.boundingBox())!;
+      await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+      await expect.poll(() => cursorRow(page)).toBe(4);
+      await expect(page.locator(PEEK)).toHaveCount(0);
+
+      // the comparison follows edits, against the same base
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(EDITED_LINES.length);
+      await editor.navigateLineEnd();
+      await editor.insert('\ni <- 9');
+      await expect(live.locator(LINE_INSERTED)).toHaveCount(3, { timeout: 10000 });
+      await expect
+        .poll(() => viewMarkers(live), { timeout: 30000 })
+        .toEqual({ ...EDITED_MARKERS, [EDITED_LINES.length]: [ADDED] });
+      expect(await viewLines(base)).toEqual([...SEED_LINES, '']);
+      await expect(base.locator(ALIGNMENT)).toHaveCount(2);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('moves focus between the document and its base version', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'a2 <- 1.5');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    try {
+      const focusIn = (view: Locator) => view.evaluate((el) => el.contains(document.activeElement));
+      await live.locator('.ace_content').click({ force: true });
+      await expect.poll(() => focusIn(live)).toBe(true);
+
+      await executeCommand(page, 'focusOtherEditorSplit');
+      await expect.poll(() => focusIn(base)).toBe(true);
+
+      await executeCommand(page, 'focusOtherEditorSplit');
+      await expect.poll(() => focusIn(live)).toBe(true);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('gives way to a regular split, and closes with the markers', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const views = liveEditors(page, 'a2 <- 1.5');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    try {
+      // a split of the document replaces the comparison, and vice versa
+      await executeCommand(page, 'splitEditorRight');
+      await expect(base).toHaveCount(0);
+      await expect(views).toHaveCount(2);
+      await expect.poll(() => isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(false);
+
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await expect(views).toHaveCount(1);
+      await expect.poll(() => isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(true);
+
+      // the command toggles the view off again
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toHaveCount(0);
+      await expect.poll(() => isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(false);
+
+      // without the markers there is no diff to show: the view closes along
+      // with them and the command goes away, and it stays closed when the
+      // markers return
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await setPref(page, PREF, false);
+      await expect(base).toHaveCount(0);
+      await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(false);
+      await expect.poll(() => isCommandEnabled(page, 'vcsShowChangesSideBySide')).toBe(false);
+
+      await setPref(page, PREF, true);
+      await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+      await expect.poll(() => isCommandEnabled(page, 'vcsShowChangesSideBySide')).toBe(true);
+      expect(await base.count()).toBe(0);
+      expect(await isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(false);
+    } finally {
+      await setPref(page, PREF, true);
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
   test('disables the commands in visual mode', async ({ rstudioPage: page }) => {
     // the gutter belongs to the source editor, which visual mode hides
     const rmdPath = `${projectDir()}/doc.Rmd`;
@@ -942,6 +1154,92 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await executeInConsoleChecked(
       page,
       `invisible(system2("git", c(${gitC()}, "checkout", "--", "nb.Rmd")))`,
+    );
+  });
+
+  test('keeps a notebook chunk\'s output widget where the side-by-side view would pad', async ({
+    rstudioPage: page,
+  }) => {
+    // The view pads the side that is short at a change boundary with a line
+    // widget, and Ace shows one widget per row; a row already holding a
+    // chunk's output keeps it, and goes without the padding.
+    const consoleActions = new ConsolePaneActions(page);
+    const loadable = await consoleActions.evalRLogical('requireNamespace("rmarkdown", quietly = TRUE)');
+    test.skip(loadable !== true, 'rmarkdown is not installed');
+
+    const nbPath = `${projectDir()}/nb-split.Rmd`;
+    const seed = ['---', 'title: x', '---', '', '```{r}', '1 + 1', '```', 'after', 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await commitAll(page, 'nb-split', [nbPath]);
+    // the line after the chunk is removed: the document is short right
+    // below the chunk's closing fence, where its output widget lives
+    const edited = seed.filter((line) => line !== 'after');
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+
+    await openFile(page, nbPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 7: [DELETED] });
+
+    const widgets = () =>
+      page.evaluate(() => {
+        type Widget = { row: number; type?: string; el?: HTMLElement; rowCount?: number };
+        const editor = window.rstudio?.documents.activeEditor() as unknown as {
+          session: { lineWidgets?: (Widget | undefined)[] };
+        } | null;
+        return (editor?.session.lineWidgets ?? [])
+          .filter((w): w is Widget => !!w)
+          .map((w) => ({ row: w.row, type: w.type ?? (w.el ? '?' : 'padding') }));
+      });
+
+    // run the chunk so its output widget occupies the fence row (6)
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect.poll(widgets, { timeout: 60000 }).toContainEqual({ row: 6, type: 'ChunkOutput' });
+    await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible({
+      timeout: 60000,
+    });
+
+    // the output widget (and the chunk's toolbar) stay, with no padding
+    // placed on their rows or anywhere else on this side
+    const expectOutputKept = async () => {
+      const found = await widgets();
+      expect(found).toContainEqual({ row: 6, type: 'ChunkOutput' });
+      expect(found.filter((w) => w.type === 'padding')).toEqual([]);
+    };
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect(base.locator(LINE_DELETED)).toHaveCount(1);
+
+      await expectOutputKept();
+      await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible();
+
+      // an edit elsewhere realigns the view, with the same outcome
+      await editor.gotoLine(2);
+      await editor.navigateLineEnd();
+      await editor.insert('y');
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [MODIFIED], 7: [DELETED] });
+      await expect(base.locator(LINE_DELETED)).toHaveCount(2);
+      await expectOutputKept();
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+    }
+    await expectOutputKept();
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(
+      page,
+      `invisible(system2("git", c(${gitC()}, "checkout", "--", "nb-split.Rmd")))`,
     );
   });
 
@@ -1469,6 +1767,19 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     while (Date.now() < deadline) {
       expect(await gutterMarkers(page)).toEqual({});
       await page.waitForTimeout(250);
+    }
+
+    // side by side, there is nothing to show but a notice
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect(page.locator(BASE_EMPTY)).toBeVisible();
+      expect(await viewLines(base)).toEqual(['']);
+      await expect(liveEditors(page, 'u <- 1').locator(LINE_INSERTED)).toHaveCount(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
     }
   });
 });

@@ -386,6 +386,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Restore the lines at the cursor to the version last staged or committed") // $NON-NLS-1$
     String vcsRevertChangeDesc();
     
+    // vcsShowChangesSideBySide
+    @DefaultStringValue("Show Changes Side by Side") // $NON-NLS-1$
+    String vcsShowChangesSideBySideLabel();
+    @DefaultStringValue("Show Changes _Side by Side") // $NON-NLS-1$
+    String vcsShowChangesSideBySideMenuLabel();
+    @DefaultStringValue("Show the version last staged or committed beside the document, with the changes between them highlighted") // $NON-NLS-1$
+    String vcsShowChangesSideBySideDesc();
+    
     // vcsViewOnGitHub
     @DefaultStringValue("View file on GitHub") // $NON-NLS-1$
     String vcsViewOnGitHubLabel();
