@@ -35,6 +35,7 @@ import { kWindowsRExe } from '../ui/utils';
 import { dialog } from 'electron';
 import { appState } from './app-state';
 import { REnvironmentCache } from './r-environment-cache';
+import { rExecutablePathWin32 } from './r-installation-win32';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -214,7 +215,7 @@ function storedRCandidatesWin32(): RCandidateWin32[] {
     logger().logDebug('User has requested the default 64-bit R installation.');
     const installPath = findDefault64Bit();
     if (installPath) {
-      const rPath = `${installPath}/bin/x64/${kWindowsRExe}`;
+      const rPath = rExecutablePathWin32(installPath);
       if (existsSync(rPath)) {
         candidates.push({ path: rPath, validate: false });
       }
@@ -239,7 +240,7 @@ function registryRCandidatesWin32(): string[] {
   if (process.arch === 'x64') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
     if (x64InstallPath) {
-      candidates.push(`${x64InstallPath}/bin/x64/${kWindowsRExe}`);
+      candidates.push(rExecutablePathWin32(x64InstallPath));
     }
   }
 
@@ -678,6 +679,10 @@ export function findRInstallationsWin32(): string[] {
     `${getenv('ProgramFiles')}/R`,
     `${getenv('ProgramFiles(x86)')}/R`,
     `${getenv('LOCALAPPDATA')}/Programs/R`,
+    // ARM64 R: CRAN's installer (admin, then per-user) and rig's user mode
+    `${getenv('ProgramFiles')}/R-aarch64`,
+    `${getenv('LOCALAPPDATA')}/Programs/R-aarch64`,
+    `${getenv('APPDATA')}/rig/data/r`,
   ];
 
   for (const location of commonLocations) {
@@ -709,7 +714,10 @@ export function isValidInstallation(rInstallPath: string, archDir: string): bool
     return true;
   }
 
-  const rExePath = path.normalize(`${rInstallPath}/bin/${archDir}/${kWindowsRExe}`);
+  const rExePath =
+    archDir === 'x64'
+      ? path.normalize(rExecutablePathWin32(rInstallPath))
+      : path.normalize(`${rInstallPath}/bin/${archDir}/${kWindowsRExe}`);
   return isValidBinary(rExePath);
 }
 

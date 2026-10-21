@@ -39,6 +39,7 @@ import { generateSchema, legacyPreferenceManager } from './../preferences/prefer
 import DesktopOptions from './desktop-options';
 import { kWindowsRExe } from '../../ui/utils';
 import { WindowBounds, positionAndEnsureVisible } from '../window-utils';
+import { rTermInBinFolderWin32 } from '../r-installation-win32';
 
 const kProportionalFont = 'font.proportionalFont';
 const kFixedWidthFont = 'font.fixedWidthFont';
@@ -365,6 +366,7 @@ if (process.platform === 'darwin') {
 /**
  * If user manually chooses bin\R.exe, sessions won't load, so insert the
  * architecture folder (i386 if they are on a 32-bit machine, otherwise x64).
+ * An R with Rterm.exe in bin itself (ARM64 R) keeps bin\Rterm.exe.
  *
  * If they want to use 32-bit R on a 64-bit machine they will need to
  * choose it directly from the i386 folder.
@@ -395,9 +397,14 @@ export function fixWindowsRExecutablePath(rExePath: string): string {
   const selectedDir = basename(dirname(rExePath)).toLowerCase();
   const origPath = rExePath;
   if (selectedDir === 'bin') {
-    // User picked bin\*.exe; insert the subfolder matching the machine's architecture.
+    // User picked bin\*.exe; insert the subfolder matching the machine's architecture,
+    // unless this R keeps Rterm.exe in bin itself (ARM64 R has no subfolder).
     const archDir = process.arch === 'x64' ? 'x64' : 'i386';
-    rExePath = join(dirname(rExePath), archDir, kWindowsRExe);
+    const binDir = dirname(rExePath);
+    rExePath =
+      archDir === 'x64' && rTermInBinFolderWin32(dirname(binDir))
+        ? join(binDir, kWindowsRExe)
+        : join(binDir, archDir, kWindowsRExe);
     logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
   } else {
     // Even if they chose the right folder, make sure they picked Rterm.exe

@@ -33,7 +33,7 @@ import EventEmitter from 'events';
 import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform } from 'os';
 import i18next from 'i18next';
-import path, { dirname } from 'path';
+import path, { basename, dirname } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
 import { normalizeSeparatorsNative } from '../ui/utils';
@@ -45,6 +45,7 @@ import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
 import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
+import { rArchitectureWin32 } from './r-installation-win32';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
@@ -73,7 +74,13 @@ export enum PendingQuit {
   PendingQuitRestartAndReload,
 }
 
-function formatSelectedVersionForUi(rBinDir: string) {
+export function formatSelectedVersionForUi(rBinDir: string) {
+  // an R with no architecture subfolder (ARM64 R) has binDir <R_HOME>/bin
+  if (basename(rBinDir).toLowerCase() === 'bin') {
+    const binHome = dirname(rBinDir);
+    return rArchitectureWin32(rBinDir) === 'arm64' ? `[ARM64] ${binHome}` : binHome;
+  }
+
   // binDir will have format <R_HOME>/bin/<arch>,
   // so we need two dirname()s to get the home path
   const rHome = dirname(dirname(rBinDir));

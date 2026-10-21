@@ -100,6 +100,32 @@ ipcRenderer.on('initialize', (_event, data) => {
     }
     visitedInstallations[rInstall] = true;
 
+    // check for an executable in bin itself (ARM64 R has no architecture subfolder)
+    const rBin = `${rInstall}/bin/${kWindowsRExe}`;
+
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    if (await ipcRenderer.invoke('fs_existsSync', rBin)) {
+      const arch = (await ipcRenderer.invoke('r_architecture', `${rInstall}/bin`)) as string;
+      const label = new Map([
+        ['arm64', '[ARM64]'],
+        ['x64', '[64-bit]'],
+        ['i386', '[32-bit]'],
+      ]).get(arch);
+      const optionEl = window.document.createElement('option');
+      optionEl.value = rBin;
+      optionEl.innerText = label !== undefined ? `${label} ${rInstall}` : rInstall;
+      selectEl.appendChild(optionEl);
+
+      if (!useDefault64BitR && isRVersionSelected(data.selectedRVersion as string, rBin)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const useCustomRadioInput = document.getElementById('use-custom') as any;
+        useCustomRadioInput.checked = true;
+        selectWidget.disabled = false;
+        selectWidget.selectedIndex = selectEl.childElementCount - 1;
+        selectWidget.focus();
+      }
+    }
+
     // check for 64 bit executable
     const r64 = `${rInstall}/bin/x64/${kWindowsRExe}`;
 

@@ -28,6 +28,7 @@ import { normalize } from 'path';
 import { kWindowsRExe } from '../utils';
 import { appState } from '../../main/app-state';
 import { loadRWebsite } from '../../main/utils';
+import { rArchitectureWin32, rExecutablePathWin32 } from '../../main/r-installation-win32';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
@@ -121,6 +122,11 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
         return existsSync(data);
       });
 
+      // the renderer can't read files, so it asks here for an R's architecture
+      this.addIpcHandler('r_architecture', async (event, data) => {
+        return rArchitectureWin32(data) ?? '';
+      });
+
       this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
         const installPath = initData.default32bitPath;
         data.useDefault32BitR = true;
@@ -132,7 +138,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
       this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
         const installPath = initData.default64bitPath;
         data.useDefault64BitR = true;
-        data.binaryPath = `${installPath}/bin/x64/${kWindowsRExe}`;
+        data.binaryPath = rExecutablePathWin32(installPath);
         logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });

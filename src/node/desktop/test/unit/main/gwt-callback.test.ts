@@ -30,13 +30,13 @@ import { existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs
 import os from 'os';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { createSinonStubInstance, StubbedClass } from '../unit-utils';
+import { createSinonStubInstance, fakeRInstallWin32, StubbedClass } from '../unit-utils';
 
 import { FilePath } from '../../../src/core/file-path';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
 
-import { GwtCallback } from '../../../src/main/gwt-callback';
+import { formatSelectedVersionForUi, GwtCallback } from '../../../src/main/gwt-callback';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
 
@@ -562,5 +562,26 @@ describe('DesktopCallback', () => {
       await clipboard.writeText('not an image');
       assert.equal(await invoke('desktop_get_clipboard_image'), '');
     });
+  });
+});
+
+describe('formatSelectedVersionForUi', () => {
+  it('labels an R in an architecture subfolder', () => {
+    assert.strictEqual(formatSelectedVersionForUi('C:/R/R-4.6.1/bin/x64'), '[64-bit] C:/R/R-4.6.1');
+    assert.strictEqual(formatSelectedVersionForUi('C:/R/R-4.6.1/bin/i386'), '[32-bit] C:/R/R-4.6.1');
+  });
+
+  it('labels an ARM64 R with no architecture subfolder', () => {
+    const rHome = mkdtempSync(path.join(os.tmpdir(), 'format-r-version-test-'));
+    try {
+      fakeRInstallWin32(rHome, { bin: 0xaa64 });
+      assert.strictEqual(formatSelectedVersionForUi(path.join(rHome, 'bin')), `[ARM64] ${rHome}`);
+    } finally {
+      rmSync(rHome, { recursive: true, force: true });
+    }
+  });
+
+  it('shows the home of an R in bin whose architecture is unknown', () => {
+    assert.strictEqual(formatSelectedVersionForUi('C:/R/R-4.6.1/bin'), 'C:/R/R-4.6.1');
   });
 });

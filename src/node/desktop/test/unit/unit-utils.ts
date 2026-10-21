@@ -15,6 +15,7 @@
 
 import path from 'path';
 import os from 'os';
+import { mkdirSync, writeFileSync } from 'fs';
 
 import { createStubInstance, StubbableType, SinonStubbedInstance, SinonStubbedMember, SinonSandbox } from 'sinon';
 import { getenv } from '../../src/core/environment';
@@ -80,6 +81,36 @@ export function tempDirectory(label = ''): FilePath {
     ? path.join(os.tmpdir(), label + '-' + randomString())
     : path.join(os.tmpdir(), randomString());
   return new FilePath(tempName);
+}
+
+/**
+ * Smallest PE image header that reads as the given machine type
+ */
+export function fakePeImage(machine: number, peOffset = 0x80): Buffer {
+  const buffer = Buffer.alloc(peOffset + 24);
+  buffer.writeUInt16LE(0x5a4d, 0);
+  buffer.writeUInt32LE(peOffset, 0x3c);
+  buffer.writeUInt32LE(0x00004550, peOffset);
+  buffer.writeUInt16LE(machine, peOffset + 4);
+  return buffer;
+}
+
+/**
+ * Lays out a Windows R installation under `rHome`: Rterm.exe and an R.dll of
+ * the given machine type in bin and/or bin\x64
+ */
+export function fakeRInstallWin32(rHome: string, layout: { bin?: number; x64?: number }): void {
+  for (const [subdir, machine] of [
+    ['bin', layout.bin],
+    [path.join('bin', 'x64'), layout.x64],
+  ] as const) {
+    if (machine !== undefined) {
+      const dir = path.join(rHome, subdir);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, 'Rterm.exe'), '');
+      writeFileSync(path.join(dir, 'R.dll'), fakePeImage(machine));
+    }
+  }
 }
 
 /**

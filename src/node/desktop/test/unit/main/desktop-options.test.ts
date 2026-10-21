@@ -26,8 +26,12 @@ import {
   clearOptionsSingleton,
   DesktopOptionsImpl,
   ElectronDesktopOptions,
+  fixWindowsRExecutablePath,
 } from '../../../src/main/preferences/electron-desktop-options';
-import { createSinonStubInstanceForSandbox, tempDirectory } from '../unit-utils';
+import { createSinonStubInstanceForSandbox, fakeRInstallWin32, tempDirectory } from '../unit-utils';
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 const kTestingConfigDirectory = tempDirectory('DesktopOptionsTesting').toString();
 
@@ -279,5 +283,58 @@ describe('Font tests', () => {
       testDesktopOptions.rBinDir(),
       process.platform === 'win32' ? normalizeSeparatorsNative(testRBinDir) : '',
     );
+  });
+});
+
+describe('fixWindowsRExecutablePath', () => {
+  let rHome = '';
+  let bin = '';
+
+  // it rewrites only on Windows, and inserts x64 only in an x64 process
+  beforeEach(function () {
+    if (process.platform !== 'win32' || process.arch !== 'x64') {
+      this.skip();
+    }
+    rHome = mkdtempSync(join(tmpdir(), 'fix-r-path-test-'));
+    bin = join(rHome, 'bin');
+  });
+
+  afterEach(() => {
+    if (rHome !== '') {
+      rmSync(rHome, { recursive: true, force: true });
+      rHome = '';
+    }
+  });
+
+  function pickRExe(): string {
+    writeFileSync(join(bin, 'R.exe'), '');
+    return fixWindowsRExecutablePath(join(bin, 'R.exe'));
+  }
+
+  it('inserts x64 for an x64 R', () => {
+    fakeRInstallWin32(rHome, { x64: 0x8664 });
+    assert.strictEqual(pickRExe(), join(bin, 'x64', 'Rterm.exe'));
+  });
+
+  it('keeps bin for an R with no architecture subfolder', () => {
+    fakeRInstallWin32(rHome, { bin: 0xaa64 });
+    assert.strictEqual(pickRExe(), join(bin, 'Rterm.exe'));
+    assert.strictEqual(fixWindowsRExecutablePath(join(bin, 'Rterm.exe')), join(bin, 'Rterm.exe'));
+  });
+
+  it('prefers bin when both exist and bin holds an ARM64 R', () => {
+    fakeRInstallWin32(rHome, { bin: 0xaa64, x64: 0x8664 });
+    assert.strictEqual(pickRExe(), join(bin, 'Rterm.exe'));
+  });
+
+  it('prefers x64 when both exist and bin does not hold an ARM64 R', () => {
+    fakeRInstallWin32(rHome, { bin: 0x8664, x64: 0x8664 });
+    assert.strictEqual(pickRExe(), join(bin, 'x64', 'Rterm.exe'));
+  });
+
+  it('keeps a direct pick of bin\\x64\\Rterm.exe', () => {
+    fakeRInstallWin32(rHome, { bin: 0xaa64, x64: 0x8664 });
+    const x64Rterm = join(bin, 'x64', 'Rterm.exe');
+    assert.strictEqual(fixWindowsRExecutablePath(x64Rterm), x64Rterm);
   });
 });
