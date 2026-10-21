@@ -373,29 +373,32 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
 
-    // Deleting across the peek's row takes its widget with it; as the only
-    // widget, that leaves Ace with no widget collection at all. The gutter
-    // must keep rendering (the fixture fails the test on a client
+    // Deleting from the row above the peek's across it takes its widget
+    // with it (Ace drops widgets from the row after the deletion's start);
+    // as the only widget, that leaves Ace with no widget collection at all.
+    // The gutter must keep rendering (the fixture fails the test on a client
     // exception), the peek must be gone, and the markers must follow.
-    await page.evaluate(() => {
+    const collectionAfterRemove = await page.evaluate(() => {
       type Pos = { row: number; column: number };
       const editor = window.rstudio!.documents.activeEditor() as unknown as {
-        session: { doc: { remove(range: { start: Pos; end: Pos }): void } };
+        session: { doc: { remove(range: { start: Pos; end: Pos }): void }; lineWidgets: unknown };
       };
-      editor.session.doc.remove({ start: { row: 4, column: 0 }, end: { row: 6, column: 0 } });
+      editor.session.doc.remove({ start: { row: 3, column: 0 }, end: { row: 6, column: 0 } });
+      return editor.session.lineWidgets;
     });
+    expect(collectionAfterRemove).toBeNull();
     await expect(page.locator(PEEK)).toHaveCount(0, { timeout: 10000 });
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 4: [DELETED] });
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 3: [DELETED] });
 
     // and the gutter is still live: a further edit (to the last line, whose
     // neighbors are unchanged, so it stays a chunk of its own) is marked
     const editor = new AceEditor(page, '');
-    await editor.gotoLine(6);
+    await editor.gotoLine(5);
     await editor.navigateLineEnd();
     await editor.insert('0');
     await expect
       .poll(() => gutterMarkers(page), { timeout: 30000 })
-      .toEqual({ 1: [ADDED], 4: [DELETED], 5: [MODIFIED] });
+      .toEqual({ 1: [ADDED], 3: [DELETED], 4: [MODIFIED] });
 
     await documentCloseAllNoSave(page);
   });
@@ -442,6 +445,68 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await documentCloseAllNoSave(page);
     await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(foldPath)}))`);
     await commitAll(page, 'remove fold', [foldPath]);
+  });
+
+  test('closes cleanly after being folded away', async ({ rstudioPage: page }) => {
+    // A fold whose last row carries the peek gets the peek's widget aliased
+    // at the fold's start row (that is how Ace shows it while folded), and
+    // Ace's removal clears only the widget's own row. Closing the peek has
+    // to sweep the alias too, or the next render brings the peek back with
+    // nothing left to close it.
+    const foldPath = `${projectDir()}/fold.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("f <- function() {", "  x <- 1", "}"), ${rPathLiteral(foldPath)})`,
+    );
+    await commitAll(page, 'fold', [foldPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("f <- function() {", "  x <- 1", "} # end"), ${rPathLiteral(foldPath)})`,
+    );
+    await openFile(page, foldPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [MODIFIED] });
+
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(1);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+
+    // the peek shows at the fold while folded, and closes from there
+    await expect(page.locator(PEEK)).toBeVisible();
+    await page.locator(PEEK).locator('.ace_git-peek-close').click();
+    await expect(page.locator(PEEK)).toHaveCount(0);
+
+    // nothing of it survives unfolding and a few renders
+    await editor.gotoLine(1);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(0);
+    await editor.gotoLine(3);
+    const deadline = Date.now() + 1500;
+    while (Date.now() < deadline) {
+      expect(await page.locator(PEEK).count()).toBe(0);
+      await page.waitForTimeout(250);
+    }
+    expect(
+      await page.evaluate(() => {
+        const ed = window.rstudio!.documents.activeEditor() as unknown as {
+          session: { lineWidgets?: ({ el?: HTMLElement } | undefined)[] | null };
+        };
+        return (ed.session.lineWidgets ?? []).filter((w) => w?.el?.classList.contains('ace_git-peek')).length;
+      }),
+    ).toBe(0);
+
+    // and a fresh peek still works
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(foldPath)}))`);
+    await commitAll(page, 'remove fold again', [foldPath]);
   });
 
   test('matches the editor\'s line-ending normalization and empty files', async ({
@@ -807,16 +872,18 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       timeout: 60000,
     });
     const cell = page.locator('.ace_gutter-cell.ace_git-deleted').first();
-    let box = (await cell.boundingBox())!;
+    let box: { x: number; y: number; width: number; height: number } | null = null;
     await expect
       .poll(async () => {
+        // the first sample only seeds the comparison: two reads a polling
+        // interval apart have to agree, never two back-to-back ones
         const next = (await cell.boundingBox())!;
-        const settled = next.y === box.y && next.height === box.height;
+        const settled = box !== null && next.y === box.y && next.height === box.height;
         box = next;
         return settled;
       }, { timeout: 30000, intervals: [300] })
       .toBe(true);
-    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await page.mouse.click(box!.x + box!.width - 3, box!.y + box!.height / 2);
     await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
 
     // the peek took the row below the seam instead, and the output is intact

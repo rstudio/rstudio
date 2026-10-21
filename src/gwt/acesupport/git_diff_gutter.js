@@ -554,6 +554,31 @@ var GitDiffGutter = function(editor) {
       var peek = this.peek;
       this.peek = null;
       this.lineWidgetManager().removeLineWidget(peek.widget);
+
+      // A fold ending on the peek's row aliases its widget at the fold's
+      // start row, and removeLineWidget clears the widget's own row only;
+      // sweep any slot (or stack) still pointing at it, or the next render
+      // would bring it back with nothing left to close it.
+      var widgets = this.editor.session.lineWidgets;
+      if (!widgets)
+         return;
+
+      for (var i = 0; i < widgets.length; i++)
+      {
+         if (widgets[i] === peek.widget)
+         {
+            widgets[i] = peek.widget.$oldWidget;
+            continue;
+         }
+
+         var above = widgets[i];
+         while (above && above.$oldWidget)
+         {
+            if (above.$oldWidget === peek.widget)
+               above.$oldWidget = peek.widget.$oldWidget;
+            above = above.$oldWidget;
+         }
+      }
    };
 
    this.rowForCell = function(element) {
