@@ -30,6 +30,9 @@ test_that("the bundled rig follows an explicit override and precedes system copi
 
 test_that("the configured bundled rig is usable without an external installation", {
 
+   # rig is bundled with the desktop only
+   skip_if_not(identical(.rs.api.versionInfo()$mode, "desktop"), "not a desktop session")
+
    bundled <- file.path(.Call("rs_rigPath", PACKAGE = "(embedding)"), "bin", .rs.rig.exeName())
    expect_true(file.exists(bundled))
    expect_equal(.rs.rig.version(bundled), package_version(.rs.rig.pinnedVersion))
@@ -204,6 +207,36 @@ test_that("the pinned rig archives have known checksums", {
 
    # other releases are unknown
    expect_identical(.rs.rig.archiveChecksum(.rs.rig.downloadUrl(version = "0.9.0")), "")
+
+})
+
+test_that("the pinned rig release matches the bundled one", {
+
+   # the bundled release is pinned in dependencies/common/rig.cmake, reached
+   # from the source tree the tests are run from
+   testsDir <- Sys.getenv("TESTTHAT_TESTS_DIR", unset = NA)
+   skip_if(is.na(testsDir), "TESTTHAT_TESTS_DIR is not set")
+   cmake <- file.path(testsDir, "..", "..", "..", "..", "dependencies", "common", "rig.cmake")
+   skip_if_not(file.exists(cmake), "dependencies/common/rig.cmake not found")
+   contents <- readLines(cmake, warn = FALSE)
+
+   version <- grep("^set\\(RSTUDIO_RIG_VERSION ", contents, value = TRUE)
+   expect_length(version, 1L)
+   expect_identical(sub('.*"(.*)".*', "\\1", version), as.character(.rs.rig.pinnedVersion))
+
+   # each digest is named for its platform and architecture, as the archives are
+   pattern <- '^set\\(RIG_SHA256_([a-z]+)_([a-z0-9_]+) +"([0-9a-f]{64})"\\)'
+   matches <- Filter(length, regmatches(contents, regexec(pattern, contents)))
+   checksums <- vapply(matches, `[[`, character(1), 4L)
+   names(checksums) <- vapply(matches, function(match) {
+      extension <- if (identical(match[[2L]], "windows")) "zip" else "tar.gz"
+      sprintf("rig-%s-%s-%s.%s", match[[2L]], match[[3L]], .rs.rig.pinnedVersion, extension)
+   }, character(1))
+
+   expect_identical(
+      checksums[order(names(checksums))],
+      .rs.rig.archiveChecksums[order(names(.rs.rig.archiveChecksums))]
+   )
 
 })
 

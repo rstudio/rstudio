@@ -110,6 +110,11 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
       continue()
    endif()
 
+   # skip rig unless building the desktop, which alone installs R with it
+   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_RIG_DIR" AND NOT RSTUDIO_ELECTRON)
+      continue()
+   endif()
+
    # validate existence
    if(NOT EXISTS "${${VAR}}")
       message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
@@ -121,7 +126,7 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
 endforeach()
 
 # Fail at configure time if rig was only partially installed.
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_RIG_DIR}/bin/rig${CMAKE_EXECUTABLE_SUFFIX}")
+if(RSTUDIO_ELECTRON AND NOT EXISTS "${RSTUDIO_DEPENDENCIES_RIG_DIR}/bin/rig${CMAKE_EXECUTABLE_SUFFIX}")
    message(FATAL_ERROR "rig executable not found (re-run install-dependencies script to install)")
 endif()
 
@@ -873,13 +878,16 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
               USE_SOURCE_PERMISSIONS)
    endif()
 
-   # Keep rig's distribution layout: Windows needs the adjacent shim and
-   # elevation helper, and Linux needs share/rig/cacert.pem.
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_RIG_DIR}/"
-           DESTINATION "${RSTUDIO_INSTALL_BIN}/rig"
-           USE_SOURCE_PERMISSIONS
-           PATTERN ".installed" EXCLUDE
-           PATTERN "._*" EXCLUDE)
+   # Only the desktop installs R with rig (server installations are managed
+   # by administrators). Keep rig's distribution layout: Windows needs the
+   # adjacent shim and elevation helper, and Linux needs share/rig/cacert.pem.
+   if(RSTUDIO_ELECTRON)
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_RIG_DIR}/"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}/rig"
+              USE_SOURCE_PERMISSIONS
+              PATTERN ".installed" EXCLUDE
+              PATTERN "._*" EXCLUDE)
+   endif()
 
    # install Copilot Language Server
    #
