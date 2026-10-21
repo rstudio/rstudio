@@ -105,7 +105,9 @@ test.describe('History pane accessibility', () => {
     await expect(recent.getByRole('option', { name: COMMANDS[2] })).toHaveCount(1);
 
     await search(page, MARKER);
-    await expect(listbox(page, 'Console History Search Results')).toBeVisible();
+    // Exact: the disclosure button's tooltip must stay out of the name.
+    await expect(listbox(page, 'Console History Search Results')
+      .getByRole('option', { name: COMMANDS[0], exact: true })).toHaveCount(1);
 
     await showContext(page);
     await expect(listbox(page, 'Console History Context')
