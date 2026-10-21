@@ -23,10 +23,13 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.renv.RenvConsoleNotice;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -39,10 +42,14 @@ import org.rstudio.studio.client.workbench.ui.PaneManager;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -76,6 +83,7 @@ public class ConsolePane extends WorkbenchPane
       progressProvider_ = progressProvider;
       commands_ = commands;
       session_ = session;
+      ariaLive_ = ariaLive;
 
       // the secondary toolbar can have several possible states that obscure
       // each other; we keep track of the stack here
@@ -240,7 +248,43 @@ public class ConsolePane extends WorkbenchPane
 
       shell_ = consoleProvider_.get();
       shell_.getDisplay().setTextInputAriaLabel(constants_.consoleLabel());
-      return (Widget) shell_.getDisplay();
+
+      mainPanel_ = new ConsoleContents();
+      mainPanel_.setStyleName(ConsoleResources.INSTANCE.consoleStyles().contents());
+      Widget shell = (Widget) shell_.getDisplay();
+      shell.addStyleName(ConsoleResources.INSTANCE.consoleStyles().contentsShell());
+      mainPanel_.add(shell);
+      return mainPanel_;
+   }
+
+   @Override
+   public void showRenvNotice(boolean severe, String message, String actionLabel, Command onAction,
+                              String secondaryActionLabel, Command onSecondaryAction)
+   {
+      if (renvNotice_ != null)
+         renvNotice_.removeFromParent();
+
+      renvNotice_ = new RenvConsoleNotice(severe, message, actionLabel, onAction,
+                                         secondaryActionLabel, onSecondaryAction, () ->
+      {
+         hideRenvNotice();
+         focus();
+      });
+      mainPanel_.insert(renvNotice_, 0);
+      mainPanel_.onResize();
+      ariaLive_.announce(AriaLiveService.INFO_BAR, message,
+                        Timing.DEBOUNCE, severe ? Severity.ALERT : Severity.STATUS);
+   }
+
+   @Override
+   public void hideRenvNotice()
+   {
+      if (renvNotice_ == null)
+         return;
+
+      renvNotice_.removeFromParent();
+      renvNotice_ = null;
+      mainPanel_.onResize();
    }
 
    @Override
@@ -407,12 +451,27 @@ public class ConsolePane extends WorkbenchPane
          showProgress(lastProgress_);
    }
 
+   // Let the notice wrap naturally, while forwarding the parent's resize
+   // notifications to the console editor after layout has been updated.
+   private class ConsoleContents extends FlowPanel implements RequiresResize, ProvidesResize
+   {
+      @Override
+      public void onResize()
+      {
+         if (shell_.getDisplay() instanceof RequiresResize)
+            ((RequiresResize) shell_.getDisplay()).onResize();
+      }
+   }
+
    private Provider<Shell> consoleProvider_;
    private Provider<JobProgressPresenter> progressProvider_;
    JobProgressPresenter progress_;
    LocalJobProgress lastProgress_;
    private final Commands commands_;
    private Shell shell_;
+   private ConsoleContents mainPanel_;
+   private RenvConsoleNotice renvNotice_;
+   private final AriaLiveService ariaLive_;
    private Session session_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;

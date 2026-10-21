@@ -28,6 +28,8 @@ public interface ConsoleResources extends ClientBundle
    public interface ConsoleStyles extends CssResource
    {
       String console();
+      String contents();
+      String contentsShell();
       String warning();
       String input();
       String prompt();
