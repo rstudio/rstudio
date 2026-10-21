@@ -206,6 +206,15 @@ public class TextEditingTargetGitDiffGutter
       splitGutter_.setBase(baseContents_);
    }
 
+   private void setBase(String contents)
+   {
+      baseContents_ = contents;
+      if (gutter_ != null)
+         gutter_.setBase(contents);
+      if (splitGutter_ != null)
+         splitGutter_.setBase(contents);
+   }
+
    private GitDiffGutterNative createGutter(AceEditor editor)
    {
       GitDiffGutterNative gutter = GitDiffGutterNative.create(editor.getWidget().getEditor());
@@ -247,7 +256,14 @@ public class TextEditingTargetGitDiffGutter
          return;
 
       final String path = sentinel_.getPath();
-      basePath_ = path;
+      if (!StringUtil.equals(basePath_, path))
+      {
+         // The old file's base must not outlive its path (Save As): a revert
+         // in the gap before the new base arrives would restore the wrong
+         // file's contents.
+         basePath_ = path;
+         setBase(null);
+      }
 
       invalidation_.invalidate();
       final Invalidation.Token token = invalidation_.getInvalidationToken();
@@ -263,10 +279,7 @@ public class TextEditingTargetGitDiffGutter
                   if (token.isInvalid() || gutter_ == null)
                      return;
 
-                  baseContents_ = response.isTracked() ? response.getContents() : null;
-                  gutter_.setBase(baseContents_);
-                  if (splitGutter_ != null)
-                     splitGutter_.setBase(baseContents_);
+                  setBase(response.isTracked() ? response.getContents() : null);
                }
 
                @Override

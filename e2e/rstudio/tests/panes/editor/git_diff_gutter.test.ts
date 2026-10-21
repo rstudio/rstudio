@@ -675,6 +675,57 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await commitAll(page, 'remove rmd', [rmdPath]);
   });
 
+  test('drops the old base the moment Save As changes the path', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // Hold the new path's base fetch, so the window before it lands -- in
+    // which the old file's base must already be gone -- is wide enough to
+    // act in. The saved copy is untracked, so it never gets a base at all.
+    const copyPath = `${projectDir()}/copy.R`;
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // fallback, not continue: the fixture routes RPCs too, and the request
+    // still has to pass through its handler
+    await page.route('**/git_diff_base_contents', async (route) => {
+      await held;
+      await route.fallback();
+    });
+
+    try {
+      await executeCommand(page, 'saveSourceDocAs');
+      const fileName = page.locator('#file_dialog_name_prompt');
+      await expect(fileName).toBeVisible({ timeout: 30000 });
+      await fileName.fill(copyPath);
+      await page.locator('#rstudio_file_accept_save').click();
+      await expect(
+        page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']"),
+      ).toContainText('copy.R', { timeout: 30000 });
+
+      // no base: no markers, and Revert has nothing to act on
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(5);
+      await executeCommand(page, 'vcsRevertChange');
+      expect(await editor.getLine(4)).toBe('d <- 40');
+    } finally {
+      release();
+      await page.unroute('**/git_diff_base_contents');
+    }
+
+    // and once the fetch lands, the untracked copy stays unmarked
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(copyPath)}))`);
+  });
+
   test('closes the peek when the index version it shows is replaced', async ({
     rstudioPage: page,
   }) => {
