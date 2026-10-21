@@ -30,6 +30,7 @@ import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
@@ -216,6 +217,9 @@ public class HistoryPane extends WorkbenchPane
 
    protected void setMode(Mode mode)
    {
+      if (finishSlide_ != null)
+         finishSlide_.execute();
+
       if (mode != mode_)
       {
          Widget current = getWidgetForMode(mode_);
@@ -297,11 +301,13 @@ public class HistoryPane extends WorkbenchPane
                                     0, Unit.PX,
                                     width, Unit.PX);
 
-      int duration = userPrefs_.reducedMotion().getValue() ? 0 : 300;
-      mainPanel_.animate(duration, new AnimationCallback()
+      // A later layout can cancel or replace the animation before its
+      // callback runs, so the next setMode also finishes the slide.
+      Command finish = new Command()
       {
-         public void onAnimationComplete()
+         public void execute()
          {
+            finishSlide_ = null;
             setVisible(from, false);
             mainPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
             mainPanel_.forceLayout();
@@ -310,6 +316,17 @@ public class HistoryPane extends WorkbenchPane
                DomUtils.setActive(toFocus.getFocusTarget());
                toFocus.getFocusTarget().removeClassName(styles_.inboundFocus());
             }
+         }
+      };
+      finishSlide_ = finish;
+
+      int duration = userPrefs_.reducedMotion().getValue() ? 0 : 300;
+      mainPanel_.animate(duration, new AnimationCallback()
+      {
+         public void onAnimationComplete()
+         {
+            if (finishSlide_ == finish)
+               finish.execute();
          }
 
          public void onLayout(Layer layer, double progress)
@@ -638,6 +655,7 @@ public class HistoryPane extends WorkbenchPane
    private HistoryTableWithToolbar searchResults_;
    private final Commands commands_;
    private final UserPrefs userPrefs_;
+   private Command finishSlide_;
    private Anchor loadMore_;
    private SearchWidget searchWidget_;
    private Styles styles_ = ((Resources) GWT.create(Resources.class)).styles();
