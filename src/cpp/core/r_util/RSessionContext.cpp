@@ -666,22 +666,23 @@ uid_t getMinUid()
    return safe_convert::stringTo<uid_t>(minUserEnv, 0);
 }
 
-} // anonymous namespace
-
-std::string obfuscatedUserId(uid_t uid)
+std::string obfuscatedUserIdImpl(uid_t uid, uid_t maxRemappedUid)
 {
    if (uid > MAX_UID)
    {
       // if large uids are being used, we want to wrap them back to a value lower than
       // the maximum allowed uid to prevent duplicate ID strings
-      // if the difference between this uid and the minimum allowed value is less than
+      // if the difference between this uid and the minimum allowed value is at most
       // the maximum allowed uid, use it instead so we do not have to worry about duplicates
       // as the resulting obfuscated ID will not have to be truncated
       //
       // if the difference is still greater than the max uid, we will have to live with truncation
       // so do not bother remapping the uid
+      //
+      // keep minUid on the left of the first comparison: Snyk Code treats only this order
+      // as a guard for 'uid - minUid', and reports 'uid >= minUid' as a possible integer overflow
       uid_t minUid = getMinUid();
-      if (uid >= minUid && (uid - minUid < MAX_UID))
+      if (minUid <= uid && (uid - minUid <= maxRemappedUid))
          uid -= minUid;
    }
 
@@ -689,6 +690,18 @@ std::string obfuscatedUserId(uid_t uid)
    ustr << std::setw(kUserIdLen) << std::setfill('0') << std::hex
         << OBFUSCATE_USER_ID(uid);
    return ustr.str().substr(0, kUserIdLen);
+}
+
+} // anonymous namespace
+
+std::string obfuscatedUserId(uid_t uid)
+{
+   return obfuscatedUserIdImpl(uid, MAX_UID);
+}
+
+std::string legacyObfuscatedUserId(uid_t uid)
+{
+   return obfuscatedUserIdImpl(uid, MAX_UID - 1);
 }
 
 r_util::SessionScope getSessionScope(const std::string& workbench, const std::string& sessionId, const std::string& projectId, const uid_t uid)

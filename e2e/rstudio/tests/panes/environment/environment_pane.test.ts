@@ -109,4 +109,130 @@ test.describe('Environment pane', () => {
     // Free the big vector so the shared session doesn't carry ~76 MiB onward.
     await consoleActions.executeInConsole('rm(bigval)');
   });
+
+  // The grid view builds its own header markup (#19170). An empty environment
+  // also covers the header redraw, since sorting no rows pushes none.
+  test('grid view headers report the sort direction', async () => {
+    const header = (name: string) =>
+      envPane.panel.getByRole('columnheader', { name, exact: true });
+    const sortButton = (name: string) =>
+      header(name).getByRole('button', { name, exact: true });
+    const sortedHeader = envPane.panel.locator('th[aria-sort]');
+
+    await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.gridViewOption.click();
+
+    // The list and grid views share the sort, and later specs in this worker
+    // inherit it, so note it here and put it back at the end.
+    let initial: { column: string; direction: string } | undefined;
+    try {
+      await expect(envPane.panel).toContainText('Environment is empty');
+      for (const name of ['Name', 'Type', 'Length', 'Size', 'Value'])
+        await expect(header(name)).toBeVisible();
+      await expect(sortedHeader).toHaveCount(1);
+      initial = {
+        column: (await sortedHeader.textContent())!.trim(),
+        direction: (await sortedHeader.getAttribute('aria-sort'))!,
+      };
+
+      // Clicking an unsorted column sorts by it, keeping the current direction.
+      // Clicking the sorted column reverses the direction.
+      await sortButton('Type').click();
+      await expect(header('Type')).toHaveAttribute('aria-sort', /^(ascending|descending)$/);
+      await sortButton('Name').click();
+      await expect(header('Name')).toHaveAttribute('aria-sort', /^(ascending|descending)$/);
+      await expect(header('Type')).not.toHaveAttribute('aria-sort');
+
+      const before = await header('Name').getAttribute('aria-sort');
+      await sortButton('Name').click();
+      await expect(header('Name')).toHaveAttribute('aria-sort',
+        before === 'ascending' ? 'descending' : 'ascending');
+      await expect(sortedHeader).toHaveCount(1);
+    } finally {
+      if (initial) {
+        const { column, direction } = initial;
+        if (await header(column).getAttribute('aria-sort') === null)
+          await sortButton(column).click();
+        await expect(header(column)).toHaveAttribute('aria-sort', /^(ascending|descending)$/);
+        if (await header(column).getAttribute('aria-sort') !== direction)
+          await sortButton(column).click();
+        await expect(header(column)).toHaveAttribute('aria-sort', direction);
+      }
+      await envPane.viewMenu.click();
+      await envPane.listViewOption.click();
+    }
+  });
+
+  // The list view draws a row of empty cells first, only to fix column widths.
+  // It is marked presentational, so the first row the table exposes is the
+  // category header, not a blank row (#19173).
+  test('list view exposes no blank layout row', async () => {
+    await consoleActions.executeInConsole('rm(list = ls()); x <- 1:3', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.listViewOption.click();
+
+    try {
+      // Only the list view has category header rows, so this also confirms the
+      // view switch finished before the check.
+      const table = envPane.panel.getByRole('table');
+      await expect(table).toHaveCount(1);
+      await expect(table.getByRole('row').first()).toHaveText('Values');
+    } finally {
+      await consoleActions.executeInConsole('rm(x)', { wait: true });
+    }
+  });
+
+  // The grid view's header and body are separate <table>s; they are exposed
+  // as one ARIA table so body cells have column headers (#19173).
+  test('grid view is one table whose cells have column headers', async () => {
+    await consoleActions.executeInConsole('rm(list = ls()); x <- 1:3', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.gridViewOption.click();
+
+    try {
+      const table = envPane.panel.getByRole('table');
+      await expect(table.getByRole('cell', { name: 'integer', exact: true })).toBeVisible();
+      await expect(table).toHaveCount(1);
+      await expect(table).toMatchAriaSnapshot(`
+        - table:
+          - rowgroup:
+            - row:
+              - columnheader "Name"
+              - columnheader "Type"
+              - columnheader "Length"
+              - columnheader "Size"
+              - columnheader "Value"
+          - rowgroup:
+            - row:
+              - cell "x"
+              - cell "integer"
+      `);
+    } finally {
+      await consoleActions.executeInConsole('rm(x)', { wait: true });
+      await envPane.viewMenu.click();
+      await envPane.listViewOption.click();
+    }
+  });
+
+  // The empty-environment message replaces the grid's body table; it reads as
+  // a row of the grid, not as a table nested in it or as text outside any row.
+  test('empty grid view shows its message as a row of the table', async () => {
+    await consoleActions.executeInConsole('rm(list = ls())', { wait: true });
+    await envPane.viewMenu.click();
+    await envPane.gridViewOption.click();
+
+    try {
+      await expect(envPane.panel).toContainText('Environment is empty');
+      const table = envPane.panel.getByRole('table');
+      await expect(table).toHaveCount(1);
+      await expect(table.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
+      await expect(table.getByRole('row')).toHaveCount(2);
+      await expect(table.getByRole('row').nth(1).getByRole('cell', { name: 'Environment is empty' }))
+        .toBeVisible();
+    } finally {
+      await envPane.viewMenu.click();
+      await envPane.listViewOption.click();
+    }
+  });
 });
