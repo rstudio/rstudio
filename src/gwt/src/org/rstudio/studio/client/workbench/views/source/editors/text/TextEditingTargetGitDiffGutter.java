@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -243,8 +244,34 @@ public class TextEditingTargetGitDiffGutter
    {
       GitDiffGutterNative gutter = GitDiffGutterNative.create(editor.getWidget().getEditor());
       gutter.setIgnoreWhitespace(prefs_.gitDiffIgnoreWhitespace().getValue());
+      gutter.setBaseRefresher(this::refreshBase);
       return gutter;
    }
+
+   // A revert first re-fetches the base, so that it restores the index as it
+   // is rather than as it was when last fetched (the focus-driven re-fetch is
+   // delayed, and the index can move under an open document meanwhile). The
+   // callback runs once the fetch has been applied, or failed.
+   private void refreshBase(JavaScriptObject callback)
+   {
+      baseCallbacks_.add(callback);
+      if (gutter_ == null)
+         runBaseCallbacks();
+      else
+         refresh();
+   }
+
+   private void runBaseCallbacks()
+   {
+      ArrayList<JavaScriptObject> callbacks = new ArrayList<>(baseCallbacks_);
+      baseCallbacks_.clear();
+      for (JavaScriptObject callback : callbacks)
+         invoke(callback);
+   }
+
+   private static native void invoke(JavaScriptObject callback) /*-{
+      callback();
+   }-*/;
 
    private void detach()
    {
@@ -264,6 +291,9 @@ public class TextEditingTargetGitDiffGutter
          splitGutter_.dispose();
          splitGutter_ = null;
       }
+
+      // a disposed gutter has nothing left to revert, so these are harmless
+      runBaseCallbacks();
    }
 
    // Refresh triggers arrive in bursts (a commit fires several, a focus
@@ -278,6 +308,9 @@ public class TextEditingTargetGitDiffGutter
    {
       if (gutter_ == null)
          return;
+
+      // this fetch covers whatever a pending scheduled one was for
+      refreshTimer_.cancel();
 
       final String path = sentinel_.getPath();
       final String encoding = currentEncoding();
@@ -313,12 +346,15 @@ public class TextEditingTargetGitDiffGutter
                   }
 
                   setBase(response.isTracked() ? response.getContents() : null);
+                  runBaseCallbacks();
                }
 
                @Override
                public void onError(ServerError error)
                {
                   Debug.logError(error);
+                  if (!token.isInvalid())
+                     runBaseCallbacks();
                }
             });
    }
@@ -336,6 +372,7 @@ public class TextEditingTargetGitDiffGutter
    private boolean attaching_;
    private boolean dismissed_;
 
+   private final ArrayList<JavaScriptObject> baseCallbacks_ = new ArrayList<>();
    private final Invalidation invalidation_ = new Invalidation();
    private final Timer refreshTimer_ = new Timer()
    {

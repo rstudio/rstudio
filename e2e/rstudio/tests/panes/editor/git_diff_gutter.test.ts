@@ -1135,6 +1135,71 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('reverts from a peek against the index as it is, not as it was', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    const peek = page.locator(PEEK);
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await expect(peek.locator(PEEK_LINE)).toHaveText(['d <- 4']);
+
+    // Stage the file from the console while the peek is open: the index now
+    // matches the buffer, and nothing has told the editor so. Revert must
+    // not restore the `d <- 4` the peek shows (undoing the very change just
+    // staged); it re-fetches the base first, finds the change gone, and
+    // leaves the line alone.
+    await executeInConsoleChecked(
+      page,
+      `invisible(system2("git", c(${gitC()}, "add", "--", "script.R")))`,
+    );
+    try {
+      await peek.locator(PEEK_REVERT).click();
+      await expect(peek).toHaveCount(0, { timeout: 30000 });
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+      expect(await new AceEditor(page, '').getLine(4)).toBe('d <- 40');
+    } finally {
+      await executeInConsoleChecked(
+        page,
+        `invisible(system2("git", c(${gitC()}, "reset", "-q", "--", "script.R")))`,
+      );
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('reverts at the cursor against the index as it is, not as it was', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(5);
+
+    // The same, through the command: with focus still in the console after
+    // staging, no focus-driven re-fetch is even pending, so the command has
+    // to fetch the base itself before acting on the (now stale) chunk.
+    await executeInConsoleChecked(
+      page,
+      `invisible(system2("git", c(${gitC()}, "add", "--", "script.R")))`,
+    );
+    try {
+      await executeCommand(page, 'vcsRevertChange');
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+      expect(await editor.getLine(4)).toBe('d <- 40');
+    } finally {
+      await executeInConsoleChecked(
+        page,
+        `invisible(system2("git", c(${gitC()}, "reset", "-q", "--", "script.R")))`,
+      );
+      await documentCloseAllNoSave(page);
+    }
+  });
+
   test('closes the peek when the index version it shows is replaced', async ({
     rstudioPage: page,
   }) => {

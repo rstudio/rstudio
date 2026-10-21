@@ -91,6 +91,7 @@ var GitDiffGutter = function(editor) {
    this.updateTimer = null;
    this.ignoreWhitespace = false;
    this.peek = null;
+   this.baseRefresher = null;
 
    this.onAfterRender = this.onAfterRender.bind(this);
    this.scheduleUpdate = this.scheduleUpdate.bind(this);
@@ -150,6 +151,25 @@ var GitDiffGutter = function(editor) {
 
    this.getChunks = function() {
       return this.chunks;
+   };
+
+   // Installs the function that re-fetches the base. It is handed a callback
+   // to run once the fetched base has been applied (through setBase), even
+   // if that base turned out to be the one already in use.
+   this.setBaseRefresher = function(refresher) {
+      this.baseRefresher = refresher;
+   };
+
+   // Runs the callback once the base is current. The base is also re-fetched
+   // on focus, but only after a delay and a round trip, and a revert must not
+   // restore an index version that has since moved -- e.g. the file staged in
+   // the Terminal while a peek was open, where the old base would undo the
+   // very change just staged.
+   this.withFreshBase = function(callback) {
+      if (this.baseRefresher)
+         this.baseRefresher(callback);
+      else
+         callback();
    };
 
    this.scheduleUpdate = function() {
@@ -381,13 +401,21 @@ var GitDiffGutter = function(editor) {
       this.editor.gotoLine(this.displayRow(chunk) + 1, 0, true);
    };
 
+   // The change is the one under the cursor now; the revert itself waits
+   // for the base, and is dropped if the change is no longer there by then
+   // (revertChunk looks it up afresh), so a late revert never acts on an
+   // edit made in the meantime.
    this.revertChangeAtCursor = function() {
       this.flushUpdate();
       var chunk = this.chunkAt(this.editor.getCursorPosition().row);
       if (!chunk)
          return false;
 
-      return this.revertChunk(chunk);
+      var self = this;
+      this.withFreshBase(function() {
+         self.revertChunk(chunk);
+      });
+      return true;
    };
 
    // Replaces the chunk's lines in the buffer with the base version's. The
@@ -516,7 +544,16 @@ var GitDiffGutter = function(editor) {
       revertButton.textContent = "Revert";
       revertButton.addEventListener("click", function() {
          self.focusEditor();
-         self.revertChunk(chunk);
+
+         // Reverting restores what the peek shows, so it goes ahead only if
+         // the peek is still open once the base is current: a changed base
+         // closes it (see setBase), and reverting to lines the user never
+         // saw would be wrong even where a chunk still sits on these rows.
+         var peek = self.peek;
+         self.withFreshBase(function() {
+            if (self.peek === peek)
+               self.revertChunk(peek.chunk);
+         });
       });
       header.appendChild(revertButton);
 
