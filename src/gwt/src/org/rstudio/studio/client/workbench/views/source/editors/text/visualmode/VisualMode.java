@@ -838,7 +838,8 @@ public class VisualMode implements VisualModeEditorSync,
         // hidden source editor's cursor
         commands_.vcsNextChange(),
         commands_.vcsPreviousChange(),
-        commands_.vcsRevertChange()
+        commands_.vcsRevertChange(),
+        commands_.vcsShowChange()
       );
       
       // initially disable code commands (they will be re-enabled later when an

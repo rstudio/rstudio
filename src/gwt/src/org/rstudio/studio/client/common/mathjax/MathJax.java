@@ -122,9 +122,12 @@ public class MathJax
                   Range range = MathJaxUtil.getLatexRange(docDisplay_);
                   if (range != null)
                   {
+                     // only our own widget counts as an existing preview:
+                     // re-rendering over another feature's (the Git gutter's
+                     // peek) would open a popup the user may have turned off
                      int endRow = range.getEnd().getRow();
                      LineWidget lineWidget = docDisplay_.getLineWidgetForRow(endRow);
-                     if (lineWidget != null)
+                     if (lineWidget != null && StringUtil.equals(lineWidget.getType(), LINE_WIDGET_TYPE))
                         renderLatex(range, true);
                   }
                }

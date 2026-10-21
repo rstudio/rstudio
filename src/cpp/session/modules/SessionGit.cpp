@@ -2689,19 +2689,24 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
 
 
 // Returns the index version of a file for the editor's Git diff gutter. The
-// result is { "tracked": bool, "contents": string }; tracked is false when the
-// file is outside the repository or not in the index (untracked, ignored),
-// in which case there is nothing to diff against.
+// result is { "tracked": bool, "id": string, "unchanged": bool, "contents":
+// string }; tracked is false when the file is outside the repository or not
+// in the index (untracked, ignored), in which case there is nothing to diff
+// against. The id names the base as decoded (blob sha plus encoding); a
+// client that already holds that base passes its id back and gets
+// "unchanged" with no contents, which spares the blob read and the transfer.
 Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   std::string path, encoding;
-   Error error = json::readParams(request.params, &path, &encoding);
+   std::string path, encoding, knownId;
+   Error error = json::readParams(request.params, &path, &encoding, &knownId);
    if (error)
       return error;
 
    json::Object result;
    result["tracked"] = false;
+   result["id"] = "";
+   result["unchanged"] = false;
    result["contents"] = "";
    pResponse->setResult(result);
 
@@ -2731,6 +2736,7 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
 
    // entries are "<mode> <sha> <stage>\t<path>", NUL-terminated
    bool regularFile = false;
+   std::string sha;
    std::vector<std::string> entries;
    boost::algorithm::split(entries, stageResult.stdOut, boost::is_any_of(std::string(1, '\0')));
    for (const std::string& entry : entries)
@@ -2741,7 +2747,11 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
 
       if (entry.substr(tab + 1) == relativePath)
       {
-         regularFile = boost::algorithm::starts_with(entry, "100");
+         std::vector<std::string> fields;
+         boost::algorithm::split(fields, entry.substr(0, tab), boost::is_any_of(" "));
+         regularFile = fields.size() == 3 && boost::algorithm::starts_with(fields[0], "100");
+         if (regularFile)
+            sha = fields[1];
          break;
       }
    }
@@ -2749,18 +2759,35 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
    if (!regularFile)
       return Success();
 
-   // the stage is spelled out, or a name such as "0:script.R" would be read
-   // as stage 0 of script.R
+   if (encoding.empty())
+      encoding = projects::projectContext().defaultEncoding();
+
+   std::string id = sha + ":" + encoding;
+   result["tracked"] = true;
+   result["id"] = id;
+   if (!knownId.empty() && knownId == id)
+   {
+      result["unchanged"] = true;
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   // The blob is read through the file's smudge filters (git-crypt, LFS,
+   // ident, eol conversion), as the working copy in the editor was; "git
+   // show" would hand back the stored form, and every line would differ.
+   // The stage is spelled out, or a name such as "0:script.R" would be read
+   // as stage 0 of script.R.
    core::system::ProcessResult procResult;
-   error = gitExec(gitArgs() << "show" << ":0:" + relativePath, root, &procResult);
+   error = gitExec(gitArgs() << "cat-file" << "--filters" << ":0:" + relativePath, root, &procResult);
    if (error)
       return error;
 
    if (procResult.exitStatus != EXIT_SUCCESS)
+   {
+      result["tracked"] = false;
+      pResponse->setResult(result);
       return Success();
-
-   if (encoding.empty())
-      encoding = projects::projectContext().defaultEncoding();
+   }
 
    std::string contents;
    error = module_context::convertToUtf8(procResult.stdOut, encoding, true, &contents);
@@ -2773,12 +2800,12 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
 
    // control characters are kept: the editor keeps them too, and JSON
    // escapes them fine
-   result["tracked"] = true;
    result["contents"] = contents;
    pResponse->setResult(result);
 
    return Success();
 }
+
 Error vcsExportFile(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {

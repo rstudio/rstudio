@@ -47,8 +47,20 @@ var MARKER_HIT_WIDTH = 6;
 // Typing bursts are coalesced into a single diff.
 var UPDATE_DELAY_MS = 150;
 
-// Bail out on pathological inputs rather than hang the UI thread.
+// Bail out on pathological inputs rather than hang the UI thread. The
+// provider does not say when it gave up (it then returns one change spanning
+// both documents), so a compute that used up the budget is taken as having
+// done so.
 var MAX_COMPUTATION_MS = 250;
+
+// Peek text when none is supplied (the IDE passes translated strings in).
+var DEFAULT_STRINGS = {
+   removedLines: function(n) { return "Removed " + pluralize(n, "line"); },
+   addedLines:   function(n) { return "Added " + pluralize(n, "line"); },
+   changedLines: function(n) { return "Changed " + pluralize(n, "line") + "; previously:"; },
+   revert: "Revert",
+   close:  "Close"
+};
 
 // Mirrors how the editor loads a document (AceEditor.doSetCode strips
 // escape characters) and how Ace's Document splits lines.
@@ -82,10 +94,12 @@ function sameChunk(a, b) {
           a.new.end.row === b.new.end.row;
 }
 
-var GitDiffGutter = function(editor) {
+var GitDiffGutter = function(editor, strings) {
    this.editor = editor;
+   this.strings = strings || DEFAULT_STRINGS;
    this.baseText = null;
    this.baseLines = null;
+   this.strippedBaseLines = null;
    this.chunks = [];
    this.rowClasses = {};
    this.updateTimer = null;
@@ -137,6 +151,7 @@ var GitDiffGutter = function(editor) {
       this.closePeek();
       this.baseText = text;
       this.baseLines = (text == null) ? null : splitLines(text);
+      this.strippedBaseLines = null;
       this.update();
    };
 
@@ -226,7 +241,10 @@ var GitDiffGutter = function(editor) {
 
          if (this.ignoreWhitespace)
          {
-            base = base.map(stripWhitespace);
+            // the base does not change between updates, so strip it once
+            if (!this.strippedBaseLines)
+               this.strippedBaseLines = base.map(stripWhitespace);
+            base = this.strippedBaseLines;
             lines = lines.map(stripWhitespace);
          }
 
@@ -253,9 +271,17 @@ var GitDiffGutter = function(editor) {
       try
       {
          var DiffProvider = require("ace/ext/diff/providers/default").DiffProvider;
-         return new DiffProvider().compute(base, lines, {
+         var started = Date.now();
+         var chunks = new DiffProvider().compute(base, lines, {
             maxComputationTimeMs: MAX_COMPUTATION_MS
          });
+
+         // A timed-out diff is not a diff: it would mark every line changed
+         // and hand Revert the whole document. Better no markers.
+         if (Date.now() - started >= MAX_COMPUTATION_MS)
+            return [];
+
+         return chunks;
       }
       catch (error)
       {
@@ -484,10 +510,32 @@ var GitDiffGutter = function(editor) {
          text = isAddition(chunk) ? "" : "\n" + oldText;
       }
 
+      // the replace fires a change, which schedules an update; run that one
+      // now rather than a second diff of the same document later
       this.closePeek();
       session.replace(range, text);
-      this.update();
+      this.flushUpdate();
       return true;
+   };
+
+   // Toggles the peek for the change under the cursor, so that what Revert
+   // would restore can be seen without the mouse. Returns false when the
+   // cursor is not on a change.
+   this.showChangeAtCursor = function() {
+      this.flushUpdate();
+      var chunk = this.chunkAt(this.editor.getCursorPosition().row);
+      if (!chunk)
+         return false;
+
+      this.togglePeek(chunk);
+      return true;
+   };
+
+   this.togglePeek = function(chunk) {
+      if (this.peek && this.peek.chunk === chunk)
+         this.closePeek();
+      else
+         this.showPeek(chunk);
    };
 
    this.lineWidgetManager = function() {
@@ -539,11 +587,11 @@ var GitDiffGutter = function(editor) {
 
       var label;
       if (isDeletion(chunk))
-         label = "Removed " + pluralize(oldLines.length, "line");
+         label = this.strings.removedLines(oldLines.length);
       else if (isAddition(chunk))
-         label = "Added " + pluralize(newCount, "line");
+         label = this.strings.addedLines(newCount);
       else
-         label = "Changed " + pluralize(newCount, "line") + "; previously:";
+         label = this.strings.changedLines(newCount);
 
       var el = document.createElement("div");
       el.className = PEEK_CLASS;
@@ -560,7 +608,7 @@ var GitDiffGutter = function(editor) {
       var revertButton = document.createElement("button");
       revertButton.type = "button";
       revertButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-revert";
-      revertButton.textContent = "Revert";
+      revertButton.textContent = this.strings.revert;
       revertButton.addEventListener("click", function() {
          self.focusEditor();
 
@@ -579,7 +627,7 @@ var GitDiffGutter = function(editor) {
       var closeButton = document.createElement("button");
       closeButton.type = "button";
       closeButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-close";
-      closeButton.textContent = "Close";
+      closeButton.textContent = this.strings.close;
       closeButton.addEventListener("click", function() {
          self.closePeek();
       });
@@ -682,11 +730,7 @@ var GitDiffGutter = function(editor) {
       e.preventDefault();
       e.stopImmediatePropagation();
       this.focusEditor();
-
-      if (this.peek && this.peek.chunk === chunk)
-         this.closePeek();
-      else
-         this.showPeek(chunk);
+      this.togglePeek(chunk);
    };
 
    // The click and dblclick that follow a consumed mousedown would otherwise
