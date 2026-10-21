@@ -26,6 +26,8 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -108,6 +110,9 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       table_.getStyle().setCursor(Cursor.DEFAULT);
       setClassId(title);
       setElement(table_);
+      Roles.getListboxRole().set(table_);
+      if (allowMultiSelect_)
+         Roles.getListboxRole().setAriaMultiselectableProperty(table_, true);
       
       addDomHandler(new FocusHandler()
       {
@@ -295,6 +300,10 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
             setSelectedPhysical(offset, length, true);
          }
       }
+
+      // A Ctrl+click can deselect the row and a Shift+click selects up to it,
+      // so neither leaves it as the last row selected.
+      setActiveRow(row);
    }
 
    private void handleKeyDown(KeyDownEvent event)
@@ -419,6 +428,71 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          getElement().appendChild(tbody);
 
       codec_.onRowsChanged(tbody);
+      applyRowRoles(tbody);
+   }
+
+   // A listbox may own only options, so table sections and non-value rows
+   // (group headers such as a file name or timestamp) are presentational.
+   // Each option is described by the header above it, which arrow-key
+   // navigation skips over.
+   private void applyRowRoles(TableSectionElement tbody)
+   {
+      Roles.getPresentationRole().set(tbody);
+      String headerId = findPrecedingHeaderId(tbody);
+      NodeList<TableRowElement> rows = tbody.getRows();
+      for (int i = 0; i < rows.getLength(); i++)
+      {
+         TableRowElement row = rows.getItem(i);
+         if (codec_.isValueRow(row))
+         {
+            Roles.getOptionRole().set(row);
+            Roles.getOptionRole().setAriaSelectedState(row, SelectedValue.of(isSelected(row)));
+            if (headerId != null)
+               row.setAttribute("aria-describedby", headerId);
+         }
+         else
+         {
+            Roles.getPresentationRole().set(row);
+            headerId = ensureId(row);
+         }
+      }
+   }
+
+   private String findPrecedingHeaderId(TableSectionElement tbody)
+   {
+      if (!codec_.hasNonValueRows())
+         return null;
+
+      for (Element el = tbody.getPreviousSiblingElement();
+           el != null && el.getTagName().equalsIgnoreCase("tbody");
+           el = el.getPreviousSiblingElement())
+      {
+         NodeList<TableRowElement> rows = ((TableSectionElement) el).getRows();
+         for (int i = rows.getLength() - 1; i >= 0; i--)
+         {
+            if (!codec_.isValueRow(rows.getItem(i)))
+               return ensureId(rows.getItem(i));
+         }
+      }
+      return null;
+   }
+
+   private static String ensureId(Element el)
+   {
+      if (el.getId().isEmpty())
+         el.setId(DOM.createUniqueId());
+      return el.getId();
+   }
+
+   // Focus stays on the table, so aria-activedescendant is how assistive
+   // technology learns which row the user moved to.
+   private void setActiveRow(TableRowElement row)
+   {
+      activeRow_ = row;
+      if (row == null)
+         table_.removeAttribute("aria-activedescendant");
+      else
+         table_.setAttribute("aria-activedescendant", ensureId(row));
    }
 
    protected void addToTop(TableSectionElement tbody)
@@ -430,6 +504,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       table_.setInnerText("");
       selectedRows_.clear();
+      setActiveRow(null);
    }
 
    public void focus()
@@ -465,11 +540,16 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          if (codec_.isValueRow(topRow))
             rowCount--;
          selectedRows_.remove(topRow);
+         if (topRow == activeRow_)
+            setActiveRow(null);
          topRow.removeFromParent();
       }
 
       if (tbody.getRows().getLength() > 0)
+      {
          codec_.onRowsChanged(tbody);
+         applyRowRoles(tbody);
+      }
       else
          tbody.removeFromParent();
 
@@ -552,8 +632,12 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          return;
 
       setStyleName(row, selectedClassName_, selected);
+      Roles.getOptionRole().setAriaSelectedState(row, SelectedValue.of(selected));
       if (selected)
+      {
          selectedRows_.add(row);
+         setActiveRow(row);
+      }
       else
          selectedRows_.remove(row);
 
@@ -775,6 +859,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    private final String selectedClassName_;
    private final boolean allowMultiSelect_;
    private ScrollPanel scrollPanel_;
+   private TableRowElement activeRow_;
    private final boolean focusable_;
    private boolean isFocused_;
 }
