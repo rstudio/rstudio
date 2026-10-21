@@ -1,0 +1,52 @@
+name: "Resolve E2E shard count"
+description: >
+  Reads a platform's Playwright shard count from .github/e2e/shards.json and
+  exposes it as outputs, so a workflow's strategy.matrix (which cannot read
+  files or env itself) can be built from the one declaration in that file.
+  See .github/e2e/README.md.
+
+  Requires .github/e2e/shards.json to be checked out; a sparse checkout of
+  that file plus this action's directory is enough.
+
+inputs:
+  platform:
+    description: 'Key to read from .github/e2e/shards.json, e.g. "macos".'
+    required: true
+
+outputs:
+  count:
+    description: "Number of shards, e.g. 6."
+    value: ${{ steps.resolve.outputs.count }}
+  matrix:
+    description: 'JSON list of 1-based shard indices for strategy.matrix, e.g. [1,2,3,4,5,6].'
+    value: ${{ steps.resolve.outputs.matrix }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: resolve
+      shell: bash
+      env:
+        PLATFORM: ${{ inputs.platform }}
+        FILE: .github/e2e/shards.json
+      run: |
+        set -euo pipefail
+
+        if [ ! -f "$FILE" ]; then
+          echo "::error::$FILE is not checked out; the calling job must check it out (a sparse checkout is enough)."
+          exit 1
+        fi
+
+        # jq prints `null` for a missing key; the regex rejects that along
+        # with 0, negatives, and non-integers, which strategy.matrix would
+        # otherwise turn into an empty or malformed shard matrix.
+        COUNT=$(jq --arg p "$PLATFORM" '.[$p]' "$FILE")
+        if ! [[ "$COUNT" =~ ^[1-9][0-9]*$ ]]; then
+          echo "::error::$FILE has no positive integer shard count for platform '$PLATFORM' (got: $COUNT)."
+          exit 1
+        fi
+        MATRIX=$(jq -c --arg p "$PLATFORM" '[range(1; .[$p] + 1)]' "$FILE")
+
+        echo "::notice::$PLATFORM e2e suite runs as $COUNT shards"
+        echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+        echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
