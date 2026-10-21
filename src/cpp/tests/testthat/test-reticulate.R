@@ -340,3 +340,36 @@ test_that("the REPL hook runs buffered code before an unindented quit", {
    expect_false(buffer$empty())
 
 })
+
+test_that("the matplotlib load hook forces the agg backend", {
+
+   skipIfPythonUnavailable()
+   skip_if_not_installed("png")
+
+   # the hook only reaches matplotlib.use() when matplotlib is imported with a
+   # backend configured explicitly (e.g. MPLBACKEND), before pyplot resolves one;
+   # matplotlib >= 3.9 loads 'matplotlib.backends' on import, so there the hook
+   # goes through pyplot instead and only the second half below is exercised
+   sys <- reticulate::import("sys", convert = TRUE)
+   skip_if("matplotlib" %in% names(sys$modules), "matplotlib is already loaded")
+
+   importlib <- reticulate::import("importlib.util", convert = TRUE)
+   skip_if(is.null(importlib$find_spec("matplotlib")), "matplotlib is not available")
+
+   os <- reticulate::import("os", convert = TRUE)
+   os$environ["MPLBACKEND"] <- "pdf"
+   on.exit(reticulate::py_del_item(os$environ, "MPLBACKEND"), add = TRUE)
+
+   # importing matplotlib fires the load hook, which switches the backend via
+   # matplotlib.use() (whose 'warn' parameter was removed in matplotlib 3.3.0);
+   # the explicit call covers the same path if the hook did not run
+   matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+   expect_no_error(.rs.reticulate.matplotlib.onLoaded())
+   expect_equal(tolower(matplotlib$get_backend()), "agg")
+
+   # once pyplot is loaded, the hook switches the backend through pyplot instead
+   matplotlib$rcParams["backend"] <- "pdf"
+   expect_no_error(.rs.reticulate.matplotlib.onLoaded())
+   expect_equal(tolower(matplotlib$get_backend()), "agg")
+
+})

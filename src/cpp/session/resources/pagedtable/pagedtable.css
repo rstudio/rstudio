@@ -39,7 +39,11 @@
 .pagedtable td {
   padding: 2px 6px 2px 6px;
 
-  white-space: nowrap;
+  /* pre rather than nowrap: both keep a cell on one line, but nowrap also
+     collapses runs of spaces, so the displayed (and copied) value no longer
+     matched the data (#19117). Newlines and tabs are already escaped by
+     encodeString() on the R side. */
+  white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
 }

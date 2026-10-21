@@ -43,7 +43,7 @@ span.status img:first-child {
    background-position: 2px 1px !important;
 }
 
-.cellTableSortableHeader > div {
+.cellTableSortableHeader > [role="button"] > div {
    padding-left: 13px !important;
 }
 
