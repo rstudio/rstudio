@@ -362,6 +362,30 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Revert changes to the file") // $NON-NLS-1$
     String vcsFileRevertDesc();
     
+    // vcsNextChange
+    @DefaultStringValue("Go to Next Change") // $NON-NLS-1$
+    String vcsNextChangeLabel();
+    @DefaultStringValue("_Next Change") // $NON-NLS-1$
+    String vcsNextChangeMenuLabel();
+    @DefaultStringValue("Go to the next line changed since it was last staged or committed") // $NON-NLS-1$
+    String vcsNextChangeDesc();
+    
+    // vcsPreviousChange
+    @DefaultStringValue("Go to Previous Change") // $NON-NLS-1$
+    String vcsPreviousChangeLabel();
+    @DefaultStringValue("_Previous Change") // $NON-NLS-1$
+    String vcsPreviousChangeMenuLabel();
+    @DefaultStringValue("Go to the previous line changed since it was last staged or committed") // $NON-NLS-1$
+    String vcsPreviousChangeDesc();
+    
+    // vcsRevertChange
+    @DefaultStringValue("Revert Change at Cursor") // $NON-NLS-1$
+    String vcsRevertChangeLabel();
+    @DefaultStringValue("Revert _Change at Cursor") // $NON-NLS-1$
+    String vcsRevertChangeMenuLabel();
+    @DefaultStringValue("Restore the lines at the cursor to the version last staged or committed") // $NON-NLS-1$
+    String vcsRevertChangeDesc();
+    
     // vcsViewOnGitHub
     @DefaultStringValue("View file on GitHub") // $NON-NLS-1$
     String vcsViewOnGitHubLabel();

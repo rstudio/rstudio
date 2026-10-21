@@ -4891,6 +4891,24 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onVcsNextChange()
+   {
+      gitDiffGutter_.goToNextChange();
+   }
+
+   @Handler
+   void onVcsPreviousChange()
+   {
+      gitDiffGutter_.goToPreviousChange();
+   }
+
+   @Handler
+   void onVcsRevertChange()
+   {
+      gitDiffGutter_.revertChangeAtCursor();
+   }
+
+   @Handler
    void onVcsViewOnGitHub()
    {
       fireVcsViewOnGithubEvent(GitHubViewRequest.VCS_VIEW);

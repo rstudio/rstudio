@@ -2,14 +2,16 @@
 // beside added and modified lines, and a wedge at the seam where lines were
 // removed. The index version is fetched once per document and again when the
 // index moves (commit, stage, checkout); the diff against the live buffer runs
-// client-side, so the markers follow typing without a save. The repo is built
+// client-side, so the markers follow typing without a save. Next/Previous
+// Change step through the markers, Revert Change at Cursor restores the index
+// version, and clicking a marker peeks at the previous lines. The repo is built
 // R-side so this also works in Server mode, where the rsession may not share a
 // filesystem with the test runner.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
 import { AceEditor } from '@pages/ace_editor.page';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
-import { executeCommand, openProject, setPref } from '@utils/commands';
+import { documentCloseAllNoSave, executeCommand, openProject, setPref } from '@utils/commands';
 import { openFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
@@ -25,6 +27,12 @@ const GUTTER_ATTACHED = 'ace_git-gutter';
 const ADDED = 'ace_git-added';
 const MODIFIED = 'ace_git-modified';
 const DELETED = 'ace_git-deleted';
+
+// The peek widget and its parts; see git_diff_gutter.js.
+const PEEK = '.ace_git-peek';
+const PEEK_LABEL = '.ace_git-peek-label';
+const PEEK_LINE = '.ace_git-peek-line';
+const PEEK_REVERT = '.ace_git-peek-revert';
 
 const SEED_LINES = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5', 'f <- 6', 'g <- 7', 'h <- 8'];
 
@@ -82,6 +90,11 @@ async function gutterMarkers(page: Page): Promise<Record<number, string[]>> {
     }
     return markers;
   });
+}
+
+/** 0-based cursor row of the active editor. */
+async function cursorRow(page: Page): Promise<number> {
+  return new AceEditor(page, '').getCursorPosition().then((pos) => pos.row);
 }
 
 /** Whether the active editor's gutter layer has a GitDiffGutter attached. */
@@ -196,6 +209,127 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect
       .poll(() => gutterMarkers(page), { timeout: 30000 })
       .toEqual({ ...EDITED_MARKERS, [EDITED_LINES.length]: [ADDED] });
+  });
+
+  test('steps through the changes with Next and Previous Change', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(1);
+
+    // forward through the three changes, then around to the first again
+    for (const row of [1, 4, 6, 1]) {
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(() => cursorRow(page)).toBe(row);
+    }
+
+    // and back, wrapping from the first to the last
+    for (const row of [6, 4, 1]) {
+      await executeCommand(page, 'vcsPreviousChange');
+      await expect.poll(() => cursorRow(page)).toBe(row);
+    }
+  });
+
+  test('reverts the change at the cursor to the index version', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const editor = new AceEditor(page, '');
+
+    // the modified line goes back to what the index has
+    await editor.gotoLine(5);
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+
+    // the removed line comes back where it was, ahead of the marked line
+    await editor.gotoLine(7);
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => editor.getLine(6)).toBe('f <- 6');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED] });
+
+    // and the added line goes away, leaving the index version exactly
+    await editor.gotoLine(2);
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+    expect((await editor.getValue()).split('\n')).toEqual([...SEED_LINES, '']);
+
+    // nothing under the cursor is a no-op
+    await executeCommand(page, 'vcsRevertChange');
+    expect((await editor.getValue()).split('\n')).toEqual([...SEED_LINES, '']);
+
+    // The buffer now matches the index but the working copy doesn't; don't
+    // leave that behind for the tests below, which reopen the file.
+    await documentCloseAllNoSave(page);
+  });
+
+  test('peeks at the previous lines when a marker is clicked', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // The marker is a bar at the right edge of the gutter cell for row 4
+    // (the modified line); the left part of the cell toggles breakpoints.
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+
+    const peek = page.locator(PEEK);
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await expect(peek.locator(PEEK_LABEL)).toHaveText('Changed 1 line; previously:');
+    await expect(peek.locator(PEEK_LINE)).toHaveText(['d <- 4']);
+    expect(await gutterMarkers(page)).toEqual(EDITED_MARKERS);
+
+    // the second click on the same marker closes the peek again
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(peek).toHaveCount(0);
+
+    // reverting from the peek restores the line and closes the peek
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await peek.locator(PEEK_REVERT).click();
+    await expect(peek).toHaveCount(0);
+    const editor = new AceEditor(page, '');
+    await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('honors the ignore-whitespace diff preference', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // Trailing whitespace on an otherwise unchanged line -- one whose
+    // neighbors are unchanged too, since touching changes merge into a
+    // single chunk and would turn the added line above into "modified".
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(8);
+    await editor.navigateLineEnd();
+    await editor.insert('   ');
+    await expect
+      .poll(() => gutterMarkers(page), { timeout: 30000 })
+      .toEqual({ ...EDITED_MARKERS, 7: [MODIFIED] });
+
+    try {
+      await setPref(page, 'git_diff_ignore_whitespace', true);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+      await setPref(page, 'git_diff_ignore_whitespace', false);
+      await expect
+        .poll(() => gutterMarkers(page), { timeout: 30000 })
+        .toEqual({ ...EDITED_MARKERS, 7: [MODIFIED] });
+    } finally {
+      await setPref(page, 'git_diff_ignore_whitespace', false);
+    }
+
+    await documentCloseAllNoSave(page);
   });
 
   test('clears once the changes are committed, and tracks the new base', async ({

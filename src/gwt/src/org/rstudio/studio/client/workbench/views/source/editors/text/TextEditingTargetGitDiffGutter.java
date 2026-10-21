@@ -70,6 +70,11 @@ public class TextEditingTargetGitDiffGutter
       // except that Save As gives the document a new path.
       releaseOnDismiss.add(docDisplay_.addSaveCompletedHandler(event -> sync()));
       releaseOnDismiss.add(prefs_.showGitDiffGutter().addValueChangeHandler(event -> sync()));
+      releaseOnDismiss.add(prefs_.gitDiffIgnoreWhitespace().addValueChangeHandler(event ->
+      {
+         if (gutter_ != null)
+            gutter_.setIgnoreWhitespace(event.getValue());
+      }));
       releaseOnDismiss.add(() ->
       {
          dismissed_ = true;
@@ -77,6 +82,24 @@ public class TextEditingTargetGitDiffGutter
       });
 
       sync();
+   }
+
+   public void goToNextChange()
+   {
+      if (gutter_ != null)
+         gutter_.goToNextChange();
+   }
+
+   public void goToPreviousChange()
+   {
+      if (gutter_ != null)
+         gutter_.goToPreviousChange();
+   }
+
+   public void revertChangeAtCursor()
+   {
+      if (gutter_ != null)
+         gutter_.revertChangeAtCursor();
    }
 
    @Inject
@@ -132,6 +155,7 @@ public class TextEditingTargetGitDiffGutter
 
          AceEditor editor = (AceEditor) docDisplay_;
          gutter_ = GitDiffGutterNative.create(editor.getWidget().getEditor());
+         gutter_.setIgnoreWhitespace(prefs_.gitDiffIgnoreWhitespace().getValue());
          refresh();
       });
    }

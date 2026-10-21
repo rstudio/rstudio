@@ -32,6 +32,25 @@ public class GitDiffGutterNative extends JavaScriptObject
       this.setBase(contents);
    }-*/;
 
+   public final native void setIgnoreWhitespace(boolean ignore) /*-{
+      this.setIgnoreWhitespace(ignore);
+   }-*/;
+
+   // Navigation wraps around; each returns false when there are no changes.
+   public final native boolean goToNextChange() /*-{
+      return this.goToNextChange();
+   }-*/;
+
+   public final native boolean goToPreviousChange() /*-{
+      return this.goToPreviousChange();
+   }-*/;
+
+   // Restores the base version of the change under the cursor; returns false
+   // when the cursor isn't on a change.
+   public final native boolean revertChangeAtCursor() /*-{
+      return this.revertChangeAtCursor();
+   }-*/;
+
    public final native void dispose() /*-{
       this.dispose();
    }-*/;
