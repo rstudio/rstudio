@@ -1862,7 +1862,13 @@ body.windows table.webGlobalToolbar {
 }
 
 
-/** Help Search box **/
+/* Align text-only Packages toolbar actions with their neighboring icons. */
+body.windows .packagesToolbarTextButton .toolbarButtonLabel {
+   position: relative;
+   top: -2px;
+}
+
+/** Search widgets **/
 .search {
    position: relative;
    top: -1px;
@@ -2911,6 +2917,10 @@ input[type="checkbox"]:checked:before {
    border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
    background: THEME_LIGHT_CONTROL_BACKGROUND;
+}
+
+body.windows .search {
+   transform: translateY(-1px);
 }
 
 .gwt-MenuBar .search {

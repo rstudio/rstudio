@@ -424,16 +424,46 @@ pipeline {
 
         stage('Trigger Automation Testing') {
           steps {
-            build wait: false,
-            job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
-            parameters: [
-              string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}"),
-              string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}"),
-              string(name: 'RSTUDIO_VERSION_PATCH', value: "${RSTUDIO_VERSION_PATCH}"),
-              string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${RSTUDIO_VERSION_SUFFIX}"),
-              string(name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"),
-              string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
-            ]
+            // A failed trigger marks the build unstable but must not skip the GHA dispatch below
+            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+              build wait: false,
+              job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
+              parameters: [
+                string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}"),
+                string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}"),
+                string(name: 'RSTUDIO_VERSION_PATCH', value: "${RSTUDIO_VERSION_PATCH}"),
+                string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${RSTUDIO_VERSION_SUFFIX}"),
+                string(name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"),
+                string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
+              ]
+            }
+          }
+        }
+
+        // Dispatches the GHA docker e2e suite for this build (rstudio-ide-automation#6105)
+        stage('Trigger Docker E2E (GHA)') {
+          when {
+            allOf {
+              expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME.startsWith('rel-') }
+              expression { params.OS_FILTER in ['all', 'jammy'] }
+              expression { params.ARCH_FILTER in ['all', 'x86_64'] }
+              expression { params.FLAVOR_FILTER in ['all', 'Server'] }
+            }
+          }
+          steps {
+            // Best-effort: a failed dispatch marks this stage red but never fails the build
+            catchError(buildResult: null, stageResult: 'FAILURE') {
+              script {
+                utils.triggerGitHubWorkflow(
+                  'rstudio',
+                  'rstudio-ide-automation',
+                  'e2e-docker.yaml',
+                  'main',
+                  [product: IS_PRO ? 'pro' : 'os', version: "${RSTUDIO_VERSION}", product_branch: "${env.BRANCH_NAME}"],
+                  60 // timeoutSecs
+                )
+              }
+            }
           }
         }
 
