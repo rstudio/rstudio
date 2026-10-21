@@ -31,6 +31,14 @@ protected:
    void SetUp() override
    {
       settingsPath_ = core::tests::scratchDir();
+
+      // use the IDs of a uid at the previous remapping boundary; server builds
+      // obfuscate user IDs, so they are computed rather than written as literals
+      core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
+      const uid_t uid = 1000 + 0xFFFFF;
+      currentId_ = core::r_util::ProjectId("12345678", uid).asString();
+      legacyId_ = core::r_util::legacyObfuscatedUserId(uid) + "12345678";
+      ASSERT_NE(currentId_, legacyId_);
    }
 
    void TearDown() override
@@ -57,18 +65,13 @@ protected:
    }
 
    core::FilePath settingsPath_;
-   const std::string currentId_ = "fffff12345678";
-   const std::string legacyId_ = "1003e12345678";
+   std::string currentId_;
+   std::string legacyId_;
    std::string version_, home_, label_;
 };
 
 TEST_F(RVersionSettingsTests, ReadsCompleteLegacyRecordAfterUidBoundaryChange)
 {
-   core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
-   const uid_t uid = 1000 + 0xFFFFF;
-   ASSERT_EQ(currentId_, core::r_util::ProjectId("12345678", uid).asString());
-   ASSERT_EQ(legacyId_, core::r_util::legacyObfuscatedUserId(uid) + "12345678");
-
    writeLegacy();
    read(legacyId_);
    EXPECT_EQ(version_, "4.4.3");
