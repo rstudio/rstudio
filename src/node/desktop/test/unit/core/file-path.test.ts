@@ -44,8 +44,9 @@ function getTestDir(): FilePath {
 // A path that should never exist
 const bogusPath = '/super/bogus/path/42';
 
-// A path that a non-elevated user cannot create
-const cannotCreatePath = process.platform === 'win32' ? '\\\\rstudio-foo-bar-23456\\a_test_folder' : '/foo/bar/crazy';
+// A path that a non-elevated user cannot create. On Windows, a folder inside an
+// existing file fails at once; a made-up network path can take seconds to fail
+const cannotCreatePath = process.platform === 'win32' ? path.join(process.execPath, 'a_test_folder') : '/foo/bar/crazy';
 
 // An absolute path in generic format (see boost filesystem for description of "generic" format)
 const absolutePath = process.platform === 'win32' ? 'C:/Users/human/documents' : '/users/human/documents';
