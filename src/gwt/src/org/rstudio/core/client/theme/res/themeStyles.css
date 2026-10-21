@@ -13,6 +13,7 @@
 @external ace_nes-gutter, ace_nes-gutter-background, ace_nes-gutter-highlight, ace_nes-gutter-deletion, ace_nes-gutter-insertion, ace_nes-gutter-replacement;
 @external ace_nes-offscreen-gutter, ace_nes-offscreen-gutter-up, ace_nes-offscreen-gutter-down;
 @external ace_diff-added, ace_diff-removed;
+@external ace_git-gutter, ace_git-added, ace_git-modified, ace_git-deleted, ace_git-deleted-below;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -3364,4 +3365,59 @@ body .rstudio-themes-alternate {
 
 .gwt-TextBox, .gwt-PasswordTextBox {
 	min-height: 16px;
+}
+
+/* Git diff markers: a bar at the right edge of the gutter cell, between the
+   line number and the code, so it stays clear of the annotation icons on the
+   left. Deleted lines leave nothing to mark, so a wedge points at the seam. */
+.ace_git-gutter .ace_gutter-cell.ace_git-added::after,
+.ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
+   content: "";
+   position: absolute;
+   top: 0;
+   bottom: 0;
+   right: 0;
+   width: 3px;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-added::after {
+   background-color: #2da44e;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
+   background-color: #0969da;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted::before,
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted-below::before {
+   content: "";
+   position: absolute;
+   right: 0;
+   width: 0;
+   height: 0;
+   border-right: 5px solid #cf222e;
+   z-index: 1;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted::before {
+   top: 0;
+   border-bottom: 5px solid transparent;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted-below::before {
+   bottom: 0;
+   border-top: 5px solid transparent;
+}
+
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-added::after {
+   background-color: #3fb950;
+}
+
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
+   background-color: #58a6ff;
+}
+
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-deleted::before,
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-deleted-below::before {
+   border-right-color: #f85149;
 }

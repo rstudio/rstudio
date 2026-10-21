@@ -22,6 +22,10 @@ cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/view
 cp build/src/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-language_tools-uncompressed.js
 cp build/src-min/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-language_tools.js
 
+# Copy the ext-diff extension (used by the Git diff gutter)
+cp build/src/ext-diff.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-diff-uncompressed.js
+cp build/src-min/ext-diff.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ext-diff.js
+
 # Copy in workers
 cp build/src-min/worker-html.js ../../www/js/workers
 cp build/src-min/worker-css.js ../../www/js/workers

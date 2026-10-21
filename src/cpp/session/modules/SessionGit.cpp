@@ -2688,6 +2688,56 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
 }
 
 
+// Returns the index version of a file for the editor's Git diff gutter. The
+// result is { "tracked": bool, "contents": string }; tracked is false when the
+// file is outside the repository or not in the index (untracked, ignored),
+// in which case there is nothing to diff against.
+Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   std::string path, encoding;
+   Error error = json::readParams(request.params, &path, &encoding);
+   if (error)
+      return error;
+
+   json::Object result;
+   result["tracked"] = false;
+   result["contents"] = "";
+   pResponse->setResult(result);
+
+   FilePath root = s_git_.root();
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   if (root.isEmpty() || !filePath.isWithin(root))
+      return Success();
+
+   std::string relativePath = filePath.getRelativePath(root);
+   if (relativePath.empty())
+      return Success();
+
+   core::system::ProcessResult procResult;
+   error = gitExec(gitArgs() << "show" << ":" + relativePath, root, &procResult);
+   if (error)
+      return error;
+
+   // a non-zero exit means the index has no such path; that's expected for
+   // new files and not worth logging
+   if (procResult.exitStatus != EXIT_SUCCESS)
+      return Success();
+
+   if (encoding.empty())
+      encoding = projects::projectContext().defaultEncoding();
+
+   std::string contents;
+   error = module_context::convertToUtf8(procResult.stdOut, encoding, true, &contents);
+   if (error)
+      contents = procResult.stdOut;
+
+   result["tracked"] = true;
+   result["contents"] = string_utils::filterControlChars(contents);
+   pResponse->setResult(result);
+
+   return Success();
+}
 Error vcsExportFile(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -3740,6 +3790,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_history", vcsHistory))
       (bind(registerRpcMethod, "git_show", vcsShow))
       (bind(registerRpcMethod, "git_show_file", vcsShowFile))
+      (bind(registerRpcMethod, "git_diff_base_contents", vcsDiffBaseContents))
       (bind(registerRpcMethod, "git_export_file", vcsExportFile))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))

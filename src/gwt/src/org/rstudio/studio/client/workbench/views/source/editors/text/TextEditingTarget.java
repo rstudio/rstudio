@@ -1666,6 +1666,9 @@ public class TextEditingTarget implements
                }
             });
 
+      gitDiffGutter_ = new TextEditingTargetGitDiffGutter(docDisplay_,
+                                                          docUpdateSentinel_,
+                                                          releaseOnDismiss_);
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
                                           commands_,
@@ -10133,6 +10136,7 @@ public class TextEditingTarget implements
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
+   private TextEditingTargetGitDiffGutter gitDiffGutter_;
    private final UserPrefs prefs_;
    private final UserState state_;
    private Display view_;
