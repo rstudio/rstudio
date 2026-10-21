@@ -62,6 +62,8 @@ async function showContext(page: Page): Promise<void> {
   await results.getByRole('option').first().click();
   await executeCommand(page, 'historyShowContext');
   await expect(listbox(page, 'Console History Context')).toBeVisible();
+  // The view slides in; the search results stay exposed until it ends.
+  await expect(results).toHaveCount(0);
 }
 
 // Back slides from the context view to the search results; both stay exposed
@@ -140,6 +142,23 @@ test.describe('History pane accessibility', () => {
     await listbox(page, 'Console History').focus();
     await page.keyboard.press('Tab');
     expect(await focusIsOnScreen(page)).toBe(true);
+  });
+
+  test('Done and Back keep keyboard focus in the pane', async ({ rstudioPage: page }) => {
+    await search(page, MARKER);
+    await exposedButtons(page, 'Done').focus();
+    await page.keyboard.press('Enter');
+    await expect(listbox(page, 'Console History')).toBeFocused();
+
+    await showContext(page);
+    await exposedButtons(page, 'Back').focus();
+    await page.keyboard.press('Enter');
+    await expect(listbox(page, 'Console History Search Results')).toBeFocused();
+
+    await showContext(page);
+    await exposedButtons(page, 'Done').focus();
+    await page.keyboard.press('Enter');
+    await expect(listbox(page, 'Console History')).toBeFocused();
   });
 
   test('arrow keys move an announced, multi-select selection', async ({ rstudioPage: page }) => {

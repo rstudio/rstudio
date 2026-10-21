@@ -219,7 +219,10 @@ public class HistoryPane extends WorkbenchPane
          Widget current = getWidgetForMode(mode_);
          Widget target = getWidgetForMode(mode);
 
-         boolean focus = DomUtils.hasFocus(getActiveHistory().getFocusTarget());
+         // Focus may be on the outgoing view's Back or Done button rather than
+         // its table; that view turns inert, so focus must follow to the target.
+         boolean focus = DomUtils.contains(current.getElement(),
+                                           DomUtils.getActiveElement());
          HasHistory focusTarget = getHistoryForMode(mode);
 
          boolean rightToLeft = mode_.getValue() < mode.getValue();
