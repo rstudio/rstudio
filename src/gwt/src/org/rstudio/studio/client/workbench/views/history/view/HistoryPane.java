@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.history.view;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -152,7 +153,8 @@ public class HistoryPane extends WorkbenchPane
          }
       });
 
-      commandList_ = createHistoryTable(TimestampMode.NONE);
+      commandList_ = createHistoryTable(TimestampMode.NONE,
+                                        constants_.recentCommandsListLabel());
       vpanel.add(commandList_);
 
       recentScrollPanel_ = new BottomScrollPanel() {
@@ -173,7 +175,7 @@ public class HistoryPane extends WorkbenchPane
       searchLabel_ = new Label();
       searchLabel_.setHeight("");
       searchResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(TimestampMode.ITEM),
+            createHistoryTable(TimestampMode.ITEM, constants_.searchResultsListLabel()),
             new Widget[] {
                   searchLabel_
             },
@@ -186,7 +188,7 @@ public class HistoryPane extends WorkbenchPane
 
       contextLabel_ = new Label();
       contextResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(TimestampMode.GROUP),
+            createHistoryTable(TimestampMode.GROUP, constants_.contextListLabel()),
             new Widget[] {
                   new SmallButton(commands_.historyDismissContext()),
                   contextLabel_
@@ -326,7 +328,7 @@ public class HistoryPane extends WorkbenchPane
       recentScrollPanel_.scrollToBottom();
    }
 
-   private HistoryTable createHistoryTable(TimestampMode timestampMode)
+   private HistoryTable createHistoryTable(TimestampMode timestampMode, String label)
    {
       HistoryTable table = new HistoryTable(
             styles_.command(),
@@ -334,6 +336,7 @@ public class HistoryPane extends WorkbenchPane
             styles_.selected(),
             timestampMode,
             commands_);
+      Roles.getListboxRole().setAriaLabelProperty(table.getElement(), label);
       table.setSize("100%", "100%");
       table.addClickHandler(new ClickHandler()
       {
