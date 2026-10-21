@@ -13,3 +13,18 @@ export function envFlag(name: string): boolean {
     return true;
   throw new Error(`${name}="${raw}" -- expected one of: 1, true, 0, false (or unset)`);
 }
+
+/**
+ * Resolve an env override against its allowed values, falling back to the
+ * default when unset or empty. An unrecognized value throws rather than being
+ * passed through, where a typo like PW_TRACE=retain-on-falure would otherwise
+ * turn a debugging aid into a confusing failure further along.
+ */
+export function envChoice<T extends string>(name: string, allowed: readonly T[], fallback: T): T {
+  const value = process.env[name];
+  if (value === undefined || value === '')
+    return fallback;
+  if (!allowed.includes(value as T))
+    throw new Error(`${name}="${value}" -- expected one of: ${allowed.join(', ')}`);
+  return value as T;
+}

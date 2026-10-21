@@ -225,6 +225,9 @@ extern const int kConsoleReadCompleted;
 extern const int kRStudioAPIShowMenu;
 extern const int kPackageVulnerabilitiesReady;
 extern const int kFilesChanged;
+extern const int kProjectRVersionMismatch;
+extern const int kRInstallCompleted;
+extern const int kRenvRestorePrompt;
 
 }
    

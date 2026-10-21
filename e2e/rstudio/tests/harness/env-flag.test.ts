@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { envFlag } from '@utils/env';
+import { envChoice, envFlag } from '@utils/env';
 
 /**
- * Harness self-test for envFlag (utils/env.ts). Workflows interpolate boolean
- * inputs as strings, so "false" must read as off and anything unrecognized
- * must fail the run rather than silently pick a mode.
+ * Harness self-test for envFlag and envChoice (utils/env.ts). Workflows
+ * interpolate inputs as strings, so "false" must read as off and anything
+ * unrecognized must fail the run rather than silently pick a mode.
  */
 
 const NAME = 'PW_TEST_ENV_FLAG';
@@ -38,6 +38,33 @@ test.describe('envFlag', () => {
       setEnv(value);
       expect(() => envFlag(NAME)).toThrow(`${NAME}="${value}"`);
       expect(() => envFlag(NAME)).toThrow('1, true, 0, false');
+    }
+  });
+});
+
+test.describe('envChoice', () => {
+  const CHOICES = ['A', 'AA', 'AAA'] as const;
+  test.afterEach(() => setEnv(undefined));
+
+  test('falls back to the default when unset or empty', () => {
+    for (const value of [undefined, '']) {
+      setEnv(value);
+      expect(envChoice(NAME, CHOICES, 'AA'), `value ${JSON.stringify(value)}`).toBe('AA');
+    }
+  });
+
+  test('returns an allowed value as given', () => {
+    for (const value of CHOICES) {
+      setEnv(value);
+      expect(envChoice(NAME, CHOICES, 'AA')).toBe(value);
+    }
+  });
+
+  test('rejects anything else, naming the variable and the accepted values', () => {
+    for (const value of ['aa', 'AAAA', ' AA', '2.2']) {
+      setEnv(value);
+      expect(() => envChoice(NAME, CHOICES, 'AA')).toThrow(`${NAME}="${value}"`);
+      expect(() => envChoice(NAME, CHOICES, 'AA')).toThrow('A, AA, AAA');
     }
   });
 });

@@ -1,5 +1,6 @@
 import { test as base, type Page } from '@playwright/test';
 import { CONSOLE_INPUT } from '../pages/console_pane.page';
+import { writeStateMarker } from '../utils/a11y';
 import { withDeadline } from '../utils/deadline';
 import { collectRunVersions, publishRunVersions } from '../utils/versions';
 import {
@@ -53,7 +54,8 @@ async function recordVersions(page: Page): Promise<void> {
 }
 
 export const test = base.extend<{ a11yPage: Page }>({
-  a11yPage: [async ({}, use) => {
+  a11yPage: [async ({}, use, testInfo) => {
+    writeStateMarker(testInfo);
     const session = await openServerSession();
     try {
       await waitForInitialState(session.page);

@@ -15,16 +15,21 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 import {
   detectREnvironment,
+  frameworkVersionHome,
   parseRQueryResult,
   promptUserForR,
   rDetectionReady,
+  rFromRStudioWhichR,
+  rQueryCommand,
+  resolveRHome,
   startRDetection,
+  windowsSessionPath,
 } from '../../../src/main/detect-r';
 
 describe('DetectR', () => {
@@ -62,12 +67,96 @@ describe('DetectR', () => {
     assert.isTrue(environment.ldLibraryPath.endsWith('/opt/R/lib'));
   });
 
+  it('queries a versioned macOS framework install through its own launch steps', () => {
+    const home = '/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources';
+    const query = rQueryCommand(`${home}/bin/R`);
+
+    // the install's ldpaths sets the library path, then its real executable runs
+    assert.equal(query.command, '/bin/sh');
+    assert.equal(query.args[0], '-c');
+    assert.include(query.args[1], '. "$R_HOME/etc/ldpaths"');
+    assert.include(query.args[1], 'exec "$R_HOME/bin/exec/R" "$@"');
+    assert.deepEqual(query.args.slice(2), ['R', '--vanilla', '-s']);
+    assert.equal(query.env.R_HOME, home);
+  });
+
+  it('queries other R installations through their launcher without R_HOME', () => {
+    for (const path of ['/Library/Frameworks/R.framework/Resources/bin/R', '/opt/R/4.4.1/bin/R', '/usr/bin/R']) {
+      const query = rQueryCommand(path);
+      assert.equal(query.command, path);
+      assert.deepEqual(query.args, ['--vanilla', '-s']);
+      assert.isUndefined(query.env.R_HOME);
+    }
+    assert.isNull(frameworkVersionHome('/Library/Frameworks/R.framework/Resources/bin/R'));
+  });
+
+  it('queries R with the library path RStudio was launched with', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    // preparing an R replaces the process's library path with that R's
+    // paths, which must not carry over into the query of another R
+    const variable = process.platform === 'darwin' ? 'DYLD_FALLBACK_LIBRARY_PATH' : 'LD_LIBRARY_PATH';
+    const launched = process.env[variable];
+    process.env[variable] = '/opt/R/4.3.3/lib/R/lib';
+    try {
+      const query = rQueryCommand('/opt/R/4.4.1/bin/R');
+      assert.equal(query.env[variable], launched);
+    } finally {
+      if (launched === undefined) {
+        delete process.env[variable];
+      } else {
+        process.env[variable] = launched;
+      }
+    }
+  });
+
+  it('puts an R on the PATH RStudio was launched with, not behind an R prepared earlier', () => {
+    const launched = process.env.PATH;
+    process.env.PATH = `C:\\R\\R-4.4.1\\bin\\x64;${launched}`;
+    try {
+      const expected = launched ? `C:\\R\\R-4.5.0\\bin\\x64;${launched}` : 'C:\\R\\R-4.5.0\\bin\\x64';
+      assert.equal(windowsSessionPath('C:\\R\\R-4.5.0\\bin\\x64'), expected);
+    } finally {
+      process.env.PATH = launched;
+    }
+  });
+
   it('rejects query output without the marker', () => {
     const [, error] = parseRQueryResult('/opt/R/bin/R', { stdout: 'not R', stderr: '', status: 1 });
     assert.isNotNull(error);
 
     const [, noOutputError] = parseRQueryResult('/opt/R/bin/R', { stdout: '', stderr: '', status: 127 });
     assert.isNotNull(noOutputError);
+  });
+
+  it('resolves an R home directory in RSTUDIO_WHICH_R to its executable', () => {
+    const home = mkdtempSync(join(tmpdir(), 'detect-r-home-'));
+    const executable = join(home, 'bin', process.platform === 'win32' ? 'x64/Rterm.exe' : 'R');
+    mkdirSync(dirname(executable), { recursive: true });
+    writeFileSync(executable, '');
+    const empty = mkdtempSync(join(tmpdir(), 'detect-r-empty-'));
+
+    try {
+      process.env.RSTUDIO_WHICH_R = home;
+      assert.equal(rFromRStudioWhichR(), executable);
+
+      // an executable is used as given, and so are a directory holding no R
+      // and a path that doesn't exist, so that validation reports them
+      assert.equal(resolveRHome(executable), executable);
+      assert.equal(resolveRHome(empty), empty);
+      assert.equal(resolveRHome(join(home, 'missing')), join(home, 'missing'));
+
+      // on Windows, the 32-bit executable is the fallback
+      const i386 = join(home, 'bin', 'i386', 'Rterm.exe');
+      mkdirSync(dirname(i386), { recursive: true });
+      writeFileSync(i386, '');
+      assert.equal(resolveRHome(home, 'win32'), process.platform === 'win32' ? executable : i386);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+      rmSync(empty, { recursive: true, force: true });
+    }
   });
 
   it('the background query fills the cache the synchronous path reads', async function () {

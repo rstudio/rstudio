@@ -342,8 +342,7 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
    
    public static Widget getSeparator()
    {
-      Image sep = new Image(ThemeResources.INSTANCE.toolbarSeparator());
-      return sep;
+      return new DecorativeImage(ThemeResources.INSTANCE.toolbarSeparator());
    }
 
    public Widget addLeftSeparator()

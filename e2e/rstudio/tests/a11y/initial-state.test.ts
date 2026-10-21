@@ -7,7 +7,7 @@ import { scanA11y, violationSummary } from '@utils/a11y';
  * then scan. A state test that changes prefs or layout must restore them --
  * on CI they persist into later tests (see README, Accessibility Tests).
  */
-test('initial state has no WCAG 2.2 AA violations', { tag: ['@a11y', '@server_only'] },
+test('initial state has no accessibility violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage }, testInfo) => {
     const results = await scanA11y(a11yPage, testInfo);
     expect(violationSummary(results)).toEqual([]);

@@ -23,6 +23,8 @@
             <g:Button ui:field="moreButton_"/>
          </td>
          <td class="{res.styles.center}" align="right">
+            <!-- kept by the dismiss button, where a long message can't push it out of view -->
+            <rw:HyperlinkLabel ui:field="actionLink_" addStyleNames="{res.styles.action}"/>
             <rw:ImageButton ui:field="dismiss_"
                      resource="{themeRes.closeTab2x}"
                      width="9"

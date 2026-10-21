@@ -13,6 +13,119 @@
 #
 #
 
+# --- helpers -------------------------------------------------------------------
+
+# Build one or more source packages into a local file:// repository, so the
+# tests don't depend on network access or on the active set of repositories.
+# 'pkgSpecs' is a named list whose names are package names and whose values
+# are named character vectors of extra DESCRIPTION fields (e.g.
+# c(Imports = "otherPkg")). The default builds a single package with no
+# extras for single-package tests.
+.rs.tests.makeLocalSourceRepo <- function(pkgSpecs = list(rstudioTestPkg = character()))
+{
+   base <- tempfile("rstudio-test-repo-")
+   dir.create(base)
+   src     <- file.path(base, "src")
+   contrib <- file.path(base, "repo", "src", "contrib")
+   dir.create(src)
+   dir.create(contrib, recursive = TRUE)
+
+   pkgNames <- names(pkgSpecs)
+
+   for (pkgName in pkgNames)
+   {
+      pkgDir <- file.path(src, pkgName)
+      dir.create(pkgDir)
+      lines <- c(
+         paste0("Package: ", pkgName),
+         "Version: 0.0.1",
+         "Title: Demo",
+         "Description: Test fixture for RStudio install-hook tests.",
+         "License: GPL-3",
+         "Encoding: UTF-8"
+      )
+      extras <- pkgSpecs[[pkgName]]
+      if (length(extras))
+         lines <- c(lines, paste0(names(extras), ": ", extras))
+      writeLines(lines, file.path(pkgDir, "DESCRIPTION"))
+      writeLines(paste0("# generated namespace for ", pkgName),
+                 file.path(pkgDir, "NAMESPACE"))
+   }
+
+   # Use R's internal tar rather than 'R CMD build', so no external tool
+   # (or R on the PATH) is needed; a plain archive of the package directory
+   # is a valid source package.
+   oldwd <- setwd(src)
+   on.exit(setwd(oldwd), add = TRUE)
+   tarballs <- character()
+   for (pkgName in pkgNames)
+   {
+      tarball <- file.path(contrib, paste0(pkgName, "_0.0.1.tar.gz"))
+      utils::tar(tarball, pkgName, compression = "gzip", tar = "internal")
+      tarballs <- c(tarballs, tarball)
+   }
+   tools::write_PACKAGES(contrib, type = "source")
+
+   list(
+      base     = base,
+      pkgName  = pkgNames[[1L]],   # first package, for single-package tests
+      pkgNames = pkgNames,
+      tarballs = tarballs,
+      reposUrl = paste0("file://", file.path(base, "repo"))
+   )
+}
+
+# Build a binary package from a source tarball, returning its path.
+.rs.tests.buildBinaryPackage <- function(tarball)
+{
+   outdir <- tempfile("rstudio-test-binary-")
+   dir.create(outdir)
+   lib <- file.path(outdir, "lib")
+   dir.create(lib)
+
+   # 'R CMD INSTALL --build' writes the binary into the working directory
+   oldwd <- setwd(outdir)
+   on.exit(setwd(oldwd), add = TRUE)
+   status <- system2(
+      file.path(R.home("bin"), "R"),
+      c("CMD", "INSTALL", "--build", "--library", shQuote(lib), shQuote(tarball)),
+      stdout = FALSE,
+      stderr = FALSE
+   )
+   if (!identical(status, 0L))
+      stop("'R CMD INSTALL --build' failed with status ", status)
+
+   binaries <- list.files(outdir, pattern = "\\.(tgz|zip|tar\\.gz)$", full.names = TRUE)
+   if (length(binaries) != 1L)
+      stop("expected exactly one binary package in '", outdir, "'")
+
+   binaries
+}
+
+# Serve a file over http:// from R's own help server, so URL installs can be
+# exercised without network access. The session normally points R's httpd
+# port at its own web server, which doesn't dispatch custom handlers, so a
+# dedicated server is started and the original port restored when 'frame'
+# exits.
+.rs.tests.serveFile <- function(file, frame = parent.frame())
+{
+   oldPort <- tools:::httpdPort()
+   tools:::httpdPort(0L)
+   port <- suppressMessages(tools::startDynamicHelp(TRUE))
+   withr::defer({
+      tools::startDynamicHelp(FALSE)
+      tools:::httpdPort(oldPort)
+   }, envir = frame)
+
+   handlers <- get(".httpd.handlers.env", asNamespace("tools"))
+   handler <- function(path, query, ...)
+      list(file = file, "content-type" = "application/octet-stream", NULL, 200L)
+   assign("rstudioTests", handler, envir = handlers)
+   withr::defer(rm("rstudioTests", envir = handlers), envir = frame)
+
+   sprintf("http://127.0.0.1:%d/custom/rstudioTests/%s", port, basename(file))
+}
+
 expect_install <- function(pkgs, ...) {
    
    # create temporary library for installation
@@ -35,22 +148,21 @@ expect_install <- function(pkgs, ...) {
 
 test_that("packages can be installed", {
 
-   expect_install("rlang", repos = "https://cloud.r-project.org")
-   expect_install("rlang", repos = "https://packagemanager.posit.co/cran/latest")
+   r <- .rs.tests.makeLocalSourceRepo()
+   on.exit(unlink(r$base, recursive = TRUE), add = TRUE)
 
+   # from a repository
+   expect_install(r$pkgName, repos = r$reposUrl, type = "source")
+
+   # from a local source package
+   expect_install(r$tarballs[[1L]], repos = NULL, type = "source")
+
+   # from a local binary package
    if (!identical(.Platform$pkgType, "source"))
    {
-      withr::local_options(repos = c(CRAN = "https://cloud.R-project.org"))
-      info <- download.packages("rlang", destdir = tempdir(), type = "binary", quiet = TRUE)
-      skip_if(nrow(info) == 0L, "CRAN has no binary packages for this platform")
-      expect_install(info[1, 2], repos = NULL, type = "binary")
-   }
-
-   if (!.rs.platform.isWindows)
-   {
-      withr::local_options(repos = c(CRAN = "https://cloud.R-project.org"))
-      info <- download.packages("rlang", destdir = tempdir(), type = "source", quiet = TRUE)
-      expect_install(info[1, 2], repos = NULL, type = "source")
+      binary <- .rs.tests.buildBinaryPackage(r$tarballs[[1L]])
+      on.exit(unlink(dirname(binary), recursive = TRUE), add = TRUE)
+      expect_install(binary, repos = NULL, type = "binary")
    }
 
 })
@@ -68,19 +180,19 @@ test_that(".rs.readPackageDescription fails cleanly for URL inputs", {
 test_that("install hook stays quiet for URL installs with repos = NULL", {
 
    # https://github.com/rstudio/rstudio/issues/18198
-   skip_on_os("windows")  # source install; no toolchain guarantee in CI
+   r <- .rs.tests.makeLocalSourceRepo()
+   on.exit(unlink(r$base, recursive = TRUE), add = TRUE)
 
    lib <- tempfile("library-")
    dir.create(lib)
    on.exit(unlink(lib, recursive = TRUE), add = TRUE)
 
-   # A small pure-R package with no dependencies; CRAN archive URLs are stable.
-   url <- "https://cloud.r-project.org/src/contrib/Archive/RECA/RECA_1.6.tar.gz"
+   url <- .rs.tests.serveFile(r$tarballs[[1L]])
    expect_no_warning(
       install.packages(url, lib = lib, repos = NULL, type = "source", quiet = TRUE)
    )
 
-   expect_true(file.exists(file.path(lib, "RECA", "DESCRIPTION")))
+   expect_true(file.exists(file.path(lib, r$pkgName, "DESCRIPTION")))
 
 })
 
@@ -147,70 +259,7 @@ test_that(".rs.installedPackagesFileInfo(paths=) returns NA mtime for missing pa
 
 })
 
-# --- helpers for hook integration tests ---------------------------------------
-
-# Build one or more source packages into a local file:// repository.
-# 'pkgSpecs' is a named list whose names are package names and whose
-# values are named character vectors of extra DESCRIPTION fields
-# (e.g. c(Imports = "otherPkg")). The default builds a single package
-# with no extras for back-compat with single-package tests.
-.rs.tests.makeLocalSourceRepo <- function(pkgSpecs = list(rstudioTestPkg = character()))
-{
-   base <- tempfile("rstudio-test-repo-")
-   dir.create(base)
-   src     <- file.path(base, "src")
-   contrib <- file.path(base, "repo", "src", "contrib")
-   dir.create(src)
-   dir.create(contrib, recursive = TRUE)
-
-   pkgNames <- names(pkgSpecs)
-
-   for (pkgName in pkgNames)
-   {
-      pkgDir <- file.path(src, pkgName)
-      dir.create(pkgDir)
-      lines <- c(
-         paste0("Package: ", pkgName),
-         "Version: 0.0.1",
-         "Title: Demo",
-         "Description: Test fixture for RStudio install-hook tests.",
-         "License: GPL-3",
-         "Encoding: UTF-8"
-      )
-      extras <- pkgSpecs[[pkgName]]
-      if (length(extras))
-         lines <- c(lines, paste0(names(extras), ": ", extras))
-      writeLines(lines, file.path(pkgDir, "DESCRIPTION"))
-      writeLines(paste0("# generated namespace for ", pkgName),
-                 file.path(pkgDir, "NAMESPACE"))
-   }
-
-   oldwd <- setwd(src)
-   on.exit(setwd(oldwd), add = TRUE)
-   for (pkgName in pkgNames)
-   {
-      system2(
-         "R",
-         c("CMD", "build", "--no-build-vignettes", "--no-manual", pkgName),
-         stdout = FALSE,
-         stderr = FALSE
-      )
-   }
-   tarballs <- list.files(src, pattern = "\\.tar\\.gz$", full.names = TRUE)
-   file.copy(tarballs, contrib)
-   tools::write_PACKAGES(contrib, type = "source")
-
-   list(
-      base     = base,
-      pkgName  = pkgNames[[1L]],   # back-compat: first package
-      pkgNames = pkgNames,
-      reposUrl = paste0("file://", file.path(base, "repo"))
-   )
-}
-
 test_that("install hook tags DESCRIPTION correctly across a no-op reinstall", {
-
-   skip_on_os("windows")  # 'R CMD build' availability varies in CI
 
    r <- .rs.tests.makeLocalSourceRepo()
    on.exit(unlink(r$base, recursive = TRUE), add = TRUE)
@@ -253,8 +302,6 @@ test_that("install hook tags DESCRIPTION correctly across a no-op reinstall", {
 })
 
 test_that(".rs.recordPackageSource(db=) tags without a network call", {
-
-   skip_on_os("windows")
 
    r <- .rs.tests.makeLocalSourceRepo()
    on.exit(unlink(r$base, recursive = TRUE), add = TRUE)
@@ -327,8 +374,6 @@ test_that(".rs.recordPackageSource is a no-op for empty pkgPaths", {
 })
 
 test_that("install hook tags transitive dependency DESCRIPTIONs", {
-
-   skip_on_os("windows")  # 'R CMD build' availability varies in CI
 
    r <- .rs.tests.makeLocalSourceRepo(list(
       rstudioTestPkgA = character(),

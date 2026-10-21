@@ -299,6 +299,7 @@ public interface DocDisplay extends HasValueChangeHandlers<VoidResponse>,
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
    void ensureCursorVisible();
+   void scrollCursorIntoView();
    void scrollCursorIntoViewIfNecessary();
    void scrollCursorIntoViewIfNecessary(int rowsAround);
    boolean isCursorInSingleLineString(boolean allowInComment);

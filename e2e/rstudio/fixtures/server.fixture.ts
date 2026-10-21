@@ -404,8 +404,28 @@ export async function signInToServer(page: Page): Promise<void> {
     await page.reload({ waitUntil: 'domcontentloaded' });
     await submitLoginFormIfShown(page);
     await page.waitForSelector(CONSOLE_INPUT, consoleReady);
+    await dismissSessionAbendNotice(page);
   }
   console.log('RStudio console is ready');
+}
+
+/**
+ * After the recovery command kills a wedged session, its replacement reports
+ * the crash in a modal shortly after the console appears. Left open, it
+ * blocks the rest of the setup until the fixture times out (run 38772279901
+ * recovered the session and still failed the retry this way).
+ */
+async function dismissSessionAbendNotice(page: Page): Promise<void> {
+  const ok = page
+    .locator('.gwt-DialogBox')
+    .filter({ hasText: 'previous R session was abnormally terminated' })
+    .getByRole('button', { name: 'OK' });
+  try {
+    await ok.click({ timeout: 15_000 });
+    console.log('Dismissed the abnormal termination notice');
+  } catch {
+    // the replacement session did not report the crash
+  }
 }
 
 /**
