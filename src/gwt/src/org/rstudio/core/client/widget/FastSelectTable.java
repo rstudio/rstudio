@@ -596,11 +596,25 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
 
    private void setSelectedPhysical(int offset, int length, boolean selected)
    {
+      // Announce only the end of a range, not each row along the way.
+      TableRowElement last = null;
       for (int i = 0; i < length; i++)
-         setSelected(getRow(offset + i), selected);
+      {
+         TableRowElement row = getRow(offset + i);
+         setSelected(row, selected, false);
+         if (selected && isSelected(row))
+            last = row;
+      }
+      if (last != null)
+         setActiveRow(last);
    }
 
    public void setSelected(TableRowElement row, boolean selected)
+   {
+      setSelected(row, selected, true);
+   }
+
+   private void setSelected(TableRowElement row, boolean selected, boolean updateActive)
    {
       try
       {
@@ -628,7 +642,8 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       if (selected)
       {
          selectedRows_.add(row);
-         setActiveRow(row);
+         if (updateActive)
+            setActiveRow(row);
       }
       else
          selectedRows_.remove(row);
