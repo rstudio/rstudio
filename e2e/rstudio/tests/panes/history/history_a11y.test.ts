@@ -3,7 +3,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole } from '@pages/console_pane.page';
-import { clearPref, executeCommand, setPref } from '@utils/commands';
+import { executeCommand, getPref, setPref } from '@utils/commands';
 import type { Locator, Page } from 'playwright';
 
 const HISTORY_PANEL = '#rstudio_workbench_panel_history';
@@ -107,7 +107,12 @@ async function waitForContextShown(page: Page): Promise<{ searchResultsInert: bo
 }
 
 test.describe('History pane accessibility', () => {
+  // The fixture turns reduced motion on for every test; put back its value,
+  // not the pref's default, so later tests in the worker keep it.
+  let fixtureReducedMotion: boolean;
+
   test.beforeAll(async ({ rstudioPage: page }) => {
+    fixtureReducedMotion = await getPref(page, 'reduced_motion') as boolean;
     for (const command of COMMANDS)
       await executeInConsole(page, command);
   });
@@ -120,7 +125,7 @@ test.describe('History pane accessibility', () => {
       });
 
       test.afterAll(async ({ rstudioPage: page }) => {
-        await clearPref(page, 'reduced_motion');
+        await setPref(page, 'reduced_motion', fixtureReducedMotion);
       });
 
       test.beforeEach(async ({ rstudioPage: page }) => {
@@ -239,7 +244,7 @@ test.describe('History pane accessibility', () => {
       // A slide leaves the search results exposed for its 300ms.
       expect(await showing).toEqual({ searchResultsInert: true });
     } finally {
-      await clearPref(page, 'reduced_motion');
+      await setPref(page, 'reduced_motion', fixtureReducedMotion);
     }
   });
 });
