@@ -373,6 +373,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
     expect(await editor.getFoldCount()).toBe(0);
 
+    // The fold arrow itself still folds: it sits just left of the 6px of
+    // padding the attached gutter adds, i.e. about 12px in from the edge,
+    // and clicking it must not open (or close) a peek.
+    await page.mouse.click(box.x + box.width - 12, box.y + box.height / 2);
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+    await expect(page.locator(PEEK)).toBeVisible();
+
     await documentCloseAllNoSave(page);
     await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(foldPath)}))`);
     await commitAll(page, 'remove fold', [foldPath]);
@@ -466,6 +473,16 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
 
+    // A refresh that fetches the same index version leaves the peek alone;
+    // the focus-triggered re-fetch would otherwise close every peek opened
+    // within half a second of clicking into the editor.
+    await executeCommand(page, 'activateVcs');
+    const unchangedBase = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
+    await executeCommand(page, 'vcsRefresh');
+    await unchangedBase;
+    await page.waitForTimeout(500);
+    await expect(page.locator(PEEK)).toBeVisible();
+
     // Replace the index entry without touching the working copy: the edited
     // file, but with `d <- 41` where the buffer has `d <- 40`. The chunk
     // keeps its rows, so only its contents change.
@@ -486,7 +503,6 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       `,
       { timeout: 60000 },
     );
-    await executeCommand(page, 'activateVcs');
     await executeCommand(page, 'vcsRefresh');
 
     // the peek showed `d <- 4`, which the index no longer has

@@ -38,9 +38,11 @@ var CELL_CLASSES = [ADDED_CLASS, MODIFIED_CLASS, DELETED_CLASS, DELETED_BELOW_CL
 
 var PEEK_CLASS = "ace_git-peek";
 
-// The marker sits at the right edge of a gutter cell; a click there opens
-// the peek instead of reaching Ace (and the breakpoint toggle behind it).
-var MARKER_HIT_WIDTH = 8;
+// The marker sits at the right edge of a gutter cell, in padding the gutter
+// gains while attached (see themeStyles.css) so that it lies beyond Ace's
+// fold arrow; a click there opens the peek instead of reaching Ace (and the
+// breakpoint toggle behind it).
+var MARKER_HIT_WIDTH = 6;
 
 // Typing bursts are coalesced into a single diff.
 var UPDATE_DELAY_MS = 150;
@@ -79,6 +81,7 @@ function sameChunk(a, b) {
 
 var GitDiffGutter = function(editor) {
    this.editor = editor;
+   this.baseText = null;
    this.baseLines = null;
    this.chunks = [];
    this.rowClasses = {};
@@ -93,6 +96,7 @@ var GitDiffGutter = function(editor) {
 
    var gutter = editor.renderer.$gutterLayer;
    dom.addCssClass(gutter.element, GUTTER_CLASS);
+   this.resetGutterPadding();
    gutter.on("afterRender", this.onAfterRender);
    editor.on("change", this.scheduleUpdate);
 
@@ -107,17 +111,34 @@ var GitDiffGutter = function(editor) {
 
 (function() {
 
+   // The gutter caches the cell padding it measured, and our class changes it.
+   this.resetGutterPadding = function() {
+      var renderer = this.editor.renderer;
+      renderer.$gutterLayer.$padding = null;
+      renderer.$loop.schedule(renderer.CHANGE_FULL);
+   };
+
    // Sets the text to diff against; null clears all markers. An open peek
-   // shows the old base, so it goes.
+   // shows the old base, so it goes when the base really changes -- not on
+   // the routine re-fetches (editor focus, Git refresh) that return the same
+   // contents.
    this.setBase = function(text) {
+      if (text === this.baseText)
+         return;
+
       this.closePeek();
+      this.baseText = text;
       this.baseLines = (text == null) ? null : splitLines(text);
       this.update();
    };
 
    this.setIgnoreWhitespace = function(ignore) {
+      ignore = !!ignore;
+      if (ignore === this.ignoreWhitespace)
+         return;
+
       this.closePeek();
-      this.ignoreWhitespace = !!ignore;
+      this.ignoreWhitespace = ignore;
       this.update();
    };
 
@@ -567,6 +588,7 @@ var GitDiffGutter = function(editor) {
       var gutter = this.editor.renderer.$gutterLayer;
       gutter.off("afterRender", this.onAfterRender);
       dom.removeCssClass(gutter.element, GUTTER_CLASS);
+      this.resetGutterPadding();
    };
 
 }).call(GitDiffGutter.prototype);
