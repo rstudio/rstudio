@@ -1724,7 +1724,7 @@
             "type": "boolean",
             "default": true,
             "title": "Install R package dependencies one at a time",
-            "description": "Whether to install R package dependencies one at a time."
+            "description": "Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel."
         },
         "graphics_backend": {
             "type": "string",

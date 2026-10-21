@@ -2375,7 +2375,9 @@
 
 # Install R package dependencies one at a time
 #
-# Whether to install R package dependencies one at a time.
+# Whether to install R package dependencies one at a time. Not used in renv
+# projects, where packages are always installed together so that renv can resolve
+# dependencies and install in parallel.
 .rs.uiPrefs$installPkgDepsIndividually <- list(
    get = function() { .rs.getUserPref("install_pkg_deps_individually") },
    set = function(value) { .rs.setUserPref("install_pkg_deps_individually", value) },
