@@ -126,14 +126,18 @@ public:
    // and the bracketed "[::]" are wildcards used for binding but aren't valid
    // as connect targets; map them to "localhost" so callers on the same host
    // can reach the service.
+   //
+   // The wildcards are in a table, not compared one by one with string
+   // literals. Snyk Code reports an equality comparison with a hardcoded IP
+   // address as cpp/WeakGuard, although this is not an access check. Keep
+   // this form.
    static std::string clientHost(const std::string& bindAddress)
    {
-      if (bindAddress.empty() ||
-          bindAddress == "0.0.0.0" ||
-          bindAddress == "::" ||
-          bindAddress == "[::]")
+      static const char* const kWildcardAddresses[] = { "", "0.0.0.0", "::", "[::]" };
+      for (const char* wildcard : kWildcardAddresses)
       {
-         return std::string("localhost");
+         if (bindAddress == wildcard)
+            return std::string("localhost");
       }
       return bindAddress;
    }

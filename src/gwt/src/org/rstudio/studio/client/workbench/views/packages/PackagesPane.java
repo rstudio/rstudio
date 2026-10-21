@@ -437,6 +437,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       });
       
       helpButton_ = commands_.renvHelp().createToolbarButton(false);
+      helpButton_.addStyleName(ThemeStyles.INSTANCE.packagesToolbarTextButton());
       toolbar.addRightWidget(helpButton_);
       helpButton_.setVisible(false);
       helpSeparator_ = toolbar.addRightSeparator();
@@ -456,6 +457,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          });
 
       repositoryButton_.setVisible(false);
+      repositoryButton_.addStyleName(ThemeStyles.INSTANCE.packagesToolbarTextButton());
       ElementIds.assignElementId(repositoryButton_, "packages_pane_repository_button");
       toolbar.addRightWidget(repositoryButton_);
       toolbar.addRightSeparator();

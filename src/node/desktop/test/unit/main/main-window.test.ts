@@ -18,17 +18,56 @@ import { describe } from 'mocha';
 import sinon from 'sinon';
 
 import { ChildProcess } from 'child_process';
+import { ipcMain } from 'electron';
 
 import { FilePath } from '../../../src/core/file-path';
 import { NullLogger, setLogger } from '../../../src/core/logger';
+import { Application } from '../../../src/main/application';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { MainWindow } from '../../../src/main/main-window';
 import { clearOptionsSingleton, ElectronDesktopOptions } from '../../../src/main/preferences/electron-desktop-options';
 import desktop from '../../../src/native/desktop.node';
-import { tempDirectory } from '../unit-utils';
+import { isWindowsDocker, tempDirectory } from '../unit-utils';
 
 describe('MainWindow', () => {
-  // MainWindow can't be instantiated in unit tests (GwtCallback needs a live
-  // window), so setSessionProcess is invoked against a bare object instead.
+  if (!isWindowsDocker()) {
+    describe('construction', () => {
+      const configDirectory = tempDirectory('MainWindowTesting').toString();
+
+      beforeEach(() => {
+        setApplication(new Application());
+        clearOptionsSingleton();
+        ElectronDesktopOptions(configDirectory);
+
+        // GwtCallback and MenuCallback register ipcMain handlers in their
+        // constructors, and a channel can only be handled once per process
+        sinon.stub(ipcMain, 'handle');
+        sinon.stub(ipcMain, 'on');
+      });
+
+      afterEach(() => {
+        sinon.restore();
+        clearOptionsSingleton();
+        clearApplicationSingleton();
+        new FilePath(configDirectory).removeIfExistsSync();
+      });
+
+      it('creates the window at its saved size', () => {
+        ElectronDesktopOptions().saveWindowBounds({ width: 1000, height: 600, x: 100, y: 100, maximized: true });
+
+        const win = new MainWindow('http://127.0.0.1:8080');
+        try {
+          assert.deepEqual(win.window.getSize(), [1000, 600]);
+        } finally {
+          win.window.destroy();
+        }
+      });
+    });
+  }
+
+  // The remaining suites invoke MainWindow methods against bare objects, so
+  // they don't need a live window or the ipcMain handlers its constructor
+  // registers.
   describe('setSessionProcess', () => {
     function setSessionProcess(sessionProcess?: { pid?: number }): void {
       MainWindow.prototype.setSessionProcess.call({} as MainWindow, sessionProcess as ChildProcess | undefined);

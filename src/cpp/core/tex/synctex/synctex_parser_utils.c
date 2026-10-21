@@ -92,10 +92,17 @@ int _synctex_error(const char * reason,...) {
 		OutputDebugStringA("SyncTeX ERROR: ");
 		len = _vscprintf(reason, arg) + 1;
 		buff = (char*)malloc( len * sizeof(char) );
-		result = vsprintf(buff, reason, arg) +strlen("SyncTeX ERROR: ");
-		OutputDebugStringA(buff);
+		/*  RStudio: write with vsnprintf and the buffer length, and skip the
+		    message if malloc fails. Snyk Code reports vsprintf as
+		    cpp/UnsafeFunctionStringHandling. Keep this form. */
+		if (buff) {
+			result = vsnprintf(buff, len, reason, arg) +strlen("SyncTeX ERROR: ");
+			OutputDebugStringA(buff);
+			free(buff);
+		} else {
+			result = -1;
+		}
 		OutputDebugStringA("\n");
-		free(buff);
 	}
 #   else
 	result = fprintf(stderr,"SyncTeX ERROR: ");

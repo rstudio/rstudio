@@ -100,6 +100,7 @@ export class MainWindow extends GwtWindow {
       baseUrl: url,
       allowExternalNavigate: false,
       addApiKeys: ['desktop', 'desktopMenuCallback'],
+      initialSize: ElectronDesktopOptions().initialMainWindowSize(),
     });
 
     appState().gwtCallback = new GwtCallback(this);
