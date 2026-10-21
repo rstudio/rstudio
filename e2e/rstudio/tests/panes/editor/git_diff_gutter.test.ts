@@ -11,7 +11,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
 import { AceEditor } from '@pages/ace_editor.page';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
-import { documentCloseAllNoSave, executeCommand, openProject, setPref } from '@utils/commands';
+import { documentCloseAllNoSave, executeCommand, isCommandEnabled, openProject, setPref } from '@utils/commands';
 import { openFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
@@ -367,13 +367,19 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await editor.insert('0');
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
 
+    // the commands that act on the markers come and go with them
+    await expect.poll(() => isCommandEnabled(page, 'vcsNextChange')).toBe(true);
+
     await setPref(page, PREF, false);
     await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(false);
     expect(await gutterMarkers(page)).toEqual({});
+    await expect.poll(() => isCommandEnabled(page, 'vcsNextChange')).toBe(false);
+    await expect.poll(() => isCommandEnabled(page, 'vcsRevertChange')).toBe(false);
 
     await setPref(page, PREF, true);
     await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+    await expect.poll(() => isCommandEnabled(page, 'vcsNextChange')).toBe(true);
   });
 
   test('leaves an untracked file unmarked', async ({ rstudioPage: page }) => {

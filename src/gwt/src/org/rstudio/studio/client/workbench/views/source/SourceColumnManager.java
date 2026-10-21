@@ -319,6 +319,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
+      // the gutter's commands come and go with the markers
+      userPrefs.showGitDiffGutter().addValueChangeHandler(event -> manageCommands(true));
+
       userPrefs.allowSourceColumns().addValueChangeHandler(event ->
       {
          boolean enabled = userPrefs.allowSourceColumns().getValue();

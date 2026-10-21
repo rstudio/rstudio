@@ -834,18 +834,23 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                               manager_.getSession().getSessionInfo().getActiveProjectDir().getPath());
 
       boolean cmdEnabled = active && vcsCommandsEnabled;
+
+      // the change navigation and revert commands only make sense with the
+      // gutter markers they act on
+      boolean gutterEnabled = vcsCommandsEnabled && userPrefs_.showGitDiffGutter().getValue();
+      boolean gutterCmdEnabled = active && gutterEnabled;
       getSourceCommand(commands_.vcsFileLog()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileDiff()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileRevert()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
-      getSourceCommand(commands_.vcsNextChange()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
-      getSourceCommand(commands_.vcsPreviousChange()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
-      getSourceCommand(commands_.vcsRevertChange()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
+      getSourceCommand(commands_.vcsNextChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsPreviousChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsRevertChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
       getSourceCommand(commands_.vcsFileLog()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileDiff()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileRevert()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
-      getSourceCommand(commands_.vcsNextChange()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
-      getSourceCommand(commands_.vcsPreviousChange()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
-      getSourceCommand(commands_.vcsRevertChange()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
+      getSourceCommand(commands_.vcsNextChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsPreviousChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsRevertChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
 
       if (cmdEnabled)
       {
