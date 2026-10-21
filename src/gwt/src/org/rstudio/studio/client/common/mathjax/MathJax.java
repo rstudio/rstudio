@@ -284,6 +284,11 @@ public class MathJax
       final int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
 
+      // a widget of another kind (e.g. the Git gutter's peek) has no MathJax
+      // root to render into; create our own alongside it instead
+      if (widget != null && !StringUtil.equals(widget.getType(), LINE_WIDGET_TYPE))
+         widget = null;
+
       if (widget == null)
       {
          // if the line widget has not been attached to the document,

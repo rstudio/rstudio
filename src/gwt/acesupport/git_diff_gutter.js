@@ -275,8 +275,13 @@ var GitDiffGutter = function(editor) {
    };
 
    // The gutter recycles its cell elements, so classes are reassigned from
-   // scratch on every render.
+   // scratch on every render. This is also where a peek notices it has been
+   // stacked under another feature's widget (Ace keeps the newest on top)
+   // and gets out of the way.
    this.onAfterRender = function() {
+      if (this.peek && this.editor.session.lineWidgets[this.peek.widget.row] !== this.peek.widget)
+         this.closePeek();
+
       var cells = this.editor.renderer.$gutterLayer.$lines.cells;
       for (var i = 0; i < cells.length; i++)
       {

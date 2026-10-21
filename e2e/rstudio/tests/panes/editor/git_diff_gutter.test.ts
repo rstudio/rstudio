@@ -13,7 +13,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
-import { documentCloseAllNoSave, executeCommand, isCommandEnabled, openProject, setPref } from '@utils/commands';
+import { clearPref, documentCloseAllNoSave, executeCommand, isCommandEnabled, openProject, setPref } from '@utils/commands';
 import { openFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
@@ -846,6 +846,115 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
     await documentCloseAllNoSave(page);
     await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(copyPath)}))`);
+  });
+
+  test('drops the old base when the document is renamed', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // a peek open on the modified line: its Revert button is reachable
+    // without refocusing the editor, so a stale base would be actionable
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+
+    // rename through the tab menu: a path change with no save of its own.
+    // The renamed file is untracked, so there is no base for it at all.
+    await executeCommand(page, 'renameSourceDoc');
+    const prompt = page.locator('#rstudio_text_entry');
+    await expect(prompt).toBeVisible({ timeout: 30000 });
+    await prompt.fill('renamed.R');
+    await page.locator('#rstudio_dlg_ok').click();
+    await expect(
+      page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']"),
+    ).toContainText('renamed.R', { timeout: 30000 });
+
+    await expect(page.locator(PEEK)).toHaveCount(0, { timeout: 30000 });
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(5);
+    await executeCommand(page, 'vcsRevertChange');
+    expect(await editor.getLine(4)).toBe('d <- 40');
+
+    // put script.R back, with the working-copy edits the tests below expect
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          invisible(file.remove(${rPathLiteral(`${projectDir()}/renamed.R`)}))
+          writeLines(c(${EDITED_LINES.map(rStringLiteral).join(', ')}), ${rPathLiteral(scriptPath())})
+        }
+      `,
+    );
+  });
+
+  test('gives way to an inline equation preview on its row', async ({ rstudioPage: page }) => {
+    // MathJax renders a display equation's preview into a line widget on the
+    // closing fence's row, and takes whatever widget it finds there as its
+    // own. A peek on that row is not; the preview must still render, the
+    // peek closes, and the typesetting queue stays unblocked for the next
+    // equation. Previews are off while the peek is opened, so that the row
+    // is free for it, and turned on afterwards to force the collision.
+    const mathPath = `${projectDir()}/math.Rmd`;
+    const seed = ['---', 'title: x', '---', '', '$$', 'a = 1', '$$', '', 'text', '', '$$', 'b = 2', '$$'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(mathPath)})`,
+    );
+    await commitAll(page, 'math', [mathPath]);
+    // the blank line after the first equation is removed: the deletion's
+    // peek goes below the closing fence, where the preview wants to be
+    const edited = [...seed.slice(0, 7), ...seed.slice(8)];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(mathPath)})`,
+    );
+
+    const visibleMath = page.locator('.rstudio-mathjax-root mjx-container').filter({ visible: true });
+    try {
+      await setPref(page, 'latexPreviewOnCursorIdle', 'never');
+      await openFile(page, mathPath);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 7: [DELETED] });
+
+      const cell = page.locator('.ace_gutter-cell.ace_git-deleted').first();
+      const box = (await cell.boundingBox())!;
+      await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+      await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+      expect(await visibleMath.count()).toBe(0);
+
+      await setPref(page, 'latexPreviewOnCursorIdle', 'always');
+      await page.evaluate(() => {
+        const editor = window.rstudio!.documents.activeEditor()!;
+        editor.focus();
+        editor.gotoLine(6, 2);
+      });
+
+      // the first equation's preview renders on the row the peek held, and
+      // the peek is gone
+      await expect(visibleMath).toHaveCount(1, { timeout: 60000 });
+      await expect(page.locator(PEEK)).toHaveCount(0);
+
+      // and the queue is not stuck: the second equation renders when the
+      // cursor idles in it
+      await page.evaluate(() => {
+        const editor = window.rstudio!.documents.activeEditor()!;
+        editor.gotoLine(11, 2);
+      });
+      await expect(visibleMath).toHaveCount(2, { timeout: 60000 });
+    } finally {
+      await clearPref(page, 'latexPreviewOnCursorIdle');
+    }
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(mathPath)}))`);
+    await commitAll(page, 'remove math', [mathPath]);
   });
 
   test('closes the peek when the index version it shows is replaced', async ({

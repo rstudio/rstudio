@@ -20,6 +20,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.vcs.GitDiffBaseContents;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiffGutterNative;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -68,8 +70,15 @@ public class TextEditingTargetGitDiffGutter
       releaseOnDismiss.add(docDisplay_.addEditorFocusHandler(event -> scheduleRefresh()));
 
       // Saving only changes the working copy, so the base is unaffected --
-      // except that Save As gives the document a new path.
+      // except that Save As gives the document a new path. A rename (Files
+      // pane, tab menu) changes the path without a save of its own and is
+      // announced on the bus instead.
       releaseOnDismiss.add(docDisplay_.addSaveCompletedHandler(event -> sync()));
+      releaseOnDismiss.add(events_.addHandler(SourceFileSavedEvent.TYPE, event ->
+      {
+         if (StringUtil.equals(event.getDocId(), sentinel_.getId()))
+            sync();
+      }));
       releaseOnDismiss.add(prefs_.showGitDiffGutter().addValueChangeHandler(event -> sync()));
       releaseOnDismiss.add(prefs_.gitDiffIgnoreWhitespace().addValueChangeHandler(event ->
       {
@@ -143,11 +152,13 @@ public class TextEditingTargetGitDiffGutter
    }
 
    @Inject
-   private void initialize(GitServerOperations server,
+   private void initialize(EventBus events,
+                           GitServerOperations server,
                            Provider<GitState> gitState,
                            UserPrefs prefs,
                            Session session)
    {
+      events_ = events;
       server_ = server;
       gitState_ = gitState;
       prefs_ = prefs;
@@ -335,6 +346,7 @@ public class TextEditingTargetGitDiffGutter
       }
    };
 
+   private EventBus events_;
    private GitServerOperations server_;
    private Provider<GitState> gitState_;
    private UserPrefs prefs_;
