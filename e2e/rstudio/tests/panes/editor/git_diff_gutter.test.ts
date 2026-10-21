@@ -364,6 +364,42 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await documentCloseAllNoSave(page);
   });
 
+  test('survives an edit that removes the peek\'s row', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+
+    // Deleting across the peek's row takes its widget with it; as the only
+    // widget, that leaves Ace with no widget collection at all. The gutter
+    // must keep rendering (the fixture fails the test on a client
+    // exception), the peek must be gone, and the markers must follow.
+    await page.evaluate(() => {
+      type Pos = { row: number; column: number };
+      const editor = window.rstudio!.documents.activeEditor() as unknown as {
+        session: { doc: { remove(range: { start: Pos; end: Pos }): void } };
+      };
+      editor.session.doc.remove({ start: { row: 4, column: 0 }, end: { row: 6, column: 0 } });
+    });
+    await expect(page.locator(PEEK)).toHaveCount(0, { timeout: 10000 });
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 4: [DELETED] });
+
+    // and the gutter is still live: a further edit (to the last line, whose
+    // neighbors are unchanged, so it stays a chunk of its own) is marked
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await editor.navigateLineEnd();
+    await editor.insert('0');
+    await expect
+      .poll(() => gutterMarkers(page), { timeout: 30000 })
+      .toEqual({ 1: [ADDED], 4: [DELETED], 5: [MODIFIED] });
+
+    await documentCloseAllNoSave(page);
+  });
+
   test('does not toggle a fold when the marker of a foldable line is clicked', async ({
     rstudioPage: page,
   }) => {
@@ -764,8 +800,22 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await executeCommand(page, 'executeCurrentChunk');
     await expect.poll(widgets, { timeout: 60000 }).toContainEqual({ row: 6, type: 'ChunkOutput' });
 
+    // The output widget registers before its contents arrive and keeps
+    // growing as they do, pushing the rows below it down; click the marker
+    // only once the output has rendered and the cell has stopped moving.
+    await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible({
+      timeout: 60000,
+    });
     const cell = page.locator('.ace_gutter-cell.ace_git-deleted').first();
-    const box = (await cell.boundingBox())!;
+    let box = (await cell.boundingBox())!;
+    await expect
+      .poll(async () => {
+        const next = (await cell.boundingBox())!;
+        const settled = next.y === box.y && next.height === box.height;
+        box = next;
+        return settled;
+      }, { timeout: 30000, intervals: [300] })
+      .toBe(true);
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
 

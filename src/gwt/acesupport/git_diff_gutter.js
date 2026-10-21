@@ -97,6 +97,9 @@ var GitDiffGutter = function(editor) {
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
 
+   // reachable from the editor for automation and debugging
+   editor.gitDiffGutter = this;
+
    var gutter = editor.renderer.$gutterLayer;
    dom.addCssClass(gutter.element, GUTTER_CLASS);
    this.resetGutterPadding();
@@ -279,8 +282,14 @@ var GitDiffGutter = function(editor) {
    // stacked under another feature's widget (Ace keeps the newest on top)
    // and gets out of the way.
    this.onAfterRender = function() {
-      if (this.peek && this.editor.session.lineWidgets[this.peek.widget.row] !== this.peek.widget)
-         this.closePeek();
+      if (this.peek)
+      {
+         // Ace drops the whole collection once its last widget goes (e.g. an
+         // edit spanning the peek's row), so the peek may be gone outright.
+         var widgets = this.editor.session.lineWidgets;
+         if (!widgets || widgets[this.peek.widget.row] !== this.peek.widget)
+            this.closePeek();
+      }
 
       var cells = this.editor.renderer.$gutterLayer.$lines.cells;
       for (var i = 0; i < cells.length; i++)
@@ -623,6 +632,9 @@ var GitDiffGutter = function(editor) {
       gutter.off("afterRender", this.onAfterRender);
       dom.removeCssClass(gutter.element, GUTTER_CLASS);
       this.resetGutterPadding();
+
+      if (this.editor.gitDiffGutter === this)
+         delete this.editor.gitDiffGutter;
    };
 
 }).call(GitDiffGutter.prototype);
