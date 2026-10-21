@@ -2749,8 +2749,10 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
    if (!regularFile)
       return Success();
 
+   // the stage is spelled out, or a name such as "0:script.R" would be read
+   // as stage 0 of script.R
    core::system::ProcessResult procResult;
-   error = gitExec(gitArgs() << "show" << ":" + relativePath, root, &procResult);
+   error = gitExec(gitArgs() << "show" << ":0:" + relativePath, root, &procResult);
    if (error)
       return error;
 

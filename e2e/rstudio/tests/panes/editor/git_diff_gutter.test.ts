@@ -639,6 +639,37 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await commitAll(page, 'remove aliases', [aliasPath, globLinkPath, globFilePath]);
   });
 
+  test('reads a file named like a stage selector as itself', async ({ rstudioPage: page }) => {
+    test.skip(process.platform === 'win32', 'colons are not allowed in Windows file names');
+
+    // "git show :0:script.R" would mean stage 0 of script.R; a tracked file
+    // literally named 0:script.R has to be looked up as that file
+    const stagePath = `${projectDir()}/0:script.R`;
+    await executeInConsoleChecked(page, `writeLines("s <- 0", ${rPathLiteral(stagePath)})`);
+    await commitAll(page, 'stage-like name', [stagePath]);
+
+    await openFile(page, stagePath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+
+    // and a revert restores this file's line, not script.R's
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(1);
+    await editor.navigateLineEnd();
+    await editor.insert('1');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => editor.getLine(0)).toBe('s <- 0');
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(stagePath)}))`);
+    await commitAll(page, 'remove stage-like name', [stagePath]);
+  });
+
   test('keeps control characters the editor keeps', async ({ rstudioPage: page }) => {
     // U+001F survives document loading, so it has to survive the base too,
     // or the line reads as modified and a revert would drop the character.
