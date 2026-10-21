@@ -32,7 +32,7 @@ protected:
    {
       settingsPath_ = core::tests::scratchDir();
 
-      // use the IDs of a uid at the previous remapping boundary; server builds
+      // use the IDs of a uid at the previous remapping boundary; Workbench builds
       // obfuscate user IDs, so they are computed rather than written as literals
       core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
       const uid_t uid = 1000 + 0xFFFFF;
