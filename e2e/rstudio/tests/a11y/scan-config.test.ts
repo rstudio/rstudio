@@ -34,9 +34,9 @@ const PAGE = `<!doctype html>
 
 const ids = (list: Result[]) => list.map((r) => r.id);
 const reported = (r: AxeResults) => [...ids(r.violations), ...ids(r.incomplete)];
-const DEFAULT: RuleSet = { level: 'AA', version: '2.2', experimental: false };
+const DEFAULT: RuleSet = { level: 'AA', version: '2.2', bestPractices: false, experimental: false };
 
-test('axe scan configuration selects rules by WCAG level and version', { tag: ['@a11y'] }, async ({ page }) => {
+test('axe scan configuration selects rules by WCAG level, version and extra groups', { tag: ['@a11y'] }, async ({ page }) => {
   await page.setContent(PAGE);
 
   await test.step('control: the page triggers every rule checked below', async () => {
@@ -79,5 +79,18 @@ test('axe scan configuration selects rules by WCAG level and version', { tag: ['
     expect(ids(results.violations)).toContain('label-content-name-mismatch');
     for (const id of ['focus-order-semantics', 'region'])
       expect(reported(results), id).not.toContain(id);
+  });
+
+  await test.step('best practices: adds best-practice rules, not experimental ones', async () => {
+    const results = await runAxe(page, { ...DEFAULT, bestPractices: true });
+    expect(ids(results.violations)).toEqual(expect.arrayContaining(['image-alt', 'region']));
+    for (const id of ['label-content-name-mismatch', 'focus-order-semantics'])
+      expect(reported(results), id).not.toContain(id);
+  });
+
+  await test.step('best practices + experimental: adds experimental best-practice rules', async () => {
+    const results = await runAxe(page, { ...DEFAULT, bestPractices: true, experimental: true });
+    expect(ids(results.violations)).toEqual(expect.arrayContaining(
+      ['region', 'label-content-name-mismatch', 'focus-order-semantics']));
   });
 });

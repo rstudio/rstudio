@@ -143,8 +143,8 @@ Error savePlotAs(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    // get args
-   std::string path, format;
-   int width, height, resolution;
+   std::string path, format, tiffCompression;
+   int width, height, resolution, jpegQuality;
    bool overwrite, useDevicePixelRatio;
    Error error = json::readParams(request.params,
                                   &path,
@@ -153,7 +153,9 @@ Error savePlotAs(const json::JsonRpcRequest& request,
                                   &height,
                                   &overwrite,
                                   &useDevicePixelRatio,
-                                  &resolution);
+                                  &resolution,
+                                  &tiffCompression,
+                                  &jpegQuality);
    if (error)
       return error;
 
@@ -170,16 +172,19 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // save plot
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
+   BitmapOptions options;
+   options.tiffCompression = tiffCompression;
+   options.jpegQuality = jpegQuality;
    if (resolution > 0)
    {
       // the width and height are in pixels at 96 DPI; draw at the requested
       // resolution instead
       double pixelRatio = resolution / 96.0;
-      error = display.savePlotAsImage(plotPath, format, width, height, pixelRatio, /*recordResolution=*/true);
+      error = display.savePlotAsImage(plotPath, format, width, height, pixelRatio, /*recordResolution=*/true, options);
    }
    else
    {
-      error = display.savePlotAsImage(plotPath, format, width, height, useDevicePixelRatio, /*recordResolution=*/true);
+      error = display.savePlotAsImage(plotPath, format, width, height, useDevicePixelRatio, /*recordResolution=*/true, options);
    }
    if (error)
    {
@@ -463,6 +468,9 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
       formats.push_back(plotExportFormat("SVG", kSvgFormat));
    formats.push_back(plotExportFormat("EPS", kPostscriptFormat));
    contextJson["formats"] = formats;
+
+   // the compressions offered for TIFFs
+   contextJson["tiffCompressionTypes"] = json::toJsonArray(tiffCompressionTypes());
 
    // get directory path -- if it doesn't exist revert to the current
    // working directory
@@ -1018,10 +1026,18 @@ SEXP rs_emitBeforeNewGridPage()
    return R_NilValue;
 }
 
+SEXP rs_tiffCompressionTypes()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(r::session::graphics::tiffCompressionTypes(), &protect);
+}
+
 SEXP rs_savePlotAsImage(SEXP fileSEXP,
                         SEXP formatSEXP,
                         SEXP widthSEXP,
-                        SEXP heightSEXP)
+                        SEXP heightSEXP,
+                        SEXP compressionSEXP,
+                        SEXP qualitySEXP)
 {
    try
    {
@@ -1030,10 +1046,17 @@ SEXP rs_savePlotAsImage(SEXP fileSEXP,
       int width = r::sexp::asInteger(widthSEXP);
       int height = r::sexp::asInteger(heightSEXP);
 
+      // the TIFF compression and JPEG quality, when given (NULL otherwise)
+      r::session::graphics::BitmapOptions options;
+      if (compressionSEXP != R_NilValue)
+         options.tiffCompression = r::sexp::safeAsString(compressionSEXP);
+      if (qualitySEXP != R_NilValue)
+         options.jpegQuality = r::sexp::asInteger(qualitySEXP);
+
       r::session::graphics::Display& display = r::session::graphics::display();
       if (display.hasOutput())
       {
-         Error error = display.savePlotAsImage(filePath, format, width, height, false, /*recordResolution=*/true);
+         Error error = display.savePlotAsImage(filePath, format, width, height, false, /*recordResolution=*/true, options);
          if (error)
          {
             // the description, when there is one, says what the caller can
@@ -1098,7 +1121,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewPlot, 0);
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewGridPage, 0);
    RS_REGISTER_CALL_METHOD(rs_emitNewPlot, 0);
-   RS_REGISTER_CALL_METHOD(rs_savePlotAsImage, 4);
+   RS_REGISTER_CALL_METHOD(rs_savePlotAsImage, 6);
+   RS_REGISTER_CALL_METHOD(rs_tiffCompressionTypes, 0);
 
    // connect to onShowManipulator
    using namespace rstudio::r::session;

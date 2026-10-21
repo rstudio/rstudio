@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.studio.client.ResizableHeader;
@@ -47,7 +49,6 @@ import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.Handler;
@@ -180,7 +181,13 @@ public class FilesList extends Composite
 
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-      filesDataGrid_.addColumn(checkColumn);
+      // the column is too narrow for visible header text, so give its header
+      // cell hidden text; an empty <th> leaves the column header unnamed
+      SafeHtmlBuilder header = new SafeHtmlBuilder();
+      header.appendHtmlConstant("<span class=\"" + ThemeStyles.INSTANCE.visuallyHidden() + "\">");
+      header.appendEscaped(constants_.selectedHeaderText());
+      header.appendHtmlConstant("</span>");
+      filesDataGrid_.addColumn(checkColumn, header.toSafeHtml());
       filesDataGrid_.setColumnWidth(checkColumn, CHECK_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       return checkColumn;
@@ -206,8 +213,13 @@ public class FilesList extends Composite
             }
          };
       iconColumn.setSortable(true);
-      filesDataGrid_.addColumn(iconColumn,
-            SafeHtmlUtils.fromSafeConstant("<span aria-label=\"File Type\"><br/></span>"));
+      SafeHtmlBuilder iconHeader = new SafeHtmlBuilder();
+      iconHeader.append(SafeHtmlUtil.createOpenTag(
+            "span", "class", ThemeStyles.INSTANCE.visuallyHidden()));
+      iconHeader.appendEscaped(constants_.fileTypeHeaderText());
+      // The <br> gives the sort button a line of height; the hidden span takes up none.
+      iconHeader.appendHtmlConstant("</span><br/>");
+      filesDataGrid_.addColumn(iconColumn, iconHeader.toSafeHtml());
       filesDataGrid_.setColumnWidth(iconColumn, ICON_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       sortHandler_.setComparator(iconColumn, new FilesListComparator() {
@@ -414,6 +426,10 @@ public class FilesList extends Composite
 
             // delegate the sort
             sortHandler_.onColumnSort(event);
+
+            // The table redraws its headers only when rows are pushed, and sorting an empty
+            // list pushes none, so redraw them here or the sort icon and aria-sort go stale.
+            filesDataGrid_.redrawHeaders();
          }
 
          private native final JsArray<ColumnSortInfo> newSortOrderArray()

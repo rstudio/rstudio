@@ -13,6 +13,7 @@ export type WcagVersion = typeof WCAG_VERSIONS[number];
 export interface RuleSet {
   level: A11yLevel;
   version: WcagVersion;
+  bestPractices: boolean;
   experimental: boolean;
 }
 
@@ -35,11 +36,15 @@ export function ruleSetTags({ level, version }: Pick<RuleSet, 'level' | 'version
   return versions.flatMap((v) => levels.flatMap((l) => AXE_WCAG_TAGS[v][l] ?? []));
 }
 
-/** The rule set picked by PW_A11Y_LEVEL, PW_A11Y_WCAG_VERSION and PW_A11Y_EXPERIMENTAL. */
+/**
+ * The rule set picked by PW_A11Y_LEVEL, PW_A11Y_WCAG_VERSION,
+ * PW_A11Y_BEST_PRACTICES and PW_A11Y_EXPERIMENTAL.
+ */
 export function ruleSetFromEnv(): RuleSet {
   return {
     level: envChoice('PW_A11Y_LEVEL', A11Y_LEVELS, 'AA'),
     version: envChoice('PW_A11Y_WCAG_VERSION', WCAG_VERSIONS, '2.2'),
+    bestPractices: envFlag('PW_A11Y_BEST_PRACTICES'),
     experimental: envFlag('PW_A11Y_EXPERIMENTAL'),
   };
 }
@@ -55,24 +60,25 @@ export const SCREENSHOT_FILE = 'a11y-state.png';
 
 const SNIPPET_MAX = 300;
 
-export function ruleSetLabel({ level, version, experimental }: RuleSet): string {
+export function ruleSetLabel({ level, version, bestPractices, experimental }: RuleSet): string {
   const label = `WCAG ${version} ${level}`;
-  return experimental ? `${label} + experimental` : label;
+  const extras = [bestPractices && 'best practices', experimental && 'experimental'].filter(Boolean);
+  return [label, ...extras].join(' + ');
 }
 
 /**
- * Scan the page (frames included) with the rule set's WCAG tags. With
- * `experimental`, axe's experimental rules are added; tag selection is OR-only,
- * so results are then filtered back to the selected WCAG tags to drop the
- * experimental rules outside them.
+ * Scan the page (frames included) with the rule set's WCAG tags, plus axe's
+ * best-practice rules with `bestPractices`. With `experimental`, axe's
+ * experimental rules are added; tag selection is OR-only, so results are then
+ * filtered back to the selected tags to drop the experimental rules outside them.
  */
 export async function runAxe(page: Page, ruleSet: RuleSet): Promise<AxeResults> {
-  const wcag = ruleSetTags(ruleSet);
-  const tags = ruleSet.experimental ? [...wcag, 'experimental'] : wcag;
+  const selected = [...ruleSetTags(ruleSet), ...(ruleSet.bestPractices ? ['best-practice'] : [])];
+  const tags = ruleSet.experimental ? [...selected, 'experimental'] : selected;
   const results = await new AxeBuilder({ page }).withTags(tags).analyze();
   if (!ruleSet.experimental)
     return results;
-  const inScope = (r: Result) => r.tags.some((t) => wcag.includes(t));
+  const inScope = (r: Result) => r.tags.some((t) => selected.includes(t));
   return {
     ...results,
     violations: results.violations.filter(inScope),
@@ -94,8 +100,9 @@ function trimSnippet(html: string): string {
   return flat.length > SNIPPET_MAX ? `${flat.slice(0, SNIPPET_MAX)}...` : flat;
 }
 
-export function wcagTags(v: Result): string {
-  return v.tags.filter((t) => t.startsWith('wcag')).join(', ');
+/** The rule's WCAG tags, and `best-practice` for axe's best-practice rules. */
+export function ruleTags(v: Result): string {
+  return v.tags.filter((t) => t.startsWith('wcag') || t === 'best-practice').join(', ');
 }
 
 export function formatNode(n: NodeResult): string {
@@ -117,7 +124,7 @@ export function formatViolations(results: AxeResults): string {
   const blocks = results.violations.map((v) => [
     `${v.id} [${v.impact ?? 'unknown'}] ${v.help}`,
     `  ${v.helpUrl}`,
-    `  tags: ${wcagTags(v)}`,
+    `  tags: ${ruleTags(v)}`,
     ...v.nodes.map(formatNode),
   ].join('\n'));
   return `${blocks.join('\n\n')}\n`;

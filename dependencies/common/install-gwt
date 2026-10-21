@@ -17,8 +17,9 @@
 
 set -e
 
-# The version of Boost to be downloaded and built.
-GWT_VERSION=2.13.1-montauk-daisy
+# The build name of RStudio's GWT fork SDK. See src/gwt/tools/build-gwt-README.md
+# for how to build and publish a new one.
+GWT_VERSION=2.13.1-montauk-daisy-3
 
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing GWT ${GWT_VERSION}"

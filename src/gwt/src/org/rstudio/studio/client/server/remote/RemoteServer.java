@@ -2178,6 +2178,8 @@ public class RemoteServer implements Server
                           boolean overwrite,
                           boolean useDevicePixelRatio,
                           int resolution,
+                          String tiffCompression,
+                          int jpegQuality,
                           ServerRequestCallback<Bool> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -2188,6 +2190,8 @@ public class RemoteServer implements Server
       params.set(4, JSONBoolean.getInstance(overwrite));
       params.set(5, JSONBoolean.getInstance(useDevicePixelRatio));
       params.set(6, new JSONNumber(resolution));
+      params.set(7, new JSONString(tiffCompression));
+      params.set(8, new JSONNumber(jpegQuality));
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
 

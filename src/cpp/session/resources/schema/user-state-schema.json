@@ -188,6 +188,14 @@
                 "resolution": {
                     "type": "integer",
                     "description": "The resolution of saved images in DPI; 0 (or unset) uses the display's."
+                },
+                "tiffCompression": {
+                    "type": "string",
+                    "description": "The compression of saved TIFF images, as named by the compression argument of grDevices::tiff()."
+                },
+                "jpegQuality": {
+                    "type": "integer",
+                    "description": "The quality of saved JPEG images, from 1 to 100."
                 }
             },
             "default": {
@@ -197,7 +205,9 @@
                 "format": "PNG",
                 "viewAfterSave": false,
                 "copyAsMetafile": false,
-                "useDevicePixelRatio": true
+                "useDevicePixelRatio": true,
+                "tiffCompression": "lzw",
+                "jpegQuality": 100
             },
             "description": "The most recently used plot export options."
         },

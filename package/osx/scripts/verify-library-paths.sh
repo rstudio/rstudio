@@ -50,6 +50,9 @@ for FILE in "${BIN_DIR}"/* "${FRAMEWORKS_DIR}"/*.dylib "${FRAMEWORKS_DIR}"/arm64
    # listed among its dependencies; the ID lines are the ones without a colon
    IDS=$(otool -arch all -D "${FILE}" | { grep -v ':$' || true; } | sort -u)
 
+   # the path of each LC_RPATH command is two lines below its 'cmd' line
+   RPATHS=$(otool -arch all -l "${FILE}" | awk '$1 == "cmd" && $2 == "LC_RPATH" { getline; getline; print $2 }' | sort -u)
+
    for DEP in ${DEPS}; do
       if grep -qxF -- "${DEP}" <<< "${IDS}"; then
          continue
@@ -60,6 +63,24 @@ for FILE in "${BIN_DIR}"/* "${FRAMEWORKS_DIR}"/*.dylib "${FRAMEWORKS_DIR}"/arm64
          "${FRAMEWORKS_PREFIX}"*)
             if [ ! -e "${BIN_DIR}/${DEP#@executable_path/}" ]; then
                echo "error: '${FILE}' loads '${DEP}', which is not in the app bundle" >&2
+               FAILED=1
+            fi
+            ;;
+         @rpath/*)
+            # only rpaths relative to bin/ point into the app bundle; one the
+            # build machine left behind may resolve here but not for users
+            FOUND=0
+            for RPATH in ${RPATHS}; do
+               case "${RPATH}" in
+                  @executable_path|@executable_path/*)
+                     if [ -e "${BIN_DIR}${RPATH#@executable_path}/${DEP#@rpath/}" ]; then
+                        FOUND=1
+                     fi
+                     ;;
+               esac
+            done
+            if [ "${FOUND}" = "0" ]; then
+               echo "error: '${FILE}' loads '${DEP}', which no rpath in the app bundle provides" >&2
                FAILED=1
             fi
             ;;

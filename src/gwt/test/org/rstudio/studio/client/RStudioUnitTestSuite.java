@@ -26,6 +26,7 @@ import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
+import org.rstudio.core.client.layout.BinarySplitLayoutPanelTests;
 import org.rstudio.core.client.widget.MiniPopupPanelTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
@@ -54,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketT
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
 import org.rstudio.studio.client.rmarkdown.model.YamlTreeTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.DefaultChunkOptionsPopupPanelTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidgetTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -71,6 +73,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(DebouncedCommandTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
+      suite.addTestSuite(BinarySplitLayoutPanelTests.class);
+      suite.addTestSuite(StatusBarWidgetTests.class);
       suite.addTestSuite(AnsiCodeTests.class);
       suite.addTestSuite(TerminalLocalEchoTests.class);
       suite.addTestSuite(TerminalSessionSocketTests.class);

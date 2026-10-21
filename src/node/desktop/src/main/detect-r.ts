@@ -16,7 +16,7 @@
 import path, { join } from 'path';
 
 import { execSync, spawn, spawnSync } from 'child_process';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 
 import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err, expect } from '../core/expected';
@@ -102,6 +102,42 @@ export function rChooserLikely(): boolean {
   return !storedRCandidatesWin32().some((candidate) => existsSync(candidate.path));
 }
 
+/**
+ * Resolves an R home directory to the R executable it holds (bin/x64/Rterm.exe,
+ * then bin/i386/Rterm.exe, on Windows; bin/R elsewhere). Any other path -- an
+ * executable, a directory holding no R, or a path that doesn't exist -- is
+ * returned as it is, so that validation reports it.
+ */
+export function resolveRHome(rPath: string, platform = process.platform): string {
+  try {
+    if (!statSync(rPath).isDirectory()) {
+      return rPath;
+    }
+  } catch {
+    return rPath;
+  }
+
+  const executables =
+    platform === 'win32' ? [`bin/x64/${kWindowsRExe}`, `bin/i386/${kWindowsRExe}`] : ['bin/R'];
+  for (const executable of executables) {
+    const candidate = join(rPath, executable);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return rPath;
+}
+
+/**
+ * The R named by the RSTUDIO_WHICH_R environment variable: an R executable,
+ * or an R home directory, which resolves to the executable it holds. Empty
+ * when the variable is unset.
+ */
+export function rFromRStudioWhichR(): string {
+  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  return rstudioWhichR ? resolveRHome(rstudioWhichR) : '';
+}
+
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
 
   const options = ElectronDesktopOptions();
@@ -111,7 +147,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     if (!showUi) {
       // nothing to do if RSTUDIO_WHICH_R is set
-      const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+      const rstudioWhichR = rFromRStudioWhichR();
       if (rstudioWhichR) {
         logger().logDebug(`Using R from RSTUDIO_WHICH_R: ${rstudioWhichR}`);
         return ok(rstudioWhichR);
@@ -618,7 +654,7 @@ export function parseRQueryResult(rPath: string, result: RQueryResult): Expected
 export function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   // note that this does not pick up variables set in a user's bash profile, for example
-  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  const rstudioWhichR = rFromRStudioWhichR();
 
   if (rstudioWhichR) {
     logger().logDebug(`Using ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
@@ -685,7 +721,7 @@ let rDetection: Promise<void> | undefined;
  * user: RSTUDIO_WHICH_R, then the platform's stored or well-known locations.
  */
 function rCandidates(): string[] {
-  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  const rstudioWhichR = rFromRStudioWhichR();
   if (rstudioWhichR) {
     return [rstudioWhichR];
   }
@@ -810,7 +846,7 @@ function findDefaultInstallPathWin32(registryVersionKey: string): string {
 
 function scanForRWin32(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
-  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  const rstudioWhichR = rFromRStudioWhichR();
   if (rstudioWhichR) {
     logger().logDebug(`Using R ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
     return ok(rstudioWhichR);
