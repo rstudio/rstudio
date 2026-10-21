@@ -449,6 +449,8 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
             Roles.getOptionRole().setAriaSelectedState(row, SelectedValue.of(isSelected(row)));
             if (headerId != null)
                row.setAttribute("aria-describedby", headerId);
+            else
+               row.removeAttribute("aria-describedby");
          }
          else
          {

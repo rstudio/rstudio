@@ -140,4 +140,18 @@ public class FastSelectTableTests extends GWTTestCase
 
       assertEquals(0, table.getRowCount());
    }
+
+   public void testRemovedHeaderNoLongerDescribesOptions()
+   {
+      FastSelectTable<String, String, String> table = createTable(
+            new String[] {"#file", "v1", "v2"});
+      TableElement el = table.getElement().cast();
+      assertTrue(el.getRows().getItem(2).hasAttribute("aria-describedby"));
+
+      // Drops the header along with v1, leaving v2 with no header above it.
+      table.removeTopRows(1);
+
+      assertEquals("v2", rowText(table));
+      assertFalse(el.getRows().getItem(0).hasAttribute("aria-describedby"));
+   }
 }
