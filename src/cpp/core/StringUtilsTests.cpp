@@ -74,6 +74,11 @@ TEST(StringTest, SubstringWorks)
 {
    std::string string("  abc  ");
    EXPECT_EQ(std::string("abc"), substring(string, 2, 5));
+   EXPECT_EQ(std::string(""), substring(string, 2, 2));
+   EXPECT_EQ(std::string("abc  "), substring(string, 2, std::string::npos));
+
+   // an inverted range returns the rest of the string
+   EXPECT_EQ(std::string("abc  "), substring(string, 2, 1));
 }
 
 TEST(StringTest, TrimWhitespaceWorks)

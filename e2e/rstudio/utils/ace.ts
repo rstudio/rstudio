@@ -84,6 +84,7 @@ export namespace Ace {
     on(event: 'changeScrollTop', fn: (scrollTop: number) => void): void;
     off(event: 'changeScrollTop', fn: (scrollTop: number) => void): void;
     getLength(): number;
+    setScrollTop(scrollTop: number): void;
     /** Rows as rendered: with wrap mode on, one soft-wrapped line counts once per visual row. */
     getScreenLength(): number;
     getLine(row: number): string;
@@ -119,6 +120,8 @@ export namespace Ace {
     commands: { byName: Record<string, { scrollIntoView?: string; [key: string]: unknown }> };
     renderer: {
       scrollTop: number;
+      lineHeight: number;
+      $size: { scrollerHeight: number };
       scrollBy(deltaX: number, deltaY: number): void;
       $scrollAnimation?: { from: number; to: number } | null;
     };

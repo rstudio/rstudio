@@ -14,6 +14,7 @@
  */
 
 #include <core/r_util/RSessionContext.hpp>
+#include <core/system/Environment.hpp>
 
 #include <gtest/gtest.h>
 
@@ -34,6 +35,39 @@ std::string makeUrl(const std::string& prefix)
 }
 
 } // anonymous namespace
+
+TEST(RSessionContextTests, ObfuscatedUserIdRemapsLargeUidsUpToMaxUid)
+{
+   // obfuscatedUserId() reads the minimum uid from this variable when it is set
+   core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
+   const uid_t kMaxUid = 0xFFFFF;
+
+   // a large uid at most kMaxUid above the minimum is remapped to that
+   // difference, so it gets the same ID as a uid equal to the difference
+   EXPECT_EQ(obfuscatedUserId(1000 + kMaxUid - 1), obfuscatedUserId(kMaxUid - 1));
+   EXPECT_EQ(obfuscatedUserId(1000 + kMaxUid), obfuscatedUserId(kMaxUid));
+}
+
+TEST(RSessionContextTests, LegacyObfuscatedUserIdPreservesPreviousBoundary)
+{
+   const uid_t kMaxUid = 0xFFFFF;
+   const uid_t kBoundaryUid = 1000 + kMaxUid;
+
+   // with a minimum uid of 0, no uid above kMaxUid is remapped, so this is the ID
+   // that kBoundaryUid got before the boundary fix; server builds obfuscate IDs,
+   // so the expected values are computed rather than written as literals
+   std::string unremappedId;
+   {
+      core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "0");
+      unremappedId = obfuscatedUserId(kBoundaryUid);
+   }
+
+   core::system::EnvironmentScope minUidScope("RSTUDIO_MINIMUM_USER_ID", "1000");
+   EXPECT_EQ(legacyObfuscatedUserId(kBoundaryUid), unremappedId);
+   EXPECT_NE(legacyObfuscatedUserId(kBoundaryUid), obfuscatedUserId(kBoundaryUid));
+   for (uid_t uid : {0u, 1000u, kMaxUid, kBoundaryUid - 1, kBoundaryUid + 1})
+      EXPECT_EQ(legacyObfuscatedUserId(uid), obfuscatedUserId(uid));
+}
 
 TEST(RSessionContextTests, ParseSessionUrlPrefixS)
 {

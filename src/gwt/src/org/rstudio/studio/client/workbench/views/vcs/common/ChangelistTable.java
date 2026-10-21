@@ -137,6 +137,9 @@ public abstract class ChangelistTable extends Composite
       dataProvider_ = new ListDataProvider<>();
       sortHandler_ = new ColumnSortEvent.ListHandler<>(dataProvider_.getList());
       table_.addColumnSortHandler(sortHandler_);
+      // The table redraws its headers only when rows are pushed, and sorting an empty
+      // list pushes none, so redraw them here or the sort icon and aria-sort go stale.
+      table_.addColumnSortHandler(event -> table_.redrawHeaders());
 
       selectionModel_ = createSelectionModel();
       table_.setSelectionModel(selectionModel_);

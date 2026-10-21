@@ -471,8 +471,10 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          // column widths, so we can't let the first row be a spanning header.
          if (rowValue.isFirstObject)
          {
+            // Exists only to fix column widths, so it must not read as a row.
             TableRowBuilder widthSettingRow = startRow().className(
                     style_.widthSettingRow());
+            widthSettingRow.attribute("role", "presentation");
             widthSettingRow.startTD().className(style_.expandCol()).endTD();
             widthSettingRow.startTD().className(style_.nameCol()).endTD();
             widthSettingRow.startTD().className(style_.resizeCol()).endTD();

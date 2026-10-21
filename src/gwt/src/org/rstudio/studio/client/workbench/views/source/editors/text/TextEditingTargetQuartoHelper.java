@@ -135,7 +135,7 @@ public class TextEditingTargetQuartoHelper
                   event.preventDefault();
                   docDisplay.replaceRange(range, "\n\n");
                   docDisplay.moveCursorBackward();
-                  docDisplay.ensureCursorVisible();
+                  docDisplay.scrollCursorIntoView();
                   return true;
                }
             }
@@ -152,7 +152,7 @@ public class TextEditingTargetQuartoHelper
       event.preventDefault();
       event.stopPropagation();
       docDisplay.insertCode("\n" + match.getGroup(1));
-      docDisplay.ensureCursorVisible();
+      docDisplay.scrollCursorIntoView();
       
       return true;
    }
