@@ -215,6 +215,24 @@ describe('DesktopOptions', () => {
     sandbox.assert.notCalled(testMainWindow.setPosition);
     sandbox.restore();
   });
+  it('restores an unmaximized window on Wayland by restoring its bounds', () => {
+    const displays = [{ workArea: { width: 2000, height: 2000, x: 0, y: 0 } }];
+    const savedWinBounds = { width: 1000, height: 600, x: 100, y: 100, maximized: false };
+
+    const sandbox = sinon.createSandbox();
+    sandbox.stub(process, 'platform').value('linux');
+    sandbox.stub(app.commandLine, 'getSwitchValue').withArgs('ozone-platform').returns('wayland');
+    sandbox.stub(screen, 'getAllDisplays').returns(displays as Display[]);
+    const testMainWindow = createSinonStubInstanceForSandbox(sandbox, BrowserWindow);
+    testMainWindow.getSize.returns([savedWinBounds.width, savedWinBounds.height]);
+
+    testingDesktopOptions().saveWindowBounds(savedWinBounds);
+    ElectronDesktopOptions().restoreMainWindowBounds(testMainWindow);
+
+    sandbox.assert.calledOnceWithExactly(testMainWindow.setBounds, savedWinBounds);
+    sandbox.assert.notCalled(testMainWindow.maximize);
+    sandbox.restore();
+  });
   it('creates the main window at its saved size, but no smaller than the minimum', () => {
     const options = testingDesktopOptions();
 

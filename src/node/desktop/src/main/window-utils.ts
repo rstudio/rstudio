@@ -128,8 +128,10 @@ export interface WindowBounds {
   maximized: boolean;
 }
 
-/** The smallest size a window is restored at. */
+/** The narrowest a window is created or restored at. */
 export const kMinWindowWidth = 300;
+
+/** The shortest a window is created or restored at. */
 export const kMinWindowHeight = 200;
 
 /**
