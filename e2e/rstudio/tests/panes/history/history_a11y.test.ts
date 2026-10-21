@@ -196,32 +196,6 @@ test.describe('History pane accessibility', () => {
         await expect(listbox(page, 'Console History')).toBeFocused();
       });
 
-      test('leaving the search results mid-slide shows the recent list', async ({
-        rstudioPage: page,
-      }) => {
-        await showContext(page);
-        await listbox(page, 'Console History Context').focus();
-        // Left goes Back to the search results, then Done to the recent list;
-        // the second press lands while the first slide is still running.
-        await page.keyboard.press('ArrowLeft');
-        await page.keyboard.press('ArrowLeft');
-
-        const recent = listbox(page, 'Console History');
-        await expect(recent).toBeFocused();
-        // Only the recent list is exposed: the second press must not strand
-        // the first slide with the context view still reachable.
-        await expect(panel(page).getByRole('listbox')).toHaveCount(1);
-        // Nothing may be left covering the recent list. The newest entry is
-        // the one the list keeps scrolled into view.
-        const newest = recent.getByRole('option', { name: COMMANDS[2], exact: true });
-        const covered = await newest.evaluate(el => {
-          const rect = el.getBoundingClientRect();
-          const hit = document.elementFromPoint(rect.left + 10, rect.top + rect.height / 2);
-          return hit === null || !el.contains(hit);
-        });
-        expect(covered).toBe(false);
-      });
-
       test('arrow keys move an announced, multi-select selection', async ({
         rstudioPage: page,
       }) => {
@@ -260,6 +234,40 @@ test.describe('History pane accessibility', () => {
       });
     });
   }
+
+  // Only a slide can be cut short, so this runs with reduced motion off.
+  test('leaving the search results mid-slide shows the recent list', async ({
+    rstudioPage: page,
+  }) => {
+    await setPref(page, 'reduced_motion', false);
+    try {
+      await executeCommand(page, 'activateHistory');
+      await returnToRecent(page);
+      await showContext(page);
+      await listbox(page, 'Console History Context').focus();
+      // Left goes Back to the search results, then Done to the recent list;
+      // the second press lands while the first slide is still running.
+      await page.keyboard.press('ArrowLeft');
+      await page.keyboard.press('ArrowLeft');
+
+      const recent = listbox(page, 'Console History');
+      await expect(recent).toBeFocused();
+      // Only the recent list is exposed: the second press must not strand
+      // the first slide with the context view still reachable.
+      await expect(panel(page).getByRole('listbox')).toHaveCount(1);
+      // Nothing may be left covering the recent list. The newest entry is
+      // the one the list keeps scrolled into view.
+      const newest = recent.getByRole('option', { name: COMMANDS[2], exact: true });
+      const covered = await newest.evaluate(el => {
+        const rect = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(rect.left + 10, rect.top + rect.height / 2);
+        return hit === null || !el.contains(hit);
+      });
+      expect(covered).toBe(false);
+    } finally {
+      await setPref(page, 'reduced_motion', fixtureReducedMotion);
+    }
+  });
 
   test('reduced motion shows the context view without a slide', async ({ rstudioPage: page }) => {
     await setPref(page, 'reduced_motion', true);
