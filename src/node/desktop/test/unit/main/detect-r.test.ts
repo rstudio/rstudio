@@ -18,7 +18,7 @@ import { assert } from 'chai';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { dirname, join } from 'path';
-import { restore, saveAndClear } from '../unit-utils';
+import { fakeRInstallWin32, restore, saveAndClear } from '../unit-utils';
 import {
   detectREnvironment,
   frameworkVersionHome,
@@ -156,6 +156,27 @@ describe('DetectR', () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
       rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves a Windows ARM64 R home, which has no architecture subfolder', () => {
+    const arm64Home = mkdtempSync(join(tmpdir(), 'detect-r-arm64-'));
+    const bothArm64Home = mkdtempSync(join(tmpdir(), 'detect-r-both-arm64-'));
+    const bothX64Home = mkdtempSync(join(tmpdir(), 'detect-r-both-x64-'));
+
+    try {
+      fakeRInstallWin32(arm64Home, { bin: 0xaa64 });
+      assert.equal(resolveRHome(arm64Home, 'win32'), join(arm64Home, 'bin', 'Rterm.exe'));
+
+      // with both layouts, bin\Rterm.exe wins only if its R.dll is ARM64
+      fakeRInstallWin32(bothArm64Home, { bin: 0xaa64, x64: 0x8664 });
+      assert.equal(resolveRHome(bothArm64Home, 'win32'), join(bothArm64Home, 'bin', 'Rterm.exe'));
+      fakeRInstallWin32(bothX64Home, { bin: 0x8664, x64: 0x8664 });
+      assert.equal(resolveRHome(bothX64Home, 'win32'), join(bothX64Home, 'bin', 'x64', 'Rterm.exe'));
+    } finally {
+      rmSync(arm64Home, { recursive: true, force: true });
+      rmSync(bothArm64Home, { recursive: true, force: true });
+      rmSync(bothX64Home, { recursive: true, force: true });
     }
   });
 

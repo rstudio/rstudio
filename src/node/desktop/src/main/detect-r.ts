@@ -35,7 +35,7 @@ import { kWindowsRExe } from '../ui/utils';
 import { dialog } from 'electron';
 import { appState } from './app-state';
 import { REnvironmentCache } from './r-environment-cache';
-import { rExecutablePathWin32 } from './r-installation-win32';
+import { rExecutablePathWin32, rTermInBinFolderWin32 } from './r-installation-win32';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -105,7 +105,8 @@ export function rChooserLikely(): boolean {
 
 /**
  * Resolves an R home directory to the R executable it holds (bin/x64/Rterm.exe,
- * then bin/i386/Rterm.exe, on Windows; bin/R elsewhere). Any other path -- an
+ * then bin/i386/Rterm.exe, on Windows, or bin/Rterm.exe for an ARM64 R, which
+ * has no architecture subfolder; bin/R elsewhere). Any other path -- an
  * executable, a directory holding no R, or a path that doesn't exist -- is
  * returned as it is, so that validation reports it.
  */
@@ -116,6 +117,10 @@ export function resolveRHome(rPath: string, platform = process.platform): string
     }
   } catch {
     return rPath;
+  }
+
+  if (platform === 'win32' && rTermInBinFolderWin32(rPath)) {
+    return join(rPath, 'bin', kWindowsRExe);
   }
 
   const executables =
