@@ -17,6 +17,10 @@
 // in the editor gutter, and lets the user step through, peek at, and revert
 // those changes. The diff itself comes from Ace's ext/diff provider, which
 // must be loaded before the first update.
+//
+// Line splitting matches Ace's Document, and an empty document counts as
+// having no lines (Ace represents it as one empty line), so that typing into
+// an empty file reads as an addition and emptying a file as a deletion.
 
 define("rstudio/git_diff_gutter", ["require", "exports", "module"], function(require, exports, module) {
 
@@ -43,6 +47,16 @@ var UPDATE_DELAY_MS = 150;
 
 // Bail out on pathological inputs rather than hang the UI thread.
 var MAX_COMPUTATION_MS = 250;
+
+function splitLines(text) {
+   return text === "" ? [] : text.split(/\r\n|\r|\n/);
+}
+
+// Only equality matters to the diff, so whitespace-insensitive comparison
+// (git diff -w) is a matter of what the provider gets to compare.
+function stripWhitespace(line) {
+   return line.replace(/\s+/g, "");
+}
 
 function pluralize(n, noun) {
    return n + " " + noun + (n === 1 ? "" : "s");
@@ -75,26 +89,34 @@ var GitDiffGutter = function(editor) {
    this.onAfterRender = this.onAfterRender.bind(this);
    this.scheduleUpdate = this.scheduleUpdate.bind(this);
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
+   this.onGutterClick = this.onGutterClick.bind(this);
 
    var gutter = editor.renderer.$gutterLayer;
    dom.addCssClass(gutter.element, GUTTER_CLASS);
    gutter.on("afterRender", this.onAfterRender);
    editor.on("change", this.scheduleUpdate);
 
-   // Capture phase, so this runs ahead of Ace's own gutter handler (and
-   // RStudio's breakpoint toggle, which hangs off it).
-   editor.renderer.$gutter.addEventListener("mousedown", this.onGutterMouseDown, true);
+   // Capture phase, so these run ahead of Ace's own gutter handlers: the
+   // breakpoint toggle hangs off mousedown, and the fold toggle off click and
+   // dblclick, with a hit region that overlaps the marker.
+   var gutterEl = editor.renderer.$gutter;
+   gutterEl.addEventListener("mousedown", this.onGutterMouseDown, true);
+   gutterEl.addEventListener("click", this.onGutterClick, true);
+   gutterEl.addEventListener("dblclick", this.onGutterClick, true);
 };
 
 (function() {
 
-   // Sets the text to diff against; null clears all markers.
+   // Sets the text to diff against; null clears all markers. An open peek
+   // shows the old base, so it goes.
    this.setBase = function(text) {
-      this.baseLines = (text == null) ? null : text.split(/\r?\n/);
+      this.closePeek();
+      this.baseLines = (text == null) ? null : splitLines(text);
       this.update();
    };
 
    this.setIgnoreWhitespace = function(ignore) {
+      this.closePeek();
       this.ignoreWhitespace = !!ignore;
       this.update();
    };
@@ -114,19 +136,65 @@ var GitDiffGutter = function(editor) {
       }, UPDATE_DELAY_MS);
    };
 
+   // Runs a pending update now, so that anything acting on the chunks sees
+   // the current document rather than one up to UPDATE_DELAY_MS stale.
+   this.flushUpdate = function() {
+      if (!this.updateTimer)
+         return;
+
+      clearTimeout(this.updateTimer);
+      this.updateTimer = null;
+      this.update();
+   };
+
    this.update = function() {
       var chunks = [];
       if (this.baseLines != null)
       {
-         var DiffProvider = require("ace/ext/diff/providers/default").DiffProvider;
+         var base = this.baseLines;
          var lines = this.editor.session.doc.getAllLines();
-         chunks = new DiffProvider().compute(this.baseLines, lines, {
-            maxComputationTimeMs: MAX_COMPUTATION_MS,
-            ignoreTrimWhitespace: this.ignoreWhitespace
-         });
+         if (lines.length === 1 && lines[0] === "")
+            lines = [];
+
+         if (this.ignoreWhitespace)
+         {
+            base = base.map(stripWhitespace);
+            lines = lines.map(stripWhitespace);
+         }
+
+         chunks = this.computeChunks(base, lines);
       }
 
       this.setChunks(chunks);
+   };
+
+   this.computeChunks = function(base, lines) {
+      // The provider cannot take an empty side (it asserts in its refinement
+      // pass), but those cases have only one possible answer anyway.
+      if (base.length === 0 || lines.length === 0)
+      {
+         if (base.length === lines.length)
+            return [];
+
+         return [{
+            old: new Range(0, 0, base.length, 0),
+            new: new Range(0, 0, lines.length, 0)
+         }];
+      }
+
+      try
+      {
+         var DiffProvider = require("ace/ext/diff/providers/default").DiffProvider;
+         return new DiffProvider().compute(base, lines, {
+            maxComputationTimeMs: MAX_COMPUTATION_MS
+         });
+      }
+      catch (error)
+      {
+         // better no markers than an error surfacing on every keystroke
+         console.warn("git diff gutter: diff failed", error);
+         return [];
+      }
    };
 
    this.setChunks = function(chunks) {
@@ -206,6 +274,17 @@ var GitDiffGutter = function(editor) {
       return isDeletion(chunk) ? Math.min(chunk.new.start.row, lastRow) : chunk.new.start.row;
    };
 
+   // The current chunk equal to one captured earlier, or null if the diff
+   // has moved on since.
+   this.findChunk = function(chunk) {
+      for (var i = 0; i < this.chunks.length; i++)
+      {
+         if (sameChunk(this.chunks[i], chunk))
+            return this.chunks[i];
+      }
+      return null;
+   };
+
    this.chunkAt = function(row) {
       for (var i = 0; i < this.chunks.length; i++)
       {
@@ -221,6 +300,7 @@ var GitDiffGutter = function(editor) {
 
    // Navigation wraps around, like Find.
    this.goToNextChange = function() {
+      this.flushUpdate();
       if (this.chunks.length === 0)
          return false;
 
@@ -240,6 +320,7 @@ var GitDiffGutter = function(editor) {
    };
 
    this.goToPreviousChange = function() {
+      this.flushUpdate();
       if (this.chunks.length === 0)
          return false;
 
@@ -263,18 +344,27 @@ var GitDiffGutter = function(editor) {
    };
 
    this.revertChangeAtCursor = function() {
+      this.flushUpdate();
       var chunk = this.chunkAt(this.editor.getCursorPosition().row);
       if (!chunk)
          return false;
 
-      this.revertChunk(chunk);
-      return true;
+      return this.revertChunk(chunk);
    };
 
    // Replaces the chunk's lines in the buffer with the base version's. The
    // document's trailing line needs care: a chunk reaching the end of the
    // document owns the newline before it rather than one after it.
    this.revertChunk = function(chunk) {
+      // the chunk may predate edits whose diff hasn't been computed yet
+      this.flushUpdate();
+      chunk = this.findChunk(chunk);
+      if (!chunk)
+      {
+         this.closePeek();
+         return false;
+      }
+
       var session = this.editor.session;
       var doc = session.doc;
       var oldText = this.baseLines.slice(chunk.old.start.row, chunk.old.end.row).join("\n");
@@ -282,8 +372,17 @@ var GitDiffGutter = function(editor) {
       var end = chunk.new.end.row;
       var length = doc.getLength();
 
+      // An empty document still has one (empty) line in Ace, which the diff
+      // treated as no lines at all; the base replaces it outright.
+      var docEmpty = length === 1 && doc.getLine(0) === "";
+
       var range, text;
-      if (end < length)
+      if (docEmpty)
+      {
+         range = new Range(0, 0, 0, 0);
+         text = oldText;
+      }
+      else if (end < length)
       {
          range = new Range(start, 0, end, 0);
          text = isAddition(chunk) ? "" : oldText + "\n";
@@ -303,6 +402,7 @@ var GitDiffGutter = function(editor) {
       this.closePeek();
       session.replace(range, text);
       this.update();
+      return true;
    };
 
    this.lineWidgetManager = function() {
@@ -402,19 +502,25 @@ var GitDiffGutter = function(editor) {
       return null;
    };
 
-   this.onGutterMouseDown = function(e) {
+   // The chunk whose marker a gutter mouse event landed on, or null.
+   this.markerChunkAt = function(e) {
       if (e.button !== 0 || !e.target.closest)
-         return;
+         return null;
 
       var cell = e.target.closest(".ace_gutter-cell");
       if (!cell)
-         return;
+         return null;
 
       if (e.clientX < cell.getBoundingClientRect().right - MARKER_HIT_WIDTH)
-         return;
+         return null;
 
+      this.flushUpdate();
       var row = this.rowForCell(cell);
-      var chunk = row == null ? null : this.chunkAt(row);
+      return row == null ? null : this.chunkAt(row);
+   };
+
+   this.onGutterMouseDown = function(e) {
+      var chunk = this.markerChunkAt(e);
       if (!chunk)
          return;
 
@@ -427,6 +533,16 @@ var GitDiffGutter = function(editor) {
          this.showPeek(chunk);
    };
 
+   // The click and dblclick that follow a consumed mousedown would otherwise
+   // reach Ace's fold handler, whose region covers the marker.
+   this.onGutterClick = function(e) {
+      if (!this.markerChunkAt(e))
+         return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+   };
+
    this.dispose = function() {
       if (this.updateTimer)
       {
@@ -436,7 +552,11 @@ var GitDiffGutter = function(editor) {
 
       this.closePeek();
       this.editor.off("change", this.scheduleUpdate);
-      this.editor.renderer.$gutter.removeEventListener("mousedown", this.onGutterMouseDown, true);
+
+      var gutterEl = this.editor.renderer.$gutter;
+      gutterEl.removeEventListener("mousedown", this.onGutterMouseDown, true);
+      gutterEl.removeEventListener("click", this.onGutterClick, true);
+      gutterEl.removeEventListener("dblclick", this.onGutterClick, true);
 
       // Strip our classes from the visible cells before letting go of the
       // render hook, since nothing else will.

@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdEditorMode;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
@@ -836,8 +837,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       boolean cmdEnabled = active && vcsCommandsEnabled;
 
       // the change navigation and revert commands only make sense with the
-      // gutter markers they act on
-      boolean gutterEnabled = vcsCommandsEnabled && userPrefs_.showGitDiffGutter().getValue();
+      // gutter markers they act on, which exist for Git alone
+      boolean gutterEnabled = vcsCommandsEnabled &&
+            VCSConstants.GIT_ID.equals(manager_.getSession().getSessionInfo().getVcsName()) &&
+            userPrefs_.showGitDiffGutter().getValue();
       boolean gutterCmdEnabled = active && gutterEnabled;
       getSourceCommand(commands_.vcsFileLog()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileDiff()).setVisible(active, cmdEnabled, vcsCommandsEnabled);

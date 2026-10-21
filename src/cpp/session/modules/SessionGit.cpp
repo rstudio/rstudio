@@ -2732,6 +2732,10 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
    if (error)
       contents = procResult.stdOut;
 
+   // the editor's copy had its line endings normalized when the document was
+   // loaded, so the base gets the same treatment or every line would differ
+   string_utils::convertLineEndings(&contents, session::options().sourceLineEnding());
+
    result["tracked"] = true;
    result["contents"] = string_utils::filterControlChars(contents);
    pResponse->setResult(result);

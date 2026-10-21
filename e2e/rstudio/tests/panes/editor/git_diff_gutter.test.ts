@@ -116,14 +116,20 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   const gitC = () => `"-C", shQuote(${rPathLiteral(projectDir())})`;
   const gitWho = `"-c", "user.name=rstudio-e2e", "-c", "user.email=rstudio-e2e@posit.co"`;
 
-  async function commitAll(page: Page, message: string): Promise<void> {
+  // Commits the given files, or everything when none are given. Tests that
+  // seed a file of their own commit just that file, so the uncommitted edits
+  // to script.R that later tests rely on stay out of the index.
+  async function commitAll(page: Page, message: string, paths: string[] = []): Promise<void> {
+    const add = paths.length === 0
+      ? '"-A"'
+      : `"--", ${paths.map((path) => `shQuote(${rPathLiteral(path)})`).join(', ')}`;
     await executeInConsoleChecked(
       page,
       heredoc`
         {
           s <- c(
-            system2("git", c(${gitC()}, "add", "-A")),
-            system2("git", c(${gitC()}, ${gitWho}, "commit", "-m", ${rStringLiteral(message)}, "--quiet"))
+            system2("git", c(${gitC()}, "add", ${add})),
+            system2("git", c(${gitC()}, ${gitWho}, "commit", "-m", shQuote(${rStringLiteral(message)}), "--quiet"))
           )
           if (any(s != 0))
             stop("git commit failed (exit status: ", paste(s, collapse = "/"), ")")
@@ -263,8 +269,41 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await executeCommand(page, 'vcsRevertChange');
     expect((await editor.getValue()).split('\n')).toEqual([...SEED_LINES, '']);
 
+    // Emptying the buffer is one deletion, and reverting it brings the whole
+    // index version back (an empty document counts as no lines, not one).
+    await editor.setValue('');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [DELETED] });
+    await editor.gotoLine(1);
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => editor.getValue()).toBe(SEED_LINES.join('\n') + '\n');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+
     // The buffer now matches the index but the working copy doesn't; don't
     // leave that behind for the tests below, which reopen the file.
+    await documentCloseAllNoSave(page);
+  });
+
+  test('reverts against the current document, not a stale diff', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // Delete the modified line and revert at once, before the debounced diff
+    // has caught up. The revert must act on the deletion now at row 4, not
+    // on the modification the stale diff still has there -- which would
+    // have swallowed the unchanged `e <- 5` below it.
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(5);
+    await page.evaluate(() => {
+      const ed = window.rstudio!.documents.activeEditor()!;
+      ed.execCommand('removeline');
+      window.rstudio!.commands.vcsRevertChange();
+    });
+    await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
+    expect(await editor.getLine(5)).toBe('e <- 5');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+
     await documentCloseAllNoSave(page);
   });
 
@@ -302,6 +341,82 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await documentCloseAllNoSave(page);
   });
 
+  test('does not toggle a fold when the marker of a foldable line is clicked', async ({
+    rstudioPage: page,
+  }) => {
+    // a committed function whose first line is then changed: the marker and
+    // Ace's fold control share the right edge of the gutter cell
+    const foldPath = `${projectDir()}/fold.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("f <- function() {", "  x <- 1", "}"), ${rPathLiteral(foldPath)})`,
+    );
+    await commitAll(page, 'fold', [foldPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("f <- function(y) {", "  x <- 1", "}"), ${rPathLiteral(foldPath)})`,
+    );
+    await openFile(page, foldPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+
+    const editor = new AceEditor(page, '');
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.dblclick(box.x + box.width - 3, box.y + box.height / 2);
+
+    // a double click is a mousedown/click pair twice: the peek opens and then
+    // closes, and the function stays unfolded throughout
+    await expect(page.locator(PEEK)).toHaveCount(0);
+    expect(await editor.getFoldCount()).toBe(0);
+
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+    expect(await editor.getFoldCount()).toBe(0);
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(foldPath)}))`);
+    await commitAll(page, 'remove fold', [foldPath]);
+  });
+
+  test('matches the editor\'s line-ending normalization and empty files', async ({
+    rstudioPage: page,
+  }) => {
+    // CR-only endings are normalized to LF when a document loads, so the
+    // index version must be too, or every line reads as modified
+    const crPath = `${projectDir()}/cr.R`;
+    const emptyPath = `${projectDir()}/empty.R`;
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          writeBin(charToRaw("a <- 1\rb <- 2\r"), ${rPathLiteral(crPath)})
+          writeBin(raw(0), ${rPathLiteral(emptyPath)})
+        }
+      `,
+    );
+    await commitAll(page, 'cr and empty', [crPath, emptyPath]);
+
+    await openFile(page, crPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+
+    // typing into a tracked empty file is an addition, not a modification of
+    // its (nonexistent) first line
+    await openFile(page, emptyPath);
+    const editor = new AceEditor(page, '');
+    await editor.insert('x <- 1');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [ADDED] });
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => editor.getValue()).toBe('');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+
+    await documentCloseAllNoSave(page);
+  });
+
   test('honors the ignore-whitespace diff preference', async ({ rstudioPage: page }) => {
     await openFile(page, scriptPath());
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
@@ -321,14 +436,68 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await setPref(page, 'git_diff_ignore_whitespace', true);
       await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
 
+      // Whitespace inside a line is ignored too, as git diff -w does. This
+      // one sits next to the modified line, so without the preference the
+      // two would merge into a single two-line modification.
+      await editor.gotoLine(4, 1);
+      await editor.insert(' ');
+      await expect.poll(() => editor.getLine(3)).toBe('c  <- 3');
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
       await setPref(page, 'git_diff_ignore_whitespace', false);
       await expect
         .poll(() => gutterMarkers(page), { timeout: 30000 })
-        .toEqual({ ...EDITED_MARKERS, 7: [MODIFIED] });
+        .toEqual({ ...EDITED_MARKERS, 3: [MODIFIED], 7: [MODIFIED] });
     } finally {
       await setPref(page, 'git_diff_ignore_whitespace', false);
     }
 
+    await documentCloseAllNoSave(page);
+  });
+
+  test('closes the peek when the index version it shows is replaced', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+
+    // Replace the index entry without touching the working copy: the edited
+    // file, but with `d <- 41` where the buffer has `d <- 40`. The chunk
+    // keeps its rows, so only its contents change.
+    const indexLines = EDITED_LINES.map((line) => (line === 'd <- 40' ? 'd <- 41' : line));
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          blob <- system2(
+            "git", c(${gitC()}, "hash-object", "-w", "--stdin"),
+            input = c(${indexLines.map(rStringLiteral).join(', ')}), stdout = TRUE
+          )
+          s <- system2("git", c(${gitC()}, "update-index", "--cacheinfo",
+                                paste0("100644,", blob, ",script.R")))
+          if (s != 0)
+            stop("git update-index failed (exit status: ", s, ")")
+        }
+      `,
+      { timeout: 60000 },
+    );
+    await executeCommand(page, 'activateVcs');
+    await executeCommand(page, 'vcsRefresh');
+
+    // the peek showed `d <- 4`, which the index no longer has
+    await expect(page.locator(PEEK)).toHaveCount(0, { timeout: 30000 });
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [MODIFIED] });
+
+    // put the index back for the tests below
+    await executeInConsoleChecked(
+      page,
+      `invisible(system2("git", c(${gitC()}, "reset", "-q", "--", "script.R")))`,
+    );
     await documentCloseAllNoSave(page);
   });
 
