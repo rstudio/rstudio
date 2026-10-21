@@ -15,8 +15,6 @@
 
 #include <gtest/gtest.h>
 
-#include <core/system/Environment.hpp>
-
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 
@@ -42,26 +40,6 @@ Dependency versionedDependency(const std::string& name, const std::string& versi
    dep.version = version;
    return dep;
 }
-
-// Scoped override of the RENV_PROJECT environment variable, which controls
-// whether install scripts use renv::install() or utils::install.packages().
-class RenvProjectScope
-{
-public:
-   explicit RenvProjectScope(const std::string& value) :
-      saved_(core::system::getenv("RENV_PROJECT"))
-   {
-      core::system::setenv("RENV_PROJECT", value);
-   }
-
-   ~RenvProjectScope()
-   {
-      core::system::setenv("RENV_PROJECT", saved_);
-   }
-
-private:
-   std::string saved_;
-};
 
 TEST(SessionDependenciesTest, SexpConstructorDefaultsOptionalFields)
 {
@@ -103,40 +81,65 @@ TEST(SessionDependenciesTest, SexpConstructorReadsOptionalFields)
 
 TEST(SessionDependenciesTest, CombinedInstallScriptIsWellFormed)
 {
-   RenvProjectScope scope("");
    std::vector<Dependency> deps = {
       cranDependency("first"),
       cranDependency("second")
    };
 
-   EXPECT_EQ(buildCombinedInstallScript(deps),
+   EXPECT_EQ(buildCombinedInstallScript(deps, false),
              "utils::install.packages(c('first','second'))\n\n");
 }
 
-TEST(SessionDependenciesTest, CombinedInstallScriptInstallsSourcePackagesSeparately)
+// Source packages go first: a binary package depending on one of them would
+// otherwise pull in a binary build, which renv then keeps.
+TEST(SessionDependenciesTest, CombinedInstallScriptInstallsSourcePackagesFirst)
 {
-   RenvProjectScope scope("");
    std::vector<Dependency> deps = {
       cranDependency("binary"),
       cranDependency("compiled", true)
    };
 
-   EXPECT_EQ(buildCombinedInstallScript(deps),
-             "utils::install.packages(c('binary'))\n\n"
-             "utils::install.packages(c('compiled'), type = 'source')\n\n");
+   EXPECT_EQ(buildCombinedInstallScript(deps, false),
+             "utils::install.packages(c('compiled'), type = 'source')\n\n"
+             "utils::install.packages(c('binary'))\n\n");
 }
 
 TEST(SessionDependenciesTest, CombinedInstallScriptUsesRenvWhenActive)
 {
-   RenvProjectScope scope("/tmp/project");
    std::vector<Dependency> deps = {
       cranDependency("binary"),
       cranDependency("compiled", true)
    };
 
-   EXPECT_EQ(buildCombinedInstallScript(deps),
-             "renv::install(c('binary'))\n\n"
-             "options(pkgType = 'source'); renv::install(c('compiled'))\n\n");
+   EXPECT_EQ(buildCombinedInstallScript(deps, true),
+             "options(pkgType = 'source'); renv::install(c('compiled'))\n\n"
+             "renv::install(c('binary'))\n\n");
+}
+
+// renv projects install everything together even when the individual-install
+// preference is set, so that renv can resolve dependencies and install in
+// parallel. (The individual path itself queries available.packages(), so it is
+// not exercised here.)
+TEST(SessionDependenciesTest, InstallScriptIgnoresIndividualPreferenceForRenv)
+{
+   std::vector<Dependency> deps = {
+      cranDependency("binary"),
+      cranDependency("compiled", true)
+   };
+
+   std::string expected = buildCombinedInstallScript(deps, true);
+   EXPECT_EQ(buildInstallScript(deps, true, true), expected);
+   EXPECT_EQ(buildInstallScript(deps, true, false), expected);
+}
+
+TEST(SessionDependenciesTest, InstallScriptUsesCombinedInstallWhenPreferenceIsOff)
+{
+   std::vector<Dependency> deps = {
+      cranDependency("binary"),
+      cranDependency("compiled", true)
+   };
+
+   EXPECT_EQ(buildInstallScript(deps, false, false), buildCombinedInstallScript(deps, false));
 }
 
 TEST(SessionDependenciesTest, VerifyInstallScriptAcceptsInstalledPackages)

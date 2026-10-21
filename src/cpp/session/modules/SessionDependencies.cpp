@@ -373,9 +373,8 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 // Builds an installation script which will install all the dependencies at once.
-std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
+std::string buildCombinedInstallScript(const std::vector<Dependency>& deps, bool isRenv)
 {
-   bool isRenv = module_context::isRenvActive();
    std::vector<std::string> cranPackages;
    std::vector<std::string> cranSourcePackages;
    std::vector<std::string> embeddedPackages;
@@ -400,24 +399,9 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
    }
 
-   // Install the CRAN packages with a single call. Note that we do not pass the repos option to
-   // install.packages() since default CRAN repos are already set in the session via
-   // an earlier call to .rs.CRANDownloadOptionsString().
-   if (!cranPackages.empty())
-   {
-      std::string pkgList = boost::algorithm::join(cranPackages, ",");
-      
-      if (isRenv)
-      {
-         cmd += "renv::install(c(" + pkgList + "))\n\n";
-      }
-      else
-      {
-         cmd += "utils::install.packages(c(" + pkgList + "))\n\n";
-      }
-   }
-
-   // Install the CRAN source packages with a single call
+   // Install the CRAN source packages first. If a binary package depends on one of these, the
+   // binary install would otherwise pull it in as a binary, and renv then treats the source
+   // request as already satisfied (install.packages() would rebuild it, but needlessly).
    if (!cranSourcePackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
@@ -430,6 +414,23 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       {
          cmd += "utils::install.packages(c(" + pkgList + "), ";
          cmd += "type = 'source')\n\n";
+      }
+   }
+
+   // Install the remaining CRAN packages with a single call. Note that we do not pass the repos
+   // option to install.packages() since default CRAN repos are already set in the session via
+   // an earlier call to .rs.CRANDownloadOptionsString().
+   if (!cranPackages.empty())
+   {
+      std::string pkgList = boost::algorithm::join(cranPackages, ",");
+
+      if (isRenv)
+      {
+         cmd += "renv::install(c(" + pkgList + "))\n\n";
+      }
+      else
+      {
+         cmd += "utils::install.packages(c(" + pkgList + "))\n\n";
       }
    }
 
@@ -516,7 +517,7 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
    {
       LOG_ERROR(error);
       // Use simple version of installation script as a fallback
-      return buildCombinedInstallScript(dependencies);
+      return buildCombinedInstallScript(dependencies, false);
    }
 
    // Create a new list of dependencies from the expanded list returned from R
@@ -574,6 +575,22 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
 
    return script;
 }
+
+} // anonymous namespace
+
+std::string buildInstallScript(const std::vector<Dependency>& deps,
+                               bool isRenv,
+                               bool installIndividually)
+{
+   // Let renv resolve dependencies and install packages together so it can use
+   // parallel installation, regardless of the individual-install preference.
+   if (!isRenv && installIndividually)
+      return buildIndividualInstallScript(deps);
+
+   return buildCombinedInstallScript(deps, isRenv);
+}
+
+namespace {
 
 Error installDependencies(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
@@ -635,16 +652,8 @@ Error installDependencies(const json::JsonRpcRequest& request,
             "...\\n\\n')\n";
    }
 
-   // Let renv resolve dependencies and install packages together so it can use
-   // parallel installation, regardless of the individual-install preference.
-   if (!isRenv && prefs::userPrefs().installPkgDepsIndividually())
-   {
-      script += buildIndividualInstallScript(deps);
-   }
-   else
-   {
-      script += buildCombinedInstallScript(deps);
-   }
+   // Build an installation script to install the required packages.
+   script += buildInstallScript(deps, isRenv, prefs::userPrefs().installPkgDepsIndividually());
 
    // install.packages() reports a failed installation as a warning, not an error, so the script
    // would otherwise carry on and claim success. Check the outcome, and abort if anything is
@@ -711,7 +720,6 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
 
 } // anonymous namespace
-
 
 Error initialize()
 {         
