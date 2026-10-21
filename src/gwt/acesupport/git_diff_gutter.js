@@ -44,13 +44,17 @@ var PEEK_CLASS = "ace_git-peek";
 // breakpoint toggle behind it).
 var MARKER_HIT_WIDTH = 6;
 
-// Typing bursts are coalesced into a single diff.
-var UPDATE_DELAY_MS = 150;
+// An edit is diffed before the frame that paints it: the diff is queued as a
+// microtask, so the markers move with the keystroke, while the many change
+// events of one operation (replace all, a reformat) are diffed once, after
+// it. A diff usually takes a millisecond or two; a document whose last diff
+// took longer than SLOW_DIFF_MS is instead diffed once typing pauses.
+var SLOW_DIFF_MS = 20;
+var SLOW_UPDATE_DELAY_MS = 150;
 
 // Bail out on pathological inputs rather than hang the UI thread. The
-// provider does not say when it gave up (it then returns one change spanning
-// both documents), so a compute that used up the budget is taken as having
-// done so.
+// provider does not say when it gave up; a timed-out line alignment comes
+// back as one change spanning both documents, with the budget spent.
 var MAX_COMPUTATION_MS = 250;
 
 // Peek text when none is supplied (the IDE passes translated strings in).
@@ -87,6 +91,15 @@ function isAddition(chunk) {
    return chunk.old.start.row === chunk.old.end.row;
 }
 
+function isWholeDocument(chunks, base, lines) {
+   if (chunks.length !== 1)
+      return false;
+
+   var chunk = chunks[0];
+   return chunk.old.start.row === 0 && chunk.old.end.row === base.length &&
+          chunk.new.start.row === 0 && chunk.new.end.row === lines.length;
+}
+
 function sameChunk(a, b) {
    return a.old.start.row === b.old.start.row &&
           a.old.end.row === b.old.end.row &&
@@ -103,6 +116,8 @@ var GitDiffGutter = function(editor, strings) {
    this.chunks = [];
    this.rowClasses = {};
    this.updateTimer = null;
+   this.updatePending = false;
+   this.lastDiffMs = 0;
    this.ignoreWhitespace = false;
    this.peek = null;
    this.baseRefresher = null;
@@ -209,24 +224,46 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.scheduleUpdate = function() {
-      if (this.updateTimer)
-         return;
-
       var self = this;
-      this.updateTimer = setTimeout(function() {
+      var run = function() {
+         if (!self.updatePending)
+            return;
+
+         self.updatePending = false;
          self.updateTimer = null;
          self.update();
-      }, UPDATE_DELAY_MS);
+      };
+
+      if (this.lastDiffMs > SLOW_DIFF_MS)
+      {
+         // slow: wait for a pause in the typing
+         if (this.updateTimer)
+            clearTimeout(this.updateTimer);
+         this.updatePending = true;
+         this.updateTimer = setTimeout(run, SLOW_UPDATE_DELAY_MS);
+         return;
+      }
+
+      if (this.updatePending)
+         return;
+
+      this.updatePending = true;
+      Promise.resolve().then(run);
    };
 
    // Runs a pending update now, so that anything acting on the chunks sees
-   // the current document rather than one up to UPDATE_DELAY_MS stale.
+   // the current document rather than one an edit behind.
    this.flushUpdate = function() {
-      if (!this.updateTimer)
+      if (!this.updatePending)
          return;
 
-      clearTimeout(this.updateTimer);
-      this.updateTimer = null;
+      if (this.updateTimer)
+      {
+         clearTimeout(this.updateTimer);
+         this.updateTimer = null;
+      }
+
+      this.updatePending = false;
       this.update();
    };
 
@@ -275,10 +312,14 @@ var GitDiffGutter = function(editor, strings) {
          var chunks = new DiffProvider().compute(base, lines, {
             maxComputationTimeMs: MAX_COMPUTATION_MS
          });
+         this.lastDiffMs = Date.now() - started;
 
-         // A timed-out diff is not a diff: it would mark every line changed
-         // and hand Revert the whole document. Better no markers.
-         if (Date.now() - started >= MAX_COMPUTATION_MS)
+         // A timed-out line alignment is not a diff: it would mark every
+         // line changed and hand Revert the whole document. Better no
+         // markers. (The budget can also run out in the character-level
+         // refinement that follows a sound alignment, which is of no
+         // consequence here; the shape tells the two apart.)
+         if (this.lastDiffMs >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
             return [];
 
          return chunks;
@@ -744,6 +785,7 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.dispose = function() {
+      this.updatePending = false;
       if (this.updateTimer)
       {
          clearTimeout(this.updateTimer);

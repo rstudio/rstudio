@@ -229,10 +229,24 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await openFile(page, scriptPath());
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
 
-    const editor = new AceEditor(page, '');
-    await editor.gotoLine(EDITED_LINES.length);
-    await editor.navigateLineEnd();
-    await editor.insert('\ni <- 9');
+    // An edit is diffed before the frame that paints it: by the next
+    // animation frame the chunks reflect it, with no timer or round trip
+    // in between.
+    const immediate = await page.evaluate(async (lastLine) => {
+      type GutterEditor = {
+        gotoLine(line: number, column: number): void;
+        navigateLineEnd(): void;
+        insert(text: string): void;
+        gitDiffGutter: { rowClasses: Record<number, string> };
+      };
+      const editor = window.rstudio!.documents.activeEditor() as unknown as GutterEditor;
+      editor.gotoLine(lastLine, 0);
+      editor.navigateLineEnd();
+      editor.insert('\ni <- 9');
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      return Object.keys(editor.gitDiffGutter.rowClasses).map(Number).sort((a, b) => a - b);
+    }, EDITED_LINES.length);
+    expect(immediate).toEqual([1, 4, 6, EDITED_LINES.length]);
 
     // the new last line is an addition; everything above is unchanged
     await expect
