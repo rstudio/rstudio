@@ -76,7 +76,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
       }, MouseDownEvent.getType());
    }
    
-   public void setIcon(ImageResource resource)
+   public void setIcon(ImageResource resource, String altText)
    {
       icon_.clear();
       hideSpinner();
@@ -84,6 +84,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
       if (resource != null)
       {
          Image icon = new Image(resource);
+         icon.setAltText(altText);
          icon.addStyleName(RES.styles().icon());
          icon_.add(icon);
       }
@@ -96,7 +97,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
       icon_.setVisible(false);
       if (spinner_ == null)
       {
-         spinner_ = new Image(SPINNER_SVG_URI);
+         spinner_ = new DecorativeImage(SPINNER_SVG_URI);
          spinner_.setPixelSize(12, 12);
          spinner_.addStyleName(RES.styles().spinnerIcon());
          StatusBarElementWidget.this.insert(spinner_, 0);
@@ -114,7 +115,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
 
    public void setValue(String value)
    {
-      setIcon(null);
+      setIcon(null, null);
       label_.setText(value);
    }
 
@@ -208,7 +209,7 @@ public class StatusBarElementWidget extends FlowPanel implements StatusBarElemen
    private final ArrayList<String> options_;
    private final FlowPanel icon_;
    private final Label label_;
-   private Image spinner_;
+   private DecorativeImage spinner_;
    private DecorativeImage arrows_;
    private boolean clicksEnabled_ = true;
 

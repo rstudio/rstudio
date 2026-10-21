@@ -784,7 +784,7 @@ public class TextEditingTarget implements
                      event.preventDefault();
                      event.stopPropagation();
                      docDisplay_.insertCode("\n" + match.getGroup(1));
-                     docDisplay_.ensureCursorVisible();
+                     docDisplay_.scrollCursorIntoView();
                   }
                }
             }
@@ -798,6 +798,7 @@ public class TextEditingTarget implements
                event.stopPropagation();
                String indent = docDisplay_.getNextLineIndent();
                docDisplay_.insertCode("\n" + indent);
+               docDisplay_.scrollCursorIntoView();
             }
             events_.fireEvent(new EditingTargetSelectedEvent(target));
          }

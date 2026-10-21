@@ -1,0 +1,402 @@
+// A column that a zoom or a splitter drag collapses to nothing must leave the
+// accessibility tree and the Tab order (#19181). Quadrants hidden by a maximize
+// or a splitter snap are display:none; they are covered here so they stay so.
+
+import { test, expect } from '@fixtures/rstudio.fixture';
+import {
+  documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
+} from '@utils/commands';
+import { focusConsole } from '@pages/console_pane.page';
+import { captureResult, killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
+import { TIMEOUTS } from '@utils/constants';
+import type { Locator, Page } from 'playwright';
+
+const CONSOLE_PANE = '#rstudio_Console_pane';
+const SOURCE_PANE = '#rstudio_Source_pane';
+const TABSET1_PANE = '#rstudio_TabSet1_pane';
+const TABSET2_PANE = '#rstudio_TabSet2_pane';
+const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
+const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
+const RIGHT_ROW_SPLITTER = '[role="separator"][aria-label="right splitter"]';
+
+function paneRegion(page: Page, pane: string): Locator {
+  return page.getByRole('region').and(page.locator(pane));
+}
+
+// Whether Tab and clicks can't reach the pane: it sits under an inert element,
+// or is not rendered at all. A column collapsed to 0px still renders, so only
+// inert keeps its controls out of the Tab order.
+async function isUnreachable(page: Page, pane: string): Promise<boolean> {
+  return page.locator(pane).evaluate(
+    el => el.closest('[inert]') !== null || !el.checkVisibility());
+}
+
+async function expectHidden(page: Page, ...panes: string[]): Promise<void> {
+  for (const pane of panes) {
+    await expect(paneRegion(page, pane), `${pane} in accessibility tree`).toHaveCount(0);
+    await expect.poll(() => isUnreachable(page, pane), { message: `${pane} unreachable` })
+      .toBe(true);
+  }
+}
+
+async function expectExposed(page: Page, ...panes: string[]): Promise<void> {
+  for (const pane of panes) {
+    await expect(paneRegion(page, pane), `${pane} in accessibility tree`).toHaveCount(1);
+    await expect.poll(() => isUnreachable(page, pane), { message: `${pane} unreachable` })
+      .toBe(false);
+  }
+}
+
+async function hasFocusWithin(page: Page, pane: string): Promise<boolean> {
+  return page.locator(pane).evaluate(el => el.contains(document.activeElement));
+}
+
+// Whether focus is on something the user can still reach, rather than dropped
+// to the page body or left inside a hidden column.
+async function hasReachableFocus(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const el = document.activeElement;
+    return el !== null && el !== document.body &&
+      el.closest('[inert]') === null && el.checkVisibility();
+  });
+}
+
+// Re-focuses on each poll: a terminal that is still starting can take focus
+// after the first attempt.
+async function focusSelectedTab(page: Page, pane: string): Promise<void> {
+  const tab = page.locator(`${pane} [role="tab"][aria-selected="true"]`);
+  await expect.poll(async () => {
+    await tab.focus();
+    return hasFocusWithin(page, pane);
+  }).toBe(true);
+}
+
+async function getOffsetWidth(page: Page, selector: string): Promise<number> {
+  return page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
+}
+
+async function dragSplitterTo(page: Page, splitter: string, x: number, y: number): Promise<void> {
+  const box = await page.locator(splitter).boundingBox();
+  if (!box)
+    throw new Error(`Splitter ${splitter} has no bounding box; is it rendered?`);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(x, y, { steps: 10 });
+  await page.mouse.up();
+}
+
+async function setSidebarVisible(page: Page, visible: boolean): Promise<void> {
+  if ((await page.locator(SIDEBAR_PANE).count() > 0) === visible)
+    return;
+  await executeCommand(page, 'toggleSidebar');
+  await expect(page.locator(SIDEBAR_PANE)).toHaveCount(visible ? 1 : 0);
+}
+
+test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () => {
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await resetLayoutZoom(page);
+    await setSidebarVisible(page, false);
+    await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  test('zooming the left column hides the right column', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'layoutZoomLeftColumn');
+    await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+    await expectExposed(page, CONSOLE_PANE);
+
+    await executeCommand(page, 'layoutZoomLeftColumn');
+    await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  test('zooming the right column hides the left column', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'layoutZoomRightColumn');
+    await expectHidden(page, CONSOLE_PANE);
+    await expectExposed(page, TABSET1_PANE, TABSET2_PANE);
+
+    await executeCommand(page, 'layoutZoomRightColumn');
+    await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  test('zooming a pane hides the panes around it', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'layoutZoomConsole');
+    await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+    await expectExposed(page, CONSOLE_PANE);
+
+    // Moving the zoom to a pane in another column swaps which column is hidden.
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE, TABSET1_PANE);
+    await expectExposed(page, TABSET2_PANE);
+
+    await executeCommand(page, 'layoutEndZoom');
+    await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  test('zooming the sidebar hides the other columns', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await expectHidden(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+    await expectExposed(page, SIDEBAR_PANE);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await expectExposed(page, SIDEBAR_PANE, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+
+    await executeCommand(page, 'layoutZoomLeftColumn');
+    await expectHidden(page, SIDEBAR_PANE, TABSET1_PANE, TABSET2_PANE);
+    await expectExposed(page, CONSOLE_PANE);
+  });
+
+  test('dragging a column splitter closed hides the column and moves focus out', async ({ rstudioPage: page }) => {
+    const splitter = page.locator(MIDDLE_COLUMN_SPLITTER);
+    const box = await splitter.boundingBox();
+    if (!box)
+      throw new Error('Middle column splitter has no bounding box; is it rendered?');
+    const windowWidth = await page.evaluate(() => window.innerWidth);
+
+    const splitterX = box.x + box.width / 2;
+    const splitterY = box.y + box.height / 2;
+
+    // A custom, unzoomed layout survives resetLayoutZoom(), so put the
+    // splitter back however the test ends.
+    try {
+      // Mouse: drag the right column shut against the window edge, then back.
+      // The splitter takes no focus on mousedown, so focus is still in the
+      // column it shuts and has to move out.
+      await focusSelectedTab(page, TABSET1_PANE);
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 1, splitterY);
+      await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeLessThan(20);
+      await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(() => hasReachableFocus(page)).toBe(true);
+
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterX, splitterY);
+      await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+
+      // Keyboard: walk the splitter left until the Console column is shut.
+      await splitter.focus();
+      for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) > 0; i++)
+        await page.keyboard.press('ArrowLeft');
+      await expectHidden(page, CONSOLE_PANE);
+
+      for (let i = 0; i < 100 && (await getOffsetWidth(page, CONSOLE_PANE)) < 100; i++)
+        await page.keyboard.press('ArrowRight');
+      await expectExposed(page, CONSOLE_PANE);
+    } finally {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterX, splitterY);
+      await expect.poll(async () => Math.abs(((await splitter.boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+    }
+  });
+
+  // Columns keep their share of the window as it resizes, so a shrink collapses
+  // only a column that was already narrow.
+  test('shrinking the window past a narrow column hides it and moves focus out', async ({ rstudioPage: page }) => {
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    const box = await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox();
+    if (!box)
+      throw new Error('Middle column splitter has no bounding box; is it rendered?');
+    const splitterY = box.y + box.height / 2;
+
+    try {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, viewport.width - 40, splitterY);
+      await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, TABSET1_PANE);
+      await focusSelectedTab(page, TABSET1_PANE);
+
+      await page.setViewportSize({ width: Math.round(viewport.width / 3), height: viewport.height });
+      await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeLessThan(20);
+      await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(() => hasReachableFocus(page)).toBe(true);
+    } finally {
+      await page.setViewportSize(viewport);
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+    }
+  });
+
+  // A resize first lays out the old column widths at the new window width,
+  // which can squeeze the fill column shut until the proportional widths land.
+  test('shrinking the window keeps focus in a narrow column that stays open', async ({ rstudioPage: page }) => {
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    const box = await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox();
+    if (!box)
+      throw new Error('Middle column splitter has no bounding box; is it rendered?');
+    const splitterY = box.y + box.height / 2;
+
+    try {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, 200, splitterY);
+      await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeLessThan(250);
+      await focusConsole(page);
+
+      await page.setViewportSize({ width: Math.round(viewport.width / 2), height: viewport.height });
+      await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, CONSOLE_PANE);
+      // Focus must not move after the layout settles, so sample for a while.
+      for (let i = 0; i < 10; i++) {
+        expect(await hasFocusWithin(page, CONSOLE_PANE), `focus in Console, sample ${i}`).toBe(true);
+        await page.waitForTimeout(50);
+      }
+    } finally {
+      await page.setViewportSize(viewport);
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+    }
+  });
+
+  // The zoom moves to Source while its column is still collapsed, and the new
+  // editor must still get focus.
+  test('opening a document while a pane is zoomed focuses the editor', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE, SOURCE_PANE);
+
+    await executeCommand(page, 'newSourceDoc');
+    await expectExposed(page, SOURCE_PANE);
+    await expectHidden(page, TABSET2_PANE);
+    await expect.poll(() => hasFocusWithin(page, SOURCE_PANE)).toBe(true);
+
+    await documentCloseAllNoSave(page);
+  });
+
+  // Without this, the browser drops focus to the page body when the element
+  // that had it becomes inert or stops being rendered.
+  test('a pane zoom that hides the focused column focuses the zoomed pane', async ({ rstudioPage: page }) => {
+    await focusConsole(page);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+  });
+
+  test('a column zoom that hides the focused column focuses the zoomed column', async ({ rstudioPage: page }) => {
+    await focusConsole(page);
+
+    await executeCommand(page, 'layoutZoomRightColumn');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
+  });
+
+  test('a pane zoom that hides the focused quadrant focuses the zoomed pane', async ({ rstudioPage: page }) => {
+    await page.locator(`${TABSET1_PANE} [role="tab"]`).first().focus();
+    await expect.poll(() => hasFocusWithin(page, TABSET1_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, TABSET1_PANE);
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+  });
+
+  test('a sidebar pane zoom that hides the focused column focuses the sidebar', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    await focusConsole(page);
+
+    await executeCommand(page, 'layoutZoomChat');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect.poll(() => hasFocusWithin(page, SIDEBAR_PANE)).toBe(true);
+    // Focusing the sidebar must not raise another pane and end the zoom.
+    expect(await isCommandChecked(page, 'layoutZoomChat')).toBe(true);
+  });
+
+  // Zoom Files first selects the Files tab, which hides the Plots content that
+  // had focus, and only then zooms.
+  test('zooming a tab from another tab in its pane focuses the zoomed pane', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'activatePlots');
+    const plotsButtonId = await page.locator(`${TABSET2_PANE} button[id]:not([disabled]):visible`)
+      .first().getAttribute('id');
+    const plotsButton = page.locator(`#${plotsButtonId}`);
+    await plotsButton.focus();
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE);
+    await expect(plotsButton).toBeHidden();
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+  });
+
+  // With Files already zoomed, Zoom Plots only switches the tab, which hides
+  // the Files content that had focus.
+  test('zooming another tab of the zoomed pane keeps focus in the pane', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectHidden(page, CONSOLE_PANE);
+    const filesButtonId = await page.locator(`${TABSET2_PANE} button[id]:not([disabled]):visible`)
+      .first().getAttribute('id');
+    const filesButton = page.locator(`#${filesButtonId}`);
+    await filesButton.focus();
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+
+    await executeCommand(page, 'layoutZoomPlots');
+    await expect(filesButton).toBeHidden();
+    expect(await isCommandChecked(page, 'layoutZoomPlots')).toBe(true);
+    await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+  });
+
+  // Terminal focuses itself only on selection, so its pane needs the fallback
+  // to a control; Background Jobs (or whichever tab is last) takes focus.
+  for (const [label, tabName] of [['Terminal', 'Terminal'], ['its last', null]] as const) {
+    test(`a column zoom that focuses the Console pane keeps ${label} tab selected`, async ({ rstudioPage: page }) => {
+      // With no documents open, the Console is the only pane in its column.
+      await documentCloseAllNoSave(page);
+      await expect(page.locator(SOURCE_PANE)).toBeHidden();
+      const tabs = page.locator(`${CONSOLE_PANE} [role="tab"]`);
+      const otherTab = tabName ? tabs.filter({ hasText: tabName }) : tabs.last();
+      await otherTab.click();
+      await expect(otherTab).toHaveAttribute('aria-selected', 'true');
+      try {
+        // Selecting Terminal on a fresh session starts a shell.
+        if (tabName === 'Terminal')
+          await expect(page.locator(`${CONSOLE_PANE} ${XTERM_SELECTOR}`)).toBeVisible();
+
+        await focusSelectedTab(page, TABSET1_PANE);
+
+        await executeCommand(page, 'layoutZoomLeftColumn');
+        await expectHidden(page, TABSET1_PANE);
+        await expect.poll(() => hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+        await expect(otherTab).toHaveAttribute('aria-selected', 'true');
+      } finally {
+        await resetLayoutZoom(page);
+        // Don't leave a shell running for later tests in this worker. The
+        // widget can show before the server registers the terminal, so wait
+        // for the registration, or the kill finds nothing to kill.
+        if (tabName === 'Terminal') {
+          await expect.poll(
+            () => captureResult(page, 'length(rstudioapi::terminalList())'),
+            { timeout: TIMEOUTS.consoleReady },
+          ).not.toBe('0');
+          await killAllTerminals(page);
+          await expect.poll(
+            () => captureResult(page, 'length(rstudioapi::terminalList())'),
+          ).toBe('0');
+        }
+        // Brings the Console tab back to the front.
+        await focusConsole(page);
+      }
+    });
+  }
+
+  test('a zoom leaves focus alone when the focused pane stays visible', async ({ rstudioPage: page }) => {
+    await focusConsole(page);
+
+    await executeCommand(page, 'layoutZoomLeftColumn');
+    await expectHidden(page, TABSET1_PANE);
+    expect(await hasFocusWithin(page, CONSOLE_PANE)).toBe(true);
+  });
+
+  test('maximizing or snapping a quadrant hides its sibling', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'maximizeTabSet1');
+    await expectHidden(page, TABSET2_PANE);
+    await expectExposed(page, TABSET1_PANE);
+
+    await executeCommand(page, 'maximizeTabSet1');
+    await expectExposed(page, TABSET1_PANE, TABSET2_PANE);
+
+    // Dragging the row splitter to the top snaps TabSet1 to its minimized bar.
+    const box = await page.locator(RIGHT_ROW_SPLITTER).boundingBox();
+    if (!box)
+      throw new Error('Right row splitter has no bounding box; is it rendered?');
+    const tabSet1Top = (await page.locator(TABSET1_PANE).boundingBox())?.y ?? 0;
+    await dragSplitterTo(page, RIGHT_ROW_SPLITTER, box.x + box.width / 2, tabSet1Top);
+    await expectHidden(page, TABSET1_PANE);
+    await expectExposed(page, TABSET2_PANE);
+  });
+});

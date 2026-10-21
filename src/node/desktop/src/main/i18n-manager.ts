@@ -34,9 +34,15 @@ const initI18n = () => {
 };
 
 const changeLanguage = async (language = 'en') => {
-  return i18next.changeLanguage(language).catch((err) => {
+  await i18next.changeLanguage(language).catch((err) => {
     console.log('Something went wrong changing language to ' + language, err);
   });
+
+  // The main process calls this too, and has no document. resolvedLanguage is the language
+  // whose strings are actually shown (e.g. 'en' when a requested language has no resources).
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = i18next.resolvedLanguage ?? 'en';
+  }
 };
 
 /**

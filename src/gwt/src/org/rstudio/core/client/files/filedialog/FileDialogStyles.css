@@ -184,16 +184,20 @@ body.windows .breadcrumb table.path span {
    height: 24px;
 }
 
-.fadeWrapper {
-
-}
-
-.editor_dark .ace_editor_theme .breadcrumb .fadeWrapper {
+/* Positioned so its left offset tracks the scroll position, and clicks
+   pass through to the breadcrumb links beneath it. */
+.breadcrumb .fadeWrapper {
+   display: none;
    position: absolute;
    left: 0;
    top: 0;
    width: 25px;
    height: 24px;
+   pointer-events: none;
+}
+
+.breadcrumb .fadeShown {
+   display: block;
 }
 
 .editor_dark .ace_editor_theme .breadcrumb .fadeWrapper img {
@@ -251,6 +255,15 @@ button.browse:focus {
 
 .rstudio-themes-alternate .breadcrumb .fadeWrapper {
    background: linear-gradient(to right, THEME_ALTERNATE_BACKGROUND, THEME_ALTERNATE_BACKGROUND_TRANSPARENT);
+}
+
+/* These themes fade with the gradient above, which the fixed-color image
+   would only tint. File dialogs sit outside the themed container, so they
+   keep the image. */
+.rstudio-themes-default .breadcrumb .fadeWrapper img,
+.rstudio-themes-dark-grey .breadcrumb .fadeWrapper img,
+.rstudio-themes-alternate .breadcrumb .fadeWrapper img {
+   display: none;
 }
 
 /* Dark theme ---- */
