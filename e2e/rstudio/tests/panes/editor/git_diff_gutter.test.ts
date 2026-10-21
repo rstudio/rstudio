@@ -1272,12 +1272,14 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await editor.insert('1');
       await expect.poll(() => editor.getLine(4)).toBe('d <- 401');
 
+      // fallback, not continue: the fixture routes RPCs too, and the
+      // request still has to pass through its handler
       const fetched = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
-      for (const route of parked.splice(0)) await route.continue();
+      for (const route of parked.splice(0)) await route.fallback();
       await fetched;
     } finally {
       await page.unroute('**/git_diff_base_contents*', park);
-      for (const route of parked.splice(0)) await route.continue().catch(() => {});
+      for (const route of parked.splice(0)) await route.fallback().catch(() => {});
     }
     expect(await editor.getLine(4)).toBe('d <- 401');
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
@@ -1288,6 +1290,64 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
 
     await documentCloseAllNoSave(page);
+  });
+
+  test('drops a revert that a Save As overtakes while the base is re-fetched', async ({
+    rstudioPage: page,
+  }) => {
+    // A tracked destination whose index version differs from the buffer in
+    // the same rows as script.R's does -- `d <- 44` where script.R's index
+    // has `d <- 4` -- so the chunk the revert was issued for has a twin with
+    // the same coordinates under the new path. It is kept out of the
+    // working tree so that Save As raises no overwrite prompt.
+    const otherPath = `${projectDir()}/other.R`;
+    const otherLines = SEED_LINES.map((line) => (line === 'd <- 4' ? 'd <- 44' : line));
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${otherLines.map(rStringLiteral).join(', ')}), ${rPathLiteral(otherPath)})`,
+    );
+    await commitAll(page, 'other', [otherPath]);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(otherPath)}))`);
+
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(5);
+
+    // Hold every base fetch: the revert's, then the one Save As triggers.
+    // Once released, the revert must not have restored other.R's `d <- 44`.
+    const parked: Route[] = [];
+    const park = async (route: Route): Promise<void> => {
+      parked.push(route);
+    };
+    await page.route('**/git_diff_base_contents*', park);
+    try {
+      await executeCommand(page, 'vcsRevertChange');
+      await expect.poll(() => parked.length, { timeout: 30000 }).toBeGreaterThan(0);
+
+      await executeCommand(page, 'saveSourceDocAs');
+      const fileName = page.locator('#file_dialog_name_prompt');
+      await expect(fileName).toBeVisible({ timeout: 30000 });
+      await fileName.fill(otherPath);
+      await page.locator('#rstudio_file_accept_save').click();
+      await expect(
+        page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']"),
+      ).toContainText('other.R', { timeout: 30000 });
+      await expect.poll(() => parked.length, { timeout: 30000 }).toBeGreaterThan(1);
+
+      for (const route of parked.splice(0)) await route.fallback();
+    } finally {
+      await page.unroute('**/git_diff_base_contents*', park);
+      for (const route of parked.splice(0)) await route.fallback().catch(() => {});
+    }
+
+    // the new path's base arrives and is diffed against the untouched buffer
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    expect(await editor.getLine(4)).toBe('d <- 40');
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(otherPath)}))`);
+    await commitAll(page, 'remove other', [otherPath]);
   });
 
   test('closes the peek when the index version it shows is replaced', async ({
