@@ -399,27 +399,10 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps, bool
       }
    }
 
-   // Install the CRAN source packages first. If a binary package depends on one of these, the
-   // binary install would otherwise pull it in as a binary, and renv then treats the source
-   // request as already satisfied (install.packages() would rebuild it, but needlessly).
-   if (!cranSourcePackages.empty())
-   {
-      std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
-
-      if (isRenv)
-      {
-         cmd += "options(pkgType = 'source'); renv::install(c(" + pkgList + "))\n\n";
-      }
-      else
-      {
-         cmd += "utils::install.packages(c(" + pkgList + "), ";
-         cmd += "type = 'source')\n\n";
-      }
-   }
-
-   // Install the remaining CRAN packages with a single call. Note that we do not pass the repos
-   // option to install.packages() since default CRAN repos are already set in the session via
-   // an earlier call to .rs.CRANDownloadOptionsString().
+   // Install the CRAN packages with a single call. Note that we do not pass the repos option to
+   // install.packages() since default CRAN repos are already set in the session via an earlier
+   // call to .rs.CRANDownloadOptionsString(). These go first so that dependencies shared with
+   // the source set below are installed as binaries.
    if (!cranPackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
@@ -431,6 +414,25 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps, bool
       else
       {
          cmd += "utils::install.packages(c(" + pkgList + "))\n\n";
+      }
+   }
+
+   // Install the CRAN source packages. The type is passed to renv::install() rather than set
+   // via options(pkgType), which would leak into later calls in the same script. rebuild = TRUE
+   // is needed because the binary install above may already have pulled in a binary build of
+   // one of these packages, and renv would otherwise link that back in from its cache.
+   if (!cranSourcePackages.empty())
+   {
+      std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
+
+      if (isRenv)
+      {
+         cmd += "renv::install(c(" + pkgList + "), type = 'source', rebuild = TRUE)\n\n";
+      }
+      else
+      {
+         cmd += "utils::install.packages(c(" + pkgList + "), ";
+         cmd += "type = 'source')\n\n";
       }
    }
 

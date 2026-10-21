@@ -90,30 +90,33 @@ TEST(SessionDependenciesTest, CombinedInstallScriptIsWellFormed)
              "utils::install.packages(c('first','second'))\n\n");
 }
 
-// Source packages go first: a binary package depending on one of them would
-// otherwise pull in a binary build, which renv then keeps.
-TEST(SessionDependenciesTest, CombinedInstallScriptInstallsSourcePackagesFirst)
+// Binary packages go first, so that dependencies shared with the source set
+// are installed as binaries rather than compiled.
+TEST(SessionDependenciesTest, CombinedInstallScriptInstallsSourcePackagesSeparately)
 {
    std::vector<Dependency> deps = {
-      cranDependency("binary"),
-      cranDependency("compiled", true)
+      cranDependency("compiled", true),
+      cranDependency("binary")
    };
 
    EXPECT_EQ(buildCombinedInstallScript(deps, false),
-             "utils::install.packages(c('compiled'), type = 'source')\n\n"
-             "utils::install.packages(c('binary'))\n\n");
+             "utils::install.packages(c('binary'))\n\n"
+             "utils::install.packages(c('compiled'), type = 'source')\n\n");
 }
 
+// The source type is passed to renv::install() rather than set via
+// options(pkgType), which would leak into the other call. rebuild = TRUE
+// stops renv from linking in a binary build the first call pulled in.
 TEST(SessionDependenciesTest, CombinedInstallScriptUsesRenvWhenActive)
 {
    std::vector<Dependency> deps = {
-      cranDependency("binary"),
-      cranDependency("compiled", true)
+      cranDependency("compiled", true),
+      cranDependency("binary")
    };
 
    EXPECT_EQ(buildCombinedInstallScript(deps, true),
-             "options(pkgType = 'source'); renv::install(c('compiled'))\n\n"
-             "renv::install(c('binary'))\n\n");
+             "renv::install(c('binary'))\n\n"
+             "renv::install(c('compiled'), type = 'source', rebuild = TRUE)\n\n");
 }
 
 // renv projects install everything together even when the individual-install
