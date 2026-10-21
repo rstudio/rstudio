@@ -6,6 +6,7 @@
 - ([#19142](https://github.com/rstudio/rstudio/issues/19142)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
 
 ### Fixed
+- ([#19165](https://github.com/rstudio/rstudio/issues/19165)): Improved vertical alignment of text buttons in the Packages toolbar and search fields on Windows.
 - ([#19167](https://github.com/rstudio/rstudio/issues/19167)): The package tables in renv Snapshot and Restore dialogs now follow the dark theme.
 - ([#19117](https://github.com/rstudio/rstudio/issues/19117)): Inline data frame output in R Markdown and Quarto documents, and the Data Viewer, now display runs of spaces in cell values as-is instead of collapsing them to a single space; the Data Viewer also shows embedded newlines and tabs escaped (`\n`, `\t`) rather than as a space.
 - ([#19198](https://github.com/rstudio/rstudio/issues/19198)): Fixed an issue where loading matplotlib via reticulate failed with `TypeError: use() got an unexpected keyword argument 'warn'` on matplotlib 3.3 through 3.8 when a non-Agg backend was configured (e.g. via `MPLBACKEND`), which could also prevent TensorFlow and Keras from initializing in RStudio.
