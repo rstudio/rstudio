@@ -516,18 +516,15 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       if (rowCount <= 0)
          return;
 
+      // A tbody emptied below is removed, so the next one is always first.
       NodeList<TableSectionElement> tBodies = table_.getTBodies();
-      for (int i = 0; i < tBodies.getLength(); i++)
-      {
-         rowCount = removeTopRows(tBodies.getItem(i), rowCount);
-         if (rowCount == 0)
-            return;
-      }
+      while (rowCount > 0 && tBodies.getLength() > 0)
+         rowCount = removeTopRows(tBodies.getItem(0), rowCount);
    }
 
    private int removeTopRows(TableSectionElement tbody, int rowCount)
    {
-      while (rowCount > 0 && tbody.getRows().getLength() >= 0)
+      while (rowCount > 0 && tbody.getRows().getLength() > 0)
       {
          TableRowElement topRow = tbody.getRows().getItem(0);
          if (codec_.isValueRow(topRow))
