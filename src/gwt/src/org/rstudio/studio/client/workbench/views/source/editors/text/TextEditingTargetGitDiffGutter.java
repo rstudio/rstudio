@@ -177,8 +177,21 @@ public class TextEditingTargetGitDiffGutter
 
       if (gutter_ == null)
          attach();
-      else if (!StringUtil.equals(basePath_, sentinel_.getPath()))
+      else if (!StringUtil.equals(basePath_, sentinel_.getPath()) ||
+               !StringUtil.equals(baseEncoding_, currentEncoding()))
          refresh();
+   }
+
+   // Reopen with Encoding replaces the document's contents and encoding
+   // without a save, so the base has to be re-fetched (and re-decoded).
+   public void documentReloaded()
+   {
+      sync();
+   }
+
+   private String currentEncoding()
+   {
+      return StringUtil.notNull(sentinel_.getEncoding());
    }
 
    private void attach()
@@ -256,12 +269,14 @@ public class TextEditingTargetGitDiffGutter
          return;
 
       final String path = sentinel_.getPath();
-      if (!StringUtil.equals(basePath_, path))
+      final String encoding = currentEncoding();
+      if (!StringUtil.equals(basePath_, path) || !StringUtil.equals(baseEncoding_, encoding))
       {
-         // The old file's base must not outlive its path (Save As): a revert
-         // in the gap before the new base arrives would restore the wrong
-         // file's contents.
+         // The old base must not outlive the path (Save As) or the encoding
+         // (Reopen with Encoding) it was fetched for: a revert in the gap
+         // before the new one arrives would restore the wrong contents.
          basePath_ = path;
+         baseEncoding_ = encoding;
          setBase(null);
       }
 
@@ -270,7 +285,7 @@ public class TextEditingTargetGitDiffGutter
 
       server_.gitDiffBaseContents(
             path,
-            StringUtil.notNull(sentinel_.getEncoding()),
+            encoding,
             new ServerRequestCallback<GitDiffBaseContents>()
             {
                @Override
@@ -278,6 +293,13 @@ public class TextEditingTargetGitDiffGutter
                {
                   if (token.isInvalid() || gutter_ == null)
                      return;
+
+                  // the encoding can change under a request in flight
+                  if (!StringUtil.equals(encoding, currentEncoding()))
+                  {
+                     refresh();
+                     return;
+                  }
 
                   setBase(response.isTracked() ? response.getContents() : null);
                }
@@ -298,6 +320,7 @@ public class TextEditingTargetGitDiffGutter
    private AceEditor splitEditor_;
    private HandlerRegistration splitFocusRegistration_;
    private String basePath_;
+   private String baseEncoding_;
    private String baseContents_;
    private boolean attaching_;
    private boolean dismissed_;

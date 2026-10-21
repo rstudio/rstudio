@@ -4674,7 +4674,9 @@ public class TextEditingTarget implements
       final Command action = () -> {
          withChooseEncoding(
                docUpdateSentinel_.getEncoding(),
-               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
+               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(
+                     encoding,
+                     () -> gitDiffGutter_.documentReloaded()));
       };
 
       // NOTE: we previously attempted to save any existing document diffs

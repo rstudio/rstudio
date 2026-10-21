@@ -540,17 +540,20 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
   test('keeps control characters the editor keeps', async ({ rstudioPage: page }) => {
     // U+001F survives document loading, so it has to survive the base too,
-    // or the line reads as modified and a revert would drop the character
+    // or the line reads as modified and a revert would drop the character.
+    // ESC, on the other hand, is stripped when a document loads, so the base
+    // must drop it as well (an ANSI-colored log is the usual case).
     const ctrlPath = `${projectDir()}/ctrl.txt`;
     await executeInConsoleChecked(
       page,
-      `writeBin(charToRaw("a\u001fb\nc\n"), ${rPathLiteral(ctrlPath)})`,
+      `writeBin(charToRaw("a\u001fb\nc\u001b[31md\n"), ${rPathLiteral(ctrlPath)})`,
     );
     await commitAll(page, 'ctrl', [ctrlPath]);
 
     await openFile(page, ctrlPath);
     const editor = new AceEditor(page, '');
     await expect.poll(() => editor.getLine(0)).toBe('a\u001fb');
+    await expect.poll(() => editor.getLine(1)).toBe('c[31md');
     await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
     const deadline = Date.now() + 3000;
     while (Date.now() < deadline) {
@@ -673,6 +676,125 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await documentCloseAllNoSave(page);
     await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(rmdPath)}))`);
     await commitAll(page, 'remove rmd', [rmdPath]);
+  });
+
+  test('re-fetches the base when the document is reopened with another encoding', async ({
+    rstudioPage: page,
+  }) => {
+    // UTF-8 bytes reopened as Latin-1 decode differently in the buffer; the
+    // base has to be decoded the same way or every non-ASCII line reads as
+    // modified (and a revert would restore the UTF-8 decoding)
+    const latinPath = `${projectDir()}/latin.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeBin(charToRaw(enc2utf8("x <- \\"caf\\u00e9\\"\\n")), ${rPathLiteral(latinPath)})`,
+    );
+    await commitAll(page, 'latin', [latinPath]);
+
+    await openFile(page, latinPath);
+    const editor = new AceEditor(page, '');
+    await expect.poll(() => editor.getLine(0)).toBe('x <- "caf\u00e9"');
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    await executeCommand(page, 'reopenSourceDocWithEncoding');
+    const encodings = page.locator('select[aria-label="Encodings"]');
+    await expect(encodings).toBeVisible({ timeout: 30000 });
+    await encodings.selectOption({ label: 'ISO-8859-1' });
+    await page.locator('#rstudio_dlg_ok').click();
+
+    // the two UTF-8 bytes of e-acute, read as Latin-1
+    await expect.poll(() => editor.getLine(0), { timeout: 30000 }).toBe('x <- "caf\u00c3\u00a9"');
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      expect(await gutterMarkers(page)).toEqual({});
+      await page.waitForTimeout(250);
+    }
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('keeps a notebook chunk\'s output widget when a peek lands on its row', async ({
+    rstudioPage: page,
+  }) => {
+    // Ace keeps one line widget per row and the notebook persists chunk
+    // output by enumerating them, so a peek placed on a chunk's output row
+    // would hide that output from the next save.
+    // Inline chunk execution needs rmarkdown loadable, nothing more; the
+    // harness's ensurePackages also walks rmarkdown's optional runtime
+    // dependencies, which this does not depend on.
+    const consoleActions = new ConsolePaneActions(page);
+    const loadable = await consoleActions.evalRLogical('requireNamespace("rmarkdown", quietly = TRUE)');
+    test.skip(loadable !== true, 'rmarkdown is not installed');
+
+    const nbPath = `${projectDir()}/nb.Rmd`;
+    const seed = ['---', 'title: x', '---', '', '```{r}', '1 + 1', '```', 'after', 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await commitAll(page, 'nb', [nbPath]);
+    // the line after the chunk is removed: the deletion seam sits right
+    // below the chunk's closing fence, where its output widget lives
+    const edited = seed.filter((line) => line !== 'after');
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+
+    await openFile(page, nbPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 7: [DELETED] });
+
+    const widgets = () =>
+      page.evaluate(() => {
+        type Widget = { row: number; type?: string; el?: HTMLElement };
+        const editor = window.rstudio?.documents.activeEditor() as unknown as {
+          session: { lineWidgets?: (Widget | undefined)[] };
+        } | null;
+        return (editor?.session.lineWidgets ?? [])
+          .filter((w): w is Widget => !!w)
+          .map((w) => ({
+            row: w.row,
+            type: w.type ?? (w.el?.classList.contains('ace_git-peek') ? 'peek' : '?'),
+          }));
+      });
+
+    // run the chunk so its output widget occupies the fence row (6)
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect.poll(widgets, { timeout: 60000 }).toContainEqual({ row: 6, type: 'ChunkOutput' });
+
+    const cell = page.locator('.ace_gutter-cell.ace_git-deleted').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
+
+    // the peek took the row below the seam instead, and the output is intact
+    expect(await widgets()).toEqual(
+      expect.arrayContaining([{ row: 6, type: 'ChunkOutput' }, { row: 7, type: 'peek' }]),
+    );
+
+    // Saving with the peek open, then reopening, still restores the output.
+    // Save needs a dirty document, so touch the title (its own chunk, so the
+    // peek stays), and wait on the save RPC itself: a notebook stays dirty
+    // after a save by design, so the dirty bit is no signal here.
+    await editor.gotoLine(2);
+    await editor.navigateLineEnd();
+    await editor.insert('y');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [MODIFIED], 7: [DELETED] });
+    await expect(page.locator(PEEK)).toBeVisible();
+    const saved = page.waitForResponse((r) => r.url().includes('save_document'));
+    await executeCommand(page, 'saveSourceDoc');
+    await saved;
+    await documentCloseAllNoSave(page);
+    await openFile(page, nbPath);
+    await expect.poll(widgets, { timeout: 60000 }).toContainEqual({ row: 6, type: 'ChunkOutput' });
+
+    await documentCloseAllNoSave(page);
+    await executeInConsoleChecked(
+      page,
+      `invisible(system2("git", c(${gitC()}, "checkout", "--", "nb.Rmd")))`,
+    );
   });
 
   test('drops the old base the moment Save As changes the path', async ({ rstudioPage: page }) => {

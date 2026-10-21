@@ -50,7 +50,10 @@ var UPDATE_DELAY_MS = 150;
 // Bail out on pathological inputs rather than hang the UI thread.
 var MAX_COMPUTATION_MS = 250;
 
+// Mirrors how the editor loads a document (AceEditor.doSetCode strips
+// escape characters) and how Ace's Document splits lines.
 function splitLines(text) {
+   text = text.replace(/\u001b/g, "");
    return text === "" ? [] : text.split(/\r\n|\r|\n/);
 }
 
@@ -437,10 +440,37 @@ var GitDiffGutter = function(editor) {
       return session.widgetManager;
    };
 
+   // Where a peek for the chunk can go. Ace keeps one line widget per row and
+   // RStudio enumerates them to persist notebook chunk output, so a peek must
+   // not displace an existing widget: it goes below the last changed line (or
+   // where removed lines were), else on the other side of the change, else
+   // nowhere.
+   this.peekRow = function(chunk) {
+      var session = this.editor.session;
+      var candidates = isDeletion(chunk)
+         ? [chunk.new.start.row - 1, chunk.new.start.row]
+         : [chunk.new.end.row - 1, chunk.new.start.row - 1];
+
+      for (var i = 0; i < candidates.length; i++)
+      {
+         var row = candidates[i];
+         if (row < 0 || row >= session.getLength())
+            continue;
+         if (session.lineWidgets && session.lineWidgets[row])
+            continue;
+         return row;
+      }
+      return null;
+   };
+
    // Shows the base version of a change in a line widget below it, with a
-   // button to revert the change.
+   // button to revert the change. Returns false if there is no room for it.
    this.showPeek = function(chunk) {
       this.closePeek();
+
+      var row = this.peekRow(chunk);
+      if (row == null)
+         return false;
 
       var self = this;
       var oldLines = this.baseLines.slice(chunk.old.start.row, chunk.old.end.row);
@@ -497,11 +527,10 @@ var GitDiffGutter = function(editor) {
          el.appendChild(lines);
       }
 
-      // below the last changed line; for a deletion, where the lines were
-      var row = isDeletion(chunk) ? Math.max(chunk.new.start.row - 1, 0) : chunk.new.end.row - 1;
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
       this.peek = { chunk: chunk, widget: widget };
+      return true;
    };
 
    this.closePeek = function() {
