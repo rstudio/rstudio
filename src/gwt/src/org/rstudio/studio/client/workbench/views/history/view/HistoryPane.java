@@ -233,7 +233,9 @@ public class HistoryPane extends WorkbenchPane
 
          boolean rightToLeft = mode_.getValue() < mode.getValue();
 
-         if (mode != Mode.Recent && mode_ != Mode.Recent)
+         boolean slide = mode != Mode.Recent && mode_ != Mode.Recent &&
+                         !userPrefs_.reducedMotion().getValue();
+         if (slide)
             animate(current,
                     target,
                     rightToLeft,
@@ -320,8 +322,7 @@ public class HistoryPane extends WorkbenchPane
       };
       finishSlide_ = finish;
 
-      int duration = userPrefs_.reducedMotion().getValue() ? 0 : 300;
-      mainPanel_.animate(duration, new AnimationCallback()
+      mainPanel_.animate(300, new AnimationCallback()
       {
          public void onAnimationComplete()
          {
