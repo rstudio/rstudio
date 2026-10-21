@@ -66,12 +66,19 @@
    }
    tools::write_PACKAGES(contrib, type = "source")
 
+   # on Windows a file URL needs a third slash before the drive (file:///C:/...)
+   repoDir <- file.path(base, "repo")
+   reposUrl <- if (.Platform$OS.type == "windows")
+      paste0("file:///", normalizePath(repoDir, winslash = "/"))
+   else
+      paste0("file://", repoDir)
+
    list(
       base     = base,
       pkgName  = pkgNames[[1L]],   # first package, for single-package tests
       pkgNames = pkgNames,
       tarballs = tarballs,
-      reposUrl = paste0("file://", file.path(base, "repo"))
+      reposUrl = reposUrl
    )
 }
 

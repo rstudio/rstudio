@@ -87,8 +87,20 @@ describe('DesktopCallback', () => {
   });
 
   describe('setPendingRVersion', () => {
-    // a stand-in R that exists on disk; querying it is stubbed
-    const rPath = process.execPath;
+    // a stand-in R that exists on disk; querying it is stubbed. It's named
+    // Rterm.exe because on Windows any other name is replaced with Rterm.exe
+    let rDir = '';
+    let rPath = '';
+
+    before(() => {
+      rDir = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'gwt-callback-r-')));
+      rPath = path.join(rDir, 'Rterm.exe');
+      writeFileSync(rPath, '');
+    });
+
+    after(() => {
+      rmSync(rDir, { recursive: true, force: true });
+    });
 
     afterEach(() => {
       callback.collectPendingRVersion();

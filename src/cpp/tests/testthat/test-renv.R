@@ -92,7 +92,11 @@ test_that("a restore is offered only when the lockfile records packages", {
 })
 
 test_that("the lockfile is found where renv looks for it", {
-   
+
+   # the same path, however its separators are written (Windows mixes / and \)
+   expect_same_path <- function(actual, expected)
+      expect_identical(chartr("\\", "/", actual), chartr("\\", "/", expected))
+
    project <- tempfile("renv-project-")
    dir.create(project)
    on.exit(unlink(project, recursive = TRUE), add = TRUE)
@@ -107,20 +111,20 @@ test_that("the lockfile is found where renv looks for it", {
          do.call(Sys.setenv, as.list(set))
    }, add = TRUE)
    
-   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "renv.lock"))
+   expect_same_path(.rs.renv.lockfilePath(project), file.path(project, "renv.lock"))
    
    # relative to the project
    Sys.setenv(RENV_PATHS_LOCKFILE = "lockfiles/dev.lock")
-   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "lockfiles/dev.lock"))
+   expect_same_path(.rs.renv.lockfilePath(project), file.path(project, "lockfiles/dev.lock"))
    
    # a trailing slash names a directory holding renv.lock
    Sys.setenv(RENV_PATHS_LOCKFILE = "lockfiles/")
-   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "lockfiles/renv.lock"))
+   expect_same_path(.rs.renv.lockfilePath(project), file.path(project, "lockfiles/renv.lock"))
    
    # absolute
    lockfile <- file.path(project, "elsewhere.lock")
    Sys.setenv(RENV_PATHS_LOCKFILE = lockfile)
-   expect_identical(.rs.renv.lockfilePath(project), lockfile)
+   expect_same_path(.rs.renv.lockfilePath(project), lockfile)
    
    writeLines('{"R": {"Version": "4.3.2"}}', lockfile)
    expect_identical(.rs.renv.lockfileRVersion(.rs.renv.readLockfile(project)), "4.3.2")
@@ -129,31 +133,31 @@ test_that("the lockfile is found where renv looks for it", {
    # the active profile's lockfile, named by the environment or the project
    profileLockfile <- file.path(project, "renv", "profiles", "dev", "renv.lock")
    Sys.setenv(RENV_PROFILE = "dev")
-   expect_identical(.rs.renv.lockfilePath(project), profileLockfile)
+   expect_same_path(.rs.renv.lockfilePath(project), profileLockfile)
    
    Sys.unsetenv("RENV_PROFILE")
    dir.create(file.path(project, "renv"))
    writeLines("dev", file.path(project, "renv", "profile"))
-   expect_identical(.rs.renv.lockfilePath(project), profileLockfile)
+   expect_same_path(.rs.renv.lockfilePath(project), profileLockfile)
    
    # the default profile uses the project's own lockfile
    writeLines("default", file.path(project, "renv", "profile"))
-   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "renv.lock"))
+   expect_same_path(.rs.renv.lockfilePath(project), file.path(project, "renv.lock"))
    
    # the renv directory can be moved, and the lockfile (and profile) move with it
    Sys.setenv(RENV_PATHS_RENV = "foo/renv")
-   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "foo", "renv.lock"))
+   expect_same_path(.rs.renv.lockfilePath(project), file.path(project, "foo", "renv.lock"))
    
    dir.create(file.path(project, "foo", "renv"), recursive = TRUE)
    writeLines("dev", file.path(project, "foo", "renv", "profile"))
-   expect_identical(
+   expect_same_path(
       .rs.renv.lockfilePath(project),
       file.path(project, "foo", "renv", "profiles", "dev", "renv.lock")
    )
    
    elsewhere <- file.path(project, "elsewhere", "renv")
    Sys.setenv(RENV_PATHS_RENV = elsewhere)
-   expect_identical(.rs.renv.lockfilePath(project), file.path(project, "elsewhere", "renv.lock"))
+   expect_same_path(.rs.renv.lockfilePath(project), file.path(project, "elsewhere", "renv.lock"))
    
 })
 
