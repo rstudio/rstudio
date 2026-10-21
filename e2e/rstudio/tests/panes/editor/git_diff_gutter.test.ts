@@ -8,7 +8,7 @@
 // R-side so this also works in Server mode, where the rsession may not share a
 // filesystem with the test runner.
 import { test, expect } from '@fixtures/rstudio.fixture';
-import type { Locator, Page } from '@playwright/test';
+import type { Locator, Page, Route } from '@playwright/test';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
@@ -1198,6 +1198,96 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       );
       await documentCloseAllNoSave(page);
     }
+  });
+
+  test('drops the base, and the revert, when the base cannot be re-fetched', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // Open the peek with focus in the console, so that the re-fetch the
+    // click's editor focus triggers has come and gone before fetches are
+    // made to fail: only the Revert's own fetch is meant to.
+    await executeInConsoleChecked(page, 'invisible(NULL)');
+    const focusFetch = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
+    const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+    const box = (await cell.boundingBox())!;
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    const peek = page.locator(PEEK);
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await focusFetch;
+    await expect(peek).toBeVisible();
+
+    // Answer the re-fetch with an error: with no way of knowing what the
+    // index holds, nothing may be reverted, and the markers (and the peek,
+    // which shows the base) go until a fetch succeeds again.
+    const failFetch = async (route: Route): Promise<void> => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ result: null, error: { code: 100, message: 'git failed' } }),
+      });
+    };
+    await page.route('**/git_diff_base_contents*', failFetch);
+    try {
+      await peek.locator(PEEK_REVERT).click();
+      await expect(peek).toHaveCount(0, { timeout: 30000 });
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+      expect(await new AceEditor(page, '').getLine(4)).toBe('d <- 40');
+    } finally {
+      await page.unroute('**/git_diff_base_contents*', failFetch);
+    }
+
+    // the next Git refresh fetches the base again and the markers return
+    await executeCommand(page, 'activateVcs');
+    await executeCommand(page, 'vcsRefresh');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('drops a revert that an edit overtakes while the base is re-fetched', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(5);
+    await editor.navigateLineEnd();
+
+    // Hold the re-fetch back, type into the very line the revert is for,
+    // then let the fetch through. The chunk still spans the same rows, so
+    // only the edit itself can tell the late revert to stand down; the
+    // typed text must survive.
+    const parked: Route[] = [];
+    const park = async (route: Route): Promise<void> => {
+      parked.push(route);
+    };
+    await page.route('**/git_diff_base_contents*', park);
+    try {
+      await executeCommand(page, 'vcsRevertChange');
+      await expect.poll(() => parked.length, { timeout: 30000 }).toBeGreaterThan(0);
+      await editor.insert('1');
+      await expect.poll(() => editor.getLine(4)).toBe('d <- 401');
+
+      const fetched = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
+      for (const route of parked.splice(0)) await route.continue();
+      await fetched;
+    } finally {
+      await page.unroute('**/git_diff_base_contents*', park);
+      for (const route of parked.splice(0)) await route.continue().catch(() => {});
+    }
+    expect(await editor.getLine(4)).toBe('d <- 401');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // asked again, with nothing in the way, the revert goes through
+    await executeCommand(page, 'vcsRevertChange');
+    await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+
+    await documentCloseAllNoSave(page);
   });
 
   test('closes the peek when the index version it shows is replaced', async ({

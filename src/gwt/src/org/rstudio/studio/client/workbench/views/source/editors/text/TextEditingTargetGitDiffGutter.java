@@ -251,7 +251,8 @@ public class TextEditingTargetGitDiffGutter
    // A revert first re-fetches the base, so that it restores the index as it
    // is rather than as it was when last fetched (the focus-driven re-fetch is
    // delayed, and the index can move under an open document meanwhile). The
-   // callback runs once the fetch has been applied, or failed.
+   // callback runs once the fetch has been applied -- or has failed, in which
+   // case the base has been dropped and there is nothing left to revert to.
    private void refreshBase(JavaScriptObject callback)
    {
       baseCallbacks_.add(callback);
@@ -353,8 +354,14 @@ public class TextEditingTargetGitDiffGutter
                public void onError(ServerError error)
                {
                   Debug.logError(error);
-                  if (!token.isInvalid())
-                     runBaseCallbacks();
+                  if (token.isInvalid() || gutter_ == null)
+                     return;
+
+                  // A base that could not be re-fetched is not one to keep
+                  // showing, let alone revert to; the next refresh (focus,
+                  // Git operation) brings the markers back.
+                  setBase(null);
+                  runBaseCallbacks();
                }
             });
    }

@@ -92,9 +92,10 @@ var GitDiffGutter = function(editor) {
    this.ignoreWhitespace = false;
    this.peek = null;
    this.baseRefresher = null;
+   this.revision = 0;
 
    this.onAfterRender = this.onAfterRender.bind(this);
-   this.scheduleUpdate = this.scheduleUpdate.bind(this);
+   this.onChange = this.onChange.bind(this);
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
 
@@ -105,7 +106,7 @@ var GitDiffGutter = function(editor) {
    dom.addCssClass(gutter.element, GUTTER_CLASS);
    this.resetGutterPadding();
    gutter.on("afterRender", this.onAfterRender);
-   editor.on("change", this.scheduleUpdate);
+   editor.on("change", this.onChange);
 
    // Capture phase, so these run ahead of Ace's own gutter handlers: the
    // breakpoint toggle hangs off mousedown, and the fold toggle off click and
@@ -170,6 +171,26 @@ var GitDiffGutter = function(editor) {
          this.baseRefresher(callback);
       else
          callback();
+   };
+
+   // Runs a revert once the base is current, unless the document was edited
+   // in the meantime: an edit within the chunk's rows leaves the chunk's
+   // coordinates intact, so revertChunk could not tell and would erase it.
+   // The user still sees what they typed and can ask again.
+   this.revertWhenFresh = function(revert) {
+      var self = this;
+      var revision = this.revision;
+      this.withFreshBase(function() {
+         if (self.revision === revision)
+            revert();
+      });
+   };
+
+   // Every edit bumps the revision, so that work deferred across a round
+   // trip can tell whether the document it was meant for is still there.
+   this.onChange = function() {
+      this.revision++;
+      this.scheduleUpdate();
    };
 
    this.scheduleUpdate = function() {
@@ -402,9 +423,7 @@ var GitDiffGutter = function(editor) {
    };
 
    // The change is the one under the cursor now; the revert itself waits
-   // for the base, and is dropped if the change is no longer there by then
-   // (revertChunk looks it up afresh), so a late revert never acts on an
-   // edit made in the meantime.
+   // for the base (see revertWhenFresh).
    this.revertChangeAtCursor = function() {
       this.flushUpdate();
       var chunk = this.chunkAt(this.editor.getCursorPosition().row);
@@ -412,7 +431,7 @@ var GitDiffGutter = function(editor) {
          return false;
 
       var self = this;
-      this.withFreshBase(function() {
+      this.revertWhenFresh(function() {
          self.revertChunk(chunk);
       });
       return true;
@@ -550,7 +569,7 @@ var GitDiffGutter = function(editor) {
          // closes it (see setBase), and reverting to lines the user never
          // saw would be wrong even where a chunk still sits on these rows.
          var peek = self.peek;
-         self.withFreshBase(function() {
+         self.revertWhenFresh(function() {
             if (self.peek === peek)
                self.revertChunk(peek.chunk);
          });
@@ -688,7 +707,7 @@ var GitDiffGutter = function(editor) {
       }
 
       this.closePeek();
-      this.editor.off("change", this.scheduleUpdate);
+      this.editor.off("change", this.onChange);
 
       var gutterEl = this.editor.renderer.$gutter;
       gutterEl.removeEventListener("mousedown", this.onGutterMouseDown, true);
