@@ -13,7 +13,16 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
-import { clearPref, documentCloseAllNoSave, executeCommand, isCommandEnabled, openProject, setPref } from '@utils/commands';
+import {
+  clearPref,
+  documentCloseAllNoSave,
+  documentOpen,
+  executeCommand,
+  isCommandEnabled,
+  openProject,
+  resetSourcePaneState,
+  setPref,
+} from '@utils/commands';
 import { openFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
@@ -36,6 +45,11 @@ const PEEK = '.ace_git-peek';
 const PEEK_LABEL = '.ace_git-peek-label';
 const PEEK_LINE = '.ace_git-peek-line';
 const PEEK_REVERT = '.ace_git-peek-revert';
+
+// The main source column and any extra ones (see SourceColumnManager).
+const MAIN_COLUMN = '#rstudio_Source_pane';
+const EXTRA_COLUMNS = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
+const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-selected']";
 
 const SEED_LINES = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5', 'f <- 6', 'g <- 7', 'h <- 8'];
 
@@ -1613,6 +1627,56 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('refreshes a document showing in an inactive source column', async ({
+    rstudioPage: page,
+  }) => {
+    // Activating a column deactivates the document shown in the previous
+    // one, which stays on screen; a commit must reach its markers without a
+    // click back into that column.
+    const otherPath = `${projectDir()}/other.R`;
+    await executeInConsoleChecked(page, `writeLines("o <- 1", ${rPathLiteral(otherPath)})`);
+    await commitAll(page, 'other', [otherPath]);
+
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    await executeCommand(page, 'newSourceColumn');
+    await expect(page.locator(`${EXTRA_COLUMNS} .ace_editor`)).toHaveCount(1);
+    try {
+      // the new column is active, so other.R opens there; edit and save it
+      await documentOpen(page, otherPath);
+      const otherView = page.locator(`${EXTRA_COLUMNS} .ace_editor`).filter({ hasText: 'o <- 1' });
+      await expect(otherView).toHaveCount(1);
+      await expect.poll(() => viewMarkers(otherView), { timeout: 30000 }).toEqual({});
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(1);
+      await editor.navigateLineEnd();
+      await editor.insert('0');
+      await expect.poll(() => viewMarkers(otherView), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+      await executeCommand(page, 'saveSourceDoc');
+      await expect
+        .poll(() => page.evaluate(() => window.rstudio!.documents.active()?.dirty))
+        .toBe(false);
+
+      // back to the main column: script.R is the active document, other.R
+      // is deactivated but still in view
+      await page.locator(`${MAIN_COLUMN} ${SELECTED_DOC_TAB}`).click();
+      await expect
+        .poll(() => page.evaluate(() => window.rstudio!.documents.active()?.path))
+        .toContain('script.R');
+
+      await commitAll(page, 'other edit', [otherPath]);
+      await executeCommand(page, 'activateVcs');
+      await executeCommand(page, 'vcsRefresh');
+      await expect.poll(() => viewMarkers(otherView), { timeout: 30000 }).toEqual({});
+      expect(await gutterMarkers(page)).toEqual(EDITED_MARKERS);
+    } finally {
+      await resetSourcePaneState(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(otherPath)}))`);
+      await commitAll(page, 'remove other', [otherPath]);
+    }
+  });
+
   test('clears once the changes are committed, and tracks the new base', async ({
     rstudioPage: page,
   }) => {
@@ -1636,6 +1700,94 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await editor.navigateLineEnd();
     await editor.insert('0');
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+  });
+
+  test('marks a lone change in the middle, and changes at both ends', async ({
+    rstudioPage: page,
+  }) => {
+    // Only the lines between the first and last difference are diffed, and
+    // the chunks are shifted back into place: a lone insertion or deletion
+    // leaves the provider nothing on one side, and changes on the first and
+    // last lines leave nothing to trim.
+    await documentCloseAllNoSave(page);
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(4);
+    await editor.navigateLineEnd();
+    await editor.insert('\nx <- 0');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [ADDED] });
+
+    // remove `e <- 5`, now on row 6; the wedge sits on the line that follows
+    await page.evaluate(() => {
+      type DocEditor = { session: { doc: { remove(range: object): void } } };
+      const editor = window.rstudio!.documents.activeEditor() as unknown as DocEditor;
+      editor.session.doc.remove({ start: { row: 6, column: 0 }, end: { row: 7, column: 0 } });
+    });
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [ADDED], 6: [DELETED] });
+
+    await editor.gotoLine(1);
+    await editor.navigateLineEnd();
+    await editor.insert('0');
+    await editor.gotoLine(8);
+    await editor.navigateLineEnd();
+    await editor.insert('0');
+    await expect
+      .poll(() => gutterMarkers(page), { timeout: 30000 })
+      .toEqual({ 0: [MODIFIED], 4: [ADDED], 6: [DELETED], 7: [MODIFIED] });
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('marks a wholesale replacement throughout', async ({ rstudioPage: page }) => {
+    // The provider spends its whole time budget refining a large replaced
+    // block character by character, and the spent budget used to read as a
+    // timed-out line alignment, leaving no markers at all. The diff is run
+    // again on per-line tokens to tell the two apart.
+    const bulkPath = `${projectDir()}/bulk.R`;
+    const count = 400;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("v%d <- %d", seq_len(${count}), seq_len(${count})), ${rPathLiteral(bulkPath)})`,
+    );
+    await commitAll(page, 'bulk', [bulkPath]);
+
+    try {
+      await openFile(page, bulkPath);
+      await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+      await page.evaluate((n) => {
+        type Editor = { selectAll(): void; insert(text: string): void };
+        const editor = window.rstudio!.documents.activeEditor() as unknown as Editor;
+        const lines: string[] = [];
+        for (let i = 1; i <= n; i++)
+          lines.push(`w${i} <- ${i * 2}`);
+        editor.selectAll();
+        editor.insert(lines.join('\n'));
+      }, count);
+
+      // every rendered row is marked modified
+      const rendered = (): Promise<{ cells: number; modified: number }> =>
+        page.evaluate((modifiedClass) => {
+          type Cell = { element: HTMLElement };
+          type GutterEditor = { renderer: { $gutterLayer: { $lines: { cells: Cell[] } } } };
+          const editor = window.rstudio!.documents.activeEditor() as unknown as GutterEditor;
+          const cells = editor.renderer.$gutterLayer.$lines.cells;
+          const modified = cells.filter((cell) => cell.element.classList.contains(modifiedClass));
+          return { cells: cells.length, modified: modified.length };
+        }, MODIFIED);
+      await expect
+        .poll(async () => {
+          const counts = await rendered();
+          return counts.cells > 10 && counts.modified === counts.cells;
+        }, { timeout: 30000 })
+        .toBe(true);
+    } finally {
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(bulkPath)}))`);
+      await commitAll(page, 'remove bulk', [bulkPath]);
+    }
   });
 
   test('is controlled by the preference', async ({ rstudioPage: page }) => {

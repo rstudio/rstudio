@@ -47,14 +47,18 @@ var MARKER_HIT_WIDTH = 6;
 // An edit is diffed before the frame that paints it: the diff is queued as a
 // microtask, so the markers move with the keystroke, while the many change
 // events of one operation (replace all, a reformat) are diffed once, after
-// it. A diff usually takes a millisecond or two; a document whose last diff
-// took longer than SLOW_DIFF_MS is instead diffed once typing pauses.
+// it. Only the lines between the first and last difference are handed to the
+// provider (see trimCommonLines), so a diff usually takes well under a
+// millisecond; a document whose last diff took longer than SLOW_DIFF_MS is
+// instead diffed once typing pauses.
 var SLOW_DIFF_MS = 20;
 var SLOW_UPDATE_DELAY_MS = 150;
 
 // Bail out on pathological inputs rather than hang the UI thread. The
 // provider does not say when it gave up; a timed-out line alignment comes
-// back as one change spanning both documents, with the budget spent.
+// back as one change spanning both documents, with the budget spent (see
+// computeChunks for how that is told apart from a document that did change
+// throughout).
 var MAX_COMPUTATION_MS = 250;
 
 // Peek text when none is supplied (the IDE passes translated strings in).
@@ -77,6 +81,78 @@ function splitLines(text) {
 // (git diff -w) is a matter of what the provider gets to compare.
 function stripWhitespace(line) {
    return line.replace(/\s+/g, "");
+}
+
+// The lines shared by both ends of the two documents, which the diff can
+// skip. The provider aligns smaller inputs (under 1,700 lines in total) with
+// a quadratic dynamic-programming pass, so a whole 300-800 line script costs
+// 3-20ms per keystroke; the lines between the first and last difference are
+// usually a handful. The matched suffix stops short of the prefix so that no
+// line is claimed by both.
+function trimCommonLines(base, lines) {
+   var n = Math.min(base.length, lines.length);
+
+   var prefix = 0;
+   while (prefix < n && base[prefix] === lines[prefix])
+      prefix++;
+
+   var suffix = 0;
+   while (suffix < n - prefix &&
+          base[base.length - 1 - suffix] === lines[lines.length - 1 - suffix])
+      suffix++;
+
+   return { prefix: prefix, suffix: suffix };
+}
+
+// Stands a token in for each line, the same token for identical lines. The
+// provider refines each change character by character, which is quadratic
+// in the characters of the change and of no use here (only the line ranges
+// are read), so a large replaced block spends the whole budget there; on
+// one-character tokens that work is negligible. The tokens come from the CJK
+// Unified Ideographs block, none of them whitespace: one code point per
+// distinct line, two once there are more than 20,992. The indentation goes
+// with the rest of the text, so the provider cannot use it to place a chunk
+// that could sit at more than one row.
+var TOKEN_FIRST = 0x4E00;
+var TOKEN_COUNT = 0x9FFF - TOKEN_FIRST + 1;
+
+function tokenFor(id) {
+   var token = "";
+   do
+   {
+      token += String.fromCharCode(TOKEN_FIRST + id % TOKEN_COUNT);
+      id = Math.floor(id / TOKEN_COUNT);
+   }
+   while (id > 0);
+
+   return token;
+}
+
+function tokenizeLines(base, lines) {
+   var ids = new Map();
+   var tokenize = function(line) {
+      var id = ids.get(line);
+      if (id == null)
+      {
+         id = ids.size;
+         ids.set(line, id);
+      }
+      return tokenFor(id);
+   };
+
+   return { base: base.map(tokenize), lines: lines.map(tokenize) };
+}
+
+function offsetChunks(chunks, rows) {
+   if (rows === 0)
+      return chunks;
+
+   return chunks.map(function(chunk) {
+      return {
+         old: new Range(chunk.old.start.row + rows, 0, chunk.old.end.row + rows, 0),
+         new: new Range(chunk.new.start.row + rows, 0, chunk.new.end.row + rows, 0)
+      };
+   });
 }
 
 function pluralize(n, noun) {
@@ -292,6 +368,13 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.computeChunks = function(base, lines) {
+      var common = trimCommonLines(base, lines);
+      if (common.prefix > 0 || common.suffix > 0)
+      {
+         base = base.slice(common.prefix, base.length - common.suffix);
+         lines = lines.slice(common.prefix, lines.length - common.suffix);
+      }
+
       // The provider cannot take an empty side (it asserts in its refinement
       // pass), but those cases have only one possible answer anyway.
       if (base.length === 0 || lines.length === 0)
@@ -299,30 +382,37 @@ var GitDiffGutter = function(editor, strings) {
          if (base.length === lines.length)
             return [];
 
-         return [{
+         return offsetChunks([{
             old: new Range(0, 0, base.length, 0),
             new: new Range(0, 0, lines.length, 0)
-         }];
+         }], common.prefix);
       }
 
       try
       {
          var DiffProvider = require("ace/ext/diff/providers/default").DiffProvider;
+         var options = { maxComputationTimeMs: MAX_COMPUTATION_MS };
          var started = Date.now();
-         var chunks = new DiffProvider().compute(base, lines, {
-            maxComputationTimeMs: MAX_COMPUTATION_MS
-         });
+         var chunks = new DiffProvider().compute(base, lines, options);
          this.lastDiffMs = Date.now() - started;
 
          // A timed-out line alignment is not a diff: it would mark every
-         // line changed and hand Revert the whole document. Better no
-         // markers. (The budget can also run out in the character-level
-         // refinement that follows a sound alignment, which is of no
-         // consequence here; the shape tells the two apart.)
+         // line changed and hand Revert the whole document. But a large
+         // replaced block looks the same, and spends the budget just as
+         // surely, in the character-level refinement that follows a sound
+         // alignment (quadratic in the block, and of no use here). The diff
+         // is run again on tokens, which leaves the budget to the alignment;
+         // only if that too gives up are there better no markers.
          if (this.lastDiffMs >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
-            return [];
+         {
+            var tokens = tokenizeLines(base, lines);
+            started = Date.now();
+            chunks = new DiffProvider().compute(tokens.base, tokens.lines, options);
+            if (Date.now() - started >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
+               return [];
+         }
 
-         return chunks;
+         return offsetChunks(chunks, common.prefix);
       }
       catch (error)
       {

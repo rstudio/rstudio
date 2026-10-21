@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.vcs.GitDiffBaseContents;
@@ -45,11 +46,11 @@ import com.google.inject.Provider;
 // diff against the live buffer is computed client-side as the user types.
 // A split editor view gets a gutter of its own, fed the same base.
 //
-// Only the active document fetches: a Git refresh reaches every open
-// document, and each fetch runs git on the session's main thread, so a
-// background document notes that its base may be stale and fetches when it is
-// next shown. A fetch names the base it already holds, and comes back empty
-// when the index still has that version.
+// Only documents on screen fetch: a Git refresh reaches every open document,
+// and each fetch runs git on the session's main thread, so a hidden document
+// notes that its base may be stale and fetches when it is next shown. A fetch
+// names the base it already holds, and comes back empty when the index still
+// has that version.
 public class TextEditingTargetGitDiffGutter
 {
    public TextEditingTargetGitDiffGutter(DocDisplay docDisplay,
@@ -160,8 +161,9 @@ public class TextEditingTargetGitDiffGutter
          gutter.showChangeAtCursor();
    }
 
-   // Called as the document is shown and hidden (see TextEditingTarget); a
-   // refresh that came in while hidden is run now that the markers are seen.
+   // Called as the document becomes and stops being the active one (see
+   // TextEditingTarget); a refresh that came in while hidden is run now that
+   // the markers are seen.
    public void onActivate()
    {
       active_ = true;
@@ -175,6 +177,14 @@ public class TextEditingTargetGitDiffGutter
    public void onDeactivate()
    {
       active_ = false;
+   }
+
+   // Whether the markers are on screen. The active document is, but so is
+   // the document showing in each other source column: a column's document
+   // is deactivated when another column becomes active, and stays in view.
+   private boolean isShown()
+   {
+      return active_ || DomUtils.isEffectivelyVisible(docDisplay_.getElement());
    }
 
    private GitDiffGutterNative gutterFor(DocDisplay display)
@@ -338,7 +348,7 @@ public class TextEditingTargetGitDiffGutter
       if (gutter_ == null)
          return;
 
-      if (!active_)
+      if (!isShown())
          refreshDeferred_ = true;
       else
          refreshTimer_.schedule(REFRESH_DELAY_MS);
@@ -371,7 +381,7 @@ public class TextEditingTargetGitDiffGutter
 
       // A hidden document waits to be shown -- unless a revert is waiting
       // on the fetch, which cannot be left hanging.
-      if (!active_ && baseCallbacks_.isEmpty())
+      if (!isShown() && baseCallbacks_.isEmpty())
       {
          refreshDeferred_ = true;
          return;
