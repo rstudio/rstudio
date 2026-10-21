@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.*;
@@ -198,8 +199,8 @@ public class HistoryPane extends WorkbenchPane
       mainPanel_.setWidgetLeftRight(contextResults_, 0, Unit.PX, 0, Unit.PX);
 
       setMode(Mode.Recent);
-      setVisible(searchResults_, searchResults_.getFocusTarget(), false);
-      setVisible(contextResults_, contextResults_.getFocusTarget(), false);
+      setVisible(searchResults_, false);
+      setVisible(contextResults_, false);
 
       return mainPanel_;
    }
@@ -217,7 +218,6 @@ public class HistoryPane extends WorkbenchPane
          Widget target = getWidgetForMode(mode);
 
          boolean focus = DomUtils.hasFocus(getActiveHistory().getFocusTarget());
-         HasHistory focusCurrent = getHistoryForMode(mode_);
          HasHistory focusTarget = getHistoryForMode(mode);
 
          boolean rightToLeft = mode_.getValue() < mode.getValue();
@@ -226,13 +226,12 @@ public class HistoryPane extends WorkbenchPane
             animate(current,
                     target,
                     rightToLeft,
-                    focusCurrent,
                     focusTarget,
                     focus);
          else
          {
-            setVisible(current, focusCurrent.getFocusTarget(), false);
-            setVisible(target, focusTarget.getFocusTarget(), true);
+            setVisible(current, false);
+            setVisible(target, true);
             if (focus)
             {
                DomUtils.setActive(focusTarget.getFocusTarget());
@@ -264,7 +263,6 @@ public class HistoryPane extends WorkbenchPane
    private void animate(final Widget from,
                         final Widget to,
                         boolean rightToLeft,
-                        final HasHistory fromFocus,
                         final HasHistory toFocus,
                         final boolean focus)
    {
@@ -273,7 +271,7 @@ public class HistoryPane extends WorkbenchPane
       if (focus)
          toFocus.getFocusTarget().addClassName(styles_.inboundFocus());
 
-      setVisible(to, toFocus.getFocusTarget(), true);
+      setVisible(to, true);
 
       int width = getOffsetWidth();
 
@@ -296,7 +294,7 @@ public class HistoryPane extends WorkbenchPane
       {
          public void onAnimationComplete()
          {
-            setVisible(from, fromFocus.getFocusTarget(), false);
+            setVisible(from, false);
             mainPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
             mainPanel_.forceLayout();
             if (focus)
@@ -312,30 +310,13 @@ public class HistoryPane extends WorkbenchPane
       });
    }
 
-   private void setVisible(Widget widget,
-                           Element focusTarget,
-                           boolean visible)
+   // Hidden views sit off-screen rather than display:none so they can slide
+   // in; inert keeps their controls out of the Tab order and the a11y tree.
+   private void setVisible(Widget widget, boolean visible)
    {
-      //mainPanel_.getWidgetContainerElement(widget).getStyle().setDisplay(
-      //      visible ? Display.BLOCK : Display.NONE);
-      if (visible)
-      {
-         if (focusTarget.getTabIndex() != 0)
-         {
-            focusTarget.setTabIndex(0);
-            mainPanel_.setWidgetLeftRight(widget, 0, Unit.PX, 0, Unit.PX);
-         }
-      }
-      else
-      {
-         if (focusTarget.getTabIndex() != -1)
-         {
-            focusTarget.setTabIndex(-1);
-            if (DomUtils.hasFocus(focusTarget))
-               focusTarget.blur();
-            mainPanel_.setWidgetLeftRight(widget, -5000, Unit.PX, 5000, Unit.PX);
-         }
-      }
+      A11y.setInert(widget.getElement(), !visible);
+      int left = visible ? 0 : -5000;
+      mainPanel_.setWidgetLeftRight(widget, left, Unit.PX, -left, Unit.PX);
       mainPanel_.forceLayout();
    }
 
