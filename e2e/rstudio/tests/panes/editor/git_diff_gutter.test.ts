@@ -1105,6 +1105,36 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await commitAll(page, 'remove math', [mathPath]);
   });
 
+  test('re-fetches the base when a marker is clicked in an unfocused editor', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // Stage the edits from the console (focus stays there), which moves the
+    // index under the open document. Clicking the marker is the first
+    // interaction with the editor afterwards: it has to pick the new index
+    // up, so the peek it opens does not outlive the stale base and no
+    // markers remain (the index now matches the buffer).
+    await executeInConsoleChecked(
+      page,
+      `invisible(system2("git", c(${gitC()}, "add", "--", "script.R")))`,
+    );
+    try {
+      const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
+      const box = (await cell.boundingBox())!;
+      await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+      await expect(page.locator(PEEK)).toHaveCount(0, { timeout: 30000 });
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+    } finally {
+      await executeInConsoleChecked(
+        page,
+        `invisible(system2("git", c(${gitC()}, "reset", "-q", "--", "script.R")))`,
+      );
+      await documentCloseAllNoSave(page);
+    }
+  });
+
   test('closes the peek when the index version it shows is replaced', async ({
     rstudioPage: page,
   }) => {

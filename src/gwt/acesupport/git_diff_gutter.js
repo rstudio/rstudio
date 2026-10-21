@@ -515,6 +515,7 @@ var GitDiffGutter = function(editor) {
       revertButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-revert";
       revertButton.textContent = "Revert";
       revertButton.addEventListener("click", function() {
+         self.focusEditor();
          self.revertChunk(chunk);
       });
       header.appendChild(revertButton);
@@ -608,6 +609,15 @@ var GitDiffGutter = function(editor) {
       return row == null ? null : this.chunkAt(row);
    };
 
+   // Consumed clicks never reach Ace's own gutter handler, which is what
+   // would focus the editor -- and the base is re-fetched on focus, so an
+   // index moved from outside (e.g. staging in the Terminal) is picked up
+   // when the user comes to the gutter just as when they come to the text.
+   this.focusEditor = function() {
+      if (!this.editor.isFocused())
+         this.editor.focus();
+   };
+
    this.onGutterMouseDown = function(e) {
       var chunk = this.markerChunkAt(e);
       if (!chunk)
@@ -615,6 +625,7 @@ var GitDiffGutter = function(editor) {
 
       e.preventDefault();
       e.stopImmediatePropagation();
+      this.focusEditor();
 
       if (this.peek && this.peek.chunk === chunk)
          this.closePeek();
