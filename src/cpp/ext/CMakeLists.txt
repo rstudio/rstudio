@@ -58,6 +58,7 @@ set(FETCHCONTENT_QUIET TRUE)
 # REPOSITORY:   The (git) repository to be used when retrieving the dependency.
 # REVISION:     The (git) revision / commit hash to be used when retrieving the dependency.
 # CUSTOM:       Optional; when TRUE, the project is retrieved but not automatically added to the build.
+# REQUIRED:     Optional; when TRUE, it will always be downloaded instead of using a system package
 # PLATFORMS:    Optional; a list of platforms for which this dependency should be retrieved and built.
 #
 # This function also accepts and ignores these optional single-value arguments, which are used to render
@@ -85,12 +86,13 @@ set(FETCHCONTENT_QUIET TRUE)
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION;CFLAGS;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;REQUIRED;VERSION;REPOSITORY;REVISION;CFLAGS;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
 
    set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
    set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
    set(${_NAME}_REVISION   "${_REVISION}"   CACHE INTERNAL "")
    set(${_NAME}_CUSTOM     "${_CUSTOM}"     CACHE INTERNAL "")
+   set(${_NAME}_REQUIRED   "${_REQUIRED}"   CACHE INTERNAL "")
    set(${_NAME}_PLATFORMS  "${_PLATFORMS}"  CACHE INTERNAL "")
    set(${_NAME}_CFLAGS     "${_CFLAGS}"     CACHE INTERNAL "")
    set(${_NAME}_CXXFLAGS   "${_CXXFLAGS}"   CACHE INTERNAL "")
@@ -360,6 +362,7 @@ dependency(HUNSPELL
    REPOSITORY "https://github.com/hunspell/hunspell"
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
    CUSTOM     TRUE
+   REQUIRED   TRUE
 )
 
 
@@ -371,6 +374,7 @@ dependency(RAPIDJSON
    REPOSITORY "https://github.com/Tencent/rapidjson"
    REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f" # pragma: allowlist secret
    CUSTOM     TRUE
+   REQUIRED   TRUE
 )
 
 
@@ -456,7 +460,7 @@ endif()
 # a valid library artifact when libgit2's SelectZlib.cmake calls find_package(ZLIB).
 # If zlib is not yet present, FindZLIB fails and libgit2 falls back to its bundled
 # deps/zlib, resulting in duplicate zlib symbols in the final binary.
-fetch(zlib ZLIB)
+fetch(ZLIB ZLIB)
 
 # libgit2's src/libgit2/CMakeLists.txt uses FILE(WRITE) to produce git2.h in
 # the build tree.  Unlike configure_file(), FILE(WRITE) unconditionally updates
@@ -477,7 +481,7 @@ fetch(
    libgit2               LIBGIT2
    gtest                 GTEST
    hunspell              HUNSPELL
-   rapidjson             RAPIDJSON
+   RapidJSON             RAPIDJSON
    tl-expected           TL_EXPECTED
    utfcpp                UTFCPP
    websocketpp           WEBSOCKETPP
