@@ -52,12 +52,14 @@ describe('MainWindow', () => {
         new FilePath(configDirectory).removeIfExistsSync();
       });
 
+      // Sizes stay within xvfb-run's default 640x480 screen, which X11 clamps
+      // larger windows to on the Linux CI runners.
       it('creates the window at its saved size', () => {
-        ElectronDesktopOptions().saveWindowBounds({ width: 1000, height: 600, x: 100, y: 100, maximized: true });
+        ElectronDesktopOptions().saveWindowBounds({ width: 500, height: 400, x: 100, y: 100, maximized: true });
 
         const win = new MainWindow('http://127.0.0.1:8080');
         try {
-          assert.deepEqual(win.window.getSize(), [1000, 600]);
+          assert.deepEqual(win.window.getSize(), [500, 400]);
         } finally {
           win.window.destroy();
         }
