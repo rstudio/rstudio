@@ -370,7 +370,6 @@ public class AceThemes
          Debug.logWarning("Failed to sync desktop theme colors: " + e.getMessage());
       }
 
-      FindMatchHighlight.update(Document.get());
       fireThemeEvents();
    }
 
@@ -419,7 +418,6 @@ public class AceThemes
       // Fire events even on error so that downstream consumers
       // (iframe theme variables, client state, desktop frame, etc.)
       // get default/fallback values rather than remaining permanently stale.
-      FindMatchHighlight.update(Document.get());
       fireThemeEvents();
    }
 

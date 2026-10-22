@@ -7,6 +7,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { clearPref, executeCommand, saveDocument, setPref, waitForActiveDocument } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
+import { getThemeStylesheetHref } from '@utils/theme';
 
 // Both the console and the active editor mount a FindReplaceBar that shares
 // these automation classes. Scope to the source panel so the test never
@@ -207,7 +208,7 @@ test.describe('Editor', () => {
   });
 
   // https://github.com/rstudio/rstudio/issues/13204
-  test('find marks the current match independently of the selection colour', async ({ rstudioPage: page }) => {
+  test('find marks the current match with its own marker', async ({ rstudioPage: page }) => {
     const content = 'alpha beta\nalpha gamma\nalpha delta\n';
     await writeAndOpenFile(page, sandbox.dir, 'editor_find_match_marker.R', content);
 
@@ -235,8 +236,13 @@ test.describe('Editor', () => {
       return { match: rect(match), selection: rect(match.parentElement!.querySelector('.ace_selection')) };
     }, FIND_MATCH_MARKER);
     expect(boxes.match).toEqual(boxes.selection);
-    const markerBackground = await page.locator(FIND_MATCH_MARKER).evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(markerBackground).not.toBe('rgba(0, 0, 0, 0)');
+
+    // The marker is styled per theme. Pastel On Dark, the theme in the report,
+    // paints it amber; check its stylesheet rather than re-theming the session.
+    const pastelUrl = new URL(await getThemeStylesheetHref(page), page.url());
+    pastelUrl.pathname = pastelUrl.pathname.replace(/[^/]+\.rstheme$/, 'pastel_on_dark.rstheme');
+    const pastelCss = await (await page.request.get(pastelUrl.toString())).text();
+    expect(pastelCss).toMatch(/\.ace_marker-layer \.ace_find_match \{[^}]*background-color: #9E6A03/);
 
     // Moving the cursor elsewhere drops the marker; Find Next brings it back.
     await editor.gotoLine(1);
