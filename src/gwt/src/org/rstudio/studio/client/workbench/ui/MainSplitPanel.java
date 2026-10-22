@@ -902,7 +902,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private String sidebarLocation_ = "left";
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
-   private static final int MINIMUM_SIDEBAR_WIDTH = 175;
+   static final int MINIMUM_SIDEBAR_WIDTH = 175;
    // Showing the sidebar must not squeeze the center (Source/Console) column
    // below this; if it would, the other columns are reset to default widths so
    // Source/Console can't be left at ~0 width (invisible).
