@@ -17,11 +17,11 @@ Download `vs_buildtools.exe` from: https://visualstudio.microsoft.com/visual-cpp
 vs_buildtools.exe --passive --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64
 ```
 
-Copy all the files from the following to the x64 and x86 folders.
+Copy all the files from the following to the x64, x86 and arm64 folders.
 
 - x64: `C:\Program Files\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x64\Microsoft.VC145.CRT\*.*`
 - x86: `C:\Program Files\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x86\Microsoft.VC145.CRT\*.*`
-- ARM: future
+- arm64: `C:\Program Files\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\arm64\Microsoft.VC145.CRT\*.*`
 
 Note that "2026", "14.50.xxxxx", and "VC145" will need to be updated to match what has actually
 been installed.
