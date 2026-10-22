@@ -235,6 +235,8 @@ test.describe('Editor', () => {
       return { match: rect(match), selection: rect(match.parentElement!.querySelector('.ace_selection')) };
     }, FIND_MATCH_MARKER);
     expect(boxes.match).toEqual(boxes.selection);
+    const markerBackground = await page.locator(FIND_MATCH_MARKER).evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(markerBackground).not.toBe('rgba(0, 0, 0, 0)');
 
     // Moving the cursor elsewhere drops the marker; Find Next brings it back.
     await editor.gotoLine(1);

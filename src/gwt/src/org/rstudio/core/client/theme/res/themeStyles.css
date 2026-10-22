@@ -388,8 +388,12 @@ pre {
    background-color: rgb(54, 50, 8);
 }
 
-/* The current Find match. Drawn above the selection marker (z-index 5) so it
-   stays visible in themes whose selection colour is faint. */
+/* The current Find match: the theme's selection colour, pushed in lightness
+   just far enough from the editor background to be visible (computed per
+   theme by FindMatchHighlight). Drawn above the selection marker (z-index 5);
+   until the variable is set, the fallbacks lighten or darken the selection
+   showing through from beneath. literal() keeps the var() expression away
+   from the CssResource parser, which does not understand custom properties. */
 .ace_marker-layer .ace_find_match {
    position: absolute;
    z-index: 6;
@@ -398,11 +402,11 @@ pre {
 }
 
 .editor_light .ace_find_match {
-   background-color: rgb(255, 213, 79);
+   background-color: literal("var(--rstudio-find-match-background, rgba(0, 0, 0, 0.12))");
 }
 
 .editor_dark .ace_find_match {
-   background-color: rgb(158, 106, 3);
+   background-color: literal("var(--rstudio-find-match-background, rgba(255, 255, 255, 0.25))");
 }
 
 .ace_tooltip {
