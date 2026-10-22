@@ -76,6 +76,18 @@ async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
 }
 
+// The width once a resize animation has finished: two reads 150ms apart agree.
+async function getSettledWidth(page: Page, selector: string): Promise<number> {
+  let last = -1;
+  await expect.poll(async () => {
+    const width = await getOffsetWidth(page, selector);
+    const settled = width === last;
+    last = width;
+    return settled;
+  }, { intervals: [150] }).toBe(true);
+  return last;
+}
+
 async function dragSplitterTo(page: Page, splitter: string, x: number, y: number): Promise<void> {
   const box = await page.locator(splitter).boundingBox();
   if (!box)
@@ -450,7 +462,9 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
 
   // The zoom records the widths it restores before it selects the tab, so
   // ending it must bring back the shut column the user left.
-  test('ending a zoom of a tab in a shut column leaves the column shut', async ({ rstudioPage: page }) => {
+  test('ending a zoom of a tab in a shut column leaves the column shut', async ({
+    rstudioPage: page,
+  }) => {
     await shutRightColumn(page);
 
     await executeCommand(page, 'layoutZoomFiles');
@@ -460,38 +474,58 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
   });
 
-  // With the Console column squeezed shut too, only the sidebar has width to
-  // give.
-  test('a column next to a wide sidebar reopens', async ({ rstudioPage: page }) => {
-    await setSidebarVisible(page, true);
-    const sidebarSplitter = page.locator(SIDEBAR_COLUMN_SPLITTER);
-    const box = await sidebarSplitter.boundingBox();
-    if (!box)
-      throw new Error('Sidebar column splitter has no bounding box; is it rendered?');
-    try {
-      await shutRightColumn(page);
-      const windowWidth = await page.evaluate(() => window.innerWidth);
-      await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, windowWidth - 1, box.y + box.height / 2);
-      await expectHidden(page, CONSOLE_PANE, TABSET2_PANE);
+  // With the Console column squeezed narrow, the sidebar has the most width to
+  // give. A plot raises Plots through two routes in one tick, and the sidebar
+  // must still pay only what the reopened column gains. (Console stays open, so
+  // focusing it to run the plot doesn't reopen it from the sidebar too.)
+  for (const [label, reopen] of [
+    ['Show Files', (page: Page) => executeCommand(page, 'activateFiles')],
+    ['a plot', (page: Page) => executeInConsole(page, 'plot(1)')],
+  ] as const) {
+    test(`${label} reopens a column next to a wide sidebar`, async ({ rstudioPage: page }) => {
+      await setSidebarVisible(page, true);
+      const sidebarSplitter = page.locator(SIDEBAR_COLUMN_SPLITTER);
+      const box = await sidebarSplitter.boundingBox();
+      if (!box)
+        throw new Error('Sidebar column splitter has no bounding box; is it rendered?');
+      const splitterY = box.y + box.height / 2;
+      try {
+        await shutRightColumn(page);
+        const windowWidth = await page.evaluate(() => window.innerWidth);
+        await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, windowWidth - 120, splitterY);
+        await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThanOrEqual(20);
+        await expectHidden(page, TABSET2_PANE);
+        const sidebarBefore = await getOffsetWidth(page, SIDEBAR_PANE);
+        const rightBefore = await getOffsetWidth(page, TABSET2_PANE);
 
-      await executeCommand(page, 'activateFiles');
-      await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
-      await expectExposed(page, SIDEBAR_PANE, TABSET2_PANE);
-    } finally {
-      // Hiding the sidebar saves its width for the next show, so put the
-      // splitter back first.
-      await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, box.x + box.width / 2, box.y + box.height / 2);
-      await expect.poll(async () => Math.abs(((await sidebarSplitter.boundingBox())?.x ?? 0) - box.x))
-        .toBeLessThanOrEqual(2);
-      await setSidebarVisible(page, false);
-    }
-  });
+        await reopen(page);
+        await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+        const sidebarAfter = await getSettledWidth(page, SIDEBAR_PANE);
+        const gained = (await getOffsetWidth(page, TABSET2_PANE)) - rightBefore;
+        expect(Math.abs(sidebarBefore - sidebarAfter - gained), 'sidebar paid only what it gave')
+          .toBeLessThanOrEqual(4);
+        expect(sidebarAfter).toBeGreaterThanOrEqual(175);
+        await expectExposed(page, SIDEBAR_PANE, TABSET2_PANE);
+      } finally {
+        await executeInConsole(page, 'graphics.off()');
+        // Hiding the sidebar saves its width for the next show, so put the
+        // splitter back first.
+        await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
+        await expect.poll(async () =>
+          Math.abs(((await sidebarSplitter.boundingBox())?.x ?? 0) - box.x))
+          .toBeLessThanOrEqual(2);
+        await setSidebarVisible(page, false);
+      }
+    });
+  }
 
   // Console and Source raise themselves rather than going through the tab
   // commands, and reopen their column the same way -- including one dragged
   // nearly but not fully shut.
   for (const [label, x] of [['shut', 1], ['nearly shut', 22]] as const) {
-    test(`activateConsole reopens the Console column dragged ${label}`, async ({ rstudioPage: page }) => {
+    test(`activateConsole reopens the Console column dragged ${label}`, async ({
+      rstudioPage: page,
+    }) => {
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, x, splitterHome.y);
       await expectHidden(page, CONSOLE_PANE);
       if (label === 'nearly shut')

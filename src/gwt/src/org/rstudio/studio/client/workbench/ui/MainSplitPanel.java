@@ -745,6 +745,29 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return column == sidebar_ ? MINIMUM_SIDEBAR_WIDTH : COLLAPSED_COLUMN_WIDTH;
    }
 
+   /**
+    * The width a column is being laid out at. Unlike getOffsetWidth(), this
+    * includes sizes set since the last layout pass, e.g. by a resize that is
+    * still animating.
+    */
+   public double getTargetWidth(Widget column)
+   {
+      if (column != center_)
+         return getWidgetSize(column);
+
+      // center_ gets what the docked columns and their splitters leave.
+      ArrayList<Widget> docked = new ArrayList<>(leftList_);
+      docked.add(right_);
+      docked.add(sidebar_);
+      double width = getOffsetWidth();
+      for (Widget widget : docked)
+      {
+         if (isColumn(widget))
+            width -= getWidgetSize(widget) + getSplitterSize();
+      }
+      return Math.max(0, width);
+   }
+
    private Widget getWidestColumn()
    {
       ArrayList<Widget> columns = new ArrayList<>(leftList_);
