@@ -160,6 +160,8 @@ TEST(CryptoTest, GenerateRsaStringCert)
 
    // check the common name we gave it matches
    ASSERT_EQ(1, X509_check_host(cert, (const char *) "testCN", 0, 0, NULL));
+   // check that the cert is self-signed
+   ASSERT_EQ(0, X509_NAME_cmp(X509_get_subject_name(cert), X509_get_issuer_name(cert)));
    // check that the private key matches the public key in the cert
    ASSERT_EQ(1, X509_check_private_key(cert, key));
 
