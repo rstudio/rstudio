@@ -728,10 +728,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return hidFocus;
    }
 
-   /**
-    * Whether a column is too narrow to show any usable part of its panes.
-    */
-   public boolean isCollapsed(Widget column)
+   private boolean isCollapsed(Widget column)
    {
       return column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
    }

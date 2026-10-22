@@ -547,18 +547,6 @@ public class PaneManager
             return;
          }
 
-         // A zoom still tracked here is a column zoom or this window's own pane
-         // zoom; neither can move to the raised pane. End one that shut the
-         // pane's column, as restoreLayout() also clears its state. (Vertical
-         // visibility is handled by the window's own state change.)
-         if (widgetSizePriorToZoom_ >= 0)
-         {
-            Widget column = getColumn(window);
-            if (column != null && panel_.isCollapsed(column))
-               restoreLayout();
-            return;
-         }
-
          reopenCollapsedColumn(window);
       });
 
@@ -2358,14 +2346,15 @@ public class PaneManager
    }
 
    /**
-    * Reopen the column holding window if a splitter drag has shut it (#19184),
-    * taking up to a default column's width from the column that can give most.
-    * Uses target widths, so the repeat calls one pane raise makes find it open.
-    * A tracked zoom is left alone: it restores the widths it shut.
+    * Reopen the column holding window if a splitter drag or a zoom has shut it
+    * (#19184), taking up to a default column's width from the column that can
+    * give most. Uses target widths, so the repeat calls one pane raise makes,
+    * or a call during a zoom's animation, see the widths being laid out.
     */
    private void reopenCollapsedColumn(LogicalWindow window)
    {
-      if (maximizedWindow_ != null || widgetSizePriorToZoom_ >= 0)
+      // A pane raise moves a zoom of another pane to this one instead.
+      if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
          return;
 
       Widget column = getColumn(window);
@@ -2373,6 +2362,16 @@ public class PaneManager
           panel_.getTargetWidth(column) >= panel_.getMinimumOpenWidth(column))
       {
          return;
+      }
+
+      // A zoom tracked here is a column zoom (a zoomed pane's column is open),
+      // which can't move to the pane, so end it. For a column zoom,
+      // restoreLayout() sets the restored widths before it returns.
+      if (widgetSizePriorToZoom_ >= 0)
+      {
+         restoreLayout();
+         if (panel_.getTargetWidth(column) >= panel_.getMinimumOpenWidth(column))
+            return;
       }
 
       Widget donor = null;

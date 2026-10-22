@@ -537,23 +537,45 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     });
   }
 
-  // A column zoom can't move to the raised pane as a pane zoom does, so the
-  // plot ends it -- and the zoom command must then start a fresh zoom rather
-  // than "restore" from state left behind.
-  test('a plot during a column zoom ends the zoom', async ({ rstudioPage: page }) => {
-    await executeCommand(page, 'layoutZoomLeftColumn');
-    await expectHidden(page, TABSET2_PANE);
-    try {
-      await executeInConsole(page, 'plot(1)');
-      await expectExposed(page, TABSET2_PANE);
-      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
-
+  // A column zoom can't move to the raised pane as a pane zoom does, so
+  // showing the pane ends it -- and the zoom command must then start a fresh
+  // zoom rather than "restore" from state left behind.
+  for (const [label, show] of [
+    ['a plot', (page: Page) => executeInConsole(page, 'plot(1)')],
+    ['Show Files', (page: Page) => executeCommand(page, 'activateFiles')],
+  ] as const) {
+    test(`${label} during a column zoom ends the zoom`, async ({ rstudioPage: page }) => {
       await executeCommand(page, 'layoutZoomLeftColumn');
       await expectHidden(page, TABSET2_PANE);
-      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+      try {
+        await show(page);
+        await expectExposed(page, TABSET2_PANE);
+        expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
+
+        await executeCommand(page, 'layoutZoomLeftColumn');
+        await expectHidden(page, TABSET2_PANE);
+        expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+      } finally {
+        await resetLayoutZoom(page);
+        await executeInConsole(page, 'graphics.off()');
+      }
+    });
+  }
+
+  // The zoom's widths are set at once but drawn over a 300ms animation, so a
+  // pane shown in that window must still end it rather than end up behind it.
+  test('Show Files while a column zoom animates ends the zoom', async ({ rstudioPage: page }) => {
+    try {
+      await page.evaluate(() => {
+        const commands = window.rstudio!.commands;
+        commands.layoutZoomLeftColumn();
+        commands.activateFiles();
+      });
+      expect(await getSettledWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, TABSET2_PANE);
+      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
     } finally {
       await resetLayoutZoom(page);
-      await executeInConsole(page, 'graphics.off()');
     }
   });
 
