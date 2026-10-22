@@ -2369,9 +2369,9 @@ public class PaneManager
    /**
     * Reopen the column holding window if a splitter drag has shut it, so that
     * showing one of its tabs leaves the tab on screen (#19184). The column gets
-    * a default column's width, taken from the column with the most to spare so
-    * that the others keep theirs. A tracked zoom is left alone: it restores the
-    * widths it shut.
+    * up to a default column's width, taken from the column that can give the
+    * most so that the others keep theirs. A tracked zoom is left alone: it
+    * restores the widths it shut.
     */
    private void reopenCollapsedColumn(LogicalWindow window)
    {
@@ -2386,23 +2386,30 @@ public class PaneManager
 
       Element frame = window.getNormal().getElement();
       Widget column = null;
-      Widget donor = null;
       for (Widget candidate : columns)
       {
          if (candidate.getElement().isOrHasChild(frame))
             column = candidate;
-         if (donor == null || getSpareWidth(candidate) > getSpareWidth(donor))
-            donor = candidate;
       }
-      if (column == null || column == donor || !panel_.isCollapsed(column))
+      if (column == null || !panel_.isCollapsed(column))
+         return;
+
+      Widget donor = null;
+      for (Widget candidate : columns)
+      {
+         if (candidate != column &&
+             (donor == null || getGivableWidth(candidate) > getGivableWidth(donor)))
+         {
+            donor = candidate;
+         }
+      }
+      double growth = Math.min(panel_.getDefaultSplitterWidth() - column.getOffsetWidth(),
+                               getGivableWidth(donor));
+      if (growth <= 0)
          return;
 
       // center_ fills the space the other columns leave and has no size of its
       // own, so it grows or shrinks as the other column changes.
-      double growth = Math.min(
-         Math.min(panel_.getDefaultSplitterWidth(), donor.getOffsetWidth() / 2.0) -
-            column.getOffsetWidth(),
-         getSpareWidth(donor));
       if (column != center_)
          panel_.setWidgetSize(column, column.getOffsetWidth() + growth);
       if (donor != center_)
@@ -2413,13 +2420,15 @@ public class PaneManager
    }
 
    /**
-    * How far a column can shrink. A layout with the sidebar below its minimum
-    * is discarded when it is restored from saved state.
+    * How much width a column can give to reopen another: at most half its
+    * width, and none of its minimum. A layout with the sidebar below its
+    * minimum is discarded when it is restored from saved state.
     */
-   private double getSpareWidth(Widget column)
+   private double getGivableWidth(Widget column)
    {
       int minimum = column == sidebar_ ? MainSplitPanel.MINIMUM_SIDEBAR_WIDTH : 0;
-      return Math.max(0, column.getOffsetWidth() - minimum);
+      return Math.max(0, Math.min(column.getOffsetWidth() / 2.0,
+                                  column.getOffsetWidth() - minimum));
    }
 
    public void activateTab(String tabName)
