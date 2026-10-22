@@ -1713,20 +1713,7 @@ public class PaneManager
 
       panel_.setWidgetSize(right_, actualRightTarget);
 
-      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      panel_.animate(duration, new AnimationCallback()
-      {
-         public void onAnimationComplete()
-         {
-            panel_.onSplitterResized(new SplitterResizedEvent());
-            if (afterComplete != null)
-               afterComplete.execute();
-         }
-
-         public void onLayout(Layer layer, double progress)
-         {
-         }
-      });
+      animateToWidgetSizes(afterComplete);
    }
 
    private void resizeHorizontallyWithSidebarOnLeft(final double rightTarget,
@@ -1785,20 +1772,7 @@ public class PaneManager
 
       panel_.setWidgetSize(right_, actualRightTarget);
 
-      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      panel_.animate(duration, new AnimationCallback()
-      {
-         public void onAnimationComplete()
-         {
-            panel_.onSplitterResized(new SplitterResizedEvent());
-            if (afterComplete != null)
-               afterComplete.execute();
-         }
-
-         public void onLayout(Layer layer, double progress)
-         {
-         }
-      });
+      animateToWidgetSizes(afterComplete);
    }
 
    private void restoreLayout()
