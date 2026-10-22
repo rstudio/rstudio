@@ -29,6 +29,7 @@ import org.rstudio.core.client.files.FileSystemItemTests;
 import org.rstudio.core.client.layout.BinarySplitLayoutPanelTests;
 import org.rstudio.core.client.widget.LayoutGridTests;
 import org.rstudio.core.client.widget.MiniPopupPanelTests;
+import org.rstudio.core.client.widget.WidgetListBoxTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.debugging.ErrorManagerTests;
@@ -75,6 +76,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
       suite.addTestSuite(LayoutGridTests.class);
+      suite.addTestSuite(WidgetListBoxTests.class);
       suite.addTestSuite(BinarySplitLayoutPanelTests.class);
       suite.addTestSuite(StatusBarWidgetTests.class);
       suite.addTestSuite(AnsiCodeTests.class);

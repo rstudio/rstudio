@@ -21,6 +21,8 @@ import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.user.client.DOM;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -111,7 +113,11 @@ public class WidgetListBox<T extends Widget>
       add(scrollPanel_);
 
       emptyTextLabel_ = new Label();
+      emptyTextLabel_.getElement().setId(DOM.createUniqueId());
       emptyTextBox_ = new VerticalPanel();
+      // A listbox may only contain options, so screen readers get the empty
+      // message as the list's description instead (see updateEmptyText).
+      A11y.setARIAHidden(emptyTextBox_);
       emptyTextBox_.addStyleName(style_.scrollPanel());
       emptyTextBox_.addStyleName(style_.emptyMessage());
       emptyTextBox_.add(emptyTextLabel_);
@@ -319,6 +325,16 @@ public class WidgetListBox<T extends Widget>
       {
          clear();
          add(emptyTextBox_);
+      }
+
+      if (items_.isEmpty() && !StringUtil.isNullOrEmpty(emptyTextLabel_.getText()))
+      {
+         Roles.getListboxRole().setAriaDescribedbyProperty(getElement(),
+               Id.of(emptyTextLabel_.getElement()));
+      }
+      else
+      {
+         Roles.getListboxRole().removeAriaDescribedbyProperty(getElement());
       }
    }
 
