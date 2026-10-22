@@ -2288,6 +2288,16 @@ public class PaneManager
 
    public void activateTab(Tab tab)
    {
+      activateTab(tab, true);
+   }
+
+   /**
+    * @param reopenColumn Whether to reopen the tab's column if a splitter drag
+    *    has shut it. A zoom about to start passes false: it records the widths
+    *    it restores when it ends, and those should be the user's.
+    */
+   private void activateTab(Tab tab, boolean reopenColumn)
+   {
       lastSelectedTab_ = tab;
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
       LogicalWindow parent = panel.getParentWindow();
@@ -2340,7 +2350,8 @@ public class PaneManager
       if (panel == null)
          return;
 
-      reopenCollapsedColumn(parent);
+      if (reopenColumn)
+         reopenCollapsedColumn(parent);
 
       if (tabToIndex_.containsKey(tab))
       {
@@ -2366,11 +2377,11 @@ public class PaneManager
       if (maximizedWindow_ != null || widgetSizePriorToZoom_ >= 0)
          return;
 
-      // The sidebar is left out because its minimum width keeps a drag from
-      // shutting it.
       ArrayList<Widget> columns = new ArrayList<>(leftList_);
       columns.add(center_);
       columns.add(right_);
+      if (sidebar_ != null)
+         columns.add(sidebar_);
 
       Element frame = window.getNormal().getElement();
       Widget column = null;
@@ -2414,7 +2425,7 @@ public class PaneManager
 
    public void zoomTab(Tab tab)
    {
-      activateTab(tab);
+      activateTab(tab, false);
       WorkbenchTabPanel tabPanel = getOwnerTabPanel(tab);
       LogicalWindow parentWindow = tabPanel.getParentWindow();
       if (parentWindow == null)

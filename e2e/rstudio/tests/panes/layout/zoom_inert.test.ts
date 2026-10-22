@@ -17,6 +17,7 @@ const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
 const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
+const SIDEBAR_COLUMN_SPLITTER = '#rstudio_sidebar_column_splitter';
 const RIGHT_ROW_SPLITTER = '[role="separator"][aria-label="right splitter"]';
 
 function paneRegion(page: Page, pane: string): Locator {
@@ -446,6 +447,45 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
         .toContainText(tabName);
     });
   }
+
+  // The zoom records the widths it restores before it selects the tab, so
+  // ending it must bring back the shut column the user left.
+  test('ending a zoom of a tab in a shut column leaves the column shut', async ({ rstudioPage: page }) => {
+    await shutRightColumn(page);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectExposed(page, TABSET2_PANE);
+
+    await executeCommand(page, 'layoutEndZoom');
+    await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  // With the Console column squeezed shut too, only the sidebar has width to
+  // give.
+  test('a column next to a wide sidebar reopens', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    const sidebarSplitter = page.locator(SIDEBAR_COLUMN_SPLITTER);
+    const box = await sidebarSplitter.boundingBox();
+    if (!box)
+      throw new Error('Sidebar column splitter has no bounding box; is it rendered?');
+    try {
+      await shutRightColumn(page);
+      const windowWidth = await page.evaluate(() => window.innerWidth);
+      await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, windowWidth - 1, box.y + box.height / 2);
+      await expectHidden(page, CONSOLE_PANE, TABSET2_PANE);
+
+      await executeCommand(page, 'activateFiles');
+      await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, SIDEBAR_PANE, TABSET2_PANE);
+    } finally {
+      // Hiding the sidebar saves its width for the next show, so put the
+      // splitter back first.
+      await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, box.x + box.width / 2, box.y + box.height / 2);
+      await expect.poll(async () => Math.abs(((await sidebarSplitter.boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+      await setSidebarVisible(page, false);
+    }
+  });
 
   test('a narrow column that is still open keeps its width', async ({ rstudioPage: page }) => {
     const windowWidth = await page.evaluate(() => window.innerWidth);
