@@ -76,16 +76,26 @@ async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
 }
 
-// The width once a resize animation has finished: two reads 150ms apart agree.
-async function getSettledWidth(page: Page, selector: string): Promise<number> {
-  let last = -1;
+// A value once a resize has finished: two reads 150ms apart agree.
+async function getSettled(read: () => Promise<number>): Promise<number> {
+  let last = Number.NaN;
   await expect.poll(async () => {
-    const width = await getOffsetWidth(page, selector);
-    const settled = width === last;
-    last = width;
+    const value = await read();
+    const settled = value === last;
+    last = value;
     return settled;
   }, { intervals: [150] }).toBe(true);
   return last;
+}
+
+async function getSettledWidth(page: Page, selector: string): Promise<number> {
+  return getSettled(() => getOffsetWidth(page, selector));
+}
+
+// A window resize lays the columns out over more than one pass, and a drag
+// started from a position a later pass moves misses the 7px splitter.
+async function waitForSplitterToSettle(page: Page, splitter: string): Promise<void> {
+  await getSettled(async () => (await page.locator(splitter).boundingBox())?.x ?? -1);
 }
 
 async function dragSplitterTo(page: Page, splitter: string, x: number, y: number): Promise<void> {
@@ -221,6 +231,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
       await expect.poll(() => hasReachableFocus(page)).toBe(true);
     } finally {
       await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
       await expect.poll(async () => Math.abs(
         ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
@@ -252,6 +263,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
       }
     } finally {
       await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
       await expect.poll(async () => Math.abs(
         ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
@@ -627,6 +639,7 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     } finally {
       await resetLayoutZoom(page);
       await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, SIDEBAR_COLUMN_SPLITTER);
       // Hiding the sidebar saves its width for the next show, so put the
       // splitter back first.
       await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, box.x + box.width / 2,
