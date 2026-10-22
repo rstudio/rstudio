@@ -22,6 +22,8 @@ const REPLACE_INPUT = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-replace-in
 const REPLACE_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-replace-button`;
 const WHOLE_WORD_CHECKBOX = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-whole-word-checkbox input`;
 const CLOSE_FIND_BAR = `${SOURCE_PANEL_SELECTOR} button[aria-label='Close find and replace']`;
+const FIND_NEXT_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-find-next-button`;
+const FIND_MATCH_MARKER = `${SOURCE_PANEL_SELECTOR} .ace_marker-layer .ace_find_match`;
 
 test.describe('Editor', () => {
   const sandbox = useSuiteSandbox();
@@ -202,6 +204,50 @@ test.describe('Editor', () => {
     // keyboard focus being on the bar.
     await page.locator(CLOSE_FIND_BAR).click();
     await expect(page.locator(FIND_INPUT)).toHaveCount(0, { timeout: 5000 });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/13204
+  test('find marks the current match independently of the selection colour', async ({ rstudioPage: page }) => {
+    const content = 'alpha beta\nalpha gamma\nalpha delta\n';
+    await writeAndOpenFile(page, sandbox.dir, 'editor_find_match_marker.R', content);
+
+    const editor = new AceEditor(page, 'alpha beta');
+    await expect.poll(() => editor.getValue()).toContain('alpha beta');
+
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_find_match_marker.R`, TIMEOUTS.fileOpen);
+    await executeCommand(page, 'findReplace');
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+    await page.locator(FIND_INPUT).click();
+    await page.locator(FIND_INPUT).pressSequentially('gamma');
+
+    // Find-as-you-type selects the match, and the match marker is drawn over
+    // exactly that selection (both are text markers of the same range, so
+    // their boxes coincide).
+    await expect.poll(() => editor.getSelectedText()).toBe('gamma');
+    await expect(page.locator(FIND_MATCH_MARKER)).toHaveCount(1);
+    const boxes = await page.evaluate((selector) => {
+      const rect = (el: Element | null) => {
+        const b = el!.getBoundingClientRect();
+        return { x: Math.round(b.x), y: Math.round(b.y), width: Math.round(b.width), height: Math.round(b.height) };
+      };
+      const match = document.querySelector(selector)!;
+      return { match: rect(match), selection: rect(match.parentElement!.querySelector('.ace_selection')) };
+    }, FIND_MATCH_MARKER);
+    expect(boxes.match).toEqual(boxes.selection);
+
+    // Moving the cursor elsewhere drops the marker; Find Next brings it back.
+    await editor.gotoLine(1);
+    await expect(page.locator(FIND_MATCH_MARKER)).toHaveCount(0);
+    await page.locator(FIND_NEXT_BUTTON).click();
+    await expect.poll(() => editor.getSelectedText()).toBe('gamma');
+    await expect(page.locator(FIND_MATCH_MARKER)).toHaveCount(1);
+
+    // Closing the bar removes the marker and leaves the selection in place.
+    await page.locator(CLOSE_FIND_BAR).click();
+    await expect(page.locator(FIND_INPUT)).toHaveCount(0, { timeout: 5000 });
+    await expect(page.locator(FIND_MATCH_MARKER)).toHaveCount(0);
+    expect(await editor.getSelectedText()).toBe('gamma');
   });
 
   // https://github.com/rstudio/rstudio/issues/17493

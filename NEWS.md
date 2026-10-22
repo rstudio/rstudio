@@ -44,7 +44,7 @@
 - ([#19183](https://github.com/rstudio/rstudio/issues/19183)): [Accessibility] Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) no longer switch the Console pane to its Console tab; the selected tab, such as Terminal, stays selected and gets focus.
 - ([#19191](https://github.com/rstudio/rstudio/issues/19191)): [Accessibility] Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) now reach the sidebar when it is showing, and skip it when it is hidden; F6 no longer gets stuck on the bottom-right pane.
 - ([#19199](https://github.com/rstudio/rstudio/issues/19199)): [Accessibility] When the user interface language is set to French, the page's language (`lang`) is now French too, so screen readers read the interface with a French voice.
-- ([#13204](https://github.com/rstudio/rstudio/issues/13204)): The Pastel On Dark theme's selection highlight is now more visible against the editor background, so the current Find match is easier to spot.
+- ([#13204](https://github.com/rstudio/rstudio/issues/13204)): The current match of Find in the editor now has its own highlight (amber on dark themes, yellow on light ones) rather than relying on the theme's selection colour, which in Pastel On Dark, Twilight, Merbivore, and several other dark themes was too faint to spot.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
