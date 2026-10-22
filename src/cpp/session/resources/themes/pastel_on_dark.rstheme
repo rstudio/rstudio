@@ -762,5 +762,5 @@
   color: #EAEAEA !important;
 }
 .ace_marker-layer .ace_find_match {
-  background-color: #9E6A03;
+  background-color: #8D6414;
 }

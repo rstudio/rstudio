@@ -242,7 +242,7 @@ test.describe('Editor', () => {
     const pastelUrl = new URL(await getThemeStylesheetHref(page), page.url());
     pastelUrl.pathname = pastelUrl.pathname.replace(/[^/]+\.rstheme$/, 'pastel_on_dark.rstheme');
     const pastelCss = await (await page.request.get(pastelUrl.toString())).text();
-    expect(pastelCss).toMatch(/\.ace_marker-layer \.ace_find_match \{[^}]*background-color: #9E6A03/);
+    expect(pastelCss).toMatch(/\.ace_marker-layer \.ace_find_match \{[^}]*background-color: #8D6414/);
 
     // Moving the cursor elsewhere drops the marker; Find Next brings it back.
     await editor.gotoLine(1);

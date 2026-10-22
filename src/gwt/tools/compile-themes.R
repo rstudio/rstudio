@@ -219,7 +219,7 @@ applyFixups.pastel_on_dark <- function(content, parsed)
       ".ace_marker-layer .ace_find_match {",
       "  background-color: %s;",
       "}",
-      replace = "#9E6A03"
+      replace = "#8D6414"
    )
    
    content
