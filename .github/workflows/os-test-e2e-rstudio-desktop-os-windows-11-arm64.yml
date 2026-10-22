@@ -652,27 +652,11 @@ jobs:
 
   # Reads the Windows shard count from .github/e2e/shards.json and republishes
   # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
-  # env value itself, so the one declaration has to pass through here. Runs
-  # on Linux because it only needs a sparse checkout and jq.
+  # env value itself, so the one declaration has to pass through here.
   shards:
-    name: Load shard count
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      count: ${{ steps.shards.outputs.count }}
-      matrix: ${{ steps.shards.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: |
-            .github/e2e/shards.json
-            .github/actions/os-e2e-shards
-          sparse-checkout-cone-mode: false
-
-      - id: shards
-        uses: ./.github/actions/os-e2e-shards
-        with:
-          platform: windows
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: windows
 
   e2e-desktop-windows11arm:
     needs: [build, shards]

@@ -7,18 +7,24 @@ count exactly once -- here -- and derives everything else from it: the
 `strategy.matrix` (via `fromJSON`), the `--shard=N/M` argument (via
 `strategy.job-total`), and the shard count printed in the PR comment.
 
-    .github/e2e/shards.json            # { "<platform>": <count>, ... }
-    .github/actions/os-e2e-shards      # reads it; outputs count + matrix
+    .github/e2e/shards.json                           # { "<platform>": <count>, ... }
+    .github/actions/os-e2e-shards                     # reads it; outputs count + matrix
+    .github/workflows/os-test-e2e-rstudio-shards.yml  # reusable job around the action
 
 A workflow's `strategy.matrix` cannot read a file or an `env` value, which
-is why the count has to pass through a small job's outputs.
+is why the count has to pass through a small job's outputs. Most engines
+get that job by calling the reusable workflow (a `shards` job with
+`uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml`), so the
+checkout pin, sparse paths and timeout live in one place. Linux Desktop
+already has a `setup` job that reads engine config, so it runs the action
+directly.
 
-| key             | workflows                                        | read by                         |
-|-----------------|--------------------------------------------------|---------------------------------|
-| `macos`         | `os-test-e2e-rstudio-desktop-os-macos-*.yml`     | a `shards` job in each workflow |
-| `windows`       | `os-test-e2e-rstudio-desktop-os-windows-*.yml`   | a `shards` job in each workflow |
-| `linux-desktop` | `os-test-e2e-rstudio-desktop-linux.yml`          | the existing `setup` job        |
-| `linux-server`  | `os-test-e2e-rstudio-server-os-ubuntu-24.yml`    | a `shards` job                  |
+| key             | workflows                                        | read by                                |
+|-----------------|--------------------------------------------------|----------------------------------------|
+| `macos`         | `os-test-e2e-rstudio-desktop-os-macos-*.yml`     | a `shards` job (the reusable workflow) |
+| `windows`       | `os-test-e2e-rstudio-desktop-os-windows-*.yml`   | a `shards` job (the reusable workflow) |
+| `linux-desktop` | `os-test-e2e-rstudio-desktop-linux.yml`          | the existing `setup` job (the action)  |
+| `linux-server`  | `os-test-e2e-rstudio-server-os-ubuntu-24.yml`    | a `shards` job (the reusable workflow) |
 
 The Linux Server accessibility run (`a11y: true`) ignores the count and
 runs its handful of state scans in one shard.
