@@ -762,9 +762,5 @@
   color: #EAEAEA !important;
 }
 .ace_marker-layer .ace_find_match {
-  position: absolute;
-  z-index: 6;
-  box-sizing: border-box;
-  border-radius: 2px;
   background-color: #9E6A03;
 }

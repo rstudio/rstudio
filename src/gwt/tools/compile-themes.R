@@ -212,14 +212,11 @@ applyFixups.pastel_on_dark <- function(content, parsed)
    
    # Find's current match is the editor selection, which this theme draws too
    # faintly to pick out (https://github.com/rstudio/rstudio/issues/13204);
-   # give it its own amber highlight, above the selection marker (z-index 5).
+   # give it its own amber highlight (the marker itself is placed by
+   # themeStyles.css and is invisible in themes that don't colour it).
    content <- .rs.add_content(
       content,
       ".ace_marker-layer .ace_find_match {",
-      "  position: absolute;",
-      "  z-index: 6;",
-      "  box-sizing: border-box;",
-      "  border-radius: 2px;",
       "  background-color: %s;",
       "}",
       replace = "#9E6A03"
