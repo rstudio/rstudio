@@ -2375,7 +2375,7 @@ public class PaneManager
       }
 
       Widget donor = null;
-      for (Widget candidate : getColumns())
+      for (Widget candidate : panel_.getColumns())
       {
          if (candidate != column &&
              (donor == null || getGivableWidth(candidate) > getGivableWidth(donor)))
@@ -2403,20 +2403,10 @@ public class PaneManager
                          () -> window.getNormal().onResize());
    }
 
-   private ArrayList<Widget> getColumns()
-   {
-      ArrayList<Widget> columns = new ArrayList<>(leftList_);
-      columns.add(center_);
-      columns.add(right_);
-      if (sidebar_ != null)
-         columns.add(sidebar_);
-      return columns;
-   }
-
    private Widget getColumn(LogicalWindow window)
    {
       Element frame = window.getNormal().getElement();
-      for (Widget column : getColumns())
+      for (Widget column : panel_.getColumns())
       {
          if (column.getElement().isOrHasChild(frame))
             return column;
