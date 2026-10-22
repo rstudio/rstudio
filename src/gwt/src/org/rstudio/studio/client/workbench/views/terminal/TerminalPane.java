@@ -233,8 +233,14 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void setFocus()
    {
-      // Terminal Pane automatically directs focus to xterm.js so this method is intentionally
-      // left blank
+      // Selecting the tab focuses the terminal on its own; this covers the tab
+      // already being selected. Without a terminal, focus the pane's controls:
+      // moving focus must not start a shell.
+      TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal != null)
+         focusTerminal(visibleTerminal, super::setFocus);
+      else
+         super.setFocus();
    }
 
    @Override
@@ -985,6 +991,35 @@ public class TerminalPane extends WorkbenchPane
 
 
    /**
+    * Focus a terminal once xterm.js has initialized, then run onNotLoaded
+    * (if given) when it still hasn't.
+    */
+   private void focusTerminal(TerminalSession terminal, Command onNotLoaded)
+   {
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         // On rare occasions (which I haven't been able to nail down), flow gets here
+         // before xtermjs has initialized, and the setFocus call throws a null exception.
+         // Nothing is obviously broken when that happens, but guard against it, wait
+         // a tiny bit and try once more.
+         if (terminal.terminalEmulatorLoaded())
+         {
+            terminal.setFocus(true);
+         }
+         else
+         {
+            Timers.singleShot(200, () ->
+            {
+               if (terminal.terminalEmulatorLoaded())
+                  terminal.setFocus(true);
+               else if (onNotLoaded != null)
+                  onNotLoaded.execute();
+            });
+         }
+      });
+   }
+
+   /**
     * If a terminal is visible give it focus and update dropdown selection.
     */
    private void setFocusOnVisible()
@@ -993,25 +1028,7 @@ public class TerminalPane extends WorkbenchPane
       if (visibleTerminal != null)
       {
          if (!suppressAutoFocus_)
-            Scheduler.get().scheduleDeferred(() ->
-            {
-               // On rare occasions (which I haven't been able to nail down), flow gets here
-               // before xtermjs has initialized, and the setFocus call throws a null exception.
-               // Nothing is obviously broken when that happens, but guard against it, wait
-               // a tiny bit and try once more.
-               if (visibleTerminal.terminalEmulatorLoaded())
-               {
-                  visibleTerminal.setFocus(true);
-               }
-               else
-               {
-                  Timers.singleShot(200, () ->
-                  {
-                     if (visibleTerminal.terminalEmulatorLoaded())
-                        visibleTerminal.setFocus(true);
-                  });
-               }
-         });
+            focusTerminal(visibleTerminal, null);
          activeTerminalToolbarButton_.setActiveTerminal(
                visibleTerminal.getCaption(), visibleTerminal.getHandle());
          setTerminalTitle(visibleTerminal.getTitle());

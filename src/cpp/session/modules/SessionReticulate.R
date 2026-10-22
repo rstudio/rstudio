@@ -230,10 +230,13 @@
    if (!identical(tolower(backend), "agg"))
    {
       sys <- reticulate::import("sys", convert = TRUE)
+      # NOTE: 'warn' was removed from matplotlib.use() in matplotlib 3.3.0,
+      # and had no effect here on older versions anyway (it only governed a
+      # warning that 'force = TRUE' already suppresses)
       if ("matplotlib.backends" %in% names(sys$modules))
          matplotlib$pyplot$switch_backend("agg")
       else
-         matplotlib$use("agg", warn = FALSE, force = TRUE)
+         matplotlib$use("agg", force = TRUE)
    }
    
    moduleNames <- c("matplotlib.pyplot", "matplotlib.pylab")

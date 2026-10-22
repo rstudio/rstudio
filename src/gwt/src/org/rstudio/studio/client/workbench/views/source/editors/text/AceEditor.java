@@ -3253,6 +3253,15 @@ public class AceEditor implements DocDisplay
          moveCursorNearTop();
    }
 
+   // Scrolls just far enough to show the cursor, as Ace does after its own
+   // editing commands. Prefer this over ensureCursorVisible() after inserting
+   // text: that one jumps the cursor to near the top of the viewport.
+   @Override
+   public void scrollCursorIntoView()
+   {
+      widget_.getEditor().scrollCursorIntoView();
+   }
+
    @Override
    public void ensureRowVisible(int row)
    {

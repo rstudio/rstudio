@@ -128,9 +128,15 @@ test.describe.serial('Console pane stays minimized across a render', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await clearPref(page, 'reduced_motion');
-    // un-minimize the Console pane for whatever runs next
-    await executeCommand(page, 'activateConsolePane');
+    // Restore the fixture's value rather than clearing: the default is false,
+    // which would leave animations on for every later spec in this worker.
+    await setPref(page, 'reduced_motion', true);
+    // Un-minimize the Console pane for whatever runs next. Only when hidden:
+    // on a pane that already has focus, activateConsolePane selects the next
+    // tab, and selecting Terminal with no terminal open starts a shell that
+    // leaks into later specs.
+    if (!(await page.locator(CONSOLE_PANE).isVisible()))
+      await executeCommand(page, 'activateConsolePane');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
     if (fileName) {
       const stem = fileName.replace(/\.Rmd$/, '');
