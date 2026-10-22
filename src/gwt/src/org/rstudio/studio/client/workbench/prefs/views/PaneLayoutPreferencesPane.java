@@ -369,6 +369,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       // Create sidebar location dropdown
       sidebarLocation_ = new ListBox();
       ElementIds.assignElementId(sidebarLocation_.getElement(), ElementIds.PANE_LAYOUT_SIDEBAR_SELECT);
+      Roles.getListboxRole().setAriaLabelProperty(sidebarLocation_.getElement(), constants_.sidebarLocationLabel());
       sidebarLocation_.addItem(constants_.sidebarLocationLeft());
       sidebarLocation_.addItem(constants_.sidebarLocationRight());
 
