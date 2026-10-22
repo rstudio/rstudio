@@ -203,6 +203,7 @@ var GitDiffGutter = function(editor, strings) {
    this.onChange = this.onChange.bind(this);
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
+   this.peekKeyboardHandler = { handleKeyboard: this.onPeekKeyboard.bind(this) };
 
    // reachable from the editor for automation and debugging
    editor.gitDiffGutter = this;
@@ -757,11 +758,16 @@ var GitDiffGutter = function(editor, strings) {
       });
       header.appendChild(revertButton);
 
+      // Closing is the lesser action (the marker, Escape, and Show Change all
+      // close the peek too), so it is a plain glyph at the end of the header.
       var closeButton = document.createElement("button");
       closeButton.type = "button";
-      closeButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-close";
-      closeButton.textContent = this.strings.close;
+      closeButton.className = PEEK_CLASS + "-close";
+      closeButton.textContent = "\u00D7";
+      closeButton.title = this.strings.close;
+      closeButton.setAttribute("aria-label", this.strings.close);
       closeButton.addEventListener("click", function() {
+         self.focusEditor();
          self.closePeek();
       });
       header.appendChild(closeButton);
@@ -782,6 +788,11 @@ var GitDiffGutter = function(editor, strings) {
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
       this.peek = { chunk: chunk, widget: widget };
+
+      // Escape closes the peek while it is open. The handler goes in just
+      // above Ace's default bindings, so the completion popup and a Vim or
+      // Emacs mode, which own Escape while active, still see the key first.
+      this.editor.keyBinding.addKeyboardHandler(this.peekKeyboardHandler, 1);
       return true;
    };
 
@@ -791,6 +802,7 @@ var GitDiffGutter = function(editor, strings) {
 
       var peek = this.peek;
       this.peek = null;
+      this.editor.keyBinding.removeKeyboardHandler(this.peekKeyboardHandler);
       this.lineWidgetManager().removeLineWidget(peek.widget);
 
       // A fold ending on the peek's row aliases its widget at the fold's
@@ -817,6 +829,16 @@ var GitDiffGutter = function(editor, strings) {
             above = above.$oldWidget;
          }
       }
+   };
+
+   // Ace keyboard handler installed while a peek is open: a plain Escape
+   // closes it and is consumed, so it does not go on to interrupt R.
+   this.onPeekKeyboard = function(data, hashId, keyString) {
+      if (hashId !== 0 || keyString !== "esc")
+         return;
+
+      this.closePeek();
+      return { command: "null" };
    };
 
    this.rowForCell = function(element) {

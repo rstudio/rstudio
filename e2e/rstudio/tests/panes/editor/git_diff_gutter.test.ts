@@ -45,6 +45,7 @@ const PEEK = '.ace_git-peek';
 const PEEK_LABEL = '.ace_git-peek-label';
 const PEEK_LINE = '.ace_git-peek-line';
 const PEEK_REVERT = '.ace_git-peek-revert';
+const PEEK_CLOSE = '.ace_git-peek-close';
 
 // The main source column and any extra ones (see SourceColumnManager).
 const MAIN_COLUMN = '#rstudio_Source_pane';
@@ -380,6 +381,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(peek).toHaveCount(0);
 
+    // so does the close glyph at the end of the peek's header
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await peek.locator(PEEK_CLOSE).click();
+    await expect(peek).toHaveCount(0);
+
     // reverting from the peek restores the line and closes the peek
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(peek).toBeVisible({ timeout: 10000 });
@@ -410,6 +417,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
     // the same command toggles it closed
     await executeCommand(page, 'vcsShowChange');
+    await expect(peek).toHaveCount(0);
+
+    // and Escape closes it from the editor
+    await executeCommand(page, 'vcsShowChange');
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await editor.focus();
+    await page.keyboard.press('Escape');
     await expect(peek).toHaveCount(0);
 
     // a removal's peek lists the removed lines
