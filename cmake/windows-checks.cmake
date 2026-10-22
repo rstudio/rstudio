@@ -75,6 +75,14 @@ elseif(NOT RSTUDIO_SESSION_WIN32 AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
       "use VsDevCmd.bat -arch=arm64 -host_arch=arm64.")
 endif()
 
+# The SessionWinARM64 target needs an ARM64 compiler; the 64-bit check above
+# also accepts x64, which would put x64 files in the arm64 folder.
+if(RSTUDIO_TARGET STREQUAL "SessionWinARM64" AND NOT RSTUDIO_WINDOWS_ARM64)
+   message(FATAL_ERROR
+      "The SessionWinARM64 target needs an ARM64 MSVC compiler.\n"
+      "Use VsDevCmd.bat -arch=arm64 -host_arch=arm64.")
+endif()
+
 # 4. Ninja is the supported, CI-tested generator. The Visual Studio multi-config
 #    generator can link (see the archive-output pinning in src/cpp/ext), but its
 #    staging/packaging/test layout is not exercised, so warn rather than fail.
