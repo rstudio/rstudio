@@ -443,10 +443,12 @@ jobs:
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too (needs.build.result == 'skipped' on the daily-download
     # path). build_only seeds the build caches without running e2e, so skip.
+    # The accessibility run uses a fixed single shard (see the matrix below),
+    # so it does not depend on the shards job having succeeded.
     if: |
       always() &&
       inputs.build_only != true &&
-      needs.shards.result == 'success' &&
+      (inputs.a11y || needs.shards.result == 'success') &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
