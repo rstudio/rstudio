@@ -1,0 +1,50 @@
+name: "Test: E2E Playwright RStudio (Shard count)"
+
+# Reusable job around .github/actions/os-e2e-shards: reads one platform's
+# Playwright shard count from .github/e2e/shards.json and republishes it as
+# workflow outputs, so a calling workflow's strategy.matrix (which cannot read
+# a file or an env value itself) can be built from that one declaration. The
+# macOS, Windows and Linux Server engines call this as their `shards` job, so
+# the checkout pin, sparse paths and timeout live here rather than in each of
+# them. See .github/e2e/README.md.
+#
+# Runs on Linux because it only needs a sparse checkout and jq.
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: 'Key to read from .github/e2e/shards.json, e.g. "macos".'
+        type: string
+        required: true
+    outputs:
+      count:
+        description: "Number of shards, e.g. 6."
+        value: ${{ jobs.shards.outputs.count }}
+      matrix:
+        description: "JSON list of 1-based shard indices for strategy.matrix, e.g. [1,2,3,4,5,6]."
+        value: ${{ jobs.shards.outputs.matrix }}
+
+permissions:
+  contents: read
+
+jobs:
+  shards:
+    name: Load shard count
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      count: ${{ steps.shards.outputs.count }}
+      matrix: ${{ steps.shards.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            .github/e2e/shards.json
+            .github/actions/os-e2e-shards
+          sparse-checkout-cone-mode: false
+
+      - id: shards
+        uses: ./.github/actions/os-e2e-shards
+        with:
+          platform: ${{ inputs.platform }}
