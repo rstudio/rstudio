@@ -143,6 +143,67 @@ async function gutterAttached(page: Page): Promise<boolean> {
   }, GUTTER_ATTACHED);
 }
 
+/** The base fetches made since tracking began; see trackBaseFetches. */
+type BaseFetches = {
+  /** The file each fetch was for, by name, in order. */
+  names: string[];
+  /** Resolves once a fetch has been seen and the last one is over a second old. */
+  settled: () => Promise<void>;
+  stop: () => void;
+};
+
+/**
+ * Watches the base fetches (git_diff_base_contents) made from now on. The
+ * gutter fetches on its own schedule: once when it attaches, and half a
+ * second after the editor gains focus; `settled` waits those out, so a test
+ * that then moves the index knows no fetch is pending that could land after
+ * the move and pick the new index up ahead of the interaction under test.
+ */
+function trackBaseFetches(page: Page): BaseFetches {
+  const names: string[] = [];
+  let lastFetchAt = 0;
+  const onRequest = (request: Request): void => {
+    if (!request.url().includes('git_diff_base_contents')) return;
+    const params = (request.postDataJSON() as { params: string[] }).params;
+    names.push(params[0].replace(/\\/g, '/').split('/').pop()!);
+    lastFetchAt = Date.now();
+  };
+  page.on('request', onRequest);
+
+  return {
+    names,
+    settled: async () => {
+      await expect
+        .poll(() => lastFetchAt > 0 && Date.now() - lastFetchAt > 1000, { timeout: 15000 })
+        .toBe(true);
+    },
+    stop: () => page.off('request', onRequest),
+  };
+}
+
+/**
+ * Opens a file, waits for the given markers, and lets the fetches the open
+ * sets off come and go: the attach fetch gives the markers, but the focus
+ * the open gives the editor schedules another half a second later. A test
+ * that stages the file right after the open would otherwise race it (and
+ * did, on CI): landing after the staging, that fetch clears the markers
+ * before the test gets to click one.
+ */
+async function openFileSettled(
+  page: Page,
+  path: string,
+  markers: Record<number, string[]>,
+): Promise<void> {
+  const fetches = trackBaseFetches(page);
+  try {
+    await openFile(page, path);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(markers);
+    await fetches.settled();
+  } finally {
+    fetches.stop();
+  }
+}
+
 test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   const sandbox = useSuiteSandbox();
 
@@ -1247,8 +1308,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('re-fetches the base when a marker is clicked in an unfocused editor', async ({
     rstudioPage: page,
   }) => {
-    await openFile(page, scriptPath());
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await openFileSettled(page, scriptPath(), EDITED_MARKERS);
 
     // Stage the edits from the console (focus stays there), which moves the
     // index under the open document. Clicking the marker is the first
@@ -1277,15 +1337,21 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('reverts from a peek against the index as it is, not as it was', async ({
     rstudioPage: page,
   }) => {
-    await openFile(page, scriptPath());
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await openFileSettled(page, scriptPath(), EDITED_MARKERS);
 
+    // Open the peek with focus in the console, and let the re-fetch the
+    // click's editor focus schedules come and go: it must not be the one
+    // that finds the staging below, or it would close the peek first.
+    await executeInConsoleChecked(page, 'invisible(NULL)');
+    const focusFetch = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
     const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
     const box = (await cell.boundingBox())!;
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     const peek = page.locator(PEEK);
     await expect(peek).toBeVisible({ timeout: 10000 });
     await expect(peek.locator(PEEK_LINE)).toHaveText(['d <- 4']);
+    await focusFetch;
+    await expect(peek).toBeVisible();
 
     // Stage the file from the console while the peek is open: the index now
     // matches the buffer, and nothing has told the editor so. Revert must
@@ -1313,8 +1379,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('reverts at the cursor against the index as it is, not as it was', async ({
     rstudioPage: page,
   }) => {
-    await openFile(page, scriptPath());
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await openFileSettled(page, scriptPath(), EDITED_MARKERS);
 
     const editor = new AceEditor(page, '');
     await editor.gotoLine(5);
@@ -1581,30 +1646,17 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await executeInConsoleChecked(page, `writeLines("o <- 1", ${rPathLiteral(otherPath)})`);
     await commitAll(page, 'other', [otherPath]);
 
-    // which documents a fetch was for, by file name, and when the last came
-    const fetched: string[] = [];
-    let lastFetchAt = 0;
-    const onRequest = (request: Request): void => {
-      if (!request.url().includes('git_diff_base_contents')) return;
-      const params = (request.postDataJSON() as { params: string[] }).params;
-      fetched.push(params[0].replace(/\\/g, '/').split('/').pop()!);
-      lastFetchAt = Date.now();
-    };
-    page.on('request', onRequest);
-
-    // opening a document fetches once on attach and again on focus; wait
-    // for those to be over before counting
-    const settled = async (): Promise<void> => {
-      await expect.poll(() => lastFetchAt > 0 && Date.now() - lastFetchAt > 1000, { timeout: 15000 }).toBe(true);
-    };
-
+    // which documents a fetch was for; the open-time fetches are waited out
+    // before counting
+    const fetches = trackBaseFetches(page);
+    const { names: fetched } = fetches;
     try {
       await openFile(page, scriptPath());
       await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
       await openFile(page, otherPath);
       await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
       await expect.poll(() => fetched.includes('other.R'), { timeout: 15000 }).toBe(true);
-      await settled();
+      await fetches.settled();
 
       // A Git refresh reaches every open document, but only the one shown
       // fetches; the hidden script.R waits.
@@ -1612,7 +1664,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await executeCommand(page, 'activateVcs');
       await executeCommand(page, 'vcsRefresh');
       await expect.poll(() => fetched.includes('other.R'), { timeout: 15000 }).toBe(true);
-      await settled();
+      await fetches.settled();
       expect(fetched).not.toContain('script.R');
 
       // and fetches when it is shown again
@@ -1620,7 +1672,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => fetched.includes('script.R'), { timeout: 15000 }).toBe(true);
       await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
     } finally {
-      page.off('request', onRequest);
+      fetches.stop();
       await documentCloseAllNoSave(page);
       await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(otherPath)}))`);
       await commitAll(page, 'remove other', [otherPath]);
