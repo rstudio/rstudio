@@ -206,6 +206,11 @@ applyFixups.pastel_on_dark <- function(content, parsed)
    content <- .rs.updateSetting(content, "#524E4E", "ace_find_line", "background-color")
    content <- .rs.updateSetting(content, "#524E4E", "ace_console_error", "background-color")
    content <- .rs.updateSetting(content, "#EAEAEA", "terminal", "color")
+
+   # The stock selection colour is too faint against the editor background to
+   # pick out a Find match by (https://github.com/rstudio/rstudio/issues/13204).
+   content <- .rs.updateSetting(content, "rgba(221, 240, 255, 0.40)", "ace_marker-layer .ace_selection", "background")
+   content <- .rs.updateSetting(content, "1px solid rgba(221, 240, 255, 0.40)", "ace_marker-layer .ace_selected-word", "border")
    
    termBgLine <- grep(".xtermInvertBgColor( *){", content, perl = TRUE)
    content[termBgLine] <- paste0(".xtermInvertBgColor { background-color: #EAEAEA; }")
