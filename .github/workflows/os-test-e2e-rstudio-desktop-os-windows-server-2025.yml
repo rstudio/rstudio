@@ -646,13 +646,22 @@ jobs:
           path: RStudio-installer.exe
           retention-days: 7
 
+  # Reads the Windows shard count from .github/e2e/shards.json and republishes
+  # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
+  # env value itself, so the one declaration has to pass through here.
+  shards:
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: windows
+
   e2e-desktop-windows:
-    needs: build
+    needs: [build, shards]
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too. build_only seeds caches without running e2e, so skip here.
     if: |
       always() &&
       inputs.build_only != true &&
+      needs.shards.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
@@ -667,13 +676,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 6 shards: per-shard setup is only ~5 minutes against a ~30 minute
-        # (at 4 shards) worst-case test step, so extra shards still convert
-        # nearly 1:1 into wall-clock savings. Playwright shards by file, not
-        # by duration, so the shard counts stay unbalanced -- at 4 shards the
-        # slowest shard ran ~30 minutes of tests against ~22 for its siblings
-        # and was the long pole of the whole PR-triggered run.
-        shard: [1, 2, 3, 4, 5, 6]
+        # Declared once in .github/e2e/shards.json (see .github/e2e/README.md
+        # for how the count was chosen); the test step derives --shard=N/M
+        # from strategy.job-total, and e2e-merge prints the same count.
+        shard: ${{ fromJSON(needs.shards.outputs.matrix) }}
     runs-on: windows-2025
     timeout-minutes: 120
     # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
@@ -1020,7 +1026,7 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-desktop-windows]
+    needs: [shards, e2e-desktop-windows]
     if: always() && inputs.defer_merge != true && needs.e2e-desktop-windows.result != 'skipped' && needs.e2e-desktop-windows.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1054,7 +1060,7 @@ jobs:
         working-directory: e2e/rstudio
         run: |
           if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            echo "::error::No blob reports found -- every shard failed to produce artifacts"
             exit 1
           fi
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
@@ -1121,7 +1127,7 @@ jobs:
             </details>
 
             ---
-            <sub>6 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>${{ needs.shards.outputs.count }} shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Release-gate floor, last so the reporting above still runs. A run that
       # executed nothing must not report green: Playwright suppresses its own
