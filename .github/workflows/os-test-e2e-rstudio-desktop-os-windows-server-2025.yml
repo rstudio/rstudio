@@ -253,7 +253,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
+          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
           restore-keys: |
             rstudio-tools-win64-v2-
 

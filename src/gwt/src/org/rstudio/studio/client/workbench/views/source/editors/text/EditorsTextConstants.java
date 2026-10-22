@@ -251,4 +251,17 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String assistantCompletionsEnabled(String prefix);
     String assistantCompletionsDisabled(String prefix);
     String reformatDocumentOnSave();
+
+    // Git diff gutter peek
+    @DefaultMessage("Removed {0} lines")
+    @AlternateMessage({"one", "Removed 1 line"})
+    String gitPeekRemovedLines(@PluralCount int count);
+    @DefaultMessage("Added {0} lines")
+    @AlternateMessage({"one", "Added 1 line"})
+    String gitPeekAddedLines(@PluralCount int count);
+    @DefaultMessage("Changed {0} lines; previously:")
+    @AlternateMessage({"one", "Changed 1 line; previously:"})
+    String gitPeekChangedLines(@PluralCount int count);
+    String gitPeekRevert();
+    String gitPeekClose();
 }
