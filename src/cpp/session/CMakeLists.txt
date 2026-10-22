@@ -122,15 +122,20 @@ endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
+   # LLVM never published a Windows ARM64 build of 13.0.1
+   set(LIBCLANG_ARM64_VERSION "23.1.3")
+   set(LIBCLANG_ARM64_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_ARM64_VERSION}/arm64")
    if(RSTUDIO_WINDOWS_ARM64)
-      # LLVM never published a Windows ARM64 build of 13.0.1
-      set(LIBCLANG_VERSION "23.1.3")
+      set(LIBCLANG_VERSION "${LIBCLANG_ARM64_VERSION}")
    else()
       set(LIBCLANG_VERSION "13.0.1")
    endif()
    set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
    if(NOT EXISTS "${LIBCLANG_DIR}")
       message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
+   endif()
+   if(RSTUDIO_PACKAGE_ARM64_SESSION AND NOT EXISTS "${LIBCLANG_ARM64_DIR}")
+      message(FATAL_ERROR "ARM64 libclang ${LIBCLANG_ARM64_VERSION} not found in ${LIBCLANG_ARM64_DIR}")
    endif()
 endif()
 
@@ -988,12 +993,21 @@ if(NOT RSTUDIO_SESSION_SUBBUILD AND NOT RSESSION_ALTERNATE_BUILD)
               DESTINATION "${RSTUDIO_INSTALL_BIN}")
    endif()
 
+   # the ARM64 session, from the SessionWinARM64 session-only build; no empty
+   # folder fallback, so a missing ARM64 build stops the package build
+   if(WIN32 AND RSTUDIO_PACKAGE_ARM64_SESSION)
+      install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/arm64"
+              USE_SOURCE_PERMISSIONS
+              DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   endif()
+
    # install libclang
-   if(WIN32 AND RSTUDIO_WINDOWS_ARM64)
-      file(GLOB LIBCLANG_ARM64_FILES "${LIBCLANG_DIR}/arm64/*")
+   if(WIN32 AND (RSTUDIO_WINDOWS_ARM64 OR RSTUDIO_PACKAGE_ARM64_SESSION))
+      file(GLOB LIBCLANG_ARM64_FILES "${LIBCLANG_ARM64_DIR}/*")
       install(PROGRAMS ${LIBCLANG_ARM64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/arm64)
-   elseif(WIN32)
+   endif()
+   if(WIN32 AND NOT RSTUDIO_WINDOWS_ARM64)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
       install(PROGRAMS ${LIBCLANG_32_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)

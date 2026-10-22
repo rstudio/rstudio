@@ -254,6 +254,10 @@ if(RSTUDIO_NO_ELECTRON)
    set(RSTUDIO_ELECTRON FALSE)
 endif()
 
+# x64 Windows package: include the ARM64 session, built into
+# <build>/src/cpp/session/arm64 by the SessionWinARM64 session-only build
+option(RSTUDIO_PACKAGE_ARM64_SESSION "Include the ARM64 session in the x64 Windows package" OFF)
+
 # session-only builds (packaged inside the main build's bin folder)
 if(WIN32)
    if(RSTUDIO_TARGET STREQUAL "SessionWin32")
