@@ -620,8 +620,10 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     const width = await getOffsetWidth(page, TABSET2_PANE);
 
     await executeCommand(page, 'activateFiles');
-    // A resize would animate, so give one time to start before sampling.
-    await page.waitForTimeout(500);
-    expect(await getOffsetWidth(page, TABSET2_PANE)).toBe(width);
+    // A resize would start at once and animate for 300ms, so sample well past it.
+    for (let i = 0; i < 20; i++) {
+      expect(await getOffsetWidth(page, TABSET2_PANE), `width, sample ${i}`).toBe(width);
+      await page.waitForTimeout(50);
+    }
   });
 });
