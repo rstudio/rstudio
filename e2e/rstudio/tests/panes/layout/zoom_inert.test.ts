@@ -6,7 +6,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import {
   documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
 } from '@utils/commands';
-import { focusConsole } from '@pages/console_pane.page';
+import { executeInConsole, focusConsole } from '@pages/console_pane.page';
 import { captureResult, killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
 import { TIMEOUTS } from '@utils/constants';
 import type { Locator, Page } from 'playwright';
@@ -484,6 +484,42 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       await expect.poll(async () => Math.abs(((await sidebarSplitter.boundingBox())?.x ?? 0) - box.x))
         .toBeLessThanOrEqual(2);
       await setSidebarVisible(page, false);
+    }
+  });
+
+  // Console and Source raise themselves rather than going through the tab
+  // commands, and reopen their column the same way -- including one dragged
+  // nearly but not fully shut.
+  for (const [label, x] of [['shut', 1], ['nearly shut', 22]] as const) {
+    test(`activateConsole reopens the Console column dragged ${label}`, async ({ rstudioPage: page }) => {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, x, splitterHome.y);
+      await expectHidden(page, CONSOLE_PANE);
+      if (label === 'nearly shut')
+        expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(0);
+
+      await executeCommand(page, 'activateConsole');
+      await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, CONSOLE_PANE, TABSET2_PANE);
+    });
+  }
+
+  // A column zoom can't move to the raised pane as a pane zoom does, so the
+  // plot ends it -- and the zoom command must then start a fresh zoom rather
+  // than "restore" from state left behind.
+  test('a plot during a column zoom ends the zoom', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'layoutZoomLeftColumn');
+    await expectHidden(page, TABSET2_PANE);
+    try {
+      await executeInConsole(page, 'plot(1)');
+      await expectExposed(page, TABSET2_PANE);
+      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
+
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expectHidden(page, TABSET2_PANE);
+      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+    } finally {
+      await resetLayoutZoom(page);
+      await executeInConsole(page, 'graphics.off()');
     }
   });
 

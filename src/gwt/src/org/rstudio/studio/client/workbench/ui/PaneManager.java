@@ -547,28 +547,19 @@ public class PaneManager
             return;
          }
 
-         Double width = Double.valueOf(window.getActiveWidget().getOffsetWidth());
-
-         // If the widget is already visible horizontally, then bail
-         // (other logic handles vertical visibility)
-         if (width > 0)
+         // A zoom still tracked here is a column zoom or this window's own pane
+         // zoom; neither can move to the raised pane. End one that shut the
+         // pane's column, as restoreLayout() also clears its state. (Vertical
+         // visibility is handled by the window's own state change.)
+         if (widgetSizePriorToZoom_ >= 0)
+         {
+            Widget column = getColumn(window);
+            if (column != null && panel_.isCollapsed(column))
+               restoreLayout();
             return;
+         }
 
-         // Attempt to change the widths of as few columns as possible
-         ArrayList<Widget> columns = new ArrayList<>();
-         columns.add(right_);
-         columns.add(center_);
-         columns.addAll(leftList_);
-
-         ArrayList<Double> sizes = getValidColumnWidths(columns, false);
-         final Command afterAnimation = () -> window.getNormal().onResize();
-
-         double rightEnd = sizes.get(0);
-         ArrayList<Double> leftTargets = new ArrayList<>();
-         if (sizes.size() > 2)
-            leftTargets.addAll(sizes.subList(2, sizes.size()));
-
-         resizeHorizontally(rightEnd, leftTargets, afterAnimation);
+         reopenCollapsedColumn(window);
       });
 
       eventBus_.addHandler(
@@ -2368,7 +2359,8 @@ public class PaneManager
 
    /**
     * Reopen the column holding window if a splitter drag has shut it, so that
-    * showing one of its tabs leaves the tab on screen (#19184). The column gets
+    * showing one of its tabs, or a pane raising itself, leaves it on screen
+    * (#19184). The column gets
     * up to a default column's width, taken from the column that can give the
     * most so that the others keep theirs. A tracked zoom is left alone: it
     * restores the widths it shut.
@@ -2378,24 +2370,12 @@ public class PaneManager
       if (maximizedWindow_ != null || widgetSizePriorToZoom_ >= 0)
          return;
 
-      ArrayList<Widget> columns = new ArrayList<>(leftList_);
-      columns.add(center_);
-      columns.add(right_);
-      if (sidebar_ != null)
-         columns.add(sidebar_);
-
-      Element frame = window.getNormal().getElement();
-      Widget column = null;
-      for (Widget candidate : columns)
-      {
-         if (candidate.getElement().isOrHasChild(frame))
-            column = candidate;
-      }
+      Widget column = getColumn(window);
       if (column == null || !panel_.isCollapsed(column))
          return;
 
       Widget donor = null;
-      for (Widget candidate : columns)
+      for (Widget candidate : getColumns())
       {
          if (candidate != column &&
              (donor == null || getGivableWidth(candidate) > getGivableWidth(donor)))
@@ -2415,8 +2395,30 @@ public class PaneManager
       if (donor != center_)
          panel_.setWidgetSize(donor, panel_.getWidgetSize(donor) - growth);
 
-      // Animate to the sizes just set.
-      resizeHorizontally(panel_.getWidgetSize(right_), panel_.getLeftWidgetSizes());
+      // Animate to the sizes just set, then lay the window out at its new width.
+      resizeHorizontally(panel_.getWidgetSize(right_), panel_.getLeftWidgetSizes(),
+                         () -> window.getNormal().onResize());
+   }
+
+   private ArrayList<Widget> getColumns()
+   {
+      ArrayList<Widget> columns = new ArrayList<>(leftList_);
+      columns.add(center_);
+      columns.add(right_);
+      if (sidebar_ != null)
+         columns.add(sidebar_);
+      return columns;
+   }
+
+   private Widget getColumn(LogicalWindow window)
+   {
+      Element frame = window.getNormal().getElement();
+      for (Widget column : getColumns())
+      {
+         if (column.getElement().isOrHasChild(frame))
+            return column;
+      }
+      return null;
    }
 
    /**
