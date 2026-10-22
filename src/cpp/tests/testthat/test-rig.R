@@ -393,15 +393,15 @@ test_that("a user-mode install leaves rig's default R setup as it was", {
    }
 
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
    expect_setequal(names(paths), c("current", "R", "Rscript", "launchAgent"))
 
    # a quick link from before the install is kept
    writeLines("#!/bin/sh", paths[["Rscript"]])
-   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl, registry = NULL)
 
    # nothing added: nothing removed, and launchd left alone
-   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchctl), character())
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchctl, registry = NULL), character())
    expect_length(calls, 1L)
 
    # rig sets a default: the links (one of them dangling) and the agent
@@ -412,7 +412,7 @@ test_that("a user-mode install leaves rig's default R setup as it was", {
    dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
    writeLines("<plist/>", paths[["launchAgent"]])
 
-   removed <- .rs.rig.userDefaultRestore(snapshot, launchctl)
+   removed <- .rs.rig.userDefaultRestore(snapshot, launchctl, registry = NULL)
    expect_setequal(removed, unname(paths[c("current", "R", "launchAgent")]))
    expect_false(any(.rs.rig.pathExists(paths[c("current", "R", "launchAgent")])))
    expect_true(file.exists(paths[["Rscript"]]))
@@ -442,20 +442,20 @@ test_that("RSTUDIO_WHICH_R is unset again when launchd had no value for it", {
    }
 
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
-   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl, registry = NULL)
 
    dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
    writeLines("<plist/>", paths[["launchAgent"]])
-   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchctl), unname(paths[["launchAgent"]]))
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchctl, registry = NULL), unname(paths[["launchAgent"]]))
    expect_identical(calls[[3L]], c("unsetenv", "RSTUDIO_WHICH_R"))
 
    # off macOS there is no agent, and launchd is never consulted
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = FALSE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "linux")
    expect_identical(names(paths), c("current", "R", "Rscript"))
    expect_identical(basename(paths[["current"]]), "current")
    calls <- list()
-   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl, registry = NULL)
    expect_length(calls, 0L)
 
 })
@@ -481,5 +481,113 @@ test_that("rig's quick-link directory is created before a user-mode install", {
    # nothing to create when rig did not report a directory
    expect_false(.rs.rig.ensureBinaryDir(list()))
    expect_false(.rs.rig.ensureBinaryDir(list(binary_dir = "")))
+
+})
+
+test_that("a Windows user-mode install leaves the registry default and user PATH as they were", {
+
+   bin <- tempfile("rig-bin-")
+   dir.create(bin)
+   on.exit(unlink(bin, recursive = TRUE), add = TRUE)
+
+   # an in-memory registry in place of PowerShell
+   store <- new.env(parent = emptyenv())
+   registry <- function() as.list(store)
+   registryWrite <- function(ops)
+   {
+      for (op in ops)
+      {
+         id <- .rs.rig.registryId(op$key, op$name)
+         if (identical(op$op, "remove"))
+            rm(list = id, envir = store)
+         else
+            assign(id, list(type = op$type, data = op$data), envir = store)
+      }
+   }
+
+   pathId  <- .rs.rig.registryId("HKCU:\\Environment", "Path")
+   rId     <- .rs.rig.registryId("HKCU:\\Software\\R-core\\R", "Current Version")
+   rPathId <- .rs.rig.registryId("HKCU:\\Software\\R-core\\R", "InstallPath")
+   r64Id   <- .rs.rig.registryId("HKCU:\\Software\\R-core\\R64", "Current Version")
+   assign(pathId, list(type = "ExpandString", data = "C:\\Windows;%USERPROFILE%\\bin"), envir = store)
+   assign(rId, list(type = "String", data = "4.6.1"), envir = store)
+
+   paths <- .rs.rig.userDefaultPaths(list(binary_dir = bin), platform = "windows")
+   expect_identical(basename(unname(paths)), c("R.exe", "RS.exe", "Rscript.exe"))
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, registry = registry, binaryDir = bin)
+
+   # nothing changed: nothing to revert
+   expect_identical(
+      .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = registryWrite),
+      character()
+   )
+
+   # rig sets its default: the shims, the registry default, and its PATH entry
+   for (shim in paths)
+      writeLines("", shim)
+   assign(pathId, list(type = "ExpandString", data = paste0(bin, ";C:\\Windows;%USERPROFILE%\\bin")), envir = store)
+   assign(rId, list(type = "String", data = "4.2.3"), envir = store)
+   assign(rPathId, list(type = "String", data = "C:\\Users\\me\\AppData\\Roaming\\rig\\data\\r\\R-4.2.3"), envir = store)
+   assign(r64Id, list(type = "String", data = "4.2.3"), envir = store)
+
+   reverted <- .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = registryWrite)
+   expect_false(any(file.exists(paths)))
+   expect_setequal(reverted, c(unname(paths), rId, rPathId, r64Id, sprintf("user PATH entry %s", bin)))
+   expect_identical(store[[pathId]], list(type = "ExpandString", data = "C:\\Windows;%USERPROFILE%\\bin"))
+   expect_identical(store[[rId]], list(type = "String", data = "4.6.1"))
+   expect_false(exists(rPathId, envir = store, inherits = FALSE))
+   expect_false(exists(r64Id, envir = store, inherits = FALSE))
+
+   # a registry that can't be read is reported, not fatal
+   broken <- function() stop("no powershell")
+   expect_warning(snapshot <- .rs.rig.userDefaultSnapshot(paths, registry = broken, binaryDir = bin))
+   expect_null(snapshot$registry)
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, registry = broken, registryWrite = registryWrite), character())
+
+})
+
+test_that("rig's PATH entry is taken out without disturbing other changes", {
+
+   bin <- "C:\\Users\\me\\.local\\bin"
+   pathId <- .rs.rig.registryId("HKCU:\\Environment", "Path")
+
+   # no user PATH before, only rig's entry after: the value goes away
+   ops <- .rs.rig.registryRestoreOps(list(), setNames(list(list(type = "ExpandString", data = bin)), pathId), bin)
+   expect_length(ops, 1L)
+   expect_identical(ops[[1L]]$op, "remove")
+
+   # rig's entry (in another case) plus one added by something else: only rig's goes
+   before <- setNames(list(list(type = "String", data = "C:\\Windows")), pathId)
+   after <- setNames(list(list(type = "String", data = paste0(toupper(bin), ";C:\\Windows;D:\\tools"))), pathId)
+   ops <- .rs.rig.registryRestoreOps(before, after, bin)
+   expect_length(ops, 1L)
+   expect_identical(ops[[1L]]$op, "set")
+   expect_identical(ops[[1L]]$type, "String")
+   expect_identical(ops[[1L]]$data, "C:\\Windows;D:\\tools")
+
+   # already on the PATH beforehand: left alone, as is a value that disappeared
+   expect_length(.rs.rig.registryRestoreOps(after, after, bin), 0L)
+   expect_length(.rs.rig.registryRestoreOps(before, list(), bin), 0L)
+
+})
+
+test_that("the registry scripts quote their PowerShell strings", {
+
+   script <- .rs.rig.registryWriteScript(list(
+      list(op = "set", key = "HKCU:\\Environment", name = "Path", type = "ExpandString", data = "C:\\it's;D:\\x"),
+      list(op = "remove", key = "HKCU:\\Software\\R-core\\R", name = "Current Version")
+   ))
+   expect_identical(
+      script[[1L]],
+      "Set-ItemProperty -LiteralPath 'HKCU:\\Environment' -Name 'Path' -Type ExpandString -Value 'C:\\it''s;D:\\x'"
+   )
+   expect_identical(
+      script[[2L]],
+      "Remove-ItemProperty -LiteralPath 'HKCU:\\Software\\R-core\\R' -Name 'Current Version' -ErrorAction SilentlyContinue"
+   )
+
+   read <- .rs.rig.registryReadScript()
+   expect_true(any(grepl("@('HKCU:\\Environment', 'Path')", read, fixed = TRUE)))
+   expect_identical(tail(read, 1L), "ConvertTo-Json -InputObject @($values) -Compress")
 
 })
