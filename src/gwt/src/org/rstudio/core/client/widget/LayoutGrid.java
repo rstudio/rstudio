@@ -50,7 +50,8 @@ public class LayoutGrid extends Grid
          {
             String label = widgets_.get(i).first;
             Widget widget = widgets_.get(i).second;
-            FormLabel formLabel = new FormLabel(StringUtil.ensureColonSuffix(label), labelTarget(widget));
+            FormLabel formLabel =
+               new FormLabel(StringUtil.ensureColonSuffix(label), labelTarget(widget));
             
             if (widget instanceof NumericValueWidget)
             {
