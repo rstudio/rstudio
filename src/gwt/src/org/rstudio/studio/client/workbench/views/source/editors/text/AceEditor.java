@@ -5356,6 +5356,21 @@ public class AceEditor implements DocDisplay
          getLoader(AceResources.INSTANCE.extLanguageTools(),
                    AceResources.INSTANCE.extLanguageToolsUncompressed());
 
+   private static final ExternalJavaScriptLoader extDiffLoader_ =
+         getLoader(AceResources.INSTANCE.extDiff(),
+                   AceResources.INSTANCE.extDiffUncompressed());
+
+   // ext-diff is only needed by the Git diff gutter, so it loads on demand
+   private static final AsyncJavaScriptLoader diffLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(extDiffLoader_);
+
+   public static void loadDiffExtension(Command onLoaded)
+   {
+      diffLoader_.execute(onLoaded);
+   }
+
    private static final List<Command> keybindingsLoadedCommands_ = new ArrayList<>();
 
    // ace itself must load before the bundles extending it; within each stage
