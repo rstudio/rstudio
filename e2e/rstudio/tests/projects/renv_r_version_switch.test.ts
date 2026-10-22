@@ -4,10 +4,11 @@ import { NO_BTN, YES_BTN } from "@pages/modals.page";
 import { closeProjectIfOpen, restartSessionWithSentinel, waitForSessionRestart } from "@utils/project";
 import { getVersion, openProject } from "@utils/commands";
 import { useSuiteSandbox } from "@utils/sandbox";
+import { sleep } from "@utils/constants";
 import { rStringLiteral } from "@utils/r";
 import { captureResult } from "@utils/terminal";
 import { execFileSync } from "child_process";
-import { readFileSync } from "fs";
+import { lstatSync, mkdirSync, readdirSync, readFileSync } from "fs";
 import type { Page } from "playwright";
 
 const PROJECT_MENU = "#rstudio_project_menubutton_toolbar";
@@ -75,6 +76,67 @@ function otherR(current: string, orthogonal: boolean): InstalledR | undefined {
     .filter((entry) => majorMinor(entry.version) !== majorMinor(current))
     .filter((entry) => isOrthogonal(entry.binary) === orthogonal)
     .sort((a, b) => compareVersions(b.version, a.version))[0];
+}
+
+// Shell startup files rig appends to (or creates, when none exist) to put its
+// quick-link directory on the PATH.
+const SHELL_PROFILES = [".profile", ".bash_profile", ".bashrc", ".zprofile", ".zshrc", ".config/fish/conf.d/rigenv.fish"];
+
+// Versions of R to install when the requested one is missing, newest first;
+// the first from a series not installed on this machine is used.
+const INSTALL_CANDIDATES = ["4.4.3", "4.3.3", "4.2.3"];
+
+function pathExists(path: string): boolean {
+  try {
+    lstatSync(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function readOrNull(path: string): string | null {
+  try {
+    return readFileSync(path, "utf-8");
+  } catch {
+    return null;
+  }
+}
+
+function launchctl(args: string[]): string {
+  try {
+    return execFileSync("/bin/launchctl", args, {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return "";
+  }
+}
+
+// The files rig creates when the first R it installs in user mode becomes the
+// default R, under the given HOME: rig's current-version link, the R and
+// Rscript quick links, and on macOS a LaunchAgent that sets RSTUDIO_WHICH_R
+// at login. Also gives rig's user-mode installation root and quick-link
+// directory.
+function rigUserDefault(rig: string, home: string): { root: string; binaryDir: string; files: string[] } {
+  const dirs = JSON.parse(
+    execFileSync(rig, ["system", "dirs", "--user", "--json"], {
+      encoding: "utf-8",
+      env: { ...process.env, HOME: home },
+      stdio: ["ignore", "pipe", "ignore"],
+    }),
+  ) as { r_root: string; binary_dir: string };
+
+  const files = [
+    `${dirs.r_root}/${process.platform === "darwin" ? "Current" : "current"}`,
+    `${dirs.binary_dir}/R`,
+    `${dirs.binary_dir}/Rscript`,
+  ];
+  if (process.platform === "darwin")
+    files.push(`${home}/Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist`);
+
+  return { root: dirs.r_root, binaryDir: dirs.binary_dir, files };
 }
 
 // The warning bar repeats its message in a screen-reader live region, so
@@ -241,6 +303,79 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     expect(isOrthogonal(target!.binary)).toBe(true);
     await expect.poll(async () => (await getVersion(page)).r).toBe(target!.version);
     expect(await captureResult(page, CHILD_R_VERSION)).toBe(target!.version);
+  });
+
+  // Installing a missing R goes through rig in user mode, and rig makes the
+  // first R it installs that way the default R outside RStudio as well (quick
+  // links, shell startup-file edits, and on macOS a login LaunchAgent that
+  // sets RSTUDIO_WHICH_R), which RStudio undoes (#19229). This downloads and
+  // installs a build of R, so it runs only when asked to.
+  test("installs a missing R without making it the default R outside RStudio", async ({
+    rstudioPage: page,
+  }) => {
+    test.setTimeout(900000);
+    test.skip(!process.env.PW_ALLOW_R_INSTALL, "downloads and installs a build of R; set PW_ALLOW_R_INSTALL=1 to allow");
+    test.skip(process.platform === "win32", "rig's Windows default (R.exe shims and registry entries) is not undone yet");
+
+    const current = (await getVersion(page)).r;
+    const known = (await captureResult(page, 'paste(.rs.rInstallations.cached(refresh = TRUE)$version, collapse = ",")'))
+      .split(",")
+      .filter(Boolean);
+    const series = new Set([current, ...known].map(majorMinor));
+    const target = INSTALL_CANDIDATES.find((version) => !series.has(majorMinor(version)));
+    test.skip(!target, "every candidate series of R is already installed");
+
+    // rig runs with the session's HOME (the sandbox's), so that is where its
+    // files land; none of the default's are there yet
+    const home = await captureResult(page, 'Sys.getenv("HOME")');
+    const rig = await captureResult(page, ".rs.rig.find()");
+    expect(rig).not.toBe("");
+    const rigDefault = rigUserDefault(rig, home);
+    expect(rigDefault.files.filter(pathExists)).toEqual([]);
+
+    // rig 0.11.0 fails outright ("No such file or directory") in a home that
+    // has no quick-link directory yet, as a fresh one here doesn't
+    mkdirSync(rigDefault.binaryDir, { recursive: true });
+    const profilesBefore = SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`));
+    const whichRBefore = process.platform === "darwin" ? launchctl(["getenv", "RSTUDIO_WHICH_R"]) : "";
+
+    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-install`, target!);
+
+    const installLink = page.getByText(`Install R ${target} and switch`, { exact: true });
+    await expect(installLink).toBeVisible({ timeout: 60000 });
+
+    originalR ||= await captureResult(page, SESSION_R);
+
+    await installLink.click();
+
+    // the download and install take a while, and the session then restarts
+    // under the new R; a failed installation is reported in the warning bar
+    const failure = page.getByText(`Installation of R ${target} failed`);
+    const deadline = Date.now() + 600000;
+    for (;;) {
+      const running = (await getVersion(page).catch(() => ({ r: "" }))).r;
+      if (running === target)
+        break;
+      if (await failure.count())
+        throw new Error(await failure.first().innerText());
+      if (Date.now() > deadline)
+        throw new Error(`R ${target} is not running after 10 minutes (R ${running} is)`);
+      await sleep(5000);
+    }
+    await waitForSessionRestart(page);
+    await expect(page.locator(PROJECT_MENU)).toContainText("renv-r-install", { timeout: 30000 });
+
+    // rig installed R in user mode under the session's home...
+    expect(readdirSync(rigDefault.root).some((entry) => entry.startsWith(target!))).toBe(true);
+
+    // ...and nothing else changed: no default links, no LaunchAgent, no
+    // startup-file edits, and launchd's RSTUDIO_WHICH_R as it was
+    expect(rigDefault.files.filter(pathExists)).toEqual([]);
+    expect(SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`))).toEqual(profilesBefore);
+    if (process.platform === "darwin") {
+      expect(launchctl(["getenv", "RSTUDIO_WHICH_R"])).toBe(whichRBefore);
+      expect(launchctl(["list", "io.r-lib.rig.rstudio-which-r"])).toBe("");
+    }
   });
 });
 
