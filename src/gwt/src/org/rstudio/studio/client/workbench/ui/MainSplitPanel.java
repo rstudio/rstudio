@@ -736,6 +736,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
    }
 
+   /**
+    * The narrowest a column can be and stay open. A layout with the sidebar
+    * below its minimum is discarded when it is restored from saved state.
+    */
+   public int getMinimumOpenWidth(Widget column)
+   {
+      return column == sidebar_ ? MINIMUM_SIDEBAR_WIDTH : COLLAPSED_COLUMN_WIDTH;
+   }
+
    private Widget getWidestColumn()
    {
       ArrayList<Widget> columns = new ArrayList<>(leftList_);
@@ -902,7 +911,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private String sidebarLocation_ = "left";
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
-   static final int MINIMUM_SIDEBAR_WIDTH = 175;
+   private static final int MINIMUM_SIDEBAR_WIDTH = 175;
    // Showing the sidebar must not squeeze the center (Source/Console) column
    // below this; if it would, the other columns are reset to default widths so
    // Source/Console can't be left at ~0 width (invisible).

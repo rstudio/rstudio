@@ -2405,7 +2405,7 @@ public class PaneManager
       }
       double growth = Math.min(panel_.getDefaultSplitterWidth() - column.getOffsetWidth(),
                                getGivableWidth(donor));
-      if (growth <= 0)
+      if (column.getOffsetWidth() + growth < panel_.getMinimumOpenWidth(column))
          return;
 
       // center_ fills the space the other columns leave and has no size of its
@@ -2421,14 +2421,12 @@ public class PaneManager
 
    /**
     * How much width a column can give to reopen another: at most half its
-    * width, and none of its minimum. A layout with the sidebar below its
-    * minimum is discarded when it is restored from saved state.
+    * width, and none that would take it below the width it needs to stay open.
     */
    private double getGivableWidth(Widget column)
    {
-      int minimum = column == sidebar_ ? MainSplitPanel.MINIMUM_SIDEBAR_WIDTH : 0;
       return Math.max(0, Math.min(column.getOffsetWidth() / 2.0,
-                                  column.getOffsetWidth() - minimum));
+                                  column.getOffsetWidth() - panel_.getMinimumOpenWidth(column)));
    }
 
    public void activateTab(String tabName)
