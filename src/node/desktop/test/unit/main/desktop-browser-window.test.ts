@@ -48,15 +48,13 @@ if (!isWindowsDocker()) {
       assert.isFalse(win.window.isVisible());
     });
 
-    // Sizes stay within xvfb-run's default 640x480 screen, which X11 clamps
-    // larger windows to on the Linux CI runners.
     it('construction creates the BrowserWindow at the requested size', () => {
       const win = new DesktopBrowserWindow({
         name: '_blank',
         skipLocaleDetection: true,
-        initialSize: { width: 500, height: 400 },
+        initialSize: { width: 1000, height: 600 },
       });
-      assert.deepEqual(win.window.getSize(), [500, 400]);
+      assert.deepEqual(win.window.getSize(), [1000, 600]);
     });
 
     describe('unmaximize handling', () => {
