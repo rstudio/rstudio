@@ -295,11 +295,11 @@ public class AppearancePreferencesPane extends PreferencesPane
       
       LayoutGrid editorGrid = new LayoutGrid(3, 2);
       editorGrid.setWidth("100%");
-      editorGrid.setWidget(0, 0, new Label(constants_.appearanceEditorFontSizeLabel()));
+      editorGrid.setWidget(0, 0, new FormLabel(constants_.appearanceEditorFontSizeLabel(), editorFontSize_));
       editorGrid.setWidget(0, 1, editorFontSize_);
-      editorGrid.setWidget(1, 0, new Label(constants_.appearanceEditorLineHeightLabel()));
+      editorGrid.setWidget(1, 0, new FormLabel(constants_.appearanceEditorLineHeightLabel(), editorLineHeight_));
       editorGrid.setWidget(1, 1, editorLineHeight_);
-      editorGrid.setWidget(2, 0, new Label(constants_.helpFontSizeLabel()));
+      editorGrid.setWidget(2, 0, new FormLabel(constants_.helpFontSizeLabel(), helpFontSize_));
       editorGrid.setWidget(2, 1, helpFontSize_);
       
       textRendering_ = new SelectWidget(
