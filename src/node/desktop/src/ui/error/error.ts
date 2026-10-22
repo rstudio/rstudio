@@ -28,7 +28,13 @@ const loadPageLocalization = () => {
       'sessionPath',
       'rSessionFailedToStart',
       'rstudioVersion',
+      'warning',
+      'errorMessage',
+      'processOutput',
+      'rSessionExitedWithCode',
+      'errors',
       'output',
+      'recentLog',
       'nextSteps',
       'rCanFailToStartupForManyReasons',
       'investigateAnyErrorsAbove',
@@ -58,6 +64,14 @@ const loadPageLocalization = () => {
             case 'rSessionExitedWithCode':
               element.innerHTML = i18next.t('uiFolder.' + reducedId, {
                 exitCode: '<strong><span id="exit_code"></span></strong>',
+              });
+              // the exit code's box exists only once the sentence is written
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (window as any).desktop.getStartupErrorInfo('exit_code', (result: string) => {
+                const exitCode = document.getElementById('exit_code');
+                if (exitCode) {
+                  exitCode.innerHTML = result;
+                }
               });
               break;
             case 'copyProblemReport':
