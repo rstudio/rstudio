@@ -39,7 +39,7 @@ if(RSTUDIO_UNINSTALL_PREVIOUS)
 endif()
 
 # install root docs
-if (NOT RSTUDIO_SESSION_WIN32)
+if (NOT RSTUDIO_SESSION_SUBBUILD)
    # dynamically configure SOURCE with the git revision hash
    INSTALL(CODE "
       execute_process(COMMAND git rev-parse HEAD

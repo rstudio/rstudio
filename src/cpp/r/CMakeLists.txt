@@ -105,7 +105,7 @@ else()
 endif()
 
 # install rules
-if (NOT RSTUDIO_SESSION_WIN32)
+if (NOT RSTUDIO_SESSION_SUBBUILD)
    file(GLOB R_SRC_FILES "R/*.R")
    install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
 endif()

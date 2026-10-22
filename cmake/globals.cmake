@@ -254,10 +254,11 @@ if(RSTUDIO_NO_ELECTRON)
    set(RSTUDIO_ELECTRON FALSE)
 endif()
 
-# set session32 if specified
+# session-only builds (packaged inside the main build's bin folder)
 if(WIN32)
    if(RSTUDIO_TARGET STREQUAL "SessionWin32")
       set(RSTUDIO_SESSION_WIN32 TRUE)
+      set(RSTUDIO_SESSION_SUBBUILD TRUE)
       add_definitions(-D_X86_)
    elseif(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
       # an ARM64 compiler builds a native ARM64 RStudio
@@ -270,7 +271,7 @@ endif()
 
 # record git revision hash (cache it since we don't use this in development
 # mode and we don't want it to force rebuilds there)
-if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSTUDIO_GIT_REVISION_HASH)
+if(NOT RSTUDIO_SESSION_SUBBUILD AND NOT RSTUDIO_GIT_REVISION_HASH)
    find_program(GIT_EXECUTABLE git)
    if(GIT_EXECUTABLE)
       execute_process(

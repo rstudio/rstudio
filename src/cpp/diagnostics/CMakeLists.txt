@@ -59,7 +59,7 @@ target_link_libraries(diagnostics
    rstudio-core
 )
 
-if(NOT RSTUDIO_SESSION_WIN32)
+if(NOT RSTUDIO_SESSION_SUBBUILD)
    install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 

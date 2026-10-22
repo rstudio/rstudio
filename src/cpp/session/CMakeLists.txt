@@ -583,7 +583,7 @@ if(WIN32)
 
    endif()
 
-   if(NOT RSTUDIO_SESSION_WIN32)
+   if(NOT RSTUDIO_SESSION_SUBBUILD)
       add_subdirectory(consoleio)
    endif()
 
@@ -740,12 +740,12 @@ endif()
 # resources and R scripts below stay gated to the primary build; postback's own
 # install rules are harmless in the alternate build, which only runs the build
 # (never the install) target.
-if(NOT RSTUDIO_SESSION_WIN32)
+if(NOT RSTUDIO_SESSION_SUBBUILD)
    add_subdirectory(postback)
 endif()
 
-# include resources, R scripts and binaries if this isn't a session 32-bit build
-if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
+# include resources, R scripts and binaries if this isn't a session-only build (32-bit or ARM64)
+if(NOT RSTUDIO_SESSION_SUBBUILD AND NOT RSESSION_ALTERNATE_BUILD)
 
    # HTML resources
    file(GLOB HTML_RESOURCE_FILES "resources/*.html")

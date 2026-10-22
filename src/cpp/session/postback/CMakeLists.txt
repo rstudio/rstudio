@@ -75,7 +75,7 @@ else()
 endif()
 
 # installation rules
-if(NOT RSTUDIO_SESSION_WIN32)
+if(NOT RSTUDIO_SESSION_SUBBUILD)
    install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
    file(GLOB POSTBACK_SCRIPTS "rpostback-*")
    set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough" "rstudio")
