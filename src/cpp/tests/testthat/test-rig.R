@@ -459,3 +459,27 @@ test_that("RSTUDIO_WHICH_R is unset again when launchd had no value for it", {
    expect_length(calls, 0L)
 
 })
+
+test_that("rig's quick-link directory is created before a user-mode install", {
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+   # a fresh home has no ~/.local/bin yet (r-lib/rig#491)
+   bin <- file.path(home, ".local", "bin")
+   expect_false(dir.exists(bin))
+   expect_true(.rs.rig.ensureBinaryDir(list(binary_dir = bin)))
+   expect_true(dir.exists(bin))
+
+   # an existing directory is left alone, contents included
+   marker <- file.path(bin, "R-4.6.1")
+   writeLines("#!/bin/sh", marker)
+   expect_true(.rs.rig.ensureBinaryDir(list(binary_dir = bin)))
+   expect_true(file.exists(marker))
+
+   # nothing to create when rig did not report a directory
+   expect_false(.rs.rig.ensureBinaryDir(list()))
+   expect_false(.rs.rig.ensureBinaryDir(list(binary_dir = "")))
+
+})

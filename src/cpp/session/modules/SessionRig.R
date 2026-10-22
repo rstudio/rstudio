@@ -214,6 +214,22 @@
 
 .rs.setVar("rig.installState", new.env(parent = emptyenv()))
 
+#' Create rig's user-mode quick-link directory when it is missing. rig 0.11.0
+#' fails outright ("No such file or directory") in a home without it, as on
+#' a fresh macOS account (r-lib/rig#491). Returns TRUE when the directory
+#' exists afterwards.
+.rs.addFunction("rig.ensureBinaryDir", function(dirs)
+{
+   dir <- dirs$binary_dir
+   if (is.null(dir) || !nzchar(dir))
+      return(invisible(FALSE))
+
+   if (!dir.exists(dir))
+      dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+
+   invisible(dir.exists(dir))
+})
+
 #' Called before 'rig add --user' runs, to remember rig's default-R files.
 .rs.addFunction("rig.userInstallBegin", function(rig)
 {
@@ -225,6 +241,8 @@
       return(invisible(FALSE))
 
    dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
+   .rs.rig.ensureBinaryDir(dirs)
+
    paths <- .rs.rig.userDefaultPaths(dirs)
    state$snapshot <- .rs.rig.userDefaultSnapshot(paths)
    invisible(TRUE)

@@ -8,7 +8,7 @@ import { sleep } from "@utils/constants";
 import { rStringLiteral } from "@utils/r";
 import { captureResult } from "@utils/terminal";
 import { execFileSync } from "child_process";
-import { lstatSync, mkdirSync, readdirSync, readFileSync } from "fs";
+import { lstatSync, readdirSync, readFileSync } from "fs";
 import type { Page } from "playwright";
 
 const PROJECT_MENU = "#rstudio_project_menubutton_toolbar";
@@ -333,9 +333,8 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     const rigDefault = rigUserDefault(rig, home);
     expect(rigDefault.files.filter(pathExists)).toEqual([]);
 
-    // rig 0.11.0 fails outright ("No such file or directory") in a home that
-    // has no quick-link directory yet, as a fresh one here doesn't
-    mkdirSync(rigDefault.binaryDir, { recursive: true });
+    // the session creates rig's quick-link directory before running it when a
+    // fresh home has none yet; rig 0.11.0 fails outright without it (r-lib/rig#491)
     const profilesBefore = SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`));
     const whichRBefore = process.platform === "darwin" ? launchctl(["getenv", "RSTUDIO_WHICH_R"]) : "";
 
