@@ -45,7 +45,7 @@ runs:
           echo "::error::$FILE has no positive integer shard count for platform '$PLATFORM' (got: $COUNT)."
           exit 1
         fi
-        MATRIX=$(jq -c --arg p "$PLATFORM" '[range(1; .[$p] + 1)]' "$FILE")
+        MATRIX=$(jq -nc --argjson n "$COUNT" '[range(1; $n + 1)]')
 
         echo "::notice::$PLATFORM e2e suite runs as $COUNT shards"
         echo "count=$COUNT" >> "$GITHUB_OUTPUT"
