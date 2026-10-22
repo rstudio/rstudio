@@ -327,6 +327,11 @@ public class WidgetListBox<T extends Widget>
          add(emptyTextBox_);
       }
 
+      // setSelectedIndex sets the active descendant; with no options left it
+      // would name one that was removed
+      if (items_.isEmpty())
+         Roles.getListboxRole().removeAriaActivedescendantProperty(getElement());
+
       if (items_.isEmpty() && !StringUtil.isNullOrEmpty(emptyTextLabel_.getText()))
       {
          Roles.getListboxRole().setAriaDescribedbyProperty(getElement(),

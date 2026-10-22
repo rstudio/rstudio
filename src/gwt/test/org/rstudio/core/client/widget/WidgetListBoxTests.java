@@ -79,6 +79,22 @@ public class WidgetListBoxTests extends GWTTestCase
       assertFalse(describedBy(list).isEmpty());
    }
 
+   // The active descendant must not name an option that was removed.
+   public void testEmptyingListClearsActiveDescendant()
+   {
+      WidgetListBox<Label> list = attachedList();
+
+      list.addItem(new Label("first"));
+      assertFalse(list.getElement().getAttribute("aria-activedescendant").isEmpty());
+      list.clearItems();
+      assertEquals("", list.getElement().getAttribute("aria-activedescendant"));
+
+      list.addItem(new Label("second"));
+      assertFalse(list.getElement().getAttribute("aria-activedescendant").isEmpty());
+      list.removeItem(0);
+      assertEquals("", list.getElement().getAttribute("aria-activedescendant"));
+   }
+
    public void testNoEmptyTextNoDescription()
    {
       WidgetListBox<Label> list = attachedList();
