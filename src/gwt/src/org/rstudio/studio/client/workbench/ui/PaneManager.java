@@ -2383,8 +2383,11 @@ public class PaneManager
             donor = candidate;
          }
       }
+      // In a narrow window a default column is narrower than the sidebar's minimum.
+      double target = Math.max(panel_.getDefaultSplitterWidth(),
+                               panel_.getMinimumOpenWidth(column));
       double width = panel_.getTargetWidth(column);
-      double growth = Math.min(panel_.getDefaultSplitterWidth() - width, getGivableWidth(donor));
+      double growth = Math.min(target - width, getGivableWidth(donor));
       if (width + growth < panel_.getMinimumOpenWidth(column))
          return;
 

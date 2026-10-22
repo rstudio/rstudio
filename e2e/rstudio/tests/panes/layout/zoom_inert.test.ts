@@ -579,6 +579,40 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     }
   });
 
+  // A left-column zoom shuts the sidebar too, and ending it leaves the sidebar
+  // shut (#19201). Three default columns in a 500px window are each narrower
+  // than the sidebar's 175px minimum, so the reopen must aim for the minimum.
+  test('Show Chat reopens a sidebar shut by a column zoom in a narrow window', async ({
+    rstudioPage: page,
+  }) => {
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    await setSidebarVisible(page, true);
+    const sidebarSplitter = page.locator(SIDEBAR_COLUMN_SPLITTER);
+    const box = await sidebarSplitter.boundingBox();
+    if (!box)
+      throw new Error('Sidebar column splitter has no bounding box; is it rendered?');
+    try {
+      await page.setViewportSize({ width: 500, height: viewport.height });
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expectHidden(page, SIDEBAR_PANE, TABSET2_PANE);
+
+      await executeCommand(page, 'activateChat');
+      expect(await getSettledWidth(page, SIDEBAR_PANE)).toBeGreaterThanOrEqual(175);
+      await expectExposed(page, SIDEBAR_PANE);
+    } finally {
+      await resetLayoutZoom(page);
+      await page.setViewportSize(viewport);
+      // Hiding the sidebar saves its width for the next show, so put the
+      // splitter back first.
+      await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, box.x + box.width / 2,
+                           box.y + box.height / 2);
+      await expect.poll(async () =>
+        Math.abs(((await sidebarSplitter.boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+      await setSidebarVisible(page, false);
+    }
+  });
+
   test('a narrow column that is still open keeps its width', async ({ rstudioPage: page }) => {
     const windowWidth = await page.evaluate(() => window.innerWidth);
     await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 60, splitterHome.y);
