@@ -130,6 +130,120 @@
    .rs.fromJSON(paste(output, collapse = "\n"))
 })
 
+#' The files rig creates when it makes a user-mode R the default R: its
+#' 'Current' link, the R and Rscript quick links, and on macOS a LaunchAgent
+#' that exports RSTUDIO_WHICH_R to every GUI application at login. 'rig add'
+#' sets a default whenever none is set yet, so an R installed from the
+#' project R-version warning bar would become the default R outside RStudio
+#' too; what the install adds is removed again once it finishes (#19229).
+.rs.addFunction("rig.userDefaultPaths", function(dirs,
+                                                 home = Sys.getenv("HOME"),
+                                                 macos = .rs.platform.isMacos)
+{
+   current <- if (macos) "Current" else "current"
+   paths <- c(
+      current = file.path(dirs$r_root, current),
+      R       = file.path(dirs$binary_dir, "R"),
+      Rscript = file.path(dirs$binary_dir, "Rscript")
+   )
+
+   if (macos)
+      paths[["launchAgent"]] <- file.path(home, "Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist")
+
+   paths
+})
+
+#' Whether each path exists, counting dangling symlinks (which file.exists()
+#' follows, and so misses).
+.rs.addFunction("rig.pathExists", function(paths)
+{
+   # Sys.readlink() gives NA for a missing path, and nzchar(NA) is TRUE
+   targets <- Sys.readlink(paths)
+   file.exists(paths) | (!is.na(targets) & nzchar(targets))
+})
+
+#' Run launchctl, returning its output ("" when it fails).
+.rs.addFunction("rig.launchctl", function(args)
+{
+   output <- .rs.tryCatch(suppressWarnings(
+      system2("/bin/launchctl", shQuote(args), stdout = TRUE, stderr = FALSE)
+   ))
+
+   if (inherits(output, "error") || !is.null(attr(output, "status", exact = TRUE)))
+      return("")
+
+   paste(output, collapse = "\n")
+})
+
+#' Which of rig's default-R files exist, and the RSTUDIO_WHICH_R launchd
+#' currently gives GUI applications, before a user-mode install.
+.rs.addFunction("rig.userDefaultSnapshot", function(paths, launchctl = .rs.rig.launchctl)
+{
+   whichR <- ""
+   if ("launchAgent" %in% names(paths))
+      whichR <- launchctl(c("getenv", "RSTUDIO_WHICH_R"))
+
+   list(paths = paths, existed = .rs.rig.pathExists(paths), whichR = whichR)
+})
+
+#' Remove the default-R files rig created since the snapshot was taken,
+#' keeping the ones that were already there, and put launchd's
+#' RSTUDIO_WHICH_R back. Returns the paths removed.
+.rs.addFunction("rig.userDefaultRestore", function(snapshot, launchctl = .rs.rig.launchctl)
+{
+   paths <- snapshot$paths
+   created <- paths[!snapshot$existed & .rs.rig.pathExists(paths)]
+   if (length(created) == 0L)
+      return(character())
+
+   if ("launchAgent" %in% names(created))
+   {
+      # loading the agent already ran it, so the variable it exported has to
+      # be reset as well: unloading alone leaves it set until logout
+      launchctl(c("unload", created[["launchAgent"]]))
+      if (nzchar(snapshot$whichR))
+         launchctl(c("setenv", "RSTUDIO_WHICH_R", snapshot$whichR))
+      else
+         launchctl(c("unsetenv", "RSTUDIO_WHICH_R"))
+   }
+
+   # the links go, not what they point at
+   file.remove(created)
+   unname(created)
+})
+
+.rs.setVar("rig.installState", new.env(parent = emptyenv()))
+
+#' Called before 'rig add --user' runs, to remember rig's default-R files.
+.rs.addFunction("rig.userInstallBegin", function(rig)
+{
+   state <- .rs.rig.installState
+   state$snapshot <- NULL
+
+   # rig's Windows default (R.exe shims and registry entries) is not undone
+   if (.rs.platform.isWindows)
+      return(invisible(FALSE))
+
+   dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
+   paths <- .rs.rig.userDefaultPaths(dirs)
+   state$snapshot <- .rs.rig.userDefaultSnapshot(paths)
+   invisible(TRUE)
+})
+
+#' Called once 'rig add' has exited, to undo the default-R setup it added.
+#' Returns the paths removed.
+.rs.addFunction("rig.userInstallEnd", function()
+{
+   state <- .rs.rig.installState
+   snapshot <- state$snapshot
+   state$snapshot <- NULL
+
+   if (is.null(snapshot))
+      return(character())
+
+   .rs.rig.userDefaultRestore(snapshot)
+})
+
 #' An empty table of R installations.
 .rs.addFunction("rInstallations.empty", function()
 {

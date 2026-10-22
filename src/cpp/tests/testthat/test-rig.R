@@ -373,3 +373,89 @@ test_that("the machine architecture is reported as is where it can't differ", {
       expect_identical(.rs.rig.machine("x86_64"), "x86_64")
 
 })
+
+test_that("a user-mode install leaves rig's default R setup as it was", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   calls <- list()
+   launchctl <- function(args)
+   {
+      calls[[length(calls) + 1L]] <<- args
+      if (identical(args[[1L]], "getenv")) "/opt/homebrew/bin/R" else ""
+   }
+
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   expect_setequal(names(paths), c("current", "R", "Rscript", "launchAgent"))
+
+   # a quick link from before the install is kept
+   writeLines("#!/bin/sh", paths[["Rscript"]])
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+
+   # nothing added: nothing removed, and launchd left alone
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchctl), character())
+   expect_length(calls, 1L)
+
+   # rig sets a default: the links (one of them dangling) and the agent
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+   expect_true(file.symlink(file.path(installed, "bin", "R"), paths[["R"]]))
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   writeLines("<plist/>", paths[["launchAgent"]])
+
+   removed <- .rs.rig.userDefaultRestore(snapshot, launchctl)
+   expect_setequal(removed, unname(paths[c("current", "R", "launchAgent")]))
+   expect_false(any(.rs.rig.pathExists(paths[c("current", "R", "launchAgent")])))
+   expect_true(file.exists(paths[["Rscript"]]))
+   expect_true(dir.exists(installed))
+
+   # the agent is unloaded, and the variable it exported put back
+   expect_identical(calls[[2L]], c("unload", paths[["launchAgent"]]))
+   expect_identical(calls[[3L]], c("setenv", "RSTUDIO_WHICH_R", "/opt/homebrew/bin/R"))
+   expect_length(calls, 3L)
+
+})
+
+test_that("RSTUDIO_WHICH_R is unset again when launchd had no value for it", {
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   calls <- list()
+   launchctl <- function(args)
+   {
+      calls[[length(calls) + 1L]] <<- args
+      ""
+   }
+
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   writeLines("<plist/>", paths[["launchAgent"]])
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchctl), unname(paths[["launchAgent"]]))
+   expect_identical(calls[[3L]], c("unsetenv", "RSTUDIO_WHICH_R"))
+
+   # off macOS there is no agent, and launchd is never consulted
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = FALSE)
+   expect_identical(names(paths), c("current", "R", "Rscript"))
+   expect_identical(basename(paths[["current"]]), "current")
+   calls <- list()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+   expect_length(calls, 0L)
+
+})

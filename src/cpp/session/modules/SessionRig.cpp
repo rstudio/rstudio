@@ -24,6 +24,7 @@
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
@@ -167,7 +168,27 @@ private:
             self->finish(false, "exited with status " + std::to_string(status));
       };
 
+      // the first R rig installs in user mode becomes the default R outside
+      // RStudio as well (R/Rscript quick links, and on macOS a login
+      // LaunchAgent that sets RSTUDIO_WHICH_R); what the install adds is
+      // removed again when the job finishes (#19229)
+      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath).call();
+      if (beginError)
+         LOG_ERROR(beginError);
+
+      core::system::Options environment;
+      core::system::environment(&environment);
+
+#ifndef _WIN32
+      // rig also appends to the shell startup files unless its user-mode
+      // quick-link directory precedes /usr/local/bin on its PATH
+      std::string home = core::system::getenv(environment, "HOME");
+      if (!home.empty())
+         core::system::addToPath(&environment, home + "/.local/bin", true);
+#endif
+
       core::system::ProcessOptions options;
+      options.environment = environment;
       options.terminateChildren = true;
       options.exitWithParent = true;
 
@@ -195,6 +216,13 @@ private:
    {
       if (pJob_->complete())
          return;
+
+      std::vector<std::string> removed;
+      Error restoreError = r::exec::RFunction(".rs.rig.userInstallEnd").call(&removed);
+      if (restoreError)
+         LOG_ERROR(restoreError);
+      else if (!removed.empty())
+         log("Removed the default R setup rig added outside RStudio: " + core::algorithm::join(removed, ", ") + "\n");
 
       json::Value installed;
       if (ok)
