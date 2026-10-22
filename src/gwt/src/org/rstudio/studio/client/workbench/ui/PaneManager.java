@@ -1639,6 +1639,15 @@ public class PaneManager
       for (int i = 0; i < leftList_.size(); i++)
          panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
 
+      animateToWidgetSizes(afterComplete);
+   }
+
+   /**
+    * Animate the columns to the sizes already set on the panel, then report the
+    * resize as a splitter drag would.
+    */
+   private void animateToWidgetSizes(final Command afterComplete)
+   {
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       panel_.animate(duration, new AnimationCallback()
       {
@@ -2358,11 +2367,8 @@ public class PaneManager
          return;
 
       Widget column = getColumn(window);
-      if (column == null ||
-          panel_.getTargetWidth(column) >= panel_.getMinimumOpenWidth(column))
-      {
+      if (column == null || isOpen(column))
          return;
-      }
 
       // A zoom tracked here is a column zoom (a zoomed pane's column is open),
       // which can't move to the pane, so end it. For a column zoom,
@@ -2370,7 +2376,7 @@ public class PaneManager
       if (widgetSizePriorToZoom_ >= 0)
       {
          restoreLayout();
-         if (panel_.getTargetWidth(column) >= panel_.getMinimumOpenWidth(column))
+         if (isOpen(column))
             return;
       }
 
@@ -2398,9 +2404,13 @@ public class PaneManager
       if (donor != center_)
          panel_.setWidgetSize(donor, panel_.getWidgetSize(donor) - growth);
 
-      // Animate to the sizes just set, then lay the window out at its new width.
-      resizeHorizontally(panel_.getWidgetSize(right_), panel_.getLeftWidgetSizes(),
-                         () -> window.getNormal().onResize());
+      // Lay the window out at its new width once it is drawn there.
+      animateToWidgetSizes(() -> window.getNormal().onResize());
+   }
+
+   private boolean isOpen(Widget column)
+   {
+      return panel_.getTargetWidth(column) >= panel_.getMinimumOpenWidth(column);
    }
 
    private Widget getColumn(LogicalWindow window)
