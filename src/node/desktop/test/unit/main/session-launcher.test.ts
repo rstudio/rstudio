@@ -17,15 +17,16 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
 import { EventEmitter } from 'events';
-import { mkdtempSync, writeFileSync } from 'fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'fs';
+import i18next from 'i18next';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { restore, saveAndClear } from '../unit-utils';
+import { fakeRInstallWin32, restore, saveAndClear } from '../unit-utils';
 
 import { FilePath } from '../../../src/core/file-path';
 import { getenv } from '../../../src/core/environment';
 
-import { launchFailedDetail, SessionLauncher } from '../../../src/main/session-launcher';
+import { launchFailedDetail, SessionLauncher, withMissingArm64SessionNote } from '../../../src/main/session-launcher';
 import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -72,6 +73,19 @@ describe('SessionLauncher', () => {
     });
     it('falls back to a placeholder when there is nothing to report', () => {
       assert.strictEqual(launchFailedDetail(null, []), '[No error available]');
+    });
+  });
+  describe('withMissingArm64SessionNote', () => {
+    it('replaces the placeholder with the note', () => {
+      const note = i18next.t('sessionLauncherTs.noArm64Session');
+      assert.strictEqual(withMissingArm64SessionNote(launchFailedDetail(null, []), 0xc000007b), note);
+    });
+    it('puts the note above real error details', () => {
+      const note = i18next.t('sessionLauncherTs.noArm64Session');
+      assert.strictEqual(withMissingArm64SessionNote('session aborted', 0xc000007b), `${note}\n\nsession aborted`);
+    });
+    it('leaves the detail alone when the session failed for another reason', () => {
+      assert.strictEqual(withMissingArm64SessionNote('session aborted', 3), 'session aborted');
     });
   });
   it('buildLaunchContext sets RS_LOCAL_PEER on Win32', async () => {
@@ -239,7 +253,34 @@ describe('SessionLauncher', () => {
     const vars: Record<string, string> = {
       R_RUNTIME: '',
       R_ARCH: '',
+      R_HOME: '',
     };
+
+    // a session folder with the given subfolders, each holding both session builds
+    function launcherWithSessions(...subdirs: string[]): SessionLauncher {
+      const dir = mkdtempSync(join(tmpdir(), 'rsession-'));
+      for (const subdir of ['', ...subdirs]) {
+        mkdirSync(join(dir, subdir), { recursive: true });
+        writeFileSync(join(dir, subdir, 'rsession.exe'), '');
+        writeFileSync(join(dir, subdir, 'rsession-utf8.exe'), '');
+      }
+      return new SessionLauncher(
+        new FilePath(join(dir, 'rsession.exe')),
+        new FilePath(),
+        new FilePath(),
+        new ApplicationLaunch(),
+        null,
+      );
+    }
+
+    // a fake R of the given machine type: ARM64 in bin, anything else in bin\x64
+    function useR(machine: number): void {
+      const rHome = mkdtempSync(join(tmpdir(), 'r-home-'));
+      fakeRInstallWin32(rHome, machine === 0xaa64 ? { bin: machine } : { x64: machine });
+      process.env.R_HOME = rHome;
+      process.env.R_ARCH = machine === 0xaa64 ? '' : 'x64';
+      process.env.R_RUNTIME = 'ucrt';
+    }
 
     beforeEach(() => {
       saveAndClear(vars);
@@ -273,6 +314,57 @@ describe('SessionLauncher', () => {
 
       process.env.R_RUNTIME = '';
       assert.equal(launcher.sessionBinaryForR().getFilename(), 'rsession.exe');
+    });
+
+    it('picks the ARM64 build for an ARM64 R', function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+
+      const launcher = launcherWithSessions('arm64');
+      useR(0xaa64);
+      const sessionPath = launcher.sessionBinaryForR();
+      assert.equal(sessionPath.getFilename(), 'rsession-utf8.exe');
+      assert.equal(sessionPath.getParent().getFilename(), 'arm64');
+      assert.isFalse(launcher.missingArm64Session);
+    });
+
+    it('keeps the regular build for an ARM64 R when no ARM64 build is installed', function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+
+      const launcher = launcherWithSessions();
+      useR(0xaa64);
+      const sessionPath = launcher.sessionBinaryForR();
+      assert.equal(sessionPath.getFilename(), 'rsession-utf8.exe');
+      assert.notEqual(sessionPath.getParent().getFilename(), 'arm64');
+      assert.isTrue(launcher.missingArm64Session);
+    });
+
+    it('keeps the regular build for an x64 R even when an ARM64 build is installed', function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+
+      const launcher = launcherWithSessions('arm64');
+      useR(0x8664);
+      const sessionPath = launcher.sessionBinaryForR();
+      assert.equal(sessionPath.getFilename(), 'rsession-utf8.exe');
+      assert.notEqual(sessionPath.getParent().getFilename(), 'arm64');
+      assert.isFalse(launcher.missingArm64Session);
+    });
+
+    it('still picks the 32-bit build for a 32-bit R', function () {
+      if (process.platform !== 'win32') {
+        this.skip();
+      }
+
+      const launcher = launcherWithSessions('x86', 'arm64');
+      process.env.R_ARCH = 'i386';
+      const sessionPath = launcher.sessionBinaryForR();
+      assert.equal(sessionPath.getFilename(), 'rsession.exe');
+      assert.equal(sessionPath.getParent().getFilename(), 'x86');
     });
   });
 });

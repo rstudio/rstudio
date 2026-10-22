@@ -37,6 +37,7 @@ import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { prepareEnvironment } from './detect-r';
+import { rArchitectureWin32 } from './r-installation-win32';
 import { EXIT_FAILURE } from './program-status';
 import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
@@ -199,6 +200,22 @@ export function launchFailedDetail(abendMessage: string | null, stateDirIssues: 
   return '[No error available]';
 }
 
+// STATUS_INVALID_IMAGE_FORMAT: Windows couldn't load the session, as when an x64 session meets an ARM64 R.dll
+const kInvalidImageFormatExitCode = 0xc000007b;
+
+/**
+ * The launch failure detail, led by the explanation that R is ARM64 but no
+ * ARM64 session was found, when the session couldn't load; replaces the
+ * "no error" placeholder.
+ */
+export function withMissingArm64SessionNote(detail: string, exitCode: number): string {
+  if (exitCode !== kInvalidImageFormatExitCode) {
+    return detail;
+  }
+  const note = i18next.t('sessionLauncherTs.noArm64Session');
+  return detail && !detail.includes('No error available') ? `${note}\n\n${detail}` : note;
+}
+
 export class SessionLauncher {
   host = '127.0.0.1';
   sessionProcess?: ChildProcess;
@@ -206,6 +223,8 @@ export class SessionLauncher {
   static launcherToken = generateShortenedUuid();
   sessionStdout: string[] = [];
   sessionStderr: string[] = [];
+  // set when R is ARM64 but no ARM64 session was found, to explain a failed start
+  missingArm64Session = false;
   private nextSessionUrl?: string;
   private splash: BrowserWindow | undefined;
   private showSplash = process.env.NODE_ENV !== 'TEST';
@@ -467,13 +486,15 @@ export class SessionLauncher {
     // Collect message from the abnormal end log path, falling back to any
     // state folder issues discovered at startup
     const abendMessage = abendLogPath().existsSync() ? this.launchFailedErrorMessage() : null;
-    vars.set('launch_failed', launchFailedDetail(abendMessage, appState().stateDirIssues));
 
     // Collect the rsession process exit code
     let exitCode = EXIT_FAILURE;
     if (this.sessionProcess && this.sessionProcess.exitCode) {
       exitCode = this.sessionProcess.exitCode;
     }
+
+    const detail = launchFailedDetail(abendMessage, appState().stateDirIssues);
+    vars.set('launch_failed', this.missingArm64Session ? withMissingArm64SessionNote(detail, exitCode) : detail);
     vars.set('session_path', this.sessionPath.getAbsolutePath());
     vars.set('exit_code', exitCode.toString());
 
@@ -719,12 +740,13 @@ export class SessionLauncher {
 
   /**
    * The session binary built for the R in the environment: on Windows, the
-   * UCRT (rsession-utf8) or 32-bit build when the R needs one; on Apple
-   * silicon, the arm64 build for an arm64 R (an x86_64 R runs the x86_64
-   * build under Rosetta).
+   * UCRT (rsession-utf8) or 32-bit build when the R needs one, or the ARM64
+   * build in arm64 for an ARM64 R; on Apple silicon, the arm64 build for an
+   * arm64 R (an x86_64 R runs the x86_64 build under Rosetta).
    */
   sessionBinaryForR(): FilePath {
     let sessionPath = this.baseSessionPath;
+    this.missingArm64Session = false;
 
     if (process.platform === 'win32') {
       // on Windows, if we're using a UCRT build of R, we'll need to use
@@ -748,6 +770,19 @@ export class SessionLauncher {
           logger().logDebug(`R is 32-bit; using ${sessionPath}`);
         } else {
           logger().logWarning('R is 32-bit, but no 32-bit rsession.exe was found');
+        }
+      }
+
+      // an ARM64 R needs the ARM64 session in arm64; R_ARCH is empty for its
+      // bin\Rterm.exe, so this reads the R.dll of the R actually chosen
+      if (arch !== 'i386' && rArchitectureWin32(path.join(getenv('R_HOME'), 'bin', arch)) === 'arm64') {
+        const arm64SessionPath = sessionPath.getParent().completeChildPath(`arm64/${sessionPath.getFilename()}`);
+        if (arm64SessionPath.existsSync()) {
+          sessionPath = arm64SessionPath;
+          logger().logDebug(`R is ARM64; using ${sessionPath}`);
+        } else {
+          this.missingArm64Session = true;
+          logger().logWarning(`R is ARM64, but no ARM64 ${sessionPath.getFilename()} was found`);
         }
       }
     }

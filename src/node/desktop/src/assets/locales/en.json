@@ -123,7 +123,8 @@
   },
   "sessionLauncherTs": {
     "rSessionFatalError": "The R session had a fatal error.",
-    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "This error was very likely caused by R attempting to load packages from a different incompatible version of R on your system. Please remove other versions of R and/or remove environment variables that reference libraries from other versions of R before proceeding."
+    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "This error was very likely caused by R attempting to load packages from a different incompatible version of R on your system. Please remove other versions of R and/or remove environment variables that reference libraries from other versions of R before proceeding.",
+    "noArm64Session": "This version of R is built for ARM64, but this copy of RStudio has no ARM64 R session. Choose a 64-bit (x64) version of R, or install a version of RStudio that supports ARM64 R."
   },
   "utilsTs": {
     "rsessionNotFoundError": "Could not find rsession executable. Try setting the \"RSTUDIO_CPP_BUILD_OUTPUT\" environment variable to the location where src/cpp was built.\n( Working directory: {{workingDirectory}} )"
