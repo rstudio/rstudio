@@ -1,6 +1,7 @@
 ## RStudio 2026.11.0 "Montauk Daisy" Release Notes
 
 ### New
+- ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed is installed first, via [rig](https://github.com/r-lib/rig), in a background job, using the copy of rig bundled with RStudio. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
 - ([#19166](https://github.com/rstudio/rstudio/issues/19166)): Web hyperlink previews now show an Open in Browser icon alongside the URL.
 - ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed is installed first, via [rig](https://github.com/r-lib/rig), in a background job; rig itself is downloaded when it is not already available. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
 - ([#19114](https://github.com/rstudio/rstudio/issues/19114)): Save Plot as Image can now compress TIFF images (with LZW, the default, or ZIP, each with or without a predictor where R supports it) and choose the quality of JPEG images. TIFFs were previously uncompressed, e.g. 36 MB for a 7 x 5 in plot saved at 600 DPI, and are now typically under 1 MB.
@@ -47,6 +48,7 @@
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
 
 ### Dependencies
+- RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
 - Electron 44.7.2
 - GWT 2.13.1
 - Quarto 1.10.19

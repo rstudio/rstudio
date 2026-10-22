@@ -845,6 +845,13 @@
             "description": "Specifies the path to quarto binaries."
          },
          {
+            "name": "external-rig-path",
+            "type": "core::FilePath",
+            "memberName": "rigPath_",
+            "defaultValue": {"code": "kDefaultRigPath", "description": "bin/rig"},
+            "description": "Specifies the path to the bundled rig distribution."
+         },
+         {
             "name": "external-copilot-path",
             "type": "core::FilePath",
             "memberName": "copilotPath_",

@@ -419,7 +419,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: ${{ needs.setup.outputs.tools_cache_key }}-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          key: ${{ needs.setup.outputs.tools_cache_key }}-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
           restore-keys: |
             ${{ needs.setup.outputs.tools_cache_key }}-
 

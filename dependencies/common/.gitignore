@@ -16,6 +16,7 @@ overlay/
 packrat/
 pandoc*/
 quarto/
+rig/
 copilot-language-server/
 copilot-language-server-js/
 node/
