@@ -50,7 +50,7 @@ public class LayoutGrid extends Grid
          {
             String label = widgets_.get(i).first;
             Widget widget = widgets_.get(i).second;
-            FormLabel formLabel = new FormLabel(StringUtil.ensureColonSuffix(label), widget);
+            FormLabel formLabel = new FormLabel(StringUtil.ensureColonSuffix(label), labelTarget(widget));
             
             if (widget instanceof NumericValueWidget)
             {
@@ -68,6 +68,17 @@ public class LayoutGrid extends Grid
          return grid;
       }
       
+      // A composite's own element is a wrapper, which a label can't name;
+      // target the form control inside it.
+      private static Widget labelTarget(Widget widget)
+      {
+         if (widget instanceof NumericValueWidget)
+            return ((NumericValueWidget) widget).getTextBox();
+         if (widget instanceof SelectWidget)
+            return ((SelectWidget) widget).getListBox();
+         return widget;
+      }
+
       private final List<Pair<String, Widget>> widgets_;
       
    }
