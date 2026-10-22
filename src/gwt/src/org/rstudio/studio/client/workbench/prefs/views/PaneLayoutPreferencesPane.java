@@ -302,19 +302,23 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left panel");
+      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(),
+            constants_.topLeftPanelLabel());
       ElementIds.assignElementId(leftTop_.getElement(), ElementIds.PANE_LAYOUT_LEFT_TOP_SELECT);
 
       leftBottom_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), "Bottom left panel");
+      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(),
+            constants_.bottomLeftPanelLabel());
       ElementIds.assignElementId(leftBottom_.getElement(), ElementIds.PANE_LAYOUT_LEFT_BOTTOM_SELECT);
 
       rightTop_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), "Top right panel");
+      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(),
+            constants_.topRightPanelLabel());
       ElementIds.assignElementId(rightTop_.getElement(), ElementIds.PANE_LAYOUT_RIGHT_TOP_SELECT);
 
       rightBottom_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right panel");
+      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(),
+            constants_.bottomRightPanelLabel());
       ElementIds.assignElementId(rightBottom_.getElement(), ElementIds.PANE_LAYOUT_RIGHT_BOTTOM_SELECT);
 
       visiblePanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
@@ -369,7 +373,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       // Create sidebar location dropdown
       sidebarLocation_ = new ListBox();
       ElementIds.assignElementId(sidebarLocation_.getElement(), ElementIds.PANE_LAYOUT_SIDEBAR_SELECT);
-      Roles.getListboxRole().setAriaLabelProperty(sidebarLocation_.getElement(), constants_.sidebarLocationLabel());
+      Roles.getListboxRole().setAriaLabelProperty(sidebarLocation_.getElement(),
+            constants_.sidebarLocationLabel());
       sidebarLocation_.addItem(constants_.sidebarLocationLeft());
       sidebarLocation_.addItem(constants_.sidebarLocationRight());
 

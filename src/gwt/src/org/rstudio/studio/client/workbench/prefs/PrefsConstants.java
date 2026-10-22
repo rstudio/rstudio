@@ -281,6 +281,10 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String removeButtonLabel();
     String createGridLabel();
     String createColumnLabel();
+    String topLeftPanelLabel();
+    String bottomLeftPanelLabel();
+    String topRightPanelLabel();
+    String bottomRightPanelLabel();
     String paneLayoutLabel();
     String accountListLabel();
     String connectButtonLabel();
