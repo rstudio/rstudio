@@ -400,3 +400,62 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await expectExposed(page, TABSET2_PANE);
   });
 });
+
+// Show commands select a tab; a column shut by a splitter drag has no zoom
+// that will reopen it later, so the command has to (#19184).
+test.describe('Show pane commands reopen a column dragged shut (#19184)', () => {
+  let splitterHome: { left: number; x: number; y: number };
+
+  test.beforeEach(async ({ rstudioPage: page }) => {
+    const box = await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox();
+    if (!box)
+      throw new Error('Middle column splitter has no bounding box; is it rendered?');
+    splitterHome = { left: box.x, x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  });
+
+  // A custom, unzoomed layout survives resetLayoutZoom(), so put the splitter
+  // back however the test ends.
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterHome.x, splitterHome.y);
+    await expect.poll(async () => Math.abs(
+      ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
+      .toBeLessThanOrEqual(2);
+    await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  async function shutRightColumn(page: Page): Promise<void> {
+    const windowWidth = await page.evaluate(() => window.innerWidth);
+    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 1, splitterHome.y);
+    await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+  }
+
+  for (const [command, tabName, preselect] of [
+    ['activateFiles', 'Files', false],
+    ['activatePlots', 'Plots', true],
+  ] as const) {
+    test(`${command} reopens the column with ${tabName} showing` +
+         `${preselect ? ' when already selected' : ''}`, async ({ rstudioPage: page }) => {
+      const otherTab = preselect ? command : 'activatePackages';
+      await executeCommand(page, otherTab);
+      await shutRightColumn(page);
+
+      await executeCommand(page, command);
+      await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, CONSOLE_PANE, TABSET2_PANE);
+      await expect(page.locator(`${TABSET2_PANE} [role="tab"][aria-selected="true"]`))
+        .toContainText(tabName);
+    });
+  }
+
+  test('a narrow column that is still open keeps its width', async ({ rstudioPage: page }) => {
+    const windowWidth = await page.evaluate(() => window.innerWidth);
+    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 60, splitterHome.y);
+    await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+    const width = await getOffsetWidth(page, TABSET2_PANE);
+
+    await executeCommand(page, 'activateFiles');
+    // A resize would animate, so give one time to start before sampling.
+    await page.waitForTimeout(500);
+    expect(await getOffsetWidth(page, TABSET2_PANE)).toBe(width);
+  });
+});

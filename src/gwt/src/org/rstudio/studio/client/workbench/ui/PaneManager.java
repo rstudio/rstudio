@@ -2340,6 +2340,8 @@ public class PaneManager
       if (panel == null)
          return;
 
+      reopenCollapsedColumn(parent);
+
       if (tabToIndex_.containsKey(tab))
       {
          int index = tabToIndex_.get(tab);
@@ -2351,6 +2353,49 @@ public class PaneManager
          Debug.logWarning("Attempt to activate suppressed or unavailable " +
                           "tab '" + tab.name() + "')");
       }
+   }
+
+   /**
+    * Reopen the column holding window if a splitter drag has shut it, so that
+    * showing one of its tabs leaves the tab on screen (#19184). The column gets
+    * a default column's width, taken from the widest column so that the others
+    * keep theirs. A tracked zoom is left alone: it restores the widths it shut.
+    */
+   private void reopenCollapsedColumn(LogicalWindow window)
+   {
+      if (maximizedWindow_ != null || widgetSizePriorToZoom_ >= 0)
+         return;
+
+      // The sidebar is left out because its minimum width keeps a drag from
+      // shutting it.
+      ArrayList<Widget> columns = new ArrayList<>(leftList_);
+      columns.add(center_);
+      columns.add(right_);
+
+      Element frame = window.getNormal().getElement();
+      Widget column = null;
+      Widget widest = null;
+      for (Widget candidate : columns)
+      {
+         if (candidate.getElement().isOrHasChild(frame))
+            column = candidate;
+         if (widest == null || candidate.getOffsetWidth() > widest.getOffsetWidth())
+            widest = candidate;
+      }
+      if (column == null || column == widest || !panel_.isCollapsed(column))
+         return;
+
+      // center_ fills the space the other columns leave and has no size of its
+      // own, so it grows or shrinks as the other column changes.
+      double width = Math.min(panel_.getDefaultSplitterWidth(), widest.getOffsetWidth() / 2.0);
+      double growth = width - column.getOffsetWidth();
+      if (column != center_)
+         panel_.setWidgetSize(column, width);
+      if (widest != center_)
+         panel_.setWidgetSize(widest, panel_.getWidgetSize(widest) - growth);
+
+      // Animate to the sizes just set.
+      resizeHorizontally(panel_.getWidgetSize(right_), panel_.getLeftWidgetSizes());
    }
 
    public void activateTab(String tabName)
