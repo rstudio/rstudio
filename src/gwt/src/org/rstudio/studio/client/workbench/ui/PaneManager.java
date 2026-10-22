@@ -547,7 +547,7 @@ public class PaneManager
             return;
          }
 
-         reopenCollapsedColumn(window);
+         reopenCollapsedColumn(window, lastSelectedTab_);
       });
 
       eventBus_.addHandler(
@@ -2339,7 +2339,7 @@ public class PaneManager
          return;
 
       if (reopenColumn)
-         reopenCollapsedColumn(parent);
+         reopenCollapsedColumn(parent, tab);
 
       if (tabToIndex_.containsKey(tab))
       {
@@ -2359,16 +2359,22 @@ public class PaneManager
     * (#19184), taking up to a default column's width from the column that can
     * give most. Uses target widths, so the repeat calls one pane raise makes,
     * or a call during a zoom's animation, see the widths being laid out.
+    *
+    * @param tab The tab to zoom if a zoom of another pane moves to window.
     */
-   private void reopenCollapsedColumn(LogicalWindow window)
+   private void reopenCollapsedColumn(LogicalWindow window, Tab tab)
    {
-      // A pane raise moves a zoom of another pane to this one instead.
-      if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
-         return;
-
       Widget column = getColumn(window);
       if (column == null || isOpen(column))
          return;
+
+      // Another pane's zoom shut the column: move the zoom here, as the
+      // WindowEnsureVisibleEvent handler does when a pane raises itself.
+      if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
+      {
+         fullyMaximizeWindow(window, tab);
+         return;
+      }
 
       // A zoom tracked here is a column zoom (a zoomed pane's column is open),
       // which can't move to the pane, so end it. For a column zoom,

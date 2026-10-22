@@ -562,6 +562,31 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     });
   }
 
+  // A pane zoom shuts the other columns and moves to a pane that raises itself;
+  // a Show command for a pane in a shut column moves it the same way.
+  test('Show Files during a Console zoom moves the zoom to Files', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+
+      await executeCommand(page, 'activateFiles');
+      await expectExposed(page, TABSET2_PANE);
+      await expectHidden(page, CONSOLE_PANE, TABSET1_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomFiles')).toBe(true);
+
+      // Ending the moved zoom restores the layout from before the first one.
+      await executeCommand(page, 'layoutEndZoom');
+      await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
+        .toBeLessThanOrEqual(2);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
   // The zoom's widths are set at once but drawn over a 300ms animation, so a
   // pane shown in that window must still end it rather than end up behind it.
   test('Show Files while a column zoom animates ends the zoom', async ({ rstudioPage: page }) => {
