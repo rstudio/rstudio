@@ -85,6 +85,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     String newConnectionCaption();
     String rstudioConnectionsCaption();
     String loadingObjectsMessage();
-    String viewTableHTML();
+    String viewTableTitle();
     String installationPath();
 }

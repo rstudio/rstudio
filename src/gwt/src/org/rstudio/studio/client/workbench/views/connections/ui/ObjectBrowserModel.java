@@ -47,6 +47,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -475,7 +476,7 @@ public class ObjectBrowserModel implements TreeViewModel
    {
       public ContainerCell()
       {
-         super("click");
+         super("click", "keydown");
       }
       
       @Override
@@ -494,15 +495,25 @@ public class ObjectBrowserModel implements TreeViewModel
          
          ConnectionObjectType type = connection_.getObjectType(
                container.getType());
-         if (type != null && !StringUtil.isNullOrEmpty(type.getIconData()))
+         if (type == null || StringUtil.isNullOrEmpty(type.getIconData()))
+            return;
+
+         if (type.isDataType())
          {
-            sb.appendHtmlConstant("<img src=\"" + type.getIconData() + "\" " + 
-                 (type.isDataType() ? 
-                     "class=\"" + RES.cellTreeStyle().tableViewDataset() + "\" " +
-                     "title=" + constants_.viewTableHTML()
-                     : 
-                     "class=\"" + RES.cellTreeStyle().containerIcon() + "\" ") +
-                 "/ >");
+            // the alt text puts the action in the item's accessible name, since
+            // Enter on the item performs it (see onBrowserEvent)
+            sb.append(SafeHtmlUtil.createOpenTag("img",
+                  "src", type.getIconData(),
+                  "class", RES.cellTreeStyle().tableViewDataset(),
+                  "title", constants_.viewTableTitle(),
+                  "alt", constants_.viewTableTitle()));
+         }
+         else
+         {
+            sb.append(SafeHtmlUtil.createOpenTag("img",
+                  "src", type.getIconData(),
+                  "class", RES.cellTreeStyle().containerIcon(),
+                  "alt", type.getName()));
          }
       }
       
@@ -519,6 +530,22 @@ public class ObjectBrowserModel implements TreeViewModel
                 eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
              }
           }
+          else if ("keydown".equals(event.getType()) &&
+                   event.getKeyCode() == KeyCodes.KEY_ENTER &&
+                   hasTableView(value))
+          {
+             event.preventDefault();
+             eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
+          }
+      }
+
+      // matches render(), which shows the view table icon only in this case
+      private boolean hasTableView(DatabaseObject object)
+      {
+         ConnectionObjectType type = connection_.getObjectType(object.getType());
+         return type != null &&
+                !StringUtil.isNullOrEmpty(type.getIconData()) &&
+                type.isDataType();
       }
    }
    
