@@ -481,7 +481,7 @@ fetch(
    fmt                   FMT
    gsl-lite              GSL_LITE
    libgit2               LIBGIT2
-   gtest                 GTEST
+   GTest                 GTEST
    hunspell              HUNSPELL
    RapidJSON             RAPIDJSON
    tl-expected           TL_EXPECTED
