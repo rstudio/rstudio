@@ -417,6 +417,18 @@ public class TextEditingTargetWidget
       return diffSplitWidget_ != null && diffSplitWidget_.isFocused();
    }
 
+   @Override
+   public boolean diffSplitHeldFocusLast()
+   {
+      return diffSplitFocusedLast_ && diffSplitWidget_ != null;
+   }
+
+   @Override
+   public boolean ensureDiffSplitCursorVisible()
+   {
+      return diffSplitWidget_ != null && diffSplitWidget_.ensureCursorVisible();
+   }
+
    // Focus goes to the view the user was last in -- the base pane of a
    // side-by-side diff, or a split view -- as when a command run from the
    // palette returns focus to the document, so that the command finds the

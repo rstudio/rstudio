@@ -1836,6 +1836,33 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => scrollTop(base)).toBe(liveTop);
       await expect.poll(levelRows).toEqual([0, 0, 0]);
 
+      // Focus returning to the document (Ctrl+1 from the console) goes to the
+      // pane last used and shows that pane's cursor: with the document's
+      // cursor at the top and the base's far below, the base cursor stays
+      // in view rather than both panes jumping to the document's.
+      type VisibleRowsEditor = { renderer: { getFirstVisibleRow(): number; getLastVisibleRow(): number } };
+      const baseRowVisible = (row: number) =>
+        base.evaluate((el, row) => {
+          const renderer = ((el as AceEditorElement).env?.editor as unknown as VisibleRowsEditor).renderer;
+          return renderer.getFirstVisibleRow() <= row && row <= renderer.getLastVisibleRow();
+        }, row);
+      await editor.gotoLine(1);
+      await expect.poll(async () => (await scrollTop(base)) === 0).toBe(true);
+      // (Ace's scroll sync ignores the other pane for 500 ms after it has set
+      // its offset, so that the two do not feed back; a user cannot scroll
+      // the base that soon after the document, this test can)
+      await page.waitForTimeout(600);
+      await base.evaluate((el) => (el as AceEditorElement).env?.editor?.focus());
+      await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+      await base.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(150, 0));
+      await expect.poll(() => baseRowVisible(149)).toBe(true);
+      await expect.poll(async () => (await scrollTop(live)) === (await scrollTop(base))).toBe(true);
+      await page.locator('#rstudio_console_input').click();
+      await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement))).toBe(false);
+      await executeCommand(page, 'activateSource');
+      await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement)), { timeout: 10000 }).toBe(true);
+      await expect.poll(() => baseRowVisible(149), { timeout: 10000 }).toBe(true);
+
       // and stay so when the editor font grows: the base editor takes the
       // document editor's font rather than Ace's default
       const fontBefore = await fontSize(live);
@@ -2117,7 +2144,15 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await executeCommand(page, 'executeSubsequentChunks');
       expect(await outputCount()).toBe(1);
       expect(await consoleText()).toBe(consoleBefore);
-      await executeCommand(page, 'focusOtherEditorSplit');
+      // -- also with focus taken elsewhere, as a menu chosen with the mouse
+      // takes it: the pane that held the cursor last counts
+      await page.locator('#rstudio_console_input').click();
+      await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement))).toBe(false);
+      await executeCommand(page, 'executePreviousChunks');
+      await executeCommand(page, 'executeSubsequentChunks');
+      expect(await outputCount()).toBe(1);
+      expect(await consoleText()).toBe(consoleBefore);
+      await live.locator('.ace_content').click({ force: true });
       await expect.poll(() => live.evaluate((el) => el.contains(document.activeElement))).toBe(true);
 
       // the same with a change below the output: the lines between stay

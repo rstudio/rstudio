@@ -81,6 +81,17 @@ public class GitDiffSplitWidget extends Widget implements RequiresResize
       return true;
    }
 
+   // Scrolls the base editor's cursor into view; false when there is no
+   // editor yet.
+   public boolean ensureCursorVisible()
+   {
+      if (view_ == null)
+         return false;
+
+      view_.ensureCursorVisible();
+      return true;
+   }
+
    @Override
    public void onResize()
    {

@@ -64,6 +64,10 @@ public class GitDiffSplitNative extends JavaScriptObject
       this.focus();
    }-*/;
 
+   public final native void ensureCursorVisible() /*-{
+      this.ensureCursorVisible();
+   }-*/;
+
    // Runs the command each time the base editor takes focus.
    public final native void onFocus(Command command) /*-{
       this.onFocus($entry(function() {

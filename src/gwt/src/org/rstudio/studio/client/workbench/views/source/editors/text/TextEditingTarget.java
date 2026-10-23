@@ -388,8 +388,12 @@ public class TextEditingTarget implements
       String getEditorSplit();
       boolean focusOtherEditorSplit();
       boolean isEditorViewFocused();
-      // whether the read-only base pane of a side-by-side diff holds focus
+      // whether the read-only base pane of a side-by-side diff holds focus,
+      // and whether it was the last of the document's views to
       boolean isDiffSplitFocused();
+      boolean diffSplitHeldFocusLast();
+      // scrolls the base pane's cursor into view; false without a base pane
+      boolean ensureDiffSplitCursorVisible();
       DocDisplay getActiveDisplay();
       void destroyEditorSplit();
       void syncSplitShowChunkOutputInline();
@@ -1369,6 +1373,11 @@ public class TextEditingTarget implements
    @Override
    public void ensureCursorVisible()
    {
+      // the view focus went back to (see TextEditingTargetWidget.focus) is
+      // the one whose cursor to show; the panes scroll together
+      if (cursorInDiffBase() && view_.ensureDiffSplitCursorVisible())
+         return;
+
       docDisplay_.ensureCursorVisible();
    }
 
@@ -10140,14 +10149,16 @@ public class TextEditingTarget implements
       }
    }
 
-   // Whether the cursor is in the read-only base pane of a side-by-side diff.
+   // Whether the cursor is in the read-only base pane of a side-by-side diff:
+   // the pane that held focus last among the document's views, since a
+   // command chosen from a menu with the mouse has taken focus to the menu.
    // An editing or code-running command then has nothing to act on, and must
    // not land on the document's own cursor or selection, out of sight; the
    // commands that work on the document directly rather than through
    // withActiveEditor check this.
    private boolean cursorInDiffBase()
    {
-      return view_ != null && view_.isDiffSplitFocused();
+      return view_ != null && view_.diffSplitHeldFocusLast();
    }
 
    /**

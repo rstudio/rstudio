@@ -1092,6 +1092,15 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.align();
       this.editorA.renderer.updateBackMarkers();
       this.editorB.renderer.updateBackMarkers();
+
+      // the outline of the cursor line's counterpart was mapped through the
+      // previous chunks (an edit above the cursor moves the line, not the
+      // cursor); Ace redoes it only on a selection change, so it is redone
+      // here from the pane holding the cursor
+      this.selectionRangeA = null;
+      this.selectionRangeB = null;
+      this.syncSelect((this.baseFocusedLast ? this.editorA : this.editorB).selection);
+
       this.syncFont();
       this.syncInitialScroll();
    };
@@ -1108,6 +1117,13 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    this.focus = function() {
       this.baseEditor.focus();
+   };
+
+   // Scrolls the base cursor into view (the document follows, the two
+   // being kept in step), as the document's own cursor is when focus
+   // returns to it.
+   this.ensureCursorVisible = function() {
+      this.baseEditor.renderer.scrollCursorIntoView(null, 0.5);
    };
 
    // Runs the handler whenever the base editor takes focus, so that the
