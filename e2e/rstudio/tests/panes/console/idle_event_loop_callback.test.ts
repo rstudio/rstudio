@@ -83,4 +83,25 @@ test.describe('Idle event loop callbacks', () => {
     await expect(consoleActions.consolePane.consoleOutput).toContainText('after callback ran second');
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
   });
+
+  test('a read opened by a callback gets its own prompt, and the REPL prompt returns after it', async ({ rstudioPage: page }) => {
+    // The prompt sits in the cell before the input's, in the shell's input row.
+    const promptText = () => page.evaluate(() =>
+      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+
+    // A callback that reads from the console: its prompt replaces the REPL's
+    // while it waits. (later never runs another callback meanwhile, so the
+    // busy-while-reading path cannot be driven from here.)
+    await executeInConsole(page, 'later::later(function() .idle_callback_answer <<- readline("answer? "), 0.1)');
+    await expect.poll(promptText, { timeout: 5000 }).toBe('answer? ');
+
+    // Answering ends the callback; the REPL prompt comes back on its own (a
+    // new prompt event, which is what executeInConsole waits for). Without
+    // that the console would sit without a prompt until something else
+    // issued one.
+    await executeInConsole(page, 'hello');
+    expect(await promptText()).toBe('> ');
+    await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
+  });
 });

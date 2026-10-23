@@ -76,11 +76,19 @@ std::atomic<int> s_sessionExecuting(0);
 // leaked: locked by the offline service thread (#18318)
 boost::mutex& s_sessionExecutingMutex = core::make_leaked<boost::mutex>();
 
-// last top-level prompt we issued, and whether the input it collects is
-// added to the console history (a plain prompt) or not (an interactive one:
-// readline(), menu(), ...)
+// last top-level prompt we issued
 std::string s_lastPrompt;
-bool s_lastPromptAddToHistory = true;
+
+// the prompt of the console read waiting for input right now, with its
+// history flag (true for the REPL prompt; false for an interactive one:
+// readline(), menu(), ...). rConsoleRead keeps it current across nested
+// reads, so restoreConsolePrompt() reissues the right one
+std::string s_currentPrompt;
+bool s_currentPromptAddToHistory = true;
+
+// prompts issued so far; a change over a stretch of code says the client's
+// prompt is no longer the waiting read's (see restoreConsolePrompt)
+unsigned s_promptsIssued = 0;
 
 void setSessionExecuting(bool executing)
 {
@@ -177,10 +185,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    // is called after code execution completes and should restore the
    // top-level prompt, not a transient one.
    if (!r::session::isBusy())
-   {
       s_lastPrompt = prompt;
-      s_lastPromptAddToHistory = addToHistory;
-   }
 
    // enque the event
    json::Object data;
@@ -194,7 +199,8 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
-   
+   s_promptsIssued++;
+
    // allow modules to detect changes after execution of previous REPL
    module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
 
@@ -208,8 +214,11 @@ void consoleInput(const std::string& input)
    enqueueConsoleInput(consoleInput);
 }
 
-// extract console input -- can be either null (user hit escape) or a string
-Error extractConsoleInput(const json::JsonRpcRequest& request)
+// queue the console input a console_input request carries (a cancel is a
+// flag on it). `ahead` places it in front of input already queued: a
+// request the console read held while input handlers ran (see
+// waitForMethod) keeps its place ahead of input they let into the queue
+Error extractConsoleInput(const json::JsonRpcRequest& request, bool ahead)
 {
    std::string text;
    std::string console;
@@ -225,8 +234,11 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
       return error;
    
    using namespace r::session;
-   addToConsoleInputBuffer(RConsoleInput(text, console, flags));
-   
+   if (ahead)
+      s_consoleInputBuffer.push_front(RConsoleInput(text, console, flags));
+   else
+      addToConsoleInputBuffer(RConsoleInput(text, console, flags));
+
    return Success();
 }
 
@@ -253,9 +265,14 @@ void reissueLastConsolePrompt()
    consolePrompt(s_lastPrompt, false);
 }
 
-void restoreLastConsolePrompt()
+void restoreConsolePrompt()
 {
-   consolePrompt(s_lastPrompt, s_lastPromptAddToHistory);
+   consolePrompt(s_currentPrompt, s_currentPromptAddToHistory);
+}
+
+unsigned promptsIssued()
+{
+   return s_promptsIssued;
 }
 
 void clearConsoleInputBuffer()
@@ -469,6 +486,13 @@ bool rConsoleRead(const std::string& prompt,
       if (init::isSessionInitialized())
          consolePrompt(prompt, addToHistory);
 
+      // this read's prompt is the one to restore while it waits; a read
+      // nested in an input handler puts the enclosing one back when done
+      std::string enclosingPrompt = s_currentPrompt;
+      bool enclosingAddToHistory = s_currentPromptAddToHistory;
+      s_currentPrompt = prompt;
+      s_currentPromptAddToHistory = addToHistory;
+
       // wait for console_input
       json::JsonRpcRequest request;
       bool succeeded = http_methods::waitForMethod(
@@ -477,15 +501,19 @@ bool rConsoleRead(const std::string& prompt,
                         boost::bind(canSuspend, prompt),
                         &request);
 
+      s_currentPrompt = enclosingPrompt;
+      s_currentPromptAddToHistory = enclosingAddToHistory;
+
       // exit process if we failed
       if (!succeeded)
          return false;
 
       // extract console input. if there is an error during extraction we log it
       // but still return and empty string and true (returning false will cause R
-      // to abort). the wait also ends with no request when input was buffered
-      // while an input handler ran (see waitForMethod); it is already extracted
-      Error error = request.method.empty() ? Success() : extractConsoleInput(request);
+      // to abort). the wait also ends with no request when input handlers let
+      // input into the queue (see waitForMethod); it is already queued. a
+      // request goes ahead of such input: it arrived first
+      Error error = request.method.empty() ? Success() : extractConsoleInput(request, true);
       if (error)
       {
          LOG_ERROR(error);

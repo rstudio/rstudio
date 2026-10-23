@@ -184,19 +184,23 @@ private:
 void processIdleEvents()
 {
    bool busyNotified = false;
+   unsigned promptsBefore = console_input::promptsIssued();
    {
       IdleEventsScope idleEventsActive(true);
       processEvents();
       busyNotified = s_idleEvents.busyNotified;
    }
 
-   // the client was told R is busy; the prompt tells it R is back
+   // the client was told R is busy, or a handler ran a console read of its
+   // own (readline()) whose prompt replaced the waiting read's: reissue the
+   // waiting read's prompt, which also tells the client R is back
    if (busyNotified)
    {
       ClientEvent busyEvent(client_events::kBusy, false);
       module_context::enqueClientEvent(busyEvent);
-      console_input::restoreLastConsolePrompt();
    }
+   if (busyNotified || console_input::promptsIssued() != promptsBefore)
+      console_input::restoreConsolePrompt();
 }
 
 // console input that arrived while an input handler was running (the console
@@ -673,41 +677,18 @@ bool waitForMethod(const std::string& method,
          core::startup_timing::checkpoint("first-request:" + ptrConnection->request().uri());
       }
 
-      // console input is queued the moment it is dequeued, ahead of this
-      // iteration's input handlers: input one of them lets through
-      // (bufferConsoleInput) has to land behind it, not ahead of it
-      bool inputQueued = false;
-      if (ptrConnection && method == kConsoleInput && isMethod(ptrConnection, kConsoleInput))
-      {
-         if (!http_methods::verifyRequestSignature(ptrConnection->request()))
-         {
-            LOG_ERROR_MESSAGE("Invalid signature for request URI " + ptrConnection->request().uri());
-            core::http::Response response;
-            response.setError(http::status::Unauthorized, "Invalid message signature");
-            ptrConnection->sendResponse(response);
-            continue;
-         }
-
-         bufferConsoleInput(ptrConnection);
-         inputQueued = true;
-      }
 
       // perform background processing (true for isIdle)
       module_context::onBackgroundProcessing(true);
 
-      // process pending events
+      // process pending events. a request dequeued above stays held here
+      // meanwhile: a console read a handler opens must not see it (nested
+      // reads take their input from the queue), and when it is console
+      // input it goes ahead of anything a handler let into the queue (see
+      // bufferConsoleInput and rConsoleRead)
       processIdleEvents();
 
-      if (inputQueued)
-      {
-         // answered above; the input itself is handed back below. the
-         // bookkeeping matches a connection handled here
-         suspend::resetSuspendTimeout(ptrConnection);
-         if (!rstudio::r::session::event_loop::polledEventHandlerInitialized())
-            rstudio::r::session::event_loop::initializePolledEventHandler(
-               polledEventHandler);
-      }
-      else if (ptrConnection)
+      if (ptrConnection)
       {
          // ensure request signature is valid
          if (!http_methods::verifyRequestSignature(ptrConnection->request()))
@@ -789,9 +770,9 @@ bool waitForMethod(const std::string& method,
          }
       }
 
-      // queued console input -- the request dequeued above, or one an input
-      // handler let through (see bufferConsoleInput) -- is what this wait is
-      // for; hand it back without a request (rConsoleRead reads the buffer)
+      // console input an input handler let into the queue (see
+      // bufferConsoleInput) is what this wait is for; hand it back without
+      // a request (rConsoleRead reads the queue)
       if (method == kConsoleInput && console_input::hasPendingInput())
       {
          *pRequest = json::JsonRpcRequest();

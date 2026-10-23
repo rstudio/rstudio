@@ -44,12 +44,16 @@ bool hasPendingInput();
 bool executing();
 void setExecuting(bool executing);
 void updateSessionExecuting();
-core::Error extractConsoleInput(const core::json::JsonRpcRequest& request);
+core::Error extractConsoleInput(const core::json::JsonRpcRequest& request, bool ahead = false);
 void reissueLastConsolePrompt();
 
-// reissue the last top-level prompt as it was issued -- with its own history
-// flag -- for a client that was told R is busy while that prompt was waiting
-void restoreLastConsolePrompt();
+// reissue the prompt of the console read waiting right now, as it was issued
+// (with its own history flag), for a client that was told R is busy while
+// that read was waiting
+void restoreConsolePrompt();
+
+// number of console prompts issued so far
+unsigned promptsIssued();
 void addToConsoleInputBuffer(
       const rstudio::r::session::RConsoleInput& consoleInput);
 
