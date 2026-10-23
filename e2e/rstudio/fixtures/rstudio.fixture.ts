@@ -502,6 +502,17 @@ export const test = base.extend<
   perTestReset: [async ({ rstudioSession, mode, screenshot }, use, testInfo) => {
     const page = rstudioSession.page;
 
+    // Scope failure diagnostics to this test: start with an empty browser
+    // console buffer and a snapshot of the current rsession log sizes, so on
+    // failure we attach only what this test produced. Taken before the
+    // probes below so a test that fails in them still gets both attached.
+    rstudioSession.consoleBuffer.length = 0;
+    const logBaseline = snapshotLogSizes(rstudioSession.logDir);
+    const attachFailureContext = async (): Promise<void> => {
+      await attachBrowserConsole(testInfo, rstudioSession.consoleBuffer);
+      await attachSessionLogs(testInfo, rstudioSession.logDir, logBaseline);
+    };
+
     // Drain exceptions that arrived BEFORE this test (a previous test's
     // teardown, the gap between specs). They can't be attributed to the
     // upcoming test, so log them rather than fail it. The drain is the first
@@ -515,7 +526,9 @@ export const test = base.extend<
     } catch (err) {
       if (!(err instanceof DeadlineError))
         throw err;
-      throw await attachWedgeDiagnostics(page, testInfo, err, screenshot);
+      const wedge = await attachWedgeDiagnostics(page, testInfo, err, screenshot);
+      await attachFailureContext();
+      throw wedge;
     }
     for (const e of leftovers) {
       console.warn(
@@ -528,21 +541,29 @@ export const test = base.extend<
     // idle event loop). Nothing DOM-based notices, and every bridge call that
     // awaits an RPC then hangs for its whole budget. Round-trip the session
     // main thread before touching it, bounded; on silence, record what R is
-    // doing and fail fast so the worker restarts with a fresh session.
+    // doing and fail fast so the worker restarts with a fresh session. The
+    // dump is of this machine's rsessions, which an external server's are
+    // not.
+    const sessionsAreLocal = mode === 'desktop' || externalServerUrl() === null;
     try {
       await probeSessionLiveness(page);
     } catch (err) {
-      if (!(err instanceof DeadlineError))
-        throw err;
+      const cause = err instanceof Error ? err : new Error(String(err));
       const { url, screenshotNote } = await capturePageState(page, testInfo, 'deaf-session.png', screenshot);
-      throw await attachDeafSessionDiagnostics(testInfo, err, `page URL: ${url} (${screenshotNote})`);
+      const pageNote = `page URL: ${url} (${screenshotNote})`;
+      let failure: Error;
+      if (cause instanceof DeadlineError) {
+        failure = await attachDeafSessionDiagnostics(testInfo, cause, pageNote, sessionsAreLocal);
+      } else {
+        // Answered, but with an error that outlasted the probe's retries:
+        // the session is not deaf, so no stack dump; the RPC detail in the
+        // message (connection_refused, a dropped request) is the lead.
+        console.error(`[session-liveness] probe failed: ${cause.message}; ${pageNote}`);
+        failure = new Error(`session liveness probe failed (${cause.message}); ${pageNote}`);
+      }
+      await attachFailureContext();
+      throw failure;
     }
-
-    // Scope failure diagnostics to this test: start with an empty browser
-    // console buffer and a snapshot of the current rsession log sizes, so on
-    // failure we attach only what this test produced.
-    rstudioSession.consoleBuffer.length = 0;
-    const logBaseline = snapshotLogSizes(rstudioSession.logDir);
 
     await resetForNextTest(page);
 
@@ -550,7 +571,7 @@ export const test = base.extend<
     // see disableLeakedAssistant (also for why multi-worker runs against an
     // external server are excluded). Runs after resetForNextTest so the
     // bridge readiness gate has already been cleared.
-    const prefsAreWorkerScoped = mode === 'desktop' || externalServerUrl() === null;
+    const prefsAreWorkerScoped = sessionsAreLocal;
     const cannotRaceAnotherWorker = testInfo.config.workers === 1;
     if ((prefsAreWorkerScoped || cannotRaceAnotherWorker) &&
         !testInfo.tags.some((tag) => ASSISTANT_TEST_TAGS.includes(tag)))
@@ -599,10 +620,8 @@ export const test = base.extend<
       testInfo.status !== testInfo.expectedStatus ||
       wedge !== null ||
       (raised.length > 0 && !ignoreClientExceptions);
-    if (willFail) {
-      await attachBrowserConsole(testInfo, rstudioSession.consoleBuffer);
-      await attachSessionLogs(testInfo, rstudioSession.logDir, logBaseline);
-    }
+    if (willFail)
+      await attachFailureContext();
 
     if (wedge)
       throw wedge;

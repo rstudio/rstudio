@@ -2,8 +2,11 @@
 #
 # Dump the state of every running rsession, and optionally kill them.
 #
-# Used by the e2e workflows in two places:
+# Used by the e2e harness in three places:
 #
+#  - from the per-test liveness probe (utils/session-liveness.ts): when a
+#    session stops answering the ping RPC, the test attaches this script's
+#    output as rsession-stacks.txt before failing fast.
 #  - as PW_RSTUDIO_SERVER_RECOVER_CMD (with --kill): when a sign-in times out
 #    waiting for the IDE console, the harness runs this before retrying, so a
 #    wedged session is recorded and replaced instead of failing every later
@@ -34,7 +37,9 @@ out=${1:?usage: rsession-diagnostics.sh [--kill] <output-dir>}
 mkdir -p "$out"
 
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
-pids=$(pgrep -x rsession || true)
+# Packaged RStudio on an arm64 Mac launches the session as rsession-arm64
+# (session-launcher.ts), so a plain -x rsession finds nothing on those runners.
+pids=$(pgrep -x 'rsession(-arm64)?' || true)
 if [ -z "$pids" ]; then
   echo "[rsession-diagnostics] no rsession processes" | tee -a "$out/summary.txt"
   exit 0

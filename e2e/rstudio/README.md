@@ -162,11 +162,14 @@ while its page stays responsive -- R running code dispatched from the idle
 event loop, #19236 -- is invisible to DOM-based checks and would otherwise
 hang every RPC-awaiting helper for its whole budget. When the probe times out
 the test fails at once with `deaf-session.png` and `rsession-stacks.txt`
-(the rsession stack dump: `sample` on macOS, thread wait channels plus gdb
-where it may attach on Linux) attached, and Playwright moves on in a fresh
-worker. The CI workflows take a privileged dump of whatever rsession is still
-running at the end of a failed shard (`scripts/ci/rsession-diagnostics.sh`,
-uploaded as the `rsession-diagnostics-*` artifact).
+attached, and Playwright moves on in a fresh worker. The stack dump is the
+output of `scripts/ci/rsession-diagnostics.sh` (`sample` on macOS, thread
+wait channels plus gdb where it may attach on Linux), run unprivileged over
+every rsession on the test machine; against an external server
+(`PW_RSTUDIO_SERVER_URL`) the sessions run elsewhere, so no dump is taken and
+the failure message says so. The CI workflows run the same script privileged
+over whatever rsession is still running at the end of a failed shard
+(uploaded as the `rsession-diagnostics-*` artifact).
 
 ### Profiling a slow test
 

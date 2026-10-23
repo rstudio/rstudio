@@ -365,13 +365,16 @@ public class ApplicationAutomation
          @Override
          public void onResponseReceived(org.rstudio.studio.client.server.VoidResponse response)
          {
-            invokeBoolCallback(onCompleted, true);
+            invokeWriteCallback(onCompleted, true, null);
          }
 
          @Override
          public void onError(org.rstudio.studio.client.server.ServerError error)
          {
-            invokeBoolCallback(onCompleted, false);
+            // Pass the detail through so a ping that fails (rather than
+            // hangs) names its cause: connection_refused from a session
+            // that is shutting down, a dropped XHR, ...
+            invokeWriteCallback(onCompleted, false, error.getUserMessage());
          }
       });
    }
@@ -1016,9 +1019,10 @@ public class ApplicationAutomation
       // probeSessionLiveness in the e2e harness).
       $wnd.rstudio.session.ping = $entry(function() {
          return new $wnd.Promise(function(resolve, reject) {
-            var cb = $entry(function(succeeded) {
+            var cb = $entry(function(succeeded, errorMessage) {
                if (succeeded) resolve();
-               else reject(new Error('ping RPC failed'));
+               else reject(new Error('ping RPC failed' +
+                                     (errorMessage ? ' -- ' + errorMessage : '')));
             });
             self.@org.rstudio.studio.client.application.ApplicationAutomation::pingSession(*)(cb);
          });
