@@ -8,6 +8,7 @@
 - ([#2846](https://github.com/rstudio/rstudio/issues/2846)): The editor gutter now marks lines that were added, changed, or removed since they were last staged or committed, for files in a Git repository. The markers update as you type; clicking one shows the previous version of those lines and offers to revert the change, and Tools > Version Control gains Next Change, Previous Change, and Revert Change at Cursor. The markers can be disabled in Global Options > Git/SVN.
 
 ### Fixed
+- ([#19240](https://github.com/rstudio/rstudio/issues/19240)): The "RStudio has reduced background file operations" console notice is no longer printed a second time when a suspended session is resumed; the copy already in the console output is kept.
 - ([#19165](https://github.com/rstudio/rstudio/issues/19165)): Improved vertical alignment of text buttons in the Packages toolbar and search fields on Windows.
 - ([#19167](https://github.com/rstudio/rstudio/issues/19167)): The package tables in renv Snapshot and Restore dialogs now follow the dark theme.
 - ([#19117](https://github.com/rstudio/rstudio/issues/19117)): Inline data frame output in R Markdown and Quarto documents, and the Data Viewer, now display runs of spaces in cell values as-is instead of collapsing them to a single space; the Data Viewer also shows embedded newlines and tabs escaped (`\n`, `\t`) rather than as a space.

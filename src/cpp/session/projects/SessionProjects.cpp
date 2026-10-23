@@ -1037,7 +1037,11 @@ void afterSessionInitHook(bool newSession)
    // since some live-updating behaviors (file monitoring, indexing) are off.
    // emitted via R's message() so it renders as an informational console
    // message. See https://github.com/rstudio/rstudio/issues/10417.
-   if (module_context::reduceRemoteFilesystemOperations())
+   //
+   // only for a new session: the message is persisted with the console output
+   // and replayed when a suspended session resumes, so emitting it again on
+   // resume would show it twice (#19240).
+   if (newSession && module_context::reduceRemoteFilesystemOperations())
    {
       std::string msg =
             "RStudio has reduced background file operations (such as file "
