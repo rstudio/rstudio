@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Command;
 
 // Wraps the acesupport GitDiffSplitView: a read-only editor showing a
 // document's base version beside the live editor, aligned and highlighted
@@ -40,6 +41,13 @@ public class GitDiffSplitNative extends JavaScriptObject
 
    public final native void focus() /*-{
       this.focus();
+   }-*/;
+
+   // Runs the command each time the base editor takes focus.
+   public final native void onFocus(Command command) /*-{
+      this.onFocus($entry(function() {
+         command.@com.google.gwt.user.client.Command::execute()();
+      }));
    }-*/;
 
    public final native void dispose() /*-{

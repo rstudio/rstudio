@@ -20,6 +20,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiff
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -44,8 +45,24 @@ public class GitDiffSplitWidget extends Widget implements RequiresResize
    public void setView(GitDiffSplitNative view)
    {
       view_ = view;
-      if (view_ != null && isAttached())
+      if (view_ == null)
+         return;
+
+      view_.onFocus(() ->
+      {
+         if (focusHandler_ != null)
+            focusHandler_.execute();
+      });
+
+      if (isAttached())
          view_.resize();
+   }
+
+   // Runs when the base editor takes focus, like a click into the live
+   // editor does; set by the owning widget to make its document current.
+   public void setFocusHandler(Command handler)
+   {
+      focusHandler_ = handler;
    }
 
    public boolean isFocused()
@@ -67,4 +84,5 @@ public class GitDiffSplitWidget extends Widget implements RequiresResize
    }
 
    private GitDiffSplitNative view_;
+   private Command focusHandler_;
 }

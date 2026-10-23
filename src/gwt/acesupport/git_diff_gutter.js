@@ -143,15 +143,39 @@ function tokenizeLines(base, lines) {
    return { base: base.map(tokenize), lines: lines.map(tokenize) };
 }
 
+function offsetRange(range, rows) {
+   return new Range(range.start.row + rows, range.start.column, range.end.row + rows, range.end.column);
+}
+
+// Moves a diff computed on a slice of the lines back to document rows. The
+// character ranges within a change (shown by the side-by-side view) move
+// with their lines.
 function offsetChunks(chunks, rows) {
    if (rows === 0)
       return chunks;
 
    return chunks.map(function(chunk) {
-      return {
-         old: new Range(chunk.old.start.row + rows, 0, chunk.old.end.row + rows, 0),
-         new: new Range(chunk.new.start.row + rows, 0, chunk.new.end.row + rows, 0)
+      var result = {
+         old: offsetRange(chunk.old, rows),
+         new: offsetRange(chunk.new, rows)
       };
+
+      if (chunk.charChanges)
+      {
+         result.charChanges = chunk.charChanges.map(function(change) {
+            return { old: offsetRange(change.old, rows), new: offsetRange(change.new, rows) };
+         });
+      }
+
+      return result;
+   });
+}
+
+// The character ranges of a diff over tokens describe the tokens, not the
+// text; only the line ranges carry over.
+function dropCharChanges(chunks) {
+   return chunks.map(function(chunk) {
+      return { old: chunk.old, new: chunk.new };
    });
 }
 
@@ -424,7 +448,7 @@ var GitDiffGutter = function(editor, strings) {
          {
             var tokens = tokenizeLines(base, lines);
             started = Date.now();
-            chunks = new DiffProvider().compute(tokens.base, tokens.lines, options);
+            chunks = dropCharChanges(new DiffProvider().compute(tokens.base, tokens.lines, options));
             if (Date.now() - started >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
                return [];
          }
@@ -554,17 +578,61 @@ var GitDiffGutter = function(editor, strings) {
       return null;
    };
 
+   // The cursor-driven commands (Next/Previous Change, Show/Revert Change at
+   // Cursor) start from the document's cursor -- or, when the base pane of a
+   // side-by-side view holds the cursor, from the base cursor, which moving
+   // around in the base does not carry over to the document. The base's rows
+   // are those of the change's old side; an addition has none there, so it
+   // is reached from the line that follows it, as a deletion is in the
+   // document.
+   this.baseFocused = function() {
+      return this.splitView != null && this.splitView.isFocused();
+   };
+
+   this.cursorRow = function() {
+      if (this.baseFocused())
+         return this.splitView.baseCursorRow();
+      return this.editor.getCursorPosition().row;
+   };
+
+   this.baseDisplayRow = function(chunk) {
+      var lastRow = this.baseLines ? this.baseLines.length - 1 : 0;
+      return isAddition(chunk) ? Math.min(chunk.old.start.row, lastRow) : chunk.old.start.row;
+   };
+
+   // The row a change is shown on in the pane holding the cursor.
+   this.cursorPaneRow = function(chunk) {
+      return this.baseFocused() ? this.baseDisplayRow(chunk) : this.displayRow(chunk);
+   };
+
+   this.chunkAtCursor = function() {
+      var row = this.cursorRow();
+      if (!this.baseFocused())
+         return this.chunkAt(row);
+
+      for (var i = 0; i < this.chunks.length; i++)
+      {
+         var chunk = this.chunks[i];
+         var hit = isAddition(chunk)
+            ? row === this.baseDisplayRow(chunk)
+            : row >= chunk.old.start.row && row < chunk.old.end.row;
+         if (hit)
+            return chunk;
+      }
+      return null;
+   };
+
    // Navigation wraps around, like Find.
    this.goToNextChange = function() {
       this.flushUpdate();
       if (this.chunks.length === 0)
          return false;
 
-      var row = this.editor.getCursorPosition().row;
+      var row = this.cursorRow();
       var target = this.chunks[0];
       for (var i = 0; i < this.chunks.length; i++)
       {
-         if (this.displayRow(this.chunks[i]) > row)
+         if (this.cursorPaneRow(this.chunks[i]) > row)
          {
             target = this.chunks[i];
             break;
@@ -580,11 +648,11 @@ var GitDiffGutter = function(editor, strings) {
       if (this.chunks.length === 0)
          return false;
 
-      var row = this.editor.getCursorPosition().row;
+      var row = this.cursorRow();
       var target = this.chunks[this.chunks.length - 1];
       for (var i = this.chunks.length - 1; i >= 0; i--)
       {
-         if (this.displayRow(this.chunks[i]) < row)
+         if (this.cursorPaneRow(this.chunks[i]) < row)
          {
             target = this.chunks[i];
             break;
@@ -596,14 +664,26 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.goToChunk = function(chunk) {
-      this.editor.gotoLine(this.displayRow(chunk) + 1, 0, true);
+      var row = this.displayRow(chunk);
+      if (this.baseFocused())
+      {
+         // the base pane keeps the cursor (its scrolling brings the document
+         // along); the document's cursor follows so that the two agree on
+         // which change is at the cursor
+         this.splitView.goToBaseRow(this.baseDisplayRow(chunk));
+         this.editor.clearSelection();
+         this.editor.moveCursorTo(row, 0);
+         return;
+      }
+
+      this.editor.gotoLine(row + 1, 0, true);
    };
 
    // The change is the one under the cursor now; the revert itself waits
    // for the base (see revertWhenFresh).
    this.revertChangeAtCursor = function() {
       this.flushUpdate();
-      var chunk = this.chunkAt(this.editor.getCursorPosition().row);
+      var chunk = this.chunkAtCursor();
       if (!chunk)
          return false;
 
@@ -674,7 +754,7 @@ var GitDiffGutter = function(editor, strings) {
    // cursor is not on a change.
    this.showChangeAtCursor = function() {
       this.flushUpdate();
-      var chunk = this.chunkAt(this.editor.getCursorPosition().row);
+      var chunk = this.chunkAtCursor();
       if (!chunk)
          return false;
 

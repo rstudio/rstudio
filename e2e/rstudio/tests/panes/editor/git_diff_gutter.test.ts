@@ -63,6 +63,7 @@ const BASE_EMPTY = `${DIFF_VIEW} .ace_git-diff-base-empty`;
 // whole changed lines (and, with .inline, the characters within them).
 const LINE_DELETED = '.ace_diff.delete:not(.inline)';
 const LINE_INSERTED = '.ace_diff.insert:not(.inline)';
+const INLINE_INSERTED = '.ace_diff.insert.inline';
 const ALIGNMENT = '.ace_diff.aligned_diff';
 
 const SEED_LINES = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5', 'f <- 6', 'g <- 7', 'h <- 8'];
@@ -1056,6 +1057,11 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect(live.locator(LINE_INSERTED)).toHaveCount(2);
       expect(await viewMarkers(live)).toEqual(EDITED_MARKERS);
 
+      // and so are the characters changed within the modified line (the `0`
+      // added to `d <- 4`): the diff is computed from the first changed line
+      // on, and its character ranges move back to document rows with it
+      await expect(live.locator(INLINE_INSERTED)).not.toHaveCount(0);
+
       // Unchanged lines sit level: padding stands in for the other side's
       // added line (in the base, below `a <- 1`) and removed line (in the
       // document, below `e <- 5`). Pairs of (base row, document row).
@@ -1166,6 +1172,250 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
       await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('acts on the change at the base pane\'s cursor when that pane holds focus', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'a2 <- 1.5');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...SEED_LINES, '']);
+
+    const baseCursorRow = () =>
+      base.evaluate((el) => (el as AceEditorElement).env?.editor?.getCursorPosition().row);
+    const focusIn = (view: Locator) => view.evaluate((el) => el.contains(document.activeElement));
+
+    try {
+      // Document cursor on the added line, base cursor on the modified one
+      // (`d <- 4`, base row 3), base focused last: the revert must take the
+      // modified line, as it would for a split view holding the cursor.
+      // Moving around the read-only base leaves the document's cursor alone.
+      const editor = new AceEditor(page, '');
+      await live.locator('.ace_content').click({ force: true });
+      await editor.gotoLine(2);
+      await base.locator('.ace_content').click({ force: true });
+      await base.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(4, 0));
+      await expect.poll(() => focusIn(base)).toBe(true);
+      expect(await cursorRow(page)).toBe(1);
+
+      await executeCommand(page, 'vcsRevertChange');
+      await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
+      expect(await editor.getLine(1)).toBe('a2 <- 1.5');
+      await expect.poll(() => viewMarkers(live), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+
+      // Next Change steps on from the base cursor: the removed `f <- 6` is
+      // base row 5, and the document's cursor follows to the marker's line.
+      // From there it wraps to the added line, which the base (having no
+      // line of its own for it) reaches from the line that follows.
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(baseCursorRow).toBe(5);
+      await expect.poll(() => cursorRow(page)).toBe(6);
+      expect(await focusIn(base)).toBe(true);
+
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(baseCursorRow).toBe(1);
+      await expect.poll(() => cursorRow(page)).toBe(1);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('keeps the document\'s folds through a base refresh, and folds the base to match', async ({
+    rstudioPage: page,
+  }) => {
+    // a committed function, folded in the document, with a change below it
+    const foldPath = `${projectDir()}/fold.R`;
+    const seed = ['f <- function() {', '  x <- 1', '  y <- 2', '}', 'z <- 3'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(foldPath)})`,
+    );
+    await commitAll(page, 'fold', [foldPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${[...seed.slice(0, 4), 'z <- 30'].map(rStringLiteral).join(', ')}), ${rPathLiteral(foldPath)})`,
+    );
+    await openFile(page, foldPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [MODIFIED] });
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(1);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'z <- 30');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    const baseFoldCount = () =>
+      base.evaluate(
+        (el) =>
+          ((el as AceEditorElement).env?.editor as unknown as { session: { getAllFolds(): unknown[] } })
+            .session.getAllFolds().length,
+      );
+    const level = async () => {
+      const [baseRow] = await screenRows(base, [4]);
+      const [liveRow] = await screenRows(live, [4]);
+      return baseRow === liveRow;
+    };
+
+    try {
+      // the base opens folded like the document, so the changed line below
+      // the function sits level on both sides
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect.poll(baseFoldCount).toBe(1);
+      await expect.poll(level).toBe(true);
+      expect(await editor.getFoldCount()).toBe(1);
+
+      // Replace the index entry (without touching the working copy); a click
+      // into the document re-fetches the base. Its text is replaced
+      // wholesale, which removes its folds -- and must not remove the
+      // document's fold with them, as Ace's fold pairing otherwise would.
+      // The base is then folded again to match.
+      const indexLines = [...seed.slice(0, 4), 'z <- 31'];
+      await executeInConsoleChecked(
+        page,
+        heredoc`
+          {
+            blob <- system2(
+              "git", c(${gitC()}, "hash-object", "-w", "--stdin"),
+              input = c(${indexLines.map(rStringLiteral).join(', ')}), stdout = TRUE
+            )
+            s <- system2("git", c(${gitC()}, "update-index", "--cacheinfo",
+                                  paste0("100644,", blob, ",fold.R")))
+            if (s != 0)
+              stop("git update-index failed (exit status: ", s, ")")
+          }
+        `,
+        { timeout: 60000 },
+      );
+      await live.locator('.ace_content').click({ force: true });
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...indexLines, '']);
+      expect(await editor.getFoldCount()).toBe(1);
+      await expect.poll(baseFoldCount).toBe(1);
+      await expect.poll(level).toBe(true);
+      expect(await viewMarkers(live)).toEqual({ 4: [MODIFIED] });
+    } finally {
+      await executeInConsoleChecked(
+        page,
+        `invisible(system2("git", c(${gitC()}, "reset", "-q", "--", "fold.R")))`,
+      );
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(foldPath)}))`);
+      await commitAll(page, 'remove folded', [foldPath]);
+    }
+  });
+
+  test('opens where the document is scrolled to, and follows its font and soft wrap', async ({
+    rstudioPage: page,
+  }) => {
+    // a committed file longer than the pane, changed near its end
+    const longPath = `${projectDir()}/long.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("l%d <- %d", 1:200, 1:200), ${rPathLiteral(longPath)})`,
+    );
+    await commitAll(page, 'long', [longPath]);
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          lines <- readLines(${rPathLiteral(longPath)})
+          lines[150] <- "l150 <- 1500"
+          writeLines(lines, ${rPathLiteral(longPath)})
+        }
+      `,
+    );
+    await openFile(page, longPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(150);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 149: [MODIFIED] });
+
+    type MeasuredEditor = {
+      session: { getScrollTop(): number; getUseWrapMode(): boolean; getWrapLimit(): number };
+      renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } };
+    };
+    const scrollTop = (view: Locator) =>
+      view.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as MeasuredEditor).session.getScrollTop(),
+      );
+    const rowTops = (view: Locator, rows: number[]) =>
+      view.evaluate((el, rows) => {
+        const editor = (el as AceEditorElement).env?.editor as unknown as MeasuredEditor;
+        return rows.map((row) => Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY));
+      }, rows);
+    const fontSize = (view: Locator) => view.evaluate((el) => getComputedStyle(el).fontSize);
+    const wrap = (view: Locator) =>
+      view.evaluate((el) => {
+        const session = ((el as AceEditorElement).env?.editor as unknown as MeasuredEditor).session;
+        return { on: session.getUseWrapMode(), limit: session.getWrapLimit() };
+      });
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+
+    // the document's editor is the one carrying the gutter: no line of a
+    // file this long stays rendered through the scrolling and resizing below
+    const live = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+      .filter({ has: page.locator(`.${GUTTER_ATTACHED}`) });
+    await expect(base).toBeVisible({ timeout: 10000 });
+    await expect(live).toHaveCount(1);
+
+    try {
+      // the base joins the document where it is scrolled to, rather than
+      // sitting at the top until the next scroll
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toHaveLength(201);
+      const liveTop = await scrollTop(live);
+      expect(liveTop).toBeGreaterThan(0);
+      await expect.poll(() => scrollTop(base)).toBe(liveTop);
+
+      // the rows around the change sit at the same heights on both sides
+      const rows = [140, 149, 160];
+      const levelRows = async () => {
+        const [baseTops, liveTops] = await Promise.all([rowTops(base, rows), rowTops(live, rows)]);
+        return baseTops.map((top, i) => top - liveTops[i]);
+      };
+      await expect.poll(levelRows).toEqual([0, 0, 0]);
+
+      // and stay so when the editor font grows: the base editor takes the
+      // document editor's font rather than Ace's default
+      const fontBefore = await fontSize(live);
+      await setPref(page, 'font_size_points', 16);
+      await expect.poll(() => fontSize(live), { timeout: 10000 }).not.toBe(fontBefore);
+      await expect.poll(() => fontSize(base)).toBe(await fontSize(live));
+      await expect.poll(levelRows).toEqual([0, 0, 0]);
+
+      // soft wrap turned on for the document reaches the base, which wraps
+      // at the document's column so that lines stay level however the two
+      // panes are sized
+      await executeCommand(page, 'toggleSoftWrapMode');
+      await expect.poll(() => wrap(live).then((w) => w.on)).toBe(true);
+      await expect
+        .poll(async () => {
+          const [baseWrap, liveWrap] = await Promise.all([wrap(base), wrap(live)]);
+          return baseWrap.on && liveWrap.limit > 0 && baseWrap.limit === liveWrap.limit;
+        })
+        .toBe(true);
+    } finally {
+      await clearPref(page, 'font_size_points');
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(longPath)}))`);
+      await commitAll(page, 'remove long', [longPath]);
     }
   });
 

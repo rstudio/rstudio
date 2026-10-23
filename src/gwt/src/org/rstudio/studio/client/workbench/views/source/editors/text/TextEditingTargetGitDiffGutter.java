@@ -291,6 +291,11 @@ public class TextEditingTargetGitDiffGutter
    private void attachDiffSplit()
    {
       diffSplit_ = GitDiffSplitNative.create(gutter_, diffSplitWidget_.getElement());
+
+      // the same re-fetch on focus as the editor views: an index moved from
+      // outside (staging in the Terminal) is picked up on a click into the
+      // base pane too
+      diffSplit_.onFocus(() -> scheduleRefresh());
       diffSplitWidget_.setView(diffSplit_);
    }
 

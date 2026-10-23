@@ -514,6 +514,15 @@ public class TextEditingTargetWidget
          return;
 
       diffSplitWidget_ = new GitDiffSplitWidget();
+
+      // route commands to this editing target when the base pane is focused,
+      // as for a split view
+      diffSplitWidget_.setFocusHandler(() ->
+      {
+         events_.fireEvent(new EditingTargetSelectedEvent(target_));
+         events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
+      });
+
       target_.diffSplitCreated(diffSplitWidget_);
    }
 
