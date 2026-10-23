@@ -3558,9 +3558,10 @@ body .rstudio-themes-alternate {
 }
 
 /* Ace's ext/diff styles the change highlights (line backgrounds, inline
-   character changes, striped alignment padding) for light themes and keys
-   its dark variants off .ace_dark, which RStudio's themes do not set; these
-   cover the dark editor themes. */
+   character changes, striped alignment padding) and the outline of the
+   cursor line's counterpart for light themes and keys its dark variants off
+   .ace_dark, which RStudio's themes do not set; these cover the dark editor
+   themes. */
 .editor_dark .ace_diff.insert {
    background-color: #212e25;
 }
@@ -3579,4 +3580,8 @@ body .rstudio-themes-alternate {
 
 .editor_dark .ace_diff.aligned_diff {
    background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09) 5px, rgba(0, 0, 0, 0) 5px, rgba(0, 0, 0, 0) 10px);
+}
+
+.editor_dark .ace_diff-active-line {
+   border-color: #75777a;
 }
