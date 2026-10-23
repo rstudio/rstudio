@@ -746,6 +746,11 @@ bool processingIdleEvents()
    return since != 0 && steadyNowNs() - since > dispatchGraceNs();
 }
 
+bool idleEventsActive()
+{
+   return s_idleEventsSince != 0;
+}
+
 void noteIdleEventsInterrupted()
 {
    s_idleEventsInterrupted = true;
@@ -938,6 +943,10 @@ bool waitForMethod(const std::string& method,
             ptrConnection->sendJsonRpcResponse();
          suspend::resetSuspendTimeout(ptrConnection);
          ptrConnection.reset();
+
+         // discarded input the modules may own (a notebook chunk's code),
+         // like input discarded from the queue (see processIdleEvents)
+         module_context::events().onUserInterrupt();
 
          if (!promptRestored && !console_input::hasPendingInput())
             console_input::restoreConsolePrompt();
@@ -1302,7 +1311,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // input, or an input handler dispatched from the idle loop
             if (console_input::isRunningCode())
             {
-               if (http_methods::processingIdleEvents())
+               if (idleEventsActive())
                   noteIdleEventsInterrupted();
                rstudio::r::exec::setInterruptsPending(true);
             }

@@ -331,8 +331,9 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
                   session::console_input::executing();
 
       // an interrupt while the handlers run is theirs (the console may
-      // count as executing too, once a read a callback opened was answered)
-      if (busy && http_methods::processingIdleEvents())
+      // count as executing too, once a read a callback opened was answered,
+      // and the dispatch may be young again after such a read)
+      if (busy && http_methods::idleEventsActive())
          http_methods::noteIdleEventsInterrupted();
       if (http_methods::protocolDebugEnabled())
       {
