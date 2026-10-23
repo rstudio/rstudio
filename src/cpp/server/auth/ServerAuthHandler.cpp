@@ -604,14 +604,21 @@ Error addUser(boost::asio::io_context& ioContext,
    }
 }
 
-json::Array getAllUsers()
+Result<json::Array> getAllUsers()
 {
    boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
+   server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()),
+                                        &connection);
+   return getAllUsers(connection);
+}
+
+Result<json::Array> getAllUsers(const DatabaseConnection& connection)
+{
+   if (!connection)
    {
-      LOG_ERROR_MESSAGE("Could not get list of users - "
-                        "timed out while attempting to get database connection");
-      return json::Array();
+      return Unexpected(systemError(boost::system::errc::resource_unavailable_try_again,
+                                    "Could not get list of users - no database connection available",
+                                    ERROR_LOCATION));
    }
 
    const auto usernameColName = overlay::getUsernameDbColumnName();
@@ -623,7 +630,7 @@ json::Array getAllUsers()
    {
       error.addProperty("description",
                         "Could not get licensed users due to database error");
-      LOG_ERROR(error);
+      return Unexpected(error);
    }
 
    json::Array licensedUsers;
