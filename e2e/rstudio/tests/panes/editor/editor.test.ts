@@ -26,8 +26,10 @@ const CLOSE_FIND_BAR = `${SOURCE_PANEL_SELECTOR} button[aria-label='Close find a
 const FIND_NEXT_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-find-next-button`;
 const SELECT_ALL_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-select-all-button`;
 const FIND_MATCH_MARKER = `${SOURCE_PANEL_SELECTOR} .ace_marker-layer .ace_find_match`;
-// #8D6414, from applyFixups.pastel_on_dark in src/gwt/tools/compile-themes.R
+// #8D6414, from applyFixups.pastel_on_dark in src/gwt/tools/compile-themes.R:
+// a translucent fill of it, outlined in it
 const FIND_MATCH_AMBER = 'rgb(141, 100, 20)';
+const FIND_MATCH_AMBER_FILL = 'rgba(141, 100, 20, 0.45)';
 
 test.describe('Editor', () => {
   const sandbox = useSuiteSandbox();
@@ -254,7 +256,8 @@ test.describe('Editor', () => {
       expect(boxes.match).toEqual(boxes.selection);
 
       // Pastel On Dark paints the marker amber.
-      await expect(marker).toHaveCSS('background-color', FIND_MATCH_AMBER);
+      await expect(marker).toHaveCSS('background-color', FIND_MATCH_AMBER_FILL);
+      await expect(marker).toHaveCSS('border-top-color', FIND_MATCH_AMBER);
 
       // Moving the cursor elsewhere drops the marker; Find Next brings it back.
       await editor.gotoLine(1);
