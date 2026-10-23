@@ -241,12 +241,41 @@ test.describe('Idle event loop callbacks', () => {
     // Two submissions whose second depends on the first: queued input must
     // run in the order it was sent.
     const promptCountBefore = await getConsolePromptCount(page);
-    await executeInConsole(page, '.idle_callback_test <- "after callback"', { wait: false });
-    await executeInConsole(page, 'cat(.idle_callback_test, "ran", "second\\n")', { wait: false });
+    const prompts = recordClientEvents(page, ['console_prompt']);
+    try {
+      await executeInConsole(page, '.idle_callback_test <- "after callback"', { wait: false });
+      await executeInConsole(page, 'cat(.idle_callback_test, "ran", "second\\n")', { wait: false });
 
-    await waitForConsoleCommandComplete(page, promptCountBefore, 20000);
-    await expect(consoleActions.consolePane.consoleOutput).toContainText('after callback ran second');
-    await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
+      await waitForConsoleCommandComplete(page, promptCountBefore, 20000);
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('after callback ran second');
+      await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
+
+      // No prompt comes between the callback's return and the queued input
+      // running, only the one once the read waits again (the REPL does not
+      // prompt between queued statements): a prompt ahead of queued input
+      // reads as the end of a command that has not run (a notebook chunk's
+      // code is queued the same way, and its queue finishes the chunk on
+      // the prompt).
+      expect(prompts.events.map((e) => (e.data as { prompt?: unknown })?.prompt)).toEqual(['> ']);
+    } finally {
+      prompts.stop();
+    }
+  });
+
+  test('Escape at a continuation prompt cancels it while the session idles', async ({ rstudioPage: page }) => {
+    // Escape in an empty console asks the server whether R is busy, and
+    // cancels the waiting read when it is not. The idle loop dispatches
+    // R's input handlers twenty times a second; that dispatch, with no
+    // callback due, must not count as R being busy, or an Escape landing
+    // in it would be sent as an interrupt the dispatch swallows, leaving
+    // the continuation prompt waiting for a second Escape. (The window is
+    // too short to be aimed at; this pins the route it preserves.)
+    await executeInConsole(page, '1 +', { wait: false });
+    await expect.poll(() => getConsolePromptText(page), { timeout: 5000 }).toBe('+ ');
+    await page.keyboard.press('Escape');
+    await expect.poll(() => getConsolePromptText(page), { timeout: 5000 }).toBe('> ');
+    await executeInConsole(page, 'cat("console", "alive\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
   });
 
   test('an interrupt before R is reported busy discards queued input and returns the prompt', async ({ rstudioPage: page }) => {

@@ -29,6 +29,7 @@
 #include "session-config.h"
 
 #include <atomic>
+#include <chrono>
 #include <cmath>
 
 #include <boost/algorithm/string.hpp>
@@ -140,13 +141,27 @@ struct IdleEventState
 };
 IdleEventState s_idleEvents;
 
-// the active flag, for the listener thread (checkForInterrupt)
-std::atomic<bool> s_idleEventsActive(false);
+// when the active handlers were dispatched (steady clock, nanoseconds; zero
+// while inactive), for the listener thread (see processingIdleEvents)
+std::atomic<std::int64_t> s_idleEventsSince(0);
+
+// how long the handlers run before they count as R running code. the
+// dispatch itself, with no callback due, takes microseconds; an interrupt
+// landing in it would be swallowed with the next read still waiting, while
+// one meant for an interactive read (Escape at readline(), or at a
+// continuation prompt) has to become a cancel of that read instead
+const std::chrono::milliseconds kIdleEventDispatchGrace(50);
+
+std::int64_t steadyNowNs()
+{
+   return std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+}
 
 void setIdleEvents(const IdleEventState& state)
 {
    s_idleEvents = state;
-   s_idleEventsActive = state.active;
+   s_idleEventsSince = state.active ? steadyNowNs() : 0;
 }
 
 // how long an input handler runs before the client is told R is busy: the
@@ -288,7 +303,13 @@ bool processIdleEvents(const std::string& method,
    // discard pref on), which leaves the client busy the same way. not when
    // a reset found nothing queued: the client saw nothing of it, and a
    // prompt would reset the console's history position and refresh the
-   // panes for no command
+   // panes for no command. and not with input pending for the read: that
+   // input runs next and prompts when done; a prompt ahead of it would be
+   // taken for the end of what is still queued (a notebook chunk's code is
+   // console input, and its queue finishes the chunk on the prompt)
+   if (console_input::hasPendingInput())
+      return false;
+
    if (busyReported ||
        requestsServed > 0 ||
        console_input::promptsIssued() != promptsBefore ||
@@ -703,7 +724,12 @@ bool protocolDebugEnabled()
 
 bool processingIdleEvents()
 {
-   return s_idleEventsActive;
+   std::int64_t since = s_idleEventsSince;
+   if (since == 0)
+      return false;
+
+   return steadyNowNs() - since >
+          std::chrono::duration_cast<std::chrono::nanoseconds>(kIdleEventDispatchGrace).count();
 }
 
 void waitForMethodInitFunction(const ClientEvent& initEvent)
@@ -865,7 +891,7 @@ bool waitForMethod(const std::string& method,
          suspend::resetSuspendTimeout(ptrConnection);
          ptrConnection.reset();
 
-         if (!promptRestored)
+         if (!promptRestored && !console_input::hasPendingInput())
             console_input::restoreConsolePrompt();
       }
 

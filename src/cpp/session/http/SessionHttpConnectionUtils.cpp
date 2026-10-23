@@ -320,7 +320,9 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       //
       // R is also busy, with the console at its prompt, while it runs an input
       // handler dispatched from the idle loop (a later callback); the interrupt
-      // is what ends a long-running one (#19236).
+      // is what ends a long-running one (#19236). the dispatch itself does not
+      // count (see http_methods::processingIdleEvents): an interrupt landing in
+      // it would be swallowed, and one at an interactive read must cancel it.
       bool busy = session::console_input::isRunningCode();
       if (http_methods::protocolDebugEnabled())
       {
