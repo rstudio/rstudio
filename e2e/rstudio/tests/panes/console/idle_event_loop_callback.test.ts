@@ -20,6 +20,7 @@ import {
   ensureConsoleIdle,
   executeInConsole,
   getConsolePromptCount,
+  getConsolePromptText,
   waitForConsoleCommandComplete,
 } from '@pages/console_pane.page';
 
@@ -194,17 +195,83 @@ test.describe('Idle event loop callbacks', () => {
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText('discarded input');
   });
 
+  test('an uncaught error in a callback discards queued input under the discard pref and returns the prompt', async ({ rstudioPage: page }) => {
+    // The callback errors only once the test has confirmed the input queued
+    // (a flag file says so), which needs a filesystem shared with the session.
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    const flag = path.join(sandbox.dir, `error-discards-${Date.now()}.flag`);
+    // The console reset R runs on an uncaught error discards queued input
+    // under this pref (its default) -- the other way, besides an interrupt,
+    // that input queued behind a callback is dropped.
+    await setPref(page, 'discard_pending_console_input_on_error', true);
+
+    await executeInConsole(page,
+      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); stop("boom") }, 0.1)`);
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+    await submitAndAwaitQueued(page, 'cat("discarded", "input\\n")');
+    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    fs.writeFileSync(flag, '');
+
+    // The error ends the callback and discards the queued input; a prompt
+    // still arrives, since the client has nothing else to clear its busy state.
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('boom');
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    await executeInConsole(page, 'cat("console", "alive\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
+    await expect(consoleActions.consolePane.consoleOutput).not.toContainText('discarded input');
+  });
+
+  test('queued input survives an uncaught error in a callback with the discard pref off', async ({ rstudioPage: page }) => {
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
+    const flag = path.join(sandbox.dir, `error-keeps-${Date.now()}.flag`);
+    await setPref(page, 'discard_pending_console_input_on_error', false);
+
+    await executeInConsole(page,
+      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); stop("boom") }, 0.1)`);
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+    const promptCountBefore = await getConsolePromptCount(page);
+    await submitAndAwaitQueued(page, 'cat("kept", "input\\n")');
+    fs.writeFileSync(flag, '');
+
+    // The error ends the callback; the queued input is handed back to the
+    // waiting read and runs, and the REPL prompts after it as usual.
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('boom');
+    await waitForConsoleCommandComplete(page, promptCountBefore, 20000);
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('kept input');
+  });
+
+  test('an uncaught error in a callback with nothing queued does not reissue the prompt', async ({ rstudioPage: page }) => {
+    // The console reset R runs on an uncaught error clears the input queue
+    // under this pref; with nothing queued, nothing was discarded and the
+    // client was never told R is busy, so there is no prompt to restore.
+    // A prompt here would reset the console's history position, refresh
+    // the Environment and Files panes, and advance the prompt counter the
+    // test helpers key off, although no command completed.
+    await setPref(page, 'discard_pending_console_input_on_error', true);
+    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
+    const promptCountBefore = await getConsolePromptCount(page);
+
+    await executeInConsole(page, 'later::later(function() stop("boom"), 0.1)', { wait: false });
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('boom');
+
+    // Only the call itself and the command below complete: two prompts. The
+    // check comes after the second command's output, by when a prompt
+    // reissued on the error would have arrived (it is queued before R even
+    // reads the next input).
+    await executeInConsole(page, 'cat("console", "alive\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
+    expect(await getConsolePromptCount(page)).toBe(promptCountBefore === null ? null : promptCountBefore + 2);
+  });
+
   test('a read opened by a callback gets its own prompt, and the REPL prompt returns after it', async ({ rstudioPage: page }) => {
-    // The prompt sits in the cell before the input's, in the shell's input row.
-    const promptText = () => page.evaluate(() =>
-      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
     const prompts = recordClientEvents(page, ['console_prompt']);
     try {
       // A callback that reads from the console: its prompt replaces the REPL's
       // while it waits. (later never runs another callback meanwhile, so the
       // busy-while-reading path cannot be driven from here.)
       await executeInConsole(page, 'later::later(function() .idle_callback_answer <<- readline("answer? "), 0.1)');
-      await expect.poll(promptText, { timeout: 5000 }).toBe('answer? ');
+      await expect.poll(() => getConsolePromptText(page), { timeout: 5000 }).toBe('answer? ');
 
       // Answering ends the callback; the REPL prompt comes back on its own (a
       // new prompt event, which is what executeInConsole waits for). Without
@@ -213,7 +280,7 @@ test.describe('Idle event loop callbacks', () => {
       // handed over the answer; the restored prompt must not report R busy
       // (notebook chunk execution and the chat pane key off that field).
       await executeInConsole(page, 'hello');
-      expect(await promptText()).toBe('> ');
+      expect(await getConsolePromptText(page)).toBe('> ');
       const restored = prompts.events.at(-1)?.data as { prompt?: unknown; busy?: unknown } | undefined;
       expect(restored?.prompt).toBe('> ');
       expect(restored?.busy).toBe(false);
@@ -226,12 +293,10 @@ test.describe('Idle event loop callbacks', () => {
 
   test('a callback that keeps running after its read is answered is reported busy again', async ({ rstudioPage: page }) => {
     const consoleInput = page.locator(CONSOLE_INPUT);
-    const promptText = () => page.evaluate(() =>
-      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
     const interruptEnabled = () => page.evaluate(() => window.rstudio?.commands?.interruptR?.isEnabled() ?? false);
 
     await executeInConsole(page, 'later::later(function() { .idle_callback_answer <<- readline("answer? "); while (TRUE) Sys.sleep(0.05) }, 0.1)');
-    await expect.poll(promptText, { timeout: 5000 }).toBe('answer? ');
+    await expect.poll(() => getConsolePromptText(page), { timeout: 5000 }).toBe('answer? ');
 
     // Answering the read hands R the answer -- which marks console input as
     // executing, as for any read -- and the callback runs on. The client is
@@ -244,7 +309,7 @@ test.describe('Idle event loop callbacks', () => {
 
     await executeCommand(page, 'interruptR');
     await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
-    expect(await promptText()).toBe('> ');
+    expect(await getConsolePromptText(page)).toBe('> ');
     await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
   });
@@ -254,8 +319,6 @@ test.describe('Idle event loop callbacks', () => {
     // file says so), which needs a filesystem shared with the session.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const consoleInput = page.locator(CONSOLE_INPUT);
-    const promptText = () => page.evaluate(() =>
-      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
     const flag = path.join(sandbox.dir, `busy-seen-${Date.now()}.flag`);
     const busy = recordClientEvents(page, ['busy']);
     // R's own busy callback adds events of its own around a read, so the
@@ -272,11 +335,11 @@ test.describe('Idle event loop callbacks', () => {
       await expect.poll(() => busyValues().includes(true), { timeout: BUSY_TIMEOUT }).toBe(true);
       await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
       fs.writeFileSync(flag, '');
-      await expect.poll(promptText, { timeout: 10000 }).toBe('answer? ');
+      await expect.poll(() => getConsolePromptText(page), { timeout: 10000 }).toBe('answer? ');
       await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
 
       await executeInConsole(page, 'hello');
-      expect(await promptText()).toBe('> ');
+      expect(await getConsolePromptText(page)).toBe('> ');
       await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
       await expect.poll(() => busyValues().at(-1), { timeout: 5000 }).toBe(false);
     } finally {
@@ -292,8 +355,6 @@ test.describe('Idle event loop callbacks', () => {
     // filesystem shared with the session.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const consoleInput = page.locator(CONSOLE_INPUT);
-    const promptText = () => page.evaluate(() =>
-      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
     const flag = path.join(sandbox.dir, `read-queued-${Date.now()}.flag`);
     const prompts = recordClientEvents(page, ['console_prompt']);
     try {
@@ -311,7 +372,7 @@ test.describe('Idle event loop callbacks', () => {
       fs.writeFileSync(flag, '');
 
       await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
-      expect(await promptText()).toBe('> ');
+      expect(await getConsolePromptText(page)).toBe('> ');
       // The read never prompted: the only prompts seen are the REPL's.
       const promptTexts = prompts.events.map((e) => (e.data as { prompt?: unknown })?.prompt);
       expect(promptTexts).not.toContain('answer? ');
