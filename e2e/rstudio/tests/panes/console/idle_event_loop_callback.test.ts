@@ -158,6 +158,25 @@ test.describe('Idle event loop callbacks', () => {
     await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
   });
 
+  test('a zero busy delay does not report the idle dispatch itself as busy', async ({ rstudioPage: page }) => {
+    const events = recordClientEvents(page, ['console_prompt', 'busy']);
+    try {
+      // The idle loop dispatches R's input handlers twenty times a second,
+      // and the server's polled event handler runs inside that dispatch; a
+      // delay of zero must not turn each dispatch into a busy report and a
+      // reissued prompt (which resets history navigation and refreshes the
+      // panes). The delay is bounded below by the dispatch grace.
+      await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 0)');
+      const seen = events.events.length;
+      // A bounded wait is the only way to observe that nothing happens: a
+      // dozen dispatches, with no callback due.
+      await page.waitForTimeout(750);
+      expect(events.events.slice(seen)).toEqual([]);
+    } finally {
+      events.stop();
+    }
+  });
+
   test('a reload while a callback runs gets the prompt back and is reported busy again', async ({ rstudioPage: page }) => {
     const consoleInput = page.locator(CONSOLE_INPUT);
     const interruptEnabled = () => page.evaluate(() => window.rstudio?.commands?.interruptR?.isEnabled() ?? false);

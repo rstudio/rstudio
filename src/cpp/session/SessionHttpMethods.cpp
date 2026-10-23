@@ -178,7 +178,12 @@ boost::posix_time::time_duration idleEventBusyDelay()
    double seconds = r::options::getOption<double>("rstudio.idleEventBusyDelay", 1.0, false);
    if (!std::isfinite(seconds) || seconds < 0 || seconds > 86400)
       seconds = 1.0;
-   return boost::posix_time::milliseconds(static_cast<long>(seconds * 1000));
+
+   // never less than the dispatch grace: the polled event handler runs in
+   // the dispatch itself, and a delay of zero would report every one busy
+   long ms = std::max(static_cast<long>(seconds * 1000),
+                      static_cast<long>(kIdleEventDispatchGrace.count()));
+   return boost::posix_time::milliseconds(ms);
 }
 
 // url for next session
@@ -882,19 +887,22 @@ bool waitForMethod(const std::string& method,
          ptrConnection.reset();
       }
 
-      // perform background processing (true for isIdle)
-      module_context::onBackgroundProcessing(true);
-
       // held console input is pending input all the same, to the idle
       // handlers' return and to work that waits for the console to be free
-      // (the notebook queue); it is handed over or discarded below
+      // (the notebook queue's retry, in the background processing below);
+      // it is handed over or discarded after the handlers have run
       bool inputHeld = ptrConnection && method == kConsoleInput;
       if (inputHeld)
          console_input::setInputHeld(true);
 
+      // perform background processing (true for isIdle)
+      module_context::onBackgroundProcessing(true);
+
       // process pending events
       unsigned clearsBefore = console_input::bufferClears();
       bool promptRestored = processIdleEvents(method, initFunction);
+      if (inputHeld)
+         console_input::setInputHeld(false);
 
       // a reset that cleared the queue meanwhile (an interrupt, an uncaught
       // error with the discard pref on) discards held input too,
@@ -908,14 +916,9 @@ bool waitForMethod(const std::string& method,
             ptrConnection->sendJsonRpcResponse();
          suspend::resetSuspendTimeout(ptrConnection);
          ptrConnection.reset();
-         console_input::setInputHeld(false);
 
          if (!promptRestored && !console_input::hasPendingInput())
             console_input::restoreConsolePrompt();
-      }
-      else if (inputHeld)
-      {
-         console_input::setInputHeld(false);
       }
 
       // the method we are waiting on
@@ -948,9 +951,11 @@ bool waitForMethod(const std::string& method,
 
       // console input an input handler let into the queue (see
       // polledEventHandler) is what this wait is for; hand it back without
-      // a request (rConsoleRead reads the queue). checked ahead of the idle
-      // suspend below: a suspend with input queued would lose the input
-      if (method == kConsoleInput && console_input::hasPendingInput())
+      // a request (rConsoleRead reads the queue). queued input only: what an
+      // enclosing read's wait holds is not for a read nested in a handler.
+      // checked ahead of the idle suspend below: a suspend with input queued
+      // would lose the input
+      if (method == kConsoleInput && console_input::hasQueuedInput())
       {
          *pRequest = json::JsonRpcRequest();
          init::ensureSessionInitialized();

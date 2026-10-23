@@ -38,9 +38,12 @@ std::string languageAfterInput(const std::string& language, const std::string& i
 // The same, over all pending console input.
 std::string languageAfterPendingInput(const std::string& language);
 
+// console input is queued for the read
+bool hasQueuedInput();
+
 // console input is waiting to be read: queued, or a console_input request
-// the console read's wait has dequeued and not yet handed over (see
-// waitForMethod)
+// a console read's wait has dequeued and not yet handed over (see
+// waitForMethod; such holds nest with the reads)
 bool hasPendingInput();
 void setInputHeld(bool held);
 

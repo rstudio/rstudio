@@ -192,7 +192,10 @@ void setExecuting(bool executing)
    }
 }
 
-void consolePrompt(const std::string& prompt, bool addToHistory)
+// issue a console prompt to the client. `notifyModules` runs the prompt
+// hook, which to modules marks the REPL done evaluating input (the notebook
+// queue finishes a chunk on it): not for a prompt merely reissued
+void enqueConsolePrompt(const std::string& prompt, bool addToHistory, bool notifyModules)
 {
    // save the last prompt for re-issuing, but only when R is at the
    // top-level REPL. mid-execution prompts (e.g. readline, browser)
@@ -220,7 +223,13 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
 
    // call prompt hook
-   module_context::events().onConsolePrompt(prompt);
+   if (notifyModules)
+      module_context::events().onConsolePrompt(prompt);
+}
+
+void consolePrompt(const std::string& prompt, bool addToHistory)
+{
+   enqueConsolePrompt(prompt, addToHistory, true);
 }
 
 void consoleInput(const std::string& input)
@@ -257,17 +266,27 @@ Error extractConsoleInput(const json::JsonRpcRequest& request, bool ahead)
    return Success();
 }
 
-// a console_input request the console read's wait holds (see waitForMethod)
-bool s_inputHeld = false;
+// console_input requests held by the waits of the console reads in progress
+// (see waitForMethod): a read nested in an input handler holds its own
+// while the enclosing read's stays held
+unsigned s_inputHeldDepth = 0;
+
+bool hasQueuedInput()
+{
+   return !s_consoleInputBuffer.empty();
+}
 
 bool hasPendingInput()
 {
-   return s_inputHeld || !s_consoleInputBuffer.empty();
+   return s_inputHeldDepth > 0 || hasQueuedInput();
 }
 
 void setInputHeld(bool held)
 {
-   s_inputHeld = held;
+   if (held)
+      s_inputHeldDepth++;
+   else if (s_inputHeldDepth > 0)
+      s_inputHeldDepth--;
 }
 
 bool executing()
@@ -295,7 +314,10 @@ void reissueLastConsolePrompt()
 
 void restoreConsolePrompt()
 {
-   consolePrompt(s_currentPrompt, s_currentPromptAddToHistory);
+   // the client's prompt only: the REPL evaluated nothing, so modules are
+   // not told of a prompt (a notebook chunk whose code is on its way to the
+   // console would be taken for done)
+   enqueConsolePrompt(s_currentPrompt, s_currentPromptAddToHistory, false);
 }
 
 unsigned promptsIssued()
