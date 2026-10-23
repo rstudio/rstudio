@@ -108,6 +108,27 @@ for (const base of ALL_DB_TARGETS) {
       await actions.disconnect();
     });
 
+    test('opens a table in the data viewer with Enter', async ({ rstudioPage: page }) => {
+      await actions.openWizard();
+      await actions.fillWizardForTarget(target);
+      await actions.confirmWizardAndWaitConnected();
+      await actions.drillExplorer(target);
+
+      // Clicking the table's name (not its View table icon) only moves the
+      // tree's keyboard focus to that item, which is where Enter is handled.
+      const table = target.explorerPath[target.explorerPath.length - 1];
+      const tableName = actions.pane.panel.getByText(table, { exact: true });
+      await tableName.click();
+      await expect(tableName.locator('xpath=..')).toBeFocused();
+
+      await page.keyboard.press('Enter');
+      await expect(page.locator('iframe[title="Data Browser"]')).toBeVisible({ timeout: 20000 });
+      const dataBrowser = page.frameLocator('iframe[title="Data Browser"]');
+      await expect(dataBrowser.getByText('Charlie')).toBeVisible({ timeout: 20000 });
+
+      await actions.disconnect();
+    });
+
     test.afterEach(async ({ rstudioPage: page }) => {
       // Leave no live connection or open dialog behind for the next test.
       if (await actions.wizard.dialog.isVisible()) {
