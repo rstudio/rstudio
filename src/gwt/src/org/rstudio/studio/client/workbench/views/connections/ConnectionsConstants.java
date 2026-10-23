@@ -32,6 +32,8 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     String connectedText();
     String statusText();
     String exploreConnectionTitle();
+    String typeColumnHeader();
+    String exploreColumnHeader();
     String connectionsTabLabel();
     String filterByConnectionLabel();
     String filterByObjectLabel();
