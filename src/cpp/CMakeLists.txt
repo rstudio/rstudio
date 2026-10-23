@@ -439,7 +439,20 @@ endif()
 if(UNIX)
 
    find_package(OpenSSL REQUIRED)
-   include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+
+   # Add the headers as a normal (non-SYSTEM) include placed BEFORE the others,
+   # for the same reason as the bundled {fmt} headers below: on macOS, clang
+   # searches the driver-added /usr/local/include ahead of every -isystem
+   # directory, so an OpenSSL installed under the /usr/local prefix (e.g. an
+   # x86_64 Homebrew on Apple Silicon) would otherwise shadow the headers of
+   # the OpenSSL we actually link against.
+   include_directories(BEFORE "${OPENSSL_INCLUDE_DIR}")
+
+   # Homebrew's unversioned 'openssl' tracks the newest major release; keep
+   # both slices of a universal macOS package on OpenSSL 3
+   if(APPLE AND RSTUDIO_PACKAGE_BUILD AND NOT OPENSSL_VERSION MATCHES "^3\\.")
+      message(FATAL_ERROR "macOS package builds require OpenSSL 3.x, but found ${OPENSSL_VERSION} at '${OPENSSL_ROOT_DIR}'. Install it with '${HOMEBREW_PREFIX}/bin/brew install openssl@3' and reconfigure.")
+   endif()
 
    # Homebrew's unversioned 'openssl' tracks the newest major release; keep
    # both slices of a universal macOS package on OpenSSL 3
