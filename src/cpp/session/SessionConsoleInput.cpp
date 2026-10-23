@@ -90,6 +90,10 @@ bool s_currentPromptAddToHistory = true;
 // prompt is no longer the waiting read's (see restoreConsolePrompt)
 unsigned s_promptsIssued = 0;
 
+// times the queue was cleared (an interrupt, an error with the discard pref
+// on); a change over a stretch of code says input pending then was discarded
+unsigned s_bufferClears = 0;
+
 void setSessionExecuting(bool executing)
 {
    LOCK_MUTEX(s_sessionExecutingMutex)
@@ -278,6 +282,12 @@ unsigned promptsIssued()
 void clearConsoleInputBuffer()
 {
    s_consoleInputBuffer = ConsoleInputQueue();
+   s_bufferClears++;
+}
+
+unsigned bufferClears()
+{
+   return s_bufferClears;
 }
 
 std::string languageAfterInput(const std::string& language, const std::string& input)

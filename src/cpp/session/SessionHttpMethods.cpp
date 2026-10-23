@@ -185,22 +185,29 @@ void processIdleEvents()
 {
    bool busyNotified = false;
    unsigned promptsBefore = console_input::promptsIssued();
+   unsigned clearsBefore = console_input::bufferClears();
    {
       IdleEventsScope idleEventsActive(true);
       processEvents();
       busyNotified = s_idleEvents.busyNotified;
    }
 
-   // the client was told R is busy, or a handler ran a console read of its
-   // own (readline()) whose prompt replaced the waiting read's: reissue the
-   // waiting read's prompt, which also tells the client R is back
+   // reissue the waiting read's prompt, which also tells the client R is
+   // back, when the client was told R is busy; when a handler ran a console
+   // read of its own (readline()) whose prompt replaced the waiting read's;
+   // or when input queued meanwhile was discarded (an interrupt), since the
+   // client marked itself busy on submitting it and only a prompt clears that
    if (busyNotified)
    {
       ClientEvent busyEvent(client_events::kBusy, false);
       module_context::enqueClientEvent(busyEvent);
    }
-   if (busyNotified || console_input::promptsIssued() != promptsBefore)
+   if (busyNotified ||
+       console_input::promptsIssued() != promptsBefore ||
+       console_input::bufferClears() != clearsBefore)
+   {
       console_input::restoreConsolePrompt();
+   }
 }
 
 // console input that arrived while an input handler was running (the console
@@ -686,7 +693,23 @@ bool waitForMethod(const std::string& method,
       // reads take their input from the queue), and when it is console
       // input it goes ahead of anything a handler let into the queue (see
       // bufferConsoleInput and rConsoleRead)
+      unsigned clearsBefore = console_input::bufferClears();
       processIdleEvents();
+
+      // held console input is pending input all the same: a reset that
+      // discarded the queue meanwhile (an interrupt) discards it too,
+      // acknowledged like the input it was queued behind
+      if (ptrConnection && method == kConsoleInput && isMethod(ptrConnection, kConsoleInput) &&
+          console_input::bufferClears() != clearsBefore)
+      {
+         json::JsonRpcRequest discarded;
+         if (http_methods::verifyRequestSignature(ptrConnection->request()) &&
+             parseAndValidateJsonRpcConnection(ptrConnection, &discarded))
+         {
+            ptrConnection->sendJsonRpcResponse();
+         }
+         ptrConnection.reset();
+      }
 
       if (ptrConnection)
       {

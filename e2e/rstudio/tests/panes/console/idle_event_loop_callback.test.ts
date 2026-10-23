@@ -42,6 +42,7 @@ test.describe('Idle event loop callbacks', () => {
     // here is what keeps the rest of the worker usable.
     await ensureConsoleIdle(page);
     await clearPref(page, 'blinking_cursor');
+    await clearPref(page, 'discard_pending_console_input_on_error');
   });
 
   test('requests are served and the interrupt works while a callback runs', async ({ rstudioPage: page }) => {
@@ -82,6 +83,30 @@ test.describe('Idle event loop callbacks', () => {
     await waitForConsoleCommandComplete(page, promptCountBefore, 20000);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('after callback ran second');
     await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
+  });
+
+  test('an interrupt before R is reported busy discards queued input and returns the prompt', async ({ rstudioPage: page }) => {
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    // The interrupt's console reset discards queued input under this pref
+    // (its default); the test relies on that, so say so.
+    await setPref(page, 'discard_pending_console_input_on_error', true);
+
+    await executeInConsole(page, 'later::later(function() { cat("callback", "started\\n"); while (TRUE) Sys.sleep(0.05) }, 0.1)');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+
+    // Submitting marks the client busy; the input is queued behind the
+    // callback. Escape in the (now empty) console sends the interrupt at once,
+    // ahead of the one-second busy report, so no delayed busy state is in play.
+    await executeInConsole(page, 'cat("discarded", "input\\n")', { wait: false });
+    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    await page.keyboard.press('Escape');
+
+    // The interrupt ends the callback and discards the queued input; a prompt
+    // still arrives, since the client has nothing else to clear its busy state.
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    await executeInConsole(page, 'cat("console", "alive\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
+    await expect(consoleActions.consolePane.consoleOutput).not.toContainText('discarded input');
   });
 
   test('a read opened by a callback gets its own prompt, and the REPL prompt returns after it', async ({ rstudioPage: page }) => {
