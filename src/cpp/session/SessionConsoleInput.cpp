@@ -224,6 +224,11 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
    return Success();
 }
 
+bool hasPendingInput()
+{
+   return !s_consoleInputBuffer.empty();
+}
+
 bool executing()
 {
    return s_rProcessingInput;
@@ -467,8 +472,9 @@ bool rConsoleRead(const std::string& prompt,
 
       // extract console input. if there is an error during extraction we log it
       // but still return and empty string and true (returning false will cause R
-      // to abort)
-      Error error = extractConsoleInput(request);
+      // to abort). the wait also ends with no request when input was buffered
+      // while an input handler ran (see waitForMethod); it is already extracted
+      Error error = request.method.empty() ? Success() : extractConsoleInput(request);
       if (error)
       {
          LOG_ERROR(error);

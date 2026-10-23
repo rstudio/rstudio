@@ -38,6 +38,9 @@ std::string languageAfterInput(const std::string& language, const std::string& i
 // The same, over all pending console input.
 std::string languageAfterPendingInput(const std::string& language);
 
+// buffered console input is waiting to be read
+bool hasPendingInput();
+
 bool executing();
 void setExecuting(bool executing);
 void updateSessionExecuting();

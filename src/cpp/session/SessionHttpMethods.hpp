@@ -59,6 +59,11 @@ void registerGwtHandlers();
 std::string clientVersion();
 std::string nextSessionUrl();
 bool protocolDebugEnabled();
+
+// R is running an input handler dispatched from the idle loop (a later
+// callback); the console is at its prompt, yet R is busy. Safe to call from
+// any thread.
+bool processingIdleEvents();
 core::Error initialize();
 bool verifyRequestSignature(const core::http::Request& request);
 

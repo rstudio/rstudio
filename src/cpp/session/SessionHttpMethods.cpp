@@ -92,6 +92,35 @@ double s_version = std::numeric_limits<double>::max();
 // names of waitForMethod handlers (used to screen out of bkgnd processing)
 std::vector<std::string> s_waitForMethodNames;
 
+// R code dispatched from the idle loop. waitForMethod() runs R's input
+// handlers (later callbacks among them) between dequeues, so a handler that
+// runs for a long time -- shiny::runApp() scheduled with later::later() --
+// keeps it from dequeuing, while console_input::executing() stays false
+// because the console is at its prompt. Tracked so that the polled event
+// handler keeps serving requests, interrupts can end the handler, and the
+// client learns that R is busy (#19236).
+struct IdleEventState
+{
+   bool active = false;
+   boost::posix_time::ptime started;
+   bool busyNotified = false;
+};
+IdleEventState s_idleEvents;
+
+// the active flag, for the listener thread (checkForInterrupt)
+std::atomic<bool> s_idleEventsActive(false);
+
+void setIdleEvents(const IdleEventState& state)
+{
+   s_idleEvents = state;
+   s_idleEventsActive = state.active;
+}
+
+// how long an input handler runs before the client is told R is busy; the
+// callbacks later usually runs take well under a millisecond
+const boost::posix_time::time_duration kIdleEventBusyDelay =
+   boost::posix_time::seconds(1);
+
 // url for next session
 std::string s_nextSessionUrl;
 
@@ -105,6 +134,10 @@ void onShutdown(bool)
 {
    s_shuttingDown = true;
 }
+
+bool parseAndValidateJsonRpcConnection(
+   boost::shared_ptr<HttpConnection> ptrConnection,
+   json::JsonRpcRequest* pJsonRpcRequest);
 
 void processEvents()
 {
@@ -120,6 +153,71 @@ void processEvents()
 
    if (error) // If the statement is interrupted, this can return an error so logging as debug to limit visibility
       LOG_DEBUG_MESSAGE(error.asString());
+}
+
+// s_idleEvents for the duration of a scope: active while R's input handlers
+// run from the idle loop, inactive while a wait for the client runs its own
+// loop (a handler can itself wait: readline() inside a later callback), since
+// the handler is then not what keeps requests from being served
+class IdleEventsScope
+{
+public:
+   explicit IdleEventsScope(bool active)
+      : saved_(s_idleEvents)
+   {
+      IdleEventState state;
+      state.active = active;
+      state.started = boost::posix_time::microsec_clock::universal_time();
+      setIdleEvents(state);
+   }
+
+   ~IdleEventsScope()
+   {
+      setIdleEvents(saved_);
+   }
+
+private:
+   IdleEventState saved_;
+};
+
+// run R's input handlers from the idle loop (see IdleEventState)
+void processIdleEvents()
+{
+   bool busyNotified = false;
+   {
+      IdleEventsScope idleEventsActive(true);
+      processEvents();
+      busyNotified = s_idleEvents.busyNotified;
+   }
+
+   // the client was told R is busy; the prompt tells it R is back
+   if (busyNotified)
+   {
+      ClientEvent busyEvent(client_events::kBusy, false);
+      module_context::enqueClientEvent(busyEvent);
+      console_input::reissueLastConsolePrompt();
+   }
+}
+
+// console input that arrived while an input handler was running (the console
+// looked idle to the client). Queue it for the prompt rather than leave it at
+// the head of the connection queue, where it would hold up every request
+// behind it -- the interrupt that could end the handler among them.
+void bufferConsoleInput(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   json::JsonRpcRequest request;
+   if (!parseAndValidateJsonRpcConnection(ptrConnection, &request))
+      return;
+
+   Error error = console_input::extractConsoleInput(request);
+   if (error)
+   {
+      LOG_ERROR(error);
+      ptrConnection->sendJsonRpcError(error);
+      return;
+   }
+
+   ptrConnection->sendJsonRpcResponse();
 }
 
 bool parseAndValidateJsonRpcConnection(
@@ -318,17 +416,36 @@ void polledEventHandler()
    // interval between background processing invocations)
    s_lastPerformed = microsec_clock::universal_time();
 
-   // check for a pending connections only while R is processing
+   // an input handler that keeps running looks idle to the client (unless
+   // the console is busy anyway): say R is busy so it offers the interrupt
+   // (undone when the handler returns)
+   if (s_idleEvents.active && !s_idleEvents.busyNotified &&
+       !console_input::executing() &&
+       s_lastPerformed - s_idleEvents.started > kIdleEventBusyDelay)
+   {
+      s_idleEvents.busyNotified = true;
+      ClientEvent busyEvent(client_events::kBusy, true);
+      module_context::enqueClientEvent(busyEvent);
+   }
+
+   // check for pending connections only while R is running code: processing
+   // console input, or an input handler dispatched from the idle loop
    // (otherwise we'll handle them directly in waitForMethod)
-   if (console_input::executing())
+   if (console_input::executing() || s_idleEvents.active)
    {
       // check the uri of the next connection
       std::string nextConnectionUri =
        httpConnectionListener().mainConnectionQueue().peekNextConnectionUri();
+      if (nextConnectionUri.empty())
+         return;
 
-      // if the uri is empty or if it one of our special waitForMethod calls
-      // then bails so that the waitForMethod logic can handle it
-      if (nextConnectionUri.empty() || isWaitForMethodUri(nextConnectionUri))
+      // bail on one of our special waitForMethod calls so that the
+      // waitForMethod logic can handle it -- unless it is console input and
+      // an input handler is what keeps waitForMethod from running, in which
+      // case the input is buffered for the prompt (see bufferConsoleInput)
+      bool bufferInput = s_idleEvents.active &&
+                         isMethod(nextConnectionUri, kConsoleInput);
+      if (isWaitForMethodUri(nextConnectionUri) && !bufferInput)
          return;
 
       // attempt to deque a connection and handle it. for now we just handle
@@ -348,7 +465,11 @@ void polledEventHandler()
             return;
          }
 
-         if (isMethod(ptrConnection, kClientInit))
+         if (bufferInput)
+         {
+            bufferConsoleInput(ptrConnection);
+         }
+         else if (isMethod(ptrConnection, kClientInit))
          {
             if (ptrConnection->isAsyncRpc())
             {
@@ -467,6 +588,11 @@ bool protocolDebugEnabled()
    return s_protocolDebugEnabled;
 }
 
+bool processingIdleEvents()
+{
+   return s_idleEventsActive;
+}
+
 void waitForMethodInitFunction(const ClientEvent& initEvent)
 {
    module_context::enqueClientEvent(initEvent);
@@ -499,6 +625,8 @@ bool waitForMethod(const std::string& method,
    {
       return false;
    }
+
+   IdleEventsScope idleEventsSuspended(false);
 
    // establish timeouts
    suspend::resetSuspendTimeout();
@@ -544,7 +672,7 @@ bool waitForMethod(const std::string& method,
       module_context::onBackgroundProcessing(true);
 
       // process pending events
-      processEvents();
+      processIdleEvents();
 
       if (ptrConnection)
       {
@@ -628,6 +756,15 @@ bool waitForMethod(const std::string& method,
          }
       }
 
+      // console input buffered while an input handler ran (see
+      // bufferConsoleInput) is what this wait is for; hand it back without
+      // a request (rConsoleRead reads the buffer)
+      if (method == kConsoleInput && console_input::hasPendingInput())
+      {
+         *pRequest = json::JsonRpcRequest();
+         init::ensureSessionInitialized();
+         break;
+      }
    }
 
    suspend::removeBlockingOp(suspend::kGenericMethod + method);
@@ -923,8 +1060,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // acknowledge request
             ptrConnection->sendJsonRpcResponse();
 
-            // only accept interrupts while R is processing input
-            if (console_input::executing())
+            // only accept interrupts while R is running code: processing
+            // input, or an input handler dispatched from the idle loop
+            if (console_input::executing() || s_idleEvents.active)
                rstudio::r::exec::setInterruptsPending(true);
          }
          
