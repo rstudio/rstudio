@@ -199,29 +199,14 @@ Each feature area defines a `*ServerOperations` interface for its RPC calls. The
 
 ## Accessibility
 
-UI work should aim for [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/) conformance. Much of
-RStudio's existing UI doesn't meet it yet, so treat this as a goal, not a requirement:
+UI work should aim for [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/) conformance, with
+particular attention to keyboard operability and screen reader support. Much of RStudio's
+existing UI doesn't meet it yet, so treat this as a goal, not a requirement:
 
 - **New UI** should be built to conform from the start.
 - **Changes to existing UI** should not make accessibility worse. Fix nearby problems when the
   fix is small and self-contained; flag larger gaps instead of growing a small change into an
   accessibility rewrite.
-
-Two areas need the most care:
-
-- **Keyboard**: every action can be reached and performed from the keyboard, with a visible
-  focus indicator and a logical tab order. Focus never gets trapped, and it goes somewhere
-  sensible when dialogs, popups and panels open or close.
-- **Screen readers**: controls have accessible names and the right roles and states. Prefer
-  native elements over ARIA on `div`s. Hide decorative images, and announce status changes
-  that sighted users would notice visually.
-
-Helpers: `src/gwt/src/org/rstudio/core/client/a11y/A11y.java` sets ARIA attributes and makes
-elements inert or visually hidden.
-`src/gwt/src/org/rstudio/studio/client/application/AriaLiveService.java` announces status
-changes. Automated axe-core scans live in
-`e2e/rstudio/tests/a11y/` (see "Accessibility Tests" in `e2e/rstudio/README.md`). They only
-catch some kinds of problems, so check keyboard and screen-reader behavior by hand too.
 
 
 ## Adding a New Feature (Checklist)
