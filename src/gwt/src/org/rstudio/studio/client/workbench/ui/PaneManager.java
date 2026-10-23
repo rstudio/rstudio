@@ -547,28 +547,7 @@ public class PaneManager
             return;
          }
 
-         Double width = Double.valueOf(window.getActiveWidget().getOffsetWidth());
-
-         // If the widget is already visible horizontally, then bail
-         // (other logic handles vertical visibility)
-         if (width > 0)
-            return;
-
-         // Attempt to change the widths of as few columns as possible
-         ArrayList<Widget> columns = new ArrayList<>();
-         columns.add(right_);
-         columns.add(center_);
-         columns.addAll(leftList_);
-
-         ArrayList<Double> sizes = getValidColumnWidths(columns, false);
-         final Command afterAnimation = () -> window.getNormal().onResize();
-
-         double rightEnd = sizes.get(0);
-         ArrayList<Double> leftTargets = new ArrayList<>();
-         if (sizes.size() > 2)
-            leftTargets.addAll(sizes.subList(2, sizes.size()));
-
-         resizeHorizontally(rightEnd, leftTargets, afterAnimation);
+         reopenCollapsedColumn(window, lastSelectedTab_, true);
       });
 
       eventBus_.addHandler(
@@ -1660,6 +1639,15 @@ public class PaneManager
       for (int i = 0; i < leftList_.size(); i++)
          panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
 
+      animateToWidgetSizes(afterComplete);
+   }
+
+   /**
+    * Animate the columns to the sizes already set on the panel, then report the
+    * resize as a splitter drag would.
+    */
+   private void animateToWidgetSizes(final Command afterComplete)
+   {
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       panel_.animate(duration, new AnimationCallback()
       {
@@ -1725,20 +1713,7 @@ public class PaneManager
 
       panel_.setWidgetSize(right_, actualRightTarget);
 
-      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      panel_.animate(duration, new AnimationCallback()
-      {
-         public void onAnimationComplete()
-         {
-            panel_.onSplitterResized(new SplitterResizedEvent());
-            if (afterComplete != null)
-               afterComplete.execute();
-         }
-
-         public void onLayout(Layer layer, double progress)
-         {
-         }
-      });
+      animateToWidgetSizes(afterComplete);
    }
 
    private void resizeHorizontallyWithSidebarOnLeft(final double rightTarget,
@@ -1797,20 +1772,7 @@ public class PaneManager
 
       panel_.setWidgetSize(right_, actualRightTarget);
 
-      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      panel_.animate(duration, new AnimationCallback()
-      {
-         public void onAnimationComplete()
-         {
-            panel_.onSplitterResized(new SplitterResizedEvent());
-            if (afterComplete != null)
-               afterComplete.execute();
-         }
-
-         public void onLayout(Layer layer, double progress)
-         {
-         }
-      });
+      animateToWidgetSizes(afterComplete);
    }
 
    private void restoreLayout()
@@ -2286,7 +2248,27 @@ public class PaneManager
       return tabs.toArray(new WorkbenchTab[tabs.size()]);
    }
 
+   /**
+    * How far activating a tab may change the layout to show the tab's pane.
+    */
+   private enum Reveal
+   {
+      /** Change nothing. A zoom about to start records the widths it restores
+       *  when it ends, and those should be the user's. */
+      NONE,
+      /** Reopen a column a splitter drag has shut, but leave any zoom alone. */
+      COLUMN,
+      /** Also move a pane zoom to the tab's pane, or end a column zoom that
+       *  shut its column, as a pane raising itself does. */
+      ZOOM
+   }
+
    public void activateTab(Tab tab)
+   {
+      activateTab(tab, Reveal.ZOOM);
+   }
+
+   private void activateTab(Tab tab, Reveal reveal)
    {
       lastSelectedTab_ = tab;
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
@@ -2316,8 +2298,12 @@ public class PaneManager
             manageChatCommands();
       }
 
-      // Ensure that the pane is visible (otherwise tab selection will fail)
-      if (!parent.visible())
+      // Show the pane if it is minimized or hidden, so the selected tab can be seen.
+      // During a pane zoom, the hidden pane is the zoomed one's partner, and
+      // showing it would end the zoom without clearing its state (#18444), so
+      // the tab is selected behind the zoom instead.
+      boolean keepZoom = reveal == Reveal.COLUMN && maximizedWindow_ != null;
+      if (!parent.visible() && !keepZoom)
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
       }
@@ -2340,6 +2326,9 @@ public class PaneManager
       if (panel == null)
          return;
 
+      if (reveal != Reveal.NONE)
+         reopenCollapsedColumn(parent, tab, reveal == Reveal.ZOOM);
+
       if (tabToIndex_.containsKey(tab))
       {
          int index = tabToIndex_.get(tab);
@@ -2353,11 +2342,108 @@ public class PaneManager
       }
    }
 
-   public void activateTab(String tabName)
+   /**
+    * Reopen the column holding window if a splitter drag or a zoom has shut it
+    * (#19184), taking up to a default column's width from the column that can
+    * give most. Uses target widths, so the repeat calls one pane raise makes,
+    * or a call during a zoom's animation, see the widths being laid out.
+    *
+    * @param tab The tab to zoom if a zoom of another pane moves to window.
+    * @param moveZoom Whether a zoom may move or end to show window.
+    */
+   private void reopenCollapsedColumn(LogicalWindow window, Tab tab, boolean moveZoom)
+   {
+      boolean zoomed = maximizedWindow_ != null || widgetSizePriorToZoom_ >= 0;
+      if (zoomed && !moveZoom)
+         return;
+
+      // Another pane's zoom hides window, in a column the zoom shut or as the
+      // zoomed pane's partner: move the zoom here, as the
+      // WindowEnsureVisibleEvent handler does when a pane raises itself.
+      if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
+      {
+         fullyMaximizeWindow(window, tab);
+         return;
+      }
+
+      Widget column = getColumn(window);
+      if (column == null || isOpen(column))
+         return;
+
+      // A zoom tracked here is a column zoom (a zoomed pane's column is open),
+      // which can't move to the pane, so end it. For a column zoom,
+      // restoreLayout() sets the restored widths before it returns.
+      if (widgetSizePriorToZoom_ >= 0)
+      {
+         restoreLayout();
+         if (isOpen(column))
+            return;
+      }
+
+      Widget donor = null;
+      for (Widget candidate : panel_.getColumns())
+      {
+         if (candidate != column &&
+             (donor == null || getGivableWidth(candidate) > getGivableWidth(donor)))
+         {
+            donor = candidate;
+         }
+      }
+      // In a narrow window a default column is narrower than the sidebar's minimum.
+      double target = Math.max(panel_.getDefaultSplitterWidth(),
+                               panel_.getMinimumOpenWidth(column));
+      double width = panel_.getTargetWidth(column);
+      double growth = Math.min(target - width, getGivableWidth(donor));
+      if (width + growth < panel_.getMinimumOpenWidth(column))
+         return;
+
+      // center_ fills the space the other columns leave and has no size of its
+      // own, so it grows or shrinks as the other column changes.
+      if (column != center_)
+         panel_.setWidgetSize(column, width + growth);
+      if (donor != center_)
+         panel_.setWidgetSize(donor, panel_.getWidgetSize(donor) - growth);
+
+      // Lay the window out at its new width once it is drawn there.
+      animateToWidgetSizes(() -> window.getNormal().onResize());
+   }
+
+   private boolean isOpen(Widget column)
+   {
+      return panel_.getTargetWidth(column) >= panel_.getMinimumOpenWidth(column);
+   }
+
+   private Widget getColumn(LogicalWindow window)
+   {
+      Element frame = window.getNormal().getElement();
+      for (Widget column : panel_.getColumns())
+      {
+         if (column.getElement().isOrHasChild(frame))
+            return column;
+      }
+      return null;
+   }
+
+   /**
+    * How much width a column can give to reopen another: at most half its
+    * width, and none that would take it below the width it needs to stay open.
+    */
+   private double getGivableWidth(Widget column)
+   {
+      double width = panel_.getTargetWidth(column);
+      return Math.max(0, Math.min(width / 2.0, width - panel_.getMinimumOpenWidth(column)));
+   }
+
+   /**
+    * Activate the tab an ActivatePaneEvent names. Code fires these to show a
+    * pane as a side effect (entering the debugger, history(), Packrat), so a
+    * zoom stays as the user left it; a column dragged shut still reopens.
+    */
+   public void activateTabLeavingZoom(String tabName)
    {
       Tab tab = tabForName(tabName);
       if (tab != null)
-         activateTab(tab);
+         activateTab(tab, Reveal.COLUMN);
    }
    
    public void focusTab(Tab tab)
@@ -2369,7 +2455,7 @@ public class PaneManager
 
    public void zoomTab(Tab tab)
    {
-      activateTab(tab);
+      activateTab(tab, Reveal.NONE);
       WorkbenchTabPanel tabPanel = getOwnerTabPanel(tab);
       LogicalWindow parentWindow = tabPanel.getParentWindow();
       if (parentWindow == null)
