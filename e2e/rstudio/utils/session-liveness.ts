@@ -242,8 +242,10 @@ export async function recordDeafSessionAtShutdown(
       console.error(`[deaf-session] at worker shutdown: ${err.message}; sessions are remote, no stack dump taken`);
       return;
     }
+    // Server workers share the sandbox, so the worker's pid keeps two dumps
+    // taken in the same second apart.
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*$/, 'Z');
-    const file = path.join(outDir, `rsession-stacks-${stamp}.txt`);
+    const file = path.join(outDir, `rsession-stacks-${stamp}-${process.pid}.txt`);
     try {
       fs.mkdirSync(outDir, { recursive: true });
       fs.writeFileSync(file, dumpRSessionStacks());
