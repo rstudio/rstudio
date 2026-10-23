@@ -9,6 +9,7 @@
 
 ### Fixed
 - ([#19240](https://github.com/rstudio/rstudio/issues/19240)): The "RStudio has reduced background file operations" console notice is no longer printed again each time a suspended session is resumed or R is restarted; it is printed once per project session, and again when a restart first turns the reduction on.
+- ([#19168](https://github.com/rstudio/rstudio/issues/19168)): RStudio now installs requested dependencies together in renv projects, allowing renv to resolve dependencies and use parallel installation even when individual package installation is enabled.
 - ([#19165](https://github.com/rstudio/rstudio/issues/19165)): Improved vertical alignment of text buttons in the Packages toolbar and search fields on Windows.
 - ([#19167](https://github.com/rstudio/rstudio/issues/19167)): The package tables in renv Snapshot and Restore dialogs now follow the dark theme.
 - ([#19117](https://github.com/rstudio/rstudio/issues/19117)): Inline data frame output in R Markdown and Quarto documents, and the Data Viewer, now display runs of spaces in cell values as-is instead of collapsing them to a single space; the Data Viewer also shows embedded newlines and tabs escaped (`\n`, `\t`) rather than as a space.
