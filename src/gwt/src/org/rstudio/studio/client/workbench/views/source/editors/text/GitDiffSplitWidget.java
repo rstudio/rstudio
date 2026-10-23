@@ -70,10 +70,15 @@ public class GitDiffSplitWidget extends Widget implements RequiresResize
       return view_ != null && view_.isFocused();
    }
 
-   public void focus()
+   // Moves focus into the base editor; false when the pane has none, which
+   // it does not until the gutter has attached, and not once it has gone.
+   public boolean focus()
    {
-      if (view_ != null)
-         view_.focus();
+      if (view_ == null)
+         return false;
+
+      view_.focus();
+      return true;
    }
 
    @Override

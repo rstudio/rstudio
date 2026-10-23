@@ -374,15 +374,18 @@ public class TextEditingTargetWidget
    @Override
    public boolean focusOtherEditorSplit()
    {
-      // the side-by-side diff has a read-only base editor to move between
+      // the side-by-side diff has a read-only base editor to move between,
+      // once the gutter has put one in the pane (false until then, as for
+      // the split that has not materialized below)
       if (diffSplitWidget_ != null)
       {
          if (diffSplitWidget_.isFocused())
+         {
             editor_.focus();
-         else
-            diffSplitWidget_.focus();
+            return true;
+         }
 
-         return true;
+         return diffSplitWidget_.focus();
       }
 
       // a requested split may not have materialized yet (see
