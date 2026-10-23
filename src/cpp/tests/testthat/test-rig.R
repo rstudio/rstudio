@@ -452,7 +452,7 @@ test_that("a user-mode install leaves rig's default R setup as it was", {
    nothing <- list(removed = character(), restored = character(), failed = character())
    expect_identical(.rs.rig.userDefaultRestore(snapshot, launchd$launchctl), nothing)
    expect_identical(launchd$verbs(), c("list", "getenv", "list", "getenv"))
-   expect_identical(.rs.rig.restoreMessages(nothing), NULL)
+   expect_identical(.rs.rig.restoreMessages(nothing), character())
 
    # rig sets a default: the links (one of them dangling) and the agent,
    # which it loads, and loading sets RSTUDIO_WHICH_R
@@ -670,8 +670,15 @@ test_that("rig's default R setup is remembered before, and put back after, a use
    expect_identical(readRDS(file), state$snapshot)
    expect_identical(state$snapshot$pid, Sys.getpid())
    expect_false(any(state$snapshot$existed))
-   expect_identical(basename(state$snapshot$paths[["launchAgent"]]), "io.r-lib.rig.rstudio-which-r.plist")
-   expect_true(startsWith(state$snapshot$paths[["launchAgent"]], home))
+   if (.rs.platform.isMacos)
+   {
+      expect_identical(basename(state$snapshot$paths[["launchAgent"]]), "io.r-lib.rig.rstudio-which-r.plist")
+      expect_true(startsWith(state$snapshot$paths[["launchAgent"]], home))
+   }
+   else
+   {
+      expect_false("launchAgent" %in% names(state$snapshot$paths))
+   }
 
    # rig sets a default while installing
    paths <- state$snapshot$paths
@@ -680,6 +687,11 @@ test_that("rig's default R setup is remembered before, and put back after, a use
    expect_true(file.symlink(installed, paths[["current"]]))
    expect_true(file.symlink(file.path(installed, "bin", "R"), paths[["R"]]))
    expect_true(file.symlink(file.path(installed, "bin", "Rscript"), paths[["Rscript"]]))
+
+   # once rig runs, its process is recorded in the snapshot too
+   expect_identical(.rs.rig.userInstallStarted(4242L), character())
+   expect_identical(state$snapshot$rigPid, 4242L)
+   expect_identical(readRDS(file)$rigPid, 4242L)
 
    # which the end of the install undoes, dropping the snapshot
    messages <- .rs.rig.userInstallEnd(launchd$launchctl)
@@ -713,6 +725,73 @@ test_that("rig's default R setup is remembered before, and put back after, a use
    expect_null(state$snapshot)
    expect_false(file.exists(file))
    expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+
+   # the snapshot is kept while something is left to undo, for a later try
+   rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   withr::with_envvar(c(HOME = home), {
+      expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
+   })
+   expect_true(file.symlink(installed, paths[["current"]]))
+   Sys.chmod(root, "0555")
+   messages <- .rs.rig.userInstallEnd(launchd$launchctl)
+   Sys.chmod(root, "0755")
+   expect_match(messages, "^Could not undo a change rig made outside RStudio: could not remove ", all = FALSE)
+   expect_true(file.exists(file))
+   expect_null(state$snapshot)
+   messages <- .rs.rig.userInstallRecover(file, launchctl = launchd$launchctl)
+   expect_match(messages, "^Removed the default R setup")
+   expect_false(file.exists(file))
+
+})
+
+test_that("a user-mode install waits for, and undoes, one another session started", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   for (dir in c(root, bin))
+      dir.create(dir, recursive = TRUE)
+
+   rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   file <- file.path(home, "rig-install-snapshot.rds")
+   launchd <- fakeLaunchd()
+   state <- .rs.rig.installState
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = FALSE)
+
+   # another session took a snapshot and its rig has set the default
+   theirs <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   theirs$pid <- 999998L
+   theirs$rigPid <- 999999L
+   saveRDS(theirs, file)
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+
+   # while that session, or just its rig, runs, this one does not install
+   alive <- function(pids) function(pid) pid %in% pids
+   withr::with_envvar(c(HOME = home), {
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999998L)), "another RStudio session")
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999999L)), "another RStudio session")
+   })
+   expect_null(state$snapshot)
+   expect_true(file.exists(file))
+   expect_true(.rs.rig.pathExists(paths[["current"]]))
+
+   # once both are gone, their default is undone before this install's
+   # snapshot is taken, so it does not pass for setup to keep
+   withr::with_envvar(c(HOME = home), {
+      messages <- .rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(integer()))
+   })
+   expect_match(messages, "^Removed the default R setup")
+   expect_false(.rs.rig.pathExists(paths[["current"]]))
+   expect_identical(readRDS(file)$pid, Sys.getpid())
+   expect_false(any(state$snapshot$existed))
+   expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+   expect_false(file.exists(file))
 
 })
 
@@ -751,6 +830,13 @@ test_that("an install a previous session did not get to undo is undone at startu
    expect_identical(.rs.rig.userInstallRecover(file, stillRunning, launchd$launchctl), character())
    expect_true(file.exists(file))
    expect_true(.rs.rig.pathExists(paths[["current"]]))
+
+   # as it may while the rig it started runs on without it
+   snapshot$rigPid <- 999997L
+   saveRDS(snapshot, file)
+   rigRunning <- function(pid) identical(pid, 999997L)
+   expect_identical(.rs.rig.userInstallRecover(file, rigRunning, launchd$launchctl), character())
+   expect_true(file.exists(file))
 
    # once it is gone, the default is undone and the snapshot dropped
    gone <- function(pid) FALSE

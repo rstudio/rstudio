@@ -327,6 +327,7 @@
 .rs.addFunction("rig.restoreMessages", function(result)
 {
    c(
+      character(),
       if (length(result$removed))
          paste("Removed the default R setup rig added outside RStudio:", paste(result$removed, collapse = ", ")),
       if (length(result$restored))
@@ -354,14 +355,38 @@
    invisible(dir.exists(dir))
 })
 
+#' Write the snapshot to 'file'. Returns a message when that fails.
+.rs.addFunction("rig.saveSnapshot", function(snapshot, file)
+{
+   saved <- .rs.tryCatch(saveRDS(snapshot, file))
+   if (inherits(saved, "error"))
+      return(sprintf("Could not save rig's default R setup to %s: %s", file, conditionMessage(saved)))
+
+   character()
+})
+
+#' Whether the install a snapshot was taken for may still be under way: the
+#' session that took it, or the rig it started, is still running. (On macOS
+#' rig outlives a session that crashes.)
+.rs.addFunction("rig.snapshotInUse", function(snapshot, running = .rs.rig.processRunning)
+{
+   pids <- c(snapshot$pid, snapshot$rigPid)
+   pids <- pids[!is.na(pids) & pids != Sys.getpid()]
+   any(vapply(pids, running, logical(1)))
+})
+
 #' Called before 'rig add --user' runs, to remember rig's default-R setup.
 #' The snapshot is also written to 'file', when one is given: rig sets the
 #' default before its slow pak step, so a session that exits mid-install
 #' may not get to undo it, and the next session then does (from the file).
-#' Returns messages for the job's log.
+#' A snapshot another session left there is undone first, so that its
+#' leftovers do not pass for the setup to keep; while that session (or its
+#' rig) still runs, the install is refused, as the two would undo each
+#' other's work. Returns messages for the job's log.
 .rs.addFunction("rig.userInstallBegin", function(rig,
                                                  file = NULL,
-                                                 launchctl = .rs.rig.launchctl)
+                                                 launchctl = .rs.rig.launchctl,
+                                                 running = .rs.rig.processRunning)
 {
    state <- .rs.rig.installState
    state$snapshot <- NULL
@@ -371,20 +396,42 @@
    if (.rs.platform.isWindows)
       return(character())
 
+   notes <- character()
+   if (!is.null(file) && file.exists(file))
+   {
+      leftover <- .rs.tryCatch(readRDS(file))
+      if (!inherits(leftover, "error") && .rs.rig.snapshotInUse(leftover, running))
+         stop("another RStudio session is still installing R")
+
+      notes <- .rs.rig.userInstallRecover(file, running, launchctl)
+   }
+
    dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
    .rs.rig.ensureBinaryDir(dirs)
 
    paths <- .rs.rig.userDefaultPaths(dirs)
    state$snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
    if (is.null(file))
-      return(character())
+      return(notes)
 
    state$file <- file
-   saved <- .rs.tryCatch(saveRDS(state$snapshot, file))
-   if (inherits(saved, "error"))
-      return(sprintf("Could not save rig's default R setup to %s: %s", file, conditionMessage(saved)))
+   c(notes, .rs.rig.saveSnapshot(state$snapshot, file))
+})
 
-   character()
+#' Called once rig is running, to record its process in the snapshot: a
+#' later session leaves the snapshot alone while that rig is still running.
+#' Returns messages for the job's log.
+.rs.addFunction("rig.userInstallStarted", function(pid)
+{
+   state <- .rs.rig.installState
+   if (is.null(state$snapshot))
+      return(character())
+
+   state$snapshot$rigPid <- as.integer(pid)
+   if (is.null(state$file))
+      return(character())
+
+   .rs.rig.saveSnapshot(state$snapshot, state$file)
 })
 
 #' Called once 'rig add' has exited, to undo the default-R setup it added or
@@ -400,17 +447,19 @@
    if (is.null(snapshot))
       return(character())
 
+   # the snapshot stays on disk while something is left to undo, for the
+   # next session to try again
    result <- .rs.rig.userDefaultRestore(snapshot, launchctl)
-   if (!is.null(file))
+   if (!is.null(file) && length(result$failed) == 0L)
       unlink(file)
 
    .rs.rig.restoreMessages(result)
 })
 
 #' Undo an install a previous session did not get to undo, from the snapshot
-#' it left in 'file'. The file is left alone while the session that wrote it
-#' is still running (its install may still be under way). Returns messages
-#' for the log.
+#' it left in 'file'. The file is left alone while that install may still be
+#' under way, and kept while something is left to undo. Returns messages for
+#' the log.
 .rs.addFunction("rig.userInstallRecover", function(file,
                                                    running = .rs.rig.processRunning,
                                                    launchctl = .rs.rig.launchctl)
@@ -425,11 +474,14 @@
       return(sprintf("Could not read rig's default R setup from %s: %s", file, conditionMessage(snapshot)))
    }
 
-   if (is.numeric(snapshot$pid) && snapshot$pid != Sys.getpid() && running(snapshot$pid))
+   if (.rs.rig.snapshotInUse(snapshot, running))
       return(character())
 
-   unlink(file)
-   .rs.rig.restoreMessages(.rs.rig.userDefaultRestore(snapshot, launchctl))
+   result <- .rs.rig.userDefaultRestore(snapshot, launchctl)
+   if (length(result$failed) == 0L)
+      unlink(file)
+
+   .rs.rig.restoreMessages(result)
 })
 
 #' Whether a process of this user with the given id is running.

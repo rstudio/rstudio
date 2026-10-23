@@ -27,6 +27,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
@@ -171,6 +172,14 @@ private:
       {
          return !self->stopped_;
       };
+      callbacks.onStarted = [self](core::system::ProcessOperations& ops)
+      {
+         std::vector<std::string> notes;
+         Error error = r::exec::RFunction(".rs.rig.userInstallStarted", static_cast<int>(ops.getPid())).call(&notes);
+         if (error)
+            LOG_ERROR(error);
+         self->logNotes(notes);
+      };
       callbacks.onStdout = [self](core::system::ProcessOperations&, const std::string& output)
       {
          self->log(output);
@@ -196,9 +205,13 @@ private:
       // changes is put back when the job finishes (#19229)
       std::vector<std::string> notes;
       Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath()).call(&notes);
-      if (beginError)
-         LOG_ERROR(beginError);
       logNotes(notes);
+      if (beginError)
+      {
+         // without the snapshot there is no undoing what rig adds
+         finish(false, "could not record rig's default R setup: " + r::endUserErrorMessage(beginError));
+         return;
+      }
 
       core::system::ProcessOptions options;
       options.terminateChildren = true;
