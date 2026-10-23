@@ -81,13 +81,17 @@ test_that("the R version is read from the project's lockfile", {
    
 })
 
-test_that("a restore is offered only when the lockfile records packages", {
+test_that("a restore requires lockfile packages other than renv itself", {
    
    expect_false(.rs.renv.lockfileHasPackages(NULL))
    expect_false(.rs.renv.lockfileHasPackages(list(R = list(Version = "4.4.1"), Packages = list())))
    
    packages <- list(jsonlite = list(Package = "jsonlite", Version = "1.8.9"))
    expect_true(.rs.renv.lockfileHasPackages(list(R = list(Version = "4.4.1"), Packages = packages)))
+
+   packages$renv <- list(Package = "renv", Version = "1.3.1")
+   expect_true(.rs.renv.lockfileHasPackages(list(Packages = packages)))
+   expect_false(.rs.renv.lockfileHasPackages(list(Packages = packages["renv"])))
    
 })
 
@@ -283,5 +287,17 @@ test_that("the project's R version is compared with the running one", {
    # no restore for a version set in the project file
    check <- .rs.projectRVersionCheck(project, "4.2", "3.6.0", TRUE, FALSE, current = "4.2.1")
    expect_equal(check$type, .rs.scalar("none"))
+
+   # an empty library needs no restore when the lockfile records no packages
+   # other than renv, which is already active
+   for (packages in c('{}', '{"renv": {"Package": "renv", "Version": "1.3.1"}}'))
+   {
+      writeLines(
+         paste0('{"R": {"Version": "4.2.3"}, "Packages": ', packages, '}'),
+         file.path(project, "renv.lock")
+      )
+      check <- .rs.projectRVersionCheck(project, "", "3.6.0", TRUE, FALSE, current = "4.2.1")
+      expect_equal(check$type, .rs.scalar("none"))
+   }
    
 })

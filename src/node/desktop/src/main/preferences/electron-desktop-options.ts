@@ -38,7 +38,7 @@ interface ElectronStoreInterface<T extends Record<string, any>> {
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
 import { kWindowsRExe } from '../../ui/utils';
-import { WindowBounds, positionAndEnsureVisible } from '../window-utils';
+import { WindowBounds, isWayland, kMinWindowHeight, kMinWindowWidth, positionAndEnsureVisible } from '../window-utils';
 import { rTermInBinFolderWin32 } from '../r-installation-win32';
 
 const kProportionalFont = 'font.proportionalFont';
@@ -190,6 +190,18 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return this.config.get(kWindowBounds, properties.view.default.windowBounds);
   }
 
+  /**
+   * The size to create the main window at: its saved unmaximized size, which
+   * is also what it returns to when a maximized window is unmaximized.
+   */
+  public initialMainWindowSize(): { width: number; height: number } {
+    const { width, height } = this.windowBounds();
+    return {
+      width: Math.max(kMinWindowWidth, width),
+      height: Math.max(kMinWindowHeight, height),
+    };
+  }
+
   // Note: screen can only be used after the 'ready' event has been emitted
   public restoreMainWindowBounds(mainWindow: BrowserWindow): void {
     try {
@@ -201,6 +213,16 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   private restoreMainWindowBoundsImpl(mainWindow: BrowserWindow): void {
     const savedBounds = this.windowBounds();
+
+    // On Wayland, resizing the window before the compositor first configures
+    // it races the maximize request, and can leave the window maximized in
+    // name but drawn at its unmaximized size (#19136). The window was created
+    // at its saved size (see initialMainWindowSize), and Wayland clients can't
+    // place their windows anyway, so maximizing is all that's left to do.
+    if (savedBounds.maximized && isWayland()) {
+      mainWindow.maximize();
+      return;
+    }
 
     positionAndEnsureVisible(
       mainWindow,

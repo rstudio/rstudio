@@ -281,6 +281,10 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String removeButtonLabel();
     String createGridLabel();
     String createColumnLabel();
+    String topLeftPanelLabel();
+    String bottomLeftPanelLabel();
+    String topRightPanelLabel();
+    String bottomRightPanelLabel();
     String paneLayoutLabel();
     String accountListLabel();
     String connectButtonLabel();
@@ -390,6 +394,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String webOption();
     String showLinkNumbersLabel();
     String chkVcsEnabledLabel();
+    String showGitDiffGutterLabel();
     String globalDisplayEnable();
     String globalDisplayDisable();
     String globalDisplayVC(String displayEnable);
@@ -648,6 +653,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String gitSignCommitLabel();
     String sidebarLocationLeft();
     String sidebarLocationRight();
+    String sidebarLocationLabel();
     String sidebarVisible();
     String resetPaneLayoutToDefaults();
     String restoreDefaultPaneAndTabLayoutCaption();

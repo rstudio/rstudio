@@ -338,6 +338,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &mathjax4Path_);
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
+   resolvePath(resourcePath_, &rigPath_);
    resolveCopilotPath(resourcePath_, &copilotPath_);
    resolveNodePath(resourcePath_, &nodePath_);
 

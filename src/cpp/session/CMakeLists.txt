@@ -27,8 +27,8 @@ if(RSTUDIO_DISABLE_CHECK_FOR_UPDATES)
    message(STATUS "Configured to remove check for updates feature")
 endif()
 
-# verify that install-dictionaries, install-mathjax, install-pandoc,
-# and install-rmarkdown have been run as required
+# Verify the dependency installers have been run as required.
+include("${RSTUDIO_PROJECT_ROOT}/dependencies/common/rig.cmake")
 
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
@@ -36,6 +36,7 @@ if(WIN32)
    set(RSTUDIO_DEPENDENCIES_MATHJAX4_DIR     "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-4")
    set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
    set(RSTUDIO_DEPENDENCIES_COPILOT_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/copilot-language-server-js")
+   set(RSTUDIO_DEPENDENCIES_RIG_DIR          "${RSTUDIO_DEPENDENCIES_DIR}/common/rig/${RSTUDIO_RIG_VERSION}")
 else()
 
    # indirection to help build machine find these libraries?
@@ -68,6 +69,12 @@ else()
    else()
       set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_DEPENDENCIES_DIR}/copilot-language-server-js")
    endif()
+
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/rig/${RSTUDIO_RIG_VERSION}")
+      set(RSTUDIO_DEPENDENCIES_RIG_DIR "${RSTUDIO_TOOLS_ROOT}/rig/${RSTUDIO_RIG_VERSION}")
+   else()
+      set(RSTUDIO_DEPENDENCIES_RIG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/rig/${RSTUDIO_RIG_VERSION}")
+   endif()
 endif()
 
 
@@ -89,7 +96,8 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
             RSTUDIO_DEPENDENCIES_MATHJAX4_DIR
             RSTUDIO_DEPENDENCIES_PANDOC_DIR
             RSTUDIO_DEPENDENCIES_QUARTO_DIR
-            RSTUDIO_DEPENDENCIES_COPILOT_DIR)
+            RSTUDIO_DEPENDENCIES_COPILOT_DIR
+            RSTUDIO_DEPENDENCIES_RIG_DIR)
 
  
    # skip quarto if not enabled
@@ -102,6 +110,11 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
       continue()
    endif()
 
+   # skip rig unless building the desktop, which alone installs R with it
+   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_RIG_DIR" AND NOT RSTUDIO_ELECTRON)
+      continue()
+   endif()
+
    # validate existence
    if(NOT EXISTS "${${VAR}}")
       message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
@@ -111,6 +124,11 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
    set("${VAR}" "${${VAR}}" CACHE INTERNAL "")
    
 endforeach()
+
+# Fail at configure time if rig was only partially installed.
+if(RSTUDIO_ELECTRON AND NOT EXISTS "${RSTUDIO_DEPENDENCIES_RIG_DIR}/bin/rig${CMAKE_EXECUTABLE_SUFFIX}")
+   message(FATAL_ERROR "rig executable not found (re-run install-dependencies script to install)")
+endif()
 
 # verify embedded packages are available
 foreach(PKG ${RSTUDIO_EMBEDDED_PACKAGES})
@@ -871,6 +889,17 @@ if(NOT RSTUDIO_SESSION_SUBBUILD AND NOT RSESSION_ALTERNATE_BUILD)
       install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
               DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
               USE_SOURCE_PERMISSIONS)
+   endif()
+
+   # Only the desktop installs R with rig (server installations are managed
+   # by administrators). Keep rig's distribution layout: Windows needs the
+   # adjacent shim and elevation helper, and Linux needs share/rig/cacert.pem.
+   if(RSTUDIO_ELECTRON)
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_RIG_DIR}/"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}/rig"
+              USE_SOURCE_PERMISSIONS
+              PATTERN ".installed" EXCLUDE
+              PATTERN "._*" EXCLUDE)
    endif()
 
    # install Copilot Language Server

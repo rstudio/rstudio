@@ -425,6 +425,9 @@ protected:
       ("external-quarto-path",
       value<std::string>(&quartoPath_)->default_value(kDefaultQuartoPath),
       "Specifies the path to quarto binaries.")
+      ("external-rig-path",
+      value<std::string>(&rigPath_)->default_value(kDefaultRigPath),
+      "Specifies the path to the bundled rig distribution.")
       ("external-copilot-path",
       value<std::string>(&copilotPath_)->default_value(kDefaultCopilotPath),
       "Specifies the path to Copilot Language Server JavaScript distribution.")
@@ -642,6 +645,7 @@ public:
    core::FilePath mathjax4Path() const { return core::FilePath(mathjax4Path_); }
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
+   core::FilePath rigPath() const { return core::FilePath(rigPath_); }
    core::FilePath copilotPath() const { return core::FilePath(copilotPath_); }
    core::FilePath nodePath() const { return core::FilePath(nodePath_); }
    core::FilePath deprecatedCopilotAgentPath() const { return core::FilePath(deprecatedCopilotAgentPath_); }
@@ -782,6 +786,7 @@ protected:
    std::string mathjax4Path_;
    std::string pandocPath_;
    std::string quartoPath_;
+   std::string rigPath_;
    std::string copilotPath_;
    std::string nodePath_;
    std::string deprecatedCopilotAgentPath_;

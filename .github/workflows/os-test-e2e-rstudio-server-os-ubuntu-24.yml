@@ -199,7 +199,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
           restore-keys: |
             rstudio-tools-linux-x86_64-
 
@@ -414,14 +414,25 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
+  # Reads the Linux Server shard count from .github/e2e/shards.json and republishes
+  # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
+  # env value itself, so the one declaration has to pass through here.
+  shards:
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: linux-server
+
   e2e-server-ubuntu:
-    needs: build
+    needs: [build, shards]
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too (needs.build.result == 'skipped' on the daily-download
     # path). build_only seeds the build caches without running e2e, so skip.
+    # The accessibility run uses a fixed single shard (see the matrix below),
+    # so it does not depend on the shards job having succeeded.
     if: |
       always() &&
       inputs.build_only != true &&
+      (inputs.a11y || needs.shards.result == 'success') &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
@@ -437,8 +448,11 @@ jobs:
       fail-fast: false
       matrix:
         # The accessibility suite is a few state scans, each in its own
-        # session; one shard runs them all.
-        shard: ${{ fromJSON(inputs.a11y && '[1]' || '[1, 2]') }}
+        # session; one shard runs them all. Otherwise the count is declared
+        # once in .github/e2e/shards.json (see .github/e2e/README.md); the
+        # test step derives --shard=N/M from strategy.job-total, and
+        # e2e-merge prints the same count.
+        shard: ${{ fromJSON(inputs.a11y && '[1]' || needs.shards.outputs.matrix) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
@@ -962,7 +976,7 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-server-ubuntu]
+    needs: [shards, e2e-server-ubuntu]
     if: always() && inputs.defer_merge != true && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1112,7 +1126,7 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · ubuntu-24.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>${{ inputs.a11y && '1 shard' || format('{0} shards', needs.shards.outputs.count) }} · ubuntu-24.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Does nothing: the name is the point. A step name can read step outputs
       # (jobs.<id>.steps.name allows the `steps` context), so this puts the build

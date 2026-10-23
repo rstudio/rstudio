@@ -284,10 +284,12 @@
    if (.rs.rVersionIsValid(version)) version else ""
 })
 
-#' Whether a parsed lockfile records any packages to restore.
+#' Whether a parsed lockfile records any packages to restore, excluding renv
+#' itself, which is already available in an active renv project.
 .rs.addFunction("renv.lockfileHasPackages", function(lockfile)
 {
-   length(lockfile[["Packages"]]) > 0L
+   packages <- setdiff(names(lockfile[["Packages"]]), "renv")
+   length(packages) > 0L
 })
 
 #' Whether the project's renv library contains no packages (other than renv
@@ -321,7 +323,8 @@
 #' @param current The version of R in use.
 #'
 #' @return A list whose 'type' says what to tell the user: "none"; "restore"
-#'   when the versions match but the renv library is empty; or "mismatch",
+#'   when the versions match, the renv library is empty and the lockfile
+#'   records packages to restore; or "mismatch",
 #'   with the 'requested' and 'current' versions, where the request came from
 #'   ('source'), whether that R could run ('supported'), and the matching
 #'   installation of R, if any ('installed').
