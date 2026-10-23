@@ -52,7 +52,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -802,7 +801,7 @@ public abstract class ModalDialogBase extends DialogBox
     */
    protected void setARIADescribedBy(Element element)
    {
-      ensureId(element);
+      DomUtils.ensureHasId(element);
       role_.setAriaDescribedbyProperty(getElement(), Id.of(element));
    }
 
@@ -813,14 +812,8 @@ public abstract class ModalDialogBase extends DialogBox
     */
    protected void setARIALabelledBy(Element element)
    {
-      ensureId(element);
+      DomUtils.ensureHasId(element);
       role_.setAriaLabelledbyProperty(getElement(), Id.of(element));
-   }
-
-   private static void ensureId(Element element)
-   {
-      if (StringUtil.isNullOrEmpty(element.getId()))
-         element.setId(DOM.createUniqueId());
    }
 
    /**
