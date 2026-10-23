@@ -6296,11 +6296,13 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutMovingCursor()
    {
-      if (cursorInDiffBase())
-         return;
-
       if (activeDisplay().isFocused() || visualMode_.isVisualEditorActive())
       {
+         // (the guard sits inside the branch: Alt+Enter in the Find field is
+         // Select All Matches, below, whichever pane held the cursor)
+         if (cursorInDiffBase())
+            return;
+
          withVisualModeSelection(() ->
          {
             codeExecution().executeSelection(true, false);

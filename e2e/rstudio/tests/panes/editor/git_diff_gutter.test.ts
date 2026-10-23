@@ -1191,6 +1191,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       const echoes = async () => (await page.locator(CONSOLE_OUTPUT).innerText()).split('a <- 1').length - 1;
       const echoesBefore = await echoes();
       await executeCommand(page, 'executeCode');
+      await executeCommand(page, 'executeCodeWithoutMovingCursor');
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(live)).toBe(true);
       await executeCommand(page, 'executeCode');
