@@ -9,10 +9,13 @@
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
+@external ace_marker-layer, ace_find_match;
 @external ace_active_debug_line, ace_next-edit-suggestion-background, ace_next-edit-suggestion-highlight, ace_next-edit-suggestion-deletion, ace_next-edit-suggestion-deletion-bounds, ace_deletion-clickable, ace_insertion_preview, ace_next-edit-suggestion-insertion-bounds, ace_insertion-clickable, ace_replacement_deletion, ace_next-edit-suggestion-replacement-bounds, ace_replacement-clickable;
 @external ace_nes-gutter, ace_nes-gutter-background, ace_nes-gutter-highlight, ace_nes-gutter-deletion, ace_nes-gutter-insertion, ace_nes-gutter-replacement;
 @external ace_nes-offscreen-gutter, ace_nes-offscreen-gutter-up, ace_nes-offscreen-gutter-down;
 @external ace_diff-added, ace_diff-removed;
+@external ace_git-gutter, ace_git-added, ace_git-modified, ace_git-deleted, ace_git-deleted-below, ace_folding-enabled, ace_gutter-cell_svg-icons;
+@external ace_git-peek, ace_git-peek-added, ace_git-peek-modified, ace_git-peek-deleted, ace_git-peek-header, ace_git-peek-label, ace_git-peek-button, ace_git-peek-revert, ace_git-peek-close, ace_git-peek-lines, ace_git-peek-line;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -383,6 +386,16 @@ pre {
 
 .editor_dark .ace_active_debug_line {
    background-color: rgb(54, 50, 8);
+}
+
+/* The current Find match. This only places the marker (above the selection
+   marker, which Ace draws at z-index 5); it is invisible until a theme gives
+   it a colour, as Pastel On Dark does. */
+.ace_marker-layer .ace_find_match {
+   position: absolute;
+   z-index: 6;
+   box-sizing: border-box;
+   border-radius: 2px;
 }
 
 .ace_tooltip {
@@ -1861,7 +1874,13 @@ body.windows table.webGlobalToolbar {
 }
 
 
-/** Help Search box **/
+/* Align text-only Packages toolbar actions with their neighboring icons. */
+body.windows .packagesToolbarTextButton .toolbarButtonLabel {
+   position: relative;
+   top: -2px;
+}
+
+/** Search widgets **/
 .search {
    position: relative;
    top: -1px;
@@ -2910,6 +2929,10 @@ input[type="checkbox"]:checked:before {
    background: THEME_LIGHT_CONTROL_BACKGROUND;
 }
 
+body.windows .search {
+   transform: translateY(-1px);
+}
+
 .gwt-MenuBar .search {
    margin-top: 1px;
 }
@@ -3364,4 +3387,179 @@ body .rstudio-themes-alternate {
 
 .gwt-TextBox, .gwt-PasswordTextBox {
 	min-height: 16px;
+}
+
+/* Git diff markers: a bar at the right edge of the gutter cell, between the
+   line number and the code, so it stays clear of the annotation icons on the
+   left: solid for added lines, dashed for modified ones, so the two differ
+   in shape and not only in colour. Deleted lines leave nothing to mark, so a
+   wedge points at the seam.
+   The cell gains 6px of right padding while the gutter is attached: Ace's
+   fold arrow hangs into the padding (margin-right: -12px), and the bar and
+   its click target have to sit beyond it. */
+.ace_git-gutter > .ace_gutter-cell,
+.ace_git-gutter > .ace_gutter-cell_svg-icons {
+   padding-right: 12px;
+}
+
+.ace_git-gutter.ace_folding-enabled > .ace_gutter-cell,
+.ace_git-gutter.ace_folding-enabled > .ace_gutter-cell_svg-icons {
+   padding-right: 19px;
+}
+
+/* The bar is 3px; a transparent border widens its box to the click target
+   (MARKER_HIT_WIDTH in git_diff_gutter.js) so the pointer cursor covers
+   exactly what a click opens. */
+.ace_git-gutter .ace_gutter-cell.ace_git-added::after,
+.ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
+   content: "";
+   position: absolute;
+   top: 0;
+   bottom: 0;
+   right: 0;
+   width: 3px;
+   border-left: 3px solid transparent;
+   background-clip: content-box;
+   cursor: pointer;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-added::after {
+   background-color: #2da44e;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
+   background: repeating-linear-gradient(to bottom, #0969da 0, #0969da 4px, transparent 4px, transparent 7px);
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted::before,
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted-below::before {
+   content: "";
+   position: absolute;
+   right: 0;
+   width: 0;
+   height: 0;
+   border-right: 5px solid #cf222e;
+   z-index: 1;
+   cursor: pointer;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted::before {
+   top: 0;
+   border-bottom: 5px solid transparent;
+}
+
+.ace_git-gutter .ace_gutter-cell.ace_git-deleted-below::before {
+   bottom: 0;
+   border-top: 5px solid transparent;
+}
+
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-added::after {
+   background-color: #3fb950;
+}
+
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
+   background: repeating-linear-gradient(to bottom, #58a6ff 0, #58a6ff 4px, transparent 4px, transparent 7px);
+}
+
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-deleted::before,
+.editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-deleted-below::before {
+   border-right-color: #f85149;
+}
+
+/* Peek at a Git change: a line widget below the changed lines showing the
+   index version, with a button to revert. Inherits the editor font. The
+   frame is neutral, with a left accent in the colour of the marker it was
+   opened from; only the previous lines themselves are tinted, as removed
+   lines are in a diff. */
+.ace_git-peek {
+   box-sizing: border-box;
+   border-top: 1px solid rgba(0, 0, 0, 0.12);
+   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+   border-left: 3px solid #0969da;
+   background-color: rgba(0, 0, 0, 0.035);
+   overflow: hidden;
+}
+
+.ace_git-peek-added {
+   border-left-color: #2da44e;
+}
+
+.ace_git-peek-deleted {
+   border-left-color: #cf222e;
+}
+
+.ace_git-peek-header {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 2px 8px;
+   font-size: 11px;
+   opacity: 0.9;
+}
+
+/* The actions follow the label instead of sitting at the far edge of the
+   editor, so on a wide editor they stay near the marker that opened the
+   peek. Only the close glyph, the lesser action, goes at the end. */
+.ace_git-peek-label {
+   margin-right: 16px; /* 24px to Revert, with the header gap */
+}
+
+.ace_git-peek-button {
+   font: inherit;
+   line-height: 16px;
+   padding: 0 6px;
+   border: 1px solid rgba(0, 0, 0, 0.25);
+   border-radius: 3px;
+   background-color: rgba(255, 255, 255, 0.7);
+   color: inherit;
+   cursor: pointer;
+}
+
+.ace_git-peek-close {
+   margin-left: auto;
+   padding: 0 4px;
+   border: none;
+   background: none;
+   font: inherit;
+   font-size: 14px;
+   line-height: 16px;
+   color: inherit;
+   opacity: 0.6;
+   cursor: pointer;
+}
+
+.ace_git-peek-close:hover {
+   opacity: 1;
+}
+
+.ace_git-peek-lines {
+   padding: 0 4px 2px 4px;
+   white-space: pre;
+}
+
+.ace_git-peek-line {
+   background-color: rgba(207, 34, 46, 0.1);
+}
+
+.editor_dark .ace_git-peek {
+   border-color: rgba(255, 255, 255, 0.12);
+   border-left-color: #58a6ff;
+   background-color: rgba(255, 255, 255, 0.05);
+}
+
+.editor_dark .ace_git-peek-added {
+   border-left-color: #3fb950;
+}
+
+.editor_dark .ace_git-peek-deleted {
+   border-left-color: #f85149;
+}
+
+.editor_dark .ace_git-peek-button {
+   border-color: rgba(255, 255, 255, 0.3);
+   background-color: rgba(255, 255, 255, 0.08);
+}
+
+.editor_dark .ace_git-peek-line {
+   background-color: rgba(248, 81, 73, 0.15);
 }

@@ -48,6 +48,28 @@ on:
         description: "Post test results as a sticky comment on the PR. Pass true only from PR-triggered callers."
         type: boolean
         default: false
+      a11y:
+        description: "Run the accessibility (axe-core) suite instead of the e2e suite: one shard, @a11y tests only, no Copilot, no test credentials."
+        type: boolean
+        default: false
+      a11y_best_practices:
+        description: "With a11y, also run axe's best-practice rules."
+        type: boolean
+        default: false
+      a11y_experimental:
+        description: "With a11y, also run axe's experimental WCAG rules."
+        type: boolean
+        default: false
+      a11y_level:
+        description: "With a11y, the highest WCAG conformance level to check (lower levels are included)."
+        type: choice
+        options: [A, AA, AAA]
+        default: AA
+      a11y_wcag_version:
+        description: "With a11y, the WCAG version to check against (earlier versions' criteria are included)."
+        type: choice
+        options: ["2.1", "2.2"]
+        default: "2.2"
   workflow_call:
     inputs:
       build_from_source:
@@ -80,6 +102,21 @@ on:
       post_pr_comment:
         type: boolean
         default: false
+      a11y:
+        type: boolean
+        default: false
+      a11y_best_practices:
+        type: boolean
+        default: false
+      a11y_experimental:
+        type: boolean
+        default: false
+      a11y_level:
+        type: string
+        default: AA
+      a11y_wcag_version:
+        type: string
+        default: "2.2"
       defer_merge:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
@@ -162,7 +199,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
           restore-keys: |
             rstudio-tools-linux-x86_64-
 
@@ -351,14 +388,51 @@ jobs:
           path: rstudio-server.deb
           retention-days: 7
 
+      # The packaged rsession is stripped, with a .gnu_debuglink naming
+      # rsession.debug: the DWARF that add_stripped_executable split off into
+      # the build tree. Ship it to the e2e job so the backtraces that
+      # rsession-diagnostics.sh takes of a wedged session carry RStudio's own
+      # frames, not just libR's and libc's. Same-run only: it matches this
+      # build and nothing else.
+      - name: Stage rsession debug symbols
+        if: inputs.build_only != true
+        run: |
+          DEBUG=package/linux/build-Server-DEB/src/cpp/session/rsession.debug
+          if [ -f "$DEBUG" ]; then
+            cp "$DEBUG" "${{ github.workspace }}/rsession.debug"
+            ls -la "${{ github.workspace }}/rsession.debug"
+          else
+            echo "::warning::$DEBUG not found; rsession backtraces will be unsymbolized"
+          fi
+
+      - name: Upload rsession debug symbols
+        if: inputs.build_only != true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rsession-debug-ubuntu-24
+          path: rsession.debug
+          if-no-files-found: warn
+          retention-days: 1
+
+  # Reads the Linux Server shard count from .github/e2e/shards.json and republishes
+  # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
+  # env value itself, so the one declaration has to pass through here.
+  shards:
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: linux-server
+
   e2e-server-ubuntu:
-    needs: build
+    needs: [build, shards]
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too (needs.build.result == 'skipped' on the daily-download
     # path). build_only seeds the build caches without running e2e, so skip.
+    # The accessibility run uses a fixed single shard (see the matrix below),
+    # so it does not depend on the shards job having succeeded.
     if: |
       always() &&
       inputs.build_only != true &&
+      (inputs.a11y || needs.shards.result == 'success') &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
@@ -373,7 +447,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        # The accessibility suite is a few state scans, each in its own
+        # session; one shard runs them all. Otherwise the count is declared
+        # once in .github/e2e/shards.json (see .github/e2e/README.md); the
+        # test step derives --shard=N/M from strategy.job-total, and
+        # e2e-merge prints the same count.
+        shard: ${{ fromJSON(inputs.a11y && '[1]' || needs.shards.outputs.matrix) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
@@ -411,7 +490,9 @@ jobs:
           # libharfbuzz0b / libfribidi0 (textshaping). Install the runtime
           # libs (not the -dev variants) so rsession's R can load these
           # packages without source compile.
-          sudo apt-get install -y xvfb jq pandoc \
+          # gdb: backtraces of a wedged rsession, taken by
+          # e2e/rstudio/scripts/ci/rsession-diagnostics.sh (see below).
+          sudo apt-get install -y xvfb jq pandoc gdb \
             libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
 
       # Ubuntu 24 restricts unprivileged user namespaces by default, which
@@ -424,6 +505,20 @@ jobs:
         uses: ./.github/actions/os-install-r-unix
         with:
           r-version: ${{ inputs.r_version }}
+
+      # With no interpreter configured, reticulate (1.47) builds itself an
+      # ephemeral uv environment the first time a spec initializes Python:
+      # a standalone Python plus numpy downloaded inside the test, so the
+      # first Python spec of every shard depended on the network and on uv.
+      # Point every rsession at a venv prepared here instead. Renviron.site
+      # is the one place that reaches the sessions, which rserver starts for
+      # the per-run test user with none of this job's environment.
+      - name: Provision Python for reticulate
+        run: |
+          sudo python3 -m venv /opt/e2e-python
+          sudo /opt/e2e-python/bin/python -m pip install --quiet numpy
+          echo "RETICULATE_PYTHON=/opt/e2e-python/bin/python" | sudo tee -a "$(R RHOME)/etc/Renviron.site" >/dev/null
+          /opt/e2e-python/bin/python -c 'import sys, numpy; print(sys.version, "numpy", numpy.__version__)'
 
       # Build-from-source path: extract the .deb artifact produced by the
       # build job above and install it.
@@ -440,6 +535,31 @@ jobs:
           sudo apt-get install -y "${{ github.workspace }}/rstudio-server.deb"
           sudo systemctl stop rstudio-server
           sudo rstudio-server verify-installation
+
+      # gdb resolves the installed rsession's .gnu_debuglink by looking for
+      # rsession.debug next to the binary, so dropping the build job's copy
+      # there is all it takes for rsession-diagnostics.sh backtraces to name
+      # RStudio's frames. The build job warns instead of failing when it
+      # could not stage the file, so this download may legitimately find no
+      # artifact; the daily-download path never has one (different binary).
+      - name: Download rsession debug symbols
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: rsession-debug-ubuntu-24
+          path: ${{ github.workspace }}
+
+      - name: Install rsession debug symbols
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        run: |
+          if [ -f "${{ github.workspace }}/rsession.debug" ]; then
+            sudo install -m 644 "${{ github.workspace }}/rsession.debug" /usr/lib/rstudio-server/bin/rsession.debug
+            # gdb reports "Reading symbols from ..." for a debuglink it accepts
+            gdb -batch -ex 'info line rstudio::session::console_input::rConsoleRead' /usr/lib/rstudio-server/bin/rsession 2>&1 | tail -2
+          else
+            echo "::warning::rsession.debug not available; rsession backtraces will be unsymbolized"
+          fi
 
       # Daily-download path: resolve and install the latest (or specified)
       # .deb. Runs when build_from_source is false (auto-resolve this branch's
@@ -531,7 +651,9 @@ jobs:
       # Assistant preference tests that select that option. Enable it here so
       # Server matches Desktop. (Posit Assistant is already available on Server
       # via the open-source overlay, so it needs no equivalent flag.)
+      # Accessibility runs keep stock open-source config, where Copilot is off.
       - name: Enable GitHub Copilot for rsessions
+        if: inputs.a11y != true
         run: |
           echo "copilot-enabled=1" | sudo tee -a /etc/rstudio/rsession.conf >/dev/null
 
@@ -653,8 +775,13 @@ jobs:
       # Fork PRs and any caller that doesn't pass the token land on present=false,
       # which skips the retrieve step below; the auth setup project then falls back
       # to its no-credentials path instead of failing the run.
+      # Skipped for accessibility runs. The token comes from the e2e-playwright
+      # environment however the job was started, so this skip -- not an absent
+      # secret -- is what keeps a11y runs from fetching unused credentials.
+      # "Retrieve test credentials" then skips too (empty present output).
       - name: Check for OP service account token
         id: op_token_check
+        if: inputs.a11y != true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
@@ -680,6 +807,12 @@ jobs:
           PW_RSTUDIO_MODE: server
           PW_RSTUDIO_EDITION: os
           PW_RSTUDIO_SERVER_URL: http://localhost:8787
+          # When a sign-in never reaches the IDE console, the harness runs
+          # this once before retrying: it records every rsession (threads,
+          # gdb backtraces) under rsession-diagnostics/ and kills them, so a
+          # wedged session costs one spec rather than every spec after it.
+          # Run as root: the sessions belong to the per-run test user.
+          PW_RSTUDIO_SERVER_RECOVER_CMD: sudo bash ${{ github.workspace }}/e2e/rstudio/scripts/ci/rsession-diagnostics.sh --kill ${{ github.workspace }}/rsession-diagnostics
           # Platform-labelled project name; playwright.config.ts uses it both as
           # the project name in reports (so a cross-platform merged report can
           # distinguish these results) and to derive the platform+shard-unique
@@ -694,6 +827,13 @@ jobs:
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          # Accessibility mode (playwright.config.ts). Empty rather than "false"
+          # when off; envFlag accepts both, but empty reads as unset in logs.
+          PW_A11Y: ${{ inputs.a11y && '1' || '' }}
+          PW_A11Y_BEST_PRACTICES: ${{ inputs.a11y_best_practices && '1' || '' }}
+          PW_A11Y_EXPERIMENTAL: ${{ inputs.a11y_experimental && '1' || '' }}
+          PW_A11Y_LEVEL: ${{ inputs.a11y_level }}
+          PW_A11Y_WCAG_VERSION: ${{ inputs.a11y_wcag_version }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
@@ -783,6 +923,30 @@ jobs:
           path: ${{ github.workspace }}/pw-sandbox/
           if-no-files-found: ignore
 
+      # Whatever is still running at the end of a failed shard gets the same
+      # dump the recovery hook takes (threads + gdb backtraces), without the
+      # kill. Collected on every outcome because the hook may already have
+      # written here during a shard that then passed on retry: that is the
+      # case worth reading most, and failure() would drop it.
+      - name: Collect rsession diagnostics
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            sudo bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "${{ github.workspace }}/rsession-diagnostics" || true
+          fi
+          if [ -d rsession-diagnostics ]; then
+            sudo chmod -R a+rX rsession-diagnostics
+            cat rsession-diagnostics/summary.txt || true
+          fi
+
+      - name: Upload rsession diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rsession-diagnostics-linux-server-${{ matrix.shard }}
+          path: rsession-diagnostics/
+          if-no-files-found: ignore
+
       - name: Capture rstudio-server logs and diagnostics on failure
         if: failure()
         run: |
@@ -812,7 +976,7 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-server-ubuntu]
+    needs: [shards, e2e-server-ubuntu]
     if: always() && inputs.defer_merge != true && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -855,7 +1019,7 @@ jobs:
         working-directory: e2e/rstudio
         run: |
           if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            echo "::error::No blob reports found -- no shard produced artifacts"
             exit 1
           fi
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
@@ -881,12 +1045,49 @@ jobs:
           retention-days: 15
           if-no-files-found: ignore
 
+      # Accessibility runs: one job-summary entry per distinct problem across
+      # every scanned state (scripts/a11y-report.ts), read from the files the
+      # state tests left in the shards' test-results artifacts.
+      - name: Download accessibility scan results
+        if: always() && inputs.a11y == true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: test-results-linux-server-*
+          path: e2e/rstudio/test-results
+          merge-multiple: true
+
+      - name: Build accessibility screenshots page
+        if: always() && inputs.a11y == true
+        working-directory: e2e/rstudio
+        run: npx tsx scripts/a11y-report.ts screenshots
+
+      # Unzipped, so it opens in the browser. GitHub drops a #fragment on the
+      # artifact link, so the summary links each state to the page's top,
+      # which lists the states.
+      - name: Upload accessibility screenshots page
+        id: a11y-screenshots
+        if: always() && inputs.a11y == true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: e2e/rstudio/a11y-screenshots.html
+          archive: false
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Summarize accessibility problems
+        if: always() && inputs.a11y == true
+        working-directory: e2e/rstudio
+        env:
+          A11Y_SCREENSHOTS_URL: ${{ steps.a11y-screenshots.outputs.artifact-url }}
+        run: npx tsx scripts/a11y-report.ts summary
+
       # Publish a browsable copy of the report to S3 on failure only, so
       # reviewers can inspect it without downloading the zip. Best-effort: a
-      # no-op on fork PRs (no secret) and never fails the job.
+      # no-op on fork PRs (no secret) and never fails the job. Accessibility
+      # results stay off the public bucket however the run was started.
       - name: Publish report to S3
         id: publish-report
-        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        if: always() && inputs.a11y != true && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
         uses: ./.github/actions/os-publish-e2e-report
         with:
           role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
@@ -925,7 +1126,7 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · ubuntu-24.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>${{ inputs.a11y && '1 shard' || format('{0} shards', needs.shards.outputs.count) }} · ubuntu-24.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Does nothing: the name is the point. A step name can read step outputs
       # (jobs.<id>.steps.name allows the `steps` context), so this puts the build

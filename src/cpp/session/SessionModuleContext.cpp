@@ -2278,6 +2278,29 @@ Error sourceModuleRFile(const std::string& rSourceFile)
    return r::sourceManager().sourceTools(srcPath);
 }
 
+SEXP rs_sourceModule(SEXP moduleSEXP)
+{
+   // r::exec::error longjmps, so nothing with a destructor may be live
+   std::string message;
+   {
+      Error error = sourceModuleRFile(r::sexp::asString(moduleSEXP));
+      if (error)
+         message = error.getSummary();
+   }
+
+   if (!message.empty())
+      r::exec::error(message);
+
+   return R_NilValue;
+}
+
+Error sourceModuleRFileOnDemand(const std::string& rSourceFile)
+{
+   FilePath modulesPath = session::options().modulesRSourcePath();
+   FilePath srcPath = modulesPath.completePath(rSourceFile);
+   return r::exec::RFunction(".rs.addLazyModule", srcPath.getAbsolutePath()).call();
+}
+
 Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                   const FilePath& workingDir,
                                   core::system::ProcessResult* pResult)
@@ -3587,6 +3610,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_setPersistentValue);
    RS_REGISTER_CALL_METHOD(rs_showErrorMessage);
    RS_REGISTER_CALL_METHOD(rs_sourceDiagnostics);
+   RS_REGISTER_CALL_METHOD(rs_sourceModule);
    RS_REGISTER_CALL_METHOD(rs_threadSleep);
    RS_REGISTER_CALL_METHOD(rs_userPrompt);
    RS_REGISTER_CALL_METHOD(rs_setRpcDelay);

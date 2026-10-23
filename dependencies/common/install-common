@@ -24,6 +24,7 @@ set -e
 ./install-boost
 ./install-pandoc
 ./install-quarto
+./install-rig
 ./install-copilot-language-server
 ./install-npm-dependencies
 ./install-soci

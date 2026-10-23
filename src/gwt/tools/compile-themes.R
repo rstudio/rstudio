@@ -210,6 +210,22 @@ applyFixups.pastel_on_dark <- function(content, parsed)
    termBgLine <- grep(".xtermInvertBgColor( *){", content, perl = TRUE)
    content[termBgLine] <- paste0(".xtermInvertBgColor { background-color: #EAEAEA; }")
    
+   # Find's current match is the editor selection, which this theme draws too
+   # faintly to pick out (https://github.com/rstudio/rstudio/issues/13204);
+   # give it its own amber highlight (the marker itself is placed by
+   # themeStyles.css and is invisible in themes that don't colour it). The
+   # outline is what makes the match easy to spot; the fill stays translucent
+   # so the matched text keeps its contrast (an opaque amber left the theme's
+   # keyword colour at 1.4:1 against it).
+   content <- .rs.add_content(
+      content,
+      ".ace_marker-layer .ace_find_match {",
+      "  background-color: rgba(141, 100, 20, 0.45);",
+      "  border: 1px solid %s;",
+      "}",
+      replace = "#8D6414"
+   )
+   
    content
 }
 

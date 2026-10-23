@@ -307,8 +307,10 @@ configure_build() {
     return
   fi
 
+  # Ninja, because CMake's default Makefiles generator compiles serially under
+  # a bare `cmake --build` (what rserver-dev runs).
   echo "[bootstrap] configuring CMake build dir: $dir"
-  cmake -S "$WORKTREE" -B "$dir" -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+  cmake -S "$WORKTREE" -B "$dir" -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
   echo "[bootstrap] build dir configured; compile with: cmake --build \"$dir\""
 }

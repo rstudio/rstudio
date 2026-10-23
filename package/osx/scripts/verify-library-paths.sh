@@ -15,10 +15,10 @@
 #
 #
 
-# fix-library-paths.sh points Homebrew references at Frameworks/ without
-# checking that the library was bundled there, and binaries it doesn't process
-# (e.g. license-manager) keep absolute Homebrew paths. Either would only fail
-# at launch on a user's machine, so check for both here.
+# A binary in bin/, or a library bundled in Frameworks/, that loads a library
+# outside macOS and Frameworks/ (e.g. from the build machine's Homebrew), or one
+# missing from Frameworks/, would only fail at launch on a user's machine; check
+# for that here.
 
 set -euo pipefail
 
@@ -38,24 +38,54 @@ FRAMEWORKS_PREFIX="@executable_path/../Frameworks/"
 shopt -s nullglob
 
 FAILED=0
-for FILE in "${BIN_DIR}"/* "${BIN_DIR}"/../Frameworks/*.dylib "${BIN_DIR}"/../Frameworks/arm64/*.dylib; do
+FRAMEWORKS_DIR="${BIN_DIR}/../Frameworks"
+for FILE in "${BIN_DIR}"/* "${FRAMEWORKS_DIR}"/*.dylib "${FRAMEWORKS_DIR}"/arm64/*.dylib; do
 
    [ -f "${FILE}" ] || continue
 
    # dependency lines are tab-indented; otool prints none for non-Mach-O files
    DEPS=$(otool -arch all -L "${FILE}" | { grep $'^\t' || true; } | cut -d' ' -f1 | tr -d '\t' | sort -u)
 
+   # a library's own install name (e.g. @rpath/libTurboActivate.dylib) is
+   # listed among its dependencies; the ID lines are the ones without a colon
+   IDS=$(otool -arch all -D "${FILE}" | { grep -v ':$' || true; } | sort -u)
+
+   # the path of each LC_RPATH command is two lines below its 'cmd' line
+   RPATHS=$(otool -arch all -l "${FILE}" | awk '$1 == "cmd" && $2 == "LC_RPATH" { getline; getline; print $2 }' | sort -u)
+
    for DEP in ${DEPS}; do
+      if grep -qxF -- "${DEP}" <<< "${IDS}"; then
+         continue
+      fi
       case "${DEP}" in
+         /usr/lib/*|/System/Library/*)
+            ;;
          "${FRAMEWORKS_PREFIX}"*)
-            # the executables that load bundled libraries all live in bin/
             if [ ! -e "${BIN_DIR}/${DEP#@executable_path/}" ]; then
                echo "error: '${FILE}' loads '${DEP}', which is not in the app bundle" >&2
                FAILED=1
             fi
             ;;
-         /opt/homebrew/*|/usr/local/*)
-            echo "error: '${FILE}' loads '${DEP}' from the build machine's Homebrew" >&2
+         @rpath/*)
+            # only rpaths relative to bin/ point into the app bundle; one the
+            # build machine left behind may resolve here but not for users
+            FOUND=0
+            for RPATH in ${RPATHS}; do
+               case "${RPATH}" in
+                  @executable_path|@executable_path/*)
+                     if [ -e "${BIN_DIR}${RPATH#@executable_path}/${DEP#@rpath/}" ]; then
+                        FOUND=1
+                     fi
+                     ;;
+               esac
+            done
+            if [ "${FOUND}" = "0" ]; then
+               echo "error: '${FILE}' loads '${DEP}', which no rpath in the app bundle provides" >&2
+               FAILED=1
+            fi
+            ;;
+         *)
+            echo "error: '${FILE}' loads '${DEP}', which is not part of macOS" >&2
             FAILED=1
             ;;
       esac
@@ -64,7 +94,6 @@ for FILE in "${BIN_DIR}"/* "${BIN_DIR}"/../Frameworks/*.dylib "${BIN_DIR}"/../Fr
 done
 
 if [ "${FAILED}" != "0" ]; then
-   echo "Bundle these libraries (HOMEBREW_LIBS in prepare-package.cmake) and point the binaries at" \
-      "Frameworks/, or stop linking them." >&2
+   echo "Link these libraries statically, bundle them in Frameworks/, or stop linking them." >&2
    exit 1
 fi

@@ -232,6 +232,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoDetectIndentationDescription();
 
    /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   @DefaultStringValue("Show Git changes in editor gutter")
+   String showGitDiffGutterTitle();
+   @DefaultStringValue("Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.")
+   String showGitDiffGutterDescription();
+
+   /**
     * Whether to show the margin guide in the RStudio code editor.
     */
    @DefaultStringValue("Show margin in editor")
@@ -1608,6 +1616,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String newProjUseRenvDescription();
 
    /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   @DefaultStringValue("Warn when a project requests a different version of R")
+   String checkProjectRVersionTitle();
+   @DefaultStringValue("Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.")
+   String checkProjectRVersionDescription();
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    @DefaultStringValue("Root document for PDF compilation")
@@ -2106,11 +2122,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fileMonitorUseGitignoreDescription();
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    @DefaultStringValue("Install R package dependencies one at a time")
    String installPkgDepsIndividuallyTitle();
-   @DefaultStringValue("Whether to install R package dependencies one at a time.")
+   @DefaultStringValue("Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.")
    String installPkgDepsIndividuallyDescription();
 
    /**

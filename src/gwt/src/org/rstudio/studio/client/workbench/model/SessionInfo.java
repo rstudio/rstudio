@@ -109,6 +109,10 @@ public class SessionInfo extends JavaScriptObject
       return this.tex_capabilities;
    }-*/;
 
+   public final native void setTexCapabilities(TexCapabilities capabilities) /*-{
+      this.tex_capabilities = capabilities;
+   }-*/;
+
    public final native CompilePdfState getCompilePdfState() /*-{
       return this.compile_pdf_state;
    }-*/;

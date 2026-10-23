@@ -16,7 +16,7 @@
 import path, { join } from 'path';
 
 import { execSync, spawn, spawnSync } from 'child_process';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 
 import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err, expect } from '../core/expected';
@@ -34,6 +34,7 @@ import { EOL } from 'os';
 import { kWindowsRExe } from '../ui/utils';
 import { dialog } from 'electron';
 import { appState } from './app-state';
+import { REnvironmentCache } from './r-environment-cache';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -41,6 +42,17 @@ if (process.platform === 'darwin') {
 } else {
   kLdLibraryPathVariable = 'LD_LIBRARY_PATH';
 }
+
+// The library path RStudio was launched with. Preparing the environment for
+// an R replaces the process's value with that R's paths, so the user's own
+// is kept aside: every R is queried with it and extends it, including an R
+// switched to later, whose paths must not follow those of the previous R.
+const kUserLdLibraryPath = getenv(kLdLibraryPathVariable);
+
+// The PATH RStudio was launched with, kept aside for the same reason: on
+// Windows the session's R goes in front of it, and an R switched to later
+// must not leave the previous R's directory behind it.
+const kUserPath = getenv('PATH');
 
 interface REnvironment {
   rScriptPath: string;
@@ -90,6 +102,42 @@ export function rChooserLikely(): boolean {
   return !storedRCandidatesWin32().some((candidate) => existsSync(candidate.path));
 }
 
+/**
+ * Resolves an R home directory to the R executable it holds (bin/x64/Rterm.exe,
+ * then bin/i386/Rterm.exe, on Windows; bin/R elsewhere). Any other path -- an
+ * executable, a directory holding no R, or a path that doesn't exist -- is
+ * returned as it is, so that validation reports it.
+ */
+export function resolveRHome(rPath: string, platform = process.platform): string {
+  try {
+    if (!statSync(rPath).isDirectory()) {
+      return rPath;
+    }
+  } catch {
+    return rPath;
+  }
+
+  const executables =
+    platform === 'win32' ? [`bin/x64/${kWindowsRExe}`, `bin/i386/${kWindowsRExe}`] : ['bin/R'];
+  for (const executable of executables) {
+    const candidate = join(rPath, executable);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return rPath;
+}
+
+/**
+ * The R named by the RSTUDIO_WHICH_R environment variable: an R executable,
+ * or an R home directory, which resolves to the executable it holds. Empty
+ * when the variable is unset.
+ */
+export function rFromRStudioWhichR(): string {
+  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  return rstudioWhichR ? resolveRHome(rstudioWhichR) : '';
+}
+
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
 
   const options = ElectronDesktopOptions();
@@ -99,7 +147,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     if (!showUi) {
       // nothing to do if RSTUDIO_WHICH_R is set
-      const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+      const rstudioWhichR = rFromRStudioWhichR();
       if (rstudioWhichR) {
         logger().logDebug(`Using R from RSTUDIO_WHICH_R: ${rstudioWhichR}`);
         return ok(rstudioWhichR);
@@ -278,11 +326,18 @@ function prepareEnvironmentImpl(rPath: string): Err {
   // in the same directory can be resolved
   const scriptPath = rEnvironment.rScriptPath;
   if (process.platform === 'win32') {
-    const binDir = path.dirname(scriptPath);
-    process.env.PATH = `${binDir};${process.env.PATH}`;
+    process.env.PATH = windowsSessionPath(path.dirname(scriptPath));
   }
 
   return success();
+}
+
+/**
+ * The PATH a session runs with on Windows: the R's bin directory ahead of
+ * the PATH RStudio was launched with, whichever R was prepared before.
+ */
+export function windowsSessionPath(binDir: string): string {
+  return kUserPath ? `${binDir};${kUserPath}` : binDir;
 }
 
 // Querying R costs a process launch (~150ms or more). The same executable is
@@ -291,6 +346,16 @@ function prepareEnvironmentImpl(rPath: string): Err {
 // query also runs in the background from the moment the app starts (see
 // startRDetection), which normally fills the cache before anything asks.
 const rEnvironmentCache = new Map<string, REnvironment>();
+let diskCache: REnvironmentCache | undefined;
+
+function environmentDiskCache(): REnvironmentCache | undefined {
+  try {
+    diskCache ??= new REnvironmentCache();
+    return diskCache;
+  } catch {
+    return undefined;
+  }
+}
 
 export function detectREnvironment(rPath: string): Expected<REnvironment> {
   const cached = rEnvironmentCache.get(rPath);
@@ -299,13 +364,19 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
   }
 
   const rExecutable = rExecutableFor(rPath);
+  const environment = rQueryEnvironment();
+  const remembered = readRememberedEnvironment(rPath, rExecutable, environment);
+  if (remembered) {
+    return remembered;
+  }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
 
+  const launch = rQueryCommand(rExecutable.getAbsolutePath(), environment);
   const [spawned, spawnError] = expect(() => {
-    return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
+    return spawnSync(launch.command, launch.args, {
       encoding: 'utf-8',
       input: rQueryScript(),
-      env: rQueryEnvironment(),
+      env: launch.env,
     });
   });
   if (spawnError) {
@@ -313,15 +384,15 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
     return err(spawnError);
   }
 
-  return rememberREnvironment(
-    rPath,
-    parseRQueryResult(rPath, {
-      stdout: spawned.stdout,
-      stderr: spawned.stderr,
-      status: spawned.status,
-      error: spawned.error,
-    }),
-  );
+  const query: RQueryResult = {
+    stdout: spawned.stdout,
+    stderr: spawned.stderr,
+    status: spawned.status,
+    error: spawned.error,
+  };
+  const result = rememberREnvironment(rPath, parseRQueryResult(rPath, query));
+  persistEnvironment(rExecutable, environment, result, query);
+  return result;
 }
 
 /**
@@ -334,13 +405,19 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
   }
 
   const rExecutable = rExecutableFor(rPath);
+  const environment = rQueryEnvironment();
+  const remembered = readRememberedEnvironment(rPath, rExecutable, environment);
+  if (remembered) {
+    return remembered;
+  }
   logger().logDebug(`Querying information about R executable at path: ${rExecutable} (in background)`);
 
+  const launch = rQueryCommand(rExecutable.getAbsolutePath(), environment);
   const result = await new Promise<RQueryResult>((resolve) => {
     let stdout = '';
     let stderr = '';
-    const child = spawn(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
-      env: rQueryEnvironment(),
+    const child = spawn(launch.command, launch.args, {
+      env: launch.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     child.stdout.on('data', (data) => (stdout += data));
@@ -353,7 +430,38 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
     child.stdin.end(rQueryScript());
   });
 
-  return rememberREnvironment(rPath, parseRQueryResult(rPath, result));
+  const parsed = rememberREnvironment(rPath, parseRQueryResult(rPath, result));
+  persistEnvironment(rExecutable, environment, parsed, result);
+  return parsed;
+}
+
+/**
+ * Replays a remembered query for this executable and environment, if any.
+ */
+function readRememberedEnvironment(
+  rPath: string,
+  rExecutable: FilePath,
+  environment: NodeJS.ProcessEnv,
+): Expected<REnvironment> | undefined {
+  const remembered = environmentDiskCache()?.read(rExecutable.getAbsolutePath(), environment);
+  if (!remembered) {
+    return undefined;
+  }
+  return rememberREnvironment(rPath, parseRQueryResult(rPath, { stdout: remembered, stderr: '', status: 0 }));
+}
+
+/**
+ * Remembers a query across launches, but only a complete, successful one.
+ */
+function persistEnvironment(
+  rExecutable: FilePath,
+  environment: NodeJS.ProcessEnv,
+  result: Expected<REnvironment>,
+  query: RQueryResult,
+): void {
+  if (!result[1] && query.status === 0 && query.stdout) {
+    environmentDiskCache()?.write(rExecutable.getAbsolutePath(), environment, query.stdout);
+  }
 }
 
 function rememberREnvironment(rPath: string, result: Expected<REnvironment>): Expected<REnvironment> {
@@ -392,9 +500,49 @@ writeLines(sep = "\x1F", c(
 ))`;
 }
 
+// A versioned install inside the macOS R framework. Its bin/R launcher script
+// hard-codes the framework's "Current" default as R_HOME, so querying such an
+// install through the script reports the default R rather than the version
+// asked for. Instead, the steps of the script that matter are taken with the
+// install's own R_HOME: source its etc/ldpaths (which sets the library path
+// the session inherits from the query), then run its real executable. The
+// framework's default path (Resources/bin/R under R.framework itself) is
+// left to the script.
+const kFrameworkVersionPattern = /^(.*\/R\.framework\/Versions\/[^/]+\/Resources)\/bin\/R$/;
+
+const kFrameworkLauncherScript = '. "$R_HOME/etc/ldpaths" && exec "$R_HOME/bin/exec/R" "$@"';
+
+export function frameworkVersionHome(rExecutable: string): string | null {
+  const match = kFrameworkVersionPattern.exec(rExecutable);
+  return match ? match[1] : null;
+}
+
+export interface RQueryCommand {
+  command: string;
+  args: string[];
+  env: NodeJS.ProcessEnv;
+}
+
+/**
+ * The command and environment to query the given R with. The environment
+ * given (the query environment by default) is left as is: a framework
+ * version's query extends a copy of it.
+ */
+export function rQueryCommand(rExecutable: string, environment = rQueryEnvironment()): RQueryCommand {
+  const args = ['--vanilla', '-s'];
+
+  const home = frameworkVersionHome(rExecutable);
+  if (home === null) {
+    return { command: rExecutable, args, env: environment };
+  }
+
+  const env = { ...environment, R_HOME: home };
+  return { command: '/bin/sh', args: ['-c', kFrameworkLauncherScript, 'R', ...args], env };
+}
+
 function rQueryEnvironment(): NodeJS.ProcessEnv {
   // remove R-related environment variables before invoking R
-  // note that we intentionally preserve an already-set LD_LIBRARY_PATH
+  // note that we intentionally preserve the user's LD_LIBRARY_PATH
   // see https://github.com/rstudio/rstudio/issues/15044 for motivation
   const envCopy = Object.assign({}, process.env);
   delete envCopy['R_HOME'];
@@ -404,6 +552,16 @@ function rQueryEnvironment(): NodeJS.ProcessEnv {
   delete envCopy['R_RUNTIME'];
   delete envCopy['R_SHARE_DIR'];
   delete envCopy['R_PLATFORM'];
+
+  // the process's own value holds the paths of an R prepared earlier
+  if (process.platform !== 'win32') {
+    if (kUserLdLibraryPath) {
+      envCopy[kLdLibraryPathVariable] = kUserLdLibraryPath;
+    } else {
+      delete envCopy[kLdLibraryPathVariable];
+    }
+  }
+
   return envCopy;
 }
 
@@ -471,9 +629,9 @@ export function parseRQueryResult(rPath: string, result: RQueryResult): Expected
     adjustedRLdLibraryPath = rLibPaths.join(':');
   }
 
-  if (process.platform !== 'win32' && getenv(kLdLibraryPathVariable) != '') {
+  if (process.platform !== 'win32' && kUserLdLibraryPath != '') {
     logger().logDebug(`Pre-pending user-defined ${kLdLibraryPathVariable} to path set by R: ${adjustedRLdLibraryPath}`);
-    adjustedRLdLibraryPath = getenv(kLdLibraryPathVariable) + ':' + adjustedRLdLibraryPath;
+    adjustedRLdLibraryPath = kUserLdLibraryPath + ':' + adjustedRLdLibraryPath;
   }
 
   // put it all together
@@ -496,7 +654,7 @@ export function parseRQueryResult(rPath: string, result: RQueryResult): Expected
 export function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   // note that this does not pick up variables set in a user's bash profile, for example
-  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  const rstudioWhichR = rFromRStudioWhichR();
 
   if (rstudioWhichR) {
     logger().logDebug(`Using ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
@@ -563,7 +721,7 @@ let rDetection: Promise<void> | undefined;
  * user: RSTUDIO_WHICH_R, then the platform's stored or well-known locations.
  */
 function rCandidates(): string[] {
-  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  const rstudioWhichR = rFromRStudioWhichR();
   if (rstudioWhichR) {
     return [rstudioWhichR];
   }
@@ -688,7 +846,7 @@ function findDefaultInstallPathWin32(registryVersionKey: string): string {
 
 function scanForRWin32(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
-  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  const rstudioWhichR = rFromRStudioWhichR();
   if (rstudioWhichR) {
     logger().logDebug(`Using R ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
     return ok(rstudioWhichR);

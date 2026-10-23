@@ -70,6 +70,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String USE_SPACES_FOR_TAB = "use_spaces_for_tab";
    public static final String NUM_SPACES_FOR_TAB = "num_spaces_for_tab";
    public static final String AUTO_DETECT_INDENTATION = "auto_detect_indentation";
+   public static final String SHOW_GIT_DIFF_GUTTER = "show_git_diff_gutter";
    public static final String SHOW_MARGIN = "show_margin";
    public static final String BLINKING_CURSOR = "blinking_cursor";
    public static final String MARGIN_COLUMN = "margin_column";
@@ -235,6 +236,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CONSOLE_SUSPEND_BLOCKED_NOTICE_DELAY = "console_suspend_blocked_notice_delay";
    public static final String NEW_PROJ_GIT_INIT = "new_proj_git_init";
    public static final String NEW_PROJ_USE_RENV = "new_proj_use_renv";
+   public static final String CHECK_PROJECT_R_VERSION = "check_project_r_version";
    public static final String ROOT_DOCUMENT = "root_document";
    public static final String SHOW_USER_HOME_PAGE = "show_user_home_page";
    public static final String REUSE_SESSIONS_FOR_PROJECT_LINKS = "reuse_sessions_for_project_links";
@@ -801,6 +803,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.autoDetectIndentationTitle(), 
          _constants.autoDetectIndentationDescription(), 
          false);
+   }
+
+   /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   public PrefValue<Boolean> showGitDiffGutter()
+   {
+      return bool(
+         "show_git_diff_gutter",
+         _constants.showGitDiffGutterTitle(), 
+         _constants.showGitDiffGutterDescription(), 
+         true);
    }
 
    /**
@@ -3043,6 +3057,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   public PrefValue<Boolean> checkProjectRVersion()
+   {
+      return bool(
+         "check_project_r_version",
+         _constants.checkProjectRVersionTitle(), 
+         _constants.checkProjectRVersionDescription(), 
+         true);
+   }
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    public PrefValue<String> rootDocument()
@@ -3889,7 +3915,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    public PrefValue<Boolean> installPkgDepsIndividually()
    {
@@ -4788,6 +4814,8 @@ public class UserPrefsAccessor extends Prefs
          numSpacesForTab().setValue(layer, source.getInteger("num_spaces_for_tab"));
       if (source.hasKey("auto_detect_indentation"))
          autoDetectIndentation().setValue(layer, source.getBool("auto_detect_indentation"));
+      if (source.hasKey("show_git_diff_gutter"))
+         showGitDiffGutter().setValue(layer, source.getBool("show_git_diff_gutter"));
       if (source.hasKey("show_margin"))
          showMargin().setValue(layer, source.getBool("show_margin"));
       if (source.hasKey("blinking_cursor"))
@@ -5118,6 +5146,8 @@ public class UserPrefsAccessor extends Prefs
          newProjGitInit().setValue(layer, source.getBool("new_proj_git_init"));
       if (source.hasKey("new_proj_use_renv"))
          newProjUseRenv().setValue(layer, source.getBool("new_proj_use_renv"));
+      if (source.hasKey("check_project_r_version"))
+         checkProjectRVersion().setValue(layer, source.getBool("check_project_r_version"));
       if (source.hasKey("root_document"))
          rootDocument().setValue(layer, source.getString("root_document"));
       if (source.hasKey("show_user_home_page"))
@@ -5384,6 +5414,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(useSpacesForTab());
       prefs.add(numSpacesForTab());
       prefs.add(autoDetectIndentation());
+      prefs.add(showGitDiffGutter());
       prefs.add(showMargin());
       prefs.add(blinkingCursor());
       prefs.add(marginColumn());
@@ -5549,6 +5580,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(consoleSuspendBlockedNoticeDelay());
       prefs.add(newProjGitInit());
       prefs.add(newProjUseRenv());
+      prefs.add(checkProjectRVersion());
       prefs.add(rootDocument());
       prefs.add(showUserHomePage());
       prefs.add(reuseSessionsForProjectLinks());

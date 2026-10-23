@@ -89,6 +89,7 @@ import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
 import org.rstudio.studio.client.common.vcs.CreateKeyResult;
 import org.rstudio.studio.client.common.vcs.DiffResult;
+import org.rstudio.studio.client.common.vcs.GitDiffBaseContents;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
@@ -2178,6 +2179,8 @@ public class RemoteServer implements Server
                           boolean overwrite,
                           boolean useDevicePixelRatio,
                           int resolution,
+                          String tiffCompression,
+                          int jpegQuality,
                           ServerRequestCallback<Bool> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -2188,6 +2191,8 @@ public class RemoteServer implements Server
       params.set(4, JSONBoolean.getInstance(overwrite));
       params.set(5, JSONBoolean.getInstance(useDevicePixelRatio));
       params.set(6, new JSONNumber(resolution));
+      params.set(7, new JSONString(tiffCompression));
+      params.set(8, new JSONNumber(jpegQuality));
       sendRequest(RPC_SCOPE, SAVE_PLOT_AS, params, requestCallback);
    }
 
@@ -3434,6 +3439,19 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(rev));
       params.set(1, new JSONString(filename));
       sendRequest(RPC_SCOPE, GIT_SHOW_FILE, params, requestCallback);
+   }
+
+   @Override
+   public void gitDiffBaseContents(String path,
+                                   String encoding,
+                                   String knownId,
+                                   ServerRequestCallback<GitDiffBaseContents> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(encoding));
+      params.set(2, new JSONString(knownId));
+      sendRequest(RPC_SCOPE, GIT_DIFF_BASE_CONTENTS, params, requestCallback);
    }
 
    @Override
@@ -6305,6 +6323,17 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void rigInstallRVersion(String version,
+                                  ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(version)
+            .get();
+
+      sendRequest(RPC_SCOPE, RIG_INSTALL_R_VERSION, params, requestCallback);
+   }
+
+   @Override
    public void markersTabClosed(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
@@ -7551,6 +7580,7 @@ public class RemoteServer implements Server
    private static final String GIT_HISTORY = "git_history";
    private static final String GIT_SHOW = "git_show";
    private static final String GIT_SHOW_FILE = "git_show_file";
+   private static final String GIT_DIFF_BASE_CONTENTS = "git_diff_base_contents";
    private static final String GIT_EXPORT_FILE = "git_export_file";
 
    private static final String SVN_ADD = "svn_add";
@@ -7738,6 +7768,7 @@ public class RemoteServer implements Server
 
    private static final String RENV_INIT = "renv_init";
    private static final String RENV_ACTIONS = "renv_actions";
+   private static final String RIG_INSTALL_R_VERSION = "rig_install_r_version";
 
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";

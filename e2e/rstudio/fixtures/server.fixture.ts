@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
-import { execFileSync, spawn, type ChildProcess } from 'child_process';
+import { execFileSync, execSync, spawn, type ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { createServer } from 'net';
 import * as fs from 'fs';
@@ -362,15 +362,77 @@ export function externalServerUrl(): string | null {
   return url.toString().replace(/\/$/, '');
 }
 
+/** How long each sign-in attempt waits for the IDE console. */
+export function serverLoginTimeout(): number {
+  return Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
+}
+
+/** Bound on PW_RSTUDIO_SERVER_RECOVER_CMD, run between sign-in attempts. */
+export const RECOVER_CMD_TIMEOUT = 300_000;
+
 /**
  * Complete the RStudio Server login on `page` (already navigated to the
  * server) and wait until the R console is ready. Fills the login form when
  * one is presented (PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD);
  * servers running with --auth-none (e.g. our spawn) skip straight to the
  * IDE, so credentials are only required when the form appears. Shared by
- * launchServer and the remote-provisioning flows.
+ * launchServer and the remote-provisioning flows. When the console does not
+ * appear in time and PW_RSTUDIO_SERVER_RECOVER_CMD is set, that command is
+ * run once and the sign-in retried (see below).
  */
 export async function signInToServer(page: Page): Promise<void> {
+  await submitLoginFormIfShown(page);
+
+  const loginTimeout = serverLoginTimeout();
+  const consoleReady = { state: 'visible' as const, timeout: loginTimeout };
+  try {
+    await page.waitForSelector(CONSOLE_INPUT, consoleReady);
+  } catch (err) {
+    // A session whose main thread is wedged never answers client_init, and
+    // the server keeps routing the account to it, so without intervention
+    // every later sign-in in the run times out the same way (run
+    // 37965911829 lost eleven specs plus the teardown to one hang). The
+    // command gets one chance to record and replace that session before the
+    // sign-in is retried; it is the caller's (CI's) hook, since the harness
+    // has no reach into an external server by itself.
+    const recover = process.env.PW_RSTUDIO_SERVER_RECOVER_CMD;
+    if (!recover)
+      throw err;
+    console.warn(`IDE console not ready after ${loginTimeout}ms; running PW_RSTUDIO_SERVER_RECOVER_CMD`);
+    execSync(recover, { stdio: 'inherit', timeout: RECOVER_CMD_TIMEOUT });
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await submitLoginFormIfShown(page);
+    await page.waitForSelector(CONSOLE_INPUT, consoleReady);
+    await dismissSessionAbendNotice(page);
+  }
+  console.log('RStudio console is ready');
+}
+
+/**
+ * After the recovery command kills a wedged session, its replacement reports
+ * the crash in a modal shortly after the console appears. Left open, it
+ * blocks the rest of the setup until the fixture times out (run 38772279901
+ * recovered the session and still failed the retry this way).
+ */
+async function dismissSessionAbendNotice(page: Page): Promise<void> {
+  const ok = page
+    .locator('.gwt-DialogBox')
+    .filter({ hasText: 'previous R session was abnormally terminated' })
+    .getByRole('button', { name: 'OK' });
+  try {
+    await ok.click({ timeout: 15_000 });
+    console.log('Dismissed the abnormal termination notice');
+  } catch {
+    // the replacement session did not report the crash
+  }
+}
+
+/**
+ * Fill and submit the login form when the server presents one; servers
+ * running with --auth-none (e.g. our spawn) show the IDE directly.
+ */
+async function submitLoginFormIfShown(page: Page): Promise<void> {
   const username = process.env.PW_RSTUDIO_SERVER_USER || '';
   const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
 
@@ -388,20 +450,18 @@ export async function signInToServer(page: Page): Promise<void> {
   } else {
     console.log('No login form detected (auth-none mode)');
   }
-
-  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
-  console.log('RStudio console is ready');
 }
 
 /**
- * Connect to RStudio Server, log in, and return a ready session. When
- * PW_RSTUDIO_SERVER_URL is unset, a private rserver-dev is spawned per
- * worker with sandboxed env so HOME / data dirs / config dirs are isolated
- * the same way the Desktop fixture isolates them. Set PW_RSTUDIO_SERVER_URL
- * to point at an external server (e.g. CI) to skip the spawn.
+ * Connect to RStudio Server, log in, and return the session once the console
+ * input is visible. It does not wait for window.rstudio.ready and does no
+ * pane setup (launchServer adds that). When PW_RSTUDIO_SERVER_URL is unset,
+ * a private rserver-dev is spawned per worker with sandboxed env so HOME /
+ * data dirs / config dirs are isolated the same way the Desktop fixture
+ * isolates them. Set PW_RSTUDIO_SERVER_URL to point at an external server
+ * (e.g. CI) to skip the spawn.
  */
-export async function launchServer(): Promise<ServerSession> {
+export async function openServerSession(): Promise<ServerSession> {
   const externalUrl = externalServerUrl();
 
   let rserverProcess: ChildProcess | undefined;
@@ -459,6 +519,18 @@ export async function launchServer(): Promise<ServerSession> {
   await page.goto(serverUrl, { waitUntil: 'domcontentloaded' });
   await signInToServer(page);
 
+  return { page, browser, rserverProcess, rserverCleanupDirs };
+}
+
+/**
+ * openServerSession(), plus the setup the e2e suite expects of every session:
+ * a stale save dialog dismissed, the Files pane showing, save_workspace and
+ * reduced_motion set, a clear console, and request interception kept on.
+ */
+export async function launchServer(): Promise<ServerSession> {
+  const session = await openServerSession();
+  const { page } = session;
+
   // Dismiss any "save changes" modal from a previous interrupted run.
   // Use isVisible() (snapshot, no wait) to gate the click -- click({ timeout })
   // would spend the full timeout when no dialog exists.
@@ -490,9 +562,9 @@ export async function launchServer(): Promise<ServerSession> {
   await sleep(500);
   console.log('Console cleared');
 
-  await keepRequestInterceptionOn(context);
+  await keepRequestInterceptionOn(page.context());
 
-  return { page, browser, rserverProcess, rserverCleanupDirs };
+  return session;
 }
 
 /** Close open buffers and quit the R session, waiting for it to end. */

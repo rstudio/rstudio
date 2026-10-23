@@ -215,6 +215,9 @@ class ClientEvent extends JavaScriptObject
    public static final String NotebookRenderCompleted = "notebook_render_completed";
    public static final String ConsoleReadCompleted = "console_read_completed";
    public static final String RStudioAPIShowMenu = "rstudioapi_show_menu";
+   public static final String ProjectRVersionMismatch = "project_r_version_mismatch";
+   public static final String RInstallCompleted = "r_install_completed";
+   public static final String RenvRestorePrompt = "renv_restore_prompt";
 
    protected ClientEvent()
    {

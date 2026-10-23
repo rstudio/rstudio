@@ -1002,10 +1002,15 @@ public class DocUpdateSentinel
 
    public void reopenWithEncoding(String encoding)
    {
+      reopenWithEncoding(encoding, null);
+   }
+
+   public void reopenWithEncoding(String encoding, Command onCompleted)
+   {
       server_.reopenWithEncoding(
             sourceDoc_.getId(),
             encoding,
-            new ReopenFileCallback());
+            new ReopenFileCallback(onCompleted, false));
    }
 
    public void ignoreExternalEdit()

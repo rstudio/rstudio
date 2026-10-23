@@ -89,7 +89,9 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
                                       previous.getViewAfterSave(),
                                       previous.getUseDevicePixelRatio(),
                                       getCopyAsMetafile(),
-                                      previous.getResolution());
+                                      previous.getResolution(),
+                                      previous.getTiffCompression(),
+                                      previous.getJpegQuality());
    }
    
    

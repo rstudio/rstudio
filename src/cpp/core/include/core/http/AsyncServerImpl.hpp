@@ -37,6 +37,7 @@
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
+#include <core/http/AsyncServerPoolProbeOverlay.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/AsyncServer.hpp>
@@ -104,6 +105,7 @@ public:
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
         scheduledCommandTimer_(acceptorService_.ioContext()),
         acceptRetryTimer_(acceptorService_.ioContext()),
+        poolProbe_(acceptorService_.ioContext()),
         running_(false),
         totalTime_(boost::posix_time::seconds(0)),
         minTime_(boost::posix_time::seconds(0)),
@@ -127,6 +129,14 @@ public:
    {
       BOOST_ASSERT(!running_);
       abortOnResourceError_ = abortOnResourceError;
+   }
+
+   // Shortens the dispatch-probe interval so tests do not have to wait whole
+   // seconds for a sample. Production callers use the default.
+   void setPoolProbeIntervalMs(int intervalMs)
+   {
+      BOOST_ASSERT(!running_);
+      poolProbe_.setIntervalMs(intervalMs);
    }
 
    virtual void addProxyHandler(const std::string& prefix,
@@ -376,7 +386,10 @@ public:
 
          // initialize scheduled command timer
          waitForScheduledCommandTimer();
-         
+
+         // initialize the thread-pool dispatch probe
+         poolProbe_.start(statsProvider_);
+
          // block all signals for the creation of the thread pool
          // (prevents signals from occurring on any of the handler threads)
          core::system::SignalBlocker signalBlocker;
@@ -1109,6 +1122,9 @@ private:
 
    // backs off re-accepting after a resource-exhaustion error (see handleAccept)
    boost::asio::system_timer acceptRetryTimer_;
+
+   // thread-pool dispatch probe; a no-op in open source
+   PoolProbeOverlay poolProbe_;
 
    boost::mutex scheduledCommandMutex_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;

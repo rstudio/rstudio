@@ -142,6 +142,10 @@ public abstract class
    public abstract AppCommand vcsFileLog();
    public abstract AppCommand vcsFileDiff();
    public abstract AppCommand vcsFileRevert();
+   public abstract AppCommand vcsNextChange();
+   public abstract AppCommand vcsPreviousChange();
+   public abstract AppCommand vcsRevertChange();
+   public abstract AppCommand vcsShowChange();
    public abstract AppCommand popoutDoc();
    public abstract AppCommand returnDocToMain();
    public abstract AppCommand quickAddNext();

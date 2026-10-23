@@ -17,7 +17,7 @@ import { assert } from 'chai';
 import { describe } from 'mocha';
 import sinon from 'sinon';
 
-import { dialog } from 'electron';
+import { app, dialog } from 'electron';
 
 import { setVars } from '../../../src/core/environment';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -46,6 +46,39 @@ if (!isWindowsDocker()) {
       assert.isObject(win);
       assert.isObject(win.window);
       assert.isFalse(win.window.isVisible());
+    });
+
+    it('construction creates the BrowserWindow at the requested size', () => {
+      const win = new DesktopBrowserWindow({
+        name: '_blank',
+        skipLocaleDetection: true,
+        initialSize: { width: 1000, height: 600 },
+      });
+      assert.deepEqual(win.window.getSize(), [1000, 600]);
+    });
+
+    describe('unmaximize handling', () => {
+      afterEach(() => {
+        sinon.restore();
+      });
+
+      function emitUnmaximize(): sinon.SinonStub {
+        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const reposition = sinon.stub(win, 'positionAndEnsureVisibleDebounced');
+        win.window.emit('unmaximize');
+        return reposition;
+      }
+
+      it('guards against restoring offscreen', () => {
+        sinon.stub(app.commandLine, 'getSwitchValue').returns('x11');
+        assert.isTrue(emitUnmaximize().calledOnce);
+      });
+
+      it('leaves the restored bounds to the compositor on Wayland', () => {
+        sinon.stub(process, 'platform').value('linux');
+        sinon.stub(app.commandLine, 'getSwitchValue').withArgs('ozone-platform').returns('wayland');
+        assert.isTrue(emitUnmaximize().notCalled);
+      });
     });
 
     it('allows navigation to presentation url', () => {

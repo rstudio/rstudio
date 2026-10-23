@@ -26,13 +26,18 @@ import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
+import org.rstudio.core.client.layout.BinarySplitLayoutPanelTests;
+import org.rstudio.core.client.widget.FastSelectTableTests;
+import org.rstudio.core.client.widget.LayoutGridTests;
 import org.rstudio.core.client.widget.MiniPopupPanelTests;
+import org.rstudio.core.client.widget.WidgetListBoxTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
 import org.rstudio.studio.client.common.debugging.ErrorManagerTests;
 import org.rstudio.studio.client.common.filetypes.FileIconRendererTests;
 import org.rstudio.studio.client.common.filetypes.FileIconTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
+import org.rstudio.studio.client.common.shell.ConsoleErrorTrackerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
@@ -53,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketT
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
 import org.rstudio.studio.client.rmarkdown.model.YamlTreeTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.DefaultChunkOptionsPopupPanelTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidgetTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -70,6 +76,11 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(DebouncedCommandTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
+      suite.addTestSuite(LayoutGridTests.class);
+      suite.addTestSuite(WidgetListBoxTests.class);
+      suite.addTestSuite(FastSelectTableTests.class);
+      suite.addTestSuite(BinarySplitLayoutPanelTests.class);
+      suite.addTestSuite(StatusBarWidgetTests.class);
       suite.addTestSuite(AnsiCodeTests.class);
       suite.addTestSuite(TerminalLocalEchoTests.class);
       suite.addTestSuite(TerminalSessionSocketTests.class);
@@ -83,6 +94,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SessionOpenerTests.class);
       suite.addTestSuite(WorkbenchListManagerTests.class);
       suite.addTestSuite(ErrorManagerTests.class);
+      suite.addTestSuite(ConsoleErrorTrackerTests.class);
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(FileSystemItemTests.class);

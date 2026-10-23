@@ -148,8 +148,10 @@ public class WorkbenchScreen extends Composite
       tabsPanel_ = paneManager_.getPanel();
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
-      Roles.getMainRole().set(tabsPanel_.getElement());
-      Roles.getMainRole().setAriaLabelProperty(tabsPanel_.getElement(), "Workbench");
+      // "application" role prioritizes application keyboard handling over
+      // screen-reader shortcuts; it sits inside the main landmark (see
+      // ApplicationWindow) so it doesn't nest the page's other landmarks
+      Roles.getApplicationRole().set(tabsPanel_.getElement());
 
       // Prevent doOnPaneSizesChanged() from being called more than once
       // every N milliseconds. Note that the act of sending the client metrics
@@ -328,7 +330,7 @@ public class WorkbenchScreen extends Composite
    @Override
    public void onActivatePane(ActivatePaneEvent event)
    {
-      paneManager_.activateTab(event.getPane());
+      paneManager_.activateTabLeavingZoom(event.getPane());
    }
 
    private void fireEventDelayed(final GwtEvent<?> event, int delayMs)

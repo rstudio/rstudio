@@ -25,6 +25,11 @@ on:
       - ".github/workflows/os-test-e2e-rstudio-desktop-linux.yml"
       - ".github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml"
       - ".github/e2e-linux/**"
+      # The shard counts and the plumbing that reads them: a count change
+      # should be proven on the PR that makes it.
+      - ".github/e2e/shards.json"
+      - ".github/actions/os-e2e-shards/**"
+      - ".github/workflows/os-test-e2e-rstudio-shards.yml"
 
 concurrency:
   group: pw-pr-${{ github.event.pull_request.number }}

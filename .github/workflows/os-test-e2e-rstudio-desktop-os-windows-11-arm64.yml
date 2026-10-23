@@ -257,7 +257,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
+          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
           restore-keys: |
             rstudio-tools-win64-v2-
 
@@ -518,72 +518,6 @@ jobs:
           Copy-Item -Recurse $yarnSrc $yarnDest
           Write-Host "yarn installed: $yarnDest\bin\yarn.cmd"
 
-      # The Electron packaging step runs `npm ci && electron-forge package`
-      # inside src/node/desktop-build-AMD64. Because src/node/desktop ships a
-      # binding.gyp, npm auto-runs `node-gyp rebuild` as the install lifecycle
-      # and uses npm's bundled node-gyp (v11.5.0 in node 22). v11 only knows
-      # VS 2017-2022 and aborts with "Could not find any Visual Studio
-      # installation to use" on the VS 2026 runner. node-gyp v12+ supports
-      # VS 2026.
-      #
-      # npm_config_node_gyp would normally redirect this, but npm pre-injects
-      # its bundled node-gyp directory into PATH for lifecycle scripts; the
-      # env var is documented as "the command to run for npm rebuild when
-      # node-gyp isn't in the path", so the bundled v11 wins. The surgical
-      # fix is to physically replace node-gyp inside the bundled npm tree --
-      # same pattern this workflow already uses for yarn above.
-      - name: Replace bundled node-gyp with v12 for VS 2026 support
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
-            -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
-          $bundledNodeDir = "$env:RSTUDIO_TOOLS_ROOT\dependencies\common\node\$nodeVersion"
-          $bundledGypDir  = "$bundledNodeDir\node_modules\npm\node_modules\node-gyp"
-          if (-not (Test-Path $bundledGypDir)) {
-            Write-Error "Bundled node-gyp directory not found: $bundledGypDir"
-            exit 1
-          }
-          # Install latest node-gyp v12 into a throwaway dir, then copy its
-          # contents over the bundled one. --install-strategy=nested disables
-          # npm's default hoisting so node-gyp's transitive deps (undici,
-          # semver, tar, ...) land inside node-gyp/node_modules/. Without
-          # nested install, deps hoist to the prefix's top-level node_modules,
-          # the copy leaves them behind, and node-gyp v12 then dies at runtime
-          # with "Cannot find module 'undici'" (its new HTTP client dep).
-          # Use the bundled npm so the install runs under the same node
-          # version that will spawn node-gyp during the rebuild lifecycle.
-          $gypInstallDir = "$env:RUNNER_TEMP\node-gyp-v12"
-          if (Test-Path $gypInstallDir) { Remove-Item -Recurse -Force $gypInstallDir }
-          New-Item -ItemType Directory -Force -Path $gypInstallDir | Out-Null
-          & "$bundledNodeDir\npm.cmd" install --install-strategy=nested --prefix $gypInstallDir node-gyp@^12
-          if ($LASTEXITCODE -ne 0) { Write-Error "node-gyp v12 install failed"; exit $LASTEXITCODE }
-          $newGypDir = "$gypInstallDir\node_modules\node-gyp"
-          if (-not (Test-Path "$newGypDir\bin\node-gyp.js")) {
-            Write-Error "node-gyp v12 not installed at $newGypDir"
-            exit 1
-          }
-          if (-not (Test-Path "$newGypDir\node_modules\undici")) {
-            Write-Error "Expected nested undici at $newGypDir\node_modules\undici but not found -- nested install did not behave as expected"
-            exit 1
-          }
-          $bundledVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
-          $newVersion     = (Get-Content "$newGypDir\package.json"     | ConvertFrom-Json).version
-          Write-Host "Replacing bundled node-gyp $bundledVersion with $newVersion (nested deps included)"
-          Remove-Item -Recurse -Force $bundledGypDir
-          Copy-Item -Recurse $newGypDir $bundledGypDir
-          # Sanity check: version is 12.x and undici is reachable where
-          # node-gyp's download.js does `require('undici')`.
-          $finalVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
-          if ($finalVersion -notlike '12.*') {
-            Write-Error "Replacement failed: bundled node-gyp is still $finalVersion"
-            exit 1
-          }
-          if (-not (Test-Path "$bundledGypDir\node_modules\undici")) {
-            Write-Error "undici missing from $bundledGypDir\node_modules -- nested deps were lost in copy"
-            exit 1
-          }
-          Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion with nested deps"
-
       # The setup steps above only need the runner's initial headroom; the
       # build below is what needs the space the background cleanup frees.
       # Gate on free space, not just the done-marker: detached, the cleanup
@@ -716,13 +650,22 @@ jobs:
           path: RStudio-installer.exe
           retention-days: 7
 
+  # Reads the Windows shard count from .github/e2e/shards.json and republishes
+  # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
+  # env value itself, so the one declaration has to pass through here.
+  shards:
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: windows
+
   e2e-desktop-windows11arm:
-    needs: build
+    needs: [build, shards]
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too. build_only seeds caches without running e2e, so skip here.
     if: |
       always() &&
       inputs.build_only != true &&
+      needs.shards.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
@@ -737,13 +680,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 6 shards: per-shard setup is only ~5 minutes against a ~30 minute
-        # (at 4 shards) worst-case test step, so extra shards still convert
-        # nearly 1:1 into wall-clock savings. Playwright shards by file, not
-        # by duration, so the shard counts stay unbalanced -- at 4 shards the
-        # slowest shard ran ~30 minutes of tests against ~22 for its siblings
-        # and was the long pole of the whole PR-triggered run.
-        shard: [1, 2, 3, 4, 5, 6]
+        # Declared once in .github/e2e/shards.json (see .github/e2e/README.md
+        # for how the count was chosen); the test step derives --shard=N/M
+        # from strategy.job-total, and e2e-merge prints the same count.
+        shard: ${{ fromJSON(needs.shards.outputs.matrix) }}
     runs-on: windows-11-arm
     timeout-minutes: 120
     # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
@@ -1140,7 +1080,7 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-desktop-windows11arm]
+    needs: [shards, e2e-desktop-windows11arm]
     if: always() && inputs.defer_merge != true && needs.e2e-desktop-windows11arm.result != 'skipped' && needs.e2e-desktop-windows11arm.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1174,7 +1114,7 @@ jobs:
         working-directory: e2e/rstudio
         run: |
           if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            echo "::error::No blob reports found -- every shard failed to produce artifacts"
             exit 1
           fi
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
@@ -1241,7 +1181,7 @@ jobs:
             </details>
 
             ---
-            <sub>6 shards · Windows 11 arm64 (x86_64 build, emulated) · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>${{ needs.shards.outputs.count }} shards · Windows 11 arm64 (x86_64 build, emulated) · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Release-gate floor, last so the reporting above still runs. A run that
       # executed nothing must not report green: Playwright suppresses its own

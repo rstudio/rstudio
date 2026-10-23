@@ -28,6 +28,9 @@ jobs:
     # owners, organization members, and collaborators may invoke the
     # assistant. Anyone else mentioning @claude is a no-op.
     #
+    # contains() is a substring test and fires on quoted text, code, and
+    # HTML comments too; it is only the cheap prefilter for the step below.
+    #
     # The repository check keeps copies of this file inert: the receiver
     # always acts on rstudio/rstudio, so a copy running in a fork or in
     # rstudio-pro would point it at this repository's unrelated item with
@@ -45,9 +48,35 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      # A mention counts only outside blockquotes, code spans, fenced code,
+      # and HTML comments, so quoting someone else's "@claude ..." does not
+      # re-trigger the assistant. Bodies are free text, so they are passed
+      # through the environment and never interpolated into script text.
+      # The receiver's gate re-verifies the mention with the same filter;
+      # keep the two identical (ide-os-claude.yml in rstudio-pro).
+      - name: Check for an effective mention
+        id: mention
+        env:
+          BODY: ${{ github.event.comment.body || github.event.review.body || github.event.issue.body }}
+        run: |
+          if printf '%s' "$BODY" | perl -0777 -ne '
+                s/^[ \t]*(```|~~~).*?(?:^[ \t]*\1[^\n]*$|\z)//msg;  # fenced code blocks
+                s/<!--.*?-->//sg;                                    # HTML comments
+                s/`[^`\n]*`//g;                                      # code spans
+                s/^[ \t]*>[^\n]*$//mg;                               # blockquote lines
+                exit(/(^|[^[:alnum:]_-])\@claude([^[:alnum:]_-]|$)/i ? 0 : 1);
+              '
+          then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No @claude mention outside quoted text, code, or comments; skipping."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # Titles are free text, so they are passed through the environment and
       # never interpolated into script text.
       - name: Compute dispatch payload
+        if: steps.mention.outputs.found == 'true'
         id: payload
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -69,6 +98,7 @@ jobs:
           echo "branch-prefix=claude/${NUMBER}-${SLUG}-" >> "$GITHUB_OUTPUT"
 
       - name: Generate token for GitHub App
+        if: steps.mention.outputs.found == 'true'
         id: generate-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -79,6 +109,7 @@ jobs:
           permission-contents: write
 
       - name: Relay to rstudio-pro
+        if: steps.mention.outputs.found == 'true'
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           EVENT_NAME: ${{ github.event_name }}
@@ -103,6 +134,7 @@ jobs:
       # Runs after the dispatch so a failed reaction never blocks the relay.
       # Reviews have no reactions API; there the only ack is Claude's reply.
       - name: Acknowledge mention
+        if: steps.mention.outputs.found == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}

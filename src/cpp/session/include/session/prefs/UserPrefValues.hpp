@@ -91,6 +91,7 @@ namespace prefs {
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
+#define kShowGitDiffGutter "show_git_diff_gutter"
 #define kShowMargin "show_margin"
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
@@ -328,6 +329,7 @@ namespace prefs {
 #define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
 #define kNewProjGitInit "new_proj_git_init"
 #define kNewProjUseRenv "new_proj_use_renv"
+#define kCheckProjectRVersion "check_project_r_version"
 #define kRootDocument "root_document"
 #define kShowUserHomePage "show_user_home_page"
 #define kShowUserHomePageAlways "always"
@@ -677,6 +679,12 @@ public:
     */
    bool autoDetectIndentation();
    core::Error setAutoDetectIndentation(bool val);
+
+   /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   bool showGitDiffGutter();
+   core::Error setShowGitDiffGutter(bool val);
 
    /**
     * Whether to show the margin guide in the RStudio code editor.
@@ -1669,6 +1677,12 @@ public:
    core::Error setNewProjUseRenv(bool val);
 
    /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   bool checkProjectRVersion();
+   core::Error setCheckProjectRVersion(bool val);
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    std::string rootDocument();
@@ -2035,7 +2049,7 @@ public:
    core::Error setFileMonitorUseGitignore(bool val);
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    bool installPkgDepsIndividually();
    core::Error setInstallPkgDepsIndividually(bool val);

@@ -351,7 +351,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();
    sessionInfo["latex_program_types"] = modules::authoring::supportedLatexProgramTypes();
-   sessionInfo["tex_capabilities"] = modules::authoring::texCapabilitiesAsJson();
+   // TeX checks already have on-demand RPCs; the client caches the first
+   // answer in place of this empty placeholder when authoring is first used.
+   sessionInfo["tex_capabilities"] = json::Object();
    sessionInfo["compile_pdf_state"] = modules::authoring::compilePdfStateAsJson();
 
    sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();

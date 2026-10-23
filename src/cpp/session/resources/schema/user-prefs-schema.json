@@ -268,6 +268,12 @@
             "title": "Auto-detect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
+        "show_git_diff_gutter": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show Git changes in editor gutter",
+            "description": "Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository."
+        },
         "show_margin": {
             "type": "boolean",
             "default": true,
@@ -1318,6 +1324,12 @@
             "title": "Create an renv environment in new projects",
             "description": "Whether an renv environment should be created inside new projects by default."
         },
+        "check_project_r_version": {
+            "type": "boolean",
+            "default": true,
+            "title": "Warn when a project requests a different version of R",
+            "description": "Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use."
+        },
         "root_document": {
             "type": "string",
             "default": "",
@@ -1718,7 +1730,7 @@
             "type": "boolean",
             "default": true,
             "title": "Install R package dependencies one at a time",
-            "description": "Whether to install R package dependencies one at a time."
+            "description": "Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel."
         },
         "graphics_backend": {
             "type": "string",

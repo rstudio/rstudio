@@ -2028,6 +2028,11 @@ public class TextEditingTargetAssistantHelper
                         // Let Ace close its popup first
                         if (!display_.hasActiveAceCompleter())
                         {
+                           // The press is spent on the suggestion, as for edit
+                           // suggestions above: it must not go on to Ace (e.g.
+                           // closing the Git gutter peek) or interrupt R.
+                           event.stopPropagation();
+                           event.preventDefault();
                            sendSuggestionFeedback("rejected");
                            resetSuggestion();
                         }

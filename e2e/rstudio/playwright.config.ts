@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import os from 'os';
 import path from 'path';
 import { TIMEOUTS } from './utils/constants';
+import { ruleSetFromEnv } from './utils/a11y';
+import { envChoice, envFlag } from './utils/env';
 
 type ProjectOptions = { mode: 'desktop' | 'server' };
 
@@ -10,20 +12,6 @@ type ProjectOptions = { mode: 'desktop' | 'server' };
 // of Playwright's string options, which is all we expose).
 const TRACE_MODES = ['off', 'on', 'retain-on-failure', 'on-first-retry', 'on-all-retries'] as const;
 const SCREENSHOT_MODES = ['off', 'on', 'only-on-failure'] as const;
-
-// Resolve an env override against its allowed values, falling back to the
-// default when unset. An unrecognized value is a hard error (matching the
-// PW_RSTUDIO_* env handling below) rather than being passed through to
-// Playwright, where a typo like PW_TRACE=retain-on-falure would otherwise turn
-// a debugging aid into a config error at startup.
-function resolveEnvMode<T extends string>(name: string, allowed: readonly T[], fallback: T): T {
-  const value = process.env[name];
-  if (value === undefined || value === '')
-    return fallback;
-  if (!allowed.includes(value as T))
-    throw new Error(`${name}="${value}" -- expected one of: ${allowed.join(', ')}`);
-  return value as T;
-}
 
 // Load env vars from a dotenv file before any process.env reads below.
 // Path is anchored to this config's directory so it works regardless of cwd.
@@ -97,17 +85,28 @@ const authTeardownProject = {
 // casualty under parallel load. Exclude it by default; opt in with PW_RUN_SMOKE.
 const smokeExclusions = process.env.PW_RUN_SMOKE ? [] : ['@smoke'];
 
+// PW_A11Y swaps the e2e suite for the Server accessibility suite (tests/a11y,
+// tag @a11y); see the projects and reporters below. Every other run leaves
+// @a11y out.
+const a11y = envFlag('PW_A11Y');
+const a11yExclusions = a11y ? [] : ['@a11y'];
+// scanA11y reads the rule-set switches only inside the RStudio-backed test,
+// after the server has started and signed in; parse them here too so a typo
+// fails at load.
+if (a11y)
+  ruleSetFromEnv();
+
 const allProjects = [
   {
     name: 'desktop',
     use: { mode: 'desktop' as const },
-    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
+    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions, ...smokeExclusions, ...a11yExclusions].join('|')),
     dependencies: ['setup'],
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
-    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
+    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions, ...smokeExclusions, ...a11yExclusions].join('|')),
     dependencies: ['setup'],
   },
 ];
@@ -140,6 +139,10 @@ const modeEnv = process.env.PW_RSTUDIO_MODE?.toLowerCase() ?? 'desktop';
 if (modeEnv !== 'desktop' && modeEnv !== 'server') {
   throw new Error(`PW_RSTUDIO_MODE="${modeEnv}" -- expected "desktop" or "server"`);
 }
+// Without this, a bare `PW_A11Y=1 npx playwright test` defaults to desktop,
+// runs only the self-test, and passes without scanning RStudio.
+if (a11y && modeEnv !== 'server')
+  throw new Error('PW_A11Y runs the Server accessibility suite; pass --project=server');
 
 // Display label for the active project, surfaced as the project "name" in
 // reports. CI sets a distinct label per platform (e.g. desktop-macos,
@@ -152,17 +155,23 @@ if (modeEnv !== 'desktop' && modeEnv !== 'server') {
 // Insights reporter also records this as its dashboard "project" field, so
 // per-platform labels show up there as distinct series.
 const projectLabel = process.env.PW_PROJECT_LABEL || modeEnv;
-const projects = [
-  // The auth setup and teardown projects run raw chromium (no RStudio
-  // launch), so mode is inert for them -- it's set only to satisfy
-  // ProjectOptions. modeEnv is validated to be 'desktop'|'server' above, so
-  // the cast is sound.
-  { ...setupProject, use: { ...setupProject.use, mode: modeEnv as ProjectOptions['mode'] } },
-  { ...authTeardownProject, use: { ...authTeardownProject.use, mode: modeEnv as ProjectOptions['mode'] } },
-  ...allProjects
-    .filter(p => p.name === modeEnv)
-    .map(p => ({ ...p, name: projectLabel })),
-];
+const modeProjects = allProjects
+  .filter(p => p.name === modeEnv)
+  .map(p => ({ ...p, name: projectLabel }));
+// In a11y mode the setup projects are left out entirely: CI passes no
+// --project, so they would run standalone, signing in and pushing files into
+// the test user's home before the scan.
+const projects = a11y
+  ? modeProjects.map(p => ({ ...p, grep: /@a11y/, dependencies: [] }))
+  : [
+      // The auth setup and teardown projects run raw chromium (no RStudio
+      // launch), so mode is inert for them -- it's set only to satisfy
+      // ProjectOptions. modeEnv is validated to be 'desktop'|'server' above, so
+      // the cast is sound.
+      { ...setupProject, use: { ...setupProject.use, mode: modeEnv as ProjectOptions['mode'] } },
+      { ...authTeardownProject, use: { ...authTeardownProject.use, mode: modeEnv as ProjectOptions['mode'] } },
+      ...modeProjects,
+    ];
 
 const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
@@ -203,16 +212,21 @@ if (process.env.GITHUB_ACTIONS)
 // per-test progress (blob is silent during the run); this also gives the
 // run-with-heartbeat watchdog a reliable heartbeat -- a line per test -- so a
 // hung run is detected by its silence. sandbox-reporter is kept so teardown can
-// still detect failures and preserve sandbox state for artifact upload. The E2E
-// Test Insights reporter rides alongside blob so per-shard results also reach
-// the dashboard. Without CONNECT_API_KEY (e.g. fork PRs) it still runs but its
-// uploads fail with warnings (never fails the run).
-if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
+// still detect failures and preserve sandbox state for artifact upload. Outside
+// accessibility runs, the E2E Test Insights reporter rides alongside blob so
+// per-shard results also reach the dashboard. Without CONNECT_API_KEY (e.g.
+// fork PRs) it still runs but its uploads fail with warnings (never fails the
+// run).
+if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD) {
   reporters.splice(0, reporters.length,
     ['blob', { fileName: `report-${projectLabel}-${process.env.PW_SHARD}.zip` }],
     ['list'],
-    ['./fixtures/sandbox-reporter.ts'],
-    ['@midleman/playwright-reporter', { mode: 'prod' }]);
+    ['./fixtures/sandbox-reporter.ts']);
+  // Accessibility results stay off the e2e dashboard, whichever workflow
+  // started the run and whichever secrets it has.
+  if (!a11y)
+    reporters.push(['@midleman/playwright-reporter', { mode: 'prod' }]);
+}
 
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
@@ -227,7 +241,9 @@ export default defineConfig<{}, ProjectOptions>({
   // On CI a single transient launch flake (e.g. GWT app slow to reach
   // ready under cold disk caches on a fresh runner) can otherwise turn
   // the whole suite red. One retry absorbs that without rerunning by hand.
-  retries: process.env.CI ? 1 : 0,
+  // Accessibility runs never retry: violations are deterministic, and a
+  // retry that happened to pass would report the run green.
+  retries: a11y ? 0 : (process.env.CI ? 1 : 0),
   reporter: reporters,
   globalSetup: './fixtures/sandbox-setup.ts',
   globalTeardown: './fixtures/sandbox-teardown.ts',
@@ -240,8 +256,8 @@ export default defineConfig<{}, ProjectOptions>({
     // Both can be escalated via env for a run that passes but behaves oddly
     // (e.g. leaves a modal that only breaks a *later* test), where the
     // on-failure default captures nothing: PW_TRACE=on / PW_SCREENSHOT=on.
-    screenshot: resolveEnvMode('PW_SCREENSHOT', SCREENSHOT_MODES, 'only-on-failure'),
-    trace: resolveEnvMode('PW_TRACE', TRACE_MODES, 'retain-on-failure'),
+    screenshot: envChoice('PW_SCREENSHOT', SCREENSHOT_MODES, 'only-on-failure'),
+    trace: envChoice('PW_TRACE', TRACE_MODES, 'retain-on-failure'),
     actionTimeout: TIMEOUTS.action,
   },
   projects,

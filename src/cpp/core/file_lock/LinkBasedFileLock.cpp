@@ -109,6 +109,8 @@ boost::function<void(const FilePath&)>& s_beforeClaim = make_leaked<boost::funct
 boost::function<void(const FilePath&)>& s_afterRename = make_leaked<boost::function<void(const FilePath&)>>();
 bool s_forceClaimDirectoryChownFailure = false;
 bool s_forceFallback = false;
+int s_forceClaimDirectoryAclError = 0;
+bool s_forceClaimDirectoryForeignOwner = false;
 #endif
 
 // Shared by the owner and registry snapshots. This mutex is never held by
@@ -1564,6 +1566,40 @@ bool isAclUnsupported(int errorNumber)
 #endif
 }
 
+// Whether a failed ACL write on a directory this process just created should
+// give way to plain mode bits. Filesystems that do not track POSIX ownership
+// (e.g. ntfs-3g mounted without uid= or permissions options) report the new
+// directory as owned by root, so the kernel refuses the ACL with EPERM even
+// though it accepts the mode bits (rstudio/rstudio#19118). Requiring that
+// foreign owner keeps other refusals, such as a security policy denying the
+// write, from silently dropping the parent's ACL.
+bool isAclUnapplicable(int errorNumber, const struct stat& preparedInfo)
+{
+   if (isAclUnsupported(errorNumber))
+      return true;
+
+   bool foreignOwner = preparedInfo.st_uid != ::geteuid();
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   foreignOwner = foreignOwner || s_forceClaimDirectoryForeignOwner;
+#endif
+   return errorNumber == EPERM && foreignOwner;
+}
+
+// Returns the acl_set_fd() status, or the failure a test asked to simulate.
+int setDescriptorAcl(int descriptor, acl_t acl, int* pErrorNumber)
+{
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_forceClaimDirectoryAclError != 0)
+   {
+      *pErrorNumber = s_forceClaimDirectoryAclError;
+      return -1;
+   }
+#endif
+   int status = ::acl_set_fd(descriptor, acl);
+   *pErrorNumber = status == -1 ? errno : 0;
+   return status;
+}
+
 #endif
 
 #ifdef __linux__
@@ -1900,15 +1936,13 @@ Error applyTranslatedPosixAcl(const FilePath& parent,
    }
    if (!error && ::acl_valid(childAcl) == -1)
       error = systemCallError("acl_valid", errno, ERROR_LOCATION);
-   if (!error && ::acl_set_fd(descriptor, childAcl) == -1)
+   if (!error)
    {
-      int errorNumber = errno;
-      if (!isAclUnsupported(errorNumber))
+      int errorNumber;
+      if (setDescriptorAcl(descriptor, childAcl, &errorNumber) == 0)
+         *pApplied = true;
+      else if (!isAclUnapplicable(errorNumber, preparedInfo))
          error = systemCallError("acl_set_fd", errorNumber, ERROR_LOCATION);
-   }
-   else if (!error)
-   {
-      *pApplied = true;
    }
 
    ::acl_free(childAcl);
@@ -2189,15 +2223,10 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
 
    if (parentAcl)
    {
-      int status = ::acl_set_fd(descriptor, parentAcl);
-      int errorNumber = status == -1 ? errno : 0;
+      int errorNumber;
+      int status = setDescriptorAcl(descriptor, parentAcl, &errorNumber);
       ::acl_free(parentAcl);
-      if (status == -1)
-      {
-         if (isAclUnsupported(errorNumber))
-            status = 0;
-      }
-      if (status == -1)
+      if (status == -1 && !isAclUnapplicable(errorNumber, preparedInfo))
       {
          Error error = systemCallError(
             "acl_set_fd",
@@ -3104,6 +3133,18 @@ void LinkBasedFileLock::setForceClaimDirectoryChownFailureForTesting(
 void LinkBasedFileLock::setForceFallbackForTesting(bool forceFallback)
 {
    s_forceFallback = forceFallback;
+}
+
+void LinkBasedFileLock::setForceClaimDirectoryAclFailureForTesting(
+   int errorNumber)
+{
+   s_forceClaimDirectoryAclError = errorNumber;
+}
+
+void LinkBasedFileLock::setForceClaimDirectoryForeignOwnerForTesting(
+   bool foreignOwner)
+{
+   s_forceClaimDirectoryForeignOwner = foreignOwner;
 }
 #endif
 

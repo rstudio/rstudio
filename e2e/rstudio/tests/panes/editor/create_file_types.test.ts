@@ -21,6 +21,9 @@ import type { Page } from 'playwright';
 // types inside a single test; here they're one test each so one type's failure
 // doesn't mask the rest.
 
+// The build-toolchain probe has been observed taking ~57s on a cold Windows runner.
+const CPP_PROBE_TIMEOUT = 90000;
+
 // Source-document tabs; a successful create brings the count to 2 (see header).
 function sourceTabs(page: Page) {
   return page.locator("[class*='rstudio_source_panel'] [role='tab']");
@@ -33,8 +36,21 @@ test.describe('Create file types', () => {
   let sourceActions: SourcePaneActions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // A C-family document probes the build toolchain (`R CMD SHLIB`, on the
+    // session's main thread), and every RPC queues behind it until it returns.
+    // Pay that once here rather than in the test after newCDoc; the session
+    // caches a successful probe.
+    test.setTimeout(CPP_PROBE_TIMEOUT + 60000);
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
+    await consoleActions.resetSourcePane();
+
+    const probe = page.waitForResponse(
+      (response) => response.url().includes('/rpc/get_cpp_capabilities'),
+      { timeout: CPP_PROBE_TIMEOUT },
+    );
+    await executeCommand(page, 'newCDoc');
+    await probe;
     await consoleActions.resetSourcePane();
   });
 

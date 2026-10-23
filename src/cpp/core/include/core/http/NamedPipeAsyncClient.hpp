@@ -100,12 +100,11 @@ private:
    }
 
    // detect when we've got the whole response and force a
-   // response + close of the socket
-   // note we do not do this if we are streaming chunked encoding
+   // response + close of the socket (AsyncClient only asks this for a
+   // buffered, non-chunked body)
    virtual bool stopReadingAndRespond()
    {
-      return !chunkedEncoding_ &&
-             (response_.body().length() >= response_.contentLength());
+      return response_.body().length() >= response_.contentLength();
    }
 
    virtual bool isShutdownError(const boost::system::error_code& ec)

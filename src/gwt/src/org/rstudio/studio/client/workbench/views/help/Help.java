@@ -165,10 +165,22 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
    }
 
    // Commands handled by Shim for activation from main menu context
-   public void onHelpHome() { bringToFront(); home(); }
-   public void onHelpSearch() { bringToFront(); view_.focusSearchHelp(); }
-   public void onHelpBack() { bringToFront(); view_.back(); }
-   public void onHelpForward() { bringToFront(); view_.forward(); }
+   public void onHelpHome() { raise(); home(); }
+   public void onHelpSearch() { raise(); view_.focusSearchHelp(); }
+   public void onHelpBack() { raise(); view_.back(); }
+   public void onHelpForward() { raise(); view_.forward(); }
+
+   /**
+    * Raise the pane itself, as a help topic does, so it can take over a zoom or
+    * reopen a shut column; bringToFront() only activates the tab. The pane's own
+    * raise names it by its localized title, which PaneManager doesn't know, and
+    * a zoom it moves takes the last activated tab, so activate Help by name first.
+    */
+   private void raise()
+   {
+      bringToFront();
+      view_.bringToFront();
+   }
 
    @Handler public void onPrintHelp() { view_.print(); }
    @Handler public void onHelpPopout() { view_.popout(); }

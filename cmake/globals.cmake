@@ -338,10 +338,10 @@ endif()
 set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 
 # node version used for building product components
-set(RSTUDIO_NODE_VERSION "22.22.2" CACHE INTERNAL "Node version for building")
+set(RSTUDIO_NODE_VERSION "24.22.1" CACHE INTERNAL "Node version for building")
 
 # node version installed with the product
-set(RSTUDIO_INSTALLED_NODE_VERSION "24.21.0" CACHE INTERNAL "Node version installed with product")
+set(RSTUDIO_INSTALLED_NODE_VERSION "24.22.1" CACHE INTERNAL "Node version installed with product")
 
 # quarto support
 
@@ -657,18 +657,6 @@ if(APPLE)
    # help Boost find icu4c
    if(RSTUDIO_USE_SYSTEM_BOOST)
       link_directories(${HOMEBREW_PREFIX}/opt/icu4c/lib)
-   endif()
-
-   # set OPENSSL_ROOT_DIR if unset; prefer openssl@3 because Homebrew's
-   # unversioned 'openssl' tracks the newest major release
-   if(NOT DEFINED OPENSSL_ROOT_DIR)
-
-      if(EXISTS "${HOMEBREW_PREFIX}/opt/openssl@3")
-         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl@3" CACHE INTERNAL "")
-      elseif(EXISTS "${HOMEBREW_PREFIX}/opt/openssl")
-         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
-      endif()
-
    endif()
 
 endif()

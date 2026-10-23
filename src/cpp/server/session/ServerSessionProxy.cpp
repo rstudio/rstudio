@@ -326,15 +326,24 @@ PidType peerPidOf(const Error& error)
    return safe_convert::stringTo<PidType>(error.getProperty(http::kLocalStreamPeerPidProperty), -1);
 }
 
-void handleProxyResponse(
-   boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+// The /s/ path's headers-received hook. Its whole content is the pending-launch
+// bookkeeping, which only needs to know that the session answered -- see
+// ResponseHeadersHandler in AsyncClient.hpp for why hooks live here rather than
+// in the completion handler.
+void handleProxyResponseHeaders(
    const r_util::SessionContext& context,
    const boost::weak_ptr<http::LocalStreamAsyncClient>& weakClient,
-   const http::Response& response)
+   http::Response&)
 {
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(context, true, std::string(), peerPidOf(weakClient));
+}
 
+void handleProxyResponse(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const http::Response& response)
+{
    // ensure authorization cookies that were automatically refreshed as part of this
    // request are stamped on the response
    ptrConnection->writeResponse(response, true, getAuthCookies(ptrConnection->response()));
@@ -551,13 +560,12 @@ void handleLocalhostResponse(
                                ipv6,
                                response,
                                &preparedResponse);
-      ptrConnection->writeResponse(preparedResponse);
+      ptrConnection->writeResponse(preparedResponse, true,
+                                   getAuthCookies(ptrConnection->response()));
    }
 }
 
-bool handleLicenseError(
-      boost::shared_ptr<http::AsyncConnection> ptrConnection,
-      const Error& error)
+bool handleLicenseError(const Error& error, http::Response* pResponse)
 {
    return false;
 }
@@ -594,7 +602,7 @@ void handleLocalhostError(
       return;
    }
 
-   if (handleLicenseError(ptrConnection, error))
+   if (handleLicenseError(error, &ptrConnection->response()))
    {
       ptrConnection->writeResponse();
    }
@@ -688,7 +696,7 @@ void handleContentError(
 
       ptrConnection->writeResponse();
    }
-   else if (handleLicenseError(ptrConnection, error))
+   else if (handleLicenseError(error, &ptrConnection->response()))
    {
       LOG_WARNING_MESSAGE("Session limit error for " + ptrConnection->request().debugInfoFinal() + " detail: " + error.asString());
       ptrConnection->writeResponse();
@@ -705,27 +713,34 @@ void handleContentError(
 void handleRpcError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
+      const http::Headers& authCookies,
       const Error& error)
 {
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(context, false, std::string(), peerPidOf(error));
+
+   // Assemble the error response separately and hand it to writeResponse(),
+   // which claims the connection before assigning it. ptrConnection->response()
+   // must not be read or mutated here: on the /s/ path FixedBufferProxy may be
+   // writing it from the upstream client's strand. authCookies were captured
+   // when this handler was bound, before the upstream request started.
+   http::Response response;
 
    // check for authentication error
    if (server::isAuthenticationError(error))
    {
       LOG_DEBUG_MESSAGE("-- rpc error: authentication error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
-                            &(ptrConnection->response()));
-      ptrConnection->writeResponse();
+                            &(response));
+      ptrConnection->writeResponse(response, true, authCookies);
       return;
    }
 
    if (server::isSessionUnavailableError(error))
    {
       LOG_DEBUG_MESSAGE("-- rpc error: session unavailable for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
-      http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
-      ptrConnection->writeResponse();
+      ptrConnection->writeResponse(response, true, authCookies);
       return;
    }
 
@@ -741,8 +756,8 @@ void handleRpcError(
       clJson["id"] = context.scope.id();
       json::JsonRpcResponse jsonRpcResponse;
       jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
-      json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
-      ptrConnection->writeResponse();
+      json::setJsonRpcResponse(jsonRpcResponse, &(response));
+      ptrConnection->writeResponse(response, true, authCookies);
       return;
    }
 
@@ -754,24 +769,25 @@ void handleRpcError(
    {
       LOG_DEBUG_MESSAGE("-- rpc error: connection unavailable for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
-                            &(ptrConnection->response()));
+                            &(response));
    }
-   else if (!handleLicenseError(ptrConnection, error))
+   else if (!handleLicenseError(error, &response))
    {
       LOG_DEBUG_MESSAGE("-- rpc error: other error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response()));
+                           &(response));
    }
    else
       LOG_DEBUG_MESSAGE("-- rpc error: license error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
    // write the response
-   ptrConnection->writeResponse();
+   ptrConnection->writeResponse(response, true, authCookies);
 }
 
 void handleEventsError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
+      const http::Headers& authCookies,
       const Error& error)
 {
    // NOTE: events requests don't initiate session launches so
@@ -779,37 +795,52 @@ void handleEventsError(
 
    LOG_DEBUG_MESSAGE("-- events error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
+   // Assemble the error response separately and hand it to writeResponse(),
+   // which claims the connection before assigning it. ptrConnection->response()
+   // must not be read or mutated here: on the /s/ path FixedBufferProxy may be
+   // writing it from the upstream client's strand. authCookies were captured
+   // when this handler was bound, before the upstream request started.
+   http::Response response;
+
    // distinguish connection error as (expected) "Unavailable" error state
    if (http::isConnectionUnavailableError(error))
    {
       // if this request required a session then return a standard 503
       if (requiresSession(ptrConnection->request()))
       {
-         http::Response& response = ptrConnection->response();
          response.setStatusCode(http::status::ServiceUnavailable);
       }
       else
       {
          json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
-                              &(ptrConnection->response()));
+                              &(response));
       }
    }
    else if (server::isInvalidSessionScopeError(error))
    {
       json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
-                           &(ptrConnection->response()));
+                           &(response));
    }
-   else if (!handleLicenseError(ptrConnection, error))
+   else if (!handleLicenseError(error, &response))
    {
       // log if not connection terminated
       logIfNotConnectionTerminated(error, ptrConnection->request());
 
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response()));
+                           &(response));
    }
 
    // write the response
-   ptrConnection->writeResponse();
+   ptrConnection->writeResponse(response, true, authCookies);
+}
+
+// Which local-stream /s/ responses must be held whole rather than streamed.
+// /s/ has no header-observable always-buffer condition of its own (no
+// WS-upgrade bridging, no body rewrites) -- unlike /p/, launcher, or the load
+// balancer, its only site-specific concern is size.
+bool shouldBufferLocalStreamResponse(const http::Response& response)
+{
+   return http::isBelowStreamingThreshold(response);
 }
 
 Error userIdForUsername(const std::string& username, UidType* pUID)
@@ -914,19 +945,23 @@ void proxyRequest(
    // its contents into the client's request instead of deep-copying them
    pClient->request().assign(std::move(*pRequest));
 
-   LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
+   LOG_DEBUG_MESSAGE("- Start streaming server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
    try
    {
       // proxy the request
       boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(
             new http::FixedBufferProxy(ptrConnection));
-      fixedBufferProxy->proxy(pClient);
-      pClient->execute(boost::bind(handleProxyResponse,
-                                   ptrConnection,
-                                   context,
-                                   boost::weak_ptr<http::LocalStreamAsyncClient>(pStreamClient),
-                                   _1),
+
+      fixedBufferProxy->proxy(pClient, getAuthCookies(ptrConnection->response()));
+      pClient->setResponseHeadersHandler(
+         boost::bind(handleProxyResponseHeaders,
+                     context,
+                     boost::weak_ptr<http::LocalStreamAsyncClient>(pStreamClient),
+                     _1));
+      pClient->setStreamNonChunkedResponses(true);
+      pClient->setBufferPredicate(shouldBufferLocalStreamResponse);
+      pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
                        errorHandler);
 
       if (clientHandler)
@@ -1030,20 +1065,69 @@ void prepareLocalhostResponseForTest(
                             pPreparedResponse);
 }
 
-void handleRpcErrorForTest(
+// Exercises handleLocalhostResponse()'s normal (non-websocket-upgrade) branch,
+// which is what a test needs to confirm auth cookies staged on the connection
+// by an earlier refreshAuthCookies() call survive onto the /p/ response --
+// see getAuthCookies()'s other two call sites (handleProxyResponse and the
+// /s/ FixedBufferProxy path) for the pattern this branch must also follow.
+// ptrLocalhost/username are unused on this branch (they only matter for the
+// websocket-upgrade branch), so callers may pass a null client and an empty
+// username.
+void handleLocalhostResponseForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const r_util::SessionContext& context,
-      const Error& error)
+      const std::string& port,
+      const std::string& baseAddress,
+      bool ipv6,
+      const http::Response& response)
 {
-   handleRpcError(ptrConnection, context, error);
+   handleLocalhostResponse(ptrConnection,
+                           boost::shared_ptr<http::IAsyncClient>(),
+                           std::string(),
+                           port,
+                           baseAddress,
+                           ipv6,
+                           response);
 }
 
+// The error handlers proxyRpcRequest() and proxyEventsRequest() hand to
+// proxyRequest(), which installs them on an upstream client whose body may be
+// streaming through a FixedBufferProxy when they fire.
 void handleContentErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
       const Error& error)
 {
    handleContentError(ptrConnection, context, error);
+}
+
+void handleRpcErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const http::Headers& authCookies,
+      const Error& error)
+{
+   handleRpcError(ptrConnection, context, authCookies, error);
+}
+
+void handleEventsErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context,
+      const http::Headers& authCookies,
+      const Error& error)
+{
+   handleEventsError(ptrConnection, context, authCookies, error);
+}
+
+void handleLocalhostErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const Error& error)
+{
+   handleLocalhostError(ptrConnection, error);
+}
+
+bool handleLicenseErrorForTest(const Error& error, http::Response* pResponse)
+{
+   return handleLicenseError(error, pResponse);
 }
 #endif
 
@@ -1247,7 +1331,8 @@ void proxyRpcRequest(
    proxyRequest(isClientInit ? RequestType::ClientInit : RequestType::Rpc,
                 context,
                 ptrConnection,
-                boost::bind(handleRpcError, ptrConnection, context, _1),
+                boost::bind(handleRpcError, ptrConnection, context,
+                            getAuthCookies(ptrConnection->response()), _1),
                 sessionRetryProfile(ptrConnection, context));
 }
    
@@ -1267,7 +1352,8 @@ void proxyEventsRequest(
    proxyRequest(RequestType::Events,
                 context,
                 ptrConnection,
-                boost::bind(handleEventsError, ptrConnection, context, _1),
+                boost::bind(handleEventsError, ptrConnection, context,
+                            getAuthCookies(ptrConnection->response()), _1),
                 http::ConnectionRetryProfile());
 }
 
@@ -1298,6 +1384,36 @@ void proxyVSCodeRequest(
                                ptrConnection,
                                boost::bind(handleContentError, ptrConnection, context, _1));
 }
+
+// Which localhost /p/ responses must be held whole rather than streamed.
+//
+// The Jetty test is a deliberate header-level over-approximation of a
+// body-level condition: isSparkUIResponse() greps the body for SparkUI's markup
+// and rewriteSparkUIResponse() rewrites that body, neither of which a streamed
+// response can do -- so every Jetty response is held, not just the SparkUI ones.
+// Redirects are held because prepareLocalhostResponse() rewrites Location and
+// Refresh, and a 101 because it is bridged socket-to-socket rather than written
+// as a body.
+bool shouldBufferLocalhostResponse(const http::Response& response)
+{
+   return response.statusCode() == http::status::SwitchingProtocols ||
+          !response.headerValue("Location").empty() ||
+          !response.headerValue("Refresh").empty() ||
+          boost::algorithm::contains(response.headerValue("Server"), "Jetty") ||
+          http::isBelowStreamingThreshold(response);
+}
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+bool shouldBufferLocalhostResponseForTest(const http::Response& response)
+{
+   return shouldBufferLocalhostResponse(response);
+}
+
+bool shouldBufferLocalStreamResponseForTest(const http::Response& response)
+{
+   return shouldBufferLocalStreamResponse(response);
+}
+#endif
 
 void proxyLocalhostRequest(
       bool ipv6,
@@ -1464,12 +1580,7 @@ void proxyLocalhostRequest(
    // response: SparkUI root-path link fixups (Server: Jetty; see
    // isSparkUIResponse), redirects (Location/Refresh), and websocket upgrades.
    pClient->setStreamNonChunkedResponses(true);
-   pClient->setBufferPredicate([](const http::Response& response) {
-      return response.statusCode() == http::status::SwitchingProtocols ||
-             !response.headerValue("Location").empty() ||
-             !response.headerValue("Refresh").empty() ||
-             boost::algorithm::contains(response.headerValue("Server"), "Jetty");
-   });
+   pClient->setBufferPredicate(shouldBufferLocalhostResponse);
 
    try
    {

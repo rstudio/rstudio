@@ -530,6 +530,8 @@ public class TextEditingTargetWidget
       // keep the status bar in sync with the split view's cursor
       splitEditorRegistrations_.add(splitEditor_.addCursorChangedHandler(event ->
             target_.splitEditorCursorChanged(event.getPosition())));
+
+      target_.splitEditorCreated(splitEditor_);
    }
 
    // Keep the split view's inline-chunk-output flag matching the primary

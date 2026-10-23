@@ -233,6 +233,10 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
                return;
             
             sort(index, event.isSortAscending());
+
+            // The table redraws its headers only when rows are pushed, and sorting an empty
+            // list pushes none, so redraw them here or the sort icon and aria-sort go stale.
+            table_.redrawHeaders();
          }
       });
    }

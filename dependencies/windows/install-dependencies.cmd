@@ -34,7 +34,8 @@ set PATH=%WINDOWS_SCRIPTS_DIR%tools;%PATH%
 
 set BOOST_VERSION=1.91.0
 set GNUGREP_VERSION=3.0
-set GWT_VERSION=2.12.2-autumn-hawkbit
+:: Build name of RStudio's GWT fork SDK; see src/gwt/tools/build-gwt-README.md.
+set GWT_VERSION=2.13.1-montauk-daisy-3
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
 set MATHJAX4_VERSION=4.1.3
@@ -179,6 +180,10 @@ cd /d "%COMMON_INSTALL_DIR%"
 %RUN% install MATHJAX
 %RUN% install MATHJAX4
 %RUN% install LIBCLANG
+
+REM Bundle the x64 distribution, matching the Windows RStudio build.
+cmake "-DRIG_ROOT=%COMMON_INSTALL_DIR%" -DRIG_PLATFORM=windows -DRIG_ARCH=x86_64 -DRIG_CLEAN=%CLEAN% -P "%WINDOWS_SCRIPTS_DIR%..\common\install-rig.cmake"
+if errorlevel 1 exit /b 1
 
 REM Determine if we have the correct version of quarto.exe already installed
 if exist quarto\bin\quarto.exe (
