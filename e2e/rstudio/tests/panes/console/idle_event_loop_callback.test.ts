@@ -14,6 +14,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { withDeadline } from '@utils/deadline';
+import { TIMEOUTS } from '@utils/constants';
 import { canWriteDir } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
 import {
@@ -144,6 +145,31 @@ test.describe('Idle event loop callbacks', () => {
     await executeCommand(page, 'interruptR');
     await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
 
+    await executeInConsole(page, 'cat("console", "alive\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
+  });
+
+  test('a reload while a callback runs gets the prompt back and is reported busy again', async ({ rstudioPage: page }) => {
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    const interruptEnabled = () => page.evaluate(() => window.rstudio?.commands?.interruptR?.isEnabled() ?? false);
+    await executeInConsole(page, 'later::later(function() { while (TRUE) Sys.sleep(0.05) }, 0.1)');
+    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+
+    // The reload's client_init is served while the callback runs, and is
+    // answered as the waiting read would answer it: with its prompt, so the
+    // reloaded console is not left without one. The callback runs on, so R
+    // is reported busy once more and the interrupt is offered again.
+    await page.reload();
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+      timeout: TIMEOUTS.sessionRestart,
+      polling: 50,
+    });
+    await expect.poll(() => getConsolePromptText(page), { timeout: BUSY_TIMEOUT }).toBe('> ');
+    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    await expect.poll(interruptEnabled, { timeout: BUSY_TIMEOUT }).toBe(true);
+
+    await executeCommand(page, 'interruptR');
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
     await executeInConsole(page, 'cat("console", "alive\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
   });

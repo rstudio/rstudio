@@ -118,6 +118,11 @@ struct IdleEventState
    // a command or an RPC's R code (a dialog): the console shows no prompt
    // afterwards that would clear a report, and the client is in the dialog
    bool reportsBusy = false;
+   // what the wait the handlers run for tells a client that (re)connects
+   // meanwhile (its waitForMethod initFunction): the waiting read's prompt,
+   // or a dialog's event again. a reload while a handler runs is answered
+   // with it, as the wait itself would answer it
+   boost::function<void()> clientInit;
    // prompts issued when the busy report was last (re)armed; a handler's own
    // console read (readline()) issues one, which clears the client's busy
    // state, so the report is armed again after it
@@ -193,13 +198,16 @@ void processEvents()
 class IdleEventsScope
 {
 public:
-   explicit IdleEventsScope(bool active, bool reportsBusy = false)
+   explicit IdleEventsScope(bool active,
+                            bool reportsBusy = false,
+                            const boost::function<void()>& clientInit = boost::function<void()>())
       : saved_(s_idleEvents)
    {
       IdleEventState state;
       state.active = active;
       state.started = boost::posix_time::microsec_clock::universal_time();
       state.reportsBusy = reportsBusy;
+      state.clientInit = clientInit;
       state.promptsIssued = console_input::promptsIssued();
       setIdleEvents(state);
    }
@@ -214,11 +222,13 @@ private:
 };
 
 // run R's input handlers from the idle loop (see IdleEventState) for a wait
-// on `method`. returns whether the waiting console read's prompt was
+// on `method`, with `initFunction` what that wait tells a client that
+// connects meanwhile. returns whether the waiting console read's prompt was
 // reissued -- done only for a console read: a wait for the client inside a
 // command (a dialog) has no prompt to restore, and the prompt current then
 // (the enclosing read's, or none) is not what the console shows
-bool processIdleEvents(const std::string& method)
+bool processIdleEvents(const std::string& method,
+                       const boost::function<void()>& initFunction)
 {
    bool busyReported = false;
    bool executingBefore = console_input::executing();
@@ -228,7 +238,8 @@ bool processIdleEvents(const std::string& method)
    {
       IdleEventsScope idleEventsActive(
                true,
-               method == kConsoleInput && !console_input::executing());
+               method == kConsoleInput && !console_input::executing(),
+               initFunction);
       processEvents();
       busyReported = s_idleEvents.busyReported;
    }
@@ -543,19 +554,21 @@ void polledEventHandler()
             }
             // client_init means the user is attempting to reload the browser
             // in the middle of a computation. process client_init and post
-            // a busy event as our initFunction
+            // a busy event as our initFunction -- or, when the computation
+            // is an input handler, with the init of the wait it runs for,
+            // as waitForMethod would: the waiting read's prompt, or a
+            // dialog's event again. a reissued prompt re-arms the busy
+            // report (above), so a handler that runs on is reported again
             using namespace session::module_context;
-            ClientEvent busyEvent(client_events::kBusy, true);
-            client_init::handleClientInit(
-                  boost::bind(enqueClientEvent, busyEvent), ptrConnection);
-
-            // when the computation is an input handler and the console was
-            // otherwise at its prompt, that busy state is ours to clear
-            // when the handler returns (see processIdleEvents)
-            if (s_idleEvents.active && s_idleEvents.reportsBusy)
+            if (s_idleEvents.active)
             {
-               s_idleEvents.busyNotified = true;
-               s_idleEvents.busyReported = true;
+               client_init::handleClientInit(s_idleEvents.clientInit, ptrConnection);
+            }
+            else
+            {
+               ClientEvent busyEvent(client_events::kBusy, true);
+               client_init::handleClientInit(
+                     boost::bind(enqueClientEvent, busyEvent), ptrConnection);
             }
          }
          else
@@ -817,7 +830,7 @@ bool waitForMethod(const std::string& method,
 
       // process pending events
       unsigned clearsBefore = console_input::bufferClears();
-      bool promptRestored = processIdleEvents(method);
+      bool promptRestored = processIdleEvents(method, initFunction);
 
       // held console input is pending input all the same: a reset that
       // cleared the queue meanwhile (an interrupt, an uncaught error with
