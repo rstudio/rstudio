@@ -531,7 +531,7 @@ public class ObjectBrowserModel implements TreeViewModel
           else if ("keydown".equals(event.getType()) &&
                    event.getKeyCode() == KeyCodes.KEY_ENTER &&
                    KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.NONE &&
-                   !isRepeating(event) &&
+                   !KeyboardShortcut.isRepeating(event) &&
                    hasTableView(connection_.getObjectType(value.getType())))
           {
              event.preventDefault();
@@ -546,12 +546,6 @@ public class ObjectBrowserModel implements TreeViewModel
                 !StringUtil.isNullOrEmpty(type.getIconData()) &&
                 type.isDataType();
       }
-
-      // holding Enter would otherwise open a viewer for every repeated keydown
-      private native boolean isRepeating(NativeEvent event)
-      /*-{
-         return event.repeat || false;
-      }-*/;
    }
    
    private static class FieldCell extends AbstractCell<Field> 
