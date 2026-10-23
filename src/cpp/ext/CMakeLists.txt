@@ -448,7 +448,7 @@ dependency(ZLIB
 # Without this, FindZLIB fails during libgit2 configure and it falls back
 # to its bundled deps/zlib, producing mixed zlib linkage in final binaries.
 if(WIN32 AND NOT RSTUDIO_USE_SYSTEM_DEPENDENCIES AND NOT RSTUDIO_USE_SYSTEM_ZLIB)
-   set(_RSTUDIO_ZLIB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/_deps/zlib-src")
+   set(_RSTUDIO_ZLIB_INCLUDE_DIR "${ZLIB_SOURCE_DIR}")
    set(_RSTUDIO_ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/src/cpp/ext/rstudio-zlib.lib")
    set(ZLIB_INCLUDE_DIR "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE PATH "" FORCE)
    set(ZLIB_INCLUDE_DIRS "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE STRING "" FORCE)
@@ -470,7 +470,7 @@ fetch(ZLIB ZLIB)
 # of every libgit2 source file on every configure.  Work around this by saving
 # the old file (with its original timestamp) before the fetch and restoring it
 # afterward when the content hasn't changed.
-set(_LIBGIT2_GIT2_H "${CMAKE_BINARY_DIR}/_deps/libgit2-build/include/git2.h")
+set(_LIBGIT2_GIT2_H "${LIBGIT2_BINARY_DIR}/include/git2.h")
 if(EXISTS "${_LIBGIT2_GIT2_H}")
    file(MD5 "${_LIBGIT2_GIT2_H}" _LIBGIT2_GIT2_H_MD5)
    file(RENAME "${_LIBGIT2_GIT2_H}" "${_LIBGIT2_GIT2_H}.prev")
