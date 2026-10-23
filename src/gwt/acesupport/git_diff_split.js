@@ -136,6 +136,13 @@ function padFreeRow(session, row) {
    return !widgets || !widgets[row] || isPadding(widgets[row]);
 }
 
+// Whether two fold lines hold a pair of mirrored folds (see mirrorFold).
+function foldLinesPaired(a, b) {
+   return a.folds.some(function(fold) {
+      return fold.other && b.folds.indexOf(fold.other) !== -1;
+   });
+}
+
 // Whether a fold is in a session, at the top level or nested in one that is.
 function foldPresent(session, fold) {
    var present = false;
@@ -237,11 +244,14 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // to the live editor's own element, do not reach it, and Ace's stylesheet
    // would give it Ace's default font. It takes the live editor's size and
    // line height as they come out, and follows them: a change in either
-   // shows up as a change in the live editor's character size.
+   // shows up as a change in the live editor's character size. The view
+   // can be created while the live editor is out of the document (the
+   // layout switching from a regular split), with no computed style to
+   // take; it is checked again as the pane is laid out and aligned.
    this.syncFont = function() {
       var live = window.getComputedStyle(this.liveEditor.container);
       var style = this.baseEditor.container.style;
-      if (style.fontSize === live.fontSize && style.lineHeight === live.lineHeight)
+      if (!live.fontSize || (style.fontSize === live.fontSize && style.lineHeight === live.lineHeight))
          return;
 
       style.fontSize = live.fontSize;
@@ -381,6 +391,23 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       });
    };
 
+   // The range a counterpart fold takes: the other side's own fold range
+   // for the mapped first row, when it spans the mapped rows (Ace maps the
+   // columns of a changed line only roughly -- a space added inside the
+   // line puts the mapped start past the end of the base's), else the
+   // mapped range, as long as it runs forward and fits as it is (Ace would
+   // clip it into something else, or nothing). Null when there is none.
+   this.$counterpartRange = function(session, mapped) {
+      if (mapped.end.row < session.getLength()) {
+         var own = session.getFoldWidgetRange(mapped.start.row);
+         if (own && own.end.row === mapped.end.row && isForward(own))
+            return own;
+      }
+
+      var clipped = session.$clipRangeToDocument(mapped.clone());
+      return isForward(mapped) && clipped.isEqual(mapped) ? mapped : null;
+   };
+
    // Pairs a fold (given with its range in document coordinates, and its
    // side: isOrig for the base) with a new fold of the same lines on the
    // other side, as Ace does for a fold made while the view is open -- or
@@ -407,11 +434,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       }
 
       if (!counterpart && !this.$withinChange(range, isOrig)) {
-         var otherRange = this.transformRange(range, isOrig);
-         // (and it has to fit the other side as it is: Ace would clip it
-         // into something else, or nothing)
-         var clipped = other.$clipRangeToDocument(otherRange.clone());
-         if (isForward(otherRange) && clipped.isEqual(otherRange)) {
+         var otherRange = this.$counterpartRange(other, this.transformRange(range, isOrig));
+         if (otherRange) {
             // Fold All folds the nested levels as they are expanded, and
             // drops the folds within as it is added; Ace reads that off the
             // range, so the counterpart gets it the same way
@@ -741,13 +765,14 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
             // A fold line shows as one line, wrapped as a whole (its first
             // row carries the wrap count; the rows folded away show none).
-            // It is compared when both sides fold the same rows, as paired
-            // folds do, with any padding below its last row, where Ace shows
+            // It is compared when the two sides' fold lines hold a pair of
+            // mirrored folds (which can span different rows, with a change
+            // inside), with any padding below its last row, where Ace shows
             // a folded row's widget; folded on one side only, the rows are
             // passed over.
             var paired = baseFold && liveFold &&
                          baseFold.start.row === baseRow && liveFold.start.row === liveRow &&
-                         baseFold.end.row - baseRow === liveFold.end.row - liveRow;
+                         foldLinesPaired(baseFold, liveFold);
             if (paired) {
                pad(baseRow, liveRow, baseFold.end.row, liveFold.end.row);
                baseRow = baseFold.end.row + 1;
@@ -761,8 +786,9 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
       this.chunks.forEach(function(chunk) {
          compareUpTo(chunk.old.start.row, chunk.new.start.row);
-         baseRow = chunk.old.end.row;
-         liveRow = chunk.new.end.row;
+         // (a fold line can run on past a change within it)
+         baseRow = Math.max(baseRow, chunk.old.end.row);
+         liveRow = Math.max(liveRow, chunk.new.end.row);
       });
       compareUpTo(this.sessionA.getLength(), this.sessionB.getLength());
    };
@@ -1031,11 +1057,13 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.align();
       this.editorA.renderer.updateBackMarkers();
       this.editorB.renderer.updateBackMarkers();
+      this.syncFont();
       this.syncInitialScroll();
    };
 
    this.resize = function() {
       this.baseEditor.resize();
+      this.syncFont();
       this.syncInitialScroll();
    };
 

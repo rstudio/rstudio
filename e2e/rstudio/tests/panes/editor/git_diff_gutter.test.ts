@@ -1212,8 +1212,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     const views = liveEditors(page, 'a2 <- 1.5');
     await expect(base).toBeVisible({ timeout: 10000 });
 
+    const fontSize = (view: Locator) => view.evaluate((el) => getComputedStyle(el).fontSize);
     try {
-      // a split of the document replaces the comparison, and vice versa
+      // a split of the document replaces the comparison, and vice versa --
+      // with the base in the document's font, though the comparison is
+      // built while the document's editor is out of the layout
+      await setPref(page, 'font_size_points', 16);
       await executeCommand(page, 'splitEditorRight');
       await expect(base).toHaveCount(0);
       await expect(views).toHaveCount(2);
@@ -1223,6 +1227,8 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect(base).toBeVisible({ timeout: 10000 });
       await expect(views).toHaveCount(1);
       await expect.poll(() => isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(true);
+      await expect.poll(async () => (await fontSize(base)) === (await fontSize(views.first()))).toBe(true);
+      await clearPref(page, 'font_size_points');
 
       // the command toggles the view off again
       await executeCommand(page, 'vcsShowChangesSideBySide');
@@ -1262,6 +1268,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       expect(await base.count()).toBe(0);
       expect(await isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(false);
     } finally {
+      await clearPref(page, 'font_size_points');
       await setPref(page, PREF, true);
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
@@ -2062,6 +2069,15 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(level, { timeout: 10000 }).toBe(0);
       expect(await rowTop(base, 8)).toBe(await rowTop(live, 8));
 
+      // Insert Chunk with the cursor in the base pane has nothing to act on
+      await live.locator('.ace_content').click({ force: true });
+      await executeCommand(page, 'focusOtherEditorSplit');
+      await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+      await executeCommand(page, 'insertChunk');
+      expect(await viewLines(live)).toEqual([...seed, '']);
+      await executeCommand(page, 'focusOtherEditorSplit');
+      await expect.poll(() => live.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
       // the same with a change below the output: the lines between stay
       // level, and so does the change
       await editor.gotoLine(seed.length);
@@ -2307,11 +2323,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
   test('leaves folded lines out of the padding for wrap-only differences', async ({ rstudioPage: page }) => {
     // A line that wraps differently (whitespace only, under a
-    // whitespace-insensitive diff) is padded for; folded away, it shows no
-    // rows on either side, and padding for it would be drawn at the fold.
+    // whitespace-insensitive diff) is padded for. Folded away, it shows no
+    // rows of its own: the fold line is one display line on each side
+    // (here of different spans, a statement having been added inside the
+    // function), compared as such.
     const wrapPath = `${projectDir()}/wrapfold.R`;
     const seed = ['f <- function() {', '  1', '}', 'tail'];
-    const edited = ['f <- function() {', '  1', `}${' '.repeat(120)}`, 'tail'];
+    const edited = ['f <- function() {', '  1', '  2', `}${' '.repeat(120)}`, 'tail'];
     await executeInConsoleChecked(
       page,
       `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
@@ -2322,9 +2340,11 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
     );
     await openFile(page, wrapPath);
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [MODIFIED] });
+    // (one line became two: both read as modified until, with whitespace
+    // ignored, the brace line matches again and only the statement is new)
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [MODIFIED], 3: [MODIFIED] });
     await setPref(page, 'git_diff_ignore_whitespace', true);
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [ADDED] });
     await executeCommand(page, 'toggleSoftWrapMode');
 
     const rowTop = (view: Locator, row: number) =>
@@ -2341,7 +2361,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect(base).toBeVisible({ timeout: 10000 });
     try {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
-      const level = async () => (await rowTop(base, 3)) - (await rowTop(live, 3));
+      const level = async () => (await rowTop(base, 3)) - (await rowTop(live, 4));
       await expect.poll(level, { timeout: 10000 }).toBe(0);
 
       await editor.gotoLine(1);
@@ -2355,6 +2375,65 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await documentCloseAllNoSave(page);
       await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wrapPath)}))`);
       await commitAll(page, 'remove wrapfold', [wrapPath]);
+    }
+  });
+
+  test('folds the base for a fold on a line that differs in whitespace only', async ({
+    rstudioPage: page,
+  }) => {
+    // With whitespace ignored the line is unchanged, but Ace maps the
+    // fold's start column past the end of the base's line; the base's own
+    // fold range for the row is used instead.
+    const wsPath = `${projectDir()}/ws.R`;
+    const seed = ['f <- function() {', '  1', '}', 'tail'];
+    const edited = ['f  <- function() {', '  1', '}', 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(wsPath)})`,
+    );
+    await commitAll(page, 'ws', [wsPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(wsPath)})`,
+    );
+    await openFile(page, wsPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+    await setPref(page, 'git_diff_ignore_whitespace', true);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(1);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+    const foldRows = (view: Locator) =>
+      view.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as { session: { getAllFolds(): { start: { row: number }; end: { row: number } }[] } })
+          .session.getAllFolds()
+          .map((fold) => [fold.start.row, fold.end.row]),
+      );
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'tail');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect.poll(() => foldRows(base)).toEqual([[0, 2]]);
+      await expect.poll(async () => (await rowTop(base, 3)) - (await rowTop(live, 3)), { timeout: 10000 }).toBe(0);
+    } finally {
+      await clearPref(page, 'git_diff_ignore_whitespace');
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wsPath)}))`);
+      await commitAll(page, 'remove ws', [wsPath]);
     }
   });
 

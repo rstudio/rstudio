@@ -6706,6 +6706,9 @@ public class TextEditingTarget implements
 
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
+      if (cursorInDiffBase())
+         return;
+
       // allow visual mode to handle
       if (visualMode_.isActivated())
       {
@@ -6804,6 +6807,9 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       if (fileType_.isQuartoMarkdown())
       {
          onQuartoInsertChunk();
@@ -6936,6 +6942,9 @@ public class TextEditingTarget implements
    @Handler
    void onInsertSection()
    {
+      if (cursorInDiffBase())
+         return;
+
       globalDisplay_.promptForText(
          constants_.onInsertSectionTitle(),
          constants_.onInsertSectionLabel(),
@@ -10074,6 +10083,15 @@ public class TextEditingTarget implements
       }
    }
 
+   // Whether the cursor is in the read-only base pane of a side-by-side diff.
+   // An editing command then has nothing to act on, and must not land on the
+   // document's own cursor, out of sight; the commands that edit the
+   // document directly rather than through withActiveEditor check this.
+   private boolean cursorInDiffBase()
+   {
+      return view_ != null && view_.isDiffSplitFocused();
+   }
+
    /**
     * Executes a command with the active Ace instance. If there is no active
     * instance (e.g. in visual mode when focus is not in an editor), then the
@@ -10091,11 +10109,9 @@ public class TextEditingTarget implements
       {
          visualMode_.performWithActiveEditor(cmd);
       }
-      else if (view_.isDiffSplitFocused())
+      else if (cursorInDiffBase())
       {
-         // the cursor is in the read-only base of a side-by-side diff: an
-         // editing command (Comment/Uncomment, Reindent) must not land on
-         // the document's own cursor out of sight
+         // nothing to edit there
       }
       else
       {
