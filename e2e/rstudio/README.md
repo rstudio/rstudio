@@ -155,6 +155,19 @@ test on uncaught client exceptions (see `window.rstudio.errors` in
 `CLAUDE.md`): the exception itself fails the test; the attachments add the
 surrounding browser-console and backend-log context.
 
+Before each test the fixture also round-trips the session's main thread
+(`window.rstudio.session.ping()`, bounded by `probeSessionLiveness()` in
+`utils/session-liveness.ts`). A session that has stopped serving requests
+while its page stays responsive -- R running code dispatched from the idle
+event loop, #19236 -- is invisible to DOM-based checks and would otherwise
+hang every RPC-awaiting helper for its whole budget. When the probe times out
+the test fails at once with `deaf-session.png` and `rsession-stacks.txt`
+(the rsession stack dump: `sample` on macOS, thread wait channels plus gdb
+where it may attach on Linux) attached, and Playwright moves on in a fresh
+worker. The CI workflows take a privileged dump of whatever rsession is still
+running at the end of a failed shard (`scripts/ci/rsession-diagnostics.sh`,
+uploaded as the `rsession-diagnostics-*` artifact).
+
 ### Profiling a slow test
 
 When a test passes but is slower than expected, find out *which step* is slow

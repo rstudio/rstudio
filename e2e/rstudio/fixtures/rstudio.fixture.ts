@@ -15,6 +15,7 @@ import {
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
 import { readRemoteOdbcStatus } from '../utils/connections';
 import { withDeadline, DeadlineError } from '../utils/deadline';
+import { attachDeafSessionDiagnostics, probeSessionLiveness } from '../utils/session-liveness';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
@@ -349,31 +350,17 @@ async function attachSessionLogs(
 const WEDGE_PROBE_MS = 30_000;
 
 /**
- * A page that stops answering evaluates is the signature of the #18394
- * wedge: a session shutdown that never completes leaves the browser parked
- * on a transition that never finishes (server: the proxied request to the
- * zombie session has no deadline; desktop: the relaunch is driven by a child
- * exit event that never fires), so the frame has no JS context and every
- * bridge call blocks forever. Untreated, that stacks fixture stages into
- * 300s of output silence and the CI heartbeat kills the whole shard with no
- * report.
- *
- * Capture what needs no JS context -- page.url() is tracked protocol-side
- * and tells a stuck navigation apart from a frozen renderer, and a
- * screenshot is a protocol-level capture -- then hand back a descriptive
- * error for the caller to throw. Failing the test fast makes Playwright
- * discard this worker and run the remaining tests in a fresh one, so the
- * shard survives with its report intact.
- *
- * Skipped when the test's `screenshot` option is 'off'; any other mode takes
- * it, since a wedge always fails the test.
+ * The page-level record a failing fixture stage takes without needing a JS
+ * context: page.url() is tracked protocol-side, and a screenshot is a
+ * protocol-level capture. Skipped when the test's `screenshot` option is
+ * 'off'; any other mode takes it, since these stages always fail the test.
  */
-async function attachWedgeDiagnostics(
+async function capturePageState(
   page: Page,
   testInfo: TestInfo,
-  cause: Error,
+  attachmentName: string,
   screenshot: PlaywrightWorkerOptions['screenshot'],
-): Promise<Error> {
+): Promise<{ url: string; screenshotNote: string }> {
   const url = page.url();
 
   const screenshotMode = !screenshot ? 'off'
@@ -384,13 +371,40 @@ async function attachWedgeDiagnostics(
   } else {
     try {
       const shot = await page.screenshot({ timeout: 5000 });
-      await testInfo.attach('wedged-page.png', { body: shot, contentType: 'image/png' });
-      screenshotNote = 'screenshot attached as wedged-page.png';
+      await testInfo.attach(attachmentName, { body: shot, contentType: 'image/png' });
+      screenshotNote = `screenshot attached as ${attachmentName}`;
     } catch {
       // A frozen renderer can block even protocol-level capture; the URL
       // alone still distinguishes the stuck-navigation case.
     }
   }
+
+  return { url, screenshotNote };
+}
+
+/**
+ * A page that stops answering evaluates is the signature of the #18394
+ * wedge: a session shutdown that never completes leaves the browser parked
+ * on a transition that never finishes (server: the proxied request to the
+ * zombie session has no deadline; desktop: the relaunch is driven by a child
+ * exit event that never fires), so the frame has no JS context and every
+ * bridge call blocks forever. Untreated, that stacks fixture stages into
+ * 300s of output silence and the CI heartbeat kills the whole shard with no
+ * report.
+ *
+ * Capture the page state (the URL tells a stuck navigation apart from a
+ * frozen renderer), then hand back a descriptive error for the caller to
+ * throw. Failing the test fast makes Playwright discard this worker and run
+ * the remaining tests in a fresh one, so the shard survives with its report
+ * intact.
+ */
+async function attachWedgeDiagnostics(
+  page: Page,
+  testInfo: TestInfo,
+  cause: Error,
+  screenshot: PlaywrightWorkerOptions['screenshot'],
+): Promise<Error> {
+  const { url, screenshotNote } = await capturePageState(page, testInfo, 'wedged-page.png', screenshot);
 
   console.error(`[wedged-page] ${cause.message}; page URL: ${url} (${screenshotNote})`);
   return new Error(
@@ -507,6 +521,21 @@ export const test = base.extend<
       console.warn(
         `[client-exception] recorded between tests (not attributed): ${e.message}\n${e.stack}`,
       );
+    }
+
+    // A page that answers evaluates can still sit on a session that has
+    // stopped serving requests (#19236: R running code dispatched from the
+    // idle event loop). Nothing DOM-based notices, and every bridge call that
+    // awaits an RPC then hangs for its whole budget. Round-trip the session
+    // main thread before touching it, bounded; on silence, record what R is
+    // doing and fail fast so the worker restarts with a fresh session.
+    try {
+      await probeSessionLiveness(page);
+    } catch (err) {
+      if (!(err instanceof DeadlineError))
+        throw err;
+      const { url, screenshotNote } = await capturePageState(page, testInfo, 'deaf-session.png', screenshot);
+      throw await attachDeafSessionDiagnostics(testInfo, err, `page URL: ${url} (${screenshotNote})`);
     }
 
     // Scope failure diagnostics to this test: start with an empty browser
