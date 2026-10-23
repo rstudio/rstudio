@@ -43,6 +43,10 @@ bool hasPendingInput();
 
 bool executing();
 void setExecuting(bool executing);
+
+// R is running code: console input, or an input handler dispatched from the
+// idle loop (a later callback). safe on any thread
+bool isRunningCode();
 void updateSessionExecuting();
 core::Error extractConsoleInput(const core::json::JsonRpcRequest& request, bool ahead = false);
 void reissueLastConsolePrompt();
@@ -55,8 +59,13 @@ void restoreConsolePrompt();
 // number of console prompts issued so far
 unsigned promptsIssued();
 
-// number of times the console input queue has been cleared so far
+// number of times the console input queue has been cleared so far, empty
+// or not
 unsigned bufferClears();
+
+// number of times queued console input has been discarded so far (a clear
+// of a non-empty queue)
+unsigned inputDiscards();
 
 // number of console reads completed so far (input handed to R)
 unsigned readsCompleted();

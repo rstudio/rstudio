@@ -90,9 +90,15 @@ bool s_currentPromptAddToHistory = true;
 // prompt is no longer the waiting read's (see restoreConsolePrompt)
 unsigned s_promptsIssued = 0;
 
-// times the queue was cleared (an interrupt, an error with the discard pref
-// on); a change over a stretch of code says input pending then was discarded
+// times the queue was cleared (an interrupt, an uncaught error with the
+// discard pref on), empty or not; a change over a stretch of code says such
+// a reset ran inside it (see waitForMethod, which holds input of its own)
 unsigned s_bufferClears = 0;
+
+// times a clear found input queued; a change over a stretch of code says
+// input pending then was discarded (R's console reset runs on every uncaught
+// error, with the queue usually empty)
+unsigned s_inputDiscards = 0;
 
 // console reads completed (input handed to R); a change over a stretch of
 // code says a read ran inside it -- one that prompted, or one satisfied from
@@ -261,6 +267,11 @@ bool executing()
    return s_rProcessingInput;
 }
 
+bool isRunningCode()
+{
+   return executing() || http_methods::processingIdleEvents();
+}
+
 void updateSessionExecuting()
 {
    if (s_sessionExecuting != s_rProcessingInput)
@@ -286,6 +297,9 @@ unsigned promptsIssued()
 
 void clearConsoleInputBuffer()
 {
+   if (!s_consoleInputBuffer.empty())
+      s_inputDiscards++;
+
    s_consoleInputBuffer = ConsoleInputQueue();
    s_bufferClears++;
 }
@@ -293,6 +307,11 @@ void clearConsoleInputBuffer()
 unsigned bufferClears()
 {
    return s_bufferClears;
+}
+
+unsigned inputDiscards()
+{
+   return s_inputDiscards;
 }
 
 unsigned readsCompleted()
