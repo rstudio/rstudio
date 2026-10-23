@@ -676,6 +676,39 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     }
   });
 
+  // A pane raises itself under its localized title, which PaneManager doesn't
+  // know ("Aide" for Help in French), so the moved zoom must still name Help.
+  test('Search R Help during a Console zoom moves the zoom to Help in French', async ({
+    rstudioPage: page,
+  }) => {
+    // The workbench syncs the LOCALE cookie the GWT bootstrap reads to the
+    // ui_language pref on load, and reloads again if they differed; wait for
+    // the language's own Help tab title rather than the first ready.
+    const reloadIn = async (helpTitle: string) => {
+      await page.reload();
+      await expect(page.locator(`${TABSET2_PANE} [role="tab"]`, { hasText: helpTitle }))
+        .toHaveCount(1, { timeout: TIMEOUTS.sessionRestart });
+      await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+        timeout: TIMEOUTS.sessionRestart,
+      });
+    };
+    await page.evaluate(() => window.rstudio!.prefs.uiLanguage.set('fr'));
+    try {
+      await reloadIn('Aide');
+
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET2_PANE);
+      await executeCommand(page, 'helpSearch');
+      await expectExposed(page, TABSET2_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomHelp')).toBe(true);
+      expect(await isCommandChecked(page, 'layoutZoomConsole')).toBe(false);
+    } finally {
+      await resetLayoutZoom(page);
+      await page.evaluate(() => window.rstudio!.prefs.uiLanguage.clear());
+      await reloadIn('Help');
+    }
+  });
+
   // History is the zoomed pane's hidden partner here; showing it would end the
   // zoom without clearing its state (#18444).
   test('history() while Files is zoomed leaves the zoom on Files', async ({
