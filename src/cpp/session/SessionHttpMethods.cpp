@@ -29,6 +29,7 @@
 #include "session-config.h"
 
 #include <atomic>
+#include <cmath>
 
 #include <boost/algorithm/string.hpp>
 
@@ -137,8 +138,9 @@ void setIdleEvents(const IdleEventState& state)
 // handlers are dispatched (R is at its prompt then)
 boost::posix_time::time_duration idleEventBusyDelay()
 {
+   // anything but a finite delay of up to a day is a mistake: use the default
    double seconds = r::options::getOption<double>("rstudio.idleEventBusyDelay", 1.0, false);
-   if (!(seconds >= 0))
+   if (!std::isfinite(seconds) || seconds < 0 || seconds > 86400)
       seconds = 1.0;
    return boost::posix_time::milliseconds(static_cast<long>(seconds * 1000));
 }
