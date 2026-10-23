@@ -440,8 +440,9 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
   });
 
   // A custom, unzoomed layout survives resetLayoutZoom(), so put the splitter
-  // back however the test ends.
+  // back however the test ends, once the test's last resize has landed.
   test.afterEach(async ({ rstudioPage: page }) => {
+    await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
     await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterHome.x, splitterHome.y);
     await expect.poll(async () => Math.abs(
       ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
