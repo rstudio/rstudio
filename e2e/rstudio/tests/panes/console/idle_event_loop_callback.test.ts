@@ -206,4 +206,45 @@ test.describe('Idle event loop callbacks', () => {
     await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
   });
+
+  test('a callback reported busy that reads and then returns at once leaves the console idle', async ({ rstudioPage: page }) => {
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    const promptText = () => page.evaluate(() =>
+      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+
+    // Busy is reported before the read; the read's prompt clears the
+    // client's busy state and re-arms the report; the callback then returns
+    // well before it would fire again. The busy=false still has to come
+    // (the workbench tracks it apart from the prompt), with the REPL prompt.
+    await executeInConsole(page, 'later::later(function() { Sys.sleep(1.5); .idle_callback_answer <<- readline("answer? "); Sys.sleep(0.2) }, 0.1)');
+    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    await expect.poll(promptText, { timeout: 10000 }).toBe('answer? ');
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
+
+    await executeInConsole(page, 'hello');
+    expect(await promptText()).toBe('> ');
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
+    await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
+  });
+
+  test('input queued during a callback that then reads it brings the prompt back', async ({ rstudioPage: page }) => {
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    const promptText = () => page.evaluate(() =>
+      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+
+    // Input submitted while the callback runs is queued; the callback's
+    // readline() then takes it straight from the queue, with no prompt of
+    // its own. The client is busy from its submit, and only the prompt
+    // restored when the callback returns clears that.
+    await executeInConsole(page, 'later::later(function() { cat("callback", "started\\n"); Sys.sleep(1); .idle_callback_answer <<- readline("answer? ") }, 0.1)');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+    await submitAndAwaitQueued(page, 'hello');
+    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    expect(await promptText()).toBe('> ');
+    await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
+  });
 });

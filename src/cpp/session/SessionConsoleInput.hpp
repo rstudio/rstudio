@@ -57,6 +57,9 @@ unsigned promptsIssued();
 
 // number of times the console input queue has been cleared so far
 unsigned bufferClears();
+
+// number of console reads completed so far (input handed to R)
+unsigned readsCompleted();
 void addToConsoleInputBuffer(
       const rstudio::r::session::RConsoleInput& consoleInput);
 

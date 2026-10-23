@@ -94,6 +94,11 @@ unsigned s_promptsIssued = 0;
 // on); a change over a stretch of code says input pending then was discarded
 unsigned s_bufferClears = 0;
 
+// console reads completed (input handed to R); a change over a stretch of
+// code says a read ran inside it -- one that prompted, or one satisfied from
+// the queue without prompting
+unsigned s_readsCompleted = 0;
+
 void setSessionExecuting(bool executing)
 {
    LOCK_MUTEX(s_sessionExecutingMutex)
@@ -288,6 +293,11 @@ void clearConsoleInputBuffer()
 unsigned bufferClears()
 {
    return s_bufferClears;
+}
+
+unsigned readsCompleted()
+{
+   return s_readsCompleted;
 }
 
 std::string languageAfterInput(const std::string& language, const std::string& input)
@@ -574,6 +584,8 @@ bool rConsoleRead(const std::string& prompt,
       clientEventQueue().add(promptEvent);
       enqueueConsoleInput(*pConsoleInput);
    }
+
+   s_readsCompleted++;
 
    // always return true (returning false causes the process to exit)
    return true;
