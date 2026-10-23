@@ -1483,7 +1483,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // each folded in turn. The base pairs a fold with the function's and the
     // block's, but has none of the loop's lines, so the loop's fold has no
     // counterpart. Expanding from the base pane removes the document's
-    // paired fold each time, and must not take the folds inside it along.
+    // paired fold each time, and must not take the folds inside it along;
+    // nor must folding over them from the base pane, while expanding every
+    // level at once (Ctrl-click) takes them all, and Fold All's lazy levels
+    // fold on the document's side as the base pane expands.
     const nestedPath = `${projectDir()}/nested.R`;
     const seed = ['f <- function() {', '  if (TRUE) {', '    a <- 1', '  }', '  b <- 2', '}'];
     const edited = [
@@ -1527,13 +1530,22 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect(base).toBeVisible({ timeout: 10000 });
 
     // each view's folds, by row, with how many folds each has nested in it
-    type FoldedEditor = { session: { getAllFolds(): { start: { row: number }; subFolds: unknown[] }[] } };
+    type AceFold = { start: { row: number }; subFolds: AceFold[] };
+    type FoldedEditor = { session: { getAllFolds(): AceFold[] } };
     const folds = (view: Locator) =>
       view.evaluate((el) =>
         ((el as AceEditorElement).env?.editor as unknown as FoldedEditor).session
           .getAllFolds()
           .map((fold) => ({ row: fold.start.row, nested: fold.subFolds.length })),
       );
+    // how many folds the first fold's first nested fold has nested in it
+    const nestedTwoDeep = (view: Locator) =>
+      view.evaluate(
+        (el) =>
+          ((el as AceEditorElement).env?.editor as unknown as FoldedEditor).session.getAllFolds()[0]
+            ?.subFolds[0]?.subFolds.length ?? -1,
+      );
+    const expandInBase = () => base.locator('.ace_fold-widget.ace_closed').first().click();
 
     try {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
@@ -1541,12 +1553,52 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
       // expand the function in the base pane: the block's fold comes back
       // on both sides, the document's with the loop's still inside it
-      await base.locator('.ace_fold-widget.ace_closed').first().click();
+      await expandInBase();
       await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
       await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 1 }]);
 
       // and the block: the document keeps the loop folded
-      await base.locator('.ace_fold-widget.ace_closed').first().click();
+      await expandInBase();
+      await expect.poll(() => folds(base)).toEqual([]);
+      await expect.poll(() => folds(live)).toEqual([{ row: 2, nested: 0 }]);
+
+      // Fold the block in the document again (the loop's fold nests in it),
+      // then the function in the base pane: the folds inside are taken in
+      // on both sides, the loop's still inside the block's
+      await editor.gotoLine(2);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 1 }]);
+      await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
+      await base.locator('.ace_fold-widget.ace_open').first().click();
+      await expect.poll(() => folds(base)).toEqual([{ row: 0, nested: 1 }]);
+      await expect.poll(() => folds(live)).toEqual([{ row: 0, nested: 1 }]);
+      expect(await nestedTwoDeep(live)).toBe(1);
+
+      // expanding every level at once takes every fold with it
+      await base.locator('.ace_fold-widget.ace_closed').first().click({ modifiers: ['Meta'] });
+      await expect.poll(() => folds(base)).toEqual([]);
+      await expect.poll(() => folds(live)).toEqual([]);
+
+      // Ace's Fold All folds the top level and leaves the levels within to
+      // be folded as each is expanded; expanded from the base pane, the
+      // document's levels fold too, the loop (which the base lacks) included
+      type LazyFoldEditor = { session: { foldAll(): void; getAllFolds(): { collapseChildren?: number }[] } };
+      await live.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as LazyFoldEditor).session.foldAll(),
+      );
+      await expect.poll(() => folds(live)).toEqual([{ row: 0, nested: 0 }]);
+      expect(
+        await live.evaluate(
+          (el) =>
+            ((el as AceEditorElement).env?.editor as unknown as LazyFoldEditor).session.getAllFolds()[0]
+              .collapseChildren,
+        ),
+      ).toBeGreaterThan(0);
+      await expect.poll(() => folds(base)).toEqual([{ row: 0, nested: 0 }]);
+      await expandInBase();
+      await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
+      await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 0 }]);
+      await expandInBase();
       await expect.poll(() => folds(base)).toEqual([]);
       await expect.poll(() => folds(live)).toEqual([{ row: 2, nested: 0 }]);
     } finally {
@@ -1684,6 +1736,32 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         const [baseTops, liveTops] = await Promise.all([rowTops(base, rows), rowTops(live, rows)]);
         return baseTops.map((top, i) => top - liveTops[i]);
       };
+      await expect.poll(levelRows).toEqual([0, 0, 0]);
+
+      // A refresh that fails empties the base pane; the document stays
+      // where it is (an empty base has nothing to scroll, and must not
+      // drag the document to the top), and rejoins it when the base is
+      // back.
+      const failFetch = async (route: Route): Promise<void> => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ result: null, error: { code: 100, message: 'git failed' } }),
+        });
+      };
+      await page.route('**/git_diff_base_contents*', failFetch);
+      try {
+        await executeCommand(page, 'activateVcs');
+        await executeCommand(page, 'vcsRefresh');
+        await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual(['']);
+        expect(await scrollTop(live)).toBe(liveTop);
+      } finally {
+        await page.unroute('**/git_diff_base_contents*', failFetch);
+      }
+      await executeCommand(page, 'vcsRefresh');
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toHaveLength(201);
+      expect(await scrollTop(live)).toBe(liveTop);
+      await expect.poll(() => scrollTop(base)).toBe(liveTop);
       await expect.poll(levelRows).toEqual([0, 0, 0]);
 
       // and stay so when the editor font grows: the base editor takes the
@@ -1892,6 +1970,112 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       page,
       `invisible(system2("git", c(${gitC()}, "checkout", "--", "nb.Rmd")))`,
     );
+  });
+
+  test('pads the base for a notebook\'s output with no change to anchor it', async ({
+    rstudioPage: page,
+  }) => {
+    // Ace pads at change boundaries only; a chunk's output takes rows the
+    // base does not have whether or not a change lies below it.
+    const consoleActions = new ConsolePaneActions(page);
+    const loadable = await consoleActions.evalRLogical('requireNamespace("rmarkdown", quietly = TRUE)');
+    test.skip(loadable !== true, 'rmarkdown is not installed');
+
+    const nbPath = `${projectDir()}/nb-clean.Rmd`;
+    const seed = ['---', 'title: x', '---', '', '```{r}', '1 + 1', '```', 'after', 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await commitAll(page, 'nb-clean', [nbPath]);
+    await openFile(page, nbPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible({
+      timeout: 60000,
+    });
+
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, '1 + 1');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      const level = async () => (await rowTop(base, 7)) - (await rowTop(live, 7));
+      await expect.poll(level, { timeout: 10000 }).toBe(0);
+      expect(await rowTop(base, 8)).toBe(await rowTop(live, 8));
+
+      // the same with a change below the output: the lines between stay
+      // level, and so does the change
+      await editor.gotoLine(seed.length);
+      await editor.navigateLineEnd();
+      await editor.insert('\nend');
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 9: [ADDED] });
+      await expect.poll(level, { timeout: 10000 }).toBe(0);
+      expect(await rowTop(base, 8)).toBe(await rowTop(live, 8));
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(nbPath)}))`);
+      await commitAll(page, 'remove nb-clean', [nbPath]);
+    }
+  });
+
+  test('folds nothing in the base for a fold over added lines', async ({ rstudioPage: page }) => {
+    // The fold's range maps into the base header's line, end before start;
+    // that is not a fold, and the base must not get a placeholder there.
+    const pyPath = `${projectDir()}/added.py`;
+    const seed = ['def outer():', '    return 1', ''];
+    const edited = ['def outer():', '    if True:', '        x = 1', '    return 1', ''];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(pyPath)})`,
+    );
+    await commitAll(page, 'added', [pyPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(pyPath)})`,
+    );
+    await openFile(page, pyPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 2: [ADDED] });
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(2);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      const baseFolds = () =>
+        base.evaluate(
+          (el) =>
+            ((el as AceEditorElement).env?.editor as unknown as { session: { getAllFolds(): unknown[] } })
+              .session.getAllFolds().length,
+        );
+      await expect.poll(baseFolds).toBe(0);
+      await expect(base.locator('.ace_fold')).toHaveCount(0);
+      expect(await editor.getFoldCount()).toBe(1);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(pyPath)}))`);
+      await commitAll(page, 'remove added', [pyPath]);
+    }
   });
 
   test('keeps a notebook chunk\'s output widget where the side-by-side view would pad', async ({

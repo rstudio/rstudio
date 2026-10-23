@@ -28,6 +28,7 @@
 define("rstudio/git_diff_split", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
+var Range = require("ace/range").Range;
 var SplitDiffView = require("ace/ext/diff/split_diff_view").SplitDiffView;
 
 var BASE_CLASS = "ace_git-diff-base";
@@ -115,6 +116,15 @@ function eachFold(folds, callback) {
 
 // Unpairs folds (nested ones included) from their counterparts on the
 // other side.
+// Whether a range runs forward, with something in it. A fold's range mapped
+// to the other side can come out empty or reversed (both ends land in the
+// same changed stretch, say an added block's), and there is nothing there
+// to fold.
+function isForward(range) {
+   return range.start.row < range.end.row ||
+          (range.start.row === range.end.row && range.start.column < range.end.column);
+}
+
 // Whether a fold is in a session, at the top level or nested in one that is.
 function foldPresent(session, fold) {
    var present = false;
@@ -153,6 +163,7 @@ var GitDiffSplitView = function(gutter, container, strings) {
 
    this.$restrictStripes(this.markerA);
    this.$restrictStripes(this.markerB);
+   this.$trackFoldOperations();
    this.attachLiveHandlers();
    gutter.setSplitView(this);
 };
@@ -346,6 +357,19 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       });
    };
 
+   // Whether a range on the given side lies within a block of lines that the
+   // other side has none of (added lines, seen from the document; removed
+   // ones, from the base). A fold of such lines has nothing to pair with.
+   this.$withinChange = function(range, isOrig) {
+      var side = isOrig ? "old" : "new";
+      var otherSide = isOrig ? "new" : "old";
+      return this.chunks.some(function(chunk) {
+         return chunk[otherSide].start.row === chunk[otherSide].end.row &&
+                chunk[side].start.row <= range.start.row &&
+                range.end.row < chunk[side].end.row;
+      });
+   };
+
    // Pairs a fold (given with its range in document coordinates, and its
    // side: isOrig for the base) with a new fold of the same lines on the
    // other side, as Ace does for a fold made while the view is open -- or
@@ -371,9 +395,9 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          }
       }
 
-      if (!counterpart) {
+      if (!counterpart && !this.$withinChange(range, isOrig)) {
          var otherRange = this.transformRange(range, isOrig);
-         if (!otherRange.isEmpty()) {
+         if (isForward(otherRange)) {
             try {
                counterpart = other.addFold(fold.placeholder, otherRange);
             } catch (error) {
@@ -445,14 +469,22 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
       if (ev.action === "remove") {
          var counterpart = fold.other;
-         if (counterpart) {
+         if (!counterpart) {
+            // the padding, if any, comes back with the next alignment
+            fold.lineWidget = null;
+         } else if (this.$addingFold > 0) {
+            // Taken into a fold being added around it: Ace puts it back
+            // inside the new fold, nested folds and all. The counterpart
+            // stays, paired; the new fold's counterpart takes it in the same
+            // way (see mirrorFold).
+         } else {
             // The counterpart goes too, with its nested folds; only the pair
-            // itself is undone. Ace expands a fold by removing it and adding
-            // its nested folds back: each of those still paired with one of
-            // the counterpart's brings that one back as it was (nested folds
-            // of its own included, which this side may not have; see
-            // mirrorFold), so their ranges are made absolute now, as Ace
-            // does for the folds it re-adds.
+            // itself is undone, and the nested folds' ranges are made
+            // absolute, as Ace does for the folds it re-adds on expansion
+            // (each of which brings its own counterpart back; see
+            // mirrorFold). An expansion restores the rest of the
+            // counterpart's; a removal outright (Ctrl-click, Unfold All)
+            // leaves them removed.
             fold.other = null;
             counterpart.other = null;
             if (foldPresent(other, counterpart))
@@ -461,47 +493,12 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
                counterpart.restoreRange(sub);
             });
 
-            // The counterpart's nested folds with no twin here (lines only
-            // the other side has) come back only if this was an expansion
-            // rather than a removal outright (Ctrl-click, Unfold All), which
-            // only the end of the turn tells: Ace's expandFold leaves the
-            // nested folds re-added and the list empty, removeFold leaves
-            // the list as it was. A fold with no nested folds is taken as
-            // expanded.
-            var hadNested = fold.subFolds.length > 0;
-            var orphans = counterpart.subFolds.filter(function(sub) {
-               return !sub.other;
-            });
-            if (orphans.length > 0) {
-               var self = this;
-               Promise.resolve().then(function() {
-                  if (hadNested && fold.subFolds.length > 0)
-                     return;
-
-                  self.$syncingFold = true;
-                  try {
-                     orphans.forEach(function(sub) {
-                        if (foldPresent(other, sub))
-                           return;
-                        try {
-                           other.addFold(sub);
-                        } catch (error) {
-                           // its lines are folded another way by now
-                        }
-                     });
-                  } finally {
-                     self.$syncingFold = false;
-                  }
-                  self.scheduleRealign();
-               });
-            }
-         } else if (fold.lineWidget) {
-            // the padding comes back with the next alignment
-            fold.lineWidget = null;
+            if (this.$expandingFold === fold)
+               this.$expandCounterpart(counterpart, other);
          }
       } else if (ev.action === "add") {
          var range = this.transformRange(fold.range, isOrig);
-         if (range.isEmpty()) {
+         if (!isForward(range)) {
             var widget = other.lineWidgets && other.lineWidgets[range.start.row + 1];
             if (isPadding(widget)) {
                fold.lineWidget = widget;
@@ -517,6 +514,74 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             }
          }
       }
+   };
+
+   // A fold's removal is reported the same way whether the fold is being
+   // expanded, taken into a fold being added around it, or removed outright,
+   // and its counterpart is treated differently in each case (see
+   // onChangeFold): the sessions' expandFold and addFold are wrapped to
+   // tell which is under way.
+   this.$trackFoldOperations = function() {
+      var self = this;
+      this.$expandingFold = null;
+      this.$addingFold = 0;
+      this.$untrackFoldOperations = [this.sessionA, this.sessionB].map(function(session) {
+         var expandFold = session.expandFold;
+         var addFold = session.addFold;
+
+         session.expandFold = function(fold) {
+            var previous = self.$expandingFold;
+            self.$expandingFold = fold;
+            try {
+               return expandFold.apply(this, arguments);
+            } finally {
+               self.$expandingFold = previous;
+            }
+         };
+
+         session.addFold = function() {
+            self.$addingFold++;
+            try {
+               return addFold.apply(this, arguments);
+            } finally {
+               self.$addingFold--;
+            }
+         };
+
+         return function() {
+            session.expandFold = expandFold;
+            session.addFold = addFold;
+         };
+      });
+   };
+
+   // The counterpart of a fold being expanded has been removed (see
+   // onChangeFold). Ace is about to add the expanded fold's nested folds
+   // back, which brings back the counterparts of those; the rest of the
+   // counterpart's nested folds -- those with no twin on the expanded
+   // side, which has none of their lines -- come back here. So do the
+   // nested levels that Fold All left to be folded on expansion
+   // (collapseChildren), within the counterpart's own range: they are
+   // mirrored, and the expanded side's own lazy folding then finds them in
+   // place.
+   this.$expandCounterpart = function(counterpart, session) {
+      this.$syncingFold = true;
+      try {
+         counterpart.subFolds.forEach(function(sub) {
+            if (sub.other || foldPresent(session, sub))
+               return;
+            try {
+               session.addFold(sub);
+            } catch (error) {
+               // its lines are folded another way by now
+            }
+         });
+      } finally {
+         this.$syncingFold = false;
+      }
+
+      if (counterpart.collapseChildren > 0)
+         session.foldAll(counterpart.start.row + 1, counterpart.end.row, counterpart.collapseChildren - 1);
    };
 
    // ---- SplitDiffView overrides ------------------------------------------
@@ -539,15 +604,76 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       }, 0);
    };
 
-   // Ace's align, marked while it runs: the changeFold events it raises
-   // as it lays the padding out are told from a line widget changing on
-   // its own (see onChangeFold).
+   // Ace's align, with two differences. The sides are marked as being
+   // aligned while it runs, so that the changeFold events it raises are
+   // told from a line widget changing on its own (see onChangeFold). And
+   // before the changes are padded for, the document's own line widgets
+   // are: chunk output takes rows the base does not have, whether or not a
+   // change lies below it to pad at (Ace pads at change boundaries only).
+   // The change padding that follows measures screen rows, so it takes
+   // this padding into account rather than counting the widget twice.
    this.align = function() {
       this.$aligning = true;
       try {
-         SplitDiffView.prototype.align.call(this);
+         this.$initWidgets(this.editorA);
+         this.$initWidgets(this.editorB);
+         if (this.hasBase)
+            this.$padForeignWidgets();
+         this.$padChanges();
+         this.sessionA._emit("changeFold", { data: { start: { row: 0 } } });
+         this.sessionB._emit("changeFold", { data: { start: { row: 0 } } });
       } finally {
          this.$aligning = false;
+      }
+   };
+
+   // Pads the base below the row that corresponds to each of the document's
+   // line widgets, by the widget's height.
+   this.$padForeignWidgets = function() {
+      var widgets = this.sessionB.lineWidgets;
+      if (!widgets)
+         return;
+
+      var lastRow = this.sessionA.getLength() - 1;
+      for (var row = 0; row < widgets.length; row++) {
+         var w = widgets[row];
+         if (!w || w.hidden || isPadding(w) || !w.rowCount)
+            continue;
+
+         var baseRow = this.transformRange(new Range(row, 0, row, 0), false).start.row;
+         this.$addWidget(this.sessionA, {
+            rowCount: w.rowCount,
+            rowsAbove: 0,
+            row: Math.min(baseRow, lastRow)
+         });
+      }
+   };
+
+   // Ace's alignment of the changes: where a change starts or ends lower
+   // on one side than the other, the other is padded up to it.
+   this.$padChanges = function() {
+      var self = this;
+      this.chunks.forEach(function(ch) {
+         self.$padBoundary(ch.old.start, ch.new.start);
+         self.$padBoundary(ch.old.end, ch.new.end);
+      });
+   };
+
+   this.$padBoundary = function(oldPos, newPos) {
+      var diff1 = this.$screenRow(oldPos, this.sessionA);
+      var diff2 = this.$screenRow(newPos, this.sessionB);
+      if (diff1 < diff2) {
+         this.$addWidget(this.sessionA, {
+            rowCount: diff2 - diff1,
+            rowsAbove: oldPos.row === 0 ? diff2 - diff1 : 0,
+            row: oldPos.row === 0 ? 0 : oldPos.row - 1
+         });
+      } else if (diff1 > diff2) {
+         this.$addWidget(this.sessionB, {
+            rowCount: diff1 - diff2,
+            rowsAbove: newPos.row === 0 ? diff1 - diff2 : 0,
+            row: newPos.row === 0 ? 0 : newPos.row - 1
+         });
       }
    };
 
@@ -711,7 +837,18 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.setBaseLines = function(lines) {
       var session = this.baseEditor.session;
       var text = lines ? lines.join("\n") : "";
+
+      // Without a base (none yet, none at all, or one that could not be
+      // re-fetched) the base pane has nothing to scroll: Ace clamps its
+      // offset to the top and its scroll sync would take the document
+      // there too, so the sync is off until a base is back, when the base
+      // joins the document again (see syncInitialScroll).
       this.hasBase = lines != null;
+      if (!this.hasBase) {
+         this.$syncScroll = false;
+         this.scrollSynced = false;
+      }
+
       if (session.getValue() !== text) {
          // Replacing the text removes the base's folds, which Ace's fold
          // sync would carry over to their live counterparts; the document
@@ -727,6 +864,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          this.foldsStale = true;
       }
 
+      if (this.hasBase)
+         this.$syncScroll = true;
       this.baseEditor.renderer.theme = this.liveEditor.renderer.theme;
    };
 
@@ -801,6 +940,9 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.disposed = true;
       this.gutter.setSplitView(null);
       this.detachLiveHandlers();
+      this.$untrackFoldOperations.forEach(function(restore) {
+         restore();
+      });
       this.unlinkFolds();
 
       // unhooks both editors and restores the live one; the base editor is
