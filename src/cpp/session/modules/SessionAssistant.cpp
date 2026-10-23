@@ -1154,9 +1154,18 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t
          break;
       }
 
+      // A negative length would wrap bodyEnd to before bodyStart and move
+      // startIndex backwards, which can repeat the same response forever.
+      int bodyLength = safe_convert::stringTo<int>(contentLength, 0);
+      if (bodyLength < 0)
+      {
+         ELOG("Internal error: response has a negative Content-Length header ({}).", contentLength);
+         break;
+      }
+
       // Consume that text.
       auto bodyStart = splitIndex + splitSize;
-      auto bodyEnd = bodyStart + safe_convert::stringTo<int>(contentLength, 0);
+      auto bodyEnd = bodyStart + static_cast<std::size_t>(bodyLength);
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
 

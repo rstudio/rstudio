@@ -232,6 +232,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoDetectIndentationDescription();
 
    /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   @DefaultStringValue("Show Git changes in editor gutter")
+   String showGitDiffGutterTitle();
+   @DefaultStringValue("Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.")
+   String showGitDiffGutterDescription();
+
+   /**
     * Whether to show the margin guide in the RStudio code editor.
     */
    @DefaultStringValue("Show margin in editor")

@@ -784,7 +784,7 @@ public class TextEditingTarget implements
                      event.preventDefault();
                      event.stopPropagation();
                      docDisplay_.insertCode("\n" + match.getGroup(1));
-                     docDisplay_.ensureCursorVisible();
+                     docDisplay_.scrollCursorIntoView();
                   }
                }
             }
@@ -798,6 +798,7 @@ public class TextEditingTarget implements
                event.stopPropagation();
                String indent = docDisplay_.getNextLineIndent();
                docDisplay_.insertCode("\n" + indent);
+               docDisplay_.scrollCursorIntoView();
             }
             events_.fireEvent(new EditingTargetSelectedEvent(target));
          }
@@ -1665,6 +1666,9 @@ public class TextEditingTarget implements
                }
             });
 
+      gitDiffGutter_ = new TextEditingTargetGitDiffGutter(docDisplay_,
+                                                          docUpdateSentinel_,
+                                                          releaseOnDismiss_);
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
                                           commands_,
@@ -3155,6 +3159,7 @@ public class TextEditingTarget implements
       if (notebook_ != null)
          notebook_.onActivate();
 
+      gitDiffGutter_.onActivate();
       view_.onActivate();
    }
 
@@ -3165,6 +3170,7 @@ public class TextEditingTarget implements
       // re-usable implementation) so changes here need to be synced
 
       externalEditCheckInvalidation_.invalidate();
+      gitDiffGutter_.onDeactivate();
 
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
@@ -4174,8 +4180,15 @@ public class TextEditingTarget implements
 
    // Called by the view when the split editor view is destroyed; drop any
    // executor bound to it so re-run-last-code falls back to the primary view.
+   void splitEditorCreated(AceEditor editor)
+   {
+      gitDiffGutter_.setSplitEditor(editor);
+   }
+
    void splitEditorRemoved()
    {
+      gitDiffGutter_.setSplitEditor(null);
+
       if (lastCodeExecution_ == splitCodeExecution_)
          lastCodeExecution_ = codeExecution_;
 
@@ -4663,7 +4676,9 @@ public class TextEditingTarget implements
       final Command action = () -> {
          withChooseEncoding(
                docUpdateSentinel_.getEncoding(),
-               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
+               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(
+                     encoding,
+                     () -> gitDiffGutter_.documentReloaded()));
       };
 
       // NOTE: we previously attempted to save any existing document diffs
@@ -4884,6 +4899,31 @@ public class TextEditingTarget implements
    {
       events_.fireEvent(new VcsRevertFileEvent(
             FileSystemItem.createFile(docUpdateSentinel_.getPath())));
+   }
+
+   // these follow the cursor, so they go to whichever editor view has it
+   @Handler
+   void onVcsNextChange()
+   {
+      gitDiffGutter_.goToNextChange(activeDisplay());
+   }
+
+   @Handler
+   void onVcsPreviousChange()
+   {
+      gitDiffGutter_.goToPreviousChange(activeDisplay());
+   }
+
+   @Handler
+   void onVcsRevertChange()
+   {
+      gitDiffGutter_.revertChangeAtCursor(activeDisplay());
+   }
+
+   @Handler
+   void onVcsShowChange()
+   {
+      gitDiffGutter_.showChangeAtCursor(activeDisplay());
    }
 
    @Handler
@@ -10132,6 +10172,7 @@ public class TextEditingTarget implements
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
+   private TextEditingTargetGitDiffGutter gitDiffGutter_;
    private final UserPrefs prefs_;
    private final UserState state_;
    private Display view_;

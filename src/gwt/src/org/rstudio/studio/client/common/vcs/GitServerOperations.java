@@ -139,6 +139,10 @@ public interface GitServerOperations extends VCSServerOperations
                     String filename,
                     ServerRequestCallback<String> requestCallback);
 
+   void gitDiffBaseContents(String path,
+                            String encoding,
+                            String knownId,
+                            ServerRequestCallback<GitDiffBaseContents> requestCallback);
    void gitExportFile(String rev,
                       String filename,
                       String targetPath,

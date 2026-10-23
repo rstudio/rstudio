@@ -116,6 +116,42 @@ export class SourcePaneActions {
     await this.waitForSuggestion(this.sourcePane.nesIndicator, timeout, 'assistantAcceptNextEditSuggestion');
   }
 
+  /**
+   * Dismiss any suggestion the provider offered for the document as it was
+   * opened, so the edit a test is about to make is the only thing the next
+   * suggestion can answer.
+   *
+   * Opening a document sends a request of its own, and the live model
+   * sometimes answers it with an edit. In run 38982090628 a next-edit
+   * suggestion inserting a copy of three lines arrived before the rename was
+   * typed, survived the rename (suggestions are meant to outlive edits; see
+   * the "survives unrelated edit" spec), and acceptNesRename applied it: the
+   * stale lines went in and print(order_total) stayed unrenamed.
+   *
+   * Escape is the dismissal the product offers for every presentation, the
+   * gutter-only icon included (which also covers the gutter marker that can
+   * persist from an earlier file, #17108). Loop rather than press once: a
+   * request still in flight when Escape lands re-renders its answer
+   * afterwards, so the exit condition is "no request pending and nothing on
+   * screen", the same gate the ghost-text dismissal specs use.
+   */
+  async dismissSuggestionsFromOpen(): Promise<void> {
+    const { nesIndicator, statusBarCompletionPending, aceTextInput } = this.sourcePane;
+    let dismissed = 0;
+
+    await expect(async () => {
+      if (await nesIndicator.isVisible().catch(() => false)) {
+        dismissed++;
+        await aceTextInput.first().press('Escape');
+      }
+      await expect(statusBarCompletionPending).toHaveCount(0, { timeout: 1000 });
+      await expect(nesIndicator).not.toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 15000 });
+
+    if (dismissed > 0)
+      console.log(`  Dismissed a suggestion offered for the document as opened (${dismissed} Escape press(es))`);
+  }
+
   async acceptNesRename(): Promise<string> {
     const { nesApply, ghostText, nesInsertionPreview, nesGutter, nesSuggestionContent } = this.sourcePane;
 
