@@ -7,7 +7,7 @@
 // interrupt is offered, honours the interrupt, and queues console input sent
 // meanwhile for the next prompt.
 
-import type { Page } from '@playwright/test';
+import type { Page, Response } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
@@ -32,21 +32,45 @@ const BUSY_TIMEOUT = 15000;
  * R is doing) arrives later as an async_completion event carrying that
  * handle on the events long-poll. Returning on the acknowledgement alone
  * would race the server: an interrupt sent then could discard an empty queue
- * and leave the input to run afterwards.
+ * and leave the input to run afterwards. The events listener is installed
+ * before submitting, since the completion can land while the
+ * acknowledgement is still being read.
  */
 async function submitAndAwaitQueued(page: Page, command: string): Promise<void> {
-  const [ack] = await Promise.all([
-    page.waitForResponse((r) => /\/rpc\/console_input/.test(r.url()), { timeout: 10000 }),
-    executeInConsole(page, command, { wait: false }),
-  ]);
-  const body = await ack.json().catch(() => ({}));
-  const handle = body?.asyncHandle;
-  if (typeof handle !== 'string')
-    return; // answered inline: the main thread has already handled it
-  await page.waitForResponse(
-    async (r) => /\/events\/get_events/.test(r.url()) && (await r.text()).includes(handle),
-    { timeout: 10000 },
-  );
+  const events: string[] = [];
+  let wanted: string | undefined;
+  let found: (() => void) | undefined;
+  const onResponse = async (response: Response): Promise<void> => {
+    if (!/\/events\/get_events/.test(response.url()))
+      return;
+    const text = await response.text().catch(() => '');
+    events.push(text);
+    if (wanted !== undefined && text.includes(wanted))
+      found?.();
+  };
+  page.on('response', onResponse);
+  try {
+    const [ack] = await Promise.all([
+      page.waitForResponse((r) => /\/rpc\/console_input/.test(r.url()), { timeout: 10000 }),
+      executeInConsole(page, command, { wait: false }),
+    ]);
+    const body = await ack.json().catch(() => ({}));
+    const handle = body?.asyncHandle;
+    if (typeof handle !== 'string')
+      return; // answered inline: the main thread has already handled it
+    await withDeadline(
+      new Promise<void>((resolve) => {
+        found = resolve;
+        wanted = handle;
+        if (events.some((text) => text.includes(handle)))
+          resolve();
+      }),
+      10000,
+      'async completion of console_input',
+    );
+  } finally {
+    page.off('response', onResponse);
+  }
 }
 
 test.describe('Idle event loop callbacks', () => {
@@ -153,6 +177,31 @@ test.describe('Idle event loop callbacks', () => {
     // that the console would sit without a prompt until something else
     // issued one.
     await executeInConsole(page, 'hello');
+    expect(await promptText()).toBe('> ');
+    await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
+  });
+
+  test('a callback that keeps running after its read is answered is reported busy again', async ({ rstudioPage: page }) => {
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    const promptText = () => page.evaluate(() =>
+      document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+    const interruptEnabled = () => page.evaluate(() => window.rstudio?.commands?.interruptR?.isEnabled() ?? false);
+
+    await executeInConsole(page, 'later::later(function() { .idle_callback_answer <<- readline("answer? "); while (TRUE) Sys.sleep(0.05) }, 0.1)');
+    await expect.poll(promptText, { timeout: 5000 }).toBe('answer? ');
+
+    // Answering the read hands R the answer -- which marks console input as
+    // executing, as for any read -- and the callback runs on. The client is
+    // busy from its own submit, but only the server's busy report offers the
+    // interrupt; it has to come even though the read's prompt cleared the
+    // client's state, and the executing flag must not suppress it.
+    await executeInConsole(page, 'hello', { wait: false });
+    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    await expect.poll(interruptEnabled, { timeout: BUSY_TIMEOUT }).toBe(true);
+
+    await executeCommand(page, 'interruptR');
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
     expect(await promptText()).toBe('> ');
     await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');

@@ -104,6 +104,13 @@ struct IdleEventState
    bool active = false;
    boost::posix_time::ptime started;
    bool busyNotified = false;
+   // console input was executing when the handlers were dispatched (a wait
+   // for the client nested in a running command): the client is busy anyway
+   bool executingAtStart = false;
+   // prompts issued when the busy report was last (re)armed; a handler's own
+   // console read (readline()) issues one, which clears the client's busy
+   // state, so the report is armed again after it
+   unsigned promptsIssued = 0;
 };
 IdleEventState s_idleEvents;
 
@@ -168,6 +175,8 @@ public:
       IdleEventState state;
       state.active = active;
       state.started = boost::posix_time::microsec_clock::universal_time();
+      state.executingAtStart = console_input::executing();
+      state.promptsIssued = console_input::promptsIssued();
       setIdleEvents(state);
    }
 
@@ -184,12 +193,22 @@ private:
 void processIdleEvents()
 {
    bool busyNotified = false;
+   bool executingBefore = console_input::executing();
    unsigned promptsBefore = console_input::promptsIssued();
    unsigned clearsBefore = console_input::bufferClears();
    {
       IdleEventsScope idleEventsActive(true);
       processEvents();
       busyNotified = s_idleEvents.busyNotified;
+   }
+
+   // a console read a handler ran (readline()) marks console input as
+   // executing when it hands R the answer, as any read does; the handler has
+   // returned now and the waiting read is back where it was
+   if (!executingBefore && console_input::executing())
+   {
+      console_input::setExecuting(false);
+      console_input::updateSessionExecuting();
    }
 
    // reissue the waiting read's prompt, which also tells the client R is
@@ -427,11 +446,21 @@ void polledEventHandler()
    // interval between background processing invocations)
    s_lastPerformed = microsec_clock::universal_time();
 
+   // a handler's own console read issued a prompt, which cleared the client's
+   // busy state: arm the busy report again for the rest of the handler
+   if (s_idleEvents.active &&
+       console_input::promptsIssued() != s_idleEvents.promptsIssued)
+   {
+      s_idleEvents.promptsIssued = console_input::promptsIssued();
+      s_idleEvents.busyNotified = false;
+      s_idleEvents.started = s_lastPerformed;
+   }
+
    // an input handler that keeps running looks idle to the client (unless
-   // the console is busy anyway): say R is busy so it offers the interrupt
+   // the console was busy anyway): say R is busy so it offers the interrupt
    // (undone when the handler returns)
    if (s_idleEvents.active && !s_idleEvents.busyNotified &&
-       !console_input::executing() &&
+       !s_idleEvents.executingAtStart &&
        s_lastPerformed - s_idleEvents.started > kIdleEventBusyDelay)
    {
       s_idleEvents.busyNotified = true;
@@ -494,10 +523,10 @@ void polledEventHandler()
             client_init::handleClientInit(
                   boost::bind(enqueClientEvent, busyEvent), ptrConnection);
 
-            // when the computation is an input handler and the console is
+            // when the computation is an input handler and the console was
             // otherwise at its prompt, that busy state is ours to clear
             // when the handler returns (see processIdleEvents)
-            if (s_idleEvents.active && !console_input::executing())
+            if (s_idleEvents.active && !s_idleEvents.executingAtStart)
                s_idleEvents.busyNotified = true;
          }
          else
