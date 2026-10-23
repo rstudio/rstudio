@@ -65,23 +65,23 @@ function(rig_installed RESULT)
 endfunction()
 
 # Checks without writing anything, so callers can skip privilege escalation
-# when nothing is needed. It cannot take the lock, so installs still recheck
-# under it below, where a concurrent clean install cannot be mid-replacement.
+# when nothing is needed. It cannot take the lock, so installs check under it
+# instead, where a concurrent clean install cannot be mid-replacement.
 if(RIG_CHECK_ONLY)
+   if(RIG_CLEAN)
+      message(FATAL_ERROR "RIG_CHECK_ONLY cannot be combined with RIG_CLEAN")
+   endif()
    rig_installed(RIG_IS_INSTALLED)
    if(NOT RIG_IS_INSTALLED)
       # install-rig matches the RIG_NOT_INSTALLED token to tell this from other errors.
       message(FATAL_ERROR
          "RIG_NOT_INSTALLED: rig ${RSTUDIO_RIG_VERSION} is not installed in ${RIG_DIR}")
    endif()
-   message(STATUS "rig ${RSTUDIO_RIG_VERSION} already installed")
-   return()
+else()
+   file(MAKE_DIRECTORY "${RIG_ROOT}/rig")
+   file(LOCK "${RIG_ROOT}/rig/install.lock" GUARD PROCESS TIMEOUT 300)
+   rig_installed(RIG_IS_INSTALLED)
 endif()
-
-file(MAKE_DIRECTORY "${RIG_ROOT}/rig")
-file(LOCK "${RIG_ROOT}/rig/install.lock" GUARD PROCESS TIMEOUT 300)
-
-rig_installed(RIG_IS_INSTALLED)
 if(RIG_IS_INSTALLED)
    message(STATUS "rig ${RSTUDIO_RIG_VERSION} already installed")
    return()
