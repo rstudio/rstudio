@@ -38,29 +38,53 @@ endif()
 
 set(RIG_DIR "${RIG_ROOT}/rig/${RSTUDIO_RIG_VERSION}")
 set(RIG_STAGING "${RIG_DIR}.staging")
-file(MAKE_DIRECTORY "${RIG_ROOT}/rig")
-file(LOCK "${RIG_ROOT}/rig/install.lock" GUARD PROCESS TIMEOUT 300)
 
-# The marker is written only after the entire distribution is installed.
-# Check the supporting files too, so an interrupted or damaged install retries.
 set(RIG_REQUIRED_FILES "bin/${RIG_EXE}" "share" "LICENSE")
 if(RIG_PLATFORM STREQUAL "windows")
    list(APPEND RIG_REQUIRED_FILES "bin/rig-shim.exe" "bin/gsudo.exe" "LICENSE-gsudo")
 elseif(RIG_PLATFORM STREQUAL "linux")
    list(APPEND RIG_REQUIRED_FILES "share/rig/cacert.pem")
 endif()
-set(RIG_COMPLETE TRUE)
-foreach(FILE IN LISTS RIG_REQUIRED_FILES)
-   if(NOT EXISTS "${RIG_DIR}/${FILE}")
-      set(RIG_COMPLETE FALSE)
-   endif()
-endforeach()
-if(RIG_COMPLETE AND NOT RIG_CLEAN AND EXISTS "${RIG_DIR}/.installed")
-   file(READ "${RIG_DIR}/.installed" RIG_INSTALLED)
-   if(RIG_INSTALLED STREQUAL "${RIG_PLATFORM}-${RIG_ARCH}")
-      message(STATUS "rig ${RSTUDIO_RIG_VERSION} already installed")
+
+# The marker is written only after the entire distribution is installed.
+# Check the supporting files too, so an interrupted or damaged install retries.
+function(rig_installed RESULT)
+   set(${RESULT} FALSE PARENT_SCOPE)
+   if(RIG_CLEAN OR NOT EXISTS "${RIG_DIR}/.installed")
       return()
    endif()
+   foreach(FILE IN LISTS RIG_REQUIRED_FILES)
+      if(NOT EXISTS "${RIG_DIR}/${FILE}")
+         return()
+      endif()
+   endforeach()
+   file(READ "${RIG_DIR}/.installed" RIG_INSTALLED)
+   if(RIG_INSTALLED STREQUAL "${RIG_PLATFORM}-${RIG_ARCH}")
+      set(${RESULT} TRUE PARENT_SCOPE)
+   endif()
+endfunction()
+
+# Checks without writing anything, so callers can skip privilege escalation
+# when nothing is needed. It cannot take the lock, so installs check under it
+# instead, where a concurrent clean install cannot be mid-replacement.
+if(RIG_CHECK_ONLY)
+   if(RIG_CLEAN)
+      message(FATAL_ERROR "RIG_CHECK_ONLY cannot be combined with RIG_CLEAN")
+   endif()
+   rig_installed(RIG_IS_INSTALLED)
+   if(NOT RIG_IS_INSTALLED)
+      # install-rig matches the RIG_NOT_INSTALLED token to tell this from other errors.
+      message(FATAL_ERROR
+         "RIG_NOT_INSTALLED: rig ${RSTUDIO_RIG_VERSION} is not installed in ${RIG_DIR}")
+   endif()
+else()
+   file(MAKE_DIRECTORY "${RIG_ROOT}/rig")
+   file(LOCK "${RIG_ROOT}/rig/install.lock" GUARD PROCESS TIMEOUT 300)
+   rig_installed(RIG_IS_INSTALLED)
+endif()
+if(RIG_IS_INSTALLED)
+   message(STATUS "rig ${RSTUDIO_RIG_VERSION} already installed")
+   return()
 endif()
 
 if(NOT DEFINED RIG_URL_BASE)

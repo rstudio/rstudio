@@ -695,11 +695,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          return;
 
       boolean hidFocus = false;
-      for (Widget column : leftList_)
+      for (Widget column : getColumns())
          hidFocus |= updateCollapsedColumn(column);
-      hidFocus |= updateCollapsedColumn(center_);
-      hidFocus |= updateCollapsedColumn(right_);
-      hidFocus |= updateCollapsedColumn(sidebar_);
 
       if (hidFocus && focusedColumnCollapsedHandler_ != null)
          focusedColumnCollapsedHandler_.accept(getWidestColumn());
@@ -712,9 +709,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
     */
    private boolean updateCollapsedColumn(Widget column)
    {
-      if (!isColumn(column))
-         return false;
-
       // This runs on every layout pass, splitter drags included; write the
       // attributes only when the column's state changes.
       Element container = getWidgetContainerElement(column);
@@ -733,21 +727,62 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
    }
 
+   /**
+    * The narrowest a column can be and stay open. A layout with the sidebar
+    * below its minimum is discarded when it is restored from saved state.
+    */
+   public int getMinimumOpenWidth(Widget column)
+   {
+      return column == sidebar_ ? MINIMUM_SIDEBAR_WIDTH : COLLAPSED_COLUMN_WIDTH;
+   }
+
+   /**
+    * The width a column is being laid out at. Unlike getOffsetWidth(), this
+    * includes sizes set since the last layout pass, e.g. by a resize that is
+    * still animating.
+    */
+   public double getTargetWidth(Widget column)
+   {
+      if (column != center_)
+         return getWidgetSize(column);
+
+      // center_ gets what the docked columns and their splitters leave.
+      double width = getOffsetWidth();
+      for (Widget docked : getColumns())
+      {
+         if (docked != center_)
+            width -= getWidgetSize(docked) + getSplitterSize();
+      }
+      return Math.max(0, width);
+   }
+
+   /**
+    * The columns now in the panel, left to right apart from the sidebar: the
+    * source columns, center_, right_, then the sidebar if it is shown.
+    */
+   public ArrayList<Widget> getColumns()
+   {
+      ArrayList<Widget> candidates = new ArrayList<>(leftList_);
+      candidates.add(center_);
+      candidates.add(right_);
+      candidates.add(sidebar_);
+
+      ArrayList<Widget> columns = new ArrayList<>();
+      for (Widget candidate : candidates)
+      {
+         if (isColumn(candidate))
+            columns.add(candidate);
+      }
+      return columns;
+   }
+
    private Widget getWidestColumn()
    {
-      ArrayList<Widget> columns = new ArrayList<>(leftList_);
-      columns.add(center_);
-      columns.add(right_);
-      columns.add(sidebar_);
-
       Widget widest = null;
-      for (Widget column : columns)
+      for (Widget column : getColumns())
       {
-         if (isColumn(column) &&
-             (widest == null || column.getOffsetWidth() > widest.getOffsetWidth()))
-         {
+         if (widest == null || column.getOffsetWidth() > widest.getOffsetWidth())
             widest = column;
-         }
       }
       return widest;
    }
