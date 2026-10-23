@@ -39,10 +39,14 @@ RIG_ARGS=(
    "-DRIG_ARCH=${RIG_ARCH}"
 )
 
-# Only ask for root privileges when rig actually needs installing. A failed
-# check is expected when it does, so its error output is not shown.
-if cmake "${RIG_ARGS[@]}" -DRIG_CHECK_ONLY=ON -P "${SCRIPT_DIR}/install-rig.cmake" 2> /dev/null; then
+# Only ask for root privileges when rig actually needs installing. Any check
+# failure other than "not installed" is reported before prompting for a password.
+if RIG_CHECK=$(cmake "${RIG_ARGS[@]}" -DRIG_CHECK_ONLY=ON -P "${SCRIPT_DIR}/install-rig.cmake" 2>&1); then
+   echo "${RIG_CHECK}"
    exit 0
+elif [[ "${RIG_CHECK}" != *RIG_NOT_INSTALLED:* ]]; then
+   echo "${RIG_CHECK}" >&2
+   exit 1
 fi
 
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"

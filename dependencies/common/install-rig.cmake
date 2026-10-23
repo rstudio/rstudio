@@ -70,7 +70,9 @@ endfunction()
 if(RIG_CHECK_ONLY)
    rig_installed(RIG_IS_INSTALLED)
    if(NOT RIG_IS_INSTALLED)
-      message(FATAL_ERROR "rig ${RSTUDIO_RIG_VERSION} is not installed in ${RIG_DIR}")
+      # install-rig matches the RIG_NOT_INSTALLED token to tell this from other errors.
+      message(FATAL_ERROR
+         "RIG_NOT_INSTALLED: rig ${RSTUDIO_RIG_VERSION} is not installed in ${RIG_DIR}")
    endif()
    message(STATUS "rig ${RSTUDIO_RIG_VERSION} already installed")
    return()
