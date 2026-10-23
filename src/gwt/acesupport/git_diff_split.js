@@ -75,6 +75,17 @@ function eachFold(folds, callback) {
    });
 }
 
+// Unpairs folds (nested ones included) from their counterparts on the
+// other side.
+function unpairFolds(folds) {
+   eachFold(folds, function(fold) {
+      if (fold.other) {
+         fold.other.other = null;
+         fold.other = null;
+      }
+   });
+}
+
 var GitDiffSplitView = function(gutter, container, strings) {
    this.gutter = gutter;
    this.container = container;
@@ -290,48 +301,104 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       });
    };
 
-   // A fresh base (the view just opened, or the index moved) has no folds,
-   // while the document keeps its own; fold the base to match, so that
-   // unchanged lines stay level, pairing the folds up as Ace does for a fold
-   // made while the view is open. A fold whose lines the base does not have
-   // is left out.
-   //
-   // Folds nested in a fold are mirrored too, each as a fold of its own
-   // (Ace nests it under the enclosing one), so that expanding the outer
-   // fold in the base restores them in the document, where Ace's pairing
-   // removes the outer fold outright. Ace keeps a nested fold's range
-   // relative to its parent's start.
-   this.mirrorFolds = function() {
-      var self = this;
-      var session = this.baseEditor.session;
+   // Pairs a fold (given with its range in document coordinates, and its
+   // side: isOrig for the base) with a new fold of the same lines on the
+   // other side, as Ace does for a fold made while the view is open -- or
+   // with nothing, if the other side has none of those lines. Then the
+   // folds nested in it, each as a fold of its own: Ace nests a fold added
+   // within another, and keeps a nested fold's range relative to its
+   // parent's start. Expanding the fold on either side then restores them
+   // on both (see onChangeFold).
+   this.mirrorFold = function(fold, range, isOrig) {
+      var other = isOrig ? this.sessionB : this.sessionA;
 
-      var mirror = function(fold, range) {
-         if (!fold.other && !range.isEmpty()) {
-            var other;
+      if (!fold.other) {
+         var otherRange = this.transformRange(range, isOrig);
+         if (!otherRange.isEmpty()) {
+            var counterpart = null;
             try {
-               other = session.addFold(fold.placeholder, self.transformRange(range, false));
+               counterpart = other.addFold(fold.placeholder, otherRange);
             } catch (error) {
-               return;
+               // no room for it there: the lines are changed, or already
+               // folded another way
             }
 
-            if (other) {
-               fold.other = other;
-               other.other = fold;
+            if (counterpart) {
+               fold.other = counterpart;
+               counterpart.other = fold;
             }
          }
+      }
 
-         fold.subFolds.forEach(function(subFold) {
-            mirror(subFold, absoluteRange(subFold.range, range.start));
-         });
-      };
+      var self = this;
+      fold.subFolds.forEach(function(subFold) {
+         self.mirrorFold(subFold, absoluteRange(subFold.range, range.start), isOrig);
+      });
+   };
+
+   // A fresh base (the view just opened, or the index moved) has no folds,
+   // while the document keeps its own; fold the base to match, so that
+   // unchanged lines stay level.
+   this.mirrorFolds = function() {
+      var self = this;
 
       this.$syncingFold = true;
       try {
          this.liveEditor.session.getAllFolds().forEach(function(fold) {
-            mirror(fold, fold.range);
+            self.mirrorFold(fold, fold.range, false);
          });
       } finally {
          this.$syncingFold = false;
+      }
+   };
+
+   // Ace's handler, with two differences. A fold added over folds already
+   // there takes them in as nested folds (Ace removes them, which took their
+   // counterparts with them, and re-adds them under it); the counterpart
+   // made here gets nested folds of its own, so that expanding the fold on
+   // either side -- a plain removal of the counterpart, nested folds and
+   // all, followed by the re-adding of this side's nested folds -- brings
+   // them back on both. And a fold whose counterpart would be empty folds
+   // away the line widget on the row that follows on the other side only
+   // if that widget is this view's alignment padding, never a notebook
+   // chunk's output or an equation preview.
+   this.onChangeFold = function(ev, session) {
+      var fold = ev.data;
+      if (this.$syncingFold || !fold || !ev.action)
+         return;
+
+      this.scheduleRealign();
+      var isOrig = session === this.sessionA;
+      var other = isOrig ? this.sessionB : this.sessionA;
+
+      if (ev.action === "remove") {
+         var counterpart = fold.other;
+         if (counterpart) {
+            unpairFolds([fold]);
+            unpairFolds([counterpart]);
+            if (counterpart.foldLine && counterpart.foldLine.folds.indexOf(counterpart) !== -1)
+               other.removeFold(counterpart);
+         } else if (fold.lineWidget) {
+            // the padding comes back with the next alignment
+            fold.lineWidget = null;
+         }
+      } else if (ev.action === "add") {
+         var range = this.transformRange(fold.range, isOrig);
+         if (range.isEmpty()) {
+            var widget = other.lineWidgets && other.lineWidgets[range.start.row + 1];
+            if (widget && this.alignmentWidgets.indexOf(widget) !== -1) {
+               fold.lineWidget = widget;
+               other.widgetManager.removeLineWidget(widget);
+               (isOrig ? this.editorB : this.editorA).renderer.updateBackMarkers();
+            }
+         } else {
+            this.$syncingFold = true;
+            try {
+               this.mirrorFold(fold, fold.range, isOrig);
+            } finally {
+               this.$syncingFold = false;
+            }
+         }
       }
    };
 

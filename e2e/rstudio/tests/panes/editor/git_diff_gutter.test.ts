@@ -1300,9 +1300,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('keeps the document\'s folds through a base refresh, and folds the base to match', async ({
     rstudioPage: page,
   }) => {
-    // a committed function, folded in the document, with a change below it
+    // a committed function (with a block nested in it), folded in the
+    // document, with a change below it
     const foldPath = `${projectDir()}/fold.R`;
-    const seed = ['f <- function() {', '  x <- 1', '  y <- 2', '}', 'z <- 3'];
+    const seed = ['f <- function() {', '  if (TRUE) {', '    x <- 1', '  }', '  y <- 2', '}', 'z <- 3'];
     await executeInConsoleChecked(
       page,
       `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(foldPath)})`,
@@ -1310,10 +1311,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await commitAll(page, 'fold', [foldPath]);
     await executeInConsoleChecked(
       page,
-      `writeLines(c(${[...seed.slice(0, 4), 'z <- 30'].map(rStringLiteral).join(', ')}), ${rPathLiteral(foldPath)})`,
+      `writeLines(c(${[...seed.slice(0, 6), 'z <- 30'].map(rStringLiteral).join(', ')}), ${rPathLiteral(foldPath)})`,
     );
     await openFile(page, foldPath);
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [MODIFIED] });
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 6: [MODIFIED] });
 
     const editor = new AceEditor(page, '');
     await editor.gotoLine(1);
@@ -1325,15 +1326,21 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     const live = liveEditors(page, 'z <- 30');
     await expect(base).toBeVisible({ timeout: 10000 });
 
-    const baseFoldCount = () =>
-      base.evaluate(
-        (el) =>
-          ((el as AceEditorElement).env?.editor as unknown as { session: { getAllFolds(): unknown[] } })
-            .session.getAllFolds().length,
+    type FoldingEditor = {
+      session: { getAllFolds(): { subFolds: unknown[] }[] };
+      gotoLine(line: number, column: number): void;
+      execCommand(name: string): void;
+    };
+    const folds = (view: Locator) =>
+      view.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as FoldingEditor).session
+          .getAllFolds()
+          .map((fold) => fold.subFolds.length),
       );
+    const baseFoldCount = () => folds(base).then((counts) => counts.length);
     const level = async () => {
-      const [baseRow] = await screenRows(base, [4]);
-      const [liveRow] = await screenRows(live, [4]);
+      const [baseRow] = await screenRows(base, [6]);
+      const [liveRow] = await screenRows(live, [6]);
       return baseRow === liveRow;
     };
 
@@ -1350,7 +1357,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       // wholesale, which removes its folds -- and must not remove the
       // document's fold with them, as Ace's fold pairing otherwise would.
       // The base is then folded again to match.
-      const indexLines = [...seed.slice(0, 4), 'z <- 31'];
+      const indexLines = [...seed.slice(0, 6), 'z <- 31'];
       await executeInConsoleChecked(
         page,
         heredoc`
@@ -1372,7 +1379,36 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       expect(await editor.getFoldCount()).toBe(1);
       await expect.poll(baseFoldCount).toBe(1);
       await expect.poll(level).toBe(true);
-      expect(await viewMarkers(live)).toEqual({ 4: [MODIFIED] });
+      expect(await viewMarkers(live)).toEqual({ 6: [MODIFIED] });
+
+      // Folds made while the view is open are paired as they come, nested
+      // ones included: with the function expanded, fold the block inside
+      // it and then the function again, and the base has a fold with one
+      // nested in it, like the document. Expanding the function from the
+      // base pane then leaves the nested fold in place on both sides.
+      await editor.gotoLine(1);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => editor.getFoldCount()).toBe(0);
+      await expect.poll(baseFoldCount).toBe(0);
+
+      await editor.gotoLine(2);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => folds(live)).toEqual([0]);
+      await expect.poll(() => folds(base)).toEqual([0]);
+      await editor.gotoLine(1);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => folds(live)).toEqual([1]);
+      await expect.poll(() => folds(base)).toEqual([1]);
+      await expect.poll(level).toBe(true);
+
+      await base.evaluate((el) => {
+        const baseEditor = (el as AceEditorElement).env?.editor as unknown as FoldingEditor;
+        baseEditor.gotoLine(1, 0);
+        baseEditor.execCommand('toggleFoldWidget');
+      });
+      await expect.poll(() => folds(live)).toEqual([0]);
+      await expect.poll(() => folds(base)).toEqual([0]);
+      await expect.poll(level).toBe(true);
     } finally {
       await executeInConsoleChecked(
         page,
