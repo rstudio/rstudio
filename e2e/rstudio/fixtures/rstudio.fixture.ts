@@ -15,7 +15,14 @@ import {
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
 import { readRemoteOdbcStatus } from '../utils/connections';
 import { withDeadline, DeadlineError } from '../utils/deadline';
-import { attachDeafSessionDiagnostics, probeSessionLiveness } from '../utils/session-liveness';
+import {
+  attachDeafSessionDiagnostics,
+  DeafSessionError,
+  probeSessionLiveness,
+  recordDeafSessionAtShutdown,
+  sessionsRunLocally,
+} from '../utils/session-liveness';
+import * as os from 'os';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
@@ -457,6 +464,11 @@ export const test = base.extend<
         await applyOdbcSysIni(session.page, odbcDir);
       }
       await use({ page: session.page, consoleBuffer });
+      await recordDeafSessionAtShutdown(
+        session.page,
+        process.env.PW_SANDBOX ?? os.tmpdir(),
+        sessionsRunLocally(mode, externalServerUrl()),
+      );
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
@@ -473,6 +485,7 @@ export const test = base.extend<
         configRoot: session.configRoot,
       });
       await logPositAssistantVersionIfInstalled(session);
+      await recordDeafSessionAtShutdown(session.page, session.logDir, true);
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
@@ -536,15 +549,27 @@ export const test = base.extend<
       );
     }
 
+    // Let a session transition the previous test started (a restart, a
+    // project switch) finish before judging the session: ready drops when
+    // one begins and returns with the new session's deferred init, and the
+    // outgoing session answers pings with connection_refused meanwhile. The
+    // same page-side gate resetForNextTest applies, with the same budget;
+    // a deaf session keeps ready true, so it reaches the probe below.
+    try {
+      await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000, polling: 100 });
+    } catch (err) {
+      await attachFailureContext();
+      throw err;
+    }
+
     // A page that answers evaluates can still sit on a session that has
     // stopped serving requests (#19236: R running code dispatched from the
     // idle event loop). Nothing DOM-based notices, and every bridge call that
     // awaits an RPC then hangs for its whole budget. Round-trip the session
     // main thread before touching it, bounded; on silence, record what R is
     // doing and fail fast so the worker restarts with a fresh session. The
-    // dump is of this machine's rsessions, which an external server's are
-    // not.
-    const sessionsAreLocal = mode === 'desktop' || externalServerUrl() === null;
+    // dump is of this machine's rsessions, which a remote server's are not.
+    const sessionsAreLocal = sessionsRunLocally(mode, externalServerUrl());
     try {
       await probeSessionLiveness(page);
     } catch (err) {
@@ -552,7 +577,7 @@ export const test = base.extend<
       const { url, screenshotNote } = await capturePageState(page, testInfo, 'deaf-session.png', screenshot);
       const pageNote = `page URL: ${url} (${screenshotNote})`;
       let failure: Error;
-      if (cause instanceof DeadlineError) {
+      if (cause instanceof DeafSessionError) {
         failure = await attachDeafSessionDiagnostics(testInfo, cause, pageNote, sessionsAreLocal);
       } else {
         // Answered, but with an error that outlasted the probe's retries:
@@ -571,7 +596,7 @@ export const test = base.extend<
     // see disableLeakedAssistant (also for why multi-worker runs against an
     // external server are excluded). Runs after resetForNextTest so the
     // bridge readiness gate has already been cleared.
-    const prefsAreWorkerScoped = sessionsAreLocal;
+    const prefsAreWorkerScoped = mode === 'desktop' || externalServerUrl() === null;
     const cannotRaceAnotherWorker = testInfo.config.workers === 1;
     if ((prefsAreWorkerScoped || cannotRaceAnotherWorker) &&
         !testInfo.tags.some((tag) => ASSISTANT_TEST_TAGS.includes(tag)))
@@ -620,11 +645,30 @@ export const test = base.extend<
       testInfo.status !== testInfo.expectedStatus ||
       wedge !== null ||
       (raised.length > 0 && !ignoreClientExceptions);
+
+    // A test that failed (a timeout above all) may have failed because the
+    // session went deaf under it, and the setup probe only ever sees the
+    // session before a test. Ask once more while the session is still here:
+    // Playwright replaces the worker after a failure, and the shutdown that
+    // follows takes the stacks with it. Only a silent ping is evidence; a
+    // ping answered with an error adds nothing the failure does not carry.
+    let deaf: Error | null = null;
+    if (willFail && wedge === null) {
+      try {
+        await probeSessionLiveness(page);
+      } catch (err) {
+        if (err instanceof DeafSessionError)
+          deaf = await attachDeafSessionDiagnostics(testInfo, err, `detected after the test (status: ${testInfo.status})`, sessionsAreLocal);
+      }
+    }
+
     if (willFail)
       await attachFailureContext();
 
     if (wedge)
       throw wedge;
+    if (deaf)
+      throw deaf;
 
     if (raised.length > 0) {
       const detail = raised.map((e) => `${e.message}\n${e.stack}`).join('\n---\n');

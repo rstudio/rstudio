@@ -19,6 +19,19 @@ import type { Page, TestInfo } from '@playwright/test';
 import { withDeadline, DeadlineError } from './deadline';
 
 /**
+ * The ping RPC was sent and the session's main thread did not answer it in
+ * time. A DeadlineError, so existing bounded-stage handling applies, but
+ * distinct from the bridge check timing out (a page with no JS context, the
+ * #18394 wedge), which says nothing about the session.
+ */
+export class DeafSessionError extends DeadlineError {
+  constructor(ms: number) {
+    super('session liveness probe (ping RPC)', ms);
+    this.name = 'DeafSessionError';
+  }
+}
+
+/**
  * Round-trip budget for the liveness probe. A healthy session answers a
  * ping in milliseconds; one still settling a restart answers within a few
  * seconds. 15s is well past both and still leaves the test its own budget
@@ -32,16 +45,17 @@ export const SESSION_LIVENESS_DEADLINE_MS = 15_000;
  * that is still shutting down ahead of a relaunch. Short, since a session
  * in transition answers again within a second or two.
  */
-const PING_RETRY_DELAYS_MS = [500, 1000];
+const PING_RETRY_DELAYS_MS = [500, 1000, 2000];
 
 /**
  * Round-trip the session's main thread through `window.rstudio.session.ping()`.
  *
  * Resolves 'alive' once the ping is answered, 'unsupported' against a binary
- * whose bridge predates the method, and rejects with a DeadlineError when
+ * whose bridge predates the method, and rejects with a DeafSessionError when
  * the main thread does not answer within `deadlineMs`. The bridge check is
- * bounded too: an evaluate against a page with no JS context (the #18394
- * wedge) would otherwise hang here instead of in the drain that precedes it.
+ * bounded too (a plain DeadlineError): an evaluate against a page with no JS
+ * context (the #18394 wedge) would otherwise hang here instead of in the
+ * drain that precedes it.
  *
  * A ping that is answered with an error is not a deaf session: it is retried
  * a couple of times (the same transport flakes withPrefWriteRetry absorbs for
@@ -62,11 +76,17 @@ export async function probeSessionLiveness(
       if (!supported)
         return 'unsupported';
 
-      await withDeadline(
-        page.evaluate(() => window.rstudio!.session!.ping()),
-        deadlineMs,
-        'session liveness probe (ping RPC)',
-      );
+      try {
+        await withDeadline(
+          page.evaluate(() => window.rstudio!.session!.ping()),
+          deadlineMs,
+          'session liveness probe (ping RPC)',
+        );
+      } catch (err) {
+        if (err instanceof DeadlineError)
+          throw new DeafSessionError(deadlineMs);
+        throw err;
+      }
       return 'alive';
     } catch (err) {
       if (err instanceof DeadlineError || attempt >= PING_RETRY_DELAYS_MS.length)
@@ -76,6 +96,20 @@ export async function probeSessionLiveness(
       await new Promise((resolve) => setTimeout(resolve, PING_RETRY_DELAYS_MS[attempt]));
     }
   }
+}
+
+/**
+ * Whether this run's rsessions are processes on this machine, which is what
+ * the stack dump can see. Desktop always; server mode when the harness
+ * spawns its own rserver, or when PW_RSTUDIO_SERVER_URL points at this
+ * host (the Ubuntu Server workflow runs rserver locally and sets
+ * http://localhost:8787). Anything else is a remote server.
+ */
+export function sessionsRunLocally(mode: 'desktop' | 'server', externalUrl: string | null): boolean {
+  if (mode === 'desktop' || externalUrl === null)
+    return true;
+  const host = new URL(externalUrl).hostname.replace(/^\[|\]$/g, '');
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
 }
 
 /**
@@ -108,10 +142,11 @@ const DUMP_LIMIT = 1024 * 1024;
  * macOS: `sample`, which works unprivileged on the caller's own processes and
  * names frames from the binary's own symbols (that is how #19236 was found).
  * Linux: thread states with their kernel wait channels (always readable),
- * then gdb when it is installed and may attach -- Ubuntu's default
- * ptrace_scope refuses a non-child, so the gdb section may just say so; the
- * CI workflows run the same script privileged at the end of a failed shard.
- * Windows: not attempted.
+ * then gdb when it is installed and may attach. Ubuntu's default
+ * ptrace_scope refuses a non-descendant, which rsession is to gdb even
+ * though both descend from the worker, so the script escalates with
+ * passwordless `sudo -n` where that exists (the CI runners) and otherwise
+ * says so. Windows: not attempted.
  */
 export function dumpRSessionStacks(): string {
   if (process.platform === 'win32')
@@ -178,4 +213,43 @@ export async function attachDeafSessionDiagnostics(
     `idle event loop (#19236) -- ${evidence}. Failing fast so the worker restarts ` +
     'with a fresh session.',
   );
+}
+
+/**
+ * Last look before a worker shuts its session down: if the session has gone
+ * deaf, write the stack dump next to the rsession logs (desktop) or into the
+ * sandbox (server), both preserved on failure, and say so on the console.
+ *
+ * The per-test probes cover a session that goes deaf between tests or
+ * during a test body; this covers what they cannot attach to a test -- a
+ * beforeAll / afterAll hook that wedged it -- and runs before the shutdown
+ * that would otherwise take the evidence with it (the workflows' end-of-shard
+ * dump finds nothing after a Desktop teardown). A healthy session costs a
+ * ping; a page without a JS context (the #18394 wedge) is left alone, since
+ * that says nothing about the session.
+ */
+export async function recordDeafSessionAtShutdown(
+  page: Page,
+  outDir: string,
+  localSessions: boolean,
+): Promise<void> {
+  try {
+    await probeSessionLiveness(page);
+  } catch (err) {
+    if (!(err instanceof DeafSessionError))
+      return;
+    if (!localSessions) {
+      console.error(`[deaf-session] at worker shutdown: ${err.message}; sessions are remote, no stack dump taken`);
+      return;
+    }
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*$/, 'Z');
+    const file = path.join(outDir, `rsession-stacks-${stamp}.txt`);
+    try {
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(file, dumpRSessionStacks());
+      console.error(`[deaf-session] at worker shutdown: ${err.message}; rsession stack dump written to ${file}`);
+    } catch (writeErr) {
+      console.error(`[deaf-session] at worker shutdown: ${err.message}; could not write ${file}: ${String(writeErr)}`);
+    }
+  }
 }

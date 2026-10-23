@@ -18,7 +18,10 @@
 #
 # Linux backtraces come from gdb, which needs ptrace rights over the target:
 # run as root (sudo) on a runner where the sessions belong to another account
-# or where ptrace_scope restricts attaching. The packaged rsession is
+# or where ptrace_scope restricts attaching. When run unprivileged, gdb is
+# escalated through passwordless `sudo -n` if that works (the CI runners),
+# since Ubuntu's default ptrace_scope lets a process attach only to its own
+# descendants and rsession is not one of gdb's. The packaged rsession is
 # stripped; its frames are named only when the build's rsession.debug sits
 # next to the binary (the Linux Server workflow installs it). macOS uses
 # `sample`, which works unprivileged on the caller's own processes and names
@@ -64,9 +67,14 @@ dump_linux() {
   echo
   echo "=== gdb: thread apply all bt ==="
   if command -v gdb >/dev/null; then
+    local as_root=()
+    if [ "$(id -u)" != 0 ] && sudo -n true 2>/dev/null; then
+      as_root=(sudo -n)
+      echo "(attaching via sudo -n)"
+    fi
     # A debugger stuck attaching or unwinding must not block recovery or
     # the workflow's final artifact upload. Escalate if it ignores SIGTERM.
-    timeout --kill-after=5s 30s \
+    ${as_root[@]+"${as_root[@]}"} timeout --kill-after=5s 30s \
       gdb -batch -p "$pid" -ex 'set pagination off' -ex 'thread apply all bt' 2>&1 \
       || echo "(gdb failed or timed out; continuing)"
   else
