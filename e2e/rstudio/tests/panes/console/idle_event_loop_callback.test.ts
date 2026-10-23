@@ -203,11 +203,12 @@ test.describe('Idle event loop callbacks', () => {
     const flag = path.join(sandbox.dir, `error-discards-${Date.now()}.flag`);
     // The console reset R runs on an uncaught error discards queued input
     // under this pref (its default) -- the other way, besides an interrupt,
-    // that input queued behind a callback is dropped.
+    // that input queued behind a callback is dropped. The error message is
+    // assembled so the echoed command cannot satisfy the wait for it.
     await setPref(page, 'discard_pending_console_input_on_error', true);
 
     await executeInConsole(page,
-      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); stop("boom") }, 0.1)`);
+      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); stop(paste0("bo", "om")) }, 0.1)`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
     await submitAndAwaitQueued(page, 'cat("discarded", "input\\n")');
     await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
@@ -228,7 +229,7 @@ test.describe('Idle event loop callbacks', () => {
     await setPref(page, 'discard_pending_console_input_on_error', false);
 
     await executeInConsole(page,
-      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); stop("boom") }, 0.1)`);
+      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); stop(paste0("bo", "om")) }, 0.1)`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
     const promptCountBefore = await getConsolePromptCount(page);
     await submitAndAwaitQueued(page, 'cat("kept", "input\\n")');
@@ -252,7 +253,7 @@ test.describe('Idle event loop callbacks', () => {
     await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
     const promptCountBefore = await getConsolePromptCount(page);
 
-    await executeInConsole(page, 'later::later(function() stop("boom"), 0.1)', { wait: false });
+    await executeInConsole(page, 'later::later(function() stop(paste0("bo", "om")), 0.1)', { wait: false });
     await expect(consoleActions.consolePane.consoleOutput).toContainText('boom');
 
     // Only the call itself and the command below complete: two prompts. The

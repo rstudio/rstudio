@@ -112,9 +112,12 @@ struct IdleEventState
    // the client was told R is busy at some point: busy=false is owed when
    // the handlers return, however many times the report was re-armed
    bool busyReported = false;
-   // console input was executing when the handlers were dispatched (a wait
-   // for the client nested in a running command): the client is busy anyway
-   bool executingAtStart = false;
+   // the busy report applies: the handlers run for a console read, with no
+   // console input executing. not for a read nested in a running command
+   // (the client is busy anyway), and not for a wait for the client inside
+   // a command or an RPC's R code (a dialog): the console shows no prompt
+   // afterwards that would clear a report, and the client is in the dialog
+   bool reportsBusy = false;
    // prompts issued when the busy report was last (re)armed; a handler's own
    // console read (readline()) issues one, which clears the client's busy
    // state, so the report is armed again after it
@@ -190,13 +193,13 @@ void processEvents()
 class IdleEventsScope
 {
 public:
-   explicit IdleEventsScope(bool active)
+   explicit IdleEventsScope(bool active, bool reportsBusy = false)
       : saved_(s_idleEvents)
    {
       IdleEventState state;
       state.active = active;
       state.started = boost::posix_time::microsec_clock::universal_time();
-      state.executingAtStart = console_input::executing();
+      state.reportsBusy = reportsBusy;
       state.promptsIssued = console_input::promptsIssued();
       setIdleEvents(state);
    }
@@ -223,7 +226,9 @@ bool processIdleEvents(const std::string& method)
    unsigned readsBefore = console_input::readsCompleted();
    unsigned discardsBefore = console_input::inputDiscards();
    {
-      IdleEventsScope idleEventsActive(true);
+      IdleEventsScope idleEventsActive(
+               true,
+               method == kConsoleInput && !console_input::executing());
       processEvents();
       busyReported = s_idleEvents.busyReported;
    }
@@ -480,7 +485,7 @@ void polledEventHandler()
    // the console was busy anyway): say R is busy so it offers the interrupt
    // (undone when the handler returns)
    if (s_idleEvents.active && !s_idleEvents.busyNotified &&
-       !s_idleEvents.executingAtStart)
+       s_idleEvents.reportsBusy)
    {
       if (!s_idleEvents.busyDelay)
          s_idleEvents.busyDelay = idleEventBusyDelay();
@@ -547,7 +552,7 @@ void polledEventHandler()
             // when the computation is an input handler and the console was
             // otherwise at its prompt, that busy state is ours to clear
             // when the handler returns (see processIdleEvents)
-            if (s_idleEvents.active && !s_idleEvents.executingAtStart)
+            if (s_idleEvents.active && s_idleEvents.reportsBusy)
             {
                s_idleEvents.busyNotified = true;
                s_idleEvents.busyReported = true;
@@ -564,6 +569,12 @@ void polledEventHandler()
             }
             handleConnection(ptrConnection, http_methods::BackgroundConnection);
          }
+
+         // a request served is activity, as in waitForMethod: console input
+         // queued behind an input handler and then discarded (an interrupt)
+         // is never handed back, so nothing else would keep an idle suspend
+         // from following a handler that outlasted the timeout
+         suspend::resetSuspendTimeout(ptrConnection);
       }
    }
 }
@@ -819,6 +830,7 @@ bool waitForMethod(const std::string& method,
          json::JsonRpcRequest discarded;
          if (parseAndValidateJsonRpcConnection(ptrConnection, &discarded))
             ptrConnection->sendJsonRpcResponse();
+         suspend::resetSuspendTimeout(ptrConnection);
          ptrConnection.reset();
 
          if (!promptRestored)
