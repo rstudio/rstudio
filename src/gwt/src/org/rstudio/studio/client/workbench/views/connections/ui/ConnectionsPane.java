@@ -30,7 +30,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -134,7 +133,8 @@ public class ConnectionsPane extends WorkbenchPane
          }
       };
          
-      connectionsDataGrid_.addColumn(typeColumn_, hiddenHeader(constants_.typeColumnHeader()));
+      connectionsDataGrid_.addColumn(typeColumn_,
+            SafeHtmlUtil.visuallyHiddenText(constants_.typeColumnHeader()));
       connectionsDataGrid_.setColumnWidth(typeColumn_, 20, Unit.PX);
             
       // add host column
@@ -178,7 +178,7 @@ public class ConnectionsPane extends WorkbenchPane
               constants_.exploreConnectionTitle()) {
       };
       connectionsDataGrid_.addColumn(exploreColumn,
-            hiddenHeader(constants_.exploreColumnHeader()));
+            SafeHtmlUtil.visuallyHiddenText(constants_.exploreColumnHeader()));
       connectionsDataGrid_.setColumnWidth(exploreColumn, 30, Unit.PX);
       
       // data provider
@@ -576,17 +576,6 @@ public class ConnectionsPane extends WorkbenchPane
              return -1 * Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
        }       
     });
-   }
-
-   // these columns are too narrow for visible header text, so give their header
-   // cells hidden text; an empty <th> leaves the column header unnamed
-   private static SafeHtml hiddenHeader(String text)
-   {
-      SafeHtmlBuilder header = new SafeHtmlBuilder();
-      header.appendHtmlConstant("<span class=\"" + ThemeStyles.INSTANCE.visuallyHidden() + "\">");
-      header.appendEscaped(text);
-      header.appendHtmlConstant("</span>");
-      return header.toSafeHtml();
    }
 
    private static class ConnectionTypeCell extends AbstractCell<Connection>
