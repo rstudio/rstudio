@@ -216,8 +216,10 @@ Two areas need the most care:
   native elements over ARIA on `div`s. Hide decorative images, and announce status changes
   that sighted users would notice visually.
 
-Helpers: `core/client/a11y/A11y.java` sets ARIA attributes and makes elements inert or
-visually hidden. `AriaLiveService` announces status changes. Automated axe-core scans live in
+Helpers: `src/gwt/src/org/rstudio/core/client/a11y/A11y.java` sets ARIA attributes and makes
+elements inert or visually hidden.
+`src/gwt/src/org/rstudio/studio/client/application/AriaLiveService.java` announces status
+changes. Automated axe-core scans live in
 `e2e/rstudio/tests/a11y/` (see "Accessibility Tests" in `e2e/rstudio/README.md`). They only
 catch some kinds of problems, so check keyboard and screen-reader behavior by hand too.
 
