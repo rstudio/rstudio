@@ -58,7 +58,7 @@ set(FETCHCONTENT_QUIET TRUE)
 # REPOSITORY:   The (git) repository to be used when retrieving the dependency.
 # REVISION:     The (git) revision / commit hash to be used when retrieving the dependency.
 # CUSTOM:       Optional; when TRUE, the project is retrieved but not automatically added to the build.
-# REQUIRED:     Optional; when TRUE, it will always be downloaded instead of using a system package
+# ALWAYS_FETCH: Optional; when TRUE, it will always be downloaded instead of using a system package
 # PLATFORMS:    Optional; a list of platforms for which this dependency should be retrieved and built.
 #
 # This function also accepts and ignores these optional single-value arguments, which are used to render
@@ -86,16 +86,16 @@ set(FETCHCONTENT_QUIET TRUE)
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;REQUIRED;VERSION;REPOSITORY;REVISION;CFLAGS;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;ALWAYS_FETCH;VERSION;REPOSITORY;REVISION;CFLAGS;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
 
-   set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
-   set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
-   set(${_NAME}_REVISION   "${_REVISION}"   CACHE INTERNAL "")
-   set(${_NAME}_CUSTOM     "${_CUSTOM}"     CACHE INTERNAL "")
-   set(${_NAME}_REQUIRED   "${_REQUIRED}"   CACHE INTERNAL "")
-   set(${_NAME}_PLATFORMS  "${_PLATFORMS}"  CACHE INTERNAL "")
-   set(${_NAME}_CFLAGS     "${_CFLAGS}"     CACHE INTERNAL "")
-   set(${_NAME}_CXXFLAGS   "${_CXXFLAGS}"   CACHE INTERNAL "")
+   set(${_NAME}_VERSION      "${_VERSION}"      CACHE INTERNAL "")
+   set(${_NAME}_REPOSITORY   "${_REPOSITORY}"   CACHE INTERNAL "")
+   set(${_NAME}_REVISION     "${_REVISION}"     CACHE INTERNAL "")
+   set(${_NAME}_CUSTOM       "${_CUSTOM}"       CACHE INTERNAL "")
+   set(${_NAME}_ALWAYS_FETCH "${_ALWAYS_FETCH}" CACHE INTERNAL "")
+   set(${_NAME}_PLATFORMS    "${_PLATFORMS}"    CACHE INTERNAL "")
+   set(${_NAME}_CFLAGS       "${_CFLAGS}"       CACHE INTERNAL "")
+   set(${_NAME}_CXXFLAGS   "  ${_CXXFLAGS}"     CACHE INTERNAL "")
 
    set(${_NAME}_ENABLED FALSE)
    if(_PLATFORMS)
@@ -188,7 +188,7 @@ function(fetch)
       endif()
 
       if(${_PREFIX}_ENABLED)
-         if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
+         if(NOT ${_PREFIX}_ALWAYS_FETCH AND (RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX}))
             find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
          else()
             set(${_PREFIX}_FETCHED TRUE)
@@ -243,6 +243,7 @@ dependency(DTL
    REPOSITORY "https://github.com/cubicdaiya/dtl"
    REVISION   "32567bb9ec704f09040fb1ed7431a3d967e3df03" # pragma: allowlist secret
    CUSTOM     TRUE
+   ALWAYS_FETCH TRUE
 )
 
 
@@ -363,7 +364,7 @@ dependency(HUNSPELL
    REPOSITORY "https://github.com/hunspell/hunspell"
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
    CUSTOM     TRUE
-   REQUIRED   TRUE
+   ALWAYS_FETCH TRUE
 )
 
 
@@ -375,7 +376,6 @@ dependency(RAPIDJSON
    REPOSITORY "https://github.com/Tencent/rapidjson"
    REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f" # pragma: allowlist secret
    CUSTOM     TRUE
-   REQUIRED   TRUE
 )
 
 
@@ -410,6 +410,7 @@ dependency(WEBSOCKETPP
    REPOSITORY "https://github.com/amini-allight/websocketpp"
    REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
    CUSTOM     TRUE
+   ALWAYS_FETCH TRUE
 )
 
 
@@ -484,7 +485,7 @@ fetch(
    hunspell              HUNSPELL
    RapidJSON             RAPIDJSON
    tl-expected           TL_EXPECTED
-   utfcpp                UTFCPP
+   utf8cpp               UTFCPP
    websocketpp           WEBSOCKETPP
    yaml-cpp              YAML_CPP)
 
@@ -546,12 +547,20 @@ endif()
 # Create rapidjson target.
 add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
 target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
-target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+if(TARGET RapidJSON)
+    target_link_libraries(rstudio-rapidjson INTERFACE RapidJSON)
+else()
+    target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+endif()
 
 
 # Create utfcpp target.
-add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
-target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
+if(TARGET utf8cpp::utf8cpp)
+  add_library(rstudio-utfcpp ALIAS utf8cpp::utf8cpp)
+else()
+  add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
+  target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
+endif()
 
 
 # Create websocketpp target.
