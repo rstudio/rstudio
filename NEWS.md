@@ -54,6 +54,7 @@
 - Electron 44.9.3
 - RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
 - GWT 2.13.1
+- Node.js 24.22.1 (GitHub Copilot, Posit Assistant)
 - Quarto 1.10.19
 - RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
 - Updated OpenSSL on Windows from 3.1.4 to 3.5.9
