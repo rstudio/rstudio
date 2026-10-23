@@ -46,6 +46,10 @@ void setExecuting(bool executing);
 void updateSessionExecuting();
 core::Error extractConsoleInput(const core::json::JsonRpcRequest& request);
 void reissueLastConsolePrompt();
+
+// reissue the last top-level prompt as it was issued -- with its own history
+// flag -- for a client that was told R is busy while that prompt was waiting
+void restoreLastConsolePrompt();
 void addToConsoleInputBuffer(
       const rstudio::r::session::RConsoleInput& consoleInput);
 

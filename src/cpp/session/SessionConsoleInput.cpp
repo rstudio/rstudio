@@ -76,8 +76,11 @@ std::atomic<int> s_sessionExecuting(0);
 // leaked: locked by the offline service thread (#18318)
 boost::mutex& s_sessionExecutingMutex = core::make_leaked<boost::mutex>();
 
-// last prompt we issued
+// last top-level prompt we issued, and whether the input it collects is
+// added to the console history (a plain prompt) or not (an interactive one:
+// readline(), menu(), ...)
 std::string s_lastPrompt;
+bool s_lastPromptAddToHistory = true;
 
 void setSessionExecuting(bool executing)
 {
@@ -174,7 +177,10 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    // is called after code execution completes and should restore the
    // top-level prompt, not a transient one.
    if (!r::session::isBusy())
+   {
       s_lastPrompt = prompt;
+      s_lastPromptAddToHistory = addToHistory;
+   }
 
    // enque the event
    json::Object data;
@@ -245,6 +251,11 @@ void updateSessionExecuting()
 void reissueLastConsolePrompt()
 {
    consolePrompt(s_lastPrompt, false);
+}
+
+void restoreLastConsolePrompt()
+{
+   consolePrompt(s_lastPrompt, s_lastPromptAddToHistory);
 }
 
 void clearConsoleInputBuffer()

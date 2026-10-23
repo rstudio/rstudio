@@ -67,16 +67,20 @@ test.describe('Idle event loop callbacks', () => {
     await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
   });
 
-  test('console input sent while a callback runs is queued for the next prompt', async ({ rstudioPage: page }) => {
+  test('console input sent while a callback runs is queued, in order, for the next prompt', async ({ rstudioPage: page }) => {
     // The callback announces itself so the input below is sent while it is
     // running, and ends on its own: an interrupt would discard queued input.
     await executeInConsole(page, 'later::later(function() { cat("callback", "started\\n"); Sys.sleep(3) }, 0.1)');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
 
+    // Two submissions whose second depends on the first: queued input must
+    // run in the order it was sent.
     const promptCountBefore = await getConsolePromptCount(page);
-    await executeInConsole(page, 'cat("after", "callback\\n")', { wait: false });
+    await executeInConsole(page, '.idle_callback_test <- "after callback"', { wait: false });
+    await executeInConsole(page, 'cat(.idle_callback_test, "ran", "second\\n")', { wait: false });
 
     await waitForConsoleCommandComplete(page, promptCountBefore, 20000);
-    await expect(consoleActions.consolePane.consoleOutput).toContainText('after callback');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('after callback ran second');
+    await expect(consoleActions.consolePane.consoleOutput).not.toContainText('Error');
   });
 });

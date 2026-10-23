@@ -195,7 +195,7 @@ void processIdleEvents()
    {
       ClientEvent busyEvent(client_events::kBusy, false);
       module_context::enqueClientEvent(busyEvent);
-      console_input::reissueLastConsolePrompt();
+      console_input::restoreLastConsolePrompt();
    }
 }
 
@@ -482,6 +482,12 @@ void polledEventHandler()
             ClientEvent busyEvent(client_events::kBusy, true);
             client_init::handleClientInit(
                   boost::bind(enqueClientEvent, busyEvent), ptrConnection);
+
+            // when the computation is an input handler and the console is
+            // otherwise at its prompt, that busy state is ours to clear
+            // when the handler returns (see processIdleEvents)
+            if (s_idleEvents.active && !console_input::executing())
+               s_idleEvents.busyNotified = true;
          }
          else
          {
@@ -667,6 +673,24 @@ bool waitForMethod(const std::string& method,
          core::startup_timing::checkpoint("first-request:" + ptrConnection->request().uri());
       }
 
+      // console input is queued the moment it is dequeued, ahead of this
+      // iteration's input handlers: input one of them lets through
+      // (bufferConsoleInput) has to land behind it, not ahead of it
+      bool inputQueued = false;
+      if (ptrConnection && method == kConsoleInput && isMethod(ptrConnection, kConsoleInput))
+      {
+         if (!http_methods::verifyRequestSignature(ptrConnection->request()))
+         {
+            LOG_ERROR_MESSAGE("Invalid signature for request URI " + ptrConnection->request().uri());
+            core::http::Response response;
+            response.setError(http::status::Unauthorized, "Invalid message signature");
+            ptrConnection->sendResponse(response);
+            continue;
+         }
+
+         bufferConsoleInput(ptrConnection);
+         inputQueued = true;
+      }
 
       // perform background processing (true for isIdle)
       module_context::onBackgroundProcessing(true);
@@ -674,7 +698,16 @@ bool waitForMethod(const std::string& method,
       // process pending events
       processIdleEvents();
 
-      if (ptrConnection)
+      if (inputQueued)
+      {
+         // answered above; the input itself is handed back below. the
+         // bookkeeping matches a connection handled here
+         suspend::resetSuspendTimeout(ptrConnection);
+         if (!rstudio::r::session::event_loop::polledEventHandlerInitialized())
+            rstudio::r::session::event_loop::initializePolledEventHandler(
+               polledEventHandler);
+      }
+      else if (ptrConnection)
       {
          // ensure request signature is valid
          if (!http_methods::verifyRequestSignature(ptrConnection->request()))
@@ -756,9 +789,9 @@ bool waitForMethod(const std::string& method,
          }
       }
 
-      // console input buffered while an input handler ran (see
-      // bufferConsoleInput) is what this wait is for; hand it back without
-      // a request (rConsoleRead reads the buffer)
+      // queued console input -- the request dequeued above, or one an input
+      // handler let through (see bufferConsoleInput) -- is what this wait is
+      // for; hand it back without a request (rConsoleRead reads the buffer)
       if (method == kConsoleInput && console_input::hasPendingInput())
       {
          *pRequest = json::JsonRpcRequest();
