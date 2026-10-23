@@ -115,13 +115,14 @@ function eachFold(folds, callback) {
 
 // Unpairs folds (nested ones included) from their counterparts on the
 // other side.
-function unpairFolds(folds) {
-   eachFold(folds, function(fold) {
-      if (fold.other) {
-         fold.other.other = null;
-         fold.other = null;
-      }
+// Whether a fold is in a session, at the top level or nested in one that is.
+function foldPresent(session, fold) {
+   var present = false;
+   eachFold(session.getAllFolds(), function(candidate) {
+      if (candidate === fold)
+         present = true;
    });
+   return present;
 }
 
 var GitDiffSplitView = function(gutter, container, strings) {
@@ -356,10 +357,23 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.mirrorFold = function(fold, range, isOrig) {
       var other = isOrig ? this.sessionB : this.sessionA;
 
-      if (!fold.other) {
+      // A fold re-added by an expansion keeps its counterpart, which went
+      // with the expanded fold's (see onChangeFold): that one comes back,
+      // nested folds and all, rather than a new one.
+      var counterpart = fold.other;
+      if (counterpart && !foldPresent(other, counterpart)) {
+         try {
+            other.addFold(counterpart);
+         } catch (error) {
+            fold.other = null;
+            counterpart.other = null;
+            counterpart = null;
+         }
+      }
+
+      if (!counterpart) {
          var otherRange = this.transformRange(range, isOrig);
          if (!otherRange.isEmpty()) {
-            var counterpart = null;
             try {
                counterpart = other.addFold(fold.placeholder, otherRange);
             } catch (error) {
@@ -368,6 +382,9 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             }
 
             if (counterpart) {
+               // (Fold All folds the nested levels as they are expanded;
+               // that goes for the counterpart too)
+               counterpart.collapseChildren = fold.collapseChildren;
                fold.other = counterpart;
                counterpart.other = fold;
             }
@@ -429,31 +446,54 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       if (ev.action === "remove") {
          var counterpart = fold.other;
          if (counterpart) {
-            // The counterpart goes with its nested folds. Those paired with
-            // nested folds of this one come back if this is an expansion
-            // (Ace re-adds this side's, and they are mirrored); those with
-            // no twin here -- folds of lines only the other side has --
-            // would be lost, so they are put back by hand.
+            // The counterpart goes too, with its nested folds; only the pair
+            // itself is undone. Ace expands a fold by removing it and adding
+            // its nested folds back: each of those still paired with one of
+            // the counterpart's brings that one back as it was (nested folds
+            // of its own included, which this side may not have; see
+            // mirrorFold), so their ranges are made absolute now, as Ace
+            // does for the folds it re-adds.
+            fold.other = null;
+            counterpart.other = null;
+            if (foldPresent(other, counterpart))
+               other.removeFold(counterpart);
+            counterpart.subFolds.forEach(function(sub) {
+               counterpart.restoreRange(sub);
+            });
+
+            // The counterpart's nested folds with no twin here (lines only
+            // the other side has) come back only if this was an expansion
+            // rather than a removal outright (Ctrl-click, Unfold All), which
+            // only the end of the turn tells: Ace's expandFold leaves the
+            // nested folds re-added and the list empty, removeFold leaves
+            // the list as it was. A fold with no nested folds is taken as
+            // expanded.
+            var hadNested = fold.subFolds.length > 0;
             var orphans = counterpart.subFolds.filter(function(sub) {
                return !sub.other;
             });
-            unpairFolds([fold]);
-            unpairFolds([counterpart]);
-            if (counterpart.foldLine && counterpart.foldLine.folds.indexOf(counterpart) !== -1)
-               other.removeFold(counterpart);
+            if (orphans.length > 0) {
+               var self = this;
+               Promise.resolve().then(function() {
+                  if (hadNested && fold.subFolds.length > 0)
+                     return;
 
-            this.$syncingFold = true;
-            try {
-               orphans.forEach(function(sub) {
-                  counterpart.restoreRange(sub);
+                  self.$syncingFold = true;
                   try {
-                     other.addFold(sub);
-                  } catch (error) {
-                     // its lines are folded another way by now
+                     orphans.forEach(function(sub) {
+                        if (foldPresent(other, sub))
+                           return;
+                        try {
+                           other.addFold(sub);
+                        } catch (error) {
+                           // its lines are folded another way by now
+                        }
+                     });
+                  } finally {
+                     self.$syncingFold = false;
                   }
+                  self.scheduleRealign();
                });
-            } finally {
-               this.$syncingFold = false;
             }
          } else if (fold.lineWidget) {
             // the padding comes back with the next alignment
@@ -480,6 +520,24 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    };
 
    // ---- SplitDiffView overrides ------------------------------------------
+
+   // Ace's realign runs on the next render. A render asked for from within
+   // a render -- as a line widget's height change is reported, say -- is
+   // dropped by Ace's render loop after a few in a row (its recursion
+   // limit), and the realign with it, until something else renders; so a
+   // frame of its own is asked for from outside the loop.
+   this.scheduleRealign = function() {
+      SplitDiffView.prototype.scheduleRealign.call(this);
+      if (this.$realignFrame)
+         return;
+
+      var self = this;
+      this.$realignFrame = setTimeout(function() {
+         self.$realignFrame = null;
+         if (self.realignPending && !self.disposed)
+            self.liveEditor.renderer.updateFull();
+      }, 0);
+   };
 
    // Ace's align, marked while it runs: the changeFold events it raises
    // as it lays the padding out are told from a line widget changing on
@@ -740,6 +798,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    };
 
    this.dispose = function() {
+      this.disposed = true;
       this.gutter.setSplitView(null);
       this.detachLiveHandlers();
       this.unlinkFolds();

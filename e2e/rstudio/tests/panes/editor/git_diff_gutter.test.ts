@@ -1479,14 +1479,24 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('keeps a fold of added lines when its parent is expanded from the base pane', async ({
     rstudioPage: page,
   }) => {
-    // A block added inside a committed function, folded, and the function
-    // folded over it. The base has the function (paired with the
-    // document's fold) but none of the block's lines, so the block's fold
-    // has no counterpart; expanding the function from the base pane removes
-    // the document's function fold, and must not take the block's with it.
+    // A loop added inside a committed if-block inside a committed function,
+    // each folded in turn. The base pairs a fold with the function's and the
+    // block's, but has none of the loop's lines, so the loop's fold has no
+    // counterpart. Expanding from the base pane removes the document's
+    // paired fold each time, and must not take the folds inside it along.
     const nestedPath = `${projectDir()}/nested.R`;
-    const seed = ['f <- function() {', '  a <- 1', '  b <- 2', '}'];
-    const edited = ['f <- function() {', '  if (TRUE) {', '    x <- 1', '  }', '  a <- 1', '  b <- 2', '}'];
+    const seed = ['f <- function() {', '  if (TRUE) {', '    a <- 1', '  }', '  b <- 2', '}'];
+    const edited = [
+      'f <- function() {',
+      '  if (TRUE) {',
+      '    while (FALSE) {',
+      '      x <- 1',
+      '    }',
+      '    a <- 1',
+      '  }',
+      '  b <- 2',
+      '}',
+    ];
     await executeInConsoleChecked(
       page,
       `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nestedPath)})`,
@@ -1498,18 +1508,17 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     );
     await openFile(page, nestedPath);
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({
-      1: [ADDED],
       2: [ADDED],
       3: [ADDED],
+      4: [ADDED],
     });
 
     const editor = new AceEditor(page, '');
-    await editor.gotoLine(2);
-    await editor.execCommand('toggleFoldWidget');
-    await expect.poll(() => editor.getFoldCount()).toBe(1);
-    await editor.gotoLine(1);
-    await editor.execCommand('toggleFoldWidget');
-    await expect.poll(() => editor.getFoldCount()).toBe(1);
+    for (const line of [3, 2, 1]) {
+      await editor.gotoLine(line);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => editor.getFoldCount()).toBe(1);
+    }
 
     await executeCommand(page, 'vcsShowChangesSideBySide');
     const base = page.locator(BASE_EDITOR);
@@ -1517,23 +1526,29 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     const live = liveEditors(page, 'f <- function() {');
     await expect(base).toBeVisible({ timeout: 10000 });
 
-    type FoldedEditor = { session: { getAllFolds(): { start: { row: number } }[] } };
-    const foldRows = (view: Locator) =>
+    // each view's folds, by row, with how many folds each has nested in it
+    type FoldedEditor = { session: { getAllFolds(): { start: { row: number }; subFolds: unknown[] }[] } };
+    const folds = (view: Locator) =>
       view.evaluate((el) =>
         ((el as AceEditorElement).env?.editor as unknown as FoldedEditor).session
           .getAllFolds()
-          .map((fold) => fold.start.row),
+          .map((fold) => ({ row: fold.start.row, nested: fold.subFolds.length })),
       );
 
     try {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
-      await expect.poll(() => foldRows(base)).toEqual([0]);
+      await expect.poll(() => folds(base)).toEqual([{ row: 0, nested: 1 }]);
 
-      // expand the function in the base pane: both sides open up, and the
-      // document keeps the block folded
+      // expand the function in the base pane: the block's fold comes back
+      // on both sides, the document's with the loop's still inside it
       await base.locator('.ace_fold-widget.ace_closed').first().click();
-      await expect.poll(() => foldRows(base)).toEqual([]);
-      await expect.poll(() => foldRows(live)).toEqual([1]);
+      await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
+      await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 1 }]);
+
+      // and the block: the document keeps the loop folded
+      await base.locator('.ace_fold-widget.ace_closed').first().click();
+      await expect.poll(() => folds(base)).toEqual([]);
+      await expect.poll(() => folds(live)).toEqual([{ row: 2, nested: 0 }]);
     } finally {
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
@@ -1961,10 +1976,23 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
         }, row);
       const levelAfterChunk = async () => (await rowTop(base, 7)) - (await rowTop(live, 7));
+      // (the collapse and expansion animate, so each is waited out by the
+      // output widget's row count before the alignment is checked)
+      const outputRows = () =>
+        page.evaluate(() => {
+          const editor = window.rstudio?.documents.activeEditor() as unknown as {
+            session: { lineWidgets?: ({ row: number; rowCount?: number } | undefined)[] };
+          } | null;
+          return (editor?.session.lineWidgets ?? []).find((w) => w?.row === 6)?.rowCount ?? 0;
+        });
       await expect.poll(levelAfterChunk).toBe(0);
+      const expandedRows = await outputRows();
+      expect(expandedRows).toBeGreaterThan(1);
       await executeCommand(page, 'notebookCollapseAllOutput');
+      await expect.poll(outputRows, { timeout: 10000 }).toBeLessThan(expandedRows);
       await expect.poll(levelAfterChunk, { timeout: 10000 }).toBe(0);
       await executeCommand(page, 'notebookExpandAllOutput');
+      await expect.poll(outputRows, { timeout: 10000 }).toBe(expandedRows);
       await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible();
       await expect.poll(levelAfterChunk, { timeout: 10000 }).toBe(0);
       await expectOutputKept();

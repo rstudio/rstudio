@@ -2734,7 +2734,14 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
       return error;
 
    if (stageResult.exitStatus != EXIT_SUCCESS)
-      return Success();
+   {
+      // a path not in the index lists nothing with status 0; a failure is
+      // an index that could not be read, not a file without a base
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("path", relativePath);
+      error.addProperty("stderr", stageResult.stdErr);
+      return error;
+   }
 
    // entries are "<mode> <sha> <stage>\t<path>", NUL-terminated
    bool regularFile = false;
