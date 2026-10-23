@@ -330,7 +330,7 @@ public class WorkbenchScreen extends Composite
    @Override
    public void onActivatePane(ActivatePaneEvent event)
    {
-      paneManager_.activateTab(event.getPane());
+      paneManager_.activateTabLeavingZoom(event.getPane());
    }
 
    private void fireEventDelayed(final GwtEvent<?> event, int delayMs)
