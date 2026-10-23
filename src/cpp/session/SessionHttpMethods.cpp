@@ -298,17 +298,13 @@ bool processIdleEvents(const std::string& method,
    // drops its own queue on an interrupt as well. input discarded by the
    // reset without an interrupt (a callback's uncaught error, with the
    // discard pref on) is reported the same way: a chunk whose code it was
-   // is gone, and its context would otherwise stay in place. only from the
-   // top-level console read with nothing executing: a read nested in a
-   // running command (a notebook chunk's option evaluation asking the
-   // console) may have the module's own code on the stack below it, and
-   // the command's own abort and prompt report an interrupt there
+   // is gone, and its context would otherwise stay in place. this wait may
+   // be nested in a module's own code (a notebook chunk's option evaluation
+   // asking the console): the notebook queue defers its own teardown while
+   // its code is on the stack
    bool interrupted = s_idleEventsInterrupted.exchange(false);
-   if (method == kConsoleInput && !executingBefore &&
-       (interrupted || console_input::inputDiscards() != discardsBefore))
-   {
+   if (interrupted || console_input::inputDiscards() != discardsBefore)
       module_context::events().onUserInterrupt();
-   }
 
    // busy=false is owed once the client was told R is busy
    if (busyReported)
@@ -934,7 +930,6 @@ bool waitForMethod(const std::string& method,
 
       // process pending events
       unsigned clearsBefore = console_input::bufferClears();
-      bool executingAtWait = console_input::executing();
       bool promptRestored = processIdleEvents(method, initFunction);
       if (inputHeld)
          console_input::setInputHeld(false);
@@ -953,10 +948,8 @@ bool waitForMethod(const std::string& method,
          ptrConnection.reset();
 
          // discarded input the modules may own (a notebook chunk's code),
-         // like input discarded from the queue (see processIdleEvents for
-         // why only from the top-level read)
-         if (!executingAtWait)
-            module_context::events().onUserInterrupt();
+         // like input discarded from the queue (see processIdleEvents)
+         module_context::events().onUserInterrupt();
 
          if (!promptRestored && !console_input::hasPendingInput())
             console_input::restoreConsolePrompt();
