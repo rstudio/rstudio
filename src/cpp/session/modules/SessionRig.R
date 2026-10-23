@@ -130,27 +130,257 @@
    .rs.fromJSON(paste(output, collapse = "\n"))
 })
 
+.rs.addFunction("rig.platform", function()
+{
+   if (.rs.platform.isWindows)
+      "windows"
+   else if (.rs.platform.isMacos)
+      "macos"
+   else
+      "linux"
+})
+
 #' The files rig creates when it makes a user-mode R the default R: its
-#' 'Current' link, the R and Rscript quick links, and on macOS a LaunchAgent
-#' that exports RSTUDIO_WHICH_R to every GUI application at login. 'rig add'
-#' sets a default whenever none is set yet, so an R installed from the
-#' project R-version warning bar would become the default R outside RStudio
-#' too; what the install adds is removed again once it finishes (#19229).
+#' 'Current' link and the R and Rscript quick links (R.exe, RS.exe and
+#' Rscript.exe shims on Windows), and on macOS a LaunchAgent that exports
+#' RSTUDIO_WHICH_R to every GUI application at login. 'rig add' sets a
+#' default whenever none is set yet, so an R installed from the project
+#' R-version warning bar would become the default R outside RStudio too;
+#' what the install adds is removed again once it finishes (#19229).
 .rs.addFunction("rig.userDefaultPaths", function(dirs,
                                                  home = Sys.getenv("HOME"),
-                                                 macos = .rs.platform.isMacos)
+                                                 platform = .rs.rig.platform())
 {
-   current <- if (macos) "Current" else "current"
-   paths <- c(
-      current = file.path(dirs$r_root, current),
-      R       = file.path(dirs$binary_dir, "R"),
-      Rscript = file.path(dirs$binary_dir, "Rscript")
+   if (identical(platform, "windows"))
+   {
+      c(
+         R       = file.path(dirs$binary_dir, "R.exe"),
+         RS      = file.path(dirs$binary_dir, "RS.exe"),
+         Rscript = file.path(dirs$binary_dir, "Rscript.exe")
+      )
+   }
+   else if (identical(platform, "macos"))
+   {
+      c(
+         current     = file.path(dirs$r_root, "Current"),
+         R           = file.path(dirs$binary_dir, "R"),
+         Rscript     = file.path(dirs$binary_dir, "Rscript"),
+         launchAgent = file.path(home, "Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist")
+      )
+   }
+   else
+   {
+      c(
+         current = file.path(dirs$r_root, "current"),
+         R       = file.path(dirs$binary_dir, "R"),
+         Rscript = file.path(dirs$binary_dir, "Rscript")
+      )
+   }
+})
+
+#' The registry values rig writes on Windows: once a user-mode R becomes the
+#' default, the current-user R-core default (the R and R64 keys, and their
+#' WOW6432Node twins used for x86_64 R on arm64); and on every install the
+#' user PATH, which gets rig's quick-link directory prepended. Paths are in
+#' PowerShell's registry-provider form.
+.rs.addFunction("rig.registryEntries", function()
+{
+   keys <- c(
+      "HKCU:\\Software\\R-core\\R",
+      "HKCU:\\Software\\R-core\\R64",
+      "HKCU:\\Software\\WOW6432Node\\R-core\\R",
+      "HKCU:\\Software\\WOW6432Node\\R-core\\R64"
    )
 
-   if (macos)
-      paths[["launchAgent"]] <- file.path(home, "Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist")
+   entries <- expand.grid(
+      name = c("Current Version", "InstallPath"),
+      key = keys,
+      stringsAsFactors = FALSE
+   )
 
-   paths
+   entries <- rbind(entries, data.frame(name = "Path", key = "HKCU:\\Environment", stringsAsFactors = FALSE))
+   entries[c("key", "name")]
+})
+
+.rs.addFunction("rig.registryId", function(key, name)
+{
+   paste(key, name, sep = "\\")
+})
+
+#' A PowerShell single-quoted string literal. Besides the ASCII apostrophe,
+#' PowerShell takes the typographic single quotes (U+2018 to U+201B) as
+#' delimiters too, so a path holding one would end the literal early unless
+#' it is doubled as well.
+.rs.addFunction("rig.psQuote", function(x)
+{
+   paste0("'", gsub("(['\u2018\u2019\u201a\u201b])", "\\1\\1", enc2utf8(x), perl = TRUE), "'")
+})
+
+#' A PowerShell script printing the registry values rig may write, as JSON:
+#' key, name, type (the value kind) and data (unexpanded) of each that exists.
+.rs.addFunction("rig.registryReadScript", function(entries = .rs.rig.registryEntries())
+{
+   items <- sprintf("@(%s, %s)", .rs.rig.psQuote(entries$key), .rs.rig.psQuote(entries$name))
+   c(
+      "$ErrorActionPreference = 'SilentlyContinue'",
+      "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
+      "$values = @()",
+      sprintf("foreach ($entry in @(%s)) {", paste(items, collapse = ", ")),
+      "   $key = Get-Item -LiteralPath $entry[0]",
+      "   if ($key -eq $null) { continue }",
+      "   $name = $key.GetValueNames() | Where-Object { $_ -eq $entry[1] } | Select-Object -First 1",
+      "   if ($name -eq $null) { continue }",
+      "   $values += @{",
+      "      key  = $entry[0];",
+      "      name = $entry[1];",
+      "      type = $key.GetValueKind($name).ToString();",
+      "      data = [string] $key.GetValue($name, '', 'DoNotExpandEnvironmentNames')",
+      "   }",
+      "}",
+      "ConvertTo-Json -InputObject @($values) -Compress"
+   )
+})
+
+#' A PowerShell script applying registry operations: each is a list with
+#' 'op' ("set" or "remove"), 'key' and 'name', plus 'type' and 'data' to set.
+.rs.addFunction("rig.registryWriteScript", function(ops)
+{
+   vapply(ops, function(op) {
+      if (identical(op$op, "remove"))
+         sprintf(
+            "Remove-ItemProperty -LiteralPath %s -Name %s -ErrorAction SilentlyContinue",
+            .rs.rig.psQuote(op$key),
+            .rs.rig.psQuote(op$name)
+         )
+      else
+         sprintf(
+            "Set-ItemProperty -LiteralPath %s -Name %s -Type %s -Value %s",
+            .rs.rig.psQuote(op$key),
+            .rs.rig.psQuote(op$name),
+            op$type,
+            .rs.rig.psQuote(op$data)
+         )
+   }, FUN.VALUE = character(1))
+})
+
+#' Write a PowerShell script as UTF-8 with a byte order mark: Windows
+#' PowerShell reads a script without one in the system ANSI code page, which
+#' would garble non-ASCII registry data (a user's PATH, say) on the way back
+#' into the registry.
+.rs.addFunction("rig.writePowershellScript", function(lines, path)
+{
+   con <- file(path, open = "wb")
+   on.exit(close(con), add = TRUE)
+   writeBin(as.raw(c(0xEF, 0xBB, 0xBF)), con)
+   writeLines(enc2utf8(lines), con, useBytes = TRUE)
+})
+
+#' Run a PowerShell script, returning its standard output. The script is
+#' expected to set the console output encoding to UTF-8 when it prints
+#' anything that matters, as the registry reader does.
+.rs.addFunction("rig.powershell", function(lines)
+{
+   script <- tempfile("rstudio-rig-", fileext = ".ps1")
+   on.exit(unlink(script), add = TRUE)
+   .rs.rig.writePowershellScript(lines, script)
+
+   output <- suppressWarnings(system2(
+      "powershell",
+      c("-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", shQuote(script)),
+      stdout = TRUE,
+      stderr = FALSE
+   ))
+
+   status <- attr(output, "status", exact = TRUE)
+   if (!is.null(status) && status != 0L)
+      stop(sprintf("powershell exited with status %i", status))
+
+   Encoding(output) <- "UTF-8"
+   output
+})
+
+#' The registry values rig may write that exist now, as a list keyed by
+#' .rs.rig.registryId(), each a list with 'type' and 'data'.
+.rs.addFunction("rig.registryRead", function()
+{
+   output <- .rs.rig.powershell(.rs.rig.registryReadScript())
+   items <- .rs.fromJSON(paste(output, collapse = "\n"))
+   if (!is.null(items$key))
+      items <- list(items)
+
+   values <- list()
+   for (item in items)
+      values[[.rs.rig.registryId(item$key, item$name)]] <- list(type = item$type, data = item$data)
+
+   values
+})
+
+.rs.addFunction("rig.registryWrite", function(ops)
+{
+   if (length(ops))
+      .rs.rig.powershell(.rs.rig.registryWriteScript(ops))
+
+   invisible(NULL)
+})
+
+.rs.addFunction("rig.pathHasDir", function(path, dir)
+{
+   if (is.null(path))
+      return(FALSE)
+
+   entries <- strsplit(path, ";", fixed = TRUE)[[1L]]
+   tolower(dir) %in% tolower(trimws(entries))
+})
+
+#' The registry operations that take the values back to 'before' where rig
+#' changed them: values rig added are removed, values it changed are set
+#' back. The user PATH only loses rig's quick-link directory, so other
+#' changes to it survive. Nothing is done about values that disappeared.
+.rs.addFunction("rig.registryRestoreOps", function(before, after, binaryDir)
+{
+   ops <- list()
+   pathId <- .rs.rig.registryId("HKCU:\\Environment", "Path")
+
+   for (id in names(after))
+   {
+      old <- before[[id]]
+      new <- after[[id]]
+      op <- NULL
+
+      if (identical(id, pathId))
+      {
+         if (!.rs.rig.pathHasDir(old$data, binaryDir) && .rs.rig.pathHasDir(new$data, binaryDir))
+         {
+            entries <- strsplit(new$data, ";", fixed = TRUE)[[1L]]
+            kept <- entries[tolower(trimws(entries)) != tolower(binaryDir)]
+            if (length(kept) == 0L && is.null(old))
+               op <- list(op = "remove", key = "HKCU:\\Environment", name = "Path")
+            else
+               op <- list(op = "set", key = "HKCU:\\Environment", name = "Path", type = new$type, data = paste(kept, collapse = ";"))
+         }
+      }
+      else if (is.null(old))
+      {
+         op <- list(op = "remove", key = sub("\\\\[^\\\\]*$", "", id), name = sub("^.*\\\\", "", id))
+      }
+      else if (!identical(old$data, new$data) || !identical(old$type, new$type))
+      {
+         op <- list(op = "set", key = sub("\\\\[^\\\\]*$", "", id), name = sub("^.*\\\\", "", id), type = old$type, data = old$data)
+      }
+
+      if (!is.null(op))
+         ops[[length(ops) + 1L]] <- op
+   }
+
+   ops
+})
+
+.rs.addFunction("rig.registryOpLabel", function(op, binaryDir)
+{
+   if (identical(op$key, "HKCU:\\Environment") && identical(op$name, "Path"))
+      sprintf("user PATH entry %s", binaryDir)
+   else
+      .rs.rig.registryId(op$key, op$name)
 })
 
 #' Whether each path exists, counting dangling symlinks (which file.exists()
@@ -175,26 +405,49 @@
    paste(output, collapse = "\n")
 })
 
-#' Which of rig's default-R files exist, and the RSTUDIO_WHICH_R launchd
-#' currently gives GUI applications, before a user-mode install.
-.rs.addFunction("rig.userDefaultSnapshot", function(paths, launchctl = .rs.rig.launchctl)
+#' Which of rig's default-R files exist, the RSTUDIO_WHICH_R launchd
+#' currently gives GUI applications, and (on Windows, through 'registry')
+#' the registry values rig may write, before a user-mode install.
+.rs.addFunction("rig.userDefaultSnapshot", function(paths,
+                                                    launchctl = .rs.rig.launchctl,
+                                                    registry = if (.rs.platform.isWindows) .rs.rig.registryRead,
+                                                    binaryDir = NULL)
 {
    whichR <- ""
    if ("launchAgent" %in% names(paths))
       whichR <- launchctl(c("getenv", "RSTUDIO_WHICH_R"))
 
-   list(paths = paths, existed = .rs.rig.pathExists(paths), whichR = whichR)
+   values <- NULL
+   if (!is.null(registry))
+   {
+      values <- .rs.tryCatch(registry())
+      if (inherits(values, "error"))
+      {
+         warning("could not read rig's registry values: ", conditionMessage(values))
+         values <- NULL
+      }
+   }
+
+   list(
+      paths     = paths,
+      existed   = .rs.rig.pathExists(paths),
+      whichR    = whichR,
+      registry  = values,
+      binaryDir = binaryDir
+   )
 })
 
 #' Remove the default-R files rig created since the snapshot was taken,
-#' keeping the ones that were already there, and put launchd's
-#' RSTUDIO_WHICH_R back. Returns the paths removed.
-.rs.addFunction("rig.userDefaultRestore", function(snapshot, launchctl = .rs.rig.launchctl)
+#' keeping the ones that were already there, put launchd's RSTUDIO_WHICH_R
+#' back, and (on Windows) take the registry values rig changed back as well.
+#' Returns what was reverted: the paths removed and the registry values.
+.rs.addFunction("rig.userDefaultRestore", function(snapshot,
+                                                   launchctl = .rs.rig.launchctl,
+                                                   registry = if (.rs.platform.isWindows) .rs.rig.registryRead,
+                                                   registryWrite = .rs.rig.registryWrite)
 {
    paths <- snapshot$paths
    created <- paths[!snapshot$existed & .rs.rig.pathExists(paths)]
-   if (length(created) == 0L)
-      return(character())
 
    if ("launchAgent" %in% names(created))
    {
@@ -208,8 +461,29 @@
    }
 
    # the links go, not what they point at
-   file.remove(created)
-   unname(created)
+   if (length(created))
+      file.remove(created)
+   reverted <- unname(created)
+
+   if (!is.null(snapshot$registry) && !is.null(registry))
+   {
+      after <- .rs.tryCatch(registry())
+      if (inherits(after, "error"))
+      {
+         warning("could not read rig's registry values: ", conditionMessage(after))
+         return(reverted)
+      }
+
+      ops <- .rs.rig.registryRestoreOps(snapshot$registry, after, snapshot$binaryDir)
+      if (length(ops))
+      {
+         registryWrite(ops)
+         labels <- vapply(ops, .rs.rig.registryOpLabel, FUN.VALUE = character(1), binaryDir = snapshot$binaryDir)
+         reverted <- c(reverted, labels)
+      }
+   }
+
+   reverted
 })
 
 .rs.setVar("rig.installState", new.env(parent = emptyenv()))
@@ -236,20 +510,16 @@
    state <- .rs.rig.installState
    state$snapshot <- NULL
 
-   # rig's Windows default (R.exe shims and registry entries) is not undone
-   if (.rs.platform.isWindows)
-      return(invisible(FALSE))
-
    dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
    .rs.rig.ensureBinaryDir(dirs)
 
    paths <- .rs.rig.userDefaultPaths(dirs)
-   state$snapshot <- .rs.rig.userDefaultSnapshot(paths)
+   state$snapshot <- .rs.rig.userDefaultSnapshot(paths, binaryDir = dirs$binary_dir)
    invisible(TRUE)
 })
 
 #' Called once 'rig add' has exited, to undo the default-R setup it added.
-#' Returns the paths removed.
+#' Returns what was reverted.
 .rs.addFunction("rig.userInstallEnd", function()
 {
    state <- .rs.rig.installState
