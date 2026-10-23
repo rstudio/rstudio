@@ -97,6 +97,8 @@ test_that("an installed R is matched by major.minor, preferring the exact patch"
 
 test_that("the architectures of an R build are read from libR", {
 
+   skip_on_os("windows")
+
    root <- tempfile("r-builds-")
    on.exit(unlink(root, recursive = TRUE), add = TRUE)
 
@@ -369,7 +371,100 @@ test_that("rig older than the pinned release is passed over", {
 test_that("the machine architecture is reported as is where it can't differ", {
 
    expect_identical(.rs.rig.machine("arm64"), "arm64")
-   if (!.rs.platform.isMacos)
+   if (!.rs.platform.isMacos && !.rs.platform.isWindows)
       expect_identical(.rs.rig.machine("x86_64"), "x86_64")
+
+})
+
+# a minimal PE image: a DOS header pointing at the PE signature, then the machine
+writePe <- function(path, machine)
+{
+   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+   dos <- c(charToRaw("MZ"), rep(as.raw(0x00), 58L), as.raw(c(0x40, 0x00, 0x00, 0x00)))
+   pe <- c(as.raw(c(0x50, 0x45, 0x00, 0x00)), machine)
+   writeBin(c(dos, pe), path)
+}
+
+test_that("the architecture of a Windows program is read from its PE header", {
+
+   root <- tempfile("pe-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   # 0xAA64 is ARM64, 0x8664 x64, 0x014C 32-bit, 0xA641 ARM64EC
+   writePe(file.path(root, "arm64.dll"), as.raw(c(0x64, 0xaa)))
+   writePe(file.path(root, "x64.dll"), as.raw(c(0x64, 0x86)))
+   writePe(file.path(root, "i386.dll"), as.raw(c(0x4c, 0x01)))
+   writePe(file.path(root, "arm64ec.dll"), as.raw(c(0x41, 0xa6)))
+   expect_identical(.rs.rInstallations.peMachine(file.path(root, "arm64.dll")), "arm64")
+   expect_identical(.rs.rInstallations.peMachine(file.path(root, "x64.dll")), "x86_64")
+   expect_identical(.rs.rInstallations.peMachine(file.path(root, "i386.dll")), "i386")
+   expect_identical(.rs.rInstallations.peMachine(file.path(root, "arm64ec.dll")), "")
+
+   # not a PE image, cut short, or missing
+   writeLines("not a program", file.path(root, "text.dll"))
+   expect_identical(.rs.rInstallations.peMachine(file.path(root, "text.dll")), "")
+   writeBin(charToRaw("MZ"), file.path(root, "short.dll"))
+   expect_identical(.rs.rInstallations.peMachine(file.path(root, "short.dll")), "")
+   expect_identical(.rs.rInstallations.peMachine(file.path(root, "missing.dll")), "")
+
+})
+
+test_that("the architectures of a Windows R build are read from R.dll", {
+
+   skip_if_not(.rs.platform.isWindows, "not Windows")
+
+   root <- tempfile("r-builds-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   # an ARM64 R keeps R.dll in bin; an x64 R in bin\x64; an older R also in bin\i386
+   writePe(file.path(root, "arm64", "bin", "R.dll"), as.raw(c(0x64, 0xaa)))
+   writePe(file.path(root, "x86_64", "bin", "x64", "R.dll"), as.raw(c(0x64, 0x86)))
+   writePe(file.path(root, "multiarch", "bin", "x64", "R.dll"), as.raw(c(0x64, 0x86)))
+   writePe(file.path(root, "multiarch", "bin", "i386", "R.dll"), as.raw(c(0x4c, 0x01)))
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "arm64")), "arm64")
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "x86_64")), "x86_64")
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "multiarch")), c("x86_64", "i386"))
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "missing")), character())
+
+   # the R running these tests
+   expected <- c(aarch64 = "arm64", x86_64 = "x86_64")[[R.version$arch]]
+   expect_identical(.rs.rInstallations.architectures(R.home()), expected)
+
+   # the ARM64 build wins over an x64 build of the same version, whichever is listed first
+   installed <- data.frame(
+      version = c("4.6.1", "4.6.1"),
+      path    = file.path(root, c("x86_64", "arm64")),
+      binary  = file.path(root, c("x86_64", "arm64"), "bin", "R.exe"),
+      home    = file.path(root, c("x86_64", "arm64")),
+      stringsAsFactors = FALSE
+   )
+   match <- .rs.findInstalledRVersion("4.6.1", installed, architecture = "arm64")
+   expect_equal(match$home, .rs.scalar(file.path(root, "arm64")))
+
+   # an x64 build is still used when it is the only one
+   match <- .rs.findInstalledRVersion("4.6.1", installed[1L, ], architecture = "arm64")
+   expect_equal(match$home, .rs.scalar(file.path(root, "x86_64")))
+
+})
+
+test_that("an ARM64 Windows machine is recognized even from an emulated R", {
+
+   skip_if_not(.rs.platform.isWindows, "not Windows")
+
+   root <- tempfile("kernel32-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   writePe(file.path(root, "arm64", "kernel32.dll"), as.raw(c(0x64, 0xaa)))
+   writePe(file.path(root, "x64", "kernel32.dll"), as.raw(c(0x64, 0x86)))
+
+   # an x64 R on an ARM64 machine reports x86-64; the system DLL tells the truth
+   expect_identical(.rs.rig.machine("x86-64", file.path(root, "arm64", "kernel32.dll")), "arm64")
+   expect_identical(.rs.rig.machine("aarch64", file.path(root, "arm64", "kernel32.dll")), "arm64")
+   expect_identical(.rs.rig.machine("x86-64", file.path(root, "x64", "kernel32.dll")), "x86-64")
+   expect_identical(.rs.rig.machine("x86-64", file.path(root, "missing.dll")), "x86-64")
+
+   # only an ARM64 machine prefers a build
+   expect_identical(.rs.rInstallations.preferredArchitecture("arm64"), "arm64")
+   expect_null(.rs.rInstallations.preferredArchitecture("x86-64"))
 
 })

@@ -100,9 +100,14 @@
 
 #' The architecture of this machine. On macOS, an x86_64 build of R running
 #' on Apple silicon (under Rosetta) reports the emulated architecture, so the
-#' hardware is asked instead.
-.rs.addFunction("rig.machine", function(machine = Sys.info()[["machine"]])
+#' hardware is asked instead. On Windows, an x64 build of R on an ARM64
+#' machine does the same, so the system's own kernel32.dll is read instead.
+.rs.addFunction("rig.machine", function(machine = Sys.info()[["machine"]],
+                                        kernel32 = file.path(Sys.getenv("SystemRoot", unset = "C:/Windows"), "System32", "kernel32.dll"))
 {
+   if (.rs.platform.isWindows)
+      return(if (identical(.rs.rInstallations.peMachine(kernel32), "arm64")) "arm64" else machine)
+
    if (!.rs.platform.isMacos || identical(machine, "arm64"))
       return(machine)
 
@@ -250,7 +255,9 @@
    {
       roots <- c(
          file.path(Sys.getenv("ProgramFiles", unset = "C:/Program Files"), "R"),
+         file.path(Sys.getenv("ProgramFiles", unset = "C:/Program Files"), "R-aarch64"),
          file.path(Sys.getenv("LOCALAPPDATA", unset = ""), "Programs", "R"),
+         file.path(Sys.getenv("LOCALAPPDATA", unset = ""), "Programs", "R-aarch64"),
          "C:/R"
       )
       homes <- list.files(roots[nzchar(roots)], pattern = "^R-", full.names = TRUE)
@@ -324,10 +331,48 @@
    cache$installed
 })
 
-#' The architectures a macOS R installation's libR.dylib was built for
-#' ("arm64", "x86_64"), read from its Mach-O header; empty when unreadable.
+#' The architecture a Windows program or DLL was built for ("arm64",
+#' "x86_64", "i386"), read from its PE header; "" when unreadable or other.
+.rs.addFunction("rInstallations.peMachine", function(path)
+{
+   con <- .rs.tryCatch(file(path, open = "rb"))
+   if (inherits(con, "error"))
+      return("")
+   on.exit(close(con), add = TRUE)
+
+   # the DOS header ends with the offset of the PE signature
+   dos <- readBin(con, "raw", n = 64L)
+   if (length(dos) < 64L || !identical(dos[1:2], charToRaw("MZ")))
+      return("")
+
+   offset <- readBin(dos[61:64], "integer", size = 4L, endian = "little")
+   if (offset < 64L)
+      return("")
+
+   seek(con, offset)
+   header <- readBin(con, "raw", n = 6L)
+   if (length(header) < 6L || !identical(header[1:4], as.raw(c(0x50, 0x45, 0x00, 0x00))))
+      return("")
+
+   machine <- readBin(header[5:6], "integer", size = 2L, signed = FALSE, endian = "little")
+   known <- c("43620" = "arm64", "34404" = "x86_64", "332" = "i386")
+   architecture <- known[as.character(machine)]
+   if (is.na(architecture)) "" else unname(architecture)
+})
+
+#' The architectures an R installation was built for ("arm64", "x86_64",
+#' "i386"): on macOS from its libR.dylib's Mach-O header, on Windows from the
+#' PE header of each R.dll it has. Empty when unreadable.
 .rs.addFunction("rInstallations.architectures", function(home)
 {
+   if (.rs.platform.isWindows)
+   {
+      # an ARM64 R keeps R.dll in bin itself, an x64 or 32-bit R in a subfolder
+      dlls <- file.path(home, c("bin", "bin/x64", "bin/i386"), "R.dll")
+      architectures <- vapply(dlls, .rs.rInstallations.peMachine, character(1), USE.NAMES = FALSE)
+      return(unique(architectures[nzchar(architectures)]))
+   }
+
    lib <- file.path(home, "lib", "libR.dylib")
    con <- .rs.tryCatch(file(lib, open = "rb"))
    if (inherits(con, "error"))
@@ -363,11 +408,11 @@
 })
 
 #' The architecture an installation of R should be built for to run
-#' natively here, when that is a choice: on Apple silicon Macs, where x86_64
-#' builds also run (emulated). NULL otherwise.
+#' natively here, when that is a choice: on Apple silicon Macs and ARM64
+#' Windows, where x86_64 builds also run (emulated). NULL otherwise.
 .rs.addFunction("rInstallations.preferredArchitecture", function(machine = .rs.rig.machine())
 {
-   if (.rs.platform.isMacos && identical(machine, "arm64")) "arm64"
+   if ((.rs.platform.isMacos || .rs.platform.isWindows) && identical(machine, "arm64")) "arm64"
 })
 
 #' Whether an installation of R runs as itself when it isn't the default.
