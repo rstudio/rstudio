@@ -262,6 +262,7 @@ bool processIdleEvents(const std::string& method,
    bool busyReported = false;
    bool executingBefore = console_input::executing();
    bool atTopLevelBefore = r::session::atTopLevelPrompt();
+   bool browserBefore = r::session::browserContextActive();
    unsigned promptsBefore = console_input::promptsIssued();
    unsigned readsBefore = console_input::readsCompleted();
    unsigned discardsBefore = console_input::inputDiscards();
@@ -285,6 +286,14 @@ bool processIdleEvents(const std::string& method,
    }
    if (atTopLevelBefore && !r::session::atTopLevelPrompt())
       r::session::setAtTopLevelPrompt(true);
+
+   // a browser() a handler entered marked a browser active from its
+   // Browse[N]> read; the handler has returned past it, and the next
+   // top-level read, which would clear the mark, is the one already waiting
+   // (quitting is refused while a browser is active). the environment
+   // module's own debug state follows at the next REPL prompt (#19259)
+   if (!browserBefore && r::session::browserContextActive())
+      r::session::setBrowserActive(false);
 
    // busy=false is owed once the client was told R is busy
    if (busyReported)
