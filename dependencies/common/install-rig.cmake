@@ -64,20 +64,21 @@ function(rig_installed RESULT)
    endif()
 endfunction()
 
-# Check before writing anything, so callers can skip privilege escalation
-# (RIG_CHECK_ONLY) when the tools root is not writable and nothing is needed.
-rig_installed(RIG_IS_INSTALLED)
-if(RIG_IS_INSTALLED)
+# Checks without writing anything, so callers can skip privilege escalation
+# when nothing is needed. It cannot take the lock, so installs still recheck
+# under it below, where a concurrent clean install cannot be mid-replacement.
+if(RIG_CHECK_ONLY)
+   rig_installed(RIG_IS_INSTALLED)
+   if(NOT RIG_IS_INSTALLED)
+      message(FATAL_ERROR "rig ${RSTUDIO_RIG_VERSION} is not installed in ${RIG_DIR}")
+   endif()
    message(STATUS "rig ${RSTUDIO_RIG_VERSION} already installed")
    return()
-elseif(RIG_CHECK_ONLY)
-   message(FATAL_ERROR "rig ${RSTUDIO_RIG_VERSION} is not installed in ${RIG_DIR}")
 endif()
 
 file(MAKE_DIRECTORY "${RIG_ROOT}/rig")
 file(LOCK "${RIG_ROOT}/rig/install.lock" GUARD PROCESS TIMEOUT 300)
 
-# Another process may have finished installing while this one waited.
 rig_installed(RIG_IS_INSTALLED)
 if(RIG_IS_INSTALLED)
    message(STATUS "rig ${RSTUDIO_RIG_VERSION} already installed")
