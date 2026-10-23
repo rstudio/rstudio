@@ -203,7 +203,6 @@ var GitDiffGutter = function(editor, strings) {
    this.onChange = this.onChange.bind(this);
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
-   this.peekKeyboardHandler = { handleKeyboard: this.onPeekKeyboard.bind(this) };
 
    // reachable from the editor for automation and debugging
    editor.gitDiffGutter = this;
@@ -221,6 +220,21 @@ var GitDiffGutter = function(editor, strings) {
    gutterEl.addEventListener("mousedown", this.onGutterMouseDown, true);
    gutterEl.addEventListener("click", this.onGutterClick, true);
    gutterEl.addEventListener("dblclick", this.onGutterClick, true);
+
+   // Escape closes an open peek. An Ace command rather than a keyboard
+   // handler of our own: commands live in the default handler, the one
+   // setKeyboardHandler keeps when RStudio rebuilds the editor's handlers
+   // (file type or keybinding changes, re-attach), and the lowest in
+   // precedence, so the completion popup and a Vim or Emacs mode, which own
+   // Escape while active, still see the key first.
+   var self = this;
+   editor.commands.addCommand({
+      name: "closeGitPeek",
+      bindKey: "Esc",
+      readOnly: true,
+      isAvailable: function() { return self.peek != null; },
+      exec: function() { self.closePeek(); }
+   });
 };
 
 (function() {
@@ -772,6 +786,19 @@ var GitDiffGutter = function(editor, strings) {
       });
       header.appendChild(closeButton);
 
+      // With "Tab key always moves focus" on, Tab can land on the peek's
+      // buttons, where a keypress never reaches the editor's textarea; let
+      // Escape close the peek from there too.
+      el.addEventListener("keydown", function(e) {
+         if (e.key !== "Escape")
+            return;
+
+         e.preventDefault();
+         e.stopPropagation();
+         self.focusEditor();
+         self.closePeek();
+      });
+
       if (oldLines.length > 0)
       {
          var lines = document.createElement("div");
@@ -788,11 +815,6 @@ var GitDiffGutter = function(editor, strings) {
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
       this.peek = { chunk: chunk, widget: widget };
-
-      // Escape closes the peek while it is open. The handler goes in just
-      // above Ace's default bindings, so the completion popup and a Vim or
-      // Emacs mode, which own Escape while active, still see the key first.
-      this.editor.keyBinding.addKeyboardHandler(this.peekKeyboardHandler, 1);
       return true;
    };
 
@@ -802,7 +824,6 @@ var GitDiffGutter = function(editor, strings) {
 
       var peek = this.peek;
       this.peek = null;
-      this.editor.keyBinding.removeKeyboardHandler(this.peekKeyboardHandler);
       this.lineWidgetManager().removeLineWidget(peek.widget);
 
       // A fold ending on the peek's row aliases its widget at the fold's
@@ -829,16 +850,6 @@ var GitDiffGutter = function(editor, strings) {
             above = above.$oldWidget;
          }
       }
-   };
-
-   // Ace keyboard handler installed while a peek is open: a plain Escape
-   // closes it and is consumed, so it does not go on to interrupt R.
-   this.onPeekKeyboard = function(data, hashId, keyString) {
-      if (hashId !== 0 || keyString !== "esc")
-         return;
-
-      this.closePeek();
-      return { command: "null" };
    };
 
    this.rowForCell = function(element) {
@@ -907,6 +918,7 @@ var GitDiffGutter = function(editor, strings) {
       }
 
       this.closePeek();
+      this.editor.commands.removeCommand("closeGitPeek");
       this.editor.off("change", this.onChange);
 
       var gutterEl = this.editor.renderer.$gutter;

@@ -110,6 +110,19 @@ async function gutterMarkers(page: Page): Promise<Record<number, string[]>> {
   });
 }
 
+/**
+ * True while the active editor's Ace keyboard-handler stack holds the Emacs
+ * handler, which RStudio installs (and later removes) by rebuilding the whole
+ * stack when the editor_keybindings pref changes.
+ */
+async function hasEmacsKeyboardHandler(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    type KeyedEditor = { keyBinding: { $handlers: { isEmacs?: boolean }[] } };
+    const editor = window.rstudio?.documents.activeEditor() as unknown as KeyedEditor | null;
+    return !!editor && editor.keyBinding.$handlers.some((handler) => handler.isEmacs === true);
+  });
+}
+
 /** 0-based cursor row of the active editor. */
 async function cursorRow(page: Page): Promise<number> {
   return new AceEditor(page, '').getCursorPosition().then((pos) => pos.row);
@@ -381,18 +394,29 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(peek).toHaveCount(0);
 
-    // so does the close glyph at the end of the peek's header
+    // so does the close glyph at the end of the peek's header, which hands
+    // focus back to the editor like the other peek actions
+    const editor = new AceEditor(page, '');
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(peek).toBeVisible({ timeout: 10000 });
     await peek.locator(PEEK_CLOSE).click();
     await expect(peek).toHaveCount(0);
+    await expect.poll(() => editor.isFocused()).toBe(true);
+
+    // Escape works from the peek's own buttons too, where Tab can leave focus
+    // with "Tab key always moves focus" on
+    await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await peek.locator(PEEK_CLOSE).focus();
+    await page.keyboard.press('Escape');
+    await expect(peek).toHaveCount(0);
+    await expect.poll(() => editor.isFocused()).toBe(true);
 
     // reverting from the peek restores the line and closes the peek
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(peek).toBeVisible({ timeout: 10000 });
     await peek.locator(PEEK_REVERT).click();
     await expect(peek).toHaveCount(0);
-    const editor = new AceEditor(page, '');
     await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
 
@@ -422,6 +446,37 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // and Escape closes it from the editor
     await executeCommand(page, 'vcsShowChange');
     await expect(peek).toBeVisible({ timeout: 10000 });
+    await editor.focus();
+    await page.keyboard.press('Escape');
+    await expect(peek).toHaveCount(0);
+
+    // that Escape is spent on the peek: with R busy it must not also reach the
+    // editor's own Escape handling, which would interrupt R. The marker is
+    // only printed if the sleep runs to completion, and is assembled at run
+    // time so the console's echo of the command itself cannot match it.
+    await executeInConsole(page, 'Sys.sleep(6); cat(paste0("slept-", "through"), "\\n")', {
+      wait: false,
+    });
+    await expect(page.locator('#rstudio_console_input')).toHaveClass(/rstudio-console-busy/);
+    await editor.focus();
+    await executeCommand(page, 'vcsShowChange');
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await page.keyboard.press('Escape');
+    await expect(peek).toHaveCount(0);
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText('slept-through', { timeout: 20000 });
+
+    // RStudio rebuilds the editor's keyboard handlers on keybinding and file
+    // type changes; an open peek keeps its Escape through that
+    await executeCommand(page, 'vcsShowChange');
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    try {
+      await setPref(page, 'editor_keybindings', 'emacs');
+      await expect.poll(() => hasEmacsKeyboardHandler(page)).toBe(true);
+    } finally {
+      await clearPref(page, 'editor_keybindings');
+    }
+    await expect.poll(() => hasEmacsKeyboardHandler(page)).toBe(false);
+    await expect(peek).toBeVisible();
     await editor.focus();
     await page.keyboard.press('Escape');
     await expect(peek).toHaveCount(0);
