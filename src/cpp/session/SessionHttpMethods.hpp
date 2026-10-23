@@ -72,15 +72,6 @@ bool processingIdleEvents();
 // that the answer is not "no" for a callback that has only just begun. for
 // the listener thread, never the main thread
 bool idleEventsPastDispatch();
-
-// R's input handlers are being run from the idle loop right now, dispatch
-// grace or not; any thread
-bool idleEventsActive();
-
-// an interrupt was accepted while the input handlers run from the idle
-// loop; any thread. the handlers' return reports it to modules as a user
-// interrupt (see processIdleEvents)
-void noteIdleEventsInterrupted();
 core::Error initialize();
 bool verifyRequestSignature(const core::http::Request& request);
 

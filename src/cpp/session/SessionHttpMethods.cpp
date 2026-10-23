@@ -139,10 +139,6 @@ IdleEventState s_idleEvents;
 // while inactive), for the listener thread (see processingIdleEvents)
 std::atomic<std::int64_t> s_idleEventsSince(0);
 
-// an interrupt was accepted for the active handlers (see
-// noteIdleEventsInterrupted)
-std::atomic<bool> s_idleEventsInterrupted(false);
-
 // how long the handlers run before they count as a callback running rather
 // than the dispatch itself, which with no callback due takes microseconds
 // and runs twenty times a second. requests are served from the polled
@@ -289,22 +285,6 @@ bool processIdleEvents(const std::string& method,
    }
    if (atTopLevelBefore && !r::session::atTopLevelPrompt())
       r::session::setAtTopLevelPrompt(true);
-
-   // an interrupt meant for the handlers ended them (or a callback among
-   // them) with no console prompt to follow -- a prompt reissued below runs
-   // no module hook -- so modules hear of it here: the notebook queue drops
-   // chunks queued behind the callback, whose code R's console reset may
-   // just have discarded, and lets go of a chunk left in flight. the client
-   // drops its own queue on an interrupt as well. input discarded by the
-   // reset without an interrupt (a callback's uncaught error, with the
-   // discard pref on) is reported the same way: a chunk whose code it was
-   // is gone, and its context would otherwise stay in place. this wait may
-   // be nested in a module's own code (a notebook chunk's option evaluation
-   // asking the console): the notebook queue defers its own teardown while
-   // its code is on the stack
-   bool interrupted = s_idleEventsInterrupted.exchange(false);
-   if (interrupted || console_input::inputDiscards() != discardsBefore)
-      module_context::events().onUserInterrupt();
 
    // busy=false is owed once the client was told R is busy
    if (busyReported)
@@ -749,16 +729,6 @@ bool processingIdleEvents()
    return since != 0 && steadyNowNs() - since > dispatchGraceNs();
 }
 
-bool idleEventsActive()
-{
-   return s_idleEventsSince != 0;
-}
-
-void noteIdleEventsInterrupted()
-{
-   s_idleEventsInterrupted = true;
-}
-
 bool idleEventsPastDispatch()
 {
    std::int64_t since = s_idleEventsSince;
@@ -946,10 +916,6 @@ bool waitForMethod(const std::string& method,
             ptrConnection->sendJsonRpcResponse();
          suspend::resetSuspendTimeout(ptrConnection);
          ptrConnection.reset();
-
-         // discarded input the modules may own (a notebook chunk's code),
-         // like input discarded from the queue (see processIdleEvents)
-         module_context::events().onUserInterrupt();
 
          if (!promptRestored && !console_input::hasPendingInput())
             console_input::restoreConsolePrompt();
@@ -1313,11 +1279,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // only accept interrupts while R is running code: processing
             // input, or an input handler dispatched from the idle loop
             if (console_input::isRunningCode())
-            {
-               if (idleEventsActive())
-                  noteIdleEventsInterrupted();
                rstudio::r::exec::setInterruptsPending(true);
-            }
          }
          
          // ping -- don't respond if we're shutting down; assume the ping

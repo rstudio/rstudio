@@ -70,10 +70,6 @@ enum ChunkExecState
 // try the deferred work again once R idles (see NotebookQueue::process)
 void scheduleDeferredRetry();
 
-// a user interrupt arrived while the queue's own code was on the stack; the
-// queue is dropped once that code has unwound, and sends nothing meanwhile
-bool cancelPending();
-
 // represents the global queue of work 
 class NotebookQueue : boost::noncopyable
 {
@@ -122,7 +118,7 @@ public:
    Error process(ExpressionMode mode)
    {
       // if list is empty, we're done
-      if (queue_.empty() || cancelPending())
+      if (queue_.empty())
          return Success();
 
       // defer if R is currently executing code (we'll initiate processing when
@@ -324,11 +320,6 @@ private:
          engine = execContext_->engine();
 
       std::string code = execUnit_->popExecRange(&range, mode, engine);
-
-      // evaluating the chunk's options may have asked the console (and so
-      // run the idle loop); an interrupt meanwhile ends this unit here
-      if (cancelPending())
-         return Success();
 
       if (code.empty())
       {
@@ -762,41 +753,6 @@ private:
 // while the notebook queue is running
 static NotebookQueue* s_queue = nullptr;
 
-// calls into the queue on the stack, and a user interrupt that arrived
-// during one (see onUserInterrupt)
-unsigned s_processingDepth = 0;
-bool s_cancelPending = false;
-
-void dropQueue();
-
-bool cancelPending()
-{
-   return s_cancelPending;
-}
-
-// marks a call into the queue that may run R code; the last one to unwind
-// carries out a drop an interrupt asked for meanwhile
-class ProcessingScope
-{
-public:
-   ProcessingScope()
-   {
-      s_processingDepth++;
-   }
-
-   ~ProcessingScope()
-   {
-      s_processingDepth--;
-      if (s_processingDepth == 0 && s_cancelPending)
-      {
-         s_cancelPending = false;
-         dropQueue();
-      }
-   }
-};
-
-void processQueue();
-
 Error updateExecQueue(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -830,28 +786,16 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // create queue if it doesn't exist (a pending drop of the old one is
-   // void: this is a new queue)
-   s_cancelPending = false;
+   // create queue if it doesn't exist
    if (!s_queue)
       s_queue = new NotebookQueue;
 
    // add the queue and process after the RPC returns 
    s_queue->add(pQueue);
-   pResponse->setAfterResponse(processQueue);
+   pResponse->setAfterResponse(
+         boost::bind(&NotebookQueue::process, s_queue, ExprModeNew));
 
    return Success();
-}
-
-void processQueue()
-{
-   ProcessingScope processing;
-   if (!s_queue)
-      return;
-
-   Error error = s_queue->process(ExprModeNew);
-   if (error)
-      LOG_ERROR(error);
 }
 
 void onConsolePrompt(const std::string& prompt)
@@ -860,7 +804,6 @@ void onConsolePrompt(const std::string& prompt)
    if (r::session::isBrowseActive())
       return;
 
-   ProcessingScope processing;
    if (s_queue)
    {
       s_queue->onConsolePrompt(prompt);
@@ -874,7 +817,7 @@ void onConsolePrompt(const std::string& prompt)
    }
 }
 
-void dropQueue()
+void onUserInterrupt()
 {
    if (s_queue)
    {
@@ -882,22 +825,6 @@ void dropQueue()
       delete s_queue;
       s_queue = nullptr;
    }
-}
-
-void onUserInterrupt()
-{
-   // the queue's own code may be on the stack: processing a unit evaluates
-   // its chunk options, which can ask the console, and an interrupt can
-   // arrive while that read waits (it also runs the idle loop). dropping the
-   // queue under its code would leave that code on a deleted object; the
-   // drop waits for it to unwind (see ProcessingScope)
-   if (s_processingDepth > 0)
-   {
-      s_cancelPending = true;
-      return;
-   }
-
-   dropQueue();
 }
 
 bool s_deferredRetryScheduled = false;
@@ -923,7 +850,6 @@ void processDeferred()
       return;
    }
 
-   ProcessingScope processing;
    Error error = s_queue->process(ExprModeNew);
    if (error)
       LOG_ERROR(error);
