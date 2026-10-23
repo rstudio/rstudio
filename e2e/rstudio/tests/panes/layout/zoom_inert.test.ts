@@ -657,6 +657,25 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     }
   });
 
+  // The Help menu's commands raise the Help pane as a help topic does, so they
+  // take over a zoom rather than act behind it.
+  test('Search R Help during a Console zoom moves the zoom to Help', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET2_PANE);
+
+      await executeCommand(page, 'helpSearch');
+      await expectExposed(page, TABSET2_PANE);
+      await expectHidden(page, CONSOLE_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomHelp')).toBe(true);
+      await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
   // History is the zoomed pane's hidden partner here; showing it would end the
   // zoom without clearing its state (#18444).
   test('history() while Files is zoomed leaves the zoom on Files', async ({
