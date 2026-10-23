@@ -47,6 +47,7 @@
 #include <core/text/TemplateFilter.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/REventLoop.hpp>
 
@@ -116,6 +117,8 @@ struct IdleEventState
    // console read (readline()) issues one, which clears the client's busy
    // state, so the report is armed again after it
    unsigned promptsIssued = 0;
+   // how long a handler runs before the report (see idleEventBusyDelay)
+   boost::posix_time::time_duration busyDelay;
 };
 IdleEventState s_idleEvents;
 
@@ -128,10 +131,17 @@ void setIdleEvents(const IdleEventState& state)
    s_idleEventsActive = state.active;
 }
 
-// how long an input handler runs before the client is told R is busy; the
-// callbacks later usually runs take well under a millisecond
-const boost::posix_time::time_duration kIdleEventBusyDelay =
-   boost::posix_time::seconds(1);
+// how long an input handler runs before the client is told R is busy: the
+// R option rstudio.idleEventBusyDelay, in seconds, one by default -- the
+// callbacks later usually runs take well under a millisecond. read when the
+// handlers are dispatched (R is at its prompt then)
+boost::posix_time::time_duration idleEventBusyDelay()
+{
+   double seconds = r::options::getOption<double>("rstudio.idleEventBusyDelay", 1.0, false);
+   if (!(seconds >= 0))
+      seconds = 1.0;
+   return boost::posix_time::milliseconds(static_cast<long>(seconds * 1000));
+}
 
 // url for next session
 std::string s_nextSessionUrl;
@@ -182,6 +192,8 @@ public:
       state.started = boost::posix_time::microsec_clock::universal_time();
       state.executingAtStart = console_input::executing();
       state.promptsIssued = console_input::promptsIssued();
+      if (active)
+         state.busyDelay = idleEventBusyDelay();
       setIdleEvents(state);
    }
 
@@ -254,6 +266,9 @@ void bufferConsoleInput(boost::shared_ptr<HttpConnection> ptrConnection)
    }
 
    ptrConnection->sendJsonRpcResponse();
+
+   // accepted input is activity: no idle suspend ahead of it
+   suspend::resetSuspendTimeout(ptrConnection);
 }
 
 bool parseAndValidateJsonRpcConnection(
@@ -467,7 +482,7 @@ void polledEventHandler()
    // (undone when the handler returns)
    if (s_idleEvents.active && !s_idleEvents.busyNotified &&
        !s_idleEvents.executingAtStart &&
-       s_lastPerformed - s_idleEvents.started > kIdleEventBusyDelay)
+       s_lastPerformed - s_idleEvents.started > s_idleEvents.busyDelay)
    {
       s_idleEvents.busyNotified = true;
       s_idleEvents.busyReported = true;
@@ -833,7 +848,19 @@ bool waitForMethod(const std::string& method,
             break; // got the method, we are out of here!
          }
       }
-      else
+
+      // console input an input handler let into the queue (see
+      // bufferConsoleInput) is what this wait is for; hand it back without
+      // a request (rConsoleRead reads the queue). checked ahead of the idle
+      // suspend below: a suspend with input queued would lose the input
+      if (method == kConsoleInput && console_input::hasPendingInput())
+      {
+         *pRequest = json::JsonRpcRequest();
+         init::ensureSessionInitialized();
+         break;
+      }
+
+      if (!ptrConnection)
       {
          // avoid calling allowSuspend too often as it iterates through the environment in R
          // looking to be sure all objects are suspendable
@@ -842,16 +869,6 @@ bool waitForMethod(const std::string& method,
             // timed-out waiting for (usually) console input 20 times (1s)
             suspend::checkForIdleSuspend(allowSuspend);
          }
-      }
-
-      // console input an input handler let into the queue (see
-      // bufferConsoleInput) is what this wait is for; hand it back without
-      // a request (rConsoleRead reads the queue)
-      if (method == kConsoleInput && console_input::hasPendingInput())
-      {
-         *pRequest = json::JsonRpcRequest();
-         init::ensureSessionInitialized();
-         break;
       }
    }
 

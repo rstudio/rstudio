@@ -121,6 +121,7 @@ test.describe('Idle event loop callbacks', () => {
     await ensureConsoleIdle(page);
     await clearPref(page, 'blinking_cursor');
     await clearPref(page, 'discard_pending_console_input_on_error');
+    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = NULL)');
   });
 
   test('requests are served and the interrupt works while a callback runs', async ({ rstudioPage: page }) => {
@@ -168,18 +169,21 @@ test.describe('Idle event loop callbacks', () => {
     // The interrupt's console reset discards queued input under this pref
     // (its default); the test relies on that, so say so.
     await setPref(page, 'discard_pending_console_input_on_error', true);
+    // Keep the busy report out of the picture however slow the runner: this
+    // is the path where the interrupt lands before it.
+    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
 
     await executeInConsole(page, 'later::later(function() { cat("callback", "started\\n"); while (TRUE) Sys.sleep(0.05) }, 0.1)');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
 
     // Submitting marks the client busy, and the server queues the input
     // behind the callback. Escape in the (now empty) console sends the
-    // interrupt at once -- ahead of the one-second busy report, which is what
-    // enables the interrupt command (the client's own busy state does not).
+    // interrupt at once -- ahead of the busy report, which is what enables
+    // the interrupt command (the client's own busy state does not).
     await submitAndAwaitQueued(page, 'cat("discarded", "input\\n")');
     await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
     const busyReported = await page.evaluate(() => window.rstudio?.commands?.interruptR?.isEnabled() ?? null);
-    expect(busyReported, 'the delayed busy report must not have fired yet (slow runner?)').toBe(false);
+    expect(busyReported, 'the delayed busy report must not have fired').toBe(false);
     await page.keyboard.press('Escape');
 
     // The interrupt ends the callback and discards the queued input; a prompt
@@ -237,24 +241,30 @@ test.describe('Idle event loop callbacks', () => {
   });
 
   test('a callback reported busy that reads and then returns at once leaves the console idle', async ({ rstudioPage: page }) => {
+    // The callback reads only once the test has seen the busy report (a flag
+    // file says so), which needs a filesystem shared with the session.
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const consoleInput = page.locator(CONSOLE_INPUT);
     const promptText = () => page.evaluate(() =>
       document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+    const flag = path.join(sandbox.dir, `busy-seen-${Date.now()}.flag`);
     const busy = recordClientEvents(page, ['busy']);
+    // R's own busy callback adds events of its own around a read, so the
+    // sequence is not fixed; what matters is that busy was reported, and
+    // that the last word once the callback has returned is "not busy".
+    const busyValues = () => busy.events.map((e) => (e.data as { value?: unknown })?.value);
     try {
       // Busy is reported before the read; the read's prompt clears the
       // client's busy state and re-arms the report; the callback then returns
       // well before it would fire again. The busy=false event still has to
       // come: the workbench tracks that event, not the console's prompt.
-      await executeInConsole(page, 'later::later(function() { Sys.sleep(1.5); .idle_callback_answer <<- readline("answer? "); Sys.sleep(0.2) }, 0.1)');
+      await executeInConsole(page,
+        `later::later(function() { while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); .idle_callback_answer <<- readline("answer? "); Sys.sleep(0.2) }, 0.1)`);
+      await expect.poll(() => busyValues().includes(true), { timeout: BUSY_TIMEOUT }).toBe(true);
       await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+      fs.writeFileSync(flag, '');
       await expect.poll(promptText, { timeout: 10000 }).toBe('answer? ');
       await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
-      // R's own busy callback adds events of its own around the read, so
-      // the sequence is not fixed; what matters is that busy was reported,
-      // and that the last word once the callback has returned is "not busy".
-      const busyValues = () => busy.events.map((e) => (e.data as { value?: unknown })?.value);
-      expect(busyValues()).toContain(true);
 
       await executeInConsole(page, 'hello');
       expect(await promptText()).toBe('> ');
