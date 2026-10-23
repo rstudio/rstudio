@@ -123,6 +123,13 @@ struct IdleEventState
    // or a dialog's event again. a reload while a handler runs is answered
    // with it, as the wait itself would answer it
    boost::function<void()> clientInit;
+   // requests served while the handlers ran (polledEventHandler). R was
+   // mid-handler then, so what they did saw it busy: a notebook chunk
+   // execution defers to the next console prompt, a state query reports R
+   // busy. the waiting read's prompt is reissued for them when the handlers
+   // return, as it would have been issued after them before they were
+   // served at all
+   unsigned requestsServed = 0;
    // prompts issued when the busy report was last (re)armed; a handler's own
    // console read (readline()) issues one, which clears the client's busy
    // state, so the report is armed again after it
@@ -231,8 +238,10 @@ bool processIdleEvents(const std::string& method,
                        const boost::function<void()>& initFunction)
 {
    bool busyReported = false;
+   unsigned requestsServed = 0;
    bool executingBefore = console_input::executing();
    bool atTopLevelBefore = r::session::atTopLevelPrompt();
+   unsigned promptsBefore = console_input::promptsIssued();
    unsigned readsBefore = console_input::readsCompleted();
    unsigned discardsBefore = console_input::inputDiscards();
    {
@@ -242,6 +251,7 @@ bool processIdleEvents(const std::string& method,
                initFunction);
       processEvents();
       busyReported = s_idleEvents.busyReported;
+      requestsServed = s_idleEvents.requestsServed;
    }
 
    // a console read a handler ran (readline()) marks console input as
@@ -267,15 +277,21 @@ bool processIdleEvents(const std::string& method,
       return false;
 
    // reissue the waiting read's prompt, which also tells the client R is
-   // back, when the client was told R is busy; when a handler ran a console
-   // read of its own (readline()), whose prompt replaced the waiting read's
-   // -- or which took input the client submitted, leaving it busy with no
-   // prompt to follow; or when input queued meanwhile was discarded (an
-   // interrupt, an uncaught error with the discard pref on), which leaves
-   // the client busy the same way. not when a reset found nothing queued:
-   // the client saw nothing of it, and a prompt would reset the console's
-   // history position and refresh the panes for no command
+   // back, when the client was told R is busy; when a request was served
+   // while the handlers ran (see IdleEventState::requestsServed); when a
+   // prompt was issued meanwhile -- a handler's own console read
+   // (readline()), whose prompt replaced the waiting read's, or a reload's
+   // client_init answered with the waiting read's prompt, which R mid-
+   // handler reported busy; when a read took input the client submitted,
+   // leaving it busy with no prompt to follow; or when input queued
+   // meanwhile was discarded (an interrupt, an uncaught error with the
+   // discard pref on), which leaves the client busy the same way. not when
+   // a reset found nothing queued: the client saw nothing of it, and a
+   // prompt would reset the console's history position and refresh the
+   // panes for no command
    if (busyReported ||
+       requestsServed > 0 ||
+       console_input::promptsIssued() != promptsBefore ||
        console_input::readsCompleted() != readsBefore ||
        console_input::inputDiscards() != discardsBefore)
    {
@@ -581,6 +597,9 @@ void polledEventHandler()
                                  " after: " + string_utils::formatDouble(duration.count(), 2));
             }
             handleConnection(ptrConnection, http_methods::BackgroundConnection);
+
+            if (s_idleEvents.active)
+               s_idleEvents.requestsServed++;
          }
 
          // a request served is activity, as in waitForMethod: console input

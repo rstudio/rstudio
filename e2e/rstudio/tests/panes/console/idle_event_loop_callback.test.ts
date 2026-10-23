@@ -174,6 +174,64 @@ test.describe('Idle event loop callbacks', () => {
     await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
   });
 
+  test('a request served during a callback shorter than the busy delay is followed by a prompt', async ({ rstudioPage: page }) => {
+    // The callback returns only once the test has had a request served (a
+    // flag file says so), which needs a filesystem shared with the session.
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    const flag = path.join(sandbox.dir, `request-served-${Date.now()}.flag`);
+    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
+    const promptCountBefore = await getConsolePromptCount(page);
+
+    // A request served while the callback runs sees R busy (a notebook
+    // chunk execution defers to the next prompt on that). Before the
+    // callback it would have been served after it, at the prompt; so the
+    // prompt is reissued for it when the callback returns, although the
+    // client was never told R was busy.
+    await executeInConsole(page,
+      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05) }, 0.1)`);
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+    await withDeadline(setPref(page, 'blinking_cursor', false), 15000, 'pref write while a callback runs');
+    fs.writeFileSync(flag, '');
+
+    await expect.poll(() => getConsolePromptCount(page), { timeout: BUSY_TIMEOUT })
+      .toBe(promptCountBefore === null ? null : promptCountBefore + 2);
+    await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
+  });
+
+  test('a reload during a callback that then returns before the busy report leaves the prompt not busy', async ({ rstudioPage: page }) => {
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
+    const flag = path.join(sandbox.dir, `reload-early-${Date.now()}.flag`);
+    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
+    const prompts = recordClientEvents(page, ['console_prompt']);
+    try {
+      await executeInConsole(page,
+        `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05) }, 0.1)`);
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+
+      // The reload's client_init is answered with the waiting read's prompt
+      // while R is mid-callback, so that prompt reports R busy (the chat
+      // pane and notebook execution key off that field). The callback then
+      // returns before R is reported busy: the prompt still has to be
+      // reissued, now not busy.
+      await page.reload();
+      await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+        timeout: TIMEOUTS.sessionRestart,
+        polling: 50,
+      });
+      await expect.poll(() => getConsolePromptText(page), { timeout: BUSY_TIMEOUT }).toBe('> ');
+      fs.writeFileSync(flag, '');
+
+      await expect.poll(() => prompts.events.at(-1)?.data, { timeout: BUSY_TIMEOUT })
+        .toMatchObject({ prompt: '> ', busy: false });
+      await expect(page.locator(CONSOLE_INPUT)).not.toHaveClass(BUSY_CLASS);
+    } finally {
+      prompts.stop();
+    }
+    await executeInConsole(page, 'cat("console", "alive\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
+  });
+
   test('console input sent while a callback runs is queued, in order, for the next prompt', async ({ rstudioPage: page }) => {
     // The callback announces itself so the input below is sent while it is
     // running, and ends on its own: an interrupt would discard queued input.
