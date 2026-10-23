@@ -65,6 +65,9 @@ enum ChunkExecState
    ChunkExecCancelled = 2
 };
 
+// try the deferred work again once R idles (see NotebookQueue::process)
+void scheduleDeferredRetry();
+
 // represents the global queue of work 
 class NotebookQueue : boost::noncopyable
 {
@@ -103,6 +106,13 @@ public:
       return queue_.empty();
    }
 
+   // a unit's code has been sent to the console and the console has not
+   // prompted since
+   bool unitInFlight()
+   {
+      return execUnit_ != nullptr;
+   }
+
    Error process(ExpressionMode mode)
    {
       // if list is empty, we're done
@@ -112,7 +122,16 @@ public:
       // defer if R is currently executing code (we'll initiate processing when
       // the console continues)
       if (!module_context::isPythonReplActive() && !r::session::isAtTopLevel())
+      {
+         // with no unit in flight, the console may not continue with a prompt:
+         // R may be running an input handler from the idle loop (a later
+         // callback) rather than a command, and the read it returns to is
+         // already waiting. try again once R idles (#19236)
+         if (!execUnit_)
+            scheduleDeferredRetry();
+
          return Success();
+      }
 
       // if we have a currently executing unit, execute it; otherwise, pop the
       // next unit off the stack
@@ -800,6 +819,35 @@ void onUserInterrupt()
       delete s_queue;
       s_queue = nullptr;
    }
+}
+
+bool s_deferredRetryScheduled = false;
+
+void processDeferred()
+{
+   s_deferredRetryScheduled = false;
+
+   // only with nothing in flight: a unit whose code was sent completes on the
+   // console prompt that follows it, and processing it before that prompt
+   // would take it for complete
+   if (s_queue && !s_queue->unitInFlight())
+   {
+      Error error = s_queue->process(ExprModeNew);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+void scheduleDeferredRetry()
+{
+   if (s_deferredRetryScheduled)
+      return;
+
+   s_deferredRetryScheduled = true;
+   module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(100),
+            processDeferred,
+            true);
 }
 
 } // anonymous namespace

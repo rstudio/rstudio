@@ -12,10 +12,11 @@ import * as path from 'path';
 import type { Page, Response } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { SourcePaneActions } from '@actions/source_pane.actions';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { withDeadline } from '@utils/deadline';
 import { TIMEOUTS } from '@utils/constants';
-import { canWriteDir } from '@utils/files';
+import { canWriteDir, closeAndDeleteSandboxFiles, writeAndOpenFile } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
 import {
   ensureConsoleIdle,
@@ -32,17 +33,15 @@ const BUSY_CLASS = /rstudio-console-busy/;
 const BUSY_TIMEOUT = 15000;
 
 /**
- * Submit console input and wait until the session's main thread has taken
- * it. The listener thread acknowledges the console_input RPC at once with an
- * asyncHandle; the main thread's handling (queuing the input behind whatever
- * R is doing) arrives later as an async_completion event carrying that
- * handle on the events long-poll. Returning on the acknowledgement alone
- * would race the server: an interrupt sent then could discard an empty queue
- * and leave the input to run afterwards. The events listener is installed
- * before submitting, since the completion can land while the
- * acknowledgement is still being read.
+ * Run `trigger`, which sends the RPC named by `rpc`, and wait until the
+ * session's main thread has served it. While R is busy the listener thread
+ * acknowledges an RPC at once with an asyncHandle; the main thread's
+ * handling arrives later as an async_completion event carrying that handle
+ * on the events long-poll. Returning on the acknowledgement alone would race
+ * the server. The events listener is installed before triggering, since the
+ * completion can land while the acknowledgement is still being read.
  */
-async function submitAndAwaitQueued(page: Page, command: string): Promise<void> {
+async function awaitServed(page: Page, rpc: RegExp, trigger: () => Promise<unknown>): Promise<void> {
   const events: string[] = [];
   let wanted: string | undefined;
   let found: (() => void) | undefined;
@@ -57,8 +56,8 @@ async function submitAndAwaitQueued(page: Page, command: string): Promise<void> 
   page.on('response', onResponse);
   try {
     const [ack] = await Promise.all([
-      page.waitForResponse((r) => /\/rpc\/console_input/.test(r.url()), { timeout: 10000 }),
-      executeInConsole(page, command, { wait: false }),
+      page.waitForResponse((r) => rpc.test(r.url()), { timeout: 10000 }),
+      trigger(),
     ]);
     const body = await ack.json().catch(() => ({}));
     const handle = body?.asyncHandle;
@@ -72,11 +71,21 @@ async function submitAndAwaitQueued(page: Page, command: string): Promise<void> 
           resolve();
       }),
       10000,
-      'async completion of console_input',
+      `async completion of ${rpc.source}`,
     );
   } finally {
     page.off('response', onResponse);
   }
+}
+
+/**
+ * Submit console input and wait until the session's main thread has taken
+ * it (queued it behind whatever R is doing): an interrupt sent on the
+ * acknowledgement alone could discard an empty queue and leave the input to
+ * run afterwards.
+ */
+async function submitAndAwaitQueued(page: Page, command: string): Promise<void> {
+  await awaitServed(page, /\/rpc\/console_input/, () => executeInConsole(page, command, { wait: false }));
 }
 
 /**
@@ -174,29 +183,68 @@ test.describe('Idle event loop callbacks', () => {
     await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
   });
 
-  test('a request served during a callback shorter than the busy delay is followed by a prompt', async ({ rstudioPage: page }) => {
+  test('a request served during a callback that returns before the busy report leaves the prompt alone', async ({ rstudioPage: page }) => {
     // The callback returns only once the test has had a request served (a
     // flag file says so), which needs a filesystem shared with the session.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
-    const consoleInput = page.locator(CONSOLE_INPUT);
     const flag = path.join(sandbox.dir, `request-served-${Date.now()}.flag`);
     await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
     const promptCountBefore = await getConsolePromptCount(page);
 
-    // A request served while the callback runs sees R busy (a notebook
-    // chunk execution defers to the next prompt on that). Before the
-    // callback it would have been served after it, at the prompt; so the
-    // prompt is reissued for it when the callback returns, although the
-    // client was never told R was busy.
+    // The client was never told R was busy and submitted nothing, so no
+    // prompt is owed: one would reset the console's history position (and
+    // the unfinished command Down-arrow brings back) for no command.
     await executeInConsole(page,
       `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05) }, 0.1)`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
-    await withDeadline(setPref(page, 'blinking_cursor', false), 15000, 'pref write while a callback runs');
+    await awaitServed(page, /\/rpc\/set_user_prefs/, () => setPref(page, 'blinking_cursor', false));
     fs.writeFileSync(flag, '');
 
-    await expect.poll(() => getConsolePromptCount(page), { timeout: BUSY_TIMEOUT })
-      .toBe(promptCountBefore === null ? null : promptCountBefore + 2);
-    await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
+    // Only the call itself and the command below complete: two prompts. The
+    // check comes after the second command's output, by when a prompt
+    // reissued on the callback's return would have arrived.
+    await executeInConsole(page, 'cat("console", "alive\\n")');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
+    expect(await getConsolePromptCount(page)).toBe(promptCountBefore === null ? null : promptCountBefore + 2);
+  });
+
+  test('a notebook chunk run while a callback runs executes once the callback returns', async ({ rstudioPage: page }) => {
+    // The callback returns only once the chunk's execution request has been
+    // served (a flag file says so), which needs a filesystem shared with
+    // the session; the chunk reports by file too, since its output goes to
+    // the editor rather than the console.
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
+    const missing = await consoleActions.ensurePackages(['rmarkdown', 'knitr']);
+    test.skip(missing.length > 0, `Could not install: ${missing.join(', ')}`);
+    const sourceActions = new SourcePaneActions(page, consoleActions);
+    const flag = path.join(sandbox.dir, `chunk-release-${Date.now()}.flag`);
+    const ran = path.join(sandbox.dir, `chunk-ran-${Date.now()}.flag`);
+    const fileName = 'idle-callback-chunk.Rmd';
+    const notebook = [
+      '---', 'output: html_document', '---', '',
+      '```{r}', `file.create(${JSON.stringify(ran)})`, '```', '',
+    ].join('\n');
+    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
+
+    await writeAndOpenFile(page, sandbox.dir, fileName, notebook);
+    try {
+      await sourceActions.ensureSourceMode();
+      await sourceActions.navigateToChunkByIndex(1);
+
+      // The execution request is served while the callback runs and finds R
+      // busy, so the chunk is deferred. The callback then returns to the
+      // waiting read with nothing to prompt for: the deferred chunk has to
+      // run all the same, not wait for the next console command.
+      await executeInConsole(page,
+        `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05) }, 0.1)`);
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+      await awaitServed(page, /\/rpc\/execute_notebook_chunks/, () => executeCommand(page, 'executeCurrentChunk'));
+      fs.writeFileSync(flag, '');
+
+      await expect.poll(() => fs.existsSync(ran), { timeout: BUSY_TIMEOUT }).toBe(true);
+    } finally {
+      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+    }
   });
 
   test('a reload during a callback that then returns before the busy report leaves the prompt not busy', async ({ rstudioPage: page }) => {

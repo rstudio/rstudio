@@ -125,13 +125,6 @@ struct IdleEventState
    // or a dialog's event again. a reload while a handler runs is answered
    // with it, as the wait itself would answer it
    boost::function<void()> clientInit;
-   // requests served while the handlers ran (polledEventHandler). R was
-   // mid-handler then, so what they did saw it busy: a notebook chunk
-   // execution defers to the next console prompt, a state query reports R
-   // busy. the waiting read's prompt is reissued for them when the handlers
-   // return, as it would have been issued after them before they were
-   // served at all
-   unsigned requestsServed = 0;
    // prompts issued when the busy report was last (re)armed; a handler's own
    // console read (readline()) issues one, which clears the client's busy
    // state, so the report is armed again after it
@@ -146,9 +139,11 @@ IdleEventState s_idleEvents;
 // while inactive), for the listener thread (see processingIdleEvents)
 std::atomic<std::int64_t> s_idleEventsSince(0);
 
-// how long the handlers run before they count, for an interrupt, as a
-// callback running rather than the dispatch itself, which with no callback
-// due takes microseconds. an interrupt landing in the dispatch would be
+// how long the handlers run before they count as a callback running rather
+// than the dispatch itself, which with no callback due takes microseconds
+// and runs twenty times a second. requests are served from the polled
+// event handler only past it, and an interrupt counts as meant for the
+// handlers only past it: landing in the dispatch alone it would be
 // swallowed with the next read still waiting, while one meant for an
 // interactive read (Escape at readline(), or at a continuation prompt) has
 // to become a cancel of that read instead (see idleEventsPastDispatch)
@@ -158,6 +153,11 @@ std::int64_t steadyNowNs()
 {
    return std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+std::int64_t dispatchGraceNs()
+{
+   return std::chrono::duration_cast<std::chrono::nanoseconds>(kIdleEventDispatchGrace).count();
 }
 
 void setIdleEvents(const IdleEventState& state)
@@ -257,7 +257,6 @@ bool processIdleEvents(const std::string& method,
                        bool inputHeld)
 {
    bool busyReported = false;
-   unsigned requestsServed = 0;
    bool executingBefore = console_input::executing();
    bool atTopLevelBefore = r::session::atTopLevelPrompt();
    unsigned promptsBefore = console_input::promptsIssued();
@@ -270,7 +269,6 @@ bool processIdleEvents(const std::string& method,
                initFunction);
       processEvents();
       busyReported = s_idleEvents.busyReported;
-      requestsServed = s_idleEvents.requestsServed;
    }
 
    // a console read a handler ran (readline()) marks console input as
@@ -296,9 +294,8 @@ bool processIdleEvents(const std::string& method,
       return false;
 
    // reissue the waiting read's prompt, which also tells the client R is
-   // back, when the client was told R is busy; when a request was served
-   // while the handlers ran (see IdleEventState::requestsServed); when a
-   // prompt was issued meanwhile -- a handler's own console read
+   // back, when the client was told R is busy; when a prompt was issued
+   // meanwhile -- a handler's own console read
    // (readline()), whose prompt replaced the waiting read's, or a reload's
    // client_init answered with the waiting read's prompt, which R mid-
    // handler reported busy; when a read took input the client submitted,
@@ -316,7 +313,6 @@ bool processIdleEvents(const std::string& method,
       return false;
 
    if (busyReported ||
-       requestsServed > 0 ||
        console_input::promptsIssued() != promptsBefore ||
        console_input::readsCompleted() != readsBefore ||
        console_input::inputDiscards() != discardsBefore)
@@ -623,9 +619,6 @@ void polledEventHandler()
                                  " after: " + string_utils::formatDouble(duration.count(), 2));
             }
             handleConnection(ptrConnection, http_methods::BackgroundConnection);
-
-            if (s_idleEvents.active)
-               s_idleEvents.requestsServed++;
          }
 
          // a request served is activity, as in waitForMethod: console input
@@ -729,7 +722,8 @@ bool protocolDebugEnabled()
 
 bool processingIdleEvents()
 {
-   return s_idleEventsSince != 0;
+   std::int64_t since = s_idleEventsSince;
+   return since != 0 && steadyNowNs() - since > dispatchGraceNs();
 }
 
 bool idleEventsPastDispatch()
@@ -741,8 +735,7 @@ bool idleEventsPastDispatch()
    // within the grace it is not yet known whether this is a callback or the
    // dispatch alone: wait for the grace to run out while the same dispatch
    // stays active (the main thread cannot wait, it is the dispatch)
-   std::int64_t graceNs =
-         std::chrono::duration_cast<std::chrono::nanoseconds>(kIdleEventDispatchGrace).count();
+   std::int64_t graceNs = dispatchGraceNs();
    while (steadyNowNs() - since <= graceNs)
    {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
