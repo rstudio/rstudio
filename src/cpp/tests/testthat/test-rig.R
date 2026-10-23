@@ -706,18 +706,14 @@ test_that("rig's default R setup is remembered before, and put back after, a use
    # with no install under way there is nothing to undo
    expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
 
-   # a snapshot that cannot be saved is reported, and still undone from memory
+   # without a saved snapshot there is no undoing the install: it is refused
    unwritable <- file.path(home, "missing", "snapshot.rds")
    withr::with_envvar(c(HOME = home), {
-      messages <- .rs.rig.userInstallBegin(rig, unwritable, launchd$launchctl)
+      expect_error(.rs.rig.userInstallBegin(rig, unwritable, launchd$launchctl), "^Could not save rig's default R setup to ")
    })
-   expect_length(messages, 1L)
-   expect_match(messages, "^Could not save rig's default R setup to ")
-   expect_false(is.null(state$snapshot))
-   expect_true(file.symlink(installed, paths[["current"]]))
-   messages <- .rs.rig.userInstallEnd(launchd$launchctl)
-   expect_match(messages, "^Removed the default R setup")
-   expect_false(.rs.rig.pathExists(paths[["current"]]))
+   expect_null(state$snapshot)
+   expect_null(state$file)
+   expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
 
    # when rig cannot say where its files are, nothing is remembered
    failing <- fakeRig(home, NULL)
@@ -726,21 +722,93 @@ test_that("rig's default R setup is remembered before, and put back after, a use
    expect_false(file.exists(file))
    expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
 
-   # the snapshot is kept while something is left to undo, for a later try
+})
+
+test_that("the snapshot is kept, and installs refused, while something is left to undo", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+   skip_if(identical(Sys.info()[["effective_user"]], "root"), "root can remove anything")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit({
+      Sys.chmod(file.path(home, "R"), "0755")
+      unlink(home, recursive = TRUE)
+   }, add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   for (dir in c(root, bin))
+      dir.create(dir, recursive = TRUE)
+
    rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   file <- file.path(home, "rig-install-snapshot.rds")
+   launchd <- fakeLaunchd()
+   state <- .rs.rig.installState
+
    withr::with_envvar(c(HOME = home), {
       expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
    })
+   paths <- state$snapshot$paths
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
    expect_true(file.symlink(installed, paths[["current"]]))
+
+   # the link cannot be removed: the snapshot stays for a later try
    Sys.chmod(root, "0555")
    messages <- .rs.rig.userInstallEnd(launchd$launchctl)
-   Sys.chmod(root, "0755")
    expect_match(messages, "^Could not undo a change rig made outside RStudio: could not remove ", all = FALSE)
    expect_true(file.exists(file))
    expect_null(state$snapshot)
+
+   # until then, no further install (whose snapshot would take the leftover
+   # for setup to keep, and forget it was ever absent)
+   withr::with_envvar(c(HOME = home), {
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), "not all undone yet")
+   })
+   expect_true(file.exists(file))
+   expect_identical(readRDS(file)$existed[["current"]], FALSE)
+
+   Sys.chmod(root, "0755")
    messages <- .rs.rig.userInstallRecover(file, launchctl = launchd$launchctl)
    expect_match(messages, "^Removed the default R setup")
    expect_false(file.exists(file))
+   expect_false(.rs.rig.pathExists(paths[["current"]]))
+
+})
+
+test_that("an agent that failed to load again is loaded by the next try", {
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = TRUE)
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   cat("<plist>old</plist>\n", file = paths[["launchAgent"]])
+   launchd <- fakeLaunchd(loaded = TRUE, whichR = "/old/R")
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+
+   # rig rewrites the agent; putting it back works, loading it does not
+   cat("<plist>new</plist>\n", file = paths[["launchAgent"]])
+   launchd$state$whichR <- "/new/R"
+   launchd$state$failing <- "load"
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$restored, unname(paths[["launchAgent"]]))
+   expect_match(result$failed, "launchctl load")
+   expect_identical(launchd$verbs(), c("list", "unload", "load", "getenv", "setenv"))
+   expect_false(launchd$state$loaded)
+
+   # the file is already as it was, so the next try only loads it
+   launchd$state$failing <- character()
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result, list(removed = character(), restored = character(), failed = character()))
+   expect_identical(launchd$verbs(), c("list", "load", "getenv"))
+   expect_true(launchd$state$loaded)
 
 })
 

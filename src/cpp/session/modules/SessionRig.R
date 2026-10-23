@@ -266,21 +266,26 @@
       {
          if (is.null(launchctl(c("unload", agent))))
             failed <- c(failed, sprintf("'launchctl unload %s' failed", agent))
+         else
+            loaded <- FALSE
       }
 
       if (rewritten)
       {
          written <- .rs.tryCatch(writeBin(snapshot$agent, agent))
          if (inherits(written, "error"))
-         {
             failed <- c(failed, sprintf("could not restore %s: %s", agent, conditionMessage(written)))
-         }
          else
-         {
             restored <- c(restored, agent)
-            if (snapshot$loaded && is.null(launchctl(c("load", agent))))
-               failed <- c(failed, sprintf("'launchctl load %s' failed", agent))
-         }
+      }
+
+      # an agent that was loaded is loaded again once its file is as it was
+      # (also after an earlier try that put the file back but failed to load it)
+      if (snapshot$loaded && !loaded && !created[["launchAgent"]] &&
+          identical(.rs.rig.readBytes(agent), snapshot$agent))
+      {
+         if (is.null(launchctl(c("load", agent))))
+            failed <- c(failed, sprintf("'launchctl load %s' failed", agent))
       }
 
       whichR <- launchctl(c("getenv", "RSTUDIO_WHICH_R"))
@@ -355,12 +360,22 @@
    invisible(dir.exists(dir))
 })
 
-#' Write the snapshot to 'file'. Returns a message when that fails.
+#' Write the snapshot to 'file', replacing any earlier one whole (so that a
+#' failed write leaves it as it was). Returns a message when that fails.
 .rs.addFunction("rig.saveSnapshot", function(snapshot, file)
 {
-   saved <- .rs.tryCatch(saveRDS(snapshot, file))
+   staged <- tempfile("rig-install-snapshot-", tmpdir = dirname(file))
+   saved <- .rs.tryCatch({
+      saveRDS(snapshot, staged)
+      if (!file.rename(staged, file))
+         stop("cannot rename ", staged)
+   })
+
    if (inherits(saved, "error"))
+   {
+      unlink(staged)
       return(sprintf("Could not save rig's default R setup to %s: %s", file, conditionMessage(saved)))
+   }
 
    character()
 })
@@ -381,8 +396,9 @@
 #' may not get to undo it, and the next session then does (from the file).
 #' A snapshot another session left there is undone first, so that its
 #' leftovers do not pass for the setup to keep; while that session (or its
-#' rig) still runs, the install is refused, as the two would undo each
-#' other's work. Returns messages for the job's log.
+#' rig) still runs, or until its leftovers are all undone, the install is
+#' refused. Without a saved snapshot there is no undoing what rig adds, so
+#' the install is refused then as well. Returns messages for the job's log.
 .rs.addFunction("rig.userInstallBegin", function(rig,
                                                  file = NULL,
                                                  launchctl = .rs.rig.launchctl,
@@ -399,23 +415,31 @@
    notes <- character()
    if (!is.null(file) && file.exists(file))
    {
-      leftover <- .rs.tryCatch(readRDS(file))
-      if (!inherits(leftover, "error") && .rs.rig.snapshotInUse(leftover, running))
-         stop("another RStudio session is still installing R")
-
       notes <- .rs.rig.userInstallRecover(file, running, launchctl)
+      if (file.exists(file))
+      {
+         if (length(notes) == 0L)
+            stop("another RStudio session is still installing R")
+
+         stop(paste(c("an earlier installation's changes are not all undone yet:", notes), collapse = "\n"))
+      }
    }
 
    dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
    .rs.rig.ensureBinaryDir(dirs)
 
    paths <- .rs.rig.userDefaultPaths(dirs)
-   state$snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
-   if (is.null(file))
-      return(notes)
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+   if (!is.null(file))
+   {
+      failure <- .rs.rig.saveSnapshot(snapshot, file)
+      if (length(failure))
+         stop(failure)
+   }
 
+   state$snapshot <- snapshot
    state$file <- file
-   c(notes, .rs.rig.saveSnapshot(state$snapshot, file))
+   notes
 })
 
 #' Called once rig is running, to record its process in the snapshot: a
