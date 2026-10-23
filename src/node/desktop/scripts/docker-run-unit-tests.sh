@@ -19,4 +19,6 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../../../../dependencies/tools/rstudio-tools.sh"
 
 export PATH=/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin/:$PATH
-xvfb-run npm test
+# xvfb-run's default 640x480 screen clamps the windows that tests create
+# (with no window manager), so tests asserting window sizes would fail.
+xvfb-run -s "-screen 0 1920x1080x24" npm test

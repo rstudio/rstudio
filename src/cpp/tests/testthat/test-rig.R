@@ -15,24 +15,31 @@
 
 context("rig")
 
-test_that("the rig download URL matches the platform and architecture", {
+test_that("the bundled rig follows an explicit override and precedes system copies", {
 
-   url <- function(...) .rs.rig.downloadUrl(version = "0.10.0", ...)
+   bundled <- file.path(tempdir(), "RStudio", "bin", "rig")
+   override <- file.path(tempdir(), "custom", .rs.rig.exeName())
+   candidates <- .rs.rig.candidatePaths(override = override, bundled = bundled)
+   expect_identical(candidates[1:2], c(override, file.path(bundled, "bin", .rs.rig.exeName())))
+   expect_identical(
+      .rs.rig.candidatePaths(override = "", bundled = bundled)[[1L]],
+      file.path(bundled, "bin", .rs.rig.exeName())
+   )
 
-   expect_match(url(sysname = "Darwin", machine = "arm64"),
-                "/v0.10.0/rig-macos-arm64-0.10.0.tar.gz$")
-   expect_match(url(sysname = "Darwin", machine = "x86_64"),
-                "/rig-macos-x86_64-0.10.0.tar.gz$")
-   expect_match(url(sysname = "Linux", machine = "x86_64"),
-                "/rig-linux-x86_64-0.10.0.tar.gz$")
-   expect_match(url(sysname = "Linux", machine = "aarch64"),
-                "/rig-linux-aarch64-0.10.0.tar.gz$")
+})
 
-   # on Windows, the machine architecture comes from the environment
-   expect_match(url(sysname = "Windows", machine = "x86-64", processorArch = "AMD64"),
-                "/rig-windows-x86_64-0.10.0.zip$")
-   expect_match(url(sysname = "Windows", machine = "x86-64", processorArch = "ARM64"),
-                "/rig-windows-arm64-0.10.0.zip$")
+test_that("the configured bundled rig is usable without an external installation", {
+
+   # rig is bundled with the desktop only
+   skip_if_not(identical(.rs.api.versionInfo()$mode, "desktop"), "not a desktop session")
+
+   bundled <- file.path(.Call("rs_rigPath", PACKAGE = "(embedding)"), "bin", .rs.rig.exeName())
+   expect_true(file.exists(bundled))
+   expect_equal(.rs.rig.version(bundled), package_version(.rs.rig.pinnedVersion))
+   expect_identical(
+      .rs.rig.find(paths = c(tempfile("missing-rig-"), bundled)),
+      normalizePath(bundled, winslash = "/")
+   )
 
 })
 
@@ -162,23 +169,19 @@ test_that("only version numbers are accepted as R versions", {
 
 })
 
-test_that("the pinned rig archives have known checksums", {
+test_that("the pinned rig version is the bundled one", {
 
-   for (sysname in c("Darwin", "Linux", "Windows"))
-   {
-      for (machine in c("x86_64", "arm64"))
-      {
-         url <- .rs.rig.downloadUrl(
-            sysname = sysname,
-            machine = machine,
-            processorArch = if (machine == "arm64") "ARM64" else "AMD64"
-         )
-         expect_match(.rs.rig.archiveChecksum(url), "^[0-9a-f]{64}$", info = url)
-      }
-   }
+   # the bundled release is pinned in dependencies/common/rig.cmake, reached
+   # from the source tree the tests are run from
+   testsDir <- Sys.getenv("TESTTHAT_TESTS_DIR", unset = NA)
+   skip_if(is.na(testsDir), "TESTTHAT_TESTS_DIR is not set")
+   cmake <- file.path(testsDir, "..", "..", "..", "..", "dependencies", "common", "rig.cmake")
+   skip_if_not(file.exists(cmake), "dependencies/common/rig.cmake not found")
+   contents <- readLines(cmake, warn = FALSE)
 
-   # other releases are unknown
-   expect_identical(.rs.rig.archiveChecksum(.rs.rig.downloadUrl(version = "0.9.0")), "")
+   version <- grep("^set\\(RSTUDIO_RIG_VERSION ", contents, value = TRUE)
+   expect_length(version, 1L)
+   expect_identical(sub('.*"(.*)".*', "\\1", version), as.character(.rs.rig.pinnedVersion))
 
 })
 
@@ -217,82 +220,6 @@ test_that("R installations found without rig are well-formed", {
    expect_identical(names(installed), c("version", "path", "binary", "home"))
    expect_true(all(vapply(installed$version, .rs.rVersionIsValid, logical(1))))
    expect_true(all(file.exists(installed$binary)))
-
-})
-
-test_that("a rig archive is extracted into the install root", {
-
-   skip_on_os("windows")
-
-   # build an archive with the layout of a rig release
-   staging <- tempfile("rig-archive-")
-   dir.create(file.path(staging, "bin"), recursive = TRUE)
-   dir.create(file.path(staging, "share"), recursive = TRUE)
-   writeLines("#!/bin/sh\necho rig", file.path(staging, "bin", "rig"))
-
-   archive <- tempfile(fileext = ".tar.gz")
-   owd <- setwd(staging)
-   on.exit(setwd(owd), add = TRUE)
-   utils::tar(archive, files = c("bin", "share"), compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   root <- file.path(tempfile("rig-root-"), "rig")
-   on.exit(unlink(dirname(root), recursive = TRUE), add = TRUE)
-
-   rig <- .rs.rig.installArchive(archive, root = root)
-   expect_true(file.exists(rig))
-   expect_equal(basename(rig), "rig")
-   expect_equal(normalizePath(dirname(dirname(rig))), normalizePath(root))
-   expect_true(file.access(rig, mode = 1L) == 0L)
-
-   # reinstalling replaces the previous copy
-   writeLines("#!/bin/sh\necho rig2", file.path(staging, "bin", "rig"))
-   setwd(staging)
-   utils::tar(archive, files = c("bin", "share"), compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   rig <- .rs.rig.installArchive(archive, root = root)
-   expect_match(readLines(rig)[[2]], "rig2")
-
-   # an archive without a rig binary is rejected, leaving the install intact
-   bad <- tempfile(fileext = ".tar.gz")
-   setwd(staging)
-   utils::tar(bad, files = "share", compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   expect_error(.rs.rig.installArchive(bad, root = root))
-   expect_true(file.exists(rig))
-
-})
-
-test_that("a rig archive that can't be installed is reported", {
-
-   skip_on_os("windows")
-   skip_if(identical(Sys.info()[["effective_user"]], "root"))
-
-   staging <- tempfile("rig-archive-")
-   dir.create(file.path(staging, "bin"), recursive = TRUE)
-   writeLines("#!/bin/sh\necho rig", file.path(staging, "bin", "rig"))
-
-   archive <- tempfile(fileext = ".tar.gz")
-   owd <- setwd(staging)
-   on.exit(setwd(owd), add = TRUE)
-   utils::tar(archive, files = "bin", compression = "gzip", tar = "internal")
-   setwd(owd)
-
-   # an install root that can't be created: neither the rename nor the copy
-   # it falls back to can succeed, and neither failure passes silently
-   parent <- tempfile("rig-root-")
-   dir.create(parent)
-   on.exit({
-      Sys.chmod(parent, mode = "0755")
-      unlink(parent, recursive = TRUE)
-   }, add = TRUE)
-   Sys.chmod(parent, mode = "0555")
-
-   root <- file.path(parent, "rig")
-   expect_error(.rs.rig.installArchive(archive, root = root))
-   expect_false(file.exists(file.path(root, "bin", "rig")))
 
 })
 
@@ -415,21 +342,26 @@ test_that("installed R versions are listed once per session unless refreshed", {
 
 test_that("rig older than the pinned release is passed over", {
 
-   skip_on_os("windows")
-
    dir <- tempfile("rig-bin-")
    dir.create(dir)
    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-   rig <- file.path(dir, "rig")
-   writeLines(c("#!/bin/sh", "echo 'RIG -- The R Installation Manager 0.9.1'"), rig)
-   Sys.chmod(rig, "0755")
+   rig <- file.path(dir, if (.rs.platform.isWindows) "rig.cmd" else "rig")
+   writeRig <- function(output)
+   {
+      writeLines(c(if (.rs.platform.isWindows) "@echo off" else "#!/bin/sh",
+                   paste("echo", output)), rig)
+      Sys.chmod(rig, "0755")
+   }
+   writeRig("RIG -- The R Installation Manager 0.9.1")
    expect_equal(.rs.rig.version(rig), package_version("0.9.1"))
+   expect_identical(.rs.rig.find(paths = rig), "")
 
-   writeLines(c("#!/bin/sh", "echo 'RIG -- The R Installation Manager 0.10.2'"), rig)
-   expect_equal(.rs.rig.version(rig), package_version("0.10.2"))
+   writeRig(paste("RIG -- The R Installation Manager", .rs.rig.pinnedVersion))
+   expect_equal(.rs.rig.version(rig), package_version(.rs.rig.pinnedVersion))
+   expect_identical(.rs.rig.find(paths = rig), normalizePath(rig, winslash = "/"))
 
-   writeLines(c("#!/bin/sh", "echo 'not rig'"), rig)
+   writeRig("not rig")
    expect_null(.rs.rig.version(rig))
 
 })

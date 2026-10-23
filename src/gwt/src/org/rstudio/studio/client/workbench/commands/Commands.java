@@ -145,6 +145,7 @@ public abstract class
    public abstract AppCommand vcsNextChange();
    public abstract AppCommand vcsPreviousChange();
    public abstract AppCommand vcsRevertChange();
+   public abstract AppCommand vcsShowChange();
    public abstract AppCommand vcsShowChangesSideBySide();
    public abstract AppCommand popoutDoc();
    public abstract AppCommand returnDocToMain();

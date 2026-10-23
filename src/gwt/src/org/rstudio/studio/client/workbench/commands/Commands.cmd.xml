@@ -496,6 +496,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="vcsNextChange"/>
             <cmd refid="vcsPreviousChange"/>
+            <cmd refid="vcsShowChange"/>
             <cmd refid="vcsRevertChange"/>
             <cmd refid="vcsShowChangesSideBySide"/>
             <separator/>
@@ -1311,6 +1312,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Revert Change at Cursor"
         menuLabel="Revert _Change at Cursor"
         desc="Restore the lines at the cursor to the version last staged or committed"
+        context="vcs"/>
+
+   <cmd id="vcsShowChange"
+        label="Show Change at Cursor"
+        menuLabel="_Show Change at Cursor"
+        desc="Show the version last staged or committed of the lines at the cursor"
         context="vcs"/>
 
    <cmd id="vcsShowChangesSideBySide"

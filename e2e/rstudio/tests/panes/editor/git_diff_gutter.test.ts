@@ -8,7 +8,7 @@
 // R-side so this also works in Server mode, where the rsession may not share a
 // filesystem with the test runner.
 import { test, expect } from '@fixtures/rstudio.fixture';
-import type { Locator, Page, Route } from '@playwright/test';
+import type { Locator, Page, Request, Response, Route } from '@playwright/test';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
@@ -16,10 +16,12 @@ import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
 import {
   clearPref,
   documentCloseAllNoSave,
+  documentOpen,
   executeCommand,
   isCommandChecked,
   isCommandEnabled,
   openProject,
+  resetSourcePaneState,
   setPref,
 } from '@utils/commands';
 import { openFile } from '@utils/files';
@@ -44,6 +46,11 @@ const PEEK = '.ace_git-peek';
 const PEEK_LABEL = '.ace_git-peek-label';
 const PEEK_LINE = '.ace_git-peek-line';
 const PEEK_REVERT = '.ace_git-peek-revert';
+
+// The main source column and any extra ones (see SourceColumnManager).
+const MAIN_COLUMN = '#rstudio_Source_pane';
+const EXTRA_COLUMNS = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
+const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-selected']";
 
 // The side-by-side diff: the pane (see ClassIds.EDITOR_DIFF_VIEW), the base
 // editor inside it, and its notice for a file with no base; see
@@ -148,6 +155,67 @@ async function gutterAttached(page: Page): Promise<boolean> {
     const editor = window.rstudio?.documents.activeEditor() as unknown as GutterEditor | null;
     return editor?.renderer.$gutterLayer.element.classList.contains(attachedClass) ?? false;
   }, GUTTER_ATTACHED);
+}
+
+/** The base fetches made since tracking began; see trackBaseFetches. */
+type BaseFetches = {
+  /** The file each fetch was for, by name, in order. */
+  names: string[];
+  /** Resolves once a fetch has been seen and the last one is over a second old. */
+  settled: () => Promise<void>;
+  stop: () => void;
+};
+
+/**
+ * Watches the base fetches (git_diff_base_contents) made from now on. The
+ * gutter fetches on its own schedule: once when it attaches, and half a
+ * second after the editor gains focus; `settled` waits those out, so a test
+ * that then moves the index knows no fetch is pending that could land after
+ * the move and pick the new index up ahead of the interaction under test.
+ */
+function trackBaseFetches(page: Page): BaseFetches {
+  const names: string[] = [];
+  let lastFetchAt = 0;
+  const onRequest = (request: Request): void => {
+    if (!request.url().includes('git_diff_base_contents')) return;
+    const params = (request.postDataJSON() as { params: string[] }).params;
+    names.push(params[0].replace(/\\/g, '/').split('/').pop()!);
+    lastFetchAt = Date.now();
+  };
+  page.on('request', onRequest);
+
+  return {
+    names,
+    settled: async () => {
+      await expect
+        .poll(() => lastFetchAt > 0 && Date.now() - lastFetchAt > 1000, { timeout: 15000 })
+        .toBe(true);
+    },
+    stop: () => page.off('request', onRequest),
+  };
+}
+
+/**
+ * Opens a file, waits for the given markers, and lets the fetches the open
+ * sets off come and go: the attach fetch gives the markers, but the focus
+ * the open gives the editor schedules another half a second later. A test
+ * that stages the file right after the open would otherwise race it (and
+ * did, on CI): landing after the staging, that fetch clears the markers
+ * before the test gets to click one.
+ */
+async function openFileSettled(
+  page: Page,
+  path: string,
+  markers: Record<number, string[]>,
+): Promise<void> {
+  const fetches = trackBaseFetches(page);
+  try {
+    await openFile(page, path);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(markers);
+    await fetches.settled();
+  } finally {
+    fetches.stop();
+  }
 }
 
 // The parts of an Ace editor the side-by-side checks reach into, beyond the
@@ -291,10 +359,24 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await openFile(page, scriptPath());
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
 
-    const editor = new AceEditor(page, '');
-    await editor.gotoLine(EDITED_LINES.length);
-    await editor.navigateLineEnd();
-    await editor.insert('\ni <- 9');
+    // An edit is diffed before the frame that paints it: by the next
+    // animation frame the chunks reflect it, with no timer or round trip
+    // in between.
+    const immediate = await page.evaluate(async (lastLine) => {
+      type GutterEditor = {
+        gotoLine(line: number, column: number): void;
+        navigateLineEnd(): void;
+        insert(text: string): void;
+        gitDiffGutter: { rowClasses: Record<number, string> };
+      };
+      const editor = window.rstudio!.documents.activeEditor() as unknown as GutterEditor;
+      editor.gotoLine(lastLine, 0);
+      editor.navigateLineEnd();
+      editor.insert('\ni <- 9');
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      return Object.keys(editor.gitDiffGutter.rowClasses).map(Number).sort((a, b) => a - b);
+    }, EDITED_LINES.length);
+    expect(immediate).toEqual([1, 4, 6, EDITED_LINES.length]);
 
     // the new last line is an addition; everything above is unchanged
     await expect
@@ -422,6 +504,43 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     const editor = new AceEditor(page, '');
     await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('shows and hides the change at the cursor from the keyboard', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // the marker is a mouse target; the command opens the same peek for a
+    // keyboard user, so what Revert would restore can be seen first
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(5);
+    await executeCommand(page, 'vcsShowChange');
+    const peek = page.locator(PEEK);
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await expect(peek.locator(PEEK_LABEL)).toHaveText('Changed 1 line; previously:');
+    await expect(peek.locator(PEEK_LINE)).toHaveText(['d <- 4']);
+
+    // the same command toggles it closed
+    await executeCommand(page, 'vcsShowChange');
+    await expect(peek).toHaveCount(0);
+
+    // a removal's peek lists the removed lines
+    await editor.gotoLine(7);
+    await executeCommand(page, 'vcsShowChange');
+    await expect(peek).toBeVisible({ timeout: 10000 });
+    await expect(peek.locator(PEEK_LABEL)).toHaveText('Removed 1 line');
+    await expect(peek.locator(PEEK_LINE)).toHaveText(['f <- 6']);
+
+    // on an unchanged line the command has nothing to show, and leaves an
+    // open peek alone
+    await editor.gotoLine(3);
+    await executeCommand(page, 'vcsShowChange');
+    await expect(peek).toHaveCount(1);
+    await expect(peek.locator(PEEK_LINE)).toHaveText(['f <- 6']);
 
     await documentCloseAllNoSave(page);
   });
@@ -730,6 +849,64 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await documentCloseAllNoSave(page);
     await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(stagePath)}))`);
     await commitAll(page, 'remove stage-like name', [stagePath]);
+  });
+
+  test('reads the index through the file\'s smudge filter', async ({ rstudioPage: page }) => {
+    // The editor shows the smudged working copy, so the base has to come
+    // through the same filters (git-crypt, LFS, ident) or every line would
+    // read as changed and the peek would show the stored form. A rot13
+    // clean/smudge pair stands in for them here.
+    const attrsPath = `${projectDir()}/.gitattributes`;
+    const cipherPath = `${projectDir()}/cipher.txt`;
+    const rot13 = 'tr A-Za-z N-ZA-Mn-za-m';
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          s <- c(
+            system2("git", c(${gitC()}, "config", "filter.rot.clean", shQuote(${rStringLiteral(rot13)}))),
+            system2("git", c(${gitC()}, "config", "filter.rot.smudge", shQuote(${rStringLiteral(rot13)})))
+          )
+          if (any(s != 0))
+            stop("git config failed (exit status: ", paste(s, collapse = "/"), ")")
+          writeLines("cipher.txt filter=rot", ${rPathLiteral(attrsPath)})
+          writeLines(c("one <- 1", "two <- 2", "three <- 3"), ${rPathLiteral(cipherPath)})
+        }
+      `,
+    );
+    await commitAll(page, 'cipher', [attrsPath, cipherPath]);
+
+    // the stored blob is rot13 of the text, as the filter is in effect
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          stored <- system2("git", c(${gitC()}, "show", ":0:cipher.txt"), stdout = TRUE)
+          if (!identical(stored[[1]], "bar <- 1"))
+            stop("the clean filter did not apply: ", stored[[1]])
+          writeLines(c("one <- 1", "two <- 22", "three <- 3"), ${rPathLiteral(cipherPath)})
+        }
+      `,
+    );
+
+    try {
+      await openFile(page, cipherPath);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [MODIFIED] });
+
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(2);
+      await executeCommand(page, 'vcsShowChange');
+      const peek = page.locator(PEEK);
+      await expect(peek).toBeVisible({ timeout: 10000 });
+      await expect(peek.locator(PEEK_LINE)).toHaveText(['two <- 2']);
+    } finally {
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(
+        page,
+        `invisible(file.remove(c(${rPathLiteral(attrsPath)}, ${rPathLiteral(cipherPath)})))`,
+      );
+      await commitAll(page, 'remove cipher', [attrsPath, cipherPath]);
+    }
   });
 
   test('keeps control characters the editor keeps', async ({ rstudioPage: page }) => {
@@ -1375,6 +1552,22 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect(page.locator(PEEK)).toBeVisible({ timeout: 10000 });
       expect(await visibleMath.count()).toBe(0);
 
+      // Typing inside the equation re-renders an existing preview after a
+      // pause; the peek on the closing fence's row is not one, so with
+      // previews off nothing may appear (a popup, in this mode).
+      await page.evaluate(() => {
+        const editor = window.rstudio!.documents.activeEditor()!;
+        editor.focus();
+        editor.gotoLine(6, 5);
+        editor.insert('1');
+      });
+      const quiet = Date.now() + 1500;
+      while (Date.now() < quiet) {
+        expect(await visibleMath.count()).toBe(0);
+        await page.waitForTimeout(250);
+      }
+      await expect(page.locator(PEEK)).toBeVisible();
+
       await setPref(page, 'latexPreviewOnCursorIdle', 'always');
       await page.evaluate(() => {
         const editor = window.rstudio!.documents.activeEditor()!;
@@ -1406,8 +1599,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('re-fetches the base when a marker is clicked in an unfocused editor', async ({
     rstudioPage: page,
   }) => {
-    await openFile(page, scriptPath());
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await openFileSettled(page, scriptPath(), EDITED_MARKERS);
 
     // Stage the edits from the console (focus stays there), which moves the
     // index under the open document. Clicking the marker is the first
@@ -1436,15 +1628,21 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('reverts from a peek against the index as it is, not as it was', async ({
     rstudioPage: page,
   }) => {
-    await openFile(page, scriptPath());
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await openFileSettled(page, scriptPath(), EDITED_MARKERS);
 
+    // Open the peek with focus in the console, and let the re-fetch the
+    // click's editor focus schedules come and go: it must not be the one
+    // that finds the staging below, or it would close the peek first.
+    await executeInConsoleChecked(page, 'invisible(NULL)');
+    const focusFetch = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
     const cell = page.locator('.ace_gutter-cell.ace_git-modified').first();
     const box = (await cell.boundingBox())!;
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     const peek = page.locator(PEEK);
     await expect(peek).toBeVisible({ timeout: 10000 });
     await expect(peek.locator(PEEK_LINE)).toHaveText(['d <- 4']);
+    await focusFetch;
+    await expect(peek).toBeVisible();
 
     // Stage the file from the console while the peek is open: the index now
     // matches the buffer, and nothing has told the editor so. Revert must
@@ -1472,8 +1670,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   test('reverts at the cursor against the index as it is, not as it was', async ({
     rstudioPage: page,
   }) => {
-    await openFile(page, scriptPath());
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await openFileSettled(page, scriptPath(), EDITED_MARKERS);
 
     const editor = new AceEditor(page, '');
     await editor.gotoLine(5);
@@ -1703,6 +1900,126 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await documentCloseAllNoSave(page);
   });
 
+  test('answers an unchanged base without re-sending it', async ({ rstudioPage: page }) => {
+    type BaseResult = { tracked: boolean; id: string; unchanged: boolean; contents: string };
+    const baseResult = async (r: Promise<Response>): Promise<BaseResult> =>
+      ((await (await r).json()) as { result: BaseResult }).result;
+
+    const firstFetch = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
+    await openFile(page, scriptPath());
+    const first = await baseResult(firstFetch);
+    expect(first.tracked).toBe(true);
+    expect(first.unchanged).toBe(false);
+    expect(first.contents.split('\n').slice(0, 2)).toEqual(SEED_LINES.slice(0, 2));
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    // A refresh names the base held; the index still has it, so the reply
+    // carries no contents, and the markers (computed from the held base)
+    // stay.
+    await executeCommand(page, 'activateVcs');
+    const refetch = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
+    await executeCommand(page, 'vcsRefresh');
+    const second = await baseResult(refetch);
+    expect(second.tracked).toBe(true);
+    expect(second.unchanged).toBe(true);
+    expect(second.id).toBe(first.id);
+    expect(second.contents).toBe('');
+    await page.waitForTimeout(500);
+    expect(await gutterMarkers(page)).toEqual(EDITED_MARKERS);
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('fetches a background document\'s base only once it is shown', async ({
+    rstudioPage: page,
+  }) => {
+    const otherPath = `${projectDir()}/other.R`;
+    await executeInConsoleChecked(page, `writeLines("o <- 1", ${rPathLiteral(otherPath)})`);
+    await commitAll(page, 'other', [otherPath]);
+
+    // which documents a fetch was for; the open-time fetches are waited out
+    // before counting
+    const fetches = trackBaseFetches(page);
+    const { names: fetched } = fetches;
+    try {
+      await openFile(page, scriptPath());
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+      await openFile(page, otherPath);
+      await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+      await expect.poll(() => fetched.includes('other.R'), { timeout: 15000 }).toBe(true);
+      await fetches.settled();
+
+      // A Git refresh reaches every open document, but only the one shown
+      // fetches; the hidden script.R waits.
+      fetched.length = 0;
+      await executeCommand(page, 'activateVcs');
+      await executeCommand(page, 'vcsRefresh');
+      await expect.poll(() => fetched.includes('other.R'), { timeout: 15000 }).toBe(true);
+      await fetches.settled();
+      expect(fetched).not.toContain('script.R');
+
+      // and fetches when it is shown again
+      await openFile(page, scriptPath());
+      await expect.poll(() => fetched.includes('script.R'), { timeout: 15000 }).toBe(true);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    } finally {
+      fetches.stop();
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(otherPath)}))`);
+      await commitAll(page, 'remove other', [otherPath]);
+    }
+  });
+
+  test('refreshes a document showing in an inactive source column', async ({
+    rstudioPage: page,
+  }) => {
+    // Activating a column deactivates the document shown in the previous
+    // one, which stays on screen; a commit must reach its markers without a
+    // click back into that column.
+    const otherPath = `${projectDir()}/other.R`;
+    await executeInConsoleChecked(page, `writeLines("o <- 1", ${rPathLiteral(otherPath)})`);
+    await commitAll(page, 'other', [otherPath]);
+
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    await executeCommand(page, 'newSourceColumn');
+    await expect(page.locator(`${EXTRA_COLUMNS} .ace_editor`)).toHaveCount(1);
+    try {
+      // the new column is active, so other.R opens there; edit and save it
+      await documentOpen(page, otherPath);
+      const otherView = page.locator(`${EXTRA_COLUMNS} .ace_editor`).filter({ hasText: 'o <- 1' });
+      await expect(otherView).toHaveCount(1);
+      await expect.poll(() => viewMarkers(otherView), { timeout: 30000 }).toEqual({});
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(1);
+      await editor.navigateLineEnd();
+      await editor.insert('0');
+      await expect.poll(() => viewMarkers(otherView), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+      await executeCommand(page, 'saveSourceDoc');
+      await expect
+        .poll(() => page.evaluate(() => window.rstudio!.documents.active()?.dirty))
+        .toBe(false);
+
+      // back to the main column: script.R is the active document, other.R
+      // is deactivated but still in view
+      await page.locator(`${MAIN_COLUMN} ${SELECTED_DOC_TAB}`).click();
+      await expect
+        .poll(() => page.evaluate(() => window.rstudio!.documents.active()?.path))
+        .toContain('script.R');
+
+      await commitAll(page, 'other edit', [otherPath]);
+      await executeCommand(page, 'activateVcs');
+      await executeCommand(page, 'vcsRefresh');
+      await expect.poll(() => viewMarkers(otherView), { timeout: 30000 }).toEqual({});
+      expect(await gutterMarkers(page)).toEqual(EDITED_MARKERS);
+    } finally {
+      await resetSourcePaneState(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(otherPath)}))`);
+      await commitAll(page, 'remove other', [otherPath]);
+    }
+  });
+
   test('clears once the changes are committed, and tracks the new base', async ({
     rstudioPage: page,
   }) => {
@@ -1726,6 +2043,94 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await editor.navigateLineEnd();
     await editor.insert('0');
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [MODIFIED] });
+  });
+
+  test('marks a lone change in the middle, and changes at both ends', async ({
+    rstudioPage: page,
+  }) => {
+    // Only the lines between the first and last difference are diffed, and
+    // the chunks are shifted back into place: a lone insertion or deletion
+    // leaves the provider nothing on one side, and changes on the first and
+    // last lines leave nothing to trim.
+    await documentCloseAllNoSave(page);
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(4);
+    await editor.navigateLineEnd();
+    await editor.insert('\nx <- 0');
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [ADDED] });
+
+    // remove `e <- 5`, now on row 6; the wedge sits on the line that follows
+    await page.evaluate(() => {
+      type DocEditor = { session: { doc: { remove(range: object): void } } };
+      const editor = window.rstudio!.documents.activeEditor() as unknown as DocEditor;
+      editor.session.doc.remove({ start: { row: 6, column: 0 }, end: { row: 7, column: 0 } });
+    });
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 4: [ADDED], 6: [DELETED] });
+
+    await editor.gotoLine(1);
+    await editor.navigateLineEnd();
+    await editor.insert('0');
+    await editor.gotoLine(8);
+    await editor.navigateLineEnd();
+    await editor.insert('0');
+    await expect
+      .poll(() => gutterMarkers(page), { timeout: 30000 })
+      .toEqual({ 0: [MODIFIED], 4: [ADDED], 6: [DELETED], 7: [MODIFIED] });
+
+    await documentCloseAllNoSave(page);
+  });
+
+  test('marks a wholesale replacement throughout', async ({ rstudioPage: page }) => {
+    // The provider spends its whole time budget refining a large replaced
+    // block character by character, and the spent budget used to read as a
+    // timed-out line alignment, leaving no markers at all. The diff is run
+    // again on per-line tokens to tell the two apart.
+    const bulkPath = `${projectDir()}/bulk.R`;
+    const count = 400;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("v%d <- %d", seq_len(${count}), seq_len(${count})), ${rPathLiteral(bulkPath)})`,
+    );
+    await commitAll(page, 'bulk', [bulkPath]);
+
+    try {
+      await openFile(page, bulkPath);
+      await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+      await page.evaluate((n) => {
+        type Editor = { selectAll(): void; insert(text: string): void };
+        const editor = window.rstudio!.documents.activeEditor() as unknown as Editor;
+        const lines: string[] = [];
+        for (let i = 1; i <= n; i++)
+          lines.push(`w${i} <- ${i * 2}`);
+        editor.selectAll();
+        editor.insert(lines.join('\n'));
+      }, count);
+
+      // every rendered row is marked modified
+      const rendered = (): Promise<{ cells: number; modified: number }> =>
+        page.evaluate((modifiedClass) => {
+          type Cell = { element: HTMLElement };
+          type GutterEditor = { renderer: { $gutterLayer: { $lines: { cells: Cell[] } } } };
+          const editor = window.rstudio!.documents.activeEditor() as unknown as GutterEditor;
+          const cells = editor.renderer.$gutterLayer.$lines.cells;
+          const modified = cells.filter((cell) => cell.element.classList.contains(modifiedClass));
+          return { cells: cells.length, modified: modified.length };
+        }, MODIFIED);
+      await expect
+        .poll(async () => {
+          const counts = await rendered();
+          return counts.cells > 10 && counts.modified === counts.cells;
+        }, { timeout: 30000 })
+        .toBe(true);
+    } finally {
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(bulkPath)}))`);
+      await commitAll(page, 'remove bulk', [bulkPath]);
+    }
   });
 
   test('is controlled by the preference', async ({ rstudioPage: page }) => {

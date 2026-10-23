@@ -386,6 +386,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Restore the lines at the cursor to the version last staged or committed") // $NON-NLS-1$
     String vcsRevertChangeDesc();
     
+    // vcsShowChange
+    @DefaultStringValue("Show Change at Cursor") // $NON-NLS-1$
+    String vcsShowChangeLabel();
+    @DefaultStringValue("_Show Change at Cursor") // $NON-NLS-1$
+    String vcsShowChangeMenuLabel();
+    @DefaultStringValue("Show the version last staged or committed of the lines at the cursor") // $NON-NLS-1$
+    String vcsShowChangeDesc();
+    
     // vcsShowChangesSideBySide
     @DefaultStringValue("Show Changes Side by Side") // $NON-NLS-1$
     String vcsShowChangesSideBySideLabel();

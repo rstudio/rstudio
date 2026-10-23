@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // Wraps the acesupport GitDiffGutter, which marks changed lines in the gutter.
@@ -24,9 +26,30 @@ public class GitDiffGutterNative extends JavaScriptObject
 {
    protected GitDiffGutterNative() {}
 
-   public static native GitDiffGutterNative create(AceEditorNative editor) /*-{
+   public static GitDiffGutterNative create(AceEditorNative editor)
+   {
+      return create(editor, constants_);
+   }
+
+   // the peek's text comes from the IDE's translations rather than the module
+   private static native GitDiffGutterNative create(AceEditorNative editor,
+                                                    EditorsTextConstants constants) /*-{
+      var strings = {
+         removedLines: $entry(function(n) {
+            return constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekRemovedLines(I)(n);
+         }),
+         addedLines: $entry(function(n) {
+            return constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekAddedLines(I)(n);
+         }),
+         changedLines: $entry(function(n) {
+            return constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekChangedLines(I)(n);
+         }),
+         revert: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekRevert()(),
+         close: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekClose()()
+      };
+
       var GitDiffGutter = $wnd.require("rstudio/git_diff_gutter").GitDiffGutter;
-      return new GitDiffGutter(editor);
+      return new GitDiffGutter(editor, strings);
    }-*/;
 
    // Sets the text to diff against; null clears all markers.
@@ -62,7 +85,15 @@ public class GitDiffGutterNative extends JavaScriptObject
       return this.revertChangeAtCursor();
    }-*/;
 
+   // Toggles the peek at the change under the cursor; returns false when the
+   // cursor isn't on a change.
+   public final native boolean showChangeAtCursor() /*-{
+      return this.showChangeAtCursor();
+   }-*/;
+
    public final native void dispose() /*-{
       this.dispose();
    }-*/;
+
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

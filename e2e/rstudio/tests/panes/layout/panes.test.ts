@@ -198,6 +198,41 @@ async function collapseCenterColumn(page: Page): Promise<number> {
   return getOffsetWidth(page, CONSOLE_PANE);
 }
 
+// Press `key` on the focused middle splitter and return the Console width once
+// it has moved and settled, or null if it didn't move within the layout timeout
+// waitForStableWidth allows (e.g. the splitter is at its limit). The splitter
+// lays out on a later turn, so a settled reading taken before the width first
+// changes could still be the old width.
+async function stepSplitter(
+  page: Page,
+  key: 'ArrowLeft' | 'ArrowRight',
+  before: number,
+): Promise<number | null> {
+  await page.keyboard.press(key);
+  try {
+    await expect
+      .poll(() => getOffsetWidth(page, CONSOLE_PANE), { timeout: 5000, intervals: [25] })
+      .not.toBe(before);
+  } catch {
+    return null;
+  }
+  return waitForStableWidth(page, CONSOLE_PANE, { min: 0 });
+}
+
+// Move the middle splitter until the Console column is back within one
+// keyboard step of `width`. Ending a sidebar zoom can leave the column
+// collapsed (#19201), and the collapsed width persists into later tests.
+// Returns the final width.
+async function restoreConsoleWidth(page: Page, width: number): Promise<number> {
+  await focusSplitter(page);
+  let current: number | null = await getOffsetWidth(page, CONSOLE_PANE);
+  for (let i = 0; i < 100 && current !== null && current < width; i++)
+    current = await stepSplitter(page, 'ArrowRight', current);
+  for (let i = 0; i < 100 && current !== null && current > width; i++)
+    current = await stepSplitter(page, 'ArrowLeft', current);
+  return getOffsetWidth(page, CONSOLE_PANE);
+}
+
 // Resize the middle splitter and assert it actually moved at least one column.
 // Without this guard, a no-op resize would silently turn the preservation
 // tests into no-op cycles that can never fail.
@@ -1007,6 +1042,8 @@ test.describe('Pane and column management', () => {
   // focus, focus must go to the empty state's Configure Panes button rather
   // than drop to the page body.
   test('Zooming an empty sidebar from the Console focuses Configure Panes (#19181)', async ({ rstudioPage: page }) => {
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+    let restoredConsoleWidth = initialConsoleWidth;
     try {
       await openPaneLayoutOptions(page);
       await resetPaneLayoutInDialog(page);
@@ -1024,6 +1061,36 @@ test.describe('Pane and column management', () => {
       await executeCommand(page, 'layoutZoomSidebar');
       await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
       await expect(configurePanes).toBeFocused();
+    } finally {
+      await restoreDefaultPaneLayout(page);
+      restoredConsoleWidth = await restoreConsoleWidth(page, initialConsoleWidth);
+    }
+    // Checked after the finally so a failed restore can't mask a body failure.
+    expectWidthClose(restoredConsoleWidth, initialConsoleWidth, 0.1, 'restored Console');
+  });
+
+  // Focus Next Pane must reach an empty sidebar too, and leave it (#19191).
+  test('F6 moves focus into and out of an empty sidebar (#19191)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_SIDEBAR);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await showSidebar(page);
+      await expect(page.locator(`${SIDEBAR_PANE} [role="tab"]`)).toHaveCount(0);
+      const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
+      await expect(configurePanes).toBeVisible();
+
+      await page.locator(`${TABSET2_PANE} [role="tab"][aria-selected="true"]`).focus();
+      await page.keyboard.press('F6');
+      await expect(configurePanes).toBeFocused();
+
+      await page.keyboard.press('Shift+F6');
+      await expect.poll(
+        () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
     } finally {
       await restoreDefaultPaneLayout(page);
     }

@@ -3444,11 +3444,13 @@ public class RemoteServer implements Server
    @Override
    public void gitDiffBaseContents(String path,
                                    String encoding,
+                                   String knownId,
                                    ServerRequestCallback<GitDiffBaseContents> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       params.set(1, new JSONString(encoding));
+      params.set(2, new JSONString(knownId));
       sendRequest(RPC_SCOPE, GIT_DIFF_BASE_CONTENTS, params, requestCallback);
    }
 

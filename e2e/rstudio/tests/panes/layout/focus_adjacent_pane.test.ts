@@ -1,8 +1,9 @@
-// Focus Previous Pane (Shift+F6) into the Console pane (#19183).
+// Focus Previous Pane (Shift+F6) into the Console pane (#19183), and Focus
+// Next/Previous Pane (F6/Shift+F6) around the sidebar (#19191).
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { executeCommand, resetLayoutZoom } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
 import { CONSOLE_INPUT, CONSOLE_TAB } from '@pages/console_pane.page';
 import {
   TERMINAL_TAB,
@@ -21,6 +22,18 @@ const BACKGROUND_JOBS_PANEL = '#rstudio_workbench_panel_background_jobs';
 const ENVIRONMENT_TAB = '#rstudio_workbench_tab_environment';
 const LOAD_WORKSPACE_BUTTON = '#rstudio_tb_loadworkspace';
 const PANES = '[id^="rstudio_"][id$="_pane"]';
+const SIDEBAR_PANE_ID = 'rstudio_Sidebar_pane';
+const SIDEBAR_PANE = `#${SIDEBAR_PANE_ID}`;
+// The sidebar's first tab, or its Configure Panes button when it has none --
+// the Workbench default, where Posit Assistant is off.
+const SIDEBAR_START =
+  `${SIDEBAR_PANE} [role="tab"], ${SIDEBAR_PANE} #rstudio_customize_panes`;
+const QUADRANT_PANE_IDS = [
+  'rstudio_Source_pane',
+  CONSOLE_PANE_ID,
+  'rstudio_TabSet1_pane',
+  'rstudio_TabSet2_pane',
+];
 
 // A terminal is created by an RPC round trip; watch this long for one to appear.
 const NO_NEW_TERMINAL_WINDOW_MS = 3000;
@@ -74,9 +87,61 @@ async function previousPaneUntilConsolePane(page: Page): Promise<void> {
   throw new Error(`Shift+F6 did not reach the Console pane in ${paneCount} steps`);
 }
 
+/**
+ * Press key until focus is back in the pane it started in, and return the
+ * panes visited in order. Each step must move focus to another pane, and a
+ * full cycle takes at most one step per pane.
+ */
+async function cyclePanes(page: Page, key: string): Promise<string[]> {
+  const start = await focusedPane(page);
+  const visited: string[] = [];
+  const maxSteps = QUADRANT_PANE_IDS.length + 1;
+  for (let step = 0; step < maxSteps; step++) {
+    const from = await focusedPane(page);
+    await page.keyboard.press(key);
+    await expect
+      .poll(() => focusedPane(page), { message: `${key} did not move focus from ${from}` })
+      .not.toBe(from);
+    const to = await focusedPane(page);
+    if (to === start)
+      return visited;
+    visited.push(to);
+  }
+  throw new Error(`${key} did not return to ${start} in ${maxSteps} steps: ${visited.join(', ')}`);
+}
+
+/**
+ * Show or hide the sidebar. Reads the toggleSidebar command's checked state,
+ * which follows the saved preference, because a zoom can shut a sidebar that
+ * is showing and make it read as hidden.
+ */
+async function setSidebarVisible(page: Page, visible: boolean): Promise<void> {
+  if (await isCommandChecked(page, 'toggleSidebar') !== visible)
+    await executeCommand(page, 'toggleSidebar');
+  if (visible)
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible();
+  else
+    await expect(page.locator(SIDEBAR_PANE)).toBeHidden();
+}
+
 test.describe.serial('Focus adjacent pane', () => {
+  // Showing or hiding the sidebar saves the preference, so put it back the way
+  // the suite found it rather than leave later spec files a hidden sidebar.
+  let sidebarInitiallyVisible = false;
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    // beforeAll runs ahead of the per-test reset's readiness gate, and a
+    // previous spec's reload can still be initializing the workbench.
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000 });
+    sidebarInitiallyVisible = await isCommandChecked(page, 'toggleSidebar');
+    // openTerminal expects the only xterm widget to be its own, so drop any
+    // terminal an earlier spec left behind.
+    await killAllTerminals(page);
+  });
+
   test.afterEach(async ({ rstudioPage: page }) => {
     await resetLayoutZoom(page);
+    await setSidebarVisible(page, sidebarInitiallyVisible);
     await killAllTerminals(page);
     await executeCommand(page, 'activateConsole');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible();
@@ -167,5 +232,43 @@ test.describe.serial('Focus adjacent pane', () => {
       await page.waitForTimeout(250);
     }
     expect(await captureResult(page, 'length(rstudioapi::terminalList())')).toBe('0');
+  });
+
+  test('skips a hidden sidebar without showing it', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, false);
+    await focusEnvironmentPane(page);
+
+    const forward = await cyclePanes(page, 'F6');
+    const backward = await cyclePanes(page, 'Shift+F6');
+
+    expect(forward).toEqual(['rstudio_TabSet2_pane', 'rstudio_Source_pane', CONSOLE_PANE_ID]);
+    expect(backward).toEqual([CONSOLE_PANE_ID, 'rstudio_Source_pane', 'rstudio_TabSet2_pane']);
+    await expect(page.locator(SIDEBAR_PANE)).toBeHidden();
+  });
+
+  test('cycles into and out of a sidebar shown after load', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, false);
+    await setSidebarVisible(page, true);
+    await page.locator(SIDEBAR_START).first().focus();
+    await expect.poll(() => focusedPane(page)).toBe(SIDEBAR_PANE_ID);
+
+    const forward = await cyclePanes(page, 'F6');
+    const backward = await cyclePanes(page, 'Shift+F6');
+
+    expect(forward).toEqual(QUADRANT_PANE_IDS);
+    expect(backward).toEqual([...QUADRANT_PANE_IDS].reverse());
+  });
+
+  test('skips a sidebar shut by a zoom', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    await focusEnvironmentPane(page);
+    await executeCommand(page, 'layoutZoomEnvironment');
+    await expect.poll(() => page.locator(SIDEBAR_PANE).evaluate(el => (el as HTMLElement).offsetWidth))
+      .toBe(0);
+    await page.locator(LOAD_WORKSPACE_BUTTON).focus();
+
+    const forward = await cyclePanes(page, 'F6');
+
+    expect(forward).toEqual(['rstudio_TabSet2_pane', 'rstudio_Source_pane', CONSOLE_PANE_ID]);
   });
 });

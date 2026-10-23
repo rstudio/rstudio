@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.vcs.GitDiffBaseContents;
@@ -47,6 +48,12 @@ import com.google.inject.Provider;
 // A split editor view gets a gutter of its own, fed the same base, and a
 // side-by-side diff view shows the base in a pane of its own, driven by the
 // primary gutter's diff.
+//
+// Only documents on screen fetch: a Git refresh reaches every open document,
+// and each fetch runs git on the session's main thread, so a hidden document
+// notes that its base may be stale and fetches when it is next shown. A fetch
+// names the base it already holds, and comes back empty when the index still
+// has that version.
 public class TextEditingTargetGitDiffGutter
 {
    public TextEditingTargetGitDiffGutter(DocDisplay docDisplay,
@@ -168,6 +175,39 @@ public class TextEditingTargetGitDiffGutter
          gutter.revertChangeAtCursor();
    }
 
+   public void showChangeAtCursor(DocDisplay display)
+   {
+      GitDiffGutterNative gutter = gutterFor(display);
+      if (gutter != null)
+         gutter.showChangeAtCursor();
+   }
+
+   // Called as the document becomes and stops being the active one (see
+   // TextEditingTarget); a refresh that came in while hidden is run now that
+   // the markers are seen.
+   public void onActivate()
+   {
+      active_ = true;
+      if (refreshDeferred_)
+      {
+         refreshDeferred_ = false;
+         refresh();
+      }
+   }
+
+   public void onDeactivate()
+   {
+      active_ = false;
+   }
+
+   // Whether the markers are on screen. The active document is, but so is
+   // the document showing in each other source column: a column's document
+   // is deactivated when another column becomes active, and stays in view.
+   private boolean isShown()
+   {
+      return active_ || DomUtils.isEffectivelyVisible(docDisplay_.getElement());
+   }
+
    private GitDiffGutterNative gutterFor(DocDisplay display)
    {
       return (display == splitEditor_) ? splitGutter_ : gutter_;
@@ -270,9 +310,10 @@ public class TextEditingTargetGitDiffGutter
       splitGutter_.setBase(baseContents_);
    }
 
-   private void setBase(String contents)
+   private void setBase(String contents, String id)
    {
       baseContents_ = contents;
+      baseId_ = (contents == null) ? null : id;
       if (gutter_ != null)
          gutter_.setBase(contents);
       if (splitGutter_ != null)
@@ -317,9 +358,11 @@ public class TextEditingTargetGitDiffGutter
    private void detach()
    {
       refreshTimer_.cancel();
+      refreshDeferred_ = false;
       invalidation_.invalidate();
       basePath_ = null;
       baseContents_ = null;
+      baseId_ = null;
 
       disposeDiffSplit();
 
@@ -352,7 +395,12 @@ public class TextEditingTargetGitDiffGutter
    // change follows an attach), and each one costs a round trip per document.
    private void scheduleRefresh()
    {
-      if (gutter_ != null)
+      if (gutter_ == null)
+         return;
+
+      if (!isShown())
+         refreshDeferred_ = true;
+      else
          refreshTimer_.schedule(REFRESH_DELAY_MS);
    }
 
@@ -373,12 +421,20 @@ public class TextEditingTargetGitDiffGutter
          // before the new one arrives would restore the wrong contents.
          basePath_ = path;
          baseEncoding_ = encoding;
-         setBase(null);
+         setBase(null, null);
 
          // Nor must a revert still waiting on the old base: it would run
          // against the new path's base, whose chunks can share the old
          // ones' coordinates. Settled now, it finds nothing to revert.
          runBaseCallbacks();
+      }
+
+      // A hidden document waits to be shown -- unless a revert is waiting
+      // on the fetch, which cannot be left hanging.
+      if (!isShown() && baseCallbacks_.isEmpty())
+      {
+         refreshDeferred_ = true;
+         return;
       }
 
       invalidation_.invalidate();
@@ -387,6 +443,7 @@ public class TextEditingTargetGitDiffGutter
       server_.gitDiffBaseContents(
             path,
             encoding,
+            StringUtil.notNull(baseId_),
             new ServerRequestCallback<GitDiffBaseContents>()
             {
                @Override
@@ -402,7 +459,17 @@ public class TextEditingTargetGitDiffGutter
                      return;
                   }
 
-                  setBase(response.isTracked() ? response.getContents() : null);
+                  // the base held is the one the index still has
+                  if (response.isUnchanged() && baseContents_ != null)
+                  {
+                     runBaseCallbacks();
+                     return;
+                  }
+
+                  if (response.isTracked())
+                     setBase(response.getContents(), response.getId());
+                  else
+                     setBase(null, null);
                   runBaseCallbacks();
                }
 
@@ -416,7 +483,7 @@ public class TextEditingTargetGitDiffGutter
                   // A base that could not be re-fetched is not one to keep
                   // showing, let alone revert to; the next refresh (focus,
                   // Git operation) brings the markers back.
-                  setBase(null);
+                  setBase(null, null);
                   runBaseCallbacks();
                }
             });
@@ -434,8 +501,11 @@ public class TextEditingTargetGitDiffGutter
    private String basePath_;
    private String baseEncoding_;
    private String baseContents_;
+   private String baseId_;
    private boolean attaching_;
    private boolean dismissed_;
+   private boolean active_;
+   private boolean refreshDeferred_;
 
    private final ArrayList<JavaScriptObject> baseCallbacks_ = new ArrayList<>();
    private final Invalidation invalidation_ = new Invalidation();

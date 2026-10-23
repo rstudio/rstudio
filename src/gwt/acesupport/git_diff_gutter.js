@@ -44,11 +44,31 @@ var PEEK_CLASS = "ace_git-peek";
 // breakpoint toggle behind it).
 var MARKER_HIT_WIDTH = 6;
 
-// Typing bursts are coalesced into a single diff.
-var UPDATE_DELAY_MS = 150;
+// An edit is diffed before the frame that paints it: the diff is queued as a
+// microtask, so the markers move with the keystroke, while the many change
+// events of one operation (replace all, a reformat) are diffed once, after
+// it. Only the lines between the first and last difference are handed to the
+// provider (see trimCommonLines), so a diff usually takes well under a
+// millisecond; a document whose last diff took longer than SLOW_DIFF_MS is
+// instead diffed once typing pauses.
+var SLOW_DIFF_MS = 20;
+var SLOW_UPDATE_DELAY_MS = 150;
 
-// Bail out on pathological inputs rather than hang the UI thread.
+// Bail out on pathological inputs rather than hang the UI thread. The
+// provider does not say when it gave up; a timed-out line alignment comes
+// back as one change spanning both documents, with the budget spent (see
+// computeChunks for how that is told apart from a document that did change
+// throughout).
 var MAX_COMPUTATION_MS = 250;
+
+// Peek text when none is supplied (the IDE passes translated strings in).
+var DEFAULT_STRINGS = {
+   removedLines: function(n) { return "Removed " + pluralize(n, "line"); },
+   addedLines:   function(n) { return "Added " + pluralize(n, "line"); },
+   changedLines: function(n) { return "Changed " + pluralize(n, "line") + "; previously:"; },
+   revert: "Revert",
+   close:  "Close"
+};
 
 // Mirrors how the editor loads a document (AceEditor.doSetCode strips
 // escape characters) and how Ace's Document splits lines.
@@ -63,6 +83,78 @@ function stripWhitespace(line) {
    return line.replace(/\s+/g, "");
 }
 
+// The lines shared by both ends of the two documents, which the diff can
+// skip. The provider aligns smaller inputs (under 1,700 lines in total) with
+// a quadratic dynamic-programming pass, so a whole 300-800 line script costs
+// 3-20ms per keystroke; the lines between the first and last difference are
+// usually a handful. The matched suffix stops short of the prefix so that no
+// line is claimed by both.
+function trimCommonLines(base, lines) {
+   var n = Math.min(base.length, lines.length);
+
+   var prefix = 0;
+   while (prefix < n && base[prefix] === lines[prefix])
+      prefix++;
+
+   var suffix = 0;
+   while (suffix < n - prefix &&
+          base[base.length - 1 - suffix] === lines[lines.length - 1 - suffix])
+      suffix++;
+
+   return { prefix: prefix, suffix: suffix };
+}
+
+// Stands a token in for each line, the same token for identical lines. The
+// provider refines each change character by character, which is quadratic
+// in the characters of the change and of no use here (only the line ranges
+// are read), so a large replaced block spends the whole budget there; on
+// one-character tokens that work is negligible. The tokens come from the CJK
+// Unified Ideographs block, none of them whitespace: one code point per
+// distinct line, two once there are more than 20,992. The indentation goes
+// with the rest of the text, so the provider cannot use it to place a chunk
+// that could sit at more than one row.
+var TOKEN_FIRST = 0x4E00;
+var TOKEN_COUNT = 0x9FFF - TOKEN_FIRST + 1;
+
+function tokenFor(id) {
+   var token = "";
+   do
+   {
+      token += String.fromCharCode(TOKEN_FIRST + id % TOKEN_COUNT);
+      id = Math.floor(id / TOKEN_COUNT);
+   }
+   while (id > 0);
+
+   return token;
+}
+
+function tokenizeLines(base, lines) {
+   var ids = new Map();
+   var tokenize = function(line) {
+      var id = ids.get(line);
+      if (id == null)
+      {
+         id = ids.size;
+         ids.set(line, id);
+      }
+      return tokenFor(id);
+   };
+
+   return { base: base.map(tokenize), lines: lines.map(tokenize) };
+}
+
+function offsetChunks(chunks, rows) {
+   if (rows === 0)
+      return chunks;
+
+   return chunks.map(function(chunk) {
+      return {
+         old: new Range(chunk.old.start.row + rows, 0, chunk.old.end.row + rows, 0),
+         new: new Range(chunk.new.start.row + rows, 0, chunk.new.end.row + rows, 0)
+      };
+   });
+}
+
 function pluralize(n, noun) {
    return n + " " + noun + (n === 1 ? "" : "s");
 }
@@ -75,6 +167,15 @@ function isAddition(chunk) {
    return chunk.old.start.row === chunk.old.end.row;
 }
 
+function isWholeDocument(chunks, base, lines) {
+   if (chunks.length !== 1)
+      return false;
+
+   var chunk = chunks[0];
+   return chunk.old.start.row === 0 && chunk.old.end.row === base.length &&
+          chunk.new.start.row === 0 && chunk.new.end.row === lines.length;
+}
+
 function sameChunk(a, b) {
    return a.old.start.row === b.old.start.row &&
           a.old.end.row === b.old.end.row &&
@@ -82,13 +183,17 @@ function sameChunk(a, b) {
           a.new.end.row === b.new.end.row;
 }
 
-var GitDiffGutter = function(editor) {
+var GitDiffGutter = function(editor, strings) {
    this.editor = editor;
+   this.strings = strings || DEFAULT_STRINGS;
    this.baseText = null;
    this.baseLines = null;
+   this.strippedBaseLines = null;
    this.chunks = [];
    this.rowClasses = {};
    this.updateTimer = null;
+   this.updatePending = false;
+   this.lastDiffMs = 0;
    this.ignoreWhitespace = false;
    this.peek = null;
    this.baseRefresher = null;
@@ -138,6 +243,7 @@ var GitDiffGutter = function(editor) {
       this.closePeek();
       this.baseText = text;
       this.baseLines = (text == null) ? null : splitLines(text);
+      this.strippedBaseLines = null;
       if (this.splitView)
          this.splitView.setBaseLines(this.baseLines);
       this.update();
@@ -211,24 +317,46 @@ var GitDiffGutter = function(editor) {
    };
 
    this.scheduleUpdate = function() {
-      if (this.updateTimer)
-         return;
-
       var self = this;
-      this.updateTimer = setTimeout(function() {
+      var run = function() {
+         if (!self.updatePending)
+            return;
+
+         self.updatePending = false;
          self.updateTimer = null;
          self.update();
-      }, UPDATE_DELAY_MS);
+      };
+
+      if (this.lastDiffMs > SLOW_DIFF_MS)
+      {
+         // slow: wait for a pause in the typing
+         if (this.updateTimer)
+            clearTimeout(this.updateTimer);
+         this.updatePending = true;
+         this.updateTimer = setTimeout(run, SLOW_UPDATE_DELAY_MS);
+         return;
+      }
+
+      if (this.updatePending)
+         return;
+
+      this.updatePending = true;
+      Promise.resolve().then(run);
    };
 
    // Runs a pending update now, so that anything acting on the chunks sees
-   // the current document rather than one up to UPDATE_DELAY_MS stale.
+   // the current document rather than one an edit behind.
    this.flushUpdate = function() {
-      if (!this.updateTimer)
+      if (!this.updatePending)
          return;
 
-      clearTimeout(this.updateTimer);
-      this.updateTimer = null;
+      if (this.updateTimer)
+      {
+         clearTimeout(this.updateTimer);
+         this.updateTimer = null;
+      }
+
+      this.updatePending = false;
       this.update();
    };
 
@@ -243,7 +371,10 @@ var GitDiffGutter = function(editor) {
 
          if (this.ignoreWhitespace)
          {
-            base = base.map(stripWhitespace);
+            // the base does not change between updates, so strip it once
+            if (!this.strippedBaseLines)
+               this.strippedBaseLines = base.map(stripWhitespace);
+            base = this.strippedBaseLines;
             lines = lines.map(stripWhitespace);
          }
 
@@ -254,6 +385,13 @@ var GitDiffGutter = function(editor) {
    };
 
    this.computeChunks = function(base, lines) {
+      var common = trimCommonLines(base, lines);
+      if (common.prefix > 0 || common.suffix > 0)
+      {
+         base = base.slice(common.prefix, base.length - common.suffix);
+         lines = lines.slice(common.prefix, lines.length - common.suffix);
+      }
+
       // The provider cannot take an empty side (it asserts in its refinement
       // pass), but those cases have only one possible answer anyway.
       if (base.length === 0 || lines.length === 0)
@@ -261,18 +399,37 @@ var GitDiffGutter = function(editor) {
          if (base.length === lines.length)
             return [];
 
-         return [{
+         return offsetChunks([{
             old: new Range(0, 0, base.length, 0),
             new: new Range(0, 0, lines.length, 0)
-         }];
+         }], common.prefix);
       }
 
       try
       {
          var DiffProvider = require("ace/ext/diff/providers/default").DiffProvider;
-         return new DiffProvider().compute(base, lines, {
-            maxComputationTimeMs: MAX_COMPUTATION_MS
-         });
+         var options = { maxComputationTimeMs: MAX_COMPUTATION_MS };
+         var started = Date.now();
+         var chunks = new DiffProvider().compute(base, lines, options);
+         this.lastDiffMs = Date.now() - started;
+
+         // A timed-out line alignment is not a diff: it would mark every
+         // line changed and hand Revert the whole document. But a large
+         // replaced block looks the same, and spends the budget just as
+         // surely, in the character-level refinement that follows a sound
+         // alignment (quadratic in the block, and of no use here). The diff
+         // is run again on tokens, which leaves the budget to the alignment;
+         // only if that too gives up are there better no markers.
+         if (this.lastDiffMs >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
+         {
+            var tokens = tokenizeLines(base, lines);
+            started = Date.now();
+            chunks = new DiffProvider().compute(tokens.base, tokens.lines, options);
+            if (Date.now() - started >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
+               return [];
+         }
+
+         return offsetChunks(chunks, common.prefix);
       }
       catch (error)
       {
@@ -504,10 +661,36 @@ var GitDiffGutter = function(editor) {
          text = isAddition(chunk) ? "" : "\n" + oldText;
       }
 
+      // the replace fires a change, which schedules an update; run that one
+      // now rather than a second diff of the same document later
       this.closePeek();
       session.replace(range, text);
-      this.update();
+      this.flushUpdate();
       return true;
+   };
+
+   // Toggles the peek for the change under the cursor, so that what Revert
+   // would restore can be seen without the mouse. Returns false when the
+   // cursor is not on a change.
+   this.showChangeAtCursor = function() {
+      this.flushUpdate();
+      var chunk = this.chunkAt(this.editor.getCursorPosition().row);
+      if (!chunk)
+         return false;
+
+      this.togglePeek(chunk);
+      return true;
+   };
+
+   // With the base on screen already (a side-by-side view), there is nothing
+   // to peek at: a marker click or Show Change at Cursor just goes there.
+   this.togglePeek = function(chunk) {
+      if (this.splitView)
+         this.goToChunk(chunk);
+      else if (this.peek && this.peek.chunk === chunk)
+         this.closePeek();
+      else
+         this.showPeek(chunk);
    };
 
    this.lineWidgetManager = function() {
@@ -561,14 +744,16 @@ var GitDiffGutter = function(editor) {
 
       var label;
       if (isDeletion(chunk))
-         label = "Removed " + pluralize(oldLines.length, "line");
+         label = this.strings.removedLines(oldLines.length);
       else if (isAddition(chunk))
-         label = "Added " + pluralize(newCount, "line");
+         label = this.strings.addedLines(newCount);
       else
-         label = "Changed " + pluralize(newCount, "line") + "; previously:";
+         label = this.strings.changedLines(newCount);
 
+      // the kind picks the accent colour, matching the marker it came from
+      var kind = isDeletion(chunk) ? "deleted" : isAddition(chunk) ? "added" : "modified";
       var el = document.createElement("div");
-      el.className = PEEK_CLASS;
+      el.className = PEEK_CLASS + " " + PEEK_CLASS + "-" + kind;
 
       var header = document.createElement("div");
       header.className = PEEK_CLASS + "-header";
@@ -582,7 +767,7 @@ var GitDiffGutter = function(editor) {
       var revertButton = document.createElement("button");
       revertButton.type = "button";
       revertButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-revert";
-      revertButton.textContent = "Revert";
+      revertButton.textContent = this.strings.revert;
       revertButton.addEventListener("click", function() {
          self.focusEditor();
 
@@ -601,7 +786,7 @@ var GitDiffGutter = function(editor) {
       var closeButton = document.createElement("button");
       closeButton.type = "button";
       closeButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-close";
-      closeButton.textContent = "Close";
+      closeButton.textContent = this.strings.close;
       closeButton.addEventListener("click", function() {
          self.closePeek();
       });
@@ -704,14 +889,7 @@ var GitDiffGutter = function(editor) {
       e.preventDefault();
       e.stopImmediatePropagation();
       this.focusEditor();
-
-      // with the base on screen already, a marker click just goes there
-      if (this.splitView)
-         this.goToChunk(chunk);
-      else if (this.peek && this.peek.chunk === chunk)
-         this.closePeek();
-      else
-         this.showPeek(chunk);
+      this.togglePeek(chunk);
    };
 
    // The click and dblclick that follow a consumed mousedown would otherwise
@@ -725,6 +903,7 @@ var GitDiffGutter = function(editor) {
    };
 
    this.dispose = function() {
+      this.updatePending = false;
       if (this.updateTimer)
       {
          clearTimeout(this.updateTimer);

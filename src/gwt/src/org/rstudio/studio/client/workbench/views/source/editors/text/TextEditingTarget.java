@@ -3163,6 +3163,7 @@ public class TextEditingTarget implements
       if (notebook_ != null)
          notebook_.onActivate();
 
+      gitDiffGutter_.onActivate();
       view_.onActivate();
    }
 
@@ -3173,6 +3174,7 @@ public class TextEditingTarget implements
       // re-usable implementation) so changes here need to be synced
 
       externalEditCheckInvalidation_.invalidate();
+      gitDiffGutter_.onDeactivate();
 
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
@@ -4963,6 +4965,12 @@ public class TextEditingTarget implements
    void onVcsRevertChange()
    {
       gitDiffGutter_.revertChangeAtCursor(activeDisplay());
+   }
+
+   @Handler
+   void onVcsShowChange()
+   {
+      gitDiffGutter_.showChangeAtCursor(activeDisplay());
    }
 
    @Handler

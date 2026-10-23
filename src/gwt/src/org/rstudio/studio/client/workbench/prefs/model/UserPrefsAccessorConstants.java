@@ -2122,11 +2122,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fileMonitorUseGitignoreDescription();
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    @DefaultStringValue("Install R package dependencies one at a time")
    String installPkgDepsIndividuallyTitle();
-   @DefaultStringValue("Whether to install R package dependencies one at a time.")
+   @DefaultStringValue("Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.")
    String installPkgDepsIndividuallyDescription();
 
    /**

@@ -27,6 +27,18 @@ public class GitDiffBaseContents extends JavaScriptObject
       return !!this.tracked;
    }-*/;
 
+   // Names the base as decoded; handed back on the next fetch so the server
+   // can answer that it is unchanged.
+   public final native String getId() /*-{
+      return this.id;
+   }-*/;
+
+   // True when the base matches the id the fetch was given; contents are
+   // then empty and the ones already held stand.
+   public final native boolean isUnchanged() /*-{
+      return !!this.unchanged;
+   }-*/;
+
    public final native String getContents() /*-{
       return this.contents;
    }-*/;
