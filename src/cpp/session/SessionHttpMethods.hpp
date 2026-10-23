@@ -72,6 +72,11 @@ bool processingIdleEvents();
 // that the answer is not "no" for a callback that has only just begun. for
 // the listener thread, never the main thread
 bool idleEventsPastDispatch();
+
+// an interrupt was accepted for the input handlers running from the idle
+// loop (not for console input executing); any thread. the handlers' return
+// reports it to modules as a user interrupt (see processIdleEvents)
+void noteIdleEventsInterrupted();
 core::Error initialize();
 bool verifyRequestSignature(const core::http::Request& request);
 

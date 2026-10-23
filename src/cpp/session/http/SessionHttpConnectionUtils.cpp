@@ -326,9 +326,14 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // (see http_methods::idleEventsPastDispatch) -- during which the handlers
       // may have returned to a read that took queued input and started a
       // command, hence the second look at executing().
-      bool busy = session::console_input::executing() ||
-                  http_methods::idleEventsPastDispatch() ||
-                  session::console_input::executing();
+      bool busy = session::console_input::executing();
+      if (!busy && http_methods::idleEventsPastDispatch())
+      {
+         busy = true;
+         http_methods::noteIdleEventsInterrupted();
+      }
+      if (!busy)
+         busy = session::console_input::executing();
       if (http_methods::protocolDebugEnabled())
       {
          if (busy)

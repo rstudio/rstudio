@@ -139,6 +139,10 @@ IdleEventState s_idleEvents;
 // while inactive), for the listener thread (see processingIdleEvents)
 std::atomic<std::int64_t> s_idleEventsSince(0);
 
+// an interrupt was accepted for the active handlers (see
+// noteIdleEventsInterrupted)
+std::atomic<bool> s_idleEventsInterrupted(false);
+
 // how long the handlers run before they count as a callback running rather
 // than the dispatch itself, which with no callback due takes microseconds
 // and runs twenty times a second. requests are served from the polled
@@ -285,6 +289,15 @@ bool processIdleEvents(const std::string& method,
    }
    if (atTopLevelBefore && !r::session::atTopLevelPrompt())
       r::session::setAtTopLevelPrompt(true);
+
+   // an interrupt meant for the handlers ended them (or a callback among
+   // them) with no console prompt to follow -- a prompt reissued below runs
+   // no module hook -- so modules hear of it here: the notebook queue drops
+   // chunks queued behind the callback, whose code R's console reset may
+   // just have discarded, and lets go of a chunk left in flight. the client
+   // drops its own queue on an interrupt as well
+   if (s_idleEventsInterrupted.exchange(false))
+      module_context::events().onUserInterrupt();
 
    // busy=false is owed once the client was told R is busy
    if (busyReported)
@@ -727,6 +740,11 @@ bool processingIdleEvents()
 {
    std::int64_t since = s_idleEventsSince;
    return since != 0 && steadyNowNs() - since > dispatchGraceNs();
+}
+
+void noteIdleEventsInterrupted()
+{
+   s_idleEventsInterrupted = true;
 }
 
 bool idleEventsPastDispatch()
@@ -1270,7 +1288,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // only accept interrupts while R is running code: processing
             // input, or an input handler dispatched from the idle loop
             if (console_input::isRunningCode())
+            {
+               if (!console_input::executing())
+                  noteIdleEventsInterrupted();
                rstudio::r::exec::setInterruptsPending(true);
+            }
          }
          
          // ping -- don't respond if we're shutting down; assume the ping
