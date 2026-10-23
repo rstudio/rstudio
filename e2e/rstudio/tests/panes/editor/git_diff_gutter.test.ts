@@ -1179,6 +1179,22 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         /^Staged or committed version, read-only/,
       );
 
+      // an editing command with the cursor in the base pane has nothing to
+      // act on: it must not land on the document's own cursor, out of sight
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(1);
+      expect(await focusIn(base)).toBe(true);
+      await executeCommand(page, 'commentUncomment');
+      expect(await editor.getLine(0)).toBe('a <- 1');
+      await executeCommand(page, 'focusOtherEditorSplit');
+      await expect.poll(() => focusIn(live)).toBe(true);
+      await executeCommand(page, 'commentUncomment');
+      await expect.poll(() => editor.getLine(0)).toBe('# a <- 1');
+      await executeCommand(page, 'commentUncomment');
+      await expect.poll(() => editor.getLine(0)).toBe('a <- 1');
+      await executeCommand(page, 'focusOtherEditorSplit');
+      await expect.poll(() => focusIn(base)).toBe(true);
+
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(live)).toBe(true);
     } finally {
@@ -2273,11 +2289,129 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(baseFolds).toBe(0);
       await expect(base.locator('.ace_fold')).toHaveCount(0);
       expect(await editor.getFoldCount()).toBe(1);
+
+      // nor for a fold made while the view is open
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => editor.getFoldCount()).toBe(0);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => editor.getFoldCount()).toBe(1);
+      await expect.poll(baseFolds).toBe(0);
+      await expect(base.locator('.ace_fold')).toHaveCount(0);
     } finally {
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
       await documentCloseAllNoSave(page);
       await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(untrackedPath)}))`);
+    }
+  });
+
+  test('leaves folded lines out of the padding for wrap-only differences', async ({ rstudioPage: page }) => {
+    // A line that wraps differently (whitespace only, under a
+    // whitespace-insensitive diff) is padded for; folded away, it shows no
+    // rows on either side, and padding for it would be drawn at the fold.
+    const wrapPath = `${projectDir()}/wrapfold.R`;
+    const seed = ['f <- function() {', '  1', '}', 'tail'];
+    const edited = ['f <- function() {', '  1', `}${' '.repeat(120)}`, 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
+    );
+    await commitAll(page, 'wrapfold', [wrapPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
+    );
+    await openFile(page, wrapPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [MODIFIED] });
+    await setPref(page, 'git_diff_ignore_whitespace', true);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+    await executeCommand(page, 'toggleSoftWrapMode');
+
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+
+    const editor = new AceEditor(page, '');
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'tail');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      const level = async () => (await rowTop(base, 3)) - (await rowTop(live, 3));
+      await expect.poll(level, { timeout: 10000 }).toBe(0);
+
+      await editor.gotoLine(1);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => editor.getFoldCount()).toBe(1);
+      await expect.poll(level, { timeout: 10000 }).toBe(0);
+    } finally {
+      await clearPref(page, 'git_diff_ignore_whitespace');
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wrapPath)}))`);
+      await commitAll(page, 'remove wrapfold', [wrapPath]);
+    }
+  });
+
+  test('counts output on the last line of a file without a trailing newline', async ({
+    rstudioPage: page,
+  }) => {
+    // The addition ends past the last line; Ace measures that by clipping
+    // to the last line, which leaves out the output below it.
+    const consoleActions = new ConsolePaneActions(page);
+    const loadable = await consoleActions.evalRLogical('requireNamespace("rmarkdown", quietly = TRUE)');
+    test.skip(loadable !== true, 'rmarkdown is not installed');
+
+    const nbPath = `${projectDir()}/nb-eof.Rmd`;
+    const seed = ['---', 'title: x', '---', ''];
+    const edited = ['---', 'title: x', '---', '', '```{r}', '1 + 1', '```'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await commitAll(page, 'nb-eof', [nbPath]);
+    await executeInConsoleChecked(
+      page,
+      `cat(paste(c(${edited.map(rStringLiteral).join(', ')}), collapse = "\\n"), file = ${rPathLiteral(nbPath)})`,
+    );
+    await openFile(page, nbPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible({
+      timeout: 60000,
+    });
+
+    const screenLength = (view: Locator) =>
+      view.evaluate(
+        (el) =>
+          ((el as AceEditorElement).env?.editor as unknown as { session: { getScreenLength(): number } }).session
+            .getScreenLength(),
+      );
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, '1 + 1');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      // the two sides are as tall as each other, output included
+      await expect
+        .poll(async () => (await screenLength(base)) - (await screenLength(live)), { timeout: 10000 })
+        .toBe(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(nbPath)}))`);
+      await commitAll(page, 'remove nb-eof', [nbPath]);
     }
   });
 

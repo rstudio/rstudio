@@ -388,6 +388,8 @@ public class TextEditingTarget implements
       String getEditorSplit();
       boolean focusOtherEditorSplit();
       boolean isEditorViewFocused();
+      // whether the read-only base pane of a side-by-side diff holds focus
+      boolean isDiffSplitFocused();
       DocDisplay getActiveDisplay();
       void destroyEditorSplit();
       void syncSplitShowChunkOutputInline();
@@ -10088,6 +10090,12 @@ public class TextEditingTarget implements
       if (isVisualEditorActive() || visualMode_.isActivated())
       {
          visualMode_.performWithActiveEditor(cmd);
+      }
+      else if (view_.isDiffSplitFocused())
+      {
+         // the cursor is in the read-only base of a side-by-side diff: an
+         // editing command (Comment/Uncomment, Reindent) must not land on
+         // the document's own cursor out of sight
       }
       else
       {

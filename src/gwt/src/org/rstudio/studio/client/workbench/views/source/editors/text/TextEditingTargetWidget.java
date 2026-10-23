@@ -407,7 +407,13 @@ public class TextEditingTargetWidget
    {
       return editor_.isFocused() ||
              (splitEditor_ != null && splitEditor_.isFocused()) ||
-             (diffSplitWidget_ != null && diffSplitWidget_.isFocused());
+             isDiffSplitFocused();
+   }
+
+   @Override
+   public boolean isDiffSplitFocused()
+   {
+      return diffSplitWidget_ != null && diffSplitWidget_.isFocused();
    }
 
    private void manageEditorSplit(String type)

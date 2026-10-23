@@ -127,6 +127,15 @@ function isForward(range) {
           (range.start.row === range.end.row && range.start.column < range.end.column);
 }
 
+// Whether a row exists and can take padding: it holds no line widget, or
+// padding already.
+function padFreeRow(session, row) {
+   if (row < 0 || row >= session.getLength())
+      return false;
+   var widgets = session.lineWidgets;
+   return !widgets || !widgets[row] || isPadding(widgets[row]);
+}
+
 // Whether a fold is in a session, at the top level or nested in one that is.
 function foldPresent(session, fold) {
    var present = false;
@@ -399,7 +408,10 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
       if (!counterpart && !this.$withinChange(range, isOrig)) {
          var otherRange = this.transformRange(range, isOrig);
-         if (isForward(otherRange) && otherRange.end.row < other.getLength()) {
+         // (and it has to fit the other side as it is: Ace would clip it
+         // into something else, or nothing)
+         var clipped = other.$clipRangeToDocument(otherRange.clone());
+         if (isForward(otherRange) && clipped.isEqual(otherRange)) {
             // Fold All folds the nested levels as they are expanded, and
             // drops the folds within as it is added; Ace reads that off the
             // range, so the counterpart gets it the same way
@@ -505,6 +517,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          // (undo restores removed lines, folds and all, in one go); the
          // mapping below is only as good as the chunks it uses
          this.gutter.flushUpdate();
+         if (!this.hasBase)
+            return;
 
          var range = this.transformRange(fold.range, isOrig);
          if (!isForward(range)) {
@@ -605,6 +619,22 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    // ---- SplitDiffView overrides ------------------------------------------
 
+   // Ace's screen row of a change boundary. At the end of the document the
+   // position is past the last line, which Ace measures by clipping to the
+   // last line and adding one; a line widget below that line (chunk output
+   // on the last line of a file without a trailing newline) lies between
+   // the two and is counted here.
+   this.$screenRow = function(pos, session) {
+      var row = SplitDiffView.prototype.$screenRow.call(this, pos, session);
+      if (pos.row >= session.getLength()) {
+         var widgets = session.lineWidgets;
+         var last = widgets && widgets[session.getLength() - 1];
+         if (last && !last.hidden && last.rowCount)
+            row += last.rowCount - (last.rowsAbove || 0);
+      }
+      return row;
+   };
+
    // Ace's realign runs on the next render. A render asked for from within
    // a render -- as a line widget's height change is reported, say -- is
    // dropped by Ace's render loop after a few in a row (its recursion
@@ -688,13 +718,44 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       var self = this;
       var baseRow = 0;
       var liveRow = 0;
+
+      // pads the side whose line (measured at the first rows) shows fewer
+      // rows, below the given rows
+      var pad = function(baseLine, liveLine, baseBelow, liveBelow) {
+         var difference = self.sessionB.getRowLineCount(liveLine) - self.sessionA.getRowLineCount(baseLine);
+         if (difference > 0)
+            self.$addWidget(self.sessionA, { rowCount: difference, rowsAbove: 0, row: baseBelow });
+         else if (difference < 0)
+            self.$addWidget(self.sessionB, { rowCount: -difference, rowsAbove: 0, row: liveBelow });
+      };
       var compareUpTo = function(baseEnd, liveEnd) {
-         for (; baseRow < baseEnd && liveRow < liveEnd; baseRow++, liveRow++) {
-            var difference = self.sessionB.getRowLineCount(liveRow) - self.sessionA.getRowLineCount(baseRow);
-            if (difference > 0)
-               self.$addWidget(self.sessionA, { rowCount: difference, rowsAbove: 0, row: baseRow });
-            else if (difference < 0)
-               self.$addWidget(self.sessionB, { rowCount: -difference, rowsAbove: 0, row: liveRow });
+         while (baseRow < baseEnd && liveRow < liveEnd) {
+            var baseFold = self.sessionA.getFoldLine(baseRow);
+            var liveFold = self.sessionB.getFoldLine(liveRow);
+            if (!baseFold && !liveFold) {
+               pad(baseRow, liveRow, baseRow, liveRow);
+               baseRow++;
+               liveRow++;
+               continue;
+            }
+
+            // A fold line shows as one line, wrapped as a whole (its first
+            // row carries the wrap count; the rows folded away show none).
+            // It is compared when both sides fold the same rows, as paired
+            // folds do, with any padding below its last row, where Ace shows
+            // a folded row's widget; folded on one side only, the rows are
+            // passed over.
+            var paired = baseFold && liveFold &&
+                         baseFold.start.row === baseRow && liveFold.start.row === liveRow &&
+                         baseFold.end.row - baseRow === liveFold.end.row - liveRow;
+            if (paired) {
+               pad(baseRow, liveRow, baseFold.end.row, liveFold.end.row);
+               baseRow = baseFold.end.row + 1;
+               liveRow = liveFold.end.row + 1;
+            } else {
+               baseRow++;
+               liveRow++;
+            }
          }
       };
 
@@ -796,10 +857,17 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       if (existing) {
          if (!isPadding(existing)) {
             // The row holds another widget (chunk output), and Ace shows
-            // one per row: the padding goes above the next line instead,
-            // which is right below that widget.
-            if (w.row + 1 < session.getLength())
-               this.$addWidget(session, { rowCount: w.rowCount, rowsAbove: w.rowCount, row: w.row + 1 });
+            // one per row. The part of the padding meant below the line
+            // goes above the next line instead, right below that widget;
+            // the part meant above the line goes below the line before,
+            // the same place. Neither moves onto another widget's row, and
+            // above the first line there is nowhere else to go.
+            var above = w.rowsAbove || 0;
+            var below = w.rowCount - above;
+            if (below > 0 && padFreeRow(session, w.row + 1))
+               this.$addWidget(session, { rowCount: below, rowsAbove: below, row: w.row + 1 });
+            if (above > 0 && padFreeRow(session, w.row - 1))
+               this.$addWidget(session, { rowCount: above, rowsAbove: 0, row: w.row - 1 });
             return;
          }
 
