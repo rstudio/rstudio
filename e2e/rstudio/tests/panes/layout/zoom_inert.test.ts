@@ -720,9 +720,13 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       // Run history() once the zoom has started: running it at the prompt then
       // would focus the Console, which moves the zoom there.
       await executeInConsole(page, 'Sys.sleep(2); history()', { wait: false });
-      await executeCommand(page, 'layoutZoomFiles');
-      expect(await page.locator(HISTORY_TAB).getAttribute('aria-selected'),
-             'history() ran before the zoom started').not.toBe('true');
+      // Read History's state in the same task that starts the zoom, so a
+      // history() landing just after it can't read as having run first.
+      const ranFirst = await page.evaluate((tab) => {
+        window.rstudio!.commands.layoutZoomFiles();
+        return document.querySelector(tab)?.getAttribute('aria-selected') === 'true';
+      }, HISTORY_TAB);
+      expect(ranFirst, 'history() ran before the zoom started').toBe(false);
       await expectHidden(page, TABSET1_PANE);
 
       await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true',
