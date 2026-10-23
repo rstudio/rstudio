@@ -51,7 +51,6 @@
 ### Dependencies
 - Electron 44.9.3
 - RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
-- Electron 44.7.2
 - GWT 2.13.1
 - Quarto 1.10.19
 - RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
