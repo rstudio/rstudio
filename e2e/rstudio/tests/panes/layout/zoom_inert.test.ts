@@ -657,6 +657,35 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     }
   });
 
+  // History is the zoomed pane's hidden partner here; showing it would end the
+  // zoom without clearing its state (#18444).
+  test('history() while Files is zoomed leaves the zoom on Files', async ({
+    rstudioPage: page,
+  }) => {
+    await executeCommand(page, 'activateEnvironment');
+    try {
+      // Run history() once the zoom has started: running it at the prompt then
+      // would focus the Console, which moves the zoom there.
+      await executeInConsole(page, 'Sys.sleep(2); history()', { wait: false });
+      await executeCommand(page, 'layoutZoomFiles');
+      await expectHidden(page, TABSET1_PANE);
+
+      await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true',
+                                                              { timeout: 10000 });
+      for (let i = 0; i < 20; i++) {
+        expect(await isCommandChecked(page, 'layoutZoomFiles'), `sample ${i}`).toBe(true);
+        expect(await isUnreachable(page, TABSET1_PANE), `sample ${i}`).toBe(true);
+        await page.waitForTimeout(50);
+      }
+
+      await executeCommand(page, 'layoutEndZoom');
+      await expectExposed(page, TABSET1_PANE, TABSET2_PANE);
+      await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
   // The zoom's widths are set at once but drawn over a 300ms animation, so a
   // pane shown in that window must still end it rather than end up behind it.
   test('Show Files while a column zoom animates ends the zoom', async ({ rstudioPage: page }) => {

@@ -2298,8 +2298,11 @@ public class PaneManager
             manageChatCommands();
       }
 
-      // Ensure that the pane is visible (otherwise tab selection will fail)
-      if (!parent.visible())
+      // Ensure that the pane is visible (otherwise tab selection will fail).
+      // During a pane zoom, the hidden pane is the zoomed one's partner, and
+      // showing it would end the zoom without clearing its state (#18444).
+      boolean keepZoom = reveal == Reveal.COLUMN && maximizedWindow_ != null;
+      if (!parent.visible() && !keepZoom)
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
       }
