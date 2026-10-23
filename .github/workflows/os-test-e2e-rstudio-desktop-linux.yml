@@ -1097,14 +1097,18 @@ jobs:
       # names the culprit. gdb needs ptrace rights over a session owned by
       # the non-root test user, hence sudo where there is one; bare runners
       # have it, container engines may not, and the dump is best effort.
+      #
+      # $GITHUB_WORKSPACE, not the github.workspace expression: on a container
+      # engine the expression is the host path, which this shell step does not
+      # share, and the upload below would find nothing (see os-e2e-deps).
       - name: Collect rsession diagnostics
         if: always()
         run: |
           if [ "${{ job.status }}" != "success" ]; then
             if command -v sudo >/dev/null; then
-              sudo bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "${{ github.workspace }}/rsession-diagnostics" || true
+              sudo bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "$GITHUB_WORKSPACE/rsession-diagnostics" || true
             else
-              bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "${{ github.workspace }}/rsession-diagnostics" || true
+              bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "$GITHUB_WORKSPACE/rsession-diagnostics" || true
             fi
           fi
           if [ -d rsession-diagnostics ]; then
