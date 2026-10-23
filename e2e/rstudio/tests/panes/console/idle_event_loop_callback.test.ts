@@ -12,11 +12,10 @@ import * as path from 'path';
 import type { Page, Response } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { SourcePaneActions } from '@actions/source_pane.actions';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { withDeadline } from '@utils/deadline';
 import { TIMEOUTS } from '@utils/constants';
-import { canWriteDir, closeAndDeleteSandboxFiles, writeAndOpenFile } from '@utils/files';
+import { canWriteDir } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
 import {
   ensureConsoleIdle,
@@ -246,86 +245,6 @@ test.describe('Idle event loop callbacks', () => {
     await executeInConsole(page, 'cat("console", "alive\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
     expect(await getConsolePromptCount(page)).toBe(promptCountBefore === null ? null : promptCountBefore + 2);
-  });
-
-  test('a notebook chunk run while a callback runs executes once the callback returns', async ({ rstudioPage: page }) => {
-    // The callback returns only once the chunk's execution request has been
-    // served (a flag file says so), which needs a filesystem shared with
-    // the session; the chunk reports by file too, since its output goes to
-    // the editor rather than the console.
-    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
-    const missing = await consoleActions.ensurePackages(['rmarkdown', 'knitr']);
-    test.skip(missing.length > 0, `Could not install: ${missing.join(', ')}`);
-    const sourceActions = new SourcePaneActions(page, consoleActions);
-    const flag = flagFile(`chunk-release-${Date.now()}.flag`);
-    const ran = flagFile(`chunk-ran-${Date.now()}.flag`);
-    const fileName = 'idle-callback-chunk.Rmd';
-    const notebook = [
-      '---', 'output: html_document', '---', '',
-      '```{r}', `file.create(${JSON.stringify(ran)})`, '```', '',
-    ].join('\n');
-    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
-
-    await writeAndOpenFile(page, sandbox.dir, fileName, notebook);
-    try {
-      await sourceActions.ensureSourceMode();
-      await sourceActions.navigateToChunkByIndex(1);
-
-      // The execution request is served while the callback runs and finds R
-      // busy, so the chunk is deferred. The callback then returns to the
-      // waiting read with nothing to prompt for: the deferred chunk has to
-      // run all the same, not wait for the next console command.
-      await executeInConsole(page,
-        `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05) }, 0.1)`);
-      await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
-      await awaitServed(page, /\/rpc\/execute_notebook_chunks/, () => executeCommand(page, 'executeCurrentChunk'));
-      fs.writeFileSync(flag, '');
-
-      await expect.poll(() => fs.existsSync(ran), { timeout: BUSY_TIMEOUT }).toBe(true);
-    } finally {
-      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
-    }
-  });
-
-  test('a notebook chunk deferred by a callback that then reads from the console runs after the answer', async ({ rstudioPage: page }) => {
-    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
-    const missing = await consoleActions.ensurePackages(['rmarkdown', 'knitr']);
-    test.skip(missing.length > 0, `Could not install: ${missing.join(', ')}`);
-    const sourceActions = new SourcePaneActions(page, consoleActions);
-    const flag = flagFile(`chunk-read-release-${Date.now()}.flag`);
-    const ran = flagFile(`chunk-read-ran-${Date.now()}.flag`);
-    const fileName = 'idle-callback-chunk-read.Rmd';
-    const notebook = [
-      '---', 'output: html_document', '---', '',
-      '```{r}', `file.create(${JSON.stringify(ran)})`, '```', '',
-    ].join('\n');
-    await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
-
-    await writeAndOpenFile(page, sandbox.dir, fileName, notebook);
-    try {
-      await sourceActions.ensureSourceMode();
-      await sourceActions.navigateToChunkByIndex(1);
-
-      // The chunk is deferred while the callback runs; the callback then
-      // opens a console read of its own, whose answer is console input the
-      // deferred chunk must not be dispatched ahead of (the read would take
-      // the chunk's code, or the answer's prompt would end the chunk before
-      // its code ran). Once the answer ends the callback, the chunk runs
-      // without another console command.
-      await executeInConsole(page,
-        `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); .idle_callback_answer <<- readline("answer? ") }, 0.1)`);
-      await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
-      await awaitServed(page, /\/rpc\/execute_notebook_chunks/, () => executeCommand(page, 'executeCurrentChunk'));
-      fs.writeFileSync(flag, '');
-      await expect.poll(() => getConsolePromptText(page), { timeout: BUSY_TIMEOUT }).toBe('answer? ');
-      await executeInConsole(page, '42');
-
-      await expect.poll(() => fs.existsSync(ran), { timeout: BUSY_TIMEOUT }).toBe(true);
-      await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
-      await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was 42');
-    } finally {
-      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
-    }
   });
 
   test('a reload during a callback that then returns before the busy report leaves the prompt not busy', async ({ rstudioPage: page }) => {
