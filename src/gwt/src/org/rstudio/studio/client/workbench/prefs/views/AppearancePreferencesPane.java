@@ -932,7 +932,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       if (helpFontSize != initialHelpFontSize_)
       {
          userPrefs_.helpFontSizePoints().setGlobalValue(helpFontSize);
-         initialEditorFontSize_ = helpFontSize;
+         initialHelpFontSize_ = helpFontSize;
       }
 
       // The editor-theme selector is only meaningful when visible; an active
