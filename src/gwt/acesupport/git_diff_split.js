@@ -750,6 +750,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          if (!w || w.hidden || isPadding(w) || !w.rowCount)
             continue;
 
+         // (a widget on the last row of a fold is listed at the fold's first
+         // row as well; it is padded for once, where it is)
+         if (w.row !== row)
+            continue;
+
          // a widget on an added line has no base row of its own: the
          // padding at the end of the addition takes it in (its rows count
          // toward the addition's screen rows), whereas a row of padding

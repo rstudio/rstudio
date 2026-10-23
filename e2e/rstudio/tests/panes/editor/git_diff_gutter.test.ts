@@ -1847,11 +1847,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           const renderer = ((el as AceEditorElement).env?.editor as unknown as VisibleRowsEditor).renderer;
           return renderer.getFirstVisibleRow() <= row && row <= renderer.getLastVisibleRow();
         }, row);
-      await editor.gotoLine(1);
-      await expect.poll(async () => (await scrollTop(base)) === 0).toBe(true);
       // (Ace's scroll sync ignores the other pane for 500 ms after it has set
       // its offset, so that the two do not feed back; a user cannot scroll
-      // the base that soon after the document, this test can)
+      // one pane that soon after the other was set, this test can -- so it
+      // waits that out before each programmatic scroll)
+      await page.waitForTimeout(600);
+      await editor.gotoLine(1);
+      await expect.poll(async () => (await scrollTop(base)) === 0).toBe(true);
       await page.waitForTimeout(600);
       await base.evaluate((el) => (el as AceEditorElement).env?.editor?.focus());
       await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement))).toBe(true);

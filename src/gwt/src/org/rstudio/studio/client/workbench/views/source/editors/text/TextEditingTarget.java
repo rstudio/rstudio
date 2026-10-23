@@ -6308,6 +6308,11 @@ public class TextEditingTarget implements
             codeExecution().executeSelection(true, false);
          });
       }
+      else if (view_.isDiffSplitFocused())
+      {
+         // the base pane holds focus: nothing to run there, and the Find
+         // field's Select All Matches is not what was asked for
+      }
       else if (view_.isAttached())
       {
          view_.findSelectAll();
@@ -10160,7 +10165,8 @@ public class TextEditingTarget implements
    // withActiveEditor check this.
    private boolean cursorInDiffBase()
    {
-      return view_ != null && view_.diffSplitHeldFocusLast();
+      // (in visual mode the source views, base pane included, are hidden)
+      return view_ != null && !isVisualModeActivated() && view_.diffSplitHeldFocusLast();
    }
 
    /**
