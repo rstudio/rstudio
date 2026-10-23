@@ -224,6 +224,11 @@ public class FindReplace
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() != 0)
       {
+         // Ace's findAll makes the first match the primary selection without
+         // firing a selection change for the rest, so when the current match
+         // is that first match the selection handler would keep the marker
+         clearMatchHighlight();
+
          editor_.selectAll(searchString, range, wholeWord, caseSensitive);
          editor_.focus();
       }
@@ -593,9 +598,10 @@ public class FindReplace
       targetSelection_ = null;
    }
 
-   // Mark the current match independently of the theme's selection colour,
-   // which in several dark themes is too faint to pick a short match out by
-   // (https://github.com/rstudio/rstudio/issues/13204).
+   // Give the current match a marker of its own, so a theme whose selection
+   // colour is too faint to pick a short match out by can colour it separately
+   // (https://github.com/rstudio/rstudio/issues/13204). The marker is invisible
+   // unless the theme styles ace_find_match; today only Pastel On Dark does.
    private void highlightMatch(Range range)
    {
       clearMatchHighlight();
