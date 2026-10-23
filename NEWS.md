@@ -9,6 +9,7 @@
 - ([#19208](https://github.com/rstudio/rstudio/issues/19208)): Tools > Version Control > Show Changes Side by Side shows the version of the current file last staged or committed beside the document, read-only, with the changes between them highlighted on both sides, unchanged lines kept level, and scrolling in step. The document stays editable, and the comparison follows as you type.
 
 ### Fixed
+- ([#19240](https://github.com/rstudio/rstudio/issues/19240)): The "RStudio has reduced background file operations" console notice is no longer printed again each time a suspended session is resumed or R is restarted; it is printed once per project session, and again when a restart first turns the reduction on.
 - ([#19168](https://github.com/rstudio/rstudio/issues/19168)): RStudio now installs requested dependencies together in renv projects, allowing renv to resolve dependencies and use parallel installation even when individual package installation is enabled.
 - ([#19165](https://github.com/rstudio/rstudio/issues/19165)): Improved vertical alignment of text buttons in the Packages toolbar and search fields on Windows.
 - ([#19167](https://github.com/rstudio/rstudio/issues/19167)): The package tables in renv Snapshot and Restore dialogs now follow the dark theme.
@@ -19,6 +20,7 @@
 - ([#19082](https://github.com/rstudio/rstudio/issues/19082)): Fixed an issue where console output slowed down, and the IDE could become unresponsive, as the console scrollback filled up -- most visibly when output alternated between stdout and stderr (e.g. `message()` and `cat()` in a loop).
 - ([#19080](https://github.com/rstudio/rstudio/issues/19080)): Fixed an issue where the console could stall for many seconds while large amounts of stderr output with no colon in it (e.g. gert's `git_clone()` progress) arrived.
 - ([#19214](https://github.com/rstudio/rstudio/issues/19214)): Fixed an issue where the Packages pane could show a stale package list (e.g. a blank Package Manager metadata column for a just-installed package) when two package-list refreshes overlapped.
+- ([#19184](https://github.com/rstudio/rstudio/issues/19184)): Fixed an issue where commands that show a pane (e.g. View > Panes > Show Files) did nothing when the pane's column had been dragged shut with a column splitter; the column now reopens.
 - ([#17196](https://github.com/rstudio/rstudio/issues/17196)): "Run All Chunks Above", "Run All Chunks Below", and "Run All" now run Python chunks, and switch the console between R and Python as needed, when chunk output is sent to the console rather than shown inline.
 - ([#19059](https://github.com/rstudio/rstudio/issues/19059)): RStudio is now compatible with (and can build against) OpenSSL 4.x.
 - ([#19079](https://github.com/rstudio/rstudio/issues/19079)): RStudio can now be built against a system Boost that was compiled as C++20 (e.g. with GCC 16, whose default is C++20): the build uses the compiler's default C++ standard when that is newer than the required minimum, and a newer standard can also be requested explicitly with `-DCMAKE_CXX_STANDARD=20`.
@@ -44,8 +46,10 @@
 - ([#19183](https://github.com/rstudio/rstudio/issues/19183)): [Accessibility] Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) no longer switch the Console pane to its Console tab; the selected tab, such as Terminal, stays selected and gets focus.
 - ([#19191](https://github.com/rstudio/rstudio/issues/19191)): [Accessibility] Focus Next Pane (F6) and Focus Previous Pane (Shift+F6) now reach the sidebar when it is showing, and skip it when it is hidden; F6 no longer gets stuck on the bottom-right pane.
 - ([#19199](https://github.com/rstudio/rstudio/issues/19199)): [Accessibility] When the user interface language is set to French, the page's language (`lang`) is now French too, so screen readers read the interface with a French voice.
+- ([#13204](https://github.com/rstudio/rstudio/issues/13204)): In the Pastel On Dark theme, the current match of Find in the editor is now highlighted in amber; the theme's selection colour was too faint against its background to pick a match out by.
 - ([#19223](https://github.com/rstudio/rstudio/issues/19223)): [Accessibility] Added accessible names to several Global Options controls that were missing them.
 - ([#19207](https://github.com/rstudio/rstudio/issues/19207)): [Accessibility] The History pane's lists are now named ("Console History", "Console History Search Results", "Console History Context"), and its search-results and context views are inert when not shown, so Tab no longer reaches their hidden Back and Done buttons. Switching between these views no longer slides them when *Reduce user interface animations* is on. The History, Markers, and Find in Files lists are now exposed to screen readers as listboxes, so moving or extending the selection with the arrow keys while the list has focus announces the current item and whether it is selected; file names and timestamps that head a group of items are read as the items' descriptions.
+- ([#19244](https://github.com/rstudio/rstudio/issues/19244)): [Accessibility] In the Connections pane, the icon-only columns of the connection list have hidden header text ("Type", "Explore"), connection type and object type icons have alt text, and pressing Enter on a table in the object browser opens it in the data viewer, as clicking its View table icon does. In the object browser tree, nested items are grouped under their parent item and the expand/collapse arrows are hidden from screen readers, which already announce whether an item is expanded.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
@@ -54,6 +58,7 @@
 - Electron 44.9.3
 - RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
 - GWT 2.13.1
+- Node.js 24.22.1 (GitHub Copilot, Posit Assistant)
 - Quarto 1.10.19
 - RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
 - Updated OpenSSL on Windows from 3.1.4 to 3.5.9

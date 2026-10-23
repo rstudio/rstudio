@@ -39,6 +39,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
@@ -712,6 +713,13 @@ public class TextEditingTarget implements
             else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
                      prefs_.editorKeybindings().getValue() != UserPrefs.EDITOR_KEYBINDINGS_VIM)
             {
+               // Ace's own listener runs first on this textarea; when one of
+               // its bindings claimed the key (closing the Git gutter peek,
+               // leaving multi-select), that press is spent and must not go
+               // on to interrupt R as well.
+               if (DomUtils.isDefaultPrevented(ne))
+                  return;
+
                event.preventDefault();
                event.stopPropagation();
 
