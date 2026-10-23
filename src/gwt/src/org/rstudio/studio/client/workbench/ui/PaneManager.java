@@ -2298,9 +2298,10 @@ public class PaneManager
             manageChatCommands();
       }
 
-      // Ensure that the pane is visible (otherwise tab selection will fail).
+      // Show the pane if it is minimized or hidden, so the selected tab can be seen.
       // During a pane zoom, the hidden pane is the zoomed one's partner, and
-      // showing it would end the zoom without clearing its state (#18444).
+      // showing it would end the zoom without clearing its state (#18444), so
+      // the tab is selected behind the zoom instead.
       boolean keepZoom = reveal == Reveal.COLUMN && maximizedWindow_ != null;
       if (!parent.visible() && !keepZoom)
       {
