@@ -25,6 +25,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -495,10 +496,7 @@ public class ObjectBrowserModel implements TreeViewModel
          
          ConnectionObjectType type = connection_.getObjectType(
                container.getType());
-         if (type == null || StringUtil.isNullOrEmpty(type.getIconData()))
-            return;
-
-         if (type.isDataType())
+         if (hasTableView(type))
          {
             // the alt text puts the action in the item's accessible name, since
             // Enter on the item performs it (see onBrowserEvent)
@@ -508,7 +506,7 @@ public class ObjectBrowserModel implements TreeViewModel
                   "title", constants_.viewTableTitle(),
                   "alt", constants_.viewTableTitle()));
          }
-         else
+         else if (type != null && !StringUtil.isNullOrEmpty(type.getIconData()))
          {
             sb.append(SafeHtmlUtil.createOpenTag("img",
                   "src", type.getIconData(),
@@ -532,21 +530,28 @@ public class ObjectBrowserModel implements TreeViewModel
           }
           else if ("keydown".equals(event.getType()) &&
                    event.getKeyCode() == KeyCodes.KEY_ENTER &&
-                   hasTableView(value))
+                   KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.NONE &&
+                   !isRepeating(event) &&
+                   hasTableView(connection_.getObjectType(value.getType())))
           {
              event.preventDefault();
              eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
           }
       }
 
-      // matches render(), which shows the view table icon only in this case
-      private boolean hasTableView(DatabaseObject object)
+      // whether the item shows the View table icon, so Enter can open the table
+      private boolean hasTableView(ConnectionObjectType type)
       {
-         ConnectionObjectType type = connection_.getObjectType(object.getType());
          return type != null &&
                 !StringUtil.isNullOrEmpty(type.getIconData()) &&
                 type.isDataType();
       }
+
+      // holding Enter would otherwise open a viewer for every repeated keydown
+      private native boolean isRepeating(NativeEvent event)
+      /*-{
+         return event.repeat || false;
+      }-*/;
    }
    
    private static class FieldCell extends AbstractCell<Field> 
