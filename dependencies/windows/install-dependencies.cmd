@@ -181,6 +181,10 @@ cd /d "%COMMON_INSTALL_DIR%"
 %RUN% install MATHJAX4
 %RUN% install LIBCLANG
 
+REM Bundle the x64 distribution, matching the Windows RStudio build.
+cmake "-DRIG_ROOT=%COMMON_INSTALL_DIR%" -DRIG_PLATFORM=windows -DRIG_ARCH=x86_64 -DRIG_CLEAN=%CLEAN% -P "%WINDOWS_SCRIPTS_DIR%..\common\install-rig.cmake"
+if errorlevel 1 exit /b 1
+
 REM Determine if we have the correct version of quarto.exe already installed
 if exist quarto\bin\quarto.exe (
   for /f "usebackq" %%v in (`quarto\bin\quarto.exe --version`) do (

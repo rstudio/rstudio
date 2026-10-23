@@ -134,6 +134,9 @@ test.describe.serial('Focus adjacent pane', () => {
     // previous spec's reload can still be initializing the workbench.
     await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000 });
     sidebarInitiallyVisible = await isCommandChecked(page, 'toggleSidebar');
+    // openTerminal expects the only xterm widget to be its own, so drop any
+    // terminal an earlier spec left behind.
+    await killAllTerminals(page);
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {

@@ -268,6 +268,12 @@
             "title": "Auto-detect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
+        "show_git_diff_gutter": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show Git changes in editor gutter",
+            "description": "Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository."
+        },
         "show_margin": {
             "type": "boolean",
             "default": true,
