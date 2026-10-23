@@ -15,6 +15,31 @@ import {
   driverVisibleInSession,
   resetConnectionState,
 } from '@utils/connections';
+import type { Locator } from '@playwright/test';
+
+/**
+ * Dispatch an Enter keydown to a tree item's cell. Sending it to the element,
+ * rather than through the keyboard, makes it independent of focus, which a
+ * refresh of the object tree can take. It is also the only way to send a
+ * repeated keydown, since Playwright can't hold a key down.
+ */
+async function dispatchEnterKeydown(
+  item: Locator,
+  init: { shiftKey?: boolean; repeat?: boolean },
+): Promise<void> {
+  await item.evaluate((el, eventInit) => {
+    const event = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      bubbles: true,
+      cancelable: true,
+      ...eventInit,
+    });
+    // GWT reads the legacy keyCode, which KeyboardEvent's init ignores.
+    Object.defineProperty(event, 'keyCode', { get: () => 13 });
+    el.dispatchEvent(event);
+  }, init);
+}
 
 for (const base of ALL_DB_TARGETS) {
   const target = effectiveTarget(base);
@@ -114,17 +139,63 @@ for (const base of ALL_DB_TARGETS) {
       await actions.confirmWizardAndWaitConnected();
       await actions.drillExplorer(target);
 
-      // Clicking the table's name (not its View table icon) only moves the
-      // tree's keyboard focus to that item, which is where Enter is handled.
+      // The fixture's per-test reset closes earlier viewers. Check it, so a
+      // leftover viewer can't stand in for the one Enter should open.
+      const viewers = page.locator('iframe[title="Data Browser"]');
+      await expect(viewers).toHaveCount(0);
+
+      // Clicking the table's name (not its View table icon) moves the tree's
+      // keyboard focus to that item, which is where Enter is handled. A late
+      // refresh of the object tree can drop that focus, so focus the item and
+      // press again if the key didn't reach it.
       const table = target.explorerPath[target.explorerPath.length - 1];
       const tableName = actions.pane.panel.getByText(table, { exact: true });
-      await tableName.click();
-      await expect(tableName.locator('xpath=..')).toBeFocused();
-
-      await page.keyboard.press('Enter');
-      await expect(page.locator('iframe[title="Data Browser"]')).toBeVisible({ timeout: 20000 });
+      await expect(async () => {
+        await tableName.click();
+        await expect(tableName.locator('xpath=..')).toBeFocused({ timeout: 1000 });
+        await page.keyboard.press('Enter');
+        await expect(viewers).toHaveCount(1, { timeout: 3000 });
+      }).toPass({ timeout: 20000 });
       const dataBrowser = page.frameLocator('iframe[title="Data Browser"]');
       await expect(dataBrowser.getByText('Charlie')).toBeVisible({ timeout: 20000 });
+
+      await actions.disconnect();
+    });
+
+    test('does not open a table with Shift+Enter or a repeated Enter', async ({
+      rstudioPage: page,
+    }) => {
+      await actions.openWizard();
+      await actions.fillWizardForTarget(target);
+      await actions.confirmWizardAndWaitConnected();
+      await actions.drillExplorer(target);
+
+      const table = target.explorerPath[target.explorerPath.length - 1];
+      const tableItem = actions.pane.panel.getByText(table, { exact: true }).locator('xpath=..');
+      const viewers = page.locator('iframe[title="Data Browser"]');
+      await expect(viewers).toHaveCount(0);
+
+      // Count preview requests rather than viewers: previewing a table whose
+      // viewer is already open reuses that viewer, so a second request can
+      // leave the viewer count unchanged.
+      const previews: string[] = [];
+      const onRequest = (request: { url(): string }) => {
+        if (request.url().endsWith('/rpc/connection_preview_object')) previews.push(request.url());
+      };
+      page.on('request', onRequest);
+
+      try {
+        // The key handler sends the preview request as it handles the key, so
+        // a request from either ignored key would go out before the plain
+        // Enter's, and be counted by the time that one's viewer appears.
+        await dispatchEnterKeydown(tableItem, { shiftKey: true });
+        await dispatchEnterKeydown(tableItem, { repeat: true });
+        await dispatchEnterKeydown(tableItem, {});
+        await expect(viewers.first()).toBeVisible({ timeout: 20000 });
+        expect(previews, 'Shift+Enter or a repeated Enter requested a preview').toHaveLength(1);
+      } finally {
+        page.off('request', onRequest);
+      }
 
       await actions.disconnect();
     });
