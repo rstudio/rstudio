@@ -15,6 +15,7 @@ const CONSOLE_PANE = '#rstudio_Console_pane';
 const SOURCE_PANE = '#rstudio_Source_pane';
 const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
+const HISTORY_TAB = '#rstudio_workbench_tab_history';
 const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
 const SIDEBAR_COLUMN_SPLITTER = '#rstudio_sidebar_column_splitter';
@@ -594,6 +595,63 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       await expect.poll(async () => Math.abs(
         ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
         .toBeLessThanOrEqual(2);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // The zoomed pane's partner quadrant is hidden rather than in a shut column,
+  // and showing it must move the zoom too, not leave a stale one (#18444).
+  test('Show Files while Environment is zoomed moves the zoom to Files', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomEnvironment');
+      await expectHidden(page, CONSOLE_PANE, TABSET2_PANE);
+
+      await executeCommand(page, 'activateFiles');
+      await expectExposed(page, TABSET2_PANE);
+      await expectHidden(page, CONSOLE_PANE, TABSET1_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomFiles')).toBe(true);
+      expect(await isCommandChecked(page, 'layoutZoomEnvironment')).toBe(false);
+
+      await executeCommand(page, 'layoutEndZoom');
+      await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
+        .toBeLessThanOrEqual(2);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // history() shows History through an ActivatePaneEvent, which code also fires
+  // as a side effect (e.g. entering the debugger). It reopens a column dragged
+  // shut, but leaves a zoom where the user put it.
+  test('history() reopens a column dragged shut', async ({ rstudioPage: page }) => {
+    await shutRightColumn(page);
+
+    await executeInConsole(page, 'history()');
+    await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThanOrEqual(20);
+    await expectExposed(page, TABSET1_PANE);
+    await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('history() during a Console zoom leaves the zoom on Console', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET1_PANE);
+
+      await executeInConsole(page, 'history()');
+      await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
+      // A moved zoom would start at once and animate for 300ms, so sample past it.
+      for (let i = 0; i < 20; i++) {
+        expect(await isCommandChecked(page, 'layoutZoomConsole'), `sample ${i}`).toBe(true);
+        expect(await getOffsetWidth(page, TABSET1_PANE), `sample ${i}`).toBe(0);
+        await page.waitForTimeout(50);
+      }
     } finally {
       await resetLayoutZoom(page);
     }

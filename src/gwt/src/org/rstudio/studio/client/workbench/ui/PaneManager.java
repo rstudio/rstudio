@@ -547,7 +547,7 @@ public class PaneManager
             return;
          }
 
-         reopenCollapsedColumn(window, lastSelectedTab_);
+         reopenCollapsedColumn(window, lastSelectedTab_, true);
       });
 
       eventBus_.addHandler(
@@ -2248,17 +2248,27 @@ public class PaneManager
       return tabs.toArray(new WorkbenchTab[tabs.size()]);
    }
 
-   public void activateTab(Tab tab)
+   /**
+    * How far activating a tab may change the layout to show the tab's pane.
+    */
+   private enum Reveal
    {
-      activateTab(tab, true);
+      /** Change nothing. A zoom about to start records the widths it restores
+       *  when it ends, and those should be the user's. */
+      NONE,
+      /** Reopen a column a splitter drag has shut, but leave any zoom alone. */
+      COLUMN,
+      /** Also move a pane zoom to the tab's pane, or end a column zoom that
+       *  shut its column, as a pane raising itself does. */
+      ZOOM
    }
 
-   /**
-    * @param reopenColumn Whether to reopen the tab's column if a splitter drag
-    *    has shut it. A zoom about to start passes false: it records the widths
-    *    it restores when it ends, and those should be the user's.
-    */
-   private void activateTab(Tab tab, boolean reopenColumn)
+   public void activateTab(Tab tab)
+   {
+      activateTab(tab, Reveal.ZOOM);
+   }
+
+   private void activateTab(Tab tab, Reveal reveal)
    {
       lastSelectedTab_ = tab;
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
@@ -2312,8 +2322,8 @@ public class PaneManager
       if (panel == null)
          return;
 
-      if (reopenColumn)
-         reopenCollapsedColumn(parent, tab);
+      if (reveal != Reveal.NONE)
+         reopenCollapsedColumn(parent, tab, reveal == Reveal.ZOOM);
 
       if (tabToIndex_.containsKey(tab))
       {
@@ -2335,20 +2345,26 @@ public class PaneManager
     * or a call during a zoom's animation, see the widths being laid out.
     *
     * @param tab The tab to zoom if a zoom of another pane moves to window.
+    * @param moveZoom Whether a zoom may move or end to show window.
     */
-   private void reopenCollapsedColumn(LogicalWindow window, Tab tab)
+   private void reopenCollapsedColumn(LogicalWindow window, Tab tab, boolean moveZoom)
    {
-      Widget column = getColumn(window);
-      if (column == null || isOpen(column))
+      boolean zoomed = maximizedWindow_ != null || widgetSizePriorToZoom_ >= 0;
+      if (zoomed && !moveZoom)
          return;
 
-      // Another pane's zoom shut the column: move the zoom here, as the
+      // Another pane's zoom hides window, in a column the zoom shut or as the
+      // zoomed pane's partner: move the zoom here, as the
       // WindowEnsureVisibleEvent handler does when a pane raises itself.
       if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
       {
          fullyMaximizeWindow(window, tab);
          return;
       }
+
+      Widget column = getColumn(window);
+      if (column == null || isOpen(column))
+         return;
 
       // A zoom tracked here is a column zoom (a zoomed pane's column is open),
       // which can't move to the pane, so end it. For a column zoom,
@@ -2414,11 +2430,16 @@ public class PaneManager
       return Math.max(0, Math.min(width / 2.0, width - panel_.getMinimumOpenWidth(column)));
    }
 
-   public void activateTab(String tabName)
+   /**
+    * Activate the tab an ActivatePaneEvent names. Code fires these to show a
+    * pane as a side effect (entering the debugger, history(), Packrat), so a
+    * zoom stays as the user left it; a column dragged shut still reopens.
+    */
+   public void activateTabLeavingZoom(String tabName)
    {
       Tab tab = tabForName(tabName);
       if (tab != null)
-         activateTab(tab);
+         activateTab(tab, Reveal.COLUMN);
    }
    
    public void focusTab(Tab tab)
@@ -2430,7 +2451,7 @@ public class PaneManager
 
    public void zoomTab(Tab tab)
    {
-      activateTab(tab, false);
+      activateTab(tab, Reveal.NONE);
       WorkbenchTabPanel tabPanel = getOwnerTabPanel(tab);
       LogicalWindow parentWindow = tabPanel.getParentWindow();
       if (parentWindow == null)
