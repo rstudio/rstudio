@@ -37,14 +37,13 @@ Since the main menubar (File, Edit, and so on) is actually part of the web page,
 
 In most cases, screen reader users will have to keep turning off their virtual cursors (also known as browse mode and quick navigation mode) in order to better interact with the RStudio web application. We will revisit this concept in more detail later on after we configure some required screen reader settings.
 
--   Notes: while any combinations of screen readers and browsers are supported technically, we have tested the following pairs for RStudio Workbench / RStudio Server.
+-   Notes: while any combinations of screen readers and browsers are supported technically, we have tested the following pairs for Posit Workbench / RStudio Server.
 
 |                        |                     | Table 1: Tested combinations of screen readers and browsers. |
 |------------------------|---------------------|--------------------------------------------------------------|
 | Operating System       | Screen Reader       | Browser                                                      |
-| Microsoft Windows 10   | JAWS version 2020   | Google Chrome                                                |
-| Microsoft Windows 10   | NVDA version 2020.1 | Google Chrome                                                |
-| macOS 10.15 (Catalina) | VoiceOver           | Safari                                                       |
+| Microsoft Windows 11   | NVDA version 2026.2 | Google Chrome                                                |
+| macOS 15 (Sequoia)     | VoiceOver           | Safari                                                       |
 
 ### Screen reader settings
 
