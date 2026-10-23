@@ -545,7 +545,7 @@ test_that("links rig repoints and an agent it rewrites are put back", {
    expect_true(file.symlink(file.path(removed, "bin", "Rscript"), paths[["Rscript"]]))
    dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
    oldAgent <- sprintf("<plist>%s</plist>\n", file.path(removed, "bin", "R"))
-   cat(oldAgent, file = paths[["launchAgent"]])
+   writeBin(charToRaw(oldAgent), paths[["launchAgent"]])
    launchd <- fakeLaunchd(loaded = TRUE, whichR = file.path(removed, "bin", "R"))
    snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
    expect_true(all(snapshot$existed))
@@ -559,7 +559,7 @@ test_that("links rig repoints and an agent it rewrites are put back", {
    dir.create(installed)
    unlink(paths[["current"]])
    expect_true(file.symlink(installed, paths[["current"]]))
-   cat(sprintf("<plist>%s</plist>\n", file.path(installed, "bin", "R")), file = paths[["launchAgent"]])
+   writeBin(charToRaw(sprintf("<plist>%s</plist>\n", file.path(installed, "bin", "R"))), paths[["launchAgent"]])
    launchd$state$whichR <- file.path(installed, "bin", "R")
    launchd$state$calls <- list()
 
@@ -626,8 +626,10 @@ test_that("what could not be undone after a user-mode install is reported", {
    launchd$state$failing <- c("unload", "unsetenv")
    Sys.chmod(bin, "0555")
 
+   # the agent keeps its file, which the next try needs to unload it
    result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
-   expect_setequal(result$removed, unname(paths[c("current", "launchAgent")]))
+   expect_identical(result$removed, unname(paths[["current"]]))
+   expect_true(file.exists(paths[["launchAgent"]]))
    expect_identical(result$restored, character())
    expect_length(result$failed, 3L)
    expect_match(result$failed, "launchctl unload", all = FALSE)
@@ -776,6 +778,46 @@ test_that("the snapshot is kept, and installs refused, while something is left t
 
 })
 
+test_that("a new agent that would not unload keeps its file for the next try", {
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = TRUE)
+   agent <- paths[["launchAgent"]]
+   launchd <- fakeLaunchd()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+
+   # rig adds and loads the agent, which then will not unload: unloading
+   # needs the file, so it stays
+   dir.create(dirname(agent), recursive = TRUE)
+   writeBin(charToRaw("<plist/>\n"), agent)
+   launchd$state$loaded <- TRUE
+   launchd$state$whichR <- "/new/R"
+   launchd$state$failing <- "unload"
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$removed, character())
+   expect_match(result$failed, "launchctl unload")
+   expect_true(file.exists(agent))
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv", "unsetenv"))
+
+   # the next try unloads it and removes it
+   launchd$state$failing <- character()
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$removed, unname(agent))
+   expect_identical(result$failed, character())
+   expect_false(file.exists(agent))
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv"))
+   expect_false(launchd$state$loaded)
+
+})
+
 test_that("an agent that would not unload is left for the next try", {
 
    root <- tempfile("rig-r-")
@@ -788,13 +830,13 @@ test_that("an agent that would not unload is left for the next try", {
    paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = TRUE)
    agent <- paths[["launchAgent"]]
    dir.create(dirname(agent), recursive = TRUE)
-   cat("<plist>old</plist>\n", file = agent)
+   writeBin(charToRaw("<plist>old</plist>\n"), agent)
    launchd <- fakeLaunchd(loaded = TRUE, whichR = "/old/R")
    snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
 
    # rig rewrites and reloads the agent, which then will not unload: its
    # file is left as rig wrote it
-   cat("<plist>new</plist>\n", file = agent)
+   writeBin(charToRaw("<plist>new</plist>\n"), agent)
    launchd$state$whichR <- "/new/R"
    launchd$state$failing <- "unload"
    launchd$state$calls <- list()
@@ -827,12 +869,12 @@ test_that("an agent that failed to load again is loaded by the next try", {
 
    paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = TRUE)
    dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
-   cat("<plist>old</plist>\n", file = paths[["launchAgent"]])
+   writeBin(charToRaw("<plist>old</plist>\n"), paths[["launchAgent"]])
    launchd <- fakeLaunchd(loaded = TRUE, whichR = "/old/R")
    snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
 
    # rig rewrites the agent; putting it back works, loading it does not
-   cat("<plist>new</plist>\n", file = paths[["launchAgent"]])
+   writeBin(charToRaw("<plist>new</plist>\n"), paths[["launchAgent"]])
    launchd$state$whichR <- "/new/R"
    launchd$state$failing <- "load"
    launchd$state$calls <- list()

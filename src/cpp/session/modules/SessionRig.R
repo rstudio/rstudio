@@ -270,8 +270,11 @@
             loaded <- FALSE
       }
 
-      # a rewritten agent that would not unload is left as is, so that a
-      # later try still sees it as rewritten and unloads it first
+      # an agent that would not unload keeps its file: unloading needs it,
+      # and a later try then still sees it as created or rewritten
+      if (loaded)
+         created[["launchAgent"]] <- FALSE
+
       if (rewritten && !loaded)
       {
          written <- .rs.tryCatch(writeBin(snapshot$agent, agent))
