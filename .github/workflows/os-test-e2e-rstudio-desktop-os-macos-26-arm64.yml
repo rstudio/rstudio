@@ -339,8 +339,16 @@ jobs:
           path: RStudio.app.tar.gz
           retention-days: 7
 
+  # Reads the macOS shard count from .github/e2e/shards.json and republishes
+  # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
+  # env value itself, so the one declaration has to pass through here.
+  shards:
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: macos
+
   e2e-desktop-macos:
-    needs: build
+    needs: [build, shards]
     # build is skipped when build_from_source is false; allow this job to
     # run in that case too. needs.build.result is "success" on a normal run
     # and "skipped" on the daily-download path. build_only seeds the build
@@ -348,6 +356,7 @@ jobs:
     if: |
       always() &&
       inputs.build_only != true &&
+      needs.shards.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
@@ -362,7 +371,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        # Declared once in .github/e2e/shards.json (see .github/e2e/README.md
+        # for how the count was chosen); the test step derives --shard=N/M
+        # from strategy.job-total, and e2e-merge prints the same count.
+        shard: ${{ fromJSON(needs.shards.outputs.matrix) }}
     runs-on: macos-26
     timeout-minutes: 120
     # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
@@ -655,7 +667,7 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-desktop-macos]
+    needs: [shards, e2e-desktop-macos]
     if: always() && inputs.defer_merge != true && needs.e2e-desktop-macos.result != 'skipped' && needs.e2e-desktop-macos.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -689,7 +701,7 @@ jobs:
         working-directory: e2e/rstudio
         run: |
           if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            echo "::error::No blob reports found -- every shard failed to produce artifacts"
             exit 1
           fi
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
@@ -756,7 +768,7 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · macos-26 ARM64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>${{ needs.shards.outputs.count }} shards · macos-26 ARM64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Release-gate floor, last so the reporting above still runs. A run that
       # executed nothing must not report green: Playwright suppresses its own

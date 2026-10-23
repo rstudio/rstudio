@@ -3497,8 +3497,11 @@ body .rstudio-themes-alternate {
    opacity: 0.9;
 }
 
+/* The actions follow the label instead of sitting at the far edge of the
+   editor, so on a wide editor they stay near the marker that opened the
+   peek. Only the close glyph, the lesser action, goes at the end. */
 .ace_git-peek-label {
-   flex: 1;
+   margin-right: 16px; /* 24px to Revert, with the header gap */
 }
 
 .ace_git-peek-button {
@@ -3510,6 +3513,23 @@ body .rstudio-themes-alternate {
    background-color: rgba(255, 255, 255, 0.7);
    color: inherit;
    cursor: pointer;
+}
+
+.ace_git-peek-close {
+   margin-left: auto;
+   padding: 0 4px;
+   border: none;
+   background: none;
+   font: inherit;
+   font-size: 14px;
+   line-height: 16px;
+   color: inherit;
+   opacity: 0.6;
+   cursor: pointer;
+}
+
+.ace_git-peek-close:hover {
+   opacity: 1;
 }
 
 .ace_git-peek-lines {
