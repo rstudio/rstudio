@@ -1007,25 +1007,10 @@ void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
    module_context::enqueClientEvent(event);
 }
 
-void onDetectChanges(module_context::ChangeSource source)
+void detectChanges()
 {
-   // Prevent recursive calls to this function
-   DROP_RECURSIVE_CALLS;
-
-   // Update session suspendable state whenever the console returns to its
-   // prompt (fired from the prompt ahead of the prompt hook). A prompt
-   // reissued after R ran code from the idle loop (a later callback) runs
-   // no prompt hook, and that code may have created what cannot be
-   // serialized (#19236)
-   if (source == module_context::ChangeSourceREPL && core::thread::isMainThread())
-      s_isGlobalEnvironmentSerializable = isGlobalEnvironmentSerializable();
-
    // Ignore if not monitoring
    if (!s_monitoring)
-      return;
-
-   // This operation may use the R runtime so don't run it if this RPC was run in the offline thread
-   if (!core::thread::isMainThread())
       return;
 
    // Check for Python changes
@@ -1043,6 +1028,28 @@ void onDetectChanges(module_context::ChangeSource source)
    
    // Check active environment for changes
    s_pEnvironmentMonitor->checkForChanges();
+}
+
+void onDetectChanges(module_context::ChangeSource source)
+{
+   // Prevent recursive calls to this function
+   DROP_RECURSIVE_CALLS;
+
+   // This operation may use the R runtime so don't run it if this RPC was run in the offline thread
+   if (!core::thread::isMainThread())
+      return;
+
+   detectChanges();
+
+   // Update session suspendable state whenever the console returns to its
+   // prompt (fired from the prompt ahead of the prompt hook), monitoring or
+   // not, and after the inspection above, which runs user code (a length()
+   // or str() method) that may itself create what cannot be serialized. A
+   // prompt reissued after R ran code from the idle loop (a later callback)
+   // runs no prompt hook, and that code may have created such an object
+   // too (#19236)
+   if (source == module_context::ChangeSourceREPL)
+      s_isGlobalEnvironmentSerializable = isGlobalEnvironmentSerializable();
 }
 
 namespace {
