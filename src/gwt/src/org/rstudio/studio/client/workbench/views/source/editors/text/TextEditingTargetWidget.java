@@ -380,7 +380,9 @@ public class TextEditingTargetWidget
       // the split that has not materialized below)
       if (diffSplitWidget_ != null)
       {
-         if (diffSplitWidget_.isFocused())
+         // by the pane that held focus last: chosen from a menu with the
+         // mouse, the command runs with focus in the menu
+         if (diffSplitFocusedLast_)
          {
             editor_.focus();
             return true;
@@ -557,6 +559,10 @@ public class TextEditingTargetWidget
       diffSplitWidget_.setFocusHandler(() ->
       {
          diffSplitFocusedLast_ = true;
+         // the editor shortcuts dispatched to the last focused Ace editor
+         // (Ctrl+K, the assignment and pipe operators) would otherwise edit
+         // the document while the base pane has focus, as in visual mode
+         AceEditor.clearLastFocusedEditor();
          events_.fireEvent(new EditingTargetSelectedEvent(target_));
          events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
       });

@@ -1192,6 +1192,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       const echoesBefore = await echoes();
       await executeCommand(page, 'executeCode');
       await executeCommand(page, 'executeCodeWithoutMovingCursor');
+      // nor do the editor shortcuts that go to the last focused Ace editor
+      await executeCommand(page, 'insertAssignmentOperator');
+      await executeCommand(page, 'yankAfterCursor');
+      expect(await editor.getLine(0)).toBe('a <- 1');
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(live)).toBe(true);
       await executeCommand(page, 'executeCode');
@@ -1601,8 +1605,14 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         .locator('.ace_gutter-cell')
         .filter({ hasText: new RegExp(`^\\s*${row + 1}\\s*$`) })
         .locator('.ace_fold-widget.ace_closed');
-      await expect(widget).toBeVisible();
-      await widget.click();
+      const foldedAt = async () => (await folds(base)).some((fold) => fold.row === row);
+      // (Ace re-renders the gutter cells after a fold changes; a click that
+      // lands on a cell being replaced is lost, so it is made again)
+      for (let attempt = 0; attempt < 2 && (await foldedAt()); attempt++) {
+        await expect(widget).toBeVisible();
+        await widget.click();
+        await expect.poll(foldedAt, { timeout: 2000 }).toBe(false).catch(() => undefined);
+      }
     };
 
     try {

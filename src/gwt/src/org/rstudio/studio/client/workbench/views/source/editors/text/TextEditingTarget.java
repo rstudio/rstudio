@@ -1378,7 +1378,7 @@ public class TextEditingTarget implements
       if (cursorInDiffBase() && view_.ensureDiffSplitCursorVisible())
          return;
 
-      docDisplay_.ensureCursorVisible();
+      activeDisplay().ensureCursorVisible();
    }
 
    @Override
