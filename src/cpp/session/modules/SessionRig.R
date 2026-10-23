@@ -270,7 +270,9 @@
             loaded <- FALSE
       }
 
-      if (rewritten)
+      # a rewritten agent that would not unload is left as is, so that a
+      # later try still sees it as rewritten and unloads it first
+      if (rewritten && !loaded)
       {
          written <- .rs.tryCatch(writeBin(snapshot$agent, agent))
          if (inherits(written, "error"))

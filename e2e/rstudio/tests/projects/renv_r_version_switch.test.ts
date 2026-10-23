@@ -339,7 +339,15 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     // fresh home has none yet; rig 0.11.0 fails outright without it (r-lib/rig#491)
     const profilesBefore = SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`));
     const whichRBefore = process.platform === "darwin" ? launchctl(["getenv", "RSTUDIO_WHICH_R"]) : "";
-    const agentLoadedBefore = process.platform === "darwin" && launchctl(["list", LAUNCH_AGENT]) !== "";
+
+    // launchd is per user, not per home: an agent of this label that is
+    // already loaded (from a rig user-mode default in the real home) is the
+    // one rig would kickstart and the cleanup would unload, as the sandbox
+    // plist shares its label
+    test.skip(
+      process.platform === "darwin" && launchctl(["list", LAUNCH_AGENT]) !== "",
+      "rig's LaunchAgent is already loaded for this user",
+    );
 
     try {
       await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-install`, target!);
@@ -376,15 +384,14 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
       expect(SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`))).toEqual(profilesBefore);
       if (process.platform === "darwin") {
         expect(launchctl(["getenv", "RSTUDIO_WHICH_R"])).toBe(whichRBefore);
-        expect(launchctl(["list", LAUNCH_AGENT]) !== "").toBe(agentLoadedBefore);
+        expect(launchctl(["list", LAUNCH_AGENT])).toBe("");
       }
     } finally {
-      // launchd is per user, not per home: an agent rig loads from the
-      // sandbox home lands in the developer's own session, and would keep
-      // pointing RStudio at the (soon deleted) sandbox R until logout if a
-      // failed run left it there
+      // an agent rig loads from the sandbox home lands in the developer's
+      // own launchd session, and would keep pointing RStudio at the (soon
+      // deleted) sandbox R until logout if a failed run left it there
       if (process.platform === "darwin") {
-        if (!agentLoadedBefore && launchctl(["list", LAUNCH_AGENT]) !== "")
+        if (launchctl(["list", LAUNCH_AGENT]) !== "")
           launchctl(["bootout", `gui/${process.getuid!()}/${LAUNCH_AGENT}`]);
         if (launchctl(["getenv", "RSTUDIO_WHICH_R"]) !== whichRBefore)
           launchctl(whichRBefore ? ["setenv", "RSTUDIO_WHICH_R", whichRBefore] : ["unsetenv", "RSTUDIO_WHICH_R"]);
