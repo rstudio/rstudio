@@ -802,13 +802,25 @@ public abstract class ModalDialogBase extends DialogBox
     */
    protected void setARIADescribedBy(Element element)
    {
-      String id = element.getId();
-      if (StringUtil.isNullOrEmpty(id))
-      {
-         id = DOM.createUniqueId();
-         element.setId(id);
-      }
+      ensureId(element);
       role_.setAriaDescribedbyProperty(getElement(), Id.of(element));
+   }
+
+   /**
+    * Name the dialog with an element inside it, for dialogs that show their own
+    * title rather than a caption set with setText
+    * @param element element containing the dialog's title
+    */
+   protected void setARIALabelledBy(Element element)
+   {
+      ensureId(element);
+      role_.setAriaLabelledbyProperty(getElement(), Id.of(element));
+   }
+
+   private static void ensureId(Element element)
+   {
+      if (StringUtil.isNullOrEmpty(element.getId()))
+         element.setId(DOM.createUniqueId());
    }
 
    /**

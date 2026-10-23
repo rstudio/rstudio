@@ -39,6 +39,8 @@ const LOCK_ICON = '[title^="Restricted Mode"]';
 
 const HEADER_UNKNOWN = 'Do you trust this project?';
 const HEADER_RESTRICTED = 'This project is restricted';
+const DESCRIPTION_UNKNOWN = /^This project contains files that may be automatically loaded/;
+const DESCRIPTION_RESTRICTED = /^This project was previously marked as untrusted/;
 
 // Visual editor gating (#17912): the Visual toggle of the visible editor tab.
 // Its aria-pressed state syncs synchronously with the document's visual-mode
@@ -409,6 +411,12 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     // Verify dialog content (unknown variant)
     const dialog = page.locator(TRUST_DIALOG);
     await expect(dialog.locator(`text=${HEADER_UNKNOWN}`)).toBeVisible();
+
+    // Named by its heading and described by its explanation (#19252)
+    await expect(dialog.getByRole('heading', { name: HEADER_UNKNOWN })).toBeVisible();
+    await expect(dialog).toHaveAccessibleName(HEADER_UNKNOWN);
+    await expect(dialog).toHaveAccessibleDescription(DESCRIPTION_UNKNOWN);
+
     await expect(dialog.locator('text=Files detected:')).toBeVisible();
     await expect(dialog.locator('a:has-text(".Rprofile")')).toBeVisible();
 
@@ -447,6 +455,9 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     const dialog = page.locator(TRUST_DIALOG);
     await expect(dialog.locator(`text=${HEADER_RESTRICTED}`)).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: HEADER_RESTRICTED })).toBeVisible();
+    await expect(dialog).toHaveAccessibleName(HEADER_RESTRICTED);
+    await expect(dialog).toHaveAccessibleDescription(DESCRIPTION_RESTRICTED);
 
     // Verify restricted-variant buttons
     await expect(page.locator(TRUST_BTN_RESTRICTED)).toBeVisible();
