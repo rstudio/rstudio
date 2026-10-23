@@ -586,8 +586,33 @@ test_that("the registry scripts quote their PowerShell strings", {
       "Remove-ItemProperty -LiteralPath 'HKCU:\\Software\\R-core\\R' -Name 'Current Version' -ErrorAction SilentlyContinue"
    )
 
+   # the typographic single quotes delimit PowerShell strings as well
+   curly <- "C:\\Tools\\O\u2019Brien;D:\\\u2018x\u2019"
+   expect_identical(.rs.rig.psQuote(curly), paste0("'", "C:\\Tools\\O\u2019\u2019Brien;D:\\\u2018\u2018x\u2019\u2019", "'"))
+   expect_identical(.rs.rig.psQuote("plain"), "'plain'")
+
    read <- .rs.rig.registryReadScript()
    expect_true(any(grepl("@('HKCU:\\Environment', 'Path')", read, fixed = TRUE)))
    expect_identical(tail(read, 1L), "ConvertTo-Json -InputObject @($values) -Compress")
+
+})
+
+test_that("the registry scripts are written as UTF-8 with a byte order mark", {
+
+   script <- tempfile("rig-", fileext = ".ps1")
+   on.exit(unlink(script), add = TRUE)
+
+   lines <- .rs.rig.registryWriteScript(list(
+      list(op = "set", key = "HKCU:\\Environment", name = "Path", type = "ExpandString", data = "C:\\Caf\u00e9;D:\\O\u2019Brien")
+   ))
+   .rs.rig.writePowershellScript(lines, script)
+
+   bytes <- readBin(script, what = "raw", n = file.size(script))
+   expect_identical(bytes[1:3], as.raw(c(0xEF, 0xBB, 0xBF)))
+   expect_identical(
+      rawToChar(bytes[-(1:3)]),
+      enc2utf8(paste0(lines, "\n"))
+   )
+   expect_true(any(bytes == as.raw(0xC3)))
 
 })

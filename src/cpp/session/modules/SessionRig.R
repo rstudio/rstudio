@@ -153,24 +153,29 @@
 {
    if (identical(platform, "windows"))
    {
-      return(c(
+      c(
          R       = file.path(dirs$binary_dir, "R.exe"),
          RS      = file.path(dirs$binary_dir, "RS.exe"),
          Rscript = file.path(dirs$binary_dir, "Rscript.exe")
-      ))
+      )
    }
-
-   current <- if (identical(platform, "macos")) "Current" else "current"
-   paths <- c(
-      current = file.path(dirs$r_root, current),
-      R       = file.path(dirs$binary_dir, "R"),
-      Rscript = file.path(dirs$binary_dir, "Rscript")
-   )
-
-   if (identical(platform, "macos"))
-      paths[["launchAgent"]] <- file.path(home, "Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist")
-
-   paths
+   else if (identical(platform, "macos"))
+   {
+      c(
+         current     = file.path(dirs$r_root, "Current"),
+         R           = file.path(dirs$binary_dir, "R"),
+         Rscript     = file.path(dirs$binary_dir, "Rscript"),
+         launchAgent = file.path(home, "Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist")
+      )
+   }
+   else
+   {
+      c(
+         current = file.path(dirs$r_root, "current"),
+         R       = file.path(dirs$binary_dir, "R"),
+         Rscript = file.path(dirs$binary_dir, "Rscript")
+      )
+   }
 })
 
 #' The registry values rig writes on Windows: once a user-mode R becomes the
@@ -202,9 +207,13 @@
    paste(key, name, sep = "\\")
 })
 
+#' A PowerShell single-quoted string literal. Besides the ASCII apostrophe,
+#' PowerShell takes the typographic single quotes (U+2018 to U+201B) as
+#' delimiters too, so a path holding one would end the literal early unless
+#' it is doubled as well.
 .rs.addFunction("rig.psQuote", function(x)
 {
-   paste0("'", gsub("'", "''", x, fixed = TRUE), "'")
+   paste0("'", gsub("(['\u2018\u2019\u201a\u201b])", "\\1\\1", enc2utf8(x), perl = TRUE), "'")
 })
 
 #' A PowerShell script printing the registry values rig may write, as JSON:
@@ -254,11 +263,26 @@
    }, FUN.VALUE = character(1))
 })
 
+#' Write a PowerShell script as UTF-8 with a byte order mark: Windows
+#' PowerShell reads a script without one in the system ANSI code page, which
+#' would garble non-ASCII registry data (a user's PATH, say) on the way back
+#' into the registry.
+.rs.addFunction("rig.writePowershellScript", function(lines, path)
+{
+   con <- file(path, open = "wb")
+   on.exit(close(con), add = TRUE)
+   writeBin(as.raw(c(0xEF, 0xBB, 0xBF)), con)
+   writeLines(enc2utf8(lines), con, useBytes = TRUE)
+})
+
+#' Run a PowerShell script, returning its standard output. The script is
+#' expected to set the console output encoding to UTF-8 when it prints
+#' anything that matters, as the registry reader does.
 .rs.addFunction("rig.powershell", function(lines)
 {
    script <- tempfile("rstudio-rig-", fileext = ".ps1")
    on.exit(unlink(script), add = TRUE)
-   writeLines(lines, script)
+   .rs.rig.writePowershellScript(lines, script)
 
    output <- suppressWarnings(system2(
       "powershell",
@@ -271,6 +295,7 @@
    if (!is.null(status) && status != 0L)
       stop(sprintf("powershell exited with status %i", status))
 
+   Encoding(output) <- "UTF-8"
    output
 })
 
