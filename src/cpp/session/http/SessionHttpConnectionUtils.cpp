@@ -53,7 +53,7 @@ namespace rstudio {
 namespace session {
 namespace console_input {
 
-bool isRunningCode();
+bool executing();
 
 }
 }
@@ -321,9 +321,11 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // R is also busy, with the console at its prompt, while it runs an input
       // handler dispatched from the idle loop (a later callback); the interrupt
       // is what ends a long-running one (#19236). the dispatch itself does not
-      // count (see http_methods::processingIdleEvents): an interrupt landing in
-      // it would be swallowed, and one at an interactive read must cancel it.
-      bool busy = session::console_input::isRunningCode();
+      // count: an interrupt landing in it would be swallowed, and one at an
+      // interactive read must cancel it. so a dispatch is first waited out
+      // (see http_methods::idleEventsPastDispatch).
+      bool busy = session::console_input::executing() ||
+                  http_methods::idleEventsPastDispatch();
       if (http_methods::protocolDebugEnabled())
       {
          if (busy)

@@ -31,6 +31,7 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <thread>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
@@ -145,11 +146,12 @@ IdleEventState s_idleEvents;
 // while inactive), for the listener thread (see processingIdleEvents)
 std::atomic<std::int64_t> s_idleEventsSince(0);
 
-// how long the handlers run before they count as R running code. the
-// dispatch itself, with no callback due, takes microseconds; an interrupt
-// landing in it would be swallowed with the next read still waiting, while
-// one meant for an interactive read (Escape at readline(), or at a
-// continuation prompt) has to become a cancel of that read instead
+// how long the handlers run before they count, for an interrupt, as a
+// callback running rather than the dispatch itself, which with no callback
+// due takes microseconds. an interrupt landing in the dispatch would be
+// swallowed with the next read still waiting, while one meant for an
+// interactive read (Escape at readline(), or at a continuation prompt) has
+// to become a cancel of that read instead (see idleEventsPastDispatch)
 const std::chrono::milliseconds kIdleEventDispatchGrace(50);
 
 std::int64_t steadyNowNs()
@@ -245,12 +247,14 @@ private:
 
 // run R's input handlers from the idle loop (see IdleEventState) for a wait
 // on `method`, with `initFunction` what that wait tells a client that
-// connects meanwhile. returns whether the waiting console read's prompt was
+// connects meanwhile, and `inputHeld` whether the wait holds the request it
+// is for already. returns whether the waiting console read's prompt was
 // reissued -- done only for a console read: a wait for the client inside a
 // command (a dialog) has no prompt to restore, and the prompt current then
 // (the enclosing read's, or none) is not what the console shows
 bool processIdleEvents(const std::string& method,
-                       const boost::function<void()>& initFunction)
+                       const boost::function<void()>& initFunction,
+                       bool inputHeld)
 {
    bool busyReported = false;
    unsigned requestsServed = 0;
@@ -303,11 +307,12 @@ bool processIdleEvents(const std::string& method,
    // discard pref on), which leaves the client busy the same way. not when
    // a reset found nothing queued: the client saw nothing of it, and a
    // prompt would reset the console's history position and refresh the
-   // panes for no command. and not with input pending for the read: that
-   // input runs next and prompts when done; a prompt ahead of it would be
-   // taken for the end of what is still queued (a notebook chunk's code is
-   // console input, and its queue finishes the chunk on the prompt)
-   if (console_input::hasPendingInput())
+   // panes for no command. and not with input pending for the read, queued
+   // or held by the wait: that input runs next and prompts when done; a
+   // prompt ahead of it would be taken for the end of what has not run (a
+   // notebook chunk's code is a console_input request like any other, and
+   // its queue finishes the chunk on the prompt)
+   if (inputHeld || console_input::hasPendingInput())
       return false;
 
    if (busyReported ||
@@ -724,12 +729,28 @@ bool protocolDebugEnabled()
 
 bool processingIdleEvents()
 {
+   return s_idleEventsSince != 0;
+}
+
+bool idleEventsPastDispatch()
+{
    std::int64_t since = s_idleEventsSince;
    if (since == 0)
       return false;
 
-   return steadyNowNs() - since >
-          std::chrono::duration_cast<std::chrono::nanoseconds>(kIdleEventDispatchGrace).count();
+   // within the grace it is not yet known whether this is a callback or the
+   // dispatch alone: wait for the grace to run out while the same dispatch
+   // stays active (the main thread cannot wait, it is the dispatch)
+   std::int64_t graceNs =
+         std::chrono::duration_cast<std::chrono::nanoseconds>(kIdleEventDispatchGrace).count();
+   while (steadyNowNs() - since <= graceNs)
+   {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      if (s_idleEventsSince != since)
+         return false;
+   }
+
+   return true;
 }
 
 void waitForMethodInitFunction(const ClientEvent& initEvent)
@@ -875,7 +896,8 @@ bool waitForMethod(const std::string& method,
 
       // process pending events
       unsigned clearsBefore = console_input::bufferClears();
-      bool promptRestored = processIdleEvents(method, initFunction);
+      bool inputHeld = ptrConnection && method == kConsoleInput;
+      bool promptRestored = processIdleEvents(method, initFunction, inputHeld);
 
       // held console input is pending input all the same: a reset that
       // cleared the queue meanwhile (an interrupt, an uncaught error with

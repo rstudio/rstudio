@@ -63,7 +63,14 @@ bool protocolDebugEnabled();
 // R is running an input handler dispatched from the idle loop (a later
 // callback); the console is at its prompt, yet R is busy. Safe to call from
 // any thread.
+// R's input handlers are being run from the idle loop (see
+// SessionHttpMethods.cpp); any thread
 bool processingIdleEvents();
+
+// the input handlers being run from the idle loop have outlasted the
+// dispatch itself, i.e. a callback is running. waits out the dispatch
+// grace when called during one: for the listener thread, not the main thread
+bool idleEventsPastDispatch();
 core::Error initialize();
 bool verifyRequestSignature(const core::http::Request& request);
 
