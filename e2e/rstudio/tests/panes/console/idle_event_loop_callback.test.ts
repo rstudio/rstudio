@@ -7,11 +7,15 @@
 // interrupt is offered, honours the interrupt, and queues console input sent
 // meanwhile for the next prompt.
 
+import * as fs from 'fs';
+import * as path from 'path';
 import type { Page, Response } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { withDeadline } from '@utils/deadline';
+import { canWriteDir } from '@utils/files';
+import { useSuiteSandbox } from '@utils/sandbox';
 import {
   ensureConsoleIdle,
   executeInConsole,
@@ -73,8 +77,33 @@ async function submitAndAwaitQueued(page: Page, command: string): Promise<void> 
   }
 }
 
+/**
+ * Record client events of the given types as they arrive on the events
+ * long-poll (each get_events response carries an array of {type, data}).
+ * Installed before the behavior under test so nothing is missed; the
+ * console's own busy class is cleared by any prompt, so an assertion about
+ * the busy EVENT (which is what the workbench tracks) has to read the wire.
+ */
+function recordClientEvents(page: Page, types: string[]): { events: { type: string; data: unknown }[]; stop(): void } {
+  const events: { type: string; data: unknown }[] = [];
+  const onResponse = async (response: Response): Promise<void> => {
+    if (!/\/events\/get_events/.test(response.url()))
+      return;
+    const body = await response.json().catch(() => null) as { result?: unknown } | null;
+    if (!Array.isArray(body?.result))
+      return;
+    for (const event of body.result as { type?: unknown; data?: unknown }[]) {
+      if (typeof event?.type === 'string' && types.includes(event.type))
+        events.push({ type: event.type, data: event.data });
+    }
+  };
+  page.on('response', onResponse);
+  return { events, stop: () => page.off('response', onResponse) };
+}
+
 test.describe('Idle event loop callbacks', () => {
   let consoleActions: ConsolePaneActions;
+  const sandbox = useSuiteSandbox();
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
@@ -211,40 +240,66 @@ test.describe('Idle event loop callbacks', () => {
     const consoleInput = page.locator(CONSOLE_INPUT);
     const promptText = () => page.evaluate(() =>
       document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+    const busy = recordClientEvents(page, ['busy']);
+    try {
+      // Busy is reported before the read; the read's prompt clears the
+      // client's busy state and re-arms the report; the callback then returns
+      // well before it would fire again. The busy=false event still has to
+      // come: the workbench tracks that event, not the console's prompt.
+      await executeInConsole(page, 'later::later(function() { Sys.sleep(1.5); .idle_callback_answer <<- readline("answer? "); Sys.sleep(0.2) }, 0.1)');
+      await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+      await expect.poll(promptText, { timeout: 10000 }).toBe('answer? ');
+      await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
+      // R's own busy callback adds events of its own around the read, so
+      // the sequence is not fixed; what matters is that busy was reported,
+      // and that the last word once the callback has returned is "not busy".
+      const busyValues = () => busy.events.map((e) => (e.data as { value?: unknown })?.value);
+      expect(busyValues()).toContain(true);
 
-    // Busy is reported before the read; the read's prompt clears the
-    // client's busy state and re-arms the report; the callback then returns
-    // well before it would fire again. The busy=false still has to come
-    // (the workbench tracks it apart from the prompt), with the REPL prompt.
-    await executeInConsole(page, 'later::later(function() { Sys.sleep(1.5); .idle_callback_answer <<- readline("answer? "); Sys.sleep(0.2) }, 0.1)');
-    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
-    await expect.poll(promptText, { timeout: 10000 }).toBe('answer? ');
-    await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
-
-    await executeInConsole(page, 'hello');
-    expect(await promptText()).toBe('> ');
-    await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
+      await executeInConsole(page, 'hello');
+      expect(await promptText()).toBe('> ');
+      await expect(consoleInput).not.toHaveClass(BUSY_CLASS);
+      await expect.poll(() => busyValues().at(-1), { timeout: 5000 }).toBe(false);
+    } finally {
+      busy.stop();
+    }
     await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
   });
 
   test('input queued during a callback that then reads it brings the prompt back', async ({ rstudioPage: page }) => {
+    // The callback waits for a file the runner writes once the input is
+    // confirmed queued, so the read always finds it queued; that needs a
+    // filesystem shared with the session.
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const consoleInput = page.locator(CONSOLE_INPUT);
     const promptText = () => page.evaluate(() =>
       document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+    const flag = path.join(sandbox.dir, `read-queued-${Date.now()}.flag`);
+    const prompts = recordClientEvents(page, ['console_prompt']);
+    try {
+      // Input submitted while the callback runs is queued; the callback's
+      // readline() then takes it straight from the queue, with no prompt of
+      // its own. The client is busy from its submit, and only the prompt
+      // restored when the callback returns clears that.
+      // The input is a number: a bare word can raise a completion popup, and
+      // the Escape that dismisses one is an interrupt in an empty console.
+      await executeInConsole(page,
+        `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); .idle_callback_answer <<- readline("answer? ") }, 0.1)`);
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+      await submitAndAwaitQueued(page, '42');
+      await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+      fs.writeFileSync(flag, '');
 
-    // Input submitted while the callback runs is queued; the callback's
-    // readline() then takes it straight from the queue, with no prompt of
-    // its own. The client is busy from its submit, and only the prompt
-    // restored when the callback returns clears that.
-    await executeInConsole(page, 'later::later(function() { cat("callback", "started\\n"); Sys.sleep(1); .idle_callback_answer <<- readline("answer? ") }, 0.1)');
-    await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
-    await submitAndAwaitQueued(page, 'hello');
-    await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
-
-    await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
-    expect(await promptText()).toBe('> ');
+      await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+      expect(await promptText()).toBe('> ');
+      // The read never prompted: the only prompts seen are the REPL's.
+      const promptTexts = prompts.events.map((e) => (e.data as { prompt?: unknown })?.prompt);
+      expect(promptTexts).not.toContain('answer? ');
+    } finally {
+      prompts.stop();
+    }
     await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
-    await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was 42');
   });
 });
