@@ -1007,10 +1007,18 @@ void onUserPrefsChanged(const std::string& /* layer */, const std::string& pref)
    module_context::enqueClientEvent(event);
 }
 
-void onDetectChanges(module_context::ChangeSource /* source */)
+void onDetectChanges(module_context::ChangeSource source)
 {
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
+
+   // Update session suspendable state whenever the console returns to its
+   // prompt (fired from the prompt ahead of the prompt hook). A prompt
+   // reissued after R ran code from the idle loop (a later callback) runs
+   // no prompt hook, and that code may have created what cannot be
+   // serialized (#19236)
+   if (source == module_context::ChangeSourceREPL && core::thread::isMainThread())
+      s_isGlobalEnvironmentSerializable = isGlobalEnvironmentSerializable();
 
    // Ignore if not monitoring
    if (!s_monitoring)
@@ -1118,9 +1126,6 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 
    // End debug output capture every time a console prompt occurs
    *pCapturingDebugOutput = false;
-   
-   // Update session suspendable state
-   s_isGlobalEnvironmentSerializable = isGlobalEnvironmentSerializable();
 
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
