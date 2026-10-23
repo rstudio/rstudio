@@ -213,6 +213,7 @@ void processIdleEvents()
 {
    bool busyReported = false;
    bool executingBefore = console_input::executing();
+   bool atTopLevelBefore = r::session::atTopLevelPrompt();
    unsigned readsBefore = console_input::readsCompleted();
    unsigned clearsBefore = console_input::bufferClears();
    {
@@ -222,13 +223,16 @@ void processIdleEvents()
    }
 
    // a console read a handler ran (readline()) marks console input as
-   // executing when it hands R the answer, as any read does; the handler has
-   // returned now and the waiting read is back where it was
+   // executing, and R as no longer at its top-level prompt, when it hands R
+   // the answer, as any read does; the handler has returned now and the
+   // waiting read is back where it was (a prompt reports R busy otherwise)
    if (!executingBefore && console_input::executing())
    {
       console_input::setExecuting(false);
       console_input::updateSessionExecuting();
    }
+   if (atTopLevelBefore && !r::session::atTopLevelPrompt())
+      r::session::setAtTopLevelPrompt(true);
 
    // reissue the waiting read's prompt, which also tells the client R is
    // back, when the client was told R is busy; when a handler ran a console

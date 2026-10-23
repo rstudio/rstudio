@@ -198,19 +198,28 @@ test.describe('Idle event loop callbacks', () => {
     // The prompt sits in the cell before the input's, in the shell's input row.
     const promptText = () => page.evaluate(() =>
       document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+    const prompts = recordClientEvents(page, ['console_prompt']);
+    try {
+      // A callback that reads from the console: its prompt replaces the REPL's
+      // while it waits. (later never runs another callback meanwhile, so the
+      // busy-while-reading path cannot be driven from here.)
+      await executeInConsole(page, 'later::later(function() .idle_callback_answer <<- readline("answer? "), 0.1)');
+      await expect.poll(promptText, { timeout: 5000 }).toBe('answer? ');
 
-    // A callback that reads from the console: its prompt replaces the REPL's
-    // while it waits. (later never runs another callback meanwhile, so the
-    // busy-while-reading path cannot be driven from here.)
-    await executeInConsole(page, 'later::later(function() .idle_callback_answer <<- readline("answer? "), 0.1)');
-    await expect.poll(promptText, { timeout: 5000 }).toBe('answer? ');
-
-    // Answering ends the callback; the REPL prompt comes back on its own (a
-    // new prompt event, which is what executeInConsole waits for). Without
-    // that the console would sit without a prompt until something else
-    // issued one.
-    await executeInConsole(page, 'hello');
-    expect(await promptText()).toBe('> ');
+      // Answering ends the callback; the REPL prompt comes back on its own (a
+      // new prompt event, which is what executeInConsole waits for). Without
+      // that the console would sit without a prompt until something else
+      // issued one. The read left R "not at its top-level prompt" when it
+      // handed over the answer; the restored prompt must not report R busy
+      // (notebook chunk execution and the chat pane key off that field).
+      await executeInConsole(page, 'hello');
+      expect(await promptText()).toBe('> ');
+      const restored = prompts.events.at(-1)?.data as { prompt?: unknown; busy?: unknown } | undefined;
+      expect(restored?.prompt).toBe('> ');
+      expect(restored?.busy).toBe(false);
+    } finally {
+      prompts.stop();
+    }
     await executeInConsole(page, 'cat("the answer was", .idle_callback_answer, "\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('the answer was hello');
   });
