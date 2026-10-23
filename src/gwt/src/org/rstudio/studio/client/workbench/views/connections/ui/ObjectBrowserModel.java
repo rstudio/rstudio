@@ -531,6 +531,7 @@ public class ObjectBrowserModel implements TreeViewModel
           else if ("keydown".equals(event.getType()) &&
                    event.getKeyCode() == KeyCodes.KEY_ENTER &&
                    KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.NONE &&
+                   // holding Enter would otherwise open a viewer per repeated keydown
                    !KeyboardShortcut.isRepeating(event) &&
                    hasTableView(connection_.getObjectType(value.getType())))
           {

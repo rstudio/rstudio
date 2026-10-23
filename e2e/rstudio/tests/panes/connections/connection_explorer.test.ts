@@ -20,8 +20,7 @@ import type { Locator } from '@playwright/test';
 /**
  * Dispatch an Enter keydown to a tree item's cell. Sending it to the element,
  * rather than through the keyboard, makes it independent of focus, which a
- * refresh of the object tree can take. It is also the only way to send a
- * repeated keydown, since Playwright can't hold a key down.
+ * refresh of the object tree can take.
  */
 async function dispatchEnterKeydown(
   item: Locator,
