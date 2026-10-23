@@ -239,9 +239,17 @@ test.describe('Editor', () => {
 
     // The marker is styled per theme. Pastel On Dark, the theme in the report,
     // paints it amber; check its stylesheet rather than re-theming the session.
+    // Fetch from inside the page: on desktop, rsession rejects requests without
+    // the shared-secret header Electron adds to the renderer's requests, which
+    // page.request does not carry.
     const pastelUrl = new URL(await getThemeStylesheetHref(page), page.url());
     pastelUrl.pathname = pastelUrl.pathname.replace(/[^/]+\.rstheme$/, 'pastel_on_dark.rstheme');
-    const pastelCss = await (await page.request.get(pastelUrl.toString())).text();
+    const pastelCss = await page.evaluate(async (url) => {
+      const response = await fetch(url);
+      if (!response.ok)
+        throw new Error(`${url}: HTTP ${response.status}`);
+      return response.text();
+    }, pastelUrl.toString());
     expect(pastelCss).toMatch(/\.ace_marker-layer \.ace_find_match \{[^}]*background-color: #8D6414/);
 
     // Moving the cursor elsewhere drops the marker; Find Next brings it back.
