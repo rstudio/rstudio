@@ -33,7 +33,17 @@ case "$(uname -s)-$(uname -m)" in
    *) echo "rig binaries unavailable for $(uname -s)-$(uname -m)"; exit 1 ;;
 esac
 
+RIG_ARGS=(
+   "-DRIG_ROOT=${RSTUDIO_TOOLS_ROOT}"
+   "-DRIG_PLATFORM=${RIG_PLATFORM}"
+   "-DRIG_ARCH=${RIG_ARCH}"
+)
+
+# Only ask for root privileges when rig actually needs installing. A failed
+# check is expected when it does, so its error output is not shown.
+if cmake "${RIG_ARGS[@]}" -DRIG_CHECK_ONLY=ON -P "${SCRIPT_DIR}/install-rig.cmake" 2> /dev/null; then
+   exit 0
+fi
+
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
-cmake "-DRIG_ROOT=${RSTUDIO_TOOLS_ROOT}" \
-   "-DRIG_PLATFORM=${RIG_PLATFORM}" "-DRIG_ARCH=${RIG_ARCH}" \
-   -P "${SCRIPT_DIR}/install-rig.cmake"
+cmake "${RIG_ARGS[@]}" -P "${SCRIPT_DIR}/install-rig.cmake"
