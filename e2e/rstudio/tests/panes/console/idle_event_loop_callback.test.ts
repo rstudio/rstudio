@@ -326,6 +326,49 @@ test.describe('Idle event loop callbacks', () => {
     }
   });
 
+  test('interrupting a callback after answering its read drops a chunk queued behind it', async ({ rstudioPage: page }) => {
+    test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
+    const missing = await consoleActions.ensurePackages(['rmarkdown', 'knitr']);
+    test.skip(missing.length > 0, `Could not install: ${missing.join(', ')}`);
+    const sourceActions = new SourcePaneActions(page, consoleActions);
+    const consoleInput = page.locator(CONSOLE_INPUT);
+    const interruptEnabled = () => page.evaluate(() => window.rstudio?.commands?.interruptR?.isEnabled() ?? false);
+    const flag = flagFile(`chunk-read-dropped-release-${Date.now()}.flag`);
+    const ran = flagFile(`chunk-read-dropped-ran-${Date.now()}.flag`);
+    const fileName = 'idle-callback-chunk-read-dropped.Rmd';
+    const notebook = [
+      '---', 'output: html_document', '---', '',
+      '```{r}', `file.create(${JSON.stringify(ran)})`, '```', '',
+    ].join('\n');
+
+    await writeAndOpenFile(page, sandbox.dir, fileName, notebook);
+    try {
+      await sourceActions.ensureSourceMode();
+      await sourceActions.navigateToChunkByIndex(1);
+
+      // Once the callback's read is answered the console counts as
+      // executing, as for any read; an interrupt then is still one that
+      // ends the callback, and the chunk deferred behind it must go with
+      // it rather than run on the retry.
+      await executeInConsole(page,
+        `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); .idle_callback_answer <<- readline("answer? "); while (TRUE) Sys.sleep(0.05) }, 0.1)`);
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
+      await awaitServed(page, /\/rpc\/execute_notebook_chunks/, () => executeCommand(page, 'executeCurrentChunk'));
+      fs.writeFileSync(flag, '');
+      await expect.poll(() => getConsolePromptText(page), { timeout: BUSY_TIMEOUT }).toBe('answer? ');
+      await executeInConsole(page, '42', { wait: false });
+      await expect.poll(interruptEnabled, { timeout: BUSY_TIMEOUT }).toBe(true);
+      await executeCommand(page, 'interruptR');
+      await expect(consoleInput).not.toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+
+      await executeInConsole(page, 'cat("console", "alive\\n")');
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
+      expect(fs.existsSync(ran)).toBe(false);
+    } finally {
+      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+    }
+  });
+
   test('a notebook chunk deferred by a callback that then reads from the console runs after the answer', async ({ rstudioPage: page }) => {
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const missing = await consoleActions.ensurePackages(['rmarkdown', 'knitr']);

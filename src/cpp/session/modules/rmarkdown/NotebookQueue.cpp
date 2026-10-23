@@ -232,9 +232,13 @@ public:
 
    void clear()
    {
-      // clean up any active execution context
+      // clean up any active execution context (once: a cleared queue is
+      // cleared again by its destructor)
       if (execContext_)
+      {
          execContext_->disconnect();
+         execContext_.reset();
+      }
       if (execUnit_)
          execUnit_.reset();
 

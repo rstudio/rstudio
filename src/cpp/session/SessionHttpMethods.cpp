@@ -295,8 +295,12 @@ bool processIdleEvents(const std::string& method,
    // no module hook -- so modules hear of it here: the notebook queue drops
    // chunks queued behind the callback, whose code R's console reset may
    // just have discarded, and lets go of a chunk left in flight. the client
-   // drops its own queue on an interrupt as well
-   if (s_idleEventsInterrupted.exchange(false))
+   // drops its own queue on an interrupt as well. input discarded by the
+   // reset without an interrupt (a callback's uncaught error, with the
+   // discard pref on) is reported the same way: a chunk whose code it was
+   // is gone, and its context would otherwise stay in place
+   bool interrupted = s_idleEventsInterrupted.exchange(false);
+   if (interrupted || console_input::inputDiscards() != discardsBefore)
       module_context::events().onUserInterrupt();
 
    // busy=false is owed once the client was told R is busy
@@ -942,8 +946,17 @@ bool waitForMethod(const std::string& method,
       // the method we are waiting on
       if (ptrConnection)
       {
-         // parse and validate request then proceed
-         if (parseAndValidateJsonRpcConnection(ptrConnection, pRequest))
+         // parse and validate request then proceed. a held request that
+         // fails here (a reload meanwhile changed the client) was still the
+         // only thing keeping the waiting read's prompt from being reissued
+         // when the handlers returned; it is nobody's input now
+         if (inputHeld && !parseAndValidateJsonRpcConnection(ptrConnection, pRequest))
+         {
+            ptrConnection.reset();
+            if (!promptRestored && !console_input::hasPendingInput())
+               console_input::restoreConsolePrompt();
+         }
+         else if (parseAndValidateJsonRpcConnection(ptrConnection, pRequest))
          {
             // respond to the method
             ptrConnection->sendJsonRpcResponse();
@@ -1289,7 +1302,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // input, or an input handler dispatched from the idle loop
             if (console_input::isRunningCode())
             {
-               if (!console_input::executing())
+               if (http_methods::processingIdleEvents())
                   noteIdleEventsInterrupted();
                rstudio::r::exec::setInterruptsPending(true);
             }
