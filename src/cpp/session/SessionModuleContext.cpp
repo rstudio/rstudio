@@ -3532,16 +3532,10 @@ Error adaptToLanguage(const std::string& language)
    // the time the next call arrives a later line may already have undone
    // the switch (a batch that returns to R), so neither the enqueued
    // language nor the console's current state can be taken as is. The
-   // next prompt means the console is idle, and its real state takes over;
-   // so does a clear of the queue (an interrupt), which drops the switch
-   // with the rest and leaves no prompt behind when the console was at its
-   // prompt all along (input queued behind an idle-loop callback).
+   // next prompt means the console is idle, and its real state takes over.
    static std::string s_projectedLanguage;
-   static unsigned s_projectedAtClears = 0;
    static RSTUDIO_BOOST_CONNECTION s_promptConnection;
    static RSTUDIO_BOOST_CONNECTION s_inputConnection;
-   if (console_input::bufferClears() != s_projectedAtClears)
-      s_projectedLanguage.clear();
    if (!s_promptConnection.connected())
    {
       s_promptConnection = module_context::events().onConsolePrompt.connect([](const std::string&) {
@@ -3575,14 +3569,9 @@ Error adaptToLanguage(const std::string& language)
    }
 
    if (error)
-   {
       LOG_ERROR(error);
-   }
    else
-   {
       s_projectedLanguage = language;
-      s_projectedAtClears = console_input::bufferClears();
-   }
 
    return Success();
 }
