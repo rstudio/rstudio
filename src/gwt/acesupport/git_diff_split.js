@@ -29,6 +29,7 @@ define("rstudio/git_diff_split", ["require", "exports", "module"], function(requ
 
 var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;
+var Fold = require("ace/edit_session/fold").Fold;
 var SplitDiffView = require("ace/ext/diff/split_diff_view").SplitDiffView;
 
 var BASE_CLASS = "ace_git-diff-base";
@@ -57,7 +58,8 @@ var RENDERER_OPTIONS = [
 // The same, for the options Ace keeps on the editor rather than its
 // renderer (asking the renderer for one of these gets a warning).
 var EDITOR_OPTIONS = [
-   "showLineNumbers"
+   "showLineNumbers",
+   "enableKeyboardAccessibility"
 ];
 
 // A nested fold's range in document coordinates, from the range Ace keeps
@@ -397,7 +399,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
       if (!counterpart && !this.$withinChange(range, isOrig)) {
          var otherRange = this.transformRange(range, isOrig);
-         if (isForward(otherRange)) {
+         if (isForward(otherRange) && otherRange.end.row < other.getLength()) {
+            // Fold All folds the nested levels as they are expanded, and
+            // drops the folds within as it is added; Ace reads that off the
+            // range, so the counterpart gets it the same way
+            otherRange.collapseChildren = fold.collapseChildren;
             try {
                counterpart = other.addFold(fold.placeholder, otherRange);
             } catch (error) {
@@ -406,9 +412,6 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             }
 
             if (counterpart) {
-               // (Fold All folds the nested levels as they are expanded;
-               // that goes for the counterpart too)
-               counterpart.collapseChildren = fold.collapseChildren;
                fold.other = counterpart;
                counterpart.other = fold;
             }
@@ -472,11 +475,12 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          if (!counterpart) {
             // the padding, if any, comes back with the next alignment
             fold.lineWidget = null;
-         } else if (this.$addingFold > 0) {
+         } else if (this.$addingFold > 0 && !this.$addingCollapses) {
             // Taken into a fold being added around it: Ace puts it back
             // inside the new fold, nested folds and all. The counterpart
             // stays, paired; the new fold's counterpart takes it in the same
-            // way (see mirrorFold).
+            // way (see mirrorFold). Not so for a fold that collapses its
+            // levels afresh, which drops it: so does its counterpart, below.
          } else {
             // The counterpart goes too, with its nested folds; only the pair
             // itself is undone, and the nested folds' ranges are made
@@ -497,6 +501,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
                this.$expandCounterpart(counterpart, other);
          }
       } else if (ev.action === "add") {
+         // A fold can follow an edit before the gutter has re-run the diff
+         // (undo restores removed lines, folds and all, in one go); the
+         // mapping below is only as good as the chunks it uses
+         this.gutter.flushUpdate();
+
          var range = this.transformRange(fold.range, isOrig);
          if (!isForward(range)) {
             var widget = other.lineWidgets && other.lineWidgets[range.start.row + 1];
@@ -525,6 +534,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       var self = this;
       this.$expandingFold = null;
       this.$addingFold = 0;
+      this.$addingCollapses = false;
       this.$untrackFoldOperations = [this.sessionA, this.sessionB].map(function(session) {
          var expandFold = session.expandFold;
          var addFold = session.addFold;
@@ -539,12 +549,21 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             }
          };
 
-         session.addFold = function() {
+         // (a fold added with collapseChildren set -- Fold All, a recursive
+         // collapse -- discards the folds within its range instead of
+         // nesting them, to fold them afresh as it is expanded)
+         session.addFold = function(placeholder, range) {
+            var collapses = placeholder instanceof Fold
+               ? placeholder.collapseChildren
+               : range && range.collapseChildren;
+            var previous = self.$addingCollapses;
             self.$addingFold++;
+            self.$addingCollapses = !!collapses;
             try {
                return addFold.apply(this, arguments);
             } finally {
                self.$addingFold--;
+               self.$addingCollapses = previous;
             }
          };
 
@@ -617,8 +636,10 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       try {
          this.$initWidgets(this.editorA);
          this.$initWidgets(this.editorB);
-         if (this.hasBase)
+         if (this.hasBase) {
             this.$padForeignWidgets();
+            this.$padWrapDifferences();
+         }
          this.$padChanges();
          this.sessionA._emit("changeFold", { data: { start: { row: 0 } } });
          this.sessionB._emit("changeFold", { data: { start: { row: 0 } } });
@@ -640,6 +661,13 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          if (!w || w.hidden || isPadding(w) || !w.rowCount)
             continue;
 
+         // a widget on an added line has no base row of its own: the
+         // padding at the end of the addition takes it in (its rows count
+         // toward the addition's screen rows), whereas a row of padding
+         // here would sit outside that measure and be added again
+         if (this.$withinChange(new Range(row, 0, row, 0), false))
+            continue;
+
          var baseRow = this.transformRange(new Range(row, 0, row, 0), false).start.row;
          this.$addWidget(this.sessionA, {
             rowCount: w.rowCount,
@@ -647,6 +675,35 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             row: Math.min(baseRow, lastRow)
          });
       }
+   };
+
+   // With a whitespace-insensitive diff and soft wrap on, a line whose only
+   // difference is whitespace is no change to pad at, yet it can wrap onto
+   // a different number of rows on each side; the matched lines are
+   // compared row by row and the shorter side padded below the line.
+   this.$padWrapDifferences = function() {
+      if (!this.ignoreWhitespace || !this.sessionB.getUseWrapMode())
+         return;
+
+      var self = this;
+      var baseRow = 0;
+      var liveRow = 0;
+      var compareUpTo = function(baseEnd, liveEnd) {
+         for (; baseRow < baseEnd && liveRow < liveEnd; baseRow++, liveRow++) {
+            var difference = self.sessionB.getRowLineCount(liveRow) - self.sessionA.getRowLineCount(baseRow);
+            if (difference > 0)
+               self.$addWidget(self.sessionA, { rowCount: difference, rowsAbove: 0, row: baseRow });
+            else if (difference < 0)
+               self.$addWidget(self.sessionB, { rowCount: -difference, rowsAbove: 0, row: liveRow });
+         }
+      };
+
+      this.chunks.forEach(function(chunk) {
+         compareUpTo(chunk.old.start.row, chunk.new.start.row);
+         baseRow = chunk.old.end.row;
+         liveRow = chunk.new.end.row;
+      });
+      compareUpTo(this.sessionA.getLength(), this.sessionB.getLength());
    };
 
    // Ace's alignment of the changes: where a change starts or ends lower
@@ -737,12 +794,19 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.$addWidget = function(session, w) {
       var existing = session.lineWidgets[w.row];
       if (existing) {
-         if (!isPadding(existing))
+         if (!isPadding(existing)) {
+            // The row holds another widget (chunk output), and Ace shows
+            // one per row: the padding goes above the next line instead,
+            // which is right below that widget.
+            if (w.row + 1 < session.getLength())
+               this.$addWidget(session, { rowCount: w.rowCount, rowsAbove: w.rowCount, row: w.row + 1 });
             return;
+         }
 
-         // a change's start and end can pad the same row (an addition has
-         // an empty range on the base side); the paddings add up
-         w.rowsAbove += existing.rowsAbove > w.rowsAbove ? existing.rowsAbove : w.rowsAbove;
+         // two paddings can land on one row (a change's start and end, as
+         // an addition has an empty range on the base side; a widget's and
+         // a change's); they add up, above the line and below it alike
+         w.rowsAbove += existing.rowsAbove;
          w.rowCount += existing.rowCount;
       }
 
@@ -888,8 +952,10 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       }
 
       this.diffSession.chunks = this.chunks = chunks;
+      this.ignoreWhitespace = !!ignoreWhitespace;
 
-      if (this.foldsStale) {
+      // (an empty base has nothing to fold; the folds wait for one)
+      if (this.foldsStale && this.hasBase) {
          this.foldsStale = false;
          this.mirrorFolds();
       }

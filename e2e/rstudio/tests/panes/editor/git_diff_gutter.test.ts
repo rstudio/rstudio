@@ -1601,6 +1601,21 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expandInBase();
       await expect.poll(() => folds(base)).toEqual([]);
       await expect.poll(() => folds(live)).toEqual([{ row: 2, nested: 0 }]);
+
+      // Collapsing the function recursively in the document (Ctrl-click on
+      // its open widget) folds it lazily and drops the block's fold, on
+      // both sides; expanding it from the base pane folds the block afresh
+      // on both, rather than bringing the dropped fold back
+      await editor.gotoLine(2);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 1 }]);
+      await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
+      await live.locator('.ace_fold-widget.ace_open').first().click({ modifiers: ['Meta'] });
+      await expect.poll(() => folds(live)).toEqual([{ row: 0, nested: 0 }]);
+      await expect.poll(() => folds(base)).toEqual([{ row: 0, nested: 0 }]);
+      await expandInBase();
+      await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
+      await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 0 }]);
     } finally {
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
@@ -1785,6 +1800,21 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         .toBe(true);
       await expect.poll(levelRows).toEqual([0, 0, 0]);
 
+      // With a whitespace-insensitive diff, a whitespace-only edit is no
+      // change to pad at, yet it can wrap the line onto one more row; the
+      // lines below stay level all the same
+      await setPref(page, 'git_diff_ignore_whitespace', true);
+      await editor.gotoLine(160);
+      await editor.navigateLineEnd();
+      await editor.insert(' '.repeat(100));
+      // (the markers are read off the rendered rows: back to the change)
+      await editor.gotoLine(150);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 149: [MODIFIED] });
+      await expect
+        .poll(async () => (await rowTops(base, [170]))[0] - (await rowTops(live, [170]))[0], { timeout: 10000 })
+        .toBe(0);
+      await clearPref(page, 'git_diff_ignore_whitespace');
+
       // so does Show Whitespace Characters, one of the renderer options the
       // base copied when it was created
       const invisibles = (view: Locator) =>
@@ -1797,6 +1827,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => invisibles(live), { timeout: 10000 }).toBe(true);
       await expect.poll(() => invisibles(base)).toBe(true);
     } finally {
+      await clearPref(page, 'git_diff_ignore_whitespace');
       await clearPref(page, 'show_invisibles');
       await clearPref(page, 'font_size_points');
       await executeCommand(page, 'removeEditorSplit');
@@ -2032,6 +2063,224 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('pads once for output inside an inserted chunk', async ({ rstudioPage: page }) => {
+    // The output's rows count toward the addition's; padding the base for
+    // them as well would open a gap before the chunk and another after it.
+    const consoleActions = new ConsolePaneActions(page);
+    const loadable = await consoleActions.evalRLogical('requireNamespace("rmarkdown", quietly = TRUE)');
+    test.skip(loadable !== true, 'rmarkdown is not installed');
+
+    const nbPath = `${projectDir()}/nb-insert.Rmd`;
+    const seed = ['---', 'title: x', '---', '', 'tail'];
+    const edited = ['---', 'title: x', '---', '', '```{r}', '1 + 1', '```', '', 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await commitAll(page, 'nb-insert', [nbPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await openFile(page, nbPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible({
+      timeout: 60000,
+    });
+
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, '1 + 1');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      // the blank line before the chunk and the line after it sit level,
+      // and nothing pads the document's side
+      await expect.poll(async () => (await rowTop(base, 3)) - (await rowTop(live, 3)), { timeout: 10000 }).toBe(0);
+      await expect.poll(async () => (await rowTop(base, 4)) - (await rowTop(live, 8)), { timeout: 10000 }).toBe(0);
+      await expect(live.locator(ALIGNMENT)).toHaveCount(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(nbPath)}))`);
+      await commitAll(page, 'remove nb-insert', [nbPath]);
+    }
+  });
+
+  test('pads above the first base line once when a widget sits on it below a leading insertion', async ({
+    rstudioPage: page,
+  }) => {
+    // A widget on the first original line pads below base row 0; the
+    // insertion above it pads above base row 0. The two add up once.
+    const leadPath = `${projectDir()}/lead.R`;
+    const seed = ['a <- 1', 'b <- 2'];
+    const edited = ['new <- 0', 'a <- 1', 'b <- 2'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(leadPath)})`,
+    );
+    await commitAll(page, 'lead', [leadPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(leadPath)})`,
+    );
+    await openFile(page, leadPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [ADDED] });
+
+    // a two-row line widget on the first original line, as a multi-line
+    // inline suggestion would be
+    await page.evaluate(() => {
+      type WidgetEditor = {
+        renderer: { lineHeight: number };
+        session: { widgetManager?: { addLineWidget(w: object): void; attach(editor: unknown): void } };
+      };
+      const editor = window.rstudio?.documents.activeEditor() as unknown as WidgetEditor;
+      if (!editor.session.widgetManager) {
+        const require = (window as unknown as { require(id: string): { LineWidgets: new (s: unknown) => NonNullable<WidgetEditor['session']['widgetManager']> } }).require;
+        editor.session.widgetManager = new (require('ace/line_widgets').LineWidgets)(editor.session);
+        editor.session.widgetManager.attach(editor);
+      }
+      const el = document.createElement('div');
+      el.style.height = `${2 * editor.renderer.lineHeight}px`;
+      editor.session.widgetManager.addLineWidget({ row: 1, el, pixelHeight: 2 * editor.renderer.lineHeight });
+    });
+
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'new <- 0');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect.poll(async () => (await rowTop(base, 0)) - (await rowTop(live, 1)), { timeout: 10000 }).toBe(0);
+      await expect.poll(async () => (await rowTop(base, 1)) - (await rowTop(live, 2)), { timeout: 10000 }).toBe(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(leadPath)}))`);
+      await commitAll(page, 'remove lead', [leadPath]);
+    }
+  });
+
+  test('maps a fold that undo brings back against the current diff', async ({ rstudioPage: page }) => {
+    // Undo puts the removed lines and their fold back in one go, before the
+    // gutter has re-run the diff; mapped against the removal's chunks, the
+    // fold would land on the wrong base lines.
+    const undoPath = `${projectDir()}/undo.R`;
+    const seed = ['f <- function() {', '  x <- 1', '}', 'z <- 3'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(undoPath)})`,
+    );
+    await commitAll(page, 'undo', [undoPath]);
+    await openFile(page, undoPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(1);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'z <- 3');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    type FoldRangeEditor = {
+      session: {
+        getAllFolds(): { start: { row: number }; end: { row: number } }[];
+        remove(range: { start: { row: number; column: number }; end: { row: number; column: number } }): void;
+      };
+    };
+    const foldRows = (view: Locator) =>
+      view.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as FoldRangeEditor).session
+          .getAllFolds()
+          .map((fold) => [fold.start.row, fold.end.row]),
+      );
+
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect.poll(() => foldRows(base)).toEqual([[0, 2]]);
+
+      // remove the folded function, let the diff catch up, then undo
+      await live.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as FoldRangeEditor).session.remove({
+          start: { row: 0, column: 0 },
+          end: { row: 3, column: 0 },
+        }),
+      );
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [DELETED] });
+      await expect.poll(() => foldRows(base)).toEqual([]);
+      await editor.execCommand('undo');
+      await expect.poll(() => foldRows(live)).toEqual([[0, 2]]);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+      await expect.poll(() => foldRows(base)).toEqual([[0, 2]]);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(undoPath)}))`);
+      await commitAll(page, 'remove undo', [undoPath]);
+    }
+  });
+
+  test('folds nothing in the base pane for an untracked file', async ({ rstudioPage: page }) => {
+    // with no base there is nothing for the document's fold to pair with
+    const untrackedPath = `${projectDir()}/untracked-fold.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("g <- function() {", "  1", "}"), ${rPathLiteral(untrackedPath)})`,
+    );
+    await openFile(page, untrackedPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(1);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect(page.locator(BASE_EMPTY)).toBeVisible();
+      const baseFolds = () =>
+        base.evaluate(
+          (el) =>
+            ((el as AceEditorElement).env?.editor as unknown as { session: { getAllFolds(): unknown[] } })
+              .session.getAllFolds().length,
+        );
+      await expect.poll(baseFolds).toBe(0);
+      await expect(base.locator('.ace_fold')).toHaveCount(0);
+      expect(await editor.getFoldCount()).toBe(1);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(untrackedPath)}))`);
+    }
+  });
+
   test('folds nothing in the base for a fold over added lines', async ({ rstudioPage: page }) => {
     // The fold's range maps into the base header's line, end before start;
     // that is not a fold, and the base must not get a placeholder there.
@@ -2127,11 +2376,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     });
 
     // the output widget (and the chunk's toolbar) stay, with no padding
-    // placed on their rows or anywhere else on this side
+    // placed on their row: the row of padding the removed line calls for
+    // goes above the line that follows the output instead
     const expectOutputKept = async () => {
       const found = await widgets();
       expect(found).toContainEqual({ row: 6, type: 'ChunkOutput' });
-      expect(found.filter((w) => w.type === 'padding')).toEqual([]);
+      expect(found.filter((w) => w.type === 'padding').map((w) => w.row)).not.toContain(6);
     };
 
     await executeCommand(page, 'vcsShowChangesSideBySide');
@@ -2142,16 +2392,30 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect(base.locator(LINE_DELETED)).toHaveCount(1);
 
       // nor are the output widget's rows striped as padding is (a widget
-      // with no background of its own would show that)
-      await expect(liveEditors(page, '1 + 1').locator(ALIGNMENT)).toHaveCount(0);
+      // with no background of its own would show that): no stripe overlaps
+      // the output, only the padding above the line that follows it
+      const stripesOverOutput = () =>
+        liveEditors(page, '1 + 1').evaluate((el) => {
+          const output = Array.from(el.querySelectorAll('.ace_lineWidgetContainer')).find((c) =>
+            (c.textContent ?? '').includes('[1] 2'),
+          );
+          if (!output) return -1;
+          const box = output.getBoundingClientRect();
+          return Array.from(el.querySelectorAll('.ace_diff.aligned_diff')).filter((stripe) => {
+            const r = stripe.getBoundingClientRect();
+            return r.bottom > box.top + 1 && r.top < box.bottom - 1;
+          }).length;
+        });
+      await expect.poll(stripesOverOutput).toBe(0);
 
       await expectOutputKept();
       await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible();
 
-      // The base is padded below its fence by the output's height, so that
-      // the removed line and the one that now follows the chunk sit level.
-      // Collapsing and expanding the output changes that height, and the
-      // padding follows it without an edit.
+      // The base is padded below its fence by the output's height, and the
+      // document above the line that follows the output ('tail', base row
+      // 8 and document row 7) by the removed line, so that 'tail' sits
+      // level. Collapsing and expanding the output changes the first
+      // padding's height, and it follows without an edit.
       const live = liveEditors(page, '1 + 1');
       const rowTop = (view: Locator, row: number) =>
         view.evaluate((el, row) => {
@@ -2159,7 +2423,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
           return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
         }, row);
-      const levelAfterChunk = async () => (await rowTop(base, 7)) - (await rowTop(live, 7));
+      const levelAfterChunk = async () => (await rowTop(base, 8)) - (await rowTop(live, 7));
       // (the collapse and expansion animate, so each is waited out by the
       // output widget's row count before the alignment is checked)
       const outputRows = () =>
