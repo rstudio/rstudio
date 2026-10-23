@@ -596,7 +596,8 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.baseDisplayRow = function(chunk) {
-      var lastRow = this.baseLines ? this.baseLines.length - 1 : 0;
+      // an empty base still has one (empty) row in Ace
+      var lastRow = this.baseLines ? Math.max(this.baseLines.length - 1, 0) : 0;
       return isAddition(chunk) ? Math.min(chunk.old.start.row, lastRow) : chunk.old.start.row;
    };
 

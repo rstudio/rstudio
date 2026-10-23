@@ -49,6 +49,18 @@ var RENDERER_OPTIONS = [
    "animatedScroll"
 ];
 
+// A nested fold's range in document coordinates, from the range Ace keeps
+// relative to the enclosing fold's start (see Fold.restoreRange).
+function absoluteRange(range, start) {
+   var absolute = range.clone();
+   [absolute.start, absolute.end].forEach(function(point) {
+      point.row += start.row;
+      if (point.row === start.row)
+         point.column += start.column;
+   });
+   return absolute;
+}
+
 // Walks a session's folds, nested ones included.
 function eachFold(folds, callback) {
    folds.forEach(function(fold) {
@@ -156,7 +168,13 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.syncMode = function() {
       var session = this.baseEditor.session;
       var liveMode = this.liveEditor.session.getMode();
-      if (liveMode && !(session.getMode() instanceof liveMode.constructor))
+      if (!liveMode)
+         return;
+
+      // the modes derive from one another (R from Text, say), so only the
+      // very same kind will do
+      var mode = session.getMode();
+      if (!mode || mode.constructor !== liveMode.constructor)
          session.setMode(new liveMode.constructor(false, session));
    };
 
@@ -246,25 +264,23 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // A fresh base (the view just opened, or the index moved) has no folds,
    // while the document keeps its own; fold the base to match, so that
    // unchanged lines stay level, pairing the folds up as Ace does for a fold
-   // made while the view is open. Nested folds come along inside their
-   // parents. A fold whose lines the base does not have is left out.
+   // made while the view is open. A fold whose lines the base does not have
+   // is left out.
+   //
+   // Folds nested in a fold are mirrored too, each as a fold of its own
+   // (Ace nests it under the enclosing one), so that expanding the outer
+   // fold in the base restores them in the document, where Ace's pairing
+   // removes the outer fold outright. Ace keeps a nested fold's range
+   // relative to its parent's start.
    this.mirrorFolds = function() {
       var self = this;
       var session = this.baseEditor.session;
 
-      this.$syncingFold = true;
-      try {
-         this.liveEditor.session.getAllFolds().forEach(function(fold) {
-            if (fold.other)
-               return;
-
-            var range = self.transformRange(fold.range, false);
-            if (range.isEmpty())
-               return;
-
+      var mirror = function(fold, range) {
+         if (!fold.other && !range.isEmpty()) {
             var other;
             try {
-               other = session.addFold(fold.placeholder, range);
+               other = session.addFold(fold.placeholder, self.transformRange(range, false));
             } catch (error) {
                return;
             }
@@ -273,6 +289,17 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
                fold.other = other;
                other.other = fold;
             }
+         }
+
+         fold.subFolds.forEach(function(subFold) {
+            mirror(subFold, absoluteRange(subFold.range, range.start));
+         });
+      };
+
+      this.$syncingFold = true;
+      try {
+         this.liveEditor.session.getAllFolds().forEach(function(fold) {
+            mirror(fold, fold.range);
          });
       } finally {
          this.$syncingFold = false;
