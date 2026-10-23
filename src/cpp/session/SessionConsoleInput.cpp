@@ -257,9 +257,17 @@ Error extractConsoleInput(const json::JsonRpcRequest& request, bool ahead)
    return Success();
 }
 
+// a console_input request the console read's wait holds (see waitForMethod)
+bool s_inputHeld = false;
+
 bool hasPendingInput()
 {
-   return !s_consoleInputBuffer.empty();
+   return s_inputHeld || !s_consoleInputBuffer.empty();
+}
+
+void setInputHeld(bool held)
+{
+   s_inputHeld = held;
 }
 
 bool executing()

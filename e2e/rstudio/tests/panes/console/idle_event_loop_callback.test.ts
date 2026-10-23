@@ -195,14 +195,17 @@ test.describe('Idle event loop callbacks', () => {
     // prompt is owed: one would reset the console's history position (and
     // the unfinished command Down-arrow brings back) for no command.
     await executeInConsole(page,
-      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05) }, 0.1)`);
+      `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05); cat("callback", "done\\n") }, 0.1)`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
     await awaitServed(page, /\/rpc\/set_user_prefs/, () => setPref(page, 'blinking_cursor', false));
     fs.writeFileSync(flag, '');
 
     // Only the call itself and the command below complete: two prompts. The
-    // check comes after the second command's output, by when a prompt
-    // reissued on the callback's return would have arrived.
+    // command goes in once the callback has announced its return, so it is
+    // not queued behind the callback (pending input would hold any prompt
+    // back by itself); a prompt reissued on the return is enqueued before
+    // the command can be read, so the count after its output is decisive.
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('callback done');
     await executeInConsole(page, 'cat("console", "alive\\n")');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('console alive');
     expect(await getConsolePromptCount(page)).toBe(promptCountBefore === null ? null : promptCountBefore + 2);

@@ -247,14 +247,12 @@ private:
 
 // run R's input handlers from the idle loop (see IdleEventState) for a wait
 // on `method`, with `initFunction` what that wait tells a client that
-// connects meanwhile, and `inputHeld` whether the wait holds the request it
-// is for already. returns whether the waiting console read's prompt was
+// connects meanwhile. returns whether the waiting console read's prompt was
 // reissued -- done only for a console read: a wait for the client inside a
 // command (a dialog) has no prompt to restore, and the prompt current then
 // (the enclosing read's, or none) is not what the console shows
 bool processIdleEvents(const std::string& method,
-                       const boost::function<void()>& initFunction,
-                       bool inputHeld)
+                       const boost::function<void()>& initFunction)
 {
    bool busyReported = false;
    bool executingBefore = console_input::executing();
@@ -309,7 +307,7 @@ bool processIdleEvents(const std::string& method,
    // prompt ahead of it would be taken for the end of what has not run (a
    // notebook chunk's code is a console_input request like any other, and
    // its queue finishes the chunk on the prompt)
-   if (inputHeld || console_input::hasPendingInput())
+   if (console_input::hasPendingInput())
       return false;
 
    if (busyReported ||
@@ -887,27 +885,37 @@ bool waitForMethod(const std::string& method,
       // perform background processing (true for isIdle)
       module_context::onBackgroundProcessing(true);
 
+      // held console input is pending input all the same, to the idle
+      // handlers' return and to work that waits for the console to be free
+      // (the notebook queue); it is handed over or discarded below
+      bool inputHeld = ptrConnection && method == kConsoleInput;
+      if (inputHeld)
+         console_input::setInputHeld(true);
+
       // process pending events
       unsigned clearsBefore = console_input::bufferClears();
-      bool inputHeld = ptrConnection && method == kConsoleInput;
-      bool promptRestored = processIdleEvents(method, initFunction, inputHeld);
+      bool promptRestored = processIdleEvents(method, initFunction);
 
-      // held console input is pending input all the same: a reset that
-      // cleared the queue meanwhile (an interrupt, an uncaught error with
-      // the discard pref on) discards it too, acknowledged like the input
-      // it was queued behind. the client is busy from its submit with no
-      // prompt to follow, unless the handlers' return restored it already
-      if (ptrConnection && method == kConsoleInput &&
-          console_input::bufferClears() != clearsBefore)
+      // a reset that cleared the queue meanwhile (an interrupt, an uncaught
+      // error with the discard pref on) discards held input too,
+      // acknowledged like the input it was queued behind. the client is
+      // busy from its submit with no prompt to follow, unless the handlers'
+      // return restored it already
+      if (inputHeld && console_input::bufferClears() != clearsBefore)
       {
          json::JsonRpcRequest discarded;
          if (parseAndValidateJsonRpcConnection(ptrConnection, &discarded))
             ptrConnection->sendJsonRpcResponse();
          suspend::resetSuspendTimeout(ptrConnection);
          ptrConnection.reset();
+         console_input::setInputHeld(false);
 
          if (!promptRestored && !console_input::hasPendingInput())
             console_input::restoreConsolePrompt();
+      }
+      else if (inputHeld)
+      {
+         console_input::setInputHeld(false);
       }
 
       // the method we are waiting on

@@ -30,6 +30,8 @@
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookChunkOptions.hpp"
 
+#include "../../SessionConsoleInput.hpp"
+
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
 #include <r/session/RSession.hpp>
@@ -829,8 +831,10 @@ void processDeferred()
 
    // only with nothing in flight: a unit whose code was sent completes on the
    // console prompt that follows it, and processing it before that prompt
-   // would take it for complete
-   if (s_queue && !s_queue->unitInFlight())
+   // would take it for complete. and only with no console input pending for
+   // the read: that input runs first and would prompt before a unit sent now
+   // had been read, with the same result -- its own prompt resumes the queue
+   if (s_queue && !s_queue->unitInFlight() && !console_input::hasPendingInput())
    {
       Error error = s_queue->process(ExprModeNew);
       if (error)
