@@ -7,6 +7,7 @@
 // interrupt is offered, honours the interrupt, and queues console input sent
 // meanwhile for the next prompt.
 
+import type { Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
@@ -23,6 +24,30 @@ const BUSY_CLASS = /rstudio-console-busy/;
 
 // Comfortably past the server's one-second busy delay, on a slow runner.
 const BUSY_TIMEOUT = 15000;
+
+/**
+ * Submit console input and wait until the session's main thread has taken
+ * it. The listener thread acknowledges the console_input RPC at once with an
+ * asyncHandle; the main thread's handling (queuing the input behind whatever
+ * R is doing) arrives later as an async_completion event carrying that
+ * handle on the events long-poll. Returning on the acknowledgement alone
+ * would race the server: an interrupt sent then could discard an empty queue
+ * and leave the input to run afterwards.
+ */
+async function submitAndAwaitQueued(page: Page, command: string): Promise<void> {
+  const [ack] = await Promise.all([
+    page.waitForResponse((r) => /\/rpc\/console_input/.test(r.url()), { timeout: 10000 }),
+    executeInConsole(page, command, { wait: false }),
+  ]);
+  const body = await ack.json().catch(() => ({}));
+  const handle = body?.asyncHandle;
+  if (typeof handle !== 'string')
+    return; // answered inline: the main thread has already handled it
+  await page.waitForResponse(
+    async (r) => /\/events\/get_events/.test(r.url()) && (await r.text()).includes(handle),
+    { timeout: 10000 },
+  );
+}
 
 test.describe('Idle event loop callbacks', () => {
   let consoleActions: ConsolePaneActions;
@@ -94,11 +119,14 @@ test.describe('Idle event loop callbacks', () => {
     await executeInConsole(page, 'later::later(function() { cat("callback", "started\\n"); while (TRUE) Sys.sleep(0.05) }, 0.1)');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
 
-    // Submitting marks the client busy; the input is queued behind the
-    // callback. Escape in the (now empty) console sends the interrupt at once,
-    // ahead of the one-second busy report, so no delayed busy state is in play.
-    await executeInConsole(page, 'cat("discarded", "input\\n")', { wait: false });
+    // Submitting marks the client busy, and the server queues the input
+    // behind the callback. Escape in the (now empty) console sends the
+    // interrupt at once -- ahead of the one-second busy report, which is what
+    // enables the interrupt command (the client's own busy state does not).
+    await submitAndAwaitQueued(page, 'cat("discarded", "input\\n")');
     await expect(consoleInput).toHaveClass(BUSY_CLASS, { timeout: BUSY_TIMEOUT });
+    const busyReported = await page.evaluate(() => window.rstudio?.commands?.interruptR?.isEnabled() ?? null);
+    expect(busyReported, 'the delayed busy report must not have fired yet (slow runner?)').toBe(false);
     await page.keyboard.press('Escape');
 
     // The interrupt ends the callback and discards the queued input; a prompt
