@@ -1186,8 +1186,17 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       expect(await focusIn(base)).toBe(true);
       await executeCommand(page, 'commentUncomment');
       expect(await editor.getLine(0)).toBe('a <- 1');
+      // nor does running code: the document's line is run from the document
+      // only (once more in the console, below), not from the base pane
+      const echoes = async () => (await page.locator(CONSOLE_OUTPUT).innerText()).split('a <- 1').length - 1;
+      const echoesBefore = await echoes();
+      await executeCommand(page, 'executeCode');
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(live)).toBe(true);
+      await executeCommand(page, 'executeCode');
+      await expect.poll(echoes, { timeout: 10000 }).toBe(echoesBefore + 1);
+      // (running the line moved the cursor on)
+      await editor.gotoLine(1);
       await executeCommand(page, 'commentUncomment');
       await expect.poll(() => editor.getLine(0)).toBe('# a <- 1');
       await executeCommand(page, 'commentUncomment');
@@ -2434,6 +2443,82 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await documentCloseAllNoSave(page);
       await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wsPath)}))`);
       await commitAll(page, 'remove ws', [wsPath]);
+    }
+  });
+
+  test('mirrors a folded selection in a plain-text file, and none over an added first line', async ({
+    rstudioPage: page,
+  }) => {
+    // Plain text has no folding rules to ask for a range (the mapped range
+    // is used as it is), and a selection folded from an added first line
+    // maps to before the base's first line, where there is nothing.
+    const textPath = `${projectDir()}/notes.txt`;
+    const seed = ['alpha', 'beta', 'gamma', 'delta'];
+    const edited = ['new', 'alpha', 'beta', 'gamma', 'delta'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(textPath)})`,
+    );
+    await commitAll(page, 'notes', [textPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(textPath)})`,
+    );
+    await openFile(page, textPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [ADDED] });
+
+    type SelectionFoldEditor = {
+      session: {
+        addFold(placeholder: string, range: unknown): unknown;
+        unfold(): void;
+        getAllFolds(): { start: { row: number }; end: { row: number } }[];
+      };
+    };
+    type AceRangeCtor = new (startRow: number, startColumn: number, endRow: number, endColumn: number) => unknown;
+    const foldSelection = (startRow: number, startColumn: number, endRow: number, endColumn: number) =>
+      page.evaluate(
+        ([startRow, startColumn, endRow, endColumn]) => {
+          const editor = window.rstudio?.documents.activeEditor() as unknown as SelectionFoldEditor;
+          const Range = (window as unknown as { require(id: string): { Range: AceRangeCtor } }).require('ace/range').Range;
+          editor.session.unfold();
+          editor.session.addFold('...', new Range(startRow, startColumn, endRow, endColumn));
+        },
+        [startRow, startColumn, endRow, endColumn],
+      );
+    const foldRows = (view: Locator) =>
+      view.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as SelectionFoldEditor).session
+          .getAllFolds()
+          .map((fold) => [fold.start.row, fold.end.row]),
+      );
+
+    // a selection folded over unchanged lines is mirrored
+    await foldSelection(2, 1, 3, 4);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    // (the folds hide one line or another: the document's editor is the one
+    // with the gutter)
+    const live = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+      .filter({ has: page.locator(`.${GUTTER_ATTACHED}`) });
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect.poll(() => foldRows(live)).toEqual([[2, 3]]);
+      await expect.poll(() => foldRows(base)).toEqual([[1, 2]]);
+
+      // one from the added first line over the next is not: the base has
+      // no row for it to start on
+      await foldSelection(0, 1, 1, 4);
+      await expect.poll(() => foldRows(live)).toEqual([[0, 1]]);
+      await expect.poll(() => foldRows(base)).toEqual([]);
+      await expect(base.locator('.ace_fold')).toHaveCount(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(textPath)}))`);
+      await commitAll(page, 'remove notes', [textPath]);
     }
   });
 

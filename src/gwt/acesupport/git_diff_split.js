@@ -398,11 +398,26 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // mapped range, as long as it runs forward and fits as it is (Ace would
    // clip it into something else, or nothing). Null when there is none.
    this.$counterpartRange = function(session, mapped) {
-      if (mapped.end.row < session.getLength()) {
-         var own = session.getFoldWidgetRange(mapped.start.row);
-         if (own && own.end.row === mapped.end.row && isForward(own))
-            return own;
+      // (a range mapped to before the first line -- a fold over an added
+      // first line and the one after it -- or past the last has no place)
+      if (mapped.start.row < 0 || mapped.end.row >= session.getLength())
+         return null;
+
+      // The mode's own fold range is asked for the first row only where the
+      // mode folds at all (Ace installs getFoldWidgetRange with the folding
+      // rules; plain text has none), and taken only over the very rows
+      // mapped: a structural fold that merely ends on the same row (a
+      // comment ending where a folded selection starts) is not the fold.
+      var own = null;
+      if (typeof session.getFoldWidgetRange === "function") {
+         try {
+            own = session.getFoldWidgetRange(mapped.start.row);
+         } catch (error) {
+            // the mode could not say
+         }
       }
+      if (own && own.start.row === mapped.start.row && own.end.row === mapped.end.row && isForward(own))
+         return own;
 
       var clipped = session.$clipRangeToDocument(mapped.clone());
       return isForward(mapped) && clipped.isEqual(mapped) ? mapped : null;

@@ -6256,6 +6256,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutFocus()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeSelection(false);
@@ -6265,6 +6268,9 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCodeWithoutFocus()
    {
+      if (cursorInDiffBase())
+         return;
+
       dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
@@ -6281,6 +6287,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutMovingCursor()
    {
+      if (cursorInDiffBase())
+         return;
+
       if (activeDisplay().isFocused() || visualMode_.isVisualEditorActive())
       {
          withVisualModeSelection(() ->
@@ -6297,6 +6306,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCode()
    {
+      if (cursorInDiffBase())
+         return;
+
       if (fileType_.isScript())
       {
          codeExecution().sendSelectionToTerminal(true);
@@ -6361,6 +6373,9 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsBackgroundJob()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().runSelectionAsJob(false /*isWorkbenchJob*/);
@@ -6370,6 +6385,9 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsWorkbenchJob()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().runSelectionAsJob(true /*isWorkbenchJob*/);
@@ -6379,6 +6397,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
@@ -6388,6 +6409,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentStatement()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
@@ -6397,6 +6421,9 @@ public class TextEditingTarget implements
    @Handler
    void onSelectCurrentStatement()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6409,6 +6436,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentParagraph()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
@@ -6418,6 +6448,9 @@ public class TextEditingTarget implements
    @Handler
    void onSendToTerminal()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().sendSelectionToTerminal(false);
@@ -6479,6 +6512,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteToCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6498,6 +6534,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteFromCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6517,6 +6556,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentFunction()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6550,6 +6592,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentSection()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -7023,6 +7068,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          // HACK: This is just to force the entire function tree to be built.
@@ -7041,6 +7089,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteNextChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection((pos) ->
       {
          Scope nextChunk = null;
@@ -7658,6 +7709,9 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCode()
    {
+      if (cursorInDiffBase())
+         return;
+
       dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
@@ -10084,9 +10138,10 @@ public class TextEditingTarget implements
    }
 
    // Whether the cursor is in the read-only base pane of a side-by-side diff.
-   // An editing command then has nothing to act on, and must not land on the
-   // document's own cursor, out of sight; the commands that edit the
-   // document directly rather than through withActiveEditor check this.
+   // An editing or code-running command then has nothing to act on, and must
+   // not land on the document's own cursor or selection, out of sight; the
+   // commands that work on the document directly rather than through
+   // withActiveEditor check this.
    private boolean cursorInDiffBase()
    {
       return view_ != null && view_.isDiffSplitFocused();
