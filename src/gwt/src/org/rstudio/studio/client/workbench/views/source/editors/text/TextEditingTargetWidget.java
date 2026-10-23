@@ -231,6 +231,7 @@ public class TextEditingTargetWidget
       editor.addFocusHandler(event ->
       {
          splitEditorFocusedLast_ = false;
+         diffSplitFocusedLast_ = false;
          initWidgetSize();
       });
 
@@ -416,6 +417,21 @@ public class TextEditingTargetWidget
       return diffSplitWidget_ != null && diffSplitWidget_.isFocused();
    }
 
+   // Focus goes to the view the user was last in -- the base pane of a
+   // side-by-side diff, or a split view -- as when a command run from the
+   // palette returns focus to the document, so that the command finds the
+   // cursor where it was.
+   private void focusLastView()
+   {
+      if (diffSplitFocusedLast_ && diffSplitWidget_ != null && diffSplitWidget_.focus())
+         return;
+
+      if (splitEditorFocusedLast_ && splitEditor_ != null)
+         splitEditor_.focus();
+      else
+         editor_.focus();
+   }
+
    private void manageEditorSplit(String type)
    {
       if (StringUtil.equals(type, splitState_))
@@ -528,6 +544,7 @@ public class TextEditingTargetWidget
       // as for a split view
       diffSplitWidget_.setFocusHandler(() ->
       {
+         diffSplitFocusedLast_ = true;
          events_.fireEvent(new EditingTargetSelectedEvent(target_));
          events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
       });
@@ -542,6 +559,7 @@ public class TextEditingTargetWidget
 
       target_.diffSplitRemoved();
       diffSplitWidget_ = null;
+      diffSplitFocusedLast_ = false;
    }
 
    private void applyWrapMode(DocDisplay display, boolean wrap)
@@ -597,6 +615,7 @@ public class TextEditingTargetWidget
       splitEditorRegistrations_.add(splitEditor_.addFocusHandler(event ->
       {
          splitEditorFocusedLast_ = true;
+         diffSplitFocusedLast_ = false;
          events_.fireEvent(new EditingTargetSelectedEvent(target_));
          events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
       }));
@@ -2429,7 +2448,7 @@ public class TextEditingTargetWidget
       @Override
       public void focus()
       {
-         editor_.focus();
+         focusLastView();
          if (activationPending_)
          {
             activationPending_ = false;
@@ -2598,6 +2617,7 @@ public class TextEditingTargetWidget
    private String splitState_ = TextEditingTarget.EDITOR_SPLIT_NONE;
    private String desiredSplitState_ = null;
    private boolean splitEditorFocusedLast_ = false;
+   private boolean diffSplitFocusedLast_ = false;
    private static final int SPLITTER_SIZE = 7;
    private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;

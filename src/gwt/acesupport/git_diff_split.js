@@ -143,6 +143,20 @@ function foldLinesPaired(a, b) {
    });
 }
 
+// Whether a fold is the one the mode's folding rules give for its first row
+// (as against a folded selection, which has columns of its own).
+function isStructuralFold(session, range) {
+   if (typeof session.getFoldWidgetRange !== "function")
+      return false;
+
+   try {
+      var own = session.getFoldWidgetRange(range.start.row);
+      return !!own && own.isEqual(range);
+   } catch (error) {
+      return false;
+   }
+}
+
 // Whether a fold is in a session, at the top level or nested in one that is.
 function foldPresent(session, fold) {
    var present = false;
@@ -159,11 +173,13 @@ var GitDiffSplitView = function(gutter, container, strings) {
    this.strings = strings || DEFAULT_STRINGS;
    this.$aligning = false;
    this.focusHandlers = [];
+   this.baseFocusedLast = false;
    this.foldsStale = true;
    this.hasBase = false;
    this.scrollSynced = false;
 
    this.onBaseFocus = this.onBaseFocus.bind(this);
+   this.onLiveFocus = this.onLiveFocus.bind(this);
    this.syncFont = this.syncFont.bind(this);
    this.syncMode = this.syncMode.bind(this);
    this.syncRendererOptions = this.syncRendererOptions.bind(this);
@@ -322,6 +338,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       session.on("changeWrapLimit", this.syncWrap);
       this.liveEditor.renderer.on("changeCharacterSize", this.syncFont);
       this.liveEditor.renderer.on("afterRender", this.syncRendererOptions);
+      this.liveEditor.on("focus", this.onLiveFocus);
    };
 
    this.detachLiveHandlers = function() {
@@ -332,6 +349,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       session.off("changeWrapLimit", this.syncWrap);
       this.liveEditor.renderer.off("changeCharacterSize", this.syncFont);
       this.liveEditor.renderer.off("afterRender", this.syncRendererOptions);
+      this.liveEditor.off("focus", this.onLiveFocus);
    };
 
    // Ace keeps the two sides scrolling together from the moment the view is
@@ -391,13 +409,14 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       });
    };
 
-   // The range a counterpart fold takes: the other side's own fold range
-   // for the mapped first row, when it spans the mapped rows (Ace maps the
-   // columns of a changed line only roughly -- a space added inside the
-   // line puts the mapped start past the end of the base's), else the
-   // mapped range, as long as it runs forward and fits as it is (Ace would
-   // clip it into something else, or nothing). Null when there is none.
-   this.$counterpartRange = function(session, mapped) {
+   // The range a counterpart fold takes: for a structural fold, the other
+   // side's own fold range for the mapped first row, when it spans the
+   // mapped rows (Ace maps the columns of a changed line only roughly -- a
+   // space added inside the line puts the mapped start past the end of the
+   // base's); else, and for a folded selection, the mapped range, as long
+   // as it runs forward and fits as it is (Ace would clip it into something
+   // else, or nothing). Null when there is none.
+   this.$counterpartRange = function(session, mapped, structural) {
       // (a range mapped to before the first line -- a fold over an added
       // first line and the one after it -- or past the last has no place)
       if (mapped.start.row < 0 || mapped.end.row >= session.getLength())
@@ -409,7 +428,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       // mapped: a structural fold that merely ends on the same row (a
       // comment ending where a folded selection starts) is not the fold.
       var own = null;
-      if (typeof session.getFoldWidgetRange === "function") {
+      if (structural && typeof session.getFoldWidgetRange === "function") {
          try {
             own = session.getFoldWidgetRange(mapped.start.row);
          } catch (error) {
@@ -449,7 +468,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       }
 
       if (!counterpart && !this.$withinChange(range, isOrig)) {
-         var otherRange = this.$counterpartRange(other, this.transformRange(range, isOrig));
+         var source = isOrig ? this.sessionA : this.sessionB;
+         var otherRange = this.$counterpartRange(other, this.transformRange(range, isOrig), isStructuralFold(source, range));
          if (otherRange) {
             // Fold All folds the nested levels as they are expanded, and
             // drops the folds within as it is added; Ace reads that off the
@@ -1098,9 +1118,22 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    };
 
    this.onBaseFocus = function() {
+      this.baseFocusedLast = true;
       this.focusHandlers.forEach(function(handler) {
          handler();
       });
+   };
+
+   this.onLiveFocus = function() {
+      this.baseFocusedLast = false;
+   };
+
+   // Whether the base pane, rather than the document, held the cursor last.
+   // The gutter's cursor-driven commands go by this rather than by focus at
+   // the time: a command chosen from a menu with the mouse has taken focus
+   // to the menu (BaseMenuBar gives it back only for keyboard activation).
+   this.heldFocusLast = function() {
+      return this.baseFocusedLast;
    };
 
    // The base cursor's row, for the gutter's cursor-driven commands when the

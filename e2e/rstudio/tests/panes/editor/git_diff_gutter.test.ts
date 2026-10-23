@@ -1204,6 +1204,14 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(base)).toBe(true);
 
+      // focus returns to the base pane when the document is returned to
+      // (another tab and back, as the command palette's return of focus
+      // does), so a command run from there still finds the cursor there
+      await executeCommand(page, 'newSourceDoc');
+      await expect.poll(() => focusIn(base)).toBe(false);
+      await executeCommand(page, 'previousTab');
+      await expect.poll(() => focusIn(base), { timeout: 10000 }).toBe(true);
+
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(live)).toBe(true);
     } finally {
@@ -1359,9 +1367,17 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => focusIn(base)).toBe(true);
       expect(await cursorRow(page)).toBe(1);
 
+      // -- and still with focus taken elsewhere meanwhile, as a menu chosen
+      // with the mouse takes it: the pane that held the cursor last counts
+      await page.locator('#rstudio_console_input').click();
+      await expect.poll(() => focusIn(base)).toBe(false);
       await executeCommand(page, 'vcsRevertChange');
       await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
       expect(await editor.getLine(1)).toBe('a2 <- 1.5');
+      await base.locator('.ace_content').click({ force: true });
+      await expect.poll(() => focusIn(base)).toBe(true);
+      // (the click moved the base cursor; back to the reverted line)
+      await base.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(4, 0));
       await expect.poll(() => viewMarkers(live), { timeout: 30000 }).toEqual({ 1: [ADDED], 6: [DELETED] });
 
       // Next Change steps on from the base cursor: the removed `f <- 6` is
@@ -1577,7 +1593,16 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           ((el as AceEditorElement).env?.editor as unknown as FoldedEditor).session.getAllFolds()[0]
             ?.subFolds[0]?.subFolds.length ?? -1,
       );
-    const expandInBase = () => base.locator('.ace_fold-widget.ace_closed').first().click();
+    // (the gutter cell of the given row, once its widget shows the fold closed:
+    // the cells are re-rendered after a fold changes)
+    const expandInBase = async (row: number) => {
+      const widget = base
+        .locator('.ace_gutter-cell')
+        .filter({ hasText: new RegExp(`^\\s*${row + 1}\\s*$`) })
+        .locator('.ace_fold-widget.ace_closed');
+      await expect(widget).toBeVisible();
+      await widget.click();
+    };
 
     try {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
@@ -1585,12 +1610,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
       // expand the function in the base pane: the block's fold comes back
       // on both sides, the document's with the loop's still inside it
-      await expandInBase();
+      await expandInBase(0);
       await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
       await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 1 }]);
 
       // and the block: the document keeps the loop folded
-      await expandInBase();
+      await expandInBase(1);
       await expect.poll(() => folds(base)).toEqual([]);
       await expect.poll(() => folds(live)).toEqual([{ row: 2, nested: 0 }]);
 
@@ -1627,10 +1652,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         ),
       ).toBeGreaterThan(0);
       await expect.poll(() => folds(base)).toEqual([{ row: 0, nested: 0 }]);
-      await expandInBase();
+      await expandInBase(0);
       await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
       await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 0 }]);
-      await expandInBase();
+      await expandInBase(1);
       await expect.poll(() => folds(base)).toEqual([]);
       await expect.poll(() => folds(live)).toEqual([{ row: 2, nested: 0 }]);
 
@@ -1645,7 +1670,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await live.locator('.ace_fold-widget.ace_open').first().click({ modifiers: ['Meta'] });
       await expect.poll(() => folds(live)).toEqual([{ row: 0, nested: 0 }]);
       await expect.poll(() => folds(base)).toEqual([{ row: 0, nested: 0 }]);
-      await expandInBase();
+      await expandInBase(0);
       await expect.poll(() => folds(base)).toEqual([{ row: 1, nested: 0 }]);
       await expect.poll(() => folds(live)).toEqual([{ row: 1, nested: 0 }]);
     } finally {
@@ -2084,6 +2109,14 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement))).toBe(true);
       await executeCommand(page, 'insertChunk');
       expect(await viewLines(live)).toEqual([...seed, '']);
+      // nor do Run All Chunks Above / Below: no new output is produced
+      const outputCount = () => page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' }).count();
+      const consoleText = () => page.locator(CONSOLE_OUTPUT).innerText();
+      const consoleBefore = await consoleText();
+      await executeCommand(page, 'executePreviousChunks');
+      await executeCommand(page, 'executeSubsequentChunks');
+      expect(await outputCount()).toBe(1);
+      expect(await consoleText()).toBe(consoleBefore);
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => live.evaluate((el) => el.contains(document.activeElement))).toBe(true);
 
@@ -2436,6 +2469,26 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
       await expect.poll(() => foldRows(base)).toEqual([[0, 2]]);
       await expect.poll(async () => (await rowTop(base, 3)) - (await rowTop(live, 3)), { timeout: 10000 }).toBe(0);
+
+      // a selection folded over the same rows keeps its own columns in the
+      // base (from the start of the line) rather than taking the function's
+      // structural fold, which starts after the brace
+      type SelectionFoldEditor = { session: { unfold(): void; addFold(placeholder: string, range: unknown): unknown; getAllFolds(): { start: { row: number; column: number } }[] } };
+      type AceRangeCtor = new (startRow: number, startColumn: number, endRow: number, endColumn: number) => unknown;
+      await live.evaluate((el) => {
+        const session = ((el as AceEditorElement).env?.editor as unknown as SelectionFoldEditor).session;
+        const Range = (window as unknown as { require(id: string): { Range: AceRangeCtor } }).require('ace/range').Range;
+        session.unfold();
+        session.addFold('...', new Range(0, 0, 2, 1));
+      });
+      await expect.poll(() => foldRows(base)).toEqual([[0, 2]]);
+      expect(
+        await base.evaluate(
+          (el) =>
+            ((el as AceEditorElement).env?.editor as unknown as SelectionFoldEditor).session.getAllFolds()[0].start
+              .column,
+        ),
+      ).toBe(0);
     } finally {
       await clearPref(page, 'git_diff_ignore_whitespace');
       await executeCommand(page, 'removeEditorSplit');

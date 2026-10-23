@@ -7142,6 +7142,9 @@ public class TextEditingTarget implements
     */
    private void executeScopedChunks(int dir)
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection((pos) ->
       {
          if (pos == null)

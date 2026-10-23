@@ -304,6 +304,9 @@ var GitDiffGutter = function(editor, strings) {
          return;
 
       this.closePeek();
+      // (an update waiting out a slow diff's typing pause would otherwise
+      // hand the view the previous chunks, and its first folds with them)
+      this.flushUpdate();
       view.setBaseLines(this.baseLines);
       view.setChunks(this.chunks, this.ignoreWhitespace);
    };
@@ -586,7 +589,7 @@ var GitDiffGutter = function(editor, strings) {
    // is reached from the line that follows it, as a deletion is in the
    // document.
    this.baseFocused = function() {
-      return this.splitView != null && this.splitView.isFocused();
+      return this.splitView != null && this.splitView.heldFocusLast();
    };
 
    this.cursorRow = function() {
