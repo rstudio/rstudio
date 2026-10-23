@@ -2692,7 +2692,9 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
 // result is { "tracked": bool, "id": string, "unchanged": bool, "contents":
 // string }; tracked is false when the file is outside the repository or not
 // in the index (untracked, ignored), in which case there is nothing to diff
-// against. The id names the base as decoded (blob sha plus encoding); a
+// against. A tracked file whose blob cannot be read is an error instead,
+// which the client tells from the absence of a base (it says so in the
+// side-by-side view). The id names the base as decoded (blob sha plus encoding); a
 // client that already holds that base passes its id back and gets
 // "unchanged" with no contents, which spares the blob read and the transfer.
 Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
@@ -2784,9 +2786,12 @@ Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
 
    if (procResult.exitStatus != EXIT_SUCCESS)
    {
-      result["tracked"] = false;
-      pResponse->setResult(result);
-      return Success();
+      // e.g. a smudge filter that fails: the file has a base, it just
+      // cannot be read right now
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("path", relativePath);
+      error.addProperty("stderr", procResult.stdErr);
+      return error;
    }
 
    std::string contents;

@@ -910,6 +910,60 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('treats a base that cannot be read as missing, not as untracked', async ({
+    rstudioPage: page,
+  }) => {
+    // A smudge filter that fails (a required filter whose tool is missing,
+    // say) makes the index version unreadable. The file is tracked all the
+    // same: no markers, and no claim that it has no base.
+    const attrsPath = `${projectDir()}/.gitattributes`;
+    const brokenPath = `${projectDir()}/broken.txt`;
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          s <- c(
+            system2("git", c(${gitC()}, "config", "filter.bad.clean", "cat")),
+            system2("git", c(${gitC()}, "config", "filter.bad.smudge", "false")),
+            system2("git", c(${gitC()}, "config", "filter.bad.required", "true"))
+          )
+          if (any(s != 0))
+            stop("git config failed (exit status: ", paste(s, collapse = "/"), ")")
+          writeLines("broken.txt filter=bad", ${rPathLiteral(attrsPath)})
+          writeLines(c("one <- 1", "two <- 2"), ${rPathLiteral(brokenPath)})
+        }
+      `,
+    );
+    await commitAll(page, 'broken', [attrsPath, brokenPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("one <- 1", "two <- 22"), ${rPathLiteral(brokenPath)})`,
+    );
+
+    const base = page.locator(BASE_EDITOR);
+    try {
+      const fetched = page.waitForResponse((r) => r.url().includes('git_diff_base_contents'));
+      await openFile(page, brokenPath);
+      await fetched;
+      await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+      expect(await gutterMarkers(page)).toEqual({});
+
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(BASE_EMPTY)).toBeHidden();
+      expect(await viewLines(base)).toEqual(['']);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(
+        page,
+        `invisible(file.remove(c(${rPathLiteral(attrsPath)}, ${rPathLiteral(brokenPath)})))`,
+      );
+      await commitAll(page, 'remove broken', [attrsPath, brokenPath]);
+    }
+  });
+
   test('keeps control characters the editor keeps', async ({ rstudioPage: page }) => {
     // U+001F survives document loading, so it has to survive the base too,
     // or the line reads as modified and a revert would drop the character.
@@ -1422,14 +1476,132 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('keeps a fold of added lines when its parent is expanded from the base pane', async ({
+    rstudioPage: page,
+  }) => {
+    // A block added inside a committed function, folded, and the function
+    // folded over it. The base has the function (paired with the
+    // document's fold) but none of the block's lines, so the block's fold
+    // has no counterpart; expanding the function from the base pane removes
+    // the document's function fold, and must not take the block's with it.
+    const nestedPath = `${projectDir()}/nested.R`;
+    const seed = ['f <- function() {', '  a <- 1', '  b <- 2', '}'];
+    const edited = ['f <- function() {', '  if (TRUE) {', '    x <- 1', '  }', '  a <- 1', '  b <- 2', '}'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nestedPath)})`,
+    );
+    await commitAll(page, 'nested', [nestedPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(nestedPath)})`,
+    );
+    await openFile(page, nestedPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({
+      1: [ADDED],
+      2: [ADDED],
+      3: [ADDED],
+    });
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(2);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+    await editor.gotoLine(1);
+    await editor.execCommand('toggleFoldWidget');
+    await expect.poll(() => editor.getFoldCount()).toBe(1);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    // (found by its first line: the rest is folded away at one point or another)
+    const live = liveEditors(page, 'f <- function() {');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    type FoldedEditor = { session: { getAllFolds(): { start: { row: number } }[] } };
+    const foldRows = (view: Locator) =>
+      view.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as FoldedEditor).session
+          .getAllFolds()
+          .map((fold) => fold.start.row),
+      );
+
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect.poll(() => foldRows(base)).toEqual([0]);
+
+      // expand the function in the base pane: both sides open up, and the
+      // document keeps the block folded
+      await base.locator('.ace_fold-widget.ace_closed').first().click();
+      await expect.poll(() => foldRows(base)).toEqual([]);
+      await expect.poll(() => foldRows(live)).toEqual([1]);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(nestedPath)}))`);
+      await commitAll(page, 'remove nested', [nestedPath]);
+    }
+  });
+
+  test('opens an untracked file where it is scrolled to, rather than at the top', async ({
+    rstudioPage: page,
+  }) => {
+    // With no base there is nothing for the base pane to scroll; the
+    // document's offset must not be clamped there and synced back.
+    const longPath = `${projectDir()}/long-untracked.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("u%d <- %d", 1:200, 1:200), ${rPathLiteral(longPath)})`,
+    );
+    await openFile(page, longPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(150);
+    type ScrolledEditor = { session: { getScrollTop(): number } };
+    const scrollTop = (view: Locator) =>
+      view.evaluate((el) =>
+        ((el as AceEditorElement).env?.editor as unknown as ScrolledEditor).session.getScrollTop(),
+      );
+    const live = liveEditors(page, 'u150 <- 150');
+    await expect.poll(() => scrollTop(live)).toBeGreaterThan(0);
+    const before = await scrollTop(live);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect(page.locator(BASE_EMPTY)).toBeVisible();
+      const deadline = Date.now() + 2000;
+      while (Date.now() < deadline) {
+        expect(await scrollTop(live)).toBe(before);
+        await page.waitForTimeout(250);
+      }
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(longPath)}))`);
+    }
+  });
+
   test('opens where the document is scrolled to, and follows its font and soft wrap', async ({
     rstudioPage: page,
   }) => {
     // a committed file longer than the pane, changed near its end
+    // (with, at line 100, an indented line long enough to wrap: RStudio
+    // turns Ace's indented soft wrap off, and a base that kept it would
+    // wrap that line onto one more row)
     const longPath = `${projectDir()}/long.R`;
     await executeInConsoleChecked(
       page,
-      `writeLines(sprintf("l%d <- %d", 1:200, 1:200), ${rPathLiteral(longPath)})`,
+      heredoc`
+        {
+          lines <- sprintf("l%d <- %d", 1:200, 1:200)
+          lines[100] <- paste0(strrep(" ", 30), "l100 <- ", strrep("x", 120))
+          writeLines(lines, ${rPathLiteral(longPath)})
+        }
+      `,
     );
     await commitAll(page, 'long', [longPath]);
     await executeInConsoleChecked(
@@ -1518,6 +1690,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           return baseWrap.on && liveWrap.limit > 0 && baseWrap.limit === liveWrap.limit;
         })
         .toBe(true);
+      await expect.poll(levelRows).toEqual([0, 0, 0]);
 
       // so does Show Whitespace Characters, one of the renderer options the
       // base copied when it was created
@@ -1775,6 +1948,26 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
       await expectOutputKept();
       await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible();
+
+      // The base is padded below its fence by the output's height, so that
+      // the removed line and the one that now follows the chunk sit level.
+      // Collapsing and expanding the output changes that height, and the
+      // padding follows it without an edit.
+      const live = liveEditors(page, '1 + 1');
+      const rowTop = (view: Locator, row: number) =>
+        view.evaluate((el, row) => {
+          type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+          const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+          return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+        }, row);
+      const levelAfterChunk = async () => (await rowTop(base, 7)) - (await rowTop(live, 7));
+      await expect.poll(levelAfterChunk).toBe(0);
+      await executeCommand(page, 'notebookCollapseAllOutput');
+      await expect.poll(levelAfterChunk, { timeout: 10000 }).toBe(0);
+      await executeCommand(page, 'notebookExpandAllOutput');
+      await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible();
+      await expect.poll(levelAfterChunk, { timeout: 10000 }).toBe(0);
+      await expectOutputKept();
 
       // an edit elsewhere realigns the view, with the same outcome
       await editor.gotoLine(2);

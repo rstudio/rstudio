@@ -44,7 +44,6 @@ var DEFAULT_STRINGS = {
 // following (see syncRendererOptions), so that the two sides look alike.
 var RENDERER_OPTIONS = [
    "showGutter",
-   "showLineNumbers",
    "showFoldWidgets",
    "fadeFoldWidgets",
    "fixedWidthGutter",
@@ -52,6 +51,12 @@ var RENDERER_OPTIONS = [
    "displayIndentGuides",
    "scrollPastEnd",
    "animatedScroll"
+];
+
+// The same, for the options Ace keeps on the editor rather than its
+// renderer (asking the renderer for one of these gets a warning).
+var EDITOR_OPTIONS = [
+   "showLineNumbers"
 ];
 
 // A nested fold's range in document coordinates, from the range Ace keeps
@@ -64,6 +69,39 @@ function absoluteRange(range, start) {
          point.column += start.column;
    });
    return absolute;
+}
+
+// Copies the options named that differ between two Ace option holders.
+function syncOptions(from, to, options) {
+   options.forEach(function(option) {
+      var value = from.getOption(option);
+      if (to.getOption(option) !== value)
+         to.setOption(option, value);
+   });
+}
+
+// The alignment padding is told from other line widgets (notebook chunk
+// output, equation previews) by a mark of its own.
+function isPadding(widget) {
+   return !!(widget && widget.gitDiffPadding);
+}
+
+// A copy of a session's line widgets with those on the given rows that are
+// not padding replaced by hidden stand-ins of the same height, or null when
+// there are none to replace; see $restrictStripes.
+function foreignWidgetsHidden(widgets, firstRow, lastRow) {
+   var copy = null;
+   var last = Math.min(lastRow, widgets.length - 1);
+   for (var row = firstRow; row <= last; row++) {
+      var w = widgets[row];
+      if (!w || w.hidden || isPadding(w))
+         continue;
+
+      if (!copy)
+         copy = widgets.slice();
+      copy[row] = { rowCount: w.rowCount, rowsAbove: w.rowsAbove, hidden: true };
+   }
+   return copy;
 }
 
 // Walks a session's folds, nested ones included.
@@ -90,9 +128,10 @@ var GitDiffSplitView = function(gutter, container, strings) {
    this.gutter = gutter;
    this.container = container;
    this.strings = strings || DEFAULT_STRINGS;
-   this.alignmentWidgets = [];
+   this.$aligning = false;
    this.focusHandlers = [];
    this.foldsStale = true;
+   this.hasBase = false;
    this.scrollSynced = false;
 
    this.onBaseFocus = this.onBaseFocus.bind(this);
@@ -187,17 +226,12 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       this.baseEditor.renderer.updateFontSize();
    };
 
-   // The renderer options have no change event of their own; they are
+   // The display options have no change event of their own; they are
    // checked as the live editor renders, which a change to any of them
    // brings about.
    this.syncRendererOptions = function() {
-      var live = this.liveEditor.renderer;
-      var base = this.baseEditor.renderer;
-      RENDERER_OPTIONS.forEach(function(option) {
-         var value = live.getOption(option);
-         if (base.getOption(option) !== value)
-            base.setOption(option, value);
-      });
+      syncOptions(this.liveEditor.renderer, this.baseEditor.renderer, RENDERER_OPTIONS);
+      syncOptions(this.liveEditor, this.baseEditor, EDITOR_OPTIONS);
    };
 
    // Tokenization and folding come from a mode of the live session's kind.
@@ -229,6 +263,13 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.syncWrap = function() {
       var live = this.liveEditor.session;
       var session = this.baseEditor.session;
+
+      // RStudio turns Ace's indented soft wrap off for its editors (see
+      // AceEditorWidget); left on in the base, an indented line can wrap
+      // onto more rows there than in the document
+      var indented = live.getOption("indentedSoftWrap");
+      if (session.getOption("indentedSoftWrap") !== indented)
+         session.setOption("indentedSoftWrap", indented);
 
       var wrap = live.getUseWrapMode();
       session.setUseWrapMode(wrap);
@@ -262,9 +303,12 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    // Ace keeps the two sides scrolling together from the moment the view is
    // created, but starts the base at the top; once the base has a size to
-   // scroll within, it joins the document wherever that is.
+   // scroll within, and lines to scroll, it joins the document wherever
+   // that is. Without a base (none yet, or none at all) the offset would
+   // be clamped to the top, and Ace's scroll sync would take the document
+   // there too.
    this.syncInitialScroll = function() {
-      if (this.scrollSynced || this.baseEditor.renderer.$size.scrollerHeight <= 0)
+      if (this.scrollSynced || !this.hasBase || this.baseEditor.renderer.$size.scrollerHeight <= 0)
          return;
 
       this.scrollSynced = true;
@@ -364,8 +408,19 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // chunk's output or an equation preview.
    this.onChangeFold = function(ev, session) {
       var fold = ev.data;
-      if (this.$syncingFold || !fold || !ev.action)
+      if (this.$syncingFold || !fold)
          return;
+
+      // A line widget being added, removed or resized (chunk output run,
+      // collapsed or expanded) is reported as a changeFold without an
+      // action, which Ace's handler ignores; it moves the rows below it,
+      // so the sides are realigned -- unless it is this view's own
+      // alignment at work (see align).
+      if (!ev.action) {
+         if (!this.$aligning)
+            this.scheduleRealign();
+         return;
+      }
 
       this.scheduleRealign();
       var isOrig = session === this.sessionA;
@@ -374,10 +429,32 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       if (ev.action === "remove") {
          var counterpart = fold.other;
          if (counterpart) {
+            // The counterpart goes with its nested folds. Those paired with
+            // nested folds of this one come back if this is an expansion
+            // (Ace re-adds this side's, and they are mirrored); those with
+            // no twin here -- folds of lines only the other side has --
+            // would be lost, so they are put back by hand.
+            var orphans = counterpart.subFolds.filter(function(sub) {
+               return !sub.other;
+            });
             unpairFolds([fold]);
             unpairFolds([counterpart]);
             if (counterpart.foldLine && counterpart.foldLine.folds.indexOf(counterpart) !== -1)
                other.removeFold(counterpart);
+
+            this.$syncingFold = true;
+            try {
+               orphans.forEach(function(sub) {
+                  counterpart.restoreRange(sub);
+                  try {
+                     other.addFold(sub);
+                  } catch (error) {
+                     // its lines are folded another way by now
+                  }
+               });
+            } finally {
+               this.$syncingFold = false;
+            }
          } else if (fold.lineWidget) {
             // the padding comes back with the next alignment
             fold.lineWidget = null;
@@ -386,7 +463,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          var range = this.transformRange(fold.range, isOrig);
          if (range.isEmpty()) {
             var widget = other.lineWidgets && other.lineWidgets[range.start.row + 1];
-            if (widget && this.alignmentWidgets.indexOf(widget) !== -1) {
+            if (isPadding(widget)) {
                fold.lineWidget = widget;
                other.widgetManager.removeLineWidget(widget);
                (isOrig ? this.editorB : this.editorA).renderer.updateBackMarkers();
@@ -403,6 +480,18 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    };
 
    // ---- SplitDiffView overrides ------------------------------------------
+
+   // Ace's align, marked while it runs: the changeFold events it raises
+   // as it lays the padding out are told from a line widget changing on
+   // its own (see onChangeFold).
+   this.align = function() {
+      this.$aligning = true;
+      try {
+         SplitDiffView.prototype.align.call(this);
+      } finally {
+         this.$aligning = false;
+      }
+   };
 
    // Ace's version applies a fixed set of editor options to both sides (no
    // active-line highlight, its custom scrollbar, and so on); the live editor
@@ -464,19 +553,18 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.$addWidget = function(session, w) {
       var existing = session.lineWidgets[w.row];
       if (existing) {
-         if (this.alignmentWidgets.indexOf(existing) === -1)
+         if (!isPadding(existing))
             return;
 
          // a change's start and end can pad the same row (an addition has
          // an empty range on the base side); the paddings add up
          w.rowsAbove += existing.rowsAbove > w.rowsAbove ? existing.rowsAbove : w.rowsAbove;
          w.rowCount += existing.rowCount;
-         this.alignmentWidgets.splice(this.alignmentWidgets.indexOf(existing), 1);
       }
 
+      w.gitDiffPadding = true;
       w.session = session;
       session.lineWidgets[w.row] = w;
-      this.alignmentWidgets.push(w);
       session.$resetRowCache(w.row);
 
       var fold = session.getFoldAt(w.row, 0);
@@ -484,57 +572,60 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          session.widgetManager.updateOnFold({ data: fold, action: "add" }, session);
    };
 
-   // Ace drops a padding widget itself when the rows around it are deleted
-   // (clearing its session as it does), so only those still in a session
-   // are kept track of.
+   // Takes the padding out of a session's line widgets. A widget added on
+   // top of a padding chains to it ($oldWidget), and a fold ending on its
+   // row aliases it at the fold's start; it is unlinked wherever found.
    this.$removeLineWidgets = function(session) {
       var widgets = session.lineWidgets;
-      var mine = this.alignmentWidgets.filter(function(w) { return w.session === session; });
-      this.alignmentWidgets = this.alignmentWidgets.filter(function(w) { return w.session && w.session !== session; });
-
-      if (!widgets || mine.length === 0)
+      if (!widgets)
          return;
 
-      // A widget added on top of ours chains to it ($oldWidget), and a fold
-      // ending on our row aliases it at the fold's start; unlink it wherever
-      // it is found.
+      var removed = false;
       for (var i = 0; i < widgets.length; i++) {
          var w = widgets[i];
-         if (w && mine.indexOf(w) !== -1) {
+         if (isPadding(w)) {
             widgets[i] = w.$oldWidget;
             w = widgets[i];
+            removed = true;
          }
 
          while (w && w.$oldWidget) {
-            if (mine.indexOf(w.$oldWidget) !== -1)
+            if (isPadding(w.$oldWidget)) {
                w.$oldWidget = w.$oldWidget.$oldWidget;
-            else
+               removed = true;
+            } else {
                w = w.$oldWidget;
+            }
          }
       }
 
+      if (!removed)
+         return;
+
       session.$resetRowCache(0);
-      session._signal("changeFold", { data: { start: { row: 0 } } });
+      var aligning = this.$aligning;
+      this.$aligning = true;
+      try {
+         session._signal("changeFold", { data: { start: { row: 0 } } });
+      } finally {
+         this.$aligning = aligning;
+      }
    };
 
    // Ace's change highlighter stripes the rows of every line widget in a
    // session as alignment padding, not only ours: chunk output hides the
    // stripes under its own background, but a multi-line Assistant suggestion
-   // has none. For the duration of a draw, a foreign widget is stood in for
-   // by a hidden copy of the same height, which keeps its rows where they
-   // are and has the highlighter pass it over.
+   // has none. For the duration of a draw, a foreign widget on a row being
+   // drawn (the only rows the highlighter looks at) is stood in for by a
+   // hidden copy of the same height, which keeps its rows where they are
+   // and has the highlighter pass it over.
    this.$restrictStripes = function(marker) {
-      var self = this;
       var update = marker.update;
       marker.update = function(html, markerLayer, session, config) {
          var widgets = session.lineWidgets;
-         if (widgets) {
-            session.lineWidgets = widgets.map(function(w) {
-               if (!w || self.alignmentWidgets.indexOf(w) !== -1)
-                  return w;
-               return { rowCount: w.rowCount, rowsAbove: w.rowsAbove, hidden: true };
-            });
-         }
+         var swapped = widgets && foreignWidgetsHidden(widgets, config.firstRow, config.lastRow);
+         if (swapped)
+            session.lineWidgets = swapped;
 
          try {
             update.call(marker, html, markerLayer, session, config);
@@ -562,6 +653,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    this.setBaseLines = function(lines) {
       var session = this.baseEditor.session;
       var text = lines ? lines.join("\n") : "";
+      this.hasBase = lines != null;
       if (session.getValue() !== text) {
          // Replacing the text removes the base's folds, which Ace's fold
          // sync would carry over to their live counterparts; the document
