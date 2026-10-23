@@ -220,6 +220,25 @@ var GitDiffGutter = function(editor, strings) {
    gutterEl.addEventListener("mousedown", this.onGutterMouseDown, true);
    gutterEl.addEventListener("click", this.onGutterClick, true);
    gutterEl.addEventListener("dblclick", this.onGutterClick, true);
+
+   // Escape closes an open peek. An Ace command rather than a keyboard
+   // handler of our own: commands live in the default handler, the one
+   // setKeyboardHandler keeps when RStudio rebuilds the editor's handlers
+   // (file type or keybinding changes, re-attach), and the lowest in
+   // precedence, so the completion popup and a Vim or Emacs mode, which own
+   // Escape while active, still see the key first. Among commands on the
+   // same key Ace tries the last one registered first, so screen reader
+   // support's blurTextInput would take Escape whenever it was added after
+   // this one (a file opened with ext-diff already loaded, or the pref turned
+   // on later); the explicit position puts this command ahead regardless.
+   var self = this;
+   editor.commands.addCommand({
+      name: "closeGitPeek",
+      bindKey: { win: "Esc", mac: "Esc", position: 1 },
+      readOnly: true,
+      isAvailable: function() { return self.peek != null; },
+      exec: function() { self.closePeek(); }
+   });
 };
 
 (function() {
@@ -757,14 +776,32 @@ var GitDiffGutter = function(editor, strings) {
       });
       header.appendChild(revertButton);
 
+      // Closing is the lesser action (the marker, Escape, and Show Change all
+      // close the peek too), so it is a plain glyph at the end of the header.
       var closeButton = document.createElement("button");
       closeButton.type = "button";
-      closeButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-close";
-      closeButton.textContent = this.strings.close;
+      closeButton.className = PEEK_CLASS + "-close";
+      closeButton.textContent = "\u00D7";
+      closeButton.title = this.strings.close;
+      closeButton.setAttribute("aria-label", this.strings.close);
       closeButton.addEventListener("click", function() {
+         self.focusEditor();
          self.closePeek();
       });
       header.appendChild(closeButton);
+
+      // With "Tab key always moves focus" on, Tab can land on the peek's
+      // buttons, where a keypress never reaches the editor's textarea; let
+      // Escape close the peek from there too.
+      el.addEventListener("keydown", function(e) {
+         if (e.key !== "Escape")
+            return;
+
+         e.preventDefault();
+         e.stopPropagation();
+         self.focusEditor();
+         self.closePeek();
+      });
 
       if (oldLines.length > 0)
       {
@@ -885,6 +922,7 @@ var GitDiffGutter = function(editor, strings) {
       }
 
       this.closePeek();
+      this.editor.commands.removeCommand("closeGitPeek");
       this.editor.off("change", this.onChange);
 
       var gutterEl = this.editor.renderer.$gutter;

@@ -3326,7 +3326,7 @@ core::Error UserPrefValues::setFileMonitorUseGitignore(bool val)
 }
 
 /**
- * Whether to install R package dependencies one at a time.
+ * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
  */
 bool UserPrefValues::installPkgDepsIndividually()
 {
