@@ -6,7 +6,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import {
   documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
 } from '@utils/commands';
-import { executeInConsole, focusConsole } from '@pages/console_pane.page';
+import { executeInConsole, focusConsole, waitForConsoleIdle } from '@pages/console_pane.page';
 import { captureResult, killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
 import { TIMEOUTS } from '@utils/constants';
 import type { Locator, Page } from 'playwright';
@@ -687,6 +687,8 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       // would focus the Console, which moves the zoom there.
       await executeInConsole(page, 'Sys.sleep(2); history()', { wait: false });
       await executeCommand(page, 'layoutZoomFiles');
+      expect(await page.locator(HISTORY_TAB).getAttribute('aria-selected'),
+             'history() ran before the zoom started').not.toBe('true');
       await expectHidden(page, TABSET1_PANE);
 
       await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true',
@@ -701,6 +703,7 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       await expectExposed(page, TABSET1_PANE, TABSET2_PANE);
       await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
     } finally {
+      await waitForConsoleIdle(page, 10000);
       await resetLayoutZoom(page);
     }
   });
