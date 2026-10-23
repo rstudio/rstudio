@@ -828,18 +828,27 @@ bool s_deferredRetryScheduled = false;
 void processDeferred()
 {
    s_deferredRetryScheduled = false;
-
-   // only with nothing in flight: a unit whose code was sent completes on the
-   // console prompt that follows it, and processing it before that prompt
-   // would take it for complete. and only with no console input pending for
-   // the read: that input runs first and would prompt before a unit sent now
-   // had been read, with the same result -- its own prompt resumes the queue
-   if (s_queue && !s_queue->unitInFlight() && !console_input::hasPendingInput())
+   if (!s_queue || s_queue->unitInFlight())
    {
-      Error error = s_queue->process(ExprModeNew);
-      if (error)
-         LOG_ERROR(error);
+      // a unit whose code was sent completes on the console prompt that
+      // follows it; processing it before that prompt would take it for
+      // complete
+      return;
    }
+
+   // not with console input pending for the read: that input runs first and
+   // would prompt before a unit sent now had been read, with the same
+   // result. usually its own prompt resumes the queue; not always (an
+   // answer held for a read a callback opened), so try again later
+   if (console_input::hasPendingInput())
+   {
+      scheduleDeferredRetry();
+      return;
+   }
+
+   Error error = s_queue->process(ExprModeNew);
+   if (error)
+      LOG_ERROR(error);
 }
 
 void scheduleDeferredRetry()

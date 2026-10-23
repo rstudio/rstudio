@@ -126,7 +126,25 @@ test.describe('Idle event loop callbacks', () => {
     await consoleActions.clearConsole();
   });
 
+  // Flag files a test's callback waits on; written in afterEach so a test
+  // that failed before releasing its callback does not leave it running --
+  // with the busy delay raised, the console looks idle and an interrupt is
+  // not offered, so the cleanup commands would only queue behind it.
+  const flags: string[] = [];
+  const flagFile = (name: string): string => {
+    const file = path.join(sandbox.dir, name);
+    flags.push(file);
+    return file;
+  };
+
   test.afterEach(async ({ rstudioPage: page }) => {
+    for (const file of flags.splice(0)) {
+      try {
+        fs.writeFileSync(file, '');
+      } catch {
+        // the sandbox is gone or not writable from here; nothing waits on it
+      }
+    }
     // A failed assertion can leave the callback running; interrupting it
     // here is what keeps the rest of the worker usable.
     await ensureConsoleIdle(page);
@@ -206,7 +224,7 @@ test.describe('Idle event loop callbacks', () => {
     // The callback returns only once the test has had a request served (a
     // flag file says so), which needs a filesystem shared with the session.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
-    const flag = path.join(sandbox.dir, `request-served-${Date.now()}.flag`);
+    const flag = flagFile(`request-served-${Date.now()}.flag`);
     await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
     const promptCountBefore = await getConsolePromptCount(page);
 
@@ -239,8 +257,8 @@ test.describe('Idle event loop callbacks', () => {
     const missing = await consoleActions.ensurePackages(['rmarkdown', 'knitr']);
     test.skip(missing.length > 0, `Could not install: ${missing.join(', ')}`);
     const sourceActions = new SourcePaneActions(page, consoleActions);
-    const flag = path.join(sandbox.dir, `chunk-release-${Date.now()}.flag`);
-    const ran = path.join(sandbox.dir, `chunk-ran-${Date.now()}.flag`);
+    const flag = flagFile(`chunk-release-${Date.now()}.flag`);
+    const ran = flagFile(`chunk-ran-${Date.now()}.flag`);
     const fileName = 'idle-callback-chunk.Rmd';
     const notebook = [
       '---', 'output: html_document', '---', '',
@@ -271,7 +289,7 @@ test.describe('Idle event loop callbacks', () => {
 
   test('a reload during a callback that then returns before the busy report leaves the prompt not busy', async ({ rstudioPage: page }) => {
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
-    const flag = path.join(sandbox.dir, `reload-early-${Date.now()}.flag`);
+    const flag = flagFile(`reload-early-${Date.now()}.flag`);
     await executeInConsole(page, 'options(rstudio.idleEventBusyDelay = 60)');
     const prompts = recordClientEvents(page, ['console_prompt']);
     try {
@@ -307,7 +325,7 @@ test.describe('Idle event loop callbacks', () => {
     // (a flag file says so), which needs a filesystem shared with the
     // session; it ends on its own, since an interrupt would discard them.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
-    const flag = path.join(sandbox.dir, `queued-in-order-${Date.now()}.flag`);
+    const flag = flagFile(`queued-in-order-${Date.now()}.flag`);
     await executeInConsole(page,
       `later::later(function() { cat("callback", "started\\n"); while (!file.exists(${JSON.stringify(flag)})) Sys.sleep(0.05) }, 0.1)`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText('callback started');
@@ -388,7 +406,7 @@ test.describe('Idle event loop callbacks', () => {
     // (a flag file says so), which needs a filesystem shared with the session.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const consoleInput = page.locator(CONSOLE_INPUT);
-    const flag = path.join(sandbox.dir, `error-discards-${Date.now()}.flag`);
+    const flag = flagFile(`error-discards-${Date.now()}.flag`);
     // The console reset R runs on an uncaught error discards queued input
     // under this pref (its default) -- the other way, besides an interrupt,
     // that input queued behind a callback is dropped. The error message is
@@ -413,7 +431,7 @@ test.describe('Idle event loop callbacks', () => {
 
   test('queued input survives an uncaught error in a callback with the discard pref off', async ({ rstudioPage: page }) => {
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
-    const flag = path.join(sandbox.dir, `error-keeps-${Date.now()}.flag`);
+    const flag = flagFile(`error-keeps-${Date.now()}.flag`);
     await setPref(page, 'discard_pending_console_input_on_error', false);
 
     await executeInConsole(page,
@@ -508,7 +526,7 @@ test.describe('Idle event loop callbacks', () => {
     // file says so), which needs a filesystem shared with the session.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const consoleInput = page.locator(CONSOLE_INPUT);
-    const flag = path.join(sandbox.dir, `busy-seen-${Date.now()}.flag`);
+    const flag = flagFile(`busy-seen-${Date.now()}.flag`);
     const busy = recordClientEvents(page, ['busy']);
     // R's own busy callback adds events of its own around a read, so the
     // sequence is not fixed; what matters is that busy was reported, and
@@ -544,7 +562,7 @@ test.describe('Idle event loop callbacks', () => {
     // filesystem shared with the session.
     test.skip(!canWriteDir(sandbox.dir), 'the runner cannot write where the session reads (remote server)');
     const consoleInput = page.locator(CONSOLE_INPUT);
-    const flag = path.join(sandbox.dir, `read-queued-${Date.now()}.flag`);
+    const flag = flagFile(`read-queued-${Date.now()}.flag`);
     const prompts = recordClientEvents(page, ['console_prompt']);
     try {
       // Input submitted while the callback runs is queued; the callback's
