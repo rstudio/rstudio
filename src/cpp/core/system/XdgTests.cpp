@@ -285,7 +285,11 @@ TEST(XdgTest, TemporaryUserDataDir)
    ASSERT_EQ(0, ::symlink(target.getAbsolutePath().c_str(), expected.getAbsolutePath().c_str()));
    EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
 
-   ASSERT_EQ(0, ::unlink(expected.getAbsolutePath().c_str()));
+   // FilePath::remove() deletes the symlink itself and leaves its target.
+   // Snyk Code reports ::unlink() on this path, which comes from $USER, as
+   // cpp/PT. Keep this form.
+   ASSERT_FALSE(expected.remove());
+   EXPECT_TRUE(target.isDirectory());
    ASSERT_FALSE(expected.ensureFile());
    EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
 }

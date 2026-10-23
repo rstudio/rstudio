@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdEditorMode;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
@@ -834,12 +835,33 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                               manager_.getSession().getSessionInfo().getActiveProjectDir().getPath());
 
       boolean cmdEnabled = active && vcsCommandsEnabled;
+
+      // The change navigation, peek, and revert commands act on the gutter
+      // markers, so they follow the gutter's own gate (a saved file in a Git
+      // session with the preference on; see TextEditingTargetGitDiffGutter)
+      // rather than the project-directory rule above: the markers go by the
+      // repository root, which the server knows and the client does not.
+      boolean gutterEnabled =
+            manager_.getSession().getSessionInfo().isVcsEnabled() &&
+            VCSConstants.GIT_ID.equals(manager_.getSession().getSessionInfo().getVcsName()) &&
+            userPrefs_.showGitDiffGutter().getValue() &&
+            getNextActiveEditor() != null &&
+            getNextActiveEditor().getPath() != null;
+      boolean gutterCmdEnabled = active && gutterEnabled;
       getSourceCommand(commands_.vcsFileLog()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileDiff()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileRevert()).setVisible(active, cmdEnabled, vcsCommandsEnabled);
+      getSourceCommand(commands_.vcsNextChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsPreviousChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsRevertChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsShowChange()).setVisible(active, gutterCmdEnabled, gutterEnabled);
       getSourceCommand(commands_.vcsFileLog()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileDiff()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
       getSourceCommand(commands_.vcsFileRevert()).setEnabled(active, cmdEnabled, vcsCommandsEnabled);
+      getSourceCommand(commands_.vcsNextChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsPreviousChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsRevertChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
+      getSourceCommand(commands_.vcsShowChange()).setEnabled(active, gutterCmdEnabled, gutterEnabled);
 
       if (cmdEnabled)
       {

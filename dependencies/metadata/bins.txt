@@ -10,3 +10,11 @@ dependency(PANDOC
    LICENSE      "GPL-2.0-or-later"
    LICENSE_PATH "COPYRIGHT"
 )
+
+dependency(RIG
+   DEPNAME      "rig"
+   REPOSITORY   "https://github.com/r-lib/rig"
+   REVISION     "v0.11.0"
+   LICENSE      "MIT"
+   LICENSE_PATH "LICENSE"
+)
