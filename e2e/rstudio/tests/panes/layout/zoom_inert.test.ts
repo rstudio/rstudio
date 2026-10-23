@@ -693,6 +693,7 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
         timeout: TIMEOUTS.sessionRestart,
       });
     };
+    const original = await page.evaluate(() => window.rstudio!.prefs.uiLanguage.get());
     await page.evaluate(() => window.rstudio!.prefs.uiLanguage.set('fr'));
     try {
       await reloadIn('Aide');
@@ -705,8 +706,12 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       expect(await isCommandChecked(page, 'layoutZoomConsole')).toBe(false);
     } finally {
       await resetLayoutZoom(page);
-      await page.evaluate(() => window.rstudio!.prefs.uiLanguage.clear());
-      await reloadIn('Help');
+      // English is the default, so clear rather than write it.
+      await page.evaluate(async (lang) => {
+        const pref = window.rstudio!.prefs.uiLanguage;
+        await (lang && lang !== 'en' ? pref.set(lang) : pref.clear());
+      }, original);
+      await reloadIn(original === 'fr' ? 'Aide' : 'Help');
     }
   });
 
