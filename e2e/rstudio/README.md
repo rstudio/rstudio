@@ -164,13 +164,13 @@ hang every RPC-awaiting helper for its whole budget. When the probe times out
 the test fails at once with `deaf-session.png` and `rsession-stacks.txt`
 attached, and Playwright moves on in a fresh worker. A failing test is probed
 again in teardown, so a session that went deaf under the test body gets the
-same attachment, and each worker probes once more before shutting its session
-down (a hook that wedged it has no test to attach to), writing the dump next
-to the rsession logs. The stack dump is the output of
-`scripts/ci/rsession-diagnostics.sh` (`sample` on macOS; thread wait channels
-plus gdb on Linux, escalated through passwordless `sudo -n` where that exists,
-since the default ptrace_scope refuses a non-descendant) over every rsession
-on the test machine. Against a remote server (`PW_RSTUDIO_SERVER_URL` on
+same attachment, and each worker whose tests never recorded a deaf session
+probes once more before shutting it down (a hook that wedged it has no test
+to attach to), writing the dump next to the rsession logs. The stack dump is
+the output of `scripts/ci/rsession-diagnostics.sh` (`sample` on macOS; thread
+wait channels plus gdb on Linux, escalated through passwordless `sudo -n`
+where that exists, since the default ptrace_scope refuses a non-descendant)
+over every rsession on the test machine. Against a remote server (`PW_RSTUDIO_SERVER_URL` on
 another host) the sessions run elsewhere, so no dump is taken and the failure
 message says so. The CI workflows run the same script privileged over whatever
 rsession is still running at the end of a failed shard (uploaded as the

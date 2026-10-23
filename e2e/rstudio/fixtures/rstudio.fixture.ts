@@ -55,6 +55,11 @@ interface SessionContext {
   // sandbox layout test uses it to scope assertions that only hold while
   // the launching instance is alive (see #18475).
   configRoot?: string;
+  // Set by perTestReset once a per-test probe has recorded this worker's
+  // session as deaf (dump attached to the failing test). The worker shutdown
+  // probe then skips its own ping and dump: the session is the same one,
+  // still deaf, and a second dump would only duplicate the attachment.
+  deafSessionRecorded?: boolean;
 }
 
 /** Tags whose tests intentionally run with an AI assistant active. */
@@ -463,12 +468,14 @@ export const test = base.extend<
       if (odbcDir) {
         await applyOdbcSysIni(session.page, odbcDir);
       }
-      await use({ page: session.page, consoleBuffer });
-      await recordDeafSessionAtShutdown(
-        session.page,
-        process.env.PW_SANDBOX ?? os.tmpdir(),
-        sessionsRunLocally(mode, externalServerUrl()),
-      );
+      const context: SessionContext = { page: session.page, consoleBuffer };
+      await use(context);
+      if (!context.deafSessionRecorded)
+        await recordDeafSessionAtShutdown(
+          session.page,
+          process.env.PW_SANDBOX ?? os.tmpdir(),
+          sessionsRunLocally(mode, externalServerUrl()),
+        );
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
@@ -478,14 +485,16 @@ export const test = base.extend<
       attachConsoleCapture(session.page, consoleBuffer);
       await recordVersions(session.page, 'desktop');
       await verifyTestManifestIfRequested(session);
-      await use({
+      const context: SessionContext = {
         page: session.page,
         consoleBuffer,
         logDir: session.logDir,
         configRoot: session.configRoot,
-      });
+      };
+      await use(context);
       await logPositAssistantVersionIfInstalled(session);
-      await recordDeafSessionAtShutdown(session.page, session.logDir, true);
+      if (!context.deafSessionRecorded)
+        await recordDeafSessionAtShutdown(session.page, session.logDir, true);
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
@@ -579,6 +588,7 @@ export const test = base.extend<
       let failure: Error;
       if (cause instanceof DeafSessionError) {
         failure = await attachDeafSessionDiagnostics(testInfo, cause, pageNote, sessionsAreLocal);
+        rstudioSession.deafSessionRecorded = true;
       } else {
         // Answered, but with an error that outlasted the probe's retries:
         // the session is not deaf, so no stack dump; the RPC detail in the
@@ -657,13 +667,23 @@ export const test = base.extend<
       try {
         await probeSessionLiveness(page);
       } catch (err) {
-        if (err instanceof DeafSessionError)
+        if (err instanceof DeafSessionError) {
           deaf = await attachDeafSessionDiagnostics(testInfo, err, `detected after the test (status: ${testInfo.status})`, sessionsAreLocal);
+          rstudioSession.deafSessionRecorded = true;
+        }
       }
     }
 
     if (willFail)
       await attachFailureContext();
+
+    // The drained exceptions are already cleared from the page, and a session
+    // that was already deaf when they were raised never logged them either,
+    // so print them before a deaf throw takes precedence over the exception
+    // failure below.
+    const detail = raised.map((e) => `${e.message}\n${e.stack}`).join('\n---\n');
+    if (deaf && raised.length > 0)
+      console.warn(`[client-exception] during "${testInfo.title}" (session went deaf):\n${detail}`);
 
     if (wedge)
       throw wedge;
@@ -671,7 +691,6 @@ export const test = base.extend<
       throw deaf;
 
     if (raised.length > 0) {
-      const detail = raised.map((e) => `${e.message}\n${e.stack}`).join('\n---\n');
       if (ignoreClientExceptions) {
         console.warn(`[client-exception] during "${testInfo.title}" (ignored by env):\n${detail}`);
       } else {

@@ -145,7 +145,8 @@ const DUMP_LIMIT = 1024 * 1024;
  * then gdb when it is installed and may attach. Ubuntu's default
  * ptrace_scope refuses a non-descendant, which rsession is to gdb even
  * though both descend from the worker, so the script escalates with
- * passwordless `sudo -n` where that exists (the CI runners) and otherwise
+ * passwordless `sudo -n` where that exists (the Ubuntu runners; the other
+ * Linux engines run as an unprivileged test user without gdb) and otherwise
  * says so. Windows: not attempted.
  */
 export function dumpRSessionStacks(): string {
@@ -207,11 +208,13 @@ export async function attachDeafSessionDiagnostics(
       'sample or attach a debugger to the rsession on that host';
     console.error(`[deaf-session] ${cause.message}; ${pageNote}; sessions are remote, no stack dump taken`);
   }
+  // Not only the #19236 case: while the console is executing, the ping is
+  // served from R's event loop, so long compiled code that never yields
+  // looks the same. The stack dump tells them apart; the message must not.
   return new Error(
     `session is not serving requests (${cause.message}). The page answers but the ` +
-    'session main thread does not: R is most likely running code dispatched from the ' +
-    `idle event loop (#19236) -- ${evidence}. Failing fast so the worker restarts ` +
-    'with a fresh session.',
+    `session main thread does not (e.g. #19236) -- ${evidence}. ` +
+    'Failing fast so the worker restarts with a fresh session.',
   );
 }
 
@@ -226,7 +229,8 @@ export async function attachDeafSessionDiagnostics(
  * that would otherwise take the evidence with it (the workflows' end-of-shard
  * dump finds nothing after a Desktop teardown). A healthy session costs a
  * ping; a page without a JS context (the #18394 wedge) is left alone, since
- * that says nothing about the session.
+ * that says nothing about the session. The fixture skips this call when a
+ * per-test probe already recorded the session as deaf.
  */
 export async function recordDeafSessionAtShutdown(
   page: Page,
