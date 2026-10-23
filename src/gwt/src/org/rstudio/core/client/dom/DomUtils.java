@@ -901,6 +901,12 @@ public class DomUtils
       return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && isCommandPressed;
    }
 
+   // Whether a listener that ran earlier for this event (e.g. Ace's own, on
+   // the same element) has already called preventDefault() on it.
+   public static native boolean isDefaultPrevented(NativeEvent event) /*-{
+      return !!event.defaultPrevented;
+   }-*/;
+
    // Returns the relative vertical position of a child to its parent.
    // Presumes that the parent is one of the elements from which the child's
    // position is computed; if this is not the case, the child's position
