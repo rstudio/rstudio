@@ -465,6 +465,20 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect(peek).toHaveCount(0);
     await expect(page.locator(CONSOLE_OUTPUT)).toContainText('slept-through', { timeout: 20000 });
 
+    // the companion: with no peek to spend it on, Escape in the editor still
+    // interrupts R, so the sleep is cut short and its marker never prints
+    await executeInConsole(page, 'Sys.sleep(30); cat(paste0("slept-", "undisturbed"), "\\n")', {
+      wait: false,
+    });
+    await expect(page.locator('#rstudio_console_input')).toHaveClass(/rstudio-console-busy/);
+    await editor.focus();
+    await expect(peek).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#rstudio_console_input')).not.toHaveClass(/rstudio-console-busy/, {
+      timeout: 10000,
+    });
+    await expect(page.locator(CONSOLE_OUTPUT)).not.toContainText('slept-undisturbed');
+
     // RStudio rebuilds the editor's keyboard handlers on keybinding and file
     // type changes; an open peek keeps its Escape through that
     await executeCommand(page, 'vcsShowChange');
@@ -480,6 +494,21 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await editor.focus();
     await page.keyboard.press('Escape');
     await expect(peek).toHaveCount(0);
+
+    // screen reader support binds Ace's own Escape (blurTextInput) on the same
+    // command manager, here after the peek's command since the file is already
+    // open; the peek's still wins, so Escape closes it and leaves focus alone
+    try {
+      await setPref(page, 'enable_screen_reader', true);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(peek).toBeVisible({ timeout: 10000 });
+      await editor.focus();
+      await page.keyboard.press('Escape');
+      await expect(peek).toHaveCount(0);
+      await expect.poll(() => editor.isFocused()).toBe(true);
+    } finally {
+      await clearPref(page, 'enable_screen_reader');
+    }
 
     // a removal's peek lists the removed lines
     await editor.gotoLine(7);

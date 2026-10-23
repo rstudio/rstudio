@@ -226,11 +226,15 @@ var GitDiffGutter = function(editor, strings) {
    // setKeyboardHandler keeps when RStudio rebuilds the editor's handlers
    // (file type or keybinding changes, re-attach), and the lowest in
    // precedence, so the completion popup and a Vim or Emacs mode, which own
-   // Escape while active, still see the key first.
+   // Escape while active, still see the key first. Among commands on the
+   // same key Ace tries the last one registered first, so screen reader
+   // support's blurTextInput would take Escape whenever it was added after
+   // this one (a file opened with ext-diff already loaded, or the pref turned
+   // on later); the explicit position puts this command ahead regardless.
    var self = this;
    editor.commands.addCommand({
       name: "closeGitPeek",
-      bindKey: "Esc",
+      bindKey: { win: "Esc", mac: "Esc", position: 1 },
       readOnly: true,
       isAvailable: function() { return self.peek != null; },
       exec: function() { self.closePeek(); }
