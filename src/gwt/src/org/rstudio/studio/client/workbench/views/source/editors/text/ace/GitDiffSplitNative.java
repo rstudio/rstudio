@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants;
+
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
@@ -25,10 +28,28 @@ public class GitDiffSplitNative extends JavaScriptObject
 {
    protected GitDiffSplitNative() {}
 
-   public static native GitDiffSplitNative create(GitDiffGutterNative gutter,
-                                                  Element container) /*-{
+   public static GitDiffSplitNative create(GitDiffGutterNative gutter, Element container)
+   {
+      return create(gutter, container, constants_);
+   }
+
+   // the pane's text comes from the IDE's translations rather than the module
+   private static native GitDiffSplitNative create(GitDiffGutterNative gutter,
+                                                   Element container,
+                                                   EditorsTextConstants constants) /*-{
+      var strings = {
+         baseEditor: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitDiffBaseEditor()(),
+         noBase: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitDiffBaseEmpty()()
+      };
+
       var GitDiffSplitView = $wnd.require("rstudio/git_diff_split").GitDiffSplitView;
-      return new GitDiffSplitView(gutter, container);
+      return new GitDiffSplitView(gutter, container, strings);
+   }-*/;
+
+   // Shows the notice for a document with no staged or committed version
+   // (and hides it otherwise, a base that is merely absent included).
+   public final native void setUntracked(boolean untracked) /*-{
+      this.setUntracked(untracked);
    }-*/;
 
    public final native void resize() /*-{
@@ -53,4 +74,6 @@ public class GitDiffSplitNative extends JavaScriptObject
    public final native void dispose() /*-{
       this.dispose();
    }-*/;
+
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

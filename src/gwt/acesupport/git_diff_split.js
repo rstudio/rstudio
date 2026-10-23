@@ -33,10 +33,15 @@ var SplitDiffView = require("ace/ext/diff/split_diff_view").SplitDiffView;
 var BASE_CLASS = "ace_git-diff-base";
 var EMPTY_CLASS = "ace_git-diff-base-empty";
 
-var EMPTY_MESSAGE = "This file has no staged or committed version to compare with.";
+// Text shown to the user; the IDE passes its translations in (see
+// GitDiffSplitNative), these stand in without them.
+var DEFAULT_STRINGS = {
+   baseEditor: "Staged or committed version, read-only",
+   noBase: "This file has no staged or committed version to compare with."
+};
 
-// Renderer options the base editor copies from the live one, so that the two
-// sides look alike.
+// Renderer options the base editor copies from the live one, and keeps
+// following (see syncRendererOptions), so that the two sides look alike.
 var RENDERER_OPTIONS = [
    "showGutter",
    "showLineNumbers",
@@ -70,9 +75,10 @@ function eachFold(folds, callback) {
    });
 }
 
-var GitDiffSplitView = function(gutter, container) {
+var GitDiffSplitView = function(gutter, container, strings) {
    this.gutter = gutter;
    this.container = container;
+   this.strings = strings || DEFAULT_STRINGS;
    this.alignmentWidgets = [];
    this.focusHandlers = [];
    this.foldsStale = true;
@@ -81,6 +87,7 @@ var GitDiffSplitView = function(gutter, container) {
    this.onBaseFocus = this.onBaseFocus.bind(this);
    this.syncFont = this.syncFont.bind(this);
    this.syncMode = this.syncMode.bind(this);
+   this.syncRendererOptions = this.syncRendererOptions.bind(this);
    this.syncTabSize = this.syncTabSize.bind(this);
    this.syncWrap = this.syncWrap.bind(this);
 
@@ -93,6 +100,8 @@ var GitDiffSplitView = function(gutter, container) {
    // that is turned off by the overrides below
    SplitDiffView.call(this, { editorA: this.baseEditor, editorB: this.liveEditor });
 
+   this.$restrictStripes(this.markerA);
+   this.$restrictStripes(this.markerB);
    this.attachLiveHandlers();
    gutter.setSplitView(this);
 };
@@ -108,9 +117,10 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       editorEl.className = BASE_CLASS;
       this.container.appendChild(editorEl);
 
+      // a live region, so that the notice is announced when it appears
       var emptyEl = document.createElement("div");
       emptyEl.className = EMPTY_CLASS;
-      emptyEl.textContent = EMPTY_MESSAGE;
+      emptyEl.setAttribute("role", "status");
       emptyEl.style.display = "none";
       this.container.appendChild(emptyEl);
       this.emptyEl = emptyEl;
@@ -126,11 +136,15 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       editor.setOption("useResizeObserver", false);
       editor.on("focus", this.onBaseFocus);
 
-      RENDERER_OPTIONS.forEach(function(option) {
-         editor.renderer.setOption(option, liveEditor.renderer.getOption(option));
-      });
+      // The label of the read-only base, for assistive technology: on the
+      // input itself, as the IDE labels its editors, and as the prefix Ace
+      // puts ahead of "Cursor at row N" when its keyboard accessibility
+      // mode relabels the input on focus.
+      editor.setOption("textInputAriaLabel", this.strings.baseEditor);
+      editor.textInput.getElement().setAttribute("aria-label", this.strings.baseEditor);
 
       this.baseEditor = editor;
+      this.syncRendererOptions();
       this.syncFont();
 
       var session = editor.session;
@@ -160,6 +174,19 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       style.fontSize = live.fontSize;
       style.lineHeight = live.lineHeight;
       this.baseEditor.renderer.updateFontSize();
+   };
+
+   // The renderer options have no change event of their own; they are
+   // checked as the live editor renders, which a change to any of them
+   // brings about.
+   this.syncRendererOptions = function() {
+      var live = this.liveEditor.renderer;
+      var base = this.baseEditor.renderer;
+      RENDERER_OPTIONS.forEach(function(option) {
+         var value = live.getOption(option);
+         if (base.getOption(option) !== value)
+            base.setOption(option, value);
+      });
    };
 
    // Tokenization and folding come from a mode of the live session's kind.
@@ -209,6 +236,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       session.on("changeWrapMode", this.syncWrap);
       session.on("changeWrapLimit", this.syncWrap);
       this.liveEditor.renderer.on("changeCharacterSize", this.syncFont);
+      this.liveEditor.renderer.on("afterRender", this.syncRendererOptions);
    };
 
    this.detachLiveHandlers = function() {
@@ -218,6 +246,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       session.off("changeWrapMode", this.syncWrap);
       session.off("changeWrapLimit", this.syncWrap);
       this.liveEditor.renderer.off("changeCharacterSize", this.syncFont);
+      this.liveEditor.renderer.off("afterRender", this.syncRendererOptions);
    };
 
    // Ace keeps the two sides scrolling together from the moment the view is
@@ -421,6 +450,33 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       session._signal("changeFold", { data: { start: { row: 0 } } });
    };
 
+   // Ace's change highlighter stripes the rows of every line widget in a
+   // session as alignment padding, not only ours: chunk output hides the
+   // stripes under its own background, but a multi-line Assistant suggestion
+   // has none. For the duration of a draw, a foreign widget is stood in for
+   // by a hidden copy of the same height, which keeps its rows where they
+   // are and has the highlighter pass it over.
+   this.$restrictStripes = function(marker) {
+      var self = this;
+      var update = marker.update;
+      marker.update = function(html, markerLayer, session, config) {
+         var widgets = session.lineWidgets;
+         if (widgets) {
+            session.lineWidgets = widgets.map(function(w) {
+               if (!w || self.alignmentWidgets.indexOf(w) !== -1)
+                  return w;
+               return { rowCount: w.rowCount, rowsAbove: w.rowsAbove, hidden: true };
+            });
+         }
+
+         try {
+            update.call(marker, html, markerLayer, session, config);
+         } finally {
+            session.lineWidgets = widgets;
+         }
+      };
+   };
+
    // Ace's detach also restores the options it had forced (none here) and
    // collapses the selection in both editors, which the live one should keep.
    this.detach = function() {
@@ -433,8 +489,9 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
 
    // ---- Driven by the gutter ---------------------------------------------
 
-   // The base lines as the gutter split them (null when there is no base);
-   // the base session shows them verbatim so that chunk rows line up.
+   // The base lines as the gutter split them (null while there is no base:
+   // not fetched yet, not fetchable, or none to fetch); the base session
+   // shows them verbatim so that chunk rows line up.
    this.setBaseLines = function(lines) {
       var session = this.baseEditor.session;
       var text = lines ? lines.join("\n") : "";
@@ -453,8 +510,15 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          this.foldsStale = true;
       }
 
-      this.emptyEl.style.display = lines ? "none" : "";
       this.baseEditor.renderer.theme = this.liveEditor.renderer.theme;
+   };
+
+   // Whether the document is known to have no staged or committed version,
+   // as opposed to a base that is not (yet) at hand: only then does the
+   // pane say so, rather than sit empty.
+   this.setUntracked = function(untracked) {
+      this.emptyEl.textContent = untracked ? this.strings.noBase : "";
+      this.emptyEl.style.display = untracked ? "" : "none";
    };
 
    // Whitespace-insensitive diffs were computed on lines with their

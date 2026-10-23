@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -56,14 +57,18 @@ import com.google.inject.Provider;
 // has that version.
 public class TextEditingTargetGitDiffGutter
 {
+   // closeDiffSplit closes the document's side-by-side view, for when the
+   // gutter driving it goes away; see detach().
    public TextEditingTargetGitDiffGutter(DocDisplay docDisplay,
                                          DocUpdateSentinel sentinel,
-                                         ArrayList<HandlerRegistration> releaseOnDismiss)
+                                         ArrayList<HandlerRegistration> releaseOnDismiss,
+                                         Command closeDiffSplit)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       docDisplay_ = docDisplay;
       sentinel_ = sentinel;
+      closeDiffSplit_ = closeDiffSplit;
 
       if (isGitSession())
       {
@@ -296,6 +301,7 @@ public class TextEditingTargetGitDiffGutter
       // outside (staging in the Terminal) is picked up on a click into the
       // base pane too
       diffSplit_.onFocus(() -> scheduleRefresh());
+      diffSplit_.setUntracked(untracked_);
       diffSplitWidget_.setView(diffSplit_);
    }
 
@@ -315,14 +321,20 @@ public class TextEditingTargetGitDiffGutter
       splitGutter_.setBase(baseContents_);
    }
 
-   private void setBase(String contents, String id)
+   // A null base comes with whether the document is known to have none
+   // (untracked), as opposed to one not at hand -- not fetched yet, or not
+   // fetchable -- which the side-by-side pane tells apart.
+   private void setBase(String contents, String id, boolean untracked)
    {
       baseContents_ = contents;
       baseId_ = (contents == null) ? null : id;
+      untracked_ = untracked;
       if (gutter_ != null)
          gutter_.setBase(contents);
       if (splitGutter_ != null)
          splitGutter_.setBase(contents);
+      if (diffSplit_ != null)
+         diffSplit_.setUntracked(untracked);
    }
 
    private GitDiffGutterNative createGutter(AceEditor editor)
@@ -368,17 +380,18 @@ public class TextEditingTargetGitDiffGutter
       basePath_ = null;
       baseContents_ = null;
       baseId_ = null;
+      untracked_ = false;
 
       disposeDiffSplit();
 
       // Without a gutter there is no diff to show side by side, so an open
       // view closes along with it (e.g. the markers turned off in Global
-      // Options). Not on dismiss, where the split is torn down regardless.
+      // Options) -- the view itself right away, not once the split state
+      // has made its round trip to the server (see
+      // TextEditingTarget.closeDiffSplit). Not on dismiss, where the split
+      // is torn down regardless.
       if (diffSplitWidget_ != null && !dismissed_)
-      {
-         sentinel_.setProperty(TextEditingTarget.EDITOR_SPLIT,
-                               TextEditingTarget.EDITOR_SPLIT_NONE);
-      }
+         closeDiffSplit_.execute();
 
       if (gutter_ != null)
       {
@@ -426,7 +439,7 @@ public class TextEditingTargetGitDiffGutter
          // before the new one arrives would restore the wrong contents.
          basePath_ = path;
          baseEncoding_ = encoding;
-         setBase(null, null);
+         setBase(null, null, false);
 
          // Nor must a revert still waiting on the old base: it would run
          // against the new path's base, whose chunks can share the old
@@ -472,9 +485,9 @@ public class TextEditingTargetGitDiffGutter
                   }
 
                   if (response.isTracked())
-                     setBase(response.getContents(), response.getId());
+                     setBase(response.getContents(), response.getId(), false);
                   else
-                     setBase(null, null);
+                     setBase(null, null, true);
                   runBaseCallbacks();
                }
 
@@ -488,7 +501,7 @@ public class TextEditingTargetGitDiffGutter
                   // A base that could not be re-fetched is not one to keep
                   // showing, let alone revert to; the next refresh (focus,
                   // Git operation) brings the markers back.
-                  setBase(null, null);
+                  setBase(null, null, false);
                   runBaseCallbacks();
                }
             });
@@ -496,6 +509,7 @@ public class TextEditingTargetGitDiffGutter
 
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel sentinel_;
+   private final Command closeDiffSplit_;
 
    private GitDiffGutterNative gutter_;
    private GitDiffGutterNative splitGutter_;
@@ -507,6 +521,7 @@ public class TextEditingTargetGitDiffGutter
    private String baseEncoding_;
    private String baseContents_;
    private String baseId_;
+   private boolean untracked_;
    private boolean attaching_;
    private boolean dismissed_;
    private boolean active_;

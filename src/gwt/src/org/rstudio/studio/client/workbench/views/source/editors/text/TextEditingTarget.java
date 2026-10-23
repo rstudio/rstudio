@@ -1671,7 +1671,8 @@ public class TextEditingTarget implements
 
       gitDiffGutter_ = new TextEditingTargetGitDiffGutter(docDisplay_,
                                                           docUpdateSentinel_,
-                                                          releaseOnDismiss_);
+                                                          releaseOnDismiss_,
+                                                          this::closeDiffSplit);
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
                                           commands_,
@@ -4085,6 +4086,18 @@ public class TextEditingTarget implements
    private boolean isDiffSplitActive()
    {
       return StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_DIFF);
+   }
+
+   // Closes the side-by-side view now (the gutter driving it is going away)
+   // and records the closed state as the commands do. The view is applied
+   // first, rather than on the property's round trip to the server as it
+   // usually is, so that the pane neither sits empty meanwhile nor stays
+   // should that round trip fail.
+   private void closeDiffSplit()
+   {
+      if (view_ != null)
+         applyEditorSplit(EDITOR_SPLIT_NONE);
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, EDITOR_SPLIT_NONE);
    }
 
    // The command is shared by every tab, so its checked state follows the

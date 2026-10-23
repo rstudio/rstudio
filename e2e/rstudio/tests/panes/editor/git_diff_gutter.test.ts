@@ -1118,6 +1118,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(base)).toBe(true);
 
+      // the pane says what it holds: a label on the base editor's input,
+      // ahead of Ace's own cursor-position label where that is in use
+      await expect(base.locator('textarea.ace_text-input')).toHaveAttribute(
+        'aria-label',
+        /^Staged or committed version, read-only/,
+      );
+
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => focusIn(live)).toBe(true);
     } finally {
@@ -1157,8 +1164,25 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       // markers return
       await executeCommand(page, 'vcsShowChangesSideBySide');
       await expect(base).toBeVisible({ timeout: 10000 });
-      await setPref(page, PREF, false);
-      await expect(base).toHaveCount(0);
+
+      // The view goes at once, pane and all -- not once the split state has
+      // been saved to the server, which here it never is: the save is made
+      // to fail, and no empty pane may be left behind by that.
+      const failSave = async (route: Route): Promise<void> => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ result: null, error: { code: 100, message: 'save failed' } }),
+        });
+      };
+      await page.route('**/modify_document_properties*', failSave);
+      try {
+        await setPref(page, PREF, false);
+        await expect(base).toHaveCount(0);
+        await expect(page.locator(DIFF_VIEW)).toHaveCount(0);
+      } finally {
+        await page.unroute('**/modify_document_properties*', failSave);
+      }
       await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(false);
       await expect.poll(() => isCommandEnabled(page, 'vcsShowChangesSideBySide')).toBe(false);
 
@@ -1169,6 +1193,52 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       expect(await isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(false);
     } finally {
       await setPref(page, PREF, true);
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('says a file has no base only when it is untracked, not when a fetch fails', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const notice = page.locator(BASE_EMPTY);
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...SEED_LINES, '']);
+      await expect(notice).toBeHidden();
+
+      // A re-fetch that fails drops the base (see the revert tests above)
+      // but says nothing about whether the file is tracked: the pane
+      // empties, and keeps the notice to itself, until a fetch succeeds.
+      const failFetch = async (route: Route): Promise<void> => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ result: null, error: { code: 100, message: 'git failed' } }),
+        });
+      };
+      await page.route('**/git_diff_base_contents*', failFetch);
+      try {
+        await executeCommand(page, 'activateVcs');
+        await executeCommand(page, 'vcsRefresh');
+        await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual(['']);
+        await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+        await expect(notice).toBeHidden();
+      } finally {
+        await page.unroute('**/git_diff_base_contents*', failFetch);
+      }
+
+      await executeCommand(page, 'vcsRefresh');
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...SEED_LINES, '']);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+      await expect(notice).toBeHidden();
+    } finally {
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
       await documentCloseAllNoSave(page);
@@ -1345,7 +1415,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
     type MeasuredEditor = {
       session: { getScrollTop(): number; getUseWrapMode(): boolean; getWrapLimit(): number };
-      renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } };
+      renderer: {
+        textToScreenCoordinates(row: number, column: number): { pageY: number };
+        getOption(name: string): unknown;
+      };
     };
     const scrollTop = (view: Locator) =>
       view.evaluate((el) =>
@@ -1409,7 +1482,20 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           return baseWrap.on && liveWrap.limit > 0 && baseWrap.limit === liveWrap.limit;
         })
         .toBe(true);
+
+      // so does Show Whitespace Characters, one of the renderer options the
+      // base copied when it was created
+      const invisibles = (view: Locator) =>
+        view.evaluate((el) =>
+          ((el as AceEditorElement).env?.editor as unknown as MeasuredEditor).renderer.getOption(
+            'showInvisibles',
+          ),
+        );
+      await setPref(page, 'show_invisibles', true);
+      await expect.poll(() => invisibles(live), { timeout: 10000 }).toBe(true);
+      await expect.poll(() => invisibles(base)).toBe(true);
     } finally {
+      await clearPref(page, 'show_invisibles');
       await clearPref(page, 'font_size_points');
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
@@ -1646,6 +1732,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     try {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
       await expect(base.locator(LINE_DELETED)).toHaveCount(1);
+
+      // nor are the output widget's rows striped as padding is (a widget
+      // with no background of its own would show that)
+      await expect(liveEditors(page, '1 + 1').locator(ALIGNMENT)).toHaveCount(0);
 
       await expectOutputKept();
       await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible();
