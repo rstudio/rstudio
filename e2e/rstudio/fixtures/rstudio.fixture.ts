@@ -26,6 +26,7 @@ import * as os from 'os';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
+import { attachRemotePositaiLog } from '../utils/remote-session-logs';
 import { selectedPaiInstalls } from './pai-seed';
 
 type Mode = 'desktop' | 'server';
@@ -530,9 +531,14 @@ export const test = base.extend<
     // probes below so a test that fails in them still gets both attached.
     rstudioSession.consoleBuffer.length = 0;
     const logBaseline = snapshotLogSizes(rstudioSession.logDir);
+    const testStart = new Date();
+    const serverUrl = externalServerUrl();
     const attachFailureContext = async (): Promise<void> => {
       await attachBrowserConsole(testInfo, rstudioSession.consoleBuffer);
       await attachSessionLogs(testInfo, rstudioSession.logDir, logBaseline);
+      // A deaf session can't serve /files/, so the fetch would only time out.
+      if (mode === 'server' && serverUrl !== null && !rstudioSession.deafSessionRecorded)
+        await attachRemotePositaiLog(page, testInfo, serverUrl, testStart);
     };
 
     // Drain exceptions that arrived BEFORE this test (a previous test's
