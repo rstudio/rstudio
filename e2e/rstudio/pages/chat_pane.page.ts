@@ -231,6 +231,19 @@ export class ChatPane extends FramePageObject {
   }
 
   /**
+   * The text Send's aria-describedby points at, which says why it is disabled
+   * when no model is selected (PA #2779); '' when it has no description.
+   * Read just after a wait on Send, so a Send that is gone fails within 1s
+   * rather than holding up that wait's failure for the full action timeout.
+   */
+  async sendDescription(): Promise<string> {
+    return this.sendBtn.evaluate((button) => {
+      const ids = (button.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+      return ids.map((id) => button.ownerDocument.getElementById(id)?.textContent ?? '').join(' ');
+    }, undefined, { timeout: 1000 });
+  }
+
+  /**
    * Type into the chat composer. Playwright's fill() is unreliable on a
    * ProseMirror contenteditable (it bypasses the editor's input handling), so
    * focus the editor and dispatch real key events instead.
