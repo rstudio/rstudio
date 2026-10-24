@@ -188,9 +188,24 @@ function(fetch)
       endif()
 
       if(${_PREFIX}_ENABLED)
-         if(NOT ${_PREFIX}_ALWAYS_FETCH AND (RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX}))
-            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
-         else()
+         set(do_fetch TRUE)
+         if(DEFINED RSTUDIO_USE_SYSTEM_${_PREFIX})
+            if(RSTUDIO_USE_SYSTEM_${_PREFIX})
+               if(${_PREFIX}_ALWAYS_FETCH)
+                  message(FATAL_ERROR "RSTUDIO_USE_SYSTEM_${_PREFIX} was explicitly enabled but "
+                                      "${_NAME} must be fetched and an installed version cannot be used.")
+               endif()
+               set(do_fetch FALSE)
+            endif()
+         elseif(RSTUDIO_USE_SYSTEM_DEPENDENCIES)
+               if(${_PREFIX}_ALWAYS_FETCH)
+                  message(WARNING "RSTUDIO_USE_SYSTEM_DEPENDENCIES was enabled but "
+                                  "${_NAME} will still be fetched instead of using an installed version.")
+               else()
+                  set(do_fetch FALSE)
+               endif()
+         endif()
+         if(do_fetch)
             set(${_PREFIX}_FETCHED TRUE)
 
             FetchContent_Declare("${_NAME}"
@@ -199,6 +214,9 @@ function(fetch)
                GIT_SHALLOW    ON
                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
                EXCLUDE_FROM_ALL)
+         else()
+            set(${_PREFIX}_FETCHED FALSE)
+            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
          endif()
       endif()
 
