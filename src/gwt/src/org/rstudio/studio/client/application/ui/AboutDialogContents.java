@@ -19,6 +19,8 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
@@ -68,8 +70,12 @@ public class AboutDialogContents extends Composite
 
       // a11y
       productName.getElement().setTabIndex(-1);
-      gplLinkLabel.getElement().setId("gplLinkLabel");
-      Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
+      // Read the hint as each new-window link's description, not as a separate item
+      A11y.setARIAHidden(newWindowHint);
+      DomUtils.ensureHasId(newWindowHint.getElement());
+      Id newWindowHintId = Id.of(newWindowHint.getElement());
+      Roles.getLinkRole().setAriaDescribedbyProperty(trademarkLink.getElement(), newWindowHintId);
+      Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), newWindowHintId);
 
       userAgentLabel.setText(Window.Navigator.getUserAgent() + quartoDetails);
       buildLabel.setText(
@@ -154,7 +160,8 @@ public class AboutDialogContents extends Composite
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField InlineLabel supportNotice;
+   @UiField Anchor trademarkLink;
    @UiField Anchor gplLink;
-   @UiField Label gplLinkLabel;
+   @UiField InlineLabel newWindowHint;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
