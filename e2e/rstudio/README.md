@@ -150,10 +150,16 @@ assertion are still recoverable: `browser-console.log` (buffered
 the test body) and, on Desktop, the slice of each rsession log file
 (`RSTUDIO_DATA_HOME/log/*.log`) written while the test ran. Both are scoped
 to the single test -- the console buffer is cleared and the log byte-offsets
-are snapshotted at test start. This is separate from the fixture failing a
-test on uncaught client exceptions (see `window.rstudio.errors` in
-`CLAUDE.md`): the exception itself fails the test; the attachments add the
-surrounding browser-console and backend-log context.
+are snapshotted at test start. Against an external server
+(`PW_RSTUDIO_SERVER_URL`), whose log directory the harness can't read, the
+fixture instead attaches the Posit Assistant backend's `positai.log`, fetched
+through the session's `/files/` endpoint from the account's default data home
+and trimmed to the entries stamped since the test started; the account's
+sessions share that log, so other workers' entries can be interleaved. This
+is separate from the fixture failing a test on uncaught client exceptions
+(see `window.rstudio.errors` in `CLAUDE.md`): the exception itself fails the
+test; the attachments add the surrounding browser-console and backend-log
+context.
 
 Before each test the fixture also round-trips the session's main thread
 (`window.rstudio.session.ping()`, bounded by `probeSessionLiveness()` in
