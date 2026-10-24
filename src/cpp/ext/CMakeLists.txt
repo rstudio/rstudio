@@ -216,6 +216,13 @@ function(fetch)
                EXCLUDE_FROM_ALL)
          else()
             find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
+
+            # GLOBAL only promotes imported targets; variables set by the package's
+            # config stay in this function's scope. Pass up the include dirs for
+            # packages that export no target (e.g. RapidJSON 1.1.0).
+            if(DEFINED ${_PREFIX}_INCLUDE_DIRS)
+               set(${_PREFIX}_INCLUDE_DIRS "${${_PREFIX}_INCLUDE_DIRS}" PARENT_SCOPE)
+            endif()
          endif()
       endif()
 
