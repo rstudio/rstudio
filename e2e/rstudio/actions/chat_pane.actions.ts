@@ -18,6 +18,10 @@ import {
 const TURN_IDLE_SAMPLES = 4;
 const TURN_IDLE_SAMPLE_INTERVAL_MS = 500;
 
+// How long Send may stay disabled after a prompt is typed. It enables at once
+// whenever the assistant has a model to send with.
+const SEND_ENABLED_TIMEOUT_MS = 15000;
+
 // Floor for waitForResponse's settle window, used when the caller's own
 // budget has already been spent waiting for the response to appear.
 const MIN_TURN_SETTLE_MS = 30000;
@@ -620,9 +624,39 @@ export class ChatPaneActions {
     await this.chatPane.typeMessage(text);
 
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
+    await this.waitForSendEnabled();
     await this.chatPane.sendBtn.click();
 
     return baseline;
+  }
+
+  /**
+   * Wait for Send to enable after typing. It stays disabled while the assistant
+   * has no model, which a signed-in session reaches when Posit AI briefly can't
+   * be read: the assistant then shows its provider-setup overlay until the
+   * backend pushes an update (posit-dev/assistant#2850). Treat that as an outage
+   * when the service is unreachable from the runner too, and otherwise fail
+   * naming the state rather than with a bare click timeout.
+   */
+  private async waitForSendEnabled(): Promise<void> {
+    try {
+      await expect(this.chatPane.sendBtn).toBeEnabled({ timeout: SEND_ENABLED_TIMEOUT_MS });
+    } catch (err) {
+      if ((await this.chatPane.noModelReason.count()) === 0) {
+        throw err;
+      }
+      await this.skipIfServiceGone();
+      throw new Error(
+        `Send stayed disabled for ${SEND_ENABLED_TIMEOUT_MS}ms because Posit Assistant has no ` +
+        'model to send with ("Please pick a model"). Where positai.log is attached ' +
+        '(Desktop and external-server runs), it shows whether the backend fetched models.'
+      );
+    }
+  }
+
+  /** Skip the test when Posit AI is unreachable from the runner (see skipIfAiServiceGone). */
+  async skipIfServiceGone(): Promise<void> {
+    await skipIfAiServiceGone('positai');
   }
 
   async waitForResponse(initialCount: number, timeout: number = 60000): Promise<number> {

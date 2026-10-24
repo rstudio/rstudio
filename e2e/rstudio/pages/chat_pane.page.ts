@@ -19,6 +19,7 @@ export class ChatPane extends FramePageObject {
   public allowDropdownTrigger: Locator;
   public allowForSessionItem: Locator;
   public sendBtn: Locator;
+  public noModelReason: Locator;
   public stopBtn: Locator;
   public installBtn: Locator;
   public updateBtn: Locator;
@@ -75,6 +76,9 @@ export class ChatPane extends FramePageObject {
     this.allowDropdownTrigger = this.frame.locator('button.rounded-l-none:has(svg.lucide-chevron-down)');
     this.allowForSessionItem = this.frame.locator('[role="menuitem"]:has-text("for this session")');
     this.sendBtn = this.frame.locator("button:has(svg.lucide-arrow-up)");
+    // Why Send is disabled when no model is selected: visually hidden text the
+    // button's aria-describedby points at (PA #2779), also its tooltip's text.
+    this.noModelReason = this.frame.getByText(/pick a model/i);
     this.stopBtn = this.frame.locator("button:has(svg.lucide-square)");
     this.installBtn = this.frame.locator("button:has-text('Install')");
     this.updateBtn = this.frame.locator("button:has-text('Update')");
