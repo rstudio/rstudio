@@ -155,8 +155,9 @@ are snapshotted at test start. Against an external server
 fixture instead attaches the Posit Assistant backend's `positai.log`, fetched
 through the session's `/files/` endpoint from the account's default data home
 and trimmed to the entries stamped since the test started; the account's
-sessions share that log, so other workers' entries can be interleaved. This is separate from the fixture failing a
-test on uncaught client exceptions (see `window.rstudio.errors` in
+sessions share that log, so other workers' entries can be interleaved. This
+is separate from the fixture failing a test on uncaught client exceptions
+(see `window.rstudio.errors` in
 `CLAUDE.md`): the exception itself fails the test; the attachments add the
 surrounding browser-console and backend-log context.
 
