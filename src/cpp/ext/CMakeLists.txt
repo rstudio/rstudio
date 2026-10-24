@@ -546,6 +546,14 @@ if(TARGET pcre)
 endif()
 
 
+# The test targets link 'gtest', which only a fetched googletest defines; an
+# installed GTest exports 'GTest::gtest'. Without this, they fall back to a
+# vendored copy under src/cpp/tests that no longer exists.
+if(NOT TARGET gtest AND TARGET GTest::gtest)
+   add_library(gtest ALIAS GTest::gtest)
+endif()
+
+
 # Create dtl target.
 add_library(rstudio-dtl INTERFACE EXCLUDE_FROM_ALL)
 target_include_directories(rstudio-dtl INTERFACE "${DTL_SOURCE_DIR}")
