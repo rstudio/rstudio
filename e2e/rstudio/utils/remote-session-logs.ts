@@ -57,6 +57,12 @@ export async function attachRemotePositaiLog(
       return;
     }
     log = await response.text();
+    // A sign-in page or other non-log answer (redirects are followed) would
+    // otherwise read as a log with nothing recent, and never be noticed.
+    if (!log.split('\n').some((line) => LOG_TIMESTAMP.test(line))) {
+      console.warn(`[positai.log] not attached: GET ${url} returned no timestamped log lines`);
+      return;
+    }
   } catch (err) {
     console.warn(`[positai.log] not attached: GET ${url} failed: ${err}`);
     return;

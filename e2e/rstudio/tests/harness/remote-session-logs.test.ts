@@ -109,6 +109,38 @@ test('attaches nothing when the session has no log or fails to serve it', async 
   }
 });
 
+test('warns when the session answers with something other than a log', async ({ page }) => {
+  const server = await serveFiles(200, '<html><body>Sign in to RStudio</body></html>');
+  const warnings: string[] = [];
+  const warn = console.warn;
+  console.warn = (message: string) => { warnings.push(message); };
+  try {
+    const { testInfo, attached } = recordingTestInfo();
+    await attachRemotePositaiLog(page, testInfo, server.url, TEST_START);
+    expect(attached.size).toBe(0);
+    expect(warnings).toEqual([expect.stringMatching(/no timestamped log lines/)]);
+  } finally {
+    console.warn = warn;
+    await server.close();
+  }
+});
+
+test('attaches nothing, quietly, when the log has no entries since the test started', async ({ page }) => {
+  const server = await serveFiles(200, LOG);
+  const warnings: string[] = [];
+  const warn = console.warn;
+  console.warn = (message: string) => { warnings.push(message); };
+  try {
+    const { testInfo, attached } = recordingTestInfo();
+    await attachRemotePositaiLog(page, testInfo, server.url, new Date('2026-10-24T00:00:00.000Z'));
+    expect(attached.size).toBe(0);
+    expect(warnings).toEqual([]);
+  } finally {
+    console.warn = warn;
+    await server.close();
+  }
+});
+
 test('attaches nothing when the session cannot be reached', async ({ page }) => {
   const server = await serveFiles(200, LOG);
   const url = server.url;
