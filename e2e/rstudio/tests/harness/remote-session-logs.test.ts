@@ -87,7 +87,7 @@ test('fetches the log under the path prefix the server is served from', async ({
   const server = await serveFiles(200, LOG);
   try {
     const { testInfo, attached } = recordingTestInfo();
-    await attachRemotePositaiLog(page, testInfo, `${server.url}/rstudio/`, TEST_START);
+    await attachRemotePositaiLog(page, testInfo, `${server.url}/rstudio`, TEST_START);
 
     expect(server.paths).toEqual(['/rstudio/files/.local/share/rstudio/log/positai.log']);
     expect(attached.has('positai.log')).toBe(true);

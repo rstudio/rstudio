@@ -33,6 +33,7 @@ export function logSince(log: string, since: Date): string {
  * the harness can read the log directory itself (Desktop). The account's
  * sessions share the log, so other workers' entries can be interleaved. A
  * failure here is reported and dropped, so it can't mask the test's own.
+ * `serverUrl` has no trailing slash, as externalServerUrl() returns it.
  */
 export async function attachRemotePositaiLog(
   page: Page,
@@ -41,7 +42,7 @@ export async function attachRemotePositaiLog(
   since: Date,
 ): Promise<void> {
   // /files/ sits at the server's root, under any path prefix it is served from.
-  const url = `${serverUrl.replace(/\/+$/, '')}/files/${REMOTE_POSITAI_LOG}`;
+  const url = `${serverUrl}/files/${REMOTE_POSITAI_LOG}`;
   let log: string;
   try {
     const response = await page.request.get(url, {
