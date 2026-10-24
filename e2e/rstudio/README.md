@@ -157,9 +157,9 @@ through the session's `/files/` endpoint from the account's default data home
 and trimmed to the entries stamped since the test started; the account's
 sessions share that log, so other workers' entries can be interleaved. This
 is separate from the fixture failing a test on uncaught client exceptions
-(see `window.rstudio.errors` in
-`CLAUDE.md`): the exception itself fails the test; the attachments add the
-surrounding browser-console and backend-log context.
+(see `window.rstudio.errors` in `CLAUDE.md`): the exception itself fails the
+test; the attachments add the surrounding browser-console and backend-log
+context.
 
 Before each test the fixture also round-trips the session's main thread
 (`window.rstudio.session.ping()`, bounded by `probeSessionLiveness()` in
