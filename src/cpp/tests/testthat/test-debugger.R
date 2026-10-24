@@ -229,3 +229,37 @@ test_that("debugSourceRef only trusts the runtime srcref for located functions",
    expect_null(.rs.debugSourceRef(1000L, runtimeRef, NULL))
 
 })
+
+test_that("debugSource() handles files without source references (#12375)", {
+
+   rfile <- tempfile(fileext = ".R")
+   on.exit(unlink(rfile), add = TRUE)
+
+   # with keep.source = FALSE, the file still runs; it just has no srcrefs
+   writeLines("x <- 42", con = rfile)
+   envir <- new.env()
+   withr::with_options(list(keep.source = FALSE), {
+      fun <- .rs.makeSourceEquivFunction(rfile, "unknown", envir)
+   })
+   fun()
+   expect_identical(envir$x, 42)
+
+})
+
+test_that("debugSource() handles files with no expressions", {
+
+   rfile <- tempfile(fileext = ".R")
+   on.exit(unlink(rfile), add = TRUE)
+
+   # empty and comment-only files parse to zero expressions
+   for (contents in list(character(), "# only a comment")) {
+      writeLines(contents, con = rfile)
+      for (keepSource in c(TRUE, FALSE)) {
+         withr::with_options(list(keep.source = keepSource), {
+            fun <- .rs.makeSourceEquivFunction(rfile, "unknown", new.env())
+         })
+         expect_error(fun(), NA)
+      }
+   }
+
+})
