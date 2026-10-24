@@ -76,8 +76,34 @@ std::atomic<int> s_sessionExecuting(0);
 // leaked: locked by the offline service thread (#18318)
 boost::mutex& s_sessionExecutingMutex = core::make_leaked<boost::mutex>();
 
-// last prompt we issued
+// last top-level prompt we issued
 std::string s_lastPrompt;
+
+// the prompt of the console read waiting for input right now, with its
+// history flag (true for the REPL prompt; false for an interactive one:
+// readline(), menu(), ...). rConsoleRead keeps it current across nested
+// reads, so restoreConsolePrompt() reissues the right one
+std::string s_currentPrompt;
+bool s_currentPromptAddToHistory = true;
+
+// prompts issued so far; a change over a stretch of code says the client's
+// prompt is no longer the waiting read's (see restoreConsolePrompt)
+unsigned s_promptsIssued = 0;
+
+// times the queue was cleared (an interrupt, an uncaught error with the
+// discard pref on), empty or not; a change over a stretch of code says such
+// a reset ran inside it (see waitForMethod, which holds input of its own)
+unsigned s_bufferClears = 0;
+
+// times a clear found input queued; a change over a stretch of code says
+// input pending then was discarded (R's console reset runs on every uncaught
+// error, with the queue usually empty)
+unsigned s_inputDiscards = 0;
+
+// console reads completed (input handed to R); a change over a stretch of
+// code says a read ran inside it -- one that prompted, or one satisfied from
+// the queue without prompting
+unsigned s_readsCompleted = 0;
 
 void setSessionExecuting(bool executing)
 {
@@ -166,7 +192,10 @@ void setExecuting(bool executing)
    }
 }
 
-void consolePrompt(const std::string& prompt, bool addToHistory)
+// issue a console prompt to the client. `notifyModules` runs the prompt
+// hook, which to modules marks the REPL done evaluating input (the notebook
+// queue finishes a chunk on it): not for a prompt merely reissued
+void enqueConsolePrompt(const std::string& prompt, bool addToHistory, bool notifyModules)
 {
    // save the last prompt for re-issuing, but only when R is at the
    // top-level REPL. mid-execution prompts (e.g. readline, browser)
@@ -188,12 +217,19 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
-   
+   s_promptsIssued++;
+
    // allow modules to detect changes after execution of previous REPL
    module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
 
    // call prompt hook
-   module_context::events().onConsolePrompt(prompt);
+   if (notifyModules)
+      module_context::events().onConsolePrompt(prompt);
+}
+
+void consolePrompt(const std::string& prompt, bool addToHistory)
+{
+   enqueConsolePrompt(prompt, addToHistory, true);
 }
 
 void consoleInput(const std::string& input)
@@ -202,8 +238,11 @@ void consoleInput(const std::string& input)
    enqueueConsoleInput(consoleInput);
 }
 
-// extract console input -- can be either null (user hit escape) or a string
-Error extractConsoleInput(const json::JsonRpcRequest& request)
+// queue the console input a console_input request carries (a cancel is a
+// flag on it). `ahead` places it in front of input already queued: a
+// request the console read held while input handlers ran (see
+// waitForMethod) keeps its place ahead of input they let into the queue
+Error extractConsoleInput(const json::JsonRpcRequest& request, bool ahead)
 {
    std::string text;
    std::string console;
@@ -219,14 +258,45 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
       return error;
    
    using namespace r::session;
-   addToConsoleInputBuffer(RConsoleInput(text, console, flags));
-   
+   if (ahead)
+      s_consoleInputBuffer.push_front(RConsoleInput(text, console, flags));
+   else
+      addToConsoleInputBuffer(RConsoleInput(text, console, flags));
+
    return Success();
+}
+
+// console_input requests held by the waits of the console reads in progress
+// (see waitForMethod): a read nested in an input handler holds its own
+// while the enclosing read's stays held
+unsigned s_inputHeldDepth = 0;
+
+bool hasQueuedInput()
+{
+   return !s_consoleInputBuffer.empty();
+}
+
+bool hasPendingInput()
+{
+   return s_inputHeldDepth > 0 || hasQueuedInput();
+}
+
+void setInputHeld(bool held)
+{
+   if (held)
+      s_inputHeldDepth++;
+   else if (s_inputHeldDepth > 0)
+      s_inputHeldDepth--;
 }
 
 bool executing()
 {
    return s_rProcessingInput;
+}
+
+bool isRunningCode()
+{
+   return executing() || http_methods::processingIdleEvents();
 }
 
 void updateSessionExecuting()
@@ -242,9 +312,41 @@ void reissueLastConsolePrompt()
    consolePrompt(s_lastPrompt, false);
 }
 
+void restoreConsolePrompt()
+{
+   // the client's prompt only: the REPL evaluated nothing, so modules are
+   // not told of a prompt (a notebook chunk whose code is on its way to the
+   // console would be taken for done)
+   enqueConsolePrompt(s_currentPrompt, s_currentPromptAddToHistory, false);
+}
+
+unsigned promptsIssued()
+{
+   return s_promptsIssued;
+}
+
 void clearConsoleInputBuffer()
 {
+   if (!s_consoleInputBuffer.empty())
+      s_inputDiscards++;
+
    s_consoleInputBuffer = ConsoleInputQueue();
+   s_bufferClears++;
+}
+
+unsigned bufferClears()
+{
+   return s_bufferClears;
+}
+
+unsigned inputDiscards()
+{
+   return s_inputDiscards;
+}
+
+unsigned readsCompleted()
+{
+   return s_readsCompleted;
 }
 
 std::string languageAfterInput(const std::string& language, const std::string& input)
@@ -453,6 +555,13 @@ bool rConsoleRead(const std::string& prompt,
       if (init::isSessionInitialized())
          consolePrompt(prompt, addToHistory);
 
+      // this read's prompt is the one to restore while it waits; a read
+      // nested in an input handler puts the enclosing one back when done
+      std::string enclosingPrompt = s_currentPrompt;
+      bool enclosingAddToHistory = s_currentPromptAddToHistory;
+      s_currentPrompt = prompt;
+      s_currentPromptAddToHistory = addToHistory;
+
       // wait for console_input
       json::JsonRpcRequest request;
       bool succeeded = http_methods::waitForMethod(
@@ -461,14 +570,19 @@ bool rConsoleRead(const std::string& prompt,
                         boost::bind(canSuspend, prompt),
                         &request);
 
+      s_currentPrompt = enclosingPrompt;
+      s_currentPromptAddToHistory = enclosingAddToHistory;
+
       // exit process if we failed
       if (!succeeded)
          return false;
 
       // extract console input. if there is an error during extraction we log it
       // but still return and empty string and true (returning false will cause R
-      // to abort)
-      Error error = extractConsoleInput(request);
+      // to abort). the wait also ends with no request when input handlers let
+      // input into the queue (see waitForMethod); it is already queued. a
+      // request goes ahead of such input: it arrived first
+      Error error = request.method.empty() ? Success() : extractConsoleInput(request, true);
       if (error)
       {
          LOG_ERROR(error);
@@ -519,6 +633,8 @@ bool rConsoleRead(const std::string& prompt,
       clientEventQueue().add(promptEvent);
       enqueueConsoleInput(*pConsoleInput);
    }
+
+   s_readsCompleted++;
 
    // always return true (returning false causes the process to exit)
    return true;
