@@ -17,7 +17,7 @@ import { assert } from 'chai';
 import { describe } from 'mocha';
 import sinon from 'sinon';
 
-import { app, dialog } from 'electron';
+import { app, dialog, screen } from 'electron';
 
 import { setVars } from '../../../src/core/environment';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -78,6 +78,78 @@ if (!isWindowsDocker()) {
         sinon.stub(process, 'platform').value('linux');
         sinon.stub(app.commandLine, 'getSwitchValue').withArgs('ozone-platform').returns('wayland');
         assert.isTrue(emitUnmaximize().notCalled);
+      });
+    });
+
+    describe('collapsed maximized window recovery', () => {
+      let clock: sinon.SinonFakeTimers;
+      const workAreaSize = { width: 2560, height: 1408 };
+
+      beforeEach(() => {
+        clock = sinon.useFakeTimers();
+      });
+
+      afterEach(() => {
+        clock.restore();
+        sinon.restore();
+      });
+
+      function useWayland(): void {
+        sinon.stub(process, 'platform').value('linux');
+        sinon.stub(app.commandLine, 'getSwitchValue').withArgs('ozone-platform').returns('wayland');
+      }
+
+      // emit a resize with the window in the given state; returns the setSize
+      // and screen.getAllDisplays stubs
+      function emitResize(
+        maximized: boolean,
+        width: number,
+        height: number,
+        displays: number,
+      ): { setSize: sinon.SinonStub; getAllDisplays: sinon.SinonStub } {
+        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        sinon.stub(win.window, 'isMaximized').returns(maximized);
+        sinon.stub(win.window, 'getBounds').returns({ x: 0, y: 0, width, height });
+        const getAllDisplays = sinon
+          .stub(screen, 'getAllDisplays')
+          .returns(new Array(displays).fill(screen.getPrimaryDisplay()));
+        sinon.stub(screen, 'getDisplayMatching').returns({ ...screen.getPrimaryDisplay(), workAreaSize });
+        const setSize = sinon.stub(win.window, 'setSize');
+        win.window.emit('resize');
+        clock.tick(300);
+        return { setSize, getAllDisplays };
+      }
+
+      it('resizes a maximized window collapsed to its frame to the work area', () => {
+        useWayland();
+        const { setSize } = emitResize(true, 44, 44, 1);
+        assert.isTrue(setSize.calledOnceWithExactly(workAreaSize.width, workAreaSize.height));
+      });
+
+      it('waits for a display before resizing', () => {
+        useWayland();
+        const { setSize, getAllDisplays } = emitResize(true, 44, 44, 0);
+        assert.isTrue(setSize.notCalled);
+
+        getAllDisplays.returns([screen.getPrimaryDisplay()]);
+        screen.emit('display-added');
+        clock.tick(300);
+        assert.isTrue(setSize.calledOnceWithExactly(workAreaSize.width, workAreaSize.height));
+      });
+
+      it('leaves a maximized window of a usable size alone', () => {
+        useWayland();
+        assert.isTrue(emitResize(true, 2560, 1408, 1).setSize.notCalled);
+      });
+
+      it('leaves an unmaximized small window alone', () => {
+        useWayland();
+        assert.isTrue(emitResize(false, 44, 44, 1).setSize.notCalled);
+      });
+
+      it('does nothing off Wayland', () => {
+        sinon.stub(app.commandLine, 'getSwitchValue').returns('x11');
+        assert.isTrue(emitResize(true, 44, 44, 1).setSize.notCalled);
       });
     });
 
