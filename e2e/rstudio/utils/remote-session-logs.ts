@@ -45,7 +45,6 @@ export async function attachRemotePositaiLog(
   let log: string;
   try {
     const response = await page.request.get(url, {
-      headers: { 'Sec-Fetch-Site': 'same-origin' },
       failOnStatusCode: false,
       timeout: FETCH_TIMEOUT_MS,
     });
