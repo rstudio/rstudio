@@ -545,8 +545,8 @@ export class ChatPaneActions {
 
     console.warn(
       `Posit AI request failed: ${quoted}. Not skipped (${notSkipped}); leaving the ` +
-      "outcome to the test's own checks. If it fails, the attached positai.log has " +
-      "the assistant backend's side of the failure."
+      "outcome to the test's own checks. If it fails, positai.log (attached on Desktop " +
+      "and external-server runs) has the assistant backend's side of the failure."
     );
     return true;
   }
