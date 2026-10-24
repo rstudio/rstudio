@@ -58,6 +58,7 @@ set(FETCHCONTENT_QUIET TRUE)
 # REPOSITORY:   The (git) repository to be used when retrieving the dependency.
 # REVISION:     The (git) revision / commit hash to be used when retrieving the dependency.
 # CUSTOM:       Optional; when TRUE, the project is retrieved but not automatically added to the build.
+# ALWAYS_FETCH: Optional; when TRUE, it will always be downloaded instead of using a system package
 # PLATFORMS:    Optional; a list of platforms for which this dependency should be retrieved and built.
 #
 # This function also accepts and ignores these optional single-value arguments, which are used to render
@@ -85,15 +86,16 @@ set(FETCHCONTENT_QUIET TRUE)
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION;CFLAGS;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;ALWAYS_FETCH;VERSION;REPOSITORY;REVISION;CFLAGS;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
 
-   set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
-   set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
-   set(${_NAME}_REVISION   "${_REVISION}"   CACHE INTERNAL "")
-   set(${_NAME}_CUSTOM     "${_CUSTOM}"     CACHE INTERNAL "")
-   set(${_NAME}_PLATFORMS  "${_PLATFORMS}"  CACHE INTERNAL "")
-   set(${_NAME}_CFLAGS     "${_CFLAGS}"     CACHE INTERNAL "")
-   set(${_NAME}_CXXFLAGS   "${_CXXFLAGS}"   CACHE INTERNAL "")
+   set(${_NAME}_VERSION      "${_VERSION}"      CACHE INTERNAL "")
+   set(${_NAME}_REPOSITORY   "${_REPOSITORY}"   CACHE INTERNAL "")
+   set(${_NAME}_REVISION     "${_REVISION}"     CACHE INTERNAL "")
+   set(${_NAME}_CUSTOM       "${_CUSTOM}"       CACHE INTERNAL "")
+   set(${_NAME}_ALWAYS_FETCH "${_ALWAYS_FETCH}" CACHE INTERNAL "")
+   set(${_NAME}_PLATFORMS    "${_PLATFORMS}"    CACHE INTERNAL "")
+   set(${_NAME}_CFLAGS       "${_CFLAGS}"       CACHE INTERNAL "")
+   set(${_NAME}_CXXFLAGS     "${_CXXFLAGS}"     CACHE INTERNAL "")
 
    set(${_NAME}_ENABLED FALSE)
    if(_PLATFORMS)
@@ -186,17 +188,41 @@ function(fetch)
       endif()
 
       if(${_PREFIX}_ENABLED)
-         if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
-            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
-         else()
-            set(${_PREFIX}_FETCHED TRUE)
-
+         set(do_fetch TRUE)
+         if(DEFINED RSTUDIO_USE_SYSTEM_${_PREFIX})
+            if(RSTUDIO_USE_SYSTEM_${_PREFIX})
+               if(${_PREFIX}_ALWAYS_FETCH)
+                  message(FATAL_ERROR "RSTUDIO_USE_SYSTEM_${_PREFIX} was explicitly enabled but "
+                                      "${_NAME} must be fetched and an installed version cannot be used.")
+               endif()
+               set(do_fetch FALSE)
+            endif()
+         elseif(RSTUDIO_USE_SYSTEM_DEPENDENCIES)
+            if(${_PREFIX}_ALWAYS_FETCH)
+               message(STATUS "RSTUDIO_USE_SYSTEM_DEPENDENCIES was enabled but "
+                              "${_NAME} will still be fetched instead of using an installed version.")
+            else()
+               set(do_fetch FALSE)
+            endif()
+         endif()
+         set(${_PREFIX}_FETCHED ${do_fetch})
+         set(${_PREFIX}_FETCHED ${do_fetch} PARENT_SCOPE)
+         if(do_fetch)
             FetchContent_Declare("${_NAME}"
                GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
                GIT_TAG        "${${_PREFIX}_REVISION}"
                GIT_SHALLOW    ON
                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
                EXCLUDE_FROM_ALL)
+         else()
+            find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
+
+            # GLOBAL only promotes imported targets; variables set by the package's
+            # config stay in this function's scope. Pass up the include dirs for
+            # packages that export no target (e.g. RapidJSON 1.1.0).
+            if(DEFINED ${_PREFIX}_INCLUDE_DIRS)
+               set(${_PREFIX}_INCLUDE_DIRS "${${_PREFIX}_INCLUDE_DIRS}" PARENT_SCOPE)
+            endif()
          endif()
       endif()
 
@@ -222,8 +248,9 @@ function(fetch)
          set(CMAKE_C_FLAGS "${_CMAKE_C_FLAGS}")
          set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS}")
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
-         set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
-         set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
+         string(TOLOWER "${_NAME}" _NAME_LOWER)
+         set("${_PREFIX}_SOURCE_DIR" "${${_NAME_LOWER}_SOURCE_DIR}" CACHE INTERNAL "")
+         set("${_PREFIX}_BINARY_DIR" "${${_NAME_LOWER}_BINARY_DIR}" CACHE INTERNAL "")
       endif()
 
    endwhile()
@@ -240,6 +267,7 @@ dependency(DTL
    REPOSITORY "https://github.com/cubicdaiya/dtl"
    REVISION   "32567bb9ec704f09040fb1ed7431a3d967e3df03" # pragma: allowlist secret
    CUSTOM     TRUE
+   ALWAYS_FETCH TRUE
 )
 
 
@@ -360,6 +388,7 @@ dependency(HUNSPELL
    REPOSITORY "https://github.com/hunspell/hunspell"
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
    CUSTOM     TRUE
+   ALWAYS_FETCH TRUE
 )
 
 
@@ -405,6 +434,7 @@ dependency(WEBSOCKETPP
    REPOSITORY "https://github.com/amini-allight/websocketpp"
    REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
    CUSTOM     TRUE
+   ALWAYS_FETCH TRUE
 )
 
 
@@ -438,11 +468,17 @@ dependency(ZLIB
    CUSTOM     TRUE
 )
 
+# zlib must be fetched before libgit2 so that the ZLIB cache variables point to
+# a valid library artifact when libgit2's SelectZlib.cmake calls find_package(ZLIB).
+# If zlib is not yet present, FindZLIB fails and libgit2 falls back to its bundled
+# deps/zlib, resulting in duplicate zlib symbols in the final binary.
+fetch(ZLIB ZLIB)
+
 # Ensure libgit2 resolves zlib to our top-level zlib build on Windows.
 # Without this, FindZLIB fails during libgit2 configure and it falls back
 # to its bundled deps/zlib, producing mixed zlib linkage in final binaries.
-if(WIN32 AND NOT RSTUDIO_USE_SYSTEM_DEPENDENCIES AND NOT RSTUDIO_USE_SYSTEM_ZLIB)
-   set(_RSTUDIO_ZLIB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/_deps/zlib-src")
+if(WIN32 AND ZLIB_FETCHED)
+   set(_RSTUDIO_ZLIB_INCLUDE_DIR "${ZLIB_SOURCE_DIR}")
    set(_RSTUDIO_ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/src/cpp/ext/rstudio-zlib.lib")
    set(ZLIB_INCLUDE_DIR "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE PATH "" FORCE)
    set(ZLIB_INCLUDE_DIRS "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE STRING "" FORCE)
@@ -452,19 +488,13 @@ if(WIN32 AND NOT RSTUDIO_USE_SYSTEM_DEPENDENCIES AND NOT RSTUDIO_USE_SYSTEM_ZLIB
    set(ZLIB_LIBRARIES "${_RSTUDIO_ZLIB_LIBRARY}" CACHE STRING "" FORCE)
 endif()
 
-# zlib must be fetched before libgit2 so that the ZLIB cache variables point to
-# a valid library artifact when libgit2's SelectZlib.cmake calls find_package(ZLIB).
-# If zlib is not yet present, FindZLIB fails and libgit2 falls back to its bundled
-# deps/zlib, resulting in duplicate zlib symbols in the final binary.
-fetch(zlib ZLIB)
-
 # libgit2's src/libgit2/CMakeLists.txt uses FILE(WRITE) to produce git2.h in
 # the build tree.  Unlike configure_file(), FILE(WRITE) unconditionally updates
 # the timestamp even when the content is unchanged, which forces a full rebuild
 # of every libgit2 source file on every configure.  Work around this by saving
 # the old file (with its original timestamp) before the fetch and restoring it
 # afterward when the content hasn't changed.
-set(_LIBGIT2_GIT2_H "${CMAKE_BINARY_DIR}/_deps/libgit2-build/include/git2.h")
+set(_LIBGIT2_GIT2_H "${LIBGIT2_BINARY_DIR}/include/git2.h")
 if(EXISTS "${_LIBGIT2_GIT2_H}")
    file(MD5 "${_LIBGIT2_GIT2_H}" _LIBGIT2_GIT2_H_MD5)
    file(RENAME "${_LIBGIT2_GIT2_H}" "${_LIBGIT2_GIT2_H}.prev")
@@ -475,11 +505,11 @@ fetch(
    fmt                   FMT
    gsl-lite              GSL_LITE
    libgit2               LIBGIT2
-   gtest                 GTEST
+   GTest                 GTEST
    hunspell              HUNSPELL
-   rapidjson             RAPIDJSON
+   RapidJSON             RAPIDJSON
    tl-expected           TL_EXPECTED
-   utfcpp                UTFCPP
+   utf8cpp               UTFCPP
    websocketpp           WEBSOCKETPP
    yaml-cpp              YAML_CPP)
 
@@ -516,6 +546,21 @@ if(TARGET pcre)
 endif()
 
 
+# The test targets link 'gtest', which only a fetched googletest defines; an
+# installed GTest exports 'GTest::gtest'. Without this, they fall back to a
+# vendored copy under src/cpp/tests that no longer exists.
+if(NOT TARGET gtest AND TARGET GTest::gtest)
+   add_library(gtest ALIAS GTest::gtest)
+endif()
+
+
+# rsession links 'libgit2package', the target a fetched libgit2 defines; an
+# installed libgit2 exports it as 'libgit2::libgit2package'.
+if(NOT TARGET libgit2package AND TARGET libgit2::libgit2package)
+   add_library(libgit2package ALIAS libgit2::libgit2package)
+endif()
+
+
 # Create dtl target.
 add_library(rstudio-dtl INTERFACE EXCLUDE_FROM_ALL)
 target_include_directories(rstudio-dtl INTERFACE "${DTL_SOURCE_DIR}")
@@ -541,12 +586,22 @@ endif()
 # Create rapidjson target.
 add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
 target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
-target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+if(TARGET RapidJSON)
+   target_link_libraries(rstudio-rapidjson INTERFACE RapidJSON)
+elseif(RAPIDJSON_INCLUDE_DIRS)
+   target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_INCLUDE_DIRS}")
+else()
+   target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+endif()
 
 
 # Create utfcpp target.
-add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
-target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
+if(TARGET utf8cpp::utf8cpp)
+   add_library(rstudio-utfcpp ALIAS utf8cpp::utf8cpp)
+else()
+   add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
+   target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
+endif()
 
 
 # Create websocketpp target.
