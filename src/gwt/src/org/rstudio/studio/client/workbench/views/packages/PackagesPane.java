@@ -480,7 +480,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       ToolbarMenuButton moreButton = new ToolbarMenuButton(
          ToolbarMenuButton.NoText,
-         ToolbarMenuButton.NoTitle,
+         constants_.paneOptionsTitle(),
          moreMenu,
          false);
       
