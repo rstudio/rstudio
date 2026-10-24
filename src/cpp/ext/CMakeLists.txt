@@ -554,6 +554,13 @@ if(NOT TARGET gtest AND TARGET GTest::gtest)
 endif()
 
 
+# rsession links 'libgit2package', the target a fetched libgit2 defines; an
+# installed libgit2 exports it as 'libgit2::libgit2package'.
+if(NOT TARGET libgit2package AND TARGET libgit2::libgit2package)
+   add_library(libgit2package ALIAS libgit2::libgit2package)
+endif()
+
+
 # Create dtl target.
 add_library(rstudio-dtl INTERFACE EXCLUDE_FROM_ALL)
 target_include_directories(rstudio-dtl INTERFACE "${DTL_SOURCE_DIR}")
