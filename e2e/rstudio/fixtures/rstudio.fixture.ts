@@ -536,7 +536,8 @@ export const test = base.extend<
     const attachFailureContext = async (): Promise<void> => {
       await attachBrowserConsole(testInfo, rstudioSession.consoleBuffer);
       await attachSessionLogs(testInfo, rstudioSession.logDir, logBaseline);
-      if (mode === 'server' && serverUrl !== null)
+      // A deaf session can't serve /files/, so the fetch would only time out.
+      if (mode === 'server' && serverUrl !== null && !rstudioSession.deafSessionRecorded)
         await attachRemotePositaiLog(page, testInfo, serverUrl, testStart);
     };
 
