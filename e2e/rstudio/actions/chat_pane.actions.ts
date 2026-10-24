@@ -642,7 +642,9 @@ export class ChatPaneActions {
     try {
       await expect(this.chatPane.sendBtn).toBeEnabled({ timeout: SEND_ENABLED_TIMEOUT_MS });
     } catch (err) {
-      if (!/pick a model/i.test(await this.chatPane.sendDescription())) {
+      // Should Send be gone, keep the timeout above rather than the lookup's own.
+      const reason = await this.chatPane.sendDescription().catch(() => '');
+      if (!/pick a model/i.test(reason)) {
         throw err;
       }
       await this.skipIfServiceGone();
