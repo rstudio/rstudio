@@ -144,6 +144,8 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
       std::size_t tPos = timeStr.find('T');
       if (tPos == std::string::npos)
          tPos = timeStr.find(' ');
+      if (tPos == std::string::npos)
+         return false;
 
       std::size_t dashPos = timeStr.find('-');
       if (dashPos == std::string::npos)
@@ -161,23 +163,33 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
 
       if (!zoneStr.empty() && zoneStr != "Z")
       {
-         int hours = 0;
-         int minutes = 0;
-         if (zoneStr.size() <= 3)
+         // [+-]hh, [+-]hhmm, or [+-]hh:mm, and nothing else
+         if (zoneStr[0] != '+' && zoneStr[0] != '-')
+            return false;
+         std::size_t zoneSize = zoneStr.size();
+         if (zoneSize != 3 && zoneSize != 5 && zoneSize != 6)
+            return false;
+         for (std::size_t i = 1; i < zoneSize; i++)
          {
-            hours = std::stoi(zoneStr);
-         }
-         else
-         {
-            // Split the string this way in case there's a colon
-            hours = std::stoi(zoneStr.substr(0, 3));
-            minutes = std::stoi(zoneStr.substr(zoneStr.size() - 2));
+            if (i == 3 && zoneSize == 6)
+            {
+               if (zoneStr[i] != ':')
+                  return false;
+            }
+            else if (!std::isdigit(static_cast<unsigned char>(zoneStr[i])))
+            {
+               return false;
+            }
          }
 
-         if (hours < 0)
-            minutes = -minutes;
+         int hours = std::stoi(zoneStr.substr(1, 2));
+         int minutes = zoneStr.size() > 3 ? std::stoi(zoneStr.substr(zoneStr.size() - 2)) : 0;
+         if (hours > 23 || minutes > 59)
+            return false;
 
          minutes += hours * 60;
+         if (zoneStr[0] == '-')
+            minutes = -minutes;
 
          *pOutTime -= boost::posix_time::minutes(minutes);
       }

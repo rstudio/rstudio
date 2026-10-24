@@ -390,6 +390,54 @@ TEST(DateTimeTest, ParsesTimeZones)
    EXPECT_EQ(outCstExt, expected);
 }
 
+TEST(DateTimeTest, RejectBadZoneStrings)
+{
+   using namespace rstudio::core::date_time;
+
+   struct Case
+   {
+      const char* input;
+      const char* expected; // the UTC result, ISO extended; empty when refused
+   };
+
+   const std::vector<Case> cases = {
+      {"2026-10-23T09:00:00Z", "2026-10-23T09:00:00"},
+      {"2026-10-23T09:00:00.5-05:00", "2026-10-23T14:00:00.500000"},
+      {"2026-10-23T09:00:00+05:30", "2026-10-23T03:30:00"},
+      {"20261023 090000+0500", "2026-10-23T04:00:00"},
+
+      // no date and time separator to find
+      {"", ""},
+      {"yesterday", ""},
+      {"2026-10-23", ""},
+      {"2026-10-23t09:00:00Z", ""},
+
+      // malformed or out-of-range zones
+      {"2026-10-23T09:00:00+5", ""},
+      {"2026-10-23T09:00:00+05:0", ""},
+      {"2026-10-23T09:00:00+050", ""},
+      {"2026-10-23T09:00:00+05-00", ""},
+      {"2026-10-23T09:00:00+24:00", ""},
+      {"2026-10-23T09:00:00+05:60", ""},
+      {"2026-10-23T09:00:00Zjunk", ""},
+
+      // dates that don't exist
+      {"2026-02-29T00:00:00Z", ""},
+      {"2026-13-01T00:00:00Z", ""},
+      {"99999999999999999999", ""},
+   };
+
+   for (const Case& testCase : cases)
+   {
+      SCOPED_TRACE(testCase.input);
+      boost::posix_time::ptime result;
+      const bool parsed = parseUtcTimeFromZoneString(testCase.input, &result);
+      EXPECT_EQ(parsed, std::string(testCase.expected).size() > 0);
+      if (parsed)
+         EXPECT_EQ(boost::posix_time::to_iso_extended_string(result), testCase.expected);
+   }
+}
+
 } // namespace unit_tests
 } // namespace core
 } // namespace rstudio
