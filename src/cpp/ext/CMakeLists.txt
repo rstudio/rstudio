@@ -199,8 +199,8 @@ function(fetch)
             endif()
          elseif(RSTUDIO_USE_SYSTEM_DEPENDENCIES)
                if(${_PREFIX}_ALWAYS_FETCH)
-                  message(WARNING "RSTUDIO_USE_SYSTEM_DEPENDENCIES was enabled but "
-                                  "${_NAME} will still be fetched instead of using an installed version.")
+                  message(STATUS "RSTUDIO_USE_SYSTEM_DEPENDENCIES was enabled but "
+                                 "${_NAME} will still be fetched instead of using an installed version.")
                else()
                   set(do_fetch FALSE)
                endif()
