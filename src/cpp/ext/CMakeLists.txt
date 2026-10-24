@@ -95,7 +95,7 @@ function(dependency)
    set(${_NAME}_ALWAYS_FETCH "${_ALWAYS_FETCH}" CACHE INTERNAL "")
    set(${_NAME}_PLATFORMS    "${_PLATFORMS}"    CACHE INTERNAL "")
    set(${_NAME}_CFLAGS       "${_CFLAGS}"       CACHE INTERNAL "")
-   set(${_NAME}_CXXFLAGS   "  ${_CXXFLAGS}"     CACHE INTERNAL "")
+   set(${_NAME}_CXXFLAGS     "${_CXXFLAGS}"     CACHE INTERNAL "")
 
    set(${_NAME}_ENABLED FALSE)
    if(_PLATFORMS)
@@ -444,6 +444,12 @@ dependency(ZLIB
    CUSTOM     TRUE
 )
 
+# zlib must be fetched before libgit2 so that the ZLIB cache variables point to
+# a valid library artifact when libgit2's SelectZlib.cmake calls find_package(ZLIB).
+# If zlib is not yet present, FindZLIB fails and libgit2 falls back to its bundled
+# deps/zlib, resulting in duplicate zlib symbols in the final binary.
+fetch(ZLIB ZLIB)
+
 # Ensure libgit2 resolves zlib to our top-level zlib build on Windows.
 # Without this, FindZLIB fails during libgit2 configure and it falls back
 # to its bundled deps/zlib, producing mixed zlib linkage in final binaries.
@@ -457,12 +463,6 @@ if(WIN32 AND NOT RSTUDIO_USE_SYSTEM_DEPENDENCIES AND NOT RSTUDIO_USE_SYSTEM_ZLIB
    set(ZLIB_LIBRARY_RELEASE "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
    set(ZLIB_LIBRARIES "${_RSTUDIO_ZLIB_LIBRARY}" CACHE STRING "" FORCE)
 endif()
-
-# zlib must be fetched before libgit2 so that the ZLIB cache variables point to
-# a valid library artifact when libgit2's SelectZlib.cmake calls find_package(ZLIB).
-# If zlib is not yet present, FindZLIB fails and libgit2 falls back to its bundled
-# deps/zlib, resulting in duplicate zlib symbols in the final binary.
-fetch(ZLIB ZLIB)
 
 # libgit2's src/libgit2/CMakeLists.txt uses FILE(WRITE) to produce git2.h in
 # the build tree.  Unlike configure_file(), FILE(WRITE) unconditionally updates
@@ -548,18 +548,20 @@ endif()
 add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
 target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
 if(TARGET RapidJSON)
-    target_link_libraries(rstudio-rapidjson INTERFACE RapidJSON)
+   target_link_libraries(rstudio-rapidjson INTERFACE RapidJSON)
+elseif(RAPIDJSON_INCLUDE_DIRS)
+   target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_INCLUDE_DIRS}")
 else()
-    target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+   target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
 endif()
 
 
 # Create utfcpp target.
 if(TARGET utf8cpp::utf8cpp)
-  add_library(rstudio-utfcpp ALIAS utf8cpp::utf8cpp)
+   add_library(rstudio-utfcpp ALIAS utf8cpp::utf8cpp)
 else()
-  add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
-  target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
+   add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
+   target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
 endif()
 
 
