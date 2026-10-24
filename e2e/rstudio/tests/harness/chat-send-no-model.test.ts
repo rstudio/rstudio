@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { TIMEOUTS } from '@utils/constants';
 
 // Harness self-test for sendChatMessage's wait on the Send button. A composer
 // with no model keeps Send disabled, described by "Please pick a model" (the
@@ -11,15 +12,26 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 
 const NO_MODEL_REASON = '<span id="reason">Please pick a model</span>';
 
-function composer(sendDisabled: boolean, extra = ''): string {
+// Enables Send once typing starts, but later than click()'s own wait for an
+// enabled element (TIMEOUTS.action) would last.
+const ENABLE_AFTER_TYPING = `oninput="setTimeout(() => document.querySelector('button').disabled = false, ${TIMEOUTS.action + 1000})"`;
+
+interface ComposerOptions {
+  send: 'disabled' | 'enabled-after-typing';
+  describedBy?: string;
+  extra?: string;
+}
+
+function composer({ send, describedBy, extra = '' }: ComposerOptions): string {
   return `
     <div id="root">
-      <div class="tiptap-input-editor" contenteditable="true" style="min-height: 2em"></div>
-      <button type="button" ${sendDisabled ? 'disabled aria-describedby="reason"' : ''}
+      ${extra}
+      <div class="tiptap-input-editor" contenteditable="true" style="min-height: 2em"
+           ${send === 'enabled-after-typing' ? ENABLE_AFTER_TYPING : ''}></div>
+      <button type="button" disabled ${describedBy ? `aria-describedby="${describedBy}"` : ''}
               onclick="document.body.dataset.sent = 'yes'">
         <svg class="lucide-arrow-up" width="16" height="16"></svg>
       </button>
-      ${extra}
     </div>`;
 }
 
@@ -30,8 +42,9 @@ async function showComposer(page: Page, html: string): Promise<ChatPaneActions> 
   return actions;
 }
 
-test('sends once Send is enabled', async ({ page }) => {
-  const actions = await showComposer(page, composer(false));
+test('waits for Send to enable after the prompt is typed', async ({ page }) => {
+  test.setTimeout(60000);
+  const actions = await showComposer(page, composer({ send: 'enabled-after-typing' }));
   let serviceChecks = 0;
   actions.skipIfServiceGone = async () => { serviceChecks++; };
 
@@ -43,7 +56,8 @@ test('sends once Send is enabled', async ({ page }) => {
 
 test('a Send disabled for lack of a model is checked for an outage and named', async ({ page }) => {
   test.setTimeout(60000);
-  const actions = await showComposer(page, composer(true, NO_MODEL_REASON));
+  const actions = await showComposer(
+    page, composer({ send: 'disabled', describedBy: 'reason', extra: NO_MODEL_REASON }));
   let serviceChecks = 0;
   actions.skipIfServiceGone = async () => { serviceChecks++; };
 
@@ -53,7 +67,9 @@ test('a Send disabled for lack of a model is checked for an outage and named', a
 
 test('a Send disabled for another reason keeps the plain timeout', async ({ page }) => {
   test.setTimeout(60000);
-  const actions = await showComposer(page, composer(true));
+  // The phrase elsewhere in the chat is not Send's description.
+  const message = '<p>Please pick a model that fits the data.</p>';
+  const actions = await showComposer(page, composer({ send: 'disabled', extra: message }));
   let serviceChecks = 0;
   actions.skipIfServiceGone = async () => { serviceChecks++; };
 

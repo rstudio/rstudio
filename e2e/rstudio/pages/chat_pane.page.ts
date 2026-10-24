@@ -19,7 +19,6 @@ export class ChatPane extends FramePageObject {
   public allowDropdownTrigger: Locator;
   public allowForSessionItem: Locator;
   public sendBtn: Locator;
-  public noModelReason: Locator;
   public stopBtn: Locator;
   public installBtn: Locator;
   public updateBtn: Locator;
@@ -76,9 +75,6 @@ export class ChatPane extends FramePageObject {
     this.allowDropdownTrigger = this.frame.locator('button.rounded-l-none:has(svg.lucide-chevron-down)');
     this.allowForSessionItem = this.frame.locator('[role="menuitem"]:has-text("for this session")');
     this.sendBtn = this.frame.locator("button:has(svg.lucide-arrow-up)");
-    // Why Send is disabled when no model is selected: visually hidden text the
-    // button's aria-describedby points at (PA #2779), also its tooltip's text.
-    this.noModelReason = this.frame.getByText(/pick a model/i);
     this.stopBtn = this.frame.locator("button:has(svg.lucide-square)");
     this.installBtn = this.frame.locator("button:has-text('Install')");
     this.updateBtn = this.frame.locator("button:has-text('Update')");
@@ -232,6 +228,17 @@ export class ChatPane extends FramePageObject {
       return false;
     }
     return (await this.chatInput.getAttribute('contenteditable').catch(() => null)) === 'true';
+  }
+
+  /**
+   * The text Send's aria-describedby points at, which says why it is disabled
+   * when no model is selected (PA #2779); '' when it has no description.
+   */
+  async sendDescription(): Promise<string> {
+    return this.sendBtn.evaluate((button) => {
+      const ids = (button.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+      return ids.map((id) => button.ownerDocument.getElementById(id)?.textContent ?? '').join(' ');
+    });
   }
 
   /**

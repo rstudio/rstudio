@@ -642,7 +642,7 @@ export class ChatPaneActions {
     try {
       await expect(this.chatPane.sendBtn).toBeEnabled({ timeout: SEND_ENABLED_TIMEOUT_MS });
     } catch (err) {
-      if ((await this.chatPane.noModelReason.count()) === 0) {
+      if (!/pick a model/i.test(await this.chatPane.sendDescription())) {
         throw err;
       }
       await this.skipIfServiceGone();
