@@ -151,16 +151,13 @@
          PRE-RELEASE BUILD
       </g:HTMLPanel>
       <g:HTMLPanel styleName="{style.dialogContents}">
-         <g:HTMLPanel ui:field="productInfo">
+         <g:HTMLPanel>
             <g:HTMLPanel styleName="{style.outerProductInfo}">
                <g:HTMLPanel styleName="{style.productInfo}">
-                  <g:Image resource='{res.rstudioLarge2x}'
-                           styleName="{style.logo}"
-                           width="48"
-                           height="48"
-                           altText="RStudio Logo">
-                     <ui:attribute name="altText" key="rStudioLogo"/>
-                  </g:Image>
+                  <rw:DecorativeImage resource='{res.rstudioLarge2x}'
+                                      styleName="{style.logo}"
+                                      width="48"
+                                      height="48"/>
                   <g:HTMLPanel styleName="{style.innerProductInfo}">
                      <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
                      <g:HTMLPanel styleName="{style.productVersion}">
@@ -188,7 +185,7 @@
                <g:InlineLabel
                   text="RStudio, Quarto, and Shiny are registered trademarks of Posit Software, PBC, all rights reserved. See">
                </g:InlineLabel>
-               <g:Anchor
+               <g:Anchor ui:field="trademarkLink"
                   href="https://www.posit.co/about/trademark/"
                   text="https://www.posit.co/about/trademark/"
                   target="_blank"></g:Anchor>
@@ -200,8 +197,8 @@
                <g:Anchor ui:field="gplLink" href="http://www.gnu.org/licenses/agpl-3.0.txt"
                   text="Affero General Public License."
                   target="_blank"></g:Anchor>
-               <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
             </g:HTMLPanel>
+            <g:InlineLabel ui:field="newWindowHint" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{style.notice}">
             <rw:HyperlinkLabel
