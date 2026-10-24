@@ -107,20 +107,6 @@ import jsinterop.base.Js;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
-   private class WidgetColumnHeader extends SafeHtmlHeader
-   {
-      public WidgetColumnHeader(String label)
-      {
-         super(SafeHtmlUtil.visuallyHiddenText(label));
-      }
-
-      @Override
-      public String getHeaderStyleNames()
-      {
-         return dataGridRes_.dataGridStyle().widgetColumnHeader();
-      }
-   }
-
    @Inject
    public PackagesPane(Commands commands, 
                        Session session,
@@ -785,7 +771,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       // add common columns
       packagesTable_.addColumn(loadedColumn_,
-            SafeHtmlUtil.visuallyHiddenText(constants_.loadedColumnHeader()));
+            hiddenTextHeader(constants_.loadedColumnHeader()));
       packagesTable_.addColumn(nameColumn_, new TextHeader(constants_.packageHeader()));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
       packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
@@ -855,14 +841,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(lockfileVersionColumn_, 100, Unit.PX);
       }
      
+      String widgetHeaderStyle = dataGridRes_.dataGridStyle().widgetColumnHeader();
+
       // help column is common
       packagesTable_.addColumn(helpColumn_,
-            new WidgetColumnHeader(constants_.helpColumnHeader()));
+            hiddenTextHeader(constants_.helpColumnHeader(), widgetHeaderStyle));
       packagesTable_.setColumnWidth(helpColumn_, 20, Unit.PX);
 
       // browse column is common
       packagesTable_.addColumn(browseColumn_,
-            new WidgetColumnHeader(constants_.browseColumnHeader()));
+            hiddenTextHeader(constants_.browseColumnHeader(), widgetHeaderStyle));
       packagesTable_.setColumnWidth(browseColumn_, 20, Unit.PX);
 
       // remove column is common (note that we allocate extra column
@@ -872,7 +860,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          scrollWidth += 3;
       
       packagesTable_.addColumn(removeColumn_,
-            SafeHtmlUtil.visuallyHiddenText(constants_.removeColumnHeader()));
+            hiddenTextHeader(constants_.removeColumnHeader()));
       packagesTable_.setColumnWidth(removeColumn_, 20 + scrollWidth, Unit.PX);
 
       packagesTable_.setTableBuilder(new PackageTableBuilder(packagesTable_));
@@ -922,6 +910,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private void updateColumnWidths()
    {
+   }
+
+   private SafeHtmlHeader hiddenTextHeader(String label)
+   {
+      return hiddenTextHeader(label, null);
+   }
+
+   private SafeHtmlHeader hiddenTextHeader(String label, String styleNames)
+   {
+      SafeHtmlHeader header = new SafeHtmlHeader(SafeHtmlUtil.visuallyHiddenText(label));
+      header.setHeaderStyleNames(styleNames);
+      return header;
    }
 
    private String getMetadataColumnLabel()
