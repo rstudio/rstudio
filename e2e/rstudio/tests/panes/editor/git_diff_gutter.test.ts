@@ -2234,6 +2234,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await executeCommand(page, 'vcsShowChangesSideBySide');
     const base = page.locator(BASE_EDITOR);
     const live = liveEditors(page, '1 + 1');
+    // Click a text row, not .ace_content's center: in a short window that lands
+    // on the chunk output, a line widget outside Ace's scroller, which never
+    // focuses the editor.
+    const clickLive = () => live.locator('.ace_line', { hasText: 'title: x' }).click();
     await expect(base).toBeVisible({ timeout: 10000 });
     try {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
@@ -2242,7 +2246,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       expect(await rowTop(base, 8)).toBe(await rowTop(live, 8));
 
       // Insert Chunk with the cursor in the base pane has nothing to act on
-      await live.locator('.ace_content').click({ force: true });
+      await clickLive();
       await executeCommand(page, 'focusOtherEditorSplit');
       await expect.poll(() => base.evaluate((el) => el.contains(document.activeElement))).toBe(true);
       await executeCommand(page, 'insertChunk');
@@ -2263,7 +2267,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await executeCommand(page, 'executeSubsequentChunks');
       expect(await outputCount()).toBe(1);
       expect(await consoleText()).toBe(consoleBefore);
-      await live.locator('.ace_content').click({ force: true });
+      await clickLive();
       await expect.poll(() => live.evaluate((el) => el.contains(document.activeElement))).toBe(true);
 
       // the same with a change below the output: the lines between stay
