@@ -19,6 +19,7 @@
 
 #include <clocale>
 #include <string>
+#include <vector>
 
 #include <core/Algorithm.hpp>
 #include <core/StringUtils.hpp>
@@ -450,6 +451,76 @@ TEST(StringTest, Utf8IncompleteSuffixLengthIgnoresInvalidSequences)
    // a complete sequence followed by nothing more is not truncated, even
    // though its last bytes are continuation bytes
    EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xE2\x94\x80"));
+}
+
+TEST(StringTest, Utf8ValidationFollowsRfc3629)
+{
+   struct Case
+   {
+      const char* name;
+      std::string text;
+      bool valid;
+      std::size_t firstLength; // utf8SequenceLength at 0; unused for empty text
+   };
+
+   const std::vector<Case> cases = {
+      {"empty", "", true, 0},
+      {"ASCII", "hello", true, 1},
+      {"two bytes", "\xC3\xA9", true, 2},                   // U+00E9
+      {"three bytes", "\xE2\x82\xAC", true, 3},             // U+20AC
+      {"four bytes", "\xF0\x9F\x98\x80", true, 4},          // U+1F600
+      {"last code point", "\xF4\x8F\xBF\xBF", true, 4},     // U+10FFFF
+      {"last before surrogates", "\xED\x9F\xBF", true, 3},  // U+D7FF
+      {"embedded NUL", std::string("a\0b", 3), true, 1},
+      {"past U+10FFFF", "\xF4\x90\x80\x80", false, 0},
+      {"surrogate", "\xED\xA0\x80", false, 0},              // U+D800
+      {"overlong two bytes", "\xC0\xAF", false, 0},
+      {"overlong three bytes", "\xE0\x80\xAF", false, 0},
+      {"overlong four bytes", "\xF0\x80\x80\xAF", false, 0},
+      {"stray continuation", "\x80", false, 0},
+      {"truncated", "\xE2\x82", false, 0},
+      {"bad continuation", "\xE2\x28\xA1", false, 0},
+      {"invalid lead", "\xF5\x80\x80\x80", false, 0},
+      {"invalid byte after valid text", "abc\xFF", false, 1},
+   };
+
+   for (const Case& testCase : cases)
+   {
+      SCOPED_TRACE(testCase.name);
+      EXPECT_EQ(isValidUtf8(testCase.text), testCase.valid);
+      if (!testCase.text.empty())
+         EXPECT_EQ(utf8SequenceLength(testCase.text, 0), testCase.firstLength);
+   }
+}
+
+TEST(StringTest, CleanUtf8StringKeepsValidTextAndReplacesEachBadByte)
+{
+   struct Case
+   {
+      const char* name;
+      std::string input;
+      std::string expected;
+   };
+
+   const std::string replacement = "\xEF\xBF\xBD"; // U+FFFD
+   const std::vector<Case> cases = {
+      {"empty", "", ""},
+      {"valid text unchanged", "caf\xC3\xA9 \xF0\x9F\x98\x80", "caf\xC3\xA9 \xF0\x9F\x98\x80"},
+      {"NUL dropped", std::string("a\0b\0", 4), "ab"},
+      {"invalid byte replaced", "a\xFF" "b", "a" + replacement + "b"},
+      {"each byte replaced on its own", "\xFF\xFE", replacement + replacement},
+      {"surrogate replaced byte by byte", "\xED\xA0\x80", replacement + replacement + replacement},
+      {"truncated sequence at the end", "ab\xE2\x82", "ab" + replacement + replacement},
+      {"valid text after a bad byte survives", "\xC0" "caf\xC3\xA9", replacement + "caf\xC3\xA9"},
+   };
+
+   for (const Case& testCase : cases)
+   {
+      SCOPED_TRACE(testCase.name);
+      const std::string cleaned = cleanUtf8String(testCase.input);
+      EXPECT_EQ(cleaned, testCase.expected);
+      EXPECT_TRUE(isValidUtf8(cleaned));
+   }
 }
 
 TEST(StringTest, HtmlUnescapeReversesHtmlEscape)

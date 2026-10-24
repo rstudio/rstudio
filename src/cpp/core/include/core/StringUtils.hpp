@@ -53,12 +53,12 @@ public:
       : needle_(needle)
    {
    }
-   
+
    bool operator()(const std::string& haystack)
    {
       return haystack.find(needle_) != std::string::npos;
    }
-   
+
 private:
    std::string needle_;
 };
@@ -118,6 +118,17 @@ std::string systemToUtf8(const std::string& str, int codepage);
 // string -- a lead byte promising more continuation bytes than remain. Returns
 // 0 for text ending on a character boundary or in an invalid sequence.
 std::size_t utf8IncompleteSuffixLength(const std::string& str);
+
+// Returns the length (1-4) of the UTF-8 sequence starting at pos, or 0 if the
+// bytes there aren't a strictly valid sequence per RFC 3629.
+std::size_t utf8SequenceLength(const std::string& str, std::size_t pos);
+
+// True if the whole string is valid UTF-8 per RFC 3629.
+bool isValidUtf8(const std::string& str);
+
+// Removes embedded NULs from a UTF-8 string and replaces any invalid bytes
+// with U+FFFD per RFC 3629, preserving the rest of the string.
+std::string cleanUtf8String(const std::string& value);
 
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
@@ -328,7 +339,7 @@ inline StringType trimWhitespace(const StringType& string,
    std::size_t start = string.find_first_not_of(whitespace);
    if (start == StringType::npos)
       return StringType();
-   
+
    std::size_t end = string.find_last_not_of(whitespace);
    return substring(string, start, end + 1);
 }
@@ -420,7 +431,7 @@ RS_GENERATE_CCTYPE_ALIAS(ispunct,  iswpunct)
 
 } // end inline namespace cctype
 
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 // force our safe wrappers to be used
