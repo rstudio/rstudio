@@ -154,13 +154,10 @@
          <g:HTMLPanel>
             <g:HTMLPanel styleName="{style.outerProductInfo}">
                <g:HTMLPanel styleName="{style.productInfo}">
-                  <g:Image resource='{res.rstudioLarge2x}'
-                           styleName="{style.logo}"
-                           width="48"
-                           height="48"
-                           altText="RStudio Logo">
-                     <ui:attribute name="altText" key="rStudioLogo"/>
-                  </g:Image>
+                  <rw:DecorativeImage resource='{res.rstudioLarge2x}'
+                                      styleName="{style.logo}"
+                                      width="48"
+                                      height="48"/>
                   <g:HTMLPanel styleName="{style.innerProductInfo}">
                      <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
                      <g:HTMLPanel styleName="{style.productVersion}">
