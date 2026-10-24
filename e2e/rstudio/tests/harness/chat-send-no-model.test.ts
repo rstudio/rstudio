@@ -16,8 +16,18 @@ const NO_MODEL_REASON = '<span id="reason">Please pick a model</span>';
 // enabled element (TIMEOUTS.action) would last.
 const ENABLE_AFTER_TYPING = `oninput="setTimeout(() => document.querySelector('button').disabled = false, ${TIMEOUTS.action + 1000})"`;
 
+// Removes Send once typing starts, as a composer re-render would, while the
+// wait for it to enable is still running.
+const REMOVE_AFTER_TYPING = `oninput="setTimeout(() => document.querySelector('button')?.remove(), 1000)"`;
+
+const SEND_HANDLERS = {
+  'disabled': '',
+  'enabled-after-typing': ENABLE_AFTER_TYPING,
+  'removed-after-typing': REMOVE_AFTER_TYPING,
+};
+
 interface ComposerOptions {
-  send: 'disabled' | 'enabled-after-typing';
+  send: keyof typeof SEND_HANDLERS;
   describedBy?: string;
   extra?: string;
 }
@@ -27,7 +37,7 @@ function composer({ send, describedBy, extra = '' }: ComposerOptions): string {
     <div id="root">
       ${extra}
       <div class="tiptap-input-editor" contenteditable="true" style="min-height: 2em"
-           ${send === 'enabled-after-typing' ? ENABLE_AFTER_TYPING : ''}></div>
+           ${SEND_HANDLERS[send]}></div>
       <button type="button" disabled ${describedBy ? `aria-describedby="${describedBy}"` : ''}
               onclick="document.body.dataset.sent = 'yes'">
         <svg class="lucide-arrow-up" width="16" height="16"></svg>
@@ -70,6 +80,16 @@ test('a Send disabled for another reason keeps the plain timeout', async ({ page
   // The phrase elsewhere in the chat is not Send's description.
   const message = '<p>Please pick a model that fits the data.</p>';
   const actions = await showComposer(page, composer({ send: 'disabled', extra: message }));
+  let serviceChecks = 0;
+  actions.skipIfServiceGone = async () => { serviceChecks++; };
+
+  await expect(actions.sendChatMessage('hello')).rejects.toThrow(/toBeEnabled/);
+  expect(serviceChecks).toBe(0);
+});
+
+test('a Send that leaves the page keeps the plain timeout', async ({ page }) => {
+  test.setTimeout(60000);
+  const actions = await showComposer(page, composer({ send: 'removed-after-typing' }));
   let serviceChecks = 0;
   actions.skipIfServiceGone = async () => { serviceChecks++; };
 
