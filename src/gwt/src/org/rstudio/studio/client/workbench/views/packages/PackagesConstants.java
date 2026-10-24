@@ -93,4 +93,8 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
     String selectNoneLabel();
     String displaySourceColumn();
     String paneOptionsTitle();
+    String loadedColumnHeader();
+    String helpColumnHeader();
+    String browseColumnHeader();
+    String removeColumnHeader();
 }

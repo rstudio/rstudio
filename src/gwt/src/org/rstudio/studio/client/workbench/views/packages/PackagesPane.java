@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
@@ -90,6 +91,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -105,11 +107,11 @@ import jsinterop.base.Js;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
-   private class WidgetTextHeader extends TextHeader
+   private class WidgetColumnHeader extends SafeHtmlHeader
    {
-      public WidgetTextHeader()
+      public WidgetColumnHeader(String label)
       {
-         super("");
+         super(SafeHtmlUtil.visuallyHiddenText(label));
       }
 
       @Override
@@ -782,8 +784,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       };
 
       // add common columns
-      packagesTable_.addColumn(loadedColumn_, new TextHeader(""));
-      packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
+      packagesTable_.addColumn(loadedColumn_,
+            SafeHtmlUtil.visuallyHiddenText(constants_.loadedColumnHeader()));
+      packagesTable_.addColumn(nameColumn_, new TextHeader(constants_.packageHeader()));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
       packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
@@ -853,11 +856,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
      
       // help column is common
-      packagesTable_.addColumn(helpColumn_, new WidgetTextHeader());
+      packagesTable_.addColumn(helpColumn_,
+            new WidgetColumnHeader(constants_.helpColumnHeader()));
       packagesTable_.setColumnWidth(helpColumn_, 20, Unit.PX);
 
       // browse column is common
-      packagesTable_.addColumn(browseColumn_, new WidgetTextHeader());
+      packagesTable_.addColumn(browseColumn_,
+            new WidgetColumnHeader(constants_.browseColumnHeader()));
       packagesTable_.setColumnWidth(browseColumn_, 20, Unit.PX);
 
       // remove column is common (note that we allocate extra column
@@ -866,7 +871,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (scrollWidth > 0)
          scrollWidth += 3;
       
-      packagesTable_.addColumn(removeColumn_, new TextHeader(""));
+      packagesTable_.addColumn(removeColumn_,
+            SafeHtmlUtil.visuallyHiddenText(constants_.removeColumnHeader()));
       packagesTable_.setColumnWidth(removeColumn_, 20 + scrollWidth, Unit.PX);
 
       packagesTable_.setTableBuilder(new PackageTableBuilder(packagesTable_));
