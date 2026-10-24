@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -68,7 +67,7 @@ public class AboutDialogContents extends Composite
       versionBuildLabel.setText(constants_.versionBuildLabel() + info.version_suffix.split("\\+")[1]);
 
       // a11y
-      productInfo.getElement().setId("productinfo");
+      productName.getElement().setTabIndex(-1);
       gplLinkLabel.getElement().setId("gplLinkLabel");
       Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
 
@@ -133,9 +132,9 @@ public class AboutDialogContents extends Composite
       }
    }
 
-   public Element getDescriptionElement()
+   public void focusProductName()
    {
-      return productInfo.getElement();
+      productName.getElement().focus();
    }
 
    public void appendToUserAgent(String text)
@@ -154,7 +153,6 @@ public class AboutDialogContents extends Composite
    @UiField HTMLPanel preReleaseRibbon;
    @UiField TextArea licenseBox;
    @UiField Label productName;
-   @UiField HTMLPanel productInfo;
    @UiField InlineLabel supportNotice;
    @UiField Anchor gplLink;
    @UiField Label gplLinkLabel;
