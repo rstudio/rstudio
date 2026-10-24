@@ -16,9 +16,10 @@ const NO_MODEL_REASON = '<span id="reason">Please pick a model</span>';
 // enabled element (TIMEOUTS.action) would last.
 const ENABLE_AFTER_TYPING = `oninput="setTimeout(() => document.querySelector('button').disabled = false, ${TIMEOUTS.action + 1000})"`;
 
-// Removes Send once typing starts, as a composer re-render would, while the
-// wait for it to enable is still running.
-const REMOVE_AFTER_TYPING = `oninput="setTimeout(() => document.querySelector('button')?.remove(), 1000)"`;
+// Removes Send, as a composer re-render would, once typing has been quiet for
+// 3s: after the visibility check that follows typing, however slow the typing,
+// and well inside the wait for Send to enable.
+const REMOVE_AFTER_TYPING = `oninput="clearTimeout(window.removal); window.removal = setTimeout(() => document.querySelector('button').remove(), 3000)"`;
 
 const SEND_HANDLERS = {
   'disabled': '',
@@ -94,5 +95,6 @@ test('a Send that leaves the page keeps the plain timeout', async ({ page }) => 
   actions.skipIfServiceGone = async () => { serviceChecks++; };
 
   await expect(actions.sendChatMessage('hello')).rejects.toThrow(/toBeEnabled/);
+  await expect(actions.chatPane.sendBtn).toHaveCount(0);
   expect(serviceChecks).toBe(0);
 });
