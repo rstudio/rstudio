@@ -73,10 +73,23 @@ test('attaches the recent part of the log the session serves', async ({ page }) 
   const server = await serveFiles(200, LOG);
   try {
     const { testInfo, attached } = recordingTestInfo();
-    await attachRemotePositaiLog(page, testInfo, `${server.url}/s/abc/`, TEST_START);
+    await attachRemotePositaiLog(page, testInfo, server.url, TEST_START);
 
     expect(server.paths).toEqual(['/files/.local/share/rstudio/log/positai.log']);
     expect(attached.get('positai.log')).toBe(logSince(LOG, TEST_START));
+  } finally {
+    await server.close();
+  }
+});
+
+test('fetches the log under the path prefix the server is served from', async ({ page }) => {
+  const server = await serveFiles(200, LOG);
+  try {
+    const { testInfo, attached } = recordingTestInfo();
+    await attachRemotePositaiLog(page, testInfo, `${server.url}/rstudio/`, TEST_START);
+
+    expect(server.paths).toEqual(['/rstudio/files/.local/share/rstudio/log/positai.log']);
+    expect(attached.has('positai.log')).toBe(true);
   } finally {
     await server.close();
   }

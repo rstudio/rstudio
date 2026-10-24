@@ -40,7 +40,8 @@ export async function attachRemotePositaiLog(
   serverUrl: string,
   since: Date,
 ): Promise<void> {
-  const url = `${new URL(serverUrl).origin}/files/${REMOTE_POSITAI_LOG}`;
+  // /files/ sits at the server's root, under any path prefix it is served from.
+  const url = `${serverUrl.replace(/\/+$/, '')}/files/${REMOTE_POSITAI_LOG}`;
   let log: string;
   try {
     const response = await page.request.get(url, {
