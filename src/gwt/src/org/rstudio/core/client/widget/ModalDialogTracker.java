@@ -39,6 +39,7 @@ public class ModalDialogTracker
    public static void onShow(PopupPanel panel)
    {
       ensureVisible(panel);
+      markModal(panel.getElement());
       dialogStack_.add(panel);
 
       if (Desktop.hasDesktopFrame()) {
@@ -157,6 +158,18 @@ public class ModalDialogTracker
       if (dialogStack_.size() < 2)
          return null;
       return dialogStack_.get(dialogStack_.size() - 2).getElement();
+   }
+
+   /**
+    * The rest of the page is made inert while a modal shows; aria-modal tells assistive
+    * technology so from the dialog itself. It's only valid on the dialog roles, so panels
+    * with any other role are left alone.
+    */
+   private static void markModal(Element el)
+   {
+      String role = el.getAttribute("role");
+      if (role.equals("dialog") || role.equals("alertdialog"))
+         el.setAttribute("aria-modal", "true");
    }
 
    private static void setInertMainWindow(boolean inert)
