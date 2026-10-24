@@ -45,6 +45,7 @@ test('returns nothing when no entry is recent enough', () => {
 /** Serve `status` and `body` for every request; returns the server's URL and the paths it was asked for. */
 async function serveFiles(status: number, body: string): Promise<{ url: string; paths: string[]; close: () => Promise<void> }> {
   const paths: string[] = [];
+  // deepcode ignore HttpToHttps: loopback-only stub serving a fake log to this test
   const server = http.createServer((req, res) => {
     paths.push(req.url ?? '');
     res.writeHead(status, { 'Content-Type': 'text/plain' });
