@@ -205,9 +205,9 @@ function(fetch)
                   set(do_fetch FALSE)
                endif()
          endif()
+         set(${_PREFIX}_FETCHED ${do_fetch})
+         set(${_PREFIX}_FETCHED ${do_fetch} PARENT_SCOPE)
          if(do_fetch)
-            set(${_PREFIX}_FETCHED TRUE)
-
             FetchContent_Declare("${_NAME}"
                GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
                GIT_TAG        "${${_PREFIX}_REVISION}"
@@ -215,7 +215,6 @@ function(fetch)
                SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
                EXCLUDE_FROM_ALL)
          else()
-            set(${_PREFIX}_FETCHED FALSE)
             find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
          endif()
       endif()
@@ -471,7 +470,7 @@ fetch(ZLIB ZLIB)
 # Ensure libgit2 resolves zlib to our top-level zlib build on Windows.
 # Without this, FindZLIB fails during libgit2 configure and it falls back
 # to its bundled deps/zlib, producing mixed zlib linkage in final binaries.
-if(WIN32 AND NOT RSTUDIO_USE_SYSTEM_DEPENDENCIES AND NOT RSTUDIO_USE_SYSTEM_ZLIB)
+if(WIN32 AND ZLIB_FETCHED)
    set(_RSTUDIO_ZLIB_INCLUDE_DIR "${ZLIB_SOURCE_DIR}")
    set(_RSTUDIO_ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/src/cpp/ext/rstudio-zlib.lib")
    set(ZLIB_INCLUDE_DIR "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE PATH "" FORCE)
