@@ -2236,8 +2236,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     const live = liveEditors(page, '1 + 1');
     // Click a text row, not .ace_content's center: in a short window that lands
     // on the chunk output, a line widget outside Ace's scroller, which never
-    // focuses the editor.
-    const clickLive = () => live.locator('.ace_line', { hasText: 'title: x' }).click();
+    // focuses the editor. Forced because Ace's layers take no pointer events;
+    // the click falls through to the scroller.
+    const clickLive = () =>
+      live.locator('.ace_line', { hasText: 'title: x' }).click({ force: true });
     await expect(base).toBeVisible({ timeout: 10000 });
     try {
       await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
