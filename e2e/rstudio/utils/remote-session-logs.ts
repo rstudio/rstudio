@@ -57,6 +57,9 @@ export async function attachRemotePositaiLog(
       return;
     }
     log = await response.text();
+    // An empty log (new, or just rotated) has no entries for this test either.
+    if (log.trim() === '')
+      return;
     // A sign-in page or other non-log answer (redirects are followed) would
     // otherwise read as a log with nothing recent, and never be noticed.
     if (!log.split('\n').some((line) => LOG_TIMESTAMP.test(line))) {

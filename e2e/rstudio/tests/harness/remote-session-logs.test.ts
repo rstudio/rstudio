@@ -126,18 +126,24 @@ test('warns when the session answers with something other than a log', async ({ 
 });
 
 test('attaches nothing, quietly, when the log has no entries since the test started', async ({ page }) => {
-  const server = await serveFiles(200, LOG);
-  const warnings: string[] = [];
-  const warn = console.warn;
-  console.warn = (message: string) => { warnings.push(message); };
-  try {
-    const { testInfo, attached } = recordingTestInfo();
-    await attachRemotePositaiLog(page, testInfo, server.url, new Date('2026-10-24T00:00:00.000Z'));
-    expect(attached.size).toBe(0);
-    expect(warnings).toEqual([]);
-  } finally {
-    console.warn = warn;
-    await server.close();
+  const cases: Array<[string, string, Date]> = [
+    ['only older entries', LOG, new Date('2026-10-24T00:00:00.000Z')],
+    ['an empty log', '\n', TEST_START],
+  ];
+  for (const [what, body, since] of cases) {
+    const server = await serveFiles(200, body);
+    const warnings: string[] = [];
+    const warn = console.warn;
+    console.warn = (message: string) => { warnings.push(message); };
+    try {
+      const { testInfo, attached } = recordingTestInfo();
+      await attachRemotePositaiLog(page, testInfo, server.url, since);
+      expect(attached.size, what).toBe(0);
+      expect(warnings, what).toEqual([]);
+    } finally {
+      console.warn = warn;
+      await server.close();
+    }
   }
 });
 
