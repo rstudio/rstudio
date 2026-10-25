@@ -63,6 +63,8 @@ Once the \"Screen Reader Support\" mode is toggled on, you will hear the followi
 
 You can press tab to find \"Yes\" button and press spacebar. RStudio Server then reloads the page with screen reader support enabled; RStudio Desktop restarts.
 
+On RStudio Server, if some of your source edits are still being saved, your browser may ask \"Reload site? Changes you made may not be saved.\" Choose \"Cancel\", wait a moment, and then reload the page yourself. The screen reader setting has already been saved, so it takes effect after the reload.
+
 Besides the basic screen reader support, you can adjust various accessibility settings at Help / Accessibility / Accessibility Options...
 
 To open this configuration, do the following:
