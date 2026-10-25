@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -47,6 +48,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -195,7 +197,8 @@ public class ConsoleInterpreterVersion
       HorizontalPanel panel = new HorizontalPanel();
       
       HTML html = new HTML();
-      html.setHTML(resource.getText());
+      // both console title variants inline these logos, so their ids must be unique
+      html.setHTML(DomUtils.prefixSvgIds(resource.getText(), DOM.createUniqueId() + "-"));
       html.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
       
       Element svg = html.getElement().getFirstChildElement();

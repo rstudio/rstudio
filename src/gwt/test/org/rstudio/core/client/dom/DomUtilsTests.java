@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.dom;
 
+import org.rstudio.studio.client.common.icons.StandardIcons;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.SpanElement;
@@ -62,5 +64,39 @@ public class DomUtilsTests extends GWTTestCase
       String url2 = "https://hostname:port/endpoint?query=yes";
       String absolute2 = DomUtils.makeAbsoluteUrl(url2);
       Assert.assertEquals(url2, absolute2);
+   }
+
+   public void testPrefixSvgIdsRewritesIdsAndReferences()
+   {
+      String svg =
+            "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" +
+            "<linearGradient id=\"a\"/>" +
+            "<linearGradient\n   id=\"b\" xlink:href=\"#a\"/>" +
+            "<path fill=\"url(#a)\" style=\"fill:url(#b);stroke:#000000\"/>" +
+            "</svg>";
+      String expected =
+            "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" +
+            "<linearGradient id=\"p-a\"/>" +
+            "<linearGradient\n   id=\"p-b\" xlink:href=\"#p-a\"/>" +
+            "<path fill=\"url(#p-a)\" style=\"fill:url(#p-b);stroke:#000000\"/>" +
+            "</svg>";
+      Assert.assertEquals(expected, DomUtils.prefixSvgIds(svg, "p-"));
+   }
+
+   public void testPrefixSvgIdsLeavesOtherAttributesAlone()
+   {
+      String svg = "<svg data-id=\"x\" grid=\"y\"><path d=\"M0 0\"/></svg>";
+      Assert.assertEquals(svg, DomUtils.prefixSvgIds(svg, "p-"));
+   }
+
+   public void testPrefixSvgIdsMakesRealLogoIdsUnique()
+   {
+      String svg = StandardIcons.INSTANCE.rLogoSvg().getText();
+      String first = DomUtils.prefixSvgIds(svg, "one-");
+      String second = DomUtils.prefixSvgIds(svg, "two-");
+      Assert.assertTrue(first.contains("id=\"one-gradientFill-1\""));
+      Assert.assertTrue(first.contains("url(#one-gradientFill-1)"));
+      Assert.assertTrue(second.contains("id=\"two-gradientFill-1\""));
+      Assert.assertFalse(second.contains("one-"));
    }
 }
