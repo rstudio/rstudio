@@ -114,7 +114,7 @@ To provide screen-reader users with overview of the application layout, RStudio 
 
 4.  Console (lower-left, contains Console and other optional tabs such as Terminal and Jobs)
 
-5.  Sidebar (hidden by default; a column at the left or right edge, containing Chat)
+5.  Sidebar (hidden by default; a column at the left or right edge, containing Chat when Posit Assistant is enabled)
 
 ```{=html}
 <!-- -->
