@@ -99,7 +99,7 @@ To provide screen-reader users with overview of the application layout, RStudio 
 
 2.  Navigation (the main menu and toolbar)
 
-3.  Main Workbench (the area below the main menu and toolbar, containing 4 quadrants)
+3.  Workbench (the main landmark: the area below the main menu and toolbar, containing 4 quadrants and an optional sidebar)
 
 ```{=html}
 <!-- -->
@@ -111,6 +111,8 @@ To provide screen-reader users with overview of the application layout, RStudio 
 3.  Source (upper-left quadrant, contains files open in text editor)
 
 4.  Console (lower-left, contains Console and other optional tabs such as Terminal and Jobs)
+
+5.  Sidebar (hidden by default; a column at the left or right edge, containing Chat)
 
 ```{=html}
 <!-- -->
