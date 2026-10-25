@@ -616,15 +616,23 @@ public class PaneManager
             eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar())));
    }
 
+   /**
+    * The quadrants, the sidebar while it is shown, and the source columns. A
+    * hidden sidebar's window is left out: one hidden since page load is in
+    * HIDE, with no widget to zoom or focus.
+    */
+   private ArrayList<LogicalWindow> getAllWindows()
+   {
+      ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
+      if (sidebar_ != null && getSidebarWindow() != null)
+         windows.add(getSidebarWindow());
+      windows.addAll(sourceLogicalWindows_);
+      return windows;
+   }
+
    LogicalWindow getLogicalWindow(WindowFrame frame)
    {
-      for (LogicalWindow window : panes_)
-         if (window.getNormal() == frame)
-            return window;
-      LogicalWindow sidebarWindow = getSidebarWindow();
-      if (sidebarWindow != null && sidebarWindow.getNormal() == frame)
-         return sidebarWindow;
-      for (LogicalWindow window : sourceLogicalWindows_)
+      for (LogicalWindow window : getAllWindows())
          if (window.getNormal() == frame)
             return window;
 
@@ -634,12 +642,7 @@ public class PaneManager
    LogicalWindow getParentLogicalWindow(Element el)
    {
       LogicalWindow targetWindow = null;
-      ArrayList<LogicalWindow> windowList = new ArrayList<>(panes_);
-      windowList.addAll(sourceLogicalWindows_);
-
-      LogicalWindow sidebarWindow = getSidebarWindow();
-      if (sidebarWindow != null)
-         windowList.add(sidebarWindow);
+      ArrayList<LogicalWindow> windowList = getAllWindows();
 
       while (el != null && targetWindow == null)
       {
@@ -2768,11 +2771,8 @@ public class PaneManager
       if (column == null)
          return null;
 
-      ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
-      windows.add(getSidebarWindow());
-      windows.addAll(sourceLogicalWindows_);
       LogicalWindow topmost = null;
-      for (LogicalWindow window : windows)
+      for (LogicalWindow window : getAllWindows())
       {
          if (window == null || !window.visible() ||
              !DomUtils.contains(column.getElement(), window.getNormal().getElement()))
@@ -3574,6 +3574,7 @@ public class PaneManager
    private final DualWindowLayoutPanel center_;
    private final DualWindowLayoutPanel right_;
    private final ArrayList<Widget> leftList_ = new ArrayList<>();
+   // The quadrants only; getAllWindows() adds the sidebar and source columns.
    private ArrayList<LogicalWindow> panes_;
    private ConsoleTabPanel consoleTabPanel_;
    private WorkbenchTabPanel tabSet1TabPanel_;
