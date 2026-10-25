@@ -31,7 +31,7 @@ Several accessibility-related options are available under the Help / Accessibili
 
 ## RStudio Desktop
 
--   Notes: Screen-reader support for RStudio Desktop requires the Electron-based open-source version 2022.12 (Elsbeth Geranium) or newer.
+-   Notes: Both RStudio Desktop and RStudio Desktop Pro support screen readers.
 
 ## Posit Workbench / RStudio Server
 
@@ -53,7 +53,7 @@ In most cases, screen reader users will have to keep turning off their virtual c
 
 ### Screen reader settings
 
-When using Posit Workbench, RStudio Server, or RStudio Desktop 2022.12 open-source (or later) with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
+When using Posit Workbench, RStudio Server, or RStudio Desktop with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
 
 The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Shift+U\" on Mac.
 
