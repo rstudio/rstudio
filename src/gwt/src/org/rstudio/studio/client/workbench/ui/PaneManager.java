@@ -417,7 +417,7 @@ public class PaneManager
       String sidebarLocation = config.getSidebarLocation();
       if (config.getSidebarVisible())
       {
-         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         LogicalWindow sidebarWindow = getSidebarWindow();
          if (sidebarWindow != null)
          {
             // For sidebar, we use just the WindowFrame directly (no vertical split)
@@ -621,7 +621,7 @@ public class PaneManager
       for (LogicalWindow window : panes_)
          if (window.getNormal() == frame)
             return window;
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      LogicalWindow sidebarWindow = getSidebarWindow();
       if (sidebarWindow != null && sidebarWindow.getNormal() == frame)
          return sidebarWindow;
       for (LogicalWindow window : sourceLogicalWindows_)
@@ -637,7 +637,7 @@ public class PaneManager
       ArrayList<LogicalWindow> windowList = new ArrayList<>(panes_);
       windowList.addAll(sourceLogicalWindows_);
 
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      LogicalWindow sidebarWindow = getSidebarWindow();
       if (sidebarWindow != null)
          windowList.add(sidebarWindow);
 
@@ -1003,7 +1003,7 @@ public class PaneManager
    private ArrayList<LogicalWindow> getFocusCycle()
    {
       ArrayList<LogicalWindow> cycle = new ArrayList<>(panes_);
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      LogicalWindow sidebarWindow = getSidebarWindow();
       if (sidebar_ != null && sidebarWindow != null && !panel_.isSidebarCollapsed())
          cycle.add(sidebarWindow);
       return cycle;
@@ -1284,8 +1284,7 @@ public class PaneManager
          // sidebar is hidden, and a panel still registered on the tabs would
          // then never be reached again (#18448). The window itself stays in
          // panesByName_ -- other code reads it while the sidebar is hidden.
-         LogicalWindow sidebarWindow =
-               panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         LogicalWindow sidebarWindow = getSidebarWindow();
          if (sidebarWindow != null)
             disposeSidebarPanel(sidebarWindow);
 
@@ -2300,7 +2299,7 @@ public class PaneManager
       }
 
       // If the tab is in the sidebar, ensure the sidebar is visible
-      if (parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      if (parent == getSidebarWindow())
       {
          // Check if sidebar is currently hidden and show it
          if (sidebar_ == null)
@@ -2770,7 +2769,7 @@ public class PaneManager
          return null;
 
       ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
-      windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
+      windows.add(getSidebarWindow());
       windows.addAll(sourceLogicalWindows_);
       LogicalWindow topmost = null;
       for (LogicalWindow window : windows)
@@ -2947,6 +2946,15 @@ public class PaneManager
    public LogicalWindow getConsoleLogicalWindow()
    {
       return panesByName_.get(PaneManager.CONSOLE_PANE);
+   }
+
+   /**
+    * The current sidebar window, kept while the sidebar is hidden. showSidebar()
+    * replaces it when it shows a hidden sidebar, so look it up each time.
+    */
+   private LogicalWindow getSidebarWindow()
+   {
+      return panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
    }
 
    public int syncAdditionalColumnCount(int count, boolean refreshDisplay)
@@ -3419,7 +3427,7 @@ public class PaneManager
       commands_.layoutZoomSidebar().setEnabled(isSidebarVisible);
 
       // Update sidebar maximize button state to reflect zoom state
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      LogicalWindow sidebarWindow = getSidebarWindow();
       if (sidebarWindow != null)
       {
          WindowFrame sidebarFrame = sidebarWindow.getNormal();
