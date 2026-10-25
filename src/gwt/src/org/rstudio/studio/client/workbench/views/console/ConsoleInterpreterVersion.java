@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -194,8 +195,7 @@ public class ConsoleInterpreterVersion
       // An <img> rather than inline SVG gives each logo its own document, so the
       // SVGs' internal ids can't collide with others in the page (the console
       // title exists in two variants, so inlining would duplicate them).
-      Image logo = new Image(resource.getSafeUri());
-      logo.setAltText("");
+      Image logo = new DecorativeImage(resource.getSafeUri());
       // GWT's setDraggable(DRAGGABLE_FALSE) sets "true"; see DocTabLayoutPanel
       logo.getElement().setAttribute("draggable", "false");
       logo.addStyleName(RES.styles().icon());
@@ -206,13 +206,12 @@ public class ConsoleInterpreterVersion
       
       panel.add(logo);
       
-      Image downArrow = new Image(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
-      downArrow.getElement().addClassName("rstudio-themes-inverts");
-      downArrow.addStyleName(RES.styles().iconDownArrow());
-      
       // this control is not operable via keyboard or screen reader, so for now we'll just hide it
       // from screen readers altogether instead of having an unlabeled image
-      downArrow.setAltText("");
+      Image downArrow = new DecorativeImage(
+            new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
+      downArrow.getElement().addClassName("rstudio-themes-inverts");
+      downArrow.addStyleName(RES.styles().iconDownArrow());
       downArrow.getElement().setAttribute("draggable", "false");
       panel.add(downArrow);
       
