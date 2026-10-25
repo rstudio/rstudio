@@ -213,6 +213,7 @@ public class ConsoleInterpreterVersion
       // this control is not operable via keyboard or screen reader, so for now we'll just hide it
       // from screen readers altogether instead of having an unlabeled image
       downArrow.setAltText("");
+      downArrow.getElement().setAttribute("draggable", "false");
       panel.add(downArrow);
       
       return panel;
