@@ -1452,19 +1452,6 @@ public class DomUtils
       el.removeEventListener(type, callback, useCapture);
    }-*/;
    
-   /**
-    * Prefixes every id in SVG markup, along with its url(#id) and href="#id"
-    * references. Inlining the same SVG more than once would otherwise put
-    * duplicate ids (e.g. gradient definitions) into the document.
-    */
-   public static String prefixSvgIds(String svg, String prefix)
-   {
-      return svg
-            .replaceAll("(\\s)id=\"([^\"]+)\"", "$1id=\"" + prefix + "$2\"")
-            .replaceAll("url\\(#([^)]+)\\)", "url(#" + prefix + "$1)")
-            .replaceAll("href=\"#([^\"]+)\"", "href=\"#" + prefix + "$1\"");
-   }
-
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;
 }

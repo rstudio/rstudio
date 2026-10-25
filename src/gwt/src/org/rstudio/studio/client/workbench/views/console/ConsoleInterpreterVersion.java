@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.console;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -38,20 +37,16 @@ import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.TextResource;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -190,29 +185,23 @@ public class ConsoleInterpreterVersion
       }
    }
 
-   private Widget createLogo(TextResource resource,
+   private Widget createLogo(DataResource resource,
                            String languageClass,
                            boolean isTabbedView)
    {
       HorizontalPanel panel = new HorizontalPanel();
       
-      HTML html = new HTML();
-      // both console title variants inline these logos, so their ids must be unique
-      html.setHTML(DomUtils.prefixSvgIds(resource.getText(), DOM.createUniqueId() + "-"));
-      html.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
-      
-      Element svg = html.getElement().getFirstChildElement();
-      svg.setAttribute("role", "presentation");
-
-      // NOTE: GWT chokes when modifying the className
-      // attribute of an SVG element so we do it "by hand" here
-      addClassName(svg, RES.styles().icon());
-      addClassName(svg, isTabbedView
+      // An <img> rather than inline SVG: both console title variants show these
+      // logos, and inlining would duplicate the SVGs' gradient ids in the page.
+      Image logo = new Image(resource.getSafeUri());
+      logo.setAltText("");
+      logo.addStyleName(RES.styles().icon());
+      logo.addStyleName(isTabbedView
             ? RES.styles().iconTabbed()
             : RES.styles().iconUntabbed());
-      addClassName(svg, languageClass);
+      logo.addStyleName(languageClass);
       
-      panel.add(html);
+      panel.add(logo);
       
       Image downArrow = new Image(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
       downArrow.getElement().addClassName("rstudio-themes-inverts");
@@ -319,11 +308,6 @@ public class ConsoleInterpreterVersion
    {
       return 18;
    }
-   
-   private final native void addClassName(Element element, String className)
-   /*-{
-      element.classList.add(className);
-   }-*/;
    
    private final HorizontalPanel container_;
    private final FlowPanel logoContainer_;
