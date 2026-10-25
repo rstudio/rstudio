@@ -628,34 +628,39 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
   });
 
   // Showing the sidebar after page load gives it a new window, and a tab
-  // raising itself there must still find it (#19202). The zoom and help() run
-  // in one call: focusing the Console to run help() would move the zoom first.
-  test('help() during a zoom moves the zoom to Help in a reshown sidebar', async ({
-    rstudioPage: page,
-  }) => {
-    await setSidebarVisible(page, false);
-    await executeInConsole(page, [
-      '.rs.e2ePanes <- .rs.readUiPref("panes")',
-      'local({ p <- .rs.e2ePanes',
-      'p$tabSet2 <- as.list(setdiff(unlist(p$tabSet2), "Help"))',
-      'p$sidebar <- list("Help")',
-      '.rs.writeUiPref("panes", p) })',
-    ].join('; '));
-    try {
+  // raising itself there must still find it (#19202).
+  test.describe('a tab raising itself in a reshown sidebar', () => {
+    test.beforeEach(async ({ rstudioPage: page }) => {
+      await setSidebarVisible(page, false);
+      await executeInConsole(page, [
+        '.rs.e2ePanes <- .rs.readUiPref("panes")',
+        'local({ p <- .rs.e2ePanes',
+        'p$tabSet2 <- as.list(setdiff(unlist(p$tabSet2), "Help"))',
+        'p$sidebar <- list("Help")',
+        '.rs.writeUiPref("panes", p) })',
+      ].join('; '));
       await setSidebarVisible(page, true);
       await expect(page.locator(`${SIDEBAR_PANE} ${HELP_TAB}`)).toHaveCount(1);
+    });
 
+    // Runs after a failed beforeEach too, so a pref write that landed before
+    // a failure is still undone.
+    test.afterEach(async ({ rstudioPage: page }) => {
+      await resetLayoutZoom(page);
+      await setSidebarVisible(page, false);
+      await executeInConsole(page, 'if (exists(".rs.e2ePanes")) { ' +
+        '.rs.writeUiPref("panes", .rs.e2ePanes); rm(.rs.e2ePanes) }');
+    });
+
+    // The zoom and help() run in one call: focusing the Console to run help()
+    // would move the zoom first.
+    test('help() during a pane zoom moves the zoom to Help', async ({ rstudioPage: page }) => {
       await executeInConsole(page,
         '.rs.api.executeCommand("layoutZoomEnvironment"); help("mean")');
       await expectExposed(page, SIDEBAR_PANE);
       await expectHidden(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
       await expect(page.locator(HELP_TAB)).toHaveAttribute('aria-selected', 'true');
-    } finally {
-      await resetLayoutZoom(page);
-      await setSidebarVisible(page, false);
-      await executeInConsole(page,
-        '.rs.writeUiPref("panes", .rs.e2ePanes); rm(.rs.e2ePanes)');
-    }
+    });
   });
 
   // history() shows History through an ActivatePaneEvent, which code also fires
