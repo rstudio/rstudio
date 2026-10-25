@@ -203,7 +203,7 @@ public class DocUpdateSentinel
             new LastChanceSaveEvent.Handler() {
                public void onLastChanceSave(LastChanceSaveEvent event)
                {
-                  // We're quitting. Save one last time.
+                  // Save one last time before the app quits or reloads.
                   final Token token = event.acquire();
                   boolean saving = doSave(null, null, null, true,
                         new ProgressIndicator()
@@ -218,27 +218,27 @@ public class DocUpdateSentinel
 
                      public void clearProgress()
                      {
-                        // alternate way to signal completion. safe to quit
+                        // alternate way to signal completion. safe to proceed
                         token.release();
                      }
 
                      public void onCompleted()
                      {
-                        // We saved successfully. We're safe to quit now.
+                        // We saved successfully. We're safe to proceed now.
                         token.release();
                      }
 
                      public void onError(String message)
                      {
-                        // The save didn't succeed. Oh well. Nothing we can
-                        // do but quit.
+                        // The save didn't succeed. Nothing we can do but
+                        // proceed.
                         token.release();
                      }
                   });
 
                   if (!saving)
                   {
-                     // No save was performed (not needed). We're safe to quit
+                     // No save was performed (not needed). We're safe to proceed
                      // now, no need to wait for server requests to complete.
                      token.release();
                   }
