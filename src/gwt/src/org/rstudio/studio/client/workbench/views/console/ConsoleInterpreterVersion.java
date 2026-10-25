@@ -191,10 +191,13 @@ public class ConsoleInterpreterVersion
    {
       HorizontalPanel panel = new HorizontalPanel();
       
-      // An <img> rather than inline SVG: both console title variants show these
-      // logos, and inlining would duplicate the SVGs' gradient ids in the page.
+      // An <img> rather than inline SVG gives each logo its own document, so the
+      // SVGs' internal ids can't collide with others in the page (the console
+      // title exists in two variants, so inlining would duplicate them).
       Image logo = new Image(resource.getSafeUri());
       logo.setAltText("");
+      // GWT's setDraggable(DRAGGABLE_FALSE) sets "true"; see DocTabLayoutPanel
+      logo.getElement().setAttribute("draggable", "false");
       logo.addStyleName(RES.styles().icon());
       logo.addStyleName(isTabbedView
             ? RES.styles().iconTabbed()
