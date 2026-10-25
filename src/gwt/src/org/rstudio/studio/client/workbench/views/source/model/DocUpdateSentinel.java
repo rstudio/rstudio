@@ -195,56 +195,55 @@ public class DocUpdateSentinel
          });
       }
 
-      // Desktop only
-      if (Desktop.isDesktop())
-      {
-         lastChanceSaveHandlerReg_ = events.addHandler(
-               LastChanceSaveEvent.TYPE,
-               new LastChanceSaveEvent.Handler() {
-                  public void onLastChanceSave(LastChanceSaveEvent event)
+      // Save pending edits before the app quits or reloads. In a browser this
+      // runs only for in-app quits and reloads; closing the tab relies on the
+      // closing handler above.
+      lastChanceSaveHandlerReg_ = events.addHandler(
+            LastChanceSaveEvent.TYPE,
+            new LastChanceSaveEvent.Handler() {
+               public void onLastChanceSave(LastChanceSaveEvent event)
+               {
+                  // We're quitting. Save one last time.
+                  final Token token = event.acquire();
+                  boolean saving = doSave(null, null, null, true,
+                        new ProgressIndicator()
                   {
-                     // We're quitting. Save one last time.
-                     final Token token = event.acquire();
-                     boolean saving = doSave(null, null, null, true,
-                           new ProgressIndicator()
+                     public void onProgress(String message)
                      {
-                        public void onProgress(String message)
-                        {
-                        }
+                     }
 
-                        public void onProgress(String message, Operation onCancel)
-                        {
-                        }
-
-                        public void clearProgress()
-                        {
-                           // alternate way to signal completion. safe to quit
-                           token.release();
-                        }
-
-                        public void onCompleted()
-                        {
-                           // We saved successfully. We're safe to quit now.
-                           token.release();
-                        }
-
-                        public void onError(String message)
-                        {
-                           // The save didn't succeed. Oh well. Nothing we can
-                           // do but quit.
-                           token.release();
-                        }
-                     });
-
-                     if (!saving)
+                     public void onProgress(String message, Operation onCancel)
                      {
-                        // No save was performed (not needed). We're safe to quit
-                        // now, no need to wait for server requests to complete.
+                     }
+
+                     public void clearProgress()
+                     {
+                        // alternate way to signal completion. safe to quit
                         token.release();
                      }
+
+                     public void onCompleted()
+                     {
+                        // We saved successfully. We're safe to quit now.
+                        token.release();
+                     }
+
+                     public void onError(String message)
+                     {
+                        // The save didn't succeed. Oh well. Nothing we can
+                        // do but quit.
+                        token.release();
+                     }
+                  });
+
+                  if (!saving)
+                  {
+                     // No save was performed (not needed). We're safe to quit
+                     // now, no need to wait for server requests to complete.
+                     token.release();
                   }
-               });
-      }
+               }
+            });
    }
    
    @Inject
