@@ -628,7 +628,9 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
   });
 
   // Showing the sidebar after page load gives it a new window, and a tab
-  // raising itself there must still find it (#19202).
+  // raising itself there must still find it (#19202). Help raises its pane on
+  // its own, which moves a zoom or ends a column zoom; its ActivatePaneEvent
+  // leaves both alone.
   test.describe('a tab raising itself in a reshown sidebar', () => {
     test.beforeEach(async ({ rstudioPage: page }) => {
       await setSidebarVisible(page, false);
@@ -660,6 +662,17 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       await expectExposed(page, SIDEBAR_PANE);
       await expectHidden(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
       await expect(page.locator(HELP_TAB)).toHaveAttribute('aria-selected', 'true');
+    });
+
+    // A left-column zoom shuts the sidebar and leaves the Console showing.
+    test('help() ends a column zoom that shut the sidebar', async ({ rstudioPage: page }) => {
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expectHidden(page, SIDEBAR_PANE);
+
+      await executeInConsole(page, 'help("mean")');
+      await expectExposed(page, SIDEBAR_PANE);
+      await expect(page.locator(HELP_TAB)).toHaveAttribute('aria-selected', 'true');
+      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
     });
   });
 
