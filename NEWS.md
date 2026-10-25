@@ -9,6 +9,7 @@
 - ([#19208](https://github.com/rstudio/rstudio/issues/19208)): Tools > Version Control > Show Changes Side by Side shows the version of the current file last staged or committed beside the document, read-only, with the changes between them highlighted on both sides, unchanged lines kept level, and scrolling in step. The document stays editable, and the comparison follows as you type.
 
 ### Fixed
+- ([#19202](https://github.com/rstudio/rstudio/issues/19202)): Fixed an issue where a tab in the sidebar that shows itself while another pane is zoomed (e.g. Help after `?mean`) stayed hidden, instead of taking over the zoom, when the sidebar had been shown after RStudio started.
 - ([#19240](https://github.com/rstudio/rstudio/issues/19240)): The "RStudio has reduced background file operations" console notice is no longer printed again each time a suspended session is resumed or R is restarted; it is printed once per project session, and again when a restart first turns the reduction on.
 - ([#19168](https://github.com/rstudio/rstudio/issues/19168)): RStudio now installs requested dependencies together in renv projects, allowing renv to resolve dependencies and use parallel installation even when individual package installation is enabled.
 - ([#19165](https://github.com/rstudio/rstudio/issues/19165)): Improved vertical alignment of text buttons in the Packages toolbar and search fields on Windows.

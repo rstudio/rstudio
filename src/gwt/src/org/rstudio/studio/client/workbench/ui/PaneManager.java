@@ -621,6 +621,9 @@ public class PaneManager
       for (LogicalWindow window : panes_)
          if (window.getNormal() == frame)
             return window;
+      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      if (sidebarWindow != null && sidebarWindow.getNormal() == frame)
+         return sidebarWindow;
       for (LogicalWindow window : sourceLogicalWindows_)
          if (window.getNormal() == frame)
             return window;
@@ -634,8 +637,6 @@ public class PaneManager
       ArrayList<LogicalWindow> windowList = new ArrayList<>(panes_);
       windowList.addAll(sourceLogicalWindows_);
 
-      // panes_ can hold a sidebar window that showSidebar() has since replaced,
-      // or none at all; panesByName_ has the live one.
       LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
       if (sidebarWindow != null)
          windowList.add(sidebarWindow);
@@ -997,28 +998,15 @@ public class PaneManager
 
    /**
     * The panes Focus Next/Previous Pane cycles through: the quadrants, then the
-    * sidebar unless it is hidden or shut by a zoom or splitter drag. panes_
-    * can't be used as is: it lists the sidebar only when the quadrants pref
-    * does, and keeps a sidebar window that showSidebar() has since replaced.
+    * sidebar unless it is hidden or shut by a zoom or splitter drag.
     */
    private ArrayList<LogicalWindow> getFocusCycle()
    {
-      ArrayList<LogicalWindow> cycle = new ArrayList<>();
-      for (LogicalWindow window : panes_)
-      {
-         if (!isSidebarWindow(window))
-            cycle.add(window);
-      }
+      ArrayList<LogicalWindow> cycle = new ArrayList<>(panes_);
       LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
       if (sidebar_ != null && sidebarWindow != null && !panel_.isSidebarCollapsed())
          cycle.add(sidebarWindow);
       return cycle;
-   }
-
-   private boolean isSidebarWindow(LogicalWindow window)
-   {
-      return window.getNormal() != null &&
-         StringUtil.equals(window.getNormal().getName(), UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
    }
 
    private String getAdjacentWindow(LogicalWindow window, boolean before)
@@ -2094,11 +2082,14 @@ public class PaneManager
    {
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
-      // Do not include hiddenTabSet in panes since it should never be displayed
+      // Do not include hiddenTabSet in panes since it should never be displayed.
+      // Leave out the sidebar too: only some layouts list it, and showSidebar()
+      // replaces its window, so read the live one from panesByName_.
       JsArrayString panes = config.getQuadrants();
       for (int i = 0; i < panes.length(); i++)
       {
-         if (StringUtil.equals(panes.get(i), UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
+         if (StringUtil.equals(panes.get(i), UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET) ||
+             StringUtil.equals(panes.get(i), UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
             continue;
          results.add(panesByName_.get(panes.get(i)));
       }
@@ -2778,8 +2769,6 @@ public class PaneManager
       if (column == null)
          return null;
 
-      // panes_ can hold a sidebar window that showSidebar() has since replaced;
-      // panesByName_ has the live one.
       ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
       windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
       windows.addAll(sourceLogicalWindows_);
