@@ -10,7 +10,7 @@
 
 ### Fixed
 - ([#18490](https://github.com/rstudio/rstudio/issues/18490)): Fixed an issue where running a chunk in a freshly opened Visual Mode document scrolled the editor to the top and back before any chunk had been clicked or edited.
-- ([quarto-dev/quarto#1204](https://github.com/quarto-dev/quarto/pull/1204)): Fixed an issue where the Visual Mode Insert Emoji and Insert Unicode popups closed on their own a few seconds after the editor was first focused, even while a search term was still being typed.
+- ([#19294](https://github.com/rstudio/rstudio/issues/19294)): Fixed an issue where the Visual Mode Insert Emoji and Insert Unicode popups closed on their own a few seconds after the editor was first focused, even while a search term was still being typed.
 - ([#19202](https://github.com/rstudio/rstudio/issues/19202)): Fixed an issue where a tab in the sidebar that shows itself while another pane is zoomed (e.g. Help after `?mean`) stayed hidden, instead of taking over the zoom, when the sidebar had been shown after RStudio started.
 - ([#19240](https://github.com/rstudio/rstudio/issues/19240)): The "RStudio has reduced background file operations" console notice is no longer printed again each time a suspended session is resumed or R is restarted; it is printed once per project session, and again when a restart first turns the reduction on.
 - ([#19168](https://github.com/rstudio/rstudio/issues/19168)): RStudio now installs requested dependencies together in renv projects, allowing renv to resolve dependencies and use parallel installation even when individual package installation is enabled.
