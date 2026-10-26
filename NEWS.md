@@ -62,6 +62,7 @@
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
 
 ### Dependencies
+- Copilot Language Server 1.555.7
 - Electron 44.9.3
 - RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
 - GWT 2.13.1
