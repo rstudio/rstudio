@@ -264,13 +264,15 @@ test_that("debugSource runs files parsed without source references", {
 
 test_that("debugSource runs files with no expressions", {
 
+   op <- options(keep.source = TRUE)
+   on.exit(options(op), add = TRUE)
+
    file <- tempfile(fileext = ".R")
    on.exit(unlink(file), add = TRUE)
 
    for (keepSource in c(TRUE, FALSE))
    {
-      op <- options(keep.source = keepSource)
-      on.exit(options(op), add = TRUE)
+      options(keep.source = keepSource)
 
       for (contents in list(character(), "# just a comment"))
       {

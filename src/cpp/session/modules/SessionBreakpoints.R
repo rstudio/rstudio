@@ -504,7 +504,7 @@
    env$fun <- .rs.removeBreakpoints(env$fun)
    breakSteps <- breakSteps[nchar(breakSteps) > 6]
    for (steps in breakSteps) {
-      step <- as.numeric(strsplit(breakSteps, ",")[[1]][3]) 
+      step <- as.numeric(strsplit(steps, ",")[[1]][3])
       op <- deparse(body(env$fun)[[2]][[2]][[step]][[1]]) 
       if (op == "<-" || op == "=") 
          eval(body(env$fun)[[2]][[2]][[step]], envir = globalenv())
