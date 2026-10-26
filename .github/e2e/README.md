@@ -44,7 +44,8 @@ approaches that overhead.
   macOS jobs, so runner concurrency is not the limit.
 - Windows: 6. At 4 shards the slowest shard ran ~30 minutes of tests
   against ~22 for its siblings and was the long pole of the PR-triggered
-  run; at 6 the shards finish in roughly 20 minutes.
+  run; at 6 most shards run 15 to 25 minutes of tests, with the shard
+  that lands the heavy cluster at 30 to 40.
 - Linux Desktop and Linux Server: 4. At 2 shards the slower shard ran
   roughly 50 to 78 minutes of tests on both platforms (Linux Server's
   second shard was 67 to 76 minutes against ~45 for its sibling), so a
