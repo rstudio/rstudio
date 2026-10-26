@@ -535,7 +535,7 @@ if(LIBGIT2_BINARY_DIR)
    endif()
 endif()
 
-if(FETCHCONTENT_SOURCE_DIR_UTFCPP)
+if(FETCHCONTENT_SOURCE_DIR_UTFCPP and NOT FETCHCONTENT_SOURCE_DIR_UTF8CPP)
    # The fetch name was changed to the package name recently so catch prior uses
    message(FATAL_ERROR "To set the fetch location of UTF8CPP use -DFETCHCONTENT_SOURCE_DIR_UTF8CPP")
 endif()
