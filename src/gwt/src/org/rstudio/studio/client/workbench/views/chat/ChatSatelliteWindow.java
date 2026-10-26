@@ -85,6 +85,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
 
       // Forward postMessage from iframe to main window
       setupMessageForwarder();
+      AssistantKeyForwarder.install();
 
       // Create suspend overlay (shown during session suspend to block interaction)
       suspendedOverlay_ = new HTML();
