@@ -82,7 +82,6 @@ public class AboutDialog extends ModalDialogBase
       }
       contents_ = new AboutDialogContents(info, editionInfo_, quartoDetails());
       fetchPositAssistantVersion();
-      setARIADescribedBy(contents_.getDescriptionElement());
       setWidth("600px"); //$NON-NLS-1$
    }
 
@@ -95,7 +94,8 @@ public class AboutDialog extends ModalDialogBase
    @Override
    protected void focusInitialControl()
    {
-      focusOkButton();
+      // Start screen reader users at the top of the content, which comes before the buttons
+      contents_.focusProductName();
    }
 
    @Inject

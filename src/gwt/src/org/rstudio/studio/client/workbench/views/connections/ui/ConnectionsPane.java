@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -29,6 +30,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -44,6 +46,7 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.command.AppCommand;
@@ -53,7 +56,6 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.Base64ImageCell;
 import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioDataGrid;
@@ -120,18 +122,19 @@ public class ConnectionsPane extends WorkbenchPane
       });
        
       // add type column; this is a package-provided image we scale to 16x16 
-      typeColumn_ = new Column<Connection, String>(new Base64ImageCell(16, 16))
+      typeColumn_ = new Column<Connection, Connection>(new ConnectionTypeCell())
       {
          @Override
-         public String getValue(Connection connection)
+         public Connection getValue(Connection connection)
          {
             if (StringUtil.isNullOrEmpty(connection.getIconData()))
                return null;
-            return connection.getIconData();
+            return connection;
          }
       };
          
-      connectionsDataGrid_.addColumn(typeColumn_, new TextHeader(""));
+      connectionsDataGrid_.addColumn(typeColumn_,
+            SafeHtmlUtil.visuallyHiddenText(constants_.typeColumnHeader()));
       connectionsDataGrid_.setColumnWidth(typeColumn_, 20, Unit.PX);
             
       // add host column
@@ -174,7 +177,8 @@ public class ConnectionsPane extends WorkbenchPane
               },
               constants_.exploreConnectionTitle()) {
       };
-      connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
+      connectionsDataGrid_.addColumn(exploreColumn,
+            SafeHtmlUtil.visuallyHiddenText(constants_.exploreColumnHeader()));
       connectionsDataGrid_.setColumnWidth(exploreColumn, 30, Unit.PX);
       
       // data provider
@@ -573,8 +577,23 @@ public class ConnectionsPane extends WorkbenchPane
        }       
     });
    }
-   
-   
+
+   private static class ConnectionTypeCell extends AbstractCell<Connection>
+   {
+      @Override
+      public void render(Context context, Connection connection, SafeHtmlBuilder sb)
+      {
+         if (connection == null)
+            return;
+         sb.append(SafeHtmlUtil.createOpenTag("img",
+                                              "src", connection.getIconData(),
+                                              "alt", connection.getId().getType(),
+                                              "width", "16",
+                                              "height", "16"));
+      }
+   }
+
+
    private Toolbar toolbar_;
    private final SlidingLayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
@@ -583,7 +602,7 @@ public class ConnectionsPane extends WorkbenchPane
    
    private Connection exploredConnection_ = null;
    
-   private final Column<Connection, String> typeColumn_;
+   private final Column<Connection, Connection> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
    private final TextColumn<Connection> statusColumn_;
   

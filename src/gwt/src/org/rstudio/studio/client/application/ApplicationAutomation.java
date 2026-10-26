@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
@@ -129,6 +130,7 @@ public class ApplicationAutomation
                                 SourceColumnManager sourceColumnManager,
                                 ChatServerOperations chatServer,
                                 ShinyServerOperations shinyServer,
+                                ApplicationServerOperations appServer,
                                 Provider<PaneManager> pPaneManager)
    {
       commands_ = commands;
@@ -138,6 +140,7 @@ public class ApplicationAutomation
       sourceColumnManager_ = sourceColumnManager;
       chatServer_ = chatServer;
       shinyServer_ = shinyServer;
+      appServer_ = appServer;
       // Provider, not a direct injection: PaneManager is constructed later in
       // the workbench lifecycle than this early-initialized agent, so resolve
       // it lazily (mirrors WorkbenchScreen / PaneLayoutPreferencesPane).
@@ -182,6 +185,7 @@ public class ApplicationAutomation
       registerVersion();
       registerChat();
       registerShiny();
+      registerSession();
       registerDialogs();
       registerLayout();
       registerErrors();
@@ -342,6 +346,37 @@ public class ApplicationAutomation
    private void registerShiny()
    {
       registerShinyObject();
+   }
+
+   private void registerSession()
+   {
+      registerSessionObject();
+   }
+
+   // Round-trip the `ping` RPC. It is answered by the session's main thread
+   // (waitForMethod / polledEventHandler), so the callback only fires while
+   // that thread is serving requests: a session that looks idle but has
+   // stopped dequeuing (#19236) never answers. Tests bound the wait to tell a
+   // deaf session from a slow one.
+   private void pingSession(JavaScriptObject onCompleted)
+   {
+      appServer_.ping(new org.rstudio.studio.client.server.ServerRequestCallback<org.rstudio.studio.client.server.VoidResponse>()
+      {
+         @Override
+         public void onResponseReceived(org.rstudio.studio.client.server.VoidResponse response)
+         {
+            invokeWriteCallback(onCompleted, true, null);
+         }
+
+         @Override
+         public void onError(org.rstudio.studio.client.server.ServerError error)
+         {
+            // Pass the detail through so a ping that fails (rather than
+            // hangs) names its cause: connection_refused from a session
+            // that is shutting down, a dropped XHR, ...
+            invokeWriteCallback(onCompleted, false, error.getUserMessage());
+         }
+      });
    }
 
    private void registerDialogs()
@@ -974,6 +1009,26 @@ public class ApplicationAutomation
       });
    }-*/;
 
+   private native final void registerSessionObject() /*-{
+      var self = this;
+      $wnd.rstudio = $wnd.rstudio || {};
+      $wnd.rstudio.session = $wnd.rstudio.session || {};
+      // Resolves once the session's main thread has answered a `ping` RPC,
+      // rejects if the RPC fails, and never settles while the main thread is
+      // not serving requests -- so callers bound it (see
+      // probeSessionLiveness in the e2e harness).
+      $wnd.rstudio.session.ping = $entry(function() {
+         return new $wnd.Promise(function(resolve, reject) {
+            var cb = $entry(function(succeeded, errorMessage) {
+               if (succeeded) resolve();
+               else reject(new Error('ping RPC failed' +
+                                     (errorMessage ? ' -- ' + errorMessage : '')));
+            });
+            self.@org.rstudio.studio.client.application.ApplicationAutomation::pingSession(*)(cb);
+         });
+      });
+   }-*/;
+
    private native final void registerShinyObject() /*-{
       var self = this;
       $wnd.rstudio = $wnd.rstudio || {};
@@ -1002,6 +1057,7 @@ public class ApplicationAutomation
    private final SourceColumnManager sourceColumnManager_;
    private final ChatServerOperations chatServer_;
    private final ShinyServerOperations shinyServer_;
+   private final ApplicationServerOperations appServer_;
    private final Provider<PaneManager> pPaneManager_;
    private boolean isAutomationAgent_ = false;
    private boolean readinessHandlersRegistered_ = false;

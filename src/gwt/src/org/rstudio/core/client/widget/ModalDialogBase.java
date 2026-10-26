@@ -52,7 +52,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -802,13 +801,19 @@ public abstract class ModalDialogBase extends DialogBox
     */
    protected void setARIADescribedBy(Element element)
    {
-      String id = element.getId();
-      if (StringUtil.isNullOrEmpty(id))
-      {
-         id = DOM.createUniqueId();
-         element.setId(id);
-      }
+      DomUtils.ensureHasId(element);
       role_.setAriaDescribedbyProperty(getElement(), Id.of(element));
+   }
+
+   /**
+    * Name the dialog with an element inside it, for dialogs that show their own
+    * title rather than a caption set with setText
+    * @param element element containing the dialog's title
+    */
+   protected void setARIALabelledBy(Element element)
+   {
+      DomUtils.ensureHasId(element);
+      role_.setAriaLabelledbyProperty(getElement(), Id.of(element));
    }
 
    /**

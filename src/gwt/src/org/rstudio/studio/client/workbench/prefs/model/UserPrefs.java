@@ -31,7 +31,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -401,7 +401,7 @@ public class UserPrefs extends UserPrefsComputed
                      if (Desktop.isDesktop())
                         quit_.doRestart(session_);
                      else
-                        eventBus_.fireEvent(new ReloadEvent());
+                        eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
                   }
                   else
                   {

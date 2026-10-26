@@ -9,12 +9,14 @@
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
+@external ace_marker-layer, ace_find_match;
 @external ace_active_debug_line, ace_next-edit-suggestion-background, ace_next-edit-suggestion-highlight, ace_next-edit-suggestion-deletion, ace_next-edit-suggestion-deletion-bounds, ace_deletion-clickable, ace_insertion_preview, ace_next-edit-suggestion-insertion-bounds, ace_insertion-clickable, ace_replacement_deletion, ace_next-edit-suggestion-replacement-bounds, ace_replacement-clickable;
 @external ace_nes-gutter, ace_nes-gutter-background, ace_nes-gutter-highlight, ace_nes-gutter-deletion, ace_nes-gutter-insertion, ace_nes-gutter-replacement;
 @external ace_nes-offscreen-gutter, ace_nes-offscreen-gutter-up, ace_nes-offscreen-gutter-down;
 @external ace_diff-added, ace_diff-removed;
 @external ace_git-gutter, ace_git-added, ace_git-modified, ace_git-deleted, ace_git-deleted-below, ace_folding-enabled, ace_gutter-cell_svg-icons;
 @external ace_git-peek, ace_git-peek-added, ace_git-peek-modified, ace_git-peek-deleted, ace_git-peek-header, ace_git-peek-label, ace_git-peek-button, ace_git-peek-revert, ace_git-peek-close, ace_git-peek-lines, ace_git-peek-line;
+@external ace_git-diff-base, ace_git-diff-base-empty, ace_diff, ace_diff-active-line, insert, delete, inline, empty, aligned_diff;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -385,6 +387,16 @@ pre {
 
 .editor_dark .ace_active_debug_line {
    background-color: rgb(54, 50, 8);
+}
+
+/* The current Find match. This only places the marker (above the selection
+   marker, which Ace draws at z-index 5); it is invisible until a theme gives
+   it a colour, as Pastel On Dark does. */
+.ace_marker-layer .ace_find_match {
+   position: absolute;
+   z-index: 6;
+   box-sizing: border-box;
+   border-radius: 2px;
 }
 
 .ace_tooltip {
@@ -3486,8 +3498,11 @@ body .rstudio-themes-alternate {
    opacity: 0.9;
 }
 
+/* The actions follow the label instead of sitting at the far edge of the
+   editor, so on a wide editor they stay near the marker that opened the
+   peek. Only the close glyph, the lesser action, goes at the end. */
 .ace_git-peek-label {
-   flex: 1;
+   margin-right: 16px; /* 24px to Revert, with the header gap */
 }
 
 .ace_git-peek-button {
@@ -3499,6 +3514,23 @@ body .rstudio-themes-alternate {
    background-color: rgba(255, 255, 255, 0.7);
    color: inherit;
    cursor: pointer;
+}
+
+.ace_git-peek-close {
+   margin-left: auto;
+   padding: 0 4px;
+   border: none;
+   background: none;
+   font: inherit;
+   font-size: 14px;
+   line-height: 16px;
+   color: inherit;
+   opacity: 0.6;
+   cursor: pointer;
+}
+
+.ace_git-peek-close:hover {
+   opacity: 1;
 }
 
 .ace_git-peek-lines {
@@ -3531,4 +3563,56 @@ body .rstudio-themes-alternate {
 
 .editor_dark .ace_git-peek-line {
    background-color: rgba(248, 81, 73, 0.15);
+}
+
+/* Side-by-side Git diff: the base version in a read-only editor filling its
+   pane beside the document, with a notice in place of a base that does not
+   exist (an untracked file). */
+.ace_git-diff-base {
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+}
+
+.ace_git-diff-base-empty {
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   padding: 12px 16px;
+   text-align: center;
+   opacity: 0.75;
+   pointer-events: none;
+   z-index: 1;
+}
+
+/* Ace's ext/diff styles the change highlights (line backgrounds, inline
+   character changes, striped alignment padding) and the outline of the
+   cursor line's counterpart for light themes and keys its dark variants off
+   .ace_dark, which RStudio's themes do not set; these cover the dark editor
+   themes. */
+.editor_dark .ace_diff.insert {
+   background-color: #212e25;
+}
+
+.editor_dark .ace_diff.delete {
+   background-color: #3f2222;
+}
+
+.editor_dark .ace_diff.insert.inline {
+   background-color: rgba(74, 251, 74, 0.22);
+}
+
+.editor_dark .ace_diff.delete.inline {
+   background-color: rgba(251, 74, 74, 0.22);
+}
+
+.editor_dark .ace_diff.aligned_diff {
+   background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.09) 5px, rgba(0, 0, 0, 0) 5px, rgba(0, 0, 0, 0) 10px);
+}
+
+.editor_dark .ace_diff-active-line {
+   border-color: #75777a;
 }

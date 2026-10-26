@@ -231,6 +231,7 @@ public class TextEditingTargetWidget
       editor.addFocusHandler(event ->
       {
          splitEditorFocusedLast_ = false;
+         diffSplitFocusedLast_ = false;
          initWidgetSize();
       });
 
@@ -374,6 +375,22 @@ public class TextEditingTargetWidget
    @Override
    public boolean focusOtherEditorSplit()
    {
+      // the side-by-side diff has a read-only base editor to move between,
+      // once the gutter has put one in the pane (false until then, as for
+      // the split that has not materialized below)
+      if (diffSplitWidget_ != null)
+      {
+         // by the pane that held focus last: chosen from a menu with the
+         // mouse, the command runs with focus in the menu
+         if (diffSplitFocusedLast_)
+         {
+            editor_.focus();
+            return true;
+         }
+
+         return diffSplitWidget_.focus();
+      }
+
       // a requested split may not have materialized yet (see
       // desiredSplitState_); report failure so callers can fall through to
       // their default behavior instead of swallowing the gesture
@@ -392,7 +409,41 @@ public class TextEditingTargetWidget
    public boolean isEditorViewFocused()
    {
       return editor_.isFocused() ||
-             (splitEditor_ != null && splitEditor_.isFocused());
+             (splitEditor_ != null && splitEditor_.isFocused()) ||
+             isDiffSplitFocused();
+   }
+
+   @Override
+   public boolean isDiffSplitFocused()
+   {
+      return diffSplitWidget_ != null && diffSplitWidget_.isFocused();
+   }
+
+   @Override
+   public boolean diffSplitHeldFocusLast()
+   {
+      return diffSplitFocusedLast_ && diffSplitWidget_ != null;
+   }
+
+   @Override
+   public boolean ensureDiffSplitCursorVisible()
+   {
+      return diffSplitWidget_ != null && diffSplitWidget_.ensureCursorVisible();
+   }
+
+   // Focus goes to the view the user was last in -- the base pane of a
+   // side-by-side diff, or a split view -- as when a command run from the
+   // palette returns focus to the document, so that the command finds the
+   // cursor where it was.
+   private void focusLastView()
+   {
+      if (diffSplitFocusedLast_ && diffSplitWidget_ != null && diffSplitWidget_.focus())
+         return;
+
+      if (splitEditorFocusedLast_ && splitEditor_ != null)
+         splitEditor_.focus();
+      else
+         editor_.focus();
    }
 
    private void manageEditorSplit(String type)
@@ -429,13 +480,21 @@ public class TextEditingTargetWidget
          height = splitPanel_.getOffsetHeight();
 
          splitPanel_.remove(editorWidget);
-         splitPanel_.remove(splitEditor_.asWidget());
+         if (splitEditor_ != null)
+            splitPanel_.remove(splitEditor_.asWidget());
+         if (diffSplitWidget_ != null)
+            splitPanel_.remove(diffSplitWidget_);
          editorPanel_.remove(splitPanel_);
          splitPanel_ = null;
 
          if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_NONE))
             editorPanel_.add(editorWidget);
       }
+
+      // the two kinds of secondary pane are exclusive
+      boolean diff = StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_DIFF);
+      if (!diff)
+         destroyDiffSplit();
 
       if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_NONE))
       {
@@ -446,6 +505,20 @@ public class TextEditingTargetWidget
          // shouldn't steal focus
          if (editorHadFocus)
             editor_.focus();
+      }
+      else if (diff)
+      {
+         destroySplitEditor();
+         ensureDiffSplit();
+
+         editorPanel_.remove(editorWidget);
+
+         // the base version reads on the left, the live document on the right
+         splitPanel_ = new NotifyingSplitLayoutPanel(SPLITTER_SIZE, events_);
+         splitPanel_.addWest(diffSplitWidget_, width / 2.0);
+         splitPanel_.add(editorWidget);
+
+         editorPanel_.add(splitPanel_);
       }
       else
       {
@@ -468,6 +541,43 @@ public class TextEditingTargetWidget
       editor_.onResize();
       if (splitEditor_ != null)
          splitEditor_.onResize();
+      if (diffSplitWidget_ != null)
+         diffSplitWidget_.onResize();
+   }
+
+   // The side-by-side diff pane; the editor inside it belongs to the editing
+   // target's Git diff gutter, which fills it in once the pane exists.
+   private void ensureDiffSplit()
+   {
+      if (diffSplitWidget_ != null)
+         return;
+
+      diffSplitWidget_ = new GitDiffSplitWidget();
+
+      // route commands to this editing target when the base pane is focused,
+      // as for a split view
+      diffSplitWidget_.setFocusHandler(() ->
+      {
+         diffSplitFocusedLast_ = true;
+         // the editor shortcuts dispatched to the last focused Ace editor
+         // (Ctrl+K, the assignment and pipe operators) would otherwise edit
+         // the document while the base pane has focus, as in visual mode
+         AceEditor.clearLastFocusedEditor();
+         events_.fireEvent(new EditingTargetSelectedEvent(target_));
+         events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
+      });
+
+      target_.diffSplitCreated(diffSplitWidget_);
+   }
+
+   private void destroyDiffSplit()
+   {
+      if (diffSplitWidget_ == null)
+         return;
+
+      target_.diffSplitRemoved();
+      diffSplitWidget_ = null;
+      diffSplitFocusedLast_ = false;
    }
 
    private void applyWrapMode(DocDisplay display, boolean wrap)
@@ -523,6 +633,7 @@ public class TextEditingTargetWidget
       splitEditorRegistrations_.add(splitEditor_.addFocusHandler(event ->
       {
          splitEditorFocusedLast_ = true;
+         diffSplitFocusedLast_ = false;
          events_.fireEvent(new EditingTargetSelectedEvent(target_));
          events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
       }));
@@ -552,6 +663,7 @@ public class TextEditingTargetWidget
    public void destroyEditorSplit()
    {
       destroySplitEditor();
+      destroyDiffSplit();
    }
 
    private void destroySplitEditor()
@@ -2354,7 +2466,7 @@ public class TextEditingTargetWidget
       @Override
       public void focus()
       {
-         editor_.focus();
+         focusLastView();
          if (activationPending_)
          {
             activationPending_ = false;
@@ -2518,10 +2630,12 @@ public class TextEditingTargetWidget
    private DockLayoutPanel editorPanel_;
    private NotifyingSplitLayoutPanel splitPanel_;
    private AceEditor splitEditor_;
+   private GitDiffSplitWidget diffSplitWidget_;
    private final ArrayList<HandlerRegistration> splitEditorRegistrations_ = new ArrayList<>();
    private String splitState_ = TextEditingTarget.EDITOR_SPLIT_NONE;
    private String desiredSplitState_ = null;
    private boolean splitEditorFocusedLast_ = false;
+   private boolean diffSplitFocusedLast_ = false;
    private static final int SPLITTER_SIZE = 7;
    private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;
