@@ -229,3 +229,78 @@ test_that("debugSourceRef only trusts the runtime srcref for located functions",
    expect_null(.rs.debugSourceRef(1000L, runtimeRef, NULL))
 
 })
+
+test_that("debugSource runs files parsed without source references", {
+
+   op <- options(keep.source = FALSE)
+   on.exit(options(op), add = TRUE)
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines("answer <- 42", file)
+
+   # With options(keep.source = FALSE), parse() attaches no srcrefs to the
+   # file's expressions (#12375); the file must still run.
+   envir <- new.env()
+   fun <- expect_silent(.rs.makeSourceEquivFunction(file, "unknown", envir))
+   expect_null(attr(fun, "srcref"))
+
+   expect_silent(fun())
+   expect_equal(envir$answer, 42)
+
+   # Breakpoints cannot be mapped without srcrefs; say so rather than
+   # dropping them silently.
+   expect_message(
+      .rs.executeDebugSource(file, "unknown", breaklines = 1L, local = envir),
+      "keep.source = TRUE"
+   )
+
+   # ... but only when there were breakpoints to drop.
+   expect_silent(
+      .rs.executeDebugSource(file, "unknown", breaklines = integer(), local = envir)
+   )
+
+})
+
+test_that("debugSource runs files with no expressions", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+
+   for (keepSource in c(TRUE, FALSE))
+   {
+      op <- options(keep.source = keepSource)
+      on.exit(options(op), add = TRUE)
+
+      for (contents in list(character(), "# just a comment"))
+      {
+         writeLines(contents, file)
+
+         fun <- expect_silent(.rs.makeSourceEquivFunction(file, "unknown", new.env()))
+         expect_null(attr(fun, "srcref"))
+         expect_silent(fun())
+      }
+   }
+
+})
+
+test_that("debugSource keeps source references when they are available", {
+
+   op <- options(keep.source = TRUE)
+   on.exit(options(op), add = TRUE)
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines(c("x <- 1", "y <- x + 1"), file)
+
+   envir <- new.env()
+   fun <- .rs.makeSourceEquivFunction(file, "unknown", envir)
+
+   ref <- attr(fun, "srcref")
+   expect_s3_class(ref, "srcref")
+   expect_equal(as.integer(ref)[c(1, 3)], c(1L, 2L))
+
+   fun()
+   expect_equal(envir$y, 2)
+
+})

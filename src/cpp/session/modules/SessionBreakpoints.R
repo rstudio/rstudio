@@ -474,6 +474,17 @@
    env$fun <- .rs.makeSourceEquivFunction(fileName, encoding, envir)
    breakSteps <- character()
 
+   # Breakpoints are mapped onto the function through the file's source
+   # references, which parse() omits when options(keep.source = FALSE).
+   # Say so rather than silently running past them.
+   if (length(breaklines) > 0 &&
+       is.null(attr(env$fun, "srcref")) &&
+       !isTRUE(getOption("keep.source")))
+   {
+      message("Breakpoints in '", basename(fileName), "' were skipped: ",
+              "debugging requires options(keep.source = TRUE).")
+   }
+
    # Inject the breakpoints
    if (length(breaklines) > 0)
    {
@@ -549,12 +560,22 @@
    }
 
    # Copy each statement from the file into the eval body of the function
-   for (i in 1:length(content)) {
+   for (i in seq_along(content)) {
      body(fun)[[2]][[2]][[i + 1]] <- content[[i]]
    }
 
-   # Set up the source references 
+   # Set up the source references. There are none when the file has no
+   # expressions (empty, or comments only), or when it was parsed with
+   # options(keep.source = FALSE); the function still runs the file, but
+   # breakpoints cannot be mapped onto it.
    refs <- attr(content, "srcref")
+   if (length(refs) == 0)
+   {
+      # drop the template's own srcref, which points into this file
+      attr(fun, "srcref") <- NULL
+      return(fun)
+   }
+
    lastref <- length(refs)
    attr(body(fun), "srcfile") <- attr(content, "srcfile")
 
