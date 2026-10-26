@@ -161,9 +161,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       // if this window is a satellite but the command only wants to be handled
       // in the a different window, execute the command there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-      if (getWindowMode() != WINDOW_MODE_ANY &&
-          Satellite.isCurrentWindowSatellite() &&
-          satellite.getSatelliteName() != getWindowMode())
+      if (isRoutedOutOfCurrentWindow())
       {
          if (getWindowMode() == WINDOW_MODE_MAIN)
          {
@@ -195,6 +193,20 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       CommandEvent event = new CommandEvent(this);
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(event);
       handlers_.fireEvent(event);
+   }
+
+   public boolean isRoutedOutOfCurrentWindow()
+   {
+      return Satellite.isCurrentWindowSatellite() &&
+             isRoutedOutOfSatellite(
+                   getWindowMode(),
+                   RStudioGinjector.INSTANCE.getSatellite().getSatelliteName());
+   }
+
+   public static boolean isRoutedOutOfSatellite(String windowMode, String satelliteName)
+   {
+      return !StringUtil.equals(windowMode, WINDOW_MODE_ANY) &&
+             !StringUtil.equals(windowMode, satelliteName);
    }
 
    public boolean isEnabled()

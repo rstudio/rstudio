@@ -530,9 +530,7 @@ public class ShortcutManager implements NativePreviewHandler,
                   return false;
                }
                if (binding.getId() != "executeCode" &&
-                     binding.getContext() != AppCommand.Context.Workbench &&
-                     binding.getContext() != AppCommand.Context.Addin &&
-                     binding.getContext() != AppCommand.Context.PackageDevelopment)
+                     !EmbeddedKeyFilter.isWorkbenchLevel(binding.getContext()))
                {
                   // Let terminal see the keyboard input and don't execute command.
                   return false;

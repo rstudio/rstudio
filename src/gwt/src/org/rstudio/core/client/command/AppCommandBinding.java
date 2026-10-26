@@ -73,6 +73,12 @@ public class AppCommandBinding implements CommandBinding
       return command_.getContext();
    }
 
+   @Override
+   public boolean isRoutedOutOfCurrentWindow()
+   {
+      return command_.isRoutedOutOfCurrentWindow();
+   }
+
    private final AppCommand command_;
    private final int disableModes_;
    private final boolean custom_;

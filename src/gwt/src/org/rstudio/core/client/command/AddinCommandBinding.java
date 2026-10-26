@@ -57,6 +57,13 @@ public class AddinCommandBinding implements CommandBinding
       return AppCommand.Context.Addin;
    }
 
+   // Addins aren't AppCommands, so they always run in the window that has the key
+   @Override
+   public boolean isRoutedOutOfCurrentWindow()
+   {
+      return false;
+   }
+
    private final RAddin addin_;
    private final AddinExecutor executor_;
 }
