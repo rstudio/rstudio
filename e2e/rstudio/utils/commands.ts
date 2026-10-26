@@ -837,6 +837,19 @@ export async function openProject(
     r.project.open(p);
   }, projectFilePath);
 
+  await waitForProjectOpen(page, projectFilePath, timeout);
+}
+
+/**
+ * Wait until the session has switched to the project at `projectFilePath`
+ * and is ready for automation. Use after a project switch the test started
+ * itself (e.g. through the Open Project dialog); `openProject` calls it.
+ */
+export async function waitForProjectOpen(
+  page: Page,
+  projectFilePath: string,
+  timeout = 60000,
+): Promise<void> {
   // The Server mode page may navigate as part of the project switch; let it
   // settle before polling the bridge. On Desktop this is a no-op.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
@@ -860,7 +873,7 @@ export async function openProject(
       .evaluate(() => typeof window.rstudio === 'object' && window.rstudio !== null)
       .catch(() => false);
     if (!bridgeInstalled) {
-      console.log(`openProject: automation bridge missing ${grace}ms after the switch; reloading once`);
+      console.log(`waitForProjectOpen: automation bridge missing ${grace}ms after the switch; reloading once`);
       await page.reload({ timeout: 30000 }).catch(() => {});
     }
     await page.waitForFunction(
@@ -910,7 +923,7 @@ export async function openProject(
         .evaluate(() => window.rstudio?.project?.path?.() ?? null)
         .catch(() => null);
       throw new Error(
-        `openProject: session did not become ready with the active project ` +
+        `waitForProjectOpen: session did not become ready with the active project ` +
         `"${projectFilePath}" within ${timeout}ms (active project: ` +
         `${actual ?? 'none'}).`,
       );
