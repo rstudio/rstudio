@@ -20,8 +20,12 @@ set -euo pipefail
 # no jammy arm64 binaries and serves that engine source tarballs instead. If a
 # future Ubuntu release lands here without arm64 binary coverage, it needs the
 # ubuntu-22 treatment rather than this one.
+#
+# gdb: backtraces of a wedged rsession, taken by
+# e2e/rstudio/scripts/ci/rsession-diagnostics.sh from the workflow's
+# failure step.
 sudo apt-get update
-sudo apt-get install -y xvfb jq \
+sudo apt-get install -y xvfb jq gdb \
   libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
 
 # Ubuntu 24+ restricts unprivileged user namespaces by default, which blocks

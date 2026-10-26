@@ -3915,7 +3915,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    public PrefValue<Boolean> installPkgDepsIndividually()
    {

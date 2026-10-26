@@ -498,6 +498,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="vcsPreviousChange"/>
             <cmd refid="vcsShowChange"/>
             <cmd refid="vcsRevertChange"/>
+            <cmd refid="vcsShowChangesSideBySide"/>
             <separator/>
             <cmd refid="vcsViewOnGitHub"/>
             <cmd refid="vcsBlameOnGitHub"/>
@@ -1317,6 +1318,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Show Change at Cursor"
         menuLabel="_Show Change at Cursor"
         desc="Show the version last staged or committed of the lines at the cursor"
+        context="vcs"/>
+
+   <cmd id="vcsShowChangesSideBySide"
+        label="Show Changes Side by Side"
+        menuLabel="Show Changes _Side by Side"
+        desc="Show the version last staged or committed beside the document, with the changes between them highlighted"
+        checkable="true"
         context="vcs"/>
 
    <cmd id="vcsViewOnGitHub"

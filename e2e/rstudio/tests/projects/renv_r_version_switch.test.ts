@@ -4,7 +4,6 @@ import { NO_BTN, YES_BTN } from "@pages/modals.page";
 import { closeProjectIfOpen, restartSessionWithSentinel, waitForSessionRestart } from "@utils/project";
 import { getVersion, openProject } from "@utils/commands";
 import { useSuiteSandbox } from "@utils/sandbox";
-import { sleep } from "@utils/constants";
 import { rStringLiteral } from "@utils/r";
 import { captureResult } from "@utils/terminal";
 import { execFileSync } from "child_process";
@@ -81,6 +80,9 @@ function otherR(current: string, orthogonal: boolean): InstalledR | undefined {
 // Shell startup files rig appends to (or creates, when none exist) to put its
 // quick-link directory on the PATH.
 const SHELL_PROFILES = [".profile", ".bash_profile", ".bashrc", ".zprofile", ".zshrc", ".config/fish/conf.d/rigenv.fish"];
+
+// The label of rig's LaunchAgent, as launchd knows it.
+const LAUNCH_AGENT = "io.r-lib.rig.rstudio-which-r";
 
 // Versions of R to install when the requested one is missing, newest first;
 // the first from a series not installed on this machine is used.
@@ -315,7 +317,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
   }) => {
     test.setTimeout(900000);
     test.skip(!process.env.PW_ALLOW_R_INSTALL, "downloads and installs a build of R; set PW_ALLOW_R_INSTALL=1 to allow");
-    test.skip(process.platform === "win32", "rig's Windows default (R.exe shims and registry entries) is not undone yet");
+    test.skip(process.platform === "win32", "the checks below read rig's files under HOME; the Windows shims and registry are covered by test-rig.R");
 
     const current = (await getVersion(page)).r;
     const known = (await captureResult(page, 'paste(.rs.rInstallations.cached(refresh = TRUE)$version, collapse = ",")'))
@@ -338,42 +340,62 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     const profilesBefore = SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`));
     const whichRBefore = process.platform === "darwin" ? launchctl(["getenv", "RSTUDIO_WHICH_R"]) : "";
 
-    await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-install`, target!);
+    // launchd is per user, not per home: an agent of this label that is
+    // already loaded (from a rig user-mode default in the real home) is the
+    // one rig would kickstart and the cleanup would unload, as the sandbox
+    // plist shares its label
+    test.skip(
+      process.platform === "darwin" && launchctl(["list", LAUNCH_AGENT]) !== "",
+      "rig's LaunchAgent is already loaded for this user",
+    );
 
-    const installLink = page.getByText(`Install R ${target} and switch`, { exact: true });
-    await expect(installLink).toBeVisible({ timeout: 60000 });
+    try {
+      await openProjectRequestingR(page, `${sandbox.dir.replace(/\\/g, "/")}/renv-r-install`, target!);
 
-    originalR ||= await captureResult(page, SESSION_R);
+      const installLink = page.getByText(`Install R ${target} and switch`, { exact: true });
+      await expect(installLink).toBeVisible({ timeout: 60000 });
 
-    await installLink.click();
+      originalR ||= await captureResult(page, SESSION_R);
 
-    // the download and install take a while, and the session then restarts
-    // under the new R; a failed installation is reported in the warning bar
-    const failure = page.getByText(`Installation of R ${target} failed`);
-    const deadline = Date.now() + 600000;
-    for (;;) {
-      const running = (await getVersion(page).catch(() => ({ r: "" }))).r;
-      if (running === target)
-        break;
-      if (await failure.count())
-        throw new Error(await failure.first().innerText());
-      if (Date.now() > deadline)
-        throw new Error(`R ${target} is not running after 10 minutes (R ${running} is)`);
-      await sleep(5000);
-    }
-    await waitForSessionRestart(page);
-    await expect(page.locator(PROJECT_MENU)).toContainText("renv-r-install", { timeout: 30000 });
+      await installLink.click();
 
-    // rig installed R in user mode under the session's home...
-    expect(readdirSync(rigDefault.root).some((entry) => entry.startsWith(target!))).toBe(true);
+      // the download and install take a while, and the session then restarts
+      // under the new R; a failed installation is reported in the warning bar
+      const failure = page.getByText(`Installation of R ${target} failed`);
+      await expect
+        .poll(
+          async () => {
+            if (await failure.count())
+              throw new Error(await failure.first().innerText());
+            return (await getVersion(page).catch(() => ({ r: "" }))).r;
+          },
+          { timeout: 600000, intervals: [5000], message: `R ${target} is not running after 10 minutes` },
+        )
+        .toBe(target!);
+      await waitForSessionRestart(page);
+      await expect(page.locator(PROJECT_MENU)).toContainText("renv-r-install", { timeout: 30000 });
 
-    // ...and nothing else changed: no default links, no LaunchAgent, no
-    // startup-file edits, and launchd's RSTUDIO_WHICH_R as it was
-    expect(rigDefault.files.filter(pathExists)).toEqual([]);
-    expect(SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`))).toEqual(profilesBefore);
-    if (process.platform === "darwin") {
-      expect(launchctl(["getenv", "RSTUDIO_WHICH_R"])).toBe(whichRBefore);
-      expect(launchctl(["list", "io.r-lib.rig.rstudio-which-r"])).toBe("");
+      // rig installed R in user mode under the session's home...
+      expect(readdirSync(rigDefault.root).some((entry) => entry.startsWith(target!))).toBe(true);
+
+      // ...and nothing else changed: no default links, no LaunchAgent, no
+      // startup-file edits, and launchd's RSTUDIO_WHICH_R as it was
+      expect(rigDefault.files.filter(pathExists)).toEqual([]);
+      expect(SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`))).toEqual(profilesBefore);
+      if (process.platform === "darwin") {
+        expect(launchctl(["getenv", "RSTUDIO_WHICH_R"])).toBe(whichRBefore);
+        expect(launchctl(["list", LAUNCH_AGENT])).toBe("");
+      }
+    } finally {
+      // an agent rig loads from the sandbox home lands in the developer's
+      // own launchd session, and would keep pointing RStudio at the (soon
+      // deleted) sandbox R until logout if a failed run left it there
+      if (process.platform === "darwin") {
+        if (launchctl(["list", LAUNCH_AGENT]) !== "")
+          launchctl(["bootout", `gui/${process.getuid!()}/${LAUNCH_AGENT}`]);
+        if (launchctl(["getenv", "RSTUDIO_WHICH_R"]) !== whichRBefore)
+          launchctl(whichRBefore ? ["setenv", "RSTUDIO_WHICH_R", whichRBefore] : ["unsetenv", "RSTUDIO_WHICH_R"]);
+      }
     }
   });
 });

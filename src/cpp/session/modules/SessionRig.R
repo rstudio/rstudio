@@ -146,7 +146,7 @@
 #' RSTUDIO_WHICH_R to every GUI application at login. 'rig add' sets a
 #' default whenever none is set yet, so an R installed from the project
 #' R-version warning bar would become the default R outside RStudio too;
-#' what the install adds is removed again once it finishes (#19229).
+#' what the install adds or changes is put back once it finishes (#19229).
 .rs.addFunction("rig.userDefaultPaths", function(dirs,
                                                  home = Sys.getenv("HOME"),
                                                  platform = .rs.rig.platform())
@@ -383,16 +383,43 @@
       .rs.rig.registryId(op$key, op$name)
 })
 
+# the label of rig's LaunchAgent, as launchd knows it
+.rs.setVar("rig.launchAgentLabel", "io.r-lib.rig.rstudio-which-r")
+
 #' Whether each path exists, counting dangling symlinks (which file.exists()
 #' follows, and so misses).
 .rs.addFunction("rig.pathExists", function(paths)
 {
    # Sys.readlink() gives NA for a missing path, and nzchar(NA) is TRUE
    targets <- Sys.readlink(paths)
-   file.exists(paths) | (!is.na(targets) & nzchar(targets))
+   exists <- file.exists(paths) | (!is.na(targets) & nzchar(targets))
+   names(exists) <- names(paths)
+   exists
 })
 
-#' Run launchctl, returning its output ("" when it fails).
+#' What each path links to: "" for a regular file or a missing path.
+.rs.addFunction("rig.linkTargets", function(paths)
+{
+   targets <- Sys.readlink(paths)
+   targets[is.na(targets)] <- ""
+   names(targets) <- names(paths)
+   targets
+})
+
+#' The bytes of a file, or NULL when it is missing or unreadable.
+.rs.addFunction("rig.readBytes", function(path)
+{
+   if (!file.exists(path))
+      return(NULL)
+
+   bytes <- .rs.tryCatch(readBin(path, what = "raw", n = file.size(path)))
+   if (inherits(bytes, "error"))
+      return(NULL)
+
+   bytes
+})
+
+#' Run launchctl, returning its output, or NULL when it fails.
 .rs.addFunction("rig.launchctl", function(args)
 {
    output <- .rs.tryCatch(suppressWarnings(
@@ -400,90 +427,220 @@
    ))
 
    if (inherits(output, "error") || !is.null(attr(output, "status", exact = TRUE)))
-      return("")
+      return(NULL)
 
    paste(output, collapse = "\n")
 })
 
-#' Which of rig's default-R files exist, the RSTUDIO_WHICH_R launchd
-#' currently gives GUI applications, and (on Windows, through 'registry')
-#' the registry values rig may write, before a user-mode install.
+#' The state of rig's default-R setup before a user-mode install: which of
+#' its files exist and what they link to, the LaunchAgent's contents, and
+#' whether launchd has the agent loaded and which RSTUDIO_WHICH_R it gives
+#' GUI applications; on Windows (through 'registry') the registry values rig
+#' may write instead, with 'binaryDir' the quick-link directory it puts on
+#' the user PATH. The snapshot records the session that took it, so that a
+#' later session can tell a leftover from an install still under way.
 .rs.addFunction("rig.userDefaultSnapshot", function(paths,
                                                     launchctl = .rs.rig.launchctl,
                                                     registry = if (.rs.platform.isWindows) .rs.rig.registryRead,
                                                     binaryDir = NULL)
 {
-   whichR <- ""
-   if ("launchAgent" %in% names(paths))
-      whichR <- launchctl(c("getenv", "RSTUDIO_WHICH_R"))
+   snapshot <- list(
+      pid       = Sys.getpid(),
+      paths     = paths,
+      existed   = .rs.rig.pathExists(paths),
+      targets   = .rs.rig.linkTargets(paths),
+      agent     = NULL,
+      loaded    = FALSE,
+      whichR    = "",
+      registry  = NULL,
+      binaryDir = binaryDir
+   )
 
-   values <- NULL
+   if ("launchAgent" %in% names(paths))
+   {
+      snapshot$agent <- .rs.rig.readBytes(paths[["launchAgent"]])
+      snapshot$loaded <- !is.null(launchctl(c("list", .rs.rig.launchAgentLabel)))
+
+      whichR <- launchctl(c("getenv", "RSTUDIO_WHICH_R"))
+      if (!is.null(whichR))
+         snapshot$whichR <- whichR
+   }
+
+   # a registry that cannot be read leaves its values out of the snapshot
+   # (and so out of the restore); the reason is kept for the job's log
    if (!is.null(registry))
    {
       values <- .rs.tryCatch(registry())
       if (inherits(values, "error"))
-      {
-         warning("could not read rig's registry values: ", conditionMessage(values))
-         values <- NULL
-      }
+         snapshot$registryError <- conditionMessage(values)
+      else
+         snapshot$registry <- values
    }
 
-   list(
-      paths     = paths,
-      existed   = .rs.rig.pathExists(paths),
-      whichR    = whichR,
-      registry  = values,
-      binaryDir = binaryDir
-   )
+   snapshot
 })
 
-#' Remove the default-R files rig created since the snapshot was taken,
-#' keeping the ones that were already there, put launchd's RSTUDIO_WHICH_R
-#' back, and (on Windows) take the registry values rig changed back as well.
-#' Returns what was reverted: the paths removed and the registry values.
+#' Undo what a user-mode install did to rig's default-R setup since the
+#' snapshot was taken: the files it created are removed, the links and the
+#' LaunchAgent it rewrote are put back (rig repoints a dangling 'Current'
+#' and rewrites a stale agent), and launchd's agent and RSTUDIO_WHICH_R are
+#' left as they were. A link whose directory has since been removed is left
+#' alone. On Windows the registry values rig changed are taken back as well
+#' (the current-user R-core default it set, and its entry on the user PATH).
+#' Returns the paths and registry values removed and restored, and a message
+#' for each step that failed.
 .rs.addFunction("rig.userDefaultRestore", function(snapshot,
                                                    launchctl = .rs.rig.launchctl,
                                                    registry = if (.rs.platform.isWindows) .rs.rig.registryRead,
                                                    registryWrite = .rs.rig.registryWrite)
 {
    paths <- snapshot$paths
-   created <- paths[!snapshot$existed & .rs.rig.pathExists(paths)]
+   exists <- .rs.rig.pathExists(paths)
+   targets <- .rs.rig.linkTargets(paths)
 
-   if ("launchAgent" %in% names(created))
+   created <- !snapshot$existed & exists
+   relinked <- snapshot$existed & nzchar(snapshot$targets) & targets != snapshot$targets
+
+   removed <- character()
+   restored <- character()
+   failed <- character()
+
+   # the agent is unloaded before its file goes or changes: loading it ran
+   # 'launchctl setenv', so the variable it exported is put back afterwards
+   # as well (unloading alone leaves it set until logout)
+   if ("launchAgent" %in% names(paths))
    {
-      # loading the agent already ran it, so the variable it exported has to
-      # be reset as well: unloading alone leaves it set until logout
-      launchctl(c("unload", created[["launchAgent"]]))
-      if (nzchar(snapshot$whichR))
-         launchctl(c("setenv", "RSTUDIO_WHICH_R", snapshot$whichR))
-      else
-         launchctl(c("unsetenv", "RSTUDIO_WHICH_R"))
+      agent <- paths[["launchAgent"]]
+      rewritten <- snapshot$existed[["launchAgent"]] && exists[["launchAgent"]] &&
+         !identical(.rs.rig.readBytes(agent), snapshot$agent)
+      loaded <- !is.null(launchctl(c("list", .rs.rig.launchAgentLabel)))
+
+      if (loaded && (created[["launchAgent"]] || rewritten || !snapshot$loaded))
+      {
+         if (is.null(launchctl(c("unload", agent))))
+            failed <- c(failed, sprintf("'launchctl unload %s' failed", agent))
+         else
+            loaded <- FALSE
+      }
+
+      # an agent that would not unload keeps its file: unloading needs it,
+      # and a later try then still sees it as created or rewritten
+      if (loaded)
+         created[["launchAgent"]] <- FALSE
+
+      if (rewritten && !loaded)
+      {
+         written <- .rs.tryCatch(writeBin(snapshot$agent, agent))
+         if (inherits(written, "error"))
+            failed <- c(failed, sprintf("could not restore %s: %s", agent, conditionMessage(written)))
+         else
+            restored <- c(restored, agent)
+      }
+
+      # an agent that was loaded is loaded again once its file is as it was
+      # (also after an earlier try that put the file back but failed to load it)
+      if (snapshot$loaded && !loaded && !created[["launchAgent"]] &&
+          identical(.rs.rig.readBytes(agent), snapshot$agent))
+      {
+         if (is.null(launchctl(c("load", agent))))
+            failed <- c(failed, sprintf("'launchctl load %s' failed", agent))
+      }
+
+      whichR <- launchctl(c("getenv", "RSTUDIO_WHICH_R"))
+      if (!is.null(whichR) && !identical(whichR, snapshot$whichR))
+      {
+         args <- if (nzchar(snapshot$whichR))
+            c("setenv", "RSTUDIO_WHICH_R", snapshot$whichR)
+         else
+            c("unsetenv", "RSTUDIO_WHICH_R")
+
+         if (is.null(launchctl(args)))
+            failed <- c(failed, sprintf("'launchctl %s' failed", paste(args, collapse = " ")))
+      }
    }
 
    # the links go, not what they point at
-   if (length(created))
-      file.remove(created)
-   reverted <- unname(created)
+   for (path in paths[created])
+   {
+      if (suppressWarnings(file.remove(path)))
+         removed <- c(removed, path)
+      else
+         failed <- c(failed, sprintf("could not remove %s", path))
+   }
 
+   for (name in names(paths)[relinked])
+   {
+      path <- paths[[name]]
+
+      # a link whose directory is gone since (rig's setup removed by hand
+      # after a session exited mid-install) is left that way: recreating the
+      # directory for a link back to its old target would not restore anything
+      if (!dir.exists(dirname(path)))
+         next
+
+      if (exists[[name]] && !suppressWarnings(file.remove(path)))
+      {
+         failed <- c(failed, sprintf("could not remove %s", path))
+         next
+      }
+
+      if (suppressWarnings(file.symlink(snapshot$targets[[name]], path)))
+         restored <- c(restored, path)
+      else
+         failed <- c(failed, sprintf("could not restore the link %s", path))
+   }
+
+   # the registry values rig added go, the ones it changed are set back; a
+   # restore that fails is tried again whole, as the operations only ever
+   # take the values back toward the snapshot
    if (!is.null(snapshot$registry) && !is.null(registry))
    {
       after <- .rs.tryCatch(registry())
       if (inherits(after, "error"))
       {
-         warning("could not read rig's registry values: ", conditionMessage(after))
-         return(reverted)
+         failed <- c(failed, sprintf("could not read rig's registry values: %s", conditionMessage(after)))
       }
-
-      ops <- .rs.rig.registryRestoreOps(snapshot$registry, after, snapshot$binaryDir)
-      if (length(ops))
+      else
       {
-         registryWrite(ops)
-         labels <- vapply(ops, .rs.rig.registryOpLabel, FUN.VALUE = character(1), binaryDir = snapshot$binaryDir)
-         reverted <- c(reverted, labels)
+         ops <- .rs.rig.registryRestoreOps(snapshot$registry, after, snapshot$binaryDir)
+         labels <- vapply(ops, .rs.rig.registryOpLabel, character(1), binaryDir = snapshot$binaryDir)
+         kinds <- vapply(ops, function(op) op$op, character(1))
+
+         written <- NULL
+         if (length(ops))
+            written <- .rs.tryCatch(registryWrite(ops))
+
+         if (inherits(written, "error"))
+         {
+            failed <- c(failed, sprintf(
+               "could not restore the registry values %s: %s",
+               paste(labels, collapse = ", "),
+               conditionMessage(written)
+            ))
+         }
+         else
+         {
+            removed <- c(removed, labels[kinds == "remove"])
+            restored <- c(restored, labels[kinds != "remove"])
+         }
       }
    }
 
-   reverted
+   list(removed = unname(removed), restored = unname(restored), failed = failed)
+})
+
+#' Lines for the installation job's log describing what a restore did.
+.rs.addFunction("rig.restoreMessages", function(result)
+{
+   c(
+      character(),
+      if (length(result$removed))
+         paste("Removed the default R setup rig added outside RStudio:", paste(result$removed, collapse = ", ")),
+      if (length(result$restored))
+         paste("Put back the default R setup rig changed outside RStudio:", paste(result$restored, collapse = ", ")),
+      if (length(result$failed))
+         paste("Could not undo a change rig made outside RStudio:", result$failed)
+   )
 })
 
 .rs.setVar("rig.installState", new.env(parent = emptyenv()))
@@ -504,32 +661,190 @@
    invisible(dir.exists(dir))
 })
 
-#' Called before 'rig add --user' runs, to remember rig's default-R files.
-.rs.addFunction("rig.userInstallBegin", function(rig)
+#' Write the snapshot to 'file', replacing any earlier one whole (so that a
+#' failed write leaves it as it was). Returns a message when that fails.
+.rs.addFunction("rig.saveSnapshot", function(snapshot, file)
+{
+   staged <- tempfile("rig-install-snapshot-", tmpdir = dirname(file))
+   saved <- .rs.tryCatch({
+      saveRDS(snapshot, staged)
+      if (!file.rename(staged, file))
+         stop("cannot rename ", staged)
+   })
+
+   if (inherits(saved, "error"))
+   {
+      unlink(staged)
+      return(sprintf("Could not save rig's default R setup to %s: %s", file, conditionMessage(saved)))
+   }
+
+   character()
+})
+
+#' Whether the install a snapshot was taken for may still be under way: the
+#' session that took it, or the rig it started, is still running. (On macOS
+#' rig outlives a session that crashes.)
+.rs.addFunction("rig.snapshotInUse", function(snapshot, running = .rs.rig.processRunning)
+{
+   pids <- c(snapshot$pid, snapshot$rigPid)
+   pids <- pids[!is.na(pids) & pids != Sys.getpid()]
+   any(vapply(pids, running, logical(1)))
+})
+
+#' Called before 'rig add --user' runs, to remember rig's default-R setup.
+#' The snapshot is also written to 'file', when one is given: rig sets the
+#' default before its slow pak step, so a session that exits mid-install
+#' may not get to undo it, and the next session then does (from the file).
+#' A snapshot another session left there is undone first, so that its
+#' leftovers do not pass for the setup to keep; while that session (or its
+#' rig) still runs, or until its leftovers are all undone (or the snapshot
+#' is deleted), the install is refused. Without a saved snapshot there is
+#' no undoing what rig adds, so
+#' the install is refused then as well. Returns messages for the job's log.
+.rs.addFunction("rig.userInstallBegin", function(rig,
+                                                 file = NULL,
+                                                 launchctl = .rs.rig.launchctl,
+                                                 running = .rs.rig.processRunning)
 {
    state <- .rs.rig.installState
    state$snapshot <- NULL
+   state$file <- NULL
+
+   notes <- character()
+   if (!is.null(file) && file.exists(file))
+   {
+      notes <- .rs.rig.userInstallRecover(file, running, launchctl)
+      if (file.exists(file))
+      {
+         if (length(notes) == 0L)
+            stop("another RStudio session is still installing R")
+
+         # the file is named so that a leftover that can never be undone
+         # (say, its directory lost its permissions for good) does not block
+         # installs forever
+         stop(paste(
+            c(
+               "an earlier installation's changes are not all undone yet:",
+               notes,
+               sprintf("(to leave them as they are, delete %s)", file)
+            ),
+            collapse = "\n"
+         ))
+      }
+   }
 
    dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
    .rs.rig.ensureBinaryDir(dirs)
 
    paths <- .rs.rig.userDefaultPaths(dirs)
-   state$snapshot <- .rs.rig.userDefaultSnapshot(paths, binaryDir = dirs$binary_dir)
-   invisible(TRUE)
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl, binaryDir = dirs$binary_dir)
+   if (!is.null(snapshot$registryError))
+      notes <- c(notes, sprintf(
+         "Could not read rig's registry values (%s); the default R rig records in the registry will not be put back.",
+         snapshot$registryError
+      ))
+
+   if (!is.null(file))
+   {
+      failure <- .rs.rig.saveSnapshot(snapshot, file)
+      if (length(failure))
+         stop(failure)
+   }
+
+   state$snapshot <- snapshot
+   state$file <- file
+   notes
 })
 
-#' Called once 'rig add' has exited, to undo the default-R setup it added.
-#' Returns what was reverted.
-.rs.addFunction("rig.userInstallEnd", function()
+#' Called once rig is running, to record its process in the snapshot: a
+#' later session leaves the snapshot alone while that rig is still running.
+#' Returns messages for the job's log.
+.rs.addFunction("rig.userInstallStarted", function(pid)
+{
+   state <- .rs.rig.installState
+   if (is.null(state$snapshot))
+      return(character())
+
+   state$snapshot$rigPid <- as.integer(pid)
+   if (is.null(state$file))
+      return(character())
+
+   .rs.rig.saveSnapshot(state$snapshot, state$file)
+})
+
+#' Called once 'rig add' has exited, to undo the default-R setup it added or
+#' changed. Returns messages for the job's log.
+.rs.addFunction("rig.userInstallEnd", function(launchctl = .rs.rig.launchctl)
 {
    state <- .rs.rig.installState
    snapshot <- state$snapshot
+   file <- state$file
    state$snapshot <- NULL
+   state$file <- NULL
 
    if (is.null(snapshot))
       return(character())
 
-   .rs.rig.userDefaultRestore(snapshot)
+   # the snapshot stays on disk while something is left to undo, for the
+   # next session to try again
+   result <- .rs.rig.userDefaultRestore(snapshot, launchctl)
+   if (!is.null(file) && length(result$failed) == 0L)
+      unlink(file)
+
+   .rs.rig.restoreMessages(result)
+})
+
+#' Undo an install a previous session did not get to undo, from the snapshot
+#' it left in 'file'. The file is left alone while that install may still be
+#' under way, and kept while something is left to undo. Returns messages for
+#' the log.
+.rs.addFunction("rig.userInstallRecover", function(file,
+                                                   running = .rs.rig.processRunning,
+                                                   launchctl = .rs.rig.launchctl)
+{
+   if (!file.exists(file))
+      return(character())
+
+   snapshot <- .rs.tryCatch(readRDS(file))
+   if (inherits(snapshot, "error"))
+   {
+      unlink(file)
+      return(sprintf("Could not read rig's default R setup from %s: %s", file, conditionMessage(snapshot)))
+   }
+
+   if (.rs.rig.snapshotInUse(snapshot, running))
+      return(character())
+
+   result <- .rs.rig.userDefaultRestore(snapshot, launchctl)
+   if (length(result$failed) == 0L)
+      unlink(file)
+
+   .rs.rig.restoreMessages(result)
+})
+
+#' Whether a process of this user with the given id is running.
+.rs.addFunction("rig.processRunning", function(pid)
+{
+   pid <- as.integer(pid)
+
+   # on Windows pskill() terminates the process whatever the signal, so the
+   # task list is consulted instead
+   if (.rs.platform.isWindows)
+   {
+      output <- .rs.tryCatch(suppressWarnings(system2(
+         "tasklist",
+         c("/FI", shQuote(sprintf("PID eq %i", pid)), "/NH", "/FO", "CSV"),
+         stdout = TRUE,
+         stderr = FALSE
+      )))
+
+      if (inherits(output, "error"))
+         return(FALSE)
+
+      return(any(grepl(sprintf(",\"%i\",", pid), output, fixed = TRUE)))
+   }
+
+   isTRUE(tools::pskill(pid, 0L))
 })
 
 #' An empty table of R installations.

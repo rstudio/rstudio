@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.history.view;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -29,15 +30,18 @@ import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
 import org.rstudio.studio.client.workbench.views.history.History.SearchBoxDisplay;
@@ -83,10 +87,11 @@ public class HistoryPane extends WorkbenchPane
    }
 
    @Inject
-   public HistoryPane(Commands commands, EventBus events)
+   public HistoryPane(Commands commands, EventBus events, UserPrefs userPrefs)
    {
       super(constants_.historyTitle(), events);
       commands_ = commands;
+      userPrefs_ = userPrefs;
       ensureWidget();
    }
 
@@ -151,7 +156,8 @@ public class HistoryPane extends WorkbenchPane
          }
       });
 
-      commandList_ = createHistoryTable(TimestampMode.NONE);
+      commandList_ = createHistoryTable(TimestampMode.NONE,
+                                        constants_.recentCommandsListLabel());
       vpanel.add(commandList_);
 
       recentScrollPanel_ = new BottomScrollPanel() {
@@ -172,7 +178,7 @@ public class HistoryPane extends WorkbenchPane
       searchLabel_ = new Label();
       searchLabel_.setHeight("");
       searchResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(TimestampMode.ITEM),
+            createHistoryTable(TimestampMode.ITEM, constants_.searchResultsListLabel()),
             new Widget[] {
                   searchLabel_
             },
@@ -185,7 +191,7 @@ public class HistoryPane extends WorkbenchPane
 
       contextLabel_ = new Label();
       contextResults_ = new HistoryTableWithToolbar(
-            createHistoryTable(TimestampMode.GROUP),
+            createHistoryTable(TimestampMode.GROUP, constants_.contextListLabel()),
             new Widget[] {
                   new SmallButton(commands_.historyDismissContext()),
                   contextLabel_
@@ -198,8 +204,8 @@ public class HistoryPane extends WorkbenchPane
       mainPanel_.setWidgetLeftRight(contextResults_, 0, Unit.PX, 0, Unit.PX);
 
       setMode(Mode.Recent);
-      setVisible(searchResults_, searchResults_.getFocusTarget(), false);
-      setVisible(contextResults_, contextResults_.getFocusTarget(), false);
+      setVisible(searchResults_, false);
+      setVisible(contextResults_, false);
 
       return mainPanel_;
    }
@@ -211,28 +217,34 @@ public class HistoryPane extends WorkbenchPane
 
    protected void setMode(Mode mode)
    {
+      if (finishSlide_ != null)
+         finishSlide_.execute();
+
       if (mode != mode_)
       {
          Widget current = getWidgetForMode(mode_);
          Widget target = getWidgetForMode(mode);
 
-         boolean focus = DomUtils.hasFocus(getActiveHistory().getFocusTarget());
-         HasHistory focusCurrent = getHistoryForMode(mode_);
+         // Focus may be on the outgoing view's Back or Done button rather than
+         // its table; that view turns inert, so focus must follow to the target.
+         boolean focus = DomUtils.contains(current.getElement(),
+                                           DomUtils.getActiveElement());
          HasHistory focusTarget = getHistoryForMode(mode);
 
          boolean rightToLeft = mode_.getValue() < mode.getValue();
 
-         if (mode != Mode.Recent && mode_ != Mode.Recent)
+         boolean slide = mode != Mode.Recent && mode_ != Mode.Recent &&
+                         !userPrefs_.reducedMotion().getValue();
+         if (slide)
             animate(current,
                     target,
                     rightToLeft,
-                    focusCurrent,
                     focusTarget,
                     focus);
          else
          {
-            setVisible(current, focusCurrent.getFocusTarget(), false);
-            setVisible(target, focusTarget.getFocusTarget(), true);
+            setVisible(current, false);
+            setVisible(target, true);
             if (focus)
             {
                DomUtils.setActive(focusTarget.getFocusTarget());
@@ -264,7 +276,6 @@ public class HistoryPane extends WorkbenchPane
    private void animate(final Widget from,
                         final Widget to,
                         boolean rightToLeft,
-                        final HasHistory fromFocus,
                         final HasHistory toFocus,
                         final boolean focus)
    {
@@ -273,7 +284,7 @@ public class HistoryPane extends WorkbenchPane
       if (focus)
          toFocus.getFocusTarget().addClassName(styles_.inboundFocus());
 
-      setVisible(to, toFocus.getFocusTarget(), true);
+      setVisible(to, true);
 
       int width = getOffsetWidth();
 
@@ -292,11 +303,14 @@ public class HistoryPane extends WorkbenchPane
                                     0, Unit.PX,
                                     width, Unit.PX);
 
-      mainPanel_.animate(300, new AnimationCallback()
+      // A later layout can cancel or replace the animation before its
+      // callback runs, so the next setMode also finishes the slide.
+      Command finish = new Command()
       {
-         public void onAnimationComplete()
+         public void execute()
          {
-            setVisible(from, fromFocus.getFocusTarget(), false);
+            finishSlide_ = null;
+            setVisible(from, false);
             mainPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
             mainPanel_.forceLayout();
             if (focus)
@@ -305,6 +319,16 @@ public class HistoryPane extends WorkbenchPane
                toFocus.getFocusTarget().removeClassName(styles_.inboundFocus());
             }
          }
+      };
+      finishSlide_ = finish;
+
+      mainPanel_.animate(300, new AnimationCallback()
+      {
+         public void onAnimationComplete()
+         {
+            if (finishSlide_ == finish)
+               finish.execute();
+         }
 
          public void onLayout(Layer layer, double progress)
          {
@@ -312,30 +336,13 @@ public class HistoryPane extends WorkbenchPane
       });
    }
 
-   private void setVisible(Widget widget,
-                           Element focusTarget,
-                           boolean visible)
+   // Hidden views sit off-screen rather than display:none so they can slide
+   // in; inert keeps their controls out of the Tab order and the a11y tree.
+   private void setVisible(Widget widget, boolean visible)
    {
-      //mainPanel_.getWidgetContainerElement(widget).getStyle().setDisplay(
-      //      visible ? Display.BLOCK : Display.NONE);
-      if (visible)
-      {
-         if (focusTarget.getTabIndex() != 0)
-         {
-            focusTarget.setTabIndex(0);
-            mainPanel_.setWidgetLeftRight(widget, 0, Unit.PX, 0, Unit.PX);
-         }
-      }
-      else
-      {
-         if (focusTarget.getTabIndex() != -1)
-         {
-            focusTarget.setTabIndex(-1);
-            if (DomUtils.hasFocus(focusTarget))
-               focusTarget.blur();
-            mainPanel_.setWidgetLeftRight(widget, -5000, Unit.PX, 5000, Unit.PX);
-         }
-      }
+      A11y.setInert(widget.getElement(), !visible);
+      int left = visible ? 0 : -5000;
+      mainPanel_.setWidgetLeftRight(widget, left, Unit.PX, -left, Unit.PX);
       mainPanel_.forceLayout();
    }
 
@@ -345,7 +352,7 @@ public class HistoryPane extends WorkbenchPane
       recentScrollPanel_.scrollToBottom();
    }
 
-   private HistoryTable createHistoryTable(TimestampMode timestampMode)
+   private HistoryTable createHistoryTable(TimestampMode timestampMode, String label)
    {
       HistoryTable table = new HistoryTable(
             styles_.command(),
@@ -353,6 +360,7 @@ public class HistoryPane extends WorkbenchPane
             styles_.selected(),
             timestampMode,
             commands_);
+      Roles.getListboxRole().setAriaLabelProperty(table.getElement(), label);
       table.setSize("100%", "100%");
       table.addClickHandler(new ClickHandler()
       {
@@ -647,6 +655,8 @@ public class HistoryPane extends WorkbenchPane
    private HistoryTableWithToolbar contextResults_;
    private HistoryTableWithToolbar searchResults_;
    private final Commands commands_;
+   private final UserPrefs userPrefs_;
+   private Command finishSlide_;
    private Anchor loadMore_;
    private SearchWidget searchWidget_;
    private Styles styles_ = ((Resources) GWT.create(Resources.class)).styles();
