@@ -573,10 +573,6 @@ endif()
 
 if(RSTUDIO_UNIT_TESTS_ENABLED)
    fetch(GTest GTEST)
-   # Only the installed GTest exports 'GTest::gtest', so add the alias unless it exists.
-   if(NOT TARGET GTest::gtest AND TARGET gtest)
-      add_library(GTest::gtest ALIAS gtest)
-   endif()
 endif()
 
 restore_global_settings()
