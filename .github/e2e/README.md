@@ -45,5 +45,10 @@ approaches that overhead.
 - Windows: 6. At 4 shards the slowest shard ran ~30 minutes of tests
   against ~22 for its siblings and was the long pole of the PR-triggered
   run; at 6 the shards finish in roughly 20 minutes.
-- Linux Desktop and Linux Server: 2, unchanged since sharding was
-  introduced; not yet re-measured.
+- Linux Desktop and Linux Server: 4. At 2 shards the slower shard ran
+  roughly 50 to 78 minutes of tests on both platforms (Linux Server's
+  second shard was 67 to 76 minutes against ~45 for its sibling), so a
+  runner with a slow setup phase pushed a shard past the 120 minute job
+  timeout with the tests themselves still passing. Four is also the
+  floor for any platform: no shard should sit close enough to the
+  timeout that a bad runner hour fails the job.
