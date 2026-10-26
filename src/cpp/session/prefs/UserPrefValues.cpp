@@ -362,6 +362,19 @@ core::Error UserPrefValues::setAutoDetectIndentation(bool val)
 }
 
 /**
+ * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+ */
+bool UserPrefValues::showGitDiffGutter()
+{
+   return readPref<bool>("show_git_diff_gutter");
+}
+
+core::Error UserPrefValues::setShowGitDiffGutter(bool val)
+{
+   return writePref("show_git_diff_gutter", val);
+}
+
+/**
  * Whether to show the margin guide in the RStudio code editor.
  */
 bool UserPrefValues::showMargin()
@@ -3313,7 +3326,7 @@ core::Error UserPrefValues::setFileMonitorUseGitignore(bool val)
 }
 
 /**
- * Whether to install R package dependencies one at a time.
+ * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
  */
 bool UserPrefValues::installPkgDepsIndividually()
 {
@@ -4082,6 +4095,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,
+      kShowGitDiffGutter,
       kShowMargin,
       kBlinkingCursor,
       kMarginColumn,

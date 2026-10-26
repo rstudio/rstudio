@@ -91,6 +91,7 @@ namespace prefs {
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
+#define kShowGitDiffGutter "show_git_diff_gutter"
 #define kShowMargin "show_margin"
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
@@ -678,6 +679,12 @@ public:
     */
    bool autoDetectIndentation();
    core::Error setAutoDetectIndentation(bool val);
+
+   /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   bool showGitDiffGutter();
+   core::Error setShowGitDiffGutter(bool val);
 
    /**
     * Whether to show the margin guide in the RStudio code editor.
@@ -2042,7 +2049,7 @@ public:
    core::Error setFileMonitorUseGitignore(bool val);
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    bool installPkgDepsIndividually();
    core::Error setInstallPkgDepsIndividually(bool val);

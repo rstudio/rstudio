@@ -253,6 +253,16 @@
    clear = function() { .rs.clearUserPref("auto_detect_indentation") }
 )
 
+# Show Git changes in editor gutter
+#
+# Whether to mark lines added, changed, or removed since they were last staged or
+# committed in the editor gutter, for files in a Git repository.
+.rs.uiPrefs$showGitDiffGutter <- list(
+   get = function() { .rs.getUserPref("show_git_diff_gutter") },
+   set = function(value) { .rs.setUserPref("show_git_diff_gutter", value) },
+   clear = function() { .rs.clearUserPref("show_git_diff_gutter") }
+)
+
 # Show margin in editor
 #
 # Whether to show the margin guide in the RStudio code editor.
@@ -2375,7 +2385,9 @@
 
 # Install R package dependencies one at a time
 #
-# Whether to install R package dependencies one at a time.
+# Whether to install R package dependencies one at a time. Not used in renv
+# projects, where packages are always installed together so that renv can resolve
+# dependencies and install in parallel.
 .rs.uiPrefs$installPkgDepsIndividually <- list(
    get = function() { .rs.getUserPref("install_pkg_deps_individually") },
    set = function(value) { .rs.setUserPref("install_pkg_deps_individually", value) },

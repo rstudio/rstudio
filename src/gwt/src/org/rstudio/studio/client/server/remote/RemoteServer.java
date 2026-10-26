@@ -89,6 +89,7 @@ import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
 import org.rstudio.studio.client.common.vcs.CreateKeyResult;
 import org.rstudio.studio.client.common.vcs.DiffResult;
+import org.rstudio.studio.client.common.vcs.GitDiffBaseContents;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.RemotesInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
@@ -3438,6 +3439,19 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(rev));
       params.set(1, new JSONString(filename));
       sendRequest(RPC_SCOPE, GIT_SHOW_FILE, params, requestCallback);
+   }
+
+   @Override
+   public void gitDiffBaseContents(String path,
+                                   String encoding,
+                                   String knownId,
+                                   ServerRequestCallback<GitDiffBaseContents> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      params.set(1, new JSONString(encoding));
+      params.set(2, new JSONString(knownId));
+      sendRequest(RPC_SCOPE, GIT_DIFF_BASE_CONTENTS, params, requestCallback);
    }
 
    @Override
@@ -7573,6 +7587,7 @@ public class RemoteServer implements Server
    private static final String GIT_HISTORY = "git_history";
    private static final String GIT_SHOW = "git_show";
    private static final String GIT_SHOW_FILE = "git_show_file";
+   private static final String GIT_DIFF_BASE_CONTENTS = "git_diff_base_contents";
    private static final String GIT_EXPORT_FILE = "git_export_file";
 
    private static final String SVN_ADD = "svn_add";

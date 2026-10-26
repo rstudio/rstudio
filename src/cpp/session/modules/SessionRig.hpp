@@ -23,7 +23,6 @@
 namespace rstudio {
 namespace core {
    class Error;
-   class FilePath;
 }
 }
 
@@ -41,12 +40,6 @@ core::Error findInstalledRVersion(const std::string& version,
 
 // The version of R being installed, or "" when no installation is running.
 std::string installInProgress();
-
-// Check a downloaded archive against the SHA-256 digest expected of it (in
-// hex, either case). An empty digest fails: nothing can be verified against
-// it. A mismatch carries the 'expected' and 'actual' digests as properties.
-core::Error verifyArchiveDigest(const core::FilePath& archive,
-                                const std::string& expected);
 
 core::Error initialize();
 

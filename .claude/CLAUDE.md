@@ -197,6 +197,18 @@ Components communicate through a central `EventBus` using typed events. Fire eve
 Each feature area defines a `*ServerOperations` interface for its RPC calls. These are aggregated into `Server.java`, which is the main server interface.
 
 
+## Accessibility
+
+UI work should aim for [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/) conformance, with
+particular attention to keyboard operability and screen reader support. Much of RStudio's
+existing UI doesn't meet it yet, so treat this as a goal, not a requirement:
+
+- **New UI** should be built to conform from the start.
+- **Changes to existing UI** should not make accessibility worse. Fix nearby problems when the
+  fix is small and self-contained; flag larger gaps instead of growing a small change into an
+  accessibility rewrite.
+
+
 ## Adding a New Feature (Checklist)
 
 When implementing a new feature end-to-end:

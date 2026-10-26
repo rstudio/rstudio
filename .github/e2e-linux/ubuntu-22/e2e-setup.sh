@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Same runtime set as the Ubuntu 24/26 engines; see ubuntu/e2e-setup.sh.
+# Same runtime set as the Ubuntu 24/26 engines; see ubuntu/e2e-setup.sh
+# (gdb included: jammy's runner image does not ship it).
 sudo apt-get update
-sudo apt-get install -y xvfb jq \
+sudo apt-get install -y xvfb jq gdb \
   libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
 
 # On arm64 ONLY, add the build toolchain and headers, because that engine

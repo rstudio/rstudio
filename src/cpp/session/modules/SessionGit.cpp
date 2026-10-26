@@ -2688,6 +2688,136 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
 }
 
 
+// Returns the index version of a file for the editor's Git diff gutter. The
+// result is { "tracked": bool, "id": string, "unchanged": bool, "contents":
+// string }; tracked is false when the file is outside the repository or not
+// in the index (untracked, ignored), in which case there is nothing to diff
+// against. A tracked file whose blob cannot be read is an error instead,
+// which the client tells from the absence of a base (it says so in the
+// side-by-side view). The id names the base as decoded (blob sha plus encoding); a
+// client that already holds that base passes its id back and gets
+// "unchanged" with no contents, which spares the blob read and the transfer.
+Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   std::string path, encoding, knownId;
+   Error error = json::readParams(request.params, &path, &encoding, &knownId);
+   if (error)
+      return error;
+
+   json::Object result;
+   result["tracked"] = false;
+   result["id"] = "";
+   result["unchanged"] = false;
+   result["contents"] = "";
+   pResponse->setResult(result);
+
+   FilePath root = s_git_.root();
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   if (root.isEmpty() || !filePath.isWithin(root))
+      return Success();
+
+   std::string relativePath = filePath.getRelativePath(root);
+   if (relativePath.empty())
+      return Success();
+
+   // Only a regular file has contents to diff against: a symlink's index
+   // entry holds its target path, and a submodule's a commit id. The path
+   // is matched literally (a name like "report[1].R" is otherwise a glob)
+   // and the entry for exactly that path is the one checked; no entry means
+   // the path isn't in the index, the normal case for new files.
+   core::system::ProcessResult stageResult;
+   error = gitExec(gitArgs() << "ls-files" << "--stage" << "-z" << "--" << ":(literal)" + relativePath,
+                   root,
+                   &stageResult);
+   if (error)
+      return error;
+
+   if (stageResult.exitStatus != EXIT_SUCCESS)
+   {
+      // a path not in the index lists nothing with status 0; a failure is
+      // an index that could not be read, not a file without a base
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("path", relativePath);
+      error.addProperty("stderr", stageResult.stdErr);
+      return error;
+   }
+
+   // entries are "<mode> <sha> <stage>\t<path>", NUL-terminated
+   bool regularFile = false;
+   std::string sha;
+   std::vector<std::string> entries;
+   boost::algorithm::split(entries, stageResult.stdOut, boost::is_any_of(std::string(1, '\0')));
+   for (const std::string& entry : entries)
+   {
+      std::size_t tab = entry.find('\t');
+      if (tab == std::string::npos)
+         continue;
+
+      if (entry.substr(tab + 1) == relativePath)
+      {
+         std::vector<std::string> fields;
+         boost::algorithm::split(fields, entry.substr(0, tab), boost::is_any_of(" "));
+         regularFile = fields.size() == 3 && boost::algorithm::starts_with(fields[0], "100");
+         if (regularFile)
+            sha = fields[1];
+         break;
+      }
+   }
+
+   if (!regularFile)
+      return Success();
+
+   if (encoding.empty())
+      encoding = projects::projectContext().defaultEncoding();
+
+   std::string id = sha + ":" + encoding;
+   result["tracked"] = true;
+   result["id"] = id;
+   if (!knownId.empty() && knownId == id)
+   {
+      result["unchanged"] = true;
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   // The blob is read through the file's smudge filters (git-crypt, LFS,
+   // ident, eol conversion), as the working copy in the editor was; "git
+   // show" would hand back the stored form, and every line would differ.
+   // The stage is spelled out, or a name such as "0:script.R" would be read
+   // as stage 0 of script.R.
+   core::system::ProcessResult procResult;
+   error = gitExec(gitArgs() << "cat-file" << "--filters" << ":0:" + relativePath, root, &procResult);
+   if (error)
+      return error;
+
+   if (procResult.exitStatus != EXIT_SUCCESS)
+   {
+      // e.g. a smudge filter that fails: the file has a base, it just
+      // cannot be read right now
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("path", relativePath);
+      error.addProperty("stderr", procResult.stdErr);
+      return error;
+   }
+
+   std::string contents;
+   error = module_context::convertToUtf8(procResult.stdOut, encoding, true, &contents);
+   if (error)
+      contents = procResult.stdOut;
+
+   // the editor's copy had its line endings normalized when the document was
+   // loaded, so the base gets the same treatment or every line would differ
+   string_utils::convertLineEndings(&contents, session::options().sourceLineEnding());
+
+   // control characters are kept: the editor keeps them too, and JSON
+   // escapes them fine
+   result["contents"] = contents;
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 Error vcsExportFile(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -3740,6 +3870,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_history", vcsHistory))
       (bind(registerRpcMethod, "git_show", vcsShow))
       (bind(registerRpcMethod, "git_show_file", vcsShowFile))
+      (bind(registerRpcMethod, "git_diff_base_contents", vcsDiffBaseContents))
       (bind(registerRpcMethod, "git_export_file", vcsExportFile))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))

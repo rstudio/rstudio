@@ -70,6 +70,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String USE_SPACES_FOR_TAB = "use_spaces_for_tab";
    public static final String NUM_SPACES_FOR_TAB = "num_spaces_for_tab";
    public static final String AUTO_DETECT_INDENTATION = "auto_detect_indentation";
+   public static final String SHOW_GIT_DIFF_GUTTER = "show_git_diff_gutter";
    public static final String SHOW_MARGIN = "show_margin";
    public static final String BLINKING_CURSOR = "blinking_cursor";
    public static final String MARGIN_COLUMN = "margin_column";
@@ -802,6 +803,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.autoDetectIndentationTitle(), 
          _constants.autoDetectIndentationDescription(), 
          false);
+   }
+
+   /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   public PrefValue<Boolean> showGitDiffGutter()
+   {
+      return bool(
+         "show_git_diff_gutter",
+         _constants.showGitDiffGutterTitle(), 
+         _constants.showGitDiffGutterDescription(), 
+         true);
    }
 
    /**
@@ -3902,7 +3915,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    public PrefValue<Boolean> installPkgDepsIndividually()
    {
@@ -4801,6 +4814,8 @@ public class UserPrefsAccessor extends Prefs
          numSpacesForTab().setValue(layer, source.getInteger("num_spaces_for_tab"));
       if (source.hasKey("auto_detect_indentation"))
          autoDetectIndentation().setValue(layer, source.getBool("auto_detect_indentation"));
+      if (source.hasKey("show_git_diff_gutter"))
+         showGitDiffGutter().setValue(layer, source.getBool("show_git_diff_gutter"));
       if (source.hasKey("show_margin"))
          showMargin().setValue(layer, source.getBool("show_margin"));
       if (source.hasKey("blinking_cursor"))
@@ -5399,6 +5414,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(useSpacesForTab());
       prefs.add(numSpacesForTab());
       prefs.add(autoDetectIndentation());
+      prefs.add(showGitDiffGutter());
       prefs.add(showMargin());
       prefs.add(blinkingCursor());
       prefs.add(marginColumn());
