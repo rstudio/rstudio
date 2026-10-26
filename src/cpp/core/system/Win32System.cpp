@@ -1186,26 +1186,102 @@ Error terminateProcessHandle(HANDLE hProcess)
    return error;
 }
 
-// Opens every descendant of pid as it is found, so its pid stays reserved
-// (and cannot be recycled onto an unrelated process) until it is terminated.
-void openProcessTree(PidType pid, std::vector<HANDLE>* pHandles)
+struct OpenedProcess
 {
-   for (const SubprocInfo& child : getSubprocesses(pid))
-   {
-      HANDLE hChild = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION,
-                                    FALSE,
-                                    child.pid);
-      if (!hChild)
-      {
-         // ERROR_INVALID_PARAMETER: exited since the snapshot, nothing to do
-         Error error = LAST_SYSTEM_ERROR();
-         if (error.getCode() != ERROR_INVALID_PARAMETER)
-            LOG_ERROR(error);
-         continue;
-      }
+   PidType pid;
+   HANDLE handle;
+};
 
-      pHandles->push_back(hChild);
-      openProcessTree(child.pid, pHandles);
+// Opens the process a snapshot lists, and checks that the handle is for
+// that process: its pid must not have been recycled since the snapshot
+// (creation after the snapshot time), and the listing itself must not be
+// an orphan still reporting a parent pid that was recycled (creation before
+// the parent's). Null when the process is gone, or when the handle is for
+// some other process.
+HANDLE openListedProcess(const PROCESSENTRY32& entry,
+                         const FILETIME& snapshotTime,
+                         const FILETIME* pParentCreationTime)
+{
+   HANDLE hProcess = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION,
+                                   FALSE,
+                                   entry.th32ProcessID);
+   if (!hProcess)
+   {
+      // ERROR_INVALID_PARAMETER: exited since the snapshot, nothing to do
+      Error error = LAST_SYSTEM_ERROR();
+      if (error.getCode() != ERROR_INVALID_PARAMETER)
+         LOG_ERROR(error);
+      return nullptr;
+   }
+
+   // kept when the time cannot be queried, as getSubprocesses() does
+   FILETIME creationTime;
+   if (!getProcessCreationTime(hProcess, &creationTime))
+      return hProcess;
+
+   bool recycled = ::CompareFileTime(&creationTime, &snapshotTime) > 0;
+   bool orphan = pParentCreationTime != nullptr &&
+                 ::CompareFileTime(&creationTime, pParentCreationTime) < 0;
+   if (recycled || orphan)
+   {
+      Error error = closeHandle(&hProcess, ERROR_LOCATION);
+      if (error)
+         LOG_ERROR(error);
+      return nullptr;
+   }
+
+   return hProcess;
+}
+
+// Opens every descendant of the process behind hParent, keeping the handles
+// so no pid can be recycled before it is terminated. This walks the snapshot
+// itself rather than using getSubprocesses(): that only returns pids, and a
+// pid can be recycled between its listing and a later OpenProcess(), so each
+// child is opened first and checked against the listing afterwards.
+void openProcessTree(HANDLE hParent, PidType parentPid, std::vector<OpenedProcess>* pProcesses)
+{
+   FILETIME parentCreationTime;
+   bool haveParentCreationTime = getProcessCreationTime(hParent, &parentCreationTime);
+
+   // taken before the snapshot, so a process created in between is (at
+   // worst) missed rather than mistaken for one that was listed
+   FILETIME snapshotTime;
+   ::GetSystemTimeAsFileTime(&snapshotTime);
+
+   HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+   if (hSnapshot == INVALID_HANDLE_VALUE)
+   {
+      LOG_ERROR(LAST_SYSTEM_ERROR());
+      return;
+   }
+   CloseHandleOnExitScope closeSnapshot(&hSnapshot, ERROR_LOCATION);
+
+   PROCESSENTRY32 entry;
+   entry.dwSize = sizeof(entry);
+   if (!::Process32First(hSnapshot, &entry))
+   {
+      LOG_ERROR(LAST_SYSTEM_ERROR());
+      return;
+   }
+
+   std::vector<OpenedProcess> children;
+   do
+   {
+      if (entry.th32ParentProcessID != parentPid)
+         continue;
+
+      HANDLE hChild = openListedProcess(entry,
+                                        snapshotTime,
+                                        haveParentCreationTime ? &parentCreationTime : nullptr);
+      if (hChild)
+         children.push_back({entry.th32ProcessID, hChild});
+   }
+   while (::Process32Next(hSnapshot, &entry));
+
+   for (const OpenedProcess& child : children)
+   {
+      pProcesses->push_back(child);
+      openProcessTree(child.handle, child.pid, pProcesses);
    }
 }
 
@@ -1219,20 +1295,19 @@ Error terminateProcessTree(PidType pid)
    CloseHandleOnExitScope closeRoot(&hRoot, ERROR_LOCATION);
 
    // the descendants have to be found while the root is alive: once it has
-   // exited, an orphan's recorded parent pid no longer passes the pid-reuse
-   // check in getSubprocesses()
-   std::vector<HANDLE> descendants;
-   openProcessTree(pid, &descendants);
+   // exited, an orphan's recorded parent pid no longer passes the check
+   std::vector<OpenedProcess> descendants;
+   openProcessTree(hRoot, pid, &descendants);
 
    Error error = terminateProcessHandle(hRoot);
 
-   for (HANDLE hDescendant : descendants)
+   for (OpenedProcess& descendant : descendants)
    {
-      Error descendantError = terminateProcessHandle(hDescendant);
+      Error descendantError = terminateProcessHandle(descendant.handle);
       if (descendantError)
          LOG_ERROR(descendantError);
 
-      descendantError = closeHandle(&hDescendant, ERROR_LOCATION);
+      descendantError = closeHandle(&descendant.handle, ERROR_LOCATION);
       if (descendantError)
          LOG_ERROR(descendantError);
    }

@@ -425,28 +425,77 @@ TEST(PosixTests, NoSubprocessesGeneric)
    }
 }
 
+namespace {
+
+// Polls waitpid() so a test cannot hang on a process that fails to exit.
+bool reapWithin(pid_t pid, int* pStatus, int seconds)
+{
+   for (int i = 0; i < seconds * 100; i++)
+   {
+      pid_t result = ::waitpid(pid, pStatus, WNOHANG);
+      if (result == pid)
+         return true;
+      if (result == -1)
+         return false;
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+
+   return false;
+}
+
+} // anonymous namespace
+
 TEST(PosixTests, TerminateProcessTreeTakesDescendants)
 {
 #ifdef __linux__
    // adopt the grandchild once its parent is gone, so it is reaped here
    // rather than by whatever runs as pid 1 (which may not, in a container)
+   int previousSubreaper = 0;
+   ASSERT_EQ(0, ::prctl(PR_GET_CHILD_SUBREAPER, &previousSubreaper));
    ASSERT_EQ(0, ::prctl(PR_SET_CHILD_SUBREAPER, 1));
+   BOOST_SCOPE_EXIT(&previousSubreaper)
+   {
+      ::prctl(PR_SET_CHILD_SUBREAPER, previousSubreaper);
+   }
+   BOOST_SCOPE_EXIT_END
 #endif
 
-   // child -> grandchild, both idle until signalled
    pid_t child = ::fork();
    ASSERT_NE(-1, child);
    if (child == 0)
    {
-      if (::fork() == 0)
-      {
-         for (;;)
-            ::pause();
-      }
+      if (::fork() == -1)
+         ::_exit(1);
 
+      // child and grandchild both idle until signalled; the alarm is a
+      // safety net should the test fail to take one of them down
+      ::alarm(30);
       for (;;)
          ::pause();
    }
+
+   pid_t grandchild = 0;
+   bool childReaped = false;
+   bool grandchildReaped = false;
+   BOOST_SCOPE_EXIT(&child, &grandchild, &childReaped, &grandchildReaped)
+   {
+      int status = 0;
+      if (!childReaped)
+      {
+         ::kill(child, SIGKILL);
+         reapWithin(child, &status, 5);
+      }
+
+      if (grandchild > 0 && !grandchildReaped)
+      {
+         ::kill(grandchild, SIGKILL);
+#ifdef __linux__
+         reapWithin(grandchild, &status, 5);
+#endif
+      }
+   }
+   BOOST_SCOPE_EXIT_END
 
    std::vector<SubprocInfo> grandchildren;
    for (int i = 0; i < 500 && grandchildren.empty(); i++)
@@ -455,26 +504,28 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
       grandchildren = getSubprocesses(child);
    }
    ASSERT_EQ(1u, grandchildren.size());
-   pid_t grandchild = grandchildren[0].pid;
+   grandchild = grandchildren[0].pid;
 
    Error error = terminateProcessTree(child);
    EXPECT_FALSE(error) << error.asString();
 
    int status = 0;
-   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   childReaped = reapWithin(child, &status, 5);
+   ASSERT_TRUE(childReaped);
    EXPECT_TRUE(WIFSIGNALED(status));
    EXPECT_EQ(SIGTERM, WTERMSIG(status));
 
 #ifdef __linux__
-   ASSERT_EQ(grandchild, ::waitpid(grandchild, &status, 0));
+   grandchildReaped = reapWithin(grandchild, &status, 5);
+   ASSERT_TRUE(grandchildReaped);
    EXPECT_TRUE(WIFSIGNALED(status));
    EXPECT_EQ(SIGTERM, WTERMSIG(status));
-   ASSERT_EQ(0, ::prctl(PR_SET_CHILD_SUBREAPER, 0));
 #else
    // reparented to launchd, which reaps it
    for (int i = 0; i < 500 && isProcessRunning(grandchild); i++)
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-   EXPECT_FALSE(isProcessRunning(grandchild));
+   grandchildReaped = !isProcessRunning(grandchild);
+   EXPECT_TRUE(grandchildReaped);
 #endif
 }
 
