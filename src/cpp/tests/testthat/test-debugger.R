@@ -368,6 +368,20 @@ test_that("debugSource cleanup leaves the file's final bindings alone", {
 
 })
 
+test_that("debugSource runs a comment-only file that has a breakpoint", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines("# the only line used to be code, and still has a breakpoint", file)
+
+   # No steps map onto a file with no expressions; the run must still
+   # finish rather than trip over an empty step list on the way out.
+   expect_silent(
+      .rs.executeDebugSource(file, "unknown", breaklines = 1L, local = new.env())
+   )
+
+})
+
 test_that("debugSource cleans functions bound through chained, conditional and member assignments", {
 
    file <- tempfile(fileext = ".R")
@@ -403,6 +417,82 @@ test_that("debugSource cleans functions bound through chained, conditional and m
    expect_equal(envir$cond_f(), 2)
    expect_equal(envir$holder$f(), 3)
    expect_equal(envir$holder$g(), 4)
+
+})
+
+test_that("debugSource cleans functions wherever the file put them", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines(c(
+      "for (i in 1:2) loop_f <- function() {",
+      "   1",
+      "}",
+      "handlers <- list(run = function() {",
+      "   2",
+      "})",
+      "alias_src <- function() {",
+      "   3",
+      "}",
+      "alias <- alias_src",
+      "rm(alias_src)",
+      "n <- 0",
+      "holder <- list()",
+      "holder[[{ n <- n + 1; n }]] <- function() {",
+      "   4",
+      "}"
+   ), file)
+
+   # A definition inside a loop, a function built inside a list, a copy of
+   # a function whose original binding is gone, and a target whose index
+   # expression has a side effect: cleanup must reach all of them without
+   # evaluating anything in the file a second time.
+   envir <- new.env()
+   .rs.executeDebugSource(file, "unknown", breaklines = c(2L, 5L, 8L, 15L), local = envir)
+
+   funs <- list(envir$loop_f, envir$handlers$run, envir$alias, envir$holder[[1L]])
+   for (fun in funs)
+   {
+      expect_null(.rs.findBreakpointSteps(body(fun)))
+      expect_s3_class(attr(fun, "srcref"), "srcref")
+   }
+
+   expect_equal(envir$loop_f(), 1)
+   expect_equal(envir$handlers$run(), 2)
+   expect_equal(envir$alias(), 3)
+   expect_equal(envir$holder[[1L]](), 4)
+   expect_equal(envir$n, 1)
+   expect_false(exists("alias_src", envir = envir, inherits = FALSE))
+
+})
+
+test_that("debugSource leaves functions the run did not define alone", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines(c(
+      "if (exists(\"halt\")) stop(\"halted\")",
+      "kept_f <- function() {",
+      "   1",
+      "}"
+   ), file)
+
+   # First run defines kept_f; the client then sets its own breakpoint on
+   # it. A second run that stops before redefining it must not strip that
+   # breakpoint: the client only re-applies breakpoints after a successful
+   # run, so the marker would otherwise stay up with nothing behind it.
+   envir <- new.env()
+   .rs.executeDebugSource(file, "unknown", breaklines = 3L, local = envir)
+   suppressMessages(.rs.setFunctionBreakpoints("kept_f", envir, list("2")))
+   expect_true(.rs.isTraced(envir$kept_f))
+
+   envir$halt <- TRUE
+   expect_error(
+      .rs.executeDebugSource(file, "unknown", breaklines = 3L, local = envir),
+      "halted"
+   )
+   expect_true(.rs.isTraced(envir$kept_f))
+   expect_equal(.rs.findBreakpointSteps(body(envir$kept_f)), c(2L, 3L))
 
 })
 
