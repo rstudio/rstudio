@@ -16,9 +16,19 @@
 
 #include <core/http/Ssl.hpp>
 
+#include <memory>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 #include <core/Log.hpp>
 #include <core/FileUtils.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/system/Crypto.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -372,6 +382,215 @@ void initializeSslStream(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>*
       boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
       LOG_ERROR(Error(ec, ERROR_LOCATION));
    }
+}
+
+namespace {
+
+// the in-memory endpoints exchange the whole handshake through these buffers
+const size_t kHandshakeBufferBytes = 64 * 1024;
+const int kMaxHandshakeSteps = 32;
+
+struct Protocol
+{
+   const char* name;
+   int version;
+};
+
+// a version of 0 marks a name that nginx accepts but that current OpenSSL
+// releases do not implement
+const Protocol kProtocols[] = {
+   { "SSLv2",   0 },
+#ifdef SSL3_VERSION
+   { "SSLv3",   SSL3_VERSION },
+#else
+   { "SSLv3",   0 },
+#endif
+   { "TLSv1",   TLS1_VERSION },
+   { "TLSv1.1", TLS1_1_VERSION },
+   { "TLSv1.2", TLS1_2_VERSION },
+   { "TLSv1.3", TLS1_3_VERSION },
+};
+
+using SslContextPtr = std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)>;
+using SslPtr = std::unique_ptr<SSL, decltype(&SSL_free)>;
+
+const Protocol* findProtocol(const std::string& name)
+{
+   for (const Protocol& protocol : kProtocols)
+   {
+      if (name == protocol.name)
+         return &protocol;
+   }
+   return nullptr;
+}
+
+// stops OpenSSL from prompting on the terminal for the passphrase of an
+// encrypted key; -1 tells OpenSSL that no passphrase is available
+int refusePassphrase(char*, int, int, void*)
+{
+   return -1;
+}
+
+Error cryptoError(const std::string& description,
+                  const FilePath& path,
+                  const ErrorLocation& location)
+{
+   Error error = core::system::crypto::getLastCryptoError(location);
+   error.addProperty("description", description);
+   error.addProperty("path", path.getAbsolutePath());
+   return error;
+}
+
+Error createServerContext(const FilePath& certificatePath,
+                          const FilePath& keyPath,
+                          const std::string& cipherList,
+                          SslContextPtr* pContext)
+{
+   SslContextPtr context(SSL_CTX_new(TLS_server_method()), SSL_CTX_free);
+   if (!context)
+      return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
+
+   SSL_CTX_set_default_passwd_cb(context.get(), refusePassphrase);
+
+   std::string certificate = certificatePath.getAbsolutePath();
+   if (SSL_CTX_use_certificate_chain_file(context.get(), certificate.c_str()) != 1)
+      return cryptoError("Could not load the certificate", certificatePath, ERROR_LOCATION);
+
+   std::string key = keyPath.getAbsolutePath();
+   if (SSL_CTX_use_PrivateKey_file(context.get(), key.c_str(), SSL_FILETYPE_PEM) != 1)
+      return cryptoError("Could not load the certificate key", keyPath, ERROR_LOCATION);
+
+   if (SSL_CTX_set_cipher_list(context.get(), cipherList.c_str()) != 1)
+      return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
+
+   *pContext = std::move(context);
+   return Success();
+}
+
+// the client accepts anything the server offers, so only the limits of the
+// server side decide whether a protocol is usable
+Error createClientContext(SslContextPtr* pContext)
+{
+   SslContextPtr context(SSL_CTX_new(TLS_client_method()), SSL_CTX_free);
+   if (!context)
+      return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
+
+   SSL_CTX_set_verify(context.get(), SSL_VERIFY_NONE, nullptr);
+   SSL_CTX_set_security_level(context.get(), 0);
+   if (SSL_CTX_set_cipher_list(context.get(), "ALL:@SECLEVEL=0") != 1)
+      return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
+
+   *pContext = std::move(context);
+   return Success();
+}
+
+// pinning the version on the SSL object replaces the minimum version from the
+// system OpenSSL configuration, as nginx does for ssl_protocols
+bool pinVersion(SSL* pSsl, int version)
+{
+   return SSL_set_min_proto_version(pSsl, version) == 1 &&
+          SSL_set_max_proto_version(pSsl, version) == 1;
+}
+
+bool isHandshakeInProgress(SSL* pSsl, int result)
+{
+   if (result == 1)
+      return true;
+
+   int error = SSL_get_error(pSsl, result);
+   return error == SSL_ERROR_WANT_READ || error == SSL_ERROR_WANT_WRITE;
+}
+
+bool runHandshake(SSL* pClient, SSL* pServer)
+{
+   for (int step = 0; step < kMaxHandshakeSteps; ++step)
+   {
+      int clientResult = SSL_do_handshake(pClient);
+      int serverResult = SSL_do_handshake(pServer);
+      if (clientResult == 1 && serverResult == 1)
+         return true;
+
+      if (!isHandshakeInProgress(pClient, clientResult) ||
+          !isHandshakeInProgress(pServer, serverResult))
+         return false;
+   }
+   return false;
+}
+
+bool canNegotiate(SSL_CTX* pServerContext, SSL_CTX* pClientContext, int version)
+{
+   if (version == 0)
+      return false;
+
+   SslPtr server(SSL_new(pServerContext), SSL_free);
+   SslPtr client(SSL_new(pClientContext), SSL_free);
+   if (!server || !client)
+      return false;
+
+   if (!pinVersion(server.get(), version) || !pinVersion(client.get(), version))
+      return false;
+
+   BIO* pClientBio = nullptr;
+   BIO* pServerBio = nullptr;
+   if (BIO_new_bio_pair(&pClientBio, kHandshakeBufferBytes,
+                        &pServerBio, kHandshakeBufferBytes) != 1)
+      return false;
+
+   // each SSL object takes ownership of its end of the pair
+   SSL_set_bio(client.get(), pClientBio, pClientBio);
+   SSL_set_bio(server.get(), pServerBio, pServerBio);
+   SSL_set_connect_state(client.get());
+   SSL_set_accept_state(server.get());
+
+   return runHandshake(client.get(), server.get());
+}
+
+Error sortProtocols(const std::string& protocolList,
+                    const FilePath& certificatePath,
+                    const FilePath& keyPath,
+                    const std::string& cipherList,
+                    ProtocolSupport* pSupport)
+{
+   SslContextPtr serverContext(nullptr, SSL_CTX_free);
+   Error error = createServerContext(certificatePath, keyPath, cipherList, &serverContext);
+   if (error)
+      return error;
+
+   SslContextPtr clientContext(nullptr, SSL_CTX_free);
+   error = createClientContext(&clientContext);
+   if (error)
+      return error;
+
+   std::vector<std::string> names;
+   boost::split(names, protocolList, boost::is_any_of(" \t"), boost::token_compress_on);
+   for (const std::string& name : names)
+   {
+      const Protocol* pProtocol = findProtocol(name);
+      if (pProtocol == nullptr)
+         continue;
+
+      if (canNegotiate(serverContext.get(), clientContext.get(), pProtocol->version))
+         pSupport->usable.push_back(name);
+      else
+         pSupport->unusable.push_back(name);
+   }
+   return Success();
+}
+
+} // anonymous namespace
+
+Error checkProtocolSupport(const std::string& protocolList,
+                           const FilePath& certificatePath,
+                           const FilePath& keyPath,
+                           const std::string& cipherList,
+                           ProtocolSupport* pSupport)
+{
+   Error error = sortProtocols(protocolList, certificatePath, keyPath, cipherList, pSupport);
+
+   // failed handshakes leave entries on the thread's OpenSSL error queue, and
+   // later OpenSSL calls must not report them as their own errors
+   ERR_clear_error();
+   return error;
 }
 
 } // namespace ssl
