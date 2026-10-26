@@ -10,6 +10,7 @@
 
 ### Fixed
 - ([#14985](https://github.com/rstudio/rstudio/issues/14985)): Fixed an issue where opening a folder without a `.Rproj` file from File > Open Project failed with an unclear error in RStudio Server and when RStudio Desktop uses the web-based file dialogs; the folder now opens as a project, creating its `.Rproj` file as the native file dialogs do.
+- ([#19202](https://github.com/rstudio/rstudio/issues/19202)): Fixed an issue where a tab in the sidebar that shows itself while another pane is zoomed (e.g. Help after `?mean`) stayed hidden, instead of taking over the zoom, when the sidebar had been shown after RStudio started.
 - ([#19240](https://github.com/rstudio/rstudio/issues/19240)): The "RStudio has reduced background file operations" console notice is no longer printed again each time a suspended session is resumed or R is restarted; it is printed once per project session, and again when a restart first turns the reduction on.
 - ([#19168](https://github.com/rstudio/rstudio/issues/19168)): RStudio now installs requested dependencies together in renv projects, allowing renv to resolve dependencies and use parallel installation even when individual package installation is enabled.
 - ([#19165](https://github.com/rstudio/rstudio/issues/19165)): Improved vertical alignment of text buttons in the Packages toolbar and search fields on Windows.
@@ -54,12 +55,15 @@
 - ([#19252](https://github.com/rstudio/rstudio/issues/19252)): [Accessibility] The project trust dialog ("Do you trust this project?" / "This project is restricted") now has an accessible name, its title, which is also marked as a heading; its explanation is read as the dialog's description.
 - ([#19251](https://github.com/rstudio/rstudio/issues/19251)): [Accessibility] Modal dialogs, including message and confirmation boxes, now set `aria-modal="true"`, so assistive technology and accessibility checkers recognize them as modal.
 - ([#19266](https://github.com/rstudio/rstudio/issues/19266)): [Accessibility] The About dialog now opens with focus on the product name at the top of its content, rather than on the OK button after it, and no longer reads all of its content as the dialog's description. The logo is marked as decorative, so VoiceOver no longer announces it as "clickable", and the hidden "opens in new window" hint is read only as a description of the trademark and license links instead of as a separate item.
+- ([#15320](https://github.com/rstudio/rstudio/issues/15320)): [Accessibility] Accessibility checkers no longer report duplicate element ids from the R and Python logos in the Console pane title.
 - ([#19264](https://github.com/rstudio/rstudio/issues/19264)): [Accessibility] In the Packages pane, the menu button at the right end of the toolbar is now named "Pane options", and the checkbox and icon columns of the package list have header text that only screen readers see ("Loaded", "Help", "Browse", "Remove").
+- ([#19272](https://github.com/rstudio/rstudio/issues/19272)): [Accessibility] Fixed an issue where turning screen reader support on or off in RStudio Server, from the Help > Accessibility menu, its keyboard shortcut, or Global Options, could lose source edits that had not yet been saved to the server. Pending edits are now saved before the page reloads, including for other Global Options changes that reload the page, such as the editor font.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
 
 ### Dependencies
+- Copilot Language Server 1.555.7
 - Electron 44.9.3
 - RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
 - GWT 2.13.1
