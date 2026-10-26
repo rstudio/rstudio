@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
@@ -356,6 +357,19 @@ public class ShortcutManager implements NativePreviewHandler,
    public void setEditorMode(int editorMode)
    {
       editorMode_ = editorMode;
+   }
+
+   // Applies the editor_keybindings pref (default, vim, emacs or sublime)
+   public void setEditorModeFromPref(String editorKeybindings)
+   {
+      if (StringUtil.equals(editorKeybindings, UserPrefs.EDITOR_KEYBINDINGS_VIM))
+         setEditorMode(KeyboardShortcut.MODE_VIM);
+      else if (StringUtil.equals(editorKeybindings, UserPrefs.EDITOR_KEYBINDINGS_EMACS))
+         setEditorMode(KeyboardShortcut.MODE_EMACS);
+      else if (StringUtil.equals(editorKeybindings, UserPrefs.EDITOR_KEYBINDINGS_SUBLIME))
+         setEditorMode(KeyboardShortcut.MODE_SUBLIME);
+      else
+         setEditorMode(KeyboardShortcut.MODE_DEFAULT);
    }
 
    public int getEditorMode()

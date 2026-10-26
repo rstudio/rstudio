@@ -13,10 +13,13 @@
 package org.rstudio.studio.client.workbench.views.chat;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.command.ApplicationCommandManager;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -46,11 +49,13 @@ public class ChatSatelliteWindow extends SatelliteWindow
    @Inject
    public ChatSatelliteWindow(Provider<EventBus> pEventBus,
                                Provider<FontSizeManager> pFSManager,
-                               Commands commands)
+                               Commands commands,
+                               ApplicationCommandManager appCommandManager)
    {
       super(pEventBus, pFSManager);
       pEventBus_ = pEventBus;
       commands_ = commands;
+      appCommandManager_ = appCommandManager;
    }
 
    @Override
@@ -86,6 +91,12 @@ public class ChatSatelliteWindow extends SatelliteWindow
       // Forward postMessage from iframe to main window
       setupMessageForwarder();
       AssistantKeyForwarder.install();
+
+      // Elsewhere the user's custom bindings and keybinding mode are loaded when an Ace
+      // editor loads, which never happens here, so load them for keys forwarded from PA
+      appCommandManager_.loadBindings();
+      ShortcutManager.INSTANCE.setEditorModeFromPref(
+            RStudioGinjector.INSTANCE.getUserPrefs().editorKeybindings().getValue());
 
       // Create suspend overlay (shown during session suspend to block interaction)
       suspendedOverlay_ = new HTML();
@@ -223,6 +234,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
    private HTML suspendedOverlay_;
    private final Provider<EventBus> pEventBus_;
    private final Commands commands_;
+   private final ApplicationCommandManager appCommandManager_;
 
    private static final ChatConstants constants_ =
       GWT.create(ChatConstants.class);
