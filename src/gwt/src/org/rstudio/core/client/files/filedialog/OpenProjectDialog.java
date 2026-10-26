@@ -73,9 +73,8 @@ public class OpenProjectDialog extends FileDialog
          @Override
          public void onClick(ClickEvent event)
          {
-            final FileSystemItem dir = browser_.getCurrentDirectory();
             server_.createProjectFile(
-                  dir.getPath(),
+                  browser_.getCurrentDirectory().getPath(),
                   new ServerRequestCallback<String>()
                   {
                      @Override
@@ -87,16 +86,11 @@ public class OpenProjectDialog extends FileDialog
                      @Override
                      public void onError(ServerError error)
                      {
+                        // keep the dialog open: the server only fails here when
+                        // the directory is gone or the request itself failed,
+                        // so there is no project file to fall back to
                         Debug.logError(error);
-
-                        // with no name typed, try the .Rproj the server would
-                        // have created, so the open reports why it failed
-                        // rather than closing as if cancelled
-                        FileSystemItem item = getSelectedItem();
-                        if (item == null)
-                           item = FileSystemItem.createFile(
-                                 dir.completePath(dir.getName() + ".Rproj"));
-                        accept(item);
+                        showError(error.getUserMessage());
                      }
                   });
          }
