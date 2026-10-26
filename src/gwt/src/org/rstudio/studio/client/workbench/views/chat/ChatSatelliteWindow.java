@@ -93,10 +93,11 @@ public class ChatSatelliteWindow extends SatelliteWindow
       AssistantKeyForwarder.install();
 
       // Elsewhere the user's custom bindings and keybinding mode are loaded when an Ace
-      // editor loads, which never happens here, so load them for keys forwarded from PA
+      // editor loads, which never happens here, so load them for keys forwarded from PA,
+      // and follow the mode pref while the window is open
       appCommandManager_.loadBindings();
-      ShortcutManager.INSTANCE.setEditorModeFromPref(
-            RStudioGinjector.INSTANCE.getUserPrefs().editorKeybindings().getValue());
+      RStudioGinjector.INSTANCE.getUserPrefs().editorKeybindings().bind(
+            mode -> ShortcutManager.INSTANCE.setEditorModeFromPref(mode));
 
       // Create suspend overlay (shown during session suspend to block interaction)
       suspendedOverlay_ = new HTML();

@@ -161,6 +161,14 @@ test.describe.serial(
       await expect(consoleActions.consolePane.consoleInput).toBeFocused();
     });
 
+    test('a keybinding mode change reaches the open satellite', async ({ rstudioPage: page }) => {
+      await setPref(page, 'editor_keybindings', 'default');
+      // Alt+X is Emacs-only, so it stops matching once the change arrives.
+      await expect
+        .poll(async () => (await sendKeyAsAssistant(satelliteChatPane.chatInput, ALT_X)).used)
+        .toBe(false);
+    });
+
     test('an any-mode shortcut stays out of the satellite', async () => {
       // Ctrl+1 is activateSource: Workbench context, no windowMode.
       const result = await sendKeyAsAssistant(satelliteChatPane.chatInput, CTRL_1);
