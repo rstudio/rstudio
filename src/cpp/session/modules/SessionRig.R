@@ -237,8 +237,9 @@
 #' snapshot was taken: the files it created are removed, the links and the
 #' LaunchAgent it rewrote are put back (rig repoints a dangling 'Current'
 #' and rewrites a stale agent), and launchd's agent and RSTUDIO_WHICH_R are
-#' left as they were. Returns the paths removed and restored, and a message
-#' for each step that failed.
+#' left as they were. A link whose directory has since been removed is left
+#' alone. Returns the paths removed and restored, and a message for each
+#' step that failed.
 .rs.addFunction("rig.userDefaultRestore", function(snapshot, launchctl = .rs.rig.launchctl)
 {
    paths <- snapshot$paths
@@ -318,6 +319,13 @@
    for (name in names(paths)[relinked])
    {
       path <- paths[[name]]
+
+      # a link whose directory is gone since (rig's setup removed by hand
+      # after a session exited mid-install) is left that way: recreating the
+      # directory for a link back to its old target would not restore anything
+      if (!dir.exists(dirname(path)))
+         next
+
       if (exists[[name]] && !suppressWarnings(file.remove(path)))
       {
          failed <- c(failed, sprintf("could not remove %s", path))
@@ -401,8 +409,9 @@
 #' may not get to undo it, and the next session then does (from the file).
 #' A snapshot another session left there is undone first, so that its
 #' leftovers do not pass for the setup to keep; while that session (or its
-#' rig) still runs, or until its leftovers are all undone, the install is
-#' refused. Without a saved snapshot there is no undoing what rig adds, so
+#' rig) still runs, or until its leftovers are all undone (or the snapshot
+#' is deleted), the install is refused. Without a saved snapshot there is
+#' no undoing what rig adds, so
 #' the install is refused then as well. Returns messages for the job's log.
 .rs.addFunction("rig.userInstallBegin", function(rig,
                                                  file = NULL,
@@ -426,7 +435,17 @@
          if (length(notes) == 0L)
             stop("another RStudio session is still installing R")
 
-         stop(paste(c("an earlier installation's changes are not all undone yet:", notes), collapse = "\n"))
+         # the file is named so that a leftover that can never be undone
+         # (say, its directory lost its permissions for good) does not block
+         # installs forever
+         stop(paste(
+            c(
+               "an earlier installation's changes are not all undone yet:",
+               notes,
+               sprintf("(to leave them as they are, delete %s)", file)
+            ),
+            collapse = "\n"
+         ))
       }
    }
 

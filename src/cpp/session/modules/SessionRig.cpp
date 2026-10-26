@@ -96,9 +96,15 @@ public:
          return;
 
       stopped_ = true;
-      module_context::processSupervisor().wait(
-               boost::posix_time::milliseconds(10),
-               boost::posix_time::milliseconds(1000));
+
+      // polled directly rather than with the supervisor's wait(), which
+      // runs until every supervised child is gone (the assistant's agent
+      // and the chat backend among them), not just rig
+      for (int i = 0; processRunning_ && i < 100; i++)
+      {
+         module_context::processSupervisor().poll();
+         boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+      }
    }
 
 private:

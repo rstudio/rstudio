@@ -593,6 +593,40 @@ test_that("links rig repoints and an agent it rewrites are put back", {
 
 })
 
+test_that("a repointed link whose directory was removed by hand is left alone", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+
+   # 'Current' dangled, rig repointed it at the new R, the session exited
+   # mid-install, and the user then removed rig's R directory wholesale
+   removed <- file.path(root, "4.3.3")
+   expect_true(file.symlink(removed, paths[["current"]]))
+   launchd <- fakeLaunchd()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   installed <- file.path(root, "4.2.3")
+   dir.create(installed)
+   unlink(paths[["current"]])
+   expect_true(file.symlink(installed, paths[["current"]]))
+   unlink(root, recursive = TRUE)
+
+   # the old link is not recreated in a directory the user chose to remove,
+   # and (so that it does not block later installs) that is not a failure
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result, list(removed = character(), restored = character(), failed = character()))
+   expect_false(dir.exists(root))
+
+})
+
 test_that("what could not be undone after a user-mode install is reported", {
 
    skip_if(.rs.platform.isWindows, "symlinks are not available")
@@ -766,6 +800,7 @@ test_that("the snapshot is kept, and installs refused, while something is left t
    # for setup to keep, and forget it was ever absent)
    withr::with_envvar(c(HOME = home), {
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), "not all undone yet")
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), file, fixed = TRUE)
    })
    expect_true(file.exists(file))
    expect_identical(readRDS(file)$existed[["current"]], FALSE)
