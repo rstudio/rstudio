@@ -1090,6 +1090,42 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
+      # Whatever rsession is still running at the end of a failed shard gets
+      # its threads and gdb backtraces dumped (the same script the Linux
+      # Server workflow runs). A session wedged by code on the idle event
+      # loop (#19236) looks idle from the outside -- the backtrace is what
+      # names the culprit. gdb needs ptrace rights over a session owned by
+      # the non-root test user, hence sudo where there is one; bare runners
+      # have it, container engines may not, and the dump is best effort.
+      #
+      # $GITHUB_WORKSPACE, not the github.workspace expression: on a container
+      # engine the expression is the host path, which this shell step does not
+      # share, and the upload below would find nothing (see os-e2e-deps).
+      - name: Collect rsession diagnostics
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            if command -v sudo >/dev/null; then
+              sudo bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "$GITHUB_WORKSPACE/rsession-diagnostics" || true
+            else
+              bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "$GITHUB_WORKSPACE/rsession-diagnostics" || true
+            fi
+          fi
+          if [ -d rsession-diagnostics ]; then
+            if command -v sudo >/dev/null; then
+              sudo chmod -R a+rX rsession-diagnostics
+            fi
+            cat rsession-diagnostics/summary.txt || true
+          fi
+
+      - name: Upload rsession diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rsession-diagnostics-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
+          path: rsession-diagnostics/
+          if-no-files-found: ignore
+
       # This engine's installed R version, one line, written by os-e2e-deps.
       #
       # It exists because a caller that runs several engines as one matrix (the

@@ -691,11 +691,6 @@ public class ObjectExplorerDataGrid
       setKeyboardSelectedColumn(0);
    }
 
-   private static final native boolean isRepeating(Event event)
-   /*-{
-      return event.repeat || false;
-   }-*/;
-
    @Override
    public void onCellPreview(CellPreviewEvent<Data> preview)
    {
@@ -711,7 +706,7 @@ public class ObjectExplorerDataGrid
          // detect whether we've received a non-repeating keydown event
          // this is used to screen out keyup events for which the source
          // of the keydown was a different event target
-         if (!isRepeating(event))
+         if (!KeyboardShortcut.isRepeating(event))
             didReceiveNonRepeatingKeyDownEvent_ = true;
 
          if (modifier == 0)

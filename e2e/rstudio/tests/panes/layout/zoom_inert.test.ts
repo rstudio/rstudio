@@ -6,7 +6,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import {
   documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
 } from '@utils/commands';
-import { focusConsole } from '@pages/console_pane.page';
+import { executeInConsole, focusConsole, waitForConsoleIdle } from '@pages/console_pane.page';
 import { captureResult, killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
 import { TIMEOUTS } from '@utils/constants';
 import type { Locator, Page } from 'playwright';
@@ -15,8 +15,11 @@ const CONSOLE_PANE = '#rstudio_Console_pane';
 const SOURCE_PANE = '#rstudio_Source_pane';
 const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
+const HISTORY_TAB = '#rstudio_workbench_tab_history';
+const HELP_TAB = '#rstudio_workbench_tab_help';
 const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
+const SIDEBAR_COLUMN_SPLITTER = '#rstudio_sidebar_column_splitter';
 const RIGHT_ROW_SPLITTER = '[role="separator"][aria-label="right splitter"]';
 
 function paneRegion(page: Page, pane: string): Locator {
@@ -73,6 +76,28 @@ async function focusSelectedTab(page: Page, pane: string): Promise<void> {
 
 async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
+}
+
+// A value once a resize has finished: two reads 150ms apart agree.
+async function getSettled(read: () => Promise<number>): Promise<number> {
+  let last = Number.NaN;
+  await expect.poll(async () => {
+    const value = await read();
+    const settled = value === last;
+    last = value;
+    return settled;
+  }, { intervals: [150] }).toBe(true);
+  return last;
+}
+
+async function getSettledWidth(page: Page, selector: string): Promise<number> {
+  return getSettled(() => getOffsetWidth(page, selector));
+}
+
+// A window resize lays the columns out over more than one pass, and a drag
+// started from a position a later pass moves misses the 7px splitter.
+async function waitForSplitterToSettle(page: Page, splitter: string): Promise<void> {
+  await getSettled(async () => (await page.locator(splitter).boundingBox())?.x ?? -1);
 }
 
 async function dragSplitterTo(page: Page, splitter: string, x: number, y: number): Promise<void> {
@@ -208,6 +233,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
       await expect.poll(() => hasReachableFocus(page)).toBe(true);
     } finally {
       await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
       await expect.poll(async () => Math.abs(
         ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
@@ -239,6 +265,7 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
       }
     } finally {
       await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
       await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
       await expect.poll(async () => Math.abs(
         ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - box.x))
@@ -398,5 +425,445 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await dragSplitterTo(page, RIGHT_ROW_SPLITTER, box.x + box.width / 2, tabSet1Top);
     await expectHidden(page, TABSET1_PANE);
     await expectExposed(page, TABSET2_PANE);
+  });
+});
+
+// Show commands select a tab; a column shut by a splitter drag has no zoom
+// that will reopen it later, so the command has to (#19184).
+test.describe('Show pane commands reopen a column dragged shut (#19184)', () => {
+  let splitterHome: { left: number; x: number; y: number };
+
+  test.beforeEach(async ({ rstudioPage: page }) => {
+    const box = await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox();
+    if (!box)
+      throw new Error('Middle column splitter has no bounding box; is it rendered?');
+    splitterHome = { left: box.x, x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  });
+
+  // A custom, unzoomed layout survives resetLayoutZoom(), so put the splitter
+  // back however the test ends, once the test's last resize has landed.
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
+    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, splitterHome.x, splitterHome.y);
+    await expect.poll(async () => Math.abs(
+      ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
+      .toBeLessThanOrEqual(2);
+    await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  async function shutRightColumn(page: Page): Promise<void> {
+    const windowWidth = await page.evaluate(() => window.innerWidth);
+    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 1, splitterHome.y);
+    await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+  }
+
+  for (const [command, tabName, preselect] of [
+    ['activateFiles', 'Files', false],
+    ['activatePlots', 'Plots', true],
+  ] as const) {
+    test(`${command} reopens the column with ${tabName} showing` +
+         `${preselect ? ' when already selected' : ''}`, async ({ rstudioPage: page }) => {
+      const otherTab = preselect ? command : 'activatePackages';
+      await executeCommand(page, otherTab);
+      await shutRightColumn(page);
+
+      await executeCommand(page, command);
+      await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, CONSOLE_PANE, TABSET2_PANE);
+      await expect(page.locator(`${TABSET2_PANE} [role="tab"][aria-selected="true"]`))
+        .toContainText(tabName);
+    });
+  }
+
+  // The zoom records the widths it restores before it selects the tab, so
+  // ending it must bring back the shut column the user left.
+  test('ending a zoom of a tab in a shut column leaves the column shut', async ({
+    rstudioPage: page,
+  }) => {
+    await shutRightColumn(page);
+
+    await executeCommand(page, 'layoutZoomFiles');
+    await expectExposed(page, TABSET2_PANE);
+
+    await executeCommand(page, 'layoutEndZoom');
+    await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+  });
+
+  // With the Console column squeezed narrow, the sidebar has the most width to
+  // give. A plot raises Plots through two routes in one tick, and the sidebar
+  // must still pay only what the reopened column gains. (Console stays open, so
+  // focusing it to run the plot doesn't reopen it from the sidebar too.)
+  for (const [label, reopen] of [
+    ['Show Files', (page: Page) => executeCommand(page, 'activateFiles')],
+    ['a plot', (page: Page) => executeInConsole(page, 'plot(1)')],
+  ] as const) {
+    test(`${label} reopens a column next to a wide sidebar`, async ({ rstudioPage: page }) => {
+      await setSidebarVisible(page, true);
+      const sidebarSplitter = page.locator(SIDEBAR_COLUMN_SPLITTER);
+      const box = await sidebarSplitter.boundingBox();
+      if (!box)
+        throw new Error('Sidebar column splitter has no bounding box; is it rendered?');
+      const splitterY = box.y + box.height / 2;
+      try {
+        await shutRightColumn(page);
+        const windowWidth = await page.evaluate(() => window.innerWidth);
+        await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, windowWidth - 120, splitterY);
+        await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThanOrEqual(20);
+        await expectHidden(page, TABSET2_PANE);
+        const sidebarBefore = await getOffsetWidth(page, SIDEBAR_PANE);
+        const rightBefore = await getOffsetWidth(page, TABSET2_PANE);
+
+        await reopen(page);
+        await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+        const sidebarAfter = await getSettledWidth(page, SIDEBAR_PANE);
+        const gained = (await getOffsetWidth(page, TABSET2_PANE)) - rightBefore;
+        expect(Math.abs(sidebarBefore - sidebarAfter - gained), 'sidebar paid only what it gave')
+          .toBeLessThanOrEqual(4);
+        expect(sidebarAfter).toBeGreaterThanOrEqual(175);
+        await expectExposed(page, SIDEBAR_PANE, TABSET2_PANE);
+      } finally {
+        await executeInConsole(page, 'graphics.off()');
+        // Hiding the sidebar saves its width for the next show, so put the
+        // splitter back first.
+        await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, box.x + box.width / 2, splitterY);
+        await expect.poll(async () =>
+          Math.abs(((await sidebarSplitter.boundingBox())?.x ?? 0) - box.x))
+          .toBeLessThanOrEqual(2);
+        await setSidebarVisible(page, false);
+      }
+    });
+  }
+
+  // Console and Source raise themselves rather than going through the tab
+  // commands, and reopen their column the same way -- including one dragged
+  // nearly but not fully shut.
+  for (const [label, x] of [['shut', 1], ['nearly shut', 22]] as const) {
+    test(`activateConsole reopens the Console column dragged ${label}`, async ({
+      rstudioPage: page,
+    }) => {
+      await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, x, splitterHome.y);
+      await expectHidden(page, CONSOLE_PANE);
+      if (label === 'nearly shut')
+        expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(0);
+
+      await executeCommand(page, 'activateConsole');
+      await expect.poll(() => getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, CONSOLE_PANE, TABSET2_PANE);
+    });
+  }
+
+  // A column zoom can't move to the raised pane as a pane zoom does, so
+  // showing the pane ends it -- and the zoom command must then start a fresh
+  // zoom rather than "restore" from state left behind.
+  for (const [label, show] of [
+    ['a plot', (page: Page) => executeInConsole(page, 'plot(1)')],
+    ['Show Files', (page: Page) => executeCommand(page, 'activateFiles')],
+  ] as const) {
+    test(`${label} during a column zoom ends the zoom`, async ({ rstudioPage: page }) => {
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expectHidden(page, TABSET2_PANE);
+      try {
+        await show(page);
+        await expectExposed(page, TABSET2_PANE);
+        expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
+
+        await executeCommand(page, 'layoutZoomLeftColumn');
+        await expectHidden(page, TABSET2_PANE);
+        expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+      } finally {
+        await resetLayoutZoom(page);
+        await executeInConsole(page, 'graphics.off()');
+      }
+    });
+  }
+
+  // A pane zoom shuts the other columns and moves to a pane that raises itself;
+  // a Show command for a pane in a shut column moves it the same way.
+  test('Show Files during a Console zoom moves the zoom to Files', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET1_PANE, TABSET2_PANE);
+
+      await executeCommand(page, 'activateFiles');
+      await expectExposed(page, TABSET2_PANE);
+      await expectHidden(page, CONSOLE_PANE, TABSET1_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomFiles')).toBe(true);
+
+      // Ending the moved zoom restores the layout from before the first one.
+      await executeCommand(page, 'layoutEndZoom');
+      await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
+        .toBeLessThanOrEqual(2);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // The zoomed pane's partner quadrant is hidden rather than in a shut column,
+  // and showing it must move the zoom too, not leave a stale one (#18444).
+  test('Show Files while Environment is zoomed moves the zoom to Files', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomEnvironment');
+      await expectHidden(page, CONSOLE_PANE, TABSET2_PANE);
+
+      await executeCommand(page, 'activateFiles');
+      await expectExposed(page, TABSET2_PANE);
+      await expectHidden(page, CONSOLE_PANE, TABSET1_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomFiles')).toBe(true);
+      expect(await isCommandChecked(page, 'layoutZoomEnvironment')).toBe(false);
+
+      await executeCommand(page, 'layoutEndZoom');
+      await expectExposed(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+      await expect.poll(async () => Math.abs(
+        ((await page.locator(MIDDLE_COLUMN_SPLITTER).boundingBox())?.x ?? 0) - splitterHome.left))
+        .toBeLessThanOrEqual(2);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // Showing the sidebar after page load gives it a new window, and a tab
+  // raising itself there must still find it (#19202). Help raises its pane on
+  // its own, which moves a zoom or ends a column zoom; its ActivatePaneEvent
+  // leaves both alone.
+  test.describe('a tab raising itself in a reshown sidebar', () => {
+    test.beforeEach(async ({ rstudioPage: page }) => {
+      await setSidebarVisible(page, false);
+      await executeInConsole(page, [
+        '.rs.e2ePanes <- .rs.readUiPref("panes")',
+        'local({ p <- .rs.e2ePanes',
+        'p$tabSet2 <- as.list(setdiff(unlist(p$tabSet2), "Help"))',
+        'p$sidebar <- list("Help")',
+        '.rs.writeUiPref("panes", p) })',
+      ].join('; '));
+      await setSidebarVisible(page, true);
+      await expect(page.locator(`${SIDEBAR_PANE} ${HELP_TAB}`)).toHaveCount(1);
+    });
+
+    // Runs after a failed beforeEach too, so a pref write that landed before
+    // a failure is still undone.
+    test.afterEach(async ({ rstudioPage: page }) => {
+      await resetLayoutZoom(page);
+      await setSidebarVisible(page, false);
+      await executeInConsole(page, 'if (exists(".rs.e2ePanes")) { ' +
+        '.rs.writeUiPref("panes", .rs.e2ePanes); rm(.rs.e2ePanes) }');
+    });
+
+    // The zoom and help() run in one call: focusing the Console to run help()
+    // would move the zoom first.
+    test('help() during a pane zoom moves the zoom to Help', async ({ rstudioPage: page }) => {
+      await executeInConsole(page,
+        '.rs.api.executeCommand("layoutZoomEnvironment"); help("mean")');
+      await expectExposed(page, SIDEBAR_PANE);
+      await expectHidden(page, CONSOLE_PANE, TABSET1_PANE, TABSET2_PANE);
+      await expect(page.locator(HELP_TAB)).toHaveAttribute('aria-selected', 'true');
+    });
+
+    // A left-column zoom shuts the sidebar and leaves the Console showing.
+    test('help() ends a column zoom that shut the sidebar', async ({ rstudioPage: page }) => {
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expectHidden(page, SIDEBAR_PANE);
+
+      await executeInConsole(page, 'help("mean")');
+      await expectExposed(page, SIDEBAR_PANE);
+      await expect(page.locator(HELP_TAB)).toHaveAttribute('aria-selected', 'true');
+      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
+    });
+  });
+
+  // history() shows History through an ActivatePaneEvent, which code also fires
+  // as a side effect (e.g. entering the debugger). It reopens a column dragged
+  // shut, but leaves a zoom where the user put it.
+  test('history() reopens a column dragged shut', async ({ rstudioPage: page }) => {
+    await shutRightColumn(page);
+
+    await executeInConsole(page, 'history()');
+    await expect.poll(() => getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThanOrEqual(20);
+    await expectExposed(page, TABSET1_PANE);
+    await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('history() during a Console zoom leaves the zoom on Console', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET1_PANE);
+
+      await executeInConsole(page, 'history()');
+      await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
+      // A moved zoom would start at once and animate for 300ms, so sample past it.
+      for (let i = 0; i < 20; i++) {
+        expect(await isCommandChecked(page, 'layoutZoomConsole'), `sample ${i}`).toBe(true);
+        expect(await getOffsetWidth(page, TABSET1_PANE), `sample ${i}`).toBe(0);
+        await page.waitForTimeout(50);
+      }
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // The Help menu's commands raise the Help pane as a help topic does, so they
+  // take over a zoom rather than act behind it.
+  test('Search R Help during a Console zoom moves the zoom to Help', async ({
+    rstudioPage: page,
+  }) => {
+    try {
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET2_PANE);
+
+      await executeCommand(page, 'helpSearch');
+      await expectExposed(page, TABSET2_PANE);
+      await expectHidden(page, CONSOLE_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomHelp')).toBe(true);
+      await expect.poll(() => hasFocusWithin(page, TABSET2_PANE)).toBe(true);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // A pane raises itself under its localized title, which PaneManager doesn't
+  // know ("Aide" for Help in French), so the moved zoom must still name Help.
+  test('Search R Help during a Console zoom moves the zoom to Help in French', async ({
+    rstudioPage: page,
+  }) => {
+    // The workbench syncs the LOCALE cookie the GWT bootstrap reads to the
+    // ui_language pref on load, and reloads again if they differed; wait for
+    // the language's own Help tab title rather than the first ready.
+    const reloadIn = async (helpTitle: string) => {
+      await page.reload();
+      await expect(page.locator(`${TABSET2_PANE} [role="tab"]`, { hasText: helpTitle }))
+        .toHaveCount(1, { timeout: TIMEOUTS.sessionRestart });
+      await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+        timeout: TIMEOUTS.sessionRestart,
+      });
+    };
+    const original = await page.evaluate(() => window.rstudio!.prefs.uiLanguage.get());
+    await page.evaluate(() => window.rstudio!.prefs.uiLanguage.set('fr'));
+    try {
+      await reloadIn('Aide');
+
+      await executeCommand(page, 'layoutZoomConsole');
+      await expectHidden(page, TABSET2_PANE);
+      await executeCommand(page, 'helpSearch');
+      await expectExposed(page, TABSET2_PANE);
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomHelp')).toBe(true);
+      expect(await isCommandChecked(page, 'layoutZoomConsole')).toBe(false);
+    } finally {
+      await resetLayoutZoom(page);
+      // English is the default, so clear rather than write it.
+      await page.evaluate(async (lang) => {
+        const pref = window.rstudio!.prefs.uiLanguage;
+        await (lang && lang !== 'en' ? pref.set(lang) : pref.clear());
+      }, original);
+      await reloadIn(original === 'fr' ? 'Aide' : 'Help');
+    }
+  });
+
+  // History is the zoomed pane's hidden partner here; showing it would end the
+  // zoom without clearing its state (#18444).
+  test('history() while Files is zoomed leaves the zoom on Files', async ({
+    rstudioPage: page,
+  }) => {
+    await executeCommand(page, 'activateEnvironment');
+    try {
+      // Run history() once the zoom has started: running it at the prompt then
+      // would focus the Console, which moves the zoom there.
+      await executeInConsole(page, 'Sys.sleep(2); history()', { wait: false });
+      // Read History's state in the same task that starts the zoom, so a
+      // history() landing just after it can't read as having run first.
+      const ranFirst = await page.evaluate((tab) => {
+        window.rstudio!.commands.layoutZoomFiles();
+        return document.querySelector(tab)?.getAttribute('aria-selected') === 'true';
+      }, HISTORY_TAB);
+      expect(ranFirst, 'history() ran before the zoom started').toBe(false);
+      await expectHidden(page, TABSET1_PANE);
+
+      await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true',
+                                                              { timeout: 10000 });
+      for (let i = 0; i < 20; i++) {
+        expect(await isCommandChecked(page, 'layoutZoomFiles'), `sample ${i}`).toBe(true);
+        expect(await isUnreachable(page, TABSET1_PANE), `sample ${i}`).toBe(true);
+        await page.waitForTimeout(50);
+      }
+
+      await executeCommand(page, 'layoutEndZoom');
+      await expectExposed(page, TABSET1_PANE, TABSET2_PANE);
+      await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      await waitForConsoleIdle(page, 10000);
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // The zoom's widths are set at once but drawn over a 300ms animation, so a
+  // pane shown in that window must still end it rather than end up behind it.
+  test('Show Files while a column zoom animates ends the zoom', async ({ rstudioPage: page }) => {
+    try {
+      await page.evaluate(() => {
+        const commands = window.rstudio!.commands;
+        commands.layoutZoomLeftColumn();
+        commands.activateFiles();
+      });
+      expect(await getSettledWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+      await expectExposed(page, TABSET2_PANE);
+      expect(await isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
+    } finally {
+      await resetLayoutZoom(page);
+    }
+  });
+
+  // A left-column zoom shuts the sidebar too, and ending it leaves the sidebar
+  // shut (#19201). Three default columns in a 500px window are each narrower
+  // than the sidebar's 175px minimum, so the reopen must aim for the minimum.
+  test('Show Chat reopens a sidebar shut by a column zoom in a narrow window', async ({
+    rstudioPage: page,
+  }) => {
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    await setSidebarVisible(page, true);
+    const sidebarSplitter = page.locator(SIDEBAR_COLUMN_SPLITTER);
+    const box = await sidebarSplitter.boundingBox();
+    if (!box)
+      throw new Error('Sidebar column splitter has no bounding box; is it rendered?');
+    try {
+      await page.setViewportSize({ width: 500, height: viewport.height });
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expectHidden(page, SIDEBAR_PANE, TABSET2_PANE);
+
+      await executeCommand(page, 'activateChat');
+      expect(await getSettledWidth(page, SIDEBAR_PANE)).toBeGreaterThanOrEqual(175);
+      await expectExposed(page, SIDEBAR_PANE);
+    } finally {
+      await resetLayoutZoom(page);
+      await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, SIDEBAR_COLUMN_SPLITTER);
+      // Hiding the sidebar saves its width for the next show, so put the
+      // splitter back first.
+      await dragSplitterTo(page, SIDEBAR_COLUMN_SPLITTER, box.x + box.width / 2,
+                           box.y + box.height / 2);
+      await expect.poll(async () =>
+        Math.abs(((await sidebarSplitter.boundingBox())?.x ?? 0) - box.x))
+        .toBeLessThanOrEqual(2);
+      await setSidebarVisible(page, false);
+    }
+  });
+
+  test('a narrow column that is still open keeps its width', async ({ rstudioPage: page }) => {
+    const windowWidth = await page.evaluate(() => window.innerWidth);
+    await dragSplitterTo(page, MIDDLE_COLUMN_SPLITTER, windowWidth - 60, splitterHome.y);
+    await expect.poll(() => getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThanOrEqual(20);
+    const width = await getOffsetWidth(page, TABSET2_PANE);
+
+    await executeCommand(page, 'activateFiles');
+    // A resize would start at once and animate for 300ms, so sample well past it.
+    for (let i = 0; i < 20; i++) {
+      expect(await getOffsetWidth(page, TABSET2_PANE), `width, sample ${i}`).toBe(width);
+      await page.waitForTimeout(50);
+    }
   });
 });

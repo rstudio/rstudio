@@ -15,9 +15,18 @@ import {
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
 import { readRemoteOdbcStatus } from '../utils/connections';
 import { withDeadline, DeadlineError } from '../utils/deadline';
+import {
+  attachDeafSessionDiagnostics,
+  DeafSessionError,
+  probeSessionLiveness,
+  recordDeafSessionAtShutdown,
+  sessionsRunLocally,
+} from '../utils/session-liveness';
+import * as os from 'os';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
+import { attachRemotePositaiLog } from '../utils/remote-session-logs';
 import { selectedPaiInstalls } from './pai-seed';
 
 type Mode = 'desktop' | 'server';
@@ -47,6 +56,11 @@ interface SessionContext {
   // sandbox layout test uses it to scope assertions that only hold while
   // the launching instance is alive (see #18475).
   configRoot?: string;
+  // Set by perTestReset once a per-test probe has recorded this worker's
+  // session as deaf (dump attached to the failing test). The worker shutdown
+  // probe then skips its own ping and dump: the session is the same one,
+  // still deaf, and a second dump would only duplicate the attachment.
+  deafSessionRecorded?: boolean;
 }
 
 /** Tags whose tests intentionally run with an AI assistant active. */
@@ -349,31 +363,17 @@ async function attachSessionLogs(
 const WEDGE_PROBE_MS = 30_000;
 
 /**
- * A page that stops answering evaluates is the signature of the #18394
- * wedge: a session shutdown that never completes leaves the browser parked
- * on a transition that never finishes (server: the proxied request to the
- * zombie session has no deadline; desktop: the relaunch is driven by a child
- * exit event that never fires), so the frame has no JS context and every
- * bridge call blocks forever. Untreated, that stacks fixture stages into
- * 300s of output silence and the CI heartbeat kills the whole shard with no
- * report.
- *
- * Capture what needs no JS context -- page.url() is tracked protocol-side
- * and tells a stuck navigation apart from a frozen renderer, and a
- * screenshot is a protocol-level capture -- then hand back a descriptive
- * error for the caller to throw. Failing the test fast makes Playwright
- * discard this worker and run the remaining tests in a fresh one, so the
- * shard survives with its report intact.
- *
- * Skipped when the test's `screenshot` option is 'off'; any other mode takes
- * it, since a wedge always fails the test.
+ * The page-level record a failing fixture stage takes without needing a JS
+ * context: page.url() is tracked protocol-side, and a screenshot is a
+ * protocol-level capture. Skipped when the test's `screenshot` option is
+ * 'off'; any other mode takes it, since these stages always fail the test.
  */
-async function attachWedgeDiagnostics(
+async function capturePageState(
   page: Page,
   testInfo: TestInfo,
-  cause: Error,
+  attachmentName: string,
   screenshot: PlaywrightWorkerOptions['screenshot'],
-): Promise<Error> {
+): Promise<{ url: string; screenshotNote: string }> {
   const url = page.url();
 
   const screenshotMode = !screenshot ? 'off'
@@ -384,13 +384,40 @@ async function attachWedgeDiagnostics(
   } else {
     try {
       const shot = await page.screenshot({ timeout: 5000 });
-      await testInfo.attach('wedged-page.png', { body: shot, contentType: 'image/png' });
-      screenshotNote = 'screenshot attached as wedged-page.png';
+      await testInfo.attach(attachmentName, { body: shot, contentType: 'image/png' });
+      screenshotNote = `screenshot attached as ${attachmentName}`;
     } catch {
       // A frozen renderer can block even protocol-level capture; the URL
       // alone still distinguishes the stuck-navigation case.
     }
   }
+
+  return { url, screenshotNote };
+}
+
+/**
+ * A page that stops answering evaluates is the signature of the #18394
+ * wedge: a session shutdown that never completes leaves the browser parked
+ * on a transition that never finishes (server: the proxied request to the
+ * zombie session has no deadline; desktop: the relaunch is driven by a child
+ * exit event that never fires), so the frame has no JS context and every
+ * bridge call blocks forever. Untreated, that stacks fixture stages into
+ * 300s of output silence and the CI heartbeat kills the whole shard with no
+ * report.
+ *
+ * Capture the page state (the URL tells a stuck navigation apart from a
+ * frozen renderer), then hand back a descriptive error for the caller to
+ * throw. Failing the test fast makes Playwright discard this worker and run
+ * the remaining tests in a fresh one, so the shard survives with its report
+ * intact.
+ */
+async function attachWedgeDiagnostics(
+  page: Page,
+  testInfo: TestInfo,
+  cause: Error,
+  screenshot: PlaywrightWorkerOptions['screenshot'],
+): Promise<Error> {
+  const { url, screenshotNote } = await capturePageState(page, testInfo, 'wedged-page.png', screenshot);
 
   console.error(`[wedged-page] ${cause.message}; page URL: ${url} (${screenshotNote})`);
   return new Error(
@@ -442,7 +469,14 @@ export const test = base.extend<
       if (odbcDir) {
         await applyOdbcSysIni(session.page, odbcDir);
       }
-      await use({ page: session.page, consoleBuffer });
+      const context: SessionContext = { page: session.page, consoleBuffer };
+      await use(context);
+      if (!context.deafSessionRecorded)
+        await recordDeafSessionAtShutdown(
+          session.page,
+          process.env.PW_SANDBOX ?? os.tmpdir(),
+          sessionsRunLocally(mode, externalServerUrl()),
+        );
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
@@ -452,13 +486,16 @@ export const test = base.extend<
       attachConsoleCapture(session.page, consoleBuffer);
       await recordVersions(session.page, 'desktop');
       await verifyTestManifestIfRequested(session);
-      await use({
+      const context: SessionContext = {
         page: session.page,
         consoleBuffer,
         logDir: session.logDir,
         configRoot: session.configRoot,
-      });
+      };
+      await use(context);
       await logPositAssistantVersionIfInstalled(session);
+      if (!context.deafSessionRecorded)
+        await recordDeafSessionAtShutdown(session.page, session.logDir, true);
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
@@ -488,6 +525,22 @@ export const test = base.extend<
   perTestReset: [async ({ rstudioSession, mode, screenshot }, use, testInfo) => {
     const page = rstudioSession.page;
 
+    // Scope failure diagnostics to this test: start with an empty browser
+    // console buffer and a snapshot of the current rsession log sizes, so on
+    // failure we attach only what this test produced. Taken before the
+    // probes below so a test that fails in them still gets both attached.
+    rstudioSession.consoleBuffer.length = 0;
+    const logBaseline = snapshotLogSizes(rstudioSession.logDir);
+    const testStart = new Date();
+    const serverUrl = externalServerUrl();
+    const attachFailureContext = async (): Promise<void> => {
+      await attachBrowserConsole(testInfo, rstudioSession.consoleBuffer);
+      await attachSessionLogs(testInfo, rstudioSession.logDir, logBaseline);
+      // A deaf session can't serve /files/, so the fetch would only time out.
+      if (mode === 'server' && serverUrl !== null && !rstudioSession.deafSessionRecorded)
+        await attachRemotePositaiLog(page, testInfo, serverUrl, testStart);
+    };
+
     // Drain exceptions that arrived BEFORE this test (a previous test's
     // teardown, the gap between specs). They can't be attributed to the
     // upcoming test, so log them rather than fail it. The drain is the first
@@ -501,7 +554,9 @@ export const test = base.extend<
     } catch (err) {
       if (!(err instanceof DeadlineError))
         throw err;
-      throw await attachWedgeDiagnostics(page, testInfo, err, screenshot);
+      const wedge = await attachWedgeDiagnostics(page, testInfo, err, screenshot);
+      await attachFailureContext();
+      throw wedge;
     }
     for (const e of leftovers) {
       console.warn(
@@ -509,11 +564,47 @@ export const test = base.extend<
       );
     }
 
-    // Scope failure diagnostics to this test: start with an empty browser
-    // console buffer and a snapshot of the current rsession log sizes, so on
-    // failure we attach only what this test produced.
-    rstudioSession.consoleBuffer.length = 0;
-    const logBaseline = snapshotLogSizes(rstudioSession.logDir);
+    // Let a session transition the previous test started (a restart, a
+    // project switch) finish before judging the session: ready drops when
+    // one begins and returns with the new session's deferred init, and the
+    // outgoing session answers pings with connection_refused meanwhile. The
+    // same page-side gate resetForNextTest applies, with the same budget;
+    // a deaf session keeps ready true, so it reaches the probe below.
+    try {
+      await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000, polling: 100 });
+    } catch (err) {
+      await attachFailureContext();
+      throw err;
+    }
+
+    // A page that answers evaluates can still sit on a session that has
+    // stopped serving requests (#19236: R running code dispatched from the
+    // idle event loop). Nothing DOM-based notices, and every bridge call that
+    // awaits an RPC then hangs for its whole budget. Round-trip the session
+    // main thread before touching it, bounded; on silence, record what R is
+    // doing and fail fast so the worker restarts with a fresh session. The
+    // dump is of this machine's rsessions, which a remote server's are not.
+    const sessionsAreLocal = sessionsRunLocally(mode, externalServerUrl());
+    try {
+      await probeSessionLiveness(page);
+    } catch (err) {
+      const cause = err instanceof Error ? err : new Error(String(err));
+      const { url, screenshotNote } = await capturePageState(page, testInfo, 'deaf-session.png', screenshot);
+      const pageNote = `page URL: ${url} (${screenshotNote})`;
+      let failure: Error;
+      if (cause instanceof DeafSessionError) {
+        failure = await attachDeafSessionDiagnostics(testInfo, cause, pageNote, sessionsAreLocal);
+        rstudioSession.deafSessionRecorded = true;
+      } else {
+        // Answered, but with an error that outlasted the probe's retries:
+        // the session is not deaf, so no stack dump; the RPC detail in the
+        // message (connection_refused, a dropped request) is the lead.
+        console.error(`[session-liveness] probe failed: ${cause.message}; ${pageNote}`);
+        failure = new Error(`session liveness probe failed (${cause.message}); ${pageNote}`);
+      }
+      await attachFailureContext();
+      throw failure;
+    }
 
     await resetForNextTest(page);
 
@@ -570,16 +661,42 @@ export const test = base.extend<
       testInfo.status !== testInfo.expectedStatus ||
       wedge !== null ||
       (raised.length > 0 && !ignoreClientExceptions);
-    if (willFail) {
-      await attachBrowserConsole(testInfo, rstudioSession.consoleBuffer);
-      await attachSessionLogs(testInfo, rstudioSession.logDir, logBaseline);
+
+    // A test that failed (a timeout above all) may have failed because the
+    // session went deaf under it, and the setup probe only ever sees the
+    // session before a test. Ask once more while the session is still here:
+    // Playwright replaces the worker after a failure, and the shutdown that
+    // follows takes the stacks with it. Only a silent ping is evidence; a
+    // ping answered with an error adds nothing the failure does not carry.
+    let deaf: Error | null = null;
+    if (willFail && wedge === null) {
+      try {
+        await probeSessionLiveness(page);
+      } catch (err) {
+        if (err instanceof DeafSessionError) {
+          deaf = await attachDeafSessionDiagnostics(testInfo, err, `detected after the test (status: ${testInfo.status})`, sessionsAreLocal);
+          rstudioSession.deafSessionRecorded = true;
+        }
+      }
     }
+
+    if (willFail)
+      await attachFailureContext();
+
+    // The drained exceptions are already cleared from the page, and a session
+    // that was already deaf when they were raised never logged them either,
+    // so print them before a deaf throw takes precedence over the exception
+    // failure below.
+    const detail = raised.map((e) => `${e.message}\n${e.stack}`).join('\n---\n');
+    if (deaf && raised.length > 0)
+      console.warn(`[client-exception] during "${testInfo.title}" (session went deaf):\n${detail}`);
 
     if (wedge)
       throw wedge;
+    if (deaf)
+      throw deaf;
 
     if (raised.length > 0) {
-      const detail = raised.map((e) => `${e.message}\n${e.stack}`).join('\n---\n');
       if (ignoreClientExceptions) {
         console.warn(`[client-exception] during "${testInfo.title}" (ignored by env):\n${detail}`);
       } else {

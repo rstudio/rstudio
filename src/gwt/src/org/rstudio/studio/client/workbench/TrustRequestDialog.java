@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -93,9 +94,11 @@ public class TrustRequestDialog extends ModalDialogBase
       String headerText = isUntrusted_
          ? constants_.trustDialogUntrustedHeader()
          : constants_.trustDialogHeader();
-      Label header = new Label(headerText);
+      HTMLPanel header = new HTMLPanel("h2", "");
+      header.getElement().setInnerText(headerText);
       header.getElement().getStyle().setFontSize(16, Unit.PX);
       header.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+      header.getElement().getStyle().setMarginTop(0, Unit.PX);
       header.getElement().getStyle().setMarginBottom(12, Unit.PX);
       panel.add(header);
 
@@ -247,7 +250,8 @@ public class TrustRequestDialog extends ModalDialogBase
 
       outerPanel.add(panel);
 
-      setARIADescribedBy(header.getElement());
+      setARIALabelledBy(header.getElement());
+      setARIADescribedBy(description.getElement());
 
       return outerPanel;
    }

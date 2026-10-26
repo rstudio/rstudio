@@ -417,7 +417,7 @@ public class PaneManager
       String sidebarLocation = config.getSidebarLocation();
       if (config.getSidebarVisible())
       {
-         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         LogicalWindow sidebarWindow = getSidebarWindow();
          if (sidebarWindow != null)
          {
             // For sidebar, we use just the WindowFrame directly (no vertical split)
@@ -547,28 +547,7 @@ public class PaneManager
             return;
          }
 
-         Double width = Double.valueOf(window.getActiveWidget().getOffsetWidth());
-
-         // If the widget is already visible horizontally, then bail
-         // (other logic handles vertical visibility)
-         if (width > 0)
-            return;
-
-         // Attempt to change the widths of as few columns as possible
-         ArrayList<Widget> columns = new ArrayList<>();
-         columns.add(right_);
-         columns.add(center_);
-         columns.addAll(leftList_);
-
-         ArrayList<Double> sizes = getValidColumnWidths(columns, false);
-         final Command afterAnimation = () -> window.getNormal().onResize();
-
-         double rightEnd = sizes.get(0);
-         ArrayList<Double> leftTargets = new ArrayList<>();
-         if (sizes.size() > 2)
-            leftTargets.addAll(sizes.subList(2, sizes.size()));
-
-         resizeHorizontally(rightEnd, leftTargets, afterAnimation);
+         reopenCollapsedColumn(window, lastSelectedTab_, true);
       });
 
       eventBus_.addHandler(
@@ -637,12 +616,23 @@ public class PaneManager
             eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar())));
    }
 
+   /**
+    * The quadrants, the sidebar while it is shown, and the source columns. A
+    * hidden sidebar's window is left out: one hidden since page load is in
+    * HIDE, with no widget to zoom or focus.
+    */
+   private ArrayList<LogicalWindow> getAllWindows()
+   {
+      ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
+      if (sidebar_ != null && getSidebarWindow() != null)
+         windows.add(getSidebarWindow());
+      windows.addAll(sourceLogicalWindows_);
+      return windows;
+   }
+
    LogicalWindow getLogicalWindow(WindowFrame frame)
    {
-      for (LogicalWindow window : panes_)
-         if (window.getNormal() == frame)
-            return window;
-      for (LogicalWindow window : sourceLogicalWindows_)
+      for (LogicalWindow window : getAllWindows())
          if (window.getNormal() == frame)
             return window;
 
@@ -652,14 +642,7 @@ public class PaneManager
    LogicalWindow getParentLogicalWindow(Element el)
    {
       LogicalWindow targetWindow = null;
-      ArrayList<LogicalWindow> windowList = new ArrayList<>(panes_);
-      windowList.addAll(sourceLogicalWindows_);
-
-      // panes_ can hold a sidebar window that showSidebar() has since replaced,
-      // or none at all; panesByName_ has the live one.
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-      if (sidebarWindow != null)
-         windowList.add(sidebarWindow);
+      ArrayList<LogicalWindow> windowList = getAllWindows();
 
       while (el != null && targetWindow == null)
       {
@@ -1018,28 +1001,15 @@ public class PaneManager
 
    /**
     * The panes Focus Next/Previous Pane cycles through: the quadrants, then the
-    * sidebar unless it is hidden or shut by a zoom or splitter drag. panes_
-    * can't be used as is: it lists the sidebar only when the quadrants pref
-    * does, and keeps a sidebar window that showSidebar() has since replaced.
+    * sidebar unless it is hidden or shut by a zoom or splitter drag.
     */
    private ArrayList<LogicalWindow> getFocusCycle()
    {
-      ArrayList<LogicalWindow> cycle = new ArrayList<>();
-      for (LogicalWindow window : panes_)
-      {
-         if (!isSidebarWindow(window))
-            cycle.add(window);
-      }
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      ArrayList<LogicalWindow> cycle = new ArrayList<>(panes_);
+      LogicalWindow sidebarWindow = getSidebarWindow();
       if (sidebar_ != null && sidebarWindow != null && !panel_.isSidebarCollapsed())
          cycle.add(sidebarWindow);
       return cycle;
-   }
-
-   private boolean isSidebarWindow(LogicalWindow window)
-   {
-      return window.getNormal() != null &&
-         StringUtil.equals(window.getNormal().getName(), UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
    }
 
    private String getAdjacentWindow(LogicalWindow window, boolean before)
@@ -1317,8 +1287,7 @@ public class PaneManager
          // sidebar is hidden, and a panel still registered on the tabs would
          // then never be reached again (#18448). The window itself stays in
          // panesByName_ -- other code reads it while the sidebar is hidden.
-         LogicalWindow sidebarWindow =
-               panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         LogicalWindow sidebarWindow = getSidebarWindow();
          if (sidebarWindow != null)
             disposeSidebarPanel(sidebarWindow);
 
@@ -1660,6 +1629,15 @@ public class PaneManager
       for (int i = 0; i < leftList_.size(); i++)
          panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
 
+      animateToWidgetSizes(afterComplete);
+   }
+
+   /**
+    * Animate the columns to the sizes already set on the panel, then report the
+    * resize as a splitter drag would.
+    */
+   private void animateToWidgetSizes(final Command afterComplete)
+   {
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       panel_.animate(duration, new AnimationCallback()
       {
@@ -1725,20 +1703,7 @@ public class PaneManager
 
       panel_.setWidgetSize(right_, actualRightTarget);
 
-      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      panel_.animate(duration, new AnimationCallback()
-      {
-         public void onAnimationComplete()
-         {
-            panel_.onSplitterResized(new SplitterResizedEvent());
-            if (afterComplete != null)
-               afterComplete.execute();
-         }
-
-         public void onLayout(Layer layer, double progress)
-         {
-         }
-      });
+      animateToWidgetSizes(afterComplete);
    }
 
    private void resizeHorizontallyWithSidebarOnLeft(final double rightTarget,
@@ -1797,20 +1762,7 @@ public class PaneManager
 
       panel_.setWidgetSize(right_, actualRightTarget);
 
-      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
-      panel_.animate(duration, new AnimationCallback()
-      {
-         public void onAnimationComplete()
-         {
-            panel_.onSplitterResized(new SplitterResizedEvent());
-            if (afterComplete != null)
-               afterComplete.execute();
-         }
-
-         public void onLayout(Layer layer, double progress)
-         {
-         }
-      });
+      animateToWidgetSizes(afterComplete);
    }
 
    private void restoreLayout()
@@ -2132,11 +2084,14 @@ public class PaneManager
    {
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
-      // Do not include hiddenTabSet in panes since it should never be displayed
+      // Do not include hiddenTabSet in panes since it should never be displayed.
+      // Leave out the sidebar too: only some layouts list it, and showSidebar()
+      // replaces its window, so read the live one from panesByName_.
       JsArrayString panes = config.getQuadrants();
       for (int i = 0; i < panes.length(); i++)
       {
-         if (StringUtil.equals(panes.get(i), UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
+         if (StringUtil.equals(panes.get(i), UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET) ||
+             StringUtil.equals(panes.get(i), UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
             continue;
          results.add(panesByName_.get(panes.get(i)));
       }
@@ -2286,7 +2241,27 @@ public class PaneManager
       return tabs.toArray(new WorkbenchTab[tabs.size()]);
    }
 
+   /**
+    * How far activating a tab may change the layout to show the tab's pane.
+    */
+   private enum Reveal
+   {
+      /** Change nothing. A zoom about to start records the widths it restores
+       *  when it ends, and those should be the user's. */
+      NONE,
+      /** Reopen a column a splitter drag has shut, but leave any zoom alone. */
+      COLUMN,
+      /** Also move a pane zoom to the tab's pane, or end a column zoom that
+       *  shut its column, as a pane raising itself does. */
+      ZOOM
+   }
+
    public void activateTab(Tab tab)
+   {
+      activateTab(tab, Reveal.ZOOM);
+   }
+
+   private void activateTab(Tab tab, Reveal reveal)
    {
       lastSelectedTab_ = tab;
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
@@ -2316,14 +2291,18 @@ public class PaneManager
             manageChatCommands();
       }
 
-      // Ensure that the pane is visible (otherwise tab selection will fail)
-      if (!parent.visible())
+      // Show the pane if it is minimized or hidden, so the selected tab can be seen.
+      // During a pane zoom, the hidden pane is the zoomed one's partner, and
+      // showing it would end the zoom without clearing its state (#18444), so
+      // the tab is selected behind the zoom instead.
+      boolean keepZoom = reveal == Reveal.COLUMN && maximizedWindow_ != null;
+      if (!parent.visible() && !keepZoom)
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
       }
 
       // If the tab is in the sidebar, ensure the sidebar is visible
-      if (parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      if (parent == getSidebarWindow())
       {
          // Check if sidebar is currently hidden and show it
          if (sidebar_ == null)
@@ -2340,6 +2319,9 @@ public class PaneManager
       if (panel == null)
          return;
 
+      if (reveal != Reveal.NONE)
+         reopenCollapsedColumn(parent, tab, reveal == Reveal.ZOOM);
+
       if (tabToIndex_.containsKey(tab))
       {
          int index = tabToIndex_.get(tab);
@@ -2353,11 +2335,108 @@ public class PaneManager
       }
    }
 
-   public void activateTab(String tabName)
+   /**
+    * Reopen the column holding window if a splitter drag or a zoom has shut it
+    * (#19184), taking up to a default column's width from the column that can
+    * give most. Uses target widths, so the repeat calls one pane raise makes,
+    * or a call during a zoom's animation, see the widths being laid out.
+    *
+    * @param tab The tab to zoom if a zoom of another pane moves to window.
+    * @param moveZoom Whether a zoom may move or end to show window.
+    */
+   private void reopenCollapsedColumn(LogicalWindow window, Tab tab, boolean moveZoom)
+   {
+      boolean zoomed = maximizedWindow_ != null || widgetSizePriorToZoom_ >= 0;
+      if (zoomed && !moveZoom)
+         return;
+
+      // Another pane's zoom hides window, in a column the zoom shut or as the
+      // zoomed pane's partner: move the zoom here, as the
+      // WindowEnsureVisibleEvent handler does when a pane raises itself.
+      if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
+      {
+         fullyMaximizeWindow(window, tab);
+         return;
+      }
+
+      Widget column = getColumn(window);
+      if (column == null || isOpen(column))
+         return;
+
+      // A zoom tracked here is a column zoom (a zoomed pane's column is open),
+      // which can't move to the pane, so end it. For a column zoom,
+      // restoreLayout() sets the restored widths before it returns.
+      if (widgetSizePriorToZoom_ >= 0)
+      {
+         restoreLayout();
+         if (isOpen(column))
+            return;
+      }
+
+      Widget donor = null;
+      for (Widget candidate : panel_.getColumns())
+      {
+         if (candidate != column &&
+             (donor == null || getGivableWidth(candidate) > getGivableWidth(donor)))
+         {
+            donor = candidate;
+         }
+      }
+      // In a narrow window a default column is narrower than the sidebar's minimum.
+      double target = Math.max(panel_.getDefaultSplitterWidth(),
+                               panel_.getMinimumOpenWidth(column));
+      double width = panel_.getTargetWidth(column);
+      double growth = Math.min(target - width, getGivableWidth(donor));
+      if (width + growth < panel_.getMinimumOpenWidth(column))
+         return;
+
+      // center_ fills the space the other columns leave and has no size of its
+      // own, so it grows or shrinks as the other column changes.
+      if (column != center_)
+         panel_.setWidgetSize(column, width + growth);
+      if (donor != center_)
+         panel_.setWidgetSize(donor, panel_.getWidgetSize(donor) - growth);
+
+      // Lay the window out at its new width once it is drawn there.
+      animateToWidgetSizes(() -> window.getNormal().onResize());
+   }
+
+   private boolean isOpen(Widget column)
+   {
+      return panel_.getTargetWidth(column) >= panel_.getMinimumOpenWidth(column);
+   }
+
+   private Widget getColumn(LogicalWindow window)
+   {
+      Element frame = window.getNormal().getElement();
+      for (Widget column : panel_.getColumns())
+      {
+         if (column.getElement().isOrHasChild(frame))
+            return column;
+      }
+      return null;
+   }
+
+   /**
+    * How much width a column can give to reopen another: at most half its
+    * width, and none that would take it below the width it needs to stay open.
+    */
+   private double getGivableWidth(Widget column)
+   {
+      double width = panel_.getTargetWidth(column);
+      return Math.max(0, Math.min(width / 2.0, width - panel_.getMinimumOpenWidth(column)));
+   }
+
+   /**
+    * Activate the tab an ActivatePaneEvent names. Code fires these to show a
+    * pane as a side effect (entering the debugger, history(), Packrat), so a
+    * zoom stays as the user left it; a column dragged shut still reopens.
+    */
+   public void activateTabLeavingZoom(String tabName)
    {
       Tab tab = tabForName(tabName);
       if (tab != null)
-         activateTab(tab);
+         activateTab(tab, Reveal.COLUMN);
    }
    
    public void focusTab(Tab tab)
@@ -2369,7 +2448,7 @@ public class PaneManager
 
    public void zoomTab(Tab tab)
    {
-      activateTab(tab);
+      activateTab(tab, Reveal.NONE);
       WorkbenchTabPanel tabPanel = getOwnerTabPanel(tab);
       LogicalWindow parentWindow = tabPanel.getParentWindow();
       if (parentWindow == null)
@@ -2692,13 +2771,8 @@ public class PaneManager
       if (column == null)
          return null;
 
-      // panes_ can hold a sidebar window that showSidebar() has since replaced;
-      // panesByName_ has the live one.
-      ArrayList<LogicalWindow> windows = new ArrayList<>(panes_);
-      windows.add(panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR));
-      windows.addAll(sourceLogicalWindows_);
       LogicalWindow topmost = null;
-      for (LogicalWindow window : windows)
+      for (LogicalWindow window : getAllWindows())
       {
          if (window == null || !window.visible() ||
              !DomUtils.contains(column.getElement(), window.getNormal().getElement()))
@@ -2872,6 +2946,15 @@ public class PaneManager
    public LogicalWindow getConsoleLogicalWindow()
    {
       return panesByName_.get(PaneManager.CONSOLE_PANE);
+   }
+
+   /**
+    * The current sidebar window, kept while the sidebar is hidden. showSidebar()
+    * replaces it when it shows a hidden sidebar, so look it up each time.
+    */
+   private LogicalWindow getSidebarWindow()
+   {
+      return panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
    }
 
    public int syncAdditionalColumnCount(int count, boolean refreshDisplay)
@@ -3344,7 +3427,7 @@ public class PaneManager
       commands_.layoutZoomSidebar().setEnabled(isSidebarVisible);
 
       // Update sidebar maximize button state to reflect zoom state
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      LogicalWindow sidebarWindow = getSidebarWindow();
       if (sidebarWindow != null)
       {
          WindowFrame sidebarFrame = sidebarWindow.getNormal();
@@ -3491,6 +3574,7 @@ public class PaneManager
    private final DualWindowLayoutPanel center_;
    private final DualWindowLayoutPanel right_;
    private final ArrayList<Widget> leftList_ = new ArrayList<>();
+   // The quadrants only; getAllWindows() adds the sidebar and source columns.
    private ArrayList<LogicalWindow> panes_;
    private ConsoleTabPanel consoleTabPanel_;
    private WorkbenchTabPanel tabSet1TabPanel_;

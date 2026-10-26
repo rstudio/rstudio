@@ -143,15 +143,39 @@ function tokenizeLines(base, lines) {
    return { base: base.map(tokenize), lines: lines.map(tokenize) };
 }
 
+function offsetRange(range, rows) {
+   return new Range(range.start.row + rows, range.start.column, range.end.row + rows, range.end.column);
+}
+
+// Moves a diff computed on a slice of the lines back to document rows. The
+// character ranges within a change (shown by the side-by-side view) move
+// with their lines.
 function offsetChunks(chunks, rows) {
    if (rows === 0)
       return chunks;
 
    return chunks.map(function(chunk) {
-      return {
-         old: new Range(chunk.old.start.row + rows, 0, chunk.old.end.row + rows, 0),
-         new: new Range(chunk.new.start.row + rows, 0, chunk.new.end.row + rows, 0)
+      var result = {
+         old: offsetRange(chunk.old, rows),
+         new: offsetRange(chunk.new, rows)
       };
+
+      if (chunk.charChanges)
+      {
+         result.charChanges = chunk.charChanges.map(function(change) {
+            return { old: offsetRange(change.old, rows), new: offsetRange(change.new, rows) };
+         });
+      }
+
+      return result;
+   });
+}
+
+// The character ranges of a diff over tokens describe the tokens, not the
+// text; only the line ranges carry over.
+function dropCharChanges(chunks) {
+   return chunks.map(function(chunk) {
+      return { old: chunk.old, new: chunk.new };
    });
 }
 
@@ -198,6 +222,7 @@ var GitDiffGutter = function(editor, strings) {
    this.peek = null;
    this.baseRefresher = null;
    this.revision = 0;
+   this.splitView = null;
 
    this.onAfterRender = this.onAfterRender.bind(this);
    this.onChange = this.onChange.bind(this);
@@ -220,6 +245,25 @@ var GitDiffGutter = function(editor, strings) {
    gutterEl.addEventListener("mousedown", this.onGutterMouseDown, true);
    gutterEl.addEventListener("click", this.onGutterClick, true);
    gutterEl.addEventListener("dblclick", this.onGutterClick, true);
+
+   // Escape closes an open peek. An Ace command rather than a keyboard
+   // handler of our own: commands live in the default handler, the one
+   // setKeyboardHandler keeps when RStudio rebuilds the editor's handlers
+   // (file type or keybinding changes, re-attach), and the lowest in
+   // precedence, so the completion popup and a Vim or Emacs mode, which own
+   // Escape while active, still see the key first. Among commands on the
+   // same key Ace tries the last one registered first, so screen reader
+   // support's blurTextInput would take Escape whenever it was added after
+   // this one (a file opened with ext-diff already loaded, or the pref turned
+   // on later); the explicit position puts this command ahead regardless.
+   var self = this;
+   editor.commands.addCommand({
+      name: "closeGitPeek",
+      bindKey: { win: "Esc", mac: "Esc", position: 1 },
+      readOnly: true,
+      isAvailable: function() { return self.peek != null; },
+      exec: function() { self.closePeek(); }
+   });
 };
 
 (function() {
@@ -243,6 +287,8 @@ var GitDiffGutter = function(editor, strings) {
       this.baseText = text;
       this.baseLines = (text == null) ? null : splitLines(text);
       this.strippedBaseLines = null;
+      if (this.splitView)
+         this.splitView.setBaseLines(this.baseLines);
       this.update();
    };
 
@@ -265,6 +311,23 @@ var GitDiffGutter = function(editor, strings) {
    // if that base turned out to be the one already in use.
    this.setBaseRefresher = function(refresher) {
       this.baseRefresher = refresher;
+   };
+
+   // A side-by-side view (see git_diff_split.js) shows the base beside the
+   // document and follows this gutter's diff. While one is attached the peek
+   // stays closed: the view shows what it would, and its alignment padding
+   // sits where the peek would go.
+   this.setSplitView = function(view) {
+      this.splitView = view;
+      if (!view)
+         return;
+
+      this.closePeek();
+      // (an update waiting out a slow diff's typing pause would otherwise
+      // hand the view the previous chunks, and its first folds with them)
+      this.flushUpdate();
+      view.setBaseLines(this.baseLines);
+      view.setChunks(this.chunks, this.ignoreWhitespace);
    };
 
    // Runs the callback once the base is current. The base is also re-fetched
@@ -407,7 +470,7 @@ var GitDiffGutter = function(editor, strings) {
          {
             var tokens = tokenizeLines(base, lines);
             started = Date.now();
-            chunks = new DiffProvider().compute(tokens.base, tokens.lines, options);
+            chunks = dropCharChanges(new DiffProvider().compute(tokens.base, tokens.lines, options));
             if (Date.now() - started >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
                return [];
          }
@@ -454,6 +517,9 @@ var GitDiffGutter = function(editor, strings) {
       });
 
       this.rowClasses = rowClasses;
+
+      if (this.splitView)
+         this.splitView.setChunks(chunks, this.ignoreWhitespace);
 
       // An open peek survives only if its change is still there unchanged.
       if (this.peek)
@@ -534,17 +600,62 @@ var GitDiffGutter = function(editor, strings) {
       return null;
    };
 
+   // The cursor-driven commands (Next/Previous Change, Show/Revert Change at
+   // Cursor) start from the document's cursor -- or, when the base pane of a
+   // side-by-side view holds the cursor, from the base cursor, which moving
+   // around in the base does not carry over to the document. The base's rows
+   // are those of the change's old side; an addition has none there, so it
+   // is reached from the line that follows it, as a deletion is in the
+   // document.
+   this.baseFocused = function() {
+      return this.splitView != null && this.splitView.heldFocusLast();
+   };
+
+   this.cursorRow = function() {
+      if (this.baseFocused())
+         return this.splitView.baseCursorRow();
+      return this.editor.getCursorPosition().row;
+   };
+
+   this.baseDisplayRow = function(chunk) {
+      // an empty base still has one (empty) row in Ace
+      var lastRow = this.baseLines ? Math.max(this.baseLines.length - 1, 0) : 0;
+      return isAddition(chunk) ? Math.min(chunk.old.start.row, lastRow) : chunk.old.start.row;
+   };
+
+   // The row a change is shown on in the pane holding the cursor.
+   this.cursorPaneRow = function(chunk) {
+      return this.baseFocused() ? this.baseDisplayRow(chunk) : this.displayRow(chunk);
+   };
+
+   this.chunkAtCursor = function() {
+      var row = this.cursorRow();
+      if (!this.baseFocused())
+         return this.chunkAt(row);
+
+      for (var i = 0; i < this.chunks.length; i++)
+      {
+         var chunk = this.chunks[i];
+         var hit = isAddition(chunk)
+            ? row === this.baseDisplayRow(chunk)
+            : row >= chunk.old.start.row && row < chunk.old.end.row;
+         if (hit)
+            return chunk;
+      }
+      return null;
+   };
+
    // Navigation wraps around, like Find.
    this.goToNextChange = function() {
       this.flushUpdate();
       if (this.chunks.length === 0)
          return false;
 
-      var row = this.editor.getCursorPosition().row;
+      var row = this.cursorRow();
       var target = this.chunks[0];
       for (var i = 0; i < this.chunks.length; i++)
       {
-         if (this.displayRow(this.chunks[i]) > row)
+         if (this.cursorPaneRow(this.chunks[i]) > row)
          {
             target = this.chunks[i];
             break;
@@ -560,11 +671,11 @@ var GitDiffGutter = function(editor, strings) {
       if (this.chunks.length === 0)
          return false;
 
-      var row = this.editor.getCursorPosition().row;
+      var row = this.cursorRow();
       var target = this.chunks[this.chunks.length - 1];
       for (var i = this.chunks.length - 1; i >= 0; i--)
       {
-         if (this.displayRow(this.chunks[i]) < row)
+         if (this.cursorPaneRow(this.chunks[i]) < row)
          {
             target = this.chunks[i];
             break;
@@ -576,14 +687,26 @@ var GitDiffGutter = function(editor, strings) {
    };
 
    this.goToChunk = function(chunk) {
-      this.editor.gotoLine(this.displayRow(chunk) + 1, 0, true);
+      var row = this.displayRow(chunk);
+      if (this.baseFocused())
+      {
+         // the base pane keeps the cursor (its scrolling brings the document
+         // along); the document's cursor follows so that the two agree on
+         // which change is at the cursor
+         this.splitView.goToBaseRow(this.baseDisplayRow(chunk));
+         this.editor.clearSelection();
+         this.editor.moveCursorTo(row, 0);
+         return;
+      }
+
+      this.editor.gotoLine(row + 1, 0, true);
    };
 
    // The change is the one under the cursor now; the revert itself waits
    // for the base (see revertWhenFresh).
    this.revertChangeAtCursor = function() {
       this.flushUpdate();
-      var chunk = this.chunkAt(this.editor.getCursorPosition().row);
+      var chunk = this.chunkAtCursor();
       if (!chunk)
          return false;
 
@@ -654,7 +777,7 @@ var GitDiffGutter = function(editor, strings) {
    // cursor is not on a change.
    this.showChangeAtCursor = function() {
       this.flushUpdate();
-      var chunk = this.chunkAt(this.editor.getCursorPosition().row);
+      var chunk = this.chunkAtCursor();
       if (!chunk)
          return false;
 
@@ -662,8 +785,12 @@ var GitDiffGutter = function(editor, strings) {
       return true;
    };
 
+   // With the base on screen already (a side-by-side view), there is nothing
+   // to peek at: a marker click or Show Change at Cursor just goes there.
    this.togglePeek = function(chunk) {
-      if (this.peek && this.peek.chunk === chunk)
+      if (this.splitView)
+         this.goToChunk(chunk);
+      else if (this.peek && this.peek.chunk === chunk)
          this.closePeek();
       else
          this.showPeek(chunk);
@@ -707,6 +834,8 @@ var GitDiffGutter = function(editor, strings) {
    // button to revert the change. Returns false if there is no room for it.
    this.showPeek = function(chunk) {
       this.closePeek();
+      if (this.splitView)
+         return false;
 
       var row = this.peekRow(chunk);
       if (row == null)
@@ -757,14 +886,32 @@ var GitDiffGutter = function(editor, strings) {
       });
       header.appendChild(revertButton);
 
+      // Closing is the lesser action (the marker, Escape, and Show Change all
+      // close the peek too), so it is a plain glyph at the end of the header.
       var closeButton = document.createElement("button");
       closeButton.type = "button";
-      closeButton.className = PEEK_CLASS + "-button " + PEEK_CLASS + "-close";
-      closeButton.textContent = this.strings.close;
+      closeButton.className = PEEK_CLASS + "-close";
+      closeButton.textContent = "\u00D7";
+      closeButton.title = this.strings.close;
+      closeButton.setAttribute("aria-label", this.strings.close);
       closeButton.addEventListener("click", function() {
+         self.focusEditor();
          self.closePeek();
       });
       header.appendChild(closeButton);
+
+      // With "Tab key always moves focus" on, Tab can land on the peek's
+      // buttons, where a keypress never reaches the editor's textarea; let
+      // Escape close the peek from there too.
+      el.addEventListener("keydown", function(e) {
+         if (e.key !== "Escape")
+            return;
+
+         e.preventDefault();
+         e.stopPropagation();
+         self.focusEditor();
+         self.closePeek();
+      });
 
       if (oldLines.length > 0)
       {
@@ -884,7 +1031,10 @@ var GitDiffGutter = function(editor, strings) {
          this.updateTimer = null;
       }
 
+      if (this.splitView)
+         this.splitView.dispose();
       this.closePeek();
+      this.editor.commands.removeCommand("closeGitPeek");
       this.editor.off("change", this.onChange);
 
       var gutterEl = this.editor.renderer.$gutter;

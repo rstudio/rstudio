@@ -264,4 +264,8 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String gitPeekChangedLines(@PluralCount int count);
     String gitPeekRevert();
     String gitPeekClose();
+
+    // Git diff side-by-side view
+    String gitDiffBaseEditor();
+    String gitDiffBaseEmpty();
 }

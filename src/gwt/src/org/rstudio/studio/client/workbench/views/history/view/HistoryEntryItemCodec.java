@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.*;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
@@ -78,6 +79,9 @@ public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, S
       td.setClassName(res_.styles().disclosure());
       td.addClassName(ThemeStyles.INSTANCE.handCursor());
       td.setVAlign("middle");
+      // Keyboard users press Right on the result instead. Hidden so the
+      // button's tooltip stays out of the option's accessible name.
+      A11y.setARIAHidden(td);
 
       DivElement div = Document.get().createDivElement();
       div.setTitle(constants_.showCommandTitle());

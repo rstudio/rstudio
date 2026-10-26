@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -37,19 +38,16 @@ import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -188,36 +186,33 @@ public class ConsoleInterpreterVersion
       }
    }
 
-   private Widget createLogo(TextResource resource,
+   private Widget createLogo(DataResource resource,
                            String languageClass,
                            boolean isTabbedView)
    {
       HorizontalPanel panel = new HorizontalPanel();
       
-      HTML html = new HTML();
-      html.setHTML(resource.getText());
-      html.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
-      
-      Element svg = html.getElement().getFirstChildElement();
-      svg.setAttribute("role", "presentation");
-
-      // NOTE: GWT chokes when modifying the className
-      // attribute of an SVG element so we do it "by hand" here
-      addClassName(svg, RES.styles().icon());
-      addClassName(svg, isTabbedView
+      // An <img> rather than inline SVG gives each logo its own document, so the
+      // SVGs' internal ids can't collide with others in the page (the console
+      // title exists in two variants, so inlining would duplicate them).
+      Image logo = new DecorativeImage(resource.getSafeUri());
+      // GWT's setDraggable(DRAGGABLE_FALSE) sets "true"; see DocTabLayoutPanel
+      logo.getElement().setAttribute("draggable", "false");
+      logo.addStyleName(RES.styles().icon());
+      logo.addStyleName(isTabbedView
             ? RES.styles().iconTabbed()
             : RES.styles().iconUntabbed());
-      addClassName(svg, languageClass);
+      logo.addStyleName(languageClass);
       
-      panel.add(html);
-      
-      Image downArrow = new Image(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
-      downArrow.getElement().addClassName("rstudio-themes-inverts");
-      downArrow.addStyleName(RES.styles().iconDownArrow());
+      panel.add(logo);
       
       // this control is not operable via keyboard or screen reader, so for now we'll just hide it
       // from screen readers altogether instead of having an unlabeled image
-      downArrow.setAltText("");
+      Image downArrow = new DecorativeImage(
+            new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
+      downArrow.getElement().addClassName("rstudio-themes-inverts");
+      downArrow.addStyleName(RES.styles().iconDownArrow());
+      downArrow.getElement().setAttribute("draggable", "false");
       panel.add(downArrow);
       
       return panel;
@@ -316,11 +311,6 @@ public class ConsoleInterpreterVersion
    {
       return 18;
    }
-   
-   private final native void addClassName(Element element, String className)
-   /*-{
-      element.classList.add(className);
-   }-*/;
    
    private final HorizontalPanel container_;
    private final FlowPanel logoContainer_;
