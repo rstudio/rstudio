@@ -51,7 +51,7 @@ import {
   findRInstallationsWin32,
   frameworkVersionHome,
 } from './detect-r';
-import { rArchitectureWin32 } from './r-installation-win32';
+import { rArchitectureWin32, rExecutablePathWin32 } from './r-installation-win32';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
@@ -104,6 +104,14 @@ export function formatSelectedVersionForUi(rBinDir: string) {
   } else {
     return rHome;
   }
+}
+
+/**
+ * The R version line for the default 64-bit R at `rHomeDir`, labeled by the R
+ * that actually runs: [ARM64] when it runs from bin, [64-bit] from bin\x64.
+ */
+export function formatDefault64BitVersionForUi(rHomeDir: string): string {
+  return `${formatSelectedVersionForUi(dirname(rExecutablePathWin32(rHomeDir)))} [Default]`;
 }
 
 /**
@@ -539,7 +547,7 @@ export class GwtCallback extends EventEmitter {
       if (options.useDefault64BitR()) {
         const rHomeDir = findDefault64Bit();
         if (rHomeDir) {
-          return `[64-bit] ${rHomeDir} [Default]`;
+          return formatDefault64BitVersionForUi(rHomeDir);
         }
       }
 

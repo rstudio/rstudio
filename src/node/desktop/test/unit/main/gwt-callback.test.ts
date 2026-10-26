@@ -36,7 +36,12 @@ import { FilePath } from '../../../src/core/file-path';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
 
-import { formatSelectedVersionForUi, GwtCallback, PendingQuit } from '../../../src/main/gwt-callback';
+import {
+  formatDefault64BitVersionForUi,
+  formatSelectedVersionForUi,
+  GwtCallback,
+  PendingQuit,
+} from '../../../src/main/gwt-callback';
 import * as DetectR from '../../../src/main/detect-r';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
@@ -651,5 +656,38 @@ describe('formatSelectedVersionForUi', () => {
 
   it('shows the home of an R in bin whose architecture is unknown', () => {
     assert.strictEqual(formatSelectedVersionForUi('C:/R/R-4.6.1/bin'), 'C:/R/R-4.6.1');
+  });
+});
+
+describe('formatDefault64BitVersionForUi', () => {
+  const withRHome = (layout: { bin?: number; x64?: number }, check: (rHome: string) => void) => {
+    const rHome = mkdtempSync(path.join(os.tmpdir(), 'format-default-r-test-'));
+    try {
+      fakeRInstallWin32(rHome, layout);
+      check(rHome);
+    } finally {
+      rmSync(rHome, { recursive: true, force: true });
+    }
+  };
+
+  it('labels an x64 default R as 64-bit, as before', () => {
+    withRHome({ x64: 0x8664 }, (rHome) => {
+      assert.strictEqual(formatDefault64BitVersionForUi(rHome), `[64-bit] ${rHome} [Default]`);
+    });
+  });
+
+  it('labels an ARM64 default R as ARM64', () => {
+    withRHome({ bin: 0xaa64 }, (rHome) => {
+      assert.strictEqual(formatDefault64BitVersionForUi(rHome), `[ARM64] ${rHome} [Default]`);
+    });
+  });
+
+  it('labels a folder with both layouts by the R that runs', () => {
+    withRHome({ bin: 0xaa64, x64: 0x8664 }, (rHome) => {
+      assert.strictEqual(formatDefault64BitVersionForUi(rHome), `[ARM64] ${rHome} [Default]`);
+    });
+    withRHome({ bin: 0x8664, x64: 0x8664 }, (rHome) => {
+      assert.strictEqual(formatDefault64BitVersionForUi(rHome), `[64-bit] ${rHome} [Default]`);
+    });
   });
 });
