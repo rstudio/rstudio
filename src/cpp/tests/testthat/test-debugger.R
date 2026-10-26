@@ -230,35 +230,45 @@ test_that("debugSourceRef only trusts the runtime srcref for located functions",
 
 })
 
-test_that("debugSource runs files parsed without source references", {
+test_that("debugSource keeps source references when keep.source is off", {
 
    op <- options(keep.source = FALSE)
    on.exit(options(op), add = TRUE)
 
    file <- tempfile(fileext = ".R")
    on.exit(unlink(file), add = TRUE)
-   writeLines("answer <- 42", file)
+   writeLines(c(
+      "answer <- 42",
+      "double_it <- function(x) {",
+      "   x * 2",
+      "}"
+   ), file)
 
-   # With options(keep.source = FALSE), parse() attaches no srcrefs to the
-   # file's expressions (#12375); the file must still run.
+   # With options(keep.source = FALSE), parse() would attach no srcrefs to the
+   # file's expressions (#12375). Breakpoints are mapped through srcrefs, and
+   # debugSource() exists to debug, so the file is parsed with them anyway.
    envir <- new.env()
    fun <- expect_silent(.rs.makeSourceEquivFunction(file, "unknown", envir))
-   expect_null(attr(fun, "srcref"))
+   expect_s3_class(attr(fun, "srcref"), "srcref")
+   expect_false(getOption("keep.source"))
+
+   # ... so a breakpoint on line 1 maps onto a step of the function.
+   steps <- .rs.getFunctionSteps(fun, "fun", 1L)
+   expect_length(steps, 1L)
+   expect_true(nzchar(steps[[1L]]$at))
 
    expect_silent(fun())
    expect_equal(envir$answer, 42)
 
-   # Breakpoints cannot be mapped without srcrefs; say so rather than
-   # dropping them silently.
-   expect_message(
-      .rs.executeDebugSource(file, "unknown", breaklines = 1L, local = envir),
-      "keep.source = TRUE"
-   )
+   # Functions defined by the file carry srcrefs too, so the client can set
+   # breakpoints on them after the file has run.
+   expect_s3_class(attr(envir$double_it, "srcref"), "srcref")
 
-   # ... but only when there were breakpoints to drop.
+   # The global option is left as the user set it.
    expect_silent(
       .rs.executeDebugSource(file, "unknown", breaklines = integer(), local = envir)
    )
+   expect_false(getOption("keep.source"))
 
 })
 
@@ -279,8 +289,14 @@ test_that("debugSource runs files with no expressions", {
          writeLines(contents, file)
 
          fun <- expect_silent(.rs.makeSourceEquivFunction(file, "unknown", new.env()))
-         expect_null(attr(fun, "srcref"))
          expect_silent(fun())
+
+         # Nothing to map breakpoints onto, and the template function's own
+         # srcrefs (present when this module is sourced with keep.source on,
+         # as in debug builds) must not leak out as the file's location.
+         expect_null(attr(fun, "srcref"))
+         expect_null(attr(body(fun), "srcref"))
+         expect_null(attr(body(fun)[[2]][[2]], "srcref"))
       }
    }
 

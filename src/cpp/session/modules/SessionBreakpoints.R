@@ -474,17 +474,6 @@
    env$fun <- .rs.makeSourceEquivFunction(fileName, encoding, envir)
    breakSteps <- character()
 
-   # Breakpoints are mapped onto the function through the file's source
-   # references, which parse() omits when options(keep.source = FALSE).
-   # Say so rather than silently running past them.
-   if (length(breaklines) > 0 &&
-       is.null(attr(env$fun, "srcref")) &&
-       !isTRUE(getOption("keep.source")))
-   {
-      message("Breakpoints in '", basename(fileName), "' were skipped: ",
-              "debugging requires options(keep.source = TRUE).")
-   }
-
    # Inject the breakpoints
    if (length(breaklines) > 0)
    {
@@ -551,30 +540,32 @@
 # when executed, has the same effect as sourcing the file.
 .rs.addFunction("makeSourceEquivFunction", function(filename, encoding, envir = globalenv())
 {
-   content <- suppressWarnings(parse(filename, encoding = encoding))
+   # Breakpoints are mapped onto the function through the file's source
+   # references, so keep them even when options(keep.source = FALSE) is set
+   # (#12375). The global option itself is left alone.
+   content <- suppressWarnings(
+      parse(filename, encoding = encoding, keep.source = TRUE)
+   )
 
-   # Create an empty function to host the expressions in the file
+   # Create an empty function to host the expressions in the file. Drop the
+   # template's own source references (kept in debug builds), which would
+   # otherwise point into this file.
    fun <- function() 
    {
       evalq({ 1 }, envir = envir)
    }
+   fun <- utils::removeSource(fun)
 
    # Copy each statement from the file into the eval body of the function
    for (i in seq_along(content)) {
      body(fun)[[2]][[2]][[i + 1]] <- content[[i]]
    }
 
-   # Set up the source references. There are none when the file has no
-   # expressions (empty, or comments only), or when it was parsed with
-   # options(keep.source = FALSE); the function still runs the file, but
-   # breakpoints cannot be mapped onto it.
+   # A file with no expressions (empty, or comments only) has no source
+   # references to wire up; the function still runs it.
    refs <- attr(content, "srcref")
    if (length(refs) == 0)
-   {
-      # drop the template's own srcref, which points into this file
-      attr(fun, "srcref") <- NULL
       return(fun)
-   }
 
    lastref <- length(refs)
    attr(body(fun), "srcfile") <- attr(content, "srcfile")
@@ -589,11 +580,7 @@
                     srcfile = attr(content, "srcfile"), 
                     class = "srcref")
    attr(body(fun), "srcref")[[2]] <- ref
-   linerefs <- list(attr(content, "srcref")[[1]])
-   for (i in 1:length(content)) {
-      linerefs[[i + 1]] <- attr(content, "srcref")[[i]]
-   }
-   attr(body(fun)[[2]][[2]], "srcref") <- linerefs
+   attr(body(fun)[[2]][[2]], "srcref") <- c(refs[1], refs)
    attr(fun, "srcref") <- ref
    return(fun)
 })
