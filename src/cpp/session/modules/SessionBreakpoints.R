@@ -486,11 +486,12 @@
    # Run it!
    env$fun()
 
-   # We injected function breakpoints above, but we don't want to leave them
-   # in the in-memory copies of the functions. Replay the assignment that
-   # created the original copy of the function, in the environment the file
-   # ran in. The client will set proper breakpoints on the functions later.
-   env$fun <- .rs.removeBreakpoints(env$fun)
+   # The breakpoints injected above are baked into any function the file
+   # defined while it ran, as .doTrace(browser()) calls in its body. Strip
+   # them from the bindings the file left behind. Replaying the defining
+   # statements instead would run them a second time, and would clobber a
+   # binding the file later reassigned. The client will set proper
+   # breakpoints on the functions later.
    paths <- strsplit(breakSteps, ",", fixed = TRUE)
 
    # Only a breakpoint nested inside a top-level statement (a function the
@@ -500,12 +501,31 @@
    for (index in indices)
    {
       statement <- body(env$fun)[[2]][[2]][[index]]
-      if (is.call(statement) &&
-          (identical(statement[[1]], as.name("<-")) ||
-           identical(statement[[1]], as.name("="))))
+      if (!is.call(statement) ||
+          !(identical(statement[[1]], as.name("<-")) ||
+            identical(statement[[1]], as.name("="))) ||
+          !is.name(statement[[2]]))
       {
-         eval(statement, envir = envir)
+         next
       }
+
+      name <- as.character(statement[[2]])
+      if (!exists(name, envir = envir, inherits = FALSE))
+         next
+
+      current <- get(name, envir = envir, inherits = FALSE)
+      if (!is.function(current) ||
+          is.null(.rs.findBreakpointSteps(body(current))))
+      {
+         next
+      }
+
+      # 'body<-' builds a new closure, dropping the source references the
+      # client needs to set breakpoints on this function; keep them
+      attrs <- attributes(current)
+      current <- .rs.removeBreakpoints(current)
+      attributes(current) <- attrs
+      assign(name, current, envir = envir)
    }
 
    return(NULL)

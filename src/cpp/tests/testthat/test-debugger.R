@@ -326,10 +326,45 @@ test_that("debugSource restores every breakpointed function it defined", {
    {
       expect_null(.rs.findBreakpointSteps(body(envir[[name]])))
       expect_false(exists(name, envir = globalenv(), inherits = FALSE))
+
+      # The clean copy keeps its source references, which the client needs
+      # to set breakpoints on it later.
+      expect_s3_class(attr(envir[[name]], "srcref"), "srcref")
    }
 
    expect_equal(envir$cleanup_f(), 1)
    expect_equal(envir$cleanup_g(), 2)
+
+})
+
+test_that("debugSource cleanup leaves the file's final bindings alone", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines(c(
+      "redefined <- function() {",
+      "   1",
+      "}",
+      "redefined <- function() {",
+      "   2",
+      "}",
+      "count <- 0",
+      "made <- (function() {",
+      "   count <<- count + 1",
+      "   function() 42",
+      "})()"
+   ), file)
+
+   # A breakpoint inside a definition the file later replaces, and one inside
+   # a statement with side effects. Cleanup must strip the injected browser
+   # calls from what the file left behind, not run those statements again:
+   # replaying them would clobber the second 'redefined' and bump 'count'.
+   envir <- new.env()
+   .rs.executeDebugSource(file, "unknown", breaklines = c(2L, 9L), local = envir)
+
+   expect_equal(envir$redefined(), 2)
+   expect_equal(envir$count, 1)
+   expect_equal(envir$made(), 42)
 
 })
 
