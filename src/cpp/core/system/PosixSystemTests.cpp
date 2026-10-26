@@ -425,6 +425,65 @@ TEST(PosixTests, NoSubprocessesGeneric)
    }
 }
 
+TEST(PosixTests, TerminateProcessTreeTakesDescendants)
+{
+#ifdef __linux__
+   // adopt the grandchild once its parent is gone, so it is reaped here
+   // rather than by whatever runs as pid 1 (which may not, in a container)
+   ASSERT_EQ(0, ::prctl(PR_SET_CHILD_SUBREAPER, 1));
+#endif
+
+   // child -> grandchild, both idle until signalled
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      if (::fork() == 0)
+      {
+         for (;;)
+            ::pause();
+      }
+
+      for (;;)
+         ::pause();
+   }
+
+   std::vector<SubprocInfo> grandchildren;
+   for (int i = 0; i < 500 && grandchildren.empty(); i++)
+   {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      grandchildren = getSubprocesses(child);
+   }
+   ASSERT_EQ(1u, grandchildren.size());
+   pid_t grandchild = grandchildren[0].pid;
+
+   Error error = terminateProcessTree(child);
+   EXPECT_FALSE(error) << error.asString();
+
+   int status = 0;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   EXPECT_TRUE(WIFSIGNALED(status));
+   EXPECT_EQ(SIGTERM, WTERMSIG(status));
+
+#ifdef __linux__
+   ASSERT_EQ(grandchild, ::waitpid(grandchild, &status, 0));
+   EXPECT_TRUE(WIFSIGNALED(status));
+   EXPECT_EQ(SIGTERM, WTERMSIG(status));
+   ASSERT_EQ(0, ::prctl(PR_SET_CHILD_SUBREAPER, 0));
+#else
+   // reparented to launchd, which reaps it
+   for (int i = 0; i < 500 && isProcessRunning(grandchild); i++)
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   EXPECT_FALSE(isProcessRunning(grandchild));
+#endif
+}
+
+TEST(PosixTests, TerminateProcessTreeOfMissingProcessIsAnError)
+{
+   Error error = terminateProcessTree(std::numeric_limits<pid_t>::max());
+   EXPECT_TRUE(error);
+}
+
 TEST(PosixTests, WorkingDirGeneric)
 {
    FilePath emptyPath;

@@ -226,3 +226,10 @@
 {
    .Call("rs_getSessionOverlayOption", as.character(key), PACKAGE = "(embedding)")
 })
+
+#' Is this machine an Apple silicon Mac? TRUE even when R runs under Rosetta,
+#' where Sys.info() reports the emulated architecture. FALSE elsewhere.
+.rs.addFunction("isAppleSilicon", function()
+{
+   .Call("rs_isAppleSilicon", PACKAGE = "(embedding)")
+})

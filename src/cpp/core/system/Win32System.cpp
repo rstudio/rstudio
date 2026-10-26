@@ -1168,6 +1168,78 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
          haveParentCreationTime ? &parentCreationTime : nullptr);
 }
 
+namespace {
+
+// TerminateProcess() fails with ERROR_ACCESS_DENIED on a process that has
+// already exited, which is not a failure to terminate it.
+Error terminateProcessHandle(HANDLE hProcess)
+{
+   if (::TerminateProcess(hProcess, 1))
+      return Success();
+
+   Error error = LAST_SYSTEM_ERROR();
+
+   DWORD exitCode = STILL_ACTIVE;
+   if (::GetExitCodeProcess(hProcess, &exitCode) && exitCode != STILL_ACTIVE)
+      return Success();
+
+   return error;
+}
+
+// Opens every descendant of pid as it is found, so its pid stays reserved
+// (and cannot be recycled onto an unrelated process) until it is terminated.
+void openProcessTree(PidType pid, std::vector<HANDLE>* pHandles)
+{
+   for (const SubprocInfo& child : getSubprocesses(pid))
+   {
+      HANDLE hChild = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION,
+                                    FALSE,
+                                    child.pid);
+      if (!hChild)
+      {
+         // ERROR_INVALID_PARAMETER: exited since the snapshot, nothing to do
+         Error error = LAST_SYSTEM_ERROR();
+         if (error.getCode() != ERROR_INVALID_PARAMETER)
+            LOG_ERROR(error);
+         continue;
+      }
+
+      pHandles->push_back(hChild);
+      openProcessTree(child.pid, pHandles);
+   }
+}
+
+} // anonymous namespace
+
+Error terminateProcessTree(PidType pid)
+{
+   HANDLE hRoot = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+   if (!hRoot)
+      return LAST_SYSTEM_ERROR();
+   CloseHandleOnExitScope closeRoot(&hRoot, ERROR_LOCATION);
+
+   // the descendants have to be found while the root is alive: once it has
+   // exited, an orphan's recorded parent pid no longer passes the pid-reuse
+   // check in getSubprocesses()
+   std::vector<HANDLE> descendants;
+   openProcessTree(pid, &descendants);
+
+   Error error = terminateProcessHandle(hRoot);
+
+   for (HANDLE hDescendant : descendants)
+   {
+      Error descendantError = terminateProcessHandle(hDescendant);
+      if (descendantError)
+         LOG_ERROR(descendantError);
+
+      descendantError = closeHandle(&hDescendant, ERROR_LOCATION);
+      if (descendantError)
+         LOG_ERROR(descendantError);
+   }
+
+   return error;
+}
+
 FilePath currentWorkingDir(PidType pid)
 {
    // NYI for Win32; commonly accepted technique for this is to use

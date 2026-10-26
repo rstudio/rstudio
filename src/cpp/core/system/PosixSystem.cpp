@@ -3138,6 +3138,31 @@ Error terminateChildProcesses(pid_t pid,
    return Success();
 }
 
+Error terminateProcessTree(PidType pid)
+{
+   return terminateProcessTree(pid, SIGTERM);
+}
+
+Error terminateProcessTree(pid_t pid, int signal)
+{
+   // the descendants have to be found while the root is alive: once it
+   // exits they are reparented, and can no longer be reached from its pid
+   std::vector<ProcessInfo> descendants;
+   Error error = getChildProcesses(pid, &descendants, false);
+   if (error)
+      return error;
+
+   error = killProcess(pid, signal);
+
+   for (const ProcessInfo& process : descendants)
+   {
+      if (::kill(process.pid, signal) != 0 && errno != ESRCH)
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   }
+
+   return error;
+}
+
 Error getOsInfo(OSInfo* pOsInfo)
 {
    std::string id;

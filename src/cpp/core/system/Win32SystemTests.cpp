@@ -552,6 +552,60 @@ TEST_F(Win32ProcessTest, KeepsChildWhenCreationTimeCannotBeQueried)
    EXPECT_TRUE(ContainsProcess(children, pi.dwProcessId));
 }
 
+// A child takes a moment to show up after its parent starts; poll for it
+// rather than sleeping a fixed time.
+static std::vector<SubprocInfo> WaitForSubprocesses(PidType pid)
+{
+   std::vector<SubprocInfo> children;
+   for (int i = 0; i < 100 && children.empty(); i++)
+   {
+      ::Sleep(50);
+      children = getSubprocesses(pid);
+   }
+   return children;
+}
+
+TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendants)
+{
+   // cmd.exe -> ping.exe, a two-level tree
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul"));
+
+   std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
+   ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
+
+   // keep the grandchild's pid from being recycled before it is checked
+   HANDLE hGrandchild = ::OpenProcess(SYNCHRONIZE, FALSE, children[0].pid);
+   ASSERT_NE(nullptr, hGrandchild);
+   CloseHandleOnExitScope closeGrandchild(&hGrandchild, ERROR_LOCATION);
+
+   Error error = terminateProcessTree(pi.dwProcessId);
+   EXPECT_FALSE(error) << error.asString();
+
+   EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
+   EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hGrandchild, 5000));
+}
+
+TEST_F(Win32ProcessTest, TerminateProcessTreeWithoutDescendants)
+{
+   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
+
+   Error error = terminateProcessTree(pi.dwProcessId);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
+}
+
+TEST_F(Win32ProcessTest, TerminateProcessTreeOfExitedProcessIsNotAnError)
+{
+   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
+
+   // a handle of our own keeps the pid valid after the process has exited
+   ASSERT_TRUE(::TerminateProcess(pi.hProcess, 1));
+   ASSERT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
+
+   Error error = terminateProcessTree(pi.dwProcessId);
+   EXPECT_FALSE(error) << error.asString();
+}
+
 } // end namespace tests
 } // end namespace system
 } // end namespace core

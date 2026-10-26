@@ -27,6 +27,7 @@
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
+#include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
@@ -404,6 +405,19 @@ SEXP rs_userDataDir()
    return r::sexp::createUtf8(userDataDir, &protect);
 }
 
+// true on Apple silicon even when this process runs under Rosetta, where R
+// reports the emulated architecture
+SEXP rs_isAppleSilicon()
+{
+   bool isAppleSilicon = false;
+#ifdef __APPLE__
+   isAppleSilicon = core::system::isAppleSilicon();
+#endif
+
+   r::sexp::Protect protect;
+   return r::sexp::create(isAppleSilicon, &protect);
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -420,6 +434,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
    RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);
    RS_REGISTER_CALL_METHOD(rs_userDataDir);
+   RS_REGISTER_CALL_METHOD(rs_isAppleSilicon);
 
    using boost::bind;
    using namespace module_context;

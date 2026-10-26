@@ -421,7 +421,26 @@ test_that("the machine architecture is reported as is where it can't differ", {
 
    expect_identical(.rs.rig.machine("arm64"), "arm64")
    if (!.rs.platform.isMacos)
+   {
+      expect_false(.rs.isAppleSilicon())
       expect_identical(.rs.rig.machine("x86_64"), "x86_64")
+   }
+
+})
+
+test_that("an x86_64 R on Apple silicon reports the hardware", {
+
+   skip_if_not(.rs.platform.isMacos, "Apple silicon is a macOS concern")
+
+   # sysctl is the oracle the in-process check replaced; the key is absent
+   # on Intel Macs, where sysctl fails
+   arm64 <- suppressWarnings(
+      system2("/usr/sbin/sysctl", c("-n", "hw.optional.arm64"), stdout = TRUE, stderr = FALSE)
+   )
+   expected <- identical(trimws(arm64[1L]), "1")
+
+   expect_identical(.rs.isAppleSilicon(), expected)
+   expect_identical(.rs.rig.machine("x86_64"), if (expected) "arm64" else "x86_64")
 
 })
 
