@@ -657,6 +657,61 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendantWithNonAsciiName)
    tempDir.remove();
 }
 
+TEST_F(Win32ProcessTest, TerminateProcessTreeReachesPastUnterminableProcess)
+{
+   // cmd.exe -> cmd.exe -> ping.exe; the middle one refuses termination
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 8 posit.co\"\" 1> nul"));
+
+   std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
+   ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
+   PidType middle = children[0].pid;
+
+   std::vector<SubprocInfo> grandchildren = WaitForSubprocesses(middle);
+   ASSERT_EQ(1u, grandchildren.size()) << "grandchildren:" << Describe(grandchildren);
+
+   HANDLE hGrandchild = ::OpenProcess(SYNCHRONIZE, FALSE, grandchildren[0].pid);
+   ASSERT_NE(nullptr, hGrandchild);
+   CloseHandleOnExitScope closeGrandchild(&hGrandchild, ERROR_LOCATION);
+
+   // deny PROCESS_TERMINATE on the middle process to everyone, allowing the
+   // rest; the fixture's job still takes it down with the others
+   PSID everyone = nullptr;
+   SID_IDENTIFIER_AUTHORITY worldAuthority = SECURITY_WORLD_SID_AUTHORITY;
+   ASSERT_TRUE(::AllocateAndInitializeSid(&worldAuthority, 1, SECURITY_WORLD_RID,
+                                          0, 0, 0, 0, 0, 0, 0, &everyone));
+   BYTE aclBuffer[256];
+   PACL acl = reinterpret_cast<PACL>(aclBuffer);
+   ASSERT_TRUE(::InitializeAcl(acl, sizeof(aclBuffer), ACL_REVISION));
+   ASSERT_TRUE(::AddAccessDeniedAce(acl, ACL_REVISION, PROCESS_TERMINATE, everyone));
+   ASSERT_TRUE(::AddAccessAllowedAce(acl, ACL_REVISION, PROCESS_ALL_ACCESS, everyone));
+   SECURITY_DESCRIPTOR securityDescriptor;
+   ASSERT_TRUE(::InitializeSecurityDescriptor(&securityDescriptor,
+                                              SECURITY_DESCRIPTOR_REVISION));
+   ASSERT_TRUE(::SetSecurityDescriptorDacl(&securityDescriptor, TRUE, acl, FALSE));
+
+   HANDLE hMiddle = ::OpenProcess(WRITE_DAC, FALSE, middle);
+   ASSERT_NE(nullptr, hMiddle);
+   CloseHandleOnExitScope closeMiddle(&hMiddle, ERROR_LOCATION);
+   ASSERT_TRUE(::SetKernelObjectSecurity(hMiddle, DACL_SECURITY_INFORMATION,
+                                        &securityDescriptor));
+   ::FreeSid(everyone);
+
+   HANDLE hTerminate = ::OpenProcess(PROCESS_TERMINATE, FALSE, middle);
+   DWORD error = ::GetLastError();
+   CloseHandleOnExitScope closeTerminate(&hTerminate, ERROR_LOCATION);
+   if (hTerminate)
+      GTEST_SKIP() << "terminate access bypasses the process DACL";
+   ASSERT_EQ(ERROR_ACCESS_DENIED, error);
+
+   // the middle process cannot be terminated (logged), but ping.exe behind
+   // it must be; the middle cmd.exe then exits on its own
+   Error treeError = terminateProcessTree(pi.dwProcessId);
+   EXPECT_FALSE(treeError) << treeError.asString();
+
+   EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
+   EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hGrandchild, 5000));
+}
+
 TEST_F(Win32ProcessTest, TerminateProcessTreeWithoutDescendants)
 {
    ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));

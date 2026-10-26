@@ -1247,7 +1247,10 @@ std::wstring processImageName(HANDLE hProcess)
 }
 
 // Opens the process a snapshot lists, and keeps the handle only when it is
-// for that process (see detail::isListedProcess); null otherwise.
+// for that process (see detail::isListedProcess); null otherwise. A process
+// that refuses termination is opened for querying alone, so that it can
+// still be checked and its descendants reached; terminating it later fails
+// and is logged.
 HANDLE openListedProcess(const PROCESSENTRY32W& entry,
                          const FILETIME& snapshotTime,
                          const FILETIME* pParentCreationTime)
@@ -1255,6 +1258,9 @@ HANDLE openListedProcess(const PROCESSENTRY32W& entry,
    HANDLE hProcess = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION,
                                    FALSE,
                                    entry.th32ProcessID);
+   if (!hProcess && ::GetLastError() == ERROR_ACCESS_DENIED)
+      hProcess = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, entry.th32ProcessID);
+
    if (!hProcess)
    {
       // ERROR_INVALID_PARAMETER: exited since the snapshot, nothing to do

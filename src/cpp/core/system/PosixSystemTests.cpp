@@ -564,6 +564,10 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
    }
    BOOST_SCOPE_EXIT_END
 
+   // from here too, so the group exists before the timed read, however far
+   // the child has got; the same group twice is a no-op
+   ASSERT_EQ(0, ::setpgid(child, child));
+
    pid_t grandchild = 0;
    ASSERT_TRUE(readPidWithin(fds[0], &grandchild, 5));
    ASSERT_GT(grandchild, 0);
