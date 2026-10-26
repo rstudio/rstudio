@@ -7,7 +7,13 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
-import { isServiceReachable, reprobeService, CITATION_SERVICE_HOSTS } from '@utils/network';
+import {
+  isServiceReachable,
+  reprobeRequest,
+  CITATION_SERVICE_HOSTS,
+  CITATION_SERVICE_REQUESTS,
+  type ServiceRequest,
+} from '@utils/network';
 import type { Page } from 'playwright';
 
 // Skip (rather than fail) a test whose citation source depends on an external
@@ -19,48 +25,72 @@ async function skipUnlessReachable(...urls: string[]): Promise<void> {
   }
 }
 
-// Stage the first result of a latent citation lookup, tolerating a service
-// that degrades after skipUnlessReachable() passed: the probe runs at test
-// start, but the lookup itself runs in the rsession seconds later (#18426). Mirrors the
-// search tests' #18267 pattern -- a service-side failure renders as the
-// dialog's error status line, and we skip on it. A lookup that hangs shows
-// neither results nor an error within the wait; re-probe the host and skip
-// retroactively if it has since become unreachable. A timeout with the
-// service still answering remains a real failure.
-async function stageFirstResultOrSkip(
+type LookupOutcome = 'pending' | 'result' | 'error';
+
+// Wait for a latent citation lookup to settle, tolerating a service that
+// degrades after skipUnlessReachable() passed: the probe runs at test start,
+// but the lookup itself runs in the rsession seconds later (#18426). A
+// service-side failure renders as the dialog's error status line, and we skip
+// on it (#18267). A lookup that hangs shows neither a result nor an error
+// within the wait; re-probe the request itself -- not just the host, whose
+// front door can answer while the lookup's own endpoint or redirect target
+// hangs -- and skip retroactively if it has since stopped answering. A
+// timeout with the request still answering remains a real failure.
+async function awaitLookupOrSkip(
   page: Page,
   citation: InsertCitationDialog,
-  host: string,
+  request: ServiceRequest,
+  outcome: () => Promise<LookupOutcome>,
+  what: string,
 ): Promise<void> {
   const deadline = Date.now() + 30000;
-  let outcome: 'pending' | 'result' | 'error' = 'pending';
-  while (outcome === 'pending' && Date.now() < deadline) {
-    if (await citation.results.first().isVisible()) {
-      outcome = 'result';
-    } else if (await citation.searchError.isVisible()) {
-      outcome = 'error';
-    } else {
+  let result: LookupOutcome = 'pending';
+  while (result === 'pending' && Date.now() < deadline) {
+    result = await outcome();
+    if (result === 'pending') {
       await page.waitForTimeout(250);
     }
   }
 
-  if (outcome === 'error') {
+  if (result === 'error') {
     await citation.cancel();
-    test.skip(true, `${host} lookup failed service-side from this runner`);
+    test.skip(true, `${request.host} lookup failed service-side from this runner`);
   }
 
-  if (outcome === 'pending') {
-    if (!(await reprobeService(host))) {
+  if (result === 'pending') {
+    if (!(await reprobeRequest(request))) {
       await citation.cancel();
-      test.skip(true, `${host} became unreachable during the lookup`);
+      test.skip(true, `${request.host} stopped answering during the lookup (${request.url})`);
     }
     const status = (await citation.searchStatus.textContent().catch(() => null))?.trim();
     throw new Error(
-      `no lookup result and no error status within 30s ` +
-        `(${host} is still reachable; dialog status: ${status ? `"${status}"` : 'none'})`,
+      `no ${what} and no error status within 30s ` +
+        `(${request.url} still answers; dialog status: ${status ? `"${status}"` : 'none'})`,
     );
   }
+}
 
+// Stage the first result of a lookup once it arrives (see awaitLookupOrSkip).
+async function stageFirstResultOrSkip(
+  page: Page,
+  citation: InsertCitationDialog,
+  request: ServiceRequest,
+): Promise<void> {
+  await awaitLookupOrSkip(
+    page,
+    citation,
+    request,
+    async () => {
+      if (await citation.results.first().isVisible()) {
+        return 'result';
+      }
+      if (await citation.searchError.isVisible()) {
+        return 'error';
+      }
+      return 'pending';
+    },
+    'lookup result',
+  );
   await citation.stageFirstResult();
 }
 
@@ -140,7 +170,7 @@ test.describe('Citations', () => {
 
     // A DOI resolves to exactly one work via a real service call (no intercept).
     await citation.search(searchBox, '10.3133/93888');
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_REQUESTS.doi('10.3133/93888'));
     await citation.insert();
 
     // The citation lands in the document. With no author, panmirror derives the
@@ -180,7 +210,7 @@ test.describe('Citations', () => {
     await citation.open();
     const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
     await citation.search(searchBox, '10.3133/93888');
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_REQUESTS.doi('10.3133/93888'));
     await citation.insert();
 
     await expect(page.locator('.ProseMirror')).toContainText('[@effects1999]', { timeout: 15000 });
@@ -213,7 +243,7 @@ test.describe('Citations', () => {
 
     // Stage the single DOI result, then remove it from the staging area (#9124).
     await citation.search(searchBox, '10.3133/93888');
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_REQUESTS.doi('10.3133/93888'));
     await expect(citation.stagedCitations).toHaveCount(1);
 
     await citation.deleteStagedCitation();
@@ -237,7 +267,7 @@ test.describe('Citations', () => {
     await citation.open();
     let searchBox = await citation.selectSource(CITATION_SOURCES.doi);
     await citation.search(searchBox, doi);
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_REQUESTS.doi(doi));
     await citation.insert();
     await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020]', { timeout: 15000 });
 
@@ -246,7 +276,7 @@ test.describe('Citations', () => {
     await citation.open();
     searchBox = await citation.selectSource(CITATION_SOURCES.datacite);
     await citation.search(searchBox, doi);
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.datacite);
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_REQUESTS.datacite(doi));
     await citation.insert();
     await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020][@bermúdez2020]', { timeout: 15000 });
 
@@ -293,14 +323,15 @@ test.describe('Citations', () => {
   // "bobolink" returns hits on all three services (DataCite, Crossref, PubMed).
   // Listed in the dialog's tree order (top to bottom): Crossref, DataCite, PubMed.
   const SEARCH_SOURCES = [
-    { source: CITATION_SOURCES.crossref, host: CITATION_SERVICE_HOSTS.crossref },
-    { source: CITATION_SOURCES.datacite, host: CITATION_SERVICE_HOSTS.datacite },
-    { source: CITATION_SOURCES.pubmed, host: CITATION_SERVICE_HOSTS.pubmed },
+    { source: CITATION_SOURCES.crossref, request: CITATION_SERVICE_REQUESTS.crossref },
+    { source: CITATION_SOURCES.datacite, request: CITATION_SERVICE_REQUESTS.datacite },
+    { source: CITATION_SOURCES.pubmed, request: CITATION_SERVICE_REQUESTS.pubmed },
   ];
   const searchTerm = 'bobolink';
-  for (const { source, host } of SEARCH_SOURCES) {
+  for (const { source, request } of SEARCH_SOURCES) {
     test(`searches ${source.alt} and returns matching results`, async ({ rstudioPage: page }) => {
-      await skipUnlessReachable(host);
+      const searchRequest = request(searchTerm);
+      await skipUnlessReachable(searchRequest.host);
       await newMarkdownVisualDoc(page);
 
       const citation = new InsertCitationDialog(page);
@@ -311,34 +342,26 @@ test.describe('Citations', () => {
       // that some rows rendered -- otherwise arbitrary or stale hits would pass.
       // We don't require it of result #1: relevance ranking can put a non-title
       // match first (e.g. PubMed ranks a "Bobo-link" correspondence hit above the
-      // title matches). Poll to ride out the list still populating.
+      // title matches). The wait rides out the list still populating, and skips
+      // on a service-side failure (e.g. NCBI rate-limits shared CI egress IPs)
+      // or on the search endpoint itself no longer answering.
       await citation.search(searchBox, searchTerm);
       const matcher = new RegExp(searchTerm, 'i');
-      const searchOutcome = async (): Promise<'pending' | 'matched' | 'error'> => {
-        if ((await citation.resultTexts(5)).some((t) => matcher.test(t))) {
-          return 'matched';
-        }
-        if (await citation.searchError.isVisible()) {
-          return 'error';
-        }
-        return 'pending';
-      };
-      await expect
-        .poll(searchOutcome, {
-          timeout: 30000,
-          message: `no ${source.alt} results mentioning "${searchTerm}" and no error status within 30s`,
-        })
-        .not.toBe('pending');
-
-      // The reachability probe above only proves the host answers from Node;
-      // the query itself runs in the rsession and can still fail (e.g. NCBI
-      // rate-limits shared CI egress IPs). That is a service problem, not a
-      // product bug -- skip, as skipUnlessReachable() would have. A timeout
-      // with neither results nor an error line still fails above.
-      if ((await searchOutcome()) === 'error') {
-        await citation.cancel();
-        test.skip(true, `${source.alt} search failed service-side from this runner`);
-      }
+      await awaitLookupOrSkip(
+        page,
+        citation,
+        searchRequest,
+        async () => {
+          if ((await citation.resultTexts(5)).some((t) => matcher.test(t))) {
+            return 'result';
+          }
+          if (await citation.searchError.isVisible()) {
+            return 'error';
+          }
+          return 'pending';
+        },
+        `${source.alt} results mentioning "${searchTerm}"`,
+      );
 
       await citation.cancel();
     });

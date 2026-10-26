@@ -22,6 +22,47 @@ export const CITATION_SERVICE_HOSTS = {
   pubmed: 'https://eutils.ncbi.nlm.nih.gov',
 } as const;
 
+/** A request a test can re-probe with reprobeRequest(). */
+export interface ServiceRequest {
+  /** The host whose cached reachability the probe's outcome replaces. */
+  host: string;
+  url: string;
+  init?: RequestInit;
+}
+
+/**
+ * The requests the rsession makes for each citation lookup, mirrored from the
+ * panmirror modules so a test can re-probe the request it actually waited on
+ * rather than just the host.
+ */
+export const CITATION_SERVICE_REQUESTS = {
+  // SessionPanmirrorDOI.cpp: CSL content negotiation at doi.org, which
+  // redirects to the registration agency's own service (data.crosscite.org
+  // for DataCite DOIs) -- the leg that hangs when that agency is down.
+  doi: (doi: string): ServiceRequest => ({
+    host: CITATION_SERVICE_HOSTS.doi,
+    url: `${CITATION_SERVICE_HOSTS.doi}/${doi}`,
+    init: { headers: { Accept: 'application/vnd.citationstyles.csl+json' } },
+  }),
+  // SessionPanmirrorCrossref.cpp
+  crossref: (query: string): ServiceRequest => ({
+    host: CITATION_SERVICE_HOSTS.crossref,
+    url: `${CITATION_SERVICE_HOSTS.crossref}/works?query=${encodeURIComponent(query)}`,
+  }),
+  // SessionPanmirrorDataCite.cpp
+  datacite: (query: string): ServiceRequest => ({
+    host: CITATION_SERVICE_HOSTS.datacite,
+    url: `${CITATION_SERVICE_HOSTS.datacite}/dois?query=${encodeURIComponent(query)}`,
+  }),
+  // SessionPanmirrorPubMed.cpp (the esearch leg; esummary follows it)
+  pubmed: (query: string): ServiceRequest => ({
+    host: CITATION_SERVICE_HOSTS.pubmed,
+    url:
+      `${CITATION_SERVICE_HOSTS.pubmed}/entrez/eutils/esearch.fcgi` +
+      `?db=pubmed&term=${encodeURIComponent(query)}&sort=relevance&retmax=25`,
+  }),
+} as const;
+
 const probeCache = new Map<string, Promise<boolean>>();
 
 /**
@@ -54,6 +95,31 @@ export function isServiceReachable(url: string, timeoutMs = 10000): Promise<bool
 export function reprobeService(url: string, timeoutMs = 10000): Promise<boolean> {
   probeCache.delete(url);
   return isServiceReachable(url, timeoutMs);
+}
+
+/**
+ * Re-probe the exact request a test waited on, not just its host. A host can
+ * answer a root probe while the request itself hangs: a DOI lookup's content
+ * negotiation at doi.org redirects to the registration agency, and a search
+ * endpoint can stall while the API's front door still responds. So this
+ * follows redirects and reads the body, within the same timeout, and treats a
+ * service-side failure (5xx, 429) like a hang -- either way it is the service
+ * that did not answer, not the product. The outcome replaces the cached
+ * answer for `request.host`, so later tests' guards on that host skip too.
+ */
+export function reprobeRequest(request: ServiceRequest, timeoutMs = 10000): Promise<boolean> {
+  const probe = fetch(request.url, {
+    ...request.init,
+    redirect: 'follow',
+    signal: AbortSignal.timeout(timeoutMs),
+  })
+    .then(async (response) => {
+      await response.arrayBuffer();
+      return response.status < 500 && response.status !== 429;
+    })
+    .catch(() => false);
+  probeCache.set(request.host, probe);
+  return probe;
 }
 
 /**
