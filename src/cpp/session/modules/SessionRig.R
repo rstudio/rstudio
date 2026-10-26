@@ -181,15 +181,15 @@
 #' The registry values rig writes on Windows: once a user-mode R becomes the
 #' default, the current-user R-core default (the R and R64 keys, and their
 #' WOW6432Node twins used for x86_64 R on arm64); and on every install the
-#' user PATH, which gets rig's quick-link directory prepended. Paths are in
-#' PowerShell's registry-provider form.
+#' user PATH, which gets rig's quick-link directory prepended. Keys name
+#' their hive first, as reg.exe takes them.
 .rs.addFunction("rig.registryEntries", function()
 {
    keys <- c(
-      "HKCU:\\Software\\R-core\\R",
-      "HKCU:\\Software\\R-core\\R64",
-      "HKCU:\\Software\\WOW6432Node\\R-core\\R",
-      "HKCU:\\Software\\WOW6432Node\\R-core\\R64"
+      "HKCU\\Software\\R-core\\R",
+      "HKCU\\Software\\R-core\\R64",
+      "HKCU\\Software\\WOW6432Node\\R-core\\R",
+      "HKCU\\Software\\WOW6432Node\\R-core\\R64"
    )
 
    entries <- expand.grid(
@@ -198,7 +198,7 @@
       stringsAsFactors = FALSE
    )
 
-   entries <- rbind(entries, data.frame(name = "Path", key = "HKCU:\\Environment", stringsAsFactors = FALSE))
+   entries <- rbind(entries, data.frame(name = "Path", key = "HKCU\\Environment", stringsAsFactors = FALSE))
    entries[c("key", "name")]
 })
 
@@ -207,118 +207,41 @@
    paste(key, name, sep = "\\")
 })
 
-#' A PowerShell single-quoted string literal. Besides the ASCII apostrophe,
-#' PowerShell takes the typographic single quotes (U+2018 to U+201B) as
-#' delimiters too, so a path holding one would end the literal early unless
-#' it is doubled as well.
-.rs.addFunction("rig.psQuote", function(x)
-{
-   paste0("'", gsub("(['\u2018\u2019\u201a\u201b])", "\\1\\1", enc2utf8(x), perl = TRUE), "'")
-})
-
-#' A PowerShell script printing the registry values rig may write, as JSON:
-#' key, name, type (the value kind) and data (unexpanded) of each that exists.
-.rs.addFunction("rig.registryReadScript", function(entries = .rs.rig.registryEntries())
-{
-   items <- sprintf("@(%s, %s)", .rs.rig.psQuote(entries$key), .rs.rig.psQuote(entries$name))
-   c(
-      "$ErrorActionPreference = 'SilentlyContinue'",
-      "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
-      "$values = @()",
-      sprintf("foreach ($entry in @(%s)) {", paste(items, collapse = ", ")),
-      "   $key = Get-Item -LiteralPath $entry[0]",
-      "   if ($key -eq $null) { continue }",
-      "   $name = $key.GetValueNames() | Where-Object { $_ -eq $entry[1] } | Select-Object -First 1",
-      "   if ($name -eq $null) { continue }",
-      "   $values += @{",
-      "      key  = $entry[0];",
-      "      name = $entry[1];",
-      "      type = $key.GetValueKind($name).ToString();",
-      "      data = [string] $key.GetValue($name, '', 'DoNotExpandEnvironmentNames')",
-      "   }",
-      "}",
-      "ConvertTo-Json -InputObject @($values) -Compress"
-   )
-})
-
-#' A PowerShell script applying registry operations: each is a list with
-#' 'op' ("set" or "remove"), 'key' and 'name', plus 'type' and 'data' to set.
-.rs.addFunction("rig.registryWriteScript", function(ops)
-{
-   vapply(ops, function(op) {
-      if (identical(op$op, "remove"))
-         sprintf(
-            "Remove-ItemProperty -LiteralPath %s -Name %s -ErrorAction SilentlyContinue",
-            .rs.rig.psQuote(op$key),
-            .rs.rig.psQuote(op$name)
-         )
-      else
-         sprintf(
-            "Set-ItemProperty -LiteralPath %s -Name %s -Type %s -Value %s",
-            .rs.rig.psQuote(op$key),
-            .rs.rig.psQuote(op$name),
-            op$type,
-            .rs.rig.psQuote(op$data)
-         )
-   }, FUN.VALUE = character(1))
-})
-
-#' Write a PowerShell script as UTF-8 with a byte order mark: Windows
-#' PowerShell reads a script without one in the system ANSI code page, which
-#' would garble non-ASCII registry data (a user's PATH, say) on the way back
-#' into the registry.
-.rs.addFunction("rig.writePowershellScript", function(lines, path)
-{
-   con <- file(path, open = "wb")
-   on.exit(close(con), add = TRUE)
-   writeBin(as.raw(c(0xEF, 0xBB, 0xBF)), con)
-   writeLines(enc2utf8(lines), con, useBytes = TRUE)
-})
-
-#' Run a PowerShell script, returning its standard output. The script is
-#' expected to set the console output encoding to UTF-8 when it prints
-#' anything that matters, as the registry reader does.
-.rs.addFunction("rig.powershell", function(lines)
-{
-   script <- tempfile("rstudio-rig-", fileext = ".ps1")
-   on.exit(unlink(script), add = TRUE)
-   .rs.rig.writePowershellScript(lines, script)
-
-   output <- suppressWarnings(system2(
-      "powershell",
-      c("-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", shQuote(script)),
-      stdout = TRUE,
-      stderr = FALSE
-   ))
-
-   status <- attr(output, "status", exact = TRUE)
-   if (!is.null(status) && status != 0L)
-      stop(sprintf("powershell exited with status %i", status))
-
-   Encoding(output) <- "UTF-8"
-   output
-})
-
 #' The registry values rig may write that exist now, as a list keyed by
-#' .rs.rig.registryId(), each a list with 'type' and 'data'.
-.rs.addFunction("rig.registryRead", function()
+#' .rs.rig.registryId(), each a list with 'type' ("String" or
+#' "ExpandString") and 'data' as stored (not expanded).
+.rs.addFunction("rig.registryRead", function(entries = .rs.rig.registryEntries())
 {
-   output <- .rs.rig.powershell(.rs.rig.registryReadScript())
-   items <- .rs.fromJSON(paste(output, collapse = "\n"))
-   if (!is.null(items$key))
-      items <- list(items)
-
    values <- list()
-   for (item in items)
-      values[[.rs.rig.registryId(item$key, item$name)]] <- list(type = item$type, data = item$data)
+   for (i in seq_len(nrow(entries)))
+   {
+      key <- entries$key[[i]]
+      name <- entries$name[[i]]
+      value <- .rs.registryGetValue(key, name)
+      if (!is.null(value))
+         values[[.rs.rig.registryId(key, name)]] <- value
+   }
 
    values
 })
 
+#' Apply registry operations: each is a list with 'op' ("set" or "remove"),
+#' 'key' and 'name', plus 'type' and 'data' to set.
 .rs.addFunction("rig.registryWrite", function(ops)
 {
-   if (length(ops))
-      .rs.rig.powershell(.rs.rig.registryWriteScript(ops))
+   for (op in ops)
+   {
+      if (identical(op$op, "remove"))
+         .rs.registryDeleteValue(op$key, op$name)
+      else
+         .rs.registrySetValue(op$key, op$name, op$data, op$type)
+   }
+
+   # Explorer (and so every shell opened from it) keeps the PATH it has
+   # until told the user environment changed
+   keys <- vapply(ops, function(op) op$key, character(1))
+   if ("HKCU\\Environment" %in% keys)
+      .rs.registryNotifyEnvironmentChange()
 
    invisible(NULL)
 })
@@ -339,7 +262,7 @@
 .rs.addFunction("rig.registryRestoreOps", function(before, after, binaryDir)
 {
    ops <- list()
-   pathId <- .rs.rig.registryId("HKCU:\\Environment", "Path")
+   pathId <- .rs.rig.registryId("HKCU\\Environment", "Path")
 
    for (id in names(after))
    {
@@ -354,9 +277,9 @@
             entries <- strsplit(new$data, ";", fixed = TRUE)[[1L]]
             kept <- entries[tolower(trimws(entries)) != tolower(binaryDir)]
             if (length(kept) == 0L && is.null(old))
-               op <- list(op = "remove", key = "HKCU:\\Environment", name = "Path")
+               op <- list(op = "remove", key = "HKCU\\Environment", name = "Path")
             else
-               op <- list(op = "set", key = "HKCU:\\Environment", name = "Path", type = new$type, data = paste(kept, collapse = ";"))
+               op <- list(op = "set", key = "HKCU\\Environment", name = "Path", type = new$type, data = paste(kept, collapse = ";"))
          }
       }
       else if (is.null(old))
@@ -377,7 +300,7 @@
 
 .rs.addFunction("rig.registryOpLabel", function(op, binaryDir)
 {
-   if (identical(op$key, "HKCU:\\Environment") && identical(op$name, "Path"))
+   if (identical(op$key, "HKCU\\Environment") && identical(op$name, "Path"))
       sprintf("user PATH entry %s", binaryDir)
    else
       .rs.rig.registryId(op$key, op$name)
@@ -684,7 +607,7 @@
 #' Whether the install a snapshot was taken for may still be under way: the
 #' session that took it, or the rig it started, is still running. (On macOS
 #' rig outlives a session that crashes.)
-.rs.addFunction("rig.snapshotInUse", function(snapshot, running = .rs.rig.processRunning)
+.rs.addFunction("rig.snapshotInUse", function(snapshot, running = .rs.isProcessRunning)
 {
    pids <- c(snapshot$pid, snapshot$rigPid)
    pids <- pids[!is.na(pids) & pids != Sys.getpid()]
@@ -704,7 +627,7 @@
 .rs.addFunction("rig.userInstallBegin", function(rig,
                                                  file = NULL,
                                                  launchctl = .rs.rig.launchctl,
-                                                 running = .rs.rig.processRunning)
+                                                 running = .rs.isProcessRunning)
 {
    state <- .rs.rig.installState
    state$snapshot <- NULL
@@ -799,7 +722,7 @@
 #' under way, and kept while something is left to undo. Returns messages for
 #' the log.
 .rs.addFunction("rig.userInstallRecover", function(file,
-                                                   running = .rs.rig.processRunning,
+                                                   running = .rs.isProcessRunning,
                                                    launchctl = .rs.rig.launchctl)
 {
    if (!file.exists(file))
@@ -820,31 +743,6 @@
       unlink(file)
 
    .rs.rig.restoreMessages(result)
-})
-
-#' Whether a process of this user with the given id is running.
-.rs.addFunction("rig.processRunning", function(pid)
-{
-   pid <- as.integer(pid)
-
-   # on Windows pskill() terminates the process whatever the signal, so the
-   # task list is consulted instead
-   if (.rs.platform.isWindows)
-   {
-      output <- .rs.tryCatch(suppressWarnings(system2(
-         "tasklist",
-         c("/FI", shQuote(sprintf("PID eq %i", pid)), "/NH", "/FO", "CSV"),
-         stdout = TRUE,
-         stderr = FALSE
-      )))
-
-      if (inherits(output, "error"))
-         return(FALSE)
-
-      return(any(grepl(sprintf(",\"%i\",", pid), output, fixed = TRUE)))
-   }
-
-   isTRUE(tools::pskill(pid, 0L))
 })
 
 #' An empty table of R installations.

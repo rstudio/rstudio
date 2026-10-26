@@ -1037,8 +1037,8 @@ test_that("an install a previous session did not get to undo is undone at startu
    expect_false(file.exists(file))
 
    # this session's own process counts as running, a finished one does not
-   expect_true(.rs.rig.processRunning(Sys.getpid()))
-   expect_false(.rs.rig.processRunning(999999L))
+   expect_true(.rs.isProcessRunning(Sys.getpid()))
+   expect_false(.rs.isProcessRunning(999999L))
 
 })
 
@@ -1072,7 +1072,7 @@ test_that("a Windows user-mode install leaves the registry default and user PATH
    dir.create(bin)
    on.exit(unlink(bin, recursive = TRUE), add = TRUE)
 
-   # an in-memory registry in place of PowerShell
+   # an in-memory registry in place of the session's registry routines
    store <- new.env(parent = emptyenv())
    registry <- function() as.list(store)
    registryWrite <- function(ops)
@@ -1087,10 +1087,10 @@ test_that("a Windows user-mode install leaves the registry default and user PATH
       }
    }
 
-   pathId  <- .rs.rig.registryId("HKCU:\\Environment", "Path")
-   rId     <- .rs.rig.registryId("HKCU:\\Software\\R-core\\R", "Current Version")
-   rPathId <- .rs.rig.registryId("HKCU:\\Software\\R-core\\R", "InstallPath")
-   r64Id   <- .rs.rig.registryId("HKCU:\\Software\\R-core\\R64", "Current Version")
+   pathId  <- .rs.rig.registryId("HKCU\\Environment", "Path")
+   rId     <- .rs.rig.registryId("HKCU\\Software\\R-core\\R", "Current Version")
+   rPathId <- .rs.rig.registryId("HKCU\\Software\\R-core\\R", "InstallPath")
+   r64Id   <- .rs.rig.registryId("HKCU\\Software\\R-core\\R64", "Current Version")
    assign(pathId, list(type = "ExpandString", data = "C:\\Windows;%USERPROFILE%\\bin"), envir = store)
    assign(rId, list(type = "String", data = "4.6.1"), envir = store)
 
@@ -1149,7 +1149,7 @@ test_that("a Windows user-mode install leaves the registry default and user PATH
 test_that("rig's PATH entry is taken out without disturbing other changes", {
 
    bin <- "C:\\Users\\me\\.local\\bin"
-   pathId <- .rs.rig.registryId("HKCU:\\Environment", "Path")
+   pathId <- .rs.rig.registryId("HKCU\\Environment", "Path")
 
    # no user PATH before, only rig's entry after: the value goes away
    ops <- .rs.rig.registryRestoreOps(list(), setNames(list(list(type = "ExpandString", data = bin)), pathId), bin)
@@ -1171,55 +1171,9 @@ test_that("rig's PATH entry is taken out without disturbing other changes", {
 
 })
 
-test_that("the registry scripts quote their PowerShell strings", {
-
-   script <- .rs.rig.registryWriteScript(list(
-      list(op = "set", key = "HKCU:\\Environment", name = "Path", type = "ExpandString", data = "C:\\it's;D:\\x"),
-      list(op = "remove", key = "HKCU:\\Software\\R-core\\R", name = "Current Version")
-   ))
-   expect_identical(
-      script[[1L]],
-      "Set-ItemProperty -LiteralPath 'HKCU:\\Environment' -Name 'Path' -Type ExpandString -Value 'C:\\it''s;D:\\x'"
-   )
-   expect_identical(
-      script[[2L]],
-      "Remove-ItemProperty -LiteralPath 'HKCU:\\Software\\R-core\\R' -Name 'Current Version' -ErrorAction SilentlyContinue"
-   )
-
-   # the typographic single quotes delimit PowerShell strings as well
-   curly <- "C:\\Tools\\O\u2019Brien;D:\\\u2018x\u2019"
-   expect_identical(.rs.rig.psQuote(curly), paste0("'", "C:\\Tools\\O\u2019\u2019Brien;D:\\\u2018\u2018x\u2019\u2019", "'"))
-   expect_identical(.rs.rig.psQuote("plain"), "'plain'")
-
-   read <- .rs.rig.registryReadScript()
-   expect_true(any(grepl("@('HKCU:\\Environment', 'Path')", read, fixed = TRUE)))
-   expect_identical(tail(read, 1L), "ConvertTo-Json -InputObject @($values) -Compress")
-
-})
-
-test_that("the registry scripts are written as UTF-8 with a byte order mark", {
-
-   script <- tempfile("rig-", fileext = ".ps1")
-   on.exit(unlink(script), add = TRUE)
-
-   lines <- .rs.rig.registryWriteScript(list(
-      list(op = "set", key = "HKCU:\\Environment", name = "Path", type = "ExpandString", data = "C:\\Caf\u00e9;D:\\O\u2019Brien")
-   ))
-   .rs.rig.writePowershellScript(lines, script)
-
-   bytes <- readBin(script, what = "raw", n = file.size(script))
-   expect_identical(bytes[1:3], as.raw(c(0xEF, 0xBB, 0xBF)))
-   expect_identical(
-      rawToChar(bytes[-(1:3)]),
-      enc2utf8(paste0(lines, "\n"))
-   )
-   expect_true(any(bytes == as.raw(0xC3)))
-
-})
-
 test_that("a running process is told from one that is gone, without being signalled", {
 
-   expect_true(.rs.rig.processRunning(Sys.getpid()))
-   expect_false(.rs.rig.processRunning(2147483000L))
+   expect_true(.rs.isProcessRunning(Sys.getpid()))
+   expect_false(.rs.isProcessRunning(2147483000L))
 
 })
