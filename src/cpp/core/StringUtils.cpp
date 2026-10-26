@@ -545,9 +545,14 @@ std::size_t utf8IncompleteSuffixLength(const std::string& str)
 
 std::size_t utf8SequenceLength(const std::string& str, std::size_t pos)
 {
+   if (pos >= str.size())
+      return 0;
+
    const auto bytes = reinterpret_cast<const unsigned char*>(str.data());
 
    const auto lead = bytes[pos];
+   if (!lead)
+      return 0;
    if (lead < 0x80)
       return 1;
 

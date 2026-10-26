@@ -471,7 +471,7 @@ TEST(StringTest, Utf8ValidationFollowsRfc3629)
       {"four bytes", "\xF0\x9F\x98\x80", true, 4},          // U+1F600
       {"last code point", "\xF4\x8F\xBF\xBF", true, 4},     // U+10FFFF
       {"last before surrogates", "\xED\x9F\xBF", true, 3},  // U+D7FF
-      {"embedded NUL", std::string("a\0b", 3), true, 1},
+      {"embedded NUL", std::string("a\0b", 3), false, 1},
       {"past U+10FFFF", "\xF4\x90\x80\x80", false, 0},
       {"surrogate", "\xED\xA0\x80", false, 0},              // U+D800
       {"overlong two bytes", "\xC0\xAF", false, 0},

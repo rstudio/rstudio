@@ -24,10 +24,11 @@
 #ifndef SHARED_CORE_DATE_TIME_HPP
 #define SHARED_CORE_DATE_TIME_HPP
 
+#include "Utility.hpp"
+
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <algorithm>
 #include <string>
 
 namespace rstudio {
@@ -116,7 +117,7 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
                                        boost::posix_time::ptime *pOutTime)
 {
    try {
-      if (std::all_of(timeStr.begin(), timeStr.end(), [](char ch){ return std::isdigit(ch); }))
+      if (rstudio::isNumeric(timeStr))
       {
          // purely numeric, treat as UNIX timestamp
          time_t timestamp = std::stoll(timeStr);
@@ -124,6 +125,7 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
          return true;
       }
 
+      boost::posix_time::ptime outTime;
       std::string zoneStr;
       std::size_t zonePos = timeStr.rfind('Z');
       if (zonePos == std::string::npos)
@@ -152,13 +154,13 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
       {
          // ISO 8601 Basic
          timeStr[tPos] = 'T'; // convert 2004 to 2019
-         *pOutTime = boost::posix_time::from_iso_string(timeStr);
+         outTime = boost::posix_time::from_iso_string(timeStr);
       }
       else
       {
          // ISO 8601 Extended
          timeStr[tPos] = ' '; // convert 2019 to 2004 because that's what this version of Boost supports
-         *pOutTime = boost::posix_time::time_from_string(timeStr);
+         outTime = boost::posix_time::time_from_string(timeStr);
       }
 
       if (!zoneStr.empty() && zoneStr != "Z")
@@ -176,7 +178,7 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
                if (zoneStr[i] != ':')
                   return false;
             }
-            else if (!std::isdigit(static_cast<unsigned char>(zoneStr[i])))
+            else if (!cctype::isdigit(zoneStr[i]))
             {
                return false;
             }
@@ -191,8 +193,9 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
          if (zoneStr[0] == '-')
             minutes = -minutes;
 
-         *pOutTime -= boost::posix_time::minutes(minutes);
+         outTime -= boost::posix_time::minutes(minutes);
       }
+      *pOutTime = outTime;
       return true;
    }
    catch (boost::bad_lexical_cast&)
