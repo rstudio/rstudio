@@ -59,7 +59,14 @@ struct Dependency
 
 // Builds an installation script which will install all the dependencies at
 // once. Exposed for testing.
-std::string buildCombinedInstallScript(const std::vector<Dependency>& deps);
+std::string buildCombinedInstallScript(const std::vector<Dependency>& deps, bool isRenv);
+
+// Builds the installation script for the dependencies, installing them one at
+// a time when requested unless renv is active, in which case the packages are
+// always installed together. Exposed for testing.
+std::string buildInstallScript(const std::vector<Dependency>& deps,
+                               bool isRenv,
+                               bool installIndividually);
 
 // Builds a script which raises an R error if any of the dependencies, or the
 // packages they depend on in turn, are not installed or are older than

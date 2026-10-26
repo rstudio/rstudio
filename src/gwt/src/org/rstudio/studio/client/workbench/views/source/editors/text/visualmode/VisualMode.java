@@ -839,7 +839,8 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.vcsNextChange(),
         commands_.vcsPreviousChange(),
         commands_.vcsRevertChange(),
-        commands_.vcsShowChange()
+        commands_.vcsShowChange(),
+        commands_.vcsShowChangesSideBySide()
       );
       
       // initially disable code commands (they will be re-enabled later when an

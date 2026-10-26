@@ -23,8 +23,13 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   // the assistant sets options(shiny.launch.browser) to a window/external
   // launcher, which overrides the shiny_viewer_type pref set below and routes
   // the app away from the Viewer pane this test asserts on. The app.R name is
-  // load-bearing too -- the cleanup hooks unlink that exact file.
-  const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file named app.R in the current working directory. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Do NOT set options(shiny.launch.browser) and do NOT pass a launch.browser argument to runApp--RStudio is already configured to open the app in the Viewer pane. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
+  // load-bearing too -- the cleanup hooks unlink that exact file. So is the
+  // console-launch instruction: once the assistant chose
+  // `later::later(function() shiny::runApp("app.R"))` "to keep the console
+  // free", which ran the app on the idle event loop, where (before #19236)
+  // the session served no requests and took no interrupt; the cleanup below
+  // could not stop it and the shard was lost to the heartbeat watchdog.
+  const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file named app.R in the current working directory. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Do NOT set options(shiny.launch.browser) and do NOT pass a launch.browser argument to runApp--RStudio is already configured to open the app in the Viewer pane. Run the app with shiny::runApp() at the console; do NOT schedule it with later::later() or run it as a background job. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
 
   // Budget for the assistant to write app.R and get it running in the Viewer,
   // sized for LLM tail latency -- observed whole-test durations are 90-108s.

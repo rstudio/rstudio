@@ -25,6 +25,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -47,6 +48,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -475,7 +477,7 @@ public class ObjectBrowserModel implements TreeViewModel
    {
       public ContainerCell()
       {
-         super("click");
+         super("click", "keydown");
       }
       
       @Override
@@ -494,15 +496,22 @@ public class ObjectBrowserModel implements TreeViewModel
          
          ConnectionObjectType type = connection_.getObjectType(
                container.getType());
-         if (type != null && !StringUtil.isNullOrEmpty(type.getIconData()))
+         if (hasTableView(type))
          {
-            sb.appendHtmlConstant("<img src=\"" + type.getIconData() + "\" " + 
-                 (type.isDataType() ? 
-                     "class=\"" + RES.cellTreeStyle().tableViewDataset() + "\" " +
-                     "title=" + constants_.viewTableHTML()
-                     : 
-                     "class=\"" + RES.cellTreeStyle().containerIcon() + "\" ") +
-                 "/ >");
+            // the alt text puts the action in the item's accessible name, since
+            // Enter on the item performs it (see onBrowserEvent)
+            sb.append(SafeHtmlUtil.createOpenTag("img",
+                  "src", type.getIconData(),
+                  "class", RES.cellTreeStyle().tableViewDataset(),
+                  "title", constants_.viewTableTitle(),
+                  "alt", constants_.viewTableTitle()));
+         }
+         else if (type != null && !StringUtil.isNullOrEmpty(type.getIconData()))
+         {
+            sb.append(SafeHtmlUtil.createOpenTag("img",
+                  "src", type.getIconData(),
+                  "class", RES.cellTreeStyle().containerIcon(),
+                  "alt", type.getName()));
          }
       }
       
@@ -519,6 +528,24 @@ public class ObjectBrowserModel implements TreeViewModel
                 eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
              }
           }
+          else if ("keydown".equals(event.getType()) &&
+                   event.getKeyCode() == KeyCodes.KEY_ENTER &&
+                   KeyboardShortcut.getModifierValue(event) == KeyboardShortcut.NONE &&
+                   // holding Enter would otherwise open a viewer per repeated keydown
+                   !KeyboardShortcut.isRepeating(event) &&
+                   hasTableView(connection_.getObjectType(value.getType())))
+          {
+             event.preventDefault();
+             eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
+          }
+      }
+
+      // whether the item shows the View table icon, so Enter can open the table
+      private boolean hasTableView(ConnectionObjectType type)
+      {
+         return type != null &&
+                !StringUtil.isNullOrEmpty(type.getIconData()) &&
+                type.isDataType();
       }
    }
    
