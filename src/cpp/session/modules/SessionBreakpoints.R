@@ -487,16 +487,25 @@
    env$fun()
 
    # We injected function breakpoints above, but we don't want to leave them
-   # in the in-memory copies of the functions. Replay the assignment that 
-   # created the original copy of the function. The client will set proper
-   # breakpoints on the functions later.
+   # in the in-memory copies of the functions. Replay the assignment that
+   # created the original copy of the function, in the environment the file
+   # ran in. The client will set proper breakpoints on the functions later.
    env$fun <- .rs.removeBreakpoints(env$fun)
-   breakSteps <- breakSteps[nchar(breakSteps) > 6]
-   for (steps in breakSteps) {
-      step <- as.numeric(strsplit(breakSteps, ",")[[1]][3]) 
-      op <- deparse(body(env$fun)[[2]][[2]][[step]][[1]]) 
-      if (op == "<-" || op == "=") 
-         eval(body(env$fun)[[2]][[2]][[step]], envir = globalenv())
+   paths <- strsplit(breakSteps, ",", fixed = TRUE)
+
+   # Only a breakpoint nested inside a top-level statement (a function the
+   # file defines) leaves anything behind; its statement index is third.
+   nested <- paths[lengths(paths) > 3]
+   indices <- unique(vapply(nested, function(path) as.integer(path[[3]]), 1L))
+   for (index in indices)
+   {
+      statement <- body(env$fun)[[2]][[2]][[index]]
+      if (is.call(statement) &&
+          (identical(statement[[1]], as.name("<-")) ||
+           identical(statement[[1]], as.name("="))))
+      {
+         eval(statement, envir = envir)
+      }
    }
 
    return(NULL)

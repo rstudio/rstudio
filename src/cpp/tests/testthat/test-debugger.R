@@ -302,6 +302,37 @@ test_that("debugSource runs files with no expressions", {
 
 })
 
+test_that("debugSource restores every breakpointed function it defined", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines(c(
+      "cleanup_f <- function() {",
+      "   1",
+      "}",
+      "cleanup_g <- function() {",
+      "   2",
+      "}"
+   ), file)
+
+   # Breakpoints inside functions the file defines are injected into the
+   # generated function before it runs, so the definitions it assigns carry
+   # them too. Afterwards each one must be replaced by a clean copy, in the
+   # environment the file ran in and not the global environment.
+   envir <- new.env()
+   .rs.executeDebugSource(file, "unknown", breaklines = c(2L, 5L), local = envir)
+
+   for (name in c("cleanup_f", "cleanup_g"))
+   {
+      expect_null(.rs.findBreakpointSteps(body(envir[[name]])))
+      expect_false(exists(name, envir = globalenv(), inherits = FALSE))
+   }
+
+   expect_equal(envir$cleanup_f(), 1)
+   expect_equal(envir$cleanup_g(), 2)
+
+})
+
 test_that("debugSource keeps source references when they are available", {
 
    op <- options(keep.source = TRUE)
