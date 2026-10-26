@@ -16,7 +16,11 @@
 #ifdef _WIN32
 
 #include <algorithm>
+#include <map>
 #include <sstream>
+#include <vector>
+
+#include <tlhelp32.h>
 
 #include <core/FileUtils.hpp>
 #include <core/system/Environment.hpp>
@@ -35,6 +39,21 @@ namespace detail {
 
 std::vector<SubprocInfo> getSubprocesses(PidType pid,
                                        const FILETIME* pParentCreationTime);
+
+struct OpenedProcess
+{
+   PidType pid;
+   HANDLE handle;
+};
+
+typedef std::map<PidType, std::vector<PROCESSENTRY32W>> ProcessListing;
+
+bool listProcesses(ProcessListing* pListing);
+
+void openProcessTree(HANDLE hRoot,
+                     PidType rootPid,
+                     const ProcessListing& listing,
+                     std::vector<OpenedProcess>* pProcesses);
 
 bool getProcessParentPid(HANDLE hProcess, PidType* pParentPid);
 
@@ -730,6 +749,42 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeReachesPastUnterminableProcess)
 
    EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
    EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hGrandchild, 5000));
+}
+
+TEST_F(Win32ProcessTest, OpenProcessTreeReachesPastExitedIntermediate)
+{
+   // cmd.exe -> cmd.exe -> ping.exe, listed before the middle one goes
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 8 posit.co\"\" 1> nul"));
+
+   std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
+   ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
+   PidType middle = children[0].pid;
+
+   std::vector<SubprocInfo> grandchildren = WaitForSubprocesses(middle);
+   ASSERT_EQ(1u, grandchildren.size()) << "grandchildren:" << Describe(grandchildren);
+   PidType grandchild = grandchildren[0].pid;
+
+   detail::ProcessListing listing;
+   ASSERT_TRUE(detail::listProcesses(&listing));
+
+   HANDLE hMiddle = ::OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE, FALSE, middle);
+   ASSERT_NE(nullptr, hMiddle);
+   CloseHandleOnExitScope closeMiddle(&hMiddle, ERROR_LOCATION);
+   ASSERT_TRUE(::TerminateProcess(hMiddle, 1));
+   ASSERT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hMiddle, 5000));
+
+   // the orphaned ping.exe is still listed under the middle process
+   std::vector<detail::OpenedProcess> opened;
+   detail::openProcessTree(pi.hProcess, pi.dwProcessId, listing, &opened);
+
+   bool found = false;
+   for (detail::OpenedProcess& process : opened)
+   {
+      if (process.pid == grandchild)
+         found = true;
+      ::CloseHandle(process.handle);
+   }
+   EXPECT_TRUE(found);
 }
 
 TEST_F(Win32ProcessTest, TerminateProcessTreeWithoutDescendants)

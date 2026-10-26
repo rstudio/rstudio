@@ -1172,6 +1172,22 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
 
 namespace detail {
 
+struct OpenedProcess
+{
+   PidType pid;
+   HANDLE handle;
+};
+
+// every process in a snapshot, by parent pid
+typedef std::map<PidType, std::vector<PROCESSENTRY32W>> ProcessListing;
+
+bool listProcesses(ProcessListing* pListing);
+
+void openProcessTree(HANDLE hRoot,
+                     PidType rootPid,
+                     const ProcessListing& listing,
+                     std::vector<OpenedProcess>* pProcesses);
+
 // The parent pid a process records, from ntdll's process information,
 // which the documented APIs do not expose; false when it cannot be queried.
 bool getProcessParentPid(HANDLE hProcess, PidType* pParentPid)
@@ -1256,12 +1272,6 @@ Error terminateProcessHandle(HANDLE hProcess)
    return error;
 }
 
-struct OpenedProcess
-{
-   PidType pid;
-   HANDLE handle;
-};
-
 // The file name of a process's executable, or empty when it cannot be
 // queried. Wide characters throughout: in an ANSI code page such as CP932
 // the trailing byte of a character can be 0x5c, a backslash.
@@ -1278,14 +1288,17 @@ std::wstring processImageName(HANDLE hProcess)
 }
 
 // Opens the process a snapshot lists, and keeps the handle only when it is
-// for that process (see detail::isListedProcess); null otherwise. A process
-// that refuses termination is opened for querying alone, so that it can
-// still be checked and its descendants reached; terminating it later fails
-// and is logged.
+// for that process (see detail::isListedProcess); null otherwise, with
+// *pExited set when it is gone. A process that refuses termination is
+// opened for querying alone, so that it can still be checked and its
+// descendants reached; terminating it later fails and is logged.
 HANDLE openListedProcess(const PROCESSENTRY32W& entry,
                          PidType parentPid,
-                         const FILETIME* pParentCreationTime)
+                         const FILETIME* pParentCreationTime,
+                         bool* pExited)
 {
+   *pExited = false;
+
    HANDLE hProcess = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION,
                                    FALSE,
                                    entry.th32ProcessID);
@@ -1294,9 +1307,11 @@ HANDLE openListedProcess(const PROCESSENTRY32W& entry,
 
    if (!hProcess)
    {
-      // ERROR_INVALID_PARAMETER: exited since the snapshot, nothing to do
+      // ERROR_INVALID_PARAMETER: exited since the snapshot
       Error error = LAST_SYSTEM_ERROR();
-      if (error.getCode() != ERROR_INVALID_PARAMETER)
+      if (error.getCode() == ERROR_INVALID_PARAMETER)
+         *pExited = true;
+      else
          LOG_ERROR(error);
       return nullptr;
    }
@@ -1323,75 +1338,109 @@ HANDLE openListedProcess(const PROCESSENTRY32W& entry,
    return hProcess;
 }
 
-// Opens every descendant of the process behind hRoot, keeping the handles
-// so no pid can be recycled before it is terminated. This walks a snapshot
-// itself rather than using getSubprocesses(): that only returns pids, and
-// a pid can be recycled between its listing and a later OpenProcess(), so
-// each child is opened first and checked against the listing afterwards
-// (see detail::isListedProcess). One snapshot bounds the walk: a tree that
-// keeps spawning is terminated as it was listed, not chased.
-void openProcessTree(HANDLE hRoot, PidType rootPid, std::vector<OpenedProcess>* pProcesses)
+} // anonymous namespace
+
+namespace detail {
+
+bool listProcesses(ProcessListing* pListing)
 {
-   std::map<PidType, std::vector<PROCESSENTRY32W>> childrenOf;
+   HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+   if (hSnapshot == INVALID_HANDLE_VALUE)
    {
-      HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-      if (hSnapshot == INVALID_HANDLE_VALUE)
-      {
-         LOG_ERROR(LAST_SYSTEM_ERROR());
-         return;
-      }
-      CloseHandleOnExitScope closeSnapshot(&hSnapshot, ERROR_LOCATION);
-
-      PROCESSENTRY32W entry;
-      entry.dwSize = sizeof(entry);
-      if (!::Process32FirstW(hSnapshot, &entry))
-      {
-         LOG_ERROR(LAST_SYSTEM_ERROR());
-         return;
-      }
-
-      do
-      {
-         childrenOf[entry.th32ParentProcessID].push_back(entry);
-      }
-      while (::Process32NextW(hSnapshot, &entry));
+      LOG_ERROR(LAST_SYSTEM_ERROR());
+      return false;
    }
+   CloseHandleOnExitScope closeSnapshot(&hSnapshot, ERROR_LOCATION);
+
+   PROCESSENTRY32W entry;
+   entry.dwSize = sizeof(entry);
+   if (!::Process32FirstW(hSnapshot, &entry))
+   {
+      LOG_ERROR(LAST_SYSTEM_ERROR());
+      return false;
+   }
+
+   do
+   {
+      (*pListing)[entry.th32ParentProcessID].push_back(entry);
+   }
+   while (::Process32NextW(hSnapshot, &entry));
+
+   return true;
+}
+
+// Opens every descendant of the process behind hRoot in the listing,
+// keeping the handles so no pid can be recycled before it is terminated.
+// This walks the listing rather than using getSubprocesses(): that only
+// returns pids, and a pid can be recycled between its listing and a later
+// OpenProcess(), so each child is opened first and checked against the
+// listing afterwards (see isListedProcess). One listing bounds the walk: a
+// tree that keeps spawning is terminated as it was listed, not chased.
+//
+// An intermediate that has exited since the listing is walked through,
+// so the descendants it leaves behind are still reached. Their checks are
+// then against the listed pid, which by now could have been given to a
+// new process, and the creation time of the nearest ancestor still held.
+void openProcessTree(HANDLE hRoot,
+                     PidType rootPid,
+                     const ProcessListing& listing,
+                     std::vector<OpenedProcess>* pProcesses)
+{
+   struct Pending
+   {
+      PidType pid;
+      bool haveCreationTime;
+      FILETIME creationTime;
+   };
+
+   Pending root = Pending();
+   root.pid = rootPid;
+   root.haveCreationTime = getProcessCreationTime(hRoot, &root.creationTime);
 
    // breadth-first from the root; a recycled pid can make the listing loop
    // back on itself, so each pid is visited once
    std::set<PidType> visited;
    visited.insert(rootPid);
-   std::vector<OpenedProcess> pending;
-   pending.push_back({rootPid, hRoot});
+   std::vector<Pending> pending;
+   pending.push_back(root);
    for (std::size_t i = 0; i < pending.size(); i++)
    {
-      OpenedProcess parent = pending[i];
+      Pending parent = pending[i];
 
-      std::map<PidType, std::vector<PROCESSENTRY32W>>::const_iterator it = childrenOf.find(parent.pid);
-      if (it == childrenOf.end())
+      ProcessListing::const_iterator it = listing.find(parent.pid);
+      if (it == listing.end())
          continue;
-
-      FILETIME parentCreationTime;
-      bool haveParentCreationTime = getProcessCreationTime(parent.handle, &parentCreationTime);
 
       for (const PROCESSENTRY32W& entry : it->second)
       {
          if (!visited.insert(entry.th32ProcessID).second)
             continue;
 
+         bool exited = false;
          HANDLE hChild = openListedProcess(entry,
                                            parent.pid,
-                                           haveParentCreationTime ? &parentCreationTime : nullptr);
+                                           parent.haveCreationTime ? &parent.creationTime : nullptr,
+                                           &exited);
+
+         Pending child = Pending();
+         child.pid = entry.th32ProcessID;
          if (hChild)
          {
-            pending.push_back({entry.th32ProcessID, hChild});
+            child.haveCreationTime = getProcessCreationTime(hChild, &child.creationTime);
+            pending.push_back(child);
             pProcesses->push_back({entry.th32ProcessID, hChild});
+         }
+         else if (exited)
+         {
+            child.haveCreationTime = parent.haveCreationTime;
+            child.creationTime = parent.creationTime;
+            pending.push_back(child);
          }
       }
    }
 }
 
-} // anonymous namespace
+} // namespace detail
 
 Error terminateProcessTree(PidType pid)
 {
@@ -1402,12 +1451,14 @@ Error terminateProcessTree(PidType pid)
 
    // the descendants have to be found while the root is alive: once it has
    // exited, an orphan's recorded parent pid no longer passes the check
-   std::vector<OpenedProcess> descendants;
-   openProcessTree(hRoot, pid, &descendants);
+   std::vector<detail::OpenedProcess> descendants;
+   detail::ProcessListing listing;
+   if (detail::listProcesses(&listing))
+      detail::openProcessTree(hRoot, pid, listing, &descendants);
 
    Error error = terminateProcessHandle(hRoot);
 
-   for (OpenedProcess& descendant : descendants)
+   for (detail::OpenedProcess& descendant : descendants)
    {
       Error descendantError = terminateProcessHandle(descendant.handle);
       if (descendantError)
