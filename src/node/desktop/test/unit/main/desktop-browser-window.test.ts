@@ -106,6 +106,7 @@ if (!isWindowsDocker()) {
         width: number,
         height: number,
         displays: number,
+        fullscreen = false,
       ): { win: DesktopBrowserWindow; setSize: sinon.SinonStub; getAllDisplays: sinon.SinonStub } {
         const display = { ...screen.getPrimaryDisplay(), workAreaSize };
         sinon.stub(screen, 'getPrimaryDisplay').returns(display);
@@ -113,6 +114,7 @@ if (!isWindowsDocker()) {
 
         const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
         sinon.stub(win.window, 'isMaximized').returns(maximized);
+        sinon.stub(win.window, 'isFullScreen').returns(fullscreen);
         sinon.stub(win.window, 'getBounds').returns({ x: 0, y: 0, width, height });
         const setSize = sinon.stub(win.window, 'setSize');
 
@@ -128,6 +130,12 @@ if (!isWindowsDocker()) {
       it('resizes a maximized window collapsed to its frame to the work area', () => {
         useWayland();
         const { setSize } = emitResize(true, 44, 44, 1);
+        assert.isTrue(setSize.calledOnceWithExactly(workAreaSize.width, workAreaSize.height));
+      });
+
+      it('resizes a fullscreen window collapsed to its frame to the work area', () => {
+        useWayland();
+        const { setSize } = emitResize(false, 44, 44, 1, true);
         assert.isTrue(setSize.calledOnceWithExactly(workAreaSize.width, workAreaSize.height));
       });
 

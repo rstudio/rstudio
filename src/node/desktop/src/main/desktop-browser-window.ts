@@ -415,11 +415,12 @@ export class DesktopBrowserWindow extends EventEmitter {
   }
 
   /**
-   * Restore a maximized window that Wayland has collapsed to its frame.
+   * Restore a maximized (or fullscreen) window that Wayland has collapsed to
+   * its frame.
    *
    * When the last monitor goes away (DisplayPort monitors do while the system
-   * sleeps), mutter configures maximized windows with no size and Chromium
-   * shrinks them to their frame. If the monitor returns before Chromium
+   * sleeps), mutter configures maximized and fullscreen windows with no size
+   * and Chromium shrinks them to their frame. If the monitor returns before Chromium
    * acknowledges that, mutter sees no size change and never re-sends the
    * maximized size, so the window stays collapsed (#19137). Committing a real
    * size makes mutter constrain the window to the work area again.
@@ -428,7 +429,11 @@ export class DesktopBrowserWindow extends EventEmitter {
    * nothing, and changing window state while it has no monitor crashes it.
    */
   recoverCollapsedMaximizedWindow(): void {
-    if (this.window.isDestroyed() || !this.window.isMaximized()) {
+    if (this.window.isDestroyed()) {
+      return;
+    }
+
+    if (!this.window.isMaximized() && !this.window.isFullScreen()) {
       return;
     }
 
@@ -452,7 +457,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     // whichever monitor it is on. (The window's own bounds can't pick that
     // monitor; Wayland reports every toplevel at the origin.)
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    logger().logDebug(`Restoring collapsed maximized window (${bounds.width}x${bounds.height}) to ${width}x${height}`);
+    logger().logDebug(`Restoring collapsed window (${bounds.width}x${bounds.height}) to ${width}x${height}`);
     this.window.setSize(width, height);
   }
 
