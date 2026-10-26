@@ -149,10 +149,6 @@ public class SatelliteApplication
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
-      // "application" role prioritizes application keyboard handling
-      // over screen-reader shortcuts
-      view_.getWidget().getElement().setAttribute("role", "application");
-
       // show the view
       view_.show(satellite_.getParams());
       
