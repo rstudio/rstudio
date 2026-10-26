@@ -625,6 +625,8 @@ add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
 target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
 if(TARGET RapidJSON)
    target_link_libraries(rstudio-rapidjson INTERFACE RapidJSON)
+elseif(TARGET rapidjson)  # Alternative spelling also used in some installed packages
+   target_link_libraries(rstudio-rapidjson INTERFACE rapidjson)
 elseif(RAPIDJSON_INCLUDE_DIRS)
    target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_INCLUDE_DIRS}")
 elseif(RapidJSON_INCLUDE_DIRS)  # Alternative spelling also used in some installed packages
