@@ -66,13 +66,6 @@ dependency(RAPIDXML
    ATTRIBUTION  "Copyright (C) 2006, 2009 Marcin Kalicinski"
 )
 
-dependency(CATCH2
-   DEPNAME      "Catch2"
-   PATH         "src/cpp/tests/cpp/tests/vendor/catch.hpp"
-   LICENSE      "BSL-1.0"
-   ATTRIBUTION  "Copyright (c) 2022 Two Blue Cubes Ltd."
-)
-
 dependency(LIBUUID
    DEPNAME      "libuuid"
    REPOSITORY   "https://github.com/util-linux/util-linux/tree/master/libuuid"
