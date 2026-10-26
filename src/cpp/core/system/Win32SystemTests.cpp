@@ -36,10 +36,10 @@ namespace detail {
 std::vector<SubprocInfo> getSubprocesses(PidType pid,
                                        const FILETIME* pParentCreationTime);
 
-bool isListedProcess(const std::string& listedExe,
+bool isListedProcess(const std::wstring& listedExe,
                      const FILETIME& snapshotTime,
                      const FILETIME* pParentCreationTime,
-                     const std::string& openedExe,
+                     const std::wstring& openedExe,
                      const FILETIME* pCreationTime);
 
 } // namespace detail
@@ -567,21 +567,21 @@ TEST(Win32SystemTest, ListedProcessIdentity)
    FILETIME after = {125, 0};
 
    // the listed process: same image, created between its parent and the snapshot
-   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, &parent, "PING.EXE", &during));
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"PING.EXE", &during));
 
    // its pid recycled after the snapshot
-   EXPECT_FALSE(detail::isListedProcess("ping.exe", snapshot, &parent, "ping.exe", &after));
+   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"ping.exe", &after));
 
    // its pid recycled onto another image, whatever the clock says
-   EXPECT_FALSE(detail::isListedProcess("ping.exe", snapshot, &parent, "cmd.exe", &during));
+   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"cmd.exe", &during));
 
    // an orphan predating the process whose pid it reports as its parent
-   EXPECT_FALSE(detail::isListedProcess("ping.exe", snapshot, &parent, "ping.exe", &before));
+   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"ping.exe", &before));
 
    // what cannot be queried is not held against it
-   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, nullptr, "ping.exe", &before));
-   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, &parent, "ping.exe", nullptr));
-   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, &parent, "", &during));
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, nullptr, L"ping.exe", &before));
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"ping.exe", nullptr));
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"", &during));
 }
 
 // A child takes a moment to show up after its parent starts; poll for it

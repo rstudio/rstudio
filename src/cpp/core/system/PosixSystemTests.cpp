@@ -445,6 +445,45 @@ bool reapWithin(pid_t pid, int* pStatus, int seconds)
    return false;
 }
 
+// Reaps every child of ours in a process group, within a bound.
+void reapGroupWithin(pid_t pgid, int seconds)
+{
+   for (int i = 0; i < seconds * 100; i++)
+   {
+      int status = 0;
+      pid_t result = ::waitpid(-pgid, &status, WNOHANG);
+      if (result == -1)
+         return;
+      if (result == 0)
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+}
+
+// Reads one pid from a pipe, retrying interrupted calls until the deadline.
+bool readPidWithin(int fd, pid_t* pPid, int seconds)
+{
+   auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
+   for (;;)
+   {
+      auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
+               deadline - std::chrono::steady_clock::now()).count();
+      if (remaining <= 0)
+         return false;
+
+      struct pollfd readable = {fd, POLLIN, 0};
+      int ready = ::poll(&readable, 1, static_cast<int>(remaining));
+      if (ready == -1 && errno == EINTR)
+         continue;
+      if (ready != 1)
+         return false;
+
+      ssize_t bytes = ::read(fd, pPid, sizeof(*pPid));
+      if (bytes == -1 && errno == EINTR)
+         continue;
+      return bytes == static_cast<ssize_t>(sizeof(*pPid));
+   }
+}
+
 } // anonymous namespace
 
 TEST(PosixTests, TerminateProcessTreeTakesDescendants)
@@ -462,8 +501,10 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
    BOOST_SCOPE_EXIT_END
 #endif
 
-   // the child reports the grandchild's pid over a pipe, so the test can
-   // take it down even if discovering it through the process table fails
+   // the grandchild reports its own pid over a pipe once it is set up, so
+   // the test can take it down even if discovering it through the process
+   // table fails; the child puts both in a process group of their own, so
+   // cleanup can reach the grandchild even before it has reported
    int fds[2];
    ASSERT_EQ(0, ::pipe(fds));
 
@@ -472,6 +513,8 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
    if (child == 0)
    {
       ::close(fds[0]);
+      if (::setpgid(0, 0) == -1)
+         ::_exit(1);
 
       pid_t grandchild = ::fork();
       if (grandchild == -1)
@@ -484,10 +527,8 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
          // the line is split naively, hiding the parent pid
          ::prctl(PR_SET_NAME, "worker thread");
 #endif
-      }
-      else
-      {
-         (void)::write(fds[1], &grandchild, sizeof(grandchild));
+         pid_t self = ::getpid();
+         (void)::write(fds[1], &self, sizeof(self));
       }
       ::close(fds[1]);
 
@@ -499,34 +540,25 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
    }
    ::close(fds[1]);
 
-   pid_t grandchild = 0;
    bool childReaped = false;
    bool grandchildReaped = false;
-   BOOST_SCOPE_EXIT(&fds, &child, &grandchild, &childReaped, &grandchildReaped)
+   BOOST_SCOPE_EXIT(&fds, &child, &childReaped, &grandchildReaped)
    {
       ::close(fds[0]);
 
-      int status = 0;
-      if (!childReaped)
+      // the group's pid is the child's, which stays reserved while any
+      // member of the group is alive
+      if (!childReaped || !grandchildReaped)
       {
+         ::kill(-child, SIGKILL);
          ::kill(child, SIGKILL);
-         reapWithin(child, &status, 5);
-      }
-
-      if (grandchild > 0 && !grandchildReaped)
-      {
-         ::kill(grandchild, SIGKILL);
-#ifdef __linux__
-         reapWithin(grandchild, &status, 5);
-#endif
+         reapGroupWithin(child, 5);
       }
    }
    BOOST_SCOPE_EXIT_END
 
-   struct pollfd readable = {fds[0], POLLIN, 0};
-   ASSERT_EQ(1, ::poll(&readable, 1, 5000));
-   ASSERT_EQ(static_cast<ssize_t>(sizeof(grandchild)),
-             ::read(fds[0], &grandchild, sizeof(grandchild)));
+   pid_t grandchild = 0;
+   ASSERT_TRUE(readPidWithin(fds[0], &grandchild, 5));
    ASSERT_GT(grandchild, 0);
 
    std::vector<SubprocInfo> grandchildren;

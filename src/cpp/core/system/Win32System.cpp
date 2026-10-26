@@ -34,7 +34,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -1180,14 +1179,17 @@ namespace detail {
 // that does not depend on the clock: a replacement with the same image,
 // created during a backward clock step inside this window, would pass,
 // and nothing public identifies a process beyond these.
-bool isListedProcess(const std::string& listedExe,
+bool isListedProcess(const std::wstring& listedExe,
                      const FILETIME& snapshotTime,
                      const FILETIME* pParentCreationTime,
-                     const std::string& openedExe,
+                     const std::wstring& openedExe,
                      const FILETIME* pCreationTime)
 {
-   if (!openedExe.empty() && !boost::algorithm::iequals(listedExe, openedExe))
+   if (!openedExe.empty() &&
+       ::CompareStringOrdinal(listedExe.c_str(), -1, openedExe.c_str(), -1, TRUE) != CSTR_EQUAL)
+   {
       return false;
+   }
 
    if (pCreationTime == nullptr)
       return true;
@@ -1227,22 +1229,24 @@ struct OpenedProcess
    HANDLE handle;
 };
 
-// The file name of a process's executable, or empty when it cannot be queried.
-std::string processImageName(HANDLE hProcess)
+// The file name of a process's executable, or empty when it cannot be
+// queried. Wide characters throughout: in an ANSI code page such as CP932
+// the trailing byte of a character can be 0x5c, a backslash.
+std::wstring processImageName(HANDLE hProcess)
 {
-   std::vector<char> path(32768);
+   std::vector<wchar_t> path(32768);
    DWORD size = static_cast<DWORD>(path.size());
-   if (!::QueryFullProcessImageNameA(hProcess, 0, path.data(), &size))
-      return std::string();
+   if (!::QueryFullProcessImageNameW(hProcess, 0, path.data(), &size))
+      return std::wstring();
 
-   std::string fullPath(path.data(), size);
-   std::size_t separator = fullPath.find_last_of("\\/");
-   return separator == std::string::npos ? fullPath : fullPath.substr(separator + 1);
+   std::wstring fullPath(path.data(), size);
+   std::size_t separator = fullPath.find_last_of(L"\\/");
+   return separator == std::wstring::npos ? fullPath : fullPath.substr(separator + 1);
 }
 
 // Opens the process a snapshot lists, and keeps the handle only when it is
 // for that process (see detail::isListedProcess); null otherwise.
-HANDLE openListedProcess(const PROCESSENTRY32& entry,
+HANDLE openListedProcess(const PROCESSENTRY32W& entry,
                          const FILETIME& snapshotTime,
                          const FILETIME* pParentCreationTime)
 {
@@ -1299,9 +1303,9 @@ void openProcessTree(HANDLE hParent, PidType parentPid, std::vector<OpenedProces
    }
    CloseHandleOnExitScope closeSnapshot(&hSnapshot, ERROR_LOCATION);
 
-   PROCESSENTRY32 entry;
+   PROCESSENTRY32W entry;
    entry.dwSize = sizeof(entry);
-   if (!::Process32First(hSnapshot, &entry))
+   if (!::Process32FirstW(hSnapshot, &entry))
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
       return;
@@ -1319,7 +1323,7 @@ void openProcessTree(HANDLE hParent, PidType parentPid, std::vector<OpenedProces
       if (hChild)
          children.push_back({entry.th32ProcessID, hChild});
    }
-   while (::Process32Next(hSnapshot, &entry));
+   while (::Process32NextW(hSnapshot, &entry));
 
    for (const OpenedProcess& child : children)
    {
