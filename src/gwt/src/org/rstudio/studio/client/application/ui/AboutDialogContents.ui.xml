@@ -151,7 +151,7 @@
          PRE-RELEASE BUILD
       </g:HTMLPanel>
       <g:HTMLPanel styleName="{style.dialogContents}">
-         <g:HTMLPanel>
+         <g:HTMLPanel ui:field="productInfo">
             <g:HTMLPanel styleName="{style.outerProductInfo}">
                <g:HTMLPanel styleName="{style.productInfo}">
                   <rw:DecorativeImage resource='{res.rstudioLarge2x}'
