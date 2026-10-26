@@ -36,11 +36,14 @@ namespace detail {
 std::vector<SubprocInfo> getSubprocesses(PidType pid,
                                        const FILETIME* pParentCreationTime);
 
+bool getProcessParentPid(HANDLE hProcess, PidType* pParentPid);
+
 bool isListedProcess(const std::wstring& listedExe,
-                     const FILETIME& snapshotTime,
-                     const FILETIME* pParentCreationTime,
+                     PidType listedParentPid,
                      const std::wstring& openedExe,
-                     const FILETIME* pCreationTime);
+                     const PidType* pOpenedParentPid,
+                     const FILETIME* pCreationTime,
+                     const FILETIME* pParentCreationTime);
 
 } // namespace detail
 
@@ -567,26 +570,43 @@ TEST(Win32SystemTest, ListedProcessIdentity)
 {
    FILETIME before = {25, 0};
    FILETIME parent = {50, 0};
-   FILETIME during = {75, 0};
-   FILETIME snapshot = {100, 0};
-   FILETIME after = {125, 0};
+   FILETIME after = {75, 0};
+   PidType parentPid = 1000;
+   PidType otherPid = 2000;
 
-   // the listed process: same image, created between its parent and the snapshot
-   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"PING.EXE", &during));
+   // the listed process: same image, spawned by the held parent after it
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", parentPid, L"PING.EXE", &parentPid, &after, &parent));
 
-   // its pid recycled after the snapshot
-   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"ping.exe", &after));
+   // its pid recycled by a process of the same image from another parent,
+   // whatever the clock said when
+   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", parentPid, L"ping.exe", &otherPid, &after, &parent));
+   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", parentPid, L"ping.exe", &otherPid, &before, &parent));
 
-   // its pid recycled onto another image, whatever the clock says
-   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"cmd.exe", &during));
+   // its pid recycled onto another image
+   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", parentPid, L"cmd.exe", &parentPid, &after, &parent));
 
    // an orphan predating the process whose pid it reports as its parent
-   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"ping.exe", &before));
+   EXPECT_FALSE(detail::isListedProcess(L"ping.exe", parentPid, L"ping.exe", &parentPid, &before, &parent));
 
    // what cannot be queried is not held against it
-   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, nullptr, L"ping.exe", &before));
-   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"ping.exe", nullptr));
-   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", snapshot, &parent, L"", &during));
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", parentPid, L"", nullptr, nullptr, nullptr));
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", parentPid, L"ping.exe", &parentPid, &before, nullptr));
+   EXPECT_TRUE(detail::isListedProcess(L"ping.exe", parentPid, L"ping.exe", &parentPid, nullptr, &parent));
+}
+
+TEST_F(Win32ProcessTest, ParentPidOfChildIsQueryableWithLimitedAccess)
+{
+   // the walk opens descendants with this access alone, so the parent pid
+   // check it relies on must work through such a handle
+   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
+
+   HANDLE hChild = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pi.dwProcessId);
+   ASSERT_NE(nullptr, hChild);
+   CloseHandleOnExitScope closeChild(&hChild, ERROR_LOCATION);
+
+   PidType parentPid = 0;
+   ASSERT_TRUE(detail::getProcessParentPid(hChild, &parentPid));
+   EXPECT_EQ(currentProcessId(), parentPid);
 }
 
 // A child takes a moment to show up after its parent starts; poll for it

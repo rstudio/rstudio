@@ -1172,20 +1172,51 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
 
 namespace detail {
 
-// Whether an opened process is the one a snapshot listed. Its image name
-// must agree with the listing, its pid must not have been recycled since
-// the snapshot (creation after the snapshot time), and the listing must
-// not be an orphan still reporting a parent pid that was recycled
-// (creation before the parent's). What cannot be queried is not held
-// against it, as in getSubprocesses(). The image name is the only check
-// that does not depend on the clock: a replacement with the same image,
-// created during a backward clock step inside this window, would pass,
-// and nothing public identifies a process beyond these.
+// The parent pid a process records, from ntdll's process information,
+// which the documented APIs do not expose; false when it cannot be queried.
+bool getProcessParentPid(HANDLE hProcess, PidType* pParentPid)
+{
+   // the layout ntdll fills in for ProcessBasicInformation (class 0)
+   struct BasicInformation
+   {
+      LONG exitStatus;
+      PVOID pebBaseAddress;
+      ULONG_PTR affinityMask;
+      LONG basePriority;
+      ULONG_PTR uniqueProcessId;
+      ULONG_PTR inheritedFromUniqueProcessId;
+   };
+   typedef LONG (NTAPI *QueryInformationProcess)(HANDLE, ULONG, PVOID, ULONG, PULONG);
+
+   static QueryInformationProcess query = reinterpret_cast<QueryInformationProcess>(
+            ::GetProcAddress(::GetModuleHandleW(L"ntdll.dll"), "NtQueryInformationProcess"));
+   if (query == nullptr)
+      return false;
+
+   BasicInformation info;
+   ULONG size = 0;
+   LONG status = query(hProcess, 0, &info, sizeof(info), &size);
+   if (status < 0)
+      return false;
+
+   *pParentPid = static_cast<PidType>(info.inheritedFromUniqueProcessId);
+   return true;
+}
+
+// Whether an opened process is the one a snapshot listed as a child of a
+// process whose handle is held. Its image name must agree with the listing;
+// the parent it records must be that held process, whose pid cannot be
+// recycled while the handle is open, so anything recording it was spawned
+// by it, before or after the snapshot; and it must not predate that parent,
+// which would make it an orphan reporting a recycled parent pid. What
+// cannot be queried is not held against it, as in getSubprocesses(). None
+// of this depends on the clock at the time of the walk.
 bool isListedProcess(const std::wstring& listedExe,
-                     const FILETIME& snapshotTime,
-                     const FILETIME* pParentCreationTime,
+                     PidType listedParentPid,
                      const std::wstring& openedExe,
-                     const FILETIME* pCreationTime)
+                     const PidType* pOpenedParentPid,
+                     const FILETIME* pCreationTime,
+                     const FILETIME* pParentCreationTime)
 {
    if (!openedExe.empty() &&
        ::CompareStringOrdinal(listedExe.c_str(), -1, openedExe.c_str(), -1, TRUE) != CSTR_EQUAL)
@@ -1193,14 +1224,14 @@ bool isListedProcess(const std::wstring& listedExe,
       return false;
    }
 
-   if (pCreationTime == nullptr)
-      return true;
-
-   if (::CompareFileTime(pCreationTime, &snapshotTime) > 0)
+   if (pOpenedParentPid != nullptr && *pOpenedParentPid != listedParentPid)
       return false;
 
-   if (pParentCreationTime != nullptr && ::CompareFileTime(pCreationTime, pParentCreationTime) < 0)
+   if (pCreationTime != nullptr && pParentCreationTime != nullptr &&
+       ::CompareFileTime(pCreationTime, pParentCreationTime) < 0)
+   {
       return false;
+   }
 
    return true;
 }
@@ -1252,7 +1283,7 @@ std::wstring processImageName(HANDLE hProcess)
 // still be checked and its descendants reached; terminating it later fails
 // and is logged.
 HANDLE openListedProcess(const PROCESSENTRY32W& entry,
-                         const FILETIME& snapshotTime,
+                         PidType parentPid,
                          const FILETIME* pParentCreationTime)
 {
    HANDLE hProcess = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION,
@@ -1270,14 +1301,18 @@ HANDLE openListedProcess(const PROCESSENTRY32W& entry,
       return nullptr;
    }
 
+   PidType openedParentPid = 0;
+   bool haveParentPid = detail::getProcessParentPid(hProcess, &openedParentPid);
+
    FILETIME creationTime;
    bool haveCreationTime = getProcessCreationTime(hProcess, &creationTime);
 
    if (!detail::isListedProcess(entry.szExeFile,
-                                snapshotTime,
-                                pParentCreationTime,
+                                parentPid,
                                 processImageName(hProcess),
-                                haveCreationTime ? &creationTime : nullptr))
+                                haveParentPid ? &openedParentPid : nullptr,
+                                haveCreationTime ? &creationTime : nullptr,
+                                pParentCreationTime))
    {
       Error error = closeHandle(&hProcess, ERROR_LOCATION);
       if (error)
@@ -1292,16 +1327,11 @@ HANDLE openListedProcess(const PROCESSENTRY32W& entry,
 // so no pid can be recycled before it is terminated. This walks a snapshot
 // itself rather than using getSubprocesses(): that only returns pids, and
 // a pid can be recycled between its listing and a later OpenProcess(), so
-// each child is opened first and checked against the listing afterwards.
-// One snapshot bounds the walk: a tree that keeps spawning is terminated
-// as it was listed, not chased.
+// each child is opened first and checked against the listing afterwards
+// (see detail::isListedProcess). One snapshot bounds the walk: a tree that
+// keeps spawning is terminated as it was listed, not chased.
 void openProcessTree(HANDLE hRoot, PidType rootPid, std::vector<OpenedProcess>* pProcesses)
 {
-   // taken before the snapshot, so a process created in between is (at
-   // worst) missed rather than mistaken for one that was listed
-   FILETIME snapshotTime;
-   ::GetSystemTimeAsFileTime(&snapshotTime);
-
    std::map<PidType, std::vector<PROCESSENTRY32W>> childrenOf;
    {
       HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -1350,7 +1380,7 @@ void openProcessTree(HANDLE hRoot, PidType rootPid, std::vector<OpenedProcess>* 
             continue;
 
          HANDLE hChild = openListedProcess(entry,
-                                           snapshotTime,
+                                           parent.pid,
                                            haveParentCreationTime ? &parentCreationTime : nullptr);
          if (hChild)
          {
