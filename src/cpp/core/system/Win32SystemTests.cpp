@@ -583,7 +583,7 @@ TEST(Win32SystemTest, RegistryKeyRoundTripsStringValuesAsStored)
       ASSERT_FALSE(error) << error.asString();
 
       // UTF-8 in and out, %VARS% left unexpanded, and the kind reported
-      std::string path = "%USERPROFILE%\\Caf\xC3\xA9;C:\\Tools\\O\xE2\x80\x99Brien";
+      std::string path = "%USERPROFILE%\\Caf\xC3\xA9;C:\\Tools\\O\xE2\x80\x99" "Brien";
       error = key.setValue("Path", path, REG_EXPAND_SZ);
       ASSERT_FALSE(error) << error.asString();
 
