@@ -11,7 +11,7 @@ import { isServiceReachable, reprobeRequest, reprobeService } from '@utils/netwo
 // front door -- counts as the service not answering, and the verdict must
 // reach the host's cached entry so later guards on that host skip too.
 
-type Behaviour = 'ok' | 'error' | 'hang' | 'redirect-then-hang' | 'redirect-then-ok';
+type Behaviour = 'ok' | 'error' | 'hang' | 'redirect-then-hang' | 'redirect-then-ok' | 'ids';
 
 let server: http.Server;
 let origin: string;
@@ -36,6 +36,11 @@ test.beforeAll(async () => {
       case 'redirect-then-ok':
         res.writeHead(302, { Location: `${origin}/ok` });
         res.end();
+        break;
+      case 'ids':
+        // A first leg whose answer names the second (PubMed esearch -> esummary).
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end('{"esearchresult":{"idlist":["1","2"]}}');
         break;
       default:
         // Headers only, then stall: the client has a connection and a status
@@ -87,6 +92,21 @@ test('a hang behind a redirect is still a hang', async () => {
 
 test('a redirect that lands on an answer is reachable', async () => {
   expect(await reprobeRequest({ host: host('d'), url: `${origin}/redirect-then-ok` }, 2000)).toBe(true);
+});
+
+test('a lookup that continues with a second request is probed through it', async () => {
+  const chained = (second: string) => ({
+    host: host(second),
+    url: `${origin}/ids`,
+    next: (body: string) => {
+      const ids: string[] = JSON.parse(body).esearchresult.idlist;
+      return { host: host(second), url: `${origin}/${second}?id=${ids.join(',')}` };
+    },
+  });
+  expect(await reprobeRequest(chained('ok'), 2000)).toBe(true);
+  // The first leg answers; the second hangs -- the lookup has not answered.
+  expect(await reprobeRequest(chained('hang'), 500)).toBe(false);
+  expect(await isServiceReachable(host('hang'))).toBe(false);
 });
 
 test('a server-side failure counts as the service not answering', async () => {

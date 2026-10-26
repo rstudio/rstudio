@@ -28,6 +28,12 @@ export interface ServiceRequest {
   host: string;
   url: string;
   init?: RequestInit;
+  /**
+   * The request the rsession makes next, derived from this one's response
+   * body (e.g. PubMed's esummary for the ids esearch returned), or undefined
+   * when the lookup ends here. Probed within the same timeout.
+   */
+  next?: (body: string) => ServiceRequest | undefined;
 }
 
 /**
@@ -54,14 +60,41 @@ export const CITATION_SERVICE_REQUESTS = {
     host: CITATION_SERVICE_HOSTS.datacite,
     url: `${CITATION_SERVICE_HOSTS.datacite}/dois?query=${encodeURIComponent(query)}`,
   }),
-  // SessionPanmirrorPubMed.cpp (the esearch leg; esummary follows it)
+  // SessionPanmirrorPubMed.cpp: esearch for the ids, then esummary for their
+  // records -- the search is not answered until both have.
   pubmed: (query: string): ServiceRequest => ({
     host: CITATION_SERVICE_HOSTS.pubmed,
     url:
       `${CITATION_SERVICE_HOSTS.pubmed}/entrez/eutils/esearch.fcgi` +
-      `?db=pubmed&term=${encodeURIComponent(query)}&sort=relevance&retmax=25`,
+      `?db=pubmed&term=${encodeURIComponent(query)}&sort=relevance&retmax=25${PUBMED_STANDARD_PARAMS}`,
+    next: (body) => {
+      const ids = pubMedIdList(body);
+      if (ids.length === 0) {
+        return undefined;
+      }
+      return {
+        host: CITATION_SERVICE_HOSTS.pubmed,
+        url:
+          `${CITATION_SERVICE_HOSTS.pubmed}/entrez/eutils/esummary.fcgi` +
+          `?db=pubmed&id=${encodeURIComponent(ids.join(','))}${PUBMED_STANDARD_PARAMS}`,
+      };
+    },
   }),
 } as const;
+
+// Appended to every PubMed request by pubMedRequest().
+const PUBMED_STANDARD_PARAMS = '&tool=rstudio&email=pubmed%40posit.co&retmode=json';
+
+// The ids an esearch response carries, or none when it is not the JSON the
+// rsession expects (the probe then stops at this leg, as the lookup would).
+function pubMedIdList(body: string): string[] {
+  try {
+    const idlist: unknown = JSON.parse(body)?.esearchresult?.idlist;
+    return Array.isArray(idlist) ? idlist.map(String) : [];
+  } catch {
+    return [];
+  }
+}
 
 const probeCache = new Map<string, Promise<boolean>>();
 
@@ -108,18 +141,22 @@ export function reprobeService(url: string, timeoutMs = 10000): Promise<boolean>
  * answer for `request.host`, so later tests' guards on that host skip too.
  */
 export function reprobeRequest(request: ServiceRequest, timeoutMs = 10000): Promise<boolean> {
-  const probe = fetch(request.url, {
-    ...request.init,
-    redirect: 'follow',
-    signal: AbortSignal.timeout(timeoutMs),
-  })
-    .then(async (response) => {
-      await response.arrayBuffer();
-      return response.status < 500 && response.status !== 429;
-    })
-    .catch(() => false);
+  const probe = probeRequestChain(request, AbortSignal.timeout(timeoutMs)).catch(() => false);
   probeCache.set(request.host, probe);
   return probe;
+}
+
+// Follow `request` and whatever it derives from its response, all under one
+// abort signal; rejects on a network-level failure or timeout on any leg.
+async function probeRequestChain(request: ServiceRequest, signal: AbortSignal): Promise<boolean> {
+  const response = await fetch(request.url, { ...request.init, redirect: 'follow', signal });
+  const body = await response.text();
+  if (response.status >= 500 || response.status === 429) {
+    return false;
+  }
+
+  const next = request.next?.(body);
+  return next ? probeRequestChain(next, signal) : true;
 }
 
 /**
