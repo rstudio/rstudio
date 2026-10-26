@@ -547,12 +547,19 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
       ::close(fds[0]);
 
       // the group's pid is the child's, which stays reserved while any
-      // member of the group is alive
+      // member of the group is alive; the child is also reaped by pid, in
+      // case it never joined the group
       if (!childReaped || !grandchildReaped)
       {
          ::kill(-child, SIGKILL);
          ::kill(child, SIGKILL);
          reapGroupWithin(child, 5);
+      }
+
+      if (!childReaped)
+      {
+         int status = 0;
+         reapWithin(child, &status, 5);
       }
    }
    BOOST_SCOPE_EXIT_END

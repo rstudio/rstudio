@@ -58,7 +58,7 @@ namespace tests {
 class Win32ProcessTest : public ::testing::Test
 {
 protected:
-   STARTUPINFO si;
+   STARTUPINFOW si;
    PROCESS_INFORMATION pi;
    HANDLE hJob;
 
@@ -74,8 +74,13 @@ protected:
    // so that nothing can be spawned before the job is in place.
    bool StartProcess(const std::string& command)
    {
-      std::vector<char> cmdBuf(command.begin(), command.end());
-      cmdBuf.push_back('\0');
+      return StartProcess(std::wstring(command.begin(), command.end()));
+   }
+
+   bool StartProcess(const std::wstring& command)
+   {
+      std::vector<wchar_t> cmdBuf(command.begin(), command.end());
+      cmdBuf.push_back(L'\0');
 
       hJob = ::CreateJobObject(nullptr, nullptr);
       if (hJob == nullptr)
@@ -92,7 +97,7 @@ protected:
          return false;
       }
 
-      if (!::CreateProcess(
+      if (!::CreateProcessW(
              nullptr,          // No module name (use command line)
              &(cmdBuf[0]),     // Command
              nullptr,          // Process handle not inheritable
@@ -615,6 +620,41 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendants)
 
    EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
    EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hGrandchild, 5000));
+}
+
+TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendantWithNonAsciiName)
+{
+   // a copy of ping.exe under a name outside the ASCII range: in CP932 its
+   // last character ends in the byte that is a backslash, which once cut the
+   // name wrongly and left the process running. Only a CP932 system sees
+   // that; elsewhere this checks that such a name goes through the wide
+   // enumeration and image query intact.
+   FilePath tempDir;
+   ASSERT_FALSE(FilePath::tempFilePath(tempDir));
+   ASSERT_FALSE(tempDir.ensureDirectory());
+   std::wstring exe = tempDir.getAbsolutePathW() + L"\\\u30bd.exe";
+
+   std::string windir;
+   ASSERT_FALSE(expandEnvironmentVariables("%windir%", &windir));
+   std::wstring ping = FilePath(windir).completePath("system32/ping.exe").getAbsolutePathW();
+   ASSERT_TRUE(::CopyFileW(ping.c_str(), exe.c_str(), FALSE));
+
+   ASSERT_TRUE(StartProcess(L"cmd.exe /S /C \"\"" + exe + L"\" -n 8 posit.co\" 1> nul"));
+
+   std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
+   ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
+
+   HANDLE hGrandchild = ::OpenProcess(SYNCHRONIZE, FALSE, children[0].pid);
+   ASSERT_NE(nullptr, hGrandchild);
+   CloseHandleOnExitScope closeGrandchild(&hGrandchild, ERROR_LOCATION);
+
+   Error error = terminateProcessTree(pi.dwProcessId);
+   EXPECT_FALSE(error) << error.asString();
+
+   EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
+   EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hGrandchild, 5000));
+
+   tempDir.remove();
 }
 
 TEST_F(Win32ProcessTest, TerminateProcessTreeWithoutDescendants)

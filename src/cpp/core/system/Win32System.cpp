@@ -22,6 +22,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <map>
+#include <set>
 #include <algorithm>
 
 #include <windows.h>
@@ -1280,55 +1282,76 @@ HANDLE openListedProcess(const PROCESSENTRY32W& entry,
    return hProcess;
 }
 
-// Opens every descendant of the process behind hParent, keeping the handles
-// so no pid can be recycled before it is terminated. This walks the snapshot
-// itself rather than using getSubprocesses(): that only returns pids, and a
-// pid can be recycled between its listing and a later OpenProcess(), so each
-// child is opened first and checked against the listing afterwards.
-void openProcessTree(HANDLE hParent, PidType parentPid, std::vector<OpenedProcess>* pProcesses)
+// Opens every descendant of the process behind hRoot, keeping the handles
+// so no pid can be recycled before it is terminated. This walks a snapshot
+// itself rather than using getSubprocesses(): that only returns pids, and
+// a pid can be recycled between its listing and a later OpenProcess(), so
+// each child is opened first and checked against the listing afterwards.
+// One snapshot bounds the walk: a tree that keeps spawning is terminated
+// as it was listed, not chased.
+void openProcessTree(HANDLE hRoot, PidType rootPid, std::vector<OpenedProcess>* pProcesses)
 {
-   FILETIME parentCreationTime;
-   bool haveParentCreationTime = getProcessCreationTime(hParent, &parentCreationTime);
-
    // taken before the snapshot, so a process created in between is (at
    // worst) missed rather than mistaken for one that was listed
    FILETIME snapshotTime;
    ::GetSystemTimeAsFileTime(&snapshotTime);
 
-   HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-   if (hSnapshot == INVALID_HANDLE_VALUE)
+   std::map<PidType, std::vector<PROCESSENTRY32W>> childrenOf;
    {
-      LOG_ERROR(LAST_SYSTEM_ERROR());
-      return;
-   }
-   CloseHandleOnExitScope closeSnapshot(&hSnapshot, ERROR_LOCATION);
+      HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+      if (hSnapshot == INVALID_HANDLE_VALUE)
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+         return;
+      }
+      CloseHandleOnExitScope closeSnapshot(&hSnapshot, ERROR_LOCATION);
 
-   PROCESSENTRY32W entry;
-   entry.dwSize = sizeof(entry);
-   if (!::Process32FirstW(hSnapshot, &entry))
-   {
-      LOG_ERROR(LAST_SYSTEM_ERROR());
-      return;
+      PROCESSENTRY32W entry;
+      entry.dwSize = sizeof(entry);
+      if (!::Process32FirstW(hSnapshot, &entry))
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+         return;
+      }
+
+      do
+      {
+         childrenOf[entry.th32ParentProcessID].push_back(entry);
+      }
+      while (::Process32NextW(hSnapshot, &entry));
    }
 
-   std::vector<OpenedProcess> children;
-   do
+   // breadth-first from the root; a recycled pid can make the listing loop
+   // back on itself, so each pid is visited once
+   std::set<PidType> visited;
+   visited.insert(rootPid);
+   std::vector<OpenedProcess> pending;
+   pending.push_back({rootPid, hRoot});
+   for (std::size_t i = 0; i < pending.size(); i++)
    {
-      if (entry.th32ParentProcessID != parentPid)
+      OpenedProcess parent = pending[i];
+
+      std::map<PidType, std::vector<PROCESSENTRY32W>>::const_iterator it = childrenOf.find(parent.pid);
+      if (it == childrenOf.end())
          continue;
 
-      HANDLE hChild = openListedProcess(entry,
-                                        snapshotTime,
-                                        haveParentCreationTime ? &parentCreationTime : nullptr);
-      if (hChild)
-         children.push_back({entry.th32ProcessID, hChild});
-   }
-   while (::Process32NextW(hSnapshot, &entry));
+      FILETIME parentCreationTime;
+      bool haveParentCreationTime = getProcessCreationTime(parent.handle, &parentCreationTime);
 
-   for (const OpenedProcess& child : children)
-   {
-      pProcesses->push_back(child);
-      openProcessTree(child.handle, child.pid, pProcesses);
+      for (const PROCESSENTRY32W& entry : it->second)
+      {
+         if (!visited.insert(entry.th32ProcessID).second)
+            continue;
+
+         HANDLE hChild = openListedProcess(entry,
+                                           snapshotTime,
+                                           haveParentCreationTime ? &parentCreationTime : nullptr);
+         if (hChild)
+         {
+            pending.push_back({entry.th32ProcessID, hChild});
+            pProcesses->push_back({entry.th32ProcessID, hChild});
+         }
+      }
    }
 }
 
