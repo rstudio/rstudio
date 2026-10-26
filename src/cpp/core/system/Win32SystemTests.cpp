@@ -20,14 +20,15 @@
 #include <sstream>
 #include <vector>
 
-#include <tlhelp32.h>
-
 #include <core/FileUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+
+// after windows.h, via System.hpp
+#include <tlhelp32.h>
 
 #include <gtest/gtest.h>
 
@@ -751,9 +752,12 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeReachesPastUnterminableProcess)
    EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hGrandchild, 5000));
 }
 
-TEST_F(Win32ProcessTest, OpenProcessTreeReachesPastExitedIntermediate)
+TEST_F(Win32ProcessTest, OpenProcessTreeStopsAtExitedIntermediate)
 {
-   // cmd.exe -> cmd.exe -> ping.exe, listed before the middle one goes
+   // cmd.exe -> cmd.exe -> ping.exe, listed before the middle one goes.
+   // Its orphan is out of reach afterwards, by design (see openProcessTree):
+   // nothing can establish that it belongs to the tree, and the walk must
+   // not guess. The listed pid is skipped quietly.
    ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 8 posit.co\"\" 1> nul"));
 
    std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
@@ -769,11 +773,19 @@ TEST_F(Win32ProcessTest, OpenProcessTreeReachesPastExitedIntermediate)
 
    HANDLE hMiddle = ::OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE, FALSE, middle);
    ASSERT_NE(nullptr, hMiddle);
-   CloseHandleOnExitScope closeMiddle(&hMiddle, ERROR_LOCATION);
    ASSERT_TRUE(::TerminateProcess(hMiddle, 1));
    ASSERT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hMiddle, 5000));
+   ASSERT_TRUE(::CloseHandle(hMiddle));
 
-   // the orphaned ping.exe is still listed under the middle process
+   // the root cmd.exe was waiting on the middle one, and held its handle;
+   // once it has exited too, nothing keeps the middle process openable
+   ASSERT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
+   HANDLE hGone = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, middle);
+   DWORD error = ::GetLastError();
+   CloseHandleOnExitScope closeGone(&hGone, ERROR_LOCATION);
+   ASSERT_EQ(nullptr, hGone) << "the exited middle process can still be opened";
+   ASSERT_EQ(ERROR_INVALID_PARAMETER, error);
+
    std::vector<detail::OpenedProcess> opened;
    detail::openProcessTree(pi.hProcess, pi.dwProcessId, listing, &opened);
 
@@ -784,7 +796,7 @@ TEST_F(Win32ProcessTest, OpenProcessTreeReachesPastExitedIntermediate)
          found = true;
       ::CloseHandle(process.handle);
    }
-   EXPECT_TRUE(found);
+   EXPECT_FALSE(found);
 }
 
 TEST_F(Win32ProcessTest, TerminateProcessTreeWithoutDescendants)

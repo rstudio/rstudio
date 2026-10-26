@@ -1288,17 +1288,14 @@ std::wstring processImageName(HANDLE hProcess)
 }
 
 // Opens the process a snapshot lists, and keeps the handle only when it is
-// for that process (see detail::isListedProcess); null otherwise, with
-// *pExited set when it is gone. A process that refuses termination is
-// opened for querying alone, so that it can still be checked and its
-// descendants reached; terminating it later fails and is logged.
+// for that process (see detail::isListedProcess); null otherwise. A process
+// that refuses termination is opened for querying alone, so that it can
+// still be checked and its descendants reached; terminating it later fails
+// and is logged.
 HANDLE openListedProcess(const PROCESSENTRY32W& entry,
                          PidType parentPid,
-                         const FILETIME* pParentCreationTime,
-                         bool* pExited)
+                         const FILETIME* pParentCreationTime)
 {
-   *pExited = false;
-
    HANDLE hProcess = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION,
                                    FALSE,
                                    entry.th32ProcessID);
@@ -1307,11 +1304,9 @@ HANDLE openListedProcess(const PROCESSENTRY32W& entry,
 
    if (!hProcess)
    {
-      // ERROR_INVALID_PARAMETER: exited since the snapshot
+      // ERROR_INVALID_PARAMETER: exited since the snapshot, nothing to do
       Error error = LAST_SYSTEM_ERROR();
-      if (error.getCode() == ERROR_INVALID_PARAMETER)
-         *pExited = true;
-      else
+      if (error.getCode() != ERROR_INVALID_PARAMETER)
          LOG_ERROR(error);
       return nullptr;
    }
@@ -1377,10 +1372,11 @@ bool listProcesses(ProcessListing* pListing)
 // listing afterwards (see isListedProcess). One listing bounds the walk: a
 // tree that keeps spawning is terminated as it was listed, not chased.
 //
-// An intermediate that has exited since the listing is walked through,
-// so the descendants it leaves behind are still reached. Their checks are
-// then against the listed pid, which by now could have been given to a
-// new process, and the creation time of the nearest ancestor still held.
+// An intermediate that exits between the listing and being opened takes
+// its subtree out of reach. Its descendants record only its pid, which may
+// since have gone to a new process, so their membership of the tree can no
+// longer be established, and terminating an unrelated process would be the
+// worse failure. A job object per launch would be the deterministic answer.
 void openProcessTree(HANDLE hRoot,
                      PidType rootPid,
                      const ProcessListing& listing,
@@ -1416,26 +1412,17 @@ void openProcessTree(HANDLE hRoot,
          if (!visited.insert(entry.th32ProcessID).second)
             continue;
 
-         bool exited = false;
          HANDLE hChild = openListedProcess(entry,
                                            parent.pid,
-                                           parent.haveCreationTime ? &parent.creationTime : nullptr,
-                                           &exited);
+                                           parent.haveCreationTime ? &parent.creationTime : nullptr);
+         if (!hChild)
+            continue;
 
          Pending child = Pending();
          child.pid = entry.th32ProcessID;
-         if (hChild)
-         {
-            child.haveCreationTime = getProcessCreationTime(hChild, &child.creationTime);
-            pending.push_back(child);
-            pProcesses->push_back({entry.th32ProcessID, hChild});
-         }
-         else if (exited)
-         {
-            child.haveCreationTime = parent.haveCreationTime;
-            child.creationTime = parent.creationTime;
-            pending.push_back(child);
-         }
+         child.haveCreationTime = getProcessCreationTime(hChild, &child.creationTime);
+         pending.push_back(child);
+         pProcesses->push_back({entry.th32ProcessID, hChild});
       }
    }
 }
