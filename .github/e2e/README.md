@@ -40,8 +40,10 @@ nearly 1:1 into wall-clock savings until the per-shard test time
 approaches that overhead.
 
 - macOS: 6. At 2 shards the test step ran 79 and 101 minutes against a
-  120 minute job timeout. The org's enterprise plan allows 50 concurrent
-  macOS jobs, so runner concurrency is not the limit.
+  120 minute job timeout; at 6 most shards run 10 to 30 minutes of tests,
+  with the shard that lands the heavy cluster at 40 to 50. The org's
+  enterprise plan allows 50 concurrent macOS jobs, so runner concurrency
+  is not the limit.
 - Windows: 6. At 4 shards the slowest shard ran ~30 minutes of tests
   against ~22 for its siblings and was the long pole of the PR-triggered
   run; at 6 most shards run 15 to 25 minutes of tests, with the shard
