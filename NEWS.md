@@ -10,6 +10,7 @@
 
 ### Fixed
 - ([#14985](https://github.com/rstudio/rstudio/issues/14985)): Fixed an issue where opening a folder without a `.Rproj` file from File > Open Project failed with an unclear error in RStudio Server and when RStudio Desktop uses the web-based file dialogs; the folder now opens as a project, creating its `.Rproj` file as the native file dialogs do.
+- ([#19236](https://github.com/rstudio/rstudio/issues/19236)): Fixed an issue where R code run from the event loop while the console was idle (e.g. `shiny::runApp()` scheduled with `later::later()`) left RStudio unresponsive and uninterruptible until it returned. The session now keeps serving requests while such code runs, shows R as busy, and can be interrupted.
 - ([#19202](https://github.com/rstudio/rstudio/issues/19202)): Fixed an issue where a tab in the sidebar that shows itself while another pane is zoomed (e.g. Help after `?mean`) stayed hidden, instead of taking over the zoom, when the sidebar had been shown after RStudio started.
 - ([#19240](https://github.com/rstudio/rstudio/issues/19240)): The "RStudio has reduced background file operations" console notice is no longer printed again each time a suspended session is resumed or R is restarted; it is printed once per project session, and again when a restart first turns the reduction on.
 - ([#19168](https://github.com/rstudio/rstudio/issues/19168)): RStudio now installs requested dependencies together in renv projects, allowing renv to resolve dependencies and use parallel installation even when individual package installation is enabled.

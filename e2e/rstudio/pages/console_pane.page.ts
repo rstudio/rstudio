@@ -223,6 +223,16 @@ export async function getConsolePromptCount(page: Page): Promise<number | null> 
   });
 }
 
+/**
+ * Read the text of the console's current prompt (`> `, `+ `, or an interactive
+ * read's own, e.g. `answer? `). The shell renders the prompt in the cell before
+ * the input's, in the input row of its table.
+ */
+export async function getConsolePromptText(page: Page): Promise<string> {
+  return page.evaluate(() =>
+    document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
+}
+
 /** Set once we've warned about a missing prompt counter, to avoid log spam. */
 let warnedMissingPromptCount = false;
 
