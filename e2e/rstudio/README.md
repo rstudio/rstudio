@@ -150,10 +150,37 @@ assertion are still recoverable: `browser-console.log` (buffered
 the test body) and, on Desktop, the slice of each rsession log file
 (`RSTUDIO_DATA_HOME/log/*.log`) written while the test ran. Both are scoped
 to the single test -- the console buffer is cleared and the log byte-offsets
-are snapshotted at test start. This is separate from the fixture failing a
-test on uncaught client exceptions (see `window.rstudio.errors` in
-`CLAUDE.md`): the exception itself fails the test; the attachments add the
-surrounding browser-console and backend-log context.
+are snapshotted at test start. Against an external server
+(`PW_RSTUDIO_SERVER_URL`), whose log directory the harness can't read, the
+fixture instead attaches the Posit Assistant backend's `positai.log`, fetched
+through the session's `/files/` endpoint from the account's default data home
+and trimmed to the entries stamped since the test started; the account's
+sessions share that log, so other workers' entries can be interleaved. This
+is separate from the fixture failing a test on uncaught client exceptions
+(see `window.rstudio.errors` in `CLAUDE.md`): the exception itself fails the
+test; the attachments add the surrounding browser-console and backend-log
+context.
+
+Before each test the fixture also round-trips the session's main thread
+(`window.rstudio.session.ping()`, bounded by `probeSessionLiveness()` in
+`utils/session-liveness.ts`). A session that has stopped serving requests
+while its page stays responsive -- R running code dispatched from the idle
+event loop, #19236 -- is invisible to DOM-based checks and would otherwise
+hang every RPC-awaiting helper for its whole budget. When the probe times out
+the test fails at once with `deaf-session.png` and `rsession-stacks.txt`
+attached, and Playwright moves on in a fresh worker. A failing test is probed
+again in teardown, so a session that went deaf under the test body gets the
+same attachment, and each worker whose tests never recorded a deaf session
+probes once more before shutting it down (a hook that wedged it has no test
+to attach to), writing the dump next to the rsession logs. The stack dump is
+the output of `scripts/ci/rsession-diagnostics.sh` (`sample` on macOS; thread
+wait channels plus gdb on Linux, escalated through passwordless `sudo -n`
+where that exists, since the default ptrace_scope refuses a non-descendant)
+over every rsession on the test machine. Against a remote server (`PW_RSTUDIO_SERVER_URL` on
+another host) the sessions run elsewhere, so no dump is taken and the failure
+message says so. The CI workflows run the same script privileged over whatever
+rsession is still running at the end of a failed shard (uploaded as the
+`rsession-diagnostics-*` artifact).
 
 ### Profiling a slow test
 

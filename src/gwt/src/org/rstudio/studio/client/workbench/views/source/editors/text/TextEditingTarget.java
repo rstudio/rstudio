@@ -311,6 +311,7 @@ public class TextEditingTarget implements
    public static final String EDITOR_SPLIT_NONE  = "none";
    public static final String EDITOR_SPLIT_RIGHT = "right";
    public static final String EDITOR_SPLIT_DOWN  = "down";
+   public static final String EDITOR_SPLIT_DIFF  = "diff";
    
    public static final String QUARTO_PREVIEW_FORMAT = "quartoPreviewFormat";
 
@@ -371,7 +372,9 @@ public class TextEditingTarget implements
 
       // Editor splits: a tab can show a second view of its document
       // (EDITOR_SPLIT_RIGHT / EDITOR_SPLIT_DOWN), sharing the document and
-      // undo history but with per-view selection, scrolling, and folds.
+      // undo history but with per-view selection, scrolling, and folds; or
+      // the Git index version of the document beside it (EDITOR_SPLIT_DIFF),
+      // read-only and aligned with it.
       //
       // Note the distinction between the "active tab" and the "active editor
       // view". Command routing selects the active tab (this editing target);
@@ -386,6 +389,12 @@ public class TextEditingTarget implements
       String getEditorSplit();
       boolean focusOtherEditorSplit();
       boolean isEditorViewFocused();
+      // whether the read-only base pane of a side-by-side diff holds focus,
+      // and whether it was the last of the document's views to
+      boolean isDiffSplitFocused();
+      boolean diffSplitHeldFocusLast();
+      // scrolls the base pane's cursor into view; false without a base pane
+      boolean ensureDiffSplitCursorVisible();
       DocDisplay getActiveDisplay();
       void destroyEditorSplit();
       void syncSplitShowChunkOutputInline();
@@ -1372,7 +1381,12 @@ public class TextEditingTarget implements
    @Override
    public void ensureCursorVisible()
    {
-      docDisplay_.ensureCursorVisible();
+      // the view focus went back to (see TextEditingTargetWidget.focus) is
+      // the one whose cursor to show; the panes scroll together
+      if (cursorInDiffBase() && view_.ensureDiffSplitCursorVisible())
+         return;
+
+      activeDisplay().ensureCursorVisible();
    }
 
    @Override
@@ -1676,7 +1690,8 @@ public class TextEditingTarget implements
 
       gitDiffGutter_ = new TextEditingTargetGitDiffGutter(docDisplay_,
                                                           docUpdateSentinel_,
-                                                          releaseOnDismiss_);
+                                                          releaseOnDismiss_,
+                                                          this::closeDiffSplit);
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
                                           commands_,
@@ -3134,6 +3149,7 @@ public class TextEditingTarget implements
          commandHandlerReg_ = null;
       }
       commandHandlerReg_ = commandBinder.bind(commands_, this);
+      syncDiffSplitCommand();
 
       // show outline if not yet rendered (deferred so that widget itself can
       // be sized first)
@@ -4079,6 +4095,39 @@ public class TextEditingTarget implements
       view_.focusOtherEditorSplit();
    }
 
+   @Handler
+   void onVcsShowChangesSideBySide()
+   {
+      String desired = isDiffSplitActive() ? EDITOR_SPLIT_NONE : EDITOR_SPLIT_DIFF;
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, desired);
+   }
+
+   private boolean isDiffSplitActive()
+   {
+      return StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_DIFF);
+   }
+
+   // Closes the side-by-side view now (the gutter driving it is going away)
+   // and records the closed state as the commands do. The view is applied
+   // first, rather than on the property's round trip to the server as it
+   // usually is, so that the pane neither sits empty meanwhile nor stays
+   // should that round trip fail.
+   private void closeDiffSplit()
+   {
+      if (view_ != null)
+         applyEditorSplit(EDITOR_SPLIT_NONE);
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, EDITOR_SPLIT_NONE);
+   }
+
+   // The command is shared by every tab, so its checked state follows the
+   // active document: on activation, and whenever its split state changes
+   // (a restored document applies its split before any tab is active).
+   private void syncDiffSplitCommand()
+   {
+      if (commandHandlerReg_ != null)
+         commands_.vcsShowChangesSideBySide().setChecked(isDiffSplitActive());
+   }
+
    // If an editor split is active and one of this editor's views currently
    // holds focus, move focus to the other view and return true. Used by
    // activateSource (Ctrl+1), so that repeated presses toggle between the
@@ -4105,17 +4154,27 @@ public class TextEditingTarget implements
 
    private void applyEditorSplit(String type)
    {
-      // tolerate stale or unrecognized property values
-      if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
-          !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      if (StringUtil.equals(type, EDITOR_SPLIT_DIFF))
       {
+         // a restored diff split for a document that can no longer show one
+         // (e.g. the markers since turned off) falls back to a single view
+         if (!gitDiffGutter_.isAvailable())
+            type = EDITOR_SPLIT_NONE;
+      }
+      else if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
+               !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      {
+         // tolerate stale or unrecognized property values
          type = EDITOR_SPLIT_NONE;
       }
-
-      if (!StringUtil.equals(type, EDITOR_SPLIT_NONE))
+      else
+      {
+         // the kind of split that Toggle Editor Split brings back
          lastEditorSplit_ = type;
+      }
 
       view_.setEditorSplit(type);
+      syncDiffSplitCommand();
    }
 
    // The editor view holding the user's cursor -- the primary editor, or the
@@ -4191,6 +4250,18 @@ public class TextEditingTarget implements
    void splitEditorCreated(AceEditor editor)
    {
       gitDiffGutter_.setSplitEditor(editor);
+   }
+
+   // Called by the view as the side-by-side diff pane comes and goes; the
+   // gutter owns the base editor shown inside it.
+   void diffSplitCreated(GitDiffSplitWidget widget)
+   {
+      gitDiffGutter_.setDiffSplitWidget(widget);
+   }
+
+   void diffSplitRemoved()
+   {
+      gitDiffGutter_.setDiffSplitWidget(null);
    }
 
    void splitEditorRemoved()
@@ -6202,6 +6273,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutFocus()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeSelection(false);
@@ -6211,6 +6285,9 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCodeWithoutFocus()
    {
+      if (cursorInDiffBase())
+         return;
+
       dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
@@ -6229,10 +6306,20 @@ public class TextEditingTarget implements
    {
       if (activeDisplay().isFocused() || visualMode_.isVisualEditorActive())
       {
+         // (the guard sits inside the branch: Alt+Enter in the Find field is
+         // Select All Matches, below, whichever pane held the cursor)
+         if (cursorInDiffBase())
+            return;
+
          withVisualModeSelection(() ->
          {
             codeExecution().executeSelection(true, false);
          });
+      }
+      else if (view_.isDiffSplitFocused())
+      {
+         // the base pane holds focus: nothing to run there, and the Find
+         // field's Select All Matches is not what was asked for
       }
       else if (view_.isAttached())
       {
@@ -6243,6 +6330,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCode()
    {
+      if (cursorInDiffBase())
+         return;
+
       if (fileType_.isScript())
       {
          codeExecution().sendSelectionToTerminal(true);
@@ -6307,6 +6397,9 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsBackgroundJob()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().runSelectionAsJob(false /*isWorkbenchJob*/);
@@ -6316,6 +6409,9 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsWorkbenchJob()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().runSelectionAsJob(true /*isWorkbenchJob*/);
@@ -6325,6 +6421,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
@@ -6334,6 +6433,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentStatement()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
@@ -6343,6 +6445,9 @@ public class TextEditingTarget implements
    @Handler
    void onSelectCurrentStatement()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6355,6 +6460,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentParagraph()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
@@ -6364,6 +6472,9 @@ public class TextEditingTarget implements
    @Handler
    void onSendToTerminal()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().sendSelectionToTerminal(false);
@@ -6425,6 +6536,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteToCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6444,6 +6558,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteFromCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6463,6 +6580,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentFunction()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6496,6 +6616,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentSection()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6652,6 +6775,9 @@ public class TextEditingTarget implements
 
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
+      if (cursorInDiffBase())
+         return;
+
       // allow visual mode to handle
       if (visualMode_.isActivated())
       {
@@ -6750,6 +6876,9 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       if (fileType_.isQuartoMarkdown())
       {
          onQuartoInsertChunk();
@@ -6882,6 +7011,9 @@ public class TextEditingTarget implements
    @Handler
    void onInsertSection()
    {
+      if (cursorInDiffBase())
+         return;
+
       globalDisplay_.promptForText(
          constants_.onInsertSectionTitle(),
          constants_.onInsertSectionLabel(),
@@ -6960,6 +7092,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          // HACK: This is just to force the entire function tree to be built.
@@ -6978,6 +7113,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteNextChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection((pos) ->
       {
          Scope nextChunk = null;
@@ -7028,6 +7166,9 @@ public class TextEditingTarget implements
     */
    private void executeScopedChunks(int dir)
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection((pos) ->
       {
          if (pos == null)
@@ -7595,6 +7736,9 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCode()
    {
+      if (cursorInDiffBase())
+         return;
+
       dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
@@ -10020,6 +10164,19 @@ public class TextEditingTarget implements
       }
    }
 
+   // Whether the cursor is in the read-only base pane of a side-by-side diff:
+   // the pane that held focus last among the document's views, since a
+   // command chosen from a menu with the mouse has taken focus to the menu.
+   // An editing or code-running command then has nothing to act on, and must
+   // not land on the document's own cursor or selection, out of sight; the
+   // commands that work on the document directly rather than through
+   // withActiveEditor check this.
+   private boolean cursorInDiffBase()
+   {
+      // (in visual mode the source views, base pane included, are hidden)
+      return view_ != null && !isVisualModeActivated() && view_.diffSplitHeldFocusLast();
+   }
+
    /**
     * Executes a command with the active Ace instance. If there is no active
     * instance (e.g. in visual mode when focus is not in an editor), then the
@@ -10036,6 +10193,10 @@ public class TextEditingTarget implements
       if (isVisualEditorActive() || visualMode_.isActivated())
       {
          visualMode_.performWithActiveEditor(cmd);
+      }
+      else if (cursorInDiffBase())
+      {
+         // nothing to edit there
       }
       else
       {

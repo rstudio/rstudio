@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { waitForConsoleIdle } from '../pages/console_pane.page';
 import type { Ace } from './ace';
 import { sleep } from './constants';
+import { withDeadline } from './deadline';
 
 // `window.rstudio` is registered when rsession runs with --automation-agent
 // (the Desktop fixture forwards that flag). The bridge lets tests trigger and
@@ -207,6 +208,16 @@ type ShinyBridge = {
   stopForegroundApp(): Promise<void>;
 };
 
+type SessionBridge = {
+  /**
+   * Resolves once the session's main thread has answered a `ping` RPC;
+   * rejects if the RPC fails. Never settles while that thread is not
+   * serving requests (a session wedged by code on the idle event loop,
+   * #19236), so always bound it -- see probeSessionLiveness().
+   */
+  ping(): Promise<void>;
+};
+
 type CompletionsBridge = {
   /**
    * Automation-only override: when true, a completion request that returns
@@ -233,6 +244,8 @@ type RStudioBridge = {
   console?: ConsoleBridge;
   /** Shiny-app automation surface. */
   shiny?: ShinyBridge;
+  /** Session liveness surface. Absent on builds that predate it. */
+  session?: SessionBridge;
   /** Completion-popup overrides. Absent on builds that predate the knob. */
   completions?: CompletionsBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
@@ -617,6 +630,13 @@ const RETRYABLE_PREF_WRITE_ERRORS = [
   'frame was detached',
 ];
 
+// A pref write resolves only when the setUserPrefs RPC has landed. On a
+// session that has stopped serving requests it never does, and the evaluate
+// has no timeout of its own: a hook or test would then sit for its whole
+// 120s budget, and two such hooks back to back push the shard past the CI
+// heartbeat's kill window (run 39884727549). 30s is far past any real write.
+const PREF_WRITE_DEADLINE_MS = 30_000;
+
 // A pref write is a full-payload set_user_prefs RPC, so it is idempotent and
 // safe to retry. Busy CI runners can drop the XHR at the transport layer
 // (winsock ERR_NO_BUFFER_SPACE, connection resets around a session rebuild),
@@ -671,15 +691,19 @@ async function withPrefWriteRetry(
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
   const camel = snakeToCamel(name);
   await withPrefWriteRetry(page, camel, () =>
-    page.evaluate(async ({ prefName, prefValue }) => {
-      const r = window.rstudio;
-      if (!r)
-        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-      const entry = r.prefs[prefName];
-      if (!entry)
-        throw new Error(`Unknown user preference: ${prefName}`);
-      await entry.set(prefValue);
-    }, { prefName: camel, prefValue: value }),
+    withDeadline(
+      page.evaluate(async ({ prefName, prefValue }) => {
+        const r = window.rstudio;
+        if (!r)
+          throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+        const entry = r.prefs[prefName];
+        if (!entry)
+          throw new Error(`Unknown user preference: ${prefName}`);
+        await entry.set(prefValue);
+      }, { prefName: camel, prefValue: value }),
+      PREF_WRITE_DEADLINE_MS,
+      `setPref(${name})`,
+    ),
   );
 }
 
@@ -691,15 +715,19 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
 export async function clearPref(page: Page, name: string): Promise<void> {
   const camel = snakeToCamel(name);
   await withPrefWriteRetry(page, camel, () =>
-    page.evaluate(async (prefName) => {
-      const r = window.rstudio;
-      if (!r)
-        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-      const entry = r.prefs[prefName];
-      if (!entry)
-        throw new Error(`Unknown user preference: ${prefName}`);
-      await entry.clear();
-    }, camel),
+    withDeadline(
+      page.evaluate(async (prefName) => {
+        const r = window.rstudio;
+        if (!r)
+          throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+        const entry = r.prefs[prefName];
+        if (!entry)
+          throw new Error(`Unknown user preference: ${prefName}`);
+        await entry.clear();
+      }, camel),
+      PREF_WRITE_DEADLINE_MS,
+      `clearPref(${name})`,
+    ),
   );
 }
 
