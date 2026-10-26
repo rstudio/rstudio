@@ -844,6 +844,8 @@ export async function openProject(
  * Wait until the session has switched to the project at `projectFilePath`
  * and is ready for automation. Use after a project switch the test started
  * itself (e.g. through the Open Project dialog); `openProject` calls it.
+ * Set `window.rstudio.ready = false` before starting the switch, as
+ * `project.open()` does: the QuitEvent reset arrives a round-trip later.
  */
 export async function waitForProjectOpen(
   page: Page,

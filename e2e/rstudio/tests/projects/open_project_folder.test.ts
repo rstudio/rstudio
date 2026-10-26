@@ -1,12 +1,6 @@
 // Opening a folder that has no .Rproj from the web Open Project dialog
+// creates the .Rproj and opens the project, as the native dialogs do
 // (#14985).
-//
-// With directories allowed, OpenFileDialog treats Open with an empty filename
-// as a request to open the current directory as a project, and ProjectOpener
-// then finds or creates its .Rproj. FileDialog used to resolve the empty name
-// to the directory disguised as a file, so the session tried to read the
-// folder as a project file and failed -- or, in builds with assertions
-// enabled, the Open button did nothing.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole } from '@pages/console_pane.page';
@@ -27,7 +21,15 @@ test.describe('Open Project dialog', () => {
   test('opening a folder without a .Rproj creates and opens one', async ({ rstudioPage: page }) => {
     const name = 'folder_without_rproj';
     const dir = `${sandbox.dir.replace(/\\/g, '/')}/${name}`;
-    await executeInConsole(page, `invisible(dir.create(${rPathLiteral(dir)}))`, { wait: true });
+    const rproj = `${dir}/${name}.Rproj`;
+
+    // a retry finds the folder left by an earlier attempt; remove its .Rproj
+    // so the open has to create one
+    await executeInConsole(
+      page,
+      `{ dir.create(${rPathLiteral(dir)}, showWarnings = FALSE); unlink(${rPathLiteral(rproj)}) }`,
+      { wait: true },
+    );
 
     await executeCommand(page, 'openProject');
     const dialog = page.locator(OPEN_PROJECT_DIALOG);
@@ -40,7 +42,10 @@ test.describe('Open Project dialog', () => {
     await expect(dialog.locator('[aria-current="location"]')).toHaveText(name, { timeout: 15000 });
 
     // Open with no filename and no selection opens the listed directory
+    await page.evaluate(() => {
+      if (window.rstudio) window.rstudio.ready = false;
+    });
     await dialog.getByRole('button', { name: 'Open' }).click();
-    await waitForProjectOpen(page, `${dir}/${name}.Rproj`);
+    await waitForProjectOpen(page, rproj);
   });
 });
