@@ -3533,9 +3533,21 @@ Error adaptToLanguage(const std::string& language)
    // the switch (a batch that returns to R), so neither the enqueued
    // language nor the console's current state can be taken as is. The
    // next prompt means the console is idle, and its real state takes over.
+   //
+   // So does input having been discarded since the switch was projected
+   // (an interrupt, an uncaught error with the discard pref on): the switch
+   // may have been among it, and when the console was at its prompt all
+   // along (input queued behind a callback run from the idle loop) no
+   // prompt follows to say so. A switch still on its way to the buffer is
+   // forgotten with it, and an adaptation in the few milliseconds before it
+   // lands then misjudges the console; tracking the switch itself rather
+   // than a projected language would close both (#19258).
    static std::string s_projectedLanguage;
+   static unsigned s_projectedAtDiscards = 0;
    static RSTUDIO_BOOST_CONNECTION s_promptConnection;
    static RSTUDIO_BOOST_CONNECTION s_inputConnection;
+   if (console_input::inputDiscards() != s_projectedAtDiscards)
+      s_projectedLanguage.clear();
    if (!s_promptConnection.connected())
    {
       s_promptConnection = module_context::events().onConsolePrompt.connect([](const std::string&) {
@@ -3569,9 +3581,14 @@ Error adaptToLanguage(const std::string& language)
    }
 
    if (error)
+   {
       LOG_ERROR(error);
+   }
    else
+   {
       s_projectedLanguage = language;
+      s_projectedAtDiscards = console_input::inputDiscards();
+   }
 
    return Success();
 }
