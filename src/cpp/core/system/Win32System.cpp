@@ -34,6 +34,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -1168,6 +1169,40 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
          haveParentCreationTime ? &parentCreationTime : nullptr);
 }
 
+namespace detail {
+
+// Whether an opened process is the one a snapshot listed. Its image name
+// must agree with the listing, its pid must not have been recycled since
+// the snapshot (creation after the snapshot time), and the listing must
+// not be an orphan still reporting a parent pid that was recycled
+// (creation before the parent's). What cannot be queried is not held
+// against it, as in getSubprocesses(). The image name is the only check
+// that does not depend on the clock: a replacement with the same image,
+// created during a backward clock step inside this window, would pass,
+// and nothing public identifies a process beyond these.
+bool isListedProcess(const std::string& listedExe,
+                     const FILETIME& snapshotTime,
+                     const FILETIME* pParentCreationTime,
+                     const std::string& openedExe,
+                     const FILETIME* pCreationTime)
+{
+   if (!openedExe.empty() && !boost::algorithm::iequals(listedExe, openedExe))
+      return false;
+
+   if (pCreationTime == nullptr)
+      return true;
+
+   if (::CompareFileTime(pCreationTime, &snapshotTime) > 0)
+      return false;
+
+   if (pParentCreationTime != nullptr && ::CompareFileTime(pCreationTime, pParentCreationTime) < 0)
+      return false;
+
+   return true;
+}
+
+} // namespace detail
+
 namespace {
 
 // TerminateProcess() fails with ERROR_ACCESS_DENIED on a process that has
@@ -1192,12 +1227,21 @@ struct OpenedProcess
    HANDLE handle;
 };
 
-// Opens the process a snapshot lists, and checks that the handle is for
-// that process: its pid must not have been recycled since the snapshot
-// (creation after the snapshot time), and the listing itself must not be
-// an orphan still reporting a parent pid that was recycled (creation before
-// the parent's). Null when the process is gone, or when the handle is for
-// some other process.
+// The file name of a process's executable, or empty when it cannot be queried.
+std::string processImageName(HANDLE hProcess)
+{
+   std::vector<char> path(32768);
+   DWORD size = static_cast<DWORD>(path.size());
+   if (!::QueryFullProcessImageNameA(hProcess, 0, path.data(), &size))
+      return std::string();
+
+   std::string fullPath(path.data(), size);
+   std::size_t separator = fullPath.find_last_of("\\/");
+   return separator == std::string::npos ? fullPath : fullPath.substr(separator + 1);
+}
+
+// Opens the process a snapshot lists, and keeps the handle only when it is
+// for that process (see detail::isListedProcess); null otherwise.
 HANDLE openListedProcess(const PROCESSENTRY32& entry,
                          const FILETIME& snapshotTime,
                          const FILETIME* pParentCreationTime)
@@ -1214,15 +1258,14 @@ HANDLE openListedProcess(const PROCESSENTRY32& entry,
       return nullptr;
    }
 
-   // kept when the time cannot be queried, as getSubprocesses() does
    FILETIME creationTime;
-   if (!getProcessCreationTime(hProcess, &creationTime))
-      return hProcess;
+   bool haveCreationTime = getProcessCreationTime(hProcess, &creationTime);
 
-   bool recycled = ::CompareFileTime(&creationTime, &snapshotTime) > 0;
-   bool orphan = pParentCreationTime != nullptr &&
-                 ::CompareFileTime(&creationTime, pParentCreationTime) < 0;
-   if (recycled || orphan)
+   if (!detail::isListedProcess(entry.szExeFile,
+                                snapshotTime,
+                                pParentCreationTime,
+                                processImageName(hProcess),
+                                haveCreationTime ? &creationTime : nullptr))
    {
       Error error = closeHandle(&hProcess, ERROR_LOCATION);
       if (error)

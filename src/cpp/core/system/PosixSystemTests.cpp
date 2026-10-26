@@ -20,6 +20,7 @@
 
 #include <grp.h>
 #include <limits.h>
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -461,12 +462,34 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
    BOOST_SCOPE_EXIT_END
 #endif
 
+   // the child reports the grandchild's pid over a pipe, so the test can
+   // take it down even if discovering it through the process table fails
+   int fds[2];
+   ASSERT_EQ(0, ::pipe(fds));
+
    pid_t child = ::fork();
    ASSERT_NE(-1, child);
    if (child == 0)
    {
-      if (::fork() == -1)
+      ::close(fds[0]);
+
+      pid_t grandchild = ::fork();
+      if (grandchild == -1)
          ::_exit(1);
+
+      if (grandchild == 0)
+      {
+#ifdef __linux__
+         // a space in the name shifts the fields of /proc/<pid>/stat when
+         // the line is split naively, hiding the parent pid
+         ::prctl(PR_SET_NAME, "worker thread");
+#endif
+      }
+      else
+      {
+         (void)::write(fds[1], &grandchild, sizeof(grandchild));
+      }
+      ::close(fds[1]);
 
       // child and grandchild both idle until signalled; the alarm is a
       // safety net should the test fail to take one of them down
@@ -474,12 +497,15 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
       for (;;)
          ::pause();
    }
+   ::close(fds[1]);
 
    pid_t grandchild = 0;
    bool childReaped = false;
    bool grandchildReaped = false;
-   BOOST_SCOPE_EXIT(&child, &grandchild, &childReaped, &grandchildReaped)
+   BOOST_SCOPE_EXIT(&fds, &child, &grandchild, &childReaped, &grandchildReaped)
    {
+      ::close(fds[0]);
+
       int status = 0;
       if (!childReaped)
       {
@@ -497,6 +523,12 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
    }
    BOOST_SCOPE_EXIT_END
 
+   struct pollfd readable = {fds[0], POLLIN, 0};
+   ASSERT_EQ(1, ::poll(&readable, 1, 5000));
+   ASSERT_EQ(static_cast<ssize_t>(sizeof(grandchild)),
+             ::read(fds[0], &grandchild, sizeof(grandchild)));
+   ASSERT_GT(grandchild, 0);
+
    std::vector<SubprocInfo> grandchildren;
    for (int i = 0; i < 500 && grandchildren.empty(); i++)
    {
@@ -504,7 +536,7 @@ TEST(PosixTests, TerminateProcessTreeTakesDescendants)
       grandchildren = getSubprocesses(child);
    }
    ASSERT_EQ(1u, grandchildren.size());
-   grandchild = grandchildren[0].pid;
+   EXPECT_EQ(grandchild, grandchildren[0].pid);
 
    Error error = terminateProcessTree(child);
    EXPECT_FALSE(error) << error.asString();

@@ -36,6 +36,12 @@ namespace detail {
 std::vector<SubprocInfo> getSubprocesses(PidType pid,
                                        const FILETIME* pParentCreationTime);
 
+bool isListedProcess(const std::string& listedExe,
+                     const FILETIME& snapshotTime,
+                     const FILETIME* pParentCreationTime,
+                     const std::string& openedExe,
+                     const FILETIME* pCreationTime);
+
 } // namespace detail
 
 namespace tests {
@@ -550,6 +556,32 @@ TEST_F(Win32ProcessTest, KeepsChildWhenCreationTimeCannotBeQueried)
    FILETIME parentCreationTime = {MAXDWORD, MAXLONG};
    auto children = detail::getSubprocesses(currentProcessId(), &parentCreationTime);
    EXPECT_TRUE(ContainsProcess(children, pi.dwProcessId));
+}
+
+TEST(Win32SystemTest, ListedProcessIdentity)
+{
+   FILETIME before = {25, 0};
+   FILETIME parent = {50, 0};
+   FILETIME during = {75, 0};
+   FILETIME snapshot = {100, 0};
+   FILETIME after = {125, 0};
+
+   // the listed process: same image, created between its parent and the snapshot
+   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, &parent, "PING.EXE", &during));
+
+   // its pid recycled after the snapshot
+   EXPECT_FALSE(detail::isListedProcess("ping.exe", snapshot, &parent, "ping.exe", &after));
+
+   // its pid recycled onto another image, whatever the clock says
+   EXPECT_FALSE(detail::isListedProcess("ping.exe", snapshot, &parent, "cmd.exe", &during));
+
+   // an orphan predating the process whose pid it reports as its parent
+   EXPECT_FALSE(detail::isListedProcess("ping.exe", snapshot, &parent, "ping.exe", &before));
+
+   // what cannot be queried is not held against it
+   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, nullptr, "ping.exe", &before));
+   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, &parent, "ping.exe", nullptr));
+   EXPECT_TRUE(detail::isListedProcess("ping.exe", snapshot, &parent, "", &during));
 }
 
 // A child takes a moment to show up after its parent starts; poll for it
