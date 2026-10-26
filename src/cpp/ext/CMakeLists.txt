@@ -612,7 +612,7 @@ target_include_directories(rstudio-hunspell SYSTEM AFTER INTERFACE "${HUNSPELL_S
 target_compile_definitions(rstudio-hunspell PUBLIC HUNSPELL_STATIC=1)
 
 if(WIN32)
-   target_include_directories(rstudio-hunspell SYSTEM AFTER PRIVATE "${HUNSPELL_PREFIX_DIR}/msvc")
+   target_include_directories(rstudio-hunspell SYSTEM AFTER PRIVATE "${HUNSPELL_SOURCE_DIR}/msvc")
    target_compile_options(rstudio-hunspell PRIVATE /wd4244 /wd4267)
    target_compile_options(rstudio-hunspell INTERFACE /wd4996)
 else()
