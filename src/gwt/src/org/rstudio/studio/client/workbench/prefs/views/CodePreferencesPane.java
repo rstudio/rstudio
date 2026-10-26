@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -671,7 +670,6 @@ public class CodePreferencesPane extends PreferencesPane
       String editorMode = editorMode_.getValue();
 
       prefs_.editorKeybindings().setGlobalValue(editorMode);
-      ShortcutManager.INSTANCE.setEditorModeFromPref(editorMode);
 
       prefs_.indentGuides().setGlobalValue(indentGuides_.getValue());
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());

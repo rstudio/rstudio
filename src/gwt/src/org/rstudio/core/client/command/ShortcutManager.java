@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -61,6 +62,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownEvent.Handler,
@@ -160,7 +162,8 @@ public class ShortcutManager implements NativePreviewHandler,
                            AddinsCommandManager addins,
                            EventBus events,
                            Binder binder,
-                           Commands commands)
+                           Commands commands,
+                           Provider<UserPrefs> pUserPrefs)
    {
       appCommands_ = appCommands;
       editorCommands_ = editorCommands;
@@ -168,7 +171,25 @@ public class ShortcutManager implements NativePreviewHandler,
       addins_ = addins;
       events_ = events;
       commands_ = commands;
+      pUserPrefs_ = pUserPrefs;
       binder.bind(commands_, this);
+
+      // Follow the editor keybindings pref in every window. Loading prefs from the session
+      // info fires no change events, so bind once they're loaded: now, or after the session
+      // init handlers (one of which loads them in satellites) have run.
+      if (pUserPrefs_.get().hasLoadedLayers(UserPrefs.LAYER_USER))
+         bindEditorModeToPref();
+      else
+         events_.addHandler(SessionInitEvent.TYPE, event ->
+               Scheduler.get().scheduleDeferred(this::bindEditorModeToPref));
+   }
+
+   private void bindEditorModeToPref()
+   {
+      if (editorModeBound_)
+         return;
+      editorModeBound_ = true;
+      pUserPrefs_.get().editorKeybindings().bind(this::setEditorModeFromPref);
    }
 
    public boolean isEnabled()
@@ -360,7 +381,7 @@ public class ShortcutManager implements NativePreviewHandler,
    }
 
    // Applies the editor_keybindings pref (default, vim, emacs or sublime)
-   public void setEditorModeFromPref(String editorKeybindings)
+   private void setEditorModeFromPref(String editorKeybindings)
    {
       if (StringUtil.equals(editorKeybindings, UserPrefs.EDITOR_KEYBINDINGS_VIM))
          setEditorMode(KeyboardShortcut.MODE_VIM);
@@ -866,6 +887,8 @@ public class ShortcutManager implements NativePreviewHandler,
    private final KeySequence keyBuffer_;
    private final IgnoredKeysMap<KeyCombination> ignoredKeys_;
    private final Timer keyTimer_;
+   private Provider<UserPrefs> pUserPrefs_;
+   private boolean editorModeBound_ = false;
    private int activeEditEventType_ = EditEvent.TYPE_NONE;
 
    private final Map<KeyMapType, KeyMap> keyMaps_;

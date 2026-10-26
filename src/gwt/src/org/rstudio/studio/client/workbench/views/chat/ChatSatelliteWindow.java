@@ -14,12 +14,10 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.ApplicationCommandManager;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -92,12 +90,9 @@ public class ChatSatelliteWindow extends SatelliteWindow
       setupMessageForwarder();
       AssistantKeyForwarder.install();
 
-      // Elsewhere the user's custom bindings and keybinding mode are loaded when an Ace
-      // editor loads, which never happens here, so load them for keys forwarded from PA,
-      // and follow the mode pref while the window is open
+      // Elsewhere the user's custom bindings are loaded when an Ace editor loads, which
+      // never happens here, so load them for keys forwarded from PA
       appCommandManager_.loadBindings();
-      RStudioGinjector.INSTANCE.getUserPrefs().editorKeybindings().bind(
-            mode -> ShortcutManager.INSTANCE.setEditorModeFromPref(mode));
 
       // Create suspend overlay (shown during session suspend to block interaction)
       suspendedOverlay_ = new HTML();

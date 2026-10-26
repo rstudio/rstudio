@@ -98,6 +98,18 @@ test.describe('Posit Assistant -- RStudio shortcuts', { tag: ['@ai', '@chat'] },
     await expectConsoleShortcutRuns(chatPane, page);
   });
 
+  test('a keybinding mode change applies in the main window', async ({ rstudioPage: page }) => {
+    await setPref(page, 'editor_keybindings', 'emacs');
+    try {
+      // Alt+X is Emacs-only, so it matches once the main window follows the pref.
+      await expect
+        .poll(async () => (await sendKeyAsAssistant(chatPane.chatInput, ALT_X)).used)
+        .toBe(true);
+    } finally {
+      await clearPref(page, 'editor_keybindings');
+    }
+  });
+
   test('an editor shortcut is left to Posit Assistant', async () => {
     // Alt+- is insertAssignmentOperator, an editor-context command.
     const result = await sendKeyAsAssistant(chatPane.chatInput, ALT_MINUS);
