@@ -26,6 +26,7 @@ interface DebugSourceCompletedEvent {
 //   - an empty or comment-only file runs instead of erroring (#12375)
 //   - cleanup leaves the bindings the file ended with alone, instead of
 //     re-running the statements that defined the breakpointed functions
+//   - cleanup still happens when the file errors part-way through
 //
 // The unit tests in src/cpp/tests/testthat/test-debugger.R cover the same
 // paths at the R level, including the case where every breakpointed
@@ -161,5 +162,23 @@ test.describe.serial('debugSource', { tag: ['@serial'] }, () => {
     expect(await consoleActions.evalRLogical(
       'identical(cleanup_h(), 2) && identical(cleanup_count, 1) && identical(cleanup_made(), 42)',
     )).toBe(true);
+  });
+
+  test('cleans up a function defined before the file errors', async ({ rstudioPage: page }) => {
+    // The file defines a breakpointed function and then fails. The client
+    // does not re-apply breakpoints after a failed run, so if the injected
+    // browser call were left in err_f, calling it would stop there with no
+    // breakpoint marker to clear.
+    await writeAndOpenFile(page, sandbox.dir, 'debugsource_error.R', heredoc`
+      err_f <- function() {
+        1
+      }
+      stop("boom")
+    ` + '\n');
+    await debuggerActions.setBreakpoint(2);
+    await executeCommand(page, 'sourceActiveDocument');
+    await expect(consoleActions.consolePane.consoleOutput).toContainText('boom', { timeout: TIMEOUTS.fileOpen });
+
+    expect(await consoleActions.evalRLogical('identical(err_f(), 1)')).toBe(true);
   });
 });

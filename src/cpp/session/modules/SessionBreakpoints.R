@@ -453,6 +453,93 @@
    
 })
 
+# Given one top-level statement of a debugged file, return the assignment
+# targets it may have bound, as a list of list(op = <assignment symbol>,
+# target = <lhs expression>). Chained (a <- b <- ...), conditional, braced
+# and member (obj$f <- ...) assignments all count.
+.rs.addFunction("debugSourceAssignmentTargets", function(statement)
+{
+   if (!is.call(statement))
+      return(list())
+
+   op <- statement[[1L]]
+   if (identical(op, as.name("<-")) ||
+       identical(op, as.name("=")) ||
+       identical(op, as.name("<<-")))
+   {
+      target <- list(list(op = op, target = statement[[2L]]))
+      return(c(target, .rs.debugSourceAssignmentTargets(statement[[3L]])))
+   }
+
+   if (identical(op, as.name("{")) ||
+       identical(op, as.name("(")) ||
+       identical(op, as.name("if")))
+   {
+      parts <- as.list(statement)[-1L]
+      if (identical(op, as.name("if")))
+         parts <- parts[-1L]
+      return(do.call(c, lapply(parts, .rs.debugSourceAssignmentTargets)))
+   }
+
+   list()
+})
+
+# After a debugged file has run, remove the breakpoints injected into 'fun'
+# from the functions the file defined. 'breakSteps' are the injected trace
+# locations; 'envir' is the environment the file ran in.
+#
+# This edits the bindings the file ended with rather than replaying the
+# statements that created them: replaying would run a statement a second
+# time, side effects and all, and clobber a binding the file later reassigned.
+.rs.addFunction("removeInjectedBreakpoints", function(fun, breakSteps, envir)
+{
+   paths <- strsplit(breakSteps, ",", fixed = TRUE)
+
+   # Only a breakpoint nested inside a top-level statement (a function the
+   # file defines) leaves anything behind; its statement index is third.
+   nested <- paths[lengths(paths) > 3]
+   indices <- unique(vapply(nested, function(path) as.integer(path[[3]]), 1L))
+   for (index in indices)
+   {
+      statement <- body(fun)[[2]][[2]][[index]]
+      for (assignment in .rs.debugSourceAssignmentTargets(statement))
+      {
+         op <- assignment$op
+         target <- assignment$target
+
+         # look up what the file left bound at this target
+         if (is.name(target))
+         {
+            name <- as.character(target)
+            inherits <- identical(op, as.name("<<-"))
+            if (!exists(name, envir = envir, inherits = inherits))
+               next
+            current <- get(name, envir = envir, inherits = inherits)
+         }
+         else
+         {
+            current <- tryCatch(eval(target, envir = envir), error = function(e) NULL)
+         }
+
+         if (!is.function(current) ||
+             is.null(.rs.findBreakpointSteps(body(current))))
+         {
+            next
+         }
+
+         # 'body<-' builds a new closure, dropping the source references the
+         # client needs to set breakpoints on this function; keep them
+         attrs <- attributes(current)
+         current <- .rs.removeBreakpoints(current)
+         attributes(current) <- attrs
+
+         # assign back the same way the file did, so a member target or a
+         # '<<-' lands where the original went
+         eval(call(as.character(op), target, current), envir = envir)
+      }
+   }
+})
+
 # Parses and executes a file for debugging
 .rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, local)
 {
@@ -483,50 +570,15 @@
             "fun", env, lapply(steps, function(step) { step$at } )))
    }
 
+   # The breakpoints injected above are baked into any function the file
+   # defines while it runs, as .doTrace(browser()) calls in its body. Strip
+   # them from whatever the file leaves behind, even when it stops with an
+   # error part-way through: the client only re-applies its own breakpoints
+   # after a successful run, and nothing else would ever remove these.
+   on.exit(.rs.removeInjectedBreakpoints(env$fun, breakSteps, envir), add = TRUE)
+
    # Run it!
    env$fun()
-
-   # The breakpoints injected above are baked into any function the file
-   # defined while it ran, as .doTrace(browser()) calls in its body. Strip
-   # them from the bindings the file left behind. Replaying the defining
-   # statements instead would run them a second time, and would clobber a
-   # binding the file later reassigned. The client will set proper
-   # breakpoints on the functions later.
-   paths <- strsplit(breakSteps, ",", fixed = TRUE)
-
-   # Only a breakpoint nested inside a top-level statement (a function the
-   # file defines) leaves anything behind; its statement index is third.
-   nested <- paths[lengths(paths) > 3]
-   indices <- unique(vapply(nested, function(path) as.integer(path[[3]]), 1L))
-   for (index in indices)
-   {
-      statement <- body(env$fun)[[2]][[2]][[index]]
-      if (!is.call(statement) ||
-          !(identical(statement[[1]], as.name("<-")) ||
-            identical(statement[[1]], as.name("="))) ||
-          !is.name(statement[[2]]))
-      {
-         next
-      }
-
-      name <- as.character(statement[[2]])
-      if (!exists(name, envir = envir, inherits = FALSE))
-         next
-
-      current <- get(name, envir = envir, inherits = FALSE)
-      if (!is.function(current) ||
-          is.null(.rs.findBreakpointSteps(body(current))))
-      {
-         next
-      }
-
-      # 'body<-' builds a new closure, dropping the source references the
-      # client needs to set breakpoints on this function; keep them
-      attrs <- attributes(current)
-      current <- .rs.removeBreakpoints(current)
-      attributes(current) <- attrs
-      assign(name, current, envir = envir)
-   }
 
    return(NULL)
 

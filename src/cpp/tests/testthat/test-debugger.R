@@ -368,6 +368,69 @@ test_that("debugSource cleanup leaves the file's final bindings alone", {
 
 })
 
+test_that("debugSource cleans functions bound through chained, conditional and member assignments", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines(c(
+      "chain_a <- chain_b <- function() {",
+      "   1",
+      "}",
+      "if (TRUE) cond_f <- function() {",
+      "   2",
+      "}",
+      "holder <- list()",
+      "holder$f <- function() {",
+      "   3",
+      "}",
+      "holder[[\"g\"]] <- function() {",
+      "   4",
+      "}"
+   ), file)
+
+   envir <- new.env()
+   .rs.executeDebugSource(file, "unknown", breaklines = c(2L, 5L, 9L, 12L), local = envir)
+
+   funs <- list(envir$chain_a, envir$chain_b, envir$cond_f, envir$holder$f, envir$holder$g)
+   for (fun in funs)
+   {
+      expect_null(.rs.findBreakpointSteps(body(fun)))
+      expect_s3_class(attr(fun, "srcref"), "srcref")
+   }
+
+   expect_equal(envir$chain_a(), 1)
+   expect_equal(envir$chain_b(), 1)
+   expect_equal(envir$cond_f(), 2)
+   expect_equal(envir$holder$f(), 3)
+   expect_equal(envir$holder$g(), 4)
+
+})
+
+test_that("debugSource cleans functions defined before the file errors", {
+
+   file <- tempfile(fileext = ".R")
+   on.exit(unlink(file), add = TRUE)
+   writeLines(c(
+      "err_f <- function() {",
+      "   1",
+      "}",
+      "stop(\"boom\")"
+   ), file)
+
+   # The error reaches the caller as-is, and the function the file managed
+   # to define is still cleaned up on the way out.
+   envir <- new.env()
+   expect_error(
+      .rs.executeDebugSource(file, "unknown", breaklines = 2L, local = envir),
+      "boom"
+   )
+
+   expect_null(.rs.findBreakpointSteps(body(envir$err_f)))
+   expect_s3_class(attr(envir$err_f, "srcref"), "srcref")
+   expect_equal(envir$err_f(), 1)
+
+})
+
 test_that("debugSource keeps source references when they are available", {
 
    op <- options(keep.source = TRUE)
