@@ -121,8 +121,9 @@ export class DesktopBrowserWindow extends EventEmitter {
   // before the screen reports its display gone
   recoverCollapsedMaximizedWindowDebounced = debounce(() => this.recoverCollapsedMaximizedWindow(), 250);
 
-  // whether recoverCollapsedMaximizedWindow() is already waiting on a display
-  private awaitingDisplayForRecovery = false;
+  // the screen 'display-added' listener recoverCollapsedMaximizedWindow() is
+  // waiting on, if any; removed when the window closes
+  private recoveryDisplayListener?: () => void;
 
   // if loading fails and emits `did-fail-load` it will be followed by a
   // 'did-finish-load'; use this bool to differentiate
@@ -375,6 +376,8 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.on('closed', () => {
+      this.recoverCollapsedMaximizedWindowDebounced.cancel();
+      this.removeRecoveryDisplayListener();
       this.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
     });
 
@@ -435,19 +438,29 @@ export class DesktopBrowserWindow extends EventEmitter {
     }
 
     if (screen.getAllDisplays().length === 0) {
-      if (!this.awaitingDisplayForRecovery) {
-        this.awaitingDisplayForRecovery = true;
-        screen.once('display-added', () => {
-          this.awaitingDisplayForRecovery = false;
+      if (!this.recoveryDisplayListener) {
+        this.recoveryDisplayListener = () => {
+          this.recoveryDisplayListener = undefined;
           this.recoverCollapsedMaximizedWindowDebounced();
-        });
+        };
+        screen.once('display-added', this.recoveryDisplayListener);
       }
       return;
     }
 
-    const { width, height } = screen.getDisplayMatching(bounds).workAreaSize;
+    // any real size will do: mutter constrains the window to the work area of
+    // whichever monitor it is on. (The window's own bounds can't pick that
+    // monitor; Wayland reports every toplevel at the origin.)
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     logger().logDebug(`Restoring collapsed maximized window (${bounds.width}x${bounds.height}) to ${width}x${height}`);
     this.window.setSize(width, height);
+  }
+
+  private removeRecoveryDisplayListener(): void {
+    if (this.recoveryDisplayListener) {
+      screen.removeListener('display-added', this.recoveryDisplayListener);
+      this.recoveryDisplayListener = undefined;
+    }
   }
 
   // implementation of DesktopWebPage.cpp::acceptNavigationRequest;

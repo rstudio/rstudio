@@ -99,25 +99,30 @@ if (!isWindowsDocker()) {
         sinon.stub(app.commandLine, 'getSwitchValue').withArgs('ozone-platform').returns('wayland');
       }
 
-      // emit a resize with the window in the given state; returns the setSize
-      // and screen.getAllDisplays stubs
+      // emit a resize with the window in the given state; returns the window
+      // and the setSize and screen.getAllDisplays stubs
       function emitResize(
         maximized: boolean,
         width: number,
         height: number,
         displays: number,
-      ): { setSize: sinon.SinonStub; getAllDisplays: sinon.SinonStub } {
+      ): { win: DesktopBrowserWindow; setSize: sinon.SinonStub; getAllDisplays: sinon.SinonStub } {
+        const display = { ...screen.getPrimaryDisplay(), workAreaSize };
+        sinon.stub(screen, 'getPrimaryDisplay').returns(display);
+        const getAllDisplays = sinon.stub(screen, 'getAllDisplays').returns(new Array(displays).fill(display));
+
         const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
         sinon.stub(win.window, 'isMaximized').returns(maximized);
         sinon.stub(win.window, 'getBounds').returns({ x: 0, y: 0, width, height });
-        const getAllDisplays = sinon
-          .stub(screen, 'getAllDisplays')
-          .returns(new Array(displays).fill(screen.getPrimaryDisplay()));
-        sinon.stub(screen, 'getDisplayMatching').returns({ ...screen.getPrimaryDisplay(), workAreaSize });
         const setSize = sinon.stub(win.window, 'setSize');
+
         win.window.emit('resize');
         clock.tick(300);
-        return { setSize, getAllDisplays };
+        return { win, setSize, getAllDisplays };
+      }
+
+      function displayAddedListeners(): number {
+        return screen.listenerCount('display-added');
       }
 
       it('resizes a maximized window collapsed to its frame to the work area', () => {
@@ -126,15 +131,70 @@ if (!isWindowsDocker()) {
         assert.isTrue(setSize.calledOnceWithExactly(workAreaSize.width, workAreaSize.height));
       });
 
+      it('resizes a maximized window collapsed in one dimension only', () => {
+        useWayland();
+        const { setSize } = emitResize(true, 2560, 44, 1);
+        assert.isTrue(setSize.calledOnceWithExactly(workAreaSize.width, workAreaSize.height));
+      });
+
       it('waits for a display before resizing', () => {
         useWayland();
+        const listeners = displayAddedListeners();
         const { setSize, getAllDisplays } = emitResize(true, 44, 44, 0);
         assert.isTrue(setSize.notCalled);
+        assert.equal(displayAddedListeners(), listeners + 1);
 
         getAllDisplays.returns([screen.getPrimaryDisplay()]);
         screen.emit('display-added');
         clock.tick(300);
         assert.isTrue(setSize.calledOnceWithExactly(workAreaSize.width, workAreaSize.height));
+        assert.equal(displayAddedListeners(), listeners);
+      });
+
+      it('waits on a single display listener across repeated resizes', () => {
+        useWayland();
+        const listeners = displayAddedListeners();
+        const { win, setSize, getAllDisplays } = emitResize(true, 44, 44, 0);
+        win.window.emit('resize');
+        clock.tick(300);
+        assert.equal(displayAddedListeners(), listeners + 1);
+
+        getAllDisplays.returns([screen.getPrimaryDisplay()]);
+        screen.emit('display-added');
+        clock.tick(300);
+        assert.isTrue(setSize.calledOnce);
+      });
+
+      it('stops waiting for a display when the window closes', () => {
+        useWayland();
+        const listeners = displayAddedListeners();
+        const { win, setSize, getAllDisplays } = emitResize(true, 44, 44, 0);
+        win.window.destroy();
+        assert.equal(displayAddedListeners(), listeners);
+
+        getAllDisplays.returns([screen.getPrimaryDisplay()]);
+        screen.emit('display-added');
+        clock.tick(300);
+        assert.isTrue(setSize.notCalled);
+      });
+
+      it('cancels a pending check when the window closes', () => {
+        useWayland();
+        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const recover = sinon.spy(win, 'recoverCollapsedMaximizedWindow');
+        win.window.emit('resize');
+        win.window.destroy();
+        clock.tick(300);
+        assert.isTrue(recover.notCalled);
+      });
+
+      it('does nothing for a destroyed window', () => {
+        useWayland();
+        const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
+        const getBounds = sinon.stub(win.window, 'getBounds');
+        win.window.destroy();
+        win.recoverCollapsedMaximizedWindow();
+        assert.isTrue(getBounds.notCalled);
       });
 
       it('leaves a maximized window of a usable size alone', () => {
