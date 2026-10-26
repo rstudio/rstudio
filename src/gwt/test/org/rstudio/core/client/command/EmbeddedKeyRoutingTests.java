@@ -24,16 +24,19 @@ public class EmbeddedKeyRoutingTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
-   public void testOnlyWorkbenchLevelContextsAllowed()
+   public void testWorkbenchLevelContextsAllowed()
    {
-      for (AppCommand.Context context : AppCommand.Context.values())
-      {
-         boolean expected =
-               context == AppCommand.Context.Workbench ||
-               context == AppCommand.Context.Addin ||
-               context == AppCommand.Context.PackageDevelopment;
-         assertEquals(context.name(), expected, EmbeddedKeyFilter.isWorkbenchLevel(context));
-      }
+      assertTrue(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Workbench));
+      assertTrue(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Addin));
+      assertTrue(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.PackageDevelopment));
+   }
+
+   public void testEditorAndLanguageContextsNotAllowed()
+   {
+      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Editor));
+      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.R));
+      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.RMarkdown));
+      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Cpp));
    }
 
    public void testMainModeRoutedOutOfSatellite()
