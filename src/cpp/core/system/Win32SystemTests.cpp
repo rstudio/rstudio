@@ -757,7 +757,8 @@ TEST_F(Win32ProcessTest, OpenProcessTreeStopsAtExitedIntermediate)
    // cmd.exe -> cmd.exe -> ping.exe, listed before the middle one goes.
    // Its orphan is out of reach afterwards, by design (see openProcessTree):
    // nothing can establish that it belongs to the tree, and the walk must
-   // not guess. The listed pid is skipped quietly.
+   // not guess (#19287 is the deterministic answer). The listed pid is
+   // skipped quietly.
    ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 8 posit.co\"\" 1> nul"));
 
    std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);

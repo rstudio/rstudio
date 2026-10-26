@@ -1376,7 +1376,8 @@ bool listProcesses(ProcessListing* pListing)
 // its subtree out of reach. Its descendants record only its pid, which may
 // since have gone to a new process, so their membership of the tree can no
 // longer be established, and terminating an unrelated process would be the
-// worse failure. A job object per launch would be the deterministic answer.
+// worse failure. A job object per launch would be the deterministic answer
+// (#19287).
 void openProcessTree(HANDLE hRoot,
                      PidType rootPid,
                      const ProcessListing& listing,
