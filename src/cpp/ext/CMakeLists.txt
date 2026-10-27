@@ -563,8 +563,8 @@ if(LIBGIT2_FETCHED)
          file(RENAME "${_LIBGIT2_GIT2_H}.prev" "${_LIBGIT2_GIT2_H}")
       endif()
    endif()
-   add_library(libgit2package INTERFACE)
-   target_include_directories(libgit2package INTERFACE ${LIBGIT2_SOURCE_DIR}/include)
+   target_include_directories(libgit2package INTERFACE
+      "$<BUILD_INTERFACE:${LIBGIT2_SOURCE_DIR}/include>")
    add_library(libgit2::libgit2package ALIAS libgit2package)
 endif()
 
