@@ -464,7 +464,6 @@ dependency(ZLIB
    VERSION    "1.3.1"
    REPOSITORY "https://github.com/madler/zlib"
    REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
-   PLATFORMS  WIN32
    CUSTOM     TRUE
 )
 
@@ -477,47 +476,45 @@ fetch(ZLIB ZLIB)
 # Ensure libgit2 resolves zlib to our top-level zlib build on Windows.
 # Without this, FindZLIB fails during libgit2 configure and it falls back
 # to its bundled deps/zlib, producing mixed zlib linkage in final binaries.
-if(WIN32)
-   if(NOT ZLIB_FETCHED)
-      add_library(rstudio-zlib ALIAS ZLIB::ZLIB)
-   else()
-      set(_RSTUDIO_ZLIB_INCLUDE_DIR "${ZLIB_SOURCE_DIR}")
-      set(_RSTUDIO_ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/src/cpp/ext/rstudio-zlib.lib")
-      set(ZLIB_INCLUDE_DIR "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE PATH "" FORCE)
-      set(ZLIB_INCLUDE_DIRS "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE STRING "" FORCE)
-      set(ZLIB_LIBRARY "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
-      set(ZLIB_LIBRARY_DEBUG "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
-      set(ZLIB_LIBRARY_RELEASE "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
-      set(ZLIB_LIBRARIES "${_RSTUDIO_ZLIB_LIBRARY}" CACHE STRING "" FORCE)
-      # Create zlib target (Windows only).
-      # Uses a custom target name to avoid colliding with the 'zlib' OBJECT target
-      # that libgit2 creates from its bundled deps/zlib.
-      # Generate zconf.h from the template (normally done by zlib's CMakeLists.txt).
-      # The only two #cmakedefine tokens (Z_PREFIX, Z_HAVE_UNISTD_H) are both
-      # undefined on Windows, so configure_file produces the correct defaults.
-      configure_file(
-         "${ZLIB_SOURCE_DIR}/zconf.h.cmakein"
-         "${ZLIB_BINARY_DIR}/zconf.h"
-         @ONLY)
+if(NOT ZLIB_FETCHED)
+   add_library(rstudio-zlib ALIAS ZLIB::ZLIB)
+else()
+   set(_RSTUDIO_ZLIB_INCLUDE_DIR "${ZLIB_SOURCE_DIR}")
+   set(_RSTUDIO_ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/src/cpp/ext/rstudio-zlib.lib")
+   set(ZLIB_INCLUDE_DIR "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE PATH "" FORCE)
+   set(ZLIB_INCLUDE_DIRS "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE STRING "" FORCE)
+   set(ZLIB_LIBRARY "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARY_DEBUG "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARY_RELEASE "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARIES "${_RSTUDIO_ZLIB_LIBRARY}" CACHE STRING "" FORCE)
+   # Create zlib target (Windows only).
+   # Uses a custom target name to avoid colliding with the 'zlib' OBJECT target
+   # that libgit2 creates from its bundled deps/zlib.
+   # Generate zconf.h from the template (normally done by zlib's CMakeLists.txt).
+   # The only two #cmakedefine tokens (Z_PREFIX, Z_HAVE_UNISTD_H) are both
+   # undefined on Windows, so configure_file produces the correct defaults.
+   configure_file(
+      "${ZLIB_SOURCE_DIR}/zconf.h.cmakein"
+      "${ZLIB_BINARY_DIR}/zconf.h"
+      @ONLY)
 
-      file(GLOB ZLIB_SOURCE_FILES "${ZLIB_SOURCE_DIR}/*.c")
-      file(GLOB ZLIB_HEADER_FILES "${ZLIB_SOURCE_DIR}/*.h")
-      add_library(rstudio-zlib STATIC ${ZLIB_SOURCE_FILES} ${ZLIB_HEADER_FILES})
-      # Source dir for zlib.h et al.; binary dir for the generated zconf.h.
-      target_include_directories(rstudio-zlib PUBLIC "${ZLIB_SOURCE_DIR}" "${ZLIB_BINARY_DIR}")
+   file(GLOB ZLIB_SOURCE_FILES "${ZLIB_SOURCE_DIR}/*.c")
+   file(GLOB ZLIB_HEADER_FILES "${ZLIB_SOURCE_DIR}/*.h")
+   add_library(rstudio-zlib STATIC ${ZLIB_SOURCE_FILES} ${ZLIB_HEADER_FILES})
+   # Source dir for zlib.h et al.; binary dir for the generated zconf.h.
+   target_include_directories(rstudio-zlib PUBLIC "${ZLIB_SOURCE_DIR}" "${ZLIB_BINARY_DIR}")
 
-      # Pin the archive output to a flat, config-independent path so the hardcoded
-      # _RSTUDIO_ZLIB_LIBRARY above (fed to libgit2's find_package(ZLIB)) resolves
-      # under both the Ninja (single-config) and Visual Studio (multi-config)
-      # generators; the latter otherwise nests the .lib under a per-config subdir.
+   # Pin the archive output to a flat, config-independent path so the hardcoded
+   # _RSTUDIO_ZLIB_LIBRARY above (fed to libgit2's find_package(ZLIB)) resolves
+   # under both the Ninja (single-config) and Visual Studio (multi-config)
+   # generators; the latter otherwise nests the .lib under a per-config subdir.
+   set_target_properties(rstudio-zlib PROPERTIES
+      ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/src/cpp/ext")
+   foreach(_cfg ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${_cfg}" _cfg_upper)
       set_target_properties(rstudio-zlib PROPERTIES
-         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/src/cpp/ext")
-      foreach(_cfg ${CMAKE_CONFIGURATION_TYPES})
-         string(TOUPPER "${_cfg}" _cfg_upper)
-         set_target_properties(rstudio-zlib PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY_${_cfg_upper} "${CMAKE_BINARY_DIR}/src/cpp/ext")
-      endforeach()
-   endif()
+         ARCHIVE_OUTPUT_DIRECTORY_${_cfg_upper} "${CMAKE_BINARY_DIR}/src/cpp/ext")
+   endforeach()
 endif()
 
 

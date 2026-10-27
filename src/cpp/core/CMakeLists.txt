@@ -204,7 +204,6 @@ if (UNIX)
       endif()
       list(APPEND CORE_INCLUDE_DIRS ${ACL_INCLUDE_DIR})
    endif()
-   find_package(ZLIB REQUIRED QUIET)
 
    # include directories and libraries
    set(CORE_SYSTEM_LIBRARIES
