@@ -703,7 +703,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          return JavaScriptObject.createArray().cast();
 
       TextEditingTarget textTarget = (TextEditingTarget) target;
-      DocDisplay display = textTarget.getDocDisplay();
+      DocDisplay display = textTarget.activeDisplay();
 
       // Get all selection ranges (supports multi-cursor)
       Range[] ranges = display.getNativeSelection().getAllRanges();

@@ -642,6 +642,10 @@ public class TextEditingTargetWidget
       splitEditorRegistrations_.add(splitEditor_.addCursorChangedHandler(event ->
             target_.splitEditorCursorChanged(event.getPosition())));
 
+      // keep Chat's selection context in sync with the split view
+      splitEditorRegistrations_.add(splitEditor_.addSelectionChangedHandler(event ->
+            target_.splitEditorSelectionChanged()));
+
       target_.splitEditorCreated(splitEditor_);
    }
 

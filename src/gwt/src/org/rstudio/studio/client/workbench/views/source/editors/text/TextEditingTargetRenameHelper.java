@@ -21,9 +21,8 @@ import com.google.gwt.user.client.Timer;
 
 public class TextEditingTargetRenameHelper
 {
-   public TextEditingTargetRenameHelper(DocDisplay docDisplay, UserPrefs prefs)
+   public TextEditingTargetRenameHelper(UserPrefs prefs)
    {
-      editor_ = (AceEditor) docDisplay;
       ranges_ = new ArrayList<>();
       state_ = new Stack<>();
       protectedNamesList_ = new ArrayList<>();
@@ -36,8 +35,11 @@ public class TextEditingTargetRenameHelper
       renameChunkState_.cancel();
    }
 
-   public int renameInScope()
+   // Renames from the selection of the editor view the command came from,
+   // which may be a document's split view or a Visual Mode chunk editor.
+   public int renameInScope(DocDisplay display)
    {
+      editor_ = (AceEditor) display;
       init();
 
       TextFileType type = editor_.getFileType();
@@ -680,7 +682,7 @@ public class TextEditingTargetRenameHelper
       private final Timer resetTimer_;
    }
 
-   private final AceEditor editor_;
+   private AceEditor editor_;
    private final List<Range> ranges_;
    private final Stack<Integer> state_;
    private final List<Set<String>> protectedNamesList_;

@@ -2974,9 +2974,12 @@ public class Source implements InsertSourceEvent.Handler,
                }
                else
                {
+                  // the editor view holding the cursor, which may be the
+                  // document's split view -- where getEditorContext() reads
+                  // the selection from
                   target.ensureTextEditorActive(() ->
                   {
-                     command.execute(target.getDocDisplay());
+                     command.execute(target.activeDisplay());
                   });
                }
             }
@@ -3326,7 +3329,7 @@ public class Source implements InsertSourceEvent.Handler,
          RStudioApiRequestEvent.SetGhostTextData data = requestEvent.getPayload().cast();
          invokeEditorApiAction(null, (TextEditingTarget target) ->
          {
-            DocDisplay editor = target.getDocDisplay();
+            DocDisplay editor = target.activeDisplay();
             editor.setGhostText(data.getText());
             
             JsObject response = JsObject.createJsObject();

@@ -3661,9 +3661,9 @@ public class AceEditor implements DocDisplay
    }
 
    @Override
-   public void toggleBreakpointAtCursor()
+   public void toggleBreakpointAtRow(int row)
    {
-      widget_.toggleBreakpointAtCursor();
+      widget_.toggleBreakpointAtRow(row);
    }
 
    @Override

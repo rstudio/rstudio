@@ -383,8 +383,8 @@ public class TextEditingTarget implements
       // output line widgets, and navigation all bind to it. getActiveDisplay()
       // returns the view that last held focus, and should be consulted only
       // where behavior must follow the user's cursor or selection (e.g.
-      // executing code, reading the selection for rstudioapi, status bar
-      // position).
+      // editing commands, executing code, folding, reading or replacing the
+      // selection for rstudioapi, status bar position).
       void setEditorSplit(String type);
       String getEditorSplit();
       boolean focusOtherEditorSplit();
@@ -652,7 +652,7 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
       presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
-      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_, prefs_);
+      renameHelper_ = new TextEditingTargetRenameHelper(prefs_);
       quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -977,9 +977,10 @@ public class TextEditingTarget implements
 
    private boolean moveCursorToNextSectionOrChunk(boolean includeSections)
    {
-      Scope current = docDisplay_.getCurrentScope();
-      ScopeList scopes = new ScopeList(docDisplay_);
-      Position cursorPos = docDisplay_.getCursorPosition();
+      DocDisplay display = activeDisplay();
+      Scope current = display.getCurrentScope();
+      ScopeList scopes = new ScopeList(display);
+      Position cursorPos = display.getCursorPosition();
 
       int n = scopes.size();
       for (int i = 0; i < n; i++)
@@ -993,7 +994,7 @@ public class TextEditingTarget implements
 
          if (scope.getPreamble().isAfter(cursorPos))
          {
-            moveCursorToNextPrevSection(scope.getPreamble());
+            moveCursorToNextPrevSection(display, scope.getPreamble());
             return true;
          }
       }
@@ -1003,8 +1004,9 @@ public class TextEditingTarget implements
 
    private boolean moveCursorToPreviousSectionOrChunk(boolean includeSections)
    {
-      ScopeList scopes = new ScopeList(docDisplay_);
-      Position cursorPos = docDisplay_.getCursorPosition();
+      DocDisplay display = activeDisplay();
+      ScopeList scopes = new ScopeList(display);
+      Position cursorPos = display.getCursorPosition();
 
       int n = scopes.size();
       for (int i = n - 1; i >= 0; i--)
@@ -1015,7 +1017,7 @@ public class TextEditingTarget implements
 
          if (scope.getPreamble().isBefore(cursorPos))
          {
-            moveCursorToNextPrevSection(scope.getPreamble());
+            moveCursorToNextPrevSection(display, scope.getPreamble());
             return true;
          }
       }
@@ -1023,10 +1025,10 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private void moveCursorToNextPrevSection(Position pos)
+   private void moveCursorToNextPrevSection(DocDisplay display, Position pos)
    {
-      docDisplay_.setCursorPosition(pos);
-      docDisplay_.moveCursorNearTop(5);
+      display.setCursorPosition(pos);
+      display.moveCursorNearTop(5);
    }
 
    @Handler
@@ -1041,22 +1043,24 @@ public class TextEditingTarget implements
    @Handler
    void onGoToStartOfCurrentScope()
    {
-      docDisplay_.focus();
-      Scope scope = docDisplay_.getCurrentScope();
+      DocDisplay display = activeDisplay();
+      display.focus();
+      Scope scope = display.getCurrentScope();
       if (scope != null)
       {
          Position position = Position.create(
                scope.getBodyStart().getRow(),
                scope.getBodyStart().getColumn() + 1);
-         docDisplay_.setCursorPosition(position);
+         display.setCursorPosition(position);
       }
    }
 
    @Handler
    void onGoToEndOfCurrentScope()
    {
-      docDisplay_.focus();
-      Scope scope = docDisplay_.getCurrentScope();
+      DocDisplay display = activeDisplay();
+      display.focus();
+      Scope scope = display.getCurrentScope();
       if (scope != null)
       {
          Position end = scope.getEnd();
@@ -1065,7 +1069,7 @@ public class TextEditingTarget implements
             Position position = Position.create(
                   end.getRow(),
                   Math.max(0, end.getColumn() - 1));
-            docDisplay_.setCursorPosition(position);
+            display.setCursorPosition(position);
          }
       }
    }
@@ -1079,14 +1083,15 @@ public class TextEditingTarget implements
       }
       else
       {
-         if (docDisplay_.getFileType().canGoNextPrevSection())
+         DocDisplay display = activeDisplay();
+         if (display.getFileType().canGoNextPrevSection())
          {
             if (!moveCursorToNextSectionOrChunk(true))
-               docDisplay_.gotoPageDown();
+               display.gotoPageDown();
          }
          else
          {
-            docDisplay_.gotoPageDown();
+            display.gotoPageDown();
          }
       }
 
@@ -1101,14 +1106,15 @@ public class TextEditingTarget implements
       }
       else
       {
-         if (docDisplay_.getFileType().canGoNextPrevSection())
+         DocDisplay display = activeDisplay();
+         if (display.getFileType().canGoNextPrevSection())
          {
             if (!moveCursorToPreviousSectionOrChunk(true))
-               docDisplay_.gotoPageUp();
+               display.gotoPageUp();
          }
          else
          {
-            docDisplay_.gotoPageUp();
+            display.gotoPageUp();
          }
       }
    }
@@ -3071,13 +3077,14 @@ public class TextEditingTarget implements
       {
          ensureTextEditorActive(() ->
          {
-            if (docDisplay_.hasSelection())
+            DocDisplay display = activeDisplay();
+            if (display.hasSelection())
             {
-               docDisplay_.replaceSelection(value);
+               display.replaceSelection(value);
             }
             else
             {
-               docDisplay_.insertCode(value);
+               display.insertCode(value);
             }
 
             callback.execute();
@@ -3087,8 +3094,9 @@ public class TextEditingTarget implements
 
    public String getSelectedText()
    {
-      if (docDisplay_.hasSelection())
-         return docDisplay_.getSelectionValue();
+      DocDisplay display = activeDisplay();
+      if (display.hasSelection())
+         return display.getSelectionValue();
       else
          return "";
    }
@@ -4178,13 +4186,14 @@ public class TextEditingTarget implements
    }
 
    // The editor view holding the user's cursor -- the primary editor, or the
-   // split view when it last held focus. Selection-driven behavior (executing
-   // code, rstudioapi selection queries, status bar position) should read
-   // from this display; document-level behavior stays on docDisplay_. See
-   // the "active tab" vs "active editor view" note on Display. In visual
-   // mode the primary editor is always used, as visual mode synchronizes its
+   // split view when it last held focus. Cursor- and selection-driven
+   // behavior (editing commands, executing code, folding, rstudioapi
+   // selection reads and writes, status bar position) should use this
+   // display; document-level behavior stays on docDisplay_. See the "active
+   // tab" vs "active editor view" note on Display. In visual mode the
+   // primary editor is always used, as visual mode synchronizes its
    // selection into it.
-   private DocDisplay activeDisplay()
+   public DocDisplay activeDisplay()
    {
       if (view_ == null || isVisualModeActivated())
          return docDisplay_;
@@ -4232,6 +4241,13 @@ public class TextEditingTarget implements
       updateStatusBarPosition();
       if (activeDisplay().isScopeTreeReady(position.getRow()))
          updateCurrentScope();
+   }
+
+   // Called by the view when the selection changes in the split editor view,
+   // so Chat's view of the selection follows the view being edited.
+   void splitEditorSelectionChanged()
+   {
+      selectionChangedTimer_.schedule(250);
    }
 
    // Applies the inline-chunk-output mode to every view of this document.
@@ -4544,7 +4560,7 @@ public class TextEditingTarget implements
       final JsArray<AceFold> folds = display.getFolds();
       display.unfoldAll();
 
-      int matches = renameHelper_.renameInScope();
+      int matches = renameHelper_.renameInScope(display);
       if (matches <= 0)
       {
          if (!display.getSelectionValue().isEmpty())
@@ -4693,7 +4709,7 @@ public class TextEditingTarget implements
          // prose, which we can't count here.
          if (!isVisualEditorActive())
          {
-            selectionRange = docDisplay_.getSelectionRange();
+            selectionRange = activeDisplay().getSelectionRange();
          }
 
          TextFileType fileType = docDisplay_.getFileType();
@@ -4730,7 +4746,7 @@ public class TextEditingTarget implements
       else
       {
          ensureTextEditorActive(() -> {
-            spelling_.checkSpelling(docDisplay_.getSpellingDoc());
+            spelling_.checkSpelling(activeDisplay().getSpellingDoc());
          });
       }
 
@@ -5617,7 +5633,9 @@ public class TextEditingTarget implements
    @Handler
    void onDebugBreakpoint()
    {
-      docDisplay_.toggleBreakpointAtCursor();
+      // breakpoints live on the primary editor (the split view shows none),
+      // but the row comes from the view holding the cursor
+      docDisplay_.toggleBreakpointAtRow(activeDisplay().getCursorPosition().getRow());
    }
 
    @Handler
@@ -6655,14 +6673,14 @@ public class TextEditingTarget implements
    // splits a chunk into two chunks
    // chunk 1: first chunk line to linePos (not including linePos)
    // chunk 2: linePos line to end
-   private void splitChunk(Scope chunk, int linePos)
+   private void splitChunk(DocDisplay display, Scope chunk, int linePos)
    {
       Position chunkStart = chunk.getBodyStart();
       Position chunkEnd = chunk.getEnd();
       if (chunkEnd == null)
-         chunkEnd = docDisplay_.getDocumentEnd();
+         chunkEnd = display.getDocumentEnd();
       Position preamble = chunk.getPreamble();
-      String preambleLine = docDisplay_.getLine(preamble.getRow()) + "\n";
+      String preambleLine = display.getLine(preamble.getRow()) + "\n";
 
       // if the cursor line is in the preamble of the chunk
       // reset it to the body of the chunk to get the same semantics
@@ -6672,7 +6690,7 @@ public class TextEditingTarget implements
 
       // get chunk contents from chunk start up to the specified line
       Range firstChunkRange = Range.create(chunkStart.getRow(), chunkStart.getColumn(), linePos, 0);
-      String firstChunkContents = docDisplay_.getTextForRange(firstChunkRange);
+      String firstChunkContents = display.getTextForRange(firstChunkRange);
       firstChunkContents = firstChunkContents.trim();
 
       // add preamble line and ending line for new first chunk
@@ -6683,7 +6701,7 @@ public class TextEditingTarget implements
 
       // get second chunk contents from what's left
       Range secondChunkRange = Range.create(linePos, 0, chunkEnd.getRow(), chunkEnd.getColumn());
-      String secondChunkContents = docDisplay_.getTextForRange(secondChunkRange);
+      String secondChunkContents = display.getTextForRange(secondChunkRange);
       secondChunkContents = secondChunkContents.trim();
 
       // add the preamble line of the original chunk to the second chunk (so we have the correct language)
@@ -6691,25 +6709,25 @@ public class TextEditingTarget implements
 
       // modify contents of original chunk with second chunk contents
       Range chunkRange = Range.create(chunkStart.getRow() - 1, chunkStart.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
-      docDisplay_.replaceRange(chunkRange, secondChunkContents);
+      display.replaceRange(chunkRange, secondChunkContents);
 
       // insert new chunk with first chunk contents
-      docDisplay_.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
-      docDisplay_.insertCode(firstChunkContents, false);
+      display.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
+      display.insertCode(firstChunkContents, false);
    }
 
    // splits a chunk into three chunks
    // chunk 1: first chunk line to start pos
    // chunk 2: start pos to end pos
    // chunk 3: end pos to end of chunk
-   private void splitChunk(Scope chunk, Position startPos, Position endPos)
+   private void splitChunk(DocDisplay display, Scope chunk, Position startPos, Position endPos)
    {
       Position chunkStart = chunk.getBodyStart();
       Position chunkEnd = chunk.getEnd();
       if (chunkEnd == null)
-         chunkEnd = docDisplay_.getDocumentEnd();
+         chunkEnd = display.getDocumentEnd();
       Position preamble = chunk.getPreamble();
-      String preambleLine = docDisplay_.getLine(preamble.getRow()) + "\n";
+      String preambleLine = display.getLine(preamble.getRow()) + "\n";
 
       // if the selected position is only within the preamble, do nothing as it makes no sense to do any splitting
       if (startPos.getRow() == preamble.getRow() && endPos.getRow() == startPos.getRow())
@@ -6731,7 +6749,7 @@ public class TextEditingTarget implements
 
       // get chunk contents from chunk start up to the specified start pos
       Range firstChunkRange = Range.create(chunkStart.getRow(), chunkStart.getColumn(), startPos.getRow(), startPos.getColumn());
-      String firstChunkContents = docDisplay_.getTextForRange(firstChunkRange);
+      String firstChunkContents = display.getTextForRange(firstChunkRange);
       firstChunkContents = firstChunkContents.trim();
 
       // add preamble line and ending line for new first chunk
@@ -6742,7 +6760,7 @@ public class TextEditingTarget implements
 
       // get middle chunk contents from selected positions
       Range middleChunkRange = Range.create(startPos.getRow(), startPos.getColumn(), endPos.getRow(), endPos.getColumn());
-      String middleChunkContents = docDisplay_.getTextForRange(middleChunkRange);
+      String middleChunkContents = display.getTextForRange(middleChunkRange);
       middleChunkContents = middleChunkContents.trim();
 
       // // add preamble line and ending line for middle chunk
@@ -6753,7 +6771,7 @@ public class TextEditingTarget implements
 
       // get final chunk contents from ending selection position to ending chunk position
       Range finalChunkRange = Range.create(endPos.getRow(), endPos.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
-      String finalChunkContents = docDisplay_.getTextForRange(finalChunkRange);
+      String finalChunkContents = display.getTextForRange(finalChunkRange);
       finalChunkContents = finalChunkContents.trim();
 
       // add preamble to final chunk
@@ -6761,16 +6779,16 @@ public class TextEditingTarget implements
 
       // modify contents of original chunk with final chunk contents
       Range chunkRange = Range.create(chunkStart.getRow() - 1, chunkStart.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
-      docDisplay_.replaceRange(chunkRange, finalChunkContents);
+      display.replaceRange(chunkRange, finalChunkContents);
 
       // insert first and middle chunk contents as new chunks
-      docDisplay_.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
-      docDisplay_.insertCode(firstChunkContents, false);
-      Position middleChunkPos = docDisplay_.getCursorPosition();
-      docDisplay_.insertCode(middleChunkContents, false);
+      display.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
+      display.insertCode(firstChunkContents, false);
+      Position middleChunkPos = display.getCursorPosition();
+      display.insertCode(middleChunkContents, false);
 
       // reset cursor position to middle chunk (selected text)
-      docDisplay_.setCursorPosition(middleChunkPos);
+      display.setCursorPosition(middleChunkPos);
    }
 
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
@@ -6796,37 +6814,38 @@ public class TextEditingTarget implements
          return;
       }
 
+      DocDisplay display = activeDisplay();
       String sel = "";
       Range selRange = null;
 
       // if currently in a chunk
       // with no selection, split this chunk into two chunks at the current line
       // with selection, split this chunk into three chunks (prior to selection, selected, post selection)
-      Scope currentChunk = docDisplay_.getCurrentChunk();
+      Scope currentChunk = display.getCurrentChunk();
       if (currentChunk != null)
       {
          // record current selection before manipulating text
-         sel = docDisplay_.getSelectionValue();
-         selRange = docDisplay_.getSelectionRange();
+         sel = display.getSelectionValue();
+         selRange = display.getSelectionRange();
 
          if (selRange.isEmpty())
          {
-            splitChunk(currentChunk, docDisplay_.getCursorPosition().getRow());
+            splitChunk(display, currentChunk, display.getCursorPosition().getRow());
             return;
          }
          else
          {
-            splitChunk(currentChunk, selRange.getStart() ,selRange.getEnd());
+            splitChunk(display, currentChunk, selRange.getStart() ,selRange.getEnd());
             return;
          }
       }
 
-      Position pos = moveCursorToNextInsertLocation();
-      InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
+      Position pos = moveCursorToNextInsertLocation(display);
+      InsertChunkInfo insertChunkInfo = display.getInsertChunkInfo();
       if (insertChunkInfo != null)
       {
          // inject the chunk skeleton
-         docDisplay_.insertCode(chunkPlaceholder, false);
+         display.insertCode(chunkPlaceholder, false);
 
          // if we had text selected, inject it into the chunk
          if (!StringUtil.isNullOrEmpty(sel))
@@ -6841,16 +6860,16 @@ public class TextEditingTarget implements
             // move over newline if selected
             if (sel.endsWith("\n"))
                endPos.setRow(endPos.getRow() + 1);
-            docDisplay_.replaceRange(
+            display.replaceRange(
                   Range.fromPoints(docContentPos, endPos), sel);
-            docDisplay_.replaceRange(selRange, "");
+            display.replaceRange(selRange, "");
          }
 
          Position cursorPosition = insertChunkInfo.getCursorPosition();
-         docDisplay_.setCursorPosition(Position.create(
+         display.setCursorPosition(Position.create(
                pos.getRow() + cursorPosition.getRow() + rowOffset,
                colOffset));
-         docDisplay_.focus();
+         display.focus();
       }
       else
       {
@@ -7014,6 +7033,7 @@ public class TextEditingTarget implements
       if (cursorInDiffBase())
          return;
 
+      DocDisplay display = activeDisplay();
       globalDisplay_.promptForText(
          constants_.onInsertSectionTitle(),
          constants_.onInsertSectionLabel(),
@@ -7023,7 +7043,7 @@ public class TextEditingTarget implements
             public void execute(String label)
             {
                // move cursor to next insert location
-               Position pos = moveCursorToNextInsertLocation();
+               Position pos = moveCursorToNextInsertLocation(display);
 
                // truncate length to print margin - 5
                int printMarginColumn = prefs_.marginColumn().getValue();
@@ -7053,27 +7073,27 @@ public class TextEditingTarget implements
                sectionLabel.append("\n\n");
 
                // insert code and move cursor
-               docDisplay_.insertCode(sectionLabel.toString(), false);
-               docDisplay_.setCursorPosition(Position.create(pos.getRow() + 3,
-                                                             0));
-               docDisplay_.focus();
+               display.insertCode(sectionLabel.toString(), false);
+               display.setCursorPosition(Position.create(pos.getRow() + 3,
+                                                         0));
+               display.focus();
 
             }
          });
    }
 
-   private Position moveCursorToNextInsertLocation()
+   private Position moveCursorToNextInsertLocation(DocDisplay display)
    {
-      docDisplay_.collapseSelection(true);
-      if (!docDisplay_.moveSelectionToBlankLine())
+      display.collapseSelection(true);
+      if (!display.moveSelectionToBlankLine())
       {
-         int lastRow = docDisplay_.getRowCount();
-         int lastCol = docDisplay_.getLength(lastRow);
+         int lastRow = display.getRowCount();
+         int lastCol = display.getLength(lastRow);
          Position endPos = Position.create(lastRow, lastCol);
-         docDisplay_.setCursorPosition(endPos);
-         docDisplay_.insertCode("\n", false);
+         display.setCursorPosition(endPos);
+         display.insertCode("\n", false);
       }
-      return docDisplay_.getCursorPosition();
+      return display.getCursorPosition();
 
    }
 
@@ -7591,6 +7611,7 @@ public class TextEditingTarget implements
    @Handler
    void onGoToLine()
    {
+      DocDisplay display = activeDisplay();
       globalDisplay_.promptForInteger(
             constants_.onGoToLineTitle(),
             constants_.onGoToLineLabel(),
@@ -7603,9 +7624,9 @@ public class TextEditingTarget implements
                   indicator.onCompleted();
 
                   line = Math.max(1, line);
-                  line = Math.min(docDisplay_.getRowCount(), line);
+                  line = Math.min(display.getRowCount(), line);
 
-                  docDisplay_.navigateToPosition(
+                  display.navigateToPosition(
                         SourcePosition.create(line-1, 0),
                         true);
                }
@@ -8896,63 +8917,65 @@ public class TextEditingTarget implements
    @Handler
    void onFold()
    {
+      DocDisplay display = activeDisplay();
       if (visualMode_.isActivated())
       {
          visualMode_.fold();
       }
       else if (useScopeTreeFolding())
       {
-         Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
-                                        docDisplay_.getSelectionEnd());
+         Range range = Range.fromPoints(display.getSelectionStart(),
+                                        display.getSelectionEnd());
          if (range.isEmpty())
          {
             // If no selection, fold the innermost non-anonymous scope
-            Scope scope = docDisplay_.getCurrentScope();
+            Scope scope = display.getCurrentScope();
             while (scope != null && scope.isAnon())
                scope = scope.getParentScope();
 
             if (scope == null || scope.isTopLevel())
                return;
 
-            docDisplay_.addFoldFromRow(scope.getFoldStart().getRow());
+            display.addFoldFromRow(scope.getFoldStart().getRow());
          }
          else
          {
             // If selection, fold the selection
-            docDisplay_.addFold(range);
+            display.addFold(range);
          }
       }
       else
       {
-         int row = docDisplay_.getSelectionStart().getRow();
-         docDisplay_.addFoldFromRow(row);
+         int row = display.getSelectionStart().getRow();
+         display.addFoldFromRow(row);
       }
    }
 
    @Handler
    void onUnfold()
    {
+      DocDisplay display = activeDisplay();
       if (visualMode_.isActivated())
       {
          visualMode_.unfold();
       }
       else if (useScopeTreeFolding())
       {
-         Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
-                                        docDisplay_.getSelectionEnd());
+         Range range = Range.fromPoints(display.getSelectionStart(),
+                                        display.getSelectionEnd());
          if (range.isEmpty())
          {
             // If no selection, either:
             //
             // 1) Unfold a fold containing the cursor, or
             // 2) Unfold the closest fold on the current row.
-            Position pos = docDisplay_.getCursorPosition();
+            Position pos = display.getCursorPosition();
 
             AceFold containingCandidate = null;
             AceFold startCandidate = null;
             AceFold endCandidate = null;
 
-            for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
+            for (AceFold f : JsUtil.asIterable(display.getFolds()))
             {
                // Check to see whether this fold contains the cursor position.
                if (f.getRange().contains(pos))
@@ -8981,38 +9004,39 @@ public class TextEditingTarget implements
 
             if (containingCandidate != null)
             {
-               docDisplay_.unfold(containingCandidate);
+               display.unfold(containingCandidate);
             }
             else if (startCandidate == null ^ endCandidate == null)
             {
-               docDisplay_.unfold(startCandidate != null ? startCandidate
-                                                          : endCandidate);
+               display.unfold(startCandidate != null ? startCandidate
+                                                      : endCandidate);
             }
             else if (startCandidate != null && endCandidate != null)
             {
                // Both are candidates; see which is closer
                int startDelta = startCandidate.getStart().getColumn() - pos.getColumn();
                int endDelta = pos.getColumn() - endCandidate.getEnd().getColumn();
-               docDisplay_.unfold(startDelta <= endDelta? startCandidate
-                                                        : endCandidate);
+               display.unfold(startDelta <= endDelta? startCandidate
+                                                    : endCandidate);
             }
          }
          else
          {
             // If selection, unfold the selection
-            docDisplay_.unfold(range);
+            display.unfold(range);
          }
       }
       else
       {
-         int row = docDisplay_.getSelectionStart().getRow();
-         docDisplay_.unfold(row);
+         int row = display.getSelectionStart().getRow();
+         display.unfold(row);
       }
    }
 
    @Handler
    void onFoldAll()
    {
+      DocDisplay display = activeDisplay();
       if (visualMode_.isActivated())
       {
          visualMode_.foldAll();
@@ -9021,21 +9045,21 @@ public class TextEditingTarget implements
       {
          // Fold all except anonymous braces
          HashSet<Integer> rowsFolded = new HashSet<>();
-         for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
+         for (AceFold f : JsUtil.asIterable(display.getFolds()))
             rowsFolded.add(f.getStart().getRow());
 
-         ScopeList scopeList = new ScopeList(docDisplay_);
+         ScopeList scopeList = new ScopeList(display);
          scopeList.removeAll(ScopeList.ANON_BRACE);
          for (Scope scope : scopeList)
          {
             int row = scope.getFoldStart().getRow();
             if (!rowsFolded.contains(row))
-               docDisplay_.addFoldFromRow(row);
+               display.addFoldFromRow(row);
          }
       }
       else
       {
-         docDisplay_.foldAll();
+         display.foldAll();
       }
        
    }
@@ -9049,7 +9073,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         docDisplay_.unfoldAll();
+         activeDisplay().unfoldAll();
       }
    }
 
@@ -9062,7 +9086,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         docDisplay_.toggleTokenInfo();
+         activeDisplay().toggleTokenInfo();
       }
    }
 
@@ -10180,7 +10204,8 @@ public class TextEditingTarget implements
    /**
     * Executes a command with the active Ace instance. If there is no active
     * instance (e.g. in visual mode when focus is not in an editor), then the
-    * command is not executed.
+    * command is not executed. In source mode, the active instance is the
+    * editor view (primary or split) that last held focus.
     *
     * @param cmd The command to execute.
     */
@@ -10200,7 +10225,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         cmd.execute(docDisplay_);
+         cmd.execute(activeDisplay());
       }
    }
 
@@ -10420,14 +10445,15 @@ public class TextEditingTarget implements
       public void run()
       {
          // Get current selections and fire event
-         Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
+         DocDisplay display = activeDisplay();
+         Range[] ranges = display.getNativeSelection().getAllRanges();
          if (ranges == null || ranges.length == 0)
             return;
 
          JsArray<JavaScriptObject> selections = JavaScriptObject.createArray().cast();
          for (Range range : ranges)
          {
-            String text = docDisplay_.getTextForRange(range);
+            String text = display.getTextForRange(range);
             selections.push(DocSelectionChangedEvent.Selection.create(range, text));
          }
 

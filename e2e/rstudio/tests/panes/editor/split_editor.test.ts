@@ -66,7 +66,49 @@ test.describe('Split editor', () => {
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.navigateFileEnd()),
       hasFocus: () => view.evaluate((el) => el.contains(document.activeElement)),
       click: () => view.locator('.ace_content').click({ force: true }),
+      select: (range: { start: { row: number; column: number }; end: { row: number; column: number } }) =>
+        view.evaluate((el, r) => (el as AceEditorElement).env?.editor?.selection.setRange(r), range),
+      rangeCount: () =>
+        view.evaluate((el) => (el as AceEditorElement).env?.editor?.selection.rangeCount ?? 0),
+      foldCount: () =>
+        view.evaluate((el) => (el as AceEditorElement).env?.editor?.session.getAllFolds().length ?? -1),
     };
+  }
+
+  // Two functions: the primary view's cursor rests in cmd_a and the focused
+  // split view selects 'y<-y*2' in cmd_b, so a command routed to the wrong
+  // view changes cmd_a instead.
+  const COMMAND_CONTENT = heredoc`
+    # split_view_marker
+    cmd_a <- function(x) {
+      x<-x+1
+      x
+    }
+    cmd_b <- function(y) {
+      y<-y*2
+      y
+    }
+  `;
+  const PRIMARY_LINE = '  x<-x+1';
+
+  async function openWithFocusedSplit(page: Page) {
+    await writeAndOpenFile(page, sandbox.dir, FILE, COMMAND_CONTENT);
+    const views = sourceViews(page);
+    await executeCommand(page, 'splitEditorRight');
+    await expect(views).toHaveCount(2);
+
+    const primary = viewEditor(views.first());
+    const split = viewEditor(views.nth(1));
+    await primary.click();
+    await primary.gotoLine(3);
+    await split.click();
+    await split.select({ start: { row: 6, column: 2 }, end: { row: 6, column: 8 } });
+    await expect.poll(() => split.hasFocus()).toBe(true);
+    return { primary, split };
+  }
+
+  async function documentLine(page: Page, row: number): Promise<string> {
+    return (await documentValue(page)).split('\n')[row];
   }
 
   test.beforeAll(async ({ rstudioPage: page }) => {
@@ -257,6 +299,69 @@ test.describe('Split editor', () => {
       expect(await consoleActions.evalRLogical('exists("split_x") && !exists("split_y")')).toBe(true);
     });
   }
+
+  // https://github.com/rstudio/rstudio/issues/19298
+  const EDITING_CASES = [
+    {
+      name: 'Comment/Uncomment shortcut',
+      run: (page: Page) => page.keyboard.press('ControlOrMeta+Shift+C'),
+      expected: /^\s*#\s*y<-y\*2$/,
+    },
+    {
+      name: 'Reformat Selection',
+      run: (page: Page) => executeCommand(page, 'reformatCode'),
+      expected: /^\s*y <- y \* 2$/,
+    },
+  ];
+
+  for (const editing of EDITING_CASES) {
+    test(`${editing.name} edits the focused view's selection`, async ({ rstudioPage: page }) => {
+      await openWithFocusedSplit(page);
+      await editing.run(page);
+      await expect.poll(() => documentLine(page, 6)).toMatch(editing.expected);
+      expect(await documentLine(page, 2)).toBe(PRIMARY_LINE);
+    });
+  }
+
+  test('folding and scope navigation follow the focused view', async ({ rstudioPage: page }) => {
+    const { primary, split } = await openWithFocusedSplit(page);
+
+    // Folds are per view: the split view folds, the primary view does not.
+    await executeCommand(page, 'fold');
+    await expect.poll(() => split.foldCount()).toBe(1);
+    expect(await primary.foldCount()).toBe(0);
+    await executeCommand(page, 'unfold');
+    await expect.poll(() => split.foldCount()).toBe(0);
+
+    // Go to Start of Scope moves the split view's cursor to cmd_b's opening
+    // line, leaving the primary view's cursor inside cmd_a.
+    await executeCommand(page, 'goToStartOfCurrentScope');
+    await expect.poll(() => split.cursorRow()).toBe(5);
+    expect(await primary.cursorRow()).toBe(2);
+  });
+
+  test('Rename in Scope selects in the focused view', async ({ rstudioPage: page }) => {
+    const { primary, split } = await openWithFocusedSplit(page);
+
+    // Renaming cmd_b's 'y' selects each of its occurrences in the split view.
+    await executeCommand(page, 'renameInScope');
+    await expect.poll(() => split.rangeCount()).toBe(4);
+    expect(await primary.rangeCount()).toBeLessThan(2);
+    await page.keyboard.press('Escape');
+  });
+
+  test('rstudioapi replaces the focused view\'s selection', async ({ rstudioPage: page }) => {
+    await openWithFocusedSplit(page);
+
+    // The console takes focus to run this; the split view remains the
+    // document's active view, as for an addin run from the console.
+    await consoleActions.executeInConsole(
+      '.rs.api.selectionSet("y <- y * 3", id = .rs.api.getSourceEditorContext()$id)',
+      { wait: true },
+    );
+    await expect.poll(() => documentLine(page, 6)).toBe('  y <- y * 3');
+    expect(await documentLine(page, 2)).toBe(PRIMARY_LINE);
+  });
 
   test('closing a split document releases its editor state', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, FILE, CONTENT);

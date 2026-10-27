@@ -429,7 +429,7 @@ public interface DocDisplay extends HasValueChangeHandlers<VoidResponse>,
    void addOrUpdateBreakpoint(Breakpoint breakpoint);
    void removeBreakpoint(Breakpoint breakpoint);
    void removeAllBreakpoints();
-   void toggleBreakpointAtCursor();
+   void toggleBreakpointAtRow(int row);
    boolean hasBreakpoints();
 
    HandlerRegistration addGutterItem(LintItem item);
