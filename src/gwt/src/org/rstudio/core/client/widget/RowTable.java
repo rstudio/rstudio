@@ -228,6 +228,7 @@ public abstract class RowTable<T> extends ScrollPanel
       
       setFocusEventListener(table_);
       addStyleName(RES.styles().panel());
+      addStyleName(RES.styles().empty());
    }
    
    private final native void setFocusEventListener(Element table)
@@ -266,8 +267,8 @@ public abstract class RowTable<T> extends ScrollPanel
       }
    }
    
-   // The focus ring goes on the scroll panel: an outline on the table would
-   // wrap only a short list's rows, or scroll out of view with a long list.
+   // The focus ring goes on the current option rather than the table, as a
+   // native listbox draws it; an empty list rings its scroll panel instead.
    // Engines without :focus-visible (HtmlUnit in unit tests) throw on the
    // selector; there the ring appears on the first keypress instead.
    private static final native boolean matchesFocusVisible(Element el)
@@ -370,6 +371,7 @@ public abstract class RowTable<T> extends ScrollPanel
          clear();
 
       data_ = data;
+      setStyleName(RES.styles().empty(), data_.isEmpty());
 
       buffer_.setLength(0);
       bufferTimer_.cancel();
@@ -505,6 +507,7 @@ public abstract class RowTable<T> extends ScrollPanel
    public void clear()
    {
       data_.clear();
+      addStyleName(RES.styles().empty());
       table_.removeAllChildren();
       table_.removeAttribute("aria-activedescendant");
       SelectionEvent.fire(this, null);
@@ -743,6 +746,7 @@ public abstract class RowTable<T> extends ScrollPanel
       
       String active();
       String focusVisible();
+      String empty();
       String selected();
       String focused();
    }

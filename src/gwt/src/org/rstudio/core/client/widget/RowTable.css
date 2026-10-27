@@ -33,9 +33,11 @@
 }
 
 /* same ring as the app-wide :focus-visible outline in focus-visible.css,
-   which is suppressed on the listbox table itself */
-.focusVisible,
-.focusVisible .focused {
+   which is suppressed on the listbox table itself; it marks the current
+   option, or the whole list when there is no option to mark */
+.focusVisible .focused,
+.focusVisible .selected,
+.focusVisible.empty {
    outline: #8AA9DB solid 2px;
    outline-offset: -2px;
 }
