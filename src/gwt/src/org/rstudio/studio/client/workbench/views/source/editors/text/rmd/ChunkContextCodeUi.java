@@ -28,7 +28,7 @@ public class ChunkContextCodeUi extends ChunkContextUi
    public ChunkContextCodeUi(TextEditingTarget target, boolean dark, Scope chunk,
                              PinnedLineWidget.Host host, int renderPass)
    {
-      super(target, chunk, target.getDocDisplay(), dark);
+      super(target, chunk, target.getPrimaryDisplay(), dark);
       
       host_ = host;
       renderPass_ = renderPass;
@@ -54,7 +54,7 @@ public class ChunkContextCodeUi extends ChunkContextUi
       // Create a new pinned line widget; ensure it always has a host by
       // providing our own host wrapper
       lineWidget_ = new PinnedLineWidget(
-            ChunkContextToolbar.LINE_WIDGET_TYPE, outerEditor_.getDocDisplay(), 
+            ChunkContextToolbar.LINE_WIDGET_TYPE, outerEditor_.getPrimaryDisplay(), 
             toolbar_, row, null, new PinnedLineWidget.Host()
             {
                @Override

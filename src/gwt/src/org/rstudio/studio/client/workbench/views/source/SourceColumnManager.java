@@ -681,7 +681,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       EditingTarget target = activeColumn_.getActiveEditor();
       if (!(target instanceof TextEditingTarget))
          return null;
-      DocDisplay display = ((TextEditingTarget) target).getDocDisplay();
+      DocDisplay display = ((TextEditingTarget) target).getPrimaryDisplay();
       if (!(display instanceof AceEditor))
          return null;
       return ((AceEditor) display).getWidget().getEditor();

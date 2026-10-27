@@ -123,7 +123,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       });
 
       // Save the collapse state of the visual mode chunks.
-      releaseOnDismiss_.add(target_.getDocDisplay().addValueChangeHandler(evt ->
+      releaseOnDismiss_.add(target_.getPrimaryDisplay().addValueChangeHandler(evt ->
       {
          nudgeSaveCollapseState();
       }));
