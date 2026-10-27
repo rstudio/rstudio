@@ -132,7 +132,10 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void onDoubleClick(DoubleClickEvent event)
          {
-            SelectionCommitEvent.fire(RowTable.this, data_.get(selectedRow_));
+            // blank space below a short list's rows is not a row
+            Element rowEl = findRowElement(event.getNativeEvent());
+            if (rowEl != null)
+               SelectionCommitEvent.fire(RowTable.this, data_.get(getRowIndex(rowEl)));
          }
       }, DoubleClickEvent.getType());
       
@@ -141,16 +144,7 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void onClick(ClickEvent event)
          {
-            Element eventTarget = event.getNativeEvent().getEventTarget().cast();
-            Element rowEl = DomUtils.findParentElement(eventTarget, new ElementPredicate()
-            {
-               @Override
-               public boolean test(Element el)
-               {
-                  return el.hasClassName(RES.styles().row());
-               }
-            });
-            
+            Element rowEl = findRowElement(event.getNativeEvent());
             if (rowEl != null)
             {
                selectRow(rowEl);
@@ -606,8 +600,25 @@ public abstract class RowTable<T> extends ScrollPanel
    
    private void selectRow(Element rowEl)
    {
-      String row = rowEl.getAttribute("__row");
-      selectRow(Integer.valueOf(row));
+      selectRow(getRowIndex(rowEl));
+   }
+   
+   private Element findRowElement(NativeEvent event)
+   {
+      Element target = event.getEventTarget().cast();
+      return DomUtils.findParentElement(target, new ElementPredicate()
+      {
+         @Override
+         public boolean test(Element el)
+         {
+            return el.hasClassName(RES.styles().row());
+         }
+      });
+   }
+   
+   private static int getRowIndex(Element rowEl)
+   {
+      return Integer.valueOf(rowEl.getAttribute("__row"));
    }
    
    private void selectOffset(NativeEvent event, int offset)

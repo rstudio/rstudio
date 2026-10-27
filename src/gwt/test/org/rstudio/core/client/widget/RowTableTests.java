@@ -319,6 +319,55 @@ public class RowTableTests extends GWTTestCase
       assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
    }
 
+   private static void doubleClick(Element el)
+   {
+      el.dispatchEvent(Document.get().createDblClickEvent(
+            0, 0, 0, 0, 0, false, false, false, false));
+   }
+
+   private static List<String> recordCommits(RowTable<String> table)
+   {
+      List<String> commits = new ArrayList<>();
+      table.addSelectionCommitHandler(event -> commits.add(event.getSelectedItem()));
+      return commits;
+   }
+
+   public void testDoubleClickOnRowCommitsIt()
+   {
+      StringTable table = createTable("a", "b", "c");
+      List<String> commits = recordCommits(table);
+      // a real click lands on a cell, not the row itself
+      Element cell = getOptions(table).get(1).getFirstChildElement();
+
+      cell.dispatchEvent(Document.get().createClickEvent(
+            1, 0, 0, 0, 0, false, false, false, false));
+      doubleClick(cell);
+
+      assertEquals(Arrays.asList("b"), commits);
+   }
+
+   public void testDoubleClickOffTheRowsCommitsNothing()
+   {
+      // e.g. blank space below a short list's rows
+      StringTable table = createTable("a", "b", "c");
+      table.selectRow(1);
+      List<String> commits = recordCommits(table);
+
+      doubleClick(table.getElement());
+
+      assertTrue(commits.isEmpty());
+   }
+
+   public void testDoubleClickOffTheRowsWithNoSelectionCommitsNothing()
+   {
+      StringTable table = createTable("a", "b", "c");
+      List<String> commits = recordCommits(table);
+
+      doubleClick(table.getElement());
+
+      assertTrue(commits.isEmpty());
+   }
+
    public void testRedrawWithoutFocusLeavesNoActiveOption()
    {
       StringTable table = createTable("a", "b", "c");
