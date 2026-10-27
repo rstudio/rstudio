@@ -37,7 +37,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BeforeShowEvent;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -584,15 +583,6 @@ public class Source implements InsertSourceEvent.Handler,
    {
       // sync UI prefs with shortcut manager
       userPrefs_ = RStudioGinjector.INSTANCE.getUserPrefs();
-
-      if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_VIM)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_EMACS)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
-      else
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
 
       initialized_ = true;
 

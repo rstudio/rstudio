@@ -23,6 +23,7 @@ import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.TextCursorTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
+import org.rstudio.core.client.command.EmbeddedKeyRoutingTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
@@ -75,6 +76,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ConsoleOutputWriterTests.class); // SLOW
       suite.addTestSuite(StringUtilTests.class);
       suite.addTestSuite(DebouncedCommandTests.class);
+      suite.addTestSuite(EmbeddedKeyRoutingTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
       suite.addTestSuite(ModalDialogTrackerTests.class);

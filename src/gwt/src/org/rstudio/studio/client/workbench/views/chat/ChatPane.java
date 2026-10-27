@@ -1026,6 +1026,7 @@ public class ChatPane
       {
          listenerSetup_ = true;
          setupMessageListener();
+         AssistantKeyForwarder.install();
       }
 
       // Show pending message now that frame is loaded
