@@ -163,12 +163,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
       if (isRoutedOutOfCurrentWindow())
       {
-         if (getWindowMode() == WINDOW_MODE_MAIN)
+         if (StringUtil.equals(getWindowMode(), WINDOW_MODE_MAIN))
          {
             // raise the main window if it's not a background command
             satellite.focusMainWindow();
          }
-         else if (getWindowMode() == WINDOW_MODE_BACKGROUND &&
+         else if (StringUtil.equals(getWindowMode(), WINDOW_MODE_BACKGROUND) &&
                   Desktop.hasDesktopFrame())
          {
             // for background commands, we still want the main window to be
