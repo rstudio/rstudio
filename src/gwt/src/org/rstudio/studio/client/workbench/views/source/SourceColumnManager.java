@@ -3071,7 +3071,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
           activeColumn_.getActiveEditor() instanceof TextEditingTarget)
       {
          TextEditingTarget editor = (TextEditingTarget) activeColumn_.getActiveEditor();
-         editor.getDocDisplay().reindent();
+         editor.activeDisplay().reindent();
       }
    }
 

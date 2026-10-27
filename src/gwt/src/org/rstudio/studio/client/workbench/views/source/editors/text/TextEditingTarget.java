@@ -2929,7 +2929,7 @@ public class TextEditingTarget implements
 
    public void insertCode(String source, boolean blockMode)
    {
-      docDisplay_.insertCode(source, blockMode);
+      activeDisplay().insertCode(source, blockMode);
    }
 
    public HashSet<AppCommand> getSupportedCommands()
@@ -5611,23 +5611,25 @@ public class TextEditingTarget implements
 
    public void reflowText()
    {
-      if (docDisplay_.getSelectionValue().isEmpty())
-         docDisplay_.setSelectionRange(
+      // prepare the selection in the view onReflowComment() acts on
+      DocDisplay display = activeDisplay();
+      if (display.getSelectionValue().isEmpty())
+         display.setSelectionRange(
                Range.fromPoints(
-                     Position.create(docDisplay_.getCursorPosition().getRow(), 0),
-                     Position.create(docDisplay_.getCursorPosition().getRow(),
-                           docDisplay_.getCurrentLine().length())));
+                     Position.create(display.getCursorPosition().getRow(), 0),
+                     Position.create(display.getCursorPosition().getRow(),
+                           display.getCurrentLine().length())));
 
       onReflowComment();
-      docDisplay_.setCursorPosition(
+      display.setCursorPosition(
             Position.create(
-                  docDisplay_.getSelectionEnd().getRow(),
+                  display.getSelectionEnd().getRow(),
                   0));
    }
 
    public void showHelpAtCursor()
    {
-      docDisplay_.goToHelp();
+      activeDisplay().goToHelp();
    }
 
    @Handler
@@ -8877,8 +8879,18 @@ public class TextEditingTarget implements
       } else {
          withActiveEditor((disp) ->
          {
+            // the find bar searches the primary editor (it does not follow
+            // the split view), so carry the focused view's selection over
+            // to it; Find Next and repeated invocations then continue from
+            // that match, as they would in a single view
+            if (disp != docDisplay_)
+            {
+               docDisplay_.setSelectionRange(disp.getSelectionRange());
+               docDisplay_.ensureCursorVisible();
+            }
+
             view_.findFromSelection(disp.getSelectionValue());
-            disp.focus();
+            docDisplay_.focus();
          });
       }
 

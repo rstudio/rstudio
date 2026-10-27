@@ -39,6 +39,11 @@ public class TextEditingTargetRenameHelper
    // which may be a document's split view or a Visual Mode chunk editor.
    public int renameInScope(DocDisplay display)
    {
+      // repeated renames cycle through one view's chunk ranges; a rename from
+      // another view starts over rather than reusing that view's identifier
+      if (editor_ != display)
+         renameChunkState_.reset();
+
       editor_ = (AceEditor) display;
       init();
 

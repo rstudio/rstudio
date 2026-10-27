@@ -65,9 +65,13 @@ test.describe('Split editor', () => {
       navigateFileEnd: () =>
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.navigateFileEnd()),
       hasFocus: () => view.evaluate((el) => el.contains(document.activeElement)),
-      click: () => view.locator('.ace_content').click({ force: true }),
+      // the scroller is the visible viewport; .ace_content spans the longest
+      // line, so its center can fall outside a narrow view
+      click: () => view.locator('.ace_scroller').click({ force: true }),
       select: (range: { start: { row: number; column: number }; end: { row: number; column: number } }) =>
         view.evaluate((el, r) => (el as AceEditorElement).env?.editor?.selection.setRange(r), range),
+      selectedText: () =>
+        view.evaluate((el) => (el as AceEditorElement).env?.editor?.getSelectedText() ?? ''),
       rangeCount: () =>
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.selection.rangeCount ?? 0),
       foldCount: () =>
@@ -348,6 +352,58 @@ test.describe('Split editor', () => {
     await expect.poll(() => split.rangeCount()).toBe(4);
     expect(await primary.rangeCount()).toBeLessThan(2);
     await page.keyboard.press('Escape');
+  });
+
+  test('Use Selection for Find searches for the focused view\'s selection', async ({ rstudioPage: page }) => {
+    const { primary } = await openWithFocusedSplit(page);
+
+    // The find bar searches the primary view, so the split view's selection
+    // carries over to it as the current match, and focus follows it there.
+    await executeCommand(page, 'findFromSelection');
+    await expect.poll(() => primary.selectedText()).toBe('y<-y*2');
+    expect(await primary.cursorRow()).toBe(6);
+    await expect.poll(() => primary.hasFocus()).toBe(true);
+    await page.keyboard.press('Escape');
+  });
+
+  test('Vim reflow (gqq) reflows the focused view\'s line', async ({ rstudioPage: page }) => {
+    const LONG = 'aaa bbb ccc ddd eee fff ggg hhh iii jjj kkk lll mmm nnn ooo ppp qqq rrr sss ttt';
+    const PRIMARY_COMMENT = `# primary ${LONG}`;
+    const SPLIT_COMMENT = `# split ${LONG}`;
+    const NEXT_COMMENT = '# next line in the same comment block';
+
+    try {
+      await setPref(page, 'editor_keybindings', 'vim');
+      await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+        # split_view_marker
+        ${PRIMARY_COMMENT}
+        reflow_x <- 1
+        ${SPLIT_COMMENT}
+        ${NEXT_COMMENT}
+      `);
+      const views = sourceViews(page);
+      await executeCommand(page, 'splitEditorRight');
+      await expect(views).toHaveCount(2);
+
+      const primary = viewEditor(views.first());
+      const split = viewEditor(views.nth(1));
+      await primary.click();
+      await primary.gotoLine(2);
+      await split.click();
+      await page.keyboard.press('Escape');
+      await split.gotoLine(4);
+      await expect.poll(() => split.hasFocus()).toBe(true);
+
+      // Only the split view's cursor line is wrapped: the rest of its comment
+      // block and the primary view's line are untouched.
+      await page.keyboard.type('gqq', { delay: 20 });
+      await expect.poll(async () => (await documentValue(page)).split('\n')).not.toContain(SPLIT_COMMENT);
+      const lines = (await documentValue(page)).split('\n');
+      expect(lines).toContain(PRIMARY_COMMENT);
+      expect(lines).toContain(NEXT_COMMENT);
+    } finally {
+      await clearPref(page, 'editor_keybindings');
+    }
   });
 
   test('rstudioapi replaces the focused view\'s selection', async ({ rstudioPage: page }) => {
