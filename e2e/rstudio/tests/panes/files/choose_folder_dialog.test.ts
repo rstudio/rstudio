@@ -172,10 +172,10 @@ test.describe('Choose Directory dialog', () => {
       await cancel.focus();
       listing.release();
 
-      // the listing's rows and any focus change land in the same task, so
-      // once rows are visible the focus decision has already been made
-      await expect(chooser.locator(`${FOLDER_LIST} tr[role="option"]`).first())
-        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      // the breadcrumb's current location and any focus change land in the
+      // same task, so once it shows the focus decision has been made (a
+      // folder with no subfolders lists no rows to wait on instead)
+      await expect(chooser.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await expect(cancel).toBeFocused();
     } finally {
       await listing.cleanup();

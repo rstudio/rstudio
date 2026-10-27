@@ -16,6 +16,9 @@ import { OPEN_FILE_DIALOG, holdListFiles } from '@utils/file-dialogs';
 
 const FILE_LIST = '#rstudio_directory_contents';
 const FILE_NAME = '#file_dialog_name_prompt';
+// the breadcrumb marks the current location when a listing arrives, in the
+// same task as any focus change, and also for a directory with no entries
+const CURRENT_LOCATION = '[aria-current="location"]';
 
 test.describe('Web file dialog initial focus @server_only', () => {
   test('a listing that arrives after the dialog is shown leaves focus on the file name', async ({ rstudioPage: page }) => {
@@ -30,10 +33,7 @@ test.describe('Web file dialog initial focus @server_only', () => {
 
       listing.release();
 
-      // the listing's rows and any focus change land in the same task, so
-      // once rows are visible the focus decision has already been made
-      await expect(dialog.locator(`${FILE_LIST} tr[role="option"]`).first())
-        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dialog.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await expect(dialog.locator(FILE_NAME)).toBeFocused();
 
       await page.keyboard.press('Escape');
@@ -54,8 +54,7 @@ test.describe('Web file dialog initial focus @server_only', () => {
     try {
       await executeCommand(page, 'openSourceDoc');
       const dialog = page.locator(OPEN_FILE_DIALOG);
-      await expect(dialog.locator(`${FILE_LIST} tr[role="option"]`).first())
-        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dialog.locator(CURRENT_LOCATION)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await expect(dialog.locator(FILE_NAME)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
 
       const focused = await page.evaluate(() =>
