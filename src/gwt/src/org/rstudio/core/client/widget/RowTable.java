@@ -250,6 +250,7 @@ public abstract class RowTable<T> extends ScrollPanel
          addStyleName(RES.styles().active());
          if (matchesFocusVisible(table_))
             addStyleName(RES.styles().focusVisible());
+         activateFirstRowIfUnselected();
       }
       else if (StringUtil.equals(event.getType(), "blur"))
       {
@@ -274,6 +275,47 @@ public abstract class RowTable<T> extends ScrollPanel
          return false;
       }
    }-*/;
+   
+   // Per the ARIA listbox pattern, focus lands on the first option when none
+   // is selected. It becomes the active descendant without being selected,
+   // since selecting it would change a dialog's chosen file or folder.
+   private void activateFirstRowIfUnselected()
+   {
+      if (selectedRow_ != -1 || data_.isEmpty())
+         return;
+      
+      setActiveRow(0);
+      table_.setAttribute("aria-activedescendant", getRowId(0));
+      scrollIntoViewIfNeeded(0);
+   }
+   
+   private void setActiveRow(int row)
+   {
+      TableRowElement rowEl = getRenderedRowElement(activeRow_);
+      if (rowEl != null)
+         rowEl.removeClassName(RES.styles().focused());
+      
+      activeRow_ = row;
+      rowEl = getRenderedRowElement(row);
+      if (rowEl != null)
+         rowEl.addClassName(RES.styles().focused());
+   }
+   
+   // Virtualization renders only a window of rows; returns null for rows
+   // outside it. Offsets skip the colgroup and top padding elements.
+   private TableRowElement getRenderedRowElement(int row)
+   {
+      int index = row - offset_;
+      if (row == -1 || index < 0 || index >= table_.getChildCount() - 3)
+         return null;
+      
+      return table_.getChild(index + 2).cast();
+   }
+   
+   private String getRowId(int row)
+   {
+      return id_ + "_row_" + row;
+   }
    
    public T getSelectedItem()
    {
@@ -345,6 +387,10 @@ public abstract class RowTable<T> extends ScrollPanel
       
       bottomPaddingRowEl_ = drawPaddingRow(getBottomPaddingHeight());
       bottomPaddingRowEl_.setAttribute("aria-hidden", "true");
+      
+      // a redraw (e.g. a file dialog navigating) can happen while focused
+      if (table_.equals(DomUtils.getActiveElement()))
+         activateFirstRowIfUnselected();
    }
    
    private void drawRow(int index, TableRowElement rowEl)
@@ -353,7 +399,13 @@ public abstract class RowTable<T> extends ScrollPanel
 
       // set internal attributes used for tracking a row's index in the DOM
       rowEl.setAttribute("__row", String.valueOf(index));
-      rowEl.setId(id_ + "_row_" + index);
+      rowEl.setId(getRowId(index));
+      
+      // redraws reuse row elements, so the class must be cleared as well as set
+      if (index == activeRow_)
+         rowEl.addClassName(RES.styles().focused());
+      else
+         rowEl.removeClassName(RES.styles().focused());
 
       // call back to implementing subclass to draw the row
       drawRowImpl(object, rowEl);
@@ -455,6 +507,7 @@ public abstract class RowTable<T> extends ScrollPanel
       selectedRow_ = -1;
       selectedRowElement_ = null;
       selectedItem_ = null;
+      activeRow_ = -1;
       
       offset_ = 0;
    }
@@ -476,6 +529,8 @@ public abstract class RowTable<T> extends ScrollPanel
       row = MathUtil.clamp(row, 0, data_.size() - 1);
       if (row == selectedRow_)
          return;
+      
+      setActiveRow(-1);
       
       if (selectedRowElement_ != null)
       {
@@ -533,7 +588,8 @@ public abstract class RowTable<T> extends ScrollPanel
    {
       event.stopPropagation();
       event.preventDefault();
-      selectRow(selectedRow_ + offset);
+      int current = selectedRow_ == -1 ? activeRow_ : selectedRow_;
+      selectRow(current + offset);
    }
    
    private void selectPrefix(NativeEvent event, String ch)
@@ -656,6 +712,9 @@ public abstract class RowTable<T> extends ScrollPanel
    private TableRowElement selectedRowElement_ = null;
    private T selectedItem_ = null;
    
+   // The option that has focus while none is selected, or -1.
+   private int activeRow_ = -1;
+   
    // Members related to the current rows in view, used for virtualization.
    private List<T> data_;
    private final Timer scrollTimer_;
@@ -680,6 +739,7 @@ public abstract class RowTable<T> extends ScrollPanel
       String active();
       String focusVisible();
       String selected();
+      String focused();
    }
    
    public interface Resources extends ClientBundle
