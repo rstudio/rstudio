@@ -128,7 +128,7 @@ public:
 
    explicit AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation)
       : continuation_(continuation),
-        time_(boost::posix_time::second_clock::local_time())
+        time_(std::chrono::steady_clock::now())
    {
    }
    
@@ -161,14 +161,14 @@ public:
          continuation_(Success(), &response);
    }
 
-   boost::posix_time::ptime time()
+   std::chrono::steady_clock::time_point time()
    {
       return time_;
    }
 
 private:
    json::JsonRpcFunctionContinuation continuation_;
-   boost::posix_time::ptime time_;
+   std::chrono::steady_clock::time_point time_;
 };
 
 // keep in sync with AssistantResponseTypes.AssistantAgentNotRunningReason
@@ -1984,7 +1984,7 @@ void onBackgroundProcessing(bool isIdle)
    // extract requests that appear to have been dropped
    if (isIdle)
    {
-      auto currentTime = boost::posix_time::second_clock::local_time();
+      auto currentTime = std::chrono::steady_clock::now();
 
       std::vector<std::string> keys;
       boost::copy(
@@ -1994,8 +1994,7 @@ void onBackgroundProcessing(bool isIdle)
       for (auto&& key : keys)
       {
          auto&& continuation = s_pendingContinuations[key];
-         auto elapsedTime = currentTime - continuation.time();
-         if (elapsedTime.seconds() > 10)
+         if (isAgentRequestExpired(continuation.time(), currentTime))
          {
             DLOG("Cancelling old continuation with id '{}'.", key);
             continuation.cancel();
@@ -2962,6 +2961,12 @@ FilePath nesLanguageServerPath(const FilePath& installPath)
    }
 
    return FilePath();
+}
+
+bool isAgentRequestExpired(std::chrono::steady_clock::time_point sentTime,
+                           std::chrono::steady_clock::time_point now)
+{
+   return now - sentTime > std::chrono::seconds(10);
 }
 
 bool stopAgentForUpdate()

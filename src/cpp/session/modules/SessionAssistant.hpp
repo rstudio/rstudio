@@ -16,6 +16,7 @@
 #ifndef RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 #define RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 
+#include <chrono>
 #include <cstddef>
 #include <string>
 
@@ -73,6 +74,11 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 // empty (no installation was located) or holds no language server script.
 // Exposed for testing.
 core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
+
+// Whether an agent request sent at sentTime has been pending long enough at now
+// that the idle sweep should cancel it as dropped. Exposed for testing.
+bool isAgentRequestExpired(std::chrono::steady_clock::time_point sentTime,
+                           std::chrono::steady_clock::time_point now);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
 // its file handles are released. Returns true if the agent stopped (or was not
