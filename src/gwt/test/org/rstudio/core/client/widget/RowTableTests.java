@@ -212,6 +212,22 @@ public class RowTableTests extends GWTTestCase
       assertEquals("", getActiveDescendant(table));
    }
 
+   public void testMouseFocusDoesNotScrollToActiveOption()
+   {
+      // scrolling while a click is in progress would move the clicked row
+      String[] items = new String[50];
+      for (int i = 0; i < items.length; i++)
+         items[i] = "item" + i;
+      StringTable table = createTable(items);
+      table.setVerticalScrollPosition(400);
+      assertEquals(400, table.getVerticalScrollPosition());
+
+      table.setFocus(true);
+
+      assertEquals(getOptions(table).get(0).getId(), getActiveDescendant(table));
+      assertEquals(400, table.getVerticalScrollPosition());
+   }
+
    public void testRedrawWithoutFocusLeavesNoActiveOption()
    {
       StringTable table = createTable("a", "b", "c");

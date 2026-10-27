@@ -248,9 +248,12 @@ public abstract class RowTable<T> extends ScrollPanel
       if (StringUtil.equals(event.getType(), "focus"))
       {
          addStyleName(RES.styles().active());
-         if (matchesFocusVisible(table_))
+         boolean keyboard = matchesFocusVisible(table_);
+         if (keyboard)
             addStyleName(RES.styles().focusVisible());
-         activateFirstRowIfUnselected();
+         
+         // scrolling on a mouse focus would move the row being clicked
+         activateFirstRowIfUnselected(keyboard);
       }
       else if (StringUtil.equals(event.getType(), "blur"))
       {
@@ -279,14 +282,15 @@ public abstract class RowTable<T> extends ScrollPanel
    // Per the ARIA listbox pattern, focus lands on the first option when none
    // is selected. It becomes the active descendant without being selected,
    // since selecting it would change a dialog's chosen file or folder.
-   private void activateFirstRowIfUnselected()
+   private void activateFirstRowIfUnselected(boolean scrollIntoView)
    {
       if (selectedRow_ != -1 || data_.isEmpty())
          return;
       
       setActiveRow(0);
       table_.setAttribute("aria-activedescendant", getRowId(0));
-      scrollIntoViewIfNeeded(0);
+      if (scrollIntoView)
+         scrollIntoViewIfNeeded(0);
    }
    
    private void setActiveRow(int row)
@@ -390,7 +394,7 @@ public abstract class RowTable<T> extends ScrollPanel
       
       // a redraw (e.g. a file dialog navigating) can happen while focused
       if (table_.equals(DomUtils.getActiveElement()))
-         activateFirstRowIfUnselected();
+         activateFirstRowIfUnselected(false);
    }
    
    private void drawRow(int index, TableRowElement rowEl)
