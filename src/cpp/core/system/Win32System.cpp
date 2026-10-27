@@ -55,6 +55,8 @@
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 
+#include "Win32SystemDetail.hpp"
+
 #ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
 #define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
 #endif
@@ -1172,22 +1174,6 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid)
 
 namespace detail {
 
-struct OpenedProcess
-{
-   PidType pid;
-   HANDLE handle;
-};
-
-// every process in a snapshot, by parent pid
-typedef std::map<PidType, std::vector<PROCESSENTRY32W>> ProcessListing;
-
-bool listProcesses(ProcessListing* pListing);
-
-void openProcessTree(HANDLE hRoot,
-                     PidType rootPid,
-                     const ProcessListing& listing,
-                     std::vector<OpenedProcess>* pProcesses);
-
 // The parent pid a process records, from ntdll's process information,
 // which the documented APIs do not expose; false when it cannot be queried.
 bool getProcessParentPid(HANDLE hProcess, PidType* pParentPid)
@@ -1437,8 +1423,9 @@ Error terminateProcessTree(PidType pid)
       return LAST_SYSTEM_ERROR();
    CloseHandleOnExitScope closeRoot(&hRoot, ERROR_LOCATION);
 
-   // the descendants have to be found while the root is alive: once it has
-   // exited, an orphan's recorded parent pid no longer passes the check
+   // open the whole tree before terminating any of it: terminating the root
+   // can make an intermediate exit (on a broken pipe, say) before its handle
+   // is held, which would take its subtree out of reach (see openProcessTree)
    std::vector<detail::OpenedProcess> descendants;
    detail::ProcessListing listing;
    if (detail::listProcesses(&listing))

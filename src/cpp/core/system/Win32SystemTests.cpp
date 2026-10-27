@@ -16,7 +16,6 @@
 #ifdef _WIN32
 
 #include <algorithm>
-#include <map>
 #include <sstream>
 #include <vector>
 
@@ -27,46 +26,13 @@
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-// after windows.h, via System.hpp
-#include <tlhelp32.h>
+#include "Win32SystemDetail.hpp"
 
 #include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
 namespace system {
-
-namespace detail {
-
-std::vector<SubprocInfo> getSubprocesses(PidType pid,
-                                       const FILETIME* pParentCreationTime);
-
-struct OpenedProcess
-{
-   PidType pid;
-   HANDLE handle;
-};
-
-typedef std::map<PidType, std::vector<PROCESSENTRY32W>> ProcessListing;
-
-bool listProcesses(ProcessListing* pListing);
-
-void openProcessTree(HANDLE hRoot,
-                     PidType rootPid,
-                     const ProcessListing& listing,
-                     std::vector<OpenedProcess>* pProcesses);
-
-bool getProcessParentPid(HANDLE hProcess, PidType* pParentPid);
-
-bool isListedProcess(const std::wstring& listedExe,
-                     PidType listedParentPid,
-                     const std::wstring& openedExe,
-                     const PidType* pOpenedParentPid,
-                     const FILETIME* pCreationTime,
-                     const FILETIME* pParentCreationTime);
-
-} // namespace detail
-
 namespace tests {
 
 // Test fixture for process creation and cleanup.
@@ -618,7 +584,7 @@ TEST_F(Win32ProcessTest, ParentPidOfChildIsQueryableWithLimitedAccess)
 {
    // the walk opens descendants with this access alone, so the parent pid
    // check it relies on must work through such a handle
-   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
 
    HANDLE hChild = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pi.dwProcessId);
    ASSERT_NE(nullptr, hChild);
@@ -645,7 +611,7 @@ static std::vector<SubprocInfo> WaitForSubprocesses(PidType pid)
 TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendants)
 {
    // cmd.exe -> ping.exe, a two-level tree
-   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul"));
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"ping -n 30 127.0.0.1\" 1> nul"));
 
    std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
    ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
@@ -672,6 +638,10 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendantWithNonAsciiName)
    FilePath tempDir;
    ASSERT_FALSE(FilePath::tempFilePath(tempDir));
    ASSERT_FALSE(tempDir.ensureDirectory());
+
+   // declared before the grandchild's handle so it runs after that closes,
+   // and on every early return; a failure to remove is logged
+   RemoveOnExitScope removeTempDir(tempDir, ERROR_LOCATION);
    std::wstring exe = tempDir.getAbsolutePathW() + L"\\\u30bd.exe";
 
    std::string windir;
@@ -679,7 +649,7 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendantWithNonAsciiName)
    std::wstring ping = FilePath(windir).completePath("system32/ping.exe").getAbsolutePathW();
    ASSERT_TRUE(::CopyFileW(ping.c_str(), exe.c_str(), FALSE));
 
-   ASSERT_TRUE(StartProcess(L"cmd.exe /S /C \"\"" + exe + L"\" -n 8 posit.co\" 1> nul"));
+   ASSERT_TRUE(StartProcess(L"cmd.exe /S /C \"\"" + exe + L"\" -n 30 127.0.0.1\" 1> nul"));
 
    std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
    ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
@@ -693,14 +663,12 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeTakesDescendantWithNonAsciiName)
 
    EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 5000));
    EXPECT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(hGrandchild, 5000));
-
-   tempDir.remove();
 }
 
 TEST_F(Win32ProcessTest, TerminateProcessTreeReachesPastUnterminableProcess)
 {
    // cmd.exe -> cmd.exe -> ping.exe; the middle one refuses termination
-   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 8 posit.co\"\" 1> nul"));
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 30 127.0.0.1\"\" 1> nul"));
 
    std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
    ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
@@ -759,7 +727,7 @@ TEST_F(Win32ProcessTest, OpenProcessTreeStopsAtExitedIntermediate)
    // nothing can establish that it belongs to the tree, and the walk must
    // not guess (#19287 is the deterministic answer). The listed pid is
    // skipped quietly.
-   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 8 posit.co\"\" 1> nul"));
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"cmd.exe /S /C \"ping -n 30 127.0.0.1\"\" 1> nul"));
 
    std::vector<SubprocInfo> children = WaitForSubprocesses(pi.dwProcessId);
    ASSERT_EQ(1u, children.size()) << "children:" << Describe(children);
@@ -802,7 +770,7 @@ TEST_F(Win32ProcessTest, OpenProcessTreeStopsAtExitedIntermediate)
 
 TEST_F(Win32ProcessTest, TerminateProcessTreeWithoutDescendants)
 {
-   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
 
    Error error = terminateProcessTree(pi.dwProcessId);
    EXPECT_FALSE(error) << error.asString();
@@ -811,7 +779,7 @@ TEST_F(Win32ProcessTest, TerminateProcessTreeWithoutDescendants)
 
 TEST_F(Win32ProcessTest, TerminateProcessTreeOfExitedProcessIsNotAnError)
 {
-   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
 
    // a handle of our own keeps the pid valid after the process has exited
    ASSERT_TRUE(::TerminateProcess(pi.hProcess, 1));
