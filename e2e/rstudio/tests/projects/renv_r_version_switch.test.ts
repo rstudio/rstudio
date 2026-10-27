@@ -317,7 +317,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
   }) => {
     test.setTimeout(900000);
     test.skip(!process.env.PW_ALLOW_R_INSTALL, "downloads and installs a build of R; set PW_ALLOW_R_INSTALL=1 to allow");
-    test.skip(process.platform === "win32", "rig's Windows default (R.exe shims and registry entries) is not undone yet");
+    test.skip(process.platform === "win32", "the checks below read rig's files under HOME; the Windows shims and registry are covered by test-rig.R");
 
     const current = (await getVersion(page)).r;
     const known = (await captureResult(page, 'paste(.rs.rInstallations.cached(refresh = TRUE)$version, collapse = ",")'))
