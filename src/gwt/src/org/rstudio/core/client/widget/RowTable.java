@@ -167,6 +167,9 @@ public abstract class RowTable<T> extends ScrollPanel
             NativeEvent event = keyEvent.getNativeEvent();
             int code = event.getKeyCode();
             
+            // keyboard use means a keyboard user, even if focus arrived by mouse
+            addStyleName(RES.styles().focusVisible());
+            
             int modifier = KeyboardShortcut.getModifierValue(event);
             if (modifier == KeyboardShortcut.NONE || modifier == KeyboardShortcut.SHIFT)
             {
@@ -245,16 +248,32 @@ public abstract class RowTable<T> extends ScrollPanel
       if (StringUtil.equals(event.getType(), "focus"))
       {
          addStyleName(RES.styles().active());
+         if (matchesFocusVisible(table_))
+            addStyleName(RES.styles().focusVisible());
       }
       else if (StringUtil.equals(event.getType(), "blur"))
       {
          removeStyleName(RES.styles().active());
+         removeStyleName(RES.styles().focusVisible());
       }
       else
       {
          Debug.logWarning("Unexpected event type '" + event.getType() + "'");
       }
    }
+   
+   // The focus ring goes on the scroll panel: an outline on the table would
+   // wrap only a short list's rows, or scroll out of view with a long list.
+   // Engines without :focus-visible (HtmlUnit in unit tests) throw on the
+   // selector; there the ring appears on the first keypress instead.
+   private static final native boolean matchesFocusVisible(Element el)
+   /*-{
+      try {
+         return el.matches(":focus-visible");
+      } catch (e) {
+         return false;
+      }
+   }-*/;
    
    public T getSelectedItem()
    {
@@ -659,6 +678,7 @@ public abstract class RowTable<T> extends ScrollPanel
       String row();
       
       String active();
+      String focusVisible();
       String selected();
    }
    
