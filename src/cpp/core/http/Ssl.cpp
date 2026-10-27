@@ -17,8 +17,10 @@
 #include <core/http/Ssl.hpp>
 
 #include <memory>
+#include <set>
 
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 
 #include <openssl/bio.h>
@@ -400,11 +402,7 @@ struct Protocol
 // releases do not implement
 const Protocol kProtocols[] = {
    { "SSLv2",   0 },
-#ifdef SSL3_VERSION
    { "SSLv3",   SSL3_VERSION },
-#else
-   { "SSLv3",   0 },
-#endif
    { "TLSv1",   TLS1_VERSION },
    { "TLSv1.1", TLS1_1_VERSION },
    { "TLSv1.2", TLS1_2_VERSION },
@@ -414,11 +412,12 @@ const Protocol kProtocols[] = {
 using SslContextPtr = std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)>;
 using SslPtr = std::unique_ptr<SSL, decltype(&SSL_free)>;
 
+// nginx matches ssl_protocols names without regard to case
 const Protocol* findProtocol(const std::string& name)
 {
    for (const Protocol& protocol : kProtocols)
    {
-      if (name == protocol.name)
+      if (boost::iequals(name, protocol.name))
          return &protocol;
    }
    return nullptr;
@@ -432,12 +431,13 @@ int refusePassphrase(char*, int, int, void*)
 }
 
 Error cryptoError(const std::string& description,
-                  const FilePath& path,
+                  const std::string& name,
+                  const std::string& value,
                   const ErrorLocation& location)
 {
    Error error = core::system::crypto::getLastCryptoError(location);
    error.addProperty("description", description);
-   error.addProperty("path", path.getAbsolutePath());
+   error.addProperty(name, value);
    return error;
 }
 
@@ -454,14 +454,15 @@ Error createServerContext(const FilePath& certificatePath,
 
    std::string certificate = certificatePath.getAbsolutePath();
    if (SSL_CTX_use_certificate_chain_file(context.get(), certificate.c_str()) != 1)
-      return cryptoError("Could not load the certificate", certificatePath, ERROR_LOCATION);
+      return cryptoError("Could not load the certificate", "path", certificate, ERROR_LOCATION);
 
    std::string key = keyPath.getAbsolutePath();
    if (SSL_CTX_use_PrivateKey_file(context.get(), key.c_str(), SSL_FILETYPE_PEM) != 1)
-      return cryptoError("Could not load the certificate key", keyPath, ERROR_LOCATION);
+      return cryptoError("Could not load the certificate key", "path", key, ERROR_LOCATION);
 
    if (SSL_CTX_set_cipher_list(context.get(), cipherList.c_str()) != 1)
-      return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
+      return cryptoError("Could not set the cipher list", "cipher-list", cipherList,
+                         ERROR_LOCATION);
 
    *pContext = std::move(context);
    return Success();
@@ -476,18 +477,24 @@ Error createClientContext(SslContextPtr* pContext)
       return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
 
    SSL_CTX_set_verify(context.get(), SSL_VERIFY_NONE, nullptr);
-   SSL_CTX_set_security_level(context.get(), 0);
-   if (SSL_CTX_set_cipher_list(context.get(), "ALL:@SECLEVEL=0") != 1)
-      return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
+
+   // @SECLEVEL=0 also sets the security level of the context to 0
+   const std::string ciphers = "ALL:@SECLEVEL=0";
+   if (SSL_CTX_set_cipher_list(context.get(), ciphers.c_str()) != 1)
+      return cryptoError("Could not set the client cipher list", "cipher-list", ciphers,
+                         ERROR_LOCATION);
 
    *pContext = std::move(context);
    return Success();
 }
 
-// pinning the version on the SSL object replaces the minimum version from the
-// system OpenSSL configuration, as nginx does for ssl_protocols
+// as nginx does for ssl_protocols, this replaces the protocol limits from the
+// system OpenSSL configuration: it clears the SSL_OP_NO_* options that the
+// Protocol command sets, and it pins the minimum and maximum versions
 bool pinVersion(SSL* pSsl, int version)
 {
+   SSL_clear_options(pSsl, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
+                           SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3);
    return SSL_set_min_proto_version(pSsl, version) == 1 &&
           SSL_set_max_proto_version(pSsl, version) == 1;
 }
@@ -517,24 +524,36 @@ bool runHandshake(SSL* pClient, SSL* pServer)
    return false;
 }
 
-bool canNegotiate(SSL_CTX* pServerContext, SSL_CTX* pClientContext, int version)
+// sets *pUsable to the result of a handshake pinned to the protocol; returns an
+// error only if OpenSSL cannot set up the handshake
+Error canNegotiate(SSL_CTX* pServerContext,
+                   SSL_CTX* pClientContext,
+                   const Protocol& protocol,
+                   bool* pUsable)
 {
-   if (version == 0)
-      return false;
+   *pUsable = false;
+   if (protocol.version == 0)
+      return Success();
+
+   // a failed handshake for an earlier protocol leaves entries on the OpenSSL
+   // error queue, and an error here must report its own cause
+   ERR_clear_error();
 
    SslPtr server(SSL_new(pServerContext), SSL_free);
    SslPtr client(SSL_new(pClientContext), SSL_free);
    if (!server || !client)
-      return false;
+      return cryptoError("Could not create the handshake endpoints", "protocol", protocol.name,
+                         ERROR_LOCATION);
 
-   if (!pinVersion(server.get(), version) || !pinVersion(client.get(), version))
-      return false;
+   if (!pinVersion(server.get(), protocol.version) || !pinVersion(client.get(), protocol.version))
+      return Success();
 
    BIO* pClientBio = nullptr;
    BIO* pServerBio = nullptr;
    if (BIO_new_bio_pair(&pClientBio, kHandshakeBufferBytes,
                         &pServerBio, kHandshakeBufferBytes) != 1)
-      return false;
+      return cryptoError("Could not create the handshake buffers", "protocol", protocol.name,
+                         ERROR_LOCATION);
 
    // each SSL object takes ownership of its end of the pair
    SSL_set_bio(client.get(), pClientBio, pClientBio);
@@ -542,7 +561,8 @@ bool canNegotiate(SSL_CTX* pServerContext, SSL_CTX* pClientContext, int version)
    SSL_set_connect_state(client.get());
    SSL_set_accept_state(server.get());
 
-   return runHandshake(client.get(), server.get());
+   *pUsable = runHandshake(client.get(), server.get());
+   return Success();
 }
 
 Error sortProtocols(const std::string& protocolList,
@@ -563,16 +583,22 @@ Error sortProtocols(const std::string& protocolList,
 
    std::vector<std::string> names;
    boost::split(names, protocolList, boost::is_any_of(" \t"), boost::token_compress_on);
+   std::set<const Protocol*> checked;
    for (const std::string& name : names)
    {
       const Protocol* pProtocol = findProtocol(name);
-      if (pProtocol == nullptr)
+      if (pProtocol == nullptr || !checked.insert(pProtocol).second)
          continue;
 
-      if (canNegotiate(serverContext.get(), clientContext.get(), pProtocol->version))
-         pSupport->usable.push_back(name);
+      bool usable = false;
+      error = canNegotiate(serverContext.get(), clientContext.get(), *pProtocol, &usable);
+      if (error)
+         return error;
+
+      if (usable)
+         pSupport->usable.push_back(pProtocol->name);
       else
-         pSupport->unusable.push_back(name);
+         pSupport->unusable.push_back(pProtocol->name);
    }
    return Success();
 }

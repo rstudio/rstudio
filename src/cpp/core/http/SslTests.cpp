@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
@@ -91,6 +92,33 @@ TEST_F(SslProtocolSupportTest, ProtocolWithFailedHandshakeIsUnusable)
    EXPECT_EQ(support.unusable, (Names{ "SSLv3" }));
 }
 
+// a failed handshake leaves entries on the OpenSSL error queue, and the next
+// handshake clears them, so the failed handshake comes last here
+TEST_F(SslProtocolSupportTest, ErrorQueueIsClearAfterFailedHandshake)
+{
+   ProtocolSupport support;
+   ASSERT_FALSE(checkProtocolSupport("TLSv1.3 SSLv3", certificate_, key_, kCiphers, &support));
+   EXPECT_EQ(support.unusable, (Names{ "SSLv3" }));
+   EXPECT_EQ(0UL, ERR_peek_error());
+}
+
+TEST_F(SslProtocolSupportTest, NamesMatchWithoutRegardToCase)
+{
+   ProtocolSupport support;
+   ASSERT_FALSE(checkProtocolSupport("tlsv1.2 TLSV1.3", certificate_, key_, kCiphers, &support));
+   EXPECT_EQ(support.usable, (Names{ "TLSv1.2", "TLSv1.3" }));
+   EXPECT_TRUE(support.unusable.empty());
+}
+
+TEST_F(SslProtocolSupportTest, RepeatedNamesAreReportedOnce)
+{
+   ProtocolSupport support;
+   ASSERT_FALSE(checkProtocolSupport("SSLv2 TLSv1.3 sslv2 TLSv1.3", certificate_, key_, kCiphers,
+                                     &support));
+   EXPECT_EQ(support.usable, (Names{ "TLSv1.3" }));
+   EXPECT_EQ(support.unusable, (Names{ "SSLv2" }));
+}
+
 TEST_F(SslProtocolSupportTest, UnknownNamesAndExtraSpacesAreSkipped)
 {
    ProtocolSupport support;
@@ -110,7 +138,9 @@ TEST_F(SslProtocolSupportTest, EmptyListReportsNothing)
 TEST_F(SslProtocolSupportTest, InvalidCipherListIsAnError)
 {
    ProtocolSupport support;
-   EXPECT_TRUE(checkProtocolSupport("TLSv1.2", certificate_, key_, "NO-SUCH-CIPHER", &support));
+   Error error = checkProtocolSupport("TLSv1.2", certificate_, key_, "NO-SUCH-CIPHER", &support);
+   EXPECT_TRUE(error);
+   EXPECT_EQ("NO-SUCH-CIPHER", error.getProperty("cipher-list"));
    EXPECT_TRUE(support.usable.empty());
 }
 

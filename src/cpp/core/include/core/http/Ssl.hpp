@@ -44,16 +44,18 @@ struct ProtocolSupport
 // Sorts each protocol named in protocolList into usable or unusable, by
 // running an in-memory TLS handshake that is pinned to that protocol. The
 // list uses the syntax of the nginx ssl_protocols directive: SSLv2, SSLv3,
-// TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3, separated by spaces. Other names are
-// skipped.
+// TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3, separated by spaces. As in nginx,
+// names match without regard to case. Each protocol is reported once, with
+// its name as written above. Other names are skipped.
 //
 // The server side of the handshake uses the system OpenSSL library and
 // configuration, the given certificate and key, and cipherList for TLS 1.2
-// and earlier. The client side accepts any cipher, so only the server side
+// and earlier. As in nginx, the protocol limits from the system configuration
+// do not apply. The client side accepts any cipher, so only the server side
 // decides the result.
 //
-// Returns an error if the certificate or key cannot be loaded, or if
-// cipherList is not valid.
+// Returns an error if the certificate or key cannot be loaded, if cipherList
+// is not valid, or if OpenSSL cannot set up a handshake.
 Error checkProtocolSupport(const std::string& protocolList,
                            const FilePath& certificatePath,
                            const FilePath& keyPath,
