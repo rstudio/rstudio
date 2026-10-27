@@ -350,6 +350,10 @@ void abort();
 
 Error terminateProcess(PidType pid);
 
+// check whether a process exists; a process the caller lacks permission to
+// inspect (e.g. one owned by another user) counts as running
+bool isProcessRunning(PidType pid);
+
 struct SubprocInfo
 {
    PidType pid;

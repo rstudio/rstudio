@@ -604,8 +604,8 @@ export class ChatPaneActions {
     // button in place of send until the whole turn (including any post-tool
     // continuation) completes, which can take well over 15s of model latency,
     // and a turn parked on an approval stays active until it is granted.
-    // Wait the turn out here, before typing: the composer re-renders when the
-    // turn ends, so text buffered into it beforehand does not survive.
+    // Wait the turn out here, before typing: text typed while a turn runs is
+    // not reliably kept or dropped when it ends.
     //
     // No provider-failure watch: waitForResponse can return with its turn
     // still running, so the turn being waited out may be a previous test's,
@@ -621,6 +621,11 @@ export class ChatPaneActions {
 
     await expect(this.chatPane.chatInput)
       .toHaveAttribute('contenteditable', 'true', { timeout: 15000 });
+
+    // A leftover draft would otherwise prefix this message, and the assistant
+    // may then decline to act on the mangled request.
+    await this.chatPane.clearMessage();
+    await expect(this.chatPane.chatInput).toHaveText('');
     await this.chatPane.typeMessage(text);
 
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
