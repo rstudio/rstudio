@@ -158,4 +158,27 @@ test.describe('Choose Directory dialog', () => {
       await listing.cleanup();
     }
   });
+
+  test('a late first listing does not take focus moved elsewhere meanwhile', async ({ rstudioPage: page }) => {
+    const listing = await holdListFiles(page);
+
+    try {
+      const chooser = await openChooser(page);
+      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
+      // outlast the dialog's initial focus, which leaves a request pending
+      await page.waitForTimeout(1000);
+
+      const cancel = chooser.getByRole('button', { name: 'Cancel' });
+      await cancel.focus();
+      listing.release();
+
+      // the listing's rows and any focus change land in the same task, so
+      // once rows are visible the focus decision has already been made
+      await expect(chooser.locator(`${FOLDER_LIST} tr[role="option"]`).first())
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(cancel).toBeFocused();
+    } finally {
+      await listing.cleanup();
+    }
+  });
 });

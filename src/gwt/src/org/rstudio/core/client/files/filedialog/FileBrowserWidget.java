@@ -15,10 +15,13 @@
 package org.rstudio.core.client.files.filedialog;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -120,7 +123,9 @@ public class FileBrowserWidget extends Composite
       // the dialog sets its own initial focus once shown (focusInitialControl);
       // focusing the list for the first listing raced it, flashing focus on
       // the list or taking it from the dialog's initial control
-      if (initialListingShown_ || directoryFocusPending_)
+      // a pending request yields to focus the user has moved meanwhile
+      boolean pendingFocus = directoryFocusPending_ && isNothingFocused();
+      if (initialListingShown_ || pendingFocus)
          setDirectoryFocus(true);
       initialListingShown_ = true;
       directoryFocusPending_ = false;
@@ -157,6 +162,12 @@ public class FileBrowserWidget extends Composite
    public void setDirectoryFocus(boolean focus)
    {
       directory_.setFocus(focus);
+   }
+
+   private static boolean isNothingFocused()
+   {
+      Element active = DomUtils.getActiveElement();
+      return active == null || active == Document.get().getBody();
    }
 
    /**
