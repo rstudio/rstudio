@@ -543,6 +543,93 @@ std::size_t utf8IncompleteSuffixLength(const std::string& str)
    return (available < expected) ? available : 0;
 }
 
+std::size_t utf8SequenceLength(const std::string& str, std::size_t pos)
+{
+   if (pos >= str.size())
+      return 0;
+
+   const auto bytes = reinterpret_cast<const unsigned char*>(str.data());
+
+   const auto lead = bytes[pos];
+   if (!lead)
+      return 0;
+   if (lead < 0x80)
+      return 1;
+
+   // the first continuation byte's range is narrowed where a wider one would
+   // allow an overlong form, a surrogate, or a code point past U+10FFFF
+   std::size_t length = 0;
+   unsigned char low = 0x80;
+   unsigned char high = 0xBF;
+   if (lead >= 0xC2 && lead <= 0xDF)
+      length = 2;
+   else if (lead == 0xE0)
+      length = 3, low = 0xA0;
+   else if (lead == 0xED)
+      length = 3, high = 0x9F;
+   else if (lead >= 0xE1 && lead <= 0xEF)
+      length = 3;
+   else if (lead == 0xF0)
+      length = 4, low = 0x90;
+   else if (lead == 0xF4)
+      length = 4, high = 0x8F;
+   else if (lead >= 0xF1 && lead <= 0xF3)
+      length = 4;
+   else
+      return 0;
+
+   if (pos + length > str.size() || bytes[pos + 1] < low || bytes[pos + 1] > high)
+      return 0;
+
+   for (std::size_t i = 2; i < length; ++i)
+   {
+      if (bytes[pos + i] < 0x80 || bytes[pos + i] > 0xBF)
+         return 0;
+   }
+   return length;
+}
+
+bool isValidUtf8(const std::string& str)
+{
+   std::size_t stringLen = str.size();
+   for (std::size_t pos = 0; pos < stringLen;)
+   {
+      std::size_t seqLen = utf8SequenceLength(str, pos);
+      if (seqLen == 0)
+         return false;
+      pos += seqLen;
+   }
+   return true;
+}
+
+std::string cleanUtf8String(const std::string& value)
+{
+   std::string result;
+   result.reserve(value.size());
+   for (std::size_t pos = 0; pos < value.size();)
+   {
+      if (value[pos] == '\0')
+      {
+         // skip nulls, which should never occur anyway
+         ++pos;
+         continue;
+      }
+
+      const std::size_t length = utf8SequenceLength(value, pos);
+      if (length == 0)
+      {
+         // replace invalid characters with a Unicode replacement character
+         result += "\xEF\xBF\xBD";
+         ++pos;
+         continue;
+      }
+
+      result.append(value, pos, length);
+      pos += length;
+   }
+   return result;
+}
+
 // https://en.cppreference.com/w/cpp/string/byte/toupper#Notes
 std::string toUpper(const std::string& str)
 {

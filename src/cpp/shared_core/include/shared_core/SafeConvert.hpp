@@ -239,7 +239,7 @@ boost::optional<TOutput> numberTo(TInput input)
 }
 
 } // namespace safe_convert
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 #endif // SHARED_CORE_SAFE_CONVERT_HPP
