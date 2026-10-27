@@ -739,6 +739,17 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     await expect.poll(() => numModalsShowing(page)).toBe(1);
     await dismissAllModals(page);
   };
+  // Clear History has no handler until the History pane has loaded, which its
+  // list being rendered confirms, and is disabled while it shows search results or
+  // context. Environment is then reselected so the raise has to select History.
+  const loadHistory = async (page: Page) => {
+    await executeCommand(page, 'activateHistory');
+    await expect(page.locator(TABSET1_PANE)
+      .getByRole('listbox', { name: 'Console History', exact: true, includeHidden: true }))
+      .toBeAttached();
+    await executeCommand(page, 'historyDismissResults');
+    await executeCommand(page, 'activateEnvironment');
+  };
   for (const { label, prepare, raise, zoom, pane, tab, cleanup } of [
     { label: 'Help Home', raise: (page: Page) => executeCommand(page, 'helpHome'),
       zoom: 'layoutZoomHelp', pane: TABSET2_PANE, tab: HELP_TAB },
@@ -755,20 +766,15 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       cleanup: '.rs.api.executeCommand("viewerClear")' },
     { label: 'Clear Workspace', raise: raiseWithConfirm('clearWorkspace'),
       zoom: 'layoutZoomEnvironment', pane: TABSET1_PANE, tab: ENVIRONMENT_TAB },
-    // Clear History has no handler until the History pane has loaded, and is
-    // disabled while it shows search results or context. Environment is then
-    // reselected so the raise has to select History.
-    { label: 'Clear History',
-      prepare: ['activateHistory', 'historyDismissResults', 'activateEnvironment'],
-      raise: raiseWithConfirm('clearHistory'),
+    { label: 'Clear History', prepare: loadHistory, raise: raiseWithConfirm('clearHistory'),
       zoom: 'layoutZoomHistory', pane: TABSET1_PANE, tab: HISTORY_TAB },
   ]) {
     test(`${label} during a Console zoom moves the zoom to its pane`, async ({
       rstudioPage: page,
     }) => {
       try {
-        for (const command of prepare ?? [])
-          await executeCommand(page, command);
+        if (prepare)
+          await prepare(page);
         await executeCommand(page, 'layoutZoomConsole');
         await expectHidden(page, pane);
 
