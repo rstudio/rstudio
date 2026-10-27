@@ -740,6 +740,8 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     await dismissAllModals(page);
   };
   for (const { label, prepare, raise, zoom, pane, tab, cleanup } of [
+    { label: 'Help Home', raise: (page: Page) => executeCommand(page, 'helpHome'),
+      zoom: 'layoutZoomHelp', pane: TABSET2_PANE, tab: HELP_TAB },
     { label: 'Go To Working Directory',
       raise: (page: Page) => executeCommand(page, 'goToWorkingDir'),
       zoom: 'layoutZoomFiles', pane: TABSET2_PANE, tab: FILES_TAB },
