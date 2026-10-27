@@ -70,6 +70,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
@@ -91,7 +92,7 @@ public class ConnectionsPane extends WorkbenchPane
    public ConnectionsPane(Commands commands, EventBus eventBus, UserPrefs userPrefs)
    {
       // initialize
-      super(constants_.connectionsTitle(), eventBus);
+      super(constants_.connectionsTitle(), PaneManager.CONNECTIONS_PANE, eventBus);
       commands_ = commands;
       userPrefs_ = userPrefs;
 

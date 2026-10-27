@@ -58,6 +58,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.Help.LinkMenu;
@@ -114,7 +115,7 @@ public class HelpPane extends WorkbenchPane
                    UserPrefs prefs,
                    SatelliteManager satelliteManager)
    {
-      super(constants_.helpText(), events);
+      super(constants_.helpText(), PaneManager.HELP_PANE, events);
 
       searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;
