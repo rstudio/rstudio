@@ -161,16 +161,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       // if this window is a satellite but the command only wants to be handled
       // in the a different window, execute the command there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-      if (getWindowMode() != WINDOW_MODE_ANY &&
-          Satellite.isCurrentWindowSatellite() &&
-          satellite.getSatelliteName() != getWindowMode())
+      if (isRoutedOutOfCurrentWindow())
       {
-         if (getWindowMode() == WINDOW_MODE_MAIN)
+         if (StringUtil.equals(getWindowMode(), WINDOW_MODE_MAIN))
          {
             // raise the main window if it's not a background command
             satellite.focusMainWindow();
          }
-         else if (getWindowMode() == WINDOW_MODE_BACKGROUND &&
+         else if (StringUtil.equals(getWindowMode(), WINDOW_MODE_BACKGROUND) &&
                   Desktop.hasDesktopFrame())
          {
             // for background commands, we still want the main window to be
@@ -195,6 +193,20 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       CommandEvent event = new CommandEvent(this);
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(event);
       handlers_.fireEvent(event);
+   }
+
+   public boolean isRoutedOutOfCurrentWindow()
+   {
+      return Satellite.isCurrentWindowSatellite() &&
+             isRoutedOutOfSatellite(
+                   getWindowMode(),
+                   RStudioGinjector.INSTANCE.getSatellite().getSatelliteName());
+   }
+
+   public static boolean isRoutedOutOfSatellite(String windowMode, String satelliteName)
+   {
+      return !StringUtil.equals(windowMode, WINDOW_MODE_ANY) &&
+             !StringUtil.equals(windowMode, satelliteName);
    }
 
    public boolean isEnabled()
@@ -326,6 +338,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
       Markdown, Sweave, Help, VCS, Packrat, Renv, RPresentation,
       Addin, Viewer, History, Tutorial, Diagnostics, Import, Files;
+
+      // Whether a shortcut may run while focus is in an embedded component that
+      // handles its own text input, such as the terminal or Posit Assistant.
+      // Editor- and language-specific commands leave the key with the component.
+      public boolean isWorkbenchLevel()
+      {
+         return this == Workbench || this == Addin || this == PackageDevelopment;
+      }
 
       @Override
       public String toString()
