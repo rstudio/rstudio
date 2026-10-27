@@ -5621,27 +5621,38 @@ public class TextEditingTarget implements
          doReflowComment(display, "()");
    }
 
+   // The Vim actions gq / gqq, == and K; like the commands they mirror, they
+   // act on the active editor view.
    public void reflowText()
    {
-      // prepare the selection in the view onReflowComment() acts on
-      DocDisplay display = activeDisplay();
-      if (display.getSelectionValue().isEmpty())
-         display.setSelectionRange(
-               Range.fromPoints(
-                     Position.create(display.getCursorPosition().getRow(), 0),
-                     Position.create(display.getCursorPosition().getRow(),
-                           display.getCurrentLine().length())));
+      withActiveEditor((disp) ->
+      {
+         if (disp.getSelectionValue().isEmpty())
+            disp.setSelectionRange(
+                  Range.fromPoints(
+                        Position.create(disp.getCursorPosition().getRow(), 0),
+                        Position.create(disp.getCursorPosition().getRow(),
+                              disp.getCurrentLine().length())));
 
-      onReflowComment();
-      display.setCursorPosition(
-            Position.create(
-                  display.getSelectionEnd().getRow(),
-                  0));
+         reflowComment(disp);
+         disp.setCursorPosition(
+               Position.create(
+                     disp.getSelectionEnd().getRow(),
+                     0));
+      });
+   }
+
+   public void reindent()
+   {
+      withActiveEditor((disp) ->
+      {
+         disp.reindent();
+      });
    }
 
    public void showHelpAtCursor()
    {
-      activeDisplay().goToHelp();
+      onGoToHelp();
    }
 
    @Handler
