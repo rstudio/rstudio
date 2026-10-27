@@ -9198,13 +9198,14 @@ public class TextEditingTarget implements
                isSaving_ = false;
             };
             
-            // fire source document saved event
+            // fire source document saved event; the cursor position picks
+            // the slide an Rpres preview shows
             FileSystemItem file = FileSystemItem.createFile(
                                              docUpdateSentinel_.getPath());
             events_.fireEvent(new SourceFileSaveCompletedEvent(
                                              file,
                                              docUpdateSentinel_.getContents(),
-                                             primaryDisplay_.getCursorPosition()));
+                                             activeDisplay().getCursorPosition()));
 
             // check for source on save
             if (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave())
