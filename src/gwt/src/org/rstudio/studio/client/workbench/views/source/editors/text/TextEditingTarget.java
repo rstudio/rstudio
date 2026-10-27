@@ -1061,6 +1061,10 @@ public class TextEditingTarget implements
    {
       DocDisplay display = activeDisplay();
       display.focus();
+
+      // build the whole scope tree first: it may only extend a little past
+      // the cursor (e.g. in a new split view), leaving a long scope endless
+      display.getScopeTree();
       Scope scope = display.getCurrentScope();
       if (scope != null)
       {

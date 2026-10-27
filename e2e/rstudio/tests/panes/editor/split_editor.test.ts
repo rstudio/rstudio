@@ -634,6 +634,60 @@ test.describe('Split editor', () => {
     }
   });
 
+  test('Shrink Selection in the split view forgets ranges from before an edit', async ({ rstudioPage: page }) => {
+    const { split } = await openWithFocusedSplit(page);
+
+    await executeCommand(page, 'expandSelection');
+    await expect.poll(() => split.selectedText()).not.toBe('y<-y*2');
+
+    // Insert a line at the top, shifting the rows the expansion recorded.
+    const top = { row: 0, column: 0 };
+    await split.select({ start: top, end: top });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => documentLine(page, 0)).toBe('');
+
+    // With the history cleared, Shrink Selection leaves the empty selection;
+    // stale history would select text at the recorded (now shifted) range.
+    await executeCommand(page, 'shrinkSelection');
+    expect(await split.selectedText()).toBe('');
+  });
+
+  test('Expand Selection leaves Ace\'s Editor.prototype without an event registry', async ({ rstudioPage: page }) => {
+    await openWithFocusedSplit(page);
+    await executeCommand(page, 'expandSelection');
+
+    // A listener registered on the prototype gives it an event registry that
+    // every editor created afterwards shares, so focusing a later split view
+    // also fired its primary view's focus handler and misrouted commands.
+    const prototypeHasRegistry = await page.evaluate(() => {
+      const ace = window as unknown as { require: (id: string) => { Editor: { prototype: object } } };
+      return Object.prototype.hasOwnProperty.call(ace.require('ace/editor').Editor.prototype, '_eventRegistry');
+    });
+    expect(prototypeHasRegistry).toBe(false);
+  });
+
+  test('Go to End of Scope finds the end of a long function in a new split view', async ({ rstudioPage: page }) => {
+    // Longer than the 30 rows past the cursor that a scope lookup builds.
+    // Joined at the template's indent, which heredoc then strips.
+    const BODY = Array.from({ length: 40 }, (_, i) => `  v${i} <- ${i}`).join('\n      ');
+    await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+      # split_view_marker
+      long_fn <- function() {
+      ${BODY}
+      }
+    `);
+    const views = sourceViews(page);
+    await executeCommand(page, 'splitEditorRight');
+    await expect(views).toHaveCount(2);
+    const split = viewEditor(views.nth(1));
+
+    await split.click();
+    await split.gotoLine(3);
+    await expect.poll(() => split.hasFocus()).toBe(true);
+    await executeCommand(page, 'goToEndOfCurrentScope');
+    await expect.poll(() => split.cursorRow()).toBe(42);
+  });
+
   // rstudioapi writes act on the view getActiveDocumentContext() reads from.
   // The console takes focus to run each call; the split view remains the
   // document's active view, as for an addin run from the console.
