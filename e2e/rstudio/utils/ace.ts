@@ -138,6 +138,7 @@ export namespace Ace {
     getSelectedText(): string;
     getFirstVisibleRow(): number;
     getLastVisibleRow(): number;
+    isRowFullyVisible(row: number): boolean;
     find(needle: string): void;
     insert(text: string): void;
     navigateLineEnd(): void;

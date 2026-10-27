@@ -91,6 +91,8 @@ test.describe('Split editor', () => {
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.session.getAllFolds().length ?? -1),
       hasGhostText: () =>
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.renderer.$ghostText != null),
+      rowFullyVisible: (row: number) =>
+        view.evaluate((el, r) => (el as AceEditorElement).env?.editor?.isRowFullyVisible(r) ?? false, row),
     };
   }
 
@@ -637,7 +639,7 @@ test.describe('Split editor', () => {
     }
   });
 
-  test('saving with whitespace stripping keeps the split view\'s cursor', async ({ rstudioPage: page }) => {
+  test('saving with whitespace stripping keeps the split view\'s selection and folds', async ({ rstudioPage: page }) => {
     const STRIP_LINE_WS = 'strip_me <- 1  ';
     const TYPED = 'keep_split';
 
@@ -647,7 +649,11 @@ test.describe('Split editor', () => {
         # split_view_marker
         ${STRIP_LINE_WS}
         ${TYPED}
+        fold_me <- function() {
+          1
+        }
         last_line <- 2
+        last_line
       `);
       const views = sourceViews(page);
       await executeCommand(page, 'splitEditorRight');
@@ -660,12 +666,19 @@ test.describe('Split editor', () => {
       await expect.poll(() => split.hasFocus()).toBe(true);
       await page.keyboard.type('X');
 
+      // Collapse fold_me in the split view, then select across it.
+      await executeCommand(page, 'foldAll');
+      await expect.poll(() => split.foldCount()).toBe(1);
+      await split.select({ start: { row: 2, column: 0 }, end: { row: 5, column: 1 } });
+
       // Stripping replaces the whole shared document, which would otherwise
-      // move the split view's cursor to the end of the file.
+      // move the split view's cursor to the end of the file and drop its
+      // folds; restoring the selection must not unfold them either.
       await executeCommand(page, 'saveSourceDoc');
       await expect.poll(() => activeDocDirty(page), { timeout: TIMEOUTS.fileOpen }).toBe(false);
       expect(await documentLine(page, 1)).toBe(STRIP_LINE_WS.trimEnd());
-      expect(await split.cursorRow()).toBe(2);
+      expect(await split.cursorRow()).toBe(5);
+      expect(await split.foldCount()).toBe(1);
     } finally {
       await clearPref(page, 'strip_trailing_whitespace');
     }
@@ -716,13 +729,18 @@ test.describe('Split editor', () => {
     const views = sourceViews(page);
     await executeCommand(page, 'splitEditorRight');
     await expect(views).toHaveCount(2);
-    const split = viewEditor(views.nth(1));
+
+    // Located by class rather than by the marker text, which scrolls out of
+    // the split view once it jumps to the end of the function.
+    const split = viewEditor(page.locator(
+      "[class*='rstudio_source_panel'] .ace_editor.rstudio_editor_split_view:visible"));
 
     await split.click();
     await split.gotoLine(3);
     await expect.poll(() => split.hasFocus()).toBe(true);
     await executeCommand(page, 'goToEndOfCurrentScope');
     await expect.poll(() => split.cursorRow()).toBe(42);
+    await expect.poll(() => split.rowFullyVisible(42)).toBe(true);
   });
 
   // rstudioapi writes act on the view getActiveDocumentContext() reads from.

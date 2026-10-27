@@ -1055,6 +1055,7 @@ public class TextEditingTarget implements
                scope.getBodyStart().getRow(),
                scope.getBodyStart().getColumn() + 1);
          display.setCursorPosition(position);
+         display.scrollCursorIntoView();
       }
    }
 
@@ -1077,6 +1078,7 @@ public class TextEditingTarget implements
                   end.getRow(),
                   Math.max(0, end.getColumn() - 1));
             display.setCursorPosition(position);
+            display.scrollCursorIntoView();
          }
       }
    }
@@ -3747,11 +3749,13 @@ public class TextEditingTarget implements
       for (AceFold fold : JsUtil.asIterable(folds))
          primaryDisplay_.addFold(fold.getRange());
 
+      // restore the selection before the folds, since setting a selection
+      // unfolds any folds it spans
       if (splitView != null)
       {
+         splitView.setSelectionRange(splitSelection);
          for (AceFold fold : JsUtil.asIterable(splitFolds))
             splitView.addFold(fold.getRange());
-         splitView.setSelectionRange(splitSelection);
          splitView.scrollToY(splitScrollTop, 0);
       }
    }
