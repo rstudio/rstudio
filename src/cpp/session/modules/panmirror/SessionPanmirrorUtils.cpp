@@ -19,6 +19,8 @@
 
 #include <core/system/Process.hpp>
 
+#include <r/ROptions.hpp>
+
 #include <session/SessionAsyncDownloadFile.hpp>
 
 using namespace rstudio::core;
@@ -97,6 +99,12 @@ void jsonRpcDownloadHandler(const json::JsonRpcFunctionContinuation& cont,
    {
       resolveJsonRpcContinuation(cont, kStatusError, json::Value(), core::errorDescription(error));
    }
+}
+
+std::string serviceBaseUrl(const std::string& option, const std::string& defaultUrl)
+{
+   std::string url = r::options::getOption<std::string>(option, defaultUrl, false);
+   return url.empty() ? defaultUrl : url;
 }
 
 

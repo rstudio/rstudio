@@ -56,6 +56,11 @@ void jsonRpcDownloadHandler(const core::json::JsonRpcFunctionContinuation& cont,
                             const core::ErrorLocation& location,
                             const JsonHandler& jsonHandler);
 
+// The base URL of an external citation service: the R option `option` when
+// set, else `defaultUrl`. Lets the e2e tests answer lookups from a local mock
+// rather than the live service.
+std::string serviceBaseUrl(const std::string& option, const std::string& defaultUrl);
+
 } // namespace panmirror
 } // namespace modules
 } // namespace session

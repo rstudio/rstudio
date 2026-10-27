@@ -15,6 +15,8 @@
 #ifndef SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP
 #define SESSION_MODULES_PANMIRROR_CROSSREF_DB_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -30,6 +32,9 @@ namespace crossref {
 
 const char * const kCrossrefApiHost = "https://api.crossref.org";
 const char * const kCrossrefWorks = "works";
+
+// kCrossrefApiHost, unless the rstudio.crossref_url option overrides it.
+std::string crossrefApiHost();
 
 core::Error initialize();
 
