@@ -739,7 +739,7 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     await expect.poll(() => numModalsShowing(page)).toBe(1);
     await dismissAllModals(page);
   };
-  for (const { label, raise, zoom, pane, tab, cleanup } of [
+  for (const { label, prepare, raise, zoom, pane, tab, cleanup } of [
     { label: 'Go To Working Directory',
       raise: (page: Page) => executeCommand(page, 'goToWorkingDir'),
       zoom: 'layoutZoomFiles', pane: TABSET2_PANE, tab: FILES_TAB },
@@ -752,13 +752,17 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       zoom: 'layoutZoomViewer', pane: TABSET2_PANE, tab: VIEWER_TAB },
     { label: 'Clear Workspace', raise: raiseWithConfirm('clearWorkspace'),
       zoom: 'layoutZoomEnvironment', pane: TABSET1_PANE, tab: ENVIRONMENT_TAB },
-    { label: 'Clear History', raise: raiseWithConfirm('clearHistory'),
+    // Clear History is disabled while History shows search results or context.
+    { label: 'Clear History', prepare: 'historyDismissResults',
+      raise: raiseWithConfirm('clearHistory'),
       zoom: 'layoutZoomHistory', pane: TABSET1_PANE, tab: HISTORY_TAB },
   ]) {
     test(`${label} during a Console zoom moves the zoom to its pane`, async ({
       rstudioPage: page,
     }) => {
       try {
+        if (prepare)
+          await executeCommand(page, prepare);
         await executeCommand(page, 'layoutZoomConsole');
         await expectHidden(page, pane);
 
