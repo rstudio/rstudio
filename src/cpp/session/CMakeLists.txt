@@ -619,7 +619,7 @@ list(APPEND SESSION_LIBRARIES
 
 # Add gtest to libraries when unit tests are enabled
 if(RSTUDIO_UNIT_TESTS_ENABLED)
-   list(APPEND SESSION_LIBRARIES gtest)
+   list(APPEND SESSION_LIBRARIES GTest::gtest)
    if(NOT WIN32)
       list(APPEND SESSION_LIBRARIES pthread)
    endif()
