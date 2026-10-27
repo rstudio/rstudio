@@ -260,9 +260,6 @@ Error terminateChildProcesses(int signal);
 Error terminateChildProcesses(pid_t pid,
                               int signal);
 
-// signal version of the terminateProcessTree() declared in System.hpp
-Error terminateProcessTree(pid_t pid, int signal);
-
 Error getOsInfo(OSInfo* pOsInfo);
 
 bool isUserNotFoundError(const core::Error& error);

@@ -1931,6 +1931,38 @@ Error processInfo(const std::string& process,
    return Success();
 }
 
+namespace {
+
+// The fields of a /proc/<pid>/stat line that follow the command name,
+// starting with the state (field 3 of the line). The name is parenthesized
+// and may itself contain spaces, so only what follows its closing
+// parenthesis is split.
+Error readStatFieldsAfterName(const FilePath& statFile, std::vector<std::string>* pFields)
+{
+   std::string contents;
+   Error error = core::readStringFromFile(statFile, &contents);
+   if (error)
+      return error;
+
+   std::size_t nameEnd = contents.rfind(')');
+   if (nameEnd == std::string::npos)
+   {
+      Error parseError = systemError(boost::system::errc::protocol_error,
+                                     "No command name in stat fields",
+                                     ERROR_LOCATION);
+      parseError.addProperty("stat-fields", contents);
+      return parseError;
+   }
+
+   boost::algorithm::split(*pFields,
+                           boost::algorithm::trim_copy(contents.substr(nameEnd + 1)),
+                           boost::is_any_of(" "),
+                           boost::algorithm::token_compress_on);
+   return Success();
+}
+
+} // anonymous namespace
+
 Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
 {
    std::string pidStr = safe_convert::numberToString(pid);
@@ -1987,30 +2019,12 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
          return error;
    }
 
-   // read the stat fields for other relevant process info; the command
-   // name (field 2) is parenthesized and may itself contain spaces, so
-   // split only what follows its closing parenthesis
-   std::string statStr;
-   error = core::readStringFromFile(statFile, &statStr);
+   // read the stat fields for other relevant process info: state, parent
+   // pid, and process group are fields 3 to 5 of the line
+   std::vector<std::string> statFields;
+   error = readStatFieldsAfterName(statFile, &statFields);
    if (error)
       return error;
-
-   std::size_t nameEnd = statStr.rfind(')');
-   if (nameEnd == std::string::npos)
-   {
-      Error parseError = systemError(boost::system::errc::protocol_error,
-                                     "No command name in stat fields",
-                                     ERROR_LOCATION);
-      parseError.addProperty("stat-fields", statStr);
-      return parseError;
-   }
-
-   // state, parent pid, and process group are fields 3 to 5 of the line
-   std::vector<std::string> statFields;
-   boost::algorithm::split(statFields,
-                           boost::algorithm::trim_copy(statStr.substr(nameEnd + 1)),
-                           boost::is_any_of(" "),
-                           boost::algorithm::token_compress_on);
 
    if (statFields.size() < 3)
    {
@@ -2076,37 +2090,19 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    }
 
 
-   // read the stat line; the command name is parenthesized and may itself
-   // contain spaces, so split only what follows its closing parenthesis
-   FilePath statFile(fmt::format("/proc/{}/stat", pid));
-   std::string contents;
-   error = core::readStringFromFile(statFile, &contents);
+   // starttime is field 22 of the line
+   std::vector<std::string> fields;
+   error = readStatFieldsAfterName(FilePath(fmt::format("/proc/{}/stat", pid)), &fields);
    if (error)
       return error;
 
-   std::size_t nameEnd = contents.rfind(')');
-   if (nameEnd == std::string::npos)
-   {
-      Error parseError = systemError(boost::system::errc::protocol_error,
-                                     ERROR_LOCATION);
-      parseError.addProperty("stat-fields", contents);
-      return parseError;
-   }
-
-   // fields after the name, starting with the state (field 3 of the line);
-   // starttime is field 22 of the line
-   std::vector<std::string> fields;
-   boost::algorithm::split(fields,
-                           boost::algorithm::trim_copy(contents.substr(nameEnd + 1)),
-                           boost::is_any_of(" "),
-                           boost::algorithm::token_compress_on);
    const std::size_t startTimeIndex = 22 - 3;
    if (fields.size() <= startTimeIndex)
    {
-      Error parseError = systemError(boost::system::errc::protocol_error,
-                                     ERROR_LOCATION);
-      parseError.addProperty("stat-fields", contents);
-      return parseError;
+      return systemError(boost::system::errc::protocol_error,
+                         "Expected at least 20 stat fields after the command name but read: " +
+                            safe_convert::numberToString<size_t>(fields.size()),
+                         ERROR_LOCATION);
    }
 
    // get the creation time and return success
@@ -3147,11 +3143,11 @@ Error terminateChildProcesses(pid_t pid,
 
 Error terminateProcessTree(PidType pid)
 {
-   return terminateProcessTree(pid, SIGTERM);
-}
+   // kill() reads 0 as our own process group and -1 as every process we can
+   // signal, and on macOS the children of pid 0 are the whole system
+   if (pid <= 0)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-Error terminateProcessTree(pid_t pid, int signal)
-{
    // the descendants have to be found while the root is alive: once it
    // exits they are reparented, and can no longer be reached from its pid;
    // the root is signalled even when they cannot be found
@@ -3160,11 +3156,11 @@ Error terminateProcessTree(pid_t pid, int signal)
    if (error)
       LOG_ERROR(error);
 
-   error = killProcess(pid, signal);
+   error = killProcess(pid, SIGTERM);
 
    for (const ProcessInfo& process : descendants)
    {
-      if (::kill(process.pid, signal) != 0 && errno != ESRCH)
+      if (::kill(process.pid, SIGTERM) != 0 && errno != ESRCH)
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
 
