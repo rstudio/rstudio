@@ -289,7 +289,7 @@ public abstract class RowTable<T> extends ScrollPanel
          return;
       
       setActiveRow(0);
-      table_.setAttribute("aria-activedescendant", getRowId(0));
+      updateActiveDescendant();
       if (scrollIntoView)
          scrollIntoViewIfNeeded(0);
    }
@@ -304,6 +304,19 @@ public abstract class RowTable<T> extends ScrollPanel
       rowEl = getRenderedRowElement(row);
       if (rowEl != null)
          rowEl.addClassName(RES.styles().focused());
+   }
+   
+   // Names the current option -- the selected one, else the focused one --
+   // only while virtualization renders it: the attribute must reference an
+   // element in the document.
+   private void updateActiveDescendant()
+   {
+      int row = selectedRow_ == -1 ? activeRow_ : selectedRow_;
+      TableRowElement rowEl = getRenderedRowElement(row);
+      if (rowEl == null)
+         table_.removeAttribute("aria-activedescendant");
+      else
+         table_.setAttribute("aria-activedescendant", rowEl.getId());
    }
    
    // Virtualization renders only a window of rows; returns null for rows
@@ -334,6 +347,7 @@ public abstract class RowTable<T> extends ScrollPanel
       if (selectedRowElement_ != null)
       {
          selectedRowElement_.removeClassName(RES.styles().selected());
+         selectedRowElement_.removeAttribute("aria-selected");
          selectedRowElement_ = null;
       }
      
@@ -358,6 +372,8 @@ public abstract class RowTable<T> extends ScrollPanel
          selectedRow_ = -1;
          selectRow(row, ScrollType.NONE);
       }
+      
+      updateActiveDescendant();
    }
 
    public void draw(List<T> data)
@@ -397,6 +413,8 @@ public abstract class RowTable<T> extends ScrollPanel
       // a redraw (e.g. a file dialog navigating) can happen while focused
       if (table_.equals(DomUtils.getActiveElement()))
          activateFirstRowIfUnselected(false);
+      
+      updateActiveDescendant();
    }
    
    private void drawRow(int index, TableRowElement rowEl)
@@ -509,7 +527,6 @@ public abstract class RowTable<T> extends ScrollPanel
       data_.clear();
       addStyleName(RES.styles().empty());
       table_.removeAllChildren();
-      table_.removeAttribute("aria-activedescendant");
       SelectionEvent.fire(this, null);
       
       selectedRow_ = -1;
@@ -518,6 +535,7 @@ public abstract class RowTable<T> extends ScrollPanel
       activeRow_ = -1;
       
       offset_ = 0;
+      updateActiveDescendant();
    }
    
    private void selectRow(NativeEvent event, int row)
@@ -551,18 +569,16 @@ public abstract class RowTable<T> extends ScrollPanel
       selectedItem_ = data_.get(selectedRow_);
       SelectionEvent.fire(this, getSelectedItem());
       
-      // check if the requested row is part of the current view;
-      // if so, apply selection styling to it. note that we need
-      // to tweak offsets to handle colgroup + padding elements
-      int index = row - offset_;
-      if (index >= 0 && index <= table_.getChildCount() - 3)
+      // if the requested row is part of the current view,
+      // apply selection styling to it
+      selectedRowElement_ = getRenderedRowElement(row);
+      if (selectedRowElement_ != null)
       {
-         selectedRowElement_ = table_.getChild(index + 2).cast();
          selectedRowElement_.addClassName(RES.styles().selected());
          selectedRowElement_.setAttribute("aria-selected", "true");
-         table_.setAttribute("aria-activedescendant", selectedRowElement_.getId());
          DomUtils.setFocus(selectedRowElement_, true);
       }
+      updateActiveDescendant();
       
       if (scrollType != ScrollType.NONE)
       {

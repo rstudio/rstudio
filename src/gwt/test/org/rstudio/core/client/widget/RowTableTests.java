@@ -228,6 +228,97 @@ public class RowTableTests extends GWTTestCase
       assertEquals(400, table.getVerticalScrollPosition());
    }
 
+   // More rows than RowTable renders at once (MAX_VISIBLE_ROWS = 500).
+   private static final int LONG_TABLE_ROWS = 600;
+
+   private StringTable createLongTable()
+   {
+      String[] items = new String[LONG_TABLE_ROWS];
+      for (int i = 0; i < items.length; i++)
+         items[i] = "item" + i;
+      return createTable(items);
+   }
+
+   // Scrolls to the given row and redraws at once, as the scroll timer would.
+   private static void scrollToRow(StringTable table, int row)
+   {
+      table.setVerticalScrollPosition((int) (row * table.getRowHeight()));
+      table.redraw();
+   }
+
+   private static List<Element> getAriaSelectedRows(RowTable<String> table)
+   {
+      List<Element> selected = new ArrayList<>();
+      NodeList<Element> rows = getTableElement(table).getElementsByTagName("tr");
+      for (int i = 0; i < rows.getLength(); i++)
+      {
+         if (rows.getItem(i).hasAttribute("aria-selected"))
+            selected.add(rows.getItem(i));
+      }
+      return selected;
+   }
+
+   private static void assertActiveDescendantRendered(RowTable<String> table, int row)
+   {
+      String id = getActiveDescendant(table);
+      Element el = Document.get().getElementById(id);
+      assertNotNull("aria-activedescendant '" + id + "' names no element", el);
+      assertEquals(String.valueOf(row), el.getAttribute("__row"));
+   }
+
+   public void testActiveOptionVirtualizedAwayIsNotReferenced()
+   {
+      StringTable table = createLongTable();
+      table.setFocus(true);
+      assertActiveDescendantRendered(table, 0);
+
+      scrollToRow(table, 400);
+      assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
+
+      scrollToRow(table, 0);
+      assertActiveDescendantRendered(table, 0);
+   }
+
+   public void testSelectedOptionVirtualizedAwayIsNotReferenced()
+   {
+      StringTable table = createLongTable();
+      table.selectRow(0);
+      assertActiveDescendantRendered(table, 0);
+
+      scrollToRow(table, 400);
+      assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
+      assertEquals("item0", table.getSelectedItem());
+
+      scrollToRow(table, 0);
+      assertActiveDescendantRendered(table, 0);
+   }
+
+   public void testRedrawKeepsOneOptionAriaSelected()
+   {
+      // scrolling shifts which row element shows the selected row
+      StringTable table = createLongTable();
+      table.selectRow(120, RowTable.ScrollType.NONE);
+
+      scrollToRow(table, 400);
+
+      List<Element> selected = getAriaSelectedRows(table);
+      assertEquals(1, selected.size());
+      assertEquals("120", selected.get(0).getAttribute("__row"));
+      assertActiveDescendantRendered(table, 120);
+   }
+
+   public void testSelectingRowPastRenderedWindowMarksNoElement()
+   {
+      // row 500 is the first row outside the initial window of 0..499
+      StringTable table = createLongTable();
+
+      table.selectRow(500, RowTable.ScrollType.NONE);
+
+      assertEquals("item500", table.getSelectedItem());
+      assertEquals(0, getAriaSelectedRows(table).size());
+      assertFalse(getTableElement(table).hasAttribute("aria-activedescendant"));
+   }
+
    public void testRedrawWithoutFocusLeavesNoActiveOption()
    {
       StringTable table = createTable("a", "b", "c");
