@@ -27,8 +27,6 @@
 #endif
 
 #include <boost/current_function.hpp>
-#include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
@@ -2132,19 +2130,17 @@ void onBackgroundProcessing(bool isIdle)
    {
       auto currentTime = std::chrono::steady_clock::now();
 
-      std::vector<std::string> keys;
-      boost::copy(
-               s_pendingContinuations | boost::adaptors::map_keys,
-               std::back_inserter(keys));
-
-      for (auto&& key : keys)
+      for (auto it = s_pendingContinuations.begin(); it != s_pendingContinuations.end(); )
       {
-         auto&& continuation = s_pendingContinuations[key];
-         if (isAgentRequestExpired(continuation.time(), currentTime))
+         if (isAgentRequestExpired(it->second.time(), currentTime))
          {
-            DLOG("Cancelling old continuation with id '{}'.", key);
-            continuation.cancel();
-            s_pendingContinuations.erase(key);
+            DLOG("Cancelling old continuation with id '{}'.", it->first);
+            it->second.cancel();
+            it = s_pendingContinuations.erase(it);
+         }
+         else
+         {
+            ++it;
          }
       }
    }
