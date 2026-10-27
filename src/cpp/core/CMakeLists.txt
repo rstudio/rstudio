@@ -212,7 +212,8 @@ if (UNIX)
       ${UTIL_LIBRARIES}
       ${UUID_LIBRARIES}
       ${RT_LIBRARIES}
-      ${ACL_LIBRARIES})
+      ${ACL_LIBRARIES}
+      rstudio-zlib)
 
    # add Apple frameworks we depend on
    if(APPLE)
