@@ -125,7 +125,7 @@ std::size_t utf8IncompleteSuffixLength(const std::string& str);
 // past the end of the string are also considered invalid.
 std::size_t utf8SequenceLength(const std::string& str, std::size_t pos);
 
-// True if the whole string is valid UTF-8 per RFC 3629.
+// True if the whole string is valid UTF-8 per RFC 3629 and contains no null bytes.
 bool isValidUtf8(const std::string& str);
 
 // Removes embedded NULs from a UTF-8 string and replaces any invalid bytes

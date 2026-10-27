@@ -103,7 +103,7 @@ RS_GENERATE_CCTYPE_ALIAS(ispunct,  iswpunct)
 
 inline bool isNumeric(const std::string& str)
 {
-  return std::all_of(str.begin(), str.end(), core::cctype::isdigit<char>);
+  return !str.empty() && std::all_of(str.begin(), str.end(), core::cctype::isdigit<char>);
 }
 
 } // end namespace rstudio
