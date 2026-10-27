@@ -176,22 +176,22 @@ TEST(SessionAssistant, NesLanguageServerPathPrefersCjsScript)
 
 TEST(SessionAssistant, AgentRequestNotExpiredAtTenSeconds)
 {
-   auto sent = std::chrono::steady_clock::now();
-   EXPECT_FALSE(isAgentRequestExpired(sent, sent));
-   EXPECT_FALSE(isAgentRequestExpired(sent, sent + std::chrono::seconds(10)));
+   auto requested = std::chrono::steady_clock::now();
+   EXPECT_FALSE(isAgentRequestExpired(requested, requested));
+   EXPECT_FALSE(isAgentRequestExpired(requested, requested + std::chrono::seconds(10)));
 }
 
 TEST(SessionAssistant, AgentRequestExpiredJustPastTenSeconds)
 {
-   auto sent = std::chrono::steady_clock::now();
-   EXPECT_TRUE(isAgentRequestExpired(sent, sent + std::chrono::milliseconds(10001)));
+   auto requested = std::chrono::steady_clock::now();
+   EXPECT_TRUE(isAgentRequestExpired(requested, requested + std::chrono::milliseconds(10001)));
 }
 
 TEST(SessionAssistant, AgentRequestExpiredAfterMoreThanAMinute)
 {
    // 65s has a seconds field of 5; the expiry check must use the total.
-   auto sent = std::chrono::steady_clock::now();
-   EXPECT_TRUE(isAgentRequestExpired(sent, sent + std::chrono::seconds(65)));
+   auto requested = std::chrono::steady_clock::now();
+   EXPECT_TRUE(isAgentRequestExpired(requested, requested + std::chrono::seconds(65)));
 }
 
 } // end namespace tests

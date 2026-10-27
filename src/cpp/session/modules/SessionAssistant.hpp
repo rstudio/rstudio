@@ -75,9 +75,10 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 // Exposed for testing.
 core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
 
-// Whether an agent request sent at sentTime has been pending long enough at now
-// that the idle sweep should cancel it as dropped. Exposed for testing.
-bool isAgentRequestExpired(std::chrono::steady_clock::time_point sentTime,
+// Whether an agent request made at requestTime has been pending long enough at
+// now that the idle sweep should cancel it as dropped. requestTime is when the
+// request was queued, which can precede the write to the agent. Exposed for testing.
+bool isAgentRequestExpired(std::chrono::steady_clock::time_point requestTime,
                            std::chrono::steady_clock::time_point now);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so

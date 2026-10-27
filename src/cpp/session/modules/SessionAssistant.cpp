@@ -2965,10 +2965,10 @@ FilePath nesLanguageServerPath(const FilePath& installPath)
    return FilePath();
 }
 
-bool isAgentRequestExpired(std::chrono::steady_clock::time_point sentTime,
+bool isAgentRequestExpired(std::chrono::steady_clock::time_point requestTime,
                            std::chrono::steady_clock::time_point now)
 {
-   return now - sentTime > std::chrono::seconds(10);
+   return now - requestTime > std::chrono::seconds(10);
 }
 
 bool stopAgentForUpdate()
