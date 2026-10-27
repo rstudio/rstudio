@@ -570,6 +570,70 @@ test.describe('Split editor', () => {
     expect(await split.hasFocus()).toBe(false);
   });
 
+  // Whether the active document has unsaved changes.
+  function activeDocDirty(page: Page) {
+    return page.evaluate(() => window.rstudio?.documents.active()?.dirty ?? null);
+  }
+
+  test('autosave on blur saves an edit made in the split view', async ({ rstudioPage: page }) => {
+    try {
+      await setPref(page, 'auto_save_on_blur', true);
+      await openWithFocusedSplit(page);
+
+      await page.keyboard.type('y<-y*5');
+      await expect.poll(() => activeDocDirty(page)).toBe(true);
+
+      // leaving the split view for the console saves the document
+      await executeCommand(page, 'activateConsole');
+      await expect.poll(() => activeDocDirty(page), { timeout: TIMEOUTS.fileOpen }).toBe(false);
+    } finally {
+      await clearPref(page, 'auto_save_on_blur');
+    }
+  });
+
+  test('idle autosave keeps trailing whitespace under both views\' cursors', async ({ rstudioPage: page }) => {
+    const PRIMARY_LINE_WS = 'keep_primary <- 1  ';
+    const OTHER_LINE_WS = 'strip_other <- 2  ';
+    const TYPED = 'keep_split';
+
+    try {
+      await setPref(page, 'strip_trailing_whitespace', true);
+      await setPref(page, 'auto_save_on_idle', 'commit');
+      await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+        # split_view_marker
+        ${PRIMARY_LINE_WS}
+        ${OTHER_LINE_WS}
+        ${TYPED}
+      `);
+      const views = sourceViews(page);
+      await executeCommand(page, 'splitEditorRight');
+      await expect(views).toHaveCount(2);
+      const primary = viewEditor(views.first());
+      const split = viewEditor(views.nth(1));
+
+      // The primary view's cursor rests at the end of its line; the split
+      // view types a trailing space onto another line, then idles.
+      await primary.click();
+      const primaryEnd = { row: 1, column: PRIMARY_LINE_WS.length };
+      await primary.select({ start: primaryEnd, end: primaryEnd });
+      await split.click();
+      const splitEnd = { row: 3, column: TYPED.length };
+      await split.select({ start: splitEnd, end: splitEnd });
+      await expect.poll(() => split.hasFocus()).toBe(true);
+      await page.keyboard.type(' <- ');
+      await expect.poll(() => activeDocDirty(page)).toBe(true);
+      await expect.poll(() => activeDocDirty(page), { timeout: TIMEOUTS.fileOpen }).toBe(false);
+
+      // Only the line under neither cursor is stripped.
+      expect(await documentLine(page, 1)).toBe(PRIMARY_LINE_WS);
+      expect(await documentLine(page, 2)).toBe(OTHER_LINE_WS.trimEnd());
+      expect(await documentLine(page, 3)).toBe(`${TYPED} <- `);
+    } finally {
+      await clearPref(page, 'auto_save_on_idle');
+      await clearPref(page, 'strip_trailing_whitespace');
+    }
+  });
+
   // rstudioapi writes act on the view getActiveDocumentContext() reads from.
   // The console takes focus to run each call; the split view remains the
   // document's active view, as for an addin run from the console.

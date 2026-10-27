@@ -1343,6 +1343,11 @@ public class TextEditingTarget implements
             // differ), so make sure the restored cursor ends up in sight
             DocDisplay display = activeDisplay();
             display.restorePosition(position);
+
+            // render first: restoring moves only the renderer's scroll offset,
+            // and scrollCursorIntoView() ignores a target that matches the
+            // session's stale one
+            display.forceImmediateRender();
             display.scrollCursorIntoView();
          });
       }
@@ -3654,18 +3659,21 @@ public class TextEditingTarget implements
             String strippedCode = "";
             
             // If this is being performed as part of an autosave, avoid
-            // mutating lines containing the cursor.
+            // mutating lines containing the cursor of either editor view.
             if (isAutoSaving())
             {
                Pattern pattern = Pattern.create("[ \t]+$", "");
-               DocDisplay cursorDisplay = activeDisplay();
-               int startRow = cursorDisplay.getSelectionStart().getRow();
-               int endRow = cursorDisplay.getSelectionEnd().getRow();
+               int startRow = primaryDisplay_.getSelectionStart().getRow();
+               int endRow = primaryDisplay_.getSelectionEnd().getRow();
+               DocDisplay activeView = activeDisplay();
+               int activeStartRow = activeView.getSelectionStart().getRow();
+               int activeEndRow = activeView.getSelectionEnd().getRow();
                
                JsArrayString lines = primaryDisplay_.getLines();
                for (int i = 0, n = lines.length(); i < n; i++)
                {
-                  if (i < startRow || i > endRow)
+                  if ((i < startRow || i > endRow) &&
+                      (i < activeStartRow || i > activeEndRow))
                   {
                      String line = lines.get(i);
                      lines.set(i, pattern.replaceAll(line, ""));
@@ -4261,6 +4269,13 @@ public class TextEditingTarget implements
       selectionChangedTimer_.schedule(250);
    }
 
+   // Called by the view when the split editor view loses focus, so autosave
+   // on blur covers edits made there.
+   void splitEditorBlurred()
+   {
+      maybeAutoSaveOnBlur();
+   }
+
    // Applies the inline-chunk-output mode to every view of this document.
    // The flag lives on each editor view, and code execution consults the
    // view that initiated it, so a stale flag on the split view would send
@@ -4272,8 +4287,7 @@ public class TextEditingTarget implements
          view_.syncSplitShowChunkOutputInline();
    }
 
-   // Called by the view when the split editor view is destroyed; drop any
-   // executor bound to it so re-run-last-code falls back to the primary view.
+   // Called by the view when it creates the split editor view.
    void splitEditorCreated(AceEditor editor)
    {
       gitDiffGutter_.setSplitEditor(editor);
@@ -4291,6 +4305,8 @@ public class TextEditingTarget implements
       gitDiffGutter_.setDiffSplitWidget(null);
    }
 
+   // Called by the view when the split editor view is destroyed; drop any
+   // executor bound to it so re-run-last-code falls back to the primary view.
    void splitEditorRemoved()
    {
       gitDiffGutter_.setSplitEditor(null);
@@ -9561,12 +9577,13 @@ public class TextEditingTarget implements
       {
          if (isCompletionEnabled())
          {
+            // read the position now: focus may move to the other view of a
+            // split while the document syncs
+            final Position pos = activeDisplay().getSelectionStart();
             withUpdatedDoc(new CommandWith2Args<String, String>() {
                @Override
                public void execute(String docPath, String docId)
                {
-                  Position pos = activeDisplay().getSelectionStart();
-
                   operation.execute(docPath,
                                     pos.getRow() + 1,
                                     pos.getColumn() + 1);

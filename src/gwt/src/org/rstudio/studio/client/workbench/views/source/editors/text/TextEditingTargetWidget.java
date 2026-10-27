@@ -646,6 +646,10 @@ public class TextEditingTargetWidget
       splitEditorRegistrations_.add(splitEditor_.addSelectionChangedHandler(event ->
             target_.splitEditorSelectionChanged()));
 
+      // autosave on blur, as for the primary view
+      splitEditorRegistrations_.add(splitEditor_.addEditorBlurHandler(event ->
+            target_.splitEditorBlurred()));
+
       // record jumps made in the split view (e.g. Go to Line) in source
       // navigation history, as for the primary view
       TextEditingTarget.addRecordNavigationPositionHandler(
