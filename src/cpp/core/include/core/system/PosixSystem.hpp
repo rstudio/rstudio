@@ -132,13 +132,9 @@ core::Error processInfo(const std::string& process,
 // get process info for the specific process specified by pid
 core::Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername = true);
 
-// check whether a process exists; a process the caller lacks permission to
-// signal (e.g. one owned by another user) counts as running
-bool isProcessRunning(pid_t pid);
-
 // check whether a process has exited but not yet been reaped; such a process
-// still "exists" to isProcessRunning() (kill(pid, 0) succeeds) but can no
-// longer hold or release anything
+// still "exists" to isProcessRunning() (declared in System.hpp; kill(pid, 0)
+// succeeds) but can no longer hold or release anything
 bool isProcessZombie(pid_t pid);
 
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);

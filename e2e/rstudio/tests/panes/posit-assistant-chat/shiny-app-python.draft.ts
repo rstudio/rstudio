@@ -140,10 +140,11 @@ test.describe.skip('Python Shiny Tip Calculator via Posit Assistant', () => {
       viewerFrame.locator('input[type="range"], .slider, [class*="slider"]').first()
     ).toBeVisible({ timeout: 10000 });
 
-    // Verify tip percentage buttons are present
+    // Verify the tip percentage choices are present, as push buttons or radio
+    // buttons (see shiny-app-r.test.ts).
     for (const pct of ['10%', '15%', '20%', '25%']) {
       await expect(
-        viewerFrame.locator(`button:has-text("${pct}"), input[value="${pct}"]`).first()
+        viewerFrame.getByRole('button', { name: pct }).or(viewerFrame.getByRole('radio', { name: pct })).first()
       ).toBeVisible({ timeout: 5000 });
     }
 
