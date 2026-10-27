@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 import com.google.gwt.core.client.GWT;
@@ -67,7 +68,7 @@ public class ChatPane
                       Commands commands,
                       Provider<ProductEditionInfo> pEdition)
    {
-      super(constants_.chatTitle(), events);
+      super(constants_.chatTitle(), PaneManager.CHAT_PANE, events);
 
       events_ = events;
       commands_ = commands;

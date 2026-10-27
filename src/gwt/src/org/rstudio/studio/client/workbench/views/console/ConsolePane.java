@@ -68,9 +68,9 @@ public class ConsolePane extends WorkbenchPane
                       AriaLiveService ariaLive,
                       Provider<PaneManager> pPaneManager)
    {
-      // We pass null in place of events here to prevent ActivePaneEvent from being called.
+      // We pass no event bus here to prevent ActivatePaneEvent from being fired.
       // ActivatePaneEvent isn't necessary and causes an exception for the Console Pane.
-      super(constants_.consoleLabel(), null);
+      super(constants_.consoleLabel());
 
       consoleProvider_ = consoleProvider;
       progressProvider_ = progressProvider;

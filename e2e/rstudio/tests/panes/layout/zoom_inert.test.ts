@@ -777,8 +777,8 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     });
   }
 
-  // A pane raises itself under its localized title, which PaneManager doesn't
-  // know ("Aide" for Help in French), so the moved zoom must still name Help.
+  // A pane's localized title ("Aide" for Help in French) is not a name
+  // PaneManager knows, so the pane must name itself as Help when it raises.
   test('Search R Help during a Console zoom moves the zoom to Help in French', async ({
     rstudioPage: page,
   }) => {
