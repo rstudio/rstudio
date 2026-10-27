@@ -75,6 +75,11 @@ test.describe('Split editor', () => {
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.getSelectedText() ?? ''),
       rangeCount: () =>
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.selection.rangeCount ?? 0),
+      scrollLeft: () =>
+        view.evaluate((el) => {
+          const renderer = (el as AceEditorElement).env?.editor?.renderer as { scrollLeft?: number } | undefined;
+          return renderer?.scrollLeft ?? -1;
+        }),
       // the text of each range of a multi-selection (single-line ranges)
       rangeTexts: () =>
         view.evaluate((el) => {
@@ -117,6 +122,14 @@ test.describe('Split editor', () => {
     await split.select({ start: { row: 6, column: 2 }, end: { row: 6, column: 8 } });
     await expect.poll(() => split.hasFocus()).toBe(true);
     return { primary, split };
+  }
+
+  // Runs Go to Line through its prompt, in whichever view has focus.
+  async function goToLineViaPrompt(page: Page, line: number) {
+    await executeCommand(page, 'goToLine');
+    await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
+    await page.keyboard.type(String(line));
+    await page.keyboard.press('Enter');
   }
 
   async function documentLine(page: Page, row: number): Promise<string> {
@@ -382,16 +395,28 @@ test.describe('Split editor', () => {
 
     // Renaming x twice in the primary view caches its chunk ranges for a
     // second; renaming y in the split view within that window must not reuse
-    // them.
+    // them. The sequence runs in one synchronous evaluation, so the cache
+    // cannot expire part way through and let the test pass without the reset.
     await primary.click();
-    await primary.gotoLine(6);
-    await executeCommand(page, 'renameInScope');
-    await expect.poll(() => primary.rangeTexts()).toEqual(['x', 'x', 'x']);
-    await executeCommand(page, 'renameInScope');
+    await expect.poll(() => primary.hasFocus()).toBe(true);
+    const splitElement = await views.nth(1).elementHandle();
+    await views.first().evaluate((primaryEl, splitEl) => {
+      const primaryEditor = (primaryEl as AceEditorElement).env?.editor;
+      const splitEditor = (splitEl as AceEditorElement | null)?.env?.editor;
+      const commands = window.rstudio?.commands;
+      if (!primaryEditor || !splitEditor || !commands)
+        throw new Error('editor views or command bridge unavailable');
 
-    await split.click();
-    await split.gotoLine(7);
-    await executeCommand(page, 'renameInScope');
+      primaryEditor.focus();
+      primaryEditor.gotoLine(6, 0);
+      commands.renameInScope();
+      commands.renameInScope();
+
+      splitEditor.focus();
+      splitEditor.gotoLine(7, 0);
+      commands.renameInScope();
+    }, splitElement);
+
     await expect.poll(() => split.rangeTexts()).toEqual(['y', 'y']);
     await page.keyboard.press('Escape');
   });
@@ -422,10 +447,7 @@ test.describe('Split editor', () => {
   test('Go to Line moves the focused view and is recorded in navigation history', async ({ rstudioPage: page }) => {
     const { primary, split } = await openWithFocusedSplit(page);
 
-    await executeCommand(page, 'goToLine');
-    await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
-    await page.keyboard.type('2');
-    await page.keyboard.press('Enter');
+    await goToLineViaPrompt(page, 2);
     await expect.poll(() => split.cursorRow()).toBe(1);
     expect(await primary.cursorRow()).toBe(2);
 
@@ -436,6 +458,36 @@ test.describe('Split editor', () => {
     await executeCommand(page, 'sourceNavigateForward');
     await expect.poll(() => split.cursorRow()).toBe(1);
     expect(await primary.cursorRow()).toBe(2);
+  });
+
+  test('Back reveals a position restored into the other view', async ({ rstudioPage: page }) => {
+    const LONG_LINE = `long_line <- "${'a'.repeat(200)}"`;
+    await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+      # split_view_marker
+      ${LONG_LINE}
+      short_line <- 1
+    `);
+    const views = sourceViews(page);
+    await executeCommand(page, 'splitEditorRight');
+    await expect(views).toHaveCount(2);
+    const primary = viewEditor(views.first());
+    const split = viewEditor(views.nth(1));
+
+    // Leave the end of the long line for the last line in the split view.
+    await split.click();
+    const lineEnd = { row: 1, column: LONG_LINE.length };
+    await split.select({ start: lineEnd, end: lineEnd });
+    await goToLineViaPrompt(page, 3);
+    await expect.poll(() => split.cursorRow()).toBe(2);
+
+    // Back from the primary view, scrolled to the left, restores the far end
+    // of the long line there and must scroll it into sight.
+    await primary.click();
+    await expect.poll(() => primary.hasFocus()).toBe(true);
+    expect(await primary.scrollLeft()).toBe(0);
+    await executeCommand(page, 'sourceNavigateBack');
+    await expect.poll(() => primary.cursorRow()).toBe(1);
+    await expect.poll(() => primary.scrollLeft()).toBeGreaterThan(0);
   });
 
   test('Vim reflow (gqq) reflows the focused view\'s line', async ({ rstudioPage: page }) => {
