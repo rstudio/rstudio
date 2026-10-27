@@ -163,10 +163,13 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
       viewerFrame.locator('input[type="range"], .slider, [class*="slider"]').first()
     ).toBeVisible({ timeout: 10000 });
 
-    // Verify tip percentage buttons are present
+    // Verify the tip percentage choices are present. "Buttons" can come back
+    // as push buttons or as radio buttons -- run 40398345386 got
+    // radioButtons(choices = c("10%" = 0.10, ...)), whose inputs carry the
+    // numeric value -- so match the accessible name of either role.
     for (const pct of ['10%', '15%', '20%', '25%']) {
       await expect(
-        viewerFrame.locator(`button:has-text("${pct}"), input[value="${pct}"]`).first()
+        viewerFrame.getByRole('button', { name: pct }).or(viewerFrame.getByRole('radio', { name: pct })).first()
       ).toBeVisible({ timeout: 5000 });
     }
 
