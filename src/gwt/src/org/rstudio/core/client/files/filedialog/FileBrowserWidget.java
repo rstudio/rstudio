@@ -116,7 +116,13 @@ public class FileBrowserWidget extends Composite
       directory_.setContents(
             host_.ls(),
             parsedDir.length > 1 ? parsedDir[parsedDir.length-2] : null);
-      setDirectoryFocus(true);
+
+      // the dialog sets its own initial focus once shown (focusInitialControl);
+      // focusing the list for the first listing raced it, flashing focus on
+      // the list or taking it from the dialog's initial control
+      if (initialListingShown_)
+         setDirectoryFocus(true);
+      initialListingShown_ = true;
    }
 
    public void cd(String path)
@@ -220,6 +226,7 @@ public class FileBrowserWidget extends Composite
    private DirectoryContentsWidget directory_;
    private TextBox filename_;
    private boolean navigating_;
+   private boolean initialListingShown_;
    private FileSystemContext context_;
    private String initialFilename_;
    private Host host_;
