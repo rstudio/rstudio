@@ -482,7 +482,10 @@ SEXP rs_registryGetValue(SEXP pathSEXP, SEXP nameSEXP)
       r::sexp::Protect protect;
       r::sexp::ListBuilder builder(&protect);
       builder.add("type", std::string(type == REG_EXPAND_SZ ? "ExpandString" : "String"));
-      builder.add("data", data);
+
+      // getValue() returns UTF-8, which is not the native encoding under R
+      // < 4.2 on Windows
+      builder.add("data", r::sexp::createUtf8(data, &protect));
       return r::sexp::create(builder, &protect);
    }
    catch (r::exec::RErrorException& e)
