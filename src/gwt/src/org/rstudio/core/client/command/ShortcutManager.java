@@ -62,7 +62,6 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownEvent.Handler,
@@ -163,7 +162,7 @@ public class ShortcutManager implements NativePreviewHandler,
                            EventBus events,
                            Binder binder,
                            Commands commands,
-                           Provider<UserPrefs> pUserPrefs)
+                           UserPrefs userPrefs)
    {
       appCommands_ = appCommands;
       editorCommands_ = editorCommands;
@@ -171,13 +170,13 @@ public class ShortcutManager implements NativePreviewHandler,
       addins_ = addins;
       events_ = events;
       commands_ = commands;
-      pUserPrefs_ = pUserPrefs;
+      userPrefs_ = userPrefs;
       binder.bind(commands_, this);
 
       // Follow the editor keybindings pref in every window. Loading prefs from the session
       // info fires no change events, so bind once they're loaded: now, or after the session
       // init handlers (one of which loads them in satellites) have run.
-      if (pUserPrefs_.get().hasLoadedLayers(UserPrefs.LAYER_USER))
+      if (userPrefs_.hasLoadedLayers(UserPrefs.LAYER_USER))
          bindEditorModeToPref();
       else
          events_.addHandler(SessionInitEvent.TYPE, event ->
@@ -189,7 +188,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (editorModeBound_)
          return;
       editorModeBound_ = true;
-      pUserPrefs_.get().editorKeybindings().bind(this::setEditorModeFromPref);
+      userPrefs_.editorKeybindings().bind(this::setEditorModeFromPref);
    }
 
    public boolean isEnabled()
@@ -887,7 +886,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private final KeySequence keyBuffer_;
    private final IgnoredKeysMap<KeyCombination> ignoredKeys_;
    private final Timer keyTimer_;
-   private Provider<UserPrefs> pUserPrefs_;
+   private UserPrefs userPrefs_;
    private boolean editorModeBound_ = false;
    private int activeEditEventType_ = EditEvent.TYPE_NONE;
 
