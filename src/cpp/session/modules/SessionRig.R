@@ -123,28 +123,180 @@
    .rs.fromJSON(paste(output, collapse = "\n"))
 })
 
+.rs.addFunction("rig.platform", function()
+{
+   if (.rs.platform.isWindows)
+      "windows"
+   else if (.rs.platform.isMacos)
+      "macos"
+   else
+      "linux"
+})
+
 #' The files rig creates when it makes a user-mode R the default R: its
-#' 'Current' link, the R and Rscript quick links, and on macOS a LaunchAgent
-#' that exports RSTUDIO_WHICH_R to every GUI application at login. 'rig add'
-#' sets a default whenever none is set yet, so an R installed from the
-#' project R-version warning bar would become the default R outside RStudio
-#' too; what the install adds or changes is put back once it finishes
-#' (#19229).
+#' 'Current' link and the R and Rscript quick links (R.exe, RS.exe and
+#' Rscript.exe shims on Windows), and on macOS a LaunchAgent that exports
+#' RSTUDIO_WHICH_R to every GUI application at login. 'rig add' sets a
+#' default whenever none is set yet, so an R installed from the project
+#' R-version warning bar would become the default R outside RStudio too;
+#' what the install adds or changes is put back once it finishes (#19229).
 .rs.addFunction("rig.userDefaultPaths", function(dirs,
                                                  home = Sys.getenv("HOME"),
-                                                 macos = .rs.platform.isMacos)
+                                                 platform = .rs.rig.platform())
 {
-   current <- if (macos) "Current" else "current"
-   paths <- c(
-      current = file.path(dirs$r_root, current),
-      R       = file.path(dirs$binary_dir, "R"),
-      Rscript = file.path(dirs$binary_dir, "Rscript")
+   if (identical(platform, "windows"))
+   {
+      c(
+         R       = file.path(dirs$binary_dir, "R.exe"),
+         RS      = file.path(dirs$binary_dir, "RS.exe"),
+         Rscript = file.path(dirs$binary_dir, "Rscript.exe")
+      )
+   }
+   else if (identical(platform, "macos"))
+   {
+      c(
+         current     = file.path(dirs$r_root, "Current"),
+         R           = file.path(dirs$binary_dir, "R"),
+         Rscript     = file.path(dirs$binary_dir, "Rscript"),
+         launchAgent = file.path(home, "Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist")
+      )
+   }
+   else
+   {
+      c(
+         current = file.path(dirs$r_root, "current"),
+         R       = file.path(dirs$binary_dir, "R"),
+         Rscript = file.path(dirs$binary_dir, "Rscript")
+      )
+   }
+})
+
+#' The registry values rig writes on Windows: once a user-mode R becomes the
+#' default, the current-user R-core default (the R and R64 keys, and their
+#' WOW6432Node twins used for x86_64 R on arm64); and on every install the
+#' user PATH, which gets rig's quick-link directory prepended. Keys name
+#' their hive first, as reg.exe takes them.
+.rs.addFunction("rig.registryEntries", function()
+{
+   keys <- c(
+      "HKCU\\Software\\R-core\\R",
+      "HKCU\\Software\\R-core\\R64",
+      "HKCU\\Software\\WOW6432Node\\R-core\\R",
+      "HKCU\\Software\\WOW6432Node\\R-core\\R64"
    )
 
-   if (macos)
-      paths[["launchAgent"]] <- file.path(home, "Library/LaunchAgents/io.r-lib.rig.rstudio-which-r.plist")
+   entries <- expand.grid(
+      name = c("Current Version", "InstallPath"),
+      key = keys,
+      stringsAsFactors = FALSE
+   )
 
-   paths
+   entries <- rbind(entries, data.frame(name = "Path", key = "HKCU\\Environment", stringsAsFactors = FALSE))
+   entries[c("key", "name")]
+})
+
+.rs.addFunction("rig.registryId", function(key, name)
+{
+   paste(key, name, sep = "\\")
+})
+
+#' The registry values rig may write that exist now, as a list keyed by
+#' .rs.rig.registryId(), each a list with 'type' ("String" or
+#' "ExpandString") and 'data' as stored (not expanded).
+.rs.addFunction("rig.registryRead", function(entries = .rs.rig.registryEntries())
+{
+   values <- list()
+   for (i in seq_len(nrow(entries)))
+   {
+      key <- entries$key[[i]]
+      name <- entries$name[[i]]
+      value <- .rs.registryGetValue(key, name)
+      if (!is.null(value))
+         values[[.rs.rig.registryId(key, name)]] <- value
+   }
+
+   values
+})
+
+#' Apply registry operations: each is a list with 'op' ("set" or "remove"),
+#' 'key' and 'name', plus 'type' and 'data' to set.
+.rs.addFunction("rig.registryWrite", function(ops)
+{
+   for (op in ops)
+   {
+      if (identical(op$op, "remove"))
+         .rs.registryDeleteValue(op$key, op$name)
+      else
+         .rs.registrySetValue(op$key, op$name, op$data, op$type)
+   }
+
+   # Explorer (and so every shell opened from it) keeps the PATH it has
+   # until told the user environment changed
+   keys <- vapply(ops, function(op) op$key, character(1))
+   if ("HKCU\\Environment" %in% keys)
+      .rs.registryNotifyEnvironmentChange()
+
+   invisible(NULL)
+})
+
+.rs.addFunction("rig.pathHasDir", function(path, dir)
+{
+   if (is.null(path))
+      return(FALSE)
+
+   entries <- strsplit(path, ";", fixed = TRUE)[[1L]]
+   tolower(dir) %in% tolower(trimws(entries))
+})
+
+#' The registry operations that take the values back to 'before' where rig
+#' changed them: values rig added are removed, values it changed are set
+#' back. The user PATH only loses rig's quick-link directory, so other
+#' changes to it survive. Nothing is done about values that disappeared.
+.rs.addFunction("rig.registryRestoreOps", function(before, after, binaryDir)
+{
+   ops <- list()
+   pathId <- .rs.rig.registryId("HKCU\\Environment", "Path")
+
+   for (id in names(after))
+   {
+      old <- before[[id]]
+      new <- after[[id]]
+      op <- NULL
+
+      if (identical(id, pathId))
+      {
+         if (!.rs.rig.pathHasDir(old$data, binaryDir) && .rs.rig.pathHasDir(new$data, binaryDir))
+         {
+            entries <- strsplit(new$data, ";", fixed = TRUE)[[1L]]
+            kept <- entries[tolower(trimws(entries)) != tolower(binaryDir)]
+            if (length(kept) == 0L && is.null(old))
+               op <- list(op = "remove", key = "HKCU\\Environment", name = "Path")
+            else
+               op <- list(op = "set", key = "HKCU\\Environment", name = "Path", type = new$type, data = paste(kept, collapse = ";"))
+         }
+      }
+      else if (is.null(old))
+      {
+         op <- list(op = "remove", key = sub("\\\\[^\\\\]*$", "", id), name = sub("^.*\\\\", "", id))
+      }
+      else if (!identical(old$data, new$data) || !identical(old$type, new$type))
+      {
+         op <- list(op = "set", key = sub("\\\\[^\\\\]*$", "", id), name = sub("^.*\\\\", "", id), type = old$type, data = old$data)
+      }
+
+      if (!is.null(op))
+         ops[[length(ops) + 1L]] <- op
+   }
+
+   ops
+})
+
+.rs.addFunction("rig.registryOpLabel", function(op, binaryDir)
+{
+   if (identical(op$key, "HKCU\\Environment") && identical(op$name, "Path"))
+      sprintf("user PATH entry %s", binaryDir)
+   else
+      .rs.rig.registryId(op$key, op$name)
 })
 
 # the label of rig's LaunchAgent, as launchd knows it
@@ -199,18 +351,25 @@
 #' The state of rig's default-R setup before a user-mode install: which of
 #' its files exist and what they link to, the LaunchAgent's contents, and
 #' whether launchd has the agent loaded and which RSTUDIO_WHICH_R it gives
-#' GUI applications. The snapshot records the session that took it, so that
-#' a later session can tell a leftover from an install still under way.
-.rs.addFunction("rig.userDefaultSnapshot", function(paths, launchctl = .rs.rig.launchctl)
+#' GUI applications; on Windows (through 'registry') the registry values rig
+#' may write instead, with 'binaryDir' the quick-link directory it puts on
+#' the user PATH. The snapshot records the session that took it, so that a
+#' later session can tell a leftover from an install still under way.
+.rs.addFunction("rig.userDefaultSnapshot", function(paths,
+                                                    launchctl = .rs.rig.launchctl,
+                                                    registry = if (.rs.platform.isWindows) .rs.rig.registryRead,
+                                                    binaryDir = NULL)
 {
    snapshot <- list(
-      pid     = Sys.getpid(),
-      paths   = paths,
-      existed = .rs.rig.pathExists(paths),
-      targets = .rs.rig.linkTargets(paths),
-      agent   = NULL,
-      loaded  = FALSE,
-      whichR  = ""
+      pid       = Sys.getpid(),
+      paths     = paths,
+      existed   = .rs.rig.pathExists(paths),
+      targets   = .rs.rig.linkTargets(paths),
+      agent     = NULL,
+      loaded    = FALSE,
+      whichR    = "",
+      registry  = NULL,
+      binaryDir = binaryDir
    )
 
    if ("launchAgent" %in% names(paths))
@@ -223,6 +382,17 @@
          snapshot$whichR <- whichR
    }
 
+   # a registry that cannot be read leaves its values out of the snapshot
+   # (and so out of the restore); the reason is kept for the job's log
+   if (!is.null(registry))
+   {
+      values <- .rs.tryCatch(registry())
+      if (inherits(values, "error"))
+         snapshot$registryError <- conditionMessage(values)
+      else
+         snapshot$registry <- values
+   }
+
    snapshot
 })
 
@@ -231,9 +401,14 @@
 #' LaunchAgent it rewrote are put back (rig repoints a dangling 'Current'
 #' and rewrites a stale agent), and launchd's agent and RSTUDIO_WHICH_R are
 #' left as they were. A link whose directory has since been removed is left
-#' alone. Returns the paths removed and restored, and a message for each
-#' step that failed.
-.rs.addFunction("rig.userDefaultRestore", function(snapshot, launchctl = .rs.rig.launchctl)
+#' alone. On Windows the registry values rig changed are taken back as well
+#' (the current-user R-core default it set, and its entry on the user PATH).
+#' Returns the paths and registry values removed and restored, and a message
+#' for each step that failed.
+.rs.addFunction("rig.userDefaultRestore", function(snapshot,
+                                                   launchctl = .rs.rig.launchctl,
+                                                   registry = if (.rs.platform.isWindows) .rs.rig.registryRead,
+                                                   registryWrite = .rs.rig.registryWrite)
 {
    paths <- snapshot$paths
    exists <- .rs.rig.pathExists(paths)
@@ -331,6 +506,42 @@
          failed <- c(failed, sprintf("could not restore the link %s", path))
    }
 
+   # the registry values rig added go, the ones it changed are set back; a
+   # restore that fails is tried again whole, as the operations only ever
+   # take the values back toward the snapshot
+   if (!is.null(snapshot$registry) && !is.null(registry))
+   {
+      after <- .rs.tryCatch(registry())
+      if (inherits(after, "error"))
+      {
+         failed <- c(failed, sprintf("could not read rig's registry values: %s", conditionMessage(after)))
+      }
+      else
+      {
+         ops <- .rs.rig.registryRestoreOps(snapshot$registry, after, snapshot$binaryDir)
+         labels <- vapply(ops, .rs.rig.registryOpLabel, character(1), binaryDir = snapshot$binaryDir)
+         kinds <- vapply(ops, function(op) op$op, character(1))
+
+         written <- NULL
+         if (length(ops))
+            written <- .rs.tryCatch(registryWrite(ops))
+
+         if (inherits(written, "error"))
+         {
+            failed <- c(failed, sprintf(
+               "could not restore the registry values %s: %s",
+               paste(labels, collapse = ", "),
+               conditionMessage(written)
+            ))
+         }
+         else
+         {
+            removed <- c(removed, labels[kinds == "remove"])
+            restored <- c(restored, labels[kinds != "remove"])
+         }
+      }
+   }
+
    list(removed = unname(removed), restored = unname(restored), failed = failed)
 })
 
@@ -389,7 +600,7 @@
 #' Whether the install a snapshot was taken for may still be under way: the
 #' session that took it, or the rig it started, is still running. (On macOS
 #' rig outlives a session that crashes.)
-.rs.addFunction("rig.snapshotInUse", function(snapshot, running = .rs.rig.processRunning)
+.rs.addFunction("rig.snapshotInUse", function(snapshot, running = .rs.isProcessRunning)
 {
    pids <- c(snapshot$pid, snapshot$rigPid)
    pids <- pids[!is.na(pids) & pids != Sys.getpid()]
@@ -409,15 +620,11 @@
 .rs.addFunction("rig.userInstallBegin", function(rig,
                                                  file = NULL,
                                                  launchctl = .rs.rig.launchctl,
-                                                 running = .rs.rig.processRunning)
+                                                 running = .rs.isProcessRunning)
 {
    state <- .rs.rig.installState
    state$snapshot <- NULL
    state$file <- NULL
-
-   # rig's Windows default (R.exe shims and registry entries) is not undone
-   if (.rs.platform.isWindows)
-      return(character())
 
    notes <- character()
    if (!is.null(file) && file.exists(file))
@@ -446,7 +653,13 @@
    .rs.rig.ensureBinaryDir(dirs)
 
    paths <- .rs.rig.userDefaultPaths(dirs)
-   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl)
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchctl, binaryDir = dirs$binary_dir)
+   if (!is.null(snapshot$registryError))
+      notes <- c(notes, sprintf(
+         "Could not read rig's registry values (%s); the default R rig records in the registry will not be put back.",
+         snapshot$registryError
+      ))
+
    if (!is.null(file))
    {
       failure <- .rs.rig.saveSnapshot(snapshot, file)
@@ -502,7 +715,7 @@
 #' under way, and kept while something is left to undo. Returns messages for
 #' the log.
 .rs.addFunction("rig.userInstallRecover", function(file,
-                                                   running = .rs.rig.processRunning,
+                                                   running = .rs.isProcessRunning,
                                                    launchctl = .rs.rig.launchctl)
 {
    if (!file.exists(file))
@@ -523,12 +736,6 @@
       unlink(file)
 
    .rs.rig.restoreMessages(result)
-})
-
-#' Whether a process of this user with the given id is running.
-.rs.addFunction("rig.processRunning", function(pid)
-{
-   isTRUE(tools::pskill(pid, 0L))
 })
 
 #' An empty table of R installations.

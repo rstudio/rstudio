@@ -38,11 +38,43 @@ std::string languageAfterInput(const std::string& language, const std::string& i
 // The same, over all pending console input.
 std::string languageAfterPendingInput(const std::string& language);
 
+// console input is queued for the read
+bool hasQueuedInput();
+
+// console input is waiting to be read: queued, or a console_input request
+// a console read's wait has dequeued and not yet handed over (see
+// waitForMethod; such holds nest with the reads)
+bool hasPendingInput();
+void setInputHeld(bool held);
+
 bool executing();
 void setExecuting(bool executing);
+
+// R is running code: console input, or an input handler dispatched from the
+// idle loop (a later callback). safe on any thread
+bool isRunningCode();
 void updateSessionExecuting();
-core::Error extractConsoleInput(const core::json::JsonRpcRequest& request);
+core::Error extractConsoleInput(const core::json::JsonRpcRequest& request, bool ahead = false);
 void reissueLastConsolePrompt();
+
+// reissue the prompt of the console read waiting right now, as it was issued
+// (with its own history flag), for a client that was told R is busy while
+// that read was waiting
+void restoreConsolePrompt();
+
+// number of console prompts issued so far
+unsigned promptsIssued();
+
+// number of times the console input queue has been cleared so far, empty
+// or not
+unsigned bufferClears();
+
+// number of times queued console input has been discarded so far (a clear
+// of a non-empty queue)
+unsigned inputDiscards();
+
+// number of console reads completed so far (input handed to R)
+unsigned readsCompleted();
 void addToConsoleInputBuffer(
       const rstudio::r::session::RConsoleInput& consoleInput);
 

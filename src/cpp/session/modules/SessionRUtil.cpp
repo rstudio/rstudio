@@ -33,6 +33,11 @@
 #include <core/Macros.hpp>
 #include <core/YamlUtil.hpp>
 
+#ifdef _WIN32
+# include <core/system/RegistryKey.hpp>
+#endif
+
+#include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
@@ -418,6 +423,161 @@ SEXP rs_isAppleSilicon()
    return r::sexp::create(isAppleSilicon, &protect);
 }
 
+SEXP rs_isProcessRunning(SEXP pidSEXP)
+{
+   PidType pid = static_cast<PidType>(r::sexp::asInteger(pidSEXP));
+
+   r::sexp::Protect protect;
+   return r::sexp::create(core::system::isProcessRunning(pid), &protect);
+}
+
+#ifdef _WIN32
+
+// Open a registry key given with its hive in front, the way reg.exe takes
+// one: "HKCU\Software\R-core\R".
+Error openRegistryKey(const std::string& path, REGSAM access, core::system::RegistryKey* pKey)
+{
+   std::size_t slash = path.find('\\');
+   std::string hive = path.substr(0, slash);
+   std::string subKey = (slash == std::string::npos) ? std::string() : path.substr(slash + 1);
+
+   HKEY hKey;
+   if (hive == "HKCU" || hive == "HKEY_CURRENT_USER")
+      hKey = HKEY_CURRENT_USER;
+   else if (hive == "HKLM" || hive == "HKEY_LOCAL_MACHINE")
+      hKey = HKEY_LOCAL_MACHINE;
+   else if (hive == "HKU" || hive == "HKEY_USERS")
+      hKey = HKEY_USERS;
+   else if (hive == "HKCR" || hive == "HKEY_CLASSES_ROOT")
+      hKey = HKEY_CLASSES_ROOT;
+   else
+      return systemError(ERROR_INVALID_PARAMETER, "unknown registry hive in " + path, ERROR_LOCATION);
+
+   return pKey->open(hKey, subKey, access);
+}
+
+bool registryValueType(const std::string& name, DWORD* pType)
+{
+   if (name == "String")
+      *pType = REG_SZ;
+   else if (name == "ExpandString")
+      *pType = REG_EXPAND_SZ;
+   else
+      return false;
+
+   return true;
+}
+
+// The string value 'name' under the key 'path', as a list of its 'type'
+// ("String" or "ExpandString") and 'data' as stored (so with %VARS% not
+// expanded), or NULL when the key or the value does not exist.
+SEXP rs_registryGetValue(SEXP pathSEXP, SEXP nameSEXP)
+{
+   try
+   {
+      std::string path = r::sexp::asUtf8String(pathSEXP);
+      std::string name = r::sexp::asUtf8String(nameSEXP);
+
+      std::string data;
+      DWORD type = REG_NONE;
+      core::system::RegistryKey key;
+      Error error = openRegistryKey(path, KEY_QUERY_VALUE, &key);
+      if (!error)
+         error = key.getValue(name, &data, &type);
+
+      if (error)
+      {
+         if (isNotFoundError(error))
+            return R_NilValue;
+         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+      }
+
+      r::sexp::Protect protect;
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("type", std::string(type == REG_EXPAND_SZ ? "ExpandString" : "String"));
+      builder.add("data", data);
+      return r::sexp::create(builder, &protect);
+   }
+   catch (r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
+}
+
+SEXP rs_registrySetValue(SEXP pathSEXP, SEXP nameSEXP, SEXP dataSEXP, SEXP typeSEXP)
+{
+   try
+   {
+      std::string path = r::sexp::asUtf8String(pathSEXP);
+      std::string name = r::sexp::asUtf8String(nameSEXP);
+      std::string data = r::sexp::asUtf8String(dataSEXP);
+      std::string typeName = r::sexp::asString(typeSEXP);
+
+      DWORD type;
+      if (!registryValueType(typeName, &type))
+         throw r::exec::RErrorException("unsupported registry value type: " + typeName);
+
+      core::system::RegistryKey key;
+      Error error = openRegistryKey(path, KEY_SET_VALUE, &key);
+      if (!error)
+         error = key.setValue(name, data, type);
+      if (error)
+         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+   }
+   catch (r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
+}
+
+// Delete the value 'name' under the key 'path'; a value (or key) that does
+// not exist is not an error.
+SEXP rs_registryDeleteValue(SEXP pathSEXP, SEXP nameSEXP)
+{
+   try
+   {
+      std::string path = r::sexp::asUtf8String(pathSEXP);
+      std::string name = r::sexp::asUtf8String(nameSEXP);
+
+      core::system::RegistryKey key;
+      Error error = openRegistryKey(path, KEY_SET_VALUE, &key);
+      if (!error)
+         error = key.deleteValue(name);
+      if (error && !isNotFoundError(error))
+         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+   }
+   catch (r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
+}
+
+// Tell running applications (Explorer above all, whose environment new
+// shells inherit) that the user environment in the registry changed.
+SEXP rs_registryNotifyEnvironmentChange()
+{
+   DWORD_PTR result = 0;
+   ::SendMessageTimeoutW(HWND_BROADCAST,
+                         WM_SETTINGCHANGE,
+                         0,
+                         reinterpret_cast<LPARAM>(L"Environment"),
+                         SMTO_ABORTIFHUNG,
+                         1000,
+                         &result);
+   return R_NilValue;
+}
+
+#endif // _WIN32
+
 } // anonymous namespace
 
 Error initialize()
@@ -435,6 +595,13 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);
    RS_REGISTER_CALL_METHOD(rs_userDataDir);
    RS_REGISTER_CALL_METHOD(rs_isAppleSilicon);
+   RS_REGISTER_CALL_METHOD(rs_isProcessRunning);
+#ifdef _WIN32
+   RS_REGISTER_CALL_METHOD(rs_registryGetValue);
+   RS_REGISTER_CALL_METHOD(rs_registrySetValue);
+   RS_REGISTER_CALL_METHOD(rs_registryDeleteValue);
+   RS_REGISTER_CALL_METHOD(rs_registryNotifyEnvironmentChange);
+#endif
 
    using boost::bind;
    using namespace module_context;

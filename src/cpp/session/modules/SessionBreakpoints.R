@@ -453,6 +453,25 @@
    
 })
 
+# After a debugged file has run, remove the breakpoints that were injected
+# into 'fun' from the functions the file defined. trace() wrapped each
+# breakpointed step as '{ .doTrace(browser()); <step> }' inside the body of
+# 'fun', and every closure the file created while running shares those
+# nodes with it, wherever the closure ended up: a plain binding, a list
+# element, an alias, another environment. Unwrapping the nodes in place
+# cleans all of them at once, without re-running or re-evaluating anything
+# the file did, and without touching functions the run never created.
+.rs.addFunction("removeInjectedBreakpoints", function(fun, breakSteps)
+{
+   # only a breakpoint nested inside a top-level statement (a function the
+   # file defines) leaves anything behind
+   nested <- lengths(strsplit(breakSteps, ",", fixed = TRUE)) > 3
+   if (!any(nested))
+      return(invisible(NULL))
+
+   invisible(.Call("rs_removeInjectedBreakpoints", body(fun), PACKAGE = "(embedding)"))
+})
+
 # Parses and executes a file for debugging
 .rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, local)
 {
@@ -478,26 +497,20 @@
    if (length(breaklines) > 0)
    {
       steps <- .rs.getFunctionSteps(env$fun, "fun", breaklines)
-      breakSteps <- unlist(lapply(steps, function(step) step$at))
+      breakSteps <- as.character(unlist(lapply(steps, function(step) step$at)))
       suppressWarnings(.rs.setFunctionBreakpoints(
             "fun", env, lapply(steps, function(step) { step$at } )))
    }
 
+   # The breakpoints injected above are baked into any function the file
+   # defines while it runs, as .doTrace(browser()) calls in its body. Strip
+   # them from whatever the file leaves behind, even when it stops with an
+   # error part-way through: the client only re-applies its own breakpoints
+   # after a successful run, and nothing else would ever remove these.
+   on.exit(.rs.removeInjectedBreakpoints(env$fun, breakSteps), add = TRUE)
+
    # Run it!
    env$fun()
-
-   # We injected function breakpoints above, but we don't want to leave them
-   # in the in-memory copies of the functions. Replay the assignment that 
-   # created the original copy of the function. The client will set proper
-   # breakpoints on the functions later.
-   env$fun <- .rs.removeBreakpoints(env$fun)
-   breakSteps <- breakSteps[nchar(breakSteps) > 6]
-   for (steps in breakSteps) {
-      step <- as.numeric(strsplit(breakSteps, ",")[[1]][3]) 
-      op <- deparse(body(env$fun)[[2]][[2]][[step]][[1]]) 
-      if (op == "<-" || op == "=") 
-         eval(body(env$fun)[[2]][[2]][[step]], envir = globalenv())
-   }
 
    return(NULL)
 
@@ -540,21 +553,33 @@
 # when executed, has the same effect as sourcing the file.
 .rs.addFunction("makeSourceEquivFunction", function(filename, encoding, envir = globalenv())
 {
-   content <- suppressWarnings(parse(filename, encoding = encoding))
+   # Breakpoints are mapped onto the function through the file's source
+   # references, so keep them even when options(keep.source = FALSE) is set
+   # (#12375). The global option itself is left alone.
+   content <- suppressWarnings(
+      parse(filename, encoding = encoding, keep.source = TRUE)
+   )
 
-   # Create an empty function to host the expressions in the file
+   # Create an empty function to host the expressions in the file. Drop the
+   # template's own source references (kept in debug builds), which would
+   # otherwise point into this file.
    fun <- function() 
    {
       evalq({ 1 }, envir = envir)
    }
+   fun <- utils::removeSource(fun)
 
    # Copy each statement from the file into the eval body of the function
-   for (i in 1:length(content)) {
+   for (i in seq_along(content)) {
      body(fun)[[2]][[2]][[i + 1]] <- content[[i]]
    }
 
-   # Set up the source references 
+   # A file with no expressions (empty, or comments only) has no source
+   # references to wire up; the function still runs it.
    refs <- attr(content, "srcref")
+   if (length(refs) == 0)
+      return(fun)
+
    lastref <- length(refs)
    attr(body(fun), "srcfile") <- attr(content, "srcfile")
 
@@ -568,11 +593,7 @@
                     srcfile = attr(content, "srcfile"), 
                     class = "srcref")
    attr(body(fun), "srcref")[[2]] <- ref
-   linerefs <- list(attr(content, "srcref")[[1]])
-   for (i in 1:length(content)) {
-      linerefs[[i + 1]] <- attr(content, "srcref")[[i]]
-   }
-   attr(body(fun)[[2]][[2]], "srcref") <- linerefs
+   attr(body(fun)[[2]][[2]], "srcref") <- c(refs[1], refs)
    attr(fun, "srcref") <- ref
    return(fun)
 })

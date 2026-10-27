@@ -1,6 +1,6 @@
 {
   "macos": 6,
   "windows": 6,
-  "linux-desktop": 2,
-  "linux-server": 2
+  "linux-desktop": 4,
+  "linux-server": 4
 }

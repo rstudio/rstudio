@@ -457,7 +457,7 @@ test_that("a user-mode install leaves rig's default R setup as it was", {
 
    launchd <- fakeLaunchd(whichR = "/opt/homebrew/bin/R")
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
    expect_setequal(names(paths), c("current", "R", "Rscript", "launchAgent"))
 
    # a quick link from before the install is kept
@@ -515,7 +515,7 @@ test_that("RSTUDIO_WHICH_R is unset again when launchd had no value for it", {
 
    launchd <- fakeLaunchd()
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
    snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
    expect_identical(snapshot$whichR, "")
 
@@ -531,7 +531,7 @@ test_that("RSTUDIO_WHICH_R is unset again when launchd had no value for it", {
    expect_identical(launchd$state$whichR, "")
 
    # off macOS there is no agent, and launchd is never consulted
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = FALSE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "linux")
    expect_identical(names(paths), c("current", "R", "Rscript"))
    expect_identical(basename(paths[["current"]]), "current")
    launchd$state$calls <- list()
@@ -553,7 +553,7 @@ test_that("links rig repoints and an agent it rewrites are put back", {
    on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
 
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
 
    # the default R was removed with 'rig rm': 'Current' and the quick links
    # dangle, and the agent (which rig keeps while any R is left) still names
@@ -624,7 +624,7 @@ test_that("a repointed link whose directory was removed by hand is left alone", 
    on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
 
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
 
    # 'Current' dangled, rig repointed it at the new R, the session exited
    # mid-install, and the user then removed rig's R directory wholesale
@@ -662,7 +662,7 @@ test_that("what could not be undone after a user-mode install is reported", {
    }, add = TRUE)
 
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
    launchd <- fakeLaunchd()
    snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
 
@@ -841,7 +841,7 @@ test_that("a new agent that would not unload keeps its file for the next try", {
       dir.create(dir)
    on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
 
-   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "macos")
    agent <- paths[["launchAgent"]]
    launchd <- fakeLaunchd()
    snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
@@ -881,7 +881,7 @@ test_that("an agent that would not unload is left for the next try", {
       dir.create(dir)
    on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
 
-   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "macos")
    agent <- paths[["launchAgent"]]
    dir.create(dirname(agent), recursive = TRUE)
    writeBin(charToRaw("<plist>old</plist>\n"), agent)
@@ -921,7 +921,7 @@ test_that("an agent that failed to load again is loaded by the next try", {
       dir.create(dir)
    on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
 
-   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "macos")
    dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
    writeBin(charToRaw("<plist>old</plist>\n"), paths[["launchAgent"]])
    launchd <- fakeLaunchd(loaded = TRUE, whichR = "/old/R")
@@ -964,7 +964,7 @@ test_that("a user-mode install waits for, and undoes, one another session starte
    file <- file.path(home, "rig-install-snapshot.rds")
    launchd <- fakeLaunchd()
    state <- .rs.rig.installState
-   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, macos = FALSE)
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "linux")
 
    # another session took a snapshot and its rig has set the default
    theirs <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
@@ -1012,7 +1012,7 @@ test_that("an install a previous session did not get to undo is undone at startu
       dir.create(dir, recursive = TRUE)
 
    dirs <- list(r_root = root, binary_dir = bin)
-   paths <- .rs.rig.userDefaultPaths(dirs, home = home, macos = TRUE)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
    launchd <- fakeLaunchd()
    file <- file.path(home, "rig-install-snapshot.rds")
 
@@ -1056,8 +1056,8 @@ test_that("an install a previous session did not get to undo is undone at startu
    expect_false(file.exists(file))
 
    # this session's own process counts as running, a finished one does not
-   expect_true(.rs.rig.processRunning(Sys.getpid()))
-   expect_false(.rs.rig.processRunning(999999L))
+   expect_true(.rs.isProcessRunning(Sys.getpid()))
+   expect_false(.rs.isProcessRunning(999999L))
 
 })
 
@@ -1082,5 +1082,117 @@ test_that("rig's quick-link directory is created before a user-mode install", {
    # nothing to create when rig did not report a directory
    expect_false(.rs.rig.ensureBinaryDir(list()))
    expect_false(.rs.rig.ensureBinaryDir(list(binary_dir = "")))
+
+})
+
+test_that("a Windows user-mode install leaves the registry default and user PATH as they were", {
+
+   bin <- tempfile("rig-bin-")
+   dir.create(bin)
+   on.exit(unlink(bin, recursive = TRUE), add = TRUE)
+
+   # an in-memory registry in place of the session's registry routines
+   store <- new.env(parent = emptyenv())
+   registry <- function() as.list(store)
+   registryWrite <- function(ops)
+   {
+      for (op in ops)
+      {
+         id <- .rs.rig.registryId(op$key, op$name)
+         if (identical(op$op, "remove"))
+            rm(list = id, envir = store)
+         else
+            assign(id, list(type = op$type, data = op$data), envir = store)
+      }
+   }
+
+   pathId  <- .rs.rig.registryId("HKCU\\Environment", "Path")
+   rId     <- .rs.rig.registryId("HKCU\\Software\\R-core\\R", "Current Version")
+   rPathId <- .rs.rig.registryId("HKCU\\Software\\R-core\\R", "InstallPath")
+   r64Id   <- .rs.rig.registryId("HKCU\\Software\\R-core\\R64", "Current Version")
+   assign(pathId, list(type = "ExpandString", data = "C:\\Windows;%USERPROFILE%\\bin"), envir = store)
+   assign(rId, list(type = "String", data = "4.6.1"), envir = store)
+
+   paths <- .rs.rig.userDefaultPaths(list(binary_dir = bin), platform = "windows")
+   expect_identical(basename(unname(paths)), c("R.exe", "RS.exe", "Rscript.exe"))
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, registry = registry, binaryDir = bin)
+   expect_identical(snapshot$registry, as.list(store))
+   expect_identical(snapshot$binaryDir, bin)
+
+   # nothing changed: nothing to revert
+   nothing <- list(removed = character(), restored = character(), failed = character())
+   expect_identical(
+      .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = registryWrite),
+      nothing
+   )
+
+   # rig sets its default: the shims, the registry default, and its PATH entry
+   for (shim in paths)
+      writeLines("", shim)
+   assign(pathId, list(type = "ExpandString", data = paste0(bin, ";C:\\Windows;%USERPROFILE%\\bin")), envir = store)
+   assign(rId, list(type = "String", data = "4.2.3"), envir = store)
+   assign(rPathId, list(type = "String", data = "C:\\Users\\me\\AppData\\Roaming\\rig\\data\\r\\R-4.2.3"), envir = store)
+   assign(r64Id, list(type = "String", data = "4.2.3"), envir = store)
+
+   result <- .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = registryWrite)
+   expect_false(any(file.exists(paths)))
+   expect_setequal(result$removed, c(unname(paths), rPathId, r64Id))
+   expect_setequal(result$restored, c(rId, sprintf("user PATH entry %s", bin)))
+   expect_identical(result$failed, character())
+   expect_identical(store[[pathId]], list(type = "ExpandString", data = "C:\\Windows;%USERPROFILE%\\bin"))
+   expect_identical(store[[rId]], list(type = "String", data = "4.6.1"))
+   expect_false(exists(rPathId, envir = store, inherits = FALSE))
+   expect_false(exists(r64Id, envir = store, inherits = FALSE))
+
+   messages <- .rs.rig.restoreMessages(result)
+   expect_length(messages, 2L)
+   expect_match(messages[[2L]], "^Put back the default R setup rig changed outside RStudio: ")
+
+   # a registry that cannot be written is reported, for the next try
+   assign(rId, list(type = "String", data = "4.2.3"), envir = store)
+   failing <- function(ops) stop("no powershell")
+   result <- .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = failing)
+   expect_identical(result$restored, character())
+   expect_match(result$failed, "could not restore the registry values .*: no powershell")
+   expect_identical(store[[rId]], list(type = "String", data = "4.2.3"))
+
+   # a registry that cannot be read is left out of the snapshot, with the reason
+   broken <- function() stop("no powershell")
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, registry = broken, binaryDir = bin)
+   expect_null(snapshot$registry)
+   expect_identical(snapshot$registryError, "no powershell")
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, registry = broken, registryWrite = registryWrite), nothing)
+
+})
+
+test_that("rig's PATH entry is taken out without disturbing other changes", {
+
+   bin <- "C:\\Users\\me\\.local\\bin"
+   pathId <- .rs.rig.registryId("HKCU\\Environment", "Path")
+
+   # no user PATH before, only rig's entry after: the value goes away
+   ops <- .rs.rig.registryRestoreOps(list(), setNames(list(list(type = "ExpandString", data = bin)), pathId), bin)
+   expect_length(ops, 1L)
+   expect_identical(ops[[1L]]$op, "remove")
+
+   # rig's entry (in another case) plus one added by something else: only rig's goes
+   before <- setNames(list(list(type = "String", data = "C:\\Windows")), pathId)
+   after <- setNames(list(list(type = "String", data = paste0(toupper(bin), ";C:\\Windows;D:\\tools"))), pathId)
+   ops <- .rs.rig.registryRestoreOps(before, after, bin)
+   expect_length(ops, 1L)
+   expect_identical(ops[[1L]]$op, "set")
+   expect_identical(ops[[1L]]$type, "String")
+   expect_identical(ops[[1L]]$data, "C:\\Windows;D:\\tools")
+
+   # already on the PATH beforehand: left alone, as is a value that disappeared
+   expect_length(.rs.rig.registryRestoreOps(after, after, bin), 0L)
+   expect_length(.rs.rig.registryRestoreOps(before, list(), bin), 0L)
+
+})
+
+test_that("a running process is told from one that is gone, without being signalled", {
+
+   expect_true(.rs.isProcessRunning(Sys.getpid()))
+   expect_false(.rs.isProcessRunning(2147483000L))
 
 })
