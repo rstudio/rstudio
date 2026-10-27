@@ -36,12 +36,15 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
@@ -158,7 +161,8 @@ public class ShortcutManager implements NativePreviewHandler,
                            AddinsCommandManager addins,
                            EventBus events,
                            Binder binder,
-                           Commands commands)
+                           Commands commands,
+                           UserPrefs userPrefs)
    {
       appCommands_ = appCommands;
       editorCommands_ = editorCommands;
@@ -166,7 +170,25 @@ public class ShortcutManager implements NativePreviewHandler,
       addins_ = addins;
       events_ = events;
       commands_ = commands;
+      userPrefs_ = userPrefs;
       binder.bind(commands_, this);
+
+      // Follow the editor keybindings pref in every window. Loading prefs from the session
+      // info fires no change events, so bind once they're loaded: now, or after the session
+      // init handlers (one of which loads them in satellites) have run.
+      if (userPrefs_.hasLoadedLayers(UserPrefs.LAYER_USER))
+         bindEditorModeToPref();
+      else
+         events_.addHandler(SessionInitEvent.TYPE, event ->
+               Scheduler.get().scheduleDeferred(this::bindEditorModeToPref));
+   }
+
+   private void bindEditorModeToPref()
+   {
+      if (editorModeBound_)
+         return;
+      editorModeBound_ = true;
+      userPrefs_.editorKeybindings().bind(this::setEditorModeFromPref);
    }
 
    public boolean isEnabled()
@@ -316,7 +338,7 @@ public class ShortcutManager implements NativePreviewHandler,
          return;
 
       keyTimer_.schedule(3000);
-      if (handleKeyDown(evt.getEvent()))
+      if (handleKeyDown(evt.getEvent(), false))
       {
          evt.cancel();
          events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
@@ -331,7 +353,7 @@ public class ShortcutManager implements NativePreviewHandler,
       keyTimer_.schedule(3000);
       if (event.getTypeInt() == Event.ONKEYDOWN)
       {
-         if (handleKeyDown(event.getNativeEvent()))
+         if (handleKeyDown(event.getNativeEvent(), false))
          {
             event.cancel();
             events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
@@ -339,9 +361,35 @@ public class ShortcutManager implements NativePreviewHandler,
       }
    }
 
+   // Handles a keydown that Posit Assistant forwarded from its iframe (see
+   // AssistantKeyForwarder). Only workbench-level commands run, and in a satellite
+   // only those that run in another window, so PA keeps every other key.
+   public boolean onAssistantKeyDown(NativeEvent event)
+   {
+      keyTimer_.schedule(3000);
+      if (!handleKeyDown(event, true))
+         return false;
+
+      events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
+      return true;
+   }
+
    public void setEditorMode(int editorMode)
    {
       editorMode_ = editorMode;
+   }
+
+   // Applies the editor_keybindings pref (default, vim, emacs or sublime)
+   private void setEditorModeFromPref(String editorKeybindings)
+   {
+      if (StringUtil.equals(editorKeybindings, UserPrefs.EDITOR_KEYBINDINGS_VIM))
+         setEditorMode(KeyboardShortcut.MODE_VIM);
+      else if (StringUtil.equals(editorKeybindings, UserPrefs.EDITOR_KEYBINDINGS_EMACS))
+         setEditorMode(KeyboardShortcut.MODE_EMACS);
+      else if (StringUtil.equals(editorKeybindings, UserPrefs.EDITOR_KEYBINDINGS_SUBLIME))
+         setEditorMode(KeyboardShortcut.MODE_SUBLIME);
+      else
+         setEditorMode(KeyboardShortcut.MODE_DEFAULT);
    }
 
    public int getEditorMode()
@@ -383,7 +431,7 @@ public class ShortcutManager implements NativePreviewHandler,
       return filtered;
    }
 
-   private boolean handleKeyDown(NativeEvent event)
+   private boolean handleKeyDown(NativeEvent event, boolean fromAssistant)
    {
       // Don't handle the (synthetic) copy, cut, paste keys
       // generated by Qt when commands executed from menu.
@@ -500,6 +548,18 @@ public class ShortcutManager implements NativePreviewHandler,
          {
             clearKeyBuffer();
 
+            if (fromAssistant)
+            {
+               if (!binding.getContext().isWorkbenchLevel())
+                  return false;
+
+               // In a satellite, commands that stay there mostly have no handler, so
+               // leave those keys with Posit Assistant (and Desktop's menu)
+               if (Satellite.isCurrentWindowSatellite() &&
+                   !binding.isRoutedOutOfCurrentWindow())
+                  return false;
+            }
+
             XTermWidget xterm = XTermWidget.tryGetXTerm(Element.as(event.getEventTarget()));
             if (xterm != null)
             {
@@ -530,9 +590,7 @@ public class ShortcutManager implements NativePreviewHandler,
                   return false;
                }
                if (binding.getId() != "executeCode" &&
-                     binding.getContext() != AppCommand.Context.Workbench &&
-                     binding.getContext() != AppCommand.Context.Addin &&
-                     binding.getContext() != AppCommand.Context.PackageDevelopment)
+                     !binding.getContext().isWorkbenchLevel())
                {
                   // Let terminal see the keyboard input and don't execute command.
                   return false;
@@ -828,6 +886,8 @@ public class ShortcutManager implements NativePreviewHandler,
    private final KeySequence keyBuffer_;
    private final IgnoredKeysMap<KeyCombination> ignoredKeys_;
    private final Timer keyTimer_;
+   private UserPrefs userPrefs_;
+   private boolean editorModeBound_ = false;
    private int activeEditEventType_ = EditEvent.TYPE_NONE;
 
    private final Map<KeyMapType, KeyMap> keyMaps_;
