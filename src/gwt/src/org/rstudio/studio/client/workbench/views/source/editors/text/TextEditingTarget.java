@@ -2689,10 +2689,13 @@ public class TextEditingTarget implements
             }
             else
             {
+               // the status bar shows the active view's scope, so the menu
+               // highlights and navigates within that view
                final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-               JsArray<Scope> tree = docDisplay_.getScopeTree();
+               DocDisplay display = activeDisplay();
+               JsArray<Scope> tree = display.getScopeTree();
                MenuItem defaultItem = addFunctionsToMenu(
-                  menu, tree, "", docDisplay_.getCurrentScope(), true);
+                  menu, tree, "", display.getCurrentScope(), true);
 
                showStatusBarPopupMenu(new StatusBarPopupRequest(menu,
                                                                 defaultItem));
@@ -2792,8 +2795,8 @@ public class TextEditingTarget implements
                   {
                      public void execute()
                      {
-                        docDisplay_.navigateToPosition(toSourcePosition(func),
-                                                       true);
+                        activeDisplay().navigateToPosition(toSourcePosition(func),
+                                                           true);
                      }
                   });
             addScopeStyle(menuItem, func);
@@ -3655,8 +3658,9 @@ public class TextEditingTarget implements
             if (isAutoSaving())
             {
                Pattern pattern = Pattern.create("[ \t]+$", "");
-               int startRow = docDisplay_.getSelectionStart().getRow();
-               int endRow = docDisplay_.getSelectionEnd().getRow();
+               DocDisplay cursorDisplay = activeDisplay();
+               int startRow = cursorDisplay.getSelectionStart().getRow();
+               int endRow = cursorDisplay.getSelectionEnd().getRow();
                
                JsArrayString lines = docDisplay_.getLines();
                for (int i = 0, n = lines.length(); i < n; i++)
@@ -5045,10 +5049,11 @@ public class TextEditingTarget implements
       FileSystemItem file =
                   FileSystemItem.createFile(docUpdateSentinel_.getPath());
 
-      if (docDisplay_.getSelectionValue().length() > 0)
+      DocDisplay display = activeDisplay();
+      if (display.getSelectionValue().length() > 0)
       {
-         int start = docDisplay_.getSelectionStart().getRow() + 1;
-         int end = docDisplay_.getSelectionEnd().getRow() + 1;
+         int start = display.getSelectionStart().getRow() + 1;
+         int end = display.getSelectionEnd().getRow() + 1;
          events_.fireEvent(new VcsViewOnGitHubEvent(
                          new GitHubViewRequest(file, type, start, end)));
       }
@@ -7425,7 +7430,8 @@ public class TextEditingTarget implements
    @Override
    public String getCurrentStatus()
    {
-      Position pos = docDisplay_.getCursorPosition();
+      // the status bar's scope (below) also tracks the active view
+      Position pos = activeDisplay().getCursorPosition();
       String scope = statusBar_.getScope().getValue();
       if (StringUtil.isNullOrEmpty(scope))
          scope = constants_.none();
@@ -8261,7 +8267,7 @@ public class TextEditingTarget implements
                {
                   rmarkdownHelper_.renderRMarkdown(
                      docUpdateSentinel_.getPath(),
-                     docDisplay_.getCursorPosition().getRow() + 1,
+                     activeDisplay().getCursorPosition().getRow() + 1,
                      format != null ? format : quartoFormat(),
                      docUpdateSentinel_.getEncoding(),
                      paramsFile,
@@ -8817,7 +8823,7 @@ public class TextEditingTarget implements
       if (file == null)
          return null;
 
-      Position selPos = docDisplay_.getSelectionStart();
+      Position selPos = activeDisplay().getSelectionStart();
       int line = selPos.getRow() + 1;
       int column = selPos.getColumn() + 1;
       return SourceLocation.create(file, line, column, fromClick);
@@ -8902,7 +8908,7 @@ public class TextEditingTarget implements
             if (disp != docDisplay_)
                docDisplay_.revealRange(disp.getSelectionRange(), false);
 
-            view_.findFromSelection(disp.getSelectionValue());
+            view_.findFromSelection(selection);
             docDisplay_.focus();
          });
       }
@@ -9547,7 +9553,7 @@ public class TextEditingTarget implements
                @Override
                public void execute(String docPath, String docId)
                {
-                  Position pos = docDisplay_.getSelectionStart();
+                  Position pos = activeDisplay().getSelectionStart();
 
                   operation.execute(docPath,
                                     pos.getRow() + 1,
@@ -10552,9 +10558,10 @@ public class TextEditingTarget implements
 
    private boolean sourceHasFocus()
    {
-      // Check if either the regular source editor (docDisplay) has focus
-      // or if the visual editor has focus (either ProseMirror or a code chunk)
-      return docDisplay_.isFocused() || 
+      // Check if either the regular source editor (either view of a split)
+      // has focus or if the visual editor has focus (either ProseMirror or a
+      // code chunk)
+      return activeDisplay().isFocused() || 
                visualEditorHasFocus_ || 
                (visualMode_.isActivated() && visualMode_.getActiveEditor() != null);
    }
