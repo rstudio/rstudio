@@ -1338,7 +1338,17 @@ public class TextEditingTarget implements
       else
       {
          ensureTextEditorActive(() -> {
-            activeDisplay().restorePosition(position);
+            // the views of a split document fold independently, so a saved
+            // scroll offset may belong to the other view; restore the row
+            // and column only, and let the receiving view scroll to them
+            String split = view_.getEditorSplit();
+            boolean splitViews =
+                  StringUtil.equals(split, EDITOR_SPLIT_RIGHT) ||
+                  StringUtil.equals(split, EDITOR_SPLIT_DOWN);
+
+            activeDisplay().restorePosition(splitViews
+                  ? SourcePosition.create(position.getRow(), position.getColumn())
+                  : position);
          });
       }
    }
@@ -8886,10 +8896,7 @@ public class TextEditingTarget implements
             // to it; Find Next and repeated invocations then continue from
             // that match, as they would in a single view
             if (disp != docDisplay_)
-            {
-               docDisplay_.setSelectionRange(disp.getSelectionRange());
-               docDisplay_.scrollCursorIntoView();
-            }
+               docDisplay_.revealRange(disp.getSelectionRange(), false);
 
             view_.findFromSelection(disp.getSelectionValue());
             docDisplay_.focus();

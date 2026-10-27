@@ -3315,6 +3315,7 @@ public class AceEditor implements DocDisplay
       navigate(pos, false);
    }
 
+   @Override
    public void revealRange(Range range, boolean animate)
    {
       widget_.getEditor().revealRange(range, animate);

@@ -397,13 +397,24 @@ test.describe('Split editor', () => {
   });
 
   test('Use Selection for Find searches for the focused view\'s selection', async ({ rstudioPage: page }) => {
-    const { primary } = await openWithFocusedSplit(page);
+    const { primary, split } = await openWithFocusedSplit(page);
+
+    // Fold both functions in the primary view only (folds are per view),
+    // then restore the split view's focus and selection.
+    await primary.click();
+    await executeCommand(page, 'foldAll');
+    await expect.poll(() => primary.foldCount()).toBe(2);
+    await split.click();
+    await split.select({ start: { row: 6, column: 2 }, end: { row: 6, column: 8 } });
+    await expect.poll(() => split.hasFocus()).toBe(true);
 
     // The find bar searches the primary view, so the split view's selection
-    // carries over to it as the current match, and focus follows it there.
+    // carries over to it as the current match -- unfolding cmd_b to show
+    // it -- and focus follows it there.
     await executeCommand(page, 'findFromSelection');
     await expect.poll(() => primary.selectedText()).toBe('y<-y*2');
     expect(await primary.cursorRow()).toBe(6);
+    expect(await primary.foldCount()).toBe(1);
     await expect.poll(() => primary.hasFocus()).toBe(true);
     await page.keyboard.press('Escape');
   });
