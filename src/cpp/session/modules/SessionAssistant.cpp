@@ -125,8 +125,14 @@ class AssistantContinuation
 public:
 
    explicit AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation)
+      : AssistantContinuation(continuation, std::chrono::steady_clock::now())
+   {
+   }
+
+   AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation,
+                         std::chrono::steady_clock::time_point time)
       : continuation_(continuation),
-        time_(std::chrono::steady_clock::now())
+        time_(time)
    {
    }
    
@@ -2965,6 +2971,28 @@ bool isAgentRequestExpired(std::chrono::steady_clock::time_point requestTime,
                            std::chrono::steady_clock::time_point now)
 {
    return now - requestTime > std::chrono::seconds(10);
+}
+
+void addPendingAgentRequestForTesting(const std::string& requestId,
+                                      std::chrono::steady_clock::time_point requestTime,
+                                      const std::function<void(bool)>& onResult)
+{
+   auto continuation = [=](const Error&, json::JsonRpcResponse* pResponse)
+   {
+      json::Value cancelledJson = pResponse->result().getObject()["cancelled"];
+      onResult(cancelledJson.isBool() && cancelledJson.getBool());
+   };
+   s_pendingContinuations[requestId] = AssistantContinuation(continuation, requestTime);
+}
+
+void queueAgentReplyForTesting(const std::string& reply)
+{
+   s_pendingResponses.push(reply);
+}
+
+void runBackgroundProcessingForTesting(bool isIdle)
+{
+   onBackgroundProcessing(isIdle);
 }
 
 bool stopAgentForUpdate()
