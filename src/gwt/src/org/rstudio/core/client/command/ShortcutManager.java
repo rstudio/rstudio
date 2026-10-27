@@ -550,7 +550,7 @@ public class ShortcutManager implements NativePreviewHandler,
 
             if (fromAssistant)
             {
-               if (!EmbeddedKeyFilter.isWorkbenchLevel(binding.getContext()))
+               if (!binding.getContext().isWorkbenchLevel())
                   return false;
 
                // In a satellite, commands that stay there mostly have no handler, so
@@ -590,7 +590,7 @@ public class ShortcutManager implements NativePreviewHandler,
                   return false;
                }
                if (binding.getId() != "executeCode" &&
-                     !EmbeddedKeyFilter.isWorkbenchLevel(binding.getContext()))
+                     !binding.getContext().isWorkbenchLevel())
                {
                   // Let terminal see the keyboard input and don't execute command.
                   return false;

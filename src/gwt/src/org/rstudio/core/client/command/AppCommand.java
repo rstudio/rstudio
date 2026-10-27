@@ -339,6 +339,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       Markdown, Sweave, Help, VCS, Packrat, Renv, RPresentation,
       Addin, Viewer, History, Tutorial, Diagnostics, Import, Files;
 
+      // Whether a shortcut may run while focus is in an embedded component that
+      // handles its own text input, such as the terminal or Posit Assistant.
+      // Editor- and language-specific commands leave the key with the component.
+      public boolean isWorkbenchLevel()
+      {
+         return this == Workbench || this == Addin || this == PackageDevelopment;
+      }
+
       @Override
       public String toString()
       {

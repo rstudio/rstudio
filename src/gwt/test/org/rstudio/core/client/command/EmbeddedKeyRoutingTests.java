@@ -26,17 +26,17 @@ public class EmbeddedKeyRoutingTests extends GWTTestCase
 
    public void testWorkbenchLevelContextsAllowed()
    {
-      assertTrue(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Workbench));
-      assertTrue(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Addin));
-      assertTrue(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.PackageDevelopment));
+      assertTrue(AppCommand.Context.Workbench.isWorkbenchLevel());
+      assertTrue(AppCommand.Context.Addin.isWorkbenchLevel());
+      assertTrue(AppCommand.Context.PackageDevelopment.isWorkbenchLevel());
    }
 
    public void testEditorAndLanguageContextsNotAllowed()
    {
-      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Editor));
-      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.R));
-      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.RMarkdown));
-      assertFalse(EmbeddedKeyFilter.isWorkbenchLevel(AppCommand.Context.Cpp));
+      assertFalse(AppCommand.Context.Editor.isWorkbenchLevel());
+      assertFalse(AppCommand.Context.R.isWorkbenchLevel());
+      assertFalse(AppCommand.Context.RMarkdown.isWorkbenchLevel());
+      assertFalse(AppCommand.Context.Cpp.isWorkbenchLevel());
    }
 
    public void testMainModeRoutedOutOfSatellite()
