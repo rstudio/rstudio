@@ -37,7 +37,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
-import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
@@ -263,7 +263,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
    protected void reload()
    {
-      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadWithLastChanceSaveEvent());
    }
 
    protected void restart(GlobalDisplay globalDisplay,

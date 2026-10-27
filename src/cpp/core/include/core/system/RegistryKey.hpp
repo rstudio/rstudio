@@ -39,12 +39,26 @@ public:
     virtual ~RegistryKey();
 
     core::Error open(HKEY hKey, std::string subKey, REGSAM samDesired);
+
+    // open subKey under hKey, creating it first when it does not exist
+    core::Error create(HKEY hKey, std::string subKey, REGSAM samDesired);
+
     bool isOpen();
 
     HKEY handle();
 
     core::Error getStringValue(std::string name, std::string* pValue);
     std::string getStringValue(std::string name, std::string defaultValue);
+
+    // The string value 'name' as stored (REG_EXPAND_SZ data is not expanded,
+    // unlike getStringValue()), with its kind in *pType. A value of any other
+    // kind fails with ERROR_INVALID_DATATYPE. Names and data are UTF-8.
+    core::Error getValue(const std::string& name, std::string* pData, DWORD* pType);
+
+    // set a REG_SZ or REG_EXPAND_SZ value
+    core::Error setValue(const std::string& name, const std::string& data, DWORD type);
+
+    core::Error deleteValue(const std::string& name);
 
     std::vector<std::string> keyNames();
 
