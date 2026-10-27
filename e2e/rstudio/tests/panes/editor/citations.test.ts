@@ -60,12 +60,12 @@ async function awaitLookupOrSkip(
   if (result === 'pending') {
     if (!(await reprobeRequest(request))) {
       await citation.cancel();
-      test.skip(true, `${request.host} stopped answering during the lookup (${request.url})`);
+      test.skip(true, `${request.host} stopped answering during the lookup (${request.href})`);
     }
     const status = (await citation.searchStatus.textContent().catch(() => null))?.trim();
     throw new Error(
       `no ${what} and no error status within 30s ` +
-        `(${request.url} still answers; dialog status: ${status ? `"${status}"` : 'none'})`,
+        `(${request.href} still answers; dialog status: ${status ? `"${status}"` : 'none'})`,
     );
   }
 }

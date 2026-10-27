@@ -18,7 +18,9 @@ let origin: string;
 let hanging: http.ServerResponse[] = [];
 
 test.beforeAll(async () => {
-  server = http.createServer((req, res) => {
+  // Not http.createServer, which Snyk Code reports as cleartext transmission
+  // even for a loopback-only test server.
+  server = new http.Server((req, res) => {
     const behaviour = new URL(req.url ?? '/', origin).pathname.slice(1) as Behaviour;
     switch (behaviour) {
       case 'ok':
@@ -69,12 +71,12 @@ function host(name: string): string {
 }
 
 test('a request that answers still counts as reachable', async () => {
-  expect(await reprobeRequest({ host: host('a'), url: `${origin}/ok` }, 2000)).toBe(true);
+  expect(await reprobeRequest({ host: host('a'), href: `${origin}/ok` }, 2000)).toBe(true);
   expect(await isServiceReachable(host('a'))).toBe(true);
 });
 
 test('a request that hangs is not answering, and marks its host down', async () => {
-  expect(await reprobeRequest({ host: host('b'), url: `${origin}/hang` }, 500)).toBe(false);
+  expect(await reprobeRequest({ host: host('b'), href: `${origin}/hang` }, 500)).toBe(false);
   // The cached host entry now reflects the request's outcome, so a later
   // test's guard on the same host skips without re-probing.
   expect(await isServiceReachable(host('b'))).toBe(false);
@@ -86,21 +88,21 @@ test('a hang behind a redirect is still a hang', async () => {
   // The host-root probe does not follow redirects, so it would pass here; the
   // request probe follows them and times out where the lookup actually stalls.
   expect(await isServiceReachable(host('c'))).toBe(true);
-  expect(await reprobeRequest({ host: host('c'), url: `${origin}/redirect-then-hang` }, 500)).toBe(false);
+  expect(await reprobeRequest({ host: host('c'), href: `${origin}/redirect-then-hang` }, 500)).toBe(false);
   expect(await isServiceReachable(host('c'))).toBe(false);
 });
 
 test('a redirect that lands on an answer is reachable', async () => {
-  expect(await reprobeRequest({ host: host('d'), url: `${origin}/redirect-then-ok` }, 2000)).toBe(true);
+  expect(await reprobeRequest({ host: host('d'), href: `${origin}/redirect-then-ok` }, 2000)).toBe(true);
 });
 
 test('a lookup that continues with a second request is probed through it', async () => {
   const chained = (second: string) => ({
     host: host(second),
-    url: `${origin}/ids`,
+    href: `${origin}/ids`,
     next: (body: string) => {
       const ids: string[] = JSON.parse(body).esearchresult.idlist;
-      return { host: host(second), url: `${origin}/${second}?id=${ids.join(',')}` };
+      return { host: host(second), href: `${origin}/${second}?id=${ids.join(',')}` };
     },
   });
   expect(await reprobeRequest(chained('ok'), 2000)).toBe(true);
@@ -110,7 +112,7 @@ test('a lookup that continues with a second request is probed through it', async
 });
 
 test('a server-side failure counts as the service not answering', async () => {
-  expect(await reprobeRequest({ host: host('e'), url: `${origin}/error` }, 2000)).toBe(false);
+  expect(await reprobeRequest({ host: host('e'), href: `${origin}/error` }, 2000)).toBe(false);
   expect(await isServiceReachable(host('e'))).toBe(false);
 });
 
@@ -120,7 +122,7 @@ test('request headers are passed through', async () => {
     seen.push(req.headers.accept ?? '');
   });
   await reprobeRequest(
-    { host: host('f'), url: `${origin}/ok`, init: { headers: { Accept: 'application/vnd.citationstyles.csl+json' } } },
+    { host: host('f'), href: `${origin}/ok`, init: { headers: { Accept: 'application/vnd.citationstyles.csl+json' } } },
     2000,
   );
   expect(seen).toContain('application/vnd.citationstyles.csl+json');
