@@ -646,6 +646,11 @@ public class TextEditingTargetWidget
       splitEditorRegistrations_.add(splitEditor_.addSelectionChangedHandler(event ->
             target_.splitEditorSelectionChanged()));
 
+      // record jumps made in the split view (e.g. Go to Line) in source
+      // navigation history, as for the primary view
+      TextEditingTarget.addRecordNavigationPositionHandler(
+            splitEditorRegistrations_, splitEditor_, events_, target_);
+
       target_.splitEditorCreated(splitEditor_);
    }
 

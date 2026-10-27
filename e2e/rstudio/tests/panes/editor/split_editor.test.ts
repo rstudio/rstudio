@@ -366,6 +366,25 @@ test.describe('Split editor', () => {
     await page.keyboard.press('Escape');
   });
 
+  test('Go to Line moves the focused view and is recorded in navigation history', async ({ rstudioPage: page }) => {
+    const { primary, split } = await openWithFocusedSplit(page);
+
+    await executeCommand(page, 'goToLine');
+    await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
+    await page.keyboard.type('2');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => split.cursorRow()).toBe(1);
+    expect(await primary.cursorRow()).toBe(2);
+
+    // Back returns the split view to where Go to Line left from, and Forward
+    // repeats the jump; the primary view stays put throughout.
+    await executeCommand(page, 'sourceNavigateBack');
+    await expect.poll(() => split.cursorRow()).toBe(6);
+    await executeCommand(page, 'sourceNavigateForward');
+    await expect.poll(() => split.cursorRow()).toBe(1);
+    expect(await primary.cursorRow()).toBe(2);
+  });
+
   test('Vim reflow (gqq) reflows the focused view\'s line', async ({ rstudioPage: page }) => {
     const LONG = 'aaa bbb ccc ddd eee fff ggg hhh iii jjj kkk lll mmm nnn ooo ppp qqq rrr sss ttt';
     const PRIMARY_COMMENT = `# primary ${LONG}`;

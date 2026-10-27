@@ -380,10 +380,11 @@ public class TextEditingTarget implements
       // view". Command routing selects the active tab (this editing target);
       // within the tab, docDisplay_ is always the primary view -- persistence
       // (DocUpdateSentinel), breakpoints, lint/spelling/debug markers, chunk
-      // output line widgets, and navigation all bind to it. getActiveDisplay()
-      // returns the view that last held focus, and should be consulted only
-      // where behavior must follow the user's cursor or selection (e.g.
-      // editing commands, executing code, folding, reading or replacing the
+      // output line widgets, and navigation into the document from elsewhere
+      // all bind to it. getActiveDisplay() returns the view that last held
+      // focus, and should be consulted only where behavior must follow the
+      // user's cursor or selection (e.g. editing commands, executing code,
+      // folding, back/forward navigation history, reading or replacing the
       // selection for rstudioapi, status bar position).
       void setEditorSplit(String type);
       String getEditorSplit();
@@ -1320,7 +1321,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         docDisplay_.recordCurrentNavigationPosition();
+         activeDisplay().recordCurrentNavigationPosition();
       }
    }
 
@@ -1337,7 +1338,7 @@ public class TextEditingTarget implements
       else
       {
          ensureTextEditorActive(() -> {
-            docDisplay_.restorePosition(position);
+            activeDisplay().restorePosition(position);
          });
       }
    }
@@ -1351,15 +1352,16 @@ public class TextEditingTarget implements
       }
       else
       {
-         Position cursor = docDisplay_.getCursorPosition();
-         if (docDisplay_.hasLineWidgets())
+         DocDisplay display = activeDisplay();
+         Position cursor = display.getCursorPosition();
+         if (display.hasLineWidgets())
          {
             // if we have line widgets, they create an non-reproducible scroll
             // position, so use the cursor position only
             return SourcePosition.create(cursor.getRow(), cursor.getColumn());
          }
          return SourcePosition.create(getContext(), cursor.getRow(),
-               cursor.getColumn(), docDisplay_.getScrollTop());
+               cursor.getColumn(), display.getScrollTop());
       }
 
    }
@@ -1373,7 +1375,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         return docDisplay_.isAtSourceRow(position);
+         return activeDisplay().isAtSourceRow(position);
       }
 
    }
