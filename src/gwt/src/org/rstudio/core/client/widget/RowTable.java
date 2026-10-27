@@ -222,7 +222,7 @@ public abstract class RowTable<T> extends ScrollPanel
       
       setFocusEventListener(table_);
       addStyleName(RES.styles().panel());
-      addStyleName(RES.styles().empty());
+      syncEmptyState();
    }
    
    private final native void setFocusEventListener(Element table)
@@ -326,6 +326,11 @@ public abstract class RowTable<T> extends ScrollPanel
       return table_.getChild(index + 2).cast();
    }
    
+   private void syncEmptyState()
+   {
+      setStyleName(RES.styles().empty(), data_.isEmpty());
+   }
+   
    private String getRowId(int row)
    {
       return id_ + "_row_" + row;
@@ -383,7 +388,7 @@ public abstract class RowTable<T> extends ScrollPanel
          clear();
 
       data_ = data;
-      setStyleName(RES.styles().empty(), data_.isEmpty());
+      syncEmptyState();
 
       buffer_.setLength(0);
       bufferTimer_.cancel();
@@ -521,7 +526,7 @@ public abstract class RowTable<T> extends ScrollPanel
    public void clear()
    {
       data_.clear();
-      addStyleName(RES.styles().empty());
+      syncEmptyState();
       table_.removeAllChildren();
       SelectionEvent.fire(this, null);
       
@@ -553,6 +558,10 @@ public abstract class RowTable<T> extends ScrollPanel
          return;
       
       setActiveRow(-1);
+      
+      // callers may append to the list passed to draw() and then select the
+      // new row without redrawing (DirectoryContentsWidget.addDirectory)
+      syncEmptyState();
       
       if (selectedRowElement_ != null)
       {

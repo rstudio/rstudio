@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -366,6 +367,23 @@ public class RowTableTests extends GWTTestCase
       doubleClick(table.getElement());
 
       assertTrue(commits.isEmpty());
+   }
+
+   public void testEmptyStateFollowsRowsAppendedToTheSharedList()
+   {
+      // DirectoryContentsWidget.addDirectory appends to the list it passed to
+      // draw(), then selects the new row, without redrawing
+      List<String> data = new ArrayList<>();
+      StringTable table = new StringTable();
+      RootPanel.get().add(table);
+      table.draw(data);
+      String empty = GWT.<RowTable.Resources>create(RowTable.Resources.class).styles().empty();
+      assertTrue(table.getElement().hasClassName(empty));
+
+      data.add("new folder");
+      table.selectRow(0);
+
+      assertFalse(table.getElement().hasClassName(empty));
    }
 
    public void testRedrawWithoutFocusLeavesNoActiveOption()
