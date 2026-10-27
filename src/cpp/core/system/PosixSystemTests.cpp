@@ -610,6 +610,47 @@ TEST(PosixTests, TerminateProcessTreeOfMissingProcessIsAnError)
    EXPECT_TRUE(error);
 }
 
+TEST(PosixTests, TerminateProcessTreeRejectsNegativePid)
+{
+   // kill() reads a negative pid as a process group. The call is made from
+   // a child that leads a group of its own and blocks SIGTERM, so a pid that
+   // got through could signal nothing else, and would leave SIGTERM pending
+   // rather than end the child. 0 and -1 reach beyond any such group, so
+   // they are not exercised.
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      sigset_t terminate;
+      sigemptyset(&terminate);
+      sigaddset(&terminate, SIGTERM);
+      if (::setpgid(0, 0) != 0 || ::sigprocmask(SIG_BLOCK, &terminate, nullptr) != 0)
+         ::_exit(3);
+
+      Error error = terminateProcessTree(-::getpid());
+      if (!error || error.getCode() != EINVAL)
+         ::_exit(1);
+
+      sigset_t pending;
+      if (::sigpending(&pending) != 0 || sigismember(&pending, SIGTERM))
+         ::_exit(2);
+
+      ::_exit(0);
+   }
+
+   int status = 0;
+   bool reaped = reapWithin(child, &status, 5);
+   if (!reaped)
+   {
+      ::kill(child, SIGKILL);
+      ::waitpid(child, nullptr, 0);
+   }
+   ASSERT_TRUE(reaped);
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status))
+      << "1: not rejected with EINVAL; 2: the group was signalled; 3: setup failed";
+}
+
 TEST(PosixTests, WorkingDirGeneric)
 {
    FilePath emptyPath;
