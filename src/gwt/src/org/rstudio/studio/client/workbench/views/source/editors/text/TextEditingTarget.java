@@ -397,6 +397,8 @@ public class TextEditingTarget implements
       // scrolls the base pane's cursor into view; false without a base pane
       boolean ensureDiffSplitCursorVisible();
       DocDisplay getActiveDisplay();
+      // the split editor view, or null when it has not materialized
+      DocDisplay getSplitDisplay();
       void destroyEditorSplit();
       void syncSplitShowChunkOutputInline();
 
@@ -3669,15 +3671,15 @@ public class TextEditingTarget implements
                Pattern pattern = Pattern.create("[ \t]+$", "");
                int startRow = primaryDisplay_.getSelectionStart().getRow();
                int endRow = primaryDisplay_.getSelectionEnd().getRow();
-               DocDisplay activeView = activeDisplay();
-               int activeStartRow = activeView.getSelectionStart().getRow();
-               int activeEndRow = activeView.getSelectionEnd().getRow();
+               DocDisplay splitView = view_.getSplitDisplay();
+               int splitStartRow = splitView == null ? -1 : splitView.getSelectionStart().getRow();
+               int splitEndRow = splitView == null ? -1 : splitView.getSelectionEnd().getRow();
                
                JsArrayString lines = primaryDisplay_.getLines();
                for (int i = 0, n = lines.length(); i < n; i++)
                {
                   if ((i < startRow || i > endRow) &&
-                      (i < activeStartRow || i > activeEndRow))
+                      (i < splitStartRow || i > splitEndRow))
                   {
                      String line = lines.get(i);
                      lines.set(i, pattern.replaceAll(line, ""));
@@ -3692,14 +3694,7 @@ public class TextEditingTarget implements
             }
             
             if (!strippedCode.equals(code))
-            {
-               // Calling 'setCode' can remove folds in the document; cache the folds
-               // and reapply them after document mutation.
-               JsArray<AceFold> folds = primaryDisplay_.getFolds();
-               primaryDisplay_.setCode(strippedCode, true);
-               for (AceFold fold : JsUtil.asIterable(folds))
-                  primaryDisplay_.addFold(fold.getRange());
-            }
+               replaceCodeKeepingViewState(strippedCode);
          }
 
          boolean autoAppendNewline = (projConfig_ == null)
@@ -3726,6 +3721,39 @@ public class TextEditingTarget implements
          // callback
          ready.execute();
       });
+   }
+
+   // Replaces the document's text with code of the same line count, keeping
+   // each editor view's state. Calling 'setCode' can remove folds in the
+   // document, so cache the folds and reapply them after document mutation;
+   // it keeps the primary view's cursor, but replacing the shared document
+   // moves a split view's cursor to the end, so restore its selection and
+   // scroll position as well.
+   private void replaceCodeKeepingViewState(String code)
+   {
+      JsArray<AceFold> folds = primaryDisplay_.getFolds();
+      DocDisplay splitView = view_.getSplitDisplay();
+      JsArray<AceFold> splitFolds = null;
+      Range splitSelection = null;
+      int splitScrollTop = 0;
+      if (splitView != null)
+      {
+         splitFolds = splitView.getFolds();
+         splitSelection = splitView.getSelectionRange();
+         splitScrollTop = splitView.getScrollTop();
+      }
+
+      primaryDisplay_.setCode(code, true);
+      for (AceFold fold : JsUtil.asIterable(folds))
+         primaryDisplay_.addFold(fold.getRange());
+
+      if (splitView != null)
+      {
+         for (AceFold fold : JsUtil.asIterable(splitFolds))
+            splitView.addFold(fold.getRange());
+         splitView.setSelectionRange(splitSelection);
+         splitView.scrollToY(splitScrollTop, 0);
+      }
    }
 
    private void applyVisualModeFixups(Command onComplete)

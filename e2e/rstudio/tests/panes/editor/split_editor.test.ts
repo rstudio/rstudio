@@ -597,8 +597,6 @@ test.describe('Split editor', () => {
     const TYPED = 'keep_split';
 
     try {
-      await setPref(page, 'strip_trailing_whitespace', true);
-      await setPref(page, 'auto_save_on_idle', 'commit');
       await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
         # split_view_marker
         ${PRIMARY_LINE_WS}
@@ -619,6 +617,11 @@ test.describe('Split editor', () => {
       await split.click();
       const splitEnd = { row: 3, column: TYPED.length };
       await split.select({ start: splitEnd, end: splitEnd });
+
+      // Turn on stripping only once the cursors are in place, so that no
+      // autosave runs while they are still being positioned.
+      await setPref(page, 'strip_trailing_whitespace', true);
+      await setPref(page, 'auto_save_on_idle', 'commit');
       await expect.poll(() => split.hasFocus()).toBe(true);
       await page.keyboard.type(' <- ');
       await expect.poll(() => activeDocDirty(page)).toBe(true);
@@ -630,6 +633,40 @@ test.describe('Split editor', () => {
       expect(await documentLine(page, 3)).toBe(`${TYPED} <- `);
     } finally {
       await clearPref(page, 'auto_save_on_idle');
+      await clearPref(page, 'strip_trailing_whitespace');
+    }
+  });
+
+  test('saving with whitespace stripping keeps the split view\'s cursor', async ({ rstudioPage: page }) => {
+    const STRIP_LINE_WS = 'strip_me <- 1  ';
+    const TYPED = 'keep_split';
+
+    try {
+      await setPref(page, 'strip_trailing_whitespace', true);
+      await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+        # split_view_marker
+        ${STRIP_LINE_WS}
+        ${TYPED}
+        last_line <- 2
+      `);
+      const views = sourceViews(page);
+      await executeCommand(page, 'splitEditorRight');
+      await expect(views).toHaveCount(2);
+      const split = viewEditor(views.nth(1));
+
+      await split.click();
+      const typedEnd = { row: 2, column: TYPED.length };
+      await split.select({ start: typedEnd, end: typedEnd });
+      await expect.poll(() => split.hasFocus()).toBe(true);
+      await page.keyboard.type('X');
+
+      // Stripping replaces the whole shared document, which would otherwise
+      // move the split view's cursor to the end of the file.
+      await executeCommand(page, 'saveSourceDoc');
+      await expect.poll(() => activeDocDirty(page), { timeout: TIMEOUTS.fileOpen }).toBe(false);
+      expect(await documentLine(page, 1)).toBe(STRIP_LINE_WS.trimEnd());
+      expect(await split.cursorRow()).toBe(2);
+    } finally {
       await clearPref(page, 'strip_trailing_whitespace');
     }
   });

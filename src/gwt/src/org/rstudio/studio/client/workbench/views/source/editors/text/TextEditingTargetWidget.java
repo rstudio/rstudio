@@ -373,6 +373,12 @@ public class TextEditingTargetWidget
    }
 
    @Override
+   public DocDisplay getSplitDisplay()
+   {
+      return splitEditor_;
+   }
+
+   @Override
    public boolean focusOtherEditorSplit()
    {
       // the side-by-side diff has a read-only base editor to move between,
