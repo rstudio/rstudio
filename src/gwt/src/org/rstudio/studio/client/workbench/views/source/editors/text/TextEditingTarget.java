@@ -8886,6 +8886,15 @@ public class TextEditingTarget implements
       } else {
          withActiveEditor((disp) ->
          {
+            // an empty or multi-line selection starts no search, so leave
+            // both views as they are
+            String selection = disp.getSelectionValue();
+            if (selection.isEmpty() || selection.indexOf('\n') != -1)
+            {
+               disp.focus();
+               return;
+            }
+
             // the find bar searches the primary editor (it does not follow
             // the split view), so carry the focused view's selection over
             // to it; Find Next and repeated invocations then continue from
