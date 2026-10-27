@@ -575,7 +575,9 @@ TEST_F(Win32ProcessTest, IsProcessRunningDetectsLiveAndDeadProcesses)
 
 TEST(Win32SystemTest, RegistryKeyRoundTripsStringValuesAsStored)
 {
-   std::string subKey = "Software\\RStudio\\Tests\\" + generateUuid(false);
+   // directly under Software, which always exists: create() would also make
+   // any missing parent keys, and leave them behind
+   std::string subKey = "Software\\RStudio-Tests-" + generateUuid(false);
 
    {
       RegistryKey key;
@@ -621,9 +623,6 @@ TEST(Win32SystemTest, RegistryKeyRoundTripsStringValuesAsStored)
    }
 
    EXPECT_EQ(ERROR_SUCCESS, ::RegDeleteKeyA(HKEY_CURRENT_USER, subKey.c_str()));
-
-   // the parent key goes too when this was the only test key in it
-   ::RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\RStudio\\Tests");
 }
 
 } // end namespace tests

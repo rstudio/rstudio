@@ -38,16 +38,15 @@ namespace tests {
 // page, so data that reaches R unmarked would be re-encoded on the way back
 TEST(SessionRUtilTest, RegistryValuesReachRAsUtf8)
 {
-   std::string subKey = "Software\\RStudio\\Tests\\" + core::system::generateUuid(false);
+   // directly under Software, which always exists: create() would also make
+   // any missing parent keys, and leave them behind
+   std::string subKey = "Software\\RStudio-Tests-" + core::system::generateUuid(false);
    std::string keyPath = "HKCU\\" + subKey;
    std::string path = "%USERPROFILE%\\Caf\xC3\xA9" ";C:\\Tools";
 
    BOOST_SCOPE_EXIT(&subKey)
    {
       ::RegDeleteKeyA(HKEY_CURRENT_USER, subKey.c_str());
-
-      // the parent key goes too when this was the only test key in it
-      ::RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\RStudio\\Tests");
    }
    BOOST_SCOPE_EXIT_END
 
