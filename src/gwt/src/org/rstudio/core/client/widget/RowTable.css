@@ -32,9 +32,10 @@
    background-color: rgb(214, 233, 247);
 }
 
-/* same ring as the app-wide :focus-visible outline in focus-visible.css,
-   which is suppressed on the listbox table itself; it marks the current
-   option, or the whole list when there is no option to mark */
+/* the color and width of the app-wide :focus-visible outline in
+   focus-visible.css, which is suppressed on the listbox table itself; the
+   offset is -2px rather than -1px so the ring sits wholly inside its box.
+   It marks the current option, or the whole list when there is none */
 .focusVisible .focused,
 .focusVisible .selected,
 .focusVisible.empty {
