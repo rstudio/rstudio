@@ -276,7 +276,9 @@ public abstract class RowTable<T> extends ScrollPanel
       try {
          return el.matches(":focus-visible");
       } catch (e) {
-         return false;
+         if (e.name === "SyntaxError")
+            return false;
+         throw e;
       }
    }-*/;
    
