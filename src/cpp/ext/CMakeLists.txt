@@ -476,7 +476,6 @@ fetch(
    fmt                   FMT
    gsl-lite              GSL_LITE
    libgit2               LIBGIT2
-   GTest                 GTEST
    hunspell              HUNSPELL
    rapidjson             RAPIDJSON
    tl-expected           TL_EXPECTED
@@ -496,6 +495,10 @@ if(EXISTS "${_LIBGIT2_GIT2_H}.prev")
    else()
       file(RENAME "${_LIBGIT2_GIT2_H}.prev" "${_LIBGIT2_GIT2_H}")
    endif()
+endif()
+
+if(RSTUDIO_UNIT_TESTS_ENABLED)
+   fetch(GTest GTEST)
 endif()
 
 restore_global_settings()
