@@ -1981,28 +1981,6 @@ void didFocus(lsp::DidFocusTextDocumentParams params,
 
 void onBackgroundProcessing(bool isIdle)
 {
-   // extract requests that appear to have been dropped
-   if (isIdle)
-   {
-      auto currentTime = std::chrono::steady_clock::now();
-
-      std::vector<std::string> keys;
-      boost::copy(
-               s_pendingContinuations | boost::adaptors::map_keys,
-               std::back_inserter(keys));
-
-      for (auto&& key : keys)
-      {
-         auto&& continuation = s_pendingContinuations[key];
-         if (isAgentRequestExpired(continuation.time(), currentTime))
-         {
-            DLOG("Cancelling old continuation with id '{}'.", key);
-            continuation.cancel();
-            s_pendingContinuations.erase(key);
-         }
-      }
-   }
-
    // process any pending requests
    while (!s_pendingResponses.empty())
    {
@@ -2147,6 +2125,30 @@ void onBackgroundProcessing(bool isIdle)
       }
    }
    
+   // extract requests that appear to have been dropped; this runs after the
+   // queue above so that a reply which arrived while R was busy is delivered
+   // rather than cancelled
+   if (isIdle)
+   {
+      auto currentTime = std::chrono::steady_clock::now();
+
+      std::vector<std::string> keys;
+      boost::copy(
+               s_pendingContinuations | boost::adaptors::map_keys,
+               std::back_inserter(keys));
+
+      for (auto&& key : keys)
+      {
+         auto&& continuation = s_pendingContinuations[key];
+         if (isAgentRequestExpired(continuation.time(), currentTime))
+         {
+            DLOG("Cancelling old continuation with id '{}'.", key);
+            continuation.cancel();
+            s_pendingContinuations.erase(key);
+         }
+      }
+   }
+
    // index files in the queue
    if (isIdle && !s_indexQueue.empty())
    {
