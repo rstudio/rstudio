@@ -11,8 +11,10 @@ import {
   failUnlessAiServiceGone,
   hasAiCredentials,
   requireAiCredentials,
+  skipForAiServiceFailure,
   type AIProvider,
 } from '@utils/ai-credentials';
+import { AssistantRequestWatcher, slowAssistantReason } from '@utils/assistant-requests';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
   test.describe(provider, { tag: ['@ai'] }, () => {
@@ -28,6 +30,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     let assistantActions: AssistantOptionsActions;
     let sourceActions: SourcePaneActions;
     let sourcePane: SourcePane;
+    let assistantRequests: AssistantRequestWatcher | undefined;
 
     // Puts the cursor on a fresh line at the end of the file, types the
     // trigger text, then clears any Ace autocomplete popup so the ghost-text
@@ -70,18 +73,30 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     };
 
     // A suggestion that never arrived is a real failure only while the
-    // provider's service still answers. The gate probed it at test start,
-    // but the runner's network can degrade mid-run (run 34728179667: the
-    // manifest download timed out and the agent reported NotSignedIn, which
-    // surfaced here as a 30s ghost-text timeout). Re-probe and skip
-    // retroactively when the service is gone; otherwise rethrow untouched.
+    // provider's service keeps up. Skip retroactively when it did not:
     //
-    // Keep the shared retry logic and re-probe the service if it times out.
+    // - Too slow: in run 40398345386 every Posit AI answer took 10s+, and the
+    //   session gave up on the re-request at its 10s cutoff, so no suggestion
+    //   could arrive within the wait. See slowAssistantReason().
+    // - Gone: the gate probed the service at test start, but the runner's
+    //   network can degrade mid-run (run 34728179667: the manifest download
+    //   timed out and the agent reported NotSignedIn, which surfaced here as
+    //   a 30s ghost-text timeout). Re-probe it.
+    //
+    // Otherwise rethrow untouched.
+    const failUnlessServiceFailed = async (err: unknown): Promise<never> => {
+      const slow = slowAssistantReason(assistantRequests?.outcomes() ?? []);
+      if (slow !== null) {
+        skipForAiServiceFailure(aiProvider, slow);
+      }
+      return failUnlessAiServiceGone(aiProvider, err);
+    };
+
     const expectSuggestionIndicator = async (timeout = TIMEOUTS.nesApply) => {
       try {
         await sourceActions.waitForNesSuggestion(timeout);
       } catch (err) {
-        await failUnlessAiServiceGone(aiProvider, err);
+        await failUnlessServiceFailed(err);
       }
     };
 
@@ -89,7 +104,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       try {
         await sourceActions.waitForGhostText(timeout);
       } catch (err) {
-        await failUnlessAiServiceGone(aiProvider, err);
+        await failUnlessServiceFailed(err);
       }
     };
 
@@ -138,6 +153,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sleep(2000);
 
       await assistantActions.setupAssistantOptions(provider);
+    });
+
+    // Watch the whole test, not just the wait: the request a wait depends on
+    // goes out as the trigger text is typed, before the wait starts.
+    test.beforeEach(async ({ rstudioPage: page }) => {
+      assistantRequests = new AssistantRequestWatcher(page);
+    });
+
+    test.afterEach(async () => {
+      assistantRequests?.stop();
+      assistantRequests = undefined;
     });
 
     test('ghost text accept', async ({ rstudioPage: page }) => {

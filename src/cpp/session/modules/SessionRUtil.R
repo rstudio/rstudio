@@ -226,3 +226,53 @@
 {
    .Call("rs_getSessionOverlayOption", as.character(key), PACKAGE = "(embedding)")
 })
+
+#' Whether a process with the given id is running. (tools::pskill(pid, 0) is
+#' no probe on Windows: R's implementation terminates the process whatever
+#' the signal.)
+.rs.addFunction("isProcessRunning", function(pid)
+{
+   .Call("rs_isProcessRunning", as.integer(pid), PACKAGE = "(embedding)")
+})
+
+#' A string value in the Windows registry, as a list of its 'type' ("String"
+#' or "ExpandString") and 'data' as stored (REG_EXPAND_SZ data is not
+#' expanded), or NULL when the key or the value does not exist. 'key' names
+#' its hive first, as reg.exe takes it: "HKCU\\Software\\R-core\\R".
+.rs.addFunction("registryGetValue", function(key, name)
+{
+   .rs.registryCheckPlatform()
+   .Call("rs_registryGetValue", enc2utf8(key), enc2utf8(name), PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("registrySetValue", function(key, name, data, type = c("String", "ExpandString"))
+{
+   .rs.registryCheckPlatform()
+   type <- match.arg(type)
+   .Call("rs_registrySetValue", enc2utf8(key), enc2utf8(name), enc2utf8(data), type, PACKAGE = "(embedding)")
+   invisible(NULL)
+})
+
+#' Delete a registry value; one that does not exist is not an error.
+.rs.addFunction("registryDeleteValue", function(key, name)
+{
+   .rs.registryCheckPlatform()
+   .Call("rs_registryDeleteValue", enc2utf8(key), enc2utf8(name), PACKAGE = "(embedding)")
+   invisible(NULL)
+})
+
+.rs.addFunction("registryCheckPlatform", function()
+{
+   if (!.rs.platform.isWindows)
+      stop("the registry is only available on Windows")
+})
+
+#' Tell running applications that the user environment in the registry
+#' changed (Explorer only re-reads it when told, and new shells inherit its
+#' copy).
+.rs.addFunction("registryNotifyEnvironmentChange", function()
+{
+   .rs.registryCheckPlatform()
+   .Call("rs_registryNotifyEnvironmentChange", PACKAGE = "(embedding)")
+   invisible(NULL)
+})

@@ -1082,6 +1082,23 @@ Error terminateProcess(PidType pid)
    return Success();
 }
 
+bool isProcessRunning(PidType pid)
+{
+   // a process the caller cannot open still exists (as with EPERM from
+   // kill(pid, 0) on POSIX); a pid no process has gives ERROR_INVALID_PARAMETER
+   HANDLE hProc = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+   if (!hProc)
+      return ::GetLastError() == ERROR_ACCESS_DENIED;
+   CloseHandleOnExitScope closeHandle(&hProc, ERROR_LOCATION);
+
+   // an exited process can still be opened while another handle to it is
+   // held (its pid is not reused before then), so ask whether it has exited
+   DWORD exitCode = 0;
+   if (!::GetExitCodeProcess(hProc, &exitCode))
+      return true;
+   return exitCode == STILL_ACTIVE;
+}
+
 namespace {
 
 bool getProcessCreationTime(HANDLE process, FILETIME* pCreationTime)
