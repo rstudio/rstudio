@@ -136,7 +136,8 @@ public class BuildPane extends WorkbenchPane
          if (pkg) 
          {
             ToolbarPopupMenu installMoreMenu = new ToolbarPopupMenu();
-            toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, "", installMoreMenu, false));
+            toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText,
+                  constants_.installOptionsText(), installMoreMenu, false));
             
             projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
                @Override
