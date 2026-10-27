@@ -62,6 +62,15 @@ test.describe('Split editor with R Markdown chunks', () => {
           editor?.gotoLine(ln, 0, false);
         }, line),
       hasFocus: () => handle.evaluate((el) => el.contains(document.activeElement)),
+      selectLine: (line: number) =>
+        handle.evaluate((el, ln) => {
+          const editor = (el as AceEditorElement).env?.editor;
+          if (!editor)
+            return;
+          const row = ln - 1;
+          const end = editor.session.getLine(row).length;
+          editor.selection.setRange({ start: { row, column: 0 }, end: { row, column: end } });
+        }, line),
       // Non-null entries in the session's sparse lineWidgets array. Chunk
       // toolbars and chunk output widgets are Ace line widgets, so a chunk
       // executed through the notebook queue adds one to the hosting view,
@@ -176,4 +185,37 @@ test.describe('Split editor with R Markdown chunks', () => {
     expect(await pollWhichRan()).toBe('chunk_one=true chunk_two=false');
     await expect.poll(() => primary.lineWidgetCount()).toBe(widgetsBefore + 1);
   });
+
+  // The number of '```{r <label>}' chunk headers in the active document.
+  async function headerCount(page: Page, label: string): Promise<number> {
+    return page.evaluate((header) => {
+      const editor = window.rstudio?.documents.activeEditor();
+      if (!editor)
+        throw new Error('no active editor');
+      return editor.getValue().split('\n').filter((line) => line === header).length;
+    }, '```{r ' + label + '}');
+  }
+
+  // https://github.com/rstudio/rstudio/issues/19298
+  //
+  // Insert Chunk inside a chunk splits the chunk under the focused view's
+  // cursor: in two at the cursor line, or in three around a selection. Each
+  // piece keeps the original header, so the headers count the pieces.
+  const INSERT_CHUNK_CASES = [
+    { name: 'at the cursor', selectLine: false, chunkTwoPieces: 2 },
+    { name: 'around the selection', selectLine: true, chunkTwoPieces: 3 },
+  ];
+
+  for (const insert of INSERT_CHUNK_CASES) {
+    test(`Insert Chunk splits the focused view's chunk ${insert.name}`, async ({ rstudioPage: page }) => {
+      const { split } = await openAndSplit(page);
+      if (insert.selectLine)
+        await split.selectLine(CHUNK_TWO_LINE);
+
+      await executeCommand(page, 'insertChunk');
+
+      await expect.poll(() => headerCount(page, 'chunk-two')).toBe(insert.chunkTwoPieces);
+      expect(await headerCount(page, 'chunk-one')).toBe(1);
+    });
+  }
 });

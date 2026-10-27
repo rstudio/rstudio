@@ -89,8 +89,12 @@ test.describe('Split editor', () => {
         }),
       foldCount: () =>
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.session.getAllFolds().length ?? -1),
+      hasGhostText: () =>
+        view.evaluate((el) => (el as AceEditorElement).env?.editor?.renderer.$ghostText != null),
     };
   }
+
+  type ViewEditor = ReturnType<typeof viewEditor>;
 
   // Two functions: the primary view's cursor rests in cmd_a and the focused
   // split view selects 'y<-y*2' in cmd_b, so a command routed to the wrong
@@ -530,18 +534,90 @@ test.describe('Split editor', () => {
     }
   });
 
-  test('rstudioapi replaces the focused view\'s selection', async ({ rstudioPage: page }) => {
+  test('Use Selection for Find without a selection leaves the primary view alone', async ({ rstudioPage: page }) => {
+    const { primary, split } = await openWithFocusedSplit(page);
+    const cursor = { row: 6, column: 2 };
+    await split.select({ start: cursor, end: cursor });
+
+    // An empty selection starts no search, so nothing carries over to the
+    // primary view and focus stays in the split view. The command runs
+    // synchronously, so its effects are settled once it returns.
+    await executeCommand(page, 'findFromSelection');
+    expect(await primary.cursorRow()).toBe(2);
+    expect(await split.hasFocus()).toBe(true);
+  });
+
+  test('Toggle Breakpoint uses the focused view\'s cursor row', async ({ rstudioPage: page }) => {
     await openWithFocusedSplit(page);
 
-    // The console takes focus to run this; the split view remains the
-    // document's active view, as for an addin run from the console.
-    await consoleActions.executeInConsole(
-      '.rs.api.selectionSet("y <- y * 3", id = .rs.api.getSourceEditorContext()$id)',
-      { wait: true },
-    );
-    await expect.poll(() => documentLine(page, 6)).toBe('  y <- y * 3');
-    expect(await documentLine(page, 2)).toBe(PRIMARY_LINE);
+    // Breakpoints live on the primary editor (the split view draws none), so
+    // the marker lands in the primary view's gutter, on the split view's row.
+    const markers = sourceViews(page).first().locator(".ace_gutter-cell[class*='breakpoint']");
+    await executeCommand(page, 'debugBreakpoint');
+    await expect(markers).toHaveCount(1);
+    await expect(markers).toHaveText('7');
+
+    await executeCommand(page, 'debugBreakpoint');
+    await expect(markers).toHaveCount(0);
   });
+
+  test('Switch Focus between Source/Console leaves the focused split view', async ({ rstudioPage: page }) => {
+    const { split } = await openWithFocusedSplit(page);
+
+    await executeCommand(page, 'switchFocusSourceConsole');
+    await expect.poll(() =>
+      page.evaluate(() => document.activeElement?.closest('#rstudio_console_input') != null)).toBe(true);
+    expect(await split.hasFocus()).toBe(false);
+  });
+
+  // rstudioapi writes act on the view getActiveDocumentContext() reads from.
+  // The console takes focus to run each call; the split view remains the
+  // document's active view, as for an addin run from the console.
+  const API_CASES: { name: string; code: string; check: (page: Page, split: ViewEditor) => Promise<void> }[] = [
+    {
+      name: 'selectionSet() replaces the focused view\'s selection',
+      code: '.rs.api.selectionSet("y <- y * 3", id = .rs.api.getSourceEditorContext()$id)',
+      check: async (page) => {
+        await expect.poll(() => documentLine(page, 6)).toBe('  y <- y * 3');
+      },
+    },
+    {
+      name: 'insertText() replaces the focused view\'s selection',
+      code: '.rs.api.insertText("y <- y * 4", id = .rs.api.getSourceEditorContext()$id)',
+      check: async (page) => {
+        await expect.poll(() => documentLine(page, 6)).toBe('  y <- y * 4');
+      },
+    },
+    {
+      name: 'setSelectionRanges() selects in the focused view',
+      code: '.rs.api.setSelectionRanges(c(8, 3, 8, 4), id = .rs.api.getSourceEditorContext()$id)',
+      check: async (_page, split) => {
+        await expect.poll(() => split.selectedText()).toBe('y');
+        expect(await split.cursorRow()).toBe(7);
+      },
+    },
+    {
+      name: 'setGhostText() shows ghost text in the focused view',
+      code: '.rs.api.setGhostText("# ghost")',
+      check: async (_page, split) => {
+        await expect.poll(() => split.hasGhostText()).toBe(true);
+      },
+    },
+  ];
+
+  for (const api of API_CASES) {
+    test(`rstudioapi ${api.name}`, async ({ rstudioPage: page }) => {
+      const { primary, split } = await openWithFocusedSplit(page);
+
+      await consoleActions.executeInConsole(api.code, { wait: true });
+      await api.check(page, split);
+
+      // the primary view's line, cursor, and lack of ghost text are untouched
+      expect(await documentLine(page, 2)).toBe(PRIMARY_LINE);
+      expect(await primary.cursorRow()).toBe(2);
+      expect(await primary.hasGhostText()).toBe(false);
+    });
+  }
 
   test('closing a split document releases its editor state', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, FILE, CONTENT);
