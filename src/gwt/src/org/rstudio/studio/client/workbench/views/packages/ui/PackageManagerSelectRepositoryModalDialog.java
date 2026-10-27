@@ -39,7 +39,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import jsinterop.base.Js;
@@ -66,9 +65,6 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
 
       panel_ = new FlowPanel();
       panel_.setSize("500px", "400px");
-
-      tableContainer_ = new ScrollPanel();
-      tableContainer_.setHeight("200px");
 
       table_ = new RowTable<PackageManagerRepository>("Repositories")
       {
@@ -150,8 +146,9 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
 
       table_.selectRow(0);
 
-      // border and background color are set via RowTable.css (theme aware)
-      tableContainer_.add(table_);
+      // the table scrolls itself, so its focus ring stays on the visible
+      // viewport; border and background color are set via RowTable.css
+      table_.setHeight("200px");
 
       showHiddenReposCb_ = new CheckBox("Show hidden repositories");
       showHiddenReposCb_.getElement().getStyle().setDisplay(Display.BLOCK);
@@ -181,7 +178,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       });
 
       panel_.add(new Header("Repository"));
-      panel_.add(tableContainer_);
+      panel_.add(table_);
       panel_.add(showHiddenReposCb_);
 
       panel_.add(new Header("Snapshot"));
@@ -243,7 +240,6 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
 
    private final JsArray<PackageManagerRepository> ppmRepos_;
    private final FlowPanel panel_;
-   private final ScrollPanel tableContainer_;
    private final RowTable<PackageManagerRepository> table_;
    private final CheckBox showHiddenReposCb_;
    private final CheckBox useSnapshotCb_;
