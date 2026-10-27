@@ -8888,7 +8888,7 @@ public class TextEditingTarget implements
             if (disp != docDisplay_)
             {
                docDisplay_.setSelectionRange(disp.getSelectionRange());
-               docDisplay_.ensureCursorVisible();
+               docDisplay_.scrollCursorIntoView();
             }
 
             view_.findFromSelection(disp.getSelectionValue());

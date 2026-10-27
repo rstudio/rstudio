@@ -15,6 +15,7 @@ test.describe('Split editor', () => {
   let consoleActions: ConsolePaneActions;
 
   const FILE = 'split_editor.R';
+  const RMD_FILE = 'split_editor.Rmd';
 
   // The marker comment identifies the source editor views in the DOM.
   const CONTENT = heredoc`
@@ -74,6 +75,13 @@ test.describe('Split editor', () => {
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.getSelectedText() ?? ''),
       rangeCount: () =>
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.selection.rangeCount ?? 0),
+      // the text of each range of a multi-selection (single-line ranges)
+      rangeTexts: () =>
+        view.evaluate((el) => {
+          const editor = (el as AceEditorElement).env?.editor;
+          return (editor?.selection.rangeList.ranges ?? []).map((r) =>
+            editor?.session.getLine(r.start.row).slice(r.start.column, r.end.column) ?? '');
+        }),
       foldCount: () =>
         view.evaluate((el) => (el as AceEditorElement).env?.editor?.session.getAllFolds().length ?? -1),
     };
@@ -123,7 +131,7 @@ test.describe('Split editor', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     if ((await sourceViews(page).count()) > 1)
       await executeCommand(page, 'removeEditorSplit');
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE]);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE, RMD_FILE]);
   });
 
   test('splitting shows a second synchronized view of the document', async ({ rstudioPage: page }) => {
@@ -351,6 +359,40 @@ test.describe('Split editor', () => {
     await executeCommand(page, 'renameInScope');
     await expect.poll(() => split.rangeCount()).toBe(4);
     expect(await primary.rangeCount()).toBeLessThan(2);
+    await page.keyboard.press('Escape');
+  });
+
+  test('Rename in Scope in another view does not reuse cached chunk ranges', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, RMD_FILE, heredoc`
+      ---
+      title: "split_view_marker"
+      ---
+
+      ${'```'}{r}
+      x <- 1
+      y <- x + 1
+      y + x
+      ${'```'}
+    `);
+    const views = sourceViews(page);
+    await executeCommand(page, 'splitEditorRight');
+    await expect(views).toHaveCount(2);
+    const primary = viewEditor(views.first());
+    const split = viewEditor(views.nth(1));
+
+    // Renaming x twice in the primary view caches its chunk ranges for a
+    // second; renaming y in the split view within that window must not reuse
+    // them.
+    await primary.click();
+    await primary.gotoLine(6);
+    await executeCommand(page, 'renameInScope');
+    await expect.poll(() => primary.rangeTexts()).toEqual(['x', 'x', 'x']);
+    await executeCommand(page, 'renameInScope');
+
+    await split.click();
+    await split.gotoLine(7);
+    await executeCommand(page, 'renameInScope');
+    await expect.poll(() => split.rangeTexts()).toEqual(['y', 'y']);
     await page.keyboard.press('Escape');
   });
 
