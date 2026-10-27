@@ -120,9 +120,10 @@ public class FileBrowserWidget extends Composite
       // the dialog sets its own initial focus once shown (focusInitialControl);
       // focusing the list for the first listing raced it, flashing focus on
       // the list or taking it from the dialog's initial control
-      if (initialListingShown_)
+      if (initialListingShown_ || directoryFocusPending_)
          setDirectoryFocus(true);
       initialListingShown_ = true;
+      directoryFocusPending_ = false;
    }
 
    public void cd(String path)
@@ -156,6 +157,18 @@ public class FileBrowserWidget extends Composite
    public void setDirectoryFocus(boolean focus)
    {
       directory_.setFocus(focus);
+   }
+
+   /**
+    * Focuses the directory list now, or once the first listing arrives: until
+    * then the list is not attached and cannot take focus.
+    */
+   public void focusDirectoryWhenListed()
+   {
+      if (initialListingShown_)
+         setDirectoryFocus(true);
+      else
+         directoryFocusPending_ = true;
    }
 
    @Override
@@ -227,6 +240,7 @@ public class FileBrowserWidget extends Composite
    private TextBox filename_;
    private boolean navigating_;
    private boolean initialListingShown_;
+   private boolean directoryFocusPending_;
    private FileSystemContext context_;
    private String initialFilename_;
    private Host host_;

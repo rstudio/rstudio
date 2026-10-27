@@ -25,9 +25,21 @@ const CHOOSE_BTN = '#rstudio_file_accept_choose';
 const NEW_FOLDER_BTN = '#rstudio_file_new_folder';
 const TEXT_ENTRY = '#rstudio_text_entry';
 const CURRENT_LOCATION = '[aria-current="location"]';
+const FOLDER_LIST = '#rstudio_directory_contents';
 
 const BASE_NAME = `pw-choose-folder-${Date.now()}`;
 const SUBFOLDER = 'target';
+
+// Opens Find in Files and its directory chooser, in whatever directory the
+// chooser starts in.
+async function openChooser(page: Page): Promise<Locator> {
+  await executeCommand(page, 'findInFiles');
+  await expect(page.locator(FIND_DIALOG)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  await page.locator(SEARCH_IN_BROWSE).click();
+  const chooser = page.locator(CHOOSER);
+  await expect(chooser).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  return chooser;
+}
 
 // Opens Find in Files and its directory chooser, then takes the chooser to
 // `dir` with the breadcrumb's Go To Folder prompt: the chooser starts in the
@@ -35,11 +47,7 @@ const SUBFOLDER = 'target';
 // to this spec, so the breadcrumb showing it as the current location means
 // that navigation has landed.
 async function openChooserAt(page: Page, dir: string): Promise<Locator> {
-  await executeCommand(page, 'findInFiles');
-  await expect(page.locator(FIND_DIALOG)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-  await page.locator(SEARCH_IN_BROWSE).click();
-  const chooser = page.locator(CHOOSER);
-  await expect(chooser).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  const chooser = await openChooser(page);
 
   // the breadcrumb marks a current location once the initial listing lands;
   // navigating before then would race it, and whichever listing arrived last
@@ -119,6 +127,33 @@ test.describe('Choose Directory dialog', () => {
       listing.release();
       await expect(chooser).toBeHidden({ timeout: TIMEOUTS.fileOpen });
       await expect(page.locator(SEARCH_IN_TEXT)).toHaveValue(new RegExp(`/${BASE_NAME}/${folder}$`));
+    } finally {
+      await listing.cleanup();
+    }
+  });
+
+  test('opening the chooser focuses the folder list without selecting a folder', async ({ rstudioPage: page }) => {
+    // a selection would change the folder Choose returns (#19315)
+    const chooser = await openChooser(page);
+
+    await expect(chooser.locator(FOLDER_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
+    await expect(chooser.locator(`${FOLDER_LIST} tr[aria-selected]`)).toHaveCount(0);
+  });
+
+  test('a listing that arrives after the chooser is shown still focuses the folder list', async ({ rstudioPage: page }) => {
+    // the list cannot take focus until its first listing attaches it, so the
+    // chooser's initial focus has to wait for that listing
+    const listing = await holdListFiles(page);
+
+    try {
+      const chooser = await openChooser(page);
+      await expect.poll(() => listing.held(), { timeout: TIMEOUTS.fileOpen }).toBeGreaterThan(0);
+      // outlast the dialog's initial focus, 100ms after it is shown; with the
+      // list still unattached, nothing observable marks that point
+      await page.waitForTimeout(1000);
+
+      listing.release();
+      await expect(chooser.locator(FOLDER_LIST)).toBeFocused({ timeout: TIMEOUTS.fileOpen });
     } finally {
       await listing.cleanup();
     }
