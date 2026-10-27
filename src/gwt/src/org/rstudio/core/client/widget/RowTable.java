@@ -502,6 +502,7 @@ public abstract class RowTable<T> extends ScrollPanel
    {
       data_.clear();
       table_.removeAllChildren();
+      table_.removeAttribute("aria-activedescendant");
       SelectionEvent.fire(this, null);
       
       selectedRow_ = -1;

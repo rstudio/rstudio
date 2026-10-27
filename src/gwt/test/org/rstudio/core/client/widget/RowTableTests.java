@@ -200,6 +200,18 @@ public class RowTableTests extends GWTTestCase
       assertNull(table.getSelectedItem());
    }
 
+   public void testClearingToEmptyDropsActiveOption()
+   {
+      // e.g. a file dialog navigating into an empty directory
+      StringTable table = createTable("a", "b", "c");
+      table.setFocus(true);
+
+      table.clear();
+      table.draw(new ArrayList<>());
+
+      assertEquals("", getActiveDescendant(table));
+   }
+
    public void testRedrawWithoutFocusLeavesNoActiveOption()
    {
       StringTable table = createTable("a", "b", "c");
