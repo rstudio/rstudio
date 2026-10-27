@@ -753,8 +753,11 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       cleanup: '.rs.api.executeCommand("viewerClear")' },
     { label: 'Clear Workspace', raise: raiseWithConfirm('clearWorkspace'),
       zoom: 'layoutZoomEnvironment', pane: TABSET1_PANE, tab: ENVIRONMENT_TAB },
-    // Clear History is disabled while History shows search results or context.
-    { label: 'Clear History', prepare: 'historyDismissResults',
+    // Clear History has no handler until the History pane has loaded, and is
+    // disabled while it shows search results or context. Environment is then
+    // reselected so the raise has to select History.
+    { label: 'Clear History',
+      prepare: ['activateHistory', 'historyDismissResults', 'activateEnvironment'],
       raise: raiseWithConfirm('clearHistory'),
       zoom: 'layoutZoomHistory', pane: TABSET1_PANE, tab: HISTORY_TAB },
   ]) {
@@ -762,8 +765,8 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       rstudioPage: page,
     }) => {
       try {
-        if (prepare)
-          await executeCommand(page, prepare);
+        for (const command of prepare ?? [])
+          await executeCommand(page, command);
         await executeCommand(page, 'layoutZoomConsole');
         await expectHidden(page, pane);
 
