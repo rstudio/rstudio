@@ -747,9 +747,10 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
       raise: (page: Page) => executeInConsole(page, 'plot(1)'),
       zoom: 'layoutZoomPlots', pane: TABSET2_PANE, tab: PLOTS_TAB, cleanup: 'graphics.off()' },
     { label: 'a page in the Viewer',
-      raise: (page: Page) => executeInConsole(page, 'f <- tempfile(fileext = ".html"); ' +
-        'writeLines("<h1>hi</h1>", f); .rs.api.viewer(f)'),
-      zoom: 'layoutZoomViewer', pane: TABSET2_PANE, tab: VIEWER_TAB },
+      raise: (page: Page) => executeInConsole(page, 'local({ f <- tempfile(fileext = ".html"); ' +
+        'writeLines("<h1>hi</h1>", f); .rs.api.viewer(f) })'),
+      zoom: 'layoutZoomViewer', pane: TABSET2_PANE, tab: VIEWER_TAB,
+      cleanup: '.rs.api.executeCommand("viewerClear")' },
     { label: 'Clear Workspace', raise: raiseWithConfirm('clearWorkspace'),
       zoom: 'layoutZoomEnvironment', pane: TABSET1_PANE, tab: ENVIRONMENT_TAB },
     // Clear History is disabled while History shows search results or context.

@@ -2,6 +2,7 @@
 // debugger.test.ts:
 //
 //   - multi-line input at the Browse[N]> prompt preserves browser state
+//   - entering the debugger selects the Environment tab
 //   - clicking a top-level breakpoint marker toggles it off (#9450)
 //   - Clear All Breakpoints removes every marker (#9450, @server_only --
 //     on Desktop the confirm dialog is a native Electron messagebox)
