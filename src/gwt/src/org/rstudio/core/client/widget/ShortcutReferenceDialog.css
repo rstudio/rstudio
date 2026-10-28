@@ -1,14 +1,28 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+/* Leaves room for the caption and buttons on short windows; the legend takes
+   what it needs (more when it wraps) and the shortcut list scrolls in the rest,
+   so the dialog itself never scrolls the legend out of view */
 .content
 {
+   display: flex;
+   flex-direction: column;
    width: 85vw;
    max-width: 1100px;
    height: 70vh;
-   /* leave room for the caption, legend, and buttons on short windows, so only
-      this region scrolls and the legend stays in view */
-   max-height: literal("calc(100vh - 170px)");
+   max-height: literal("calc(100vh - 130px)");
+}
+
+.scroller
+{
+   flex: 1 1 auto;
+   min-height: 4em;
    overflow: auto;
+}
+
+.legend
+{
+   flex: none;
 }
 
 .groups

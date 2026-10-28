@@ -54,7 +54,7 @@ public class ShortcutReferenceDialog extends ModalDialogBase
    protected Widget createMainWidget()
    {
       scroller_ = new ScrollPanel(content_);
-      scroller_.addStyleName(RES.styles().content());
+      scroller_.addStyleName(RES.styles().scroller());
 
       // Focusable so the keyboard can scroll it and screen readers start
       // reading at the reference rather than at the Close button
@@ -62,11 +62,10 @@ public class ShortcutReferenceDialog extends ModalDialogBase
       Roles.getRegionRole().set(scroller_.getElement());
       Roles.getRegionRole().setAriaLabelProperty(scroller_.getElement(), getText());
 
-      if (legend_ == null)
-         return scroller_;
-
       FlowPanel panel = new FlowPanel();
-      panel.add(legend_);
+      panel.addStyleName(RES.styles().content());
+      if (legend_ != null)
+         panel.add(legend_);
       panel.add(scroller_);
       return panel;
    }
@@ -80,6 +79,7 @@ public class ShortcutReferenceDialog extends ModalDialogBase
    public interface Styles extends CssResource
    {
       String content();
+      String scroller();
       String groups();
       String legend();
    }
