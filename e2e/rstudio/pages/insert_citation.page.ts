@@ -44,6 +44,8 @@ export class InsertCitationDialog extends PageObject {
    * progress text, hence the text filter.
    */
   public readonly searchError: Locator;
+  /** The same status line when a search succeeds but finds nothing. */
+  public readonly searchNoResults: Locator;
   public readonly insertButton: Locator;
   public readonly cancelButton: Locator;
   /** Staged citations, shown as tag chips at the bottom of the dialog. */
@@ -58,6 +60,10 @@ export class InsertCitationDialog extends PageObject {
     this.searchError = page
       .locator('.pm-insert-citation-source-panel-list-noresults-text')
       .filter({ hasText: /error occurred|Unable to search/ })
+      .first();
+    this.searchNoResults = page
+      .locator('.pm-insert-citation-source-panel-list-noresults-text')
+      .filter({ hasText: /^No (results|data)/ })
       .first();
     this.insertButton = this.dialog.getByRole('button', { name: 'Insert', exact: true });
     this.cancelButton = this.dialog.getByRole('button', { name: 'Cancel', exact: true });

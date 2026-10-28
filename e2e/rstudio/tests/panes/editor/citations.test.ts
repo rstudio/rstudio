@@ -305,4 +305,20 @@ test.describe('Citations', () => {
 
     await citation.cancel();
   });
+
+  // The DOI reaches the rsession's download.file() call inside an R string
+  // literal; a quote in it must not end the literal. The mock has no such
+  // DOI, so a correctly quoted lookup gets "No data", not an R parse error.
+  test('looks up a DOI containing a quote', async ({ rstudioPage: page }) => {
+    skipUnlessServicesReachable();
+    await newMarkdownVisualDoc(page);
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+    const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
+    await citation.search(searchBox, "10.1002/it's");
+    await expect(citation.searchNoResults).toHaveText('No data for this DOI could be found.', { timeout: 30000 });
+
+    await citation.cancel();
+  });
 });
