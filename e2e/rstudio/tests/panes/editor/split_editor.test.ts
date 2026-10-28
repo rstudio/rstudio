@@ -1,12 +1,12 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
+import { writeAndOpenFile, seedSandboxFile, openFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { collectClientStatePushes, waitForActiveDocIdPush } from '@utils/client-state';
 import { executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
-import { rPathLiteral } from '@utils/r';
+import { rPathLiteral, rStringLiteral } from '@utils/r';
 import type { AceEditorElement } from '@utils/ace';
 import type { Locator, Page, Route } from '@playwright/test';
 
@@ -18,6 +18,10 @@ test.describe('Split editor', () => {
   const FILE = 'split_editor.R';
   const RMD_FILE = 'split_editor.Rmd';
   const INSERT_FILE = 'split_editor_insert.txt';
+
+  // Outside the directory the Files pane lists, so changes to it on disk
+  // raise no file change event.
+  const UNLISTED_FILE = 'unlisted/split_editor.R';
 
   // The marker comment identifies the source editor views in the DOM.
   const CONTENT = heredoc`
@@ -144,6 +148,17 @@ test.describe('Split editor', () => {
     return (await documentValue(page)).split('\n')[row];
   }
 
+  // Rewrites a sandbox file on disk from the console, dating it ahead so the
+  // change registers even within the second the file was opened.
+  async function changeFileOnDisk(fileName: string, lines: string[]) {
+    const fullPath = rPathLiteral(`${sandbox.dir}/${fileName}`);
+    const content = `c(${lines.map(rStringLiteral).join(', ')})`;
+    await consoleActions.executeInConsole(
+      `writeLines(${content}, ${fullPath}); Sys.setFileTime(${fullPath}, Sys.time() + 10)`,
+      { wait: true },
+    );
+  }
+
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     await consoleActions.resetSourcePane();
@@ -152,7 +167,7 @@ test.describe('Split editor', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     if ((await sourceViews(page).count()) > 1)
       await executeCommand(page, 'removeEditorSplit');
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE, RMD_FILE, INSERT_FILE]);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE, RMD_FILE, INSERT_FILE, UNLISTED_FILE]);
   });
 
   test('splitting shows a second synchronized view of the document', async ({ rstudioPage: page }) => {
@@ -749,14 +764,7 @@ test.describe('Split editor', () => {
     await split.select({ start: { row: 2, column: 0 }, end: { row: 2, column: 8 } });
     expect(await split.selectedText()).toBe('reload_b');
 
-    // Change the file on disk, dating it ahead so the change registers even
-    // within the second the file was opened.
-    const fullPath = rPathLiteral(`${sandbox.dir}/${FILE}`);
-    await consoleActions.executeInConsole(
-      `writeLines(c("# split_view_marker", "reload_a <- 1", "reload_b <- 2", "reload_c <- 30"), ${fullPath}); ` +
-      `Sys.setFileTime(${fullPath}, Sys.time() + 10)`,
-      { wait: true },
-    );
+    await changeFileOnDisk(FILE, ['# split_view_marker', 'reload_a <- 1', 'reload_b <- 2', 'reload_c <- 30']);
 
     // Focusing the primary view checks for external changes, and the
     // unmodified document reloads by replacing its whole text, which would
@@ -764,6 +772,33 @@ test.describe('Split editor', () => {
     await primary.click();
     await expect.poll(() => documentLine(page, 3), { timeout: TIMEOUTS.fileOpen }).toBe('reload_c <- 30');
     expect(await split.selectedText()).toBe('reload_b');
+  });
+
+  test('focusing the split view reloads a document changed on disk', async ({ rstudioPage: page }) => {
+    const CHECK_FOR_EXTERNAL_EDIT = /\/rpc\/check_for_external_edit(?:\?|$)/;
+
+    // Opening the file focuses the primary view, which checks for changes
+    // on disk after a delay; let that check finish before the file changes.
+    const openCheck = page.waitForResponse(CHECK_FOR_EXTERNAL_EDIT);
+    await openFile(page, await seedSandboxFile(page, sandbox.dir, UNLISTED_FILE, CONTENT));
+    await openCheck;
+    const openCheckDone = Date.now();
+
+    // Split with focus in the console, so that neither view is focused again
+    // until the split view is.
+    await executeCommand(page, 'activateConsole');
+    const views = sourceViews(page);
+    await executeCommand(page, 'splitEditorRight');
+    await expect(views).toHaveCount(2);
+    const split = viewEditor(views.nth(1));
+
+    await changeFileOnDisk(UNLISTED_FILE, ['# split_view_marker', 'split_x <- 10', 'split_y <- 200']);
+
+    // A check within a second of the previous one is skipped (see
+    // TextEditingTarget.externalEditCheckInterval_).
+    await expect.poll(() => Date.now() - openCheckDone).toBeGreaterThanOrEqual(1000);
+    await split.click();
+    await expect.poll(() => documentLine(page, 2), { timeout: TIMEOUTS.fileOpen }).toBe('split_y <- 200');
   });
 
   test('Shrink Selection in the split view forgets ranges from before an edit', async ({ rstudioPage: page }) => {

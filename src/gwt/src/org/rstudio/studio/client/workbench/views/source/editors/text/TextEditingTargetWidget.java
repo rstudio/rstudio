@@ -635,13 +635,15 @@ public class TextEditingTargetWidget
       // which would clobber the margin-column wrap applied here
       applyWrapMode(splitEditor_, editor_.getUseWrapMode());
 
-      // route commands to this editing target when the split view is focused
+      // route commands to this editing target when the split view is focused,
+      // and check for changes on disk as focusing the primary view does
       splitEditorRegistrations_.add(splitEditor_.addFocusHandler(event ->
       {
          splitEditorFocusedLast_ = true;
          diffSplitFocusedLast_ = false;
          events_.fireEvent(new EditingTargetSelectedEvent(target_));
          events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
+         target_.splitEditorFocused();
       }));
 
       // keep the status bar in sync with the split view's cursor

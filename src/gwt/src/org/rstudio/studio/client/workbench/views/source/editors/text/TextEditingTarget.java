@@ -4311,6 +4311,13 @@ public class TextEditingTarget implements
       selectionChangedTimer_.schedule(250);
    }
 
+   // Called by the view when the split editor view gains focus, so returning
+   // to the document through either view picks up changes made on disk.
+   void splitEditorFocused()
+   {
+      checkForExternalEdit(500);
+   }
+
    // Called by the view when the split editor view loses focus, so autosave
    // on blur covers edits made there.
    void splitEditorBlurred()
