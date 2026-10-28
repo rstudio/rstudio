@@ -121,9 +121,8 @@ pinned_node_version() {
 }
 
 # Locate the directory holding the pinned node: this worktree, then the main
-# checkout, then the tools roots -- as pinnedNodeBinDir in
-# e2e/rstudio/scripts/dev-common.ts does, plus Windows' tools root and layout.
-# Prints nothing when not found.
+# checkout, then the tools roots -- mirroring pinnedNodeBinDir in
+# e2e/rstudio/scripts/dev-common.ts. Prints nothing when not found.
 pinned_node_bin() {
   if [ -z "$PINNED_NODE_VERSION" ]; then
     return
