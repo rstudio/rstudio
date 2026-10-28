@@ -130,6 +130,14 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String editingGroupName();
     String completionGroupName();
     String viewGroupName();
+    String keySymbolCommand();
+    String keySymbolOption();
+    String keySymbolShift();
+    String keySymbolControl();
+    String keySymbolReturn();
+    String keySymbolTab();
+    String keySymbolDelete();
+    String keySymbolForwardDelete();
     String addShiftPTag();
     String useDefaultPrefix();
     String validateMessage();

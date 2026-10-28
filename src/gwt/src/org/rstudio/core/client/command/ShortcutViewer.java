@@ -15,8 +15,10 @@
 
 package org.rstudio.core.client.command;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.widget.CommandShortcutReference;
+import org.rstudio.core.client.widget.KeySymbolLegend;
 import org.rstudio.core.client.widget.ShortcutReferenceDialog;
 import org.rstudio.core.client.widget.VimKeyInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -40,8 +42,10 @@ public class ShortcutViewer
    @Handler
    public void onHelpKeyboardShortcuts()
    {
+      // shortcuts are shown with key symbols where there's a Command key
       new ShortcutReferenceDialog(
             constants_.shortcutHeaderText(),
+            BrowseCap.hasMetaKey() ? new KeySymbolLegend() : null,
             new CommandShortcutReference()).showModal();
    }
 

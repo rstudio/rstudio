@@ -52,3 +52,32 @@
 {
    font-family: inherit;
 }
+
+.legend dl
+{
+   display: flex;
+   flex-wrap: wrap;
+   gap: 0.3em 1.5em;
+   margin: 0 0 0.75em 0;
+}
+
+.legend dl div
+{
+   display: flex;
+   align-items: baseline;
+   gap: 0.4em;
+}
+
+/* same font as the shortcut table, but large enough to make out each glyph */
+.legend dt
+{
+   font-family: fixedWidthFont;
+   font-weight: bold;
+   font-size: 1.4em;
+   line-height: 1;
+}
+
+.legend dd
+{
+   margin: 0;
+}

@@ -20,20 +20,28 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Modal dialog hosting a keyboard shortcut reference: one heading and table
- * per group of shortcuts, in a scrollable region.
+ * per group of shortcuts, in a scrollable region, optionally preceded by a
+ * legend that stays in view while the region scrolls.
  */
 public class ShortcutReferenceDialog extends ModalDialogBase
 {
    public ShortcutReferenceDialog(String caption, Widget content)
    {
+      this(caption, null, content);
+   }
+
+   public ShortcutReferenceDialog(String caption, Widget legend, Widget content)
+   {
       super(Roles.getDialogRole());
       setThemeAware(true);
       setText(caption);
+      legend_ = legend;
       content_ = content;
 
       // Enter would otherwise close the dialog from the reference region;
@@ -53,7 +61,14 @@ public class ShortcutReferenceDialog extends ModalDialogBase
       scroller_.getElement().setTabIndex(0);
       Roles.getRegionRole().set(scroller_.getElement());
       Roles.getRegionRole().setAriaLabelProperty(scroller_.getElement(), getText());
-      return scroller_;
+
+      if (legend_ == null)
+         return scroller_;
+
+      FlowPanel panel = new FlowPanel();
+      panel.add(legend_);
+      panel.add(scroller_);
+      return panel;
    }
 
    @Override
@@ -66,6 +81,7 @@ public class ShortcutReferenceDialog extends ModalDialogBase
    {
       String content();
       String groups();
+      String legend();
    }
 
    public interface Resources extends ClientBundle
@@ -80,6 +96,7 @@ public class ShortcutReferenceDialog extends ModalDialogBase
       RES.styles().ensureInjected();
    }
 
+   private final Widget legend_;
    private final Widget content_;
    private ScrollPanel scroller_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
