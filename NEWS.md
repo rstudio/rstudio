@@ -75,7 +75,7 @@
 
 ### Dependencies
 - Copilot Language Server 1.555.7
-- Electron 44.9.3
+- Electron 44.10.0
 - RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
 - GWT 2.13.1
 - Node.js 24.22.1 (GitHub Copilot, Posit Assistant)
