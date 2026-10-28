@@ -155,6 +155,40 @@ public class RowTableTests extends GWTTestCase
       assertNull(table.getSelectedItem());
    }
 
+   public void testNavigationKeysOnEmptyTableSelectNothing()
+   {
+      StringTable table = createTable();
+      int[] selectionEvents = { 0 };
+      table.addSelectionHandler(event -> selectionEvents[0]++);
+      table.setFocus(true);
+
+      pressKey(table, "ArrowUp", KeyCodes.KEY_UP);
+      pressKey(table, "ArrowDown", KeyCodes.KEY_DOWN);
+      pressKey(table, "PageUp", KeyCodes.KEY_PAGEUP);
+      pressKey(table, "PageDown", KeyCodes.KEY_PAGEDOWN);
+      pressKey(table, "Home", KeyCodes.KEY_HOME);
+      pressKey(table, "End", KeyCodes.KEY_END);
+
+      assertNull(table.getSelectedItem());
+      assertEquals(0, selectionEvents[0]);
+      assertEquals("", getActiveDescendant(table));
+   }
+
+   public void testKeyPressShowsFocusRingUntilBlur()
+   {
+      // HtmlUnit has no :focus-visible, so only a key press adds the ring here
+      String focusVisible =
+            GWT.<RowTable.Resources>create(RowTable.Resources.class).styles().focusVisible();
+      StringTable table = createTable("a", "b", "c");
+      table.setFocus(true);
+
+      pressKey(table, "ArrowDown", KeyCodes.KEY_DOWN);
+      assertTrue(table.getElement().hasClassName(focusVisible));
+
+      table.setFocus(false);
+      assertFalse(table.getElement().hasClassName(focusVisible));
+   }
+
    public void testArrowDownMovesFromActiveOption()
    {
       StringTable table = createTable("a", "b", "c");

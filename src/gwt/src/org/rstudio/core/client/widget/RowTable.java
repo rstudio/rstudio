@@ -553,6 +553,10 @@ public abstract class RowTable<T> extends ScrollPanel
    
    public void selectRow(int row, ScrollType scrollType)
    {
+      // an empty list clamps some targets (Up, End, PageUp) to row 0
+      if (data_.isEmpty())
+         return;
+
       row = MathUtil.clamp(row, 0, data_.size() - 1);
       if (row == selectedRow_)
          return;
