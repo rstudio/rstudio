@@ -40,6 +40,7 @@ set CLEANBUILD=
 set RSTUDIO_TARGET=Electron
 set PACKAGE_VERSION_SET=
 set DEBUG_BUILD=
+set ARM64=
 
 REM Produce multiarch builds by default on Jenkins.
 if defined JENKINS_URL (
@@ -72,6 +73,10 @@ for %%A in (%*) do (
         set MULTIARCH=1
         set KNOWN_ARG=1
     )
+    if /I "%%A" == "arm64" (
+        set ARM64=1
+        set KNOWN_ARG=1
+    )
     if /I "%%A" == "nogwt" (
         set BUILD_GWT=0
         set KNOWN_ARG=1
@@ -90,6 +95,17 @@ for %%A in (%*) do (
 REM Check for debug build.
 if defined DEBUG_BUILD (
     set CMAKE_BUILD_TYPE=Debug
+)
+
+REM The ARM64 session needs an ARM64 R; check before the long main build.
+set ARM64_CMAKE_ARGS=
+if defined ARM64 (
+    if not defined LIBR_HOME_ARM64 (
+        echo LIBR_HOME_ARM64 is not set; it is required with arm64; exiting
+        endlocal
+        exit /b 1
+    )
+    set ARM64_CMAKE_ARGS=-DRSTUDIO_PACKAGE_ARM64_SESSION=ON
 )
 
 REM Clean if requested.
@@ -204,7 +220,7 @@ cmake -G Ninja ^
     -DRSTUDIO_PACKAGE_BUILD=1 ^
     -DLIBR_HOME=C:\R\R-3.6.3 ^
     -DGWT_BUILD=%BUILD_GWT% ^
-    %RSTUDIO_CMAKE_EXTRA_ARGS% %RSTUDIO_PROJECT_ROOT% || (
+    %ARM64_CMAKE_ARGS% %RSTUDIO_CMAKE_EXTRA_ARGS% %RSTUDIO_PROJECT_ROOT% || (
         echo.!! ERROR: configure failed
         exit /b 1
     )
@@ -247,6 +263,14 @@ if "%MULTIARCH%" == "1" (
     )
 )
 
+REM Perform the ARM64 session build and install it into the 64-bit tree.
+if defined ARM64 (
+    call make-install-winarm64.bat "%BUILD_DIR%\src\cpp\session" %* || (
+        echo.!! ERROR: ARM64 session components build failed
+        exit /b 1
+    )
+)
+
 REM Create packages for development builds.
 REM The official build invokes this from Jenkinsfile after signing binaries.
 if not defined JENKINS_URL (
@@ -273,12 +297,13 @@ goto :eof
 
 :showhelp
 echo.
-echo make-package [clean] [debug] [electron] [multiarch] [nogwt] [nozip] [quick]
+echo make-package [clean] [debug] [electron] [multiarch] [arm64] [nogwt] [nozip] [quick]
 echo.
 echo     clean:      perform full rebuild
 echo     debug:      perform a debug build
 echo     electron:   build Electron desktop (default)
 echo     multiarch:  produce both 32-bit and 64-bit rsession executables
+echo     arm64:      also build the ARM64 rsession (set LIBR_HOME_ARM64 to an ARM64 R)
 echo     nogwt:      skip GWT build (use previous GWT build)
 echo     nozip:      skip creation of ZIP file
 echo     quick:      skip creation of setup package

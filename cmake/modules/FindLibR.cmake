@@ -30,6 +30,11 @@ if(DEFINED ENV{LIBR_HOME} AND NOT LIBR_HOME)
    set(LIBR_HOME "$ENV{LIBR_HOME}")
 endif()
 
+# a cross-compiled build (see globals.cmake) can't run the target R
+if(RSTUDIO_CROSS_COMPILE AND NOT LIBR_HOME)
+   message(FATAL_ERROR "Cross-compiling: set LIBR_HOME to an R for the target architecture")
+endif()
+
 unset(_R_EXECUTABLE CACHE)
 
 if(LIBR_HOME)
@@ -111,49 +116,67 @@ endif()
 # 2. Query R for all paths (shared across all platforms)
 # ===========================================================================
 
-execute_process(
-   COMMAND "${_R_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home())"
-   OUTPUT_VARIABLE LIBR_HOME
-   RESULT_VARIABLE _R_RESULT
-)
-if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_HOME)
-   message(FATAL_ERROR "Failed to query R.home() from '${_R_EXECUTABLE}'")
-endif()
-set(LIBR_HOME "${LIBR_HOME}" CACHE PATH "R home directory" FORCE)
+if(RSTUDIO_CROSS_COMPILE)
 
-set(LIBR_EXECUTABLE "${_R_EXECUTABLE}" CACHE PATH "R executable" FORCE)
-get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH)
-set(LIBR_BIN_DIR "${LIBR_BIN_DIR}" CACHE FILEPATH "R bin directory" FORCE)
+   # the target R can't run here: its folders are the ones R.home() reports
+   file(TO_CMAKE_PATH "${LIBR_HOME}" LIBR_HOME)
+   set(LIBR_HOME "${LIBR_HOME}" CACHE PATH "R home directory" FORCE)
 
-execute_process(
-   COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('include'))"
-   OUTPUT_VARIABLE LIBR_INCLUDE_DIRS
-   RESULT_VARIABLE _R_RESULT
-)
-if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_INCLUDE_DIRS)
-   message(FATAL_ERROR "Failed to query R.home('include') from '${LIBR_EXECUTABLE}'")
-endif()
-set(LIBR_INCLUDE_DIRS "${LIBR_INCLUDE_DIRS}" CACHE PATH "R include directory" FORCE)
+   set(LIBR_EXECUTABLE "${_R_EXECUTABLE}" CACHE PATH "R executable" FORCE)
+   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH)
+   set(LIBR_BIN_DIR "${LIBR_BIN_DIR}" CACHE FILEPATH "R bin directory" FORCE)
 
-execute_process(
-   COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('doc'))"
-   OUTPUT_VARIABLE LIBR_DOC_DIR
-   RESULT_VARIABLE _R_RESULT
-)
-if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_DOC_DIR)
-   message(FATAL_ERROR "Failed to query R.home('doc') from '${LIBR_EXECUTABLE}'")
-endif()
-set(LIBR_DOC_DIR "${LIBR_DOC_DIR}" CACHE PATH "R doc directory" FORCE)
+   set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory" FORCE)
+   set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory" FORCE)
+   set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory" FORCE)
 
-execute_process(
-   COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('lib'))"
-   OUTPUT_VARIABLE LIBR_LIB_DIR
-   RESULT_VARIABLE _R_RESULT
-)
-if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_LIB_DIR)
-   message(FATAL_ERROR "Failed to query R.home('lib') from '${LIBR_EXECUTABLE}'")
+else()
+
+   execute_process(
+      COMMAND "${_R_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home())"
+      OUTPUT_VARIABLE LIBR_HOME
+      RESULT_VARIABLE _R_RESULT
+   )
+   if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_HOME)
+      message(FATAL_ERROR "Failed to query R.home() from '${_R_EXECUTABLE}'")
+   endif()
+   set(LIBR_HOME "${LIBR_HOME}" CACHE PATH "R home directory" FORCE)
+
+   set(LIBR_EXECUTABLE "${_R_EXECUTABLE}" CACHE PATH "R executable" FORCE)
+   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH)
+   set(LIBR_BIN_DIR "${LIBR_BIN_DIR}" CACHE FILEPATH "R bin directory" FORCE)
+
+   execute_process(
+      COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('include'))"
+      OUTPUT_VARIABLE LIBR_INCLUDE_DIRS
+      RESULT_VARIABLE _R_RESULT
+   )
+   if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_INCLUDE_DIRS)
+      message(FATAL_ERROR "Failed to query R.home('include') from '${LIBR_EXECUTABLE}'")
+   endif()
+   set(LIBR_INCLUDE_DIRS "${LIBR_INCLUDE_DIRS}" CACHE PATH "R include directory" FORCE)
+
+   execute_process(
+      COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('doc'))"
+      OUTPUT_VARIABLE LIBR_DOC_DIR
+      RESULT_VARIABLE _R_RESULT
+   )
+   if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_DOC_DIR)
+      message(FATAL_ERROR "Failed to query R.home('doc') from '${LIBR_EXECUTABLE}'")
+   endif()
+   set(LIBR_DOC_DIR "${LIBR_DOC_DIR}" CACHE PATH "R doc directory" FORCE)
+
+   execute_process(
+      COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(R.home('lib'))"
+      OUTPUT_VARIABLE LIBR_LIB_DIR
+      RESULT_VARIABLE _R_RESULT
+   )
+   if(NOT _R_RESULT EQUAL 0 OR NOT LIBR_LIB_DIR)
+      message(FATAL_ERROR "Failed to query R.home('lib') from '${LIBR_EXECUTABLE}'")
+   endif()
+   set(LIBR_LIB_DIR "${LIBR_LIB_DIR}" CACHE PATH "R lib directory" FORCE)
+
 endif()
-set(LIBR_LIB_DIR "${LIBR_LIB_DIR}" CACHE PATH "R lib directory" FORCE)
 
 # ===========================================================================
 # 3. Find libraries
@@ -176,14 +199,25 @@ if(WIN32)
       "${LIBR_HOME}/bin"
    )
 
-   # Generate .lib files from DLLs
-   execute_process(
-      COMMAND "${_LIBR_ARCH_BIN}/Rscript.exe" "dll2lib.R" "${CMAKE_C_COMPILER}"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
-      OUTPUT_VARIABLE _DLL2LIB_STDOUT
-      ERROR_VARIABLE _DLL2LIB_STDERR
-      RESULT_VARIABLE _DLL2LIB_RESULT
-   )
+   # Generate .lib files from DLLs (without running R when cross-compiling)
+   if(RSTUDIO_CROSS_COMPILE)
+      execute_process(
+         COMMAND "${CMAKE_COMMAND}" "-DR_BIN_DIR=${_LIBR_ARCH_BIN}" "-DCOMPILER=${CMAKE_C_COMPILER}"
+                 "-DMACHINE=${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" -P "dll2lib.cmake"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
+         OUTPUT_VARIABLE _DLL2LIB_STDOUT
+         ERROR_VARIABLE _DLL2LIB_STDERR
+         RESULT_VARIABLE _DLL2LIB_RESULT
+      )
+   else()
+      execute_process(
+         COMMAND "${_LIBR_ARCH_BIN}/Rscript.exe" "dll2lib.R" "${CMAKE_C_COMPILER}"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools"
+         OUTPUT_VARIABLE _DLL2LIB_STDOUT
+         ERROR_VARIABLE _DLL2LIB_STDERR
+         RESULT_VARIABLE _DLL2LIB_RESULT
+      )
+   endif()
    if(NOT _DLL2LIB_RESULT EQUAL 0)
       message(STATUS "dll2lib.R output: ${_DLL2LIB_STDOUT}")
       message(STATUS "dll2lib.R error: ${_DLL2LIB_STDERR}")

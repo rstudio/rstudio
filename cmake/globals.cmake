@@ -275,6 +275,17 @@ if(WIN32)
    else()
       add_definitions(-D_AMD64_)
    endif()
+
+   # an ARM64 build on a non-ARM64 machine can't run the ARM64 R or what it builds:
+   # FindLibR.cmake reads R's folders from LIBR_HOME, and tests are discovered at test time
+   if(RSTUDIO_WINDOWS_ARM64 AND NOT DEFINED RSTUDIO_CROSS_COMPILE AND
+      NOT CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "ARM64")
+      set(RSTUDIO_CROSS_COMPILE TRUE)
+   endif()
+   if(RSTUDIO_CROSS_COMPILE)
+      set(CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)
+      set(RSTUDIO_VERIFY_R_VERSION FALSE)
+   endif()
 endif()
 
 # record git revision hash (cache it since we don't use this in development
