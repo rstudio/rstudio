@@ -10,6 +10,7 @@
 
 ### Fixed
 - ([#19298](https://github.com/rstudio/rstudio/issues/19298)): Fixed an issue where editor commands such as Comment/Uncomment Lines, Reformat Selection, Rename in Scope, Insert Chunk, folding, and scope navigation acted on the original view instead of the focused one in a split editor. Text inserted or replaced with `rstudioapi` (e.g. `insertText()`, `selectionSet()`) now also goes to the focused view, matching the selection that `getActiveDocumentContext()` reports. Rename in Scope also works again in Visual Mode code chunks.
+- ([#19298](https://github.com/rstudio/rstudio/issues/19298)): Fixed an issue where using Expand Selection caused editors opened afterwards in the session to respond to each other's focus and editing events; in a split editor, this sent editor commands to the wrong view.
 - ([#19228](https://github.com/rstudio/rstudio/issues/19228)): [Accessibility] RStudio keyboard shortcuts such as F6, Ctrl+2 and Ctrl+Shift+2 now work while focus is in Posit Assistant, including when it's popped out (requires an updated Posit Assistant).
 - ([#18490](https://github.com/rstudio/rstudio/issues/18490)): Fixed an issue where running a chunk in a freshly opened Visual Mode document scrolled the editor to the top and back before any chunk had been clicked or edited.
 - ([#19294](https://github.com/rstudio/rstudio/issues/19294)): Fixed an issue where the Visual Mode Insert Emoji and Insert Unicode popups closed on their own a few seconds after the editor was first focused, even while a search term was still being typed.
