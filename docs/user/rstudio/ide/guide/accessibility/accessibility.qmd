@@ -41,7 +41,7 @@ Many RStudio features can be operated entirely with the keyboard. Using the keyb
 
 ### Keyboard shortcuts
 
-RStudio has many keyboard shortcuts to trigger actions, move between areas of the user interface, and so on. Many of these can be discovered by browsing the main menu, hovering the mouse cursor over toolbar buttons, and viewing keyboard shortcut reference from the Help / Keyboard Shortcut Help menu.
+RStudio has many keyboard shortcuts to trigger actions, move between areas of the user interface, and so on. Many of these can be discovered by browsing the main menu, hovering the mouse cursor over toolbar buttons, and viewing keyboard shortcut reference from the Help / Keyboard Shortcuts Help menu.
 
 Keyboard shortcuts may be customized using the Tools / Modify Keyboard Shortcuts menu. For more on this, see the [Customizing Keyboard Shortcuts article.](../productivity/custom-shortcuts.html)
 
