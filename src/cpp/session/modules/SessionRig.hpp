@@ -34,8 +34,10 @@ namespace rig {
 // Find an installed R matching the requested version (same major.minor),
 // among those rig reports and those in the platform's standard locations.
 // On success, *pInstalled is an object with 'version', 'path', 'binary' and
-// 'home'; when nothing matches it is null.
+// 'home'; when nothing matches it is null. A build for 'architecture' is
+// preferred when one is given, else one that runs natively here.
 core::Error findInstalledRVersion(const std::string& version,
+                                  const std::string& architecture,
                                   core::json::Value* pInstalled);
 
 // The version of R being installed, or "" when no installation is running.

@@ -6324,10 +6324,12 @@ public class RemoteServer implements Server
 
    @Override
    public void rigInstallRVersion(String version,
+                                  String architecture,
                                   ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(version)
+            .add(architecture)
             .get();
 
       sendRequest(RPC_SCOPE, RIG_INSTALL_R_VERSION, params, requestCallback);

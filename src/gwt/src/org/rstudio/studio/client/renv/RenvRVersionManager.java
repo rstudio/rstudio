@@ -113,7 +113,7 @@ public class RenvRVersionManager
                false,
                message,
                constants_.installRVersion(data.requested_version),
-               () -> installR(data.requested_version));
+               () -> chooseArchitectureAndInstall(data.requested_version, data.install_architectures));
       }
       else
       {
@@ -166,7 +166,38 @@ public class RenvRVersionManager
             });
    }
 
-   private void installR(String version)
+   // where both builds run (ARM64 Windows, Apple silicon Macs), ask which to install
+   private void chooseArchitectureAndInstall(String version, String[] architectures)
+   {
+      if (architectures == null || architectures.length < 2)
+      {
+         installR(version, "");
+         return;
+      }
+
+      String nativeArch = architectures[0];
+      String otherArch = architectures[1];
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION,
+            constants_.chooseRArchitectureCaption(),
+            constants_.chooseRArchitectureMessage(version),
+            true,
+            () -> installR(version, nativeArch),
+            () -> installR(version, otherArch),
+            null,
+            architectureLabel(nativeArch),
+            architectureLabel(otherArch),
+            true);
+   }
+
+   private static String architectureLabel(String architecture)
+   {
+      return StringUtil.equals(architecture, "x86_64")
+            ? constants_.x64RLabel()
+            : constants_.arm64RLabel();
+   }
+
+   private void installR(String version, String architecture)
    {
       globalDisplay_.hideWarningBar();
 
@@ -174,7 +205,7 @@ public class RenvRVersionManager
       // so be ready for its completion event before asking
       pendingInstall_ = version;
 
-      server_.rigInstallRVersion(version, new ServerRequestCallback<String>()
+      server_.rigInstallRVersion(version, architecture, new ServerRequestCallback<String>()
       {
          @Override
          public void onResponseReceived(String jobId)

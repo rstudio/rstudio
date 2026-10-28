@@ -197,6 +197,13 @@ void checkProjectRVersion(bool refreshInstalled)
    data["source"] = source;
    data["supported"] = supported;
    data["installed"] = installed.isObject() ? installed : json::Value();
+
+   // the builds of R to choose between when installing ('arm64', 'x86_64'),
+   // or none where there's no choice
+   json::Value architectures = result["architectures"];
+   if (!architectures.isArray())
+      architectures = json::Array();
+   data["install_architectures"] = architectures;
    data["can_install"] = desktop && supported;
 
    // lets a client that connects while R installs (e.g. after a refresh)

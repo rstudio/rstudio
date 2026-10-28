@@ -326,8 +326,9 @@
 #'   when the versions match, the renv library is empty and the lockfile
 #'   records packages to restore; or "mismatch",
 #'   with the 'requested' and 'current' versions, where the request came from
-#'   ('source'), whether that R could run ('supported'), and the matching
-#'   installation of R, if any ('installed').
+#'   ('source'), whether that R could run ('supported'), the matching
+#'   installation of R, if any ('installed'), and the builds of R to choose
+#'   between when installing it ('architectures'; empty when there's no choice).
 .rs.addFunction("projectRVersionCheck", function(project,
                                                  projectVersion,
                                                  minimum,
@@ -388,6 +389,7 @@
       current   = .rs.scalar(current),
       source    = .rs.scalar(source),
       supported = .rs.scalar(.rs.rVersionSupported(version, minimum)),
-      installed = installed
+      installed = installed,
+      architectures = if (findInstalled) .rs.rig.installArchitectures() else character()
    )
 })

@@ -445,6 +445,22 @@ test_that("the architectures of a Windows R build are read from R.dll", {
    match <- .rs.findInstalledRVersion("4.6.1", installed[1L, ], architecture = "arm64")
    expect_equal(match$home, .rs.scalar(file.path(root, "x86_64")))
 
+   # the x64 build is found when it was the one asked for (installing R)
+   match <- .rs.findInstalledRVersion("4.6.1", installed[2:1, ], architecture = "x86_64")
+   expect_equal(match$home, .rs.scalar(file.path(root, "x86_64")))
+
+})
+
+test_that("installing R offers a choice of build only where both builds run", {
+
+   if (.rs.platform.isMacos || .rs.platform.isWindows)
+      expect_identical(.rs.rig.installArchitectures("arm64"), c("arm64", "x86_64"))
+   else
+      expect_identical(.rs.rig.installArchitectures("arm64"), character())
+
+   expect_identical(.rs.rig.installArchitectures("x86-64"), character())
+   expect_identical(.rs.rig.installArchitectures("x86_64"), character())
+
 })
 
 test_that("an ARM64 Windows machine is recognized even from an emulated R", {

@@ -263,6 +263,7 @@ test_that("the project's R version is compared with the running one", {
    expect_equal(check$source, .rs.scalar("lockfile"))
    expect_true(check$supported)
    expect_null(check$installed)
+   expect_identical(check$architectures, character())
    
    # the project file wins over the lockfile
    check <- .rs.projectRVersionCheck(project, "4.1", "3.6.0", TRUE, FALSE, current = "4.4.1")

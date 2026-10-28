@@ -415,6 +415,14 @@
    if ((.rs.platform.isMacos || .rs.platform.isWindows) && identical(machine, "arm64")) "arm64"
 })
 
+#' The builds of R to choose between when installing R, the native one first:
+#' only where an x86_64 build also runs (ARM64 Windows, Apple silicon Macs).
+.rs.addFunction("rig.installArchitectures", function(machine = .rs.rig.machine())
+{
+   preferred <- .rs.rInstallations.preferredArchitecture(machine)
+   if (is.null(preferred)) character() else c(preferred, "x86_64")
+})
+
 #' Whether an installation of R runs as itself when it isn't the default.
 #' Every version in the macOS R framework comes with a launcher script (and
 #' other files) naming the framework's shared Resources directory, which

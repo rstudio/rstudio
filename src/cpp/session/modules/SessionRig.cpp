@@ -55,9 +55,10 @@ SEXP rs_rigPath()
 class RInstallJob : public boost::enable_shared_from_this<RInstallJob>
 {
 public:
-   static boost::shared_ptr<RInstallJob> create(const std::string& version)
+   static boost::shared_ptr<RInstallJob> create(const std::string& version,
+                                                const std::string& architecture)
    {
-      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version));
+      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version, architecture));
       pJob->initialize();
       return pJob;
    }
@@ -78,14 +79,16 @@ public:
    }
 
 private:
-   explicit RInstallJob(const std::string& version)
-      : version_(version)
+   RInstallJob(const std::string& version, const std::string& architecture)
+      : version_(version), architecture_(architecture)
    {
    }
 
    void initialize()
    {
       std::string name = "Install R " + version_;
+      if (!architecture_.empty())
+         name += " (" + architecture_ + ")";
 
       // the job outlives this object (jobs are never discarded), so its stop
       // action must not keep this object alive
@@ -137,6 +140,11 @@ private:
       jobs::setJobStatus(pJob_, "Installing R " + version_);
 
       std::vector<std::string> args = { "add", version_, "--user" };
+      if (!architecture_.empty())
+      {
+         args.push_back("--arch");
+         args.push_back(architecture_);
+      }
       log("$ " + rigPath + " " + core::algorithm::join(args, " ") + "\n");
 
       boost::shared_ptr<RInstallJob> self = shared_from_this();
@@ -199,7 +207,7 @@ private:
       json::Value installed;
       if (ok)
       {
-         Error lookupError = findInstalledRVersion(version_, &installed);
+         Error lookupError = findInstalledRVersion(version_, architecture_, &installed);
          if (lookupError)
             LOG_ERROR(lookupError);
 
@@ -241,6 +249,7 @@ private:
 
 private:
    std::string version_;
+   std::string architecture_;
    boost::shared_ptr<jobs::Job> pJob_;
    bool processRunning_ = false;
    bool stopped_ = false;
@@ -265,21 +274,36 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (!boost::regex_match(version, boost::regex("\\d+\\.\\d+(\\.\\d+)?")))
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
+   // the build of R to install where there's a choice; empty for rig's default
+   std::string architecture;
+   if (request.params.getSize() > 1)
+   {
+      if (!request.params[1].isString())
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      architecture = request.params[1].getString();
+   }
+   if (!architecture.empty() && architecture != "arm64" && architecture != "x86_64")
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
    if (s_pInstallJob && s_pInstallJob->running())
       return Error("RInstallInProgress", 1, "An R installation is already in progress", ERROR_LOCATION);
 
-   s_pInstallJob = RInstallJob::create(version);
+   s_pInstallJob = RInstallJob::create(version, architecture);
    pResponse->setResult(s_pInstallJob->jobId());
    return Success();
 }
 
 } // anonymous namespace
 
-Error findInstalledRVersion(const std::string& version, json::Value* pInstalled)
+Error findInstalledRVersion(const std::string& version,
+                            const std::string& architecture,
+                            json::Value* pInstalled)
 {
-   return r::exec::RFunction(".rs.findInstalledRVersion")
-         .addParam("version", version)
-         .call(pInstalled);
+   r::exec::RFunction findInstalled(".rs.findInstalledRVersion");
+   findInstalled.addParam("version", version);
+   if (!architecture.empty())
+      findInstalled.addParam("architecture", architecture);
+   return findInstalled.call(pInstalled);
 }
 
 std::string installInProgress()

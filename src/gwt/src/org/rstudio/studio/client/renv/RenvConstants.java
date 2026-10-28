@@ -46,4 +46,8 @@ public interface RenvConstants extends Messages {
     String updateRMessage(String version);
     String renvLibraryEmpty();
     String renvRestoreAction();
+    String chooseRArchitectureCaption();
+    String chooseRArchitectureMessage(String version);
+    String arm64RLabel();
+    String x64RLabel();
 }
