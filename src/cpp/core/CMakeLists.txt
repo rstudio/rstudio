@@ -382,15 +382,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/ManifestTests.cpp")
    endif()
 
-   # Use gtest from vendor directory
-   set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
-   include_directories(${GTEST_SOURCE_DIR}/include)
-
-   # Add Google Test if not already added
-   if(NOT TARGET gtest)
-      add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
-   endif()
-
    add_executable(rstudio-core-tests
       TestMain.cpp
       ${CORE_TEST_FILES}
@@ -399,7 +390,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    target_link_libraries(rstudio-core-tests
       rstudio-core
-      gtest
+      GTest::gtest
    )
 
    if(NOT WIN32)
