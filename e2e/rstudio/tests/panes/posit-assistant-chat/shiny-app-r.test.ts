@@ -29,7 +29,13 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   // free", which ran the app on the idle event loop, where (before #19236)
   // the session served no requests and took no interrupt; the cleanup below
   // could not stop it and the shard was lost to the heartbeat watchdog.
-  const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file named app.R in the current working directory. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Do NOT set options(shiny.launch.browser) and do NOT pass a launch.browser argument to runApp--RStudio is already configured to open the app in the Viewer pane. Run the app with shiny::runApp() at the console; do NOT schedule it with later::later() or run it as a background job. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
+  //
+  // The assistant may run runApp() inside its own executeCode call, which
+  // blocks until the app stops, so its turn never ends while the app runs
+  // (run 40691812818). The test therefore waits on the Viewer, not on the
+  // turn, and asks for no closing message.
+  const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file named app.R in the current working directory. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Do NOT set options(shiny.launch.browser) and do NOT pass a launch.browser argument to runApp--RStudio is already configured to open the app in the Viewer pane. Run the app with shiny::runApp() at the console; do NOT schedule it with later::later() or run it as a background job.`;
+  const APP_TITLE = 'Wacky Tip Calculator for R';
 
   // Budget for the assistant to write app.R and get it running in the Viewer,
   // sized for LLM tail latency -- observed whole-test durations are 90-108s.
@@ -82,13 +88,26 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
+    // A timed-out poll leaves only seconds of the no-output watchdog's window,
+    // and the cleanup below can outlast them; announcing it restarts the clock.
+    console.log('[shiny-app-r] cleanup: stopping the assistant turn and the app');
+
+    // The turn is still running when the assistant launched the app from its
+    // own executeCode call. Stop it first, so interrupting R below does not
+    // hand control back to a live turn that may launch the app again.
+    if (chatPane && (await chatPane.isStopButtonVisible())) {
+      await chatPane.stopBtn.click().catch(() => {});
+      await expect(chatPane.stopBtn).toBeHidden({ timeout: 10000 }).catch(() => {});
+    }
+
     // Stop the app cleanly when the Viewer is showing it. This is best
     // effort: when the test failed before the Viewer activated (the app ran
     // but never rendered there), the stop button never appears even though
-    // R is busy serving the app.
+    // R is busy serving the app. Stopping the turn above can also stop the
+    // app, hiding the button between the check and the click.
     const viewerStopBtn = page.locator("[id^='rstudio_tb_viewerstop']");
     if (await viewerStopBtn.isVisible().catch(() => false)) {
-      await viewerStopBtn.click();
+      await viewerStopBtn.click({ timeout: 5000 }).catch(() => {});
       await waitForConsoleIdle(page, 10000).catch(() => {});
     }
 
@@ -118,7 +137,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     // Without this the test falls back to the 120s global timeout and cuts the
     // poll below off at 40% of its budget -- a bare "Test timeout exceeded"
     // instead of the poll's own diagnostic. Derived to keep the two in sync;
-    // the margin covers conversation setup and the 90s of Viewer assertions.
+    // the margin covers conversation setup and the Viewer assertions.
     test.setTimeout(ASSISTANT_TURN_BUDGET_MS + 120000);
 
     // Start a fresh conversation
@@ -132,31 +151,16 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     // budget-vs-watchdog margin exact instead of a guess about setup silence.
     console.log(`[shiny-app-r] awaiting assistant turn (budget ${ASSISTANT_TURN_BUDGET_MS / 1000}s)`);
 
-    // Poll until the assistant completes. Handle Allow dialogs for each tool type.
-    await chatActions.pollWithAllowDialogs(async () => {
-      const messageCount = await chatPane.getMessageCount();
-      if (messageCount >= 2 && await chatActions.isTurnIdle()) {
-        const lastText = await chatPane.messageItem.last().innerText().catch(() => '');
-        if (lastText.includes('Wacky Tip Calculator for R has started') && !lastText.includes('Create a Shiny for R')) {
-          return true;
-        }
-      }
-      return false;
-    }, ASSISTANT_TURN_BUDGET_MS);
-
-
-
-    // Verify the Viewer pane iframe is visible (expect auto-waits up to 30s
-    // -- the iframe may take a beat to mount after the assistant signals
-    // completion).
-    const viewerIframe = page.locator(VIEWER_FRAME);
-    await expect(viewerIframe).toBeVisible({ timeout: 30000 });
-
-    // Verify elements inside the Viewer iframe
+    // Poll until the app shows in the Viewer, granting Allow dialogs for each
+    // tool type meanwhile. The turn may still be running (see PROMPT).
     const viewerFrame = page.frameLocator(VIEWER_FRAME);
-    await expect(
-      viewerFrame.locator('text=Wacky Tip Calculator for R').first()
-    ).toBeVisible({ timeout: 30000 });
+    const appTitle = viewerFrame.getByText(APP_TITLE).first();
+    await chatActions.pollWithAllowDialogs(
+      () => appTitle.isVisible().catch(() => false),
+      ASSISTANT_TURN_BUDGET_MS,
+    );
+
+    await expect(page.locator(VIEWER_FRAME)).toBeVisible();
 
     // Verify slider is present
     await expect(
