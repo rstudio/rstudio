@@ -6,6 +6,7 @@ import { collectClientStatePushes, waitForActiveDocIdPush } from '@utils/client-
 import { executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
+import { rPathLiteral } from '@utils/r';
 import type { AceEditorElement } from '@utils/ace';
 import type { Locator, Page, Route } from '@playwright/test';
 
@@ -729,6 +730,40 @@ test.describe('Split editor', () => {
     } finally {
       await clearPref(page, 'strip_trailing_whitespace');
     }
+  });
+
+  test('reloading after an external change keeps the split view\'s selection', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+      # split_view_marker
+      reload_a <- 1
+      reload_b <- 2
+      reload_c <- 3
+    `);
+    const views = sourceViews(page);
+    await executeCommand(page, 'splitEditorRight');
+    await expect(views).toHaveCount(2);
+    const primary = viewEditor(views.first());
+    const split = viewEditor(views.nth(1));
+
+    await split.click();
+    await split.select({ start: { row: 2, column: 0 }, end: { row: 2, column: 8 } });
+    expect(await split.selectedText()).toBe('reload_b');
+
+    // Change the file on disk, dating it ahead so the change registers even
+    // within the second the file was opened.
+    const fullPath = rPathLiteral(`${sandbox.dir}/${FILE}`);
+    await consoleActions.executeInConsole(
+      `writeLines(c("# split_view_marker", "reload_a <- 1", "reload_b <- 2", "reload_c <- 30"), ${fullPath}); ` +
+      `Sys.setFileTime(${fullPath}, Sys.time() + 10)`,
+      { wait: true },
+    );
+
+    // Focusing the primary view checks for external changes, and the
+    // unmodified document reloads by replacing its whole text, which would
+    // otherwise move the split view's cursor to the end of the file.
+    await primary.click();
+    await expect.poll(() => documentLine(page, 3), { timeout: TIMEOUTS.fileOpen }).toBe('reload_c <- 30');
+    expect(await split.selectedText()).toBe('reload_b');
   });
 
   test('Shrink Selection in the split view forgets ranges from before an edit', async ({ rstudioPage: page }) => {

@@ -3714,7 +3714,7 @@ public class TextEditingTarget implements
             }
             
             if (!strippedCode.equals(code))
-               replaceCodeKeepingViewState(strippedCode);
+               replaceCodeKeepingFolds(strippedCode);
          }
 
          boolean autoAppendNewline = (projConfig_ == null)
@@ -3744,37 +3744,25 @@ public class TextEditingTarget implements
    }
 
    // Replaces the document's text with code of the same line count, keeping
-   // each editor view's state. Calling 'setCode' can remove folds in the
-   // document, so cache the folds and reapply them after document mutation;
-   // it keeps the primary view's cursor, but replacing the shared document
-   // moves a split view's cursor to the end, so restore its selection and
-   // scroll position as well.
-   private void replaceCodeKeepingViewState(String code)
+   // each editor view's folds. 'setCode' keeps each view's cursor and scroll
+   // position but can remove folds in the document, so cache the folds and
+   // reapply them after document mutation. They go back after 'setCode' has
+   // restored the selections, since setting a selection unfolds any folds it
+   // spans.
+   private void replaceCodeKeepingFolds(String code)
    {
       JsArray<AceFold> folds = primaryDisplay_.getFolds();
       DocDisplay splitView = view_.getSplitDisplay();
-      JsArray<AceFold> splitFolds = null;
-      Range splitSelection = null;
-      int splitScrollTop = 0;
-      if (splitView != null)
-      {
-         splitFolds = splitView.getFolds();
-         splitSelection = splitView.getSelectionRange();
-         splitScrollTop = splitView.getScrollTop();
-      }
+      JsArray<AceFold> splitFolds = splitView == null ? null : splitView.getFolds();
 
       primaryDisplay_.setCode(code, true);
       for (AceFold fold : JsUtil.asIterable(folds))
          primaryDisplay_.addFold(fold.getRange());
 
-      // restore the selection before the folds, since setting a selection
-      // unfolds any folds it spans
       if (splitView != null)
       {
-         splitView.setSelectionRange(splitSelection);
          for (AceFold fold : JsUtil.asIterable(splitFolds))
             splitView.addFold(fold.getRange());
-         splitView.scrollToY(splitScrollTop, 0);
       }
    }
 

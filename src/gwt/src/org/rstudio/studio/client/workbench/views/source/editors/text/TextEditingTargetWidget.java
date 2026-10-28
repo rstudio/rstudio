@@ -694,6 +694,7 @@ public class TextEditingTargetWidget
          registration.removeHandler();
       splitEditorRegistrations_.clear();
 
+      splitEditor_.detachFromDocument();
       splitEditor_.getWidget().getEditor().destroy();
       splitEditor_ = null;
       splitEditorFocusedLast_ = false;
