@@ -814,6 +814,19 @@ void copyToActiveDevice()
    r::exec::RFunction(".rs.GEcopyDisplayList", rsDeviceNumber).call();
 }
    
+std::string altText()
+{
+   if (s_pGEDevDesc == nullptr)
+      return std::string();
+
+   std::string altText;
+   Error error = r::exec::RFunction(".rs.graphicsAltText",
+                                    s_pGEDevDesc->displayList).call(&altText);
+   if (error)
+      LOG_ERROR(error);
+   return altText;
+}
+
 std::string imageFileExtension()
 {
    return "png";
@@ -871,6 +884,7 @@ Error initialize(
    graphicsDevice.imageFileExtension = imageFileExtension;
    graphicsDevice.close = close;
    graphicsDevice.onBeforeExecute = onBeforeExecute;
+   graphicsDevice.altText = altText;
    Error error = plotManager().initialize(graphicsPath,
                                           graphicsDevice,
                                           &s_graphicsDeviceEvents);

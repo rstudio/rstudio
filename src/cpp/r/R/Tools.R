@@ -550,6 +550,32 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    )
 })
 
+#' Graphics Alt Text
+#'
+#' Collect the alt text that plot authors attached to the grobs drawn on a
+#' page, such as ggplot2's `labs(alt = ...)`. Grid records each top-level
+#' grob it draws in the engine display list, which is reset on every new
+#' page, so text from an earlier page can't leak into a later one.
+#'
+#' @param displayList The device's engine display list.
+#' @return The alt text, or an empty string when there is none.
+.rs.addFunction("graphicsAltText", function(displayList)
+{
+   altText <- character()
+   for (entry in as.list(displayList))
+   {
+      args <- entry[[2]]
+      if (length(args) < 2 || !is.list(args[[2]]))
+         next
+
+      alt <- attr(args[[2]][["x"]], "alt-label", exact = TRUE)
+      if (is.character(alt) && length(alt) == 1 && !is.na(alt) && nzchar(alt))
+         altText <- c(altText, alt)
+   }
+
+   paste(altText, collapse = " ")
+})
+
 # record an object to a file
 .rs.addFunction("saveGraphics", function(filename)
 {

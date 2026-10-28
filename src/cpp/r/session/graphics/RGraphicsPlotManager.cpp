@@ -85,6 +85,7 @@ PlotManager::PlotManager()
       lastChange_(boost::posix_time::not_a_date_time),
       suppressDeviceEvents_(false),
       activePlot_(-1),
+      activePlotChanged_(false),
       plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)")
 {
    plots_.set_capacity(100);
@@ -164,6 +165,7 @@ Error PlotManager::setActivePlot(int index)
 
       // set index
       activePlot_ = index;
+      activePlotChanged_ = true;
       
       // render it
       renderActivePlotToDisplay();
@@ -593,6 +595,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    
    // optional manipulator structure
    json::Value plotManipulatorJson;
+   std::string altText;
 
    if (hasPlot()) // write image for active plot
    {
@@ -619,6 +622,8 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
 
       // get manipulator
       activePlot().manipulatorAsJson(&plotManipulatorJson);
+
+      altText = graphicsDevice_.altText();
    }
    else  // write "empty" image 
    {
@@ -633,6 +638,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
       }
    }
    
+   bool activePlotChanged = activePlotChanged_;
+   activePlotChanged_ = false;
+
    // call output function
    DisplayState currentState(imageFilename(),
                              plotManipulatorJson,
@@ -640,7 +648,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
                              r::session::graphics::device::getHeight(),
                              activePlotIndex(), 
                              plotCount(),
-                             r::session::graphics::device::hasFixedSize());
+                             r::session::graphics::device::hasFixedSize(),
+                             altText,
+                             activePlotChanged);
    outputFunction(currentState);
 }
    
@@ -928,6 +938,7 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
       // add the plot
       plots_.push_back(ptrPlot);
       activePlot_ = gsl::narrow_cast<int>(plots_.size()) - 1;
+      activePlotChanged_ = true;
    }
 
    // once we render the new plot we always reset pending manipulator state

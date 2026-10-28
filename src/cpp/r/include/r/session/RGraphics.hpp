@@ -112,14 +112,18 @@ struct DisplayState
                 int height,
                 int activePlotIndex,
                 int plotCount,
-                bool fixedSize)
+                bool fixedSize,
+                const std::string& altText,
+                bool activePlotChanged)
       : imageFilename(imageFilename), 
         manipulatorJson(manipulatorJson),
         width(width),
         height(height),
         activePlotIndex(activePlotIndex),
         plotCount(plotCount),
-        fixedSize(fixedSize)
+        fixedSize(fixedSize),
+        altText(altText),
+        activePlotChanged(activePlotChanged)
    {
    }
    
@@ -130,6 +134,13 @@ struct DisplayState
    int activePlotIndex;
    int plotCount;
    bool fixedSize;
+
+   // alt text the plot's author supplied, or empty
+   std::string altText;
+
+   // whether a different plot is shown than at the previous render, as
+   // opposed to the same plot redrawn (e.g. after a resize)
+   bool activePlotChanged;
 };
 
 extern const char * const kPngFormat;
