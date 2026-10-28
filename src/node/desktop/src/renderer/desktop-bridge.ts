@@ -582,10 +582,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_toggle_fullscreen_mode');
     },
 
-    showKeyboardShortcutHelp: () => {
-      ipcRenderer.send('desktop_show_keyboard_shortcut_help');
-    },
-
     launchSession: (reload: boolean) => {
       ipcRenderer.send('desktop_launch_session', reload);
     },

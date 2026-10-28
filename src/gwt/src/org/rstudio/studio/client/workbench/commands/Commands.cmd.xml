@@ -666,7 +666,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       <!-- "Cmd" means Ctrl OR Meta -->
       <!-- Use spaces for key sequences, e.g. 'Ctrl+X Ctrl+F' -->
       <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
-      <!-- When adding/changing shortcuts, also update keyboard.htm -->
       <shortcutgroup name="Source Editor">
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R" disableModes="sublime"/>
