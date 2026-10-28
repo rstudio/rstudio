@@ -54,7 +54,7 @@ export const RESET_CITATION_SERVICE_OPTIONS =
   `options(${SERVICES.map((s) => `rstudio.${s}_url = NULL`).join(', ')})`;
 
 export class CitationServiceMock {
-  private readonly failures = new Map<CitationService, number>();
+  private readonly failures = new Map<CitationService, { status: number; resource?: string }>();
 
   private constructor(
     private readonly server: http.Server,
@@ -82,9 +82,12 @@ export class CitationServiceMock {
     return `options(${args.join(', ')})`;
   }
 
-  /** Answer every request to `service` with `status` until reset(). */
-  fail(service: CitationService, status: number): void {
-    this.failures.set(service, status);
+  /**
+   * Answer requests to `service` with `status` until reset(): every request,
+   * or only those for `resource` (e.g. '/entrez/eutils/esummary.fcgi').
+   */
+  fail(service: CitationService, status: number, resource?: string): void {
+    this.failures.set(service, { status, resource });
   }
 
   reset(): void {
@@ -114,8 +117,8 @@ export class CitationServiceMock {
     headers: http.IncomingHttpHeaders,
   ): Answer {
     const failure = this.failures.get(service);
-    if (failure !== undefined) {
-      return { status: failure };
+    if (failure !== undefined && (failure.resource === undefined || failure.resource === resource)) {
+      return { status: failure.status };
     }
 
     switch (service) {

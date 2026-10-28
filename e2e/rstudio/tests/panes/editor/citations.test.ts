@@ -8,7 +8,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
-import { CitationServiceMock, RESET_CITATION_SERVICE_OPTIONS } from '@utils/citation-services';
+import { CitationServiceMock, RESET_CITATION_SERVICE_OPTIONS, type CitationService } from '@utils/citation-services';
 import { sessionsRunLocally } from '@utils/session-liveness';
 import type { Page } from 'playwright';
 
@@ -68,9 +68,11 @@ test.describe('Citations', () => {
 
   test.afterAll(async () => {
     try {
-      await consoleActions.executeInConsole(RESET_CITATION_SERVICE_OPTIONS, { wait: true });
+      if (servicesReachable)
+        await consoleActions.executeInConsole(RESET_CITATION_SERVICE_OPTIONS, { wait: true });
     } finally {
-      await services.close();
+      // Unset if beforeAll failed before the mock started.
+      await services?.close();
     }
   });
 
@@ -82,8 +84,11 @@ test.describe('Citations', () => {
     services.reset();
     // Citation inserts append to references.bib in the shared workdir; remove
     // any leftover so each test's bib assertions start from a clean file. The
-    // same command (re)points the session's citation lookups at the mock.
-    await consoleActions.executeInConsole(`unlink("references.bib"); ${services.optionsCall()}`, { wait: true });
+    // same command (re)points the session's citation lookups at the mock --
+    // only when it can reach the mock, so a remote session that never runs
+    // afterAll isn't left with Insert Citation pointed at a dead port.
+    const pointAtMock = servicesReachable ? `; ${services.optionsCall()}` : '';
+    await consoleActions.executeInConsole(`unlink("references.bib")${pointAtMock}`, { wait: true });
   });
 
   function skipUnlessServicesReachable(): void {
@@ -291,20 +296,41 @@ test.describe('Citations', () => {
   }
 
   // A service-side failure surfaces as the dialog's error status line, not an
-  // endless "Searching..." or an empty result list.
-  test('reports a citation service failure in the dialog', async ({ rstudioPage: page }) => {
-    skipUnlessServicesReachable();
-    services.fail('datacite', 503);
-    await newMarkdownVisualDoc(page);
+  // endless "Searching..." or an empty result list. Each case fails through
+  // its own rsession path: doiFetchCSL, crossrefRequest, dataCiteRequest, and
+  // both legs of pubMedSearch (esummary runs in a nested continuation). This
+  // also proves each lookup goes through the mock: one that fell back to the
+  // live service would get results instead. Crossref's panel has no
+  // service-specific wording, only the catch-all.
+  const SERVICE_FAILURES: { service: CitationService; resource?: string; query: string; error: string }[] = [
+    { service: 'doi', query: '10.3133/93888', error: 'An error occurred while searching for this DOI.' },
+    { service: 'crossref', query: searchTerm, error: 'An unknown error occurred. Please try again.' },
+    { service: 'datacite', query: searchTerm, error: 'An error occurred while searching DataCite.' },
+    { service: 'pubmed', query: searchTerm, error: 'An error occurred while searching PubMed.' },
+    {
+      service: 'pubmed',
+      resource: '/entrez/eutils/esummary.fcgi',
+      query: searchTerm,
+      error: 'An error occurred while searching PubMed.',
+    },
+  ];
+  for (const { service, resource, query, error } of SERVICE_FAILURES) {
+    const source = CITATION_SOURCES[service];
+    const what = resource ? `${source.alt} ${resource.split('/').pop()}` : source.alt;
+    test(`reports a ${what} service failure in the dialog`, async ({ rstudioPage: page }) => {
+      skipUnlessServicesReachable();
+      services.fail(service, 503, resource);
+      await newMarkdownVisualDoc(page);
 
-    const citation = new InsertCitationDialog(page);
-    await citation.open();
-    const searchBox = await citation.selectSource(CITATION_SOURCES.datacite);
-    await citation.search(searchBox, searchTerm);
-    await expect(citation.searchError).toHaveText('An error occurred while searching DataCite.', { timeout: 30000 });
+      const citation = new InsertCitationDialog(page);
+      await citation.open();
+      const searchBox = await citation.selectSource(source);
+      await citation.search(searchBox, query);
+      await expect(citation.searchError).toHaveText(error, { timeout: 30000 });
 
-    await citation.cancel();
-  });
+      await citation.cancel();
+    });
+  }
 
   // The DOI reaches the rsession's download.file() call inside an R string
   // literal; a quote in it must not end the literal. The mock has no such
