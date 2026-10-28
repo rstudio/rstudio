@@ -106,14 +106,7 @@
    if (!.rs.platform.isMacos || identical(machine, "arm64"))
       return(machine)
 
-   arm64 <- .rs.tryCatch(suppressWarnings(
-      system2("/usr/sbin/sysctl", c("-n", "hw.optional.arm64"), stdout = TRUE, stderr = FALSE)
-   ))
-
-   if (is.character(arm64) && identical(trimws(arm64[1L]), "1"))
-      return("arm64")
-
-   machine
+   if (.rs.isAppleSilicon()) "arm64" else machine
 })
 
 #' Run rig with the given arguments, returning its parsed JSON output.

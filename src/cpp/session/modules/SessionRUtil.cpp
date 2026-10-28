@@ -410,6 +410,19 @@ SEXP rs_userDataDir()
    return r::sexp::createUtf8(userDataDir, &protect);
 }
 
+// true on Apple silicon even when this process runs under Rosetta, where R
+// reports the emulated architecture
+SEXP rs_isAppleSilicon()
+{
+   bool isAppleSilicon = false;
+#ifdef __APPLE__
+   isAppleSilicon = core::system::isAppleSilicon();
+#endif
+
+   r::sexp::Protect protect;
+   return r::sexp::create(isAppleSilicon, &protect);
+}
+
 SEXP rs_isProcessRunning(SEXP pidSEXP)
 {
    PidType pid = static_cast<PidType>(r::sexp::asInteger(pidSEXP));
@@ -581,6 +594,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
    RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);
    RS_REGISTER_CALL_METHOD(rs_userDataDir);
+   RS_REGISTER_CALL_METHOD(rs_isAppleSilicon);
    RS_REGISTER_CALL_METHOD(rs_isProcessRunning);
 #ifdef _WIN32
    RS_REGISTER_CALL_METHOD(rs_registryGetValue);
