@@ -697,6 +697,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut value="Alt+Down" title="Move Lines Down" />
          <shortcut refid="moveLinesDown" value="Ctrl+Meta+Down" title="Move Lines Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="moveLinesDown" value="Ctrl+Shift+Down" title="Move Lines Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+         <shortcut value="Alt+Shift+Up" title="Copy Lines Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Alt+Up" title="Copy Lines Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Shift+Down" title="Copy Lines Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Alt+Down" title="Copy Lines Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime" />
          <shortcut refid="expandToLine" value="Meta+L" title="Expand Selection to line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs" />
@@ -721,6 +725,53 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="assistantDismissNextEditSuggestion" value="Ctrl+Shift+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss assistant Next Edit Suggestion" />
          <shortcut refid="assistantDismissNextEditSuggestion" value="Cmd+Shift+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss assistant Next Edit Suggestion" />
 
+      </shortcutgroup>
+      <!-- Ace and the browser handle these keys; the entries only document them -->
+      <shortcutgroup name="Editing">
+         <shortcut value="Cmd+Z" title="Undo"/>
+         <shortcut value="Cmd+Shift+Z" title="Redo"/>
+         <shortcut value="Cmd+X" title="Cut"/>
+         <shortcut value="Cmd+C" title="Copy"/>
+         <shortcut value="Cmd+V" title="Paste"/>
+         <shortcut value="Cmd+Shift+V" title="Paste with Indent"/>
+         <shortcut value="Cmd+A" title="Select All"/>
+         <shortcut value="Ctrl+Left" title="Jump to Previous Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Left" title="Jump to Previous Word" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+Right" title="Jump to Next Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Right" title="Jump to Next Word" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+Home" title="Jump to Start" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Up" title="Jump to Start" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+End" title="Jump to End" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Down" title="Jump to End" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+Shift+Left" title="Select Previous Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Shift+Left" title="Select Previous Word" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+Shift+Right" title="Select Next Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Shift+Right" title="Select Next Word" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Shift+Left" title="Select to Line Start" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Shift+Left" title="Select to Line Start" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Shift+Right" title="Select to Line End" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Shift+Right" title="Select to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Shift+PageUp" title="Select Page Up"/>
+         <shortcut value="Shift+PageDown" title="Select Page Down"/>
+         <shortcut value="Ctrl+Shift+Home" title="Select to Start" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Shift+Up" title="Select to Start" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+Shift+End" title="Select to End" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Shift+Down" title="Select to End" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+Backspace" title="Delete Previous Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Backspace" title="Delete Previous Word" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+Delete" title="Delete Next Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Delete" title="Delete Next Word" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Alt+Backspace" title="Delete to Line Start" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Backspace" title="Delete to Line Start" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Tab" title="Indent"/>
+         <shortcut value="Shift+Tab" title="Outdent"/>
+      </shortcutgroup>
+      <shortcutgroup name="Completion">
+         <shortcut value="Tab|Ctrl+Space" title="Complete Code" />
+         <shortcut value="Up" title="Previous Completion"/>
+         <shortcut value="Down" title="Next Completion"/>
+         <shortcut value="Enter" title="Accept Completion"/>
+         <shortcut value="Escape" title="Dismiss Completions"/>
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -915,11 +966,14 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="vcsNextChange" value="Cmd+Alt+PageDown"/>
          <shortcut refid="vcsPreviousChange" value="Cmd+Alt+PageUp"/>
          <shortcut refid="vcsCommit" value="Ctrl+Alt+M" />
+         <shortcut value="Ctrl+Up" title="Scroll Diff Up"/>
+         <shortcut value="Ctrl+Down" title="Scroll Diff Down"/>
+         <shortcut value="Space" title="Stage or Unstage Selected Files"/>
+         <shortcut value="Enter" title="Stage or Unstage and Move to Next File"/>
       </shortcutgroup>
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />
          <shortcut value="F2" title="Go To Function / File"/>
-         <shortcut value="Tab|Ctrl+Space" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="restartR" value="Meta+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="restartR" value="Cmd+Shift+F10" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -948,6 +1002,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
          <shortcut value="Cmd+Up" title="Popup Command History"/>
+         <shortcut value="Up" title="Previous Command in History"/>
+         <shortcut value="Down" title="Next Command in History"/>
+         <shortcut value="Home" title="Move Cursor to Line Start" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Left" title="Move Cursor to Line Start" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="End" title="Move Cursor to Line End" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Meta+Right" title="Move Cursor to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Escape" title="Interrupt R"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
          <shortcut refid="newTerminal" value="Alt+Shift+R"/>
