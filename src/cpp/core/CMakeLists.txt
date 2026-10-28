@@ -204,7 +204,7 @@ if (UNIX)
       endif()
       list(APPEND CORE_INCLUDE_DIRS ${ACL_INCLUDE_DIR})
    endif()
-   find_package(ZLIB REQUIRED QUIET)
+   find_package(ZLIB REQUIRED)
 
    # include directories and libraries
    set(CORE_SYSTEM_LIBRARIES
@@ -213,7 +213,7 @@ if (UNIX)
       ${UUID_LIBRARIES}
       ${RT_LIBRARIES}
       ${ACL_LIBRARIES}
-      rstudio-zlib)
+      ZLIB::ZLIB)
 
    # add Apple frameworks we depend on
    if(APPLE)
