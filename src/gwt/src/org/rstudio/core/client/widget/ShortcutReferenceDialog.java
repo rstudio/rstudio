@@ -60,7 +60,9 @@ public class ShortcutReferenceDialog extends ModalDialogBase
       // reading at the reference rather than at the Close button
       scroller_.getElement().setTabIndex(0);
       Roles.getRegionRole().set(scroller_.getElement());
-      Roles.getRegionRole().setAriaLabelProperty(scroller_.getElement(), getText());
+      // not the caption, which is already the dialog's name
+      Roles.getRegionRole().setAriaLabelProperty(scroller_.getElement(),
+            constants_.shortcutListLabel());
 
       FlowPanel panel = new FlowPanel();
       panel.addStyleName(RES.styles().content());
