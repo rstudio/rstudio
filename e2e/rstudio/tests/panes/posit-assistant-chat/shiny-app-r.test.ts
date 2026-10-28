@@ -165,11 +165,15 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     console.log(`[shiny-app-r] awaiting the app in the Viewer (budget ${ASSISTANT_TURN_BUDGET_MS / 1000}s)`);
 
     // Poll until the app shows in the Viewer, granting Allow dialogs for each
-    // tool type meanwhile. The turn may still be running (see PROMPT).
+    // tool type meanwhile. The turn may still be running (see PROMPT). Check
+    // the iframe too: visibility inside a frame is judged from its own
+    // document, so the title reads visible even when the Viewer is hidden.
     const viewerFrame = page.frameLocator(VIEWER_FRAME);
     const appTitle = viewerFrame.getByText(APP_TITLE).first();
     await chatActions.pollWithAllowDialogs(
-      () => appTitle.isVisible().catch(() => false),
+      async () =>
+        (await page.locator(VIEWER_FRAME).isVisible().catch(() => false)) &&
+        (await appTitle.isVisible().catch(() => false)),
       ASSISTANT_TURN_BUDGET_MS,
     );
 
