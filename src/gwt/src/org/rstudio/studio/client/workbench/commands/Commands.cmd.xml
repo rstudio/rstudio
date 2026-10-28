@@ -725,15 +725,20 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="assistantDismissNextEditSuggestion" value="Cmd+Shift+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss assistant Next Edit Suggestion" />
 
       </shortcutgroup>
-      <!-- Ace and the browser handle these keys; the entries only document them -->
+      <!-- Ace and the browser handle these keys; the entries only document them.
+           Vim and Emacs bind Ctrl+A, Ctrl+C, Ctrl+V, and Ctrl+X to other actions. -->
       <shortcutgroup name="Editing">
          <shortcut value="Cmd+Z" title="Undo"/>
          <shortcut value="Cmd+Shift+Z" title="Redo"/>
-         <shortcut value="Cmd+X" title="Cut"/>
-         <shortcut value="Cmd+C" title="Copy"/>
-         <shortcut value="Cmd+V" title="Paste"/>
+         <shortcut value="Meta+X" title="Cut"/>
+         <shortcut value="Ctrl+X" title="Cut" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
+         <shortcut value="Meta+C" title="Copy"/>
+         <shortcut value="Ctrl+C" title="Copy" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
+         <shortcut value="Meta+V" title="Paste"/>
+         <shortcut value="Ctrl+V" title="Paste" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
          <shortcut value="Cmd+Shift+V" title="Paste with Indent"/>
-         <shortcut value="Cmd+A" title="Select All"/>
+         <shortcut value="Meta+A" title="Select All"/>
+         <shortcut value="Ctrl+A" title="Select All" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
          <shortcut value="Ctrl+Left" title="Jump to Previous Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Alt+Left" title="Jump to Previous Word" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Ctrl+Right" title="Jump to Next Word" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -766,7 +771,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut value="Shift+Tab" title="Outdent"/>
       </shortcutgroup>
       <shortcutgroup name="Completion">
-         <shortcut value="Tab|Ctrl+Space" title="Complete Code" />
+         <!-- Only one key per title is shown, the last one registered -->
+         <shortcut value="Ctrl+Space|Tab" title="Complete Code" />
          <shortcut value="Up" title="Previous Completion"/>
          <shortcut value="Down" title="Next Completion"/>
          <shortcut value="Enter" title="Accept Completion"/>
