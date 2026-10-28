@@ -52,6 +52,14 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    }
 
    @Override
+   protected void focusInitialControl()
+   {
+      // the folder list is the chooser's main control; its first item gets
+      // focus without being selected, so the chosen folder is unchanged
+      browser_.focusDirectoryWhenListed();
+   }
+
+   @Override
    public FileSystemItem[] ls()
    {
       FileSystemItem[] items = super.ls();
