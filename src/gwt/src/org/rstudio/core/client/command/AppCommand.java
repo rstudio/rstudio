@@ -810,14 +810,29 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    private static SafeHtml createMenuImageHtml(ImageResource image)
    {
+      // Contrast themes do not recolor bitmaps; these classes let themeStyles.css
+      // redraw the checkmark in the contrast theme's text color.
+      String className = isMenuCheck(image)
+            ? "rstudio-forced-colors-glyph rstudio-glyph-menu-check"
+            : "";
+
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       sb.append(SafeHtmlUtil.createOpenTag("img",
+        "class", className,
         "width", Integer.toString(image.getWidth()),
         "height", Integer.toString(image.getHeight()),
         "src", image.getSafeUri().asString(),
         "alt", ""));
       sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
+   }
+
+   // Callers pass the checkmark as a plain ImageResource, so recognize it by its URI.
+   private static boolean isMenuCheck(ImageResource image)
+   {
+      String uri = image.getSafeUri().asString();
+      return uri.equals(ThemeResources.INSTANCE.menuCheck2x().getSafeUri().asString()) ||
+             uri.equals(ThemeResources.INSTANCE.menuCheckInverted2x().getSafeUri().asString());
    }
 
    private boolean enabled_ = true;
