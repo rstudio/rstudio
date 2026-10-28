@@ -18,11 +18,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutInfo;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -50,6 +52,18 @@ public class CommandShortcutReferenceTests extends GWTTestCase
    {
       List<ShortcutInfo> list = new ArrayList<>(Arrays.asList(shortcuts));
       return CommandShortcutReference.buildHtml(list).asString();
+   }
+
+   // not a static field, which JUnit would initialize outside GWT
+   private static CoreClientConstants constants()
+   {
+      return GWT.create(CoreClientConstants.class);
+   }
+
+   // headings are localized, so match the label for the running locale
+   private static String heading(String label)
+   {
+      return "<h2>" + label + "</h2>";
    }
 
    private static int count(String haystack, String needle)
@@ -99,8 +113,8 @@ public class CommandShortcutReferenceTests extends GWTTestCase
             shortcut("D", 'D', "Not Displayed", "Hidden"));
 
       assertEquals(html, 2, count(html, "<h2>"));
-      int console = html.indexOf("<h2>Console</h2>");
-      int editor = html.indexOf("<h2>Source Editor</h2>");
+      int console = html.indexOf(heading(constants().consoleGroupName()));
+      int editor = html.indexOf(heading(constants().sourceEditorGroupName()));
       assertTrue(html, console != -1 && editor > console);
 
       // both Console entries land in the Console table, before the next heading
@@ -119,6 +133,6 @@ public class CommandShortcutReferenceTests extends GWTTestCase
             shortcut("B", 'B', "Files", ""));
 
       assertTrue(html, html.contains("<td>Shown</td>"));
-      assertFalse(html, html.contains("<h2>Files</h2>"));
+      assertFalse(html, html.contains(heading(constants().filesGroupName())));
    }
 }
