@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -77,7 +78,7 @@ public class TutorialPane
                           DependencyManager dependencies,
                           TutorialServerOperations server)
    {
-      super(constants_.tutorialTitle(), events);
+      super(constants_.tutorialTitle(), PaneManager.TUTORIAL_PANE, events);
 
       globalDisplay_ = globalDisplay;
       commands_      = commands;

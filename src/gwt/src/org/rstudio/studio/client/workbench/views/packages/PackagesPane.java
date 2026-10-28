@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
@@ -115,7 +116,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                        UserPrefs prefs,
                        PackagesServerOperations server)
    {
-      super(constants_.packagesTitle(), events);
+      super(constants_.packagesTitle(), PaneManager.PACKAGES_PANE, events);
 
       commands_ = commands;
       session_ = session;

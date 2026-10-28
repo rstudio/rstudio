@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
@@ -71,7 +72,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                     Provider<FileCommandToolbar> pFileCommandToolbar,
                     Provider<UserPrefs> pPrefs)
    {
-      super(constants_.filesTitle(), events);
+      super(constants_.filesTitle(), PaneManager.FILES_PANE, events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       fileDialogs_ = fileDialogs;

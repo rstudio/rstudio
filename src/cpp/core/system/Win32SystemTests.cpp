@@ -16,11 +16,13 @@
 #ifdef _WIN32
 
 #include <algorithm>
+#include <limits>
 #include <sstream>
 
 #include <core/FileUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/RegistryKey.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -550,6 +552,78 @@ TEST_F(Win32ProcessTest, KeepsChildWhenCreationTimeCannotBeQueried)
    FILETIME parentCreationTime = {MAXDWORD, MAXLONG};
    auto children = detail::getSubprocesses(currentProcessId(), &parentCreationTime);
    EXPECT_TRUE(ContainsProcess(children, pi.dwProcessId));
+}
+
+TEST_F(Win32ProcessTest, IsProcessRunningDetectsLiveAndDeadProcesses)
+{
+   // own process is trivially running
+   EXPECT_TRUE(isProcessRunning(currentProcessId()));
+
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
+   PidType pid = pi.dwProcessId;
+   EXPECT_TRUE(isProcessRunning(pid));
+
+   // the fixture's handles keep the exited process openable (and its pid
+   // from being reused); it must still read as gone
+   ASSERT_TRUE(::TerminateProcess(pi.hProcess, 1));
+   ASSERT_EQ(WAIT_OBJECT_0, ::WaitForSingleObject(pi.hProcess, 10000));
+   EXPECT_FALSE(isProcessRunning(pid));
+
+   // a pid no process can have reports not running
+   EXPECT_FALSE(isProcessRunning(std::numeric_limits<PidType>::max()));
+}
+
+TEST(Win32SystemTest, RegistryKeyRoundTripsStringValuesAsStored)
+{
+   std::string subKey = "Software\\RStudio\\Tests\\" + generateUuid(false);
+
+   {
+      RegistryKey key;
+      Error error = key.create(HKEY_CURRENT_USER, subKey, KEY_READ | KEY_WRITE);
+      ASSERT_FALSE(error) << error.asString();
+
+      // UTF-8 in and out, %VARS% left unexpanded, and the kind reported
+      std::string path = "%USERPROFILE%\\Caf\xC3\xA9;C:\\Tools\\O\xE2\x80\x99" "Brien";
+      error = key.setValue("Path", path, REG_EXPAND_SZ);
+      ASSERT_FALSE(error) << error.asString();
+
+      std::string data;
+      DWORD type = REG_NONE;
+      error = key.getValue("Path", &data, &type);
+      ASSERT_FALSE(error) << error.asString();
+      EXPECT_EQ(path, data);
+      EXPECT_EQ(static_cast<DWORD>(REG_EXPAND_SZ), type);
+
+      error = key.setValue("Current Version", "4.6.1", REG_SZ);
+      ASSERT_FALSE(error) << error.asString();
+      error = key.getValue("Current Version", &data, &type);
+      ASSERT_FALSE(error) << error.asString();
+      EXPECT_EQ("4.6.1", data);
+      EXPECT_EQ(static_cast<DWORD>(REG_SZ), type);
+
+      // a value that was never there, or was deleted, is a not-found error
+      error = key.getValue("InstallPath", &data, &type);
+      EXPECT_TRUE(isNotFoundError(error)) << error.asString();
+      error = key.deleteValue("Current Version");
+      ASSERT_FALSE(error) << error.asString();
+      error = key.getValue("Current Version", &data, &type);
+      EXPECT_TRUE(isNotFoundError(error)) << error.asString();
+      error = key.deleteValue("Current Version");
+      EXPECT_TRUE(isNotFoundError(error)) << error.asString();
+
+      // only string kinds are read
+      DWORD number = 1;
+      ASSERT_EQ(ERROR_SUCCESS, ::RegSetValueExA(key.handle(), "Number", 0, REG_DWORD,
+                                                reinterpret_cast<const BYTE*>(&number), sizeof(number)));
+      error = key.getValue("Number", &data, &type);
+      EXPECT_TRUE(error);
+      EXPECT_FALSE(isNotFoundError(error));
+   }
+
+   EXPECT_EQ(ERROR_SUCCESS, ::RegDeleteKeyA(HKEY_CURRENT_USER, subKey.c_str()));
+
+   // the parent key goes too when this was the only test key in it
+   ::RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\RStudio\\Tests");
 }
 
 } // end namespace tests

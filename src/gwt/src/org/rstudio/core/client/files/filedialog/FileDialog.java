@@ -47,12 +47,18 @@ public abstract class FileDialog extends FileSystemDialog
    /**
     * This should ONLY be called from the accept() method, otherwise the
     * filename may contain invalid data which could throw an exception.
-    * @return
+    * @return the item named by the filename, or null when it is empty
     */
    @Override
    protected FileSystemItem getSelectedItem()
    {
-      FileSystemItem item = context_.itemForName(browser_.getFilename(), false, false);
+      // an empty name is not a valid path element; resolving it would yield
+      // the current directory disguised as a file
+      String filename = browser_.getFilename().trim();
+      if (filename.isEmpty())
+         return null;
+
+      FileSystemItem item = context_.itemForName(filename, false, false);
 
       // follow macOS Finder aliases / Windows shortcuts so accepting one
       // acts on its target rather than the link file

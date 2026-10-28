@@ -44,6 +44,7 @@ import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildRenderSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildServeSubTypeEvent;
@@ -78,7 +79,7 @@ public class BuildPane extends WorkbenchPane
                     BuildServerOperations server, 
                     ProjectsServerOperations projServer)
    {
-      super(constants_.buildText(), events);
+      super(constants_.buildText(), PaneManager.BUILD_PANE, events);
       ((BuildPane.Binder) GWT.create(BuildPane.Binder.class)).bind(commands, this);
 
       commands_ = commands;
@@ -135,7 +136,8 @@ public class BuildPane extends WorkbenchPane
          if (pkg) 
          {
             ToolbarPopupMenu installMoreMenu = new ToolbarPopupMenu();
-            toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, "", installMoreMenu, false));
+            toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText,
+                  constants_.installOptionsText(), installMoreMenu, false));
             
             projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
                @Override
