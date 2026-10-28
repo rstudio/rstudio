@@ -179,6 +179,9 @@ void dataCiteSearch(const json::JsonRpcRequest& request,
    core::http::Fields params;
    params.push_back(std::make_pair("query", query));
 
+   // DataCite otherwise lists matches newest-first
+   params.push_back(std::make_pair("sort", "relevance"));
+
    // make request
    dataCiteRequest("dois", params, cont,
                    [](const core::json::JsonRpcFunctionContinuation& cont, core::json::Value json) {
