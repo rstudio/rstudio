@@ -2325,11 +2325,10 @@ input[type="checkbox"]:checked:before {
    }
 }
 
-/* Menu checkmarks and changelist checkboxes are <img> bitmaps, which forced
- * colors mode does not recolor. Redraw them by masking the <img> to an SVG of
- * the glyph and filling it with CanvasText. Passed through to the browser like
- * the block above, but gated on the features it relies on: without them it would
- * paint a solid square, or nothing. */
+/* Forced colors mode does not recolor <img> bitmaps, so mask each checkmark or
+ * checkbox <img> to an SVG of its glyph, filled with CanvasText. Passed through
+ * like the block above, but gated on the features it relies on: without them it
+ * would paint a solid square, or nothing. */
 
 @supports (forced-color-adjust: none) and (mask-image: none) {
    @media (forced-colors: active) {
@@ -2344,6 +2343,12 @@ input[type="checkbox"]:checked:before {
          /* Cancels the inversion applied to menu checkmarks in dark menus. */
          filter: none;
          mask-size: 100% 100%;
+      }
+
+      /* A disabled item's label is forced to full CanvasText, so its checkmark
+       * should not stay faded. */
+      .gwt-MenuItem.disabled img.rstudio-forced-colors-glyph {
+         opacity: 1;
       }
 
       img.rstudio-glyph-menu-check {

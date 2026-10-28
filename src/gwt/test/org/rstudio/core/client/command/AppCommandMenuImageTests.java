@@ -45,6 +45,7 @@ public class AppCommandMenuImageTests extends GWTTestCase
       String html = menuLabel(ThemeResources.INSTANCE.executeChunk2x());
       assertTrue(html.contains("<img"));
       assertFalse(html.contains("rstudio-forced-colors-glyph"));
+      assertFalse(html.contains("class=\"\""));
    }
 
    @Override
