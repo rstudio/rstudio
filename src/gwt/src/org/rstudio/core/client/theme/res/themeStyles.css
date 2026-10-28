@@ -2345,10 +2345,11 @@ input[type="checkbox"]:checked:before {
          mask-size: 100% 100%;
       }
 
-      /* A disabled item's label is forced to full CanvasText, so its checkmark
-       * should not stay faded. */
+      /* GrayText, the contrast theme's disabled color, rather than the faded
+       * normal rendering, which drops a white checkmark on black to 2.5:1. */
       .gwt-MenuItem.disabled img.rstudio-forced-colors-glyph {
          opacity: 1;
+         background-color: GrayText;
       }
 
       img.rstudio-glyph-menu-check {
