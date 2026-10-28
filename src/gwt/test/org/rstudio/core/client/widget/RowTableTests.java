@@ -119,13 +119,21 @@ public class RowTableTests extends GWTTestCase
       Object.defineProperty(event, "key", { value: key });
    }-*/;
 
+   // HtmlUnit focus never matches :focus-visible, so plain focus acts as
+   // mouse focus; a key press then shows the ring as keyboard focus would
+   private static void focusByKeyboard(RowTable<String> table)
+   {
+      table.setFocus(true);
+      pressKey(table, "Shift", KeyCodes.KEY_SHIFT);
+   }
+
    public void testFocusMakesFirstOptionActiveWithoutSelectingIt()
    {
       StringTable table = createTable("a", "b", "c");
       int[] selectionEvents = { 0 };
       table.addSelectionHandler(event -> selectionEvents[0]++);
 
-      table.setFocus(true);
+      focusByKeyboard(table);
 
       Element first = getOptions(table).get(0);
       assertEquals(first.getId(), getActiveDescendant(table));
@@ -189,12 +197,26 @@ public class RowTableTests extends GWTTestCase
       assertFalse(table.getElement().hasClassName(focusVisible));
    }
 
-   public void testArrowDownMovesFromActiveOptionShownByRing()
+   public void testBlurDropsActiveOption()
+   {
+      // otherwise mouse focus on return would leave an unmarked active option
+      // for Down to skip past
+      StringTable table = createTable("a", "b", "c");
+      focusByKeyboard(table);
+      assertEquals(getOptions(table).get(0).getId(), getActiveDescendant(table));
+
+      table.setFocus(false);
+      assertEquals("", getActiveDescendant(table));
+
+      table.setFocus(true);
+      pressKey(table, "ArrowDown", KeyCodes.KEY_DOWN);
+      assertEquals("a", table.getSelectedItem());
+   }
+
+   public void testArrowDownMovesFromActiveOption()
    {
       StringTable table = createTable("a", "b", "c");
-      table.setFocus(true);
-      // any key press shows the ring, as keyboard focus would
-      pressKey(table, "Shift", KeyCodes.KEY_SHIFT);
+      focusByKeyboard(table);
 
       pressKey(table, "ArrowDown", KeyCodes.KEY_DOWN);
 
@@ -204,20 +226,20 @@ public class RowTableTests extends GWTTestCase
 
    public void testArrowDownAfterMouseFocusSelectsFirstOption()
    {
-      // HtmlUnit focus never matches :focus-visible, so this is mouse focus:
-      // row 0 is active but unmarked, and Down must not skip past it
+      // mouse focus marks no option, so Down must not skip past row 0
       StringTable table = createTable("a", "b", "c");
       table.setFocus(true);
 
       pressKey(table, "ArrowDown", KeyCodes.KEY_DOWN);
 
       assertEquals("a", table.getSelectedItem());
+      assertEquals(getOptions(table).get(0).getId(), getActiveDescendant(table));
    }
 
    public void testArrowUpSelectsActiveFirstOption()
    {
       StringTable table = createTable("a", "b", "c");
-      table.setFocus(true);
+      focusByKeyboard(table);
 
       pressKey(table, "ArrowUp", KeyCodes.KEY_UP);
 
@@ -239,7 +261,7 @@ public class RowTableTests extends GWTTestCase
    {
       // navigating to another directory redraws the table while it keeps focus
       StringTable table = createTable("a", "b", "c");
-      table.setFocus(true);
+      focusByKeyboard(table);
       table.selectRow(1);
 
       table.clear();
@@ -253,7 +275,7 @@ public class RowTableTests extends GWTTestCase
    {
       // e.g. a file dialog navigating into an empty directory
       StringTable table = createTable("a", "b", "c");
-      table.setFocus(true);
+      focusByKeyboard(table);
 
       table.clear();
       table.draw(new ArrayList<>());
@@ -261,7 +283,7 @@ public class RowTableTests extends GWTTestCase
       assertEquals("", getActiveDescendant(table));
    }
 
-   public void testMouseFocusDoesNotScrollToActiveOption()
+   public void testMouseFocusMarksNoOptionAndDoesNotScroll()
    {
       // scrolling while a click is in progress would move the clicked row
       String[] items = new String[50];
@@ -273,7 +295,7 @@ public class RowTableTests extends GWTTestCase
 
       table.setFocus(true);
 
-      assertEquals(getOptions(table).get(0).getId(), getActiveDescendant(table));
+      assertEquals("", getActiveDescendant(table));
       assertEquals(400, table.getVerticalScrollPosition());
    }
 
@@ -318,7 +340,7 @@ public class RowTableTests extends GWTTestCase
    public void testActiveOptionVirtualizedAwayIsNotReferenced()
    {
       StringTable table = createLongTable();
-      table.setFocus(true);
+      focusByKeyboard(table);
       assertActiveDescendantRendered(table, 0);
 
       scrollToRow(table, 400);

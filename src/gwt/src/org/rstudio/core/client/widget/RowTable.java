@@ -206,8 +206,9 @@ public abstract class RowTable<T> extends ScrollPanel
             }
 
             // keyboard use means a keyboard user, even if focus arrived by
-            // mouse; added after handling the key, which selectOffset reads
-            addStyleName(RES.styles().focusVisible());
+            // mouse; shown after handling the key, so that with no option
+            // active yet the first Down lands on row 0
+            showFocusRing();
          }
       }, KeyDownEvent.getType());
       
@@ -244,17 +245,15 @@ public abstract class RowTable<T> extends ScrollPanel
       if (StringUtil.equals(event.getType(), "focus"))
       {
          addStyleName(RES.styles().active());
-         boolean keyboard = matchesFocusVisible(table_);
-         if (keyboard)
-            addStyleName(RES.styles().focusVisible());
-         
-         // scrolling on a mouse focus would move the row being clicked
-         activateFirstRowIfUnselected(keyboard);
+         if (matchesFocusVisible(table_))
+            showFocusRing();
       }
       else if (StringUtil.equals(event.getType(), "blur"))
       {
          removeStyleName(RES.styles().active());
          removeStyleName(RES.styles().focusVisible());
+         setActiveRow(-1);
+         updateActiveDescendant();
       }
       else
       {
@@ -276,6 +275,23 @@ public abstract class RowTable<T> extends ScrollPanel
          throw e;
       }
    }-*/;
+   
+   // The ring and the active option come and go together, so what is shown,
+   // what a screen reader announces, and where the arrow keys start agree.
+   // Mouse focus shows neither: the first key press brings both.
+   private void showFocusRing()
+   {
+      if (isFocusRingShown())
+         return;
+      
+      addStyleName(RES.styles().focusVisible());
+      activateFirstRowIfUnselected(true);
+   }
+   
+   private boolean isFocusRingShown()
+   {
+      return getElement().hasClassName(RES.styles().focusVisible());
+   }
    
    // Per the ARIA listbox pattern, focus lands on the first option when none
    // is selected. It becomes the active descendant without being selected,
@@ -412,8 +428,9 @@ public abstract class RowTable<T> extends ScrollPanel
       bottomPaddingRowEl_ = drawPaddingRow(getBottomPaddingHeight());
       bottomPaddingRowEl_.setAttribute("aria-hidden", "true");
       
-      // a redraw (e.g. a file dialog navigating) can happen while focused
-      if (table_.equals(DomUtils.getActiveElement()))
+      // a redraw (e.g. a file dialog navigating) can happen while focused;
+      // blur removes the ring, so it shows only while the table has focus
+      if (isFocusRingShown())
          activateFirstRowIfUnselected(false);
       
       updateActiveDescendant();
@@ -639,12 +656,7 @@ public abstract class RowTable<T> extends ScrollPanel
    {
       event.stopPropagation();
       event.preventDefault();
-      // keys move from the active option only once its ring has shown it;
-      // after mouse focus the first press counts from above row 0, so Down
-      // lands on row 0 rather than past an option the user never saw marked
-      int current = selectedRow_;
-      if (current == -1 && getElement().hasClassName(RES.styles().focusVisible()))
-         current = activeRow_;
+      int current = selectedRow_ == -1 ? activeRow_ : selectedRow_;
       selectRow(current + offset);
    }
    
