@@ -501,6 +501,9 @@ test.describe('Split editor', () => {
     const GET_FILE_CONTENTS = /\/rpc\/get_file_contents(?:\?|$)/;
     const insertPath = `${sandbox.dir}/${INSERT_FILE}`;
 
+    // Vim splits ex command arguments at whitespace, and :r takes exactly one.
+    test.skip(/\s/.test(insertPath), 'the sandbox path contains whitespace');
+
     // Hold the file contents request until focus has moved to the primary view.
     const parked: Route[] = [];
     await page.route(GET_FILE_CONTENTS, (route) => {
