@@ -29,7 +29,8 @@ if exist "%RSTUDIO_TOOLS_ROOT%\dependencies\windows" (
 )
 
 %RUN% normalize-path "%PACKAGE_DIR%\..\..\src\node\desktop" ELECTRON_SOURCE_DIR
-%RUN% normalize-path "%ELECTRON_SOURCE_DIR%\..\desktop-build-AMD64" ELECTRON_BINARY_DIR
+REM CMake names the Electron build folder after PROCESSOR_ARCHITECTURE (cmake/globals.cmake)
+%RUN% normalize-path "%ELECTRON_SOURCE_DIR%\..\desktop-build-%PROCESSOR_ARCHITECTURE%" ELECTRON_BINARY_DIR
 %RUN% normalize-path "%RSTUDIO_DEPENDENCIES%" RSTUDIO_DEPENDENCIES
 
 set BUILD_GWT=1
