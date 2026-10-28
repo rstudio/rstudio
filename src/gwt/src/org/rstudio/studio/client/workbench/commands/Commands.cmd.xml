@@ -771,8 +771,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut value="Shift+Tab" title="Outdent"/>
       </shortcutgroup>
       <shortcutgroup name="Completion">
-         <!-- Only one key per title is shown, the last one registered -->
-         <shortcut value="Ctrl+Space|Tab" title="Complete Code" />
+         <!-- Only the last key per title is shown: Ctrl+Space, because Tab doesn't
+              complete when Tab completion is off or Tab moves focus -->
+         <shortcut value="Tab|Ctrl+Space" title="Complete Code" />
          <shortcut value="Up" title="Previous Completion"/>
          <shortcut value="Down" title="Next Completion"/>
          <shortcut value="Enter" title="Accept Completion"/>
