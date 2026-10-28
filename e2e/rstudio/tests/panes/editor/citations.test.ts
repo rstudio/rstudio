@@ -10,7 +10,12 @@ import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
 import { CitationServiceMock, RESET_CITATION_SERVICE_OPTIONS, type CitationService } from '@utils/citation-services';
 import { sessionsRunLocally } from '@utils/session-liveness';
+import { envFlag } from '@utils/env';
 import type { Page } from 'playwright';
+
+// PW_CITATION_LIVE=1 leaves the session on the live services, to check that
+// fixtures/citation-services.json still describes what they answer.
+const LIVE_SERVICES = envFlag('PW_CITATION_LIVE');
 
 // Read the value of an R expression via marker-wrapped console output. Runs on
 // the rsession host, so it reads files the IDE wrote (e.g. references.bib in the
@@ -44,8 +49,9 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
 // panmirror visual editor's Insert menu; see the InsertCitationDialog page
 // object and visual-editor.md for the dialog's selectors and the one-time init
 // reset these tests work around. The network-backed sources (DOI, Crossref,
-// DataCite, PubMed) answer from a local mock of those services; see
-// utils/citation-services.ts.
+// DataCite, PubMed) answer from a local mock of those services (see
+// utils/citation-services.ts), or from the live services under
+// PW_CITATION_LIVE.
 test.describe('Citations', () => {
   // Inserting a citation writes references.bib to the working directory;
   // useSuiteSandbox() redirects cwd into the per-run sandbox so nothing lands
@@ -56,6 +62,7 @@ test.describe('Citations', () => {
   let sourceActions: SourcePaneActions;
   let services: CitationServiceMock;
   let servicesReachable: boolean;
+  let usingMock: boolean;
 
   test.beforeAll(async ({ rstudioPage: page, mode }) => {
     consoleActions = new ConsolePaneActions(page);
@@ -63,12 +70,13 @@ test.describe('Citations', () => {
     services = await CitationServiceMock.start();
     // The mock listens on this machine's loopback, which only an rsession on
     // this machine can reach.
-    servicesReachable = sessionsRunLocally(mode, externalServerUrl());
+    servicesReachable = LIVE_SERVICES || sessionsRunLocally(mode, externalServerUrl());
+    usingMock = servicesReachable && !LIVE_SERVICES;
   });
 
   test.afterAll(async () => {
     try {
-      if (servicesReachable)
+      if (usingMock)
         await consoleActions.executeInConsole(RESET_CITATION_SERVICE_OPTIONS, { wait: true });
     } finally {
       // Unset if beforeAll failed before the mock started.
@@ -87,12 +95,17 @@ test.describe('Citations', () => {
     // same command (re)points the session's citation lookups at the mock --
     // only when it can reach the mock, so a remote session that never runs
     // afterAll isn't left with Insert Citation pointed at a dead port.
-    const pointAtMock = servicesReachable ? `; ${services.optionsCall()}` : '';
+    const pointAtMock = usingMock ? `; ${services.optionsCall()}` : '';
     await consoleActions.executeInConsole(`unlink("references.bib")${pointAtMock}`, { wait: true });
   });
 
   function skipUnlessServicesReachable(): void {
     test.skip(!servicesReachable, 'the citation service mock is unreachable from a remote rsession');
+  }
+
+  function skipUnlessUsingMock(): void {
+    skipUnlessServicesReachable();
+    test.skip(LIVE_SERVICES, 'PW_CITATION_LIVE: the live services cannot be made to fail');
   }
 
   // Open a fresh markdown document in visual mode (the only place citations are
@@ -318,7 +331,7 @@ test.describe('Citations', () => {
     const source = CITATION_SOURCES[service];
     const what = resource ? `${source.alt} ${resource.split('/').pop()}` : source.alt;
     test(`reports a ${what} service failure in the dialog`, async ({ rstudioPage: page }) => {
-      skipUnlessServicesReachable();
+      skipUnlessUsingMock();
       services.fail(service, 503, resource);
       await newMarkdownVisualDoc(page);
 
@@ -333,8 +346,9 @@ test.describe('Citations', () => {
   }
 
   // The DOI reaches the rsession's download.file() call inside an R string
-  // literal; a quote in it must not end the literal. The mock has no such
-  // DOI, so a correctly quoted lookup gets "No data", not an R parse error.
+  // literal; a quote in it must not end the literal. Neither the mock nor
+  // doi.org has such a DOI, so a correctly quoted lookup gets "No data", not
+  // an R parse error.
   test('looks up a DOI containing a quote', async ({ rstudioPage: page }) => {
     skipUnlessServicesReachable();
     await newMarkdownVisualDoc(page);
