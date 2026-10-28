@@ -33,23 +33,25 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 
 /**
- * The shortcuts currently in effect, grouped as in Commands.cmd.xml. Reflects
- * the platform, the editor keybindings, and any customized shortcuts.
+ * The shortcuts declared in Commands.cmd.xml, grouped as declared there. Reflects
+ * the platform, the editor keybindings, and customized shortcuts for commands
+ * that have a default shortcut.
  */
 public class CommandShortcutReference extends Composite
 {
    public CommandShortcutReference()
    {
-      HTML html = new HTML(buildHtml());
+      HTML html = new HTML(buildHtml(ShortcutManager.INSTANCE.getActiveShortcutInfo()));
       html.addStyleName(ShortcutReferenceDialog.RES.styles().groups());
       initWidget(html);
    }
 
-   private static SafeHtml buildHtml()
+   // Groups appear in order of first use, which is declaration order for
+   // ShortcutManager's list
+   static SafeHtml buildHtml(List<ShortcutInfo> shortcuts)
    {
-      // Shortcut info arrives in declaration order, so groups keep that order too
       Map<String, List<ShortcutInfo>> groups = new LinkedHashMap<>();
-      for (ShortcutInfo info : ShortcutManager.INSTANCE.getActiveShortcutInfo())
+      for (ShortcutInfo info : shortcuts)
       {
          if (StringUtil.isNullOrEmpty(info.getDescription()) ||
              info.getShortcuts(false).isEmpty() ||
@@ -102,10 +104,10 @@ public class CommandShortcutReference extends Composite
          }
          else
          {
-            // On macOS the pretty form uses symbols (e.g. for Command) that
-            // screen readers may not announce; give them the spelled-out form.
-            // The symbols are HTML entities, but key names in customized
-            // shortcuts come from the user's bindings file, so escape the rest.
+            // The pretty form uses symbols on macOS (e.g. for Command) and
+            // abbreviations such as PgUp that screen readers may not announce
+            // well; give them the plain form. The symbols are HTML entities, but
+            // custom key names come from the user's bindings file, so escape the rest.
             sb.appendHtmlConstant("<span aria-hidden=\"true\">");
             sb.append(SafeHtmlUtils.fromTrustedString(
                   SafeHtmlUtils.htmlEscapeAllowEntities(pretty.get(i))));

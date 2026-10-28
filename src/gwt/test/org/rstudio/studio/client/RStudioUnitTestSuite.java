@@ -28,6 +28,7 @@ import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
 import org.rstudio.core.client.layout.BinarySplitLayoutPanelTests;
+import org.rstudio.core.client.widget.CommandShortcutReferenceTests;
 import org.rstudio.core.client.widget.FastSelectTableTests;
 import org.rstudio.core.client.widget.LayoutGridTests;
 import org.rstudio.core.client.widget.MiniPopupPanelTests;
@@ -107,6 +108,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(FileIconRendererTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
+      suite.addTestSuite(CommandShortcutReferenceTests.class);
       suite.addTestSuite(LintItemTests.class);
       suite.addTestSuite(PositAiInstallManagerTests.class);
       suite.addTestSuite(PackageLinkColumnTests.class);
