@@ -20,7 +20,8 @@
 # worktree can't corrupt the parent's node_modules through a shared inode.
 #
 # Falls back to `npm ci` when the lockfiles differ (the branch changed deps) or
-# the main checkout has no node_modules to clone.
+# the main checkout has no node_modules to clone. `npm ci` runs under the
+# repo's pinned node, which must be installed in dependencies/common/node.
 #
 # Platforms: the clone mechanism is gated by OS -- clonefile on macOS (`cp -c`),
 # reflink on Linux (`cp --reflink=auto`). On filesystems without copy-on-write
@@ -111,14 +112,18 @@ clone_tree() {
   cp -R "$src" "$dst"
 }
 
-# Locate the pinned node toolchain's bin directory (version from
-# dependencies/tools/rstudio-tools.sh): this worktree, then the main checkout,
-# then the global tools location -- mirroring pinnedNodeBinDir in
-# e2e/rstudio/scripts/dev-common.ts. Prints nothing when not found.
+# The pinned node version, from dependencies/tools/rstudio-tools.sh.
+pinned_node_version() {
+  sed -n 's/^export RSTUDIO_NODE_VERSION="\(.*\)"$/\1/p' \
+    "$WORKTREE/dependencies/tools/rstudio-tools.sh" 2>/dev/null | head -1
+}
+
+# Locate the pinned node toolchain's bin directory: this worktree, then the
+# main checkout, then the global tools location -- mirroring pinnedNodeBinDir
+# in e2e/rstudio/scripts/dev-common.ts. Prints nothing when not found.
 pinned_node_bin() {
   local version
-  version="$(sed -n 's/^export RSTUDIO_NODE_VERSION="\(.*\)"$/\1/p' \
-    "$WORKTREE/dependencies/tools/rstudio-tools.sh" 2>/dev/null | head -1)"
+  version="$(pinned_node_version)"
   if [ -z "$version" ]; then
     return
   fi
@@ -196,16 +201,25 @@ ensure_deps() {
     fi
   fi
 
-  # use the repo's pinned node for npm ci -- a mismatched system node can
-  # break the desktop postinstall (native rebuilds, generate.ts)
+  # Require the repo's pinned node for npm ci rather than falling back to the
+  # system node: a newer one breaks the desktop postinstall (electron-rebuild's
+  # yargs fails to load under Node 26), and the main checkout's
+  # dependencies/common/node lags a pin bump until its deps are reinstalled.
   local node_bin
   node_bin="$(pinned_node_bin)"
-  if [ -n "$node_bin" ]; then
-    echo "[bootstrap] npm ci in $pkg (using pinned node from $node_bin)"
-    ( cd "$wt" && PATH="$node_bin:$PATH" npm ci )
-  else
-    echo "[bootstrap] npm ci in $pkg (pinned node not found; using system node)"
-    ( cd "$wt" && npm ci )
+  if [ -z "$node_bin" ]; then
+    echo "[bootstrap] ERROR: pinned node $(pinned_node_version) not found for npm ci in $pkg; install it in the main checkout with:" >&2
+    echo "[bootstrap]   (cd \"$MAIN_CHECKOUT/dependencies/common\" && ./install-npm-dependencies)" >&2
+    exit 1
+  fi
+
+  # A failed npm ci leaves a partial node_modules, which a rerun would take
+  # as installed (see the check above); remove it so the rerun retries.
+  echo "[bootstrap] npm ci in $pkg (using pinned node from $node_bin)"
+  if ! ( cd "$wt" && PATH="$node_bin:$PATH" npm ci ); then
+    rm -rf "$wt/node_modules"
+    echo "[bootstrap] ERROR: npm ci failed in $pkg; removed its partial node_modules" >&2
+    exit 1
   fi
 }
 
