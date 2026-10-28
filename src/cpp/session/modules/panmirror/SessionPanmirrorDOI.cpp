@@ -84,7 +84,7 @@ void doiFetchCSL(const json::JsonRpcRequest& request,
        std::string url;
        http::Fields headers;
        boost::format fmt("%s/%s");
-       url = boost::str(fmt % kDOIHost % doi);
+       url = boost::str(fmt % serviceBaseUrl(kDOIUrlOption, kDOIHost) % doi);
        headers.push_back(std::make_pair("Accept", kCSLJsonFormat));
        asyncDownloadFile(url, headers, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION, jsonPassthrough));
     }
@@ -93,7 +93,7 @@ void doiFetchCSL(const json::JsonRpcRequest& request,
        // Path to DOI metadata works/{doi}/transform/{format} (see: https://citation.crosscite.org/docs.html#sec-5)
        boost::format fmt("%s/%s/transform/%s");
        const std::string resourcePath = boost::str(fmt % kCrossrefWorks % doi % kCSLJsonFormat);
-       std::string url = std::string(kCrossrefApiHost) + "/" + resourcePath;
+       std::string url = crossrefApiHost() + "/" + resourcePath;
        asyncDownloadFile(url, boost::bind(crossrefDownloadHandler, doi, cont, _1));
     }
 }

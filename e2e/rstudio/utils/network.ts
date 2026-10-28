@@ -1,26 +1,13 @@
 /**
  * Reachability probes for tests that depend on external services.
  *
- * Some tests exercise features whose lookups hit live third-party APIs (e.g.
- * the Insert Citation dialog's DOI/Crossref/DataCite/PubMed sources). An
- * outage or blocked egress on a CI runner is not a product bug, so such tests
- * should skip -- not fail -- when the service cannot be reached at all.
+ * Some tests exercise features whose requests hit live third-party APIs (e.g.
+ * the AI assistants' providers; see utils/ai-credentials.ts). An outage or
+ * blocked egress on a CI runner is not a product bug, so such tests should
+ * skip -- not fail -- when the service cannot be reached at all.
  */
 
 import * as net from 'net';
-
-/**
- * External hosts the rsession's citation lookups hit. The requests originate
- * in the C++ session process, not the browser (see the modules under
- * src/cpp/session/modules/panmirror/), so they cannot be intercepted or
- * mocked via Playwright routing.
- */
-export const CITATION_SERVICE_HOSTS = {
-  doi: 'https://doi.org',
-  crossref: 'https://api.crossref.org',
-  datacite: 'https://api.datacite.org',
-  pubmed: 'https://eutils.ncbi.nlm.nih.gov',
-} as const;
 
 const probeCache = new Map<string, Promise<boolean>>();
 
