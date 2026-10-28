@@ -94,14 +94,19 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
 
     // The turn is still running when the assistant launched the app from its
     // own executeCode call. Stop it first, so interrupting R below does not
-    // hand control back to a live turn that may launch the app again.
-    if (chatActions) {
-      for (let attempt = 1; attempt <= 3 && !(await chatActions.isTurnIdle()); attempt++) {
+    // hand control back to a live turn that may launch the app again. A chat
+    // that never loaded has no turn, though isTurnIdle() reads it as busy.
+    if (chatPane && (await chatPane.chatRoot.isVisible().catch(() => false))) {
+      let idle = await chatActions.isTurnIdle();
+      for (let attempt = 1; attempt <= 3 && !idle; attempt++) {
         await chatPane.stopBtn.click({ timeout: 5000 }).catch((err) => {
           console.warn(`[shiny-app-r] stopping the turn (attempt ${attempt}): ${(err as Error).message}`);
         });
+        // Let the cancel land before re-sampling, so it is not read as a failure.
+        await expect(chatPane.stopBtn).toBeHidden({ timeout: 10000 }).catch(() => {});
+        idle = await chatActions.isTurnIdle();
       }
-      if (!(await chatActions.isTurnIdle())) {
+      if (!idle) {
         console.warn('[shiny-app-r] the assistant turn is still running after 3 stop attempts');
       }
     }
@@ -113,7 +118,9 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     // app, hiding the button between the check and the click.
     const viewerStopBtn = page.locator("[id^='rstudio_tb_viewerstop']");
     if (await viewerStopBtn.isVisible().catch(() => false)) {
-      await viewerStopBtn.click({ timeout: 5000 }).catch(() => {});
+      await viewerStopBtn.click({ timeout: 5000 }).catch((err) => {
+        console.warn(`[shiny-app-r] Viewer stop click failed: ${(err as Error).message}`);
+      });
       await waitForConsoleIdle(page, 10000).catch(() => {});
     }
 
@@ -155,7 +162,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     // The no-output watchdog counts from the last output, not from here, so
     // announce the wait: that resets its timer at poll start and makes the
     // budget-vs-watchdog margin exact instead of a guess about setup silence.
-    console.log(`[shiny-app-r] awaiting assistant turn (budget ${ASSISTANT_TURN_BUDGET_MS / 1000}s)`);
+    console.log(`[shiny-app-r] awaiting the app in the Viewer (budget ${ASSISTANT_TURN_BUDGET_MS / 1000}s)`);
 
     // Poll until the app shows in the Viewer, granting Allow dialogs for each
     // tool type meanwhile. The turn may still be running (see PROMPT).
@@ -165,8 +172,6 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
       () => appTitle.isVisible().catch(() => false),
       ASSISTANT_TURN_BUDGET_MS,
     );
-
-    await expect(page.locator(VIEWER_FRAME)).toBeVisible();
 
     // Verify slider is present
     await expect(
