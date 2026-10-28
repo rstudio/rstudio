@@ -151,15 +151,16 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display
       plotsToolbar_.invalidateSeparators();
    }
 
-   public void showPlot(String plotUrl, Size fixedSize)
+   public void showPlot(String plotUrl, Size fixedSize, String altText)
    {
-      // save plot url and size for refresh
+      // save plot url, size, and alt text for refresh
       plotUrl_ = plotUrl;
       fixedSize_ = fixedSize;
+      altText_ = altText;
 
       // use frame.contentWindow.location.replace to avoid having the plot
       // enter the browser's history
-      frame_.setImageUrl(plotUrl, fixedSize);
+      frame_.setImageUrl(plotUrl, fixedSize, altText);
       plotsToolbar_.invalidateSeparators();
    }
 
@@ -172,7 +173,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display
    public void refresh()
    {
       if (plotUrl_ != null)
-         frame_.setImageUrl(plotUrl_, fixedSize_);
+         frame_.setImageUrl(plotUrl_, fixedSize_, altText_);
    }
 
    public void setPlotSizeLabel(String label)
@@ -223,6 +224,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display
    private ImageFrame frame_;
    private String plotUrl_;
    private Size fixedSize_;
+   private String altText_;
    private PlotsToolbar plotsToolbar_ = null;
    private PlotsSurface plotsSurface_ = null;
    private Plots.Parent plotsParent_ = new Plots.Parent() {

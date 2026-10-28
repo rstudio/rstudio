@@ -44,6 +44,7 @@ public class AriaLiveService
    public static final String GIT_MESSAGE_LENGTH = "git_message_length";
    public static final String INACCESSIBLE_FEATURE = "inaccessible_feature";
    public static final String INFO_BAR = "info_bar";
+   public static final String PLOT_CHANGED = "plot_changed";
    public static final String PROGRESS_COMPLETION = "progress_completion";
    public static final String PROGRESS_LOG = "progress_log";
    public static final String SCREEN_READER_NOT_ENABLED = "screen_reader_not_enabled";
@@ -76,6 +77,7 @@ public class AriaLiveService
       announcements_.put(GIT_MESSAGE_LENGTH, constants_.commitMessageLengthAnnouncement());
       announcements_.put(INACCESSIBLE_FEATURE, constants_.inaccessibleWarningAnnouncement());
       announcements_.put(INFO_BAR, constants_.infoBarsAnnouncement());
+      announcements_.put(PLOT_CHANGED, constants_.plotChangedAnnouncement());
       announcements_.put(PROGRESS_COMPLETION, constants_.taskCompletionAnnouncement());
       announcements_.put(PROGRESS_LOG, constants_.taskProgressAnnouncement());
       announcements_.put(SCREEN_READER_NOT_ENABLED, constants_.screenReaderAnnouncement());

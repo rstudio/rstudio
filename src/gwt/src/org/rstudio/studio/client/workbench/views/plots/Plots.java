@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.plots;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
@@ -23,7 +24,10 @@ import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -82,7 +86,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       void showEmptyPlot();
 
       // fixedSize is null when the plot was drawn at the size of the pane
-      void showPlot(String plotUrl, Size fixedSize);
+      void showPlot(String plotUrl, Size fixedSize, String altText);
       String getPlotUrl();
       void setPlotSizeLabel(String label);
 
@@ -103,7 +107,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
                 Commands commands,
                 EventBus events,
                 final PlotsServerOperations server,
-                Session session)
+                Session session,
+                AriaLiveService ariaLive)
    {
       super(view);
       view_ = view;
@@ -113,6 +118,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       userState_ = userState;
       server_ = server;
       session_ = session;
+      ariaLive_ = ariaLive;
       exportPlot_ = GWT.create(ExportPlot.class);
       zoomWindow_ = null;
       zoomWindowDefaultSize_ = null;
@@ -202,7 +208,18 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       else
       {
          String url = server_.getGraphicsUrl(plotsState.getFilename());
-         view_.showPlot(url, plotSizeFixed_ ? plotSize_ : null);
+         String altText = plotAltText(plotsState);
+         view_.showPlot(url, plotSizeFixed_ ? plotSize_ : null, altText);
+
+         // a screen reader user can't otherwise tell that running code
+         // produced a plot, or which plot the history buttons moved to
+         if (plotsState.getActivePlotChanged())
+         {
+            ariaLive_.announce(AriaLiveService.PLOT_CHANGED,
+                               altText,
+                               Timing.DEBOUNCE,
+                               Severity.STATUS);
+         }
       }
 
       // activate the plots tab if requested
@@ -223,6 +240,16 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
          Desktop.getFrame().reloadZoomWindow();
       else if ((zoomWindow_ != null) && !zoomWindow_.isClosed())
          zoomWindow_.reload();
+   }
+
+   private String plotAltText(PlotsState plotsState)
+   {
+      int position = plotsState.getPlotIndex() + 1;
+      int count = plotsState.getPlotCount();
+      String authorAltText = plotsState.getAltText();
+      if (StringUtil.isNullOrEmpty(authorAltText))
+         return constants_.plotAltText(position, count);
+      return constants_.plotAltTextWithDescription(position, count, authorAltText);
    }
 
    void onNextPlot()
@@ -667,6 +694,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
    private final WorkbenchContext workbenchContext_;
    private final Commands commands_;
    private final Session session_;
+   private final AriaLiveService ariaLive_;
    private final Provider<UserState> userState_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;

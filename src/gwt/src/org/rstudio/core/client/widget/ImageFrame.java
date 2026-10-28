@@ -47,7 +47,7 @@ public class ImageFrame extends Frame
             {
                String sizing = "width=\"100%\" height=\"100%\"";
                setupContent(getElement(), sizing);
-               replaceLocation(getElement(), url_, fixedWidth(), fixedHeight());
+               replaceLocation(getElement(), url_, fixedWidth(), fixedHeight(), altText_);
             }
          }
       }.schedule(100);
@@ -76,10 +76,20 @@ public class ImageFrame extends Frame
     */
    public void setImageUrl(String url, Size fixedSize)
    {
+      setImageUrl(url, fixedSize, null);
+   }
+
+   /**
+    * As setImageUrl(url, fixedSize), giving the image the alt text; a null
+    * altText leaves the image without one.
+    */
+   public void setImageUrl(String url, Size fixedSize, String altText)
+   {
       url_ = url;
       fixedSize_ = fixedSize;
+      altText_ = altText;
       if (isAttached())
-         replaceLocation(getElement(), url, fixedWidth(), fixedHeight());
+         replaceLocation(getElement(), url, fixedWidth(), fixedHeight(), altText);
    }
 
    private int fixedWidth()
@@ -95,7 +105,8 @@ public class ImageFrame extends Frame
    private native final boolean replaceLocation(Element el,
                                                 String url,
                                                 int fixedWidth,
-                                                int fixedHeight) /*-{
+                                                int fixedHeight,
+                                                String altText) /*-{
       // contentWindow itself is null while the iframe is detached or being
       // re-parented (e.g. a pane-layout quadrant swap moves the Plots pane),
       // and dereferencing it raises an uncaught TypeError that surfaces as an
@@ -122,6 +133,10 @@ public class ImageFrame extends Frame
          style.position = style.inset = style.margin = '';
          style.width = style.height = style.boxShadow = '';
       }
+      if (altText != null)
+         img.alt = altText;
+      else
+         img.removeAttribute('alt');
       if (url && url != 'javascript:false') {
          style.display = 'inline';
          img.src = url;
@@ -158,4 +173,5 @@ public class ImageFrame extends Frame
 
    private String url_ = "javascript:false";
    private Size fixedSize_ = null;
+   private String altText_ = null;
 }
