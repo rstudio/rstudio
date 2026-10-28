@@ -2952,7 +2952,19 @@ public class TextEditingTarget implements
 
    public void insertCode(String source, boolean blockMode)
    {
-      activeDisplay().insertCode(source, blockMode);
+      insertCode(activeDisplay(), source, blockMode);
+   }
+
+   // Inserts at the cursor of the given editor view, which a caller captures
+   // before an asynchronous request so that the result lands in the view the
+   // request came from; falls back to the active view when that one is gone
+   // (the split was removed while the request was pending).
+   public void insertCode(DocDisplay display, String source, boolean blockMode)
+   {
+      if (display != primaryDisplay_ && display != view_.getSplitDisplay())
+         display = activeDisplay();
+
+      display.insertCode(source, blockMode);
    }
 
    public HashSet<AppCommand> getSupportedCommands()

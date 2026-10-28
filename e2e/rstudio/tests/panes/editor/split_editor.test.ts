@@ -7,7 +7,7 @@ import { executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
 import type { AceEditorElement } from '@utils/ace';
-import type { Locator, Page } from '@playwright/test';
+import type { Locator, Page, Route } from '@playwright/test';
 
 // https://github.com/rstudio/rstudio/issues/2129
 test.describe('Split editor', () => {
@@ -16,6 +16,7 @@ test.describe('Split editor', () => {
 
   const FILE = 'split_editor.R';
   const RMD_FILE = 'split_editor.Rmd';
+  const INSERT_FILE = 'split_editor_insert.txt';
 
   // The marker comment identifies the source editor views in the DOM.
   const CONTENT = heredoc`
@@ -150,7 +151,7 @@ test.describe('Split editor', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     if ((await sourceViews(page).count()) > 1)
       await executeCommand(page, 'removeEditorSplit');
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE, RMD_FILE]);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE, RMD_FILE, INSERT_FILE]);
   });
 
   test('splitting shows a second synchronized view of the document', async ({ rstudioPage: page }) => {
@@ -494,6 +495,49 @@ test.describe('Split editor', () => {
     await executeCommand(page, 'sourceNavigateBack');
     await expect.poll(() => primary.cursorRow()).toBe(1);
     await expect.poll(() => primary.scrollLeft()).toBeGreaterThan(0);
+  });
+
+  test('Vim :read inserts into the view it ran in when focus moves before the file arrives', async ({ rstudioPage: page }) => {
+    const GET_FILE_CONTENTS = /\/rpc\/get_file_contents(?:\?|$)/;
+    const insertPath = `${sandbox.dir}/${INSERT_FILE}`;
+
+    // Hold the file contents request until focus has moved to the primary view.
+    const parked: Route[] = [];
+    await page.route(GET_FILE_CONTENTS, (route) => {
+      parked.push(route);
+    });
+    const release = async (): Promise<void> => {
+      await page.unroute(GET_FILE_CONTENTS);
+      for (const route of parked.splice(0))
+        await route.continue().catch(() => {});
+    };
+
+    try {
+      await setPref(page, 'editor_keybindings', 'vim');
+      await consoleActions.executeInConsole(
+        `writeLines("INSERTED", ${JSON.stringify(insertPath)})`,
+        { wait: true },
+      );
+
+      const { primary, split } = await openWithFocusedSplit(page);
+      const cursor = { row: 6, column: 0 };
+      await split.select({ start: cursor, end: cursor });
+      await page.keyboard.press('Escape');
+      await page.keyboard.type(`:r ${insertPath}`);
+      await page.keyboard.press('Enter');
+      await expect.poll(() => parked.length).toBe(1);
+
+      await primary.click();
+      await primary.gotoLine(2);
+      await expect.poll(() => primary.hasFocus()).toBe(true);
+      await release();
+
+      await expect.poll(() => documentLine(page, 6)).toBe('INSERTED');
+      expect(await documentLine(page, 1)).toBe('cmd_a <- function(x) {');
+    } finally {
+      await release();
+      await clearPref(page, 'editor_keybindings');
+    }
   });
 
   test('Vim reflow (gqq) reflows the focused view\'s line', async ({ rstudioPage: page }) => {

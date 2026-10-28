@@ -3014,13 +3014,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       EditingTarget activeEditor = activeColumn_.getActiveEditor();
       if (activeEditor instanceof TextEditingTarget)
       {
+         // insert into the view the command came from, even if focus moves
+         // to the other view of a split before the contents arrive
          final TextEditingTarget target = (TextEditingTarget) activeEditor;
+         final DocDisplay display = target.activeDisplay();
          server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
          {
             @Override
             public void onResponseReceived(String content)
             {
-               target.insertCode(content, false);
+               target.insertCode(display, content, false);
             }
 
             @Override
@@ -3034,17 +3037,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void pasteRCodeExecutionResult(final String code)
    {
+      // insert into the view the command came from, wherever focus has moved
+      // by the time the (possibly slow) result arrives
+      if (!hasActiveEditor() ||
+          !(activeColumn_.getActiveEditor() instanceof TextEditingTarget))
+         return;
+
+      final TextEditingTarget target = (TextEditingTarget) activeColumn_.getActiveEditor();
+      final DocDisplay display = target.activeDisplay();
       server_.executeRCode(code, new ServerRequestCallback<String>()
       {
          @Override
          public void onResponseReceived(String output)
          {
-            if (hasActiveEditor() &&
-                activeColumn_.getActiveEditor() instanceof TextEditingTarget)
-            {
-               TextEditingTarget editor = (TextEditingTarget) activeColumn_.getActiveEditor();
-               editor.insertCode(output, false);
-            }
+            target.insertCode(display, output, false);
          }
 
          @Override
