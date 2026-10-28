@@ -821,7 +821,7 @@ std::string altText()
 
    std::string altText;
    Error error = r::exec::RFunction(".rs.graphicsAltText",
-                                    s_pGEDevDesc->displayList).call(&altText);
+                                    s_pGEDevDesc->displayList).callUtf8(&altText);
    if (error)
       LOG_ERROR(error);
    return altText;
