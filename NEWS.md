@@ -10,6 +10,7 @@
 
 ### Fixed
 - ([#19315](https://github.com/rstudio/rstudio/issues/19315)): [Accessibility] The file list in web-based file dialogs (e.g. Open File, Choose Directory) now shows a focus indicator when reached with the keyboard. When no file is selected, the first item is marked as focused and announced by screen readers, without being selected. Choose Directory now opens with focus on its folder list, and Open File no longer briefly moves focus to the file list before the File name box.
+- ([#19319](https://github.com/rstudio/rstudio/issues/19319)): Fixed an issue where DataCite search results in the Visual Mode Insert Citation dialog were listed newest-first rather than by relevance to the search terms.
 - ([#19228](https://github.com/rstudio/rstudio/issues/19228)): [Accessibility] RStudio keyboard shortcuts such as F6, Ctrl+2 and Ctrl+Shift+2 now work while focus is in Posit Assistant, including when it's popped out (requires an updated Posit Assistant).
 - ([#18490](https://github.com/rstudio/rstudio/issues/18490)): Fixed an issue where running a chunk in a freshly opened Visual Mode document scrolled the editor to the top and back before any chunk had been clicked or edited.
 - ([#19294](https://github.com/rstudio/rstudio/issues/19294)): Fixed an issue where the Visual Mode Insert Emoji and Insert Unicode popups closed on their own a few seconds after the editor was first focused, even while a search term was still being typed.

@@ -149,6 +149,12 @@ export class CitationServiceMock {
 
       case 'datacite':
         if (resource === '/dois') {
+          // Unsorted, DataCite lists matches newest-first, which can push every
+          // close match off the dialog's first rows (#19319). So only a search
+          // that asks for relevance gets results here.
+          if (params.get('sort') !== 'relevance') {
+            return { status: 200, body: { data: [] } };
+          }
           const query = (params.get('query') ?? '').toLowerCase();
           return { status: 200, body: FIXTURES.datacite[query] ?? { data: [] } };
         }
