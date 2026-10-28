@@ -120,11 +120,12 @@ public class RowTableTests extends GWTTestCase
    }-*/;
 
    // HtmlUnit focus never matches :focus-visible, so plain focus acts as
-   // mouse focus; a key press then shows the ring as keyboard focus would
+   // mouse focus; a key press then shows the ring as keyboard focus would.
+   // RowTable takes no action on ArrowRight.
    private static void focusByKeyboard(RowTable<String> table)
    {
       table.setFocus(true);
-      pressKey(table, "Shift", KeyCodes.KEY_SHIFT);
+      pressKey(table, "ArrowRight", KeyCodes.KEY_RIGHT);
    }
 
    public void testFocusMakesFirstOptionActiveWithoutSelectingIt()
@@ -195,6 +196,24 @@ public class RowTableTests extends GWTTestCase
 
       table.setFocus(false);
       assertFalse(table.getElement().hasClassName(focusVisible));
+   }
+
+   public void testShiftTabFromMouseFocusKeepsScrollPosition()
+   {
+      // keys that may only be leaving the list show no ring, which would
+      // scroll row 0 into view as focus goes
+      String[] items = new String[50];
+      for (int i = 0; i < items.length; i++)
+         items[i] = "item" + i;
+      StringTable table = createTable(items);
+      table.setVerticalScrollPosition(400);
+      table.setFocus(true);
+
+      pressKey(table, "Shift", KeyCodes.KEY_SHIFT);
+      pressKey(table, "Tab", KeyCodes.KEY_TAB);
+
+      assertEquals(400, table.getVerticalScrollPosition());
+      assertEquals("", getActiveDescendant(table));
    }
 
    public void testBlurDropsActiveOption()

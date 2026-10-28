@@ -21,6 +21,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
@@ -207,8 +208,11 @@ public abstract class RowTable<T> extends ScrollPanel
 
             // keyboard use means a keyboard user, even if focus arrived by
             // mouse; shown after handling the key, so that with no option
-            // active yet the first Down lands on row 0
-            showFocusRing();
+            // active yet the first Down lands on row 0. Tab and a lone
+            // modifier (the Shift of Shift+Tab) may only be leaving: the ring
+            // would scroll row 0 into view as focus goes
+            if (code != KeyCodes.KEY_TAB && !KeyboardHelper.isModifierKey(code))
+               showFocusRing();
          }
       }, KeyDownEvent.getType());
       
