@@ -22,6 +22,7 @@ import java.util.Map;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
 
@@ -54,7 +55,7 @@ public class CommandShortcutReference extends Composite
       for (ShortcutInfo info : shortcuts)
       {
          if (StringUtil.isNullOrEmpty(info.getDescription()) ||
-             info.getShortcuts(false).isEmpty() ||
+             info.getDisplayedKeySequences().isEmpty() ||
              info.getGroupName().equals(HIDDEN_GROUP))
          {
             continue;
@@ -90,17 +91,19 @@ public class CommandShortcutReference extends Composite
 
    private static void appendShortcuts(SafeHtmlBuilder sb, ShortcutInfo info)
    {
-      List<String> pretty = info.getShortcuts(true);
-      List<String> plain = info.getShortcuts(false);
-      for (int i = 0; i < plain.size(); i++)
+      boolean first = true;
+      for (KeySequence keys : info.getDisplayedKeySequences())
       {
-         if (i > 0)
+         if (!first)
             sb.appendHtmlConstant(", ");
+         first = false;
 
+         String pretty = keys.toString(true);
+         String plain = keys.toString(false);
          sb.appendHtmlConstant("<kbd>");
-         if (pretty.get(i).equals(plain.get(i)))
+         if (pretty.equals(plain))
          {
-            sb.appendEscaped(plain.get(i));
+            sb.appendEscaped(plain);
          }
          else
          {
@@ -110,9 +113,9 @@ public class CommandShortcutReference extends Composite
             // custom key names come from the user's bindings file, so escape the rest.
             sb.appendHtmlConstant("<span aria-hidden=\"true\">");
             sb.append(SafeHtmlUtils.fromTrustedString(
-                  SafeHtmlUtils.htmlEscapeAllowEntities(pretty.get(i))));
+                  SafeHtmlUtils.htmlEscapeAllowEntities(pretty)));
             sb.appendHtmlConstant("</span>");
-            sb.append(SafeHtmlUtil.visuallyHiddenText(plain.get(i)));
+            sb.append(SafeHtmlUtil.visuallyHiddenText(plain));
          }
          sb.appendHtmlConstant("</kbd>");
       }
