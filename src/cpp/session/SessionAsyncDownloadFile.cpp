@@ -130,7 +130,7 @@ void asyncDownloadFile(const std::string& url,
    // create headers if we have them
    std::vector<std::string> headerList;
    std::transform(headers.begin(), headers.end(), std::back_inserter(headerList), [](const http::Field& field) {
-      return "`" + field.first + "` = '" + field.second + "'";
+      return "`" + field.first + "` = '" + string_utils::singleQuotedStrEscape(field.second) + "'";
    });
    std::string headersStr;
    if (headerList.size() > 0)
@@ -141,7 +141,9 @@ void asyncDownloadFile(const std::string& url,
    if (!userAgent.empty())
       cmd += "options(HTTPUserAgent = '" + string_utils::singleQuotedStrEscape(userAgent) + "'); ";
    cmd += "tmp <- tempfile(); ";
-   cmd += "download.file('" + url + "'" + headersStr + ", destfile = tmp, quiet = TRUE); ";
+   // the url can carry a DOI typed by the user or returned by a search
+   // service, so it must not be able to close the string literal
+   cmd += "download.file('" + string_utils::singleQuotedStrEscape(url) + "'" + headersStr + ", destfile = tmp, quiet = TRUE); ";
    cmd += "cat(readLines(tmp, warn = FALSE)); ";
    cmd += "} ";
 

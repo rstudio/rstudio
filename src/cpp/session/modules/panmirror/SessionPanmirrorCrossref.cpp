@@ -27,6 +27,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncDownloadFile.hpp>
 
+#include "SessionPanmirrorUtils.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -97,7 +99,7 @@ void crossrefRequest(const std::string& resource,
 
    // build the url and make the request
    boost::format fmt("%s/%s%s");
-   const std::string url = boost::str(fmt % kCrossrefApiHost % resource % queryString);
+   const std::string url = boost::str(fmt % crossrefApiHost() % resource % queryString);
 
    http::Fields headers;
    asyncJsonRpcRequest(url, userAgent, headers, handler, cont);
@@ -153,6 +155,11 @@ void crossrefDoi(const json::JsonRpcRequest& request,
 
 
 } // end anonymous namespace
+
+std::string crossrefApiHost()
+{
+   return serviceBaseUrl(kCrossrefUrlOption, kCrossrefApiHost);
+}
 
 Error initialize()
 {

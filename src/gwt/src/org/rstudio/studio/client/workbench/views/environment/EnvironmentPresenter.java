@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -775,7 +776,7 @@ public class EnvironmentPresenter extends BasePresenter
       if (contextDepth > 0 &&
           contextDepth_ == 0)
       {
-         eventBus_.fireEvent(new ActivatePaneEvent(constants_.environmentCapitalized()));
+         eventBus_.fireEvent(new ActivatePaneEvent(PaneManager.ENVIRONMENT_PANE));
          debugCommander_.enterDebugMode(DebugMode.Function);
          enteringDebugMode = true;
       }

@@ -27,8 +27,6 @@
 #endif
 
 #include <boost/current_function.hpp>
-#include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
@@ -127,8 +125,14 @@ class AssistantContinuation
 public:
 
    explicit AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation)
+      : AssistantContinuation(continuation, std::chrono::steady_clock::now())
+   {
+   }
+
+   AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation,
+                         std::chrono::steady_clock::time_point time)
       : continuation_(continuation),
-        time_(boost::posix_time::second_clock::local_time())
+        time_(time)
    {
    }
    
@@ -161,14 +165,14 @@ public:
          continuation_(Success(), &response);
    }
 
-   boost::posix_time::ptime time()
+   std::chrono::steady_clock::time_point time()
    {
       return time_;
    }
 
 private:
    json::JsonRpcFunctionContinuation continuation_;
-   boost::posix_time::ptime time_;
+   std::chrono::steady_clock::time_point time_;
 };
 
 // keep in sync with AssistantResponseTypes.AssistantAgentNotRunningReason
@@ -1981,29 +1985,6 @@ void didFocus(lsp::DidFocusTextDocumentParams params,
 
 void onBackgroundProcessing(bool isIdle)
 {
-   // extract requests that appear to have been dropped
-   if (isIdle)
-   {
-      auto currentTime = boost::posix_time::second_clock::local_time();
-
-      std::vector<std::string> keys;
-      boost::copy(
-               s_pendingContinuations | boost::adaptors::map_keys,
-               std::back_inserter(keys));
-
-      for (auto&& key : keys)
-      {
-         auto&& continuation = s_pendingContinuations[key];
-         auto elapsedTime = currentTime - continuation.time();
-         if (elapsedTime.seconds() > 10)
-         {
-            DLOG("Cancelling old continuation with id '{}'.", key);
-            continuation.cancel();
-            s_pendingContinuations.erase(key);
-         }
-      }
-   }
-
    // process any pending requests
    while (!s_pendingResponses.empty())
    {
@@ -2148,6 +2129,28 @@ void onBackgroundProcessing(bool isIdle)
       }
    }
    
+   // extract requests that appear to have been dropped; this runs after the
+   // queue above so that a reply which arrived while R was busy is delivered
+   // rather than cancelled
+   if (isIdle)
+   {
+      auto currentTime = std::chrono::steady_clock::now();
+
+      for (auto it = s_pendingContinuations.begin(); it != s_pendingContinuations.end(); )
+      {
+         if (isAgentRequestExpired(it->second.time(), currentTime))
+         {
+            DLOG("Cancelling old continuation with id '{}'.", it->first);
+            it->second.cancel();
+            it = s_pendingContinuations.erase(it);
+         }
+         else
+         {
+            ++it;
+         }
+      }
+   }
+
    // index files in the queue
    if (isIdle && !s_indexQueue.empty())
    {
@@ -2962,6 +2965,34 @@ FilePath nesLanguageServerPath(const FilePath& installPath)
    }
 
    return FilePath();
+}
+
+bool isAgentRequestExpired(std::chrono::steady_clock::time_point requestTime,
+                           std::chrono::steady_clock::time_point now)
+{
+   return now - requestTime > std::chrono::seconds(10);
+}
+
+void addPendingAgentRequestForTesting(const std::string& requestId,
+                                      std::chrono::steady_clock::time_point requestTime,
+                                      const std::function<void(bool)>& onResult)
+{
+   auto continuation = [=](const Error&, json::JsonRpcResponse* pResponse)
+   {
+      json::Value cancelledJson = pResponse->result().getObject()["cancelled"];
+      onResult(cancelledJson.isBool() && cancelledJson.getBool());
+   };
+   s_pendingContinuations[requestId] = AssistantContinuation(continuation, requestTime);
+}
+
+void queueAgentReplyForTesting(const std::string& reply)
+{
+   s_pendingResponses.push(reply);
+}
+
+void runBackgroundProcessingForTesting(bool isIdle)
+{
+   onBackgroundProcessing(isIdle);
 }
 
 bool stopAgentForUpdate()

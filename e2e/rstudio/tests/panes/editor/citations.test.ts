@@ -1,4 +1,5 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { externalServerUrl } from '@fixtures/server.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { InsertCitationDialog, CITATION_SOURCES } from '@pages/insert_citation.page';
@@ -7,62 +8,14 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
-import { isServiceReachable, reprobeService, CITATION_SERVICE_HOSTS } from '@utils/network';
+import { CitationServiceMock, RESET_CITATION_SERVICE_OPTIONS, type CitationService } from '@utils/citation-services';
+import { sessionsRunLocally } from '@utils/session-liveness';
+import { envFlag } from '@utils/env';
 import type { Page } from 'playwright';
 
-// Skip (rather than fail) a test whose citation source depends on an external
-// service that is unreachable from this runner -- an outage or blocked egress
-// is not a product bug. Probes are Node-side and cached; see utils/network.ts.
-async function skipUnlessReachable(...urls: string[]): Promise<void> {
-  for (const url of urls) {
-    test.skip(!(await isServiceReachable(url)), `${url} is unreachable from this runner`);
-  }
-}
-
-// Stage the first result of a latent citation lookup, tolerating a service
-// that degrades after skipUnlessReachable() passed: the probe runs at test
-// start, but the lookup itself runs in the rsession seconds later (#18426). Mirrors the
-// search tests' #18267 pattern -- a service-side failure renders as the
-// dialog's error status line, and we skip on it. A lookup that hangs shows
-// neither results nor an error within the wait; re-probe the host and skip
-// retroactively if it has since become unreachable. A timeout with the
-// service still answering remains a real failure.
-async function stageFirstResultOrSkip(
-  page: Page,
-  citation: InsertCitationDialog,
-  host: string,
-): Promise<void> {
-  const deadline = Date.now() + 30000;
-  let outcome: 'pending' | 'result' | 'error' = 'pending';
-  while (outcome === 'pending' && Date.now() < deadline) {
-    if (await citation.results.first().isVisible()) {
-      outcome = 'result';
-    } else if (await citation.searchError.isVisible()) {
-      outcome = 'error';
-    } else {
-      await page.waitForTimeout(250);
-    }
-  }
-
-  if (outcome === 'error') {
-    await citation.cancel();
-    test.skip(true, `${host} lookup failed service-side from this runner`);
-  }
-
-  if (outcome === 'pending') {
-    if (!(await reprobeService(host))) {
-      await citation.cancel();
-      test.skip(true, `${host} became unreachable during the lookup`);
-    }
-    const status = (await citation.searchStatus.textContent().catch(() => null))?.trim();
-    throw new Error(
-      `no lookup result and no error status within 30s ` +
-        `(${host} is still reachable; dialog status: ${status ? `"${status}"` : 'none'})`,
-    );
-  }
-
-  await citation.stageFirstResult();
-}
+// PW_CITATION_LIVE=1 leaves the session on the live services, to check that
+// fixtures/citation-services.json still describes what they answer.
+const LIVE_SERVICES = envFlag('PW_CITATION_LIVE');
 
 // Read the value of an R expression via marker-wrapped console output. Runs on
 // the rsession host, so it reads files the IDE wrote (e.g. references.bib in the
@@ -95,7 +48,10 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
 // Migrated from Selenium test_desktop_Citations.py. Citations live in the
 // panmirror visual editor's Insert menu; see the InsertCitationDialog page
 // object and visual-editor.md for the dialog's selectors and the one-time init
-// reset these tests work around.
+// reset these tests work around. The network-backed sources (DOI, Crossref,
+// DataCite, PubMed) answer from a local mock of those services (see
+// utils/citation-services.ts), or from the live services under
+// PW_CITATION_LIVE.
 test.describe('Citations', () => {
   // Inserting a citation writes references.bib to the working directory;
   // useSuiteSandbox() redirects cwd into the per-run sandbox so nothing lands
@@ -104,10 +60,28 @@ test.describe('Citations', () => {
 
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
+  let services: CitationServiceMock;
+  let servicesReachable: boolean;
+  let usingMock: boolean;
 
-  test.beforeAll(async ({ rstudioPage: page }) => {
+  test.beforeAll(async ({ rstudioPage: page, mode }) => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
+    services = await CitationServiceMock.start();
+    // The mock listens on this machine's loopback, which only an rsession on
+    // this machine can reach.
+    servicesReachable = LIVE_SERVICES || sessionsRunLocally(mode, externalServerUrl());
+    usingMock = servicesReachable && !LIVE_SERVICES;
+  });
+
+  test.afterAll(async () => {
+    try {
+      if (usingMock)
+        await consoleActions.executeInConsole(RESET_CITATION_SERVICE_OPTIONS, { wait: true });
+    } finally {
+      // Unset if beforeAll failed before the mock started.
+      await services?.close();
+    }
   });
 
   // Each test starts from a single clean Untitled tab. resetSourcePane()
@@ -115,10 +89,24 @@ test.describe('Citations', () => {
   // dirty doc without a save prompt.
   test.beforeEach(async () => {
     await consoleActions.resetSourcePane();
+    services.reset();
     // Citation inserts append to references.bib in the shared workdir; remove
-    // any leftover so each test's bib assertions start from a clean file.
-    await consoleActions.executeInConsole('unlink("references.bib")', { wait: true });
+    // any leftover so each test's bib assertions start from a clean file. The
+    // same command (re)points the session's citation lookups at the mock --
+    // only when it can reach the mock, so a remote session that never runs
+    // afterAll isn't left with Insert Citation pointed at a dead port.
+    const pointAtMock = usingMock ? `; ${services.optionsCall()}` : '';
+    await consoleActions.executeInConsole(`unlink("references.bib")${pointAtMock}`, { wait: true });
   });
+
+  function skipUnlessServicesReachable(): void {
+    test.skip(!servicesReachable, 'the citation service mock is unreachable from a remote rsession');
+  }
+
+  function skipUnlessUsingMock(): void {
+    skipUnlessServicesReachable();
+    test.skip(LIVE_SERVICES, 'PW_CITATION_LIVE: the live services cannot be made to fail');
+  }
 
   // Open a fresh markdown document in visual mode (the only place citations are
   // reachable). Plain markdown is the cheapest host -- no rmarkdown package, no
@@ -131,16 +119,16 @@ test.describe('Citations', () => {
   }
 
   test('inserts an authorless DOI citation into a markdown visual editor', async ({ rstudioPage: page }) => {
-    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
+    skipUnlessServicesReachable();
     await newMarkdownVisualDoc(page);
 
     const citation = new InsertCitationDialog(page);
     await citation.open();
     const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
 
-    // A DOI resolves to exactly one work via a real service call (no intercept).
+    // A DOI resolves to exactly one work.
     await citation.search(searchBox, '10.3133/93888');
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await citation.stageFirstResult();
     await citation.insert();
 
     // The citation lands in the document. With no author, panmirror derives the
@@ -156,9 +144,8 @@ test.describe('Citations', () => {
     expect(bib).toContain('@techreport'); // entry type, not just fields
     expect(bib).toContain('Bobolink');
     expect(bib).toContain('10.3133/93888');
-    // No author: the key is title-derived. If this DOI ever gains an author
-    // field upstream, the key would change and this test's premise breaks --
-    // fail here rather than silently testing the wrong thing.
+    // No author: the key is title-derived. Guards the fixture too -- a CSL
+    // record with an author would change the key and this test's premise.
     expect(bib).not.toMatch(/author\s*=/i);
   });
 
@@ -166,7 +153,7 @@ test.describe('Citations', () => {
   // where the previous migration attempt stalled ("never reaches visual mode").
   // Opening a file-based .qmd and using ensureVisualMode() gets there reliably.
   test('inserts a DOI citation into a Quarto visual editor', async ({ rstudioPage: page }) => {
-    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
+    skipUnlessServicesReachable();
     const fileName = `citations_${Date.now()}.qmd`;
     await sourceActions.createAndOpenFile(fileName, '---\ntitle: Citations\n---\n\nGrassland bird research.\n');
     await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
@@ -180,7 +167,7 @@ test.describe('Citations', () => {
     await citation.open();
     const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
     await citation.search(searchBox, '10.3133/93888');
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await citation.stageFirstResult();
     await citation.insert();
 
     await expect(page.locator('.ProseMirror')).toContainText('[@effects1999]', { timeout: 15000 });
@@ -204,7 +191,7 @@ test.describe('Citations', () => {
   });
 
   test('deletes a staged citation', async ({ rstudioPage: page }) => {
-    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi);
+    skipUnlessServicesReachable();
     await newMarkdownVisualDoc(page);
 
     const citation = new InsertCitationDialog(page);
@@ -213,7 +200,7 @@ test.describe('Citations', () => {
 
     // Stage the single DOI result, then remove it from the staging area (#9124).
     await citation.search(searchBox, '10.3133/93888');
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await citation.stageFirstResult();
     await expect(citation.stagedCitations).toHaveCount(1);
 
     await citation.deleteStagedCitation();
@@ -228,7 +215,7 @@ test.describe('Citations', () => {
   // "bermúdez2020a" (and a second bib entry) instead.
   test('does not duplicate a citation inserted from two sources', async ({ rstudioPage: page }) => {
     // The same work is inserted first via From DOI, then via DataCite.
-    await skipUnlessReachable(CITATION_SERVICE_HOSTS.doi, CITATION_SERVICE_HOSTS.datacite);
+    skipUnlessServicesReachable();
     await newMarkdownVisualDoc(page);
     const citation = new InsertCitationDialog(page);
     const doi = '10.5281/ZENODO.4266706';
@@ -237,7 +224,7 @@ test.describe('Citations', () => {
     await citation.open();
     let searchBox = await citation.selectSource(CITATION_SOURCES.doi);
     await citation.search(searchBox, doi);
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
+    await citation.stageFirstResult();
     await citation.insert();
     await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020]', { timeout: 15000 });
 
@@ -246,7 +233,7 @@ test.describe('Citations', () => {
     await citation.open();
     searchBox = await citation.selectSource(CITATION_SOURCES.datacite);
     await citation.search(searchBox, doi);
-    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.datacite);
+    await citation.stageFirstResult();
     await citation.insert();
     await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020][@bermúdez2020]', { timeout: 15000 });
 
@@ -290,17 +277,13 @@ test.describe('Citations', () => {
   }
 
   // Selecting each network-backed source and searching returns matching results.
-  // "bobolink" returns hits on all three services (DataCite, Crossref, PubMed).
+  // "bobolink" has hits in every service's fixture (DataCite, Crossref, PubMed).
   // Listed in the dialog's tree order (top to bottom): Crossref, DataCite, PubMed.
-  const SEARCH_SOURCES = [
-    { source: CITATION_SOURCES.crossref, host: CITATION_SERVICE_HOSTS.crossref },
-    { source: CITATION_SOURCES.datacite, host: CITATION_SERVICE_HOSTS.datacite },
-    { source: CITATION_SOURCES.pubmed, host: CITATION_SERVICE_HOSTS.pubmed },
-  ];
+  const SEARCH_SOURCES = [CITATION_SOURCES.crossref, CITATION_SOURCES.datacite, CITATION_SOURCES.pubmed];
   const searchTerm = 'bobolink';
-  for (const { source, host } of SEARCH_SOURCES) {
+  for (const source of SEARCH_SOURCES) {
     test(`searches ${source.alt} and returns matching results`, async ({ rstudioPage: page }) => {
-      await skipUnlessReachable(host);
+      skipUnlessServicesReachable();
       await newMarkdownVisualDoc(page);
 
       const citation = new InsertCitationDialog(page);
@@ -310,37 +293,72 @@ test.describe('Citations', () => {
       // At least one of the first five results should mention the term, not just
       // that some rows rendered -- otherwise arbitrary or stale hits would pass.
       // We don't require it of result #1: relevance ranking can put a non-title
-      // match first (e.g. PubMed ranks a "Bobo-link" correspondence hit above the
-      // title matches). Poll to ride out the list still populating.
+      // match first, and the PubMed fixture keeps such a hit (a "Bobo-link"
+      // correspondence) ahead of the title matches.
       await citation.search(searchBox, searchTerm);
       const matcher = new RegExp(searchTerm, 'i');
-      const searchOutcome = async (): Promise<'pending' | 'matched' | 'error'> => {
-        if ((await citation.resultTexts(5)).some((t) => matcher.test(t))) {
-          return 'matched';
-        }
-        if (await citation.searchError.isVisible()) {
-          return 'error';
-        }
-        return 'pending';
-      };
       await expect
-        .poll(searchOutcome, {
+        .poll(async () => (await citation.resultTexts(5)).some((t) => matcher.test(t)), {
           timeout: 30000,
-          message: `no ${source.alt} results mentioning "${searchTerm}" and no error status within 30s`,
+          message: `no ${source.alt} result mentioning "${searchTerm}" within 30s`,
         })
-        .not.toBe('pending');
-
-      // The reachability probe above only proves the host answers from Node;
-      // the query itself runs in the rsession and can still fail (e.g. NCBI
-      // rate-limits shared CI egress IPs). That is a service problem, not a
-      // product bug -- skip, as skipUnlessReachable() would have. A timeout
-      // with neither results nor an error line still fails above.
-      if ((await searchOutcome()) === 'error') {
-        await citation.cancel();
-        test.skip(true, `${source.alt} search failed service-side from this runner`);
-      }
+        .toBe(true);
 
       await citation.cancel();
     });
   }
+
+  // A service-side failure surfaces as the dialog's error status line, not an
+  // endless "Searching..." or an empty result list. Each case fails through
+  // its own rsession path: doiFetchCSL, crossrefRequest, dataCiteRequest, and
+  // both legs of pubMedSearch (esummary runs in a nested continuation). This
+  // also proves each lookup goes through the mock: one that fell back to the
+  // live service would get results instead. Crossref's panel has no
+  // service-specific wording, only the catch-all.
+  const SERVICE_FAILURES: { service: CitationService; resource?: string; query: string; error: string }[] = [
+    { service: 'doi', query: '10.3133/93888', error: 'An error occurred while searching for this DOI.' },
+    { service: 'crossref', query: searchTerm, error: 'An unknown error occurred. Please try again.' },
+    { service: 'datacite', query: searchTerm, error: 'An error occurred while searching DataCite.' },
+    { service: 'pubmed', query: searchTerm, error: 'An error occurred while searching PubMed.' },
+    {
+      service: 'pubmed',
+      resource: '/entrez/eutils/esummary.fcgi',
+      query: searchTerm,
+      error: 'An error occurred while searching PubMed.',
+    },
+  ];
+  for (const { service, resource, query, error } of SERVICE_FAILURES) {
+    const source = CITATION_SOURCES[service];
+    const what = resource ? `${source.alt} ${resource.split('/').pop()}` : source.alt;
+    test(`reports a ${what} service failure in the dialog`, async ({ rstudioPage: page }) => {
+      skipUnlessUsingMock();
+      services.fail(service, 503, resource);
+      await newMarkdownVisualDoc(page);
+
+      const citation = new InsertCitationDialog(page);
+      await citation.open();
+      const searchBox = await citation.selectSource(source);
+      await citation.search(searchBox, query);
+      await expect(citation.searchError).toHaveText(error, { timeout: 30000 });
+
+      await citation.cancel();
+    });
+  }
+
+  // The DOI reaches the rsession's download.file() call inside an R string
+  // literal; a quote in it must not end the literal. Neither the mock nor
+  // doi.org has such a DOI, so a correctly quoted lookup gets "No data", not
+  // an R parse error.
+  test('looks up a DOI containing a quote', async ({ rstudioPage: page }) => {
+    skipUnlessServicesReachable();
+    await newMarkdownVisualDoc(page);
+
+    const citation = new InsertCitationDialog(page);
+    await citation.open();
+    const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
+    await citation.search(searchBox, "10.1002/it's");
+    await expect(citation.searchNoResults).toHaveText('No data for this DOI could be found.', { timeout: 30000 });
+
+    await citation.cancel();
+  });
 });

@@ -89,7 +89,9 @@ public class TerminalPane extends WorkbenchPane
                           WorkbenchContext workbenchContext,
                           WorkbenchServerOperations server)
    {
-      super(constants_.terminalText(), events);
+      // No pane name: Terminal shares the Console's window and PaneManager has
+      // no tab for it, so there is nothing to activate by name.
+      super(constants_.terminalText(), null, events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
