@@ -282,10 +282,12 @@ public abstract class RowTable<T> extends ScrollPanel
    
    // The ring and the active option come and go together, so what is shown,
    // what a screen reader announces, and where the arrow keys start agree.
-   // Mouse focus shows neither: the first key press brings both.
+   // Mouse focus shows neither: the first key press brings both. A key's
+   // handler can move focus away first (Enter opening the Save dialog's
+   // overwrite prompt), and blur has already removed the ring by then.
    private void showFocusRing()
    {
-      if (isFocusRingShown())
+      if (isFocusRingShown() || !table_.equals(DomUtils.getActiveElement()))
          return;
       
       addStyleName(RES.styles().focusVisible());

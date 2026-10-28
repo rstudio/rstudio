@@ -216,6 +216,22 @@ public class RowTableTests extends GWTTestCase
       assertEquals("", getActiveDescendant(table));
    }
 
+   public void testKeyThatMovesFocusAwayLeavesNoRing()
+   {
+      // e.g. Enter on an existing file in the Save dialog opens the overwrite
+      // prompt, which blurs the table while the key is being handled
+      String focusVisible =
+            GWT.<RowTable.Resources>create(RowTable.Resources.class).styles().focusVisible();
+      StringTable table = createTable("a", "b", "c");
+      table.addSelectionCommitHandler(event -> table.setFocus(false));
+      table.setFocus(true);
+      table.selectRow(1);
+
+      pressKey(table, "Enter", KeyCodes.KEY_ENTER);
+
+      assertFalse(table.getElement().hasClassName(focusVisible));
+   }
+
    public void testBlurDropsActiveOption()
    {
       // otherwise mouse focus on return would leave an unmarked active option
