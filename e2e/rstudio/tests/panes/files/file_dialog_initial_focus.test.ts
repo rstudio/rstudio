@@ -20,7 +20,7 @@ const FILE_NAME = '#file_dialog_name_prompt';
 // same task as any focus change, and also for a directory with no entries
 const CURRENT_LOCATION = '[aria-current="location"]';
 
-test.describe('Web file dialog initial focus @server_only', () => {
+test.describe('Web file dialog initial focus', () => {
   test('a listing that arrives after the dialog is shown leaves focus on the file name', async ({ rstudioPage: page }) => {
     const listing = await holdListFiles(page);
 
