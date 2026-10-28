@@ -84,7 +84,7 @@ void doiFetchCSL(const json::JsonRpcRequest& request,
        std::string url;
        http::Fields headers;
        boost::format fmt("%s/%s");
-       url = boost::str(fmt % serviceBaseUrl("rstudio.doi_url", kDOIHost) % doi);
+       url = boost::str(fmt % serviceBaseUrl(kDOIUrlOption, kDOIHost) % doi);
        headers.push_back(std::make_pair("Accept", kCSLJsonFormat));
        asyncDownloadFile(url, headers, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION, jsonPassthrough));
     }

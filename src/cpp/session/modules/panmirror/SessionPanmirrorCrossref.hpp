@@ -33,7 +33,7 @@ namespace crossref {
 const char * const kCrossrefApiHost = "https://api.crossref.org";
 const char * const kCrossrefWorks = "works";
 
-// kCrossrefApiHost, unless the rstudio.crossref_url option overrides it.
+// kCrossrefApiHost, unless kCrossrefUrlOption overrides it.
 std::string crossrefApiHost();
 
 core::Error initialize();

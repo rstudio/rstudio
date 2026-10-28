@@ -104,6 +104,10 @@ void jsonRpcDownloadHandler(const json::JsonRpcFunctionContinuation& cont,
 std::string serviceBaseUrl(const std::string& option, const std::string& defaultUrl)
 {
    std::string url = r::options::getOption<std::string>(option, defaultUrl, false);
+
+   while (!url.empty() && url.back() == '/')
+      url.pop_back();
+
    return url.empty() ? defaultUrl : url;
 }
 

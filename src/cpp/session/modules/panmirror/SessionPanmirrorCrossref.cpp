@@ -158,7 +158,7 @@ void crossrefDoi(const json::JsonRpcRequest& request,
 
 std::string crossrefApiHost()
 {
-   return serviceBaseUrl("rstudio.crossref_url", kCrossrefApiHost);
+   return serviceBaseUrl(kCrossrefUrlOption, kCrossrefApiHost);
 }
 
 Error initialize()

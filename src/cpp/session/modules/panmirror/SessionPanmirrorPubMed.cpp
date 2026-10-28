@@ -206,7 +206,7 @@ void pubMedRequest(const std::string& resource,
 
    // build the url and make the request
    boost::format fmt("%s/%s%s");
-   const std::string host = serviceBaseUrl("rstudio.pubmed_url", kPubMedEUtilsHost);
+   const std::string host = serviceBaseUrl(kPubMedUrlOption, kPubMedEUtilsHost);
    const std::string url = boost::str(fmt % host % resource % queryString);
 
    asyncDownloadFile(url, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION, handler));

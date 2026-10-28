@@ -123,7 +123,7 @@ void dataCiteRequest(const std::string& resource,
 
    // build the url and make the request
    boost::format fmt("%s/%s%s");
-   const std::string host = serviceBaseUrl("rstudio.datacite_url", kDataCiteApiHost);
+   const std::string host = serviceBaseUrl(kDataCiteUrlOption, kDataCiteApiHost);
    const std::string url = boost::str(fmt % host % resource % queryString);
 
    asyncDownloadFile(url, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION,
