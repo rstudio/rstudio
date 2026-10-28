@@ -133,8 +133,10 @@ TEST(CryptoTest, GenerateRsaFileCert)
    X509* cert = PEM_read_bio_X509(certBIO, NULL, 0, NULL);
    EVP_PKEY* key = PEM_read_bio_PrivateKey(keyBIO, NULL, NULL, NULL);
 
-   // check the common name we gave it matches
+   // check the common name we gave it matches, both with default hostname
+   // verification and when only the subject alternative names are consulted
    ASSERT_EQ(1, X509_check_host(cert, (const char *) "testCN", 0, 0, NULL));
+   ASSERT_EQ(1, X509_check_host(cert, (const char *) "testCN", 0, X509_CHECK_FLAG_NEVER_CHECK_SUBJECT, NULL));
    // check that the private key matches the public key in the cert
    ASSERT_EQ(1, X509_check_private_key(cert, key));
 
@@ -158,8 +160,10 @@ TEST(CryptoTest, GenerateRsaStringCert)
    X509* cert = PEM_read_bio_X509(certBIO, NULL, 0, NULL);
    EVP_PKEY* key = PEM_read_bio_PrivateKey(keyBIO, NULL, NULL, NULL);
 
-   // check the common name we gave it matches
+   // check the common name we gave it matches, both with default hostname
+   // verification and when only the subject alternative names are consulted
    ASSERT_EQ(1, X509_check_host(cert, (const char *) "testCN", 0, 0, NULL));
+   ASSERT_EQ(1, X509_check_host(cert, (const char *) "testCN", 0, X509_CHECK_FLAG_NEVER_CHECK_SUBJECT, NULL));
    // check that the cert is self-signed
    ASSERT_EQ(0, X509_NAME_cmp(X509_get_subject_name(cert), X509_get_issuer_name(cert)));
    // check that the private key matches the public key in the cert

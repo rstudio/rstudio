@@ -32,6 +32,7 @@
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #include <algorithm>
 #include <stdio.h>
@@ -405,6 +406,29 @@ Error generateRsaCertAndKey(const std::string& certCommonName,
 
    X509_set_subject_name(pCert.get(), pName.get());
    X509_set_issuer_name(pCert.get(), pName.get());
+
+   // Hostname verification matches against DNS subject alternative names; OpenSSL 4.1
+   // and later no longer fall back to the subject CN, so the CN is repeated as a SAN
+   if (certCommonName.size() > 0)
+   {
+      auto pAltNames = make_unique_ptr(GENERAL_NAMES_new(), GENERAL_NAMES_free);
+      auto pAltName = make_unique_ptr(GENERAL_NAME_new(), GENERAL_NAME_free);
+      auto pDnsName = make_unique_ptr(ASN1_IA5STRING_new(), ASN1_IA5STRING_free);
+      if (!pAltNames || !pAltName || !pDnsName)
+         return getLastCryptoError(ERROR_LOCATION);
+
+      if (ASN1_STRING_set(pDnsName.get(), certCommonName.c_str(), gsl::narrow_cast<int>(certCommonName.size())) != 1)
+         return getLastCryptoError(ERROR_LOCATION);
+
+      // set0 and push take ownership on success
+      GENERAL_NAME_set0_value(pAltName.get(), GEN_DNS, pDnsName.release());
+      if (sk_GENERAL_NAME_push(pAltNames.get(), pAltName.get()) == 0)
+         return getLastCryptoError(ERROR_LOCATION);
+      pAltName.release();
+
+      if (X509_add1_ext_i2d(pCert.get(), NID_subject_alt_name, pAltNames.get(), 0, X509V3_ADD_DEFAULT) != 1)
+         return getLastCryptoError(ERROR_LOCATION);
+   }
 
    X509_sign(pCert.get(), pCertKey.get(), EVP_sha256());
 
