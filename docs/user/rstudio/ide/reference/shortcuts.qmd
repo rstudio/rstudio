@@ -56,88 +56,88 @@ It's also available on the *Tools* menu (*Tools* -\> *Show Command Palette*).
 
 ## Source
 
-| Description                                         | Windows & Linux                                     | Mac                                                          |
-|:----------------------------------------------------|:----------------------------------------------------|:-------------------------------------------------------------|
-| Go to File/Function                                 | Ctrl+. \[period\]                                   | Ctrl+. \[period\]                                            |
-| Move cursor to Source Editor                        | Ctrl+1                                              | Ctrl+1                                                       |
-| Toggle document outline                             | Ctrl+Shift+O                                        | Shift+Command+O                                              |
-| Toggle visual markdown editor                       | Ctrl+Shift+F4                                       | Shift+Command+F4                                             |
-| New R script                                        | Ctrl+Shift+N (Ctrl+Alt+Shift+N in Chrome on Server) | Shift+Command+N (Option+Shift+Command+N in Chrome on Server) |
-| Open document                                       | Ctrl+O                                              | Command+O                                                    |
-| Save active document                                | Ctrl+S                                              | Command+S                                                    |
-| Save all documents                                  | Ctrl+Alt+S                                          | Command+Option+S                                             |
-| Close active document                               | Ctrl+W                                              | Command+W                                                    |
-| Close all open documents                            | Ctrl+Shift+W                                        | Shift+Command+W                                              |
-| Close other documents                               | Ctrl+Shift+Alt+W                                    | Option+Shift+Command+W                                       |
-| Preview HTML (Markdown and HTML)                    | Ctrl+Shift+K                                        | Shift+Command+K                                              |
-| Knit Document (knitr)                               | Ctrl+Shift+K                                        | Shift+Command+K                                              |
-| Render Document (Quarto)                            | Ctrl+Shift+K                                        | Shift+Command+K                                              |
-| Compile Report (R script)                           | Ctrl+Shift+K                                        | Shift+Command+K                                              |
-| Compile PDF (TeX and Sweave)                        | Ctrl+Shift+K                                        | Shift+Command+K                                              |
-| Insert chunk (Sweave and Knitr)                     | Ctrl+Alt+I                                          | Option+Command+I                                             |
-| Insert code section                                 | Ctrl+Shift+R                                        | Shift+Command+R or Ctrl+Shift+R                              |
-| Run current line/selection                          | Ctrl+Enter                                          | Command+Return                                               |
-| Run current line/selection (retain cursor position) | Alt+Enter                                           | Option+Return                                                |
-| Re-run previous region                              | Ctrl+Alt+P                                          | Option+Command+P                                             |
-| Run current document                                | Ctrl+Alt+R                                          | Option+Command+R                                             |
-| Run from document beginning to current line         | Ctrl+Alt+B                                          | Option+Command+B                                             |
-| Run from current line to document end               | Ctrl+Alt+E                                          | Option+Command+E                                             |
-| Run the current function definition                 | Ctrl+Alt+F                                          | Option+Command+F                                             |
-| Run the current code section                        | Ctrl+Alt+T                                          | Option+Command+T                                             |
-| Run previous Sweave/Rmd code                        | Ctrl+Alt+Shift+P                                    | Option+Shift+Command+P                                       |
-| Run the current Sweave/Rmd chunk                    | Ctrl+Alt+C or Ctrl+Shift+Enter                      | Option+Command+C or Shift+Command+Return                     |
-| Run the next Sweave/Rmd chunk                       | Ctrl+Alt+N                                          | Option+Command+N                                             |
-| Source a file                                       | Ctrl+Alt+G                                          | Ctrl+Option+G                                                |
-| Source the current document                         | Ctrl+Shift+S                                        | Shift+Command+S                                              |
-| Source the current document (with echo)             | Ctrl+Shift+Enter                                    | Shift+Command+Return                                         |
-| Send current line/selection to terminal             | Ctrl+Alt+Enter                                      | Option+Command+Return                                        |
-| Fold Selected                                       | Alt+L                                               | Option+Command+L                                             |
-| Unfold Selected                                     | Shift+Alt+L                                         | Option+Shift+Command+L                                       |
-| Fold All                                            | Alt+O                                               | Option+Command+O                                             |
-| Unfold All                                          | Shift+Alt+O                                         | Option+Shift+Command+O                                       |
-| Go to line                                          | Shift+Alt+G                                         | Option+Shift+Command+G                                       |
-| Jump to                                             | Shift+Alt+J                                         | Option+Shift+Command+J                                       |
-| Expand selection                                    | Ctrl+Shift+Up                                       | Option+Shift+Command+Up                                      |
-| Shrink selection                                    | Ctrl+Shift+Down                                     | Option+Shift+Command+Down                                    |
-| Select current statement                            | Ctrl+Alt+Shift+S                                    | Ctrl+Option+Shift+S                                          |
-| Next section                                        | Ctrl+PageDown                                       | Command+PageDown                                             |
-| Previous section                                    | Ctrl+PageUp                                         | Command+PageUp                                               |
-| Split into lines                                    | Ctrl+Alt+A                                          | Ctrl+Option+A                                                |
-| Edit lines from start                               | Ctrl+Alt+Shift+A                                    | Ctrl+Option+Shift+A                                          |
-| Switch to tab                                       | Ctrl+Shift+. \[period\]                             | Ctrl+Shift+. \[period\]                                      |
-| Previous tab                                        | Ctrl+F11, or Ctrl+Alt+Left (Windows)                | Ctrl+F11 or Ctrl+Option+Left                                 |
-| Previous tab (desktop only)                         | Ctrl+Shift+Tab                                      | Ctrl+Shift+Tab                                               |
-| Next tab                                            | Ctrl+F12, or Ctrl+Alt+Right (Windows)               | Ctrl+F12 or Ctrl+Option+Right                                |
-| Next tab (desktop only)                             | Ctrl+Tab                                            | Ctrl+Tab                                                     |
-| First tab                                           | Ctrl+Shift+F11 or Ctrl+Alt+Shift+Left               | Ctrl+Shift+F11 or Ctrl+Option+Shift+Left                     |
-| Last tab                                            | Ctrl+Shift+F12 or Ctrl+Alt+Shift+Right              | Ctrl+Shift+F12 or Ctrl+Option+Shift+Right                    |
-| Navigate back                                       | Ctrl+F9                                             | Command+F9                                                   |
-| Navigate forward                                    | Ctrl+F10                                            | Command+F10                                                  |
-| Extract function from selection                     | Ctrl+Alt+X                                          | Option+Command+X                                             |
-| Extract variable from selection                     | Ctrl+Alt+V                                          | Option+Command+V                                             |
-| Reindent lines                                      | Ctrl+I                                              | Command+I                                                    |
-| Comment/uncomment current line/selection            | Ctrl+Shift+C                                        | Shift+Command+C                                              |
-| Reflow Comment                                      | Ctrl+Shift+/                                        | Ctrl+Shift+/                                                 |
-| Reformat Selection                                  | Ctrl+Shift+A                                        | Shift+Command+A                                              |
-| Show Diagnostics for Current Project                | Ctrl+Shift+Alt+D                                    | Option+Shift+Command+D                                       |
-| Transpose Letters                                   | No shortcut                                         | Ctrl+T                                                       |
-| Move Lines Up/Down                                  | Alt+Up/Down                                         | Option+Up or Down                                            |
-| Copy Lines Up/Down                                  | Shift+Alt+Up/Down                                   | Option+Command+Up or Down                                    |
-| Jump to Matching Brace/Paren                        | Ctrl+P                                              | Ctrl+P                                                       |
-| Expand to Matching Brace/Paren                      | Ctrl+Shift+Alt+E                                    | Ctrl+Shift+E                                                 |
-| Add Cursor Above Current Cursor                     | Ctrl+Alt+Up                                         | Ctrl+Option+Up                                               |
-| Add Cursor Below Current Cursor                     | Ctrl+Alt+Down                                       | Ctrl+Option+Down                                             |
-| Move Active Cursor Up                               | Ctrl+Alt+Shift+Up                                   | Ctrl+Option+Shift+Up                                         |
-| Move Active Cursor Down                             | Ctrl+Alt+Shift+Down                                 | Ctrl+Option+Shift+Down                                       |
-| Find and Replace                                    | Ctrl+F                                              | Command+F                                                    |
-| Find Next                                           | Win: F3, Linux: Ctrl+G                              | Command+G                                                    |
-| Find Previous                                       | Win: Shift+F3, Linux: Ctrl+Shift+G                  | Shift+Command+G                                              |
-| Use Selection for Find                              | Ctrl+F3                                             | Command+E                                                    |
-| Replace and Find                                    | Ctrl+Shift+J                                        | Shift+Command+J                                              |
-| Find in Files                                       | Ctrl+Shift+F                                        | Shift+Command+F                                              |
-| Check Spelling                                      | F7                                                  | F7                                                           |
-| Rename Symbol in Scope                              | Ctrl+Alt+Shift+M                                    | Option+Shift+Command+M                                       |
-| Insert Roxygen Skeleton                             | Ctrl+Shift+Alt+R                                    | Option+Shift+Command+R                                       |
+| Description                                           | Windows & Linux                                     | Mac                                                          |
+|:------------------------------------------------------|:----------------------------------------------------|:-------------------------------------------------------------|
+| Go to File/Function                                   | Ctrl+. \[period\]                                   | Ctrl+. \[period\]                                            |
+| Move cursor to Source Editor                          | Ctrl+1                                              | Ctrl+1                                                       |
+| Toggle document outline                               | Ctrl+Shift+O                                        | Shift+Command+O                                              |
+| Toggle visual markdown editor                         | Ctrl+Shift+F4                                       | Shift+Command+F4                                             |
+| New R script                                          | Ctrl+Shift+N (Ctrl+Alt+Shift+N in Chrome on Server) | Shift+Command+N (Option+Shift+Command+N in Chrome on Server) |
+| Open document                                         | Ctrl+O                                              | Command+O                                                    |
+| Save active document                                  | Ctrl+S                                              | Command+S                                                    |
+| Save all documents                                    | Ctrl+Alt+S                                          | Command+Option+S                                             |
+| Close active document (except in Chrome on Server)    | Ctrl+W                                              | Command+W                                                    |
+| Close all open documents (except in Chrome on Server) | Ctrl+Shift+W                                        | Shift+Command+W                                              |
+| Close other documents                                 | Ctrl+Shift+Alt+W                                    | Option+Shift+Command+W                                       |
+| Preview HTML (Markdown and HTML)                      | Ctrl+Shift+K                                        | Shift+Command+K                                              |
+| Knit Document (knitr)                                 | Ctrl+Shift+K                                        | Shift+Command+K                                              |
+| Render Document (Quarto)                              | Ctrl+Shift+K                                        | Shift+Command+K                                              |
+| Compile Report (R script)                             | Ctrl+Shift+K                                        | Shift+Command+K                                              |
+| Compile PDF (TeX and Sweave)                          | Ctrl+Shift+K                                        | Shift+Command+K                                              |
+| Insert chunk (Sweave and Knitr)                       | Ctrl+Alt+I                                          | Option+Command+I                                             |
+| Insert code section                                   | Ctrl+Shift+R                                        | Shift+Command+R or Ctrl+Shift+R                              |
+| Run current line/selection                            | Ctrl+Enter                                          | Command+Return                                               |
+| Run current line/selection (retain cursor position)   | Alt+Enter                                           | Option+Return                                                |
+| Re-run previous region                                | Ctrl+Alt+P                                          | Option+Command+P                                             |
+| Run current document                                  | Ctrl+Alt+R                                          | Option+Command+R                                             |
+| Run from document beginning to current line           | Ctrl+Alt+B                                          | Option+Command+B                                             |
+| Run from current line to document end                 | Ctrl+Alt+E                                          | Option+Command+E                                             |
+| Run the current function definition                   | Ctrl+Alt+F                                          | Option+Command+F                                             |
+| Run the current code section                          | Ctrl+Alt+T                                          | Option+Command+T                                             |
+| Run previous Sweave/Rmd code                          | Ctrl+Alt+Shift+P                                    | Option+Shift+Command+P                                       |
+| Run the current Sweave/Rmd chunk                      | Ctrl+Alt+C or Ctrl+Shift+Enter                      | Option+Command+C or Shift+Command+Return                     |
+| Run the next Sweave/Rmd chunk                         | Ctrl+Alt+N                                          | Option+Command+N                                             |
+| Source a file                                         | Ctrl+Alt+G                                          | Ctrl+Option+G                                                |
+| Source the current document                           | Ctrl+Shift+S                                        | Shift+Command+S                                              |
+| Source the current document (with echo)               | Ctrl+Shift+Enter                                    | Shift+Command+Return                                         |
+| Send current line/selection to terminal               | Ctrl+Alt+Enter                                      | Option+Command+Return                                        |
+| Fold Selected                                         | Alt+L                                               | Option+Command+L                                             |
+| Unfold Selected                                       | Shift+Alt+L                                         | Option+Shift+Command+L                                       |
+| Fold All                                              | Alt+O                                               | Option+Command+O                                             |
+| Unfold All                                            | Shift+Alt+O                                         | Option+Shift+Command+O                                       |
+| Go to line                                            | Shift+Alt+G                                         | Option+Shift+Command+G                                       |
+| Jump to                                               | Shift+Alt+J                                         | Option+Shift+Command+J                                       |
+| Expand selection                                      | Ctrl+Shift+Up                                       | Option+Shift+Command+Up                                      |
+| Shrink selection                                      | Ctrl+Shift+Down                                     | Option+Shift+Command+Down                                    |
+| Select current statement                              | Ctrl+Alt+Shift+S                                    | Ctrl+Option+Shift+S                                          |
+| Next section                                          | Ctrl+PageDown                                       | Command+PageDown                                             |
+| Previous section                                      | Ctrl+PageUp                                         | Command+PageUp                                               |
+| Split into lines                                      | Ctrl+Alt+A                                          | Ctrl+Option+A                                                |
+| Edit lines from start                                 | Ctrl+Alt+Shift+A                                    | Ctrl+Option+Shift+A                                          |
+| Switch to tab                                         | Ctrl+Shift+. \[period\]                             | Ctrl+Shift+. \[period\]                                      |
+| Previous tab                                          | Ctrl+F11, or Ctrl+Alt+Left (Windows)                | Ctrl+F11 or Ctrl+Option+Left                                 |
+| Previous tab (desktop only)                           | Ctrl+Shift+Tab                                      | Ctrl+Shift+Tab                                               |
+| Next tab                                              | Ctrl+F12, or Ctrl+Alt+Right (Windows)               | Ctrl+F12 or Ctrl+Option+Right                                |
+| Next tab (desktop only)                               | Ctrl+Tab                                            | Ctrl+Tab                                                     |
+| First tab                                             | Ctrl+Shift+F11 or Ctrl+Alt+Shift+Left               | Ctrl+Shift+F11 or Ctrl+Option+Shift+Left                     |
+| Last tab                                              | Ctrl+Shift+F12 or Ctrl+Alt+Shift+Right              | Ctrl+Shift+F12 or Ctrl+Option+Shift+Right                    |
+| Navigate back                                         | Ctrl+F9                                             | Command+F9                                                   |
+| Navigate forward                                      | Ctrl+F10                                            | Command+F10                                                  |
+| Extract function from selection                       | Ctrl+Alt+X                                          | Option+Command+X                                             |
+| Extract variable from selection                       | Ctrl+Alt+V                                          | Option+Command+V                                             |
+| Reindent lines                                        | Ctrl+I                                              | Command+I                                                    |
+| Comment/uncomment current line/selection              | Ctrl+Shift+C                                        | Shift+Command+C                                              |
+| Reflow Comment                                        | Ctrl+Shift+/                                        | Ctrl+Shift+/                                                 |
+| Reformat Selection                                    | Ctrl+Shift+A                                        | Shift+Command+A                                              |
+| Show Diagnostics for Current Project                  | Ctrl+Shift+Alt+D                                    | Option+Shift+Command+D                                       |
+| Transpose Letters                                     | No shortcut                                         | Ctrl+T                                                       |
+| Move Lines Up/Down                                    | Alt+Up/Down                                         | Option+Up or Down                                            |
+| Copy Lines Up/Down                                    | Shift+Alt+Up/Down                                   | Option+Command+Up or Down                                    |
+| Jump to Matching Brace/Paren                          | Ctrl+P                                              | Ctrl+P                                                       |
+| Expand to Matching Brace/Paren                        | Ctrl+Shift+Alt+E                                    | Ctrl+Shift+E                                                 |
+| Add Cursor Above Current Cursor                       | Ctrl+Alt+Up                                         | Ctrl+Option+Up                                               |
+| Add Cursor Below Current Cursor                       | Ctrl+Alt+Down                                       | Ctrl+Option+Down                                             |
+| Move Active Cursor Up                                 | Ctrl+Alt+Shift+Up                                   | Ctrl+Option+Shift+Up                                         |
+| Move Active Cursor Down                               | Ctrl+Alt+Shift+Down                                 | Ctrl+Option+Shift+Down                                       |
+| Find and Replace                                      | Ctrl+F                                              | Command+F                                                    |
+| Find Next                                             | Win: F3, Linux: Ctrl+G                              | Command+G                                                    |
+| Find Previous                                         | Win: Shift+F3, Linux: Ctrl+Shift+G                  | Shift+Command+G                                              |
+| Use Selection for Find                                | Ctrl+F3                                             | Command+E                                                    |
+| Replace and Find                                      | Ctrl+Shift+J                                        | Shift+Command+J                                              |
+| Find in Files                                         | Ctrl+Shift+F                                        | Shift+Command+F                                              |
+| Check Spelling                                        | F7                                                  | F7                                                           |
+| Rename Symbol in Scope                                | Ctrl+Alt+Shift+M                                    | Option+Shift+Command+M                                       |
+| Insert Roxygen Skeleton                               | Ctrl+Shift+Alt+R                                    | Option+Shift+Command+R                                       |
 
 ## Editing (Console and Source)
 
