@@ -95,9 +95,15 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     // The turn is still running when the assistant launched the app from its
     // own executeCode call. Stop it first, so interrupting R below does not
     // hand control back to a live turn that may launch the app again.
-    if (chatPane && (await chatPane.isStopButtonVisible())) {
-      await chatPane.stopBtn.click().catch(() => {});
-      await expect(chatPane.stopBtn).toBeHidden({ timeout: 10000 }).catch(() => {});
+    if (chatActions) {
+      for (let attempt = 1; attempt <= 3 && !(await chatActions.isTurnIdle()); attempt++) {
+        await chatPane.stopBtn.click({ timeout: 5000 }).catch((err) => {
+          console.warn(`[shiny-app-r] stopping the turn (attempt ${attempt}): ${(err as Error).message}`);
+        });
+      }
+      if (!(await chatActions.isTurnIdle())) {
+        console.warn('[shiny-app-r] the assistant turn is still running after 3 stop attempts');
+      }
     }
 
     // Stop the app cleanly when the Viewer is showing it. This is best
