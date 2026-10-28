@@ -127,6 +127,9 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String consoleGroupName();
     String terminalGroupName();
     String otherGroupName();
+    String editingGroupName();
+    String completionGroupName();
+    String viewGroupName();
     String addShiftPTag();
     String useDefaultPrefix();
     String validateMessage();
@@ -148,7 +151,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String manualRefreshLabel();
     String busyLabel();
     String redactedText();
-    String vimKeyboardShortcutHelpMessage();
     String showPopupBlockMessage(String hostName);
     String rpcErrorMessage(String statusCode, String desktop, String method);
     String rpcErrorMessageCaption();

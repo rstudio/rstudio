@@ -1,0 +1,54 @@
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+.content
+{
+   width: 85vw;
+   max-width: 1100px;
+   height: 70vh;
+   overflow: auto;
+}
+
+.groups
+{
+   column-width: 22em;
+   column-gap: 2em;
+   padding-right: 1em;
+}
+
+.groups h2
+{
+   font-size: 1.2em;
+   margin: 0.8em 0 0.4em 0;
+   break-after: avoid;
+}
+
+.groups h2:first-child
+{
+   margin-top: 0;
+}
+
+.groups table
+{
+   border-collapse: collapse;
+   break-inside: avoid;
+}
+
+.groups th,
+.groups td
+{
+   text-align: left;
+   vertical-align: top;
+   padding: 0.15em 1em 0.15em 0;
+   font-weight: normal;
+}
+
+.groups th
+{
+   font-family: fixedWidthFont;
+   font-weight: bold;
+}
+
+.groups kbd
+{
+   font-family: inherit;
+}
