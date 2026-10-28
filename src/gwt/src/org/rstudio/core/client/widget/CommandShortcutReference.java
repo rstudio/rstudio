@@ -28,6 +28,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 
@@ -102,8 +103,13 @@ public class CommandShortcutReference extends Composite
          else
          {
             // On macOS the pretty form uses symbols (e.g. for Command) that
-            // screen readers may not announce; give them the spelled-out form
-            sb.appendHtmlConstant("<span aria-hidden=\"true\">" + pretty.get(i) + "</span>");
+            // screen readers may not announce; give them the spelled-out form.
+            // The symbols are HTML entities, but key names in customized
+            // shortcuts come from the user's bindings file, so escape the rest.
+            sb.appendHtmlConstant("<span aria-hidden=\"true\">");
+            sb.append(SafeHtmlUtils.fromTrustedString(
+                  SafeHtmlUtils.htmlEscapeAllowEntities(pretty.get(i))));
+            sb.appendHtmlConstant("</span>");
             sb.append(SafeHtmlUtil.visuallyHiddenText(plain.get(i)));
          }
          sb.appendHtmlConstant("</kbd>");

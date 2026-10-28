@@ -35,6 +35,10 @@ public class ShortcutReferenceDialog extends ModalDialogBase
       setThemeAware(true);
       setText(caption);
       content_ = content;
+
+      // Enter would otherwise close the dialog from the reference region;
+      // the focused Close button still handles Enter itself
+      setEnterDisabled(true);
       addOkButton(new ThemedButton(constants_.closeText(), event -> closeDialog()));
    }
 
