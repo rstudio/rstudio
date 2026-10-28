@@ -5,7 +5,7 @@ import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { executeCommand } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
 import type { AceEditorElement } from '@utils/ace';
-import type { ElementHandle, Page } from '@playwright/test';
+import type { ElementHandle, Page, Route } from '@playwright/test';
 
 // https://github.com/rstudio/rstudio/issues/2129
 //
@@ -62,6 +62,13 @@ test.describe('Split editor with R Markdown chunks', () => {
           editor?.gotoLine(ln, 0, false);
         }, line),
       hasFocus: () => handle.evaluate((el) => el.contains(document.activeElement)),
+      cursorLine: () =>
+        handle.evaluate((el) => {
+          const editor = (el as AceEditorElement).env?.editor;
+          if (!editor)
+            return null;
+          return editor.session.getLine(editor.getCursorPosition().row);
+        }),
       selectLine: (line: number) =>
         handle.evaluate((el, ln) => {
           const editor = (el as AceEditorElement).env?.editor;
@@ -87,9 +94,9 @@ test.describe('Split editor with R Markdown chunks', () => {
     };
   }
 
-  async function openAndSplit(page: Page) {
+  async function openAndSplit(page: Page, content = CONTENT) {
     file = `split_editor_rmd_${++fileCounter}.Rmd`;
-    await writeAndOpenFile(page, sandbox.dir, file, CONTENT);
+    await writeAndOpenFile(page, sandbox.dir, file, content);
     await expect.poll(async () => (await docViewHandles(page)).length).toBe(1);
 
     await executeCommand(page, 'splitEditorDown');
@@ -218,4 +225,75 @@ test.describe('Split editor with R Markdown chunks', () => {
       expect(await headerCount(page, 'chunk-one')).toBe(1);
     });
   }
+
+  // A new split view's scope tree reaches only 30 rows past its cursor until
+  // the document changes, so a longer chunk looked endless there: Insert
+  // Chunk then rewrote everything through the end of the document, dragging
+  // the primary view's cursor out of the chunk below.
+  test('Insert Chunk in a new split view splits a long chunk in place', async ({ rstudioPage: page }) => {
+    // Joined at the template's indent, which heredoc then strips.
+    const BODY = Array.from({ length: 60 }, (_, i) => `long_${i} <- ${i}`).join('\n      ');
+    const AFTER_LINE = 69; // 1-based line of 'after_value <- 1'
+    // Below the chunk's first line: a split there rewrites the chunk's
+    // remaining text, while one at the first line rewrites it unchanged,
+    // which Ace skips.
+    const SPLIT_LINE = 10;
+    const { primary, split } = await openAndSplit(page, heredoc`
+      ---
+      title: split editor rmd
+      ---
+
+      ${FENCE}{r long}
+      ${BODY}
+      ${FENCE}
+
+      ${FENCE}{r after}
+      after_value <- 1
+      ${FENCE}
+    `);
+
+    await primary.focusAndGoto(AFTER_LINE);
+    await split.focusAndGoto(SPLIT_LINE);
+    await expect.poll(() => split.hasFocus()).toBe(true);
+
+    await executeCommand(page, 'insertChunk');
+
+    await expect.poll(() => headerCount(page, 'long')).toBe(2);
+    expect(await headerCount(page, 'after')).toBe(1);
+    expect(await primary.cursorLine()).toBe('after_value <- 1');
+  });
+
+  // Insert SQL Chunk asks the session for a default connection name before
+  // inserting; the chunk must still go to the view the command ran in.
+  test('Insert SQL Chunk splits the chunk of the view it ran in when focus moves first', async ({ rstudioPage: page }) => {
+    const DEFAULT_SQL_CONNECTION_NAME = /\/rpc\/default_sql_connection_name(?:\?|$)/;
+
+    // Hold the connection name request until focus has moved to the primary view.
+    const parked: Route[] = [];
+    await page.route(DEFAULT_SQL_CONNECTION_NAME, (route) => {
+      parked.push(route);
+    });
+    const release = async (): Promise<void> => {
+      await page.unroute(DEFAULT_SQL_CONNECTION_NAME);
+      for (const route of parked.splice(0))
+        await route.continue().catch(() => {});
+    };
+
+    try {
+      // Run from the split view (in chunk-two), then focus the primary view
+      // (in chunk-one) while the request is pending.
+      const { primary } = await openAndSplit(page);
+      await executeCommand(page, 'insertChunkSQL');
+      await expect.poll(() => parked.length).toBe(1);
+
+      await primary.focusAndGoto(CHUNK_ONE_LINE);
+      await expect.poll(() => primary.hasFocus()).toBe(true);
+      await release();
+
+      await expect.poll(() => headerCount(page, 'chunk-two')).toBe(2);
+      expect(await headerCount(page, 'chunk-one')).toBe(1);
+    } finally {
+      await release();
+    }
+  });
 });

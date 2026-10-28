@@ -2957,14 +2957,20 @@ public class TextEditingTarget implements
 
    // Inserts at the cursor of the given editor view, which a caller captures
    // before an asynchronous request so that the result lands in the view the
-   // request came from; falls back to the active view when that one is gone
-   // (the split was removed while the request was pending).
+   // request came from.
    public void insertCode(DocDisplay display, String source, boolean blockMode)
    {
-      if (display != primaryDisplay_ && display != view_.getSplitDisplay())
-         display = activeDisplay();
+      liveDisplay(display).insertCode(source, blockMode);
+   }
 
-      display.insertCode(source, blockMode);
+   // Returns the given editor view, or the active view if the given one is
+   // gone (e.g. a split closed while a request made from it was pending).
+   private DocDisplay liveDisplay(DocDisplay display)
+   {
+      if (display != primaryDisplay_ && display != view_.getSplitDisplay())
+         return activeDisplay();
+
+      return display;
    }
 
    public HashSet<AppCommand> getSupportedCommands()
@@ -6882,6 +6888,11 @@ public class TextEditingTarget implements
 
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
+      onInsertChunk(activeDisplay(), chunkPlaceholder, rowOffset, colOffset);
+   }
+
+   private void onInsertChunk(DocDisplay display, String chunkPlaceholder, int rowOffset, int colOffset)
+   {
       if (cursorInDiffBase())
          return;
 
@@ -6903,9 +6914,14 @@ public class TextEditingTarget implements
          return;
       }
 
-      DocDisplay display = activeDisplay();
+      display = liveDisplay(display);
       String sel = "";
       Range selRange = null;
+
+      // build the whole scope tree first: it may only extend a little past
+      // the cursor (e.g. in a new split view), leaving a long chunk endless,
+      // which splitChunk() would treat as running to the end of the document
+      display.getScopeTree();
 
       // if currently in a chunk
       // with no selection, split this chunk into two chunks at the current line
@@ -7051,6 +7067,9 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkSQL()
    {
+      // insert into the view the command ran in, even if focus moves to
+      // another view while the connection name is requested
+      final DocDisplay display = activeDisplay();
       server_.defaultSqlConnectionName(new ServerRequestCallback<String>()
       {
          @Override
@@ -7058,11 +7077,11 @@ public class TextEditingTarget implements
          {
             if (name != null)
             {
-               onInsertChunk("```{sql connection=" + name + "}\n\n```\n", 1, 0);
+               onInsertChunk(display, "```{sql connection=" + name + "}\n\n```\n", 1, 0);
             }
             else
             {
-               onInsertChunk("```{sql connection=}\n\n```\n", 0, 19);
+               onInsertChunk(display, "```{sql connection=}\n\n```\n", 0, 19);
             }
          }
 
@@ -7070,7 +7089,7 @@ public class TextEditingTarget implements
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            onInsertChunk("```{sql connection=}\n\n```\n", 0, 19);
+            onInsertChunk(display, "```{sql connection=}\n\n```\n", 0, 19);
          }
       });
    }
