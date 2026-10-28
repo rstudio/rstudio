@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyCombination;
@@ -183,7 +184,11 @@ public class CommandShortcutReference extends Composite
          case "Terminal":           return constants_.terminalGroupName();
          case "Main Menu (Server)": return constants_.mainMenuGroupName();
          case "Accessibility":      return constants_.accessibilityGroupName();
-         default:                   return group;
+         default:
+            // shown untranslated; add a case and a CoreClientConstants entry
+            Debug.logWarning("Keyboard shortcut group '" + group +
+                  "' from Commands.cmd.xml has no translated label");
+            return group;
       }
    }
 
