@@ -189,15 +189,29 @@ public class RowTableTests extends GWTTestCase
       assertFalse(table.getElement().hasClassName(focusVisible));
    }
 
-   public void testArrowDownMovesFromActiveOption()
+   public void testArrowDownMovesFromActiveOptionShownByRing()
    {
       StringTable table = createTable("a", "b", "c");
       table.setFocus(true);
+      // any key press shows the ring, as keyboard focus would
+      pressKey(table, "Shift", KeyCodes.KEY_SHIFT);
 
       pressKey(table, "ArrowDown", KeyCodes.KEY_DOWN);
 
       assertEquals("b", table.getSelectedItem());
       assertEquals(getOptions(table).get(1).getId(), getActiveDescendant(table));
+   }
+
+   public void testArrowDownAfterMouseFocusSelectsFirstOption()
+   {
+      // HtmlUnit focus never matches :focus-visible, so this is mouse focus:
+      // row 0 is active but unmarked, and Down must not skip past it
+      StringTable table = createTable("a", "b", "c");
+      table.setFocus(true);
+
+      pressKey(table, "ArrowDown", KeyCodes.KEY_DOWN);
+
+      assertEquals("a", table.getSelectedItem());
    }
 
    public void testArrowUpSelectsActiveFirstOption()

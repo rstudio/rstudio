@@ -160,10 +160,7 @@ public abstract class RowTable<T> extends ScrollPanel
          {
             NativeEvent event = keyEvent.getNativeEvent();
             int code = event.getKeyCode();
-            
-            // keyboard use means a keyboard user, even if focus arrived by mouse
-            addStyleName(RES.styles().focusVisible());
-            
+
             int modifier = KeyboardShortcut.getModifierValue(event);
             if (modifier == KeyboardShortcut.NONE || modifier == KeyboardShortcut.SHIFT)
             {
@@ -207,6 +204,10 @@ public abstract class RowTable<T> extends ScrollPanel
                   }
                }
             }
+
+            // keyboard use means a keyboard user, even if focus arrived by
+            // mouse; added after handling the key, which selectOffset reads
+            addStyleName(RES.styles().focusVisible());
          }
       }, KeyDownEvent.getType());
       
@@ -638,7 +639,12 @@ public abstract class RowTable<T> extends ScrollPanel
    {
       event.stopPropagation();
       event.preventDefault();
-      int current = selectedRow_ == -1 ? activeRow_ : selectedRow_;
+      // keys move from the active option only once its ring has shown it;
+      // after mouse focus the first press counts from above row 0, so Down
+      // lands on row 0 rather than past an option the user never saw marked
+      int current = selectedRow_;
+      if (current == -1 && getElement().hasClassName(RES.styles().focusVisible()))
+         current = activeRow_;
       selectRow(current + offset);
    }
    
