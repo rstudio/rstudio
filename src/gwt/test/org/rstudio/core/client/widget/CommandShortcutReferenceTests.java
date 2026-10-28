@@ -102,6 +102,30 @@ public class CommandShortcutReferenceTests extends GWTTestCase
    }
 
    /**
+    * Do macOS spoken names use the legend's names, in macOS modifier order?
+    */
+   public void testSpokenMacFormMatchesLegendNames()
+   {
+      CoreClientConstants c = constants();
+
+      KeySequence all = new KeySequence();
+      all.add(new KeyCombination("Enter", KeyCodes.KEY_ENTER,
+            KeyboardShortcut.META | KeyboardShortcut.SHIFT |
+            KeyboardShortcut.ALT | KeyboardShortcut.CTRL));
+      assertEquals(
+            c.keySymbolControl() + "+" + c.keySymbolOption() + "+" + c.keySymbolShift() +
+            "+" + c.keySymbolCommand() + "+" + c.keySymbolReturn(),
+            CommandShortcutReference.spokenMacForm(all));
+
+      KeySequence deletes = new KeySequence();
+      deletes.add(new KeyCombination("Backspace", KeyCodes.KEY_BACKSPACE, KeyboardShortcut.ALT));
+      deletes.add(new KeyCombination("Delete", KeyCodes.KEY_DELETE, KeyboardShortcut.NONE));
+      assertEquals(
+            c.keySymbolOption() + "+" + c.keySymbolDelete() + " " + c.keySymbolForwardDelete(),
+            CommandShortcutReference.spokenMacForm(deletes));
+   }
+
+   /**
     * Do groups appear once each, in order of first use, without the hidden group?
     */
    public void testGroupsInFirstUseOrder()

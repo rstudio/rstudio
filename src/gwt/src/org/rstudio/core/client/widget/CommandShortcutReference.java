@@ -19,14 +19,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -109,15 +113,52 @@ public class CommandShortcutReference extends Composite
          {
             // The pretty form uses symbols on macOS (e.g. for Command) and
             // abbreviations such as PgUp that screen readers may not announce
-            // well; give them the plain form. The symbols are HTML entities, but
+            // well; give them names instead. The symbols are HTML entities, but
             // custom key names come from the user's bindings file, so escape the rest.
+            String spoken = BrowseCap.hasMetaKey() ? spokenMacForm(keys) : plain;
             sb.appendHtmlConstant("<span aria-hidden=\"true\">");
             sb.append(SafeHtmlUtils.fromTrustedString(
                   SafeHtmlUtils.htmlEscapeAllowEntities(pretty)));
             sb.appendHtmlConstant("</span>");
-            sb.append(SafeHtmlUtil.visuallyHiddenText(plain));
+            sb.append(SafeHtmlUtil.visuallyHiddenText(spoken));
          }
          sb.appendHtmlConstant("</kbd>");
+      }
+   }
+
+   // Names keys as KeySymbolLegend does, in macOS modifier order. The plain
+   // form can't be used: it says Alt, Enter, and Backspace, and menu
+   // accelerators depend on it.
+   static String spokenMacForm(KeySequence keys)
+   {
+      List<String> combinations = new ArrayList<>();
+      for (KeyCombination combination : keys.getData())
+      {
+         List<String> parts = new ArrayList<>();
+         int modifiers = combination.getModifier();
+         if ((modifiers & KeyboardShortcut.CTRL) != 0)
+            parts.add(constants_.keySymbolControl());
+         if ((modifiers & KeyboardShortcut.ALT) != 0)
+            parts.add(constants_.keySymbolOption());
+         if ((modifiers & KeyboardShortcut.SHIFT) != 0)
+            parts.add(constants_.keySymbolShift());
+         if ((modifiers & KeyboardShortcut.META) != 0)
+            parts.add(constants_.keySymbolCommand());
+         parts.add(macKeyName(combination));
+         combinations.add(StringUtil.joinStrings(parts, "+"));
+      }
+      return StringUtil.joinStrings(combinations, " ");
+   }
+
+   private static String macKeyName(KeyCombination combination)
+   {
+      switch (combination.getKeyCode())
+      {
+         case KeyCodes.KEY_ENTER:     return constants_.keySymbolReturn();
+         case KeyCodes.KEY_TAB:       return constants_.keySymbolTab();
+         case KeyCodes.KEY_BACKSPACE: return constants_.keySymbolDelete();
+         case KeyCodes.KEY_DELETE:    return constants_.keySymbolForwardDelete();
+         default:                     return combination.getKeyName(false);
       }
    }
 
