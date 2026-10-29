@@ -78,7 +78,8 @@ public class KeyMapDispatchTests extends GWTTestCase
 
    public void testShorterBindingInLaterMapHidesLongerOne()
    {
-      addins_.addBinding(keys(prefix_, ctrl1_, ctrl2_), binding(AppCommand.Context.Workbench, true));
+      addins_.addBinding(keys(prefix_, ctrl1_, ctrl2_),
+                         binding(AppCommand.Context.Workbench, true));
       app_.addBinding(keys(prefix_, ctrl1_), binding(AppCommand.Context.Editor, true));
       assertFalse(canDispatchAfterPrefix(false));
    }
@@ -110,10 +111,31 @@ public class KeyMapDispatchTests extends GWTTestCase
       assertFalse(canDispatchAfterPrefix(true));
    }
 
+   public void testDisabledShorterBindingDoesNotHide()
+   {
+      app_.addBinding(keys(prefix_, ctrl1_), binding(AppCommand.Context.Editor, false));
+      app_.addBinding(keys(prefix_, ctrl1_, ctrl2_), binding(AppCommand.Context.Workbench, true));
+      assertTrue(canDispatchAfterPrefix(false));
+   }
+
+   public void testTwoStrokesTyped()
+   {
+      app_.addBinding(keys(prefix_, ctrl1_, ctrl2_), binding(AppCommand.Context.Workbench, true));
+      assertTrue(canDispatchAfter(keys(prefix_, ctrl1_), false));
+
+      addins_.addBinding(keys(prefix_, ctrl1_, ctrl2_), binding(AppCommand.Context.Editor, true));
+      assertFalse(canDispatchAfter(keys(prefix_, ctrl1_), false));
+   }
+
    private boolean canDispatchAfterPrefix(boolean includeDisabled)
    {
+      return canDispatchAfter(keys(prefix_), includeDisabled);
+   }
+
+   private boolean canDispatchAfter(KeySequence typed, boolean includeDisabled)
+   {
       List<KeyMap> maps = Arrays.asList(addins_, app_);
-      return KeyMap.canDispatchAfter(maps, keys(prefix_), includeDisabled,
+      return KeyMap.canDispatchAfter(maps, typed, includeDisabled,
             binding -> binding.getContext() == AppCommand.Context.Workbench);
    }
 

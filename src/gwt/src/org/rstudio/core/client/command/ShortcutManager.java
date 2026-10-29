@@ -374,8 +374,9 @@ public class ShortcutManager implements NativePreviewHandler,
          return true;
       }
 
-      // handleKeyDown() keeps only such strokes in the buffer. Claim keys while it
-      // holds them, as swallowEvents() does for keys outside PA's iframe.
+      // Claim keys while the buffer holds strokes, as swallowEvents() does outside
+      // PA's iframe. handleKeyDown() keeps only strokes that lead to such a command,
+      // but leaves the buffer as is for a bare modifier or while it's disabled.
       return !keyBuffer_.isEmpty();
    }
 
