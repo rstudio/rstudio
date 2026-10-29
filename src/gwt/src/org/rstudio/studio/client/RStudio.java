@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.core.client.widget.ResizeGripper;
+import org.rstudio.core.client.widget.ShortcutReferenceDialog;
 import org.rstudio.core.client.widget.SlideLabel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -465,6 +466,7 @@ public class RStudio implements EntryPoint
       DiffFrame.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       ShowPublicKeyDialog.ensureStylesInjected();
+      ShortcutReferenceDialog.ensureStylesInjected();
       CreateKeyDialog.ensureStylesInjected();
       SshKeyWidget.ensureStylesInjected();
       IgnoreDialog.ensureStylesInjected();

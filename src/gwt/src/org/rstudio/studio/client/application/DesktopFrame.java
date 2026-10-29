@@ -212,7 +212,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                             int column);
    
    void toggleFullscreenMode();
-   void showKeyboardShortcutHelp();
    
    void reloadZoomWindow();
    
