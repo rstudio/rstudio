@@ -265,6 +265,9 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await executeCommand(page, 'newSourceColumn');
     await expect(extraColumn).toHaveCount(1, { timeout: 10000 });
     try {
+      // The column's Untitled doc arrives later, and only closing it removes
+      // the column.
+      await expect(extraColumn.locator('[role="tab"]')).toHaveCount(1, { timeout: 10000 });
       const columns = [EXTRA_SOURCE_COLUMN_PANES, CONSOLE_PANE, TABSET1_PANE];
       const before: number[] = [];
       for (const column of columns)
