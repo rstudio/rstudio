@@ -242,8 +242,11 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                            if (response.result == null)
                            {
                               // Stop waiting if the agent isn't running and couldn't be
-                              // started; otherwise it just didn't answer in time.
-                              String message = agentNotRunningMessage(assistantType, response);
+                              // started; otherwise it didn't answer in time, or is still
+                              // starting up.
+                              boolean starting = response.error != null &&
+                                    response.error.getCode() == AssistantConstants.ErrorCodes.AGENT_NOT_INITIALIZED;
+                              String message = starting ? null : agentNotRunningMessage(assistantType, response);
                               if (message == null)
                               {
                                  statusTimer_.schedule(1000);
