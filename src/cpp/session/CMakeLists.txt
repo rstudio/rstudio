@@ -883,11 +883,14 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    # install Copilot Language Server
    #
    # the copilot-language-server-js distribution bundles native binaries for
-   # every platform and architecture it supports; the binaries that can never
-   # run on the target platform account for the bulk of the distribution's
-   # size, so exclude them. revisit these patterns when updating the bundled
-   # Copilot version in case the package layout changes -- files that stop
-   # matching are installed again (larger package), never broken.
+   # every platform and architecture it supports: per-platform bin/ and
+   # compiled/ folders, plus one Copilot SDK package per platform/arch under
+   # node_modules/@github/copilot-sdk-<platform>-<arch> (the SDK loads only
+   # the one matching process.platform/process.arch). the binaries that can
+   # never run on the target platform account for the bulk of the
+   # distribution's size, so exclude them. files that stop matching after a
+   # Copilot update are installed again (larger package), never broken, so
+   # the update skill re-checks the layout these patterns expect.
    if(RSTUDIO_ENABLE_COPILOT)
 
       if(APPLE)
@@ -900,23 +903,11 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
       set(COPILOT_EXCLUDES
          REGEX "copilot-language-server-js/(bin|compiled)/(${COPILOT_EXCLUDED_PLATFORMS})$" EXCLUDE
-         REGEX "@github/copilot/sdk/prebuilds/(${COPILOT_EXCLUDED_PLATFORMS})-" EXCLUDE)
+         REGEX "@github/copilot-sdk-(${COPILOT_EXCLUDED_PLATFORMS})-[^/]+$" EXCLUDE)
 
-      # mxc-bin mixes binaries for all platforms within its per-architecture
-      # folders, so those are excluded file-by-file; the crypt32*.node modules
-      # at the package root are Windows-only
-      if(WIN32)
+      # the crypt32*.node modules at the package root are Windows-only
+      if(NOT WIN32)
          list(APPEND COPILOT_EXCLUDES
-            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec|mxc-exec-mac)$" EXCLUDE)
-      elseif(APPLE)
-         list(APPEND COPILOT_EXCLUDES
-            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec)$" EXCLUDE
-            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
-            REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
-      else()
-         list(APPEND COPILOT_EXCLUDES
-            REGEX "@github/copilot/mxc-bin/[^/]+/mxc-exec-mac$" EXCLUDE
-            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
             REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
       endif()
 
@@ -933,8 +924,7 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
          if(DEFINED COPILOT_EXCLUDED_ARCH)
             list(APPEND COPILOT_EXCLUDES
                REGEX "copilot-language-server-js/(bin|compiled)/[^/]+/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
-               REGEX "@github/copilot/sdk/prebuilds/[^/]+-${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
-               REGEX "@github/copilot/mxc-bin/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE)
+               REGEX "@github/copilot-sdk-[^/]+-${COPILOT_EXCLUDED_ARCH}$" EXCLUDE)
          endif()
       endif()
 

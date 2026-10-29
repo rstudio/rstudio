@@ -100,16 +100,21 @@ The default tools root (`/opt/rstudio-tools/...`) requires elevated privileges, 
 ```bash
 VERIFY_DIR="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_DIR"' EXIT
-RSTUDIO_TOOLS_ROOT="$VERIFY_DIR" bash dependencies/common/install-copilot-language-server
+RSTUDIO_TOOLS_ROOT="$VERIFY_DIR" bash dependencies/common/install-copilot-language-server &&
+  COPILOT_DIR="$VERIFY_DIR/copilot-language-server-js" &&
+  ls -d "$COPILOT_DIR"/node_modules/@github/copilot-sdk-*-* "$COPILOT_DIR"/bin/*/* "$COPILOT_DIR"/compiled/*/* &&
+  du -sh "$COPILOT_DIR"/node_modules/* "$COPILOT_DIR"/node_modules/@github/* | sort -h | tail -12
 ```
 
-Confirm exit code 0. The `trap` ensures the temp directory is cleaned up whether the install succeeds or fails. If the install fails, report the error and stop.
+Confirm exit code 0. The `trap` ensures the temp directory is cleaned up whether the install succeeds or fails, which is why the checks run in the same block. If the install fails, report the error and stop.
+
+Then check the listing against the install excludes in `src/cpp/session/CMakeLists.txt` (search for `COPILOT_EXCLUDES`). They expect one `node_modules/@github/copilot-sdk-<platform>-<arch>` package per platform and per-platform `bin/<platform>/<arch>` and `compiled/<platform>/<arch>` folders. If any of those are missing, or the largest entries in the `du` output are other per-platform packages, update the excludes to match the new layout and include that file in the commit. Excludes that stop matching don't break the build. They silently ship every platform's binaries, roughly 500 MB extra (#19360).
 
 After verification, tell the user they will need to re-run `dependencies/common/install-copilot-language-server` themselves (with appropriate privileges) to install the new copilot-language-server into their dev environment.
 
 ### 8. Commit and open a PR
 
-Commit the four modified files and open a pull request:
+Commit the four modified files (five if the excludes changed) and open a pull request:
 
 - **Branch**: `feature/update-copilot-language-server-<VERSION>`
 - **Commit message**: `Update copilot-language-server to <VERSION>`
