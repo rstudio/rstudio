@@ -26,6 +26,9 @@
 namespace rstudio {
 namespace core {
 class Error;
+namespace system {
+class ProcessOperations;
+} // namespace system
 } // namespace core
 } // namespace rstudio
 
@@ -102,15 +105,18 @@ std::chrono::steady_clock::duration agentRequestTimeout(const std::string& metho
 // Drive the agent reply loop and expiry sweep without a running agent: register
 // a pending request (onResult receives whether it was cancelled), optionally
 // marked as written to the agent at now; queue a raw reply as if read from the
-// agent; reset state as a new agent process starts; and run one
-// background-processing pass at now. Exposed for testing.
+// agent; queue a notification for the agent; reset state as a new agent
+// process starts; write queued requests to the agent as a supervisor poll
+// does; and run one background-processing pass at now. Exposed for testing.
 void addPendingAgentRequestForTesting(const std::string& requestId,
                                       const std::string& method,
                                       bool written,
                                       std::chrono::steady_clock::time_point now,
                                       const std::function<void(bool)>& onResult);
 void queueAgentReplyForTesting(const std::string& reply);
+void queueAgentNotificationForTesting(const std::string& method);
 void resetForNewAgentForTesting();
+void writeQueuedAgentRequestsForTesting(core::system::ProcessOperations& operations);
 void runBackgroundProcessingForTesting(bool isIdle,
                                        std::chrono::steady_clock::time_point now);
 

@@ -3072,9 +3072,19 @@ void addPendingAgentRequestForTesting(const std::string& requestId,
       onRequestWritten({ method, requestId, json::Value() }, now);
 }
 
+void queueAgentNotificationForTesting(const std::string& method)
+{
+   sendNotification(method, json::Object());
+}
+
 void resetForNewAgentForTesting()
 {
    resetForNewAgent();
+}
+
+void writeQueuedAgentRequestsForTesting(core::system::ProcessOperations& operations)
+{
+   agent::onContinue(operations, s_agentGeneration);
 }
 
 void queueAgentReplyForTesting(const std::string& reply)

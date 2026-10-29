@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
+#include <core/system/Process.hpp>
 
 namespace rstudio {
 namespace session {
@@ -32,10 +33,12 @@ using modules::assistant::AgentStderrTail;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
 using modules::assistant::nesLanguageServerPath;
+using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
 using modules::assistant::resetForNewAgentForTesting;
 using modules::assistant::runBackgroundProcessingForTesting;
 using modules::assistant::ServicedClock;
+using modules::assistant::writeQueuedAgentRequestsForTesting;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
 using std::chrono::steady_clock;
@@ -375,6 +378,35 @@ TEST(SessionAssistant, NewAgentCancelsPreviousAgentsRequests)
    queueReply("previous-agent-written");
    runIdlePass();
    EXPECT_EQ(*written, std::vector<bool>({ true }));
+}
+
+// Records what would be written to the agent's stdin.
+class RecordingAgentOperations : public core::system::ProcessOperations
+{
+public:
+   core::Error writeToStdin(const std::string& input, bool) override
+   {
+      writes.push_back(input);
+      return core::Success();
+   }
+   core::Error ptySetSize(int, int) override { return core::Success(); }
+   core::Error ptyInterrupt() override { return core::Success(); }
+   core::Error terminate() override { return core::Success(); }
+   PidType getPid() override { return 0; }
+
+   std::vector<std::string> writes;
+};
+
+TEST(SessionAssistant, NewAgentIsNotSentPreviousAgentsQueue)
+{
+   // The previous agent answered 'initialize' but exited before its
+   // 'initialized' was written; the new agent must not receive it.
+   queueAgentNotificationForTesting("initialized");
+   resetForNewAgentForTesting();
+
+   RecordingAgentOperations operations;
+   writeQueuedAgentRequestsForTesting(operations);
+   EXPECT_TRUE(operations.writes.empty());
 }
 
 TEST(SessionAssistant, InitializeOutlastsRequestTimeout)
