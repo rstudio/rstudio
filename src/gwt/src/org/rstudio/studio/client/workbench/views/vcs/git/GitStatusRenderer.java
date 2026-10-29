@@ -76,9 +76,12 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
       if (str.length() < 2)
          return "";
 
-      // Git reports untracked files as "??"; both halves mean the same thing.
+      // In "??" (untracked) and "UU" (both modified in a conflict), both halves
+      // mean the same thing.
       if (str.equals("??"))
          return constants_.untrackedCapitalized();
+      if (str.equals("UU"))
+         return constants_.unmergedCapitalized();
 
       String indexDesc = descForStatus(str.charAt(0));
       String treeDesc = descForStatus(str.charAt(1));
