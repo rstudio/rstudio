@@ -280,6 +280,19 @@ TEST(SessionAssistant, IdlePassKeepsRequestWithinTimeout)
    EXPECT_EQ(*results, std::vector<bool>({ false }));
 }
 
+TEST(SessionAssistant, IdlePassCancelsRequestJustPastTimeout)
+{
+   auto results = addRequest("at-timeout", kCompletion, true);
+
+   serviceEventsFor(seconds(10));
+   runIdlePass();
+   EXPECT_TRUE(results->empty());
+
+   serviceEventsFor(milliseconds(100));
+   runIdlePass();
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
+}
+
 TEST(SessionAssistant, IdlePassDeliversQueuedReplyToExpiredRequest)
 {
    // A reply that arrived while R was busy must reach its request even
