@@ -460,6 +460,10 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      # Certification runs are rare and span most engines; saving their
+      # os-e2e-deps caches would only push out the caches PR builds
+      # read. Every engine call below sets this.
+      skip_e2e_deps_cache_save: true
       os: ${{ matrix.os }}
       arch: ${{ matrix.arch }}
       project: desktop
@@ -485,6 +489,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: server
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).ubuntu24s }}
       build_from_source: ${{ inputs.build_from_source || false }}
@@ -508,6 +513,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos26 }}
       build_from_source: ${{ inputs.build_from_source || false }}
@@ -531,6 +537,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos15 }}
       build_from_source: ${{ inputs.build_from_source || false }}
@@ -556,6 +563,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos14 }}
       build_from_source: ${{ inputs.build_from_source || false }}
@@ -579,6 +587,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).windows2025 }}
       build_from_source: ${{ inputs.build_from_source || false }}

@@ -121,6 +121,10 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+      skip_e2e_deps_cache_save:
+        description: "Don't save the os-e2e-deps caches (R library, pak downloads, Playwright browsers). Set by broad-matrix callers whose engines run too rarely for those caches to outlive eviction."
+        type: boolean
+        default: false
     outputs:
       r_version_actual:
         description: >-
@@ -544,6 +548,7 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          save-cache: ${{ !inputs.skip_e2e_deps_cache_save }}
           # RUNNER_OS is just "macOS" for every Mac runner regardless of arch OR
           # OS version, so without a scope every macOS engine shares one
           # os-e2e-deps cache key and restores the others' incompatible R

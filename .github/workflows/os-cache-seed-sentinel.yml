@@ -79,7 +79,7 @@ jobs:
           os-cache-seed-e2e-macos-26-arm64.yml=rstudio-tools-arm64- rstudio-build-rlibs-arm64- rstudio-gwt-arm64-
           os-cache-seed-e2e-macos-15-x86_64.yml=rstudio-tools-x86_64- rstudio-build-rlibs-x86_64- rstudio-gwt-x86_64-
           os-cache-seed-e2e-rstudio-desktop-os-windows-server-2025.yml=rstudio-tools-win64- rstudio-gwt-win64-
-          os-cache-seed-e2e-deps.yml=Windows-r-$R_MM- Windows-pak-$R_MM- Windows-pw- macOS-macos26-arm64-r-$R_MM- macOS-macos26-arm64-pak-$R_MM- macOS-macos26-arm64-pw- Linux-noble-amd64-r-$R_MM- Linux-noble-amd64-pak-$R_MM- Linux-noble-amd64-pw- Linux-r-$R_MM- Linux-pak-$R_MM- Linux-pw-
+          os-cache-seed-e2e-deps.yml=Windows-r-$R_MM- Windows-pak-$R_MM- Windows-pw- macOS-macos26-arm64-r-$R_MM- macOS-macos26-arm64-pak-$R_MM- macOS-macos26-arm64-pw- Linux-noble-amd64-r-$R_MM- Linux-noble-amd64-pak-$R_MM- Linux-noble-amd64-pw-
           "
 
           FAILED=0
@@ -204,5 +204,35 @@ jobs:
               "(Opened automatically by the cache-seed sentinel; it skips re-alerting while this issue stays open, and closes it once the seed succeeds again.)")
             gh issue create --title "$TITLE" --body "$BODY" || FAILED=1
           done
+
+          exit $FAILED
+
+      # GWT output is keyed on a hash of the GWT sources, so every merge that
+      # touches them saves a new 30-80 MB entry per platform key, and an older
+      # entry is only ever read on an exact key match (a restore-keys match
+      # recompiles from scratch). Keep the two newest per key family -- the
+      # second covers runs keyed against the previous main -- and delete the
+      # rest, rather than leaving superseded builds in the quota for 7 days.
+      - name: Prune superseded GWT output caches on main
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          KEEP=2
+          gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/actions/caches?ref=refs/heads/main&key=rstudio-gwt-&sort=created_at&direction=desc&per_page=100" \
+            --jq '.actions_caches[] | "\(.id) \(.key)"' > "$RUNNER_TEMP/gwt-caches.txt"
+
+          # Newest first; a key's family is the key minus its trailing hash.
+          awk -v keep="$KEEP" '{ fam = $2; sub(/-[0-9a-f]+$/, "", fam); if (++seen[fam] > keep) print $1, $2 }' \
+            "$RUNNER_TEMP/gwt-caches.txt" > "$RUNNER_TEMP/gwt-stale.txt"
+
+          FAILED=0
+          while read -r ID KEY; do
+            echo "Deleting superseded GWT cache $KEY (id $ID)"
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/caches/$ID" --silent || FAILED=1
+          done < "$RUNNER_TEMP/gwt-stale.txt"
+          echo "Pruned $(wc -l < "$RUNNER_TEMP/gwt-stale.txt") of $(wc -l < "$RUNNER_TEMP/gwt-caches.txt") GWT caches"
 
           exit $FAILED
