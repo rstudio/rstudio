@@ -1288,6 +1288,53 @@ test_that("installing R offers a choice of build only where both builds run", {
 
 })
 
+test_that("the versions rig can install are its releases, without previews", {
+
+   json <- function(rig, args)
+   {
+      expect_identical(args, c("available", "--all", "--arch", "arm64"))
+      list(
+         list(name = "4.4.3", version = "4.4.3", type = "release"),
+         list(name = "4.6.2", version = "4.6.2", type = "release"),
+         list(name = "next", version = "4.6.3", type = "next"),
+         list(name = "devel", version = "4.7.0", type = "devel"),
+         list(name = "broken", type = "release")
+      )
+   }
+
+   expect_identical(.rs.rig.availableVersions("arm64", "rig", json), c("4.4.3", "4.6.2"))
+   expect_error(.rs.rig.availableVersions("arm64", "", json), "rig was not found")
+
+})
+
+test_that("installing R offers only the builds rig has the version for", {
+
+   both <- c("arm64", "x86_64")
+   available <- function(architecture)
+   {
+      switch(architecture,
+         arm64  = c("4.4.0", "4.4.3", "4.5.3", "4.6.2"),
+         x86_64 = c("4.3.3", "4.4.0", "4.4.3", "4.5.3", "4.6.2"))
+   }
+
+   # a version with a patch level must exist as is; a major.minor needs any release
+   expect_identical(.rs.rig.installArchitecturesFor("4.4.3", both, available), both)
+   expect_identical(.rs.rig.installArchitecturesFor("4.4", both, available), both)
+   expect_identical(.rs.rig.installArchitecturesFor("4.3.3", both, available), "x86_64")
+   expect_identical(.rs.rig.installArchitecturesFor("4.3", both, available), "x86_64")
+   expect_identical(.rs.rig.installArchitecturesFor("4.4.9", both, available), character())
+   expect_identical(.rs.rig.installArchitecturesFor("5.7.3", both, available), character())
+
+   # with no choice to narrow, rig isn't asked
+   unasked <- function(architecture) stop("rig was asked")
+   expect_identical(.rs.rig.installArchitecturesFor("4.3.3", character(), unasked), character())
+
+   # where rig can't say, every build is offered
+   offline <- function(architecture) stop("offline")
+   expect_identical(.rs.rig.installArchitecturesFor("4.3.3", both, offline), both)
+
+})
+
 test_that("an ARM64 Windows machine is recognized even from an emulated R", {
 
    skip_if_not(.rs.platform.isWindows, "not Windows")

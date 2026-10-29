@@ -321,21 +321,28 @@
 #' @param refreshInstalled Whether to list the installed versions of R
 #'   afresh, rather than reuse the list from an earlier check this session.
 #' @param current The version of R in use.
+#' @param architectures The builds of R this machine runs, native first, when
+#'   there's a choice (see .rs.rig.installArchitectures()).
+#' @param architecturesFor Narrows 'architectures' to those rig has a version
+#'   for (see .rs.rig.installArchitecturesFor()).
 #'
 #' @return A list whose 'type' says what to tell the user: "none"; "restore"
 #'   when the versions match, the renv library is empty and the lockfile
 #'   records packages to restore; or "mismatch",
 #'   with the 'requested' and 'current' versions, where the request came from
 #'   ('source'), whether that R could run ('supported'), the matching
-#'   installation of R, if any ('installed'), and the builds of R to choose
-#'   between when installing it ('architectures'; empty when there's no choice).
+#'   installation of R, if any ('installed'), the builds of R to choose
+#'   between when installing it ('architectures'; empty when there's no
+#'   choice), and whether rig has any build of it ('installable').
 .rs.addFunction("projectRVersionCheck", function(project,
                                                  projectVersion,
                                                  minimum,
                                                  renvActive,
                                                  findInstalled,
                                                  refreshInstalled = TRUE,
-                                                 current = getRversion())
+                                                 current = getRversion(),
+                                                 architectures = .rs.rig.installArchitectures(),
+                                                 architecturesFor = .rs.rig.installArchitecturesFor)
 {
    lockfile <- NULL
    if (nzchar(projectVersion))
@@ -382,14 +389,27 @@
    }
 
    version <- if (is.null(installed)) requested else as.character(installed$version)
+   supported <- .rs.rVersionSupported(version, minimum)
+
+   # rig is asked which builds exist only when there's a choice to narrow
+   # and the version would be installed
+   if (!findInstalled)
+      architectures <- character()
+   installable <- TRUE
+   if (is.null(installed) && supported && length(architectures))
+   {
+      architectures <- architecturesFor(requested, architectures)
+      installable <- length(architectures) > 0L
+   }
 
    list(
       type      = .rs.scalar("mismatch"),
       requested = .rs.scalar(requested),
       current   = .rs.scalar(current),
       source    = .rs.scalar(source),
-      supported = .rs.scalar(.rs.rVersionSupported(version, minimum)),
+      supported = .rs.scalar(supported),
       installed = installed,
-      architectures = if (findInstalled) .rs.rig.installArchitectures() else character()
+      architectures = architectures,
+      installable = .rs.scalar(installable)
    )
 })

@@ -169,9 +169,16 @@ public class RenvRVersionManager
    // where both builds run (ARM64 Windows, Apple silicon Macs), ask which to install
    private void chooseArchitectureAndInstall(String version, String[] architectures)
    {
-      if (architectures == null || architectures.length < 2)
+      if (architectures == null || architectures.length == 0)
       {
          installR(version, "");
+         return;
+      }
+
+      // the only build rig has, named so rig doesn't pick the native one
+      if (architectures.length == 1)
+      {
+         installR(version, architectures[0]);
          return;
       }
 

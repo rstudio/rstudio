@@ -178,11 +178,13 @@ void checkProjectRVersion(bool refreshInstalled)
 
    std::string requested, current, source;
    bool supported = false;
+   bool installable = false;
    error = json::readObject(result,
                             "requested", requested,
                             "current", current,
                             "source", source,
-                            "supported", supported);
+                            "supported", supported,
+                            "installable", installable);
    if (error)
    {
       LOG_ERROR(error);
@@ -204,7 +206,9 @@ void checkProjectRVersion(bool refreshInstalled)
    if (!architectures.isArray())
       architectures = json::Array();
    data["install_architectures"] = architectures;
-   data["can_install"] = desktop && supported;
+
+   // installable is false when rig has no build of the version at all
+   data["can_install"] = desktop && supported && installable;
 
    // lets a client that connects while R installs (e.g. after a refresh)
    // pick up where the one that started the installation left off

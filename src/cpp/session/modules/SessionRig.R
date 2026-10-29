@@ -1031,6 +1031,53 @@
    if (is.null(preferred)) character() else c(preferred, "x86_64")
 })
 
+#' The released versions of R rig can install for an architecture. Previews
+#' ('next', 'devel') are left out, as a project never names one.
+.rs.addFunction("rig.availableVersions", function(architecture,
+                                                  rig = .rs.rig.find(),
+                                                  json = .rs.rig.json)
+{
+   if (!nzchar(rig))
+      stop("rig was not found")
+
+   entries <- json(rig, c("available", "--all", "--arch", architecture))
+   versions <- vapply(entries, function(entry) {
+      release <- identical(entry$type, "release") && is.character(entry$version)
+      if (release) entry$version else NA_character_
+   }, character(1), USE.NAMES = FALSE)
+
+   versions[!is.na(versions)]
+})
+
+#' Which of 'architectures' rig has the given version of R for: a version
+#' with a patch level must exist as is, a major.minor needs any release of it.
+#' Where rig can't say, every build is offered and the install reports why.
+.rs.addFunction("rig.installArchitecturesFor", function(version,
+                                                        architectures = .rs.rig.installArchitectures(),
+                                                        available = .rs.rig.availableVersions)
+{
+   if (length(architectures) == 0L)
+      return(architectures)
+
+   exact <- !grepl("^[0-9]+[.][0-9]+$", version)
+   offered <- vapply(architectures, function(architecture) {
+      versions <- .rs.tryCatch(available(architecture))
+      if (inherits(versions, "error"))
+      {
+         .rs.logWarningMessage(
+            "error listing the versions of R rig can install for %s: %s",
+            architecture,
+            conditionMessage(versions)
+         )
+         return(NA)
+      }
+
+      if (exact) version %in% versions else any(.rs.rVersionMatches(version, versions))
+   }, logical(1), USE.NAMES = FALSE)
+
+   if (anyNA(offered)) architectures else architectures[offered]
+})
+
 #' Whether an installation of R runs as itself when it isn't the default.
 #' Every version in the macOS R framework comes with a launcher script (and
 #' other files) naming the framework's shared Resources directory, which
