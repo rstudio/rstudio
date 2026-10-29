@@ -367,11 +367,43 @@ public class ShortcutManager implements NativePreviewHandler,
    public boolean onAssistantKeyDown(NativeEvent event)
    {
       keyTimer_.schedule(3000);
-      if (!handleKeyDown(event, true))
+      if (handleKeyDown(event, true))
+      {
+         events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
+         return true;
+      }
+
+      // Claim the first stroke of a shortcut that can run from here, so the browser's
+      // default action doesn't run (swallowEvents() can't see keys in PA's iframe).
+      // PA keeps any other key, so a prefix of commands it can't run is dropped.
+      if (isAssistantPrefix())
+         return true;
+
+      clearKeyBuffer();
+      return false;
+   }
+
+   private boolean isAssistantPrefix()
+   {
+      if (keyBuffer_.isEmpty())
          return false;
 
-      events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
-      return true;
+      for (KeyMap map : keyMaps_.values())
+      {
+         if (map.isPrefix(keyBuffer_, ShortcutManager::canRunFromAssistant))
+            return true;
+      }
+      return false;
+   }
+
+   private static boolean canRunFromAssistant(CommandBinding binding)
+   {
+      if (!binding.getContext().isWorkbenchLevel())
+         return false;
+
+      // In a satellite, commands that stay there mostly have no handler, so
+      // leave those keys with Posit Assistant (and Desktop's menu)
+      return !Satellite.isCurrentWindowSatellite() || binding.isRoutedOutOfCurrentWindow();
    }
 
    public void setEditorMode(int editorMode)
@@ -548,17 +580,8 @@ public class ShortcutManager implements NativePreviewHandler,
          {
             clearKeyBuffer();
 
-            if (fromAssistant)
-            {
-               if (!binding.getContext().isWorkbenchLevel())
-                  return false;
-
-               // In a satellite, commands that stay there mostly have no handler, so
-               // leave those keys with Posit Assistant (and Desktop's menu)
-               if (Satellite.isCurrentWindowSatellite() &&
-                   !binding.isRoutedOutOfCurrentWindow())
-                  return false;
-            }
+            if (fromAssistant && !canRunFromAssistant(binding))
+               return false;
 
             XTermWidget xterm = XTermWidget.tryGetXTerm(Element.as(event.getEventTarget()));
             if (xterm != null)

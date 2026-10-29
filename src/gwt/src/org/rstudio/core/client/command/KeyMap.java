@@ -19,6 +19,7 @@ package org.rstudio.core.client.command;
 // - Given a command, one can discover what key sequences it is bound to.
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.DirectedGraph;
@@ -181,6 +182,12 @@ public class KeyMap
 
    public boolean isPrefix(KeySequence keys)
    {
+      return isPrefix(keys, binding -> true);
+   }
+
+   // Whether keys lead to a binding that would be active and that accept allows
+   public boolean isPrefix(KeySequence keys, Predicate<CommandBinding> accept)
+   {
       DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());
       if (node == null)
          return false;
@@ -195,10 +202,14 @@ public class KeyMap
             if (bindings == null || bindings.isEmpty())
                return true;
 
+            // As in getActiveBinding(), only the first enabled binding counts
             for (CommandBinding binding : bindings)
             {
                if (binding.isEnabled())
                {
+                  if (!accept.test(binding))
+                     return true;
+
                   pending.set(true);
                   return false;
                }
