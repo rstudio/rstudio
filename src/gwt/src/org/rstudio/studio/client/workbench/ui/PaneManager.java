@@ -746,7 +746,7 @@ public class PaneManager
     * before toggling it back leaves the layout maximized, squeezing the other
     * panes to near-zero so the next test can't reach its targets. The guard
     * matters because restoreLayout() resets column widths to default when no
-    * window is maximized, so firing it unconditionally would clobber any custom
+    * zoom is tracked, so firing it unconditionally would clobber any custom
     * widths a non-zoomed test set up. Pane/window zoom is tracked by
     * maximizedWindow_ / maximizedTab_; column zoom is reflected by
     * getZoomedColumn().
@@ -1786,7 +1786,10 @@ public class PaneManager
       clearZoomBookkeeping();
 
       // If we were zoomed, the snapshot provides the previous 'non-zoom' state.
-      if (maximizedWindow != null &&
+      // A column zoom records it without a maximized window. The default
+      // widths are no substitute: they leave a zoom-collapsed sidebar shut, and
+      // ignore the sidebar's width, which can shut the center column (#19201).
+      if ((maximizedWindow != null || rightWidthPriorToZoom >= 0) &&
           leftList_.size() == leftWidthsPriorToZoom.size())
       {
          restoreSavedLayout(maximizedWindow,
@@ -1935,7 +1938,8 @@ public class PaneManager
    {
       restorePaneStateToDefault();
 
-      maximizedWindow.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      if (maximizedWindow != null)
+         maximizedWindow.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
 
       ArrayList<Double> leftTargets = new ArrayList<>();
       if (leftList_.size() > 0)

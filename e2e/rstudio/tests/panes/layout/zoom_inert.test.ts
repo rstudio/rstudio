@@ -122,6 +122,23 @@ async function setSidebarVisible(page: Page, visible: boolean): Promise<void> {
   await expect(page.locator(SIDEBAR_PANE)).toHaveCount(visible ? 1 : 0);
 }
 
+async function isSidebarOnLeft(page: Page): Promise<boolean> {
+  const sidebar = await page.locator(SIDEBAR_PANE).boundingBox();
+  const consolePane = await page.locator(CONSOLE_PANE).boundingBox();
+  if (!sidebar || !consolePane)
+    throw new Error('Sidebar or Console pane has no bounding box; are both rendered?');
+  return sidebar.x < consolePane.x;
+}
+
+// Moves a visible sidebar to the given side; returns whether it had to move.
+async function setSidebarOnLeft(page: Page, left: boolean): Promise<boolean> {
+  if (await isSidebarOnLeft(page) === left)
+    return false;
+  await executeCommand(page, 'toggleSidebarLocation');
+  await expect.poll(() => isSidebarOnLeft(page)).toBe(left);
+  return true;
+}
+
 test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     await resetLayoutZoom(page);
@@ -175,6 +192,37 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await expectHidden(page, SIDEBAR_PANE, TABSET1_PANE, TABSET2_PANE);
     await expectExposed(page, CONSOLE_PANE);
   });
+
+  for (const side of ['left', 'right']) {
+    for (const zoom of ['layoutZoomSidebar', 'layoutZoomLeftColumn', 'layoutZoomRightColumn']) {
+      test(`End Zoom after ${zoom} with the sidebar on the ${side} restores the pre-zoom column widths (#19201)`, async ({ rstudioPage: page }) => {
+        await setSidebarVisible(page, true);
+        const moved = await setSidebarOnLeft(page, side === 'left');
+        try {
+          const columns = [SIDEBAR_PANE, CONSOLE_PANE, TABSET1_PANE];
+          const before: number[] = [];
+          for (const column of columns)
+            before.push(await getSettledWidth(page, column));
+
+          await executeCommand(page, zoom);
+          await expect.poll(() => isCommandChecked(page, zoom)).toBe(true);
+          await executeCommand(page, 'layoutEndZoom');
+          await expect.poll(() => isCommandChecked(page, zoom)).toBe(false);
+
+          for (let i = 0; i < columns.length; i++) {
+            expect(Math.abs(await getSettledWidth(page, columns[i]) - before[i]),
+                   `${columns[i]} width`).toBeLessThanOrEqual(2);
+          }
+          await expectExposed(page, ...columns);
+        } finally {
+          if (moved) {
+            await resetLayoutZoom(page);
+            await setSidebarOnLeft(page, side !== 'left');
+          }
+        }
+      });
+    }
+  }
 
   test('dragging a column splitter closed hides the column and moves focus out', async ({ rstudioPage: page }) => {
     const splitter = page.locator(MIDDLE_COLUMN_SPLITTER);
