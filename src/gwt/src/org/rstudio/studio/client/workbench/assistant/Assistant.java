@@ -150,7 +150,11 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          {
             onCompleted.execute();
 
-            if (response.error != null)
+            if (response == null)
+            {
+               showNotRunning(constants_.assistantDiagnosticsTitle(getDisplayName(assistantType)), assistantType);
+            }
+            else if (response.error != null)
             {
                globalDisplay_.showErrorMessage(response.error.message);
             }
@@ -205,6 +209,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          @Override
          protected void onSuccess(AssistantSignInResponse response)
          {
+            if (response == null)
+            {
+               showNotRunning(constants_.assistantSignInDialogTitle(getDisplayName(assistantType)), assistantType);
+               return;
+            }
+
             AssistantError error = response.error;
             if (error != null)
             {
@@ -311,7 +321,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       String assistantType = getAssistantType();
       signOut(assistantType, (response) ->
       {
-         if (response.result == null)
+         if (response == null)
+         {
+            showNotRunning(constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)), assistantType);
+            return;
+         }
+         else if (response.result == null)
          {
             showNoResponse(constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)), assistantType);
             return;
@@ -446,8 +461,18 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       return null;
    }
 
+   // The session answers without a response when the agent isn't running and
+   // couldn't be started.
+   private void showNotRunning(String title, String assistantType)
+   {
+      globalDisplay_.showMessage(
+            MessageDisplay.MSG_ERROR,
+            title,
+            constants_.assistantNotRunning(getDisplayName(assistantType)));
+   }
+
    // A response has no result when the session cancelled a request the agent
-   // didn't answer in time, or answered for an agent that wasn't running.
+   // didn't answer in time.
    private void showNoResponse(String title, String assistantType)
    {
       globalDisplay_.showMessage(
