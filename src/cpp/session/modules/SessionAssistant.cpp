@@ -180,7 +180,7 @@ public:
 private:
    json::JsonRpcFunctionContinuation continuation_;
    std::chrono::steady_clock::duration started_{};
-   std::chrono::steady_clock::duration timeout_ = kHeldAgentRequestTimeout;
+   std::chrono::steady_clock::duration timeout_{};
 };
 
 // keep in sync with AssistantResponseTypes.AssistantAgentNotRunningReason
