@@ -24,6 +24,7 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -33,6 +34,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
+import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
@@ -83,6 +86,24 @@ public abstract class ChangelistTable extends Composite
    public static void ensureStylesInjected()
    {
       resources_.styles().ensureInjected();
+   }
+
+   /**
+    * Opens the span that holds a row's status icons. The icons themselves have
+    * empty alt text, so the description is also the span's accessible name;
+    * the title alone is not reliably read by screen readers.
+    */
+   public static SafeHtml statusOpenTag(String desc)
+   {
+      String cls = resources_.cellTableStyle().status();
+      if (StringUtil.isNullOrEmpty(desc))
+         return SafeHtmlUtil.createOpenTag("span", "class", cls);
+
+      return SafeHtmlUtil.createOpenTag("span",
+            "class", cls,
+            "title", desc,
+            "role", "img",
+            "aria-label", desc);
    }
 
 

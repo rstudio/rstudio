@@ -19,12 +19,11 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
-import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable.ChangelistTableCellTableResources;
+import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 
 public class GitStatusRenderer implements SafeHtmlRenderer<String>
 {
@@ -62,12 +61,7 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
       ImageResource2x treeImg = imgForStatus(str.charAt(1));
 
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
-      builder.append(SafeHtmlUtils.fromTrustedString(
-            "<span " +
-            "class=\"" + ctRes_.cellTableStyle().status() + "\" " +
-            "title=\"" +
-            SafeHtmlUtils.htmlEscape(descForStatus(str)) +
-            "\">"));
+      builder.append(ChangelistTable.statusOpenTag(descForStatus(str)));
 
       builder.append(indexImg.getSafeHtml());
       builder.append(treeImg.getSafeHtml());
@@ -81,6 +75,10 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
    {
       if (str.length() < 2)
          return "";
+
+      // Git reports untracked files as "??"; both halves mean the same thing.
+      if (str.equals("??"))
+         return constants_.untrackedCapitalized();
 
       String indexDesc = descForStatus(str.charAt(0));
       String treeDesc = descForStatus(str.charAt(1));
@@ -154,6 +152,5 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
    }
 
    private static final StatusResources resources_ = GWT.create(StatusResources.class);
-   private static final ChangelistTableCellTableResources ctRes_ = GWT.create(ChangelistTableCellTableResources.class);
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

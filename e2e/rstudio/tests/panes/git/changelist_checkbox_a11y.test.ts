@@ -1,7 +1,8 @@
 // Regression test for issue #19328: the Git pane's Staged column was drawn as a
 // bare <img alt="">, so screen readers skipped it. Each cell must now be exposed
 // as a checkbox named for its file, with aria-checked conveying staged, unstaged,
-// and partially staged ("mixed") files, and must stay operable by click.
+// and partially staged ("mixed") files, and must stay operable by click. The
+// Status column's icons are likewise named by their status description.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole } from '@pages/console_pane.page';
 import { executeCommand, openProject } from '@utils/commands';
@@ -75,6 +76,17 @@ test.describe('Git changelist checkboxes (#19328)', () => {
     await expect(partial).toHaveAttribute('aria-checked', 'mixed', { timeout: 30000 });
     await expect(staged).toHaveAttribute('aria-checked', 'true');
     await expect(untracked).toHaveAttribute('aria-checked', 'false');
+
+    // The status icons have empty alt text; their description is the name.
+    // A has: locator resolves inside the row, so it must not be panel-rooted.
+    const statusOf = (file: string) =>
+      panel
+        .getByRole('row')
+        .filter({ has: page.getByRole('checkbox', { name: `Stage ${file}`, exact: true }) })
+        .getByRole('img');
+    await expect(statusOf('partial.R')).toHaveAccessibleName('Modified/Modified');
+    await expect(statusOf('staged.R')).toHaveAccessibleName('Added');
+    await expect(statusOf('untracked.R')).toHaveAccessibleName('Untracked');
 
     // Clicking stages the file, and the re-rendered cell reports the new state.
     await untracked.click();
