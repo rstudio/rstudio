@@ -561,6 +561,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 #' @return The alt text, or an empty string when there is none.
 .rs.addFunction("graphicsAltText", function(displayList)
 {
+   # .subset2() skips S3 dispatch, since a display list entry's arguments can
+   # be any object, including one whose own `[[` method fails
    altText <- character()
    for (entry in as.list(displayList))
    {
@@ -568,7 +570,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       if (length(args) < 2 || !is.list(args[[2]]))
          next
 
-      alt <- attr(args[[2]][["x"]], "alt-label", exact = TRUE)
+      alt <- attr(.subset2(args[[2]], "x"), "alt-label", exact = TRUE)
       if (is.character(alt) && length(alt) == 1 && !is.na(alt) && nzchar(alt))
          altText <- c(altText, alt)
    }
