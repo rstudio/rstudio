@@ -30,6 +30,8 @@ namespace tests {
 using core::FilePath;
 using modules::assistant::addPendingAgentRequestForTesting;
 using modules::assistant::AgentStderrTail;
+using modules::assistant::closeDocumentForTesting;
+using modules::assistant::focusDocumentForTesting;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
 using modules::assistant::nesLanguageServerPath;
@@ -37,6 +39,7 @@ using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
 using modules::assistant::resetForNewAgentForTesting;
 using modules::assistant::runBackgroundProcessingForTesting;
+using modules::assistant::sendFocusForTesting;
 using modules::assistant::ServicedClock;
 using modules::assistant::writeQueuedAgentRequestsForTesting;
 using std::chrono::milliseconds;
@@ -407,6 +410,50 @@ TEST(SessionAssistant, NewAgentIsNotSentPreviousAgentsQueue)
    RecordingAgentOperations operations;
    writeQueuedAgentRequestsForTesting(operations);
    EXPECT_TRUE(operations.writes.empty());
+}
+
+// Write what a new agent is sent once it's initialized.
+std::vector<std::string> writesAfterInitialization()
+{
+   // The second poll writes what was held until 'initialized' was written.
+   queueAgentNotificationForTesting("initialized");
+   RecordingAgentOperations operations;
+   writeQueuedAgentRequestsForTesting(operations);
+   writeQueuedAgentRequestsForTesting(operations);
+   return operations.writes;
+}
+
+bool containsFocus(const std::vector<std::string>& writes, const std::string& uri)
+{
+   for (const std::string& write : writes)
+   {
+      if (write.find("textDocument/didFocus") != std::string::npos &&
+          write.find(uri) != std::string::npos)
+         return true;
+   }
+   return false;
+}
+
+TEST(SessionAssistant, NewAgentIsSentFocusFromBeforeItStarted)
+{
+   // Focus changes while no agent runs (as here) are recorded, not sent.
+   resetForNewAgentForTesting();
+   focusDocumentForTesting("file:///focused.R");
+
+   resetForNewAgentForTesting();
+   sendFocusForTesting();
+   EXPECT_TRUE(containsFocus(writesAfterInitialization(), "file:///focused.R"));
+}
+
+TEST(SessionAssistant, NewAgentIsNotSentFocusOfClosedDocument)
+{
+   resetForNewAgentForTesting();
+   focusDocumentForTesting("file:///closed.R");
+   closeDocumentForTesting("file:///closed.R");
+
+   resetForNewAgentForTesting();
+   sendFocusForTesting();
+   EXPECT_FALSE(containsFocus(writesAfterInitialization(), "file:///closed.R"));
 }
 
 TEST(SessionAssistant, InitializeOutlastsRequestTimeout)
