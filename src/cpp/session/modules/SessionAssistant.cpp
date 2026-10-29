@@ -120,19 +120,18 @@ struct AssistantRequest
    json::Value params;
 };
 
+// Requests are held, unwritten, until the agent has answered 'initialize', so
+// they get as long as 'initialize' does before the sweep gives up on them.
+const std::chrono::seconds kAgentInitializeTimeout(60);
+const std::chrono::seconds kAgentRequestTimeout(10);
+const std::chrono::seconds kHeldAgentRequestTimeout = kAgentInitializeTimeout;
+
 class AssistantContinuation
 {
 public:
 
    explicit AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation)
-      : AssistantContinuation(continuation, std::chrono::steady_clock::now())
-   {
-   }
-
-   AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation,
-                         std::chrono::steady_clock::time_point time)
-      : continuation_(continuation),
-        time_(time)
+      : continuation_(continuation)
    {
    }
    
@@ -140,6 +139,19 @@ public:
    AssistantContinuation()
       : AssistantContinuation(json::JsonRpcFunctionContinuation())
    {
+   }
+
+   // Start (or restart) the clock on this request, in serviced time.
+   void startClock(std::chrono::steady_clock::duration now,
+                   std::chrono::steady_clock::duration timeout)
+   {
+      started_ = now;
+      timeout_ = timeout;
+   }
+
+   bool isExpired(std::chrono::steady_clock::duration now) const
+   {
+      return now - started_ > timeout_;
    }
 
    void invoke(json::Object resultJson)
@@ -165,14 +177,10 @@ public:
          continuation_(Success(), &response);
    }
 
-   std::chrono::steady_clock::time_point time()
-   {
-      return time_;
-   }
-
 private:
    json::JsonRpcFunctionContinuation continuation_;
-   std::chrono::steady_clock::time_point time_;
+   std::chrono::steady_clock::duration started_{};
+   std::chrono::steady_clock::duration timeout_ = kHeldAgentRequestTimeout;
 };
 
 // keep in sync with AssistantResponseTypes.AssistantAgentNotRunningReason
@@ -240,6 +248,10 @@ std::vector<AssistantRequest> s_pendingRequests;
 // Metadata related to pending requests.
 // Mainly used to map responses to their expected result types.
 std::map<std::string, AssistantContinuation> s_pendingContinuations;
+
+// Clock for timing out agent requests. Background processing runs every 50ms
+// or so while R services events, so a longer gap means R was blocked.
+ServicedClock s_servicedClock(std::chrono::seconds(1));
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
@@ -693,6 +705,14 @@ std::string formatRequest(const AssistantRequest& request)
 }
 
 
+void addPendingContinuation(const std::string& requestId,
+                            const AssistantContinuation& continuation)
+{
+   AssistantContinuation& pending = s_pendingContinuations[requestId];
+   pending = continuation;
+   pending.startClock(s_servicedClock.elapsed(), kHeldAgentRequestTimeout);
+}
+
 void sendRequest(const std::string& method,
                  const std::string& requestId,
                  const json::Value& paramsJson,
@@ -701,10 +721,19 @@ void sendRequest(const std::string& method,
    DLOG("Enqueuing request '{}' with id '{}'.", method, requestId);
    
    // Add the continuation, which is executed in response to the request.
-   s_pendingContinuations[requestId] = continuation;
+   addPendingContinuation(requestId, continuation);
 
    // Create and enqueue the request.
    s_pendingRequests.push_back({ method, requestId, paramsJson });
+}
+
+// The agent can't start on a request until it has been written to the agent,
+// so restart the request's clock then.
+void onRequestWritten(const AssistantRequest& request)
+{
+   auto it = s_pendingContinuations.find(request.id);
+   if (it != s_pendingContinuations.end())
+      it->second.startClock(s_servicedClock.elapsed(), agentRequestTimeout(request.method));
 }
 
 // Should only be used for debugging, as this will block the R session
@@ -1061,6 +1090,7 @@ bool onContinue(ProcessOperations& operations, uint64_t generation)
          std::string htmlRequest = formatRequest(request);
          debugCallback(htmlRequest);
          operations.writeToStdin(htmlRequest, false);
+         onRequestWritten(request);
       }
       s_pendingRequests.clear();
    }
@@ -1083,6 +1113,7 @@ bool onContinue(ProcessOperations& operations, uint64_t generation)
          std::string htmlRequest = formatRequest(request);
          debugCallback(htmlRequest);
          operations.writeToStdin(htmlRequest, false);
+         onRequestWritten(request);
          return true;
       });
    }
@@ -1983,8 +2014,10 @@ void didFocus(lsp::DidFocusTextDocumentParams params,
    sendNotification("textDocument/didFocus", paramsJson);
 }
 
-void onBackgroundProcessing(bool isIdle)
+void onBackgroundProcessing(bool isIdle, std::chrono::steady_clock::time_point now)
 {
+   s_servicedClock.tick(now);
+
    // process any pending requests
    while (!s_pendingResponses.empty())
    {
@@ -2134,11 +2167,9 @@ void onBackgroundProcessing(bool isIdle)
    // rather than cancelled
    if (isIdle)
    {
-      auto currentTime = std::chrono::steady_clock::now();
-
       for (auto it = s_pendingContinuations.begin(); it != s_pendingContinuations.end(); )
       {
-         if (isAgentRequestExpired(it->second.time(), currentTime))
+         if (it->second.isExpired(s_servicedClock.elapsed()))
          {
             DLOG("Cancelling old continuation with id '{}'.", it->first);
             it->second.cancel();
@@ -2967,14 +2998,39 @@ FilePath nesLanguageServerPath(const FilePath& installPath)
    return FilePath();
 }
 
-bool isAgentRequestExpired(std::chrono::steady_clock::time_point requestTime,
-                           std::chrono::steady_clock::time_point now)
+ServicedClock::ServicedClock(std::chrono::steady_clock::duration maxGap)
+   : maxGap_(maxGap),
+     elapsed_(std::chrono::steady_clock::duration::zero())
 {
-   return now - requestTime > std::chrono::seconds(10);
+}
+
+void ServicedClock::tick(std::chrono::steady_clock::time_point now)
+{
+   if (ticked_ && now > lastTick_)
+      elapsed_ += std::min(now - lastTick_, maxGap_);
+
+   lastTick_ = now;
+   ticked_ = true;
+}
+
+std::chrono::steady_clock::duration ServicedClock::elapsed() const
+{
+   return elapsed_;
+}
+
+std::chrono::steady_clock::duration agentRequestTimeout(const std::string& method)
+{
+   // Cancelling 'initialize' means 'initialized' is never sent, leaving the
+   // agent unusable until it restarts, so allow for a slow cold start.
+   if (method == "initialize")
+      return kAgentInitializeTimeout;
+
+   return kAgentRequestTimeout;
 }
 
 void addPendingAgentRequestForTesting(const std::string& requestId,
-                                      std::chrono::steady_clock::time_point requestTime,
+                                      const std::string& method,
+                                      bool written,
                                       const std::function<void(bool)>& onResult)
 {
    auto continuation = [=](const Error&, json::JsonRpcResponse* pResponse)
@@ -2982,7 +3038,9 @@ void addPendingAgentRequestForTesting(const std::string& requestId,
       json::Value cancelledJson = pResponse->result().getObject()["cancelled"];
       onResult(cancelledJson.isBool() && cancelledJson.getBool());
    };
-   s_pendingContinuations[requestId] = AssistantContinuation(continuation, requestTime);
+   addPendingContinuation(requestId, AssistantContinuation(continuation));
+   if (written)
+      onRequestWritten({ method, requestId, json::Value() });
 }
 
 void queueAgentReplyForTesting(const std::string& reply)
@@ -2990,9 +3048,10 @@ void queueAgentReplyForTesting(const std::string& reply)
    s_pendingResponses.push(reply);
 }
 
-void runBackgroundProcessingForTesting(bool isIdle)
+void runBackgroundProcessingForTesting(bool isIdle,
+                                       std::chrono::steady_clock::time_point now)
 {
-   onBackgroundProcessing(isIdle);
+   onBackgroundProcessing(isIdle, now);
 }
 
 bool stopAgentForUpdate()
@@ -3047,7 +3106,10 @@ Error initialize()
    // Synchronize user + project preferences with internal caches
    synchronize();
 
-   events().onBackgroundProcessing.connect(onBackgroundProcessing);
+   events().onBackgroundProcessing.connect([](bool isIdle)
+   {
+      onBackgroundProcessing(isIdle, std::chrono::steady_clock::now());
+   });
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onShutdown.connect(onShutdown);

@@ -28,11 +28,15 @@ namespace tests {
 using core::FilePath;
 using modules::assistant::addPendingAgentRequestForTesting;
 using modules::assistant::AgentStderrTail;
+using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
-using modules::assistant::isAgentRequestExpired;
 using modules::assistant::nesLanguageServerPath;
 using modules::assistant::queueAgentReplyForTesting;
 using modules::assistant::runBackgroundProcessingForTesting;
+using modules::assistant::ServicedClock;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::steady_clock;
 
 TEST(SessionAssistant, StderrTailKeepsShortTextUnchanged)
 {
@@ -179,65 +183,179 @@ TEST(SessionAssistant, NesLanguageServerPathPrefersCjsScript)
    installDir.removeIfExists();
 }
 
-TEST(SessionAssistant, AgentRequestNotExpiredAtTenSeconds)
+TEST(SessionAssistant, ServicedClockCountsShortGaps)
 {
-   auto requested = std::chrono::steady_clock::now();
-   EXPECT_FALSE(isAgentRequestExpired(requested, requested));
-   EXPECT_FALSE(isAgentRequestExpired(requested, requested + std::chrono::seconds(10)));
+   auto start = steady_clock::now();
+   ServicedClock clock(seconds(1));
+   clock.tick(start);
+   EXPECT_EQ(clock.elapsed(), steady_clock::duration::zero());
+
+   clock.tick(start + milliseconds(500));
+   clock.tick(start + milliseconds(1500));
+   EXPECT_EQ(clock.elapsed(), milliseconds(1500));
 }
 
-TEST(SessionAssistant, AgentRequestExpiredJustPastTenSeconds)
+TEST(SessionAssistant, ServicedClockCapsLongGaps)
 {
-   auto requested = std::chrono::steady_clock::now();
-   EXPECT_TRUE(isAgentRequestExpired(requested, requested + std::chrono::milliseconds(10001)));
+   auto start = steady_clock::now();
+   ServicedClock clock(seconds(1));
+   clock.tick(start);
+   clock.tick(start + seconds(30));
+   EXPECT_EQ(clock.elapsed(), seconds(1));
 }
 
-TEST(SessionAssistant, AgentRequestExpiredAfterMoreThanAMinute)
+TEST(SessionAssistant, ServicedClockIgnoresTimeGoingBackwards)
 {
-   // 65s has a seconds field of 5; the expiry check must use the total.
-   auto requested = std::chrono::steady_clock::now();
-   EXPECT_TRUE(isAgentRequestExpired(requested, requested + std::chrono::seconds(65)));
+   auto start = steady_clock::now();
+   ServicedClock clock(seconds(1));
+   clock.tick(start);
+   clock.tick(start - milliseconds(500));
+   EXPECT_EQ(clock.elapsed(), steady_clock::duration::zero());
+
+   clock.tick(start);
+   EXPECT_EQ(clock.elapsed(), milliseconds(500));
+}
+
+TEST(SessionAssistant, InitializeGetsLongerTimeoutThanOtherRequests)
+{
+   EXPECT_EQ(agentRequestTimeout("initialize"), seconds(60));
+   EXPECT_EQ(agentRequestTimeout("textDocument/inlineCompletion"), seconds(10));
+}
+
+namespace {
+
+const char* const kCompletion = "textDocument/inlineCompletion";
+
+// Simulated time for the background-processing passes below. It runs ahead of
+// the real clock so each test's passes follow the previous test's.
+steady_clock::time_point s_now = steady_clock::now();
+
+// Run busy passes 100ms apart, as while R runs code that services events.
+void serviceEventsFor(steady_clock::duration span)
+{
+   for (auto end = s_now + span; s_now < end; )
+   {
+      s_now += milliseconds(100);
+      runBackgroundProcessingForTesting(false, s_now);
+   }
+}
+
+void runIdlePass()
+{
+   runBackgroundProcessingForTesting(true, s_now);
+}
+
+void queueReply(const std::string& requestId)
+{
+   queueAgentReplyForTesting(
+      R"({"jsonrpc":"2.0","id":")" + requestId + R"(","result":{}})");
+}
+
+} // anonymous namespace
+
+TEST(SessionAssistant, IdlePassKeepsRequestWithinTimeout)
+{
+   std::vector<bool> results;
+   addPendingAgentRequestForTesting("within-timeout", kCompletion, true,
+                                    [&](bool cancelled) { results.push_back(cancelled); });
+
+   serviceEventsFor(seconds(9));
+   runIdlePass();
+   EXPECT_TRUE(results.empty());
+
+   queueReply("within-timeout");
+   runIdlePass();
+   EXPECT_EQ(results, std::vector<bool>({ false }));
 }
 
 TEST(SessionAssistant, IdlePassDeliversQueuedReplyToExpiredRequest)
 {
-   // A reply that arrived while R was blocked must reach its request even
+   // A reply that arrived while R was busy must reach its request even
    // though the request is past its timeout by the time R is idle.
-   auto requested = std::chrono::steady_clock::now() - std::chrono::seconds(30);
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-with-reply", requested,
+   addPendingAgentRequestForTesting("expired-with-reply", kCompletion, true,
                                     [&](bool cancelled) { results.push_back(cancelled); });
-   queueAgentReplyForTesting(R"({"jsonrpc":"2.0","id":"expired-with-reply","result":{}})");
 
-   runBackgroundProcessingForTesting(true);
+   serviceEventsFor(seconds(11));
+   queueReply("expired-with-reply");
+   runIdlePass();
 
    EXPECT_EQ(results, std::vector<bool>({ false }));
 }
 
 TEST(SessionAssistant, IdlePassCancelsExpiredRequestWithoutReply)
 {
-   auto requested = std::chrono::steady_clock::now() - std::chrono::seconds(30);
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-without-reply", requested,
+   addPendingAgentRequestForTesting("expired-without-reply", kCompletion, true,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
-   runBackgroundProcessingForTesting(true);
+   serviceEventsFor(seconds(11));
+   runIdlePass();
 
    EXPECT_EQ(results, std::vector<bool>({ true }));
 }
 
 TEST(SessionAssistant, BusyPassLeavesExpiredRequestPending)
 {
-   auto requested = std::chrono::steady_clock::now() - std::chrono::seconds(30);
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-while-busy", requested,
+   addPendingAgentRequestForTesting("expired-while-busy", kCompletion, true,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
-   runBackgroundProcessingForTesting(false);
+   serviceEventsFor(seconds(11));
    EXPECT_TRUE(results.empty());
 
    // An idle pass then cancels it, which also removes it from the pending map.
-   runBackgroundProcessingForTesting(true);
+   runIdlePass();
+   EXPECT_EQ(results, std::vector<bool>({ true }));
+}
+
+TEST(SessionAssistant, TimeBlockedWithoutServicingEventsIsNotChargedToRequest)
+{
+   // While R is blocked the agent's output isn't drained, so a large reply
+   // can stall the agent until the first pass afterwards; the request must
+   // still be pending when the reply follows on the next pass.
+   std::vector<bool> results;
+   addPendingAgentRequestForTesting("blocked", kCompletion, true,
+                                    [&](bool cancelled) { results.push_back(cancelled); });
+
+   s_now += seconds(30);
+   runIdlePass();
+   EXPECT_TRUE(results.empty());
+
+   queueReply("blocked");
+   serviceEventsFor(milliseconds(100));
+   EXPECT_EQ(results, std::vector<bool>({ false }));
+}
+
+TEST(SessionAssistant, InitializeOutlastsRequestTimeout)
+{
+   std::vector<bool> results;
+   addPendingAgentRequestForTesting("initialize", "initialize", true,
+                                    [&](bool cancelled) { results.push_back(cancelled); });
+
+   serviceEventsFor(seconds(30));
+   runIdlePass();
+   EXPECT_TRUE(results.empty());
+
+   serviceEventsFor(seconds(31));
+   runIdlePass();
+   EXPECT_EQ(results, std::vector<bool>({ true }));
+}
+
+TEST(SessionAssistant, HeldRequestOutlastsRequestTimeout)
+{
+   // A request held unwritten while the agent initializes is timed as
+   // generously as 'initialize' itself.
+   std::vector<bool> results;
+   addPendingAgentRequestForTesting("held", kCompletion, false,
+                                    [&](bool cancelled) { results.push_back(cancelled); });
+
+   serviceEventsFor(seconds(30));
+   runIdlePass();
+   EXPECT_TRUE(results.empty());
+
+   serviceEventsFor(seconds(31));
+   runIdlePass();
    EXPECT_EQ(results, std::vector<bool>({ true }));
 }
 
