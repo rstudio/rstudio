@@ -70,6 +70,7 @@
 - ([#19272](https://github.com/rstudio/rstudio/issues/19272)): [Accessibility] Fixed an issue where turning screen reader support on or off in RStudio Server, from the Help > Accessibility menu, its keyboard shortcut, or Global Options, could lose source edits that had not yet been saved to the server. Pending edits are now saved before the page reloads, including for other Global Options changes that reload the page, such as the editor font.
 - ([#19313](https://github.com/rstudio/rstudio/issues/19313)): [Accessibility] The drop-down button next to Install in the Build pane now has an accessible name and tooltip ("Install options").
 - ([#18494](https://github.com/rstudio/rstudio/issues/18494)): [Accessibility] Menu checkmarks and the checkboxes in the Git and SVN changelists now follow the colors of the active Windows contrast theme. Previously menu checkmarks were nearly invisible under a contrast theme with a black background.
+- ([#19335](https://github.com/rstudio/rstudio/issues/19335)): [Accessibility] The Engine and Kernel drop-downs in the New Quarto Document dialog now have accessible names, taken from their visible captions. Clicking a caption now focuses its drop-down.
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
