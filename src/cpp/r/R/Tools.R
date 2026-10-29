@@ -571,8 +571,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          next
 
       alt <- attr(.subset2(args[[2]], "x"), "alt-label", exact = TRUE)
-      if (is.character(alt) && length(alt) == 1 && !is.na(alt) && nzchar(alt))
-         altText <- c(altText, alt)
+      if (is.character(alt) && length(alt) == 1 && !is.na(alt) && nzchar(trimws(alt)))
+         altText <- c(altText, trimws(alt))
    }
 
    paste(altText, collapse = " ")

@@ -332,6 +332,7 @@ test_that("plots without alt text have none (#19337)", {
    expect_equal(withAltTextDevice(grid::grid.draw(grid::rectGrob())), "")
    expect_equal(withAltTextDevice(grid::grid.draw(altTextGrob(NA_character_))), "")
    expect_equal(withAltTextDevice(grid::grid.draw(altTextGrob(c("a", "b")))), "")
+   expect_equal(withAltTextDevice(grid::grid.draw(altTextGrob(" \n "))), "")
 })
 
 test_that("alt text does not carry over to a later page (#19337)", {
@@ -341,6 +342,11 @@ test_that("alt text does not carry over to a later page (#19337)", {
       plot(1:10)
    })
    expect_equal(altText, "")
+})
+
+test_that("alt text is trimmed (#19337)", {
+   altText <- withAltTextDevice(grid::grid.draw(altTextGrob("  A bar chart of sales \n")))
+   expect_equal(altText, "A bar chart of sales")
 })
 
 test_that("alt text survives saving and restoring a plot (#19337)", {
