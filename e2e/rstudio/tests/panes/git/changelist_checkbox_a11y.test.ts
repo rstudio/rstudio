@@ -1,8 +1,7 @@
-// Regression test for issue #19328: the Git pane's Staged column was drawn as a
-// bare <img alt="">, so screen readers skipped it. Each cell must now be exposed
-// as a checkbox named for its file, with aria-checked conveying staged, unstaged,
-// and partially staged ("mixed") files, and must stay operable by click. The
-// Status column's icons are likewise named by their status description.
+// Regression test for issue #19328: the Git pane's Staged and Status columns were
+// bare images that screen readers skipped. Each Staged cell must be a checkbox
+// named for its file whose aria-checked is true, false, or mixed, and toggle on
+// click; each Status cell must be named by its status description.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole } from '@pages/console_pane.page';
 import { executeCommand, openProject } from '@utils/commands';

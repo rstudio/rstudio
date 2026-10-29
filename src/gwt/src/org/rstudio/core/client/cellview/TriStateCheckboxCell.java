@@ -150,7 +150,7 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
 
       // Contrast themes do not recolor bitmaps; these classes let themeStyles.css
       // redraw the checkbox in the contrast theme's text color. There is no alt:
-      // alt="" marks an image presentational, which conflicts with the role.
+      // ARIA in HTML permits alt="" only on images with no role or role="none".
       sb.append(SafeHtmlUtil.createOpenTag("img",
             "class", "rstudio-forced-colors-glyph " + glyph,
             "src", img.getSafeUri().asString(),
