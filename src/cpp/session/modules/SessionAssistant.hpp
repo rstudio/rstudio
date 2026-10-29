@@ -102,14 +102,9 @@ private:
 // serviced time, before the idle sweep cancels it as dropped. Exposed for testing.
 std::chrono::steady_clock::duration agentRequestTimeout(const std::string& method);
 
-// Drive the agent reply loop and expiry sweep without a running agent: register
-// a pending request (onResult receives whether it was cancelled), optionally
-// marked as written to the agent at now; queue a raw reply as if read from the
-// agent; queue a notification for the agent; focus a source database
-// document; re-send the focus as the initialize callback does; reset state as a
-// new agent process starts; write queued requests to the agent as a
-// supervisor poll does; and run one background-processing pass at now.
-// Exposed for testing.
+// Hooks that drive the agent request and reply handling without a running
+// agent, each standing in for the production step its name describes.
+// onResult receives whether the request was cancelled. Exposed for testing.
 void addPendingAgentRequestForTesting(const std::string& requestId,
                                       const std::string& method,
                                       bool written,

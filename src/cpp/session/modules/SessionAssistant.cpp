@@ -2075,9 +2075,9 @@ void didFocus(lsp::DidFocusTextDocumentParams params,
       return;
 
    // Note: unlike the handlers above, we intentionally don't skip when the
-   // agent hasn't finished initializing. Pre-init requests are held in
-   // s_pendingRequests and written in order once 'initialized' is sent, so
-   // this follows the focus the initialize callback re-sends.
+   // agent hasn't finished initializing: this is held until 'initialized' is
+   // written. A focus change after the initialize callback re-sent the focus
+   // would otherwise be lost.
    sendFocus(params.textDocument.uri, pDoc);
 }
 
