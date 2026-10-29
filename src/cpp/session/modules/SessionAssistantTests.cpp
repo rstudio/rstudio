@@ -33,6 +33,7 @@ using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
 using modules::assistant::nesLanguageServerPath;
 using modules::assistant::queueAgentReplyForTesting;
+using modules::assistant::resetForNewAgentForTesting;
 using modules::assistant::runBackgroundProcessingForTesting;
 using modules::assistant::ServicedClock;
 using std::chrono::milliseconds;
@@ -359,6 +360,21 @@ TEST(SessionAssistant, RequestWrittenAfterBlockGetsFullTimeout)
    queueReply("written-after-block");
    runIdlePass();
    EXPECT_EQ(*results, std::vector<bool>({ false }));
+}
+
+TEST(SessionAssistant, NewAgentCancelsPreviousAgentsRequests)
+{
+   auto held = addRequest("previous-agent-held", kCompletion, false);
+   auto written = addRequest("previous-agent-written", kCompletion, true);
+
+   resetForNewAgentForTesting();
+   EXPECT_EQ(*held, std::vector<bool>({ true }));
+   EXPECT_EQ(*written, std::vector<bool>({ true }));
+
+   // A late reply for a cancelled request isn't delivered a second time.
+   queueReply("previous-agent-written");
+   runIdlePass();
+   EXPECT_EQ(*written, std::vector<bool>({ true }));
 }
 
 TEST(SessionAssistant, InitializeOutlastsRequestTimeout)

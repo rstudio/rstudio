@@ -1349,6 +1349,24 @@ bool stopAgentSync(int maxIterations = 100)
 // Forward declaration; defined after docOpened()
 void syncOpenDocuments();
 
+void resetForNewAgent()
+{
+   // Every agent process, including a restart of the same assistant, must
+   // answer 'initialize' before it is sent other requests.
+   s_agentInitialized = false;
+   s_agentInitializeAnswered = false;
+
+   // Requests still queued or awaiting a reply were meant for the previous
+   // process, which can't answer them. Cancel them so callers aren't left
+   // waiting, then drop anything still queued, including what they queue.
+   std::map<std::string, AssistantContinuation> continuations;
+   continuations.swap(s_pendingContinuations);
+   for (auto&& entry : continuations)
+      entry.second.cancel();
+
+   s_pendingRequests.clear();
+}
+
 Error startAgent(const std::string& assistantType = "")
 {
    if (s_agentRuntimeStatus != AgentRuntimeStatus::Unknown &&
@@ -1436,11 +1454,7 @@ Error startAgent(const std::string& assistantType = "")
    bool overrideInEffect = !agentPathOverride.isEmpty();
 
    uint64_t agentGeneration = ++s_agentGeneration;
-
-   // Every agent process, including a restart of the same assistant, must
-   // answer 'initialize' before it is sent other requests.
-   s_agentInitialized = false;
-   s_agentInitializeAnswered = false;
+   resetForNewAgent();
 
    // Resolve the agent executable once and reuse it in the launch branches
    // below.
@@ -3056,6 +3070,11 @@ void addPendingAgentRequestForTesting(const std::string& requestId,
    addPendingContinuation(requestId, AssistantContinuation(continuation));
    if (written)
       onRequestWritten({ method, requestId, json::Value() }, now);
+}
+
+void resetForNewAgentForTesting()
+{
+   resetForNewAgent();
 }
 
 void queueAgentReplyForTesting(const std::string& reply)
