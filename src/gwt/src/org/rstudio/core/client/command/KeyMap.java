@@ -18,8 +18,10 @@ package org.rstudio.core.client.command;
 // - Given a key sequence, one can discover commands bound to that key sequence,
 // - Given a command, one can discover what key sequences it is bound to.
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.DirectedGraph;
@@ -212,10 +214,56 @@ public class KeyMap
       return pending.get();
    }
 
+   // Whether typing more keys after keys can dispatch a binding that accept allows.
+   // As in ShortcutManager.handleKeyDown(), dispatch runs the first active binding,
+   // in map order, for the shortest sequence that has one, and a stroke without a
+   // modifier that dispatches nothing clears the typed keys.
+   public static boolean canDispatchAfter(Collection<KeyMap> maps,
+                                          KeySequence keys,
+                                          boolean includeDisabled,
+                                          Predicate<CommandBinding> accept)
+   {
+      for (KeyMap map : maps)
+      {
+         for (KeySequence extension : map.getActiveExtensions(keys, includeDisabled))
+         {
+            CommandBinding binding = getDispatchedBinding(maps, keys, extension, includeDisabled);
+            if (binding != null && accept.test(binding))
+               return true;
+         }
+      }
+      return false;
+   }
+
+   // The binding that typing the rest of extension after keys dispatches, or null
+   // if a shorter sequence dispatches first or the typed keys are cleared
+   private static CommandBinding getDispatchedBinding(Collection<KeyMap> maps,
+                                                      KeySequence keys,
+                                                      KeySequence extension,
+                                                      boolean includeDisabled)
+   {
+      KeySequence typed = keys.clone();
+      while (typed.size() < extension.size())
+      {
+         KeyCombination stroke = extension.get(typed.size());
+         typed.add(stroke);
+         for (KeyMap map : maps)
+         {
+            CommandBinding binding = map.getActiveBinding(typed, includeDisabled);
+            if (binding != null)
+               return typed.size() == extension.size() ? binding : null;
+         }
+
+         if (stroke.getModifier() == KeyboardShortcut.NONE)
+            return null;
+      }
+      return null;
+   }
+
    // Returns the longer key sequences that start with keys and have an active
    // binding (as in getActiveBinding()) in this map. Typing stops at the first
    // of these, so sequences that extend one of them are left out.
-   public List<KeySequence> getActiveExtensions(KeySequence keys, boolean includeDisabled)
+   private List<KeySequence> getActiveExtensions(KeySequence keys, boolean includeDisabled)
    {
       List<KeySequence> extensions = new ArrayList<>();
       DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());

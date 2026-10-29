@@ -379,45 +379,6 @@ public class ShortcutManager implements NativePreviewHandler,
       return !keyBuffer_.isEmpty();
    }
 
-   // Whether more keys could dispatch a command that runs from Posit Assistant
-   private boolean isAssistantPrefix()
-   {
-      for (KeyMap map : keyMaps_.values())
-      {
-         for (KeySequence keys : map.getActiveExtensions(keyBuffer_, reportShortcutBinding_))
-         {
-            CommandBinding binding = getDispatchedBinding(keys);
-            if (binding != null && canRunFromAssistant(binding))
-               return true;
-         }
-      }
-      return false;
-   }
-
-   // The binding that typing keys after the key buffer would dispatch, or null if
-   // the buffer dispatches a shorter sequence or is cleared first. As in
-   // handleKeyDown(), the first key map with an active binding wins.
-   private CommandBinding getDispatchedBinding(KeySequence keys)
-   {
-      KeySequence typed = keyBuffer_.clone();
-      while (typed.size() < keys.size())
-      {
-         KeyCombination stroke = keys.get(typed.size());
-         typed.add(stroke);
-         for (KeyMap map : keyMaps_.values())
-         {
-            CommandBinding binding = map.getActiveBinding(typed, reportShortcutBinding_);
-            if (binding != null)
-               return typed.size() == keys.size() ? binding : null;
-         }
-
-         // A stroke without a modifier that dispatches nothing clears the buffer
-         if (stroke.getModifier() == KeyboardShortcut.NONE)
-            return null;
-      }
-      return null;
-   }
-
    private static boolean canRunFromAssistant(CommandBinding binding)
    {
       if (!binding.getContext().isWorkbenchLevel())
@@ -687,7 +648,11 @@ public class ShortcutManager implements NativePreviewHandler,
 
       // Posit Assistant keeps keys that lead only to commands it can't run
       if (fromAssistant && pending)
-         pending = isAssistantPrefix();
+      {
+         pending = KeyMap.canDispatchAfter(
+               keyMaps_.values(), keyBuffer_, reportShortcutBinding_,
+               ShortcutManager::canRunFromAssistant);
+      }
 
       if (!(pending || isPrefixForEditor(keyCombination, event)))
          clearKeyBuffer();
