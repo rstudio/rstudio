@@ -65,8 +65,8 @@ public class PlotsState extends JavaScriptObject
       return this.altText || "";
    }-*/;
 
-   // whether a different plot is shown than in the previous state, rather
-   // than the same plot redrawn (e.g. after a resize)
+   // whether a different plot is shown than in the last state the server
+   // sent, rather than the same plot redrawn (e.g. after a resize)
    public final native boolean getActivePlotChanged() /*-{
       return !!this.activePlotChanged;
    }-*/;

@@ -138,8 +138,8 @@ struct DisplayState
    // alt text the plot's author supplied, or empty
    std::string altText;
 
-   // whether a different plot is shown than at the previous render, as
-   // opposed to the same plot redrawn (e.g. after a resize)
+   // whether a different plot is shown than in the last state sent to the
+   // client, as opposed to the same plot redrawn (e.g. after a resize)
    bool activePlotChanged;
 };
 
