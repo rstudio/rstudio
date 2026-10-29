@@ -239,10 +239,23 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                         @Override
                         public void onResponseReceived(AssistantStatusResponse response)
                         {
-                           // No answer this time; keep waiting for the user to authenticate
                            if (response.result == null)
                            {
-                              statusTimer_.schedule(1000);
+                              // Stop waiting if the agent isn't running and couldn't be
+                              // started; otherwise it just didn't answer in time.
+                              String message = agentNotRunningMessage(assistantType, response);
+                              if (message == null)
+                              {
+                                 statusTimer_.schedule(1000);
+                              }
+                              else
+                              {
+                                 signInDialog_.closeDialog();
+                                 globalDisplay_.showMessage(
+                                       MessageDisplay.MSG_ERROR,
+                                       constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
+                                       message);
+                              }
                            }
                            else if (response.result.status == AssistantConstants.STATUS_OK)
                            {
@@ -344,6 +357,10 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          @Override
          protected void onSuccess(AssistantStatusResponse response)
          {
+            String notRunningMessage = response == null
+                  ? null
+                  : agentNotRunningMessage(assistantType, response);
+
             if (response == null)
             {
                display_.showMessage(
@@ -352,27 +369,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                      constants_.assistantEmptyResponse(displayName));
 
             }
-            else if (response.error != null)
+            else if (notRunningMessage != null)
             {
-               String output = response.output;
-               if (StringUtil.isNullOrEmpty(output))
-                  output = constants_.assistantNoOutput();
-
-               String message = constants_.assistantErrorStartingAgent(
-                     displayName, response.error.getEndUserMessage(), output);
-
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
                      constants_.assistantCheckStatusDialogTitle(displayName),
-                     message);
-            }
-            else if (response.reason != null)
-            {
-               int reason = (int) response.reason.valueOf();
-               display_.showMessage(
-                     MessageDisplay.MSG_INFO,
-                     constants_.assistantCheckStatusDialogTitle(displayName),
-                     AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, displayName));
+                     notRunningMessage);
             }
             else if (response.result == null)
             {
@@ -416,6 +418,29 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       {
          return error.message;
       }
+   }
+
+   // Why the agent isn't running, when the session's status response says so
+   // (it couldn't be launched, or is disabled); null otherwise.
+   private String agentNotRunningMessage(String assistantType, AssistantStatusResponse response)
+   {
+      String displayName = getDisplayName(assistantType);
+      if (response.error != null)
+      {
+         String output = response.output;
+         if (StringUtil.isNullOrEmpty(output))
+            output = constants_.assistantNoOutput();
+
+         return constants_.assistantErrorStartingAgent(
+               displayName, response.error.getEndUserMessage(), output);
+      }
+      else if (response.reason != null)
+      {
+         int reason = (int) response.reason.valueOf();
+         return AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, displayName);
+      }
+
+      return null;
    }
 
    // A response has no result when the session cancelled a request the agent
