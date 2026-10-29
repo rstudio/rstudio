@@ -150,9 +150,17 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          {
             onCompleted.execute();
 
-            if (response.error != null)
+            if (response == null)
+            {
+               showNotRunning(constants_.assistantDiagnosticsTitle(getDisplayName(assistantType)), assistantType);
+            }
+            else if (response.error != null)
             {
                globalDisplay_.showErrorMessage(response.error.message);
+            }
+            else if (response.result == null)
+            {
+               showNoResponse(constants_.assistantDiagnosticsTitle(getDisplayName(assistantType)), assistantType);
             }
             else
             {
@@ -201,6 +209,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          @Override
          protected void onSuccess(AssistantSignInResponse response)
          {
+            if (response == null)
+            {
+               showNotRunning(constants_.assistantSignInDialogTitle(getDisplayName(assistantType)), assistantType);
+               return;
+            }
+
             AssistantError error = response.error;
             if (error != null)
             {
@@ -208,6 +222,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                      MessageDisplay.MSG_ERROR,
                      constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
                      constants_.assistantError(error.code, error.message));
+               return;
+            }
+
+            if (response.result == null)
+            {
+               showNoResponse(constants_.assistantSignInDialogTitle(getDisplayName(assistantType)), assistantType);
                return;
             }
 
@@ -229,7 +249,28 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                         @Override
                         public void onResponseReceived(AssistantStatusResponse response)
                         {
-                           if (response.result.status == AssistantConstants.STATUS_OK)
+                           if (response.result == null)
+                           {
+                              // Stop waiting if the agent isn't running and couldn't be
+                              // started; otherwise it didn't answer in time, or is still
+                              // starting up.
+                              boolean starting = response.error != null &&
+                                    response.error.getCode() == AssistantConstants.ErrorCodes.AGENT_NOT_INITIALIZED;
+                              String message = starting ? null : agentNotRunningMessage(assistantType, response);
+                              if (message == null)
+                              {
+                                 statusTimer_.schedule(1000);
+                              }
+                              else
+                              {
+                                 signInDialog_.closeDialog();
+                                 globalDisplay_.showMessage(
+                                       MessageDisplay.MSG_ERROR,
+                                       constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
+                                       message);
+                              }
+                           }
+                           else if (response.result.status == AssistantConstants.STATUS_OK)
                            {
                               signInDialog_.closeDialog();
                               callback.execute(response);
@@ -280,6 +321,17 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       String assistantType = getAssistantType();
       signOut(assistantType, (response) ->
       {
+         if (response == null)
+         {
+            showNotRunning(constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)), assistantType);
+            return;
+         }
+         else if (response.result == null)
+         {
+            showNoResponse(constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)), assistantType);
+            return;
+         }
+
          String status = response.result.status;
          if (StringUtil.equals(status, AssistantConstants.STATUS_NOT_SIGNED_IN))
          {
@@ -323,6 +375,10 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          @Override
          protected void onSuccess(AssistantStatusResponse response)
          {
+            String notRunningMessage = response == null
+                  ? null
+                  : agentNotRunningMessage(assistantType, response);
+
             if (response == null)
             {
                display_.showMessage(
@@ -331,27 +387,16 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                      constants_.assistantEmptyResponse(displayName));
 
             }
-            else if (response.error != null)
+            else if (notRunningMessage != null)
             {
-               String output = response.output;
-               if (StringUtil.isNullOrEmpty(output))
-                  output = constants_.assistantNoOutput();
-
-               String message = constants_.assistantErrorStartingAgent(
-                     displayName, response.error.getEndUserMessage(), output);
-
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
                      constants_.assistantCheckStatusDialogTitle(displayName),
-                     message);
+                     notRunningMessage);
             }
-            else if (response.reason != null)
+            else if (response.result == null)
             {
-               int reason = (int) response.reason.valueOf();
-               display_.showMessage(
-                     MessageDisplay.MSG_INFO,
-                     constants_.assistantCheckStatusDialogTitle(displayName),
-                     AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, displayName));
+               showNoResponse(constants_.assistantCheckStatusDialogTitle(displayName), assistantType);
             }
             else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
@@ -391,6 +436,49 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       {
          return error.message;
       }
+   }
+
+   // Why the agent isn't running, when the session's status response says so
+   // (it couldn't be launched, or is disabled); null otherwise.
+   private String agentNotRunningMessage(String assistantType, AssistantStatusResponse response)
+   {
+      String displayName = getDisplayName(assistantType);
+      if (response.error != null)
+      {
+         String output = response.output;
+         if (StringUtil.isNullOrEmpty(output))
+            output = constants_.assistantNoOutput();
+
+         return constants_.assistantErrorStartingAgent(
+               displayName, response.error.getEndUserMessage(), output);
+      }
+      else if (response.reason != null)
+      {
+         int reason = (int) response.reason.valueOf();
+         return AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, displayName);
+      }
+
+      return null;
+   }
+
+   // The session answers without a response when the agent isn't running and
+   // couldn't be started.
+   private void showNotRunning(String title, String assistantType)
+   {
+      globalDisplay_.showMessage(
+            MessageDisplay.MSG_ERROR,
+            title,
+            constants_.assistantNotRunning(getDisplayName(assistantType)));
+   }
+
+   // A response has no result when the session cancelled a request the agent
+   // didn't answer in time.
+   private void showNoResponse(String title, String assistantType)
+   {
+      globalDisplay_.showMessage(
+            MessageDisplay.MSG_ERROR,
+            title,
+            constants_.assistantNoResponse(getDisplayName(assistantType)));
    }
 
    private void showGenericResponseMessage(String title, Object object)
