@@ -13,6 +13,7 @@ const NO_ANNOUNCEMENT_WINDOW_MS = 3000;
 
 let consoleActions: ConsolePaneActions;
 let plotsPane: PlotsPane;
+let missingPackages: string[] = [];
 
 function plotImage(page: Page) {
   return page.frameLocator(PLOT_IMAGE_FRAME).locator('#img');
@@ -67,11 +68,14 @@ test.describe.serial('Plot alt text', { tag: ['@serial'] }, () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     plotsPane = new PlotsPane(page);
+    missingPackages = await consoleActions.ensurePackages(['ggplot2']);
     await consoleActions.executeInConsole('try(while (dev.cur() > 1) dev.off(), silent = TRUE)');
     await recordAnnouncements(page);
   });
 
   test.beforeEach(async ({ rstudioPage: page }) => {
+    // every test builds on the plot history the ggplot2 test starts
+    test.skip(missingPackages.length > 0, `Missing: ${missingPackages.join(', ')}`);
     await clearAnnouncements(page);
   });
 
