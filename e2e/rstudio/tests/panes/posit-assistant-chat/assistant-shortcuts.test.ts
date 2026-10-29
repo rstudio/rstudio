@@ -45,7 +45,7 @@ const CTRL_ALT_SHIFT_K: KeyInit = {
   shiftKey: true,
 };
 // Unbound by default; the two-stroke tests use them as prefixes.
-const CTRL_ALT_SHIFT_J: KeyInit = { ...CTRL_ALT_SHIFT_K, key: 'J', code: 'KeyJ', keyCode: 74 };
+const CTRL_ALT_SHIFT_Q: KeyInit = { ...CTRL_ALT_SHIFT_K, key: 'Q', code: 'KeyQ', keyCode: 81 };
 const CTRL_ALT_SHIFT_H: KeyInit = { ...CTRL_ALT_SHIFT_K, key: 'H', code: 'KeyH', keyCode: 72 };
 
 // Dispatch a keydown inside the chat iframe and hand it to the parent's
@@ -144,7 +144,7 @@ test.describe.serial(
       // A custom binding replaces the command's defaults, so Ctrl+2 alone is unbound.
       await consoleActions.executeInConsole(
         writeAppBindings({
-          activateConsole: 'Ctrl+Alt+Shift+J Ctrl+2',
+          activateConsole: 'Ctrl+Alt+Shift+Q Ctrl+2',
           insertAssignmentOperator: 'Ctrl+Alt+Shift+H Ctrl+1',
         }),
       );
@@ -157,7 +157,7 @@ test.describe.serial(
     });
 
     test('the first stroke of a Workbench shortcut is claimed', async ({ rstudioPage: page }) => {
-      const prefix = await sendKeyAsAssistant(chatPane.chatInput, CTRL_ALT_SHIFT_J);
+      const prefix = await sendKeyAsAssistant(chatPane.chatInput, CTRL_ALT_SHIFT_Q);
       expect(prefix).toEqual({ used: true, defaultPrevented: true });
       await expectConsoleShortcutRuns(chatPane, page);
     });
