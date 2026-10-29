@@ -27,7 +27,7 @@ if ! [ -w "$INSTALL_DIR" ]; then
     export INSTALL_DIR="$HOME/opt/bin"
 fi
 
-VERSION=0.3.1
+VERSION=0.16.0
 
 if [ "$(arch)" = "aarch64" ] || [ "$(arch)"  = "arm64" ] ; then
     ARCH=aarch64
@@ -43,17 +43,17 @@ BASE_URL=https://github.com/mozilla/sccache/releases/download/v${VERSION}
 if is-macos; then
     URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-apple-darwin.tar.gz
     if [ "${ARCH}" = "x86_64" ] ; then
-        SCCACHE_PACKAGE_HASH="d8ade8d98cef392e6b256d184690e1d722f263c9f0bd83938fdd524e839c9e58"
+        SCCACHE_PACKAGE_HASH="f7dbd055db75a938ab1539f5316c5d08e73a1b94c40ab170ddcc617f5bf18343"
     else
-        SCCACHE_PACKAGE_HASH="303d8e905c44eb5401adc55561a4c44b36906516f3c1c0de386c4844d38151bc"
+        SCCACHE_PACKAGE_HASH="ded590cae2c72042c61178632906bef62d635fa20d45f8b22110a2241f430960"
     fi
 else
     # Assume Linux if not macOS
     URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-unknown-linux-musl.tar.gz
     if [ "${ARCH}" = "x86_64" ] ; then
-        SCCACHE_PACKAGE_HASH="94ea33aac8dcb358753f8240cc87345963cf83cda7c6af0395dff31ffdc88df4"
+        SCCACHE_PACKAGE_HASH="aec995a83ad3dff3d14b6314e08858b7b73d35ca85a5bcf3d3a9ec07dee35588"
     else
-        SCCACHE_PACKAGE_HASH="1bf58385dc27b66324bb9ee82084e65c4d2e60baa19e3d16d2ab4da6c1ae66b2"
+        SCCACHE_PACKAGE_HASH="f73a5c39f96bb6ebb89cc7915cf182260d4cbf30765322c5e793d0fe8bd80784"
     fi
 fi
 
@@ -62,8 +62,9 @@ download ${URL} sccache.tar.gz \
 
 extract sccache.tar.gz
 mkdir -p ${INSTALL_DIR}
-if [ ! -f ${INSTALL_DIR}/sccache ]; then
-  mv sccache-v${VERSION}-*/sccache ${INSTALL_DIR}/sccache
+# replace an existing install unless it is already this version
+if ! "${INSTALL_DIR}/sccache" --version 2>/dev/null | grep -qx "sccache ${VERSION}"; then
+  mv -f sccache-v${VERSION}-*/sccache ${INSTALL_DIR}/sccache
 
   chmod +x ${INSTALL_DIR}/sccache
   # this is so that boost/bjam will find and use sccache
