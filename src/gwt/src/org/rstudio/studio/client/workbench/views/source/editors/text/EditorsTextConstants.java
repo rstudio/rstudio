@@ -262,10 +262,17 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("Changed {0} lines; previously:")
     @AlternateMessage({"one", "Changed 1 line; previously:"})
     String gitPeekChangedLines(@PluralCount int count);
+    @DefaultMessage("Changed {0} lines")
+    @AlternateMessage({"one", "Changed 1 line"})
+    String gitPeekChangedLinesShort(@PluralCount int count);
     String gitPeekRevert();
     String gitPeekClose();
 
     // Git diff side-by-side view
     String gitDiffBaseEditor();
     String gitDiffBaseEmpty();
+    String gitDiffBeforeLabel();
+    String gitDiffBeforeDescription();
+    String gitDiffAfterLabel();
+    String gitDiffAfterDescription();
 }

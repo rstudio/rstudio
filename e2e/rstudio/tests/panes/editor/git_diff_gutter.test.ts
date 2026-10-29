@@ -21,6 +21,7 @@ import {
   isCommandChecked,
   isCommandEnabled,
   openProject,
+  resetLayoutZoom,
   resetSourcePaneState,
   setPref,
 } from '@utils/commands';
@@ -48,6 +49,9 @@ const PEEK_LINE = '.ace_git-peek-line';
 const PEEK_REVERT = '.ace_git-peek-revert';
 const PEEK_CLOSE = '.ace_git-peek-close';
 
+// The peek's compact form, in the side-by-side view: the actions alone.
+const PEEK_COMPACT = '.ace_git-peek-compact';
+
 // The main source column and any extra ones (see SourceColumnManager).
 const MAIN_COLUMN = '#rstudio_Source_pane';
 const EXTRA_COLUMNS = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
@@ -56,9 +60,18 @@ const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-sele
 // The side-by-side diff: the pane (see ClassIds.EDITOR_DIFF_VIEW), the base
 // editor inside it, and its notice for a file with no base; see
 // git_diff_split.js.
-const DIFF_VIEW = "[class*='editor_diff_view']";
+const DIFF_VIEW = '.rstudio_editor_diff_view';
 const BASE_EDITOR = `${DIFF_VIEW} .ace_git-diff-base`;
 const BASE_EMPTY = `${DIFF_VIEW} .ace_git-diff-base-empty`;
+
+// The headers naming the two sides (see GitDiffSplitWidget), and the editor
+// toolbar's toggle for the view (ClassIds.EDITOR_DIFF_VIEW_TOGGLE).
+const DIFF_HEADER = '.editor_diff_header';
+const DIFF_TOGGLE = '.rstudio_editor_diff_view_toggle:visible';
+
+// The Git pane, and the button on each of its rows that opens the file at
+// its first change (see GitChangelistTable).
+const GIT_PANEL = '#rstudio_workbench_panel_git';
 
 // Ace's ext/diff change highlights, drawn in each editor's marker layer:
 // whole changed lines (and, with .inline, the characters within them).
@@ -1228,12 +1241,29 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect(base.locator(ALIGNMENT)).toHaveCount(1);
       await expect(live.locator(ALIGNMENT)).toHaveCount(1);
 
-      // with the base on screen, a marker click goes to the change instead
-      // of opening a peek
+      // with the base on screen, a marker click goes to the change and opens
+      // a bar with the actions alone -- the base pane shows the previous
+      // lines already -- and the base pane is padded to keep the sides level
       const cell = live.locator('.ace_gutter-cell.ace_git-modified').first();
       const box = (await cell.boundingBox())!;
       await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
       await expect.poll(() => cursorRow(page)).toBe(4);
+      const bar = live.locator(PEEK_COMPACT);
+      await expect(bar).toBeVisible({ timeout: 10000 });
+      await expect(bar).toHaveAttribute('aria-label', 'Changed 1 line');
+      await expect(bar.locator(PEEK_REVERT)).toBeVisible();
+      await expect(bar.locator(PEEK_LINE)).toHaveCount(0);
+      await expect(bar.locator(PEEK_LABEL)).toHaveCount(0);
+      await expect
+        .poll(async () => {
+          const baseRows = await screenRows(base, unchanged.map(([row]) => row));
+          const liveRows = await screenRows(live, unchanged.map(([, row]) => row));
+          return baseRows.map((row, i) => row - liveRows[i]);
+        }, { timeout: 10000 })
+        .toEqual(unchanged.map(() => 0));
+
+      // a second click on the marker closes it again
+      await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
       await expect(page.locator(PEEK)).toHaveCount(0);
 
       // the comparison follows edits, against the same base
@@ -1394,6 +1424,111 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect(base).toHaveCount(0);
       await documentCloseAllNoSave(page);
     }
+  });
+
+  test('toggles from the editor toolbar, with each side named', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const toggle = page.locator(DIFF_TOGGLE);
+    const base = page.locator(BASE_EDITOR);
+    try {
+      // The button shares the split editor button's width gate, which the
+      // test window's source pane falls short of; zoomed, it clears it.
+      await executeCommand(page, 'layoutZoomSource');
+
+      // a latching button: pressed while the view is up (with an icon of its
+      // own -- the command's image, being checkable, is its menu check mark)
+      await expect(toggle).toHaveCount(1, { timeout: 10000 });
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+      await expect(toggle.locator('img')).toHaveAttribute('src', /.+/);
+      await toggle.click();
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(() => isCommandChecked(page, 'vcsShowChangesSideBySide')).toBe(true);
+
+      // each pane says which side of the comparison it shows: the index
+      // version on the left, above the base editor, and the document on the
+      // right, above the live one
+      const headers = page.locator(DIFF_HEADER);
+      await expect(headers).toHaveText([
+        'Before Index (last staged or committed)',
+        'After Working tree (your current edits)',
+      ]);
+      const live = liveEditors(page, 'a2 <- 1.5');
+      const top = async (locator: Locator) => (await locator.boundingBox())!.y;
+      expect(await top(headers.first())).toBeLessThan(await top(base));
+      expect(await top(headers.last())).toBeLessThan(await top(live));
+      expect(await top(headers.first())).toBe(await top(headers.last()));
+
+      await toggle.click();
+      await expect(base).toHaveCount(0);
+      await expect(headers).toHaveCount(0);
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+      // the button comes and goes with the markers, as the command does
+      await setPref(page, PREF, false);
+      await expect(toggle).toHaveCount(0, { timeout: 10000 });
+      await setPref(page, PREF, true);
+      await expect(toggle).toHaveCount(1, { timeout: 10000 });
+    } finally {
+      await setPref(page, PREF, true);
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await resetLayoutZoom(page);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('reverts a change from the side-by-side view\'s action bar', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'a2 <- 1.5');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    try {
+      // Show Change at Cursor opens the bar from the keyboard, as it opens
+      // the peek in a single view
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(5);
+      await executeCommand(page, 'vcsShowChange');
+      const bar = live.locator(PEEK_COMPACT);
+      await expect(bar).toBeVisible({ timeout: 10000 });
+
+      await bar.locator(PEEK_REVERT).click();
+      await expect(page.locator(PEEK)).toHaveCount(0);
+      await expect.poll(() => editor.getLine(4)).toBe('d <- 4');
+      await expect
+        .poll(() => viewMarkers(live), { timeout: 30000 })
+        .toEqual({ 1: [ADDED], 6: [DELETED] });
+      await expect(base.locator(LINE_DELETED)).toHaveCount(1);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
+  test('opens a changed file at its first change from the Git pane', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'activateVcs');
+    const panel = page.locator(GIT_PANEL);
+    await expect(panel).toBeVisible({ timeout: 15000 });
+
+    // script.R's first change is the line added after the first (row 1)
+    const goTo = panel.getByRole('button', { name: 'Open script.R at its first change', exact: true });
+    await expect(goTo).toBeVisible({ timeout: 30000 });
+    await goTo.click();
+
+    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('script.R', { timeout: 15000 });
+    await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
+
+    // the click opens the file rather than staging it
+    await expect(
+      panel.getByRole('checkbox', { name: 'Stage script.R', exact: true }),
+    ).toHaveAttribute('aria-checked', 'false');
+    await documentCloseAllNoSave(page);
   });
 
   test('says a file has no base only when it is untracked, not when a fetch fails', async ({

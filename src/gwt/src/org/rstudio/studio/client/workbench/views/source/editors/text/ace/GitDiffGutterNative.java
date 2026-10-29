@@ -44,6 +44,9 @@ public class GitDiffGutterNative extends JavaScriptObject
          changedLines: $entry(function(n) {
             return constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekChangedLines(I)(n);
          }),
+         changedLinesShort: $entry(function(n) {
+            return constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekChangedLinesShort(I)(n);
+         }),
          revert: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekRevert()(),
          close: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekClose()()
       };

@@ -4098,6 +4098,13 @@ public class TextEditingTarget implements
    @Handler
    void onVcsShowChangesSideBySide()
    {
+      toggleDiffSplit();
+   }
+
+   // Also run by the editor toolbar's toggle, for its own document whether
+   // or not that is the active one.
+   void toggleDiffSplit()
+   {
       String desired = isDiffSplitActive() ? EDITOR_SPLIT_NONE : EDITOR_SPLIT_DIFF;
       docUpdateSentinel_.setProperty(EDITOR_SPLIT, desired);
    }

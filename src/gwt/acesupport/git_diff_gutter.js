@@ -66,6 +66,7 @@ var DEFAULT_STRINGS = {
    removedLines: function(n) { return "Removed " + pluralize(n, "line"); },
    addedLines:   function(n) { return "Added " + pluralize(n, "line"); },
    changedLines: function(n) { return "Changed " + pluralize(n, "line") + "; previously:"; },
+   changedLinesShort: function(n) { return "Changed " + pluralize(n, "line"); },
    revert: "Revert",
    close:  "Close"
 };
@@ -315,14 +316,14 @@ var GitDiffGutter = function(editor, strings) {
 
    // A side-by-side view (see git_diff_split.js) shows the base beside the
    // document and follows this gutter's diff. While one is attached the peek
-   // stays closed: the view shows what it would, and its alignment padding
-   // sits where the peek would go.
+   // shows the actions alone (see showPeek), so an open one goes as the view
+   // comes or goes.
    this.setSplitView = function(view) {
+      this.closePeek();
       this.splitView = view;
       if (!view)
          return;
 
-      this.closePeek();
       // (an update waiting out a slow diff's typing pause would otherwise
       // hand the view the previous chunks, and its first folds with them)
       this.flushUpdate();
@@ -785,15 +786,19 @@ var GitDiffGutter = function(editor, strings) {
       return true;
    };
 
-   // With the base on screen already (a side-by-side view), there is nothing
-   // to peek at: a marker click or Show Change at Cursor just goes there.
+   // With the base on screen already (a side-by-side view), a marker click or
+   // Show Change at Cursor also goes to the change, so that the two panes'
+   // cursors agree on it.
    this.togglePeek = function(chunk) {
+      if (this.peek && this.peek.chunk === chunk)
+      {
+         this.closePeek();
+         return;
+      }
+
       if (this.splitView)
          this.goToChunk(chunk);
-      else if (this.peek && this.peek.chunk === chunk)
-         this.closePeek();
-      else
-         this.showPeek(chunk);
+      this.showPeek(chunk);
    };
 
    this.lineWidgetManager = function() {
@@ -811,7 +816,8 @@ var GitDiffGutter = function(editor, strings) {
    // RStudio enumerates them to persist notebook chunk output, so a peek must
    // not displace an existing widget: it goes below the last changed line (or
    // where removed lines were), else on the other side of the change, else
-   // nowhere.
+   // nowhere. A side-by-side view's alignment padding is no obstacle: the
+   // view moves it off the peek's row as it realigns.
    this.peekRow = function(chunk) {
       var session = this.editor.session;
       var candidates = isDeletion(chunk)
@@ -823,25 +829,30 @@ var GitDiffGutter = function(editor, strings) {
          var row = candidates[i];
          if (row < 0 || row >= session.getLength())
             continue;
-         if (session.lineWidgets && session.lineWidgets[row])
+
+         var widget = session.lineWidgets && session.lineWidgets[row];
+         if (widget && !widget.gitDiffPadding)
             continue;
+
          return row;
       }
       return null;
    };
 
    // Shows the base version of a change in a line widget below it, with a
-   // button to revert the change. Returns false if there is no room for it.
+   // button to revert the change. With a side-by-side view attached, whose
+   // base pane shows the previous lines already, the widget is a compact bar
+   // with the buttons alone; the view pads the base pane to match it. Returns
+   // false if there is no room for it.
    this.showPeek = function(chunk) {
       this.closePeek();
-      if (this.splitView)
-         return false;
 
       var row = this.peekRow(chunk);
       if (row == null)
          return false;
 
       var self = this;
+      var compact = this.splitView != null;
       var oldLines = this.baseLines.slice(chunk.old.start.row, chunk.old.end.row);
       var newCount = chunk.new.end.row - chunk.new.start.row;
 
@@ -850,6 +861,8 @@ var GitDiffGutter = function(editor, strings) {
          label = this.strings.removedLines(oldLines.length);
       else if (isAddition(chunk))
          label = this.strings.addedLines(newCount);
+      else if (compact)
+         label = this.strings.changedLinesShort(newCount);
       else
          label = this.strings.changedLines(newCount);
 
@@ -862,10 +875,21 @@ var GitDiffGutter = function(editor, strings) {
       header.className = PEEK_CLASS + "-header";
       el.appendChild(header);
 
-      var labelEl = document.createElement("span");
-      labelEl.className = PEEK_CLASS + "-label";
-      labelEl.textContent = label;
-      header.appendChild(labelEl);
+      // The compact bar's label is for assistive technology only; on screen
+      // the bar sits against the change it is about.
+      if (compact)
+      {
+         el.className += " " + PEEK_CLASS + "-compact";
+         el.setAttribute("role", "group");
+         el.setAttribute("aria-label", label);
+      }
+      else
+      {
+         var labelEl = document.createElement("span");
+         labelEl.className = PEEK_CLASS + "-label";
+         labelEl.textContent = label;
+         header.appendChild(labelEl);
+      }
 
       var revertButton = document.createElement("button");
       revertButton.type = "button";
@@ -913,7 +937,7 @@ var GitDiffGutter = function(editor, strings) {
          self.closePeek();
       });
 
-      if (oldLines.length > 0)
+      if (oldLines.length > 0 && !compact)
       {
          var lines = document.createElement("div");
          lines.className = PEEK_CLASS + "-lines";

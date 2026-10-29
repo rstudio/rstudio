@@ -17,6 +17,9 @@
 @external ace_git-gutter, ace_git-added, ace_git-modified, ace_git-deleted, ace_git-deleted-below, ace_folding-enabled, ace_gutter-cell_svg-icons;
 @external ace_git-peek, ace_git-peek-added, ace_git-peek-modified, ace_git-peek-deleted, ace_git-peek-header, ace_git-peek-label, ace_git-peek-button, ace_git-peek-revert, ace_git-peek-close, ace_git-peek-lines, ace_git-peek-line;
 @external ace_git-diff-base, ace_git-diff-base-empty, ace_diff, ace_diff-active-line, insert, delete, inline, empty, aligned_diff;
+@external editor_diff_header, editor_diff_header-side;
+@external rstudio-vcs-go-to-change;
+@external rstudio_editor_diff_view_toggle;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -1702,6 +1705,21 @@ body.windows .toolbar {
 
 .rstudio-themes-dark .toolbarButtonLatchable {
    border-color: transparent;
+}
+
+/* The side-by-side Git diff toggle (TextEditingTargetWidget) carries a full
+   size icon, where the other latching buttons' are small: its box grows to
+   fit the icon, and the icon sits at the top of it, level with the icons of
+   the plain buttons beside it. With no label to make room for, it is padded
+   evenly, so the icon sits centered in its latched frame. */
+.rstudio_editor_diff_view_toggle {
+   height: 19px;
+   padding-left: 5px;
+   padding-right: 5px;
+}
+
+.rstudio_editor_diff_view_toggle .toolbarButtonLeftImage {
+   margin-top: 0;
 }
 
 .toolbarButtonLatchable .toolbarButtonLabel {
@@ -3437,9 +3455,9 @@ body .rstudio-themes-alternate {
 
 /* Git diff markers: a bar at the right edge of the gutter cell, between the
    line number and the code, so it stays clear of the annotation icons on the
-   left: solid for added lines, dashed for modified ones, so the two differ
-   in shape and not only in colour. Deleted lines leave nothing to mark, so a
-   wedge points at the seam.
+   left: green for added lines, blue for modified ones (the peek and the
+   Revert command say which a change is). Deleted lines leave nothing to
+   mark, so a wedge points at the seam.
    The cell gains 6px of right padding while the gutter is attached: Ace's
    fold arrow hangs into the padding (margin-right: -12px), and the bar and
    its click target have to sit beyond it. */
@@ -3474,7 +3492,7 @@ body .rstudio-themes-alternate {
 }
 
 .ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
-   background: repeating-linear-gradient(to bottom, #0969da 0, #0969da 4px, transparent 4px, transparent 7px);
+   background-color: #0969da;
 }
 
 .ace_git-gutter .ace_gutter-cell.ace_git-deleted::before,
@@ -3504,7 +3522,7 @@ body .rstudio-themes-alternate {
 }
 
 .editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-modified::after {
-   background: repeating-linear-gradient(to bottom, #58a6ff 0, #58a6ff 4px, transparent 4px, transparent 7px);
+   background-color: #58a6ff;
 }
 
 .editor_dark .ace_git-gutter .ace_gutter-cell.ace_git-deleted::before,
@@ -3619,6 +3637,47 @@ body .rstudio-themes-alternate {
    left: 0;
    right: 0;
    bottom: 0;
+}
+
+/* The Git pane's go-to-change buttons, one per changed file; see
+   GitChangelistTable. */
+.rstudio-vcs-go-to-change {
+   padding: 0;
+   border: none;
+   background: none;
+   line-height: 0;
+   vertical-align: middle;
+   cursor: pointer;
+   opacity: 0.7;
+}
+
+.rstudio-vcs-go-to-change:hover,
+.rstudio-vcs-go-to-change:focus-visible {
+   opacity: 1;
+}
+
+/* The headers naming the two sides of a side-by-side Git diff: the index
+   version on the left, the document on the right (see GitDiffSplitWidget). */
+.editor_diff_header {
+   box-sizing: border-box;
+   height: 22px;
+   line-height: 21px;
+   padding: 0 8px;
+   overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+   background-color: rgba(0, 0, 0, 0.03);
+}
+
+.editor_diff_header-side {
+   font-weight: bold;
+   margin-right: 2px;
+}
+
+.editor_dark .editor_diff_header {
+   border-bottom-color: rgba(255, 255, 255, 0.15);
+   background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ace_git-diff-base-empty {

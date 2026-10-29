@@ -24,6 +24,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -36,8 +38,12 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.common.vcs.WorktreeInfo;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -48,6 +54,9 @@ import org.rstudio.studio.client.workbench.views.vcs.RemoveWorktreeDialog;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.WorktreeActions;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffChunk;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.Range;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -119,6 +128,10 @@ public class GitPresenter extends BaseVcsPresenter
             if (mod != KeyboardShortcut.NONE)
                return;
 
+            // Enter and Space on a row's go-to-change button press it
+            if (GitChangelistTable.isGoToChangeEvent(event.getNativeEvent()))
+               return;
+
             if (event.getNativeKeyCode() == ' ')
             {
                event.preventDefault();
@@ -140,6 +153,9 @@ public class GitPresenter extends BaseVcsPresenter
          @Override
          public void onMouseDown(MouseDownEvent event)
          {
+            if (GitChangelistTable.isGoToChangeEvent(event.getNativeEvent()))
+               return;
+
             if (dblClick.checkForDoubleClick(event.getNativeEvent()))
             {
                event.preventDefault();
@@ -149,6 +165,8 @@ public class GitPresenter extends BaseVcsPresenter
             }
          }
       });
+
+      view_.getChangelistTable().setGoToChangeHandler(item -> openFileAtFirstChange(item));
 
       view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler(){
          @Override
@@ -173,6 +191,84 @@ public class GitPresenter extends BaseVcsPresenter
    private void openSelectedFiles()
    {
       vcsFileOpener_.openFiles(view_.getSelectedItems());
+   }
+
+   // Opens a file at its first change: the first the working tree makes to
+   // the index, as the editor's gutter marks them, or else the first staged
+   // one. An untracked file is new throughout, and opens at the top.
+   private void openFileAtFirstChange(StatusAndPath item)
+   {
+      if ("??".equals(item.getStatus()))
+      {
+         vcsFileOpener_.openFileAtLine(item, 1);
+         return;
+      }
+
+      findFirstChange(item, PatchMode.Working, line ->
+      {
+         if (line > 0)
+         {
+            vcsFileOpener_.openFileAtLine(item, line);
+            return;
+         }
+
+         findFirstChange(item, PatchMode.Stage, stagedLine ->
+            vcsFileOpener_.openFileAtLine(item, Math.max(stagedLine, 1)));
+      });
+   }
+
+   // Passes on the first line of the file's first change in the given diff,
+   // or 0 when there is none (or the diff could not be had).
+   private void findFirstChange(StatusAndPath item,
+                                PatchMode patchMode,
+                                CommandWithArg<Integer> onFound)
+   {
+      server_.gitDiffFile(
+            item.getPath(),
+            patchMode,
+            0, /* contextLines */
+            true, /* noSizeWarning */
+            false, /* ignoreWhitespace */
+            new ServerRequestCallback<DiffResult>()
+            {
+               @Override
+               public void onResponseReceived(DiffResult result)
+               {
+                  onFound.execute(firstChangedLine(result.getDecodedValue()));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  onFound.execute(0);
+               }
+            });
+   }
+
+   private static int firstChangedLine(String diff)
+   {
+      try
+      {
+         UnifiedParser parser = new UnifiedParser(diff);
+         if (parser.nextFilePair() == null)
+            return 0;
+
+         DiffChunk chunk = parser.nextChunk();
+         if (chunk == null)
+            return 0;
+
+         // the working tree's side of the hunk; for a deletion it starts at
+         // the line before the removed ones (0 when they were at the top)
+         Range[] ranges = chunk.getRanges();
+         return Math.max(ranges[ranges.length - 1].startRow, 1);
+      }
+      catch (Exception e)
+      {
+         // e.g. a conflicted file's combined diff
+         Debug.logException(e);
+         return 0;
+      }
    }
 
    private void manageCommands()
