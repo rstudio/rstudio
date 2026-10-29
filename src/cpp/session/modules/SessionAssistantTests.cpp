@@ -331,6 +331,7 @@ TEST(SessionAssistant, RequestWrittenAfterBlockGetsFullTimeout)
 {
    // The first pass after R was blocked writes queued requests before the
    // background handler runs; the gap before the write mustn't count.
+   runBackgroundProcessingForTesting(false, s_now);
    s_now += seconds(30);
    std::vector<bool> results;
    addPendingAgentRequestForTesting("written-after-block", kCompletion, true, s_now,
