@@ -63,6 +63,7 @@ public class PathBreadcrumbWidget
       outer_ = new SimplePanel();
       outer_.setWidget(panel_);
       outer_.setStylePrimaryName(RES.styles().breadcrumb());
+      Roles.getGroupRole().set(outer_.getElement());
       Roles.getGroupRole().setAriaLabelProperty(outer_.getElement(), constants_.pathBreadCrumbSelectPath());
 
       Image fade = new Image(RES.fade());
