@@ -67,21 +67,13 @@ public class ImageFrame extends Frame
    
    public void setImageUrl(String url)
    {
-      setImageUrl(url, null);
+      setImageUrl(url, null, null);
    }
 
    /**
     * Shows the image at the given size, in CSS pixels, scaling it down to fit
     * the frame and centering it; a null size stretches it to fill the frame.
-    */
-   public void setImageUrl(String url, Size fixedSize)
-   {
-      setImageUrl(url, fixedSize, null);
-   }
-
-   /**
-    * As setImageUrl(url, fixedSize), giving the image the alt text; a null
-    * altText leaves the image without one.
+    * A null altText leaves the image without alt text.
     */
    public void setImageUrl(String url, Size fixedSize, String altText)
    {
