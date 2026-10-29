@@ -101,11 +101,12 @@ std::chrono::steady_clock::duration agentRequestTimeout(const std::string& metho
 
 // Drive the agent reply loop and expiry sweep without a running agent: register
 // a pending request (onResult receives whether it was cancelled), optionally
-// marked as written to the agent; queue a raw reply as if read from the agent;
-// and run one background-processing pass at now. Exposed for testing.
+// marked as written to the agent at now; queue a raw reply as if read from the
+// agent; and run one background-processing pass at now. Exposed for testing.
 void addPendingAgentRequestForTesting(const std::string& requestId,
                                       const std::string& method,
                                       bool written,
+                                      std::chrono::steady_clock::time_point now,
                                       const std::function<void(bool)>& onResult);
 void queueAgentReplyForTesting(const std::string& reply);
 void runBackgroundProcessingForTesting(bool isIdle,

@@ -256,7 +256,7 @@ void queueReply(const std::string& requestId)
 TEST(SessionAssistant, IdlePassKeepsRequestWithinTimeout)
 {
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("within-timeout", kCompletion, true,
+   addPendingAgentRequestForTesting("within-timeout", kCompletion, true, s_now,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
    serviceEventsFor(seconds(9));
@@ -273,7 +273,7 @@ TEST(SessionAssistant, IdlePassDeliversQueuedReplyToExpiredRequest)
    // A reply that arrived while R was busy must reach its request even
    // though the request is past its timeout by the time R is idle.
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-with-reply", kCompletion, true,
+   addPendingAgentRequestForTesting("expired-with-reply", kCompletion, true, s_now,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
    serviceEventsFor(seconds(11));
@@ -286,7 +286,7 @@ TEST(SessionAssistant, IdlePassDeliversQueuedReplyToExpiredRequest)
 TEST(SessionAssistant, IdlePassCancelsExpiredRequestWithoutReply)
 {
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-without-reply", kCompletion, true,
+   addPendingAgentRequestForTesting("expired-without-reply", kCompletion, true, s_now,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
    serviceEventsFor(seconds(11));
@@ -298,7 +298,7 @@ TEST(SessionAssistant, IdlePassCancelsExpiredRequestWithoutReply)
 TEST(SessionAssistant, BusyPassLeavesExpiredRequestPending)
 {
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-while-busy", kCompletion, true,
+   addPendingAgentRequestForTesting("expired-while-busy", kCompletion, true, s_now,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
    serviceEventsFor(seconds(11));
@@ -315,7 +315,7 @@ TEST(SessionAssistant, TimeBlockedWithoutServicingEventsIsNotChargedToRequest)
    // can stall the agent until the first pass afterwards; the request must
    // still be pending when the reply follows on the next pass.
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("blocked", kCompletion, true,
+   addPendingAgentRequestForTesting("blocked", kCompletion, true, s_now,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
    s_now += seconds(30);
@@ -327,10 +327,28 @@ TEST(SessionAssistant, TimeBlockedWithoutServicingEventsIsNotChargedToRequest)
    EXPECT_EQ(results, std::vector<bool>({ false }));
 }
 
+TEST(SessionAssistant, RequestWrittenAfterBlockGetsFullTimeout)
+{
+   // The first pass after R was blocked writes queued requests before the
+   // background handler runs; the gap before the write mustn't count.
+   s_now += seconds(30);
+   std::vector<bool> results;
+   addPendingAgentRequestForTesting("written-after-block", kCompletion, true, s_now,
+                                    [&](bool cancelled) { results.push_back(cancelled); });
+
+   serviceEventsFor(milliseconds(9900));
+   runIdlePass();
+   EXPECT_TRUE(results.empty());
+
+   queueReply("written-after-block");
+   runIdlePass();
+   EXPECT_EQ(results, std::vector<bool>({ false }));
+}
+
 TEST(SessionAssistant, InitializeOutlastsRequestTimeout)
 {
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("initialize", "initialize", true,
+   addPendingAgentRequestForTesting("initialize", "initialize", true, s_now,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
    serviceEventsFor(seconds(30));
@@ -347,7 +365,7 @@ TEST(SessionAssistant, HeldRequestOutlastsRequestTimeout)
    // A request held unwritten while the agent initializes is timed as
    // generously as 'initialize' itself.
    std::vector<bool> results;
-   addPendingAgentRequestForTesting("held", kCompletion, false,
+   addPendingAgentRequestForTesting("held", kCompletion, false, s_now,
                                     [&](bool cancelled) { results.push_back(cancelled); });
 
    serviceEventsFor(seconds(30));

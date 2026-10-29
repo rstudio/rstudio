@@ -728,9 +728,14 @@ void sendRequest(const std::string& method,
 }
 
 // The agent can't start on a request until it has been written to the agent,
-// so restart the request's clock then.
-void onRequestWritten(const AssistantRequest& request)
+// so restart the request's clock then. Writes happen in the supervisor poll,
+// before this pass's background handler ticks the clock, so tick it first;
+// otherwise the gap before the write would count against the request.
+void onRequestWritten(const AssistantRequest& request,
+                      std::chrono::steady_clock::time_point now)
 {
+   s_servicedClock.tick(now);
+
    auto it = s_pendingContinuations.find(request.id);
    if (it != s_pendingContinuations.end())
       it->second.startClock(s_servicedClock.elapsed(), agentRequestTimeout(request.method));
@@ -1090,7 +1095,7 @@ bool onContinue(ProcessOperations& operations, uint64_t generation)
          std::string htmlRequest = formatRequest(request);
          debugCallback(htmlRequest);
          operations.writeToStdin(htmlRequest, false);
-         onRequestWritten(request);
+         onRequestWritten(request, std::chrono::steady_clock::now());
       }
       s_pendingRequests.clear();
    }
@@ -1113,7 +1118,7 @@ bool onContinue(ProcessOperations& operations, uint64_t generation)
          std::string htmlRequest = formatRequest(request);
          debugCallback(htmlRequest);
          operations.writeToStdin(htmlRequest, false);
-         onRequestWritten(request);
+         onRequestWritten(request, std::chrono::steady_clock::now());
          return true;
       });
    }
@@ -3031,6 +3036,7 @@ std::chrono::steady_clock::duration agentRequestTimeout(const std::string& metho
 void addPendingAgentRequestForTesting(const std::string& requestId,
                                       const std::string& method,
                                       bool written,
+                                      std::chrono::steady_clock::time_point now,
                                       const std::function<void(bool)>& onResult)
 {
    auto continuation = [=](const Error&, json::JsonRpcResponse* pResponse)
@@ -3040,7 +3046,7 @@ void addPendingAgentRequestForTesting(const std::string& requestId,
    };
    addPendingContinuation(requestId, AssistantContinuation(continuation));
    if (written)
-      onRequestWritten({ method, requestId, json::Value() });
+      onRequestWritten({ method, requestId, json::Value() }, now);
 }
 
 void queueAgentReplyForTesting(const std::string& reply)
