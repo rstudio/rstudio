@@ -940,8 +940,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
-         // Keyboard selection is disabled, so without one tab stop the list
-         // couldn't be reached, or scrolled, from the keyboard at all.
+         // Keyboard selection is disabled, so without one tab stop nothing in
+         // the list could take focus. The scroller can't take it instead: it
+         // sits between the grid's role="table" and its rowgroups.
          int tabIndex = context.getIndex() == 0 ? 0 : -1;
          SafeHtml checkbox = value.isAttached()
             ? TEMPLATES.checkboxChecked(value.getName(), tabIndex)
