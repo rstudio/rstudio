@@ -15,11 +15,17 @@
 
 #include "SessionAssistant.hpp"
 
+#include <memory>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
+#include <core/system/Process.hpp>
+
+#include <session/SessionSourceDatabase.hpp>
+
+#include "SessionLSP.hpp"
 
 namespace rstudio {
 namespace session {
@@ -28,11 +34,20 @@ namespace tests {
 using core::FilePath;
 using modules::assistant::addPendingAgentRequestForTesting;
 using modules::assistant::AgentStderrTail;
+using modules::assistant::focusDocumentForTesting;
+using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
-using modules::assistant::isAgentRequestExpired;
 using modules::assistant::nesLanguageServerPath;
+using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
+using modules::assistant::resetForNewAgentForTesting;
 using modules::assistant::runBackgroundProcessingForTesting;
+using modules::assistant::resendFocusForTesting;
+using modules::assistant::ServicedClock;
+using modules::assistant::writeQueuedAgentRequestsForTesting;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::steady_clock;
 
 TEST(SessionAssistant, StderrTailKeepsShortTextUnchanged)
 {
@@ -179,66 +194,368 @@ TEST(SessionAssistant, NesLanguageServerPathPrefersCjsScript)
    installDir.removeIfExists();
 }
 
-TEST(SessionAssistant, AgentRequestNotExpiredAtTenSeconds)
+TEST(SessionAssistant, ServicedClockCountsShortGaps)
 {
-   auto requested = std::chrono::steady_clock::now();
-   EXPECT_FALSE(isAgentRequestExpired(requested, requested));
-   EXPECT_FALSE(isAgentRequestExpired(requested, requested + std::chrono::seconds(10)));
+   auto start = steady_clock::now();
+   ServicedClock clock(seconds(1));
+   clock.tick(start);
+   EXPECT_EQ(clock.elapsed(), steady_clock::duration::zero());
+
+   clock.tick(start + milliseconds(500));
+   clock.tick(start + milliseconds(1500));
+   EXPECT_EQ(clock.elapsed(), milliseconds(1500));
 }
 
-TEST(SessionAssistant, AgentRequestExpiredJustPastTenSeconds)
+TEST(SessionAssistant, ServicedClockCapsLongGaps)
 {
-   auto requested = std::chrono::steady_clock::now();
-   EXPECT_TRUE(isAgentRequestExpired(requested, requested + std::chrono::milliseconds(10001)));
+   auto start = steady_clock::now();
+   ServicedClock clock(seconds(1));
+   clock.tick(start);
+   clock.tick(start + seconds(30));
+   EXPECT_EQ(clock.elapsed(), seconds(1));
 }
 
-TEST(SessionAssistant, AgentRequestExpiredAfterMoreThanAMinute)
+TEST(SessionAssistant, ServicedClockIgnoresTimeGoingBackwards)
 {
-   // 65s has a seconds field of 5; the expiry check must use the total.
-   auto requested = std::chrono::steady_clock::now();
-   EXPECT_TRUE(isAgentRequestExpired(requested, requested + std::chrono::seconds(65)));
+   auto start = steady_clock::now();
+   ServicedClock clock(seconds(1));
+   clock.tick(start);
+   clock.tick(start - milliseconds(500));
+   EXPECT_EQ(clock.elapsed(), steady_clock::duration::zero());
+
+   clock.tick(start);
+   EXPECT_EQ(clock.elapsed(), milliseconds(500));
+}
+
+TEST(SessionAssistant, InitializeGetsLongerTimeoutThanOtherRequests)
+{
+   EXPECT_EQ(agentRequestTimeout("initialize"), seconds(60));
+   EXPECT_EQ(agentRequestTimeout("textDocument/inlineCompletion"), seconds(10));
+}
+
+namespace {
+
+const char* const kCompletion = "textDocument/inlineCompletion";
+
+// Simulated time for the background-processing passes below. It runs ahead of
+// the real clock so each test's passes follow the previous test's.
+steady_clock::time_point s_now = steady_clock::now();
+
+// Run busy passes 100ms apart, as while R runs code that services events.
+void serviceEventsFor(steady_clock::duration span)
+{
+   for (auto end = s_now + span; s_now < end; )
+   {
+      s_now += milliseconds(100);
+      runBackgroundProcessingForTesting(false, s_now);
+   }
+}
+
+void runIdlePass()
+{
+   runBackgroundProcessingForTesting(true, s_now);
+}
+
+// Register a pending request and collect its results. The results are shared
+// with the request so that one a failed test leaves pending can still be
+// resolved safely by a later test's sweep.
+std::shared_ptr<std::vector<bool>> addRequest(const std::string& requestId,
+                                              const std::string& method,
+                                              bool written)
+{
+   auto results = std::make_shared<std::vector<bool>>();
+   addPendingAgentRequestForTesting(requestId, method, written, s_now,
+                                    [results](bool cancelled) { results->push_back(cancelled); });
+   return results;
+}
+
+void queueReply(const std::string& requestId)
+{
+   queueAgentReplyForTesting(
+      R"({"jsonrpc":"2.0","id":")" + requestId + R"(","result":{}})");
+}
+
+} // anonymous namespace
+
+TEST(SessionAssistant, IdlePassKeepsRequestWithinTimeout)
+{
+   auto results = addRequest("within-timeout", kCompletion, true);
+
+   serviceEventsFor(seconds(9));
+   runIdlePass();
+   EXPECT_TRUE(results->empty());
+
+   queueReply("within-timeout");
+   runIdlePass();
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
+}
+
+TEST(SessionAssistant, IdlePassCancelsRequestJustPastTimeout)
+{
+   auto results = addRequest("at-timeout", kCompletion, true);
+
+   serviceEventsFor(seconds(10));
+   runIdlePass();
+   EXPECT_TRUE(results->empty());
+
+   serviceEventsFor(milliseconds(100));
+   runIdlePass();
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
 }
 
 TEST(SessionAssistant, IdlePassDeliversQueuedReplyToExpiredRequest)
 {
-   // A reply that arrived while R was blocked must reach its request even
+   // A reply that arrived while R was busy must reach its request even
    // though the request is past its timeout by the time R is idle.
-   auto requested = std::chrono::steady_clock::now() - std::chrono::seconds(30);
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-with-reply", requested,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
-   queueAgentReplyForTesting(R"({"jsonrpc":"2.0","id":"expired-with-reply","result":{}})");
+   auto results = addRequest("expired-with-reply", kCompletion, true);
 
-   runBackgroundProcessingForTesting(true);
+   serviceEventsFor(seconds(11));
+   queueReply("expired-with-reply");
+   runIdlePass();
 
-   EXPECT_EQ(results, std::vector<bool>({ false }));
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
 }
 
 TEST(SessionAssistant, IdlePassCancelsExpiredRequestWithoutReply)
 {
-   auto requested = std::chrono::steady_clock::now() - std::chrono::seconds(30);
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-without-reply", requested,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("expired-without-reply", kCompletion, true);
 
-   runBackgroundProcessingForTesting(true);
+   serviceEventsFor(seconds(11));
+   runIdlePass();
 
-   EXPECT_EQ(results, std::vector<bool>({ true }));
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
 }
 
 TEST(SessionAssistant, BusyPassLeavesExpiredRequestPending)
 {
-   auto requested = std::chrono::steady_clock::now() - std::chrono::seconds(30);
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-while-busy", requested,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("expired-while-busy", kCompletion, true);
 
-   runBackgroundProcessingForTesting(false);
-   EXPECT_TRUE(results.empty());
+   serviceEventsFor(seconds(11));
+   EXPECT_TRUE(results->empty());
 
    // An idle pass then cancels it, which also removes it from the pending map.
-   runBackgroundProcessingForTesting(true);
-   EXPECT_EQ(results, std::vector<bool>({ true }));
+   runIdlePass();
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
+}
+
+TEST(SessionAssistant, TimeBlockedWithoutServicingEventsIsNotChargedToRequest)
+{
+   // While R is blocked the agent's output isn't drained, so a large reply
+   // can stall the agent until the first pass afterwards; the request must
+   // still be pending when the reply follows on the next pass.
+   auto results = addRequest("blocked", kCompletion, true);
+
+   s_now += seconds(30);
+   runIdlePass();
+   EXPECT_TRUE(results->empty());
+
+   queueReply("blocked");
+   serviceEventsFor(milliseconds(100));
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
+}
+
+TEST(SessionAssistant, RequestWrittenAfterBlockGetsFullTimeout)
+{
+   // The first pass after R was blocked writes queued requests before the
+   // background handler runs; the gap before the write mustn't count.
+   runBackgroundProcessingForTesting(false, s_now);
+   s_now += seconds(30);
+   auto results = addRequest("written-after-block", kCompletion, true);
+
+   serviceEventsFor(milliseconds(9900));
+   runIdlePass();
+   EXPECT_TRUE(results->empty());
+
+   queueReply("written-after-block");
+   runIdlePass();
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
+}
+
+TEST(SessionAssistant, NewAgentCancelsPreviousAgentsRequests)
+{
+   auto held = addRequest("previous-agent-held", kCompletion, false);
+   auto written = addRequest("previous-agent-written", kCompletion, true);
+
+   resetForNewAgentForTesting();
+   EXPECT_EQ(*held, std::vector<bool>({ true }));
+   EXPECT_EQ(*written, std::vector<bool>({ true }));
+
+   // A late reply for a cancelled request isn't delivered a second time.
+   queueReply("previous-agent-written");
+   runIdlePass();
+   EXPECT_EQ(*written, std::vector<bool>({ true }));
+}
+
+// Records what would be written to the agent's stdin.
+class RecordingAgentOperations : public core::system::ProcessOperations
+{
+public:
+   core::Error writeToStdin(const std::string& input, bool) override
+   {
+      writes.push_back(input);
+      return core::Success();
+   }
+   core::Error ptySetSize(int, int) override { return core::Success(); }
+   core::Error ptyInterrupt() override { return core::Success(); }
+   core::Error terminate() override { return core::Success(); }
+   PidType getPid() override { return 0; }
+
+   std::vector<std::string> writes;
+};
+
+TEST(SessionAssistant, NewAgentIsNotSentPreviousAgentsQueue)
+{
+   // The previous agent answered 'initialize' but exited before its
+   // 'initialized' was written; the new agent must not receive it.
+   queueAgentNotificationForTesting("initialized");
+   resetForNewAgentForTesting();
+
+   RecordingAgentOperations operations;
+   writeQueuedAgentRequestsForTesting(operations);
+   EXPECT_TRUE(operations.writes.empty());
+}
+
+// Write what a new agent is sent once it's initialized.
+std::vector<std::string> writesAfterInitialization()
+{
+   // The second poll writes what was held until 'initialized' was written.
+   queueAgentNotificationForTesting("initialized");
+   RecordingAgentOperations operations;
+   writeQueuedAgentRequestsForTesting(operations);
+   writeQueuedAgentRequestsForTesting(operations);
+   return operations.writes;
+}
+
+// Whether the writes include a focus notification for uri, or for any
+// document when uri is empty.
+bool containsFocus(const std::vector<std::string>& writes, const std::string& uri)
+{
+   for (const std::string& write : writes)
+   {
+      if (write.find("textDocument/didFocus") != std::string::npos &&
+          write.find(uri) != std::string::npos)
+         return true;
+   }
+   return false;
+}
+
+// R documents in the source database, as the editor has them open.
+class FocusedDocumentTest : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FilePath::tempFilePath(dir_);
+      dir_.ensureDirectory();
+      resetForNewAgentForTesting();
+   }
+
+   void TearDown() override
+   {
+      for (const std::string& id : ids_)
+         source_database::remove(id);
+      dir_.removeIfExists();
+   }
+
+   std::string openDocument(const std::string& fileName)
+   {
+      auto pDoc = boost::make_shared<source_database::SourceDocument>(kSourceDocumentTypeRSource);
+      moveTo(pDoc, fileName);
+      ids_.push_back(pDoc->id());
+      return pDoc->id();
+   }
+
+   // As saving the document under a new name does.
+   void rename(const std::string& id, const std::string& fileName)
+   {
+      auto pDoc = boost::make_shared<source_database::SourceDocument>();
+      EXPECT_FALSE(source_database::get(id, pDoc));
+      moveTo(pDoc, fileName);
+   }
+
+   std::string uri(const std::string& id)
+   {
+      auto pDoc = boost::make_shared<source_database::SourceDocument>();
+      EXPECT_FALSE(source_database::get(id, pDoc));
+      return modules::lsp::uriFromDocument(pDoc);
+   }
+
+private:
+   void moveTo(boost::shared_ptr<source_database::SourceDocument> pDoc,
+               const std::string& fileName)
+   {
+      FilePath path = dir_.completeChildPath(fileName);
+      core::writeStringToFile(path, "x <- 1\n");
+      EXPECT_FALSE(pDoc->setPathAndContents(path.getAbsolutePath()));
+      EXPECT_FALSE(source_database::put(pDoc));
+   }
+
+   FilePath dir_;
+   std::vector<std::string> ids_;
+};
+
+TEST_F(FocusedDocumentTest, NewAgentIsSentFocusFromBeforeItStarted)
+{
+   // Focus changes while no agent runs (as here) are recorded, not sent.
+   std::string id = openDocument("focused.R");
+   focusDocumentForTesting(id);
+
+   resetForNewAgentForTesting();
+   resendFocusForTesting();
+   EXPECT_TRUE(containsFocus(writesAfterInitialization(), uri(id)));
+}
+
+TEST_F(FocusedDocumentTest, NewAgentIsSentFocusedDocumentsNewName)
+{
+   std::string id = openDocument("before.R");
+   std::string before = uri(id);
+   focusDocumentForTesting(id);
+   rename(id, "after.R");
+
+   resetForNewAgentForTesting();
+   resendFocusForTesting();
+   std::vector<std::string> writes = writesAfterInitialization();
+   EXPECT_TRUE(containsFocus(writes, uri(id)));
+   EXPECT_FALSE(containsFocus(writes, before));
+}
+
+TEST_F(FocusedDocumentTest, NewAgentIsNotSentFocusOfClosedDocument)
+{
+   std::string id = openDocument("closed.R");
+   focusDocumentForTesting(id);
+   source_database::remove(id);
+
+   resetForNewAgentForTesting();
+   resendFocusForTesting();
+   EXPECT_FALSE(containsFocus(writesAfterInitialization(), ""));
+}
+
+TEST(SessionAssistant, InitializeOutlastsRequestTimeout)
+{
+   auto results = addRequest("initialize", "initialize", true);
+
+   serviceEventsFor(seconds(30));
+   runIdlePass();
+   EXPECT_TRUE(results->empty());
+
+   serviceEventsFor(seconds(31));
+   runIdlePass();
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
+}
+
+TEST(SessionAssistant, HeldRequestOutlastsRequestTimeout)
+{
+   // A request held unwritten while the agent initializes is timed as
+   // generously as 'initialize' itself.
+   auto results = addRequest("held", kCompletion, false);
+
+   serviceEventsFor(seconds(30));
+   runIdlePass();
+   EXPECT_TRUE(results->empty());
+
+   serviceEventsFor(seconds(31));
+   runIdlePass();
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
 }
 
 } // end namespace tests
