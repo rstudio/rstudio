@@ -10,23 +10,27 @@ const HOME_PATH = '/help/doc/home/';
 
 /**
  * The initial state with the Help pane shown in place of Files, on its home
- * page (Help > R Help, the pane's house button). The page is help history,
- * which persists, but the session opens on home when that history is empty,
- * so it needs no restore.
+ * page (Help > R Help, the pane's house button). Showing home adds it to the
+ * persisted help history; no other state shows Help, so that needs no restore.
  */
 test('help home page has no accessibility violations', { tag: ['@a11y', '@server_only'] },
   async ({ a11yPage: page }, testInfo) => {
-    // helpHome navigates even when the pane is already on home (it reloads
-    // then), so waiting for that navigation keeps the scan off a page that is
-    // about to be replaced.
-    const homeNavigated = page.waitForEvent('framenavigated', {
-      predicate: (frame) => frame.parentFrame() === page.mainFrame() && frame.url().includes(HOME_PATH),
-      timeout: TIMEOUTS.fileOpen,
-    });
-    homeNavigated.catch(() => {});
     const results = await withFilesTabsetTab(page, HELP_TAB,
-      () => executeCommand(page, 'helpHome'),
+      () => executeCommand(page, 'activateHelp'),
       async () => {
+        // Help is built on first use and then shows a page from its history.
+        // Let that load first, so the navigation waited on below is helpHome's
+        // and the scan isn't run on a page about to be replaced.
+        await page.waitForFunction((selector) => {
+          const doc = document.querySelector<HTMLIFrameElement>(selector)?.contentDocument;
+          return doc?.location.href.includes('/help/') === true && doc.readyState === 'complete';
+        }, HELP_FRAME, { timeout: TIMEOUTS.fileOpen });
+        // helpHome navigates even when the pane is already on home (it reloads).
+        const homeNavigated = page.waitForEvent('framenavigated', {
+          predicate: (frame) => frame.parentFrame() === page.mainFrame() && frame.url().includes(HOME_PATH),
+          timeout: TIMEOUTS.fileOpen,
+        });
+        await executeCommand(page, 'helpHome');
         const frame = await homeNavigated;
         await frame.waitForLoadState('load', { timeout: TIMEOUTS.fileOpen });
         await expect(page.frameLocator(HELP_FRAME).getByRole('heading', { name: 'Manuals' }))

@@ -40,22 +40,24 @@ async function restoreFilesTab(page: Page, tabSave: Promise<Request>): Promise<v
 }
 
 /**
- * Restore Files after `select` failed or never confirmed its tab. The test is
- * already failing, so a restore problem is only logged: throwing would hide
- * the original error.
+ * Restore Files once the test has already failed. `tabSave` is unset when the
+ * other tab was never confirmed selected, in which case Files may never have
+ * been left.
  */
-async function restoreAfterFailedSelect(page: Page): Promise<void> {
-  if (await page.locator(FILES_TAB).getAttribute('aria-selected') === 'true')
-    return;
-  const tabSave = page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT });
-  await restoreFilesTab(page, tabSave)
-    .catch((err: Error) => console.warn(`Files tab not restored: ${err.message}`));
+async function restoreAfterFailure(page: Page, tabSave: Promise<Request> | undefined): Promise<void> {
+  if (tabSave === undefined) {
+    const filesSelected = await page.locator(FILES_TAB).getAttribute('aria-selected', { timeout: TIMEOUTS.action });
+    if (filesSelected === 'true')
+      return;
+  }
+  await restoreFilesTab(page, tabSave ?? page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT }));
 }
 
 /**
  * Run `body` with another tab of the Files tabset selected, then select Files
  * again and wait for that selection to be saved. `select` must lead to `tab`
- * (e.g. `#rstudio_workbench_tab_help`) being selected.
+ * (e.g. `#rstudio_workbench_tab_help`) being selected. If the test fails
+ * first, a restore problem is only logged, so it can't hide the original error.
  */
 export async function withFilesTabsetTab<T>(
   page: Page,
@@ -64,6 +66,7 @@ export async function withFilesTabsetTab<T>(
   body: () => Promise<T>,
 ): Promise<T> {
   let tabSave: Promise<Request> | undefined;
+  let result: T;
   try {
     await select();
     await expect(page.locator(tab)).toHaveAttribute('aria-selected', 'true', { timeout: TIMEOUTS.consoleReady });
@@ -73,11 +76,12 @@ export async function withFilesTabsetTab<T>(
     // `body` from surfacing as an unhandled rejection first.
     tabSave = page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT });
     tabSave.catch(() => {});
-    return await body();
-  } finally {
-    if (tabSave)
-      await restoreFilesTab(page, tabSave);
-    else
-      await restoreAfterFailedSelect(page);
+    result = await body();
+  } catch (err) {
+    await restoreAfterFailure(page, tabSave)
+      .catch((restoreErr: Error) => console.warn(`Files tab not restored: ${restoreErr.message}`));
+    throw err;
   }
+  await restoreFilesTab(page, tabSave);
+  return result;
 }
