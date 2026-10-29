@@ -457,7 +457,7 @@ protected:
       dir_.removeIfExists();
    }
 
-   std::string open(const std::string& fileName)
+   std::string openDocument(const std::string& fileName)
    {
       auto pDoc = boost::make_shared<source_database::SourceDocument>(kSourceDocumentTypeRSource);
       moveTo(pDoc, fileName);
@@ -497,7 +497,7 @@ private:
 TEST_F(FocusedDocumentTest, NewAgentIsSentFocusFromBeforeItStarted)
 {
    // Focus changes while no agent runs (as here) are recorded, not sent.
-   std::string id = open("focused.R");
+   std::string id = openDocument("focused.R");
    focusDocumentForTesting(id);
 
    resetForNewAgentForTesting();
@@ -507,7 +507,7 @@ TEST_F(FocusedDocumentTest, NewAgentIsSentFocusFromBeforeItStarted)
 
 TEST_F(FocusedDocumentTest, NewAgentIsSentFocusedDocumentsNewName)
 {
-   std::string id = open("before.R");
+   std::string id = openDocument("before.R");
    std::string before = uri(id);
    focusDocumentForTesting(id);
    rename(id, "after.R");
@@ -521,7 +521,7 @@ TEST_F(FocusedDocumentTest, NewAgentIsSentFocusedDocumentsNewName)
 
 TEST_F(FocusedDocumentTest, NewAgentIsNotSentFocusOfClosedDocument)
 {
-   std::string id = open("closed.R");
+   std::string id = openDocument("closed.R");
    focusDocumentForTesting(id);
    source_database::remove(id);
 
