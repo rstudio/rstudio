@@ -19,16 +19,20 @@ function plotImage(page: Page) {
   return page.frameLocator(PLOT_IMAGE_FRAME).locator('#img');
 }
 
-// Records every text the status live region is given, from now on. The region
-// keeps its last text, so reading it can't tell a new announcement from an
-// old one.
+// Records every text the app's status live region (AriaLiveStatusWidget) is
+// given, from now on. The region keeps its last text, so reading it can't
+// tell a new announcement from an old one.
 async function recordAnnouncements(page: Page): Promise<void> {
   await page.evaluate(() => {
     const w = window as unknown as { __plotAnnouncements: string[] };
     w.__plotAnnouncements = [];
-    const region = document.querySelector('[role=status]');
-    if (!region)
-      throw new Error('No status live region found');
+    // the widget pairs its status region with an alert region; other widgets,
+    // such as info bars, have status regions of their own
+    const regions = document.querySelectorAll(
+      'div:has(> [role=status] + [role=alert]) > [role=status]');
+    if (regions.length !== 1)
+      throw new Error(`Expected one app status live region, found ${regions.length}`);
+    const region = regions[0];
     new MutationObserver(() => {
       const text = (region.textContent ?? '').trim();
       if (text)
