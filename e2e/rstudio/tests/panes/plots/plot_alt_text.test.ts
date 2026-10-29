@@ -123,12 +123,27 @@ test.describe.serial('Plot alt text', { tag: ['@serial'] }, () => {
     await expectNoPlotAnnouncement(page);
   });
 
+  // e.g. a ggplot2 plot whose build is slow enough for the blank page to be
+  // shown first
+  test('alt text drawn after the plot is shown is announced', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole('plot(1:3)');
+    await expect(plotImage(page)).toHaveAttribute('alt', 'Plot 3 of 3', { timeout: TIMEOUTS.fileOpen });
+    await expectAnnounced(page, 'Plot 3 of 3');
+
+    await consoleActions.executeInConsole(
+      'grid::grid.draw(structure(grid::rectGrob(width = 0.1, height = 0.1), `alt-label` = "Three points"))');
+
+    const expected = 'Plot 3 of 3: Three points';
+    await expect(plotImage(page)).toHaveAttribute('alt', expected, { timeout: TIMEOUTS.fileOpen });
+    await expectAnnounced(page, expected);
+  });
+
   test('the announcement can be turned off', async ({ rstudioPage: page }) => {
     await consoleActions.executeInConsole(
       '.rs.writeUiPref("disabled_aria_live_announcements", list("plot_changed"))');
     await consoleActions.executeInConsole('plot(1:5)');
 
-    await expect(plotImage(page)).toHaveAttribute('alt', 'Plot 3 of 3', { timeout: TIMEOUTS.fileOpen });
+    await expect(plotImage(page)).toHaveAttribute('alt', 'Plot 4 of 4', { timeout: TIMEOUTS.fileOpen });
     await expectNoPlotAnnouncement(page);
   });
 });

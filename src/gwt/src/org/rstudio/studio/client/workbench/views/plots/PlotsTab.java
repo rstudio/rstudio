@@ -193,14 +193,20 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       // a screen reader user can't otherwise tell that running code produced
       // a plot, or which plot the history buttons moved to. Announced here
       // rather than by the presenter, which misses the states superseded
-      // while it is still loading.
-      if (hasPlots && plotsState.getActivePlotChanged())
+      // while it is still loading. A plot can first be shown before it has
+      // finished drawing (e.g. while ggplot2 builds it), so its alt text
+      // arriving later is announced too.
+      String altText = hasPlots ? PlotAltText.forState(plotsState) : null;
+      if (altText != null &&
+          (plotsState.getActivePlotChanged() ||
+           (lastAltText_ != null && !altText.equals(lastAltText_))))
       {
          ariaLive_.announce(AriaLiveService.PLOT_CHANGED,
-                            PlotAltText.forState(plotsState),
+                            altText,
                             Timing.DEBOUNCE,
                             Severity.STATUS);
       }
+      lastAltText_ = altText;
 
       if (plotsState.getActivatePlots() || shim_.loaded)
       {
@@ -215,6 +221,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final PlotsShim shim_;
    private final AriaLiveService ariaLive_;
+   private String lastAltText_;
    private Commands commands_;
    private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }
