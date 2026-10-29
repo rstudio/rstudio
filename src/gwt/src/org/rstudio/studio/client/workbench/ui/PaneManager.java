@@ -1530,6 +1530,7 @@ public class PaneManager
             widgetSizePriorToZoom_ = right_.getOffsetWidth();
          else
             widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+         panelWidthPriorToZoom_ = panel_.getOffsetWidth();
       }
 
       // Put all of the panes in NORMAL mode, just to ensure an appropriate
@@ -1779,10 +1780,12 @@ public class PaneManager
       // handler. If maximizedWindow_ were still set, that handler would start
       // a new zoom in the middle of this restore (#18448).
       final LogicalWindow maximizedWindow = maximizedWindow_;
-      final double rightWidthPriorToZoom = widgetSizePriorToZoom_;
-      final double sidebarWidthPriorToZoom = sidebarSizePriorToZoom_;
-      final ArrayList<Double> leftWidthsPriorToZoom =
-            new ArrayList<>(leftWidgetSizePriorToZoom_);
+      final double scale = getZoomSnapshotScale();
+      final double rightWidthPriorToZoom = widgetSizePriorToZoom_ * scale;
+      final double sidebarWidthPriorToZoom = sidebarSizePriorToZoom_ * scale;
+      final ArrayList<Double> leftWidthsPriorToZoom = new ArrayList<>();
+      for (Double width : leftWidgetSizePriorToZoom_)
+         leftWidthsPriorToZoom.add(width * scale);
       clearZoomBookkeeping();
 
       // If we were zoomed, the snapshot provides the previous 'non-zoom' state.
@@ -1810,7 +1813,22 @@ public class PaneManager
       maximizedTab_ = null;
       widgetSizePriorToZoom_ = -1;
       sidebarSizePriorToZoom_ = -1;
+      panelWidthPriorToZoom_ = -1;
       leftWidgetSizePriorToZoom_.clear();
+   }
+
+   /**
+    * The factor by which the panel has grown or shrunk since the zoom recorded
+    * the column widths. Those are pixel widths, so a window resized during the
+    * zoom would get widths that no longer fit; scaling them is what the panel
+    * does to unzoomed columns on a resize.
+    */
+   private double getZoomSnapshotScale()
+   {
+      double panelWidth = panel_.getOffsetWidth();
+      if (panelWidthPriorToZoom_ <= 0 || panelWidth <= 0)
+         return 1.0;
+      return panelWidth / panelWidthPriorToZoom_;
    }
 
    private void invalidateSavedLayoutState(boolean enableSplitter)
@@ -2655,11 +2673,12 @@ public class PaneManager
             restoreColumnLayout();
             return;
          }
-         rightTargetSize = widgetSizePriorToZoom_;
+         double scale = getZoomSnapshotScale();
+         rightTargetSize = widgetSizePriorToZoom_ * scale;
          for (Double s : leftWidgetSizePriorToZoom_)
-            leftTargetSize.add(s);
+            leftTargetSize.add(s * scale);
          if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ >= 0)
-            sidebarTargetSize = sidebarSizePriorToZoom_;
+            sidebarTargetSize = sidebarSizePriorToZoom_ * scale;
          unZooming = true;
       }
       else if (StringUtil.equals(columnId, LEFT_COLUMN))
@@ -2724,6 +2743,7 @@ public class PaneManager
       {
          widgetSizePriorToZoom_ = -1;
          sidebarSizePriorToZoom_ = -1;
+         panelWidthPriorToZoom_ = -1;
          leftWidgetSizePriorToZoom_.clear();
       }
       else
@@ -2732,6 +2752,7 @@ public class PaneManager
          {
             // right_ is always EAST, so getWidgetSize works in all cases
             widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+            panelWidthPriorToZoom_ = panel_.getOffsetWidth();
          }
          if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ < 0)
             sidebarSizePriorToZoom_ = sidebar_.getOffsetWidth();
@@ -3599,6 +3620,7 @@ public class PaneManager
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private double sidebarSizePriorToZoom_ = -1;
+   private double panelWidthPriorToZoom_ = -1;
    private final ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
 
    private ArrayList<Tab> tabs1_;

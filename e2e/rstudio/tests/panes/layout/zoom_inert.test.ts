@@ -224,6 +224,39 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     }
   }
 
+  test('End Zoom after the window shrinks scales the pre-zoom column widths (#19201)', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    const columns = [SIDEBAR_PANE, CONSOLE_PANE, TABSET1_PANE];
+
+    // Each column's share of the space the columns fill, so that a narrower
+    // window can be compared with a wider one.
+    const readShares = async (): Promise<number[]> => {
+      const widths: number[] = [];
+      for (const column of columns)
+        widths.push(await getSettledWidth(page, column));
+      const total = widths.reduce((a, b) => a + b, 0);
+      return widths.map(w => w / total);
+    };
+
+    const before = await readShares();
+    try {
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+      await page.setViewportSize({ width: Math.round(viewport.width * 0.6), height: viewport.height });
+      await executeCommand(page, 'layoutEndZoom');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
+
+      const after = await readShares();
+      for (let i = 0; i < columns.length; i++)
+        expect(Math.abs(after[i] - before[i]), `${columns[i]} share`).toBeLessThanOrEqual(0.03);
+      await expectExposed(page, ...columns);
+    } finally {
+      await resetLayoutZoom(page);
+      await page.setViewportSize(viewport);
+    }
+  });
+
   test('dragging a column splitter closed hides the column and moves focus out', async ({ rstudioPage: page }) => {
     const splitter = page.locator(MIDDLE_COLUMN_SPLITTER);
     const box = await splitter.boundingBox();
