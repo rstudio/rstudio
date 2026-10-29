@@ -190,12 +190,9 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.refreshPlot().setEnabled(hasPlots);
       commands_.showManipulator().setEnabled(hasPlots);
 
-      // a screen reader user can't otherwise tell that running code produced
-      // a plot, or which plot the history buttons moved to. Announced here
-      // rather than by the presenter, which misses the states superseded
-      // while it is still loading. A plot can first be shown before it has
-      // finished drawing (e.g. while ggplot2 builds it), so its alt text
-      // arriving later is announced too.
+      // announced here, not in the lazily loaded presenter, which misses
+      // states superseded while it loads; alt text arriving after the plot
+      // is shown (e.g. while ggplot2 builds it) is announced too
       String altText = hasPlots ? PlotAltText.forState(plotsState) : null;
       if (altText != null &&
           (plotsState.getActivePlotChanged() ||
