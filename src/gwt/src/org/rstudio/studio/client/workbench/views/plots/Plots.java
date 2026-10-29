@@ -87,8 +87,6 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       String getPlotUrl();
       void setPlotSizeLabel(String label);
 
-      void refresh();
-
       PlotsSurface getPlotsSurface();
 
       Parent getPlotsParent();
