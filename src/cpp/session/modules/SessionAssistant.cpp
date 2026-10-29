@@ -2205,8 +2205,8 @@ void onBackgroundProcessing(bool isIdle, std::chrono::steady_clock::time_point n
             break;
          
          // check for finished
-         auto now = boost::chrono::steady_clock::now();
-         auto elapsed = boost::chrono::duration_cast<boost::chrono::milliseconds>(now - start);
+         auto end = boost::chrono::steady_clock::now();
+         auto elapsed = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start);
          if (elapsed.count() >= 100)
             break;
       }
