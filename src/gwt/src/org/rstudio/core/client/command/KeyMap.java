@@ -40,6 +40,7 @@ public class KeyMap
       public boolean isEnabled();
       public boolean isUserDefinedBinding();
       public AppCommand.Context getContext();
+      public boolean isRoutedOutOfCurrentWindow();
    }
 
    public KeyMap()

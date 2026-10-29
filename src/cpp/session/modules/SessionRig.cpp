@@ -24,8 +24,10 @@
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
@@ -48,6 +50,13 @@ SEXP rs_rigPath()
 {
    r::sexp::Protect rProtect;
    return r::sexp::create(options().rigPath().getAbsolutePath(), &rProtect);
+}
+
+// The snapshot of rig's default-R setup taken before an install, kept on
+// disk so that an install the session does not outlive is still undone.
+FilePath installSnapshotPath()
+{
+   return module_context::userScratchPath().completePath("rig-install-snapshot.rds");
 }
 
 // Installing R runs 'rig add' as a job, reporting its outcome through a
@@ -76,6 +85,27 @@ public:
    const std::string& version() const
    {
       return version_;
+   }
+
+   // The session is exiting while rig runs. rig is stopped here, rather than
+   // left to the session's final child cleanup, so that the job finishes and
+   // undoes what rig added before the session is gone; if rig does not exit
+   // in time, the snapshot stays on disk and the next session undoes it.
+   void onSessionShutdown()
+   {
+      if (!processRunning_)
+         return;
+
+      stopped_ = true;
+
+      // polled directly rather than with the supervisor's wait(), which
+      // runs until every supervised child is gone (the assistant's agent
+      // and the chat backend among them), not just rig
+      for (int i = 0; processRunning_ && i < 100; i++)
+      {
+         module_context::processSupervisor().poll();
+         boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+      }
    }
 
 private:
@@ -156,6 +186,14 @@ private:
       {
          return !self->stopped_;
       };
+      callbacks.onStarted = [self](core::system::ProcessOperations& ops)
+      {
+         std::vector<std::string> notes;
+         Error error = r::exec::RFunction(".rs.rig.userInstallStarted", static_cast<int>(ops.getPid())).call(&notes);
+         if (error)
+            LOG_ERROR(error);
+         self->logNotes(notes);
+      };
       callbacks.onStdout = [self](core::system::ProcessOperations&, const std::string& output)
       {
          self->log(output);
@@ -175,9 +213,34 @@ private:
             self->finish(false, "exited with status " + std::to_string(status));
       };
 
+      // the first R rig installs in user mode becomes the default R outside
+      // RStudio as well (R/Rscript quick links, and on macOS a login
+      // LaunchAgent that sets RSTUDIO_WHICH_R); what the install adds or
+      // changes is put back when the job finishes (#19229)
+      std::vector<std::string> notes;
+      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath()).call(&notes);
+      logNotes(notes);
+      if (beginError)
+      {
+         // without the snapshot there is no undoing what rig adds
+         finish(false, "could not record rig's default R setup: " + r::endUserErrorMessage(beginError));
+         return;
+      }
+
       core::system::ProcessOptions options;
       options.terminateChildren = true;
       options.exitWithParent = true;
+
+#ifndef _WIN32
+      // rig also appends to the shell startup files unless its user-mode
+      // quick-link directory precedes /usr/local/bin on its PATH
+      core::system::Options environment;
+      core::system::environment(&environment);
+      std::string home = core::system::getenv(environment, "HOME");
+      if (!home.empty())
+         core::system::addToPath(&environment, home + "/.local/bin", true);
+      options.environment = environment;
+#endif
 
       Error error = module_context::processSupervisor().runProgram(rigPath, args, options, callbacks);
       if (error)
@@ -203,6 +266,12 @@ private:
    {
       if (pJob_->complete())
          return;
+
+      std::vector<std::string> notes;
+      Error restoreError = r::exec::RFunction(".rs.rig.userInstallEnd").call(&notes);
+      if (restoreError)
+         LOG_ERROR(restoreError);
+      logNotes(notes);
 
       json::Value installed;
       if (ok)
@@ -247,6 +316,12 @@ private:
       pJob_->addOutput(text, false);
    }
 
+   void logNotes(const std::vector<std::string>& notes)
+   {
+      for (const std::string& note : notes)
+         log(note + "\n");
+   }
+
 private:
    std::string version_;
    std::string architecture_;
@@ -257,6 +332,24 @@ private:
 
 // only one installation runs at a time
 boost::shared_ptr<RInstallJob> s_pInstallJob;
+
+void onShutdown(bool)
+{
+   if (s_pInstallJob)
+      s_pInstallJob->onSessionShutdown();
+}
+
+// undo an install a previous session did not get to undo
+void onDeferredInit(bool)
+{
+   std::vector<std::string> notes;
+   Error error = r::exec::RFunction(".rs.rig.userInstallRecover", installSnapshotPath().getAbsolutePath()).call(&notes);
+   if (error)
+      LOG_ERROR(error);
+
+   for (const std::string& note : notes)
+      WLOGF("{}", note);
+}
 
 Error rigInstallRVersion(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
@@ -317,6 +410,9 @@ Error initialize()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_rigPath);
+
+   events().onShutdown.connect(onShutdown);
+   events().onDeferredInit.connect(onDeferredInit);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

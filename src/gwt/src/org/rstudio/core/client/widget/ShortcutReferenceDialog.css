@@ -1,0 +1,100 @@
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+/* Leaves room for the caption and buttons on short windows; the legend takes
+   what it needs (more when it wraps) and the shortcut list scrolls in the rest,
+   so the dialog itself never scrolls the legend out of view */
+.content
+{
+   display: flex;
+   flex-direction: column;
+   width: 85vw;
+   max-width: 1100px;
+   height: 70vh;
+   max-height: literal("calc(100vh - 130px)");
+}
+
+.scroller
+{
+   flex: 1 1 auto;
+   min-height: 4em;
+   overflow: auto;
+}
+
+.legend
+{
+   flex: none;
+}
+
+.groups
+{
+   column-width: 22em;
+   column-gap: 2em;
+   padding-right: 1em;
+}
+
+.groups h2
+{
+   font-size: 1.2em;
+   margin: 0.8em 0 0.4em 0;
+   break-after: avoid;
+}
+
+.groups h2:first-child
+{
+   margin-top: 0;
+}
+
+.groups table
+{
+   border-collapse: collapse;
+   break-inside: avoid;
+}
+
+.groups th,
+.groups td
+{
+   text-align: left;
+   vertical-align: top;
+   padding: 0.15em 1em 0.15em 0;
+   font-weight: normal;
+}
+
+.groups th
+{
+   font-family: fixedWidthFont;
+   font-weight: bold;
+}
+
+.groups kbd
+{
+   font-family: inherit;
+}
+
+.legend dl
+{
+   display: flex;
+   flex-wrap: wrap;
+   gap: 0.3em 1.5em;
+   margin: 0 0 0.75em 0;
+}
+
+.legend dl div
+{
+   display: flex;
+   align-items: baseline;
+   gap: 0.4em;
+}
+
+/* same font as the shortcut table, but large enough to make out each glyph */
+.legend dt
+{
+   font-family: fixedWidthFont;
+   font-weight: bold;
+   font-size: 1.4em;
+   line-height: 1;
+}
+
+.legend dd
+{
+   margin: 0;
+}

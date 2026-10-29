@@ -16,7 +16,9 @@
 #ifndef RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 #define RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 
+#include <chrono>
 #include <cstddef>
+#include <functional>
 #include <string>
 
 #include <shared_core/FilePath.hpp>
@@ -73,6 +75,22 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 // empty (no installation was located) or holds no language server script.
 // Exposed for testing.
 core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
+
+// Whether an agent request made at requestTime has been pending long enough at
+// now that the idle sweep should cancel it as dropped. requestTime is when the
+// request was queued, which can precede the write to the agent. Exposed for testing.
+bool isAgentRequestExpired(std::chrono::steady_clock::time_point requestTime,
+                           std::chrono::steady_clock::time_point now);
+
+// Drive the agent reply loop and expiry sweep without a running agent: register
+// a pending request whose clock started at requestTime (onResult receives
+// whether it was cancelled), queue a raw reply as if read from the agent, and
+// run one background-processing pass. Exposed for testing.
+void addPendingAgentRequestForTesting(const std::string& requestId,
+                                      std::chrono::steady_clock::time_point requestTime,
+                                      const std::function<void(bool)>& onResult);
+void queueAgentReplyForTesting(const std::string& reply);
+void runBackgroundProcessingForTesting(bool isIdle);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
 // its file handles are released. Returns true if the agent stopped (or was not

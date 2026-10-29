@@ -56,6 +56,20 @@ void jsonRpcDownloadHandler(const core::json::JsonRpcFunctionContinuation& cont,
                             const core::ErrorLocation& location,
                             const JsonHandler& jsonHandler);
 
+// R options that override the citation services' base URLs (see
+// serviceBaseUrl()). Kept together so they can't drift from the e2e mock's
+// list in e2e/rstudio/utils/citation-services.ts.
+const char * const kDOIUrlOption = "rstudio.doi_url";
+const char * const kCrossrefUrlOption = "rstudio.crossref_url";
+const char * const kDataCiteUrlOption = "rstudio.datacite_url";
+const char * const kPubMedUrlOption = "rstudio.pubmed_url";
+
+// The base URL of an external citation service: the R option `option` when
+// set (less any trailing slash, since callers append "/<resource>"), else
+// `defaultUrl`. Lets the e2e tests answer lookups from a local mock rather
+// than the live service.
+std::string serviceBaseUrl(const std::string& option, const std::string& defaultUrl);
+
 } // namespace panmirror
 } // namespace modules
 } // namespace session

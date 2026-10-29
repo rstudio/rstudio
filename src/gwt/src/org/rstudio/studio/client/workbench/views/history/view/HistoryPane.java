@@ -42,6 +42,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
 import org.rstudio.studio.client.workbench.views.history.History.SearchBoxDisplay;
@@ -89,7 +90,7 @@ public class HistoryPane extends WorkbenchPane
    @Inject
    public HistoryPane(Commands commands, EventBus events, UserPrefs userPrefs)
    {
-      super(constants_.historyTitle(), events);
+      super(constants_.historyTitle(), PaneManager.HISTORY_PANE, events);
       commands_ = commands;
       userPrefs_ = userPrefs;
       ensureWidget();

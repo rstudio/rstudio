@@ -17,6 +17,7 @@ package org.rstudio.core.client.cellview;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 
 import com.google.gwt.cell.client.Cell;
@@ -118,14 +119,31 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
    public void render(Context context, Boolean value, SafeHtmlBuilder sb)
    {
       ImageResource2x img;
+      String glyph;
       if (value == null)
+      {
          img = new ImageResource2x(RES.checkboxIndeterminate2x());
+         glyph = "rstudio-glyph-checkbox-indeterminate";
+      }
       else if (value)
+      {
          img = new ImageResource2x(RES.checkboxOn2x());
+         glyph = "rstudio-glyph-checkbox-on";
+      }
       else
+      {
          img = new ImageResource2x(RES.checkboxOff2x());
+         glyph = "rstudio-glyph-checkbox-off";
+      }
 
-      sb.append(img.getSafeHtml());
+      // Contrast themes do not recolor bitmaps; these classes let themeStyles.css
+      // redraw the checkbox in the contrast theme's text color.
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+            "class", "rstudio-forced-colors-glyph " + glyph,
+            "src", img.getSafeUri().asString(),
+            "width", Integer.toString(img.getWidth()),
+            "height", Integer.toString(img.getHeight()),
+            "alt", ""));
    }
 
    @Override

@@ -110,7 +110,12 @@ public:
          return Success();
 
       // defer if R is currently executing code (we'll initiate processing when
-      // the console continues)
+      // the console continues). R running an input handler from the idle loop
+      // (a later callback) defers too, although the console is at its prompt
+      // and will not prompt again when the handler returns: the chunk then
+      // waits for the next console command. A retry on idle would run a chunk
+      // the client has dropped on an interrupt meanwhile, since that drop
+      // does not reach the server yet (#19257)
       if (!module_context::isPythonReplActive() && !r::session::isAtTopLevel())
          return Success();
 
@@ -211,9 +216,13 @@ public:
 
    void clear()
    {
-      // clean up any active execution context
+      // clean up any active execution context (once: a cleared queue is
+      // cleared again by its destructor)
       if (execContext_)
+      {
          execContext_->disconnect();
+         execContext_.reset();
+      }
       if (execUnit_)
          execUnit_.reset();
 

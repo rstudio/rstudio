@@ -63,8 +63,6 @@ Once the \"Screen Reader Support\" mode is toggled on, you will hear the followi
 
 You can press tab to find \"Yes\" button and press spacebar. RStudio Server then reloads the page with screen reader support enabled; RStudio Desktop restarts.
 
-On RStudio Server, if some of your source edits are still being saved, your browser may ask \"Reload site? Changes you made may not be saved.\" Choose \"Cancel\", wait a moment, and then reload the page yourself. The screen reader setting has already been saved, so it takes effect after the reload.
-
 Besides the basic screen reader support, you can adjust various accessibility settings at Help / Accessibility / Accessibility Options...
 
 To open this configuration, do the following:
@@ -152,13 +150,13 @@ A full list of shortcuts for accessing each menu is as follows:
 
 ### Keyboard shortcuts help
 
-RStudio has a list of keyboard shortcuts that you can refer to anytime. To bring up the keyboard help, press \"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac.
+RStudio has a list of keyboard shortcuts that you can refer to anytime. To bring up the keyboard help, press \"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac. It opens in a dialog, with focus on the list of shortcuts.
 
 Each section has been marked up with proper headings (H2 tag) so that you can jump between different categories using screen readers\' quick navigation keys.
 
-Under the headings, shortcuts are organized in a simple table form in which you can utilize screen readers\' table navigation keys.
+Under the headings, shortcuts are organized in a simple table form in which you can utilize screen readers\' table navigation keys. If the quick navigation keys do not respond, make sure your screen reader\'s browse mode is on.
 
-Simply close the opened tab after you finish reading the content to go back to the RStudio main page.
+Press \"Escape\", or activate the Close button, to close the dialog and return to where you were.
 
 ### Console navigation
 
@@ -174,7 +172,7 @@ If you would like to review the executed output in more detail via arrow keys, y
 
 An useful shortcut key to clear the entire console output is \"Ctrl+L\". You may want to press this key before executing a new command to secure a cleaner output buffer for screen readers.
 
-More useful keyboard shortcuts for source editor can be found under the \"Console\" and \"Editing (Console and Source)\" sections at Keyboard Shortcuts Help (\"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac).
+More useful keyboard shortcuts for the console can be found under the \"Console\", \"Editing\", and \"Completion\" sections at Keyboard Shortcuts Help (\"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac).
 
 -   Notes for Mac Users: the default VoiceOver modifier (VO) key conflict with any RStudio\'s shortcuts using Ctrl+Opt key combinations like above. Please use the VoiceOver pass-through keys (Ctrl+Opt+Tab) each time before pressing any RStudio\'s shortcuts requiring Ctrl+Opt key combination. Or, you can change the VO modifier key into \"Caps Lock\" via VoiceOver Utility (VO+F8) / General / \"Keys to use as the VoiceOver modifier\" setting.
 
@@ -190,7 +188,7 @@ Technically, you can utilize all the standard navigation keys (e.g., Home, End, 
 
 An useful shortcut key to control the tab key behavior is \"Alt+Shift+\[ (left bracket)\" on Windows or Linux; \"Ctrl+Opt+\[ (left bracket)\" on Mac. This toggles a mode of whether or not the Tab key will always move focus to the next element , even when in a text editing control.
 
-More useful keyboard shortcuts for source editor can be found under the \"Source\" and \"Editing (Console and Source)\" sections at Keyboard Shortcuts Help (\"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac).
+More useful keyboard shortcuts for source editor can be found under the \"Source Editor\", \"Source Navigation\", and \"Editing\" sections at Keyboard Shortcuts Help (\"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac).
 
 -   Notes for Cursor Movement: In any event your screen readers do not read anything when using up/down-arrow keys in either console input area or source editor, please place your cursor at the end of current line by pressing \"End\" key, and then try again.
 
