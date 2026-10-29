@@ -19,7 +19,7 @@ package org.rstudio.core.client.command;
 // - Given a command, one can discover what key sequences it is bound to.
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Map;
 
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.DirectedGraph;
@@ -182,12 +182,6 @@ public class KeyMap
 
    public boolean isPrefix(KeySequence keys)
    {
-      return isPrefix(keys, binding -> true);
-   }
-
-   // Whether keys lead to a binding that would be active and that accept allows
-   public boolean isPrefix(KeySequence keys, Predicate<CommandBinding> accept)
-   {
       DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());
       if (node == null)
          return false;
@@ -202,14 +196,11 @@ public class KeyMap
             if (bindings == null || bindings.isEmpty())
                return true;
 
-            // As in getActiveBinding(), only the first enabled binding counts, and
-            // dispatch stops at it, so it hides any longer binding below it
             for (CommandBinding binding : bindings)
             {
                if (binding.isEnabled())
                {
-                  if (accept.test(binding))
-                     pending.set(true);
+                  pending.set(true);
                   return false;
                }
             }
@@ -219,6 +210,33 @@ public class KeyMap
       });
 
       return pending.get();
+   }
+
+   // Returns the longer key sequences that start with keys and have an active
+   // binding (as in getActiveBinding()) in this map. Typing stops at the first
+   // of these, so sequences that extend one of them are left out.
+   public List<KeySequence> getActiveExtensions(KeySequence keys, boolean includeDisabled)
+   {
+      List<KeySequence> extensions = new ArrayList<>();
+      DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.findNode(keys.getData());
+      if (node != null)
+         addActiveExtensions(node, includeDisabled, extensions);
+      return extensions;
+   }
+
+   private void addActiveExtensions(DirectedGraph<KeyCombination, List<CommandBinding>> node,
+                                    boolean includeDisabled,
+                                    List<KeySequence> extensions)
+   {
+      for (Map.Entry<KeyCombination, DirectedGraph<KeyCombination, List<CommandBinding>>> entry :
+           node.getChildren().entrySet())
+      {
+         KeySequence keys = new KeySequence(entry.getValue().getKeyChain());
+         if (getActiveBinding(keys, includeDisabled) != null)
+            extensions.add(keys);
+         else
+            addActiveExtensions(entry.getValue(), includeDisabled, extensions);
+      }
    }
 
    public void forEachBinding(final CommandWith2Args<KeySequence, List<CommandBinding>> command)

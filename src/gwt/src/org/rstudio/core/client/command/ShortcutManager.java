@@ -363,7 +363,8 @@ public class ShortcutManager implements NativePreviewHandler,
 
    // Handles a keydown that Posit Assistant forwarded from its iframe (see
    // AssistantKeyForwarder). Only workbench-level commands run, and in a satellite
-   // only those that run in another window, so PA keeps every other key.
+   // only those that run in another window. PA keeps every other key, except while
+   // the strokes typed so far lead to one of those commands.
    public boolean onAssistantKeyDown(NativeEvent event)
    {
       keyTimer_.schedule(3000);
@@ -373,27 +374,48 @@ public class ShortcutManager implements NativePreviewHandler,
          return true;
       }
 
-      // Claim the first stroke of a shortcut that can run from here, so the browser's
-      // default action doesn't run (swallowEvents() can't see keys in PA's iframe).
-      // PA keeps any other key, so a prefix of commands it can't run is dropped.
-      if (isAssistantPrefix())
-         return true;
+      // handleKeyDown() keeps only such strokes in the buffer. Claim keys while it
+      // holds them, as swallowEvents() does for keys outside PA's iframe.
+      return !keyBuffer_.isEmpty();
+   }
 
-      clearKeyBuffer();
+   // Whether more keys could dispatch a command that runs from Posit Assistant
+   private boolean isAssistantPrefix()
+   {
+      for (KeyMap map : keyMaps_.values())
+      {
+         for (KeySequence keys : map.getActiveExtensions(keyBuffer_, reportShortcutBinding_))
+         {
+            CommandBinding binding = getDispatchedBinding(keys);
+            if (binding != null && canRunFromAssistant(binding))
+               return true;
+         }
+      }
       return false;
    }
 
-   private boolean isAssistantPrefix()
+   // The binding that typing keys after the key buffer would dispatch, or null if
+   // the buffer dispatches a shorter sequence or is cleared first. As in
+   // handleKeyDown(), the first key map with an active binding wins.
+   private CommandBinding getDispatchedBinding(KeySequence keys)
    {
-      if (keyBuffer_.isEmpty())
-         return false;
-
-      for (KeyMap map : keyMaps_.values())
+      KeySequence typed = keyBuffer_.clone();
+      while (typed.size() < keys.size())
       {
-         if (map.isPrefix(keyBuffer_, ShortcutManager::canRunFromAssistant))
-            return true;
+         KeyCombination stroke = keys.get(typed.size());
+         typed.add(stroke);
+         for (KeyMap map : keyMaps_.values())
+         {
+            CommandBinding binding = map.getActiveBinding(typed, reportShortcutBinding_);
+            if (binding != null)
+               return typed.size() == keys.size() ? binding : null;
+         }
+
+         // A stroke without a modifier that dispatches nothing clears the buffer
+         if (stroke.getModifier() == KeyboardShortcut.NONE)
+            return null;
       }
-      return false;
+      return null;
    }
 
    private static boolean canRunFromAssistant(CommandBinding binding)
@@ -662,7 +684,10 @@ public class ShortcutManager implements NativePreviewHandler,
             reportShortcutUnbound();
          }
       }
-      
+
+      // Posit Assistant keeps keys that lead only to commands it can't run
+      if (fromAssistant && pending)
+         pending = isAssistantPrefix();
 
       if (!(pending || isPrefixForEditor(keyCombination, event)))
          clearKeyBuffer();
