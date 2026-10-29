@@ -90,6 +90,7 @@ private:
    bool hasManipulatorFile() const;
    core::FilePath manipulatorFilePath(const std::string& storageUuid) const;
    void loadManipulatorIfNecessary() const;
+   void readAltText();
    void saveManipulator(const std::string& storageUuid) const;
 
 private:

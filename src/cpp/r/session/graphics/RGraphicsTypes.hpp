@@ -73,7 +73,7 @@ struct GraphicsDeviceFunctions
    boost::function<std::string()> imageFileExtension;
    boost::function<void()> close;
    boost::function<void()> onBeforeExecute;
-   boost::function<std::string()> altText;
+   boost::function<core::Error(std::string*)> altText;
 };
 
 

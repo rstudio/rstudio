@@ -814,17 +814,17 @@ void copyToActiveDevice()
    r::exec::RFunction(".rs.GEcopyDisplayList", rsDeviceNumber).call();
 }
    
-std::string altText()
+Error altText(std::string* pAltText)
 {
+   // without a device nothing has been drawn, so there is no alt text
    if (s_pGEDevDesc == nullptr)
-      return std::string();
+   {
+      pAltText->clear();
+      return Success();
+   }
 
-   std::string altText;
-   Error error = r::exec::RFunction(".rs.graphicsAltText",
-                                    s_pGEDevDesc->displayList).callUtf8(&altText);
-   if (error)
-      LOG_ERROR(error);
-   return altText;
+   return r::exec::RFunction(".rs.graphicsAltText",
+                             s_pGEDevDesc->displayList).callUtf8(pAltText);
 }
 
 std::string imageFileExtension()

@@ -129,7 +129,7 @@ Error Plot::renderFromDisplay()
         (renderedSize() == graphicsDevice_.displaySize()) )
    {
       if (!altText_)
-         altText_ = graphicsDevice_.altText();
+         readAltText();
       return Success();
    }
 
@@ -155,7 +155,8 @@ Error Plot::renderFromDisplay()
    // update state
    storageUuid_ = storageUuid;
    needsUpdate_ = false;
-   altText_ = graphicsDevice_.altText();
+   altText_ = boost::none;
+   readAltText();
    
    // return error status 
    return removeError;
@@ -208,6 +209,18 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
 std::string Plot::altText() const
 {
    return altText_.get_value_or(std::string());
+}
+
+void Plot::readAltText()
+{
+   std::string altText;
+   Error error = graphicsDevice_.altText(&altText);
+
+   // leave it unread, rather than read as empty, so the next render retries
+   if (error)
+      LOG_ERROR(error);
+   else
+      altText_ = altText;
 }
 
 std::string Plot::imageFilename() const
