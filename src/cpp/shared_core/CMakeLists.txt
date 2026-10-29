@@ -106,10 +106,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${SHARED_CORE_HEADER_FILES}
    )
 
-   target_include_directories(rstudio-shared-core-tests PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}/../tests/cpp/tests/vendor
-   )
-
    target_link_libraries(rstudio-shared-core-tests
       rstudio-core
       GTest::gtest

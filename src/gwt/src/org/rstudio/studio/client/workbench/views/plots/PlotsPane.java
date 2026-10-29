@@ -37,6 +37,7 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.ui.PlotsToolbar;
@@ -49,7 +50,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display
    public PlotsPane(Commands commands, EventBus events, PlotsServerOperations server,
          DependencyManager dependencies)
    {
-      super(constants_.plotsTitle(), events);
+      super(constants_.plotsTitle(), PaneManager.PLOTS_PANE, events);
       commands_ = commands;
       server_ = server;
       dependencies_ = dependencies;

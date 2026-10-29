@@ -68,6 +68,9 @@ public class AboutDialogContents extends Composite
       versionMajorLabel.setText(info.version_major + "." + info.version_minor + "." + info.version_patch);
       versionBuildLabel.setText(constants_.versionBuildLabel() + info.version_suffix.split("\\+")[1]);
 
+      // Automated tests locate the dialog's content by this id
+      productInfo.getElement().setId("productinfo");
+
       // a11y
       productName.getElement().setTabIndex(-1);
       // Read the hint as each new-window link's description, not as a separate item
@@ -159,6 +162,7 @@ public class AboutDialogContents extends Composite
    @UiField HTMLPanel preReleaseRibbon;
    @UiField TextArea licenseBox;
    @UiField Label productName;
+   @UiField HTMLPanel productInfo;
    @UiField InlineLabel supportNotice;
    @UiField Anchor trademarkLink;
    @UiField Anchor gplLink;

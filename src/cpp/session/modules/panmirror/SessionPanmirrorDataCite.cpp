@@ -123,7 +123,8 @@ void dataCiteRequest(const std::string& resource,
 
    // build the url and make the request
    boost::format fmt("%s/%s%s");
-   const std::string url = boost::str(fmt % kDataCiteApiHost % resource % queryString);
+   const std::string host = serviceBaseUrl(kDataCiteUrlOption, kDataCiteApiHost);
+   const std::string url = boost::str(fmt % host % resource % queryString);
 
    asyncDownloadFile(url, boost::bind(jsonRpcDownloadHandler, cont, _1, ERROR_LOCATION,
                                       [handler](const core::json::JsonRpcFunctionContinuation& cont,
@@ -178,6 +179,9 @@ void dataCiteSearch(const json::JsonRpcRequest& request,
    // build params
    core::http::Fields params;
    params.push_back(std::make_pair("query", query));
+
+   // DataCite otherwise lists matches newest-first
+   params.push_back(std::make_pair("sort", "relevance"));
 
    // make request
    dataCiteRequest("dois", params, cont,

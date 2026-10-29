@@ -2,6 +2,7 @@
 // debugger.test.ts:
 //
 //   - multi-line input at the Browse[N]> prompt preserves browser state
+//   - entering the debugger selects the Environment tab
 //   - clicking a top-level breakpoint marker toggles it off (#9450)
 //   - Clear All Breakpoints removes every marker (#9450, @server_only --
 //     on Desktop the confirm dialog is a native Electron messagebox)
@@ -23,6 +24,9 @@ import { waitForConsoleFocus, waitForConsoleIdle } from '@pages/console_pane.pag
 import { heredoc } from '@utils/heredoc';
 
 const sandbox = useSuiteSandbox();
+
+const ENVIRONMENT_TAB = '#rstudio_workbench_tab_environment';
+const HISTORY_TAB = '#rstudio_workbench_tab_history';
 
 let consoleActions: ConsolePaneActions;
 let debuggerActions: DebuggerActions;
@@ -156,6 +160,21 @@ test.describe('R debugger extras', () => {
 
       // Debug highlight should still be visible after the multi-line eval.
       await expect(debuggerActions.debuggerPage.activeDebugLine.first()).toBeVisible();
+    });
+  });
+
+  // Entering the debugger brings the Environment tab forward from behind
+  // another tab in its pane.
+  test.describe.serial('Debugger entry', { tag: ['@serial'] }, () => {
+    test.afterEach(resetAfterTest);
+
+    test('selects the Environment tab', async ({ rstudioPage: page }) => {
+      await executeCommand(page, 'activateHistory');
+      await expect(page.locator(HISTORY_TAB)).toHaveAttribute('aria-selected', 'true');
+
+      await consoleActions.executeInConsole('(function() browser())()');
+      await debuggerActions.waitForDebugMode();
+      await expect(page.locator(ENVIRONMENT_TAB)).toHaveAttribute('aria-selected', 'true');
     });
   });
 

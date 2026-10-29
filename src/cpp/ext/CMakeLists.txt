@@ -205,7 +205,6 @@ function(fetch)
                set(do_fetch FALSE)
             endif()
          endif()
-         set(${_PREFIX}_FETCHED ${do_fetch})
          set(${_PREFIX}_FETCHED ${do_fetch} PARENT_SCOPE)
          if(do_fetch)
             FetchContent_Declare("${_NAME}"

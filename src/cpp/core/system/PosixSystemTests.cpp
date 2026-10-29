@@ -20,6 +20,7 @@
 
 #include <grp.h>
 #include <limits.h>
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/socket.h>
@@ -423,6 +424,231 @@ TEST(PosixTests, NoSubprocessesGeneric)
       ::kill(pid, SIGKILL);
       ::waitpid(pid, nullptr, 0);
    }
+}
+
+namespace {
+
+// Polls waitpid() so a test cannot hang on a process that fails to exit.
+bool reapWithin(pid_t pid, int* pStatus, int seconds)
+{
+   for (int i = 0; i < seconds * 100; i++)
+   {
+      pid_t result = ::waitpid(pid, pStatus, WNOHANG);
+      if (result == pid)
+         return true;
+      if (result == -1)
+         return false;
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+
+   return false;
+}
+
+// Reaps every child of ours in a process group, within a bound.
+void reapGroupWithin(pid_t pgid, int seconds)
+{
+   for (int i = 0; i < seconds * 100; i++)
+   {
+      int status = 0;
+      pid_t result = ::waitpid(-pgid, &status, WNOHANG);
+      if (result == -1)
+         return;
+      if (result == 0)
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+}
+
+// Reads one pid from a pipe, retrying interrupted calls until the deadline.
+bool readPidWithin(int fd, pid_t* pPid, int seconds)
+{
+   auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
+   for (;;)
+   {
+      auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
+               deadline - std::chrono::steady_clock::now()).count();
+      if (remaining <= 0)
+         return false;
+
+      struct pollfd readable = {fd, POLLIN, 0};
+      int ready = ::poll(&readable, 1, static_cast<int>(remaining));
+      if (ready == -1 && errno == EINTR)
+         continue;
+      if (ready != 1)
+         return false;
+
+      ssize_t bytes = ::read(fd, pPid, sizeof(*pPid));
+      if (bytes == -1 && errno == EINTR)
+         continue;
+      return bytes == static_cast<ssize_t>(sizeof(*pPid));
+   }
+}
+
+} // anonymous namespace
+
+TEST(PosixTests, TerminateProcessTreeTakesDescendants)
+{
+#ifdef __linux__
+   // adopt the grandchild once its parent is gone, so it is reaped here
+   // rather than by whatever runs as pid 1 (which may not, in a container)
+   int previousSubreaper = 0;
+   ASSERT_EQ(0, ::prctl(PR_GET_CHILD_SUBREAPER, &previousSubreaper));
+   ASSERT_EQ(0, ::prctl(PR_SET_CHILD_SUBREAPER, 1));
+   BOOST_SCOPE_EXIT(&previousSubreaper)
+   {
+      ::prctl(PR_SET_CHILD_SUBREAPER, previousSubreaper);
+   }
+   BOOST_SCOPE_EXIT_END
+#endif
+
+   // the grandchild reports its own pid over a pipe once it is set up, so
+   // the test can take it down even if discovering it through the process
+   // table fails; the child puts both in a process group of their own, so
+   // cleanup can reach the grandchild even before it has reported
+   int fds[2];
+   ASSERT_EQ(0, ::pipe(fds));
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::close(fds[0]);
+      if (::setpgid(0, 0) == -1)
+         ::_exit(1);
+
+      pid_t grandchild = ::fork();
+      if (grandchild == -1)
+         ::_exit(1);
+
+      if (grandchild == 0)
+      {
+#ifdef __linux__
+         // a space in the name shifts the fields of /proc/<pid>/stat when
+         // the line is split naively, hiding the parent pid
+         ::prctl(PR_SET_NAME, "worker thread");
+#endif
+         pid_t self = ::getpid();
+         (void)::write(fds[1], &self, sizeof(self));
+      }
+      ::close(fds[1]);
+
+      // child and grandchild both idle until signalled; the alarm is a
+      // safety net should the test fail to take one of them down
+      ::alarm(30);
+      for (;;)
+         ::pause();
+   }
+   ::close(fds[1]);
+
+   bool childReaped = false;
+   bool grandchildReaped = false;
+   BOOST_SCOPE_EXIT(&fds, &child, &childReaped, &grandchildReaped)
+   {
+      ::close(fds[0]);
+
+      // the group's pid is the child's, which stays reserved while any
+      // member of the group is alive; the child is also reaped by pid, in
+      // case it never joined the group
+      if (!childReaped || !grandchildReaped)
+      {
+         ::kill(-child, SIGKILL);
+         ::kill(child, SIGKILL);
+         reapGroupWithin(child, 5);
+      }
+
+      if (!childReaped)
+      {
+         int status = 0;
+         reapWithin(child, &status, 5);
+      }
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // from here too, so the group exists before the timed read, however far
+   // the child has got; the same group twice is a no-op
+   ASSERT_EQ(0, ::setpgid(child, child));
+
+   pid_t grandchild = 0;
+   ASSERT_TRUE(readPidWithin(fds[0], &grandchild, 5));
+   ASSERT_GT(grandchild, 0);
+
+   std::vector<SubprocInfo> grandchildren;
+   for (int i = 0; i < 500 && grandchildren.empty(); i++)
+   {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      grandchildren = getSubprocesses(child);
+   }
+   ASSERT_EQ(1u, grandchildren.size());
+   EXPECT_EQ(grandchild, grandchildren[0].pid);
+
+   Error error = terminateProcessTree(child);
+   EXPECT_FALSE(error) << error.asString();
+
+   int status = 0;
+   childReaped = reapWithin(child, &status, 5);
+   ASSERT_TRUE(childReaped);
+   EXPECT_TRUE(WIFSIGNALED(status));
+   EXPECT_EQ(SIGTERM, WTERMSIG(status));
+
+#ifdef __linux__
+   grandchildReaped = reapWithin(grandchild, &status, 5);
+   ASSERT_TRUE(grandchildReaped);
+   EXPECT_TRUE(WIFSIGNALED(status));
+   EXPECT_EQ(SIGTERM, WTERMSIG(status));
+#else
+   // reparented to launchd, which reaps it
+   for (int i = 0; i < 500 && isProcessRunning(grandchild); i++)
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   grandchildReaped = !isProcessRunning(grandchild);
+   EXPECT_TRUE(grandchildReaped);
+#endif
+}
+
+TEST(PosixTests, TerminateProcessTreeOfMissingProcessIsAnError)
+{
+   Error error = terminateProcessTree(std::numeric_limits<pid_t>::max());
+   EXPECT_TRUE(error);
+}
+
+TEST(PosixTests, TerminateProcessTreeRejectsNegativePid)
+{
+   // kill() reads a negative pid as a process group. The call is made from
+   // a child that leads a group of its own and blocks SIGTERM, so a pid that
+   // got through could signal nothing else, and would leave SIGTERM pending
+   // rather than end the child. 0 and -1 reach beyond any such group, so
+   // they are not exercised.
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      sigset_t terminate;
+      sigemptyset(&terminate);
+      sigaddset(&terminate, SIGTERM);
+      if (::setpgid(0, 0) != 0 || ::sigprocmask(SIG_BLOCK, &terminate, nullptr) != 0)
+         ::_exit(3);
+
+      Error error = terminateProcessTree(-::getpid());
+      if (!error || error.getCode() != EINVAL)
+         ::_exit(1);
+
+      sigset_t pending;
+      if (::sigpending(&pending) != 0 || sigismember(&pending, SIGTERM))
+         ::_exit(2);
+
+      ::_exit(0);
+   }
+
+   int status = 0;
+   bool reaped = reapWithin(child, &status, 5);
+   if (!reaped)
+   {
+      ::kill(child, SIGKILL);
+      ::waitpid(child, nullptr, 0);
+   }
+   ASSERT_TRUE(reaped);
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status))
+      << "1: not rejected with EINVAL; 2: the group was signalled; 3: setup failed";
 }
 
 TEST(PosixTests, WorkingDirGeneric)

@@ -16,8 +16,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -672,18 +670,6 @@ public class CodePreferencesPane extends PreferencesPane
       String editorMode = editorMode_.getValue();
 
       prefs_.editorKeybindings().setGlobalValue(editorMode);
-      boolean isVim = editorMode == UserPrefs.EDITOR_KEYBINDINGS_VIM;
-      boolean isEmacs = editorMode == UserPrefs.EDITOR_KEYBINDINGS_EMACS;
-      boolean isSublime = editorMode == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME;
-
-      if (isVim)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (isEmacs)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else if (isSublime)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
-      else
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
 
       prefs_.indentGuides().setGlobalValue(indentGuides_.getValue());
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());

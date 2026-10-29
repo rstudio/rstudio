@@ -254,6 +254,21 @@ export class ChatPane extends FramePageObject {
   }
 
   /**
+   * Empty the chat composer. typeMessage() only appends, and a draft whose
+   * send was refused (e.g. while readline() blocks the turn) is still there
+   * after the turn ends.
+   */
+  async clearMessage(): Promise<void> {
+    if (!(await this.chatInput.textContent())) {
+      return;
+    }
+
+    await this.chatInput.click();
+    await this.chatInput.press('ControlOrMeta+a');
+    await this.chatInput.press('Backspace');
+  }
+
+  /**
    * Get the rename option from the context menu
    */
   getRenameMenuItem(): Locator {

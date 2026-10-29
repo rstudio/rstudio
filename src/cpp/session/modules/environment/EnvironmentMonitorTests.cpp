@@ -24,6 +24,7 @@
 #include "../../SessionClientEventQueue.hpp"
 #include "EnvironmentMonitor.hpp"
 #include "EnvironmentUtils.hpp"
+#include "SessionEnvironment.hpp"
 
 namespace rstudio {
 namespace session {
@@ -319,6 +320,24 @@ TEST_F(GlobalEnvironmentMonitorTest, LastValueChangeInEmptyWorkspaceIsNotReporte
    EXPECT_FALSE(drainEnvironmentEvents(&eventNames));
    EXPECT_TRUE(eventNames.empty());
    EXPECT_TRUE(signals_.empty());
+}
+
+// whether the session counts as suspendable is refreshed whenever the console
+// returns to its prompt: a prompt the REPL issued and one reissued after R ran
+// code from the idle loop both fire detect-changes for the REPL (#19236)
+TEST(EnvironmentSuspendabilityTest, ExternalPointerIsFoundOnReturnToPrompt)
+{
+   const char kName[] = "rsEnvironmentSuspendabilityTestPointer";
+
+   // a DLL handle is an external pointer, which cannot be serialized
+   ASSERT_FALSE(evaluate(
+      "assign('" + std::string(kName) + "', getLoadedDLLs()[['base']][['handle']], envir = globalenv())"));
+   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
+   EXPECT_FALSE(isSuspendable());
+
+   EXPECT_FALSE(removeGlobal(kName));
+   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
+   EXPECT_TRUE(isSuspendable());
 }
 
 TEST(EnvironmentListingPrefsTest, PaneListsNamesPerPrefs)

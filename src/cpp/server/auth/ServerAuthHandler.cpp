@@ -368,7 +368,7 @@ void removeExpiredCookies()
 bool isCookieExpired(const std::string& cookie,
                      boost::optional<boost::posix_time::ptime>* pLoginExpiry,
                      std::string *pDebugInfo)
-{ 
+{
    boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
    std::string value, debugInfo;
    boost::posix_time::ptime expiry;
@@ -462,7 +462,7 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
                           bool* pExists)
 {
    LOG_DEBUG_MESSAGE("User db query start: " + user.getUsername());
-   
+
    *pLocked = true;
 
    const auto usernameColName = overlay::getUsernameDbColumnName();
@@ -497,7 +497,7 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
       int uid = row.get<int>(1);
       bool locked = row.get<int>(3) == 1;
 
-      // Check the last signin time. If we haven't seen a row for this user yet, update the time. 
+      // Check the last signin time. If we haven't seen a row for this user yet, update the time.
       // Otherwise, if there are somehow multiple rows for this user, update
       // Ignore rows without a perfect username/uid match (except with uinitialized uids [<0])
       // Safe static cast, because we already handled uid < 0
@@ -517,7 +517,7 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
       if (row.get<int>(1) < 0)
       {
          LOG_DEBUG_MESSAGE("Updating posix user ID in database: " + user.getUsername());
-   
+
          Query setUidQuery = connection->query("UPDATE licensed_users SET user_id = :uid WHERE user_name = :username and user_id = :olduid")
             .withInput(user.getUserId())
             .withInput(username)
@@ -560,14 +560,14 @@ Error addUser(boost::asio::io_context& ioContext,
    {
       return dbUnavailableError("Cannot add user", username, ERROR_LOCATION);
    }
-   
+
    system::User user;
    Error error = system::getUserFromUsername(username, user);
    if (error)
       return error;
 
-   // NOTE: this implementation runs the same query twice - once here in the call to 
-   // getUserFromDatabase and once in isUserLicensed; however, this function is only called by the 
+   // NOTE: this implementation runs the same query twice - once here in the call to
+   // getUserFromDatabase and once in isUserLicensed; however, this function is only called by the
    // rstudio-server add-user command, so the slightly worse performance should not
    // be a concern.
    // check if user already exists - if they do, there's nothing for us to do
@@ -604,14 +604,25 @@ Error addUser(boost::asio::io_context& ioContext,
    }
 }
 
-json::Array getAllUsers()
+Result<json::Array> getAllUsers()
 {
    boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
+   if (!server_core::database::getConnection(
+         boost::posix_time::seconds(server::options().dbConnectionTimeout()),
+         &connection))
+      return Unexpected(systemError(boost::system::errc::resource_unavailable_try_again,
+                                    "Could not get list of users - no database connection available",
+                                    ERROR_LOCATION));
+   return getAllUsers(connection);
+}
+
+Result<json::Array> getAllUsers(const DatabaseConnection& connection)
+{
+   if (!connection)
    {
-      LOG_ERROR_MESSAGE("Could not get list of users - "
-                        "timed out while attempting to get database connection");
-      return json::Array();
+      return Unexpected(systemError(boost::system::errc::resource_unavailable_try_again,
+                                    "Could not get list of users - no database connection available",
+                                    ERROR_LOCATION));
    }
 
    const auto usernameColName = overlay::getUsernameDbColumnName();
@@ -623,7 +634,7 @@ json::Array getAllUsers()
    {
       error.addProperty("description",
                         "Could not get licensed users due to database error");
-      LOG_ERROR(error);
+      return Unexpected(error);
    }
 
    json::Array licensedUsers;
@@ -673,7 +684,7 @@ Error updateLastSignin(const boost::shared_ptr<IConnection>& connection,
 Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
                         const system::User& user,
                         bool isAdmin)
-{ 
+{
    LOG_DEBUG_MESSAGE("Adding user to database: " + user.getUsername());
 
    Error error = overlay::addUserToDatabase(connection, user, isAdmin);
@@ -826,7 +837,7 @@ Error isUserLicensed(const system::User& user,
          *pLicensed = false;
          return Success();
       }
-      
+
       error = addUserToDatabase(connection, user, isAdmin);
       if (error)
          return error;
@@ -838,7 +849,7 @@ Error isUserLicensed(const system::User& user,
          if (error)
             return error;
       }
-      
+
       // added successfully, and there's space for the user
       *pLicensed = true;
       return Success();
@@ -884,7 +895,7 @@ boost::posix_time::ptime parseDateStr(const std::string& strTime)
 
 void onCookieRevoked(const std::string& cookie)
 {
-   
+
 }
 
 // uri constants
