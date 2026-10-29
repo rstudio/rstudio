@@ -23,6 +23,10 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
 
+#include <session/SessionSourceDatabase.hpp>
+
+#include "SessionLSP.hpp"
+
 namespace rstudio {
 namespace session {
 namespace tests {
@@ -30,7 +34,6 @@ namespace tests {
 using core::FilePath;
 using modules::assistant::addPendingAgentRequestForTesting;
 using modules::assistant::AgentStderrTail;
-using modules::assistant::closeDocumentForTesting;
 using modules::assistant::focusDocumentForTesting;
 using modules::assistant::agentRequestTimeout;
 using modules::assistant::agentStderrTail;
@@ -39,7 +42,7 @@ using modules::assistant::queueAgentNotificationForTesting;
 using modules::assistant::queueAgentReplyForTesting;
 using modules::assistant::resetForNewAgentForTesting;
 using modules::assistant::runBackgroundProcessingForTesting;
-using modules::assistant::sendFocusForTesting;
+using modules::assistant::resendFocusForTesting;
 using modules::assistant::ServicedClock;
 using modules::assistant::writeQueuedAgentRequestsForTesting;
 using std::chrono::milliseconds;
@@ -423,6 +426,8 @@ std::vector<std::string> writesAfterInitialization()
    return operations.writes;
 }
 
+// Whether the writes include a focus notification for uri, or for any
+// document when uri is empty.
 bool containsFocus(const std::vector<std::string>& writes, const std::string& uri)
 {
    for (const std::string& write : writes)
@@ -434,26 +439,95 @@ bool containsFocus(const std::vector<std::string>& writes, const std::string& ur
    return false;
 }
 
-TEST(SessionAssistant, NewAgentIsSentFocusFromBeforeItStarted)
+// R documents in the source database, as the editor has them open.
+class FocusedDocumentTest : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FilePath::tempFilePath(dir_);
+      dir_.ensureDirectory();
+      resetForNewAgentForTesting();
+   }
+
+   void TearDown() override
+   {
+      for (const std::string& id : ids_)
+         source_database::remove(id);
+      dir_.removeIfExists();
+   }
+
+   std::string open(const std::string& fileName)
+   {
+      auto pDoc = boost::make_shared<source_database::SourceDocument>(kSourceDocumentTypeRSource);
+      moveTo(pDoc, fileName);
+      ids_.push_back(pDoc->id());
+      return pDoc->id();
+   }
+
+   // As saving the document under a new name does.
+   void rename(const std::string& id, const std::string& fileName)
+   {
+      auto pDoc = boost::make_shared<source_database::SourceDocument>();
+      EXPECT_FALSE(source_database::get(id, pDoc));
+      moveTo(pDoc, fileName);
+   }
+
+   std::string uri(const std::string& id)
+   {
+      auto pDoc = boost::make_shared<source_database::SourceDocument>();
+      EXPECT_FALSE(source_database::get(id, pDoc));
+      return modules::lsp::uriFromDocument(pDoc);
+   }
+
+private:
+   void moveTo(boost::shared_ptr<source_database::SourceDocument> pDoc,
+               const std::string& fileName)
+   {
+      FilePath path = dir_.completeChildPath(fileName);
+      core::writeStringToFile(path, "x <- 1\n");
+      EXPECT_FALSE(pDoc->setPathAndContents(path.getAbsolutePath()));
+      EXPECT_FALSE(source_database::put(pDoc));
+   }
+
+   FilePath dir_;
+   std::vector<std::string> ids_;
+};
+
+TEST_F(FocusedDocumentTest, NewAgentIsSentFocusFromBeforeItStarted)
 {
    // Focus changes while no agent runs (as here) are recorded, not sent.
-   resetForNewAgentForTesting();
-   focusDocumentForTesting("file:///focused.R");
+   std::string id = open("focused.R");
+   focusDocumentForTesting(id);
 
    resetForNewAgentForTesting();
-   sendFocusForTesting();
-   EXPECT_TRUE(containsFocus(writesAfterInitialization(), "file:///focused.R"));
+   resendFocusForTesting();
+   EXPECT_TRUE(containsFocus(writesAfterInitialization(), uri(id)));
 }
 
-TEST(SessionAssistant, NewAgentIsNotSentFocusOfClosedDocument)
+TEST_F(FocusedDocumentTest, NewAgentIsSentFocusedDocumentsNewName)
 {
-   resetForNewAgentForTesting();
-   focusDocumentForTesting("file:///closed.R");
-   closeDocumentForTesting("file:///closed.R");
+   std::string id = open("before.R");
+   std::string before = uri(id);
+   focusDocumentForTesting(id);
+   rename(id, "after.R");
 
    resetForNewAgentForTesting();
-   sendFocusForTesting();
-   EXPECT_FALSE(containsFocus(writesAfterInitialization(), "file:///closed.R"));
+   resendFocusForTesting();
+   std::vector<std::string> writes = writesAfterInitialization();
+   EXPECT_TRUE(containsFocus(writes, uri(id)));
+   EXPECT_FALSE(containsFocus(writes, before));
+}
+
+TEST_F(FocusedDocumentTest, NewAgentIsNotSentFocusOfClosedDocument)
+{
+   std::string id = open("closed.R");
+   focusDocumentForTesting(id);
+   source_database::remove(id);
+
+   resetForNewAgentForTesting();
+   resendFocusForTesting();
+   EXPECT_FALSE(containsFocus(writesAfterInitialization(), ""));
 }
 
 TEST(SessionAssistant, InitializeOutlastsRequestTimeout)

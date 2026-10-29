@@ -105,8 +105,8 @@ std::chrono::steady_clock::duration agentRequestTimeout(const std::string& metho
 // Drive the agent reply loop and expiry sweep without a running agent: register
 // a pending request (onResult receives whether it was cancelled), optionally
 // marked as written to the agent at now; queue a raw reply as if read from the
-// agent; queue a notification for the agent; focus or close an R document;
-// send the recorded focus as the initialize callback does; reset state as a
+// agent; queue a notification for the agent; focus a source database
+// document; re-send the focus as the initialize callback does; reset state as a
 // new agent process starts; write queued requests to the agent as a
 // supervisor poll does; and run one background-processing pass at now.
 // Exposed for testing.
@@ -117,9 +117,8 @@ void addPendingAgentRequestForTesting(const std::string& requestId,
                                       const std::function<void(bool)>& onResult);
 void queueAgentReplyForTesting(const std::string& reply);
 void queueAgentNotificationForTesting(const std::string& method);
-void focusDocumentForTesting(const std::string& uri);
-void closeDocumentForTesting(const std::string& uri);
-void sendFocusForTesting();
+void focusDocumentForTesting(const std::string& documentId);
+void resendFocusForTesting();
 void resetForNewAgentForTesting();
 void writeQueuedAgentRequestsForTesting(core::system::ProcessOperations& operations);
 void runBackgroundProcessingForTesting(bool isIdle,

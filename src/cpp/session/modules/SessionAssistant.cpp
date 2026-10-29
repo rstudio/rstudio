@@ -247,10 +247,9 @@ bool s_agentInitialized = false;
 // queued before s_agentInitialized is set.
 bool s_agentInitializeAnswered = false;
 
-// The focus most recently reported to the agent, or that would have been if
-// it were running: the focused document's URI, or empty when that document
-// isn't indexable. Nothing else tells a new agent which document has focus.
-boost::optional<std::string> s_focusedUri;
+// The ID of the document most recently focused, whether or not an agent was
+// running to be told. Nothing else tells a new agent which document has focus.
+boost::optional<std::string> s_focusedDocumentId;
 
 // A queue of pending requests, to be sent via the agent's stdin.
 std::vector<AssistantRequest> s_pendingRequests;
@@ -1353,7 +1352,7 @@ bool stopAgentSync(int maxIterations = 100)
 
 // Forward declarations; defined after docOpened() and didClose()
 void syncOpenDocuments();
-void sendFocus();
+void resendFocus();
 
 void resetForNewAgent()
 {
@@ -1686,7 +1685,7 @@ Error startAgent(const std::string& assistantType = "")
 
       // Sync currently open documents, and which of them has focus, with the agent
       syncOpenDocuments();
-      sendFocus();
+      resendFocus();
 
       // For Posit AI, set up session notifications and warmup
       if (assistant == kAssistantPosit)
@@ -2007,10 +2006,6 @@ void didChange(lsp::DidChangeTextDocumentParams params)
 
 void didClose(lsp::DidCloseTextDocumentParams params)
 {
-   // Don't point a later agent at a document that is no longer open.
-   if (s_focusedUri && *s_focusedUri == params.textDocument.uri)
-      s_focusedUri = boost::none;
-
    if (!checkAgentRunning())
       return;
 
@@ -2030,19 +2025,18 @@ void didClose(lsp::DidCloseTextDocumentParams params)
    docClosed(params.textDocument.uri);
 }
 
-void sendFocus()
+void sendFocus(const std::string& uri,
+               const boost::shared_ptr<source_database::SourceDocument>& pDoc)
 {
-   if (!s_focusedUri)
-      return;
-
    // If document is NOT indexable we tell the agent that no file has focus via an empty request.
    // This is to prevent the agent from attempting to read the contents of the file.
+   // (pDoc arrives without contents loaded, so skip the contents-based check.)
    json::Object paramsJson;
-   if (!s_focusedUri->empty())
+   if (isIndexableDocument(pDoc, false))
    {
       lsp::DidFocusTextDocumentParams params = {
          .textDocument = {
-            .uri = *s_focusedUri,
+            .uri = uri,
          }
       };
       paramsJson = lsp::toJson(params);
@@ -2051,11 +2045,31 @@ void sendFocus()
    sendNotification("textDocument/didFocus", paramsJson);
 }
 
+void resendFocus()
+{
+   if (!s_focusedDocumentId)
+      return;
+
+   // Look the document up again: it may have been saved under a new name,
+   // reopened, or closed since it was focused.
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   Error error = source_database::get(*s_focusedDocumentId, false, pDoc);
+   if (error)
+   {
+      if (isFileNotFoundError(error))
+         s_focusedDocumentId = boost::none;
+      else
+         LOG_ERROR(error);
+      return;
+   }
+
+   sendFocus(lsp::uriFromDocument(pDoc), pDoc);
+}
+
 void didFocus(lsp::DidFocusTextDocumentParams params,
               boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   // pDoc arrives without contents loaded, so skip the contents-based check.
-   s_focusedUri = isIndexableDocument(pDoc, false) ? params.textDocument.uri : std::string();
+   s_focusedDocumentId = pDoc->id();
 
    if (!checkAgentRunning())
       return;
@@ -2064,7 +2078,7 @@ void didFocus(lsp::DidFocusTextDocumentParams params,
    // agent hasn't finished initializing. Pre-init requests are held in
    // s_pendingRequests and written in order once 'initialized' is sent, so
    // this follows the focus the initialize callback re-sends.
-   sendFocus();
+   sendFocus(params.textDocument.uri, pDoc);
 }
 
 void onBackgroundProcessing(bool isIdle, std::chrono::steady_clock::time_point now)
@@ -3102,29 +3116,28 @@ void queueAgentNotificationForTesting(const std::string& method)
    sendNotification(method, json::Object());
 }
 
-void focusDocumentForTesting(const std::string& uri)
+void focusDocumentForTesting(const std::string& documentId)
 {
+   // As lsp::lspDocFocused() reports focus
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   Error error = source_database::get(documentId, false, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
    lsp::DidFocusTextDocumentParams params = {
       .textDocument = {
-         .uri = uri,
+         .uri = lsp::uriFromDocument(pDoc),
       }
    };
-   didFocus(params, boost::make_shared<source_database::SourceDocument>(kSourceDocumentTypeRSource));
+   didFocus(params, pDoc);
 }
 
-void closeDocumentForTesting(const std::string& uri)
+void resendFocusForTesting()
 {
-   lsp::DidCloseTextDocumentParams params = {
-      .textDocument = {
-         .uri = uri,
-      }
-   };
-   didClose(params);
-}
-
-void sendFocusForTesting()
-{
-   sendFocus();
+   resendFocus();
 }
 
 void resetForNewAgentForTesting()
