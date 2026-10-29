@@ -167,6 +167,7 @@ public abstract class ChangelistTable extends Composite
       dataProvider_.addDataDisplay(table_);
 
       configureTable();
+      table_.getElement().setAttribute("aria-label", getTableLabel());
 
       table_.setSize("100%", "auto");
 
@@ -199,6 +200,11 @@ public abstract class ChangelistTable extends Composite
    }
 
    protected abstract SafeHtmlRenderer<String> getStatusRenderer();
+
+   protected String getTableLabel()
+   {
+      return constants_.changedFiles();
+   }
 
    public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)
    {

@@ -1,7 +1,7 @@
 // Regression test for issue #19328: the Git pane's Staged and Status columns were
 // bare images that screen readers skipped. Each Staged cell must be a checkbox
 // named for its file whose aria-checked is true, false, or mixed, and toggle on
-// click; each Status cell must be named by its status description.
+// click; each Status cell and the table itself must be named.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeInConsole } from '@pages/console_pane.page';
 import { executeCommand, openProject } from '@utils/commands';
@@ -67,6 +67,8 @@ test.describe('Git changelist checkboxes (#19328)', () => {
     await executeCommand(page, 'activateVcs');
     const panel = page.locator(GIT_PANEL);
     await expect(panel).toBeVisible({ timeout: 15000 });
+
+    await expect(panel.getByRole('table', { name: 'Changed files', exact: true })).toBeVisible();
 
     const partial = panel.getByRole('checkbox', { name: 'Stage partial.R', exact: true });
     const staged = panel.getByRole('checkbox', { name: 'Stage staged.R', exact: true });

@@ -102,6 +102,12 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
    }
 
    @Override
+   protected String getTableLabel()
+   {
+      return constants_.filesToCommit();
+   }
+
+   @Override
    protected void configureTable()
    {
       commitColumn_ = new Column<StatusAndPath, Boolean>(
