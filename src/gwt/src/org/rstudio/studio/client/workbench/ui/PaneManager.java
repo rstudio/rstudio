@@ -1552,11 +1552,16 @@ public class PaneManager
 
       ArrayList<Double> leftTargets = new ArrayList<>();
       {
-         if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
+         // Record the widths only when no zoom has: a zoom already in place
+         // (moved to this pane, or a column zoom) holds the pre-zoom widths,
+         // and the current ones are the zoomed widths.
+         boolean recordWidths = leftWidgetSizePriorToZoom_.size() != leftList_.size();
+         if (recordWidths)
             leftWidgetSizePriorToZoom_.clear();
          for (Widget column : leftList_)
          {
-            leftWidgetSizePriorToZoom_.add(panel_.getWidgetSize(column));
+            if (recordWidths)
+               leftWidgetSizePriorToZoom_.add(panel_.getWidgetSize(column));
             if (!isRightWidget &&
                 !isCenterWidget &&
                 DomUtils.contains(column.getElement(), window.getActiveWidget().getElement()))
@@ -1789,10 +1794,10 @@ public class PaneManager
       clearZoomBookkeeping();
 
       // If we were zoomed, the snapshot provides the previous 'non-zoom' state.
-      // A column zoom records it without a maximized window. The default
-      // widths are no substitute: they leave a zoom-collapsed sidebar shut, and
-      // ignore the sidebar's width, which can shut the center column (#19201).
-      if ((maximizedWindow != null || rightWidthPriorToZoom >= 0) &&
+      // Pane and column zooms both record it. The default widths are no
+      // substitute: they leave a zoom-collapsed sidebar shut, and ignore the
+      // sidebar's width, which can shut the center column (#19201).
+      if (rightWidthPriorToZoom >= 0 &&
           leftList_.size() == leftWidthsPriorToZoom.size())
       {
          restoreSavedLayout(maximizedWindow,
@@ -1851,8 +1856,8 @@ public class PaneManager
       // zoomColumn's re-entry does, recording the restored widths as the new
       // zoom's prior state -- would read the zoom-time geometry if it ran here.
       // Defer it, so it lands behind the layout the panel already scheduled.
-      // (The pane/window-zoom path goes through restoreSavedLayout, which does
-      // animate and threads afterComplete into onAnimationComplete.)
+      // (A zoom with a snapshot to restore goes through restoreSavedLayout,
+      // which does animate and threads afterComplete into onAnimationComplete.)
       if (afterComplete != null)
          Scheduler.get().scheduleDeferred(afterComplete::execute);
    }

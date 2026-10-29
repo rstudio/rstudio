@@ -14,6 +14,7 @@ import type { Locator, Page } from 'playwright';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
 const SOURCE_PANE = '#rstudio_Source_pane';
+const EXTRA_SOURCE_COLUMN_PANES = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
 const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
 const ENVIRONMENT_TAB = '#rstudio_workbench_tab_environment';
@@ -254,6 +255,40 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     } finally {
       await resetLayoutZoom(page);
       await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
+    }
+  });
+
+  test('End Zoom after a column zoom and then a pane zoom restores the source columns (#19201)', async ({ rstudioPage: page }) => {
+    const extraColumn = page.locator(EXTRA_SOURCE_COLUMN_PANES);
+    await expect(extraColumn, 'precondition: no extra source column to start').toHaveCount(0);
+    await executeCommand(page, 'newSourceColumn');
+    await expect(extraColumn).toHaveCount(1, { timeout: 10000 });
+    try {
+      const columns = [EXTRA_SOURCE_COLUMN_PANES, CONSOLE_PANE, TABSET1_PANE];
+      const before: number[] = [];
+      for (const column of columns)
+        before.push(await getSettledWidth(page, column));
+
+      // Each zoom records the widths it would restore; the second must not
+      // record them again over the first.
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+      await executeCommand(page, 'layoutZoomConsole');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomConsole')).toBe(true);
+      await executeCommand(page, 'layoutEndZoom');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomConsole')).toBe(false);
+
+      for (let i = 0; i < columns.length; i++) {
+        expect(Math.abs(await getSettledWidth(page, columns[i]) - before[i]),
+               `${columns[i]} width`).toBeLessThanOrEqual(2);
+      }
+    } finally {
+      await resetLayoutZoom(page);
+      // newSourceColumn opens an Untitled doc in the new column; closing it
+      // removes the column.
+      await documentCloseAllNoSave(page);
+      await expect(extraColumn).toHaveCount(0, { timeout: 10000 });
     }
   });
 
@@ -965,8 +1000,8 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     }
   });
 
-  // A left-column zoom shuts the sidebar too, and ending it leaves the sidebar
-  // shut (#19201). Three default columns in a 500px window are each narrower
+  // A left-column zoom shuts the sidebar too, and Show Chat during the zoom
+  // must reopen it. Three default columns in a 500px window are each narrower
   // than the sidebar's 175px minimum, so the reopen must aim for the minimum.
   test('Show Chat reopens a sidebar shut by a column zoom in a narrow window', async ({
     rstudioPage: page,
