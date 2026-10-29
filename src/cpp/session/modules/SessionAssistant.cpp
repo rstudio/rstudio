@@ -1432,6 +1432,10 @@ Error startAgent(const std::string& assistantType = "")
 
    uint64_t agentGeneration = ++s_agentGeneration;
 
+   // Every agent process, including a restart of the same assistant, must
+   // answer 'initialize' before it is sent other requests.
+   s_agentInitialized = false;
+
    // Resolve the agent executable once and reuse it in the launch branches
    // below.
    FilePath resolvedAgentPath;
@@ -1715,9 +1719,6 @@ bool ensureAgentRunning(const std::string& assistantType = "",
             ELOG("Failed to stop current agent for assistant type switch");
             return false;
          }
-
-         // Reset initialized flag so we properly initialize the new agent
-         s_agentInitialized = false;
       }
       else
       {
