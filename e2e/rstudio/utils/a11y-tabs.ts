@@ -2,6 +2,7 @@ import { expect, type Page, type Request } from '@playwright/test';
 import { executeCommand } from './commands';
 import { TIMEOUTS } from './constants';
 
+const FILES_TAB = '#rstudio_workbench_tab_files';
 const FILES_TOOLBAR_BUTTON = '#rstudio_mb_files_touch_file';
 // The tab switch only schedules a passive save, 5 s out (ClientStateUpdater).
 const TAB_STATE_SAVE_TIMEOUT = 15_000;
@@ -39,10 +40,22 @@ async function restoreFilesTab(page: Page, tabSave: Promise<Request>): Promise<v
 }
 
 /**
+ * Restore Files after `select` failed or never confirmed its tab. The test is
+ * already failing, so a restore problem is only logged: throwing would hide
+ * the original error.
+ */
+async function restoreAfterFailedSelect(page: Page): Promise<void> {
+  if (await page.locator(FILES_TAB).getAttribute('aria-selected') === 'true')
+    return;
+  const tabSave = page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT });
+  await restoreFilesTab(page, tabSave)
+    .catch((err: Error) => console.warn(`Files tab not restored: ${err.message}`));
+}
+
+/**
  * Run `body` with another tab of the Files tabset selected, then select Files
  * again and wait for that selection to be saved. `select` must lead to `tab`
- * (e.g. `#rstudio_workbench_tab_help`) being selected; until it is, nothing
- * has changed, so a failure there needs no restore.
+ * (e.g. `#rstudio_workbench_tab_help`) being selected.
  */
 export async function withFilesTabsetTab<T>(
   page: Page,
@@ -50,17 +63,21 @@ export async function withFilesTabsetTab<T>(
   select: () => Promise<void>,
   body: () => Promise<T>,
 ): Promise<T> {
-  await select();
-  await expect(page.locator(tab)).toHaveAttribute('aria-selected', 'true', { timeout: TIMEOUTS.consoleReady });
-  // Any tab-state save from here on carries the new tab. Waiting for it costs
-  // up to a timer tick, but guarantees switching back produces a save to wait
-  // for. Awaited in restoreFilesTab; this keeps a timeout during `body` from
-  // surfacing as an unhandled rejection first.
-  const tabSave = page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT });
-  tabSave.catch(() => {});
+  let tabSave: Promise<Request> | undefined;
   try {
+    await select();
+    await expect(page.locator(tab)).toHaveAttribute('aria-selected', 'true', { timeout: TIMEOUTS.consoleReady });
+    // Any tab-state save from here on carries the new tab. Waiting for it
+    // costs up to a timer tick, but guarantees switching back produces a save
+    // to wait for. Awaited in restoreFilesTab; this keeps a timeout during
+    // `body` from surfacing as an unhandled rejection first.
+    tabSave = page.waitForRequest(isTabStateSave, { timeout: TAB_STATE_SAVE_TIMEOUT });
+    tabSave.catch(() => {});
     return await body();
   } finally {
-    await restoreFilesTab(page, tabSave);
+    if (tabSave)
+      await restoreFilesTab(page, tabSave);
+    else
+      await restoreAfterFailedSelect(page);
   }
 }
