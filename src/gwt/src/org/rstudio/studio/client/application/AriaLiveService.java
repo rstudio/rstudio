@@ -42,7 +42,6 @@ public class AriaLiveService
    public static final String CONSOLE_COMMAND = "console_command";
    public static final String FILTERED_LIST = "filtered_list";
    public static final String GIT_MESSAGE_LENGTH = "git_message_length";
-   public static final String INACCESSIBLE_FEATURE = "inaccessible_feature";
    public static final String INFO_BAR = "info_bar";
    public static final String PLOT_CHANGED = "plot_changed";
    public static final String PROGRESS_COMPLETION = "progress_completion";
@@ -75,7 +74,6 @@ public class AriaLiveService
       announcements_.put(CONSOLE_COMMAND, constants_.consoleCommandAnnouncement());
       announcements_.put(FILTERED_LIST, constants_.filterResultCountAnnouncement());
       announcements_.put(GIT_MESSAGE_LENGTH, constants_.commitMessageLengthAnnouncement());
-      announcements_.put(INACCESSIBLE_FEATURE, constants_.inaccessibleWarningAnnouncement());
       announcements_.put(INFO_BAR, constants_.infoBarsAnnouncement());
       announcements_.put(PLOT_CHANGED, constants_.plotChangedAnnouncement());
       announcements_.put(PROGRESS_COMPLETION, constants_.taskCompletionAnnouncement());

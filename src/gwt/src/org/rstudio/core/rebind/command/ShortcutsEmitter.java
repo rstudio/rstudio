@@ -247,6 +247,14 @@ public class ShortcutsEmitter
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEDOWN";
       if (val.equalsIgnoreCase("space"))
          return "32";
+      if (val.equalsIgnoreCase("home"))
+         return "com.google.gwt.event.dom.client.KeyCodes.KEY_HOME";
+      if (val.equalsIgnoreCase("end"))
+         return "com.google.gwt.event.dom.client.KeyCodes.KEY_END";
+      if (val.equalsIgnoreCase("escape"))
+         return "com.google.gwt.event.dom.client.KeyCodes.KEY_ESCAPE";
+      if (val.equalsIgnoreCase("delete"))
+         return "com.google.gwt.event.dom.client.KeyCodes.KEY_DELETE";
       if (val.equalsIgnoreCase("F1"))
          return "112";
       if (val.equalsIgnoreCase("F2"))

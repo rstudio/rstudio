@@ -1,0 +1,162 @@
+/*
+ * CommandShortcutReferenceTests.java
+ *
+ * Copyright (C) 2026 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.core.client.widget;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.command.KeyCombination;
+import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutInfo;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.junit.client.GWTTestCase;
+
+public class CommandShortcutReferenceTests extends GWTTestCase
+{
+   @Override
+   public String getModuleName()
+   {
+      return "org.rstudio.studio.RStudioTests";
+   }
+
+   private static ShortcutInfo shortcut(KeySequence keys, String group, String title)
+   {
+      return new ShortcutInfo(new KeyboardShortcut(keys, group, title, ""), null);
+   }
+
+   private static ShortcutInfo shortcut(String key, int keyCode, String group, String title)
+   {
+      KeySequence keys = new KeySequence();
+      keys.add(new KeyCombination(key, keyCode, KeyboardShortcut.CTRL));
+      return shortcut(keys, group, title);
+   }
+
+   private static String render(ShortcutInfo... shortcuts)
+   {
+      List<ShortcutInfo> list = new ArrayList<>(Arrays.asList(shortcuts));
+      return CommandShortcutReference.buildHtml(list).asString();
+   }
+
+   // not a static field, which JUnit would initialize outside GWT
+   private static CoreClientConstants constants()
+   {
+      return GWT.create(CoreClientConstants.class);
+   }
+
+   // headings are localized, so match the label for the running locale
+   private static String heading(String label)
+   {
+      return "<h2>" + label + "</h2>";
+   }
+
+   private static int count(String haystack, String needle)
+   {
+      int count = 0;
+      for (int i = haystack.indexOf(needle); i != -1; i = haystack.indexOf(needle, i + 1))
+         count++;
+      return count;
+   }
+
+   /**
+    * Are key names from customized shortcuts escaped rather than rendered as markup?
+    */
+   public void testEscapesCustomKeyName()
+   {
+      String html = render(shortcut("<i>q</i>", 0, "Console", "Custom"));
+
+      assertFalse(html, html.contains("<i>"));
+      assertTrue(html, html.contains("&lt;i&gt;q&lt;/i&gt;"));
+   }
+
+   /**
+    * Is a custom key name escaped when its pretty form differs from the plain one,
+    * as on macOS? PageUp is abbreviated to PgUp in the pretty form on every platform.
+    */
+   public void testEscapesCustomKeyNameInPrettyForm()
+   {
+      KeySequence keys = new KeySequence();
+      keys.add(new KeyCombination("PageUp", KeyCodes.KEY_PAGEUP, KeyboardShortcut.CTRL));
+      keys.add(new KeyCombination("<i>q</i>", 0, KeyboardShortcut.NONE));
+      String html = render(shortcut(keys, "Console", "Custom"));
+
+      assertTrue(html, html.contains("aria-hidden"));
+      assertFalse(html, html.contains("<i>"));
+      assertEquals(html, 2, count(html, "&lt;i&gt;q&lt;/i&gt;"));
+   }
+
+   /**
+    * Do macOS spoken names use the legend's names, in macOS modifier order?
+    */
+   public void testSpokenMacFormMatchesLegendNames()
+   {
+      CoreClientConstants c = constants();
+
+      KeySequence all = new KeySequence();
+      all.add(new KeyCombination("Enter", KeyCodes.KEY_ENTER,
+            KeyboardShortcut.META | KeyboardShortcut.SHIFT |
+            KeyboardShortcut.ALT | KeyboardShortcut.CTRL));
+      assertEquals(
+            c.keySymbolControl() + "+" + c.keySymbolOption() + "+" + c.keySymbolShift() +
+            "+" + c.keySymbolCommand() + "+" + c.keySymbolReturn(),
+            CommandShortcutReference.spokenMacForm(all));
+
+      KeySequence deletes = new KeySequence();
+      deletes.add(new KeyCombination("Backspace", KeyCodes.KEY_BACKSPACE, KeyboardShortcut.ALT));
+      deletes.add(new KeyCombination("Delete", KeyCodes.KEY_DELETE, KeyboardShortcut.NONE));
+      assertEquals(
+            c.keySymbolOption() + "+" + c.keySymbolDelete() + " " + c.keySymbolForwardDelete(),
+            CommandShortcutReference.spokenMacForm(deletes));
+   }
+
+   /**
+    * Do groups appear once each, in order of first use, without the hidden group?
+    */
+   public void testGroupsInFirstUseOrder()
+   {
+      String html = render(
+            shortcut("A", 'A', "Console", "First"),
+            shortcut("B", 'B', "Source Editor", "Second"),
+            shortcut("C", 'C', "Console", "Third"),
+            shortcut("D", 'D', "Not Displayed", "Hidden"));
+
+      assertEquals(html, 2, count(html, "<h2>"));
+      int console = html.indexOf(heading(constants().consoleGroupName()));
+      int editor = html.indexOf(heading(constants().sourceEditorGroupName()));
+      assertTrue(html, console != -1 && editor > console);
+
+      // both Console entries land in the Console table, before the next heading
+      int third = html.indexOf("<td>Third</td>");
+      assertTrue(html, third > console && third < editor);
+      assertFalse(html, html.contains("Hidden"));
+   }
+
+   /**
+    * Are shortcuts without a description left out, along with a group that ends up empty?
+    */
+   public void testSkipsUndescribedShortcuts()
+   {
+      String html = render(
+            shortcut("A", 'A', "Console", "Shown"),
+            shortcut("B", 'B', "Files", ""));
+
+      assertTrue(html, html.contains("<td>Shown</td>"));
+      assertFalse(html, html.contains(heading(constants().filesGroupName())));
+   }
+}
