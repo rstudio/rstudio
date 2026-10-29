@@ -120,16 +120,18 @@ void Plot::saveManipulator() const
    
 Error Plot::renderFromDisplay()
 {
+   // disable polled events in this scope
+   r::session::event_loop::DisablePolledEventHandlerScope scope;
+
    // we can use our cached representation if we don't need an update and our 
    // rendered size is the same as the current graphics device size
    if ( !needsUpdate_ &&
         (renderedSize() == graphicsDevice_.displaySize()) )
    {
+      if (!altText_)
+         altText_ = graphicsDevice_.altText();
       return Success();
    }
-
-   // disable polled events in this scope
-   r::session::event_loop::DisablePolledEventHandlerScope scope;
 
    // generate a new storage uuid
    std::string storageUuid = core::system::generateUuid();
@@ -153,6 +155,7 @@ Error Plot::renderFromDisplay()
    // update state
    storageUuid_ = storageUuid;
    needsUpdate_ = false;
+   altText_ = graphicsDevice_.altText();
    
    // return error status 
    return removeError;
@@ -201,6 +204,11 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
    return removeError;
 }
    
+
+std::string Plot::altText() const
+{
+   return altText_.get_value_or(std::string());
+}
 
 std::string Plot::imageFilename() const
 {

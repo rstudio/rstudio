@@ -623,7 +623,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
       // get manipulator
       activePlot().manipulatorAsJson(&plotManipulatorJson);
 
-      altText = graphicsDevice_.altText();
+      altText = activePlot().altText();
    }
    else  // write "empty" image 
    {
