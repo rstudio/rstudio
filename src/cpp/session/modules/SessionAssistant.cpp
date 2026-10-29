@@ -242,6 +242,11 @@ boost::posix_time::ptime s_agentLastLaunchFailure(boost::posix_time::not_a_date_
 // Primarily done to allow proper sequencing of Assistant callbacks.
 bool s_agentInitialized = false;
 
+// Whether the running agent has answered 'initialize'. Notifications queued
+// from then on follow 'initialized' in s_pendingRequests, so they may be
+// queued before s_agentInitialized is set.
+bool s_agentInitializeAnswered = false;
+
 // A queue of pending requests, to be sent via the agent's stdin.
 std::vector<AssistantRequest> s_pendingRequests;
 
@@ -902,7 +907,7 @@ void setPositAiConfiguration()
 
 bool supportsSessionNotifications()
 {
-   return s_agentInitialized &&
+   return s_agentInitializeAnswered &&
           s_runningAgentType == kAssistantPosit;
 }
 
@@ -1435,6 +1440,7 @@ Error startAgent(const std::string& assistantType = "")
    // Every agent process, including a restart of the same assistant, must
    // answer 'initialize' before it is sent other requests.
    s_agentInitialized = false;
+   s_agentInitializeAnswered = false;
 
    // Resolve the agent executable once and reuse it in the launch branches
    // below.
@@ -1642,6 +1648,8 @@ Error startAgent(const std::string& assistantType = "")
             return;
          }
       }
+
+      s_agentInitializeAnswered = true;
 
       // newer versions of Assistant require an 'initialized' notification, which is
       // then used as a signal that they should start the agent process
