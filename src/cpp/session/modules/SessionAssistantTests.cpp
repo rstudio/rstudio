@@ -15,6 +15,7 @@
 
 #include "SessionAssistant.hpp"
 
+#include <memory>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -245,6 +246,19 @@ void runIdlePass()
    runBackgroundProcessingForTesting(true, s_now);
 }
 
+// Register a pending request and collect its results. The results are shared
+// with the request so that one a failed test leaves pending can still be
+// resolved safely by a later test's sweep.
+std::shared_ptr<std::vector<bool>> addRequest(const std::string& requestId,
+                                              const std::string& method,
+                                              bool written)
+{
+   auto results = std::make_shared<std::vector<bool>>();
+   addPendingAgentRequestForTesting(requestId, method, written, s_now,
+                                    [results](bool cancelled) { results->push_back(cancelled); });
+   return results;
+}
+
 void queueReply(const std::string& requestId)
 {
    queueAgentReplyForTesting(
@@ -255,58 +269,50 @@ void queueReply(const std::string& requestId)
 
 TEST(SessionAssistant, IdlePassKeepsRequestWithinTimeout)
 {
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("within-timeout", kCompletion, true, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("within-timeout", kCompletion, true);
 
    serviceEventsFor(seconds(9));
    runIdlePass();
-   EXPECT_TRUE(results.empty());
+   EXPECT_TRUE(results->empty());
 
    queueReply("within-timeout");
    runIdlePass();
-   EXPECT_EQ(results, std::vector<bool>({ false }));
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
 }
 
 TEST(SessionAssistant, IdlePassDeliversQueuedReplyToExpiredRequest)
 {
    // A reply that arrived while R was busy must reach its request even
    // though the request is past its timeout by the time R is idle.
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-with-reply", kCompletion, true, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("expired-with-reply", kCompletion, true);
 
    serviceEventsFor(seconds(11));
    queueReply("expired-with-reply");
    runIdlePass();
 
-   EXPECT_EQ(results, std::vector<bool>({ false }));
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
 }
 
 TEST(SessionAssistant, IdlePassCancelsExpiredRequestWithoutReply)
 {
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-without-reply", kCompletion, true, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("expired-without-reply", kCompletion, true);
 
    serviceEventsFor(seconds(11));
    runIdlePass();
 
-   EXPECT_EQ(results, std::vector<bool>({ true }));
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
 }
 
 TEST(SessionAssistant, BusyPassLeavesExpiredRequestPending)
 {
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("expired-while-busy", kCompletion, true, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("expired-while-busy", kCompletion, true);
 
    serviceEventsFor(seconds(11));
-   EXPECT_TRUE(results.empty());
+   EXPECT_TRUE(results->empty());
 
    // An idle pass then cancels it, which also removes it from the pending map.
    runIdlePass();
-   EXPECT_EQ(results, std::vector<bool>({ true }));
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
 }
 
 TEST(SessionAssistant, TimeBlockedWithoutServicingEventsIsNotChargedToRequest)
@@ -314,17 +320,15 @@ TEST(SessionAssistant, TimeBlockedWithoutServicingEventsIsNotChargedToRequest)
    // While R is blocked the agent's output isn't drained, so a large reply
    // can stall the agent until the first pass afterwards; the request must
    // still be pending when the reply follows on the next pass.
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("blocked", kCompletion, true, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("blocked", kCompletion, true);
 
    s_now += seconds(30);
    runIdlePass();
-   EXPECT_TRUE(results.empty());
+   EXPECT_TRUE(results->empty());
 
    queueReply("blocked");
    serviceEventsFor(milliseconds(100));
-   EXPECT_EQ(results, std::vector<bool>({ false }));
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
 }
 
 TEST(SessionAssistant, RequestWrittenAfterBlockGetsFullTimeout)
@@ -333,49 +337,43 @@ TEST(SessionAssistant, RequestWrittenAfterBlockGetsFullTimeout)
    // background handler runs; the gap before the write mustn't count.
    runBackgroundProcessingForTesting(false, s_now);
    s_now += seconds(30);
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("written-after-block", kCompletion, true, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("written-after-block", kCompletion, true);
 
    serviceEventsFor(milliseconds(9900));
    runIdlePass();
-   EXPECT_TRUE(results.empty());
+   EXPECT_TRUE(results->empty());
 
    queueReply("written-after-block");
    runIdlePass();
-   EXPECT_EQ(results, std::vector<bool>({ false }));
+   EXPECT_EQ(*results, std::vector<bool>({ false }));
 }
 
 TEST(SessionAssistant, InitializeOutlastsRequestTimeout)
 {
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("initialize", "initialize", true, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("initialize", "initialize", true);
 
    serviceEventsFor(seconds(30));
    runIdlePass();
-   EXPECT_TRUE(results.empty());
+   EXPECT_TRUE(results->empty());
 
    serviceEventsFor(seconds(31));
    runIdlePass();
-   EXPECT_EQ(results, std::vector<bool>({ true }));
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
 }
 
 TEST(SessionAssistant, HeldRequestOutlastsRequestTimeout)
 {
    // A request held unwritten while the agent initializes is timed as
    // generously as 'initialize' itself.
-   std::vector<bool> results;
-   addPendingAgentRequestForTesting("held", kCompletion, false, s_now,
-                                    [&](bool cancelled) { results.push_back(cancelled); });
+   auto results = addRequest("held", kCompletion, false);
 
    serviceEventsFor(seconds(30));
    runIdlePass();
-   EXPECT_TRUE(results.empty());
+   EXPECT_TRUE(results->empty());
 
    serviceEventsFor(seconds(31));
    runIdlePass();
-   EXPECT_EQ(results, std::vector<bool>({ true }));
+   EXPECT_EQ(*results, std::vector<bool>({ true }));
 }
 
 } // end namespace tests
