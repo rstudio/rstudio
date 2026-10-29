@@ -202,15 +202,14 @@ public class KeyMap
             if (bindings == null || bindings.isEmpty())
                return true;
 
-            // As in getActiveBinding(), only the first enabled binding counts
+            // As in getActiveBinding(), only the first enabled binding counts, and
+            // dispatch stops at it, so it hides any longer binding below it
             for (CommandBinding binding : bindings)
             {
                if (binding.isEnabled())
                {
-                  if (!accept.test(binding))
-                     return true;
-
-                  pending.set(true);
+                  if (accept.test(binding))
+                     pending.set(true);
                   return false;
                }
             }

@@ -142,9 +142,10 @@ test.describe.serial(
       ({ consoleActions } = await setupPositAssistantChat(page));
       await consoleActions.executeInConsole(BACKUP_BINDINGS);
       // A custom binding replaces the command's defaults, so Ctrl+2 alone is unbound.
+      // The three-stroke binding sits behind insertAssignmentOperator's two strokes.
       await consoleActions.executeInConsole(
         writeAppBindings({
-          activateConsole: 'Ctrl+Alt+Shift+Q Ctrl+2',
+          activateConsole: 'Ctrl+Alt+Shift+Q Ctrl+2|Ctrl+Alt+Shift+H Ctrl+1 Ctrl+2',
           insertAssignmentOperator: 'Ctrl+Alt+Shift+H Ctrl+1',
         }),
       );
@@ -163,6 +164,8 @@ test.describe.serial(
     });
 
     test('the first stroke of an editor shortcut is left to Posit Assistant', async () => {
+      // Dispatch stops at insertAssignmentOperator, so activateConsole's longer
+      // binding behind it doesn't make Ctrl+Alt+Shift+H a claimable prefix.
       const prefix = await sendKeyAsAssistant(chatPane.chatInput, CTRL_ALT_SHIFT_H);
       expect(prefix).toEqual({ used: false, defaultPrevented: false });
       // Ctrl+1 runs activateSource only if the prefix was dropped; otherwise it
