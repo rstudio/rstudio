@@ -373,8 +373,8 @@ test_that("ggplot2 alt text is found (#19337)", {
 
 test_that("display list entries with a failing `[[` method are skipped (#19337)", {
    failing <- structure(list(x = 1), class = "rstudioFailingSubset")
-   registerS3method("[[", "rstudioFailingSubset",
-                    function(x, i, ...) stop("`[[` should not be called"))
+   local_mocked_s3_method("[[", "rstudioFailingSubset",
+                          function(x, i, ...) stop("`[[` should not be called"))
    displayList <- list(
       list(NULL, list(NULL, failing)),
       list(NULL, list(NULL, list(x = altTextGrob("A bar chart of sales"))))
