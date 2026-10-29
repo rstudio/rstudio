@@ -105,7 +105,8 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
    protected void configureTable()
    {
       commitColumn_ = new Column<StatusAndPath, Boolean>(
-            new TriStateCheckboxCell<>(selectionModel_))
+            new TriStateCheckboxCell<>(selectionModel_,
+                  item -> constants_.commitFile(item.getPath())))
       {
          @Override
          public Boolean getValue(StatusAndPath object)
