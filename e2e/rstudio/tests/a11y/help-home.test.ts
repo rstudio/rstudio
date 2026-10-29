@@ -30,6 +30,9 @@ test('help home page has no accessibility violations', { tag: ['@a11y', '@server
           predicate: (frame) => frame.parentFrame() === page.mainFrame() && frame.url().includes(HOME_PATH),
           timeout: TIMEOUTS.fileOpen,
         });
+        // Awaited below; this keeps a helpHome failure from also surfacing as
+        // an unhandled rejection.
+        homeNavigated.catch(() => {});
         await executeCommand(page, 'helpHome');
         const frame = await homeNavigated;
         await frame.waitForLoadState('load', { timeout: TIMEOUTS.fileOpen });
