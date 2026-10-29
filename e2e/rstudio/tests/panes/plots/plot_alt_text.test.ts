@@ -19,6 +19,10 @@ function plotImage(page: Page) {
   return page.frameLocator(PLOT_IMAGE_FRAME).locator('#img');
 }
 
+async function expectPlotAlt(page: Page, alt: string): Promise<void> {
+  await expect(plotImage(page)).toHaveAttribute('alt', alt, { timeout: TIMEOUTS.fileOpen });
+}
+
 // Records every text the app's status live region (AriaLiveStatusWidget) is
 // given, from now on. The region keeps its last text, so reading it can't
 // tell a new announcement from an old one.
@@ -94,23 +98,23 @@ test.describe.serial('Plot alt text', { tag: ['@serial'] }, () => {
       'ggplot2::labs(alt = "Weight falls as fuel economy rises"))');
 
     const expected = 'Plot 1 of 1: Weight falls as fuel economy rises';
-    await expect(plotImage(page)).toHaveAttribute('alt', expected, { timeout: TIMEOUTS.fileOpen });
+    await expectPlotAlt(page, expected);
     await expectAnnounced(page, expected);
   });
 
   test('a later base plot does not inherit the earlier alt text', async ({ rstudioPage: page }) => {
     await consoleActions.executeInConsole('plot(1:10)');
 
-    await expect(plotImage(page)).toHaveAttribute('alt', 'Plot 2 of 2', { timeout: TIMEOUTS.fileOpen });
+    await expectPlotAlt(page, 'Plot 2 of 2');
     await expectAnnounced(page, 'Plot 2 of 2');
   });
 
-  test('moving through the plot history announces the plot shown', async ({ rstudioPage: page }) => {
+  test('moving through the history announces the plot shown', async ({ rstudioPage: page }) => {
     await plotsPane.tab.click();
     await plotsPane.previousPlotBtn.click();
 
     const expected = 'Plot 1 of 2: Weight falls as fuel economy rises';
-    await expect(plotImage(page)).toHaveAttribute('alt', expected, { timeout: TIMEOUTS.fileOpen });
+    await expectPlotAlt(page, expected);
     await expectAnnounced(page, expected);
   });
 
@@ -131,14 +135,15 @@ test.describe.serial('Plot alt text', { tag: ['@serial'] }, () => {
   // shown first
   test('alt text drawn after the plot is shown is announced', async ({ rstudioPage: page }) => {
     await consoleActions.executeInConsole('plot(1:3)');
-    await expect(plotImage(page)).toHaveAttribute('alt', 'Plot 3 of 3', { timeout: TIMEOUTS.fileOpen });
+    await expectPlotAlt(page, 'Plot 3 of 3');
     await expectAnnounced(page, 'Plot 3 of 3');
 
     await consoleActions.executeInConsole(
-      'grid::grid.draw(structure(grid::rectGrob(width = 0.1, height = 0.1), `alt-label` = "Three points"))');
+      'grid::grid.draw(structure(grid::rectGrob(width = 0.1, height = 0.1), ' +
+      '`alt-label` = "Three points"))');
 
     const expected = 'Plot 3 of 3: Three points';
-    await expect(plotImage(page)).toHaveAttribute('alt', expected, { timeout: TIMEOUTS.fileOpen });
+    await expectPlotAlt(page, expected);
     await expectAnnounced(page, expected);
   });
 
@@ -147,7 +152,7 @@ test.describe.serial('Plot alt text', { tag: ['@serial'] }, () => {
       '.rs.writeUiPref("disabled_aria_live_announcements", list("plot_changed"))');
     await consoleActions.executeInConsole('plot(1:5)');
 
-    await expect(plotImage(page)).toHaveAttribute('alt', 'Plot 4 of 4', { timeout: TIMEOUTS.fileOpen });
+    await expectPlotAlt(page, 'Plot 4 of 4');
     await expectNoPlotAnnouncement(page);
   });
 });
