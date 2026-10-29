@@ -24,6 +24,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -33,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEve
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.FixedPlotSizeUtils;
+import org.rstudio.studio.client.workbench.views.plots.model.PlotAltText;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 
@@ -103,12 +107,14 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
                    Binder binder,
                    Commands commands,
                    PlotsServerOperations server,
-                   UserState userState)
+                   UserState userState,
+                   AriaLiveService ariaLive)
    {
       super(constants_.plotsTitle(), shim);
       binder.bind(commands, shim);
       commands_ = commands;
       shim_ = shim;
+      ariaLive_ = ariaLive;
       events.addHandler(PlotsChangedEvent.TYPE, this);
       events.addHandler(LocatorEvent.TYPE, shim);
       events.addHandler(ConsolePromptEvent.TYPE, shim);
@@ -184,6 +190,21 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.refreshPlot().setEnabled(hasPlots);
       commands_.showManipulator().setEnabled(hasPlots);
 
+      // announced here, not in the lazily loaded presenter, which misses
+      // states superseded while it loads; alt text arriving after the plot
+      // is shown (e.g. while ggplot2 builds it) is announced too
+      String altText = hasPlots ? PlotAltText.forState(plotsState) : null;
+      if (altText != null &&
+          (plotsState.getActivePlotChanged() ||
+           (lastAltText_ != null && !altText.equals(lastAltText_))))
+      {
+         ariaLive_.announce(AriaLiveService.PLOT_CHANGED,
+                            altText,
+                            Timing.DEBOUNCE,
+                            Severity.STATUS);
+      }
+      lastAltText_ = altText;
+
       if (plotsState.getActivatePlots() || shim_.loaded)
       {
          shim_.onPlotsChanged(event);
@@ -196,6 +217,8 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
 
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final PlotsShim shim_;
+   private final AriaLiveService ariaLive_;
+   private String lastAltText_;
    private Commands commands_;
    private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

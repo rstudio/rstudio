@@ -58,4 +58,16 @@ public class PlotsState extends JavaScriptObject
    public final native boolean getFixedSize() /*-{
       return !!this.fixedSize;
    }-*/;
+
+   // alt text the plot's author supplied (e.g. ggplot2's labs(alt = ...)), or
+   // an empty string
+   public final native String getAltText() /*-{
+      return this.altText || "";
+   }-*/;
+
+   // whether a different plot is shown than in the last state the server
+   // sent, rather than the same plot redrawn (e.g. after a resize)
+   public final native boolean getActivePlotChanged() /*-{
+      return !!this.activePlotChanged;
+   }-*/;
 }

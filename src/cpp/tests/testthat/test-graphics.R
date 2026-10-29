@@ -292,3 +292,92 @@ test_that("a plot with a fixed size is published to RPubs at that size (#4422)",
    expect_equal(pngDimensions(file.path(largeDir, "plot-small.png")), c(768, 768))
    expect_equal(pngDimensions(file.path(largeDir, "plot-full.png")), c(1536, 1536))
 })
+
+# Draws on a throwaway device that records its display list, as the RStudio
+# device does, and returns the alt text found on the current page.
+withAltTextDevice <- function(code) {
+   grDevices::pdf(NULL)
+   on.exit(grDevices::dev.off(), add = TRUE)
+   grDevices::dev.control("enable")
+   force(code)
+   .rs.graphicsAltText(grDevices::recordPlot()[[1]])
+}
+
+altTextGrob <- function(alt) {
+   grob <- grid::rectGrob()
+   attr(grob, "alt-label") <- alt
+   grob
+}
+
+test_that("alt text attached to a drawn grob is found (#19337)", {
+   altText <- withAltTextDevice({
+      grid::grid.newpage()
+      grid::grid.draw(altTextGrob("A bar chart of sales"))
+   })
+   expect_equal(altText, "A bar chart of sales")
+})
+
+test_that("alt text of several grobs on one page is combined (#19337)", {
+   altText <- withAltTextDevice({
+      grid::grid.newpage()
+      grid::grid.draw(altTextGrob("First panel."))
+      grid::grid.draw(altTextGrob(""))
+      grid::grid.draw(altTextGrob("Second panel."))
+   })
+   expect_equal(altText, "First panel. Second panel.")
+})
+
+test_that("plots without alt text have none (#19337)", {
+   expect_equal(withAltTextDevice(plot(1:10)), "")
+   expect_equal(withAltTextDevice(grid::grid.draw(grid::rectGrob())), "")
+   expect_equal(withAltTextDevice(grid::grid.draw(altTextGrob(NA_character_))), "")
+   expect_equal(withAltTextDevice(grid::grid.draw(altTextGrob(c("a", "b")))), "")
+   expect_equal(withAltTextDevice(grid::grid.draw(altTextGrob(" \n "))), "")
+})
+
+test_that("alt text does not carry over to a later page (#19337)", {
+   altText <- withAltTextDevice({
+      grid::grid.newpage()
+      grid::grid.draw(altTextGrob("A bar chart of sales"))
+      plot(1:10)
+   })
+   expect_equal(altText, "")
+})
+
+test_that("alt text is trimmed (#19337)", {
+   altText <- withAltTextDevice(grid::grid.draw(altTextGrob("  A bar chart of sales \n")))
+   expect_equal(altText, "A bar chart of sales")
+})
+
+test_that("alt text survives saving and restoring a plot (#19337)", {
+   snapshot <- tempfile(fileext = ".snapshot")
+   on.exit(unlink(snapshot), add = TRUE)
+
+   altText <- withAltTextDevice({
+      grid::grid.newpage()
+      grid::grid.draw(altTextGrob("A bar chart of sales"))
+      .rs.saveGraphics(snapshot)
+      plot(1:10)
+      .rs.restoreGraphics(snapshot)
+   })
+   expect_equal(altText, "A bar chart of sales")
+})
+
+test_that("ggplot2 alt text is found (#19337)", {
+   skip_if_not_installed("ggplot2")
+   plot <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg, wt)) +
+      ggplot2::geom_point() +
+      ggplot2::labs(alt = "Weight against fuel economy")
+   expect_equal(withAltTextDevice(print(plot)), "Weight against fuel economy")
+})
+
+test_that("display list entries with a failing `[[` method are skipped (#19337)", {
+   failing <- structure(list(x = 1), class = "rstudioFailingSubset")
+   local_mocked_s3_method("[[", "rstudioFailingSubset",
+                          function(x, i, ...) stop("`[[` should not be called"))
+   displayList <- list(
+      list(NULL, list(NULL, failing)),
+      list(NULL, list(NULL, list(x = altTextGrob("A bar chart of sales"))))
+   )
+   expect_equal(.rs.graphicsAltText(displayList), "A bar chart of sales")
+})

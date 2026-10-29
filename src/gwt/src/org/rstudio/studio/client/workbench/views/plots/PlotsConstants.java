@@ -31,6 +31,8 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
     String publishingPlotsLabel();
     String plotText();
     String plotsPaneLabel();
+    String plotAltText(int position, int count);
+    String plotAltTextWithDescription(int position, int count, String description);
     String exportText();
     String plotPreviewTitle();
     String convertingPlotText();
