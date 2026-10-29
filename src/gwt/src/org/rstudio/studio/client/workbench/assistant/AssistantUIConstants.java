@@ -31,6 +31,7 @@ public interface AssistantUIConstants extends com.google.gwt.i18n.client.Message
     String assistantCheckStatusDialogTitle(String assistantName);
     String assistantStatusDialogTitle(String assistantName);
     String assistantEmptyResponse(String assistantName);
+    String assistantNoResponse(String assistantName);
     String assistantNoOutput();
     String assistantErrorStartingAgent(String assistantName, String error, String output);
     String assistantNotSignedIn(String assistantName);

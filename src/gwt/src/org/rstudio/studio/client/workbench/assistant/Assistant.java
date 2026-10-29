@@ -154,6 +154,10 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
             {
                globalDisplay_.showErrorMessage(response.error.message);
             }
+            else if (response.result == null)
+            {
+               showNoResponse(constants_.assistantDiagnosticsTitle(getDisplayName(assistantType)), assistantType);
+            }
             else
             {
                AssistantDiagnostics diagnostics = response.result.cast();
@@ -211,6 +215,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                return;
             }
 
+            if (response.result == null)
+            {
+               showNoResponse(constants_.assistantSignInDialogTitle(getDisplayName(assistantType)), assistantType);
+               return;
+            }
+
             AssistantSignInResponseResult result = response.result.cast();
             if (result.status == AssistantConstants.STATUS_PROMPT_USER_DEVICE_FLOW)
             {
@@ -229,7 +239,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                         @Override
                         public void onResponseReceived(AssistantStatusResponse response)
                         {
-                           if (response.result.status == AssistantConstants.STATUS_OK)
+                           // No answer this time; keep waiting for the user to authenticate
+                           if (response.result == null)
+                           {
+                              statusTimer_.schedule(1000);
+                           }
+                           else if (response.result.status == AssistantConstants.STATUS_OK)
                            {
                               signInDialog_.closeDialog();
                               callback.execute(response);
@@ -280,6 +295,12 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       String assistantType = getAssistantType();
       signOut(assistantType, (response) ->
       {
+         if (response.result == null)
+         {
+            showNoResponse(constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)), assistantType);
+            return;
+         }
+
          String status = response.result.status;
          if (StringUtil.equals(status, AssistantConstants.STATUS_NOT_SIGNED_IN))
          {
@@ -353,6 +374,10 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                      constants_.assistantCheckStatusDialogTitle(displayName),
                      AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, displayName));
             }
+            else if (response.result == null)
+            {
+               showNoResponse(constants_.assistantCheckStatusDialogTitle(displayName), assistantType);
+            }
             else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                display_.showMessage(
@@ -391,6 +416,16 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       {
          return error.message;
       }
+   }
+
+   // A response has no result when the session cancelled a request the agent
+   // didn't answer in time, or answered for an agent that wasn't running.
+   private void showNoResponse(String title, String assistantType)
+   {
+      globalDisplay_.showMessage(
+            MessageDisplay.MSG_ERROR,
+            title,
+            constants_.assistantNoResponse(getDisplayName(assistantType)));
    }
 
    private void showGenericResponseMessage(String title, Object object)
