@@ -514,9 +514,9 @@ When reviewing a PR that mentions an associated rstudio-pro PR (a link to a pro-
 wording like "open-source companion"), flag it first and ask the author to confirm the rstudio-pro
 PR has already been reviewed and approved, and that this PR matches its open-source portion, before
 any detailed review. If you can read the rstudio-pro PR, compare the diffs yourself and report any
-divergence. Once confirmed, keep the review cursory, and note that any requested change must also be made in the rstudio-pro PR, or
-the two will be out of sync. If it hasn't been reviewed yet, recommend that it be reviewed in
-rstudio-pro first, rather than iterating here.
+divergence. Once confirmed, keep the review cursory, and note that any requested change must also
+be made in the rstudio-pro PR, or the two will be out of sync. If it hasn't been reviewed yet,
+recommend that it be reviewed in rstudio-pro first, rather than iterating here.
 
 
 ## Git Conventions
