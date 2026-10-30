@@ -294,8 +294,9 @@ struct CachedFrame : MoveOnly
    std::string objName;
 
    // The number of rows and columns; used to determine whether the shape of the frame has changed
-   // (necessitating a full reload of any displayed version of the frame)
-   int nrow, ncol;
+   // (necessitating a full reload of any displayed version of the frame). -1 means unknown,
+   // including for an object that wasn't bound when the frame was created.
+   int nrow = -1, ncol = -1;
    std::vector<std::string> colNames;
 
    // The current search string and filter set
