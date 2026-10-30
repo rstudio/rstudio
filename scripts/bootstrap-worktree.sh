@@ -236,7 +236,8 @@ ensure_deps() {
   local main="$MAIN_CHECKOUT/$pkg"
   local pending main_pending
   pending="$(pending_marker "$WORKTREE" "$pkg")"
-  main_pending="$(pending_marker "$MAIN_CHECKOUT" "$pkg")"
+  # empty when the main checkout isn't a checkout (a bare repo's worktree)
+  main_pending="$(pending_marker "$MAIN_CHECKOUT" "$pkg" 2>/dev/null || true)"
 
   if [ ! -f "$wt/package-lock.json" ]; then
     echo "[bootstrap] skip $pkg (no package-lock.json)"
@@ -255,6 +256,7 @@ ensure_deps() {
      && cmp -s "$wt/package-lock.json" "$main/package-lock.json"; then
     if [ -f "$main_pending" ]; then
       echo "[bootstrap] main's $pkg/node_modules is from a failed or interrupted install; falling back to npm ci"
+      echo "[bootstrap]   to clone from main again, rerun this script in the main checkout, or delete $main_pending if main's install was repaired by hand"
     elif main_tree_current "$main"; then
       echo "[bootstrap] cloning $pkg/node_modules from main (lockfiles match)"
       touch "$pending"
