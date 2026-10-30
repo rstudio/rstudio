@@ -14,11 +14,9 @@ import { getPref, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 // ---------------------------------------------------------------------------
-// Project-level skill (lives in <project>/.posit/assistant/skills/ under a
-// sandbox project. Absolute paths are computed in beforeAll once the sandbox
-// dir is known.) Not the legacy <project>/.positai/skills/: Posit Assistant
-// still reads it, but shows a "Legacy config" banner that, with a tip also
-// showing, pushes the tool-approval row behind the composer in a narrow pane.
+// Project-level skill, in <project>/.posit/assistant/skills/ of a sandbox
+// project; paths are computed in beforeAll. Not the legacy .positai/skills/:
+// its "Legacy config" banner can cover the tool-approval row (#19372).
 // ---------------------------------------------------------------------------
 
 const PROJECT_NAME = 'user_skills_test_project';
