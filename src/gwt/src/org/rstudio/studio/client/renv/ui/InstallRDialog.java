@@ -73,6 +73,16 @@ public class InstallRDialog extends ModalDialog<String>
       directory_.focus();
    }
 
+   @Override
+   protected void onEnableControls(boolean enabled)
+   {
+      // while the install request is pending, an edit to the folder would
+      // otherwise re-enable OK and allow a second request
+      directory_.setEnabled(enabled);
+      if (enabled)
+         updateOkButton();
+   }
+
    private void updateOkButton()
    {
       enableOkButton(!collectInput().isEmpty());

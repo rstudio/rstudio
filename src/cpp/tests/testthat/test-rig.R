@@ -767,7 +767,7 @@ test_that("rig's default R setup is remembered before, and put back after, a use
 
    # the snapshot is taken (with rig's quick-link directory created first)
    # and kept on disk, for a session that does not outlive the install
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
    })
    expect_true(dir.exists(bin))
@@ -814,7 +814,7 @@ test_that("rig's default R setup is remembered before, and put back after, a use
 
    # without a saved snapshot there is no undoing the install: it is refused
    unwritable <- file.path(home, "missing", "snapshot.rds")
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_error(.rs.rig.userInstallBegin(rig, unwritable, launchd$launchctl), "^Could not save rig's default R setup to ")
    })
    expect_null(state$snapshot)
@@ -891,7 +891,7 @@ test_that("the snapshot is kept, and installs refused, while something is left t
    launchd <- fakeLaunchd()
    state <- .rs.rig.installState
 
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
    })
    paths <- state$snapshot$paths
@@ -908,7 +908,7 @@ test_that("the snapshot is kept, and installs refused, while something is left t
 
    # until then, no further install (whose snapshot would take the leftover
    # for setup to keep, and forget it was ever absent)
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), "not all undone yet")
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), file, fixed = TRUE)
    })
@@ -1068,7 +1068,7 @@ test_that("a user-mode install waits for, and undoes, one another session starte
 
    # while that session, or just its rig, runs, this one does not install
    alive <- function(pids) function(pid) pid %in% pids
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999998L)), "another RStudio session")
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999999L)), "another RStudio session")
    })
@@ -1078,7 +1078,7 @@ test_that("a user-mode install waits for, and undoes, one another session starte
 
    # once both are gone, their default is undone before this install's
    # snapshot is taken, so it does not pass for setup to keep
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       messages <- .rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(integer()))
    })
    expect_match(messages, "^Removed the default R setup")

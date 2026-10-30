@@ -212,7 +212,9 @@ private:
       // LaunchAgent that sets RSTUDIO_WHICH_R); what the install adds or
       // changes is put back when the job finishes (#19229)
       std::vector<std::string> notes;
-      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath(), directory_).call(&notes);
+      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath())
+            .addParam("directory", directory_)
+            .call(&notes);
       logNotes(notes);
       if (beginError)
       {
@@ -275,6 +277,14 @@ private:
       json::Value installed;
       if (ok)
       {
+         // later checks this session (e.g. after a reload) reuse the cached
+         // list of installations, which must include the new R
+         Error refreshError = r::exec::RFunction(".rs.rInstallations.cached")
+               .addParam("refresh", true)
+               .call();
+         if (refreshError)
+            LOG_ERROR(refreshError);
+
          Error lookupError = r::exec::RFunction(".rs.rig.installedRVersion")
                .addParam("version", version_)
                .addParam("directory", directory_)
