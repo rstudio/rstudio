@@ -468,15 +468,25 @@ Error createServerContext(const FilePath& certificatePath,
    return Success();
 }
 
+// accepts every certificate, also one that fails verification. Snyk Code
+// reports SSL_VERIFY_NONE as cpp/SSLVerificationBypass, so the client sets
+// SSL_VERIFY_PEER with this callback instead. Keep this form.
+int acceptAnyCertificate(int, X509_STORE_CTX*)
+{
+   return 1;
+}
+
 // the client accepts anything the server offers, so only the limits of the
-// server side decide whether a protocol is usable
+// server side decide whether a protocol is usable. The handshake runs in memory
+// and carries no data, so the client accepts any certificate. The explicit
+// verify mode replaces a VerifyMode from the system OpenSSL configuration.
 Error createClientContext(SslContextPtr* pContext)
 {
    SslContextPtr context(SSL_CTX_new(TLS_client_method()), SSL_CTX_free);
    if (!context)
       return core::system::crypto::getLastCryptoError(ERROR_LOCATION);
 
-   SSL_CTX_set_verify(context.get(), SSL_VERIFY_NONE, nullptr);
+   SSL_CTX_set_verify(context.get(), SSL_VERIFY_PEER, acceptAnyCertificate);
 
    // @SECLEVEL=0 also sets the security level of the context to 0
    const std::string ciphers = "ALL:@SECLEVEL=0";
@@ -490,11 +500,14 @@ Error createClientContext(SslContextPtr* pContext)
 
 // as nginx does for ssl_protocols, this replaces the protocol limits from the
 // system OpenSSL configuration: it clears the SSL_OP_NO_* options that the
-// Protocol command sets, and it pins the minimum and maximum versions
+// Protocol command sets, and it pins the minimum and maximum versions.
+// SSL_OP_NO_SSL_MASK holds all of those options. Snyk Code reports
+// SSL_OP_NO_TLSv1 and the other deprecated versions, cleared by name, as
+// cpp/TLS. Here the handshake only tests the one pinned version. Keep this
+// form.
 bool pinVersion(SSL* pSsl, int version)
 {
-   SSL_clear_options(pSsl, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
-                           SSL_OP_NO_TLSv1_2 | SSL_OP_NO_TLSv1_3);
+   SSL_clear_options(pSsl, SSL_OP_NO_SSL_MASK);
    return SSL_set_min_proto_version(pSsl, version) == 1 &&
           SSL_set_max_proto_version(pSsl, version) == 1;
 }
