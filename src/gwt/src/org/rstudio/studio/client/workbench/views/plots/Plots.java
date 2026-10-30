@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.FixedPlotSizeUtils;
+import org.rstudio.studio.client.workbench.views.plots.model.PlotAltText;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -82,11 +83,9 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       void showEmptyPlot();
 
       // fixedSize is null when the plot was drawn at the size of the pane
-      void showPlot(String plotUrl, Size fixedSize);
+      void showPlot(String plotUrl, Size fixedSize, String altText);
       String getPlotUrl();
       void setPlotSizeLabel(String label);
-
-      void refresh();
 
       PlotsSurface getPlotsSurface();
 
@@ -202,7 +201,9 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       else
       {
          String url = server_.getGraphicsUrl(plotsState.getFilename());
-         view_.showPlot(url, plotSizeFixed_ ? plotSize_ : null);
+         view_.showPlot(url,
+                        plotSizeFixed_ ? plotSize_ : null,
+                        PlotAltText.forState(plotsState));
       }
 
       // activate the plots tab if requested
