@@ -1511,6 +1511,175 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('pins the peek to the bottom of the editor for a change taller than it', async ({
+    rstudioPage: page,
+  }) => {
+    // 120 changed lines from line 100, more than the pane shows at once, with
+    // lines enough on either side to scroll the change fully out of view
+    const tallPath = `${projectDir()}/tall.R`;
+    const FIRST = 99;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("t%d <- %d", 1:400, 1:400), ${rPathLiteral(tallPath)})`,
+    );
+    await commitAll(page, 'tall', [tallPath]);
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          lines <- readLines(${rPathLiteral(tallPath)})
+          lines[100:219] <- sprintf("t%d <- %d", 100:219, 1000L + 100:219)
+          writeLines(lines, ${rPathLiteral(tallPath)})
+        }
+      `,
+    );
+
+    type ScrolledEditor = {
+      session: { getScrollTop(): number; setScrollTop(top: number): void };
+      renderer: {
+        scroller: HTMLElement;
+        lineHeight: number;
+        updateFull(force: boolean): void;
+        textToScreenCoordinates(row: number, column: number): { pageY: number };
+      };
+    };
+
+    // Scrolls the view to each offset in turn, rendering it at once, and
+    // reports where the peek's header is drawn there: from the peek's top
+    // edge (its border included) to the header's bottom.
+    const sweep = (view: Locator, offsets: number[]) =>
+      view.evaluate(
+        (el, { offsets, first }) => {
+          const editor = (el as AceEditorElement).env?.editor as unknown as ScrolledEditor;
+          return offsets.map((offset) => {
+            editor.session.setScrollTop(offset);
+            editor.renderer.updateFull(true);
+            const peek = el.querySelector('.ace_git-peek');
+            const header = peek?.querySelector('.ace_git-peek-header')?.getBoundingClientRect();
+            const view = editor.renderer.scroller.getBoundingClientRect();
+            return {
+              scrollTop: editor.session.getScrollTop(),
+              pinned: !!peek?.classList.contains('ace_git-peek-pinned'),
+              top: peek?.getBoundingClientRect().top ?? NaN,
+              bottom: header?.bottom ?? NaN,
+              viewTop: view.top,
+              viewBottom: view.bottom,
+              changeBottom: editor.renderer.textToScreenCoordinates(first, 0).pageY + editor.renderer.lineHeight,
+            };
+          });
+        },
+        { offsets, first: FIRST },
+      );
+    const steps = (from: number, to: number, by: number) =>
+      Array.from({ length: Math.floor(Math.abs(to - from) / by) + 1 }, (_, i) => from + Math.sign(to - from) * i * by);
+
+    // Clicks the gutter marker of the first changed line in sight.
+    const clickMarker = async (view: Locator) => {
+      const box = (await view.locator('.ace_gutter-cell.ace_git-modified').first().boundingBox())!;
+      await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
+    };
+
+    const live = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+      .filter({ has: page.locator(`.${GUTTER_ATTACHED}`) });
+    const base = page.locator(BASE_EDITOR);
+    const peek = page.locator(PEEK);
+
+    await openFile(page, tallPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+    await expect(live).toHaveCount(1);
+
+    try {
+      // with the change's first line near the top of the view, its peek
+      // would open below the view's bottom edge
+      const lineHeight = await live.evaluate(
+        (el) => ((el as AceEditorElement).env?.editor as unknown as ScrolledEditor).renderer.lineHeight,
+      );
+      const start = (FIRST - 2) * lineHeight;
+      await sweep(live, [start]);
+      await expect.poll(async () => (await gutterMarkers(page))[FIRST], { timeout: 30000 }).toEqual([MODIFIED]);
+      await clickMarker(live);
+      await expect(peek).toBeVisible({ timeout: 10000 });
+
+      // Scrolling down: the header holds to the view's bottom edge, then
+      // scrolls with the text from where it belongs, and out at the top. It
+      // never jumps: from one step to the next it holds still, or moves no
+      // further than the text did.
+      const down = await sweep(live, steps(start, start + 140 * lineHeight, 11));
+      expect(down[0].pinned).toBe(true);
+      const unpinned = down.findIndex((s) => !s.pinned);
+      expect(unpinned).toBeGreaterThan(0);
+      expect(down.slice(unpinned).every((s) => !s.pinned)).toBe(true);
+      expect(down[down.length - 1].bottom).toBeLessThan(down[0].viewTop);
+      for (let i = 0; i < down.length; i++) {
+        const s = down[i];
+        if (s.pinned)
+          expect(Math.abs(s.bottom - s.viewBottom)).toBeLessThan(1);
+        if (i === 0)
+          continue;
+
+        const moved = s.top - down[i - 1].top;
+        const scrolled = s.scrollTop - down[i - 1].scrollTop;
+        expect(moved).toBeLessThanOrEqual(0.5);
+        expect(moved).toBeGreaterThanOrEqual(-scrolled - 0.5);
+        if (!s.pinned && !down[i - 1].pinned)
+          expect(Math.abs(moved + scrolled)).toBeLessThan(0.5);
+      }
+
+      // Scrolling up: the header holds to the bottom edge until the
+      // change's first line comes down to it, and then leaves with that line
+      // rather than float over code outside the change.
+      const up = await sweep(live, steps(start, 0, 11));
+      expect(up[0].pinned).toBe(true);
+      expect(up[up.length - 1].top).toBeGreaterThan(up[0].viewBottom);
+      expect(up.some((s) => s.bottom > s.viewBottom + 1 && s.top < s.viewBottom)).toBe(true);
+      for (let i = 0; i < up.length; i++) {
+        const s = up[i];
+        expect(s.top).toBeGreaterThanOrEqual(s.changeBottom - 0.5);
+        if (s.pinned && s.top > s.changeBottom + 0.5)
+          expect(Math.abs(s.bottom - s.viewBottom)).toBeLessThan(1);
+        if (i === 0)
+          continue;
+
+        const moved = s.top - up[i - 1].top;
+        const scrolled = up[i - 1].scrollTop - s.scrollTop;
+        expect(moved).toBeGreaterThanOrEqual(-0.5);
+        expect(moved).toBeLessThanOrEqual(scrolled + 0.5);
+      }
+
+      await page.keyboard.press('Escape');
+      await expect(peek).toHaveCount(0);
+
+      // Side by side, the action bar pins the same way, and its buttons
+      // work from there.
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await sweep(live, [start]);
+      await expect.poll(() => viewMarkers(live), { timeout: 30000 }).toMatchObject({ [FIRST]: [MODIFIED] });
+      await clickMarker(live);
+      const bar = live.locator(PEEK_COMPACT);
+      await expect(bar).toBeVisible({ timeout: 10000 });
+
+      const [pinned] = await sweep(live, [start]);
+      expect(pinned.pinned).toBe(true);
+      expect(Math.abs(pinned.bottom - pinned.viewBottom)).toBeLessThan(1);
+
+      await bar.locator(PEEK_REVERT).click();
+      await expect(peek).toHaveCount(0);
+      await expect.poll(() => viewMarkers(live), { timeout: 30000 }).toEqual({});
+    } finally {
+      if ((await base.count()) > 0) {
+        await executeCommand(page, 'removeEditorSplit');
+        await expect(base).toHaveCount(0);
+      }
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(
+        page,
+        `invisible(system2("git", c(${gitC()}, "checkout", "--", shQuote(${rPathLiteral(tallPath)}))))`,
+      );
+    }
+  });
+
   test('opens a changed file at its first change from the Git pane', async ({ rstudioPage: page }) => {
     await executeCommand(page, 'activateVcs');
     const panel = page.locator(GIT_PANEL);

@@ -15,7 +15,7 @@
 @external ace_nes-offscreen-gutter, ace_nes-offscreen-gutter-up, ace_nes-offscreen-gutter-down;
 @external ace_diff-added, ace_diff-removed;
 @external ace_git-gutter, ace_git-added, ace_git-modified, ace_git-deleted, ace_git-deleted-below, ace_folding-enabled, ace_gutter-cell_svg-icons;
-@external ace_git-peek, ace_git-peek-added, ace_git-peek-modified, ace_git-peek-deleted, ace_git-peek-header, ace_git-peek-label, ace_git-peek-button, ace_git-peek-revert, ace_git-peek-close, ace_git-peek-lines, ace_git-peek-line;
+@external ace_git-peek, ace_git-peek-added, ace_git-peek-modified, ace_git-peek-deleted, ace_git-peek-pinned, ace_git-peek-header, ace_git-peek-label, ace_git-peek-button, ace_git-peek-revert, ace_git-peek-close, ace_git-peek-lines, ace_git-peek-line;
 @external ace_git-diff-base, ace_git-diff-base-empty, ace_diff, ace_diff-active-line, insert, delete, inline, empty, aligned_diff;
 @external editor_diff_header, editor_diff_header-side;
 @external rstudio-vcs-go-to-change;
@@ -3542,6 +3542,7 @@ body .rstudio-themes-alternate {
    border-left: 3px solid #0969da;
    background-color: rgba(0, 0, 0, 0.035);
    overflow: hidden;
+   transition: box-shadow 0.15s ease-out;
 }
 
 .ace_git-peek-added {
@@ -3626,6 +3627,21 @@ body .rstudio-themes-alternate {
 
 .editor_dark .ace_git-peek-line {
    background-color: rgba(248, 81, 73, 0.15);
+}
+
+/* A peek pinned to the bottom of the editor (see pinPeek in
+   git_diff_gutter.js) floats over code, so it is drawn opaque: the editor's
+   background (from the editor element, its parent) under the peek's tint.
+   The shadow fades rather than pops as pinning starts and ends. */
+.ace_git-peek.ace_git-peek-pinned {
+   background-color: inherit;
+   background-image: linear-gradient(rgba(0, 0, 0, 0.035), rgba(0, 0, 0, 0.035));
+   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.editor_dark .ace_git-peek.ace_git-peek-pinned {
+   background-image: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05));
+   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.5);
 }
 
 /* Side-by-side Git diff: the base version in a read-only editor filling its

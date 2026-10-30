@@ -229,6 +229,7 @@ var GitDiffGutter = function(editor, strings) {
    this.onChange = this.onChange.bind(this);
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
+   this.pinPeek = this.pinPeek.bind(this);
 
    // reachable from the editor for automation and debugging
    editor.gitDiffGutter = this;
@@ -237,6 +238,7 @@ var GitDiffGutter = function(editor, strings) {
    dom.addCssClass(gutter.element, GUTTER_CLASS);
    this.resetGutterPadding();
    gutter.on("afterRender", this.onAfterRender);
+   editor.renderer.on("afterRender", this.pinPeek);
    editor.on("change", this.onChange);
 
    // Capture phase, so these run ahead of Ace's own gutter handlers: the
@@ -990,6 +992,56 @@ var GitDiffGutter = function(editor, strings) {
       }
    };
 
+   // A peek below a change taller than the editor would open out of view.
+   // Like a sticky footer, its header is drawn at the bottom of the editor
+   // instead, while the change's first line is still on screen above it; as
+   // that line leaves through the bottom, it takes the header with it.
+   //
+   // The widget keeps its place (and the space reserved for it); only where
+   // it is drawn moves. This runs in the render pass that positions it, and
+   // the pinned and natural positions meet where pinning starts, so the
+   // header never jumps as the editor scrolls between the two.
+   this.pinPeek = function() {
+      var peek = this.peek;
+      if (!peek)
+         return;
+
+      // A peek above its change (where a notebook's output took the row
+      // below) or at removed lines has no changed lines to cover.
+      var widget = peek.widget;
+      var chunk = peek.chunk;
+      var el = widget.el;
+      var lift = 0;
+      var height = 0;
+      if (!widget.hidden && !isDeletion(chunk) && widget.row >= chunk.new.start.row)
+      {
+         var header = el.firstChild;
+         height = el.clientTop + header.offsetTop + header.offsetHeight;
+
+         var top = this.rowScreenBottom(widget.row);
+         var floor = this.rowScreenBottom(chunk.new.start.row);
+         var bottom = this.editor.renderer.$size.scrollerHeight;
+         lift = top - Math.max(Math.min(top, bottom - height), floor);
+      }
+
+      var pinned = lift > 0;
+      dom.setCssClass(el, PEEK_CLASS + "-pinned", pinned);
+      el.style.transform = pinned ? "translateY(" + -lift + "px)" : "";
+
+      // (the clip leaves room above for the pinned header's shadow)
+      el.style.clipPath = pinned ? "inset(-8px 0 calc(100% - " + height + "px) 0)" : "";
+   };
+
+   // The bottom of a document row on screen, in the editor container's
+   // coordinates: where Ace's LineWidgets.renderWidgets puts a widget below
+   // the row.
+   this.rowScreenBottom = function(row) {
+      var config = this.editor.renderer.layerConfig;
+      var screenRow = this.editor.session.documentToScreenRow(row, 0);
+      var top = (screenRow - config.firstRowScreen) * config.lineHeight - config.offset;
+      return top + config.lineHeight * this.editor.session.getRowLineCount(row);
+   };
+
    this.rowForCell = function(element) {
       var cells = this.editor.renderer.$gutterLayer.$lines.cells;
       for (var i = 0; i < cells.length; i++)
@@ -1059,6 +1111,7 @@ var GitDiffGutter = function(editor, strings) {
          this.splitView.dispose();
       this.closePeek();
       this.editor.commands.removeCommand("closeGitPeek");
+      this.editor.renderer.off("afterRender", this.pinPeek);
       this.editor.off("change", this.onChange);
 
       var gutterEl = this.editor.renderer.$gutter;
