@@ -61,6 +61,13 @@ test_that("custom installation roots remain discoverable and select the exact R"
    .rs.rig.rememberInstallDir(installs, registry)
    expect_identical(.rs.rig.installDirs(registry), installs)
 
+   # a directory another session added in the meantime is kept, and one
+   # both added is listed once
+   other <- file.path(root, "other R versions")
+   cat(other, installs, sep = "\n", file = registry, append = TRUE)
+   .rs.rig.rememberInstallDir(file.path(root, "third"), registry)
+   expect_identical(.rs.rig.installDirs(registry), c(installs, other, file.path(root, "third")))
+
    # Exercise the user-mode layouts used by Windows, macOS and Linux.
    for (layout in c(".", "Resources", "lib/R"))
    {

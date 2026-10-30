@@ -97,14 +97,20 @@
 
 .rs.addFunction("rig.installDirs", function(file = .rs.rig.installDirsFile())
 {
-   if (file.exists(file)) readLines(file, warn = FALSE, encoding = "UTF-8") else character()
+   if (file.exists(file)) unique(readLines(file, warn = FALSE, encoding = "UTF-8")) else character()
 })
 
+#' Appends rather than rewriting the file, so that sessions remembering
+#' directories at the same time keep each other's.
 .rs.addFunction("rig.rememberInstallDir", function(directory, file = .rs.rig.installDirsFile())
 {
-   dirs <- unique(c(.rs.rig.installDirs(file), directory))
+   if (directory %in% .rs.rig.installDirs(file))
+      return(invisible(NULL))
+
    dir.create(dirname(file), recursive = TRUE, showWarnings = FALSE)
-   writeLines(enc2utf8(dirs), file, useBytes = TRUE)
+   con <- file(file, open = "ab")
+   on.exit(close(con), add = TRUE)
+   writeLines(enc2utf8(directory), con, useBytes = TRUE)
 })
 
 #' Find R in the confirmed destination, rather than switching to a nearby
