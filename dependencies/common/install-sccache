@@ -27,48 +27,69 @@ if ! [ -w "$INSTALL_DIR" ]; then
     export INSTALL_DIR="$HOME/opt/bin"
 fi
 
-VERSION=0.3.1
+VERSION=0.16.0
 
-if [ "$(arch)" = "aarch64" ] || [ "$(arch)"  = "arm64" ] ; then
-    ARCH=aarch64
+SCCACHE="${INSTALL_DIR}/sccache"
+INSTALLED_VERSION=$("${SCCACHE}" --version 2>/dev/null | awk '{ print $2 }' || true)
+
+if [ -L "${SCCACHE}" ]; then
+    # e.g. installed by Homebrew, which manages its own upgrades
+    info "${SCCACHE} is a symlink; leaving it alone"
+elif [ -n "${INSTALLED_VERSION}" ] &&
+     [ "$(printf '%s\n' "${VERSION}" "${INSTALLED_VERSION}" | sort -V | head -n 1)" = "${VERSION}" ]; then
+    info "sccache ${INSTALLED_VERSION} is already installed"
 else
-    # Assume x86_64 if not aarch64
-    ARCH=x86_64
-fi
 
-echo "${ARCH}"
-
-BASE_URL=https://github.com/mozilla/sccache/releases/download/v${VERSION}
-
-if is-macos; then
-    URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-apple-darwin.tar.gz
-    if [ "${ARCH}" = "x86_64" ] ; then
-        SCCACHE_PACKAGE_HASH="d8ade8d98cef392e6b256d184690e1d722f263c9f0bd83938fdd524e839c9e58"
+    if [ "$(arch)" = "aarch64" ] || [ "$(arch)"  = "arm64" ] ; then
+        ARCH=aarch64
     else
-        SCCACHE_PACKAGE_HASH="303d8e905c44eb5401adc55561a4c44b36906516f3c1c0de386c4844d38151bc"
+        # Assume x86_64 if not aarch64
+        ARCH=x86_64
     fi
-else
-    # Assume Linux if not macOS
-    URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-unknown-linux-musl.tar.gz
-    if [ "${ARCH}" = "x86_64" ] ; then
-        SCCACHE_PACKAGE_HASH="94ea33aac8dcb358753f8240cc87345963cf83cda7c6af0395dff31ffdc88df4"
+
+    echo "${ARCH}"
+
+    BASE_URL=https://github.com/mozilla/sccache/releases/download/v${VERSION}
+
+    if is-macos; then
+        URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-apple-darwin.tar.gz
+        if [ "${ARCH}" = "x86_64" ] ; then
+            SCCACHE_PACKAGE_HASH="f7dbd055db75a938ab1539f5316c5d08e73a1b94c40ab170ddcc617f5bf18343"
+        else
+            SCCACHE_PACKAGE_HASH="ded590cae2c72042c61178632906bef62d635fa20d45f8b22110a2241f430960"
+        fi
     else
-        SCCACHE_PACKAGE_HASH="1bf58385dc27b66324bb9ee82084e65c4d2e60baa19e3d16d2ab4da6c1ae66b2"
+        # Assume Linux if not macOS
+        URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-unknown-linux-musl.tar.gz
+        if [ "${ARCH}" = "x86_64" ] ; then
+            SCCACHE_PACKAGE_HASH="aec995a83ad3dff3d14b6314e08858b7b73d35ca85a5bcf3d3a9ec07dee35588"
+        else
+            SCCACHE_PACKAGE_HASH="f73a5c39f96bb6ebb89cc7915cf182260d4cbf30765322c5e793d0fe8bd80784"
+        fi
     fi
+
+    download ${URL} sccache.tar.gz \
+        && echo "${SCCACHE_PACKAGE_HASH} sccache.tar.gz" | sha256sum -c -
+
+    extract sccache.tar.gz
+    mkdir -p ${INSTALL_DIR}
+
+    # A server from an older version can't talk to the new client, so stop it.
+    "${SCCACHE}" --stop-server >/dev/null 2>&1 || true
+    mv -f sccache-v${VERSION}-*/sccache "${SCCACHE}"
+    chmod +x "${SCCACHE}"
+
+    # this is so that boost/bjam will find and use sccache;
+    # don't replace a real ccache
+    if ! [ -e "${INSTALL_DIR}/ccache" ]; then
+        ln -sf "${SCCACHE}" "${INSTALL_DIR}/ccache"
+    fi
+
+    rm -rf sccache*
+
 fi
 
-download ${URL} sccache.tar.gz \
-    && echo "${SCCACHE_PACKAGE_HASH} sccache.tar.gz" | sha256sum -c -
-
-extract sccache.tar.gz
-mkdir -p ${INSTALL_DIR}
-if [ ! -f ${INSTALL_DIR}/sccache ]; then
-  mv sccache-v${VERSION}-*/sccache ${INSTALL_DIR}/sccache
-
-  chmod +x ${INSTALL_DIR}/sccache
-  # this is so that boost/bjam will find and use sccache
-  ln -sf ${INSTALL_DIR}/sccache ${INSTALL_DIR}/ccache
-
+FOUND=$(command -v sccache || true)
+if [ -n "${FOUND}" ] && [ "${FOUND}" != "${SCCACHE}" ]; then
+    warn "${FOUND} comes before ${SCCACHE} on PATH and will be used instead"
 fi
-
-rm -rf sccache*
