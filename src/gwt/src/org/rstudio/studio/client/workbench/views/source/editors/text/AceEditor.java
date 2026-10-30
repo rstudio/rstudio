@@ -361,6 +361,9 @@ public class AceEditor implements DocDisplay
    public AceEditor(AceEditor attachTo)
    {
       widget_ = new AceEditorWidget(true, attachTo == null ? null : attachTo.widget_.getEditor());
+      attachedTo_ = attachTo;
+      if (attachTo != null)
+         attachTo.documentViews_.add(this);
       snippets_ = new SnippetHelper(this);
       monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
@@ -1339,11 +1342,20 @@ public class AceEditor implements DocDisplay
 
       if (preserveCursorPosition)
       {
+         // replacing the whole document moves the cursor of every other view
+         // of it to the end, so keep their selections and scroll positions
+         List<Command> restoreViews = new ArrayList<>();
+         for (AceEditor view : documentViews_)
+            restoreViews.add(view.saveSelectionAndScroll());
+
          withPreservedCursorPosition(() -> {
             // Setting the value directly on the document prevents undo/redo
             // stack from being blown away
             widget_.getEditor().getSession().getDocument().setValue(normalizedCode);
          });
+
+         for (Command restore : restoreViews)
+            restore.execute();
       }
       else
       {
@@ -1375,6 +1387,36 @@ public class AceEditor implements DocDisplay
          scrollToY(scrollTop, 0);
          scrollToX(scrollLeft);
       });
+   }
+
+   // Returns a command restoring this view's current selection and scroll
+   // position, as withPreservedCursorPosition() does for its own editor's
+   // cursor.
+   private Command saveSelectionAndScroll()
+   {
+      final Range selection = getSelectionRange();
+      final int scrollTop = getScrollTop();
+      final int scrollLeft = getScrollLeft();
+
+      return () ->
+      {
+         setSelectionRange(selection);
+         scrollToY(scrollTop, 0);
+         scrollToX(scrollLeft);
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            scrollToY(scrollTop, 0);
+            scrollToX(scrollLeft);
+         });
+      };
+   }
+
+   // Stops tracking a view created with AceEditor(AceEditor) as one of its
+   // source editor's document views; call before destroying the view.
+   public void detachFromDocument()
+   {
+      if (attachedTo_ != null)
+         attachedTo_.documentViews_.remove(this);
    }
 
    public int getScrollLeft()
@@ -3315,6 +3357,7 @@ public class AceEditor implements DocDisplay
       navigate(pos, false);
    }
 
+   @Override
    public void revealRange(Range range, boolean animate)
    {
       widget_.getEditor().revealRange(range, animate);
@@ -3661,9 +3704,9 @@ public class AceEditor implements DocDisplay
    }
 
    @Override
-   public void toggleBreakpointAtCursor()
+   public void toggleBreakpointAtRow(int row)
    {
-      widget_.toggleBreakpointAtCursor();
+      widget_.toggleBreakpointAtRow(row);
    }
 
    @Override
@@ -5256,6 +5299,12 @@ public class AceEditor implements DocDisplay
          NATIVE_R_PIPE, MAGRITTR_PIPE, "%<>%", "%T>%", "%$%"));
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
+
+   // the editor whose document this view shares, if any, and the views
+   // sharing this editor's document (see AceEditor(AceEditor))
+   private final AceEditor attachedTo_;
+   private final List<AceEditor> documentViews_ = new ArrayList<>();
+
    private final SnippetHelper snippets_;
    private final AceEditorMonitor monitor_;
    private ScrollAnimator scrollAnimator_;

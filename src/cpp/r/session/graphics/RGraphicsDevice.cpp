@@ -814,6 +814,19 @@ void copyToActiveDevice()
    r::exec::RFunction(".rs.GEcopyDisplayList", rsDeviceNumber).call();
 }
    
+Error altText(std::string* pAltText)
+{
+   // without a device nothing has been drawn, so there is no alt text
+   if (s_pGEDevDesc == nullptr)
+   {
+      pAltText->clear();
+      return Success();
+   }
+
+   return r::exec::RFunction(".rs.graphicsAltText",
+                             s_pGEDevDesc->displayList).callUtf8(pAltText);
+}
+
 std::string imageFileExtension()
 {
    return "png";
@@ -871,6 +884,7 @@ Error initialize(
    graphicsDevice.imageFileExtension = imageFileExtension;
    graphicsDevice.close = close;
    graphicsDevice.onBeforeExecute = onBeforeExecute;
+   graphicsDevice.altText = altText;
    Error error = plotManager().initialize(graphicsPath,
                                           graphicsDevice,
                                           &s_graphicsDeviceEvents);

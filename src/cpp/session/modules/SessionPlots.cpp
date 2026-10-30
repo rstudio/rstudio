@@ -806,6 +806,8 @@ void enquePlotsChanged(const r::session::graphics::DisplayState& displayState,
    jsonPlotsState["plotIndex"] = displayState.activePlotIndex;
    jsonPlotsState["plotCount"] = displayState.plotCount;
    jsonPlotsState["fixedSize"] = displayState.fixedSize;
+   jsonPlotsState["altText"] = displayState.altText;
+   jsonPlotsState["activePlotChanged"] = displayState.activePlotChanged;
    jsonPlotsState["activatePlots"] = activatePlots &&
                                      (displayState.plotCount > 0);
    jsonPlotsState["showManipulator"] = showManipulator;

@@ -44,6 +44,9 @@ const CTRL_ALT_SHIFT_K: KeyInit = {
   altKey: true,
   shiftKey: true,
 };
+// Unbound by default; the two-stroke tests use them as prefixes.
+const CTRL_ALT_SHIFT_Q: KeyInit = { ...CTRL_ALT_SHIFT_K, key: 'Q', code: 'KeyQ', keyCode: 81 };
+const CTRL_ALT_SHIFT_H: KeyInit = { ...CTRL_ALT_SHIFT_K, key: 'H', code: 'KeyH', keyCode: 72 };
 
 // Dispatch a keydown inside the chat iframe and hand it to the parent's
 // rstudioChatKeydown, as PA's forwarder does. The event is stopped at a
@@ -116,6 +119,62 @@ test.describe('Posit Assistant -- RStudio shortcuts', { tag: ['@ai', '@chat'] },
     expect(result).toEqual({ used: false, defaultPrevented: false });
   });
 });
+
+// Custom bindings load only at startup, so reload to apply or drop them.
+async function reloadWithChat(page: Page): Promise<ChatPane> {
+  await page.reload();
+  await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000 });
+  const chatPane = new ChatPane(page);
+  await expect(chatPane.chatInput).toBeVisible({ timeout: 30000 });
+  return chatPane;
+}
+
+test.describe.serial(
+  'Posit Assistant -- two-stroke RStudio shortcuts',
+  { tag: ['@ai', '@chat'] },
+  () => {
+    requireAiCredentials(test, 'positai');
+
+    let consoleActions: ConsolePaneActions;
+    let chatPane: ChatPane;
+
+    test.beforeAll(async ({ rstudioPage: page }) => {
+      ({ consoleActions } = await setupPositAssistantChat(page));
+      await consoleActions.executeInConsole(BACKUP_BINDINGS);
+      // A custom binding replaces the command's defaults, so Ctrl+2 alone is unbound.
+      // The three-stroke binding sits behind insertAssignmentOperator's two strokes.
+      await consoleActions.executeInConsole(
+        writeAppBindings({
+          activateConsole: 'Ctrl+Alt+Shift+Q Ctrl+2|Ctrl+Alt+Shift+H Ctrl+1 Ctrl+2',
+          insertAssignmentOperator: 'Ctrl+Alt+Shift+H Ctrl+1',
+        }),
+      );
+      chatPane = await reloadWithChat(page);
+    });
+
+    test.afterAll(async ({ rstudioPage: page }) => {
+      await consoleActions.executeInConsole(RESTORE_BINDINGS);
+      await reloadWithChat(page);
+    });
+
+    test('the first stroke of a Workbench shortcut is claimed', async ({ rstudioPage: page }) => {
+      const prefix = await sendKeyAsAssistant(chatPane.chatInput, CTRL_ALT_SHIFT_Q);
+      expect(prefix).toEqual({ used: true, defaultPrevented: true });
+      await expectConsoleShortcutRuns(chatPane, page);
+    });
+
+    test('the first stroke of an editor shortcut is left to Posit Assistant', async () => {
+      // Dispatch stops at insertAssignmentOperator, so activateConsole's longer
+      // binding behind it doesn't make Ctrl+Alt+Shift+H a claimable prefix.
+      const prefix = await sendKeyAsAssistant(chatPane.chatInput, CTRL_ALT_SHIFT_H);
+      expect(prefix).toEqual({ used: false, defaultPrevented: false });
+      // Ctrl+1 runs activateSource only if the prefix was dropped; otherwise it
+      // completes insertAssignmentOperator, which PA keeps.
+      const result = await sendKeyAsAssistant(chatPane.chatInput, CTRL_1);
+      expect(result).toEqual({ used: true, defaultPrevented: true });
+    });
+  },
+);
 
 // Satellite pop-out on Server hits the Chrome window.open() reload path;
 // chat-satellite-commands.test.ts is @desktop_only for the same reason.
