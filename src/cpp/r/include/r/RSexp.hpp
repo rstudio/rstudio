@@ -352,14 +352,15 @@ class PreservedSEXP : MoveOnly
 {
 public:
 
-   // Empty is stored as nullptr, not R_NilValue: file-scope instances are
+   // Empty is stored as nullptr, never R_NilValue: file-scope instances are
    // constructed before R has initialized R_NilValue, so a default argument
-   // of R_NilValue would quietly capture a null pointer. get() maps empty
+   // of R_NilValue would quietly capture a null pointer. set() folds
+   // R_NilValue into nullptr so there is one empty state, and get() maps it
    // back to R_NilValue so a null SEXP never escapes to R.
    explicit PreservedSEXP(SEXP sexp = nullptr)
-      : sexp_(sexp)
+      : sexp_(nullptr)
    {
-      preserve();
+      set(sexp);
    }
 
    PreservedSEXP(PreservedSEXP&& other)
@@ -390,7 +391,7 @@ public:
    void set(SEXP sexp)
    {
       release();
-      sexp_ = sexp;
+      sexp_ = sexp == R_NilValue ? nullptr : sexp;
       preserve();
    }
 
@@ -401,7 +402,7 @@ public:
 
    bool isNil() const
    {
-      return sexp_ == nullptr || sexp_ == R_NilValue;
+      return sexp_ == nullptr;
    }
    
    explicit operator bool() const

@@ -1388,7 +1388,7 @@ void onDetectChanges(module_context::ChangeSource source)
       // it's possible that the object was mutated in place;
       // attempt to detect this as well
       bool typeChanged = false;
-      if (observedSEXP != nullptr)
+      if (!i->second.observedSEXP.isNil())
       {
          static SEXP s_class = Rf_install("class");
          SEXP oldClass = Rf_getAttrib(observedSEXP, s_class);
