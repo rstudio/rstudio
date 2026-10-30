@@ -19,6 +19,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.EditorsText
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 
 // Wraps the acesupport GitDiffGutter, which marks changed lines in the gutter.
 // Requires Ace's diff extension to be loaded; see AceEditor.loadDiffExtension().
@@ -71,6 +72,30 @@ public class GitDiffGutterNative extends JavaScriptObject
       this.setBaseRefresher($entry(function(callback) {
          refresher.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(callback);
       }));
+   }-*/;
+
+   // Installs what is told when the change at the cursor, or the number of
+   // changes, may have moved.
+   public final native void setStatusListener(Command listener) /*-{
+      this.setStatusListener($entry(function() {
+         listener.@com.google.gwt.user.client.Command::execute()();
+      }));
+   }-*/;
+
+   // Whether there is a base to count changes against (there is none for an
+   // untracked file, or before the first fetch).
+   public final native boolean hasBase() /*-{
+      return this.hasBase();
+   }-*/;
+
+   public final native int getChangeCount() /*-{
+      return this.getChangeCount();
+   }-*/;
+
+   // The change at the cursor's position among the document's changes, or -1
+   // when the cursor is not on one.
+   public final native int getChangeIndexAtCursor() /*-{
+      return this.getChangeIndexAtCursor();
    }-*/;
 
    // Navigation wraps around; each returns false when there are no changes.

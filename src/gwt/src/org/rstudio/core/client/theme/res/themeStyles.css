@@ -19,6 +19,7 @@
 @external ace_git-diff-base, ace_git-diff-base-empty, ace_diff, ace_diff-active-line, insert, delete, inline, empty, aligned_diff;
 @external editor_diff_header, editor_diff_header-side;
 @external rstudio-vcs-go-to-change;
+@external rstudio-git-change-nav-count, rstudio-git-change-nav-button;
 @external rstudio_editor_diff_view_toggle;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
@@ -3670,6 +3671,46 @@ body .rstudio-themes-alternate {
 .rstudio-vcs-go-to-change:hover,
 .rstudio-vcs-go-to-change:focus-visible {
    opacity: 1;
+}
+
+/* The editor status bar's Git change navigator: Previous and Next Change
+   buttons around a count of the document's changes (see
+   ChangeNavigatorWidget). The chevrons take the status bar's text colour. */
+.rstudio-git-change-nav-count {
+   position: relative;
+   top: 1px; /* level with the status bar's other labels */
+   padding: 0 3px;
+}
+
+.rstudio-git-change-nav-button {
+   width: 16px;
+   height: 16px;
+   padding: 0;
+   margin: 0;
+   border: none;
+   border-radius: 3px;
+   background: none;
+   color: inherit;
+   line-height: 0;
+   vertical-align: top;
+   cursor: pointer;
+   opacity: 0.8;
+}
+
+.rstudio-git-change-nav-button:hover {
+   background-color: rgba(0, 0, 0, 0.08);
+   opacity: 1;
+}
+
+.rstudio-themes-dark .rstudio-git-change-nav-button:hover {
+   background-color: rgba(255, 255, 255, 0.12);
+}
+
+.rstudio-git-change-nav-button[disabled],
+.rstudio-themes-dark .rstudio-git-change-nav-button[disabled] {
+   background: none;
+   cursor: default;
+   opacity: 0.35;
 }
 
 /* The headers naming the two sides of a side-by-side Git diff: the index

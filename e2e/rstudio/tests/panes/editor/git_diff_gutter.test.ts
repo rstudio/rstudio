@@ -52,6 +52,10 @@ const PEEK_CLOSE = '.ace_git-peek-close';
 // The peek's compact form, in the side-by-side view: the actions alone.
 const PEEK_COMPACT = '.ace_git-peek-compact';
 
+// The status bar's change navigator, of the document on screen.
+const CHANGE_NAV = "[class*='rstudio_source_panel'] .rstudio-git-change-nav:visible";
+const CHANGE_NAV_COUNT = '.rstudio-git-change-nav-count';
+
 // The main source column and any extra ones (see SourceColumnManager).
 const MAIN_COLUMN = '#rstudio_Source_pane';
 const EXTRA_COLUMNS = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
@@ -431,6 +435,101 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     for (const row of [6, 4, 1]) {
       await executeCommand(page, 'vcsPreviousChange');
       await expect.poll(() => cursorRow(page)).toBe(row);
+    }
+  });
+
+  test('steps through the changes from the status bar, which counts them', async ({
+    rstudioPage: page,
+  }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+
+    const nav = page.locator(CHANGE_NAV);
+    const count = nav.locator(CHANGE_NAV_COUNT);
+    const previous = nav.getByRole('button', { name: 'Go to Previous Change', exact: true });
+    const next = nav.getByRole('button', { name: 'Go to Next Change', exact: true });
+    const editor = new AceEditor(page, '');
+
+    // off a change, the count is of them all; on one, it says which
+    await editor.gotoLine(1);
+    await expect(count).toHaveText('3 changes', { timeout: 10000 });
+    await editor.gotoLine(5);
+    await expect(count).toHaveText('Change 2 of 3');
+
+    // The buttons step as the commands do, wrapping around, and leave focus
+    // in the editor. Where the cursor lands is announced as well as shown.
+    await editor.gotoLine(1);
+    for (const [row, text] of [[1, 'Change 1 of 3'], [4, 'Change 2 of 3']] as const) {
+      await next.click();
+      await expect.poll(() => cursorRow(page)).toBe(row);
+      await expect(count).toHaveText(text);
+    }
+    await expect(page.locator('[role="status"]', { hasText: 'Change 2 of 3' })).toBeAttached();
+    await expect.poll(() => editor.isFocused()).toBe(true);
+    await previous.click();
+    await expect.poll(() => cursorRow(page)).toBe(1);
+    await previous.click();
+    await expect.poll(() => cursorRow(page)).toBe(6);
+    await expect(count).toHaveText('Change 3 of 3');
+
+    // a click brings focus to the editor from elsewhere ...
+    await executeCommand(page, 'activateConsole');
+    await expect.poll(() => editor.isFocused()).toBe(false);
+    await next.click();
+    await expect.poll(() => cursorRow(page)).toBe(1);
+    await expect.poll(() => editor.isFocused()).toBe(true);
+
+    // ... while from the keyboard, focus stays on the button for the next step
+    await next.focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => cursorRow(page)).toBe(4);
+    await expect(next).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => cursorRow(page)).toBe(6);
+    await editor.focus();
+
+    // an open peek comes along to the next change
+    await editor.gotoLine(2);
+    await executeCommand(page, 'vcsShowChange');
+    const peek = page.locator(PEEK);
+    await expect(peek.locator(PEEK_LABEL)).toHaveText('Added 1 line', { timeout: 10000 });
+    await next.click();
+    await expect.poll(() => cursorRow(page)).toBe(4);
+    await expect(peek).toHaveCount(1);
+    await expect(peek.locator(PEEK_LABEL)).toHaveText('Changed 1 line; previously:');
+    await page.keyboard.press('Escape');
+    await expect(peek).toHaveCount(0);
+
+    // gone with the markers, and back with them
+    await setPref(page, PREF, false);
+    try {
+      await expect(nav).toBeHidden({ timeout: 10000 });
+    } finally {
+      await setPref(page, PREF, true);
+    }
+    await expect(count).toHaveText(/of 3$/, { timeout: 30000 });
+    await documentCloseAllNoSave(page);
+
+    // A file matching the index has nothing to step through; one Git does
+    // not track has nothing to count changes against.
+    const cleanPath = `${projectDir()}/clean.R`;
+    const untrackedPath = `${projectDir()}/untracked-nav.R`;
+    await executeInConsoleChecked(page, `writeLines("x <- 1", ${rPathLiteral(cleanPath)})`);
+    await commitAll(page, 'clean', [cleanPath]);
+    await executeInConsoleChecked(page, `writeLines("y <- 1", ${rPathLiteral(untrackedPath)})`);
+    try {
+      await openFile(page, cleanPath);
+      await expect(count).toHaveText('No changes', { timeout: 30000 });
+      await expect(previous).toBeDisabled();
+      await expect(next).toBeDisabled();
+      await documentCloseAllNoSave(page);
+
+      await openFile(page, untrackedPath);
+      await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+      await expect(nav).toBeHidden();
+    } finally {
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(untrackedPath)}))`);
     }
   });
 

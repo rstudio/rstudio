@@ -224,9 +224,12 @@ var GitDiffGutter = function(editor, strings) {
    this.baseRefresher = null;
    this.revision = 0;
    this.splitView = null;
+   this.statusListener = null;
+   this.statusPending = false;
 
    this.onAfterRender = this.onAfterRender.bind(this);
    this.onChange = this.onChange.bind(this);
+   this.onCursorActivity = this.onCursorActivity.bind(this);
    this.onGutterMouseDown = this.onGutterMouseDown.bind(this);
    this.onGutterClick = this.onGutterClick.bind(this);
    this.pinPeek = this.pinPeek.bind(this);
@@ -240,6 +243,8 @@ var GitDiffGutter = function(editor, strings) {
    gutter.on("afterRender", this.onAfterRender);
    editor.renderer.on("afterRender", this.pinPeek);
    editor.on("change", this.onChange);
+   editor.on("changeSelection", this.onCursorActivity);
+   editor.on("focus", this.onCursorActivity);
 
    // Capture phase, so these run ahead of Ace's own gutter handlers: the
    // breakpoint toggle hangs off mousedown, and the fold toggle off click and
@@ -316,15 +321,68 @@ var GitDiffGutter = function(editor, strings) {
       this.baseRefresher = refresher;
    };
 
+   // Installs what is told when the change at the cursor, or the number of
+   // changes, may have moved (see getChangeIndexAtCursor). Calls are batched
+   // per task, and come after the side-by-side view has noted which pane
+   // took focus.
+   this.setStatusListener = function(listener) {
+      this.statusListener = listener;
+      this.notifyStatus();
+   };
+
+   this.notifyStatus = function() {
+      if (!this.statusListener || this.statusPending)
+         return;
+
+      var self = this;
+      this.statusPending = true;
+      Promise.resolve().then(function() {
+         self.statusPending = false;
+         if (self.statusListener)
+            self.statusListener();
+      });
+   };
+
+   this.onCursorActivity = function() {
+      this.notifyStatus();
+   };
+
+   // Whether there is a base to diff against; without one (none fetched yet,
+   // an untracked file) there are no changes to count.
+   this.hasBase = function() {
+      return this.baseLines != null;
+   };
+
+   this.getChangeCount = function() {
+      return this.chunks.length;
+   };
+
+   // The position of the change at the cursor among the document's changes,
+   // or -1 when the cursor is not on one.
+   this.getChangeIndexAtCursor = function() {
+      return this.chunks.indexOf(this.chunkAtCursor());
+   };
+
    // A side-by-side view (see git_diff_split.js) shows the base beside the
    // document and follows this gutter's diff. While one is attached the peek
    // shows the actions alone (see showPeek), so an open one goes as the view
-   // comes or goes.
+   // comes or goes. The base pane's cursor counts as the cursor while it
+   // holds focus, so its moves are reported as the document's are.
    this.setSplitView = function(view) {
       this.closePeek();
+      if (this.splitView)
+      {
+         this.splitView.baseEditor.off("changeSelection", this.onCursorActivity);
+         this.splitView.baseEditor.off("focus", this.onCursorActivity);
+      }
+
       this.splitView = view;
+      this.notifyStatus();
       if (!view)
          return;
+
+      view.baseEditor.on("changeSelection", this.onCursorActivity);
+      view.baseEditor.on("focus", this.onCursorActivity);
 
       // (an update waiting out a slow diff's typing pause would otherwise
       // hand the view the previous chunks, and its first folds with them)
@@ -542,6 +600,7 @@ var GitDiffGutter = function(editor, strings) {
 
       var renderer = this.editor.renderer;
       renderer.$loop.schedule(renderer.CHANGE_GUTTER);
+      this.notifyStatus();
    };
 
    // The gutter recycles its cell elements, so classes are reassigned from
@@ -648,7 +707,8 @@ var GitDiffGutter = function(editor, strings) {
       return null;
    };
 
-   // Navigation wraps around, like Find.
+   // Navigation wraps around, like Find. An open peek comes along to the
+   // change navigated to, so that changes can be reviewed one after another.
    this.goToNextChange = function() {
       this.flushUpdate();
       if (this.chunks.length === 0)
@@ -665,7 +725,7 @@ var GitDiffGutter = function(editor, strings) {
          }
       }
 
-      this.goToChunk(target);
+      this.goToChange(target);
       return true;
    };
 
@@ -685,8 +745,15 @@ var GitDiffGutter = function(editor, strings) {
          }
       }
 
-      this.goToChunk(target);
+      this.goToChange(target);
       return true;
+   };
+
+   this.goToChange = function(chunk) {
+      var peeking = this.peek != null && this.peek.chunk !== chunk;
+      this.goToChunk(chunk);
+      if (peeking)
+         this.showPeek(chunk);
    };
 
    this.goToChunk = function(chunk) {
@@ -1101,6 +1168,7 @@ var GitDiffGutter = function(editor, strings) {
 
    this.dispose = function() {
       this.updatePending = false;
+      this.statusListener = null;
       if (this.updateTimer)
       {
          clearTimeout(this.updateTimer);
@@ -1113,6 +1181,8 @@ var GitDiffGutter = function(editor, strings) {
       this.editor.commands.removeCommand("closeGitPeek");
       this.editor.renderer.off("afterRender", this.pinPeek);
       this.editor.off("change", this.onChange);
+      this.editor.off("changeSelection", this.onCursorActivity);
+      this.editor.off("focus", this.onCursorActivity);
 
       var gutterEl = this.editor.renderer.$gutter;
       gutterEl.removeEventListener("mousedown", this.onGutterMouseDown, true);

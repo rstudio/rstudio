@@ -99,9 +99,12 @@
                                  showArrows="false"/>
                                  
       <sb:NotebookProgressWidget ui:field="progress_"
-                                 styleName="{style.element} {style.last}" 
+                                 styleName="{style.element} {style.last}"
                                  visible="false" />
-                              
+
+      <sb:ChangeNavigatorWidget ui:field="changes_"
+                                addStyleNames="{style.element}"/>
+
       <sb:StatusBarElementWidget ui:field="language_"
                                  styleName="{style.element} {style.last}"
                                  showArrows="true"

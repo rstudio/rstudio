@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import org.rstudio.core.client.command.AppCommand;
+
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -71,4 +73,12 @@ public interface StatusBar
    void hideNotebookProgress(boolean immediately);
    HandlerRegistration addProgressClickHandler(ClickHandler handler);
    HandlerRegistration addProgressCancelHandler(Command onCanceled);
+
+   // Previous and Next Change buttons around a count of the document's Git
+   // changes; hidden until shown.
+   void initChangeNavigator(AppCommand previous,
+                            AppCommand next,
+                            ChangeNavigatorWidget.Handler handler);
+   void setChangeNavigatorVisible(boolean visible);
+   void setChanges(String text, boolean canNavigate);
 }

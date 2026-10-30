@@ -275,4 +275,12 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String gitDiffBeforeDescription();
     String gitDiffAfterLabel();
     String gitDiffAfterDescription();
+
+    // Git change navigator in the editor status bar
+    String gitChangeNavigatorLabel();
+    String gitChangePosition(int index, int count);
+    @DefaultMessage("{0} changes")
+    @AlternateMessage({"one", "1 change"})
+    String gitChangeCount(@PluralCount int count);
+    String gitNoChanges();
 }

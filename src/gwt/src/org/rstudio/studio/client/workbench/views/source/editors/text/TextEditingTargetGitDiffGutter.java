@@ -58,17 +58,21 @@ import com.google.inject.Provider;
 public class TextEditingTargetGitDiffGutter
 {
    // closeDiffSplit closes the document's side-by-side view, for when the
-   // gutter driving it goes away; see detach().
+   // gutter driving it goes away; see detach(). statusChanged is run when
+   // what getChangeCount() and getChangeIndexAtCursor() report may have
+   // moved.
    public TextEditingTargetGitDiffGutter(DocDisplay docDisplay,
                                          DocUpdateSentinel sentinel,
                                          ArrayList<HandlerRegistration> releaseOnDismiss,
-                                         Command closeDiffSplit)
+                                         Command closeDiffSplit,
+                                         Command statusChanged)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       docDisplay_ = docDisplay;
       sentinel_ = sentinel;
       closeDiffSplit_ = closeDiffSplit;
+      statusChanged_ = statusChanged;
 
       if (isGitSession())
       {
@@ -185,6 +189,26 @@ public class TextEditingTargetGitDiffGutter
       GitDiffGutterNative gutter = gutterFor(display);
       if (gutter != null)
          gutter.showChangeAtCursor();
+   }
+
+   // The number of changes, as seen from the given view; -1 when there is no
+   // base to count them against (no gutter, an untracked file, or a base not
+   // fetched yet).
+   public int getChangeCount(DocDisplay display)
+   {
+      GitDiffGutterNative gutter = gutterFor(display);
+      if (gutter == null || !gutter.hasBase())
+         return -1;
+
+      return gutter.getChangeCount();
+   }
+
+   // The position of the change at the given view's cursor among the
+   // document's changes, or -1 when the cursor is not on one.
+   public int getChangeIndexAtCursor(DocDisplay display)
+   {
+      GitDiffGutterNative gutter = gutterFor(display);
+      return (gutter == null) ? -1 : gutter.getChangeIndexAtCursor();
    }
 
    // Called as the document becomes and stops being the active one (see
@@ -342,6 +366,7 @@ public class TextEditingTargetGitDiffGutter
       GitDiffGutterNative gutter = GitDiffGutterNative.create(editor.getWidget().getEditor());
       gutter.setIgnoreWhitespace(prefs_.gitDiffIgnoreWhitespace().getValue());
       gutter.setBaseRefresher(this::refreshBase);
+      gutter.setStatusListener(statusChanged_);
       return gutter;
    }
 
@@ -407,6 +432,9 @@ public class TextEditingTargetGitDiffGutter
 
       // a disposed gutter has nothing left to revert, so these are harmless
       runBaseCallbacks();
+
+      if (!dismissed_)
+         statusChanged_.execute();
    }
 
    // Refresh triggers arrive in bursts (a commit fires several, a focus
@@ -510,6 +538,7 @@ public class TextEditingTargetGitDiffGutter
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel sentinel_;
    private final Command closeDiffSplit_;
+   private final Command statusChanged_;
 
    private GitDiffGutterNative gutter_;
    private GitDiffGutterNative splitGutter_;
