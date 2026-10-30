@@ -22,8 +22,8 @@
 # Falls back to `npm ci` when the lockfiles differ (the branch changed deps) or
 # the main checkout has no node_modules to clone. `npm ci` runs under the
 # repo's pinned node; src/node/desktop requires it, while e2e/rstudio falls
-# back to the system node. Each finished install leaves a marker file in
-# node_modules, so a rerun redoes an install that failed or was interrupted.
+# back to the system node. A marker file in the git dir is set while an install
+# runs, so a rerun redoes an install that failed or was interrupted.
 #
 # Platforms: the clone mechanism is gated by OS -- clonefile on macOS (`cp -c`),
 # reflink on Linux (`cp --reflink=auto`). On filesystems without copy-on-write
@@ -216,6 +216,14 @@ main_tree_current() {
   ' "$main/package-lock.json" "$main/node_modules/.package-lock.json"
 }
 
+# The marker file that exists while this script installs a package's
+# node_modules in a checkout, so a tree left with it is a failed or interrupted
+# install. It lives in the checkout's git dir, where npm ci (which empties
+# node_modules) and a clone of node_modules can't touch it.
+pending_marker() {
+  git -C "$1" rev-parse --path-format=absolute --git-path "bootstrap-pending-${2//\//-}"
+}
+
 # Make sure a package dir has node_modules: clone from main when the lockfiles
 # match and main's installed tree is current, otherwise npm ci. Pass
 # "require-pinned-node" to fail rather than npm ci under the system node.
@@ -224,32 +232,32 @@ ensure_deps() {
   local require_pinned="${2:-}"
   local wt="$WORKTREE/$pkg"
   local main="$MAIN_CHECKOUT/$pkg"
-  local marker="$wt/node_modules/.bootstrap-complete"
+  local pending main_pending
+  pending="$(pending_marker "$WORKTREE" "$pkg")"
+  main_pending="$(pending_marker "$MAIN_CHECKOUT" "$pkg")"
 
   if [ ! -f "$wt/package-lock.json" ]; then
     echo "[bootstrap] skip $pkg (no package-lock.json)"
     return
   fi
 
-  # A worktree tree without the marker is a failed or interrupted install (or
-  # predates the marker), so redo it; the clone and npm ci both replace it.
-  # The main checkout's trees come from its own installs, so keep any there.
-  if [ -f "$marker" ] \
-     || { [ "$WORKTREE" = "$MAIN_CHECKOUT" ] && [ -d "$wt/node_modules" ]; }; then
+  if [ -f "$pending" ]; then
+    echo "[bootstrap] $pkg: the previous install failed or was interrupted; reinstalling"
+  elif [ -d "$wt/node_modules" ]; then
     echo "[bootstrap] $pkg already has node_modules; leaving as-is"
     return
-  fi
-  if [ -d "$wt/node_modules" ]; then
-    echo "[bootstrap] $pkg/node_modules has no $(basename "$marker") (failed, interrupted, or older install); reinstalling"
   fi
 
   if [ "$WORKTREE" != "$MAIN_CHECKOUT" ] \
      && [ -d "$main/node_modules" ] \
      && cmp -s "$wt/package-lock.json" "$main/package-lock.json"; then
-    if main_tree_current "$main"; then
+    if [ -f "$main_pending" ]; then
+      echo "[bootstrap] main's $pkg/node_modules is from a failed or interrupted install; falling back to npm ci"
+    elif main_tree_current "$main"; then
       echo "[bootstrap] cloning $pkg/node_modules from main (lockfiles match)"
+      touch "$pending"
       if clone_tree "$main/node_modules" "$wt/node_modules"; then
-        touch "$marker"
+        rm -f "$pending"
         return
       fi
       echo "[bootstrap] clone failed; falling back to npm ci"
@@ -262,16 +270,22 @@ ensure_deps() {
   # an install (electron-rebuild's yargs fails to load under Node 26), and the
   # main checkout's dependencies/common/node lags a pin bump until its deps
   # are reinstalled.
+  local npm_path="$PATH"
   if [ -n "$PINNED_NODE_BIN" ]; then
     echo "[bootstrap] npm ci in $pkg (using pinned node from $PINNED_NODE_BIN)"
-    ( cd "$wt" && PATH="$PINNED_NODE_BIN:$PATH" npm ci )
+    npm_path="$PINNED_NODE_BIN:$PATH"
   elif [ "$require_pinned" = "require-pinned-node" ]; then
     pinned_node_missing "$pkg"
   else
     echo "[bootstrap] npm ci in $pkg (pinned node not found; using system node)"
-    ( cd "$wt" && npm ci )
   fi
-  touch "$marker"
+
+  touch "$pending"
+  if ! ( cd "$wt" && PATH="$npm_path" npm ci ); then
+    echo "[bootstrap] ERROR: npm ci failed in $pkg; rerun this script to retry the install" >&2
+    exit 1
+  fi
+  rm -f "$pending"
 }
 
 # Copy a generated, gitignored file from the main checkout when the worktree is
