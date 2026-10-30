@@ -912,8 +912,10 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       endif()
 
       # non-macOS packages are architecture-specific, so also exclude binaries
-      # built for the other architecture (macOS packages are universal and
-      # keep both)
+      # built for the other architecture. macOS keeps both: universal packages
+      # ship an x64 and an arm64 node, and an arm64-only package can bundle
+      # the x64 node (see the node install above), so the target architecture
+      # doesn't tell us which binaries Copilot will load
       if(NOT APPLE)
          string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" COPILOT_TARGET_PROCESSOR)
          if(COPILOT_TARGET_PROCESSOR MATCHES "^(x86_64|amd64)$")
