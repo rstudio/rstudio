@@ -2865,9 +2865,13 @@ public class TextEditingTarget implements
    }
 
    // Goes to the document's first Git change as its markers show it (see
-   // NavigationMethods.GIT_FIRST_CHANGE).
+   // NavigationMethods.GIT_FIRST_CHANGE). The visual editor has no markers;
+   // a document still in it stays where the navigation put it.
    public void goToFirstGitChange()
    {
+      if (isVisualModeActivated())
+         return;
+
       gitDiffGutter_.goToFirstChange();
    }
 

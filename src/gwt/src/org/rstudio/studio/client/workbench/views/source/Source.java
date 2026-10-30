@@ -2232,18 +2232,26 @@ public class Source implements InsertSourceEvent.Handler,
                            navMethod == NavigationMethods.HIGHLIGHT_LINE &&
                            !userPrefs_.highlightSelectedLine().getValue();
 
+                     // (the first change is gone to once the navigation is
+                     // done, which in visual mode can take a switch to the
+                     // source editor first)
+                     Command afterNavigation = onNavigationCompleted;
+                     if (navMethod == NavigationMethods.GIT_FIRST_CHANGE &&
+                         target instanceof TextEditingTarget)
+                     {
+                        afterNavigation = () ->
+                        {
+                           onNavigationCompleted.execute();
+                           ((TextEditingTarget) target).goToFirstGitChange();
+                        };
+                     }
+
                      target.navigateToPosition(
                            srcPosition,
                            false,
                            highlight,
                            moveCursor,
-                           onNavigationCompleted);
-
-                     if (navMethod == NavigationMethods.GIT_FIRST_CHANGE &&
-                         target instanceof TextEditingTarget)
-                     {
-                        ((TextEditingTarget) target).goToFirstGitChange();
-                     }
+                           afterNavigation);
                   }
                }
             });

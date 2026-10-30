@@ -2017,6 +2017,28 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await clearPref(page, 'smooth_scrolling');
       await documentCloseAllNoSave(page);
 
+      // scrolled across a long line (soft wrap off), back to the start of
+      // the line gone to
+      await rewrite(`lines[1] <- paste0("m1 <- '", strrep("x", 400), "'"); lines[2] <- "m2 <- 0"; lines[180] <- "m180 <- 0"`);
+      await openFile(page, movePath);
+      await expect.poll(async () => (await gutterMarkers(page))[1], { timeout: 30000 }).toEqual([MODIFIED]);
+      await editor.gotoLine(2);
+      const scrollLeft = () =>
+        live.evaluate((el) => {
+          type Scrolled = { session: { getScrollLeft(): number; setScrollLeft(left: number): void } };
+          return ((el as AceEditorElement).env?.editor as unknown as Scrolled).session.getScrollLeft();
+        });
+      await live.evaluate((el) => {
+        type Scrolled = { session: { setScrollLeft(left: number): void } };
+        ((el as AceEditorElement).env?.editor as unknown as Scrolled).session.setScrollLeft(600);
+      });
+      await expect.poll(scrollLeft).toBeGreaterThan(0);
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(() => cursorRow(page)).toBe(179);
+      await expect.poll(scrollLeft).toBe(0);
+      await expect.poll(() => rowInView(live, 179), { timeout: 10000 }).toBe(true);
+      await documentCloseAllNoSave(page);
+
       // side by side, from the deletion of the first 60 lines to a change
       // below them
       await rewrite('lines[100] <- "m100 <- 0"; lines <- lines[-(1:60)]');
@@ -2362,6 +2384,45 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         `,
       );
       await commitAll(page, 'remove first changes', [...firstPaths, subDir]);
+    }
+  });
+
+  test('goes on to the first change the editor marks when its gutter attaches late', async ({
+    rstudioPage: page,
+  }) => {
+    // After a reload the diff support loads afresh, and the first document
+    // opened then gets its gutter only once that is in: the go-to-change
+    // request waits for it. (A blank line added after the final newline is
+    // where the gutter and Git place the change apart.)
+    const latePath = `${projectDir()}/late.R`;
+    await executeInConsoleChecked(page, `writeLines("x <- 1", ${rPathLiteral(latePath)})`);
+    await commitAll(page, 'late', [latePath]);
+    await executeInConsoleChecked(page, `writeLines(c("x <- 1", ""), ${rPathLiteral(latePath)})`);
+
+    // (Ace's loader registers each module it is handed)
+    const diffScriptLoaded = () =>
+      page.evaluate(() => {
+        const define = (window as unknown as { define?: { modules?: Record<string, unknown> } }).define;
+        return !!define?.modules && 'ace/ext/diff/providers/default' in define.modules;
+      });
+
+    try {
+      await page.reload();
+      await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 60000 });
+      expect(await diffScriptLoaded()).toBe(false);
+
+      await executeCommand(page, 'activateVcs');
+      const panel = page.locator(GIT_PANEL);
+      await expect(panel).toBeVisible({ timeout: 15000 });
+      await panel.getByRole('button', { name: 'Open late.R at its first change', exact: true }).press('Enter');
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('late.R', { timeout: 15000 });
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [ADDED] });
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(2);
+      expect(await diffScriptLoaded()).toBe(true);
+    } finally {
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(latePath)}))`);
+      await commitAll(page, 'remove late', [latePath]);
     }
   });
 

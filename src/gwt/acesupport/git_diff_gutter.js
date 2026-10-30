@@ -217,16 +217,20 @@ function moveCursorTo(editor, row) {
    editor.moveCursorTo(row, 0);
 }
 
-// Scrolls a row to the middle of the editor, as gotoLine does, unless it is
+// Brings the start of a row, where the cursor goes (see moveCursorTo), into
+// view: the row to the middle of the editor, as gotoLine does, unless it is
 // in view already -- going by where the rows are now, and where the view is
 // headed (an animated scroll may be under way), rather than by what was
-// last drawn.
+// last drawn -- and the view back to the left edge.
 function revealRow(editor, row) {
    var renderer = editor.renderer;
    var top = renderer.$cursorLayer.getPixelPosition({ row: row, column: 0 }).top;
    var scrollTop = editor.session.getScrollTop();
    if (top < scrollTop || top + renderer.lineHeight > scrollTop + renderer.$size.scrollerHeight)
       renderer.scrollToLine(row, true, true);
+
+   if (editor.session.getScrollLeft() > 0)
+      editor.session.setScrollLeft(0);
 }
 
 var GitDiffGutter = function(editor, strings) {

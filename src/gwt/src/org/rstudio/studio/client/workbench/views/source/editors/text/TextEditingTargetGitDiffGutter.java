@@ -328,15 +328,14 @@ public class TextEditingTargetGitDiffGutter
          if (diffSplitWidget_ != null)
             attachDiffSplit();
 
-         // (a pending go-to-first-change fetches the base itself)
+         refresh();
+
+         // (after the refresh, which takes up the document's path: one
+         // taken up afresh drops whatever was waiting on the old base)
          if (firstChangePending_)
          {
             firstChangePending_ = false;
             gutter_.goToFirstChangeWhenFresh();
-         }
-         else
-         {
-            refresh();
          }
       });
    }
