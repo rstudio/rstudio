@@ -948,22 +948,23 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             // goes above the next line instead, right below that widget;
             // the part meant above the line goes below the line before,
             // the same place. Neither moves onto another widget's row (nor
-            // above the first line, or below the last). Where it cannot
-            // move, the gutter's peek takes the rows on as its own until
-            // the next alignment: the action bar of a deletion, between
-            // chunk output and the padding for the removed lines, say (see
-            // peekRow in git_diff_gutter.js). Chunk output, whose height
-            // RStudio keeps track of, is left alone.
+            // above the first line, or below the last) -- but for the
+            // gutter's peek, which takes the rows on as its own until the
+            // next alignment, as it does where padding cannot move off its
+            // row: the action bar of a deletion, between chunk output and
+            // the padding for the removed lines, say (see peekRow in
+            // git_diff_gutter.js). Chunk output, whose height RStudio keeps
+            // track of, is left alone.
             var above = w.rowsAbove || 0;
             var below = w.rowCount - above;
-            var isPeek = this.gutter.peek != null && existing === this.gutter.peek.widget;
+            var isPeek = this.$isPeek(existing);
             var lentAbove = 0;
             var lentBelow = 0;
-            if (below > 0 && padFreeRow(session, w.row + 1))
+            if (below > 0 && this.$canPad(session, w.row + 1))
                this.$addWidget(session, { rowCount: below, rowsAbove: below, row: w.row + 1 });
             else if (below > 0 && isPeek)
                lentBelow = below;
-            if (above > 0 && padFreeRow(session, w.row - 1))
+            if (above > 0 && this.$canPad(session, w.row - 1))
                this.$addWidget(session, { rowCount: above, rowsAbove: 0, row: w.row - 1 });
             else if (above > 0 && isPeek)
                lentAbove = above;
@@ -990,6 +991,17 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       var fold = session.getFoldAt(w.row, 0);
       if (fold)
          session.widgetManager.updateOnFold({ data: fold, action: "add" }, session);
+   };
+
+   this.$isPeek = function(widget) {
+      return widget != null && this.gutter.peek != null && widget === this.gutter.peek.widget;
+   };
+
+   // Whether padding moved off a row can go on another: one that takes
+   // padding (see padFreeRow), or holds the gutter's peek.
+   this.$canPad = function(session, row) {
+      return padFreeRow(session, row) ||
+         (session.lineWidgets != null && this.$isPeek(session.lineWidgets[row]));
    };
 
    // Takes the padding out of a session's line widgets. A widget added on

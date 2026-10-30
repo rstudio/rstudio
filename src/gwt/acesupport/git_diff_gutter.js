@@ -1197,8 +1197,10 @@ var GitDiffGutter = function(editor, strings) {
       // the side-by-side action bar of a deletion below the line after it
       // (see peekRow), which covers the padding standing in for the removed
       // lines above that line (and the line), from the padding's top: the
-      // bottom of the line before, or above the first line, its rowsAbove.
-      // Where chunk output holds that line's row, the bar goes on the line
+      // bottom of the line before, or where the bar took the padding on
+      // above its line (above the first line, or below chunk output on the
+      // line before), its rowsAbove. Where chunk output holds that line's
+      // row, the bar goes on the line
       // before and takes the padding on below it (see $addWidget in
       // git_diff_split.js); it is drawn after the padding, against the
       // marked line, and held up to the padding's top the same way.
@@ -1215,9 +1217,9 @@ var GitDiffGutter = function(editor, strings) {
       }
       else if (!widget.hidden && peek.compact && widget.row === chunk.new.start.row)
       {
-         var paddingTop = (widget.row > 0)
+         var paddingTop = (widget.row > 0 && !widget.rowsAbove)
             ? this.rowScreenBottom(widget.row - 1)
-            : this.rowScreenTop(0) - (widget.rowsAbove || 0) * lineHeight;
+            : this.rowScreenTop(widget.row) - (widget.rowsAbove || 0) * lineHeight;
          floor = paddingTop + lineHeight;
       }
       else if (!widget.hidden && peek.compact && isDeletion(chunk) &&

@@ -4353,6 +4353,75 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('keeps the sides level with the action bar open below a chunk\'s output', async ({
+    rstudioPage: page,
+  }) => {
+    // A line removed just after a chunk's closing fence, which holds the
+    // chunk's output: the padding for the removed line, meant below the
+    // fence, goes above the line after it instead, which the action bar
+    // shown from there sits below; the bar takes the padding on.
+    const consoleActions = new ConsolePaneActions(page);
+    const loadable = await consoleActions.evalRLogical('requireNamespace("rmarkdown", quietly = TRUE)');
+    test.skip(loadable !== true, 'rmarkdown is not installed');
+
+    const nbPath = `${projectDir()}/nb-after.Rmd`;
+    const seed = ['---', 'title: x', '---', '', '```{r}', '1 + 1', '```', 'gone', 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await commitAll(page, 'nb-after', [nbPath]);
+    const edited = seed.filter((line) => line !== 'gone');
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(nbPath)})`,
+    );
+    await openFile(page, nbPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 7: [DELETED] });
+
+    // run the chunk so its output widget occupies the fence row (6)
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible({
+      timeout: 60000,
+    });
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, '1 + 1');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+    // 'tail': base row 8, document row 7
+    const level = async () => (await rowTop(base, 8)) - (await rowTop(live, 7));
+
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await expect.poll(level, { timeout: 10000 }).toBe(0);
+
+      await editor.gotoLine(8);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+      await expect.poll(level, { timeout: 10000 }).toBe(0);
+      await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible();
+
+      await live.locator(PEEK_CLOSE).click();
+      await expect(page.locator(PEEK)).toHaveCount(0);
+      await expect.poll(level, { timeout: 10000 }).toBe(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(nbPath)}))`);
+      await commitAll(page, 'remove nb-after', [nbPath]);
+    }
+  });
+
   test('drops the old base the moment Save As changes the path', async ({ rstudioPage: page }) => {
     await openFile(page, scriptPath());
     await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
