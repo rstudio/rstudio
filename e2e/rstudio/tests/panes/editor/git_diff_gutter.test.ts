@@ -15,6 +15,7 @@ import { AceEditor } from '@pages/ace_editor.page';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
 import {
   clearPref,
+  dismissAllModals,
   documentCloseAllNoSave,
   documentOpen,
   executeCommand,
@@ -1610,6 +1611,63 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('keeps the sides aligned with the action bar open at a deletion at the top', async ({
+    rstudioPage: page,
+  }) => {
+    // The document is padded above its first line for the removed lines,
+    // and the bar sits below that line, on the row the padding is hung on.
+    const topPath = `${projectDir()}/topdel.R`;
+    const seed = ['x <- 0', 'y <- 0', 'a <- 1', 'b <- 2', 'c <- 3'];
+    const edited = ['a <- 1', 'b <- 2', 'c <- 3'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(topPath)})`,
+    );
+    await commitAll(page, 'topdel', [topPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(topPath)})`,
+    );
+    await openFile(page, topPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [DELETED] });
+
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'c <- 3');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      const first = async () => (await rowTop(base, 2)) - (await rowTop(live, 0));
+      const second = async () => (await rowTop(base, 3)) - (await rowTop(live, 1));
+      await expect.poll(first, { timeout: 10000 }).toBe(0);
+
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(1);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+      await expect.poll(first, { timeout: 10000 }).toBe(0);
+      await expect.poll(second, { timeout: 10000 }).toBe(0);
+
+      await live.locator(PEEK_CLOSE).click();
+      await expect(page.locator(PEEK)).toHaveCount(0);
+      await expect.poll(first, { timeout: 10000 }).toBe(0);
+      await expect.poll(second, { timeout: 10000 }).toBe(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(topPath)}))`);
+      await commitAll(page, 'remove topdel', [topPath]);
+    }
+  });
+
   test('pins the peek to the bottom of the editor for a change taller than it', async ({
     rstudioPage: page,
   }) => {
@@ -1779,6 +1837,133 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('brings a tall peek along to the next change, in view', async ({ rstudioPage: page }) => {
+    // The peek at the first change shows its 60 previous lines; the second
+    // change lies far enough below for Next Change to scroll to it.
+    const navPath = `${projectDir()}/tallnav.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("n%d <- %d", 1:400, 1:400), ${rPathLiteral(navPath)})`,
+    );
+    await commitAll(page, 'tallnav', [navPath]);
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          lines <- readLines(${rPathLiteral(navPath)})
+          lines[c(20:79, 300)] <- sprintf("n%d <- %d", c(20:79, 300), 0L)
+          writeLines(lines, ${rPathLiteral(navPath)})
+        }
+      `,
+    );
+    await openFile(page, navPath);
+    await expect.poll(() => gutterAttached(page), { timeout: 30000 }).toBe(true);
+
+    type ScrolledEditor = {
+      renderer: {
+        scroller: HTMLElement;
+        textToScreenCoordinates(row: number, column: number): { pageY: number };
+      };
+    };
+    const live = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+      .filter({ has: page.locator(`.${GUTTER_ATTACHED}`) });
+    const peek = page.locator(PEEK);
+
+    try {
+      const editor = new AceEditor(page, '');
+      await editor.gotoLine(20);
+      await expect.poll(async () => (await gutterMarkers(page))[19], { timeout: 30000 }).toEqual([MODIFIED]);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(peek.locator(PEEK_LINE)).toHaveCount(60, { timeout: 10000 });
+
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(() => cursorRow(page)).toBe(299);
+      await expect(peek.locator(PEEK_LINE)).toHaveCount(1, { timeout: 10000 });
+      await expect
+        .poll(
+          () =>
+            live.evaluate((el) => {
+              const renderer = ((el as AceEditorElement).env?.editor as unknown as ScrolledEditor).renderer;
+              const view = renderer.scroller.getBoundingClientRect();
+              const y = renderer.textToScreenCoordinates(299, 0).pageY;
+              return y >= view.top && y < view.bottom;
+            }),
+          { timeout: 10000 },
+        )
+        .toBe(true);
+    } finally {
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(navPath)}))`);
+      await commitAll(page, 'remove tallnav', [navPath]);
+    }
+  });
+
+  test('pins the peek for a single changed line wrapped taller than the editor', async ({
+    rstudioPage: page,
+  }) => {
+    // The peek's row is the change's first row here, so the header is held
+    // above the row's last screen line by the bottom of its first one.
+    const wrapPath = `${projectDir()}/tallwrap.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("a <- 1", "x <- 1", "b <- 2"), ${rPathLiteral(wrapPath)})`,
+    );
+    await commitAll(page, 'tallwrap', [wrapPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c("a <- 1", paste0("x <- c(", paste(rep("1", 4000), collapse = ", "), ")"), "b <- 2"), ${rPathLiteral(wrapPath)})`,
+    );
+    await openFile(page, wrapPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [MODIFIED] });
+    await executeCommand(page, 'toggleSoftWrapMode');
+
+    type WrappedEditor = {
+      session: { getRowLineCount(row: number): number; setScrollTop(top: number): void };
+      renderer: { scroller: HTMLElement; lineHeight: number; updateFull(force: boolean): void };
+    };
+    const live = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+      .filter({ has: page.locator(`.${GUTTER_ATTACHED}`) });
+    const peek = page.locator(PEEK);
+
+    try {
+      // the line wraps (once the wrap is applied) onto more rows than the
+      // editor shows
+      const tall = () =>
+        live.evaluate((el) => {
+          const editor = (el as AceEditorElement).env?.editor as unknown as WrappedEditor;
+          editor.session.setScrollTop(0);
+          editor.renderer.updateFull(true);
+          return editor.session.getRowLineCount(1) * editor.renderer.lineHeight > editor.renderer.scroller.clientHeight;
+        });
+      await expect.poll(tall, { timeout: 10000 }).toBe(true);
+
+      const box = (await live.locator('.ace_gutter-cell.ace_git-modified').first().boundingBox())!;
+      await page.mouse.click(box.x + box.width - 3, box.y + 5);
+      await expect(peek).toBeVisible({ timeout: 10000 });
+
+      await expect
+        .poll(
+          () =>
+            live.evaluate((el) => {
+              const header = el.querySelector('.ace_git-peek-header')!.getBoundingClientRect();
+              const view = ((el as AceEditorElement).env?.editor as unknown as WrappedEditor).renderer.scroller.getBoundingClientRect();
+              return {
+                pinned: !!el.querySelector('.ace_git-peek-pinned'),
+                atBottom: Math.abs(header.bottom - view.bottom) < 1,
+              };
+            }),
+          { timeout: 10000 },
+        )
+        .toEqual({ pinned: true, atBottom: true });
+    } finally {
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wrapPath)}))`);
+      await commitAll(page, 'remove tallwrap', [wrapPath]);
+    }
+  });
+
   test('opens a changed file at its first change from the Git pane', async ({ rstudioPage: page }) => {
     await executeCommand(page, 'activateVcs');
     const panel = page.locator(GIT_PANEL);
@@ -1797,6 +1982,91 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       panel.getByRole('checkbox', { name: 'Stage script.R', exact: true }),
     ).toHaveAttribute('aria-checked', 'false');
     await documentCloseAllNoSave(page);
+  });
+
+  test('opens the Git pane\'s files where the gutter marks their first change', async ({
+    rstudioPage: page,
+  }) => {
+    const delPath = `${projectDir()}/firstdel.R`;
+    const wsPath = `${projectDir()}/firstws.R`;
+    const subDir = `${projectDir()}/sub`;
+    const rdsPath = `${projectDir()}/first.rds`;
+    const seed = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5'];
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          stopifnot(dir.create(${rPathLiteral(subDir)}))
+          for (path in c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(`${subDir}/old.R`)}))
+            writeLines(c(${seed.map(rStringLiteral).join(', ')}), path)
+        }
+      `,
+    );
+    await commitAll(page, 'first changes', [delPath, wsPath, subDir]);
+
+    // a removed line, which the gutter marks on the line after it; a
+    // whitespace-only edit ahead of a real one; a rename within a
+    // subdirectory, staged; an untracked binary file
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          writeLines(c(${seed.filter((line) => line !== 'c <- 3').map(rStringLiteral).join(', ')}), ${rPathLiteral(delPath)})
+          writeLines(c("a <- 1", "b <- 2   ", "c <- 3", "d <- 40", "e <- 5"), ${rPathLiteral(wsPath)})
+          s <- system2("git", c(${gitC()}, "mv", "sub/old.R", "sub/new.R"))
+          if (s != 0)
+            stop("git mv failed (exit status: ", s, ")")
+          saveRDS(1:10, ${rPathLiteral(rdsPath)})
+        }
+      `,
+    );
+
+    await executeCommand(page, 'activateVcs');
+    const panel = page.locator(GIT_PANEL);
+    await expect(panel).toBeVisible({ timeout: 15000 });
+    const goTo = (path: string) =>
+      panel.getByRole('button', { name: `Open ${path} at its first change`, exact: true });
+
+    try {
+      await goTo('firstdel.R').click();
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstdel.R', { timeout: 15000 });
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(2);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [DELETED] });
+      await documentCloseAllNoSave(page);
+
+      await setPref(page, 'git_diff_ignore_whitespace', true);
+      await goTo('firstws.R').click();
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstws.R', { timeout: 15000 });
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(3);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 3: [MODIFIED] });
+      await documentCloseAllNoSave(page);
+
+      await goTo('sub/old.R -> sub/new.R').click();
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('new.R', { timeout: 15000 });
+      await expect
+        .poll(() => page.evaluate(() => window.rstudio?.documents.active()?.path ?? ''))
+        .toMatch(/\/GitGutter\/sub\/new\.R$/);
+      await documentCloseAllNoSave(page);
+
+      // an .rds has no line to go to, and opens as Open would open it: an
+      // offer to read it into an object
+      await goTo('first.rds').click();
+      await expect(page.getByText('Load R Object', { exact: true })).toBeVisible({ timeout: 15000 });
+    } finally {
+      await dismissAllModals(page);
+      await clearPref(page, 'git_diff_ignore_whitespace');
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(
+        page,
+        heredoc`
+          {
+            unlink(c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(rdsPath)}))
+            unlink(${rPathLiteral(subDir)}, recursive = TRUE)
+          }
+        `,
+      );
+      await commitAll(page, 'remove first changes', [delPath, wsPath, subDir]);
+    }
   });
 
   test('says a file has no base only when it is untracked, not when a fetch fails', async ({

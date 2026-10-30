@@ -21,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -63,11 +64,17 @@ public class VCSFileOpener
    }
    
    // Opens a file at a (1-based) line. From the main window only: the Git
-   // pane's changes table, which offers it, is not in a satellite.
+   // pane's changes table, which offers it, is not in a satellite. A file the
+   // editor can't take as text (an .rds, an image) has no line to go to, and
+   // opens as it would from the pane's Open command; editFile() would force
+   // it into the editor, which then refuses it as binary.
    public void openFileAtLine(StatusAndPath item, int line)
    {
       FileSystemItem file = FileSystemItem.createFile(resolvePath(item));
-      fileTypeRegistry_.editFile(file, FilePosition.create(line, 0));
+      if (fileTypeRegistry_.getTypeForFile(file) instanceof TextFileType)
+         fileTypeRegistry_.editFile(file, FilePosition.create(line, 0));
+      else
+         fileTypeRegistry_.openFile(file);
    }
 
    private void satelliteOpenFiles(JavaScriptObject items)
@@ -110,15 +117,21 @@ public class VCSFileOpener
    // The path of the file as it is in the working tree.
    private String resolvePath(StatusAndPath item)
    {
-      // NOTE: renames need some extra processing
+      // NOTE: renames need some extra processing: a rename's raw path is
+      // "<old path> -> <new path>", where only the old path is absolute; the
+      // new one is relative to the repository root, as both are in getPath()
       String path = item.getRawPath();
       if (StringUtil.equals(item.getStatus(), "R "))
       {
          String[] parts = path.split(" -> ");
-         if (parts.length == 2)
+         String[] relativeParts = item.getPath().split(" -> ");
+         if (parts.length == 2 &&
+             relativeParts.length == 2 &&
+             parts[0].endsWith(relativeParts[0]))
          {
             String oldPath = parts[0], newPath = parts[1];
-            path = StringUtil.substring(oldPath, 0, oldPath.lastIndexOf('/')) + "/" + newPath;
+            String root = oldPath.substring(0, oldPath.length() - relativeParts[0].length());
+            path = root + newPath;
          }
       }
       return path;

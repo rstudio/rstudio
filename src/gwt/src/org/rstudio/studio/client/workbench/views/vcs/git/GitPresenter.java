@@ -48,6 +48,7 @@ import org.rstudio.studio.client.common.vcs.WorktreeInfo;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.NewWorktreeDialog;
 import org.rstudio.studio.client.workbench.views.vcs.RemoveWorktreeDialog;
@@ -95,10 +96,12 @@ public class GitPresenter extends BaseVcsPresenter
                        GitState gitState,
                        final GlobalDisplay globalDisplay,
                        SatelliteManager satelliteManager,
-                       WorktreeActions worktreeActions)
+                       WorktreeActions worktreeActions,
+                       UserPrefs prefs)
    {
       super(view);
       worktreeActions_ = worktreeActions;
+      prefs_ = prefs;
       gitPresenterCore_ = gitCore;
       vcsFileOpener_  = vcsFileOpener;
       view_ = view;
@@ -228,7 +231,7 @@ public class GitPresenter extends BaseVcsPresenter
             patchMode,
             0, /* contextLines */
             true, /* noSizeWarning */
-            false, /* ignoreWhitespace */
+            prefs_.gitDiffIgnoreWhitespace().getValue(), /* ignoreWhitespace, as the gutter */
             new ServerRequestCallback<DiffResult>()
             {
                @Override
@@ -259,9 +262,13 @@ public class GitPresenter extends BaseVcsPresenter
             return 0;
 
          // the working tree's side of the hunk; for a deletion it starts at
-         // the line before the removed ones (0 when they were at the top)
+         // the line before the removed ones (0 when they were at the top),
+         // but the gutter marks the line after (see displayRow() in
+         // git_diff_gutter.js), which past the end the editor clamps to the
+         // last line, as the gutter does
          Range[] ranges = chunk.getRanges();
-         return Math.max(ranges[ranges.length - 1].startRow, 1);
+         Range range = ranges[ranges.length - 1];
+         return (range.rowCount == 0) ? range.startRow + 1 : range.startRow;
       }
       catch (Exception e)
       {
@@ -542,5 +549,6 @@ public class GitPresenter extends BaseVcsPresenter
    private final WorktreeActions worktreeActions_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
+   private final UserPrefs prefs_;
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

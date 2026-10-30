@@ -749,8 +749,14 @@ var GitDiffGutter = function(editor, strings) {
       return true;
    };
 
+   // (the open peek goes first: the rows it takes up would otherwise come
+   // out of the scroll position worked out for the change, and carry it
+   // off screen when the peek sat above it)
    this.goToChange = function(chunk) {
       var peeking = this.peek != null && this.peek.chunk !== chunk;
+      if (peeking)
+         this.closePeek();
+
       this.goToChunk(chunk);
       if (peeking)
          this.showPeek(chunk);
@@ -886,7 +892,8 @@ var GitDiffGutter = function(editor, strings) {
    // not displace an existing widget: it goes below the last changed line (or
    // where removed lines were), else on the other side of the change, else
    // nowhere. A side-by-side view's alignment padding is no obstacle: the
-   // view moves it off the peek's row as it realigns.
+   // view moves it off the peek's row as it realigns (or, above the first
+   // line, onto the peek; see $addWidget in git_diff_split.js).
    this.peekRow = function(chunk) {
       var session = this.editor.session;
       var candidates = isDeletion(chunk)
@@ -1085,8 +1092,11 @@ var GitDiffGutter = function(editor, strings) {
          var header = el.firstChild;
          height = el.clientTop + header.offsetTop + header.offsetHeight;
 
+         // (the floor is the bottom of the change's first screen line, not
+         // of its first row, so that a line wrapped taller than the editor
+         // brings the header up too)
          var top = this.rowScreenBottom(widget.row);
-         var floor = this.rowScreenBottom(chunk.new.start.row);
+         var floor = this.rowScreenTop(chunk.new.start.row) + this.editor.renderer.layerConfig.lineHeight;
          var bottom = this.editor.renderer.$size.scrollerHeight;
          lift = top - Math.max(Math.min(top, bottom - height), floor);
       }
@@ -1099,14 +1109,19 @@ var GitDiffGutter = function(editor, strings) {
       el.style.clipPath = pinned ? "inset(-8px 0 calc(100% - " + height + "px) 0)" : "";
    };
 
-   // The bottom of a document row on screen, in the editor container's
-   // coordinates: where Ace's LineWidgets.renderWidgets puts a widget below
-   // the row.
-   this.rowScreenBottom = function(row) {
+   // The top of a document row on screen, in the editor container's
+   // coordinates.
+   this.rowScreenTop = function(row) {
       var config = this.editor.renderer.layerConfig;
       var screenRow = this.editor.session.documentToScreenRow(row, 0);
-      var top = (screenRow - config.firstRowScreen) * config.lineHeight - config.offset;
-      return top + config.lineHeight * this.editor.session.getRowLineCount(row);
+      return (screenRow - config.firstRowScreen) * config.lineHeight - config.offset;
+   };
+
+   // The bottom of a document row on screen: where Ace's
+   // LineWidgets.renderWidgets puts a widget below the row.
+   this.rowScreenBottom = function(row) {
+      var lineHeight = this.editor.renderer.layerConfig.lineHeight;
+      return this.rowScreenTop(row) + lineHeight * this.editor.session.getRowLineCount(row);
    };
 
    this.rowForCell = function(element) {

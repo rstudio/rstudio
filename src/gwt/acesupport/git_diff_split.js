@@ -136,6 +136,25 @@ function padFreeRow(session, row) {
    return !widgets || !widgets[row] || isPadding(widgets[row]);
 }
 
+// Puts padding above a line widget's line, as Ace draws a widget's
+// rowsAbove (counted in its rowCount, as with Ace's own padding); for the
+// first line, which has no line before it to pad below. The rows are given
+// back as the padding is taken out (see $removeLineWidgets).
+function lendRowsAbove(widget, rows) {
+   widget.gitDiffLentRows = (widget.gitDiffLentRows || 0) + rows;
+   widget.rowsAbove = (widget.rowsAbove || 0) + rows;
+   widget.rowCount += rows;
+   widget.gitDiffOwnRowCount = widget.rowCount - widget.gitDiffLentRows;
+}
+
+function returnRowsAbove(widget) {
+   // (a widget measured again since has a rowCount of its own already)
+   if (widget.rowCount === widget.gitDiffOwnRowCount + widget.gitDiffLentRows)
+      widget.rowCount = widget.gitDiffOwnRowCount;
+   widget.rowsAbove -= widget.gitDiffLentRows;
+   widget.gitDiffLentRows = 0;
+}
+
 // Whether two fold lines hold a pair of mirrored folds (see mirrorFold).
 function foldLinesPaired(a, b) {
    return a.folds.some(function(fold) {
@@ -927,13 +946,21 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             // goes above the next line instead, right below that widget;
             // the part meant above the line goes below the line before,
             // the same place. Neither moves onto another widget's row, and
-            // above the first line there is nowhere else to go.
+            // above the first line there is nowhere else to go -- but for
+            // the gutter's peek, the compact bar below the line after a
+            // deletion at the top, which takes the rows on as its own until
+            // the next alignment (chunk output, whose height RStudio keeps
+            // track of, is left alone).
             var above = w.rowsAbove || 0;
             var below = w.rowCount - above;
             if (below > 0 && padFreeRow(session, w.row + 1))
                this.$addWidget(session, { rowCount: below, rowsAbove: below, row: w.row + 1 });
-            if (above > 0 && padFreeRow(session, w.row - 1))
+            if (above > 0 && padFreeRow(session, w.row - 1)) {
                this.$addWidget(session, { rowCount: above, rowsAbove: 0, row: w.row - 1 });
+            } else if (above > 0 && w.row === 0 && this.gutter.peek && existing === this.gutter.peek.widget) {
+               lendRowsAbove(existing, above);
+               session.$resetRowCache(0);
+            }
             return;
          }
 
@@ -957,6 +984,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
    // Takes the padding out of a session's line widgets. A widget added on
    // top of a padding chains to it ($oldWidget), and a fold ending on its
    // row aliases it at the fold's start; it is unlinked wherever found.
+   // Padding lent to a widget (see $addWidget) is given back.
    this.$removeLineWidgets = function(session) {
       var widgets = session.lineWidgets;
       if (!widgets)
@@ -968,6 +996,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          if (isPadding(w)) {
             widgets[i] = w.$oldWidget;
             w = widgets[i];
+            removed = true;
+         }
+
+         if (w && w.gitDiffLentRows) {
+            returnRowsAbove(w);
             removed = true;
          }
 
