@@ -960,11 +960,11 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             var isPeek = this.$isPeek(existing);
             var lentAbove = 0;
             var lentBelow = 0;
-            if (below > 0 && this.$canPad(session, w.row + 1))
+            if (below > 0 && this.$canPad(session, w.row + 1, existing))
                this.$addWidget(session, { rowCount: below, rowsAbove: below, row: w.row + 1 });
             else if (below > 0 && isPeek)
                lentBelow = below;
-            if (above > 0 && this.$canPad(session, w.row - 1))
+            if (above > 0 && this.$canPad(session, w.row - 1, existing))
                this.$addWidget(session, { rowCount: above, rowsAbove: 0, row: w.row - 1 });
             else if (above > 0 && isPeek)
                lentAbove = above;
@@ -997,11 +997,17 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       return widget != null && this.gutter.peek != null && widget === this.gutter.peek.widget;
    };
 
-   // Whether padding moved off a row can go on another: one that takes
-   // padding (see padFreeRow), or holds the gutter's peek.
-   this.$canPad = function(session, row) {
-      return padFreeRow(session, row) ||
-         (session.lineWidgets != null && this.$isPeek(session.lineWidgets[row]));
+   // Whether padding moved off a widget's row can go on another: one that
+   // takes padding (see padFreeRow), or holds the gutter's peek -- unless
+   // the padding is moving off the peek. Ace has a widget at the end of a
+   // fold stand at the fold's start too, and the padding would go back and
+   // forth between the two.
+   this.$canPad = function(session, row, from) {
+      if (padFreeRow(session, row))
+         return true;
+
+      return !this.$isPeek(from) &&
+         session.lineWidgets != null && this.$isPeek(session.lineWidgets[row]);
    };
 
    // Takes the padding out of a session's line widgets. A widget added on

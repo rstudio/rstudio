@@ -3804,6 +3804,73 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('keeps the action bar of a folded change when wrapping pads at the fold', async ({
+    rstudioPage: page,
+  }) => {
+    // The bar below a function's changed closing line, folded away with
+    // the function: Ace has a widget at the end of a fold stand at the
+    // fold's start too. Wrapped, the base's header (which differs in
+    // whitespace only) takes more rows than the document's, and the
+    // padding for that lands on the fold's start -- the bar, on both rows
+    // of the fold, which takes it on rather than passing it between them.
+    const wrapPath = `${projectDir()}/foldbar.R`;
+    const seed = [`f <- function(${' '.repeat(300)}) {`, '}', 'tail'];
+    const edited = ['f <- function() {', '} # x', 'tail'];
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
+    );
+    await commitAll(page, 'foldbar', [wrapPath]);
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
+    );
+    await setPref(page, 'git_diff_ignore_whitespace', true);
+    await openFile(page, wrapPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [MODIFIED] });
+
+    const editor = new AceEditor(page, '');
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'tail');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    const rowTop = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
+      }, row);
+
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+      await editor.gotoLine(2);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+
+      await editor.gotoLine(1);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => editor.getFoldCount()).toBe(1);
+      const tailTop = await rowTop(base, 2);
+      await executeCommand(page, 'toggleSoftWrapMode');
+
+      // (drawn wrapped, the base's header pushes its last line down; the
+      // sides realigned for the render, where the padding went back and
+      // forth until the stack ran out)
+      await expect.poll(() => rowTop(base, 2), { timeout: 10000 }).toBeGreaterThan(tailTop);
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible();
+    } finally {
+      // (the view goes before whitespace counts again: the base header's
+      // highlight, on a folded line that wraps, trips Ace's
+      // getRowWrapIndent, which takes the fold's end row for its own)
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await clearPref(page, 'git_diff_ignore_whitespace');
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wrapPath)}))`);
+      await commitAll(page, 'remove foldbar', [wrapPath]);
+    }
+  });
+
   test('folds the base for a fold on a line that differs in whitespace only', async ({
     rstudioPage: page,
   }) => {
