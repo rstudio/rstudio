@@ -24,7 +24,7 @@ public class MathJaxPreviewer
    public MathJaxPreviewer(TextEditingTarget target)
    {
       target_ = target;
-      display_= target.getDocDisplay();
+      display_= target.getPrimaryDisplay();
    }
    
    public void renderAllLatex()

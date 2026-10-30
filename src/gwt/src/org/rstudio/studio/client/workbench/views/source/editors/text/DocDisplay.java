@@ -300,6 +300,8 @@ public interface DocDisplay extends HasValueChangeHandlers<VoidResponse>,
    void moveCursorNearTop(int rowOffset);
    void ensureCursorVisible();
    void scrollCursorIntoView();
+   // selects the range, unfolding and scrolling as needed to show it
+   void revealRange(Range range, boolean animate);
    void scrollCursorIntoViewIfNecessary();
    void scrollCursorIntoViewIfNecessary(int rowsAround);
    boolean isCursorInSingleLineString(boolean allowInComment);
@@ -429,7 +431,7 @@ public interface DocDisplay extends HasValueChangeHandlers<VoidResponse>,
    void addOrUpdateBreakpoint(Breakpoint breakpoint);
    void removeBreakpoint(Breakpoint breakpoint);
    void removeAllBreakpoints();
-   void toggleBreakpointAtCursor();
+   void toggleBreakpointAtRow(int row);
    boolean hasBreakpoints();
 
    HandlerRegistration addGutterItem(LintItem item);
