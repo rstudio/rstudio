@@ -25,6 +25,104 @@
    if (.rs.platform.isWindows) "rig.exe" else "rig"
 })
 
+#' The initial destination shown before installing R. Ask an available rig
+#' for its effective user-mode root, including its configuration overrides.
+#' Without rig (a damaged installation), use the explicit environment
+#' override or its platform default. The confirmed path is always passed to
+#' rig.
+.rs.addFunction("rig.defaultInstallDir", function(rig = .rs.rig.find(),
+                                                  windows = .rs.platform.isWindows,
+                                                  override = Sys.getenv("RIG_R_INSTALL_DIR"),
+                                                  appdata = Sys.getenv("APPDATA"),
+                                                  home = path.expand("~"))
+{
+   if (nzchar(rig))
+   {
+      dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
+      if (is.character(dirs$r_root) && length(dirs$r_root) == 1L && nzchar(dirs$r_root))
+         return(dirs$r_root)
+      stop("Unable to determine the R installation directory")
+   }
+
+   if (nzchar(override))
+      return(path.expand(override))
+
+   if (windows)
+   {
+      if (!nzchar(appdata))
+         stop("Unable to determine the user application data directory")
+      file.path(appdata, "rig", "data", "r")
+   }
+   else
+   {
+      file.path(home, ".local", "share", "rig", "r")
+   }
+})
+
+#' Check the selected root before starting a job or downloading anything.
+#' Missing directories are allowed when their nearest ancestor is writable.
+.rs.addFunction("rig.validateInstallDir", function(directory)
+{
+   if (!is.character(directory) || length(directory) != 1L || is.na(directory) ||
+       !nzchar(trimws(directory)) || grepl("[\r\n]", directory))
+      stop("Choose an R installation directory")
+
+   directory <- path.expand(directory)
+   if (.rs.platform.isWindows)
+      directory <- gsub("\\", "/", directory, fixed = TRUE)
+   absolute <- if (.rs.platform.isWindows)
+      grepl("^([A-Za-z]:/|//)", directory)
+   else
+      startsWith(directory, "/")
+   if (!absolute)
+      stop("Choose an absolute path for the R installation directory")
+
+   parent <- directory
+   while (!file.exists(parent) && dirname(parent) != parent)
+      parent <- dirname(parent)
+   if (!dir.exists(parent))
+      stop("The installation path must be a directory")
+   if (file.access(parent, 2L) != 0L)
+      stop("The installation directory is not writable. Choose a location in your user account.")
+
+   normalizePath(directory, winslash = "/", mustWork = FALSE)
+})
+
+#' Keep custom roots discoverable after a restart, without changing rig's
+#' configuration or hiding R versions in its other installation roots.
+.rs.addFunction("rig.installDirsFile", function()
+{
+   file.path(.Call("rs_userDataDir", PACKAGE = "(embedding)"), "r-install-dirs")
+})
+
+.rs.addFunction("rig.installDirs", function(file = .rs.rig.installDirsFile())
+{
+   if (file.exists(file)) unique(readLines(file, warn = FALSE, encoding = "UTF-8")) else character()
+})
+
+#' Appends rather than rewriting the file, so that sessions remembering
+#' directories at the same time keep each other's.
+.rs.addFunction("rig.rememberInstallDir", function(directory, file = .rs.rig.installDirsFile())
+{
+   if (directory %in% .rs.rig.installDirs(file))
+      return(invisible(NULL))
+
+   dir.create(dirname(file), recursive = TRUE, showWarnings = FALSE)
+   con <- file(file, open = "ab")
+   on.exit(close(con), add = TRUE)
+   writeLines(enc2utf8(directory), con, useBytes = TRUE)
+})
+
+#' Find R in the confirmed destination, rather than switching to a nearby
+#' version from some other installation root when the job finishes.
+.rs.addFunction("rig.installedRVersion", function(version, directory)
+{
+   installed <- .rs.rInstallations.scanRoots(directory)
+   if (length(strsplit(version, ".", fixed = TRUE)[[1L]]) == 3L)
+      installed <- installed[installed$version == version, , drop = FALSE]
+   .rs.findInstalledRVersion(version, installed = installed)
+})
+
 #' The locations searched for a rig binary, in order of preference: an
 #' explicit override, the bundled copy, the PATH, and standard install
 #' locations.
@@ -584,6 +682,26 @@
 
 .rs.setVar("rig.installState", new.env(parent = emptyenv()))
 
+#' rig's user-mode directories as 'rig add' will see them when installing
+#' into 'directory': rig takes the destination from RIG_R_INSTALL_DIR, which
+#' the install runs with, so it is set for this query as well.
+.rs.addFunction("rig.userDirs", function(rig, directory = "")
+{
+   if (nzchar(directory))
+   {
+      override <- Sys.getenv("RIG_R_INSTALL_DIR", unset = NA)
+      Sys.setenv(RIG_R_INSTALL_DIR = directory)
+      on.exit({
+         if (is.na(override))
+            Sys.unsetenv("RIG_R_INSTALL_DIR")
+         else
+            Sys.setenv(RIG_R_INSTALL_DIR = override)
+      }, add = TRUE)
+   }
+
+   .rs.rig.json(rig, c("system", "dirs", "--user"))
+})
+
 #' Create rig's user-mode quick-link directory when it is missing. rig 0.11.0
 #' fails outright ("No such file or directory") in a home without it, as on
 #' a fresh macOS account (r-lib/rig#491). Returns TRUE when the directory
@@ -643,7 +761,8 @@
 .rs.addFunction("rig.userInstallBegin", function(rig,
                                                  file = NULL,
                                                  launchctl = .rs.rig.launchctl,
-                                                 running = .rs.isProcessRunning)
+                                                 running = .rs.isProcessRunning,
+                                                 directory = "")
 {
    state <- .rs.rig.installState
    state$snapshot <- NULL
@@ -672,7 +791,7 @@
       }
    }
 
-   dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
+   dirs <- .rs.rig.userDirs(rig, directory)
    .rs.rig.ensureBinaryDir(dirs)
 
    paths <- .rs.rig.userDefaultPaths(dirs)
@@ -936,9 +1055,29 @@
 #' when rig is unavailable.
 .rs.addFunction("rInstallations.list", function(rig = .rs.rig.find())
 {
-   installed <- rbind(.rs.rig.list(rig), .rs.rInstallations.scan())
+   installed <- rbind(.rs.rig.list(rig), .rs.rInstallations.scan(),
+                      .rs.rInstallations.scanRoots(.rs.rig.installDirs()))
    key <- ifelse(nzchar(installed$home), installed$home, installed$binary)
    installed[!duplicated(key), , drop = FALSE]
+})
+
+#' Read the standard rig user-mode layouts at roots selected in RStudio.
+.rs.addFunction("rInstallations.scanRoots", function(roots)
+{
+   paths <- list.files(roots[dir.exists(roots)], full.names = TRUE)
+   rows <- lapply(paths, function(path) {
+      home <- .rs.rInstallations.homeFromPath(path)
+      if (!nzchar(home))
+         return(NULL)
+      version <- .rs.rInstallations.versionFromHome(home)
+      binary <- file.path(path, "bin", if (.rs.platform.isWindows) "R.exe" else "R")
+      if (!nzchar(version) || !file.exists(binary))
+         return(NULL)
+
+      data.frame(version = version, path = path, binary = binary, home = home,
+                 stringsAsFactors = FALSE)
+   })
+   .rs.rInstallations.bind(rows)
 })
 
 .rs.setVar("rInstallationsCache", new.env(parent = emptyenv()))
@@ -1078,7 +1217,7 @@
    match <- if (nrow(exact) > 0L)
       exact[1L, ]
    else
-      candidates[which.max(package_version(candidates$version)), ]
+      candidates[order(package_version(candidates$version), decreasing = TRUE)[1L], ]
 
    match <- as.list(match)
    if (!nzchar(match$home))

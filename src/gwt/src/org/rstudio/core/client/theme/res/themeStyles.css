@@ -22,7 +22,8 @@
 @external cueText;
 @external search;
 @external highlight, disabled;
-@external gwt-Button, gwt-Button-DialogAction, gwt-Button-DefaultDialogAction;
+@external gwt-Button, gwt-Button-DialogAction, gwt-Button-DefaultDialogAction,
+          gwt-Button-ThemeAware;
 @external themedButton, buttonContent;
 @external gwt-CheckBox, gwt-RadioButton;
 @external gwt-DialogBox, gwt-DialogBox-ModalDialog;
@@ -2853,14 +2854,16 @@ input[type="checkbox"]:checked:before {
    background: transparent;
 }
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button > table:first-child {
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button > table:first-child,
+.rstudio-themes-dark button.gwt-Button-ThemeAware > table:first-child {
    background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
    box-shadow: none;
 }
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button:active > table:first-child {
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button:active > table:first-child,
+.rstudio-themes-dark button.gwt-Button-ThemeAware:active > table:first-child {
    background: THEME_DARKGREY_INACTIVE;
 }
 

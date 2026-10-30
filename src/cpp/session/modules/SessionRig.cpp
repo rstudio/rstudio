@@ -64,9 +64,10 @@ FilePath installSnapshotPath()
 class RInstallJob : public boost::enable_shared_from_this<RInstallJob>
 {
 public:
-   static boost::shared_ptr<RInstallJob> create(const std::string& version)
+   static boost::shared_ptr<RInstallJob> create(const std::string& version,
+                                               const std::string& directory)
    {
-      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version));
+      boost::shared_ptr<RInstallJob> pJob(new RInstallJob(version, directory));
       pJob->initialize();
       return pJob;
    }
@@ -108,8 +109,8 @@ public:
    }
 
 private:
-   explicit RInstallJob(const std::string& version)
-      : version_(version)
+   RInstallJob(const std::string& version, const std::string& directory)
+      : version_(version), directory_(directory)
    {
    }
 
@@ -160,13 +161,14 @@ private:
 
    // Have rig install the requested version of R. Installing in admin mode
    // needs sudo, which can't be answered from here, so R is always installed
-   // in user mode (into the home directory), even when rig itself is
+   // in user mode, at the confirmed destination, even when rig itself is
    // configured for admin mode.
    void installR(const std::string& rigPath)
    {
       jobs::setJobStatus(pJob_, "Installing R " + version_);
 
       std::vector<std::string> args = { "add", version_, "--user" };
+      log("Installing into " + directory_ + "\n");
       log("$ " + rigPath + " " + core::algorithm::join(args, " ") + "\n");
 
       boost::shared_ptr<RInstallJob> self = shared_from_this();
@@ -210,7 +212,9 @@ private:
       // LaunchAgent that sets RSTUDIO_WHICH_R); what the install adds or
       // changes is put back when the job finishes (#19229)
       std::vector<std::string> notes;
-      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath()).call(&notes);
+      Error beginError = r::exec::RFunction(".rs.rig.userInstallBegin", rigPath, installSnapshotPath().getAbsolutePath())
+            .addParam("directory", directory_)
+            .call(&notes);
       logNotes(notes);
       if (beginError)
       {
@@ -223,16 +227,21 @@ private:
       options.terminateChildren = true;
       options.exitWithParent = true;
 
+      // rig installs into the confirmed destination (its RIG_R_INSTALL_DIR
+      // override), which the snapshot above was taken for as well
+      core::system::Options environment;
+      core::system::environment(&environment);
+      core::system::setenv(&environment, "RIG_R_INSTALL_DIR", directory_);
+
 #ifndef _WIN32
       // rig also appends to the shell startup files unless its user-mode
       // quick-link directory precedes /usr/local/bin on its PATH
-      core::system::Options environment;
-      core::system::environment(&environment);
       std::string home = core::system::getenv(environment, "HOME");
       if (!home.empty())
          core::system::addToPath(&environment, home + "/.local/bin", true);
-      options.environment = environment;
 #endif
+
+      options.environment = environment;
 
       Error error = module_context::processSupervisor().runProgram(rigPath, args, options, callbacks);
       if (error)
@@ -268,7 +277,18 @@ private:
       json::Value installed;
       if (ok)
       {
-         Error lookupError = findInstalledRVersion(version_, &installed);
+         // later checks this session (e.g. after a reload) reuse the cached
+         // list of installations, which must include the new R
+         Error refreshError = r::exec::RFunction(".rs.rInstallations.cached")
+               .addParam("refresh", true)
+               .call();
+         if (refreshError)
+            LOG_ERROR(refreshError);
+
+         Error lookupError = r::exec::RFunction(".rs.rig.installedRVersion")
+               .addParam("version", version_)
+               .addParam("directory", directory_)
+               .call(&installed);
          if (lookupError)
             LOG_ERROR(lookupError);
 
@@ -316,6 +336,7 @@ private:
 
 private:
    std::string version_;
+   std::string directory_;
    boost::shared_ptr<jobs::Job> pJob_;
    bool processRunning_ = false;
    bool stopped_ = false;
@@ -323,6 +344,20 @@ private:
 
 // only one installation runs at a time
 boost::shared_ptr<RInstallJob> s_pInstallJob;
+
+Error rigGetInstallDir(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   if (options().programMode() != kSessionProgramModeDesktop)
+      return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
+
+   std::string directory;
+   Error error = r::exec::RFunction(".rs.rig.defaultInstallDir").call(&directory);
+   if (error)
+      return error;
+   pResponse->setResult(directory);
+   return Success();
+}
 
 void onShutdown(bool)
 {
@@ -350,8 +385,8 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (options().programMode() != kSessionProgramModeDesktop)
       return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
 
-   std::string version;
-   Error error = json::readParams(request.params, &version);
+   std::string version, directory;
+   Error error = json::readParams(request.params, &version, &directory);
    if (error)
       return error;
 
@@ -361,7 +396,20 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (s_pInstallJob && s_pInstallJob->running())
       return Error("RInstallInProgress", 1, "An R installation is already in progress", ERROR_LOCATION);
 
-   s_pInstallJob = RInstallJob::create(version);
+   std::string normalizedDirectory;
+   error = r::exec::RFunction(".rs.rig.validateInstallDir")
+         .addParam("directory", directory)
+         .call(&normalizedDirectory);
+   if (error)
+      return error;
+
+   error = r::exec::RFunction(".rs.rig.rememberInstallDir")
+         .addParam("directory", normalizedDirectory)
+         .call();
+   if (error)
+      return error;
+
+   s_pInstallJob = RInstallJob::create(version, normalizedDirectory);
    pResponse->setResult(s_pInstallJob->jobId());
    return Success();
 }
@@ -393,6 +441,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "rig_install_r_version", rigInstallRVersion))
+      (bind(registerRpcMethod, "rig_get_install_dir", rigGetInstallDir))
       (bind(sourceModuleRFile, "SessionRig.R"));
 
    return initBlock.execute();

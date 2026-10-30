@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.renv;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -22,16 +23,16 @@ import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.renv.events.ProjectRVersionMismatchEvent;
 import org.rstudio.studio.client.renv.events.RInstallCompletedEvent;
-import org.rstudio.studio.client.renv.events.RenvRestorePromptEvent;
+import org.rstudio.studio.client.renv.events.RenvConsoleNoticeEvent;
 import org.rstudio.studio.client.renv.model.RVersionInstall;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
+import org.rstudio.studio.client.renv.ui.InstallRDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -42,8 +43,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class RenvRVersionManager
       implements ProjectRVersionMismatchEvent.Handler,
-                 RInstallCompletedEvent.Handler,
-                 RenvRestorePromptEvent.Handler
+                 RInstallCompletedEvent.Handler
 {
    @Inject
    public RenvRVersionManager(EventBus events,
@@ -60,18 +60,14 @@ public class RenvRVersionManager
 
       events_.addHandler(ProjectRVersionMismatchEvent.TYPE, this);
       events_.addHandler(RInstallCompletedEvent.TYPE, this);
-      events_.addHandler(RenvRestorePromptEvent.TYPE, this);
    }
 
-   // The warning bar renders its message as HTML, and the versions and errors
-   // shown in it come from project files and processes, so everything
-   // substituted into a message is escaped.
    @Override
    public void onProjectRVersionMismatch(ProjectRVersionMismatchEvent event)
    {
       ProjectRVersionMismatchEvent.Data data = event.getData();
-      String requested = escape(data.requested_version);
-      String current = escape(data.current_version);
+      String requested = StringUtil.notNull(data.requested_version);
+      String current = StringUtil.notNull(data.current_version);
 
       String message = StringUtil.equals(data.source, "project")
             ? constants_.projectRVersionMismatch(requested, current)
@@ -79,7 +75,7 @@ public class RenvRVersionManager
 
       if (!data.supported)
       {
-         globalDisplay_.showWarningBar(false, message + " " + constants_.rVersionUnsupported(requested));
+         showNotice(false, message + " " + constants_.rVersionUnsupported(requested));
          return;
       }
 
@@ -87,37 +83,45 @@ public class RenvRVersionManager
       // relaunched with a different R
       if (!Desktop.isDesktop())
       {
-         globalDisplay_.showWarningBar(false, message);
+         showNotice(false, message);
          return;
       }
 
       RVersionInstall installed = data.installed;
-      if (installed != null)
+      if (StringUtil.equals(data.installing_version, data.requested_version))
       {
-         globalDisplay_.showWarningBar(
+         // this page was loaded while R installs (e.g. after a refresh), so
+         // it takes over waiting for the installation to finish
+         pendingInstall_ = data.requested_version;
+         showNotice(false, constants_.rInstallInProgress(requested));
+      }
+      else if (data.can_install &&
+               (installed == null ||
+                (!StringUtil.equals(installed.version, requested) &&
+                 !installed.version.startsWith(requested + "."))))
+      {
+         // A nearby patch release can be used immediately, but also offer
+         // the exact requested version. A major.minor request is already
+         // satisfied by any installed patch release in that series.
+         showNotice(
+               false,
+               message,
+               constants_.installRVersion(requested),
+               () -> installR(requested),
+               installed == null ? null : constants_.switchToRVersion(installed.version),
+               installed == null ? null : () -> switchToR(installed));
+      }
+      else if (installed != null)
+      {
+         showNotice(
                false,
                message,
                constants_.switchToRVersion(installed.version),
                () -> switchToR(installed));
       }
-      else if (StringUtil.equals(data.installing_version, data.requested_version))
-      {
-         // this page was loaded while R installs (e.g. after a refresh), so
-         // it takes over waiting for the installation to finish
-         pendingInstall_ = data.requested_version;
-         globalDisplay_.showWarningBar(false, constants_.rInstallInProgress(requested));
-      }
-      else if (data.can_install)
-      {
-         globalDisplay_.showWarningBar(
-               false,
-               message,
-               constants_.installRVersion(data.requested_version),
-               () -> installR(data.requested_version));
-      }
       else
       {
-         globalDisplay_.showWarningBar(false, message);
+         showNotice(false, message);
       }
    }
 
@@ -134,9 +138,9 @@ public class RenvRVersionManager
       {
          // the offer stays up should the switch not go ahead
          RVersionInstall installed = data.installed;
-         globalDisplay_.showWarningBar(
+         showNotice(
                false,
-               constants_.rInstalled(escape(installed.version)),
+               constants_.rInstalled(StringUtil.notNull(installed.version)),
                constants_.switchToRVersion(installed.version),
                () -> switchToR(installed));
 
@@ -144,52 +148,62 @@ public class RenvRVersionManager
       }
       else
       {
-         String version = escape(data.version);
+         String version = StringUtil.notNull(data.version);
          String error = StringUtil.isNullOrEmpty(data.error)
                ? constants_.rInstallFailed(version)
-               : constants_.rInstallFailedWithError(version, escape(data.error));
-         globalDisplay_.showWarningBar(true, error);
+               : constants_.rInstallFailedWithError(version, data.error);
+         showNotice(true, error);
       }
-   }
-
-   @Override
-   public void onRenvRestorePrompt(RenvRestorePromptEvent event)
-   {
-      globalDisplay_.showWarningBar(
-            false,
-            constants_.renvLibraryEmpty(),
-            constants_.renvRestoreAction(),
-            () ->
-            {
-               globalDisplay_.hideWarningBar();
-               events_.fireEvent(new SendToConsoleEvent("renv::restore()", true));
-            });
    }
 
    private void installR(String version)
    {
-      globalDisplay_.hideWarningBar();
+      if (installDialogPending_)
+         return;
+
+      installDialogPending_ = true;
+      server_.rigGetInstallDir(new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String directory)
+         {
+            installDialogPending_ = false;
+            new InstallRDialog(version, directory,
+                  (path, indicator) -> installR(version, path, indicator)).showModal();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            installDialogPending_ = false;
+            globalDisplay_.showErrorMessage(constants_.installRCaption(version), error.getUserMessage());
+         }
+      });
+   }
+
+   private void installR(String version, String directory, ProgressIndicator indicator)
+   {
+      indicator.onProgress(constants_.rInstallStarting());
 
       // the job can finish (e.g. fail to start) before the response arrives,
       // so be ready for its completion event before asking
       pendingInstall_ = version;
 
-      server_.rigInstallRVersion(version, new ServerRequestCallback<String>()
+      server_.rigInstallRVersion(version, directory, new ServerRequestCallback<String>()
       {
          @Override
          public void onResponseReceived(String jobId)
          {
+            indicator.onCompleted();
             if (StringUtil.equals(pendingInstall_, version))
-               globalDisplay_.showWarningBar(false, constants_.rInstallInProgress(escape(version)));
+               showNotice(false, constants_.rInstallInProgress(StringUtil.notNull(version)));
          }
 
          @Override
          public void onError(ServerError error)
          {
             pendingInstall_ = null;
-            globalDisplay_.showWarningBar(
-                  true,
-                  constants_.rInstallFailedWithError(escape(version), escape(error.getUserMessage())));
+            indicator.onError(error.getUserMessage());
          }
       });
    }
@@ -224,7 +238,7 @@ public class RenvRVersionManager
 
    // Once the quit is going ahead, the desktop checks that the R runs and
    // holds on to it for the relaunch; a quit that then fails clears it again.
-   // The warning bar (and its offer) stays up until then, as the user can
+   // The Console notice (and its offer) stays up until then, as the user can
    // still back out of the quit.
    private void restartWithR(RVersionInstall installed)
    {
@@ -241,7 +255,7 @@ public class RenvRVersionManager
                return;
             }
 
-            globalDisplay_.hideWarningBar();
+            hideNotice();
             quit_.performQuit(
                   null,
                   constants_.switchingRVersionProgress(installed.version),
@@ -254,19 +268,38 @@ public class RenvRVersionManager
 
    private void onSwitchFailed(RVersionInstall installed, String error)
    {
-      globalDisplay_.showWarningBar(
+      showNotice(
             true,
-            constants_.rSwitchFailed(escape(installed.version), escape(error)),
+            constants_.rSwitchFailed(StringUtil.notNull(installed.version), StringUtil.notNull(error)),
             constants_.switchToRVersion(installed.version),
             () -> switchToR(installed));
    }
 
-   private static String escape(String text)
+   private void showNotice(boolean severe, String message)
    {
-      return SafeHtmlUtils.htmlEscape(StringUtil.notNull(text));
+      showNotice(severe, message, null, null);
+   }
+
+   private void showNotice(boolean severe, String message, String actionLabel, Command action)
+   {
+      showNotice(severe, message, actionLabel, action, null, null);
+   }
+
+   private void showNotice(boolean severe, String message, String actionLabel, Command action,
+                           String secondaryActionLabel, Command secondaryAction)
+   {
+      // The notice renders the message and action labels as plain text.
+      events_.fireEvent(new RenvConsoleNoticeEvent(severe, message, actionLabel, action,
+                                                  secondaryActionLabel, secondaryAction));
+   }
+
+   private void hideNotice()
+   {
+      events_.fireEvent(new RenvConsoleNoticeEvent(false, null, null, null));
    }
 
    private String pendingInstall_ = null;
+   private boolean installDialogPending_ = false;
 
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;

@@ -15,6 +15,83 @@
 
 context("rig")
 
+test_that("the default R install directory follows the platform and override", {
+
+   default <- function(...) .rs.rig.defaultInstallDir(rig = "", ...)
+   expect_identical(default(windows = FALSE, override = "", home = "/home/test"),
+                    "/home/test/.local/share/rig/r")
+   expect_identical(default(windows = TRUE, override = "", appdata = "C:/Users/test/AppData/Roaming"),
+                    "C:/Users/test/AppData/Roaming/rig/data/r")
+   expect_identical(default(windows = FALSE, override = "/custom/R"), "/custom/R")
+   expect_identical(default(windows = TRUE, override = "D:/custom R"), "D:/custom R")
+   expect_error(default(windows = TRUE, override = "", appdata = ""), "application data")
+
+})
+
+test_that("R installation paths are checked before starting an installation", {
+
+   root <- tempfile("r-install-path-")
+   dir.create(root)
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   expect_identical(.rs.rig.validateInstallDir(root), normalizePath(root, winslash = "/"))
+   target <- file.path(root, "R versions", "new")
+   expect_identical(.rs.rig.validateInstallDir(target), normalizePath(target, winslash = "/", mustWork = FALSE))
+   expect_false(dir.exists(target))
+   expect_error(.rs.rig.validateInstallDir(""), "Choose")
+   expect_error(.rs.rig.validateInstallDir(NA_character_), "Choose")
+   expect_error(.rs.rig.validateInstallDir("relative/path"), "absolute path")
+   expect_error(.rs.rig.validateInstallDir(paste0(root, "\nother")), "Choose")
+
+   file <- file.path(root, "file")
+   file.create(file)
+   expect_error(.rs.rig.validateInstallDir(file), "must be a directory")
+   expect_error(.rs.rig.validateInstallDir(file.path(file, "R")), "must be a directory")
+
+})
+
+test_that("custom installation roots remain discoverable and select the exact R", {
+
+   root <- tempfile("custom R-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+   registry <- file.path(root, "settings", "r-install-dirs")
+   installs <- file.path(root, "R versions")
+   expect_identical(.rs.rig.installDirs(registry), character())
+   .rs.rig.rememberInstallDir(installs, registry)
+   .rs.rig.rememberInstallDir(installs, registry)
+   expect_identical(.rs.rig.installDirs(registry), installs)
+
+   # a directory another session added in the meantime is kept, and one
+   # both added is listed once
+   other <- file.path(root, "other R versions")
+   cat(other, installs, sep = "\n", file = registry, append = TRUE)
+   .rs.rig.rememberInstallDir(file.path(root, "third"), registry)
+   expect_identical(.rs.rig.installDirs(registry), c(installs, other, file.path(root, "third")))
+
+   # Exercise the user-mode layouts used by Windows, macOS and Linux.
+   for (layout in c(".", "Resources", "lib/R"))
+   {
+      prefix <- file.path(installs, gsub("[/\\.]", "_", layout))
+      home <- file.path(prefix, layout)
+      dir.create(file.path(home, "library", "base"), recursive = TRUE)
+      dir.create(file.path(home, "include"), recursive = TRUE)
+      writeLines(c('#define R_MAJOR "4"', '#define R_MINOR "5.2"'),
+                 file.path(home, "include", "Rversion.h"))
+      dir.create(file.path(prefix, "bin"), showWarnings = FALSE)
+      file.create(file.path(prefix, "bin", if (.rs.platform.isWindows) "R.exe" else "R"))
+   }
+
+   installed <- .rs.rInstallations.scanRoots(.rs.rig.installDirs(registry))
+   expect_equal(nrow(installed), 3L)
+   expect_true(all(installed$version == "4.5.2"))
+   expect_true(all(file.exists(installed$binary)))
+   expect_equal(.rs.rig.installedRVersion("4.5.2", installs)$version, .rs.scalar("4.5.2"))
+   expect_null(.rs.rig.installedRVersion("4.5.3", installs))
+   expect_equal(.rs.rig.installedRVersion("4.5", installs)$version, .rs.scalar("4.5.2"))
+   expect_equal(nrow(.rs.rInstallations.scanRoots(file.path(root, "missing"))), 0L)
+
+})
+
 # A stand-in for launchctl: 'state' holds whether rig's agent is loaded and
 # the RSTUDIO_WHICH_R launchd exports, 'calls' records every invocation, and
 # the verbs in 'failing' fail (as a missing launchctl would, with NULL).
@@ -59,7 +136,7 @@ fakeRig <- function(home, dirs)
    lines <- if (is.null(dirs))
       c("#!/bin/sh", "exit 1")
    else
-      c("#!/bin/sh", sprintf("echo '{\"r_root\": \"%s\", \"binary_dir\": \"%s\"}'", dirs$r_root, dirs$binary_dir))
+      c("#!/bin/sh", sprintf('echo "{\\"r_root\\": \\"${RIG_R_INSTALL_DIR:-%s}\\", \\"binary_dir\\": \\"%s\\"}"', dirs$r_root, dirs$binary_dir))
 
    writeLines(lines, rig)
    Sys.chmod(rig, "0755")
@@ -758,7 +835,7 @@ test_that("rig's default R setup is remembered before, and put back after, a use
 
    # the snapshot is taken (with rig's quick-link directory created first)
    # and kept on disk, for a session that does not outlive the install
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
    })
    expect_true(dir.exists(bin))
@@ -805,7 +882,7 @@ test_that("rig's default R setup is remembered before, and put back after, a use
 
    # without a saved snapshot there is no undoing the install: it is refused
    unwritable <- file.path(home, "missing", "snapshot.rds")
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_error(.rs.rig.userInstallBegin(rig, unwritable, launchd$launchctl), "^Could not save rig's default R setup to ")
    })
    expect_null(state$snapshot)
@@ -818,6 +895,46 @@ test_that("rig's default R setup is remembered before, and put back after, a use
    expect_null(state$snapshot)
    expect_false(file.exists(file))
    expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+
+})
+
+test_that("the snapshot before a user-mode install covers the confirmed destination", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   custom <- file.path(home, "custom R")
+   dir.create(root)
+   dir.create(custom)
+
+   rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   launchd <- fakeLaunchd()
+   state <- .rs.rig.installState
+
+   # rig's 'Current' link lands in the destination, so that is where the
+   # snapshot looks for it, and the session's environment is left as it was
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      expect_identical(.rs.rig.userInstallBegin(rig, NULL, launchd$launchctl, directory = custom), character())
+      expect_identical(dirname(state$snapshot$paths[["current"]]), custom)
+      expect_identical(Sys.getenv("RIG_R_INSTALL_DIR", unset = NA), NA_character_)
+      expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+
+      expect_identical(.rs.rig.userInstallBegin(rig, NULL, launchd$launchctl), character())
+      expect_identical(dirname(state$snapshot$paths[["current"]]), root)
+      expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+   })
+
+   # an override of the user's own is put back afterward
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = root), {
+      expect_identical(.rs.rig.userInstallBegin(rig, NULL, launchd$launchctl, directory = custom), character())
+      expect_identical(dirname(state$snapshot$paths[["current"]]), custom)
+      expect_identical(Sys.getenv("RIG_R_INSTALL_DIR"), root)
+      expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+   })
 
 })
 
@@ -842,7 +959,7 @@ test_that("the snapshot is kept, and installs refused, while something is left t
    launchd <- fakeLaunchd()
    state <- .rs.rig.installState
 
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
    })
    paths <- state$snapshot$paths
@@ -859,7 +976,7 @@ test_that("the snapshot is kept, and installs refused, while something is left t
 
    # until then, no further install (whose snapshot would take the leftover
    # for setup to keep, and forget it was ever absent)
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), "not all undone yet")
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), file, fixed = TRUE)
    })
@@ -1019,7 +1136,7 @@ test_that("a user-mode install waits for, and undoes, one another session starte
 
    # while that session, or just its rig, runs, this one does not install
    alive <- function(pids) function(pid) pid %in% pids
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999998L)), "another RStudio session")
       expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999999L)), "another RStudio session")
    })
@@ -1029,7 +1146,7 @@ test_that("a user-mode install waits for, and undoes, one another session starte
 
    # once both are gone, their default is undone before this install's
    # snapshot is taken, so it does not pass for setup to keep
-   withr::with_envvar(c(HOME = home), {
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
       messages <- .rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(integer()))
    })
    expect_match(messages, "^Removed the default R setup")
