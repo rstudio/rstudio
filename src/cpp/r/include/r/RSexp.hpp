@@ -352,7 +352,11 @@ class PreservedSEXP : MoveOnly
 {
 public:
 
-   explicit PreservedSEXP(SEXP sexp = R_NilValue)
+   // Empty is stored as nullptr, not R_NilValue: file-scope instances are
+   // constructed before R has initialized R_NilValue, so a default argument
+   // of R_NilValue would quietly capture a null pointer. get() maps empty
+   // back to R_NilValue so a null SEXP never escapes to R.
+   explicit PreservedSEXP(SEXP sexp = nullptr)
       : sexp_(sexp)
    {
       preserve();
@@ -361,7 +365,7 @@ public:
    PreservedSEXP(PreservedSEXP&& other)
    {
       sexp_ = other.sexp_;
-      other.sexp_ = R_NilValue;
+      other.sexp_ = nullptr;
    }
 
    PreservedSEXP& operator=(PreservedSEXP&& other)
@@ -373,7 +377,7 @@ public:
          // old SEXP for the life of the session
          release();
          sexp_ = other.sexp_;
-         other.sexp_ = R_NilValue;
+         other.sexp_ = nullptr;
       }
       return *this;
    }
@@ -392,12 +396,12 @@ public:
 
    SEXP get() const
    {
-      return sexp_;
+      return sexp_ == nullptr ? R_NilValue : sexp_;
    }
 
    bool isNil() const
    {
-      return sexp_ == R_NilValue;
+      return sexp_ == nullptr || sexp_ == R_NilValue;
    }
    
    explicit operator bool() const
@@ -414,7 +418,7 @@ private:
 
    void preserve()
    {
-      if (sexp_ != R_NilValue)
+      if (!isNil())
       {
          ::R_PreserveObject(sexp_);
       }
@@ -422,11 +426,11 @@ private:
 
    void release()
    {
-      if (sexp_ != R_NilValue)
+      if (!isNil())
       {
          ::R_ReleaseObject(sexp_);
-         sexp_ = R_NilValue;
       }
+      sexp_ = nullptr;
    }
 
    SEXP sexp_;

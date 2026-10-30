@@ -120,6 +120,16 @@ test_that("breakpoints in S7 methods for S7 generics preserve the method class",
 
 })
 
+test_that("the browser environment can be read before it is first set", {
+
+   # The environment is held in a file-scope PreservedSEXP, built before R
+   # starts. Until a console prompt sets it, reading it must give R's NULL,
+   # not a null pointer that .Call() warns about converting.
+   env <- expect_silent(.Call("rs_getBrowserEnv", PACKAGE = "(embedding)"))
+   expect_true(is.null(env) || is.environment(env))
+
+})
+
 test_that("frames whose inner call is built internally keep their call site", {
 
    # lapply() constructs the call to FUN itself, so that call carries no
@@ -142,9 +152,7 @@ test_that("frames whose inner call is built internally keep their call site", {
    source(file, local = env, keep.source = TRUE)
 
    # lapply() wraps its result, so unwrap before reading the frame list.
-   # Outside a debug session rs_getBrowserEnv has no environment to report,
-   # which warns on the way back through the embedding layer.
-   frames <- suppressWarnings(env$outer_fn())[[1L]]$frames
+   frames <- expect_silent(env$outer_fn())[[1L]]$frames
    names <- vapply(frames, function(frame) as.character(frame$function_name), "")
 
    # Frames run innermost first, and the test harness has lapply() frames of
@@ -190,9 +198,9 @@ test_that("the frame being browsed keeps its own file location", {
    source(locatedFile, local = env, keep.source = TRUE)
    source(outerFile, local = env, keep.source = TRUE)
 
-   # Outside a debug session rs_getBrowserEnv has no environment to report, so
-   # the innermost frame stands in for the one the browser would be halted in.
-   frame <- suppressWarnings(env$outer_fn())$frames[[1L]]
+   # Outside a debug session there is no browser environment, so the
+   # innermost frame stands in for the one the browser would be halted in.
+   frame <- expect_silent(env$outer_fn())$frames[[1L]]
 
    expect_identical(as.character(frame$function_name), "located_fn")
    expect_true(as.logical(frame$real_sourceref))
