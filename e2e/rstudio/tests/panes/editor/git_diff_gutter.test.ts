@@ -3812,62 +3812,75 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // fold's start too. Wrapped, the base's header (which differs in
     // whitespace only) takes more rows than the document's, and the
     // padding for that lands on the fold's start -- the bar, on both rows
-    // of the fold, which takes it on rather than passing it between them.
-    const wrapPath = `${projectDir()}/foldbar.R`;
-    const seed = [`f <- function(${' '.repeat(300)}) {`, '}', 'tail'];
-    const edited = ['f <- function() {', '} # x', 'tail'];
-    await executeInConsoleChecked(
-      page,
-      `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
-    );
-    await commitAll(page, 'foldbar', [wrapPath]);
-    await executeInConsoleChecked(
-      page,
-      `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
-    );
-    await setPref(page, 'git_diff_ignore_whitespace', true);
-    await openFile(page, wrapPath);
-    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [MODIFIED] });
-
+    // of the fold, which takes it on rather than passing it between them --
+    // or, past a line in the function's body, within the fold, where the
+    // bar is to stay in view all the same.
     const editor = new AceEditor(page, '');
-    await executeCommand(page, 'vcsShowChangesSideBySide');
     const base = page.locator(BASE_EDITOR);
     const live = liveEditors(page, 'tail');
-    await expect(base).toBeVisible({ timeout: 10000 });
     const rowTop = (view: Locator, row: number) =>
       view.evaluate((el, row) => {
         type Measured = { renderer: { textToScreenCoordinates(row: number, column: number): { pageY: number } } };
         const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
         return Math.round(editor.renderer.textToScreenCoordinates(row, 0).pageY);
       }, row);
+    const barInView = () =>
+      live.evaluate((el) => {
+        type Scrolled = { renderer: { scroller: HTMLElement } };
+        const bar = el.querySelector('.ace_git-peek-compact');
+        if (!bar) return false;
+        const box = bar.getBoundingClientRect();
+        const view = ((el as AceEditorElement).env?.editor as unknown as Scrolled).renderer.scroller.getBoundingClientRect();
+        return box.top >= view.top && box.bottom <= view.bottom + 1;
+      });
 
-    try {
-      await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
-      await editor.gotoLine(2);
-      await executeCommand(page, 'vcsShowChange');
-      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+    for (const body of [[], ['  1']]) {
+      const wrapPath = `${projectDir()}/foldbar${body.length}.R`;
+      const seed = [`f <- function(${' '.repeat(300)}) {`, ...body, '}', 'tail'];
+      const edited = ['f <- function() {', ...body, '} # x', 'tail'];
+      const closingRow = body.length + 1;
+      await executeInConsoleChecked(
+        page,
+        `writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
+      );
+      await commitAll(page, 'foldbar', [wrapPath]);
+      await executeInConsoleChecked(
+        page,
+        `writeLines(c(${edited.map(rStringLiteral).join(', ')}), ${rPathLiteral(wrapPath)})`,
+      );
+      await setPref(page, 'git_diff_ignore_whitespace', true);
+      await openFile(page, wrapPath);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ [closingRow]: [MODIFIED] });
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
 
-      await editor.gotoLine(1);
-      await editor.execCommand('toggleFoldWidget');
-      await expect.poll(() => editor.getFoldCount()).toBe(1);
-      const tailTop = await rowTop(base, 2);
-      await executeCommand(page, 'toggleSoftWrapMode');
+      try {
+        await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...seed, '']);
+        await editor.gotoLine(closingRow + 1);
+        await executeCommand(page, 'vcsShowChange');
+        await expect.poll(barInView, { timeout: 10000 }).toBe(true);
 
-      // (drawn wrapped, the base's header pushes its last line down; the
-      // sides realigned for the render, where the padding went back and
-      // forth until the stack ran out)
-      await expect.poll(() => rowTop(base, 2), { timeout: 10000 }).toBeGreaterThan(tailTop);
-      await expect(live.locator(PEEK_COMPACT)).toBeVisible();
-    } finally {
-      // (the view goes before whitespace counts again: the base header's
-      // highlight, on a folded line that wraps, trips Ace's
-      // getRowWrapIndent, which takes the fold's end row for its own)
-      await executeCommand(page, 'removeEditorSplit');
-      await expect(base).toHaveCount(0);
-      await documentCloseAllNoSave(page);
-      await clearPref(page, 'git_diff_ignore_whitespace');
-      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wrapPath)}))`);
-      await commitAll(page, 'remove foldbar', [wrapPath]);
+        await editor.gotoLine(1);
+        await editor.execCommand('toggleFoldWidget');
+        await expect.poll(() => editor.getFoldCount()).toBe(1);
+        const tailTop = await rowTop(base, closingRow + 1);
+        await executeCommand(page, 'toggleSoftWrapMode');
+
+        // (drawn wrapped, the base's header pushes its last line down; the
+        // sides realigned for the render)
+        await expect.poll(() => rowTop(base, closingRow + 1), { timeout: 10000 }).toBeGreaterThan(tailTop);
+        await expect.poll(barInView, { timeout: 10000 }).toBe(true);
+      } finally {
+        // (the view goes before whitespace counts again: the base header's
+        // highlight, on a folded line that wraps, trips Ace's
+        // getRowWrapIndent, which takes the fold's end row for its own)
+        await executeCommand(page, 'removeEditorSplit');
+        await expect(base).toHaveCount(0);
+        await documentCloseAllNoSave(page);
+        await clearPref(page, 'git_diff_ignore_whitespace');
+        await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(wrapPath)}))`);
+        await commitAll(page, 'remove foldbar', [wrapPath]);
+      }
     }
   });
 

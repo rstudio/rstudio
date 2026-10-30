@@ -986,11 +986,22 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       w.gitDiffPadding = true;
       w.session = session;
       session.lineWidgets[w.row] = w;
-      session.$resetRowCache(w.row);
 
+      // Padding within a fold is hidden, or on its last row stands at its
+      // first row instead where that is free, as Ace's fold handling has
+      // it (updateOnFold in line_widgets.js) -- but for the padding alone:
+      // run for the whole fold again, Ace's would hide the widget it has
+      // already stood at the fold's first row (a folded change's action
+      // bar, say), which is then on both of the rows it checks.
       var fold = session.getFoldAt(w.row, 0);
-      if (fold)
-         session.widgetManager.updateOnFold({ data: fold, action: "add" }, session);
+      var firstRow = w.row;
+      if (fold && w.row > fold.start.row && w.row === fold.end.row && !session.lineWidgets[fold.start.row]) {
+         session.lineWidgets[fold.start.row] = w;
+         firstRow = fold.start.row;
+      } else if (fold && (w.row > fold.start.row || w.row === fold.end.row)) {
+         w.hidden = true;
+      }
+      session.$resetRowCache(firstRow);
    };
 
    this.$isPeek = function(widget) {
