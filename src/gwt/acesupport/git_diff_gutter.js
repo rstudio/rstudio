@@ -290,14 +290,7 @@ var GitDiffGutter = function(editor, strings) {
    // support's blurTextInput would take Escape whenever it was added after
    // this one (a file opened with ext-diff already loaded, or the pref turned
    // on later); the explicit position puts this command ahead regardless.
-   var self = this;
-   editor.commands.addCommand({
-      name: "closeGitPeek",
-      bindKey: { win: "Esc", mac: "Esc", position: 1 },
-      readOnly: true,
-      isAvailable: function() { return self.peek != null; },
-      exec: function() { self.closePeek(); }
-   });
+   editor.commands.addCommand(this.closePeekCommand());
 };
 
 (function() {
@@ -402,6 +395,7 @@ var GitDiffGutter = function(editor, strings) {
       {
          this.splitView.baseEditor.off("changeSelection", this.onCursorActivity);
          this.splitView.baseEditor.off("focus", this.onCursorActivity);
+         this.splitView.baseEditor.commands.removeCommand("closeGitPeek");
       }
 
       this.splitView = view;
@@ -409,14 +403,30 @@ var GitDiffGutter = function(editor, strings) {
       if (!view)
          return;
 
+      // (the base pane can hold focus with the action bar open, which
+      // Escape closes from there too)
       view.baseEditor.on("changeSelection", this.onCursorActivity);
       view.baseEditor.on("focus", this.onCursorActivity);
+      view.baseEditor.commands.addCommand(this.closePeekCommand());
 
       // (an update waiting out a slow diff's typing pause would otherwise
       // hand the view the previous chunks, and its first folds with them)
       this.flushUpdate();
       view.setBaseLines(this.baseLines);
       view.setChunks(this.chunks, this.ignoreWhitespace);
+   };
+
+   // The Escape command that closes the peek (see the constructor), for an
+   // editor's command set.
+   this.closePeekCommand = function() {
+      var self = this;
+      return {
+         name: "closeGitPeek",
+         bindKey: { win: "Esc", mac: "Esc", position: 1 },
+         readOnly: true,
+         isAvailable: function() { return self.peek != null; },
+         exec: function() { self.closePeek(); }
+      };
    };
 
    // Runs the callback once the base is current. The base is also re-fetched
@@ -436,19 +446,31 @@ var GitDiffGutter = function(editor, strings) {
    // file at the line Git reports first, and that can be off from the
    // markers (an unsaved edit above it, a newline at the end of the file,
    // whitespace ignored). The cursor stays where it is without a change to
-   // go to, or if it has been moved meanwhile.
+   // go to, or if the user has moved on meanwhile (see cursorState).
    this.goToFirstChangeWhenFresh = function() {
       var self = this;
-      var cursor = this.editor.getCursorPosition();
+      var state = this.cursorState();
       this.withFreshBase(function() {
-         var now = self.editor.getCursorPosition();
-         if (now.row !== cursor.row || now.column !== cursor.column)
+         if (self.cursorState() !== state)
             return;
 
          self.flushUpdate();
          if (self.chunks.length > 0)
             self.goToChange(self.chunks[0]);
       });
+   };
+
+   // Where the cursors are, and which pane of a side-by-side view holds
+   // focus: what moving on from a position changes.
+   this.cursorState = function() {
+      var cursor = this.editor.getCursorPosition();
+      var state = [cursor.row, cursor.column];
+      if (this.splitView)
+      {
+         var baseCursor = this.splitView.baseEditor.getCursorPosition();
+         state.push(baseCursor.row, baseCursor.column, this.baseFocused());
+      }
+      return state.join(",");
    };
 
    // Runs a revert once the base is current, unless the document was edited

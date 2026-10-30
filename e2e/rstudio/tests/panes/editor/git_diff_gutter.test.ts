@@ -1643,6 +1643,33 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('closes the action bar with Escape from the base pane', async ({ rstudioPage: page }) => {
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, 'a2 <- 1.5');
+    await expect(base).toBeVisible({ timeout: 10000 });
+    const focusIn = (view: Locator) => view.evaluate((el) => el.contains(document.activeElement));
+
+    try {
+      // the base pane holds focus, on the modified line (`d <- 4`, base row 3)
+      await base.locator('.ace_content').click({ force: true });
+      await base.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(4, 0));
+      await expect.poll(() => focusIn(base)).toBe(true);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+      await expect.poll(() => focusIn(base)).toBe(true);
+
+      await page.keyboard.press('Escape');
+      await expect(page.locator(PEEK)).toHaveCount(0);
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
   test('keeps the sides aligned with the action bar open at a deletion at the top', async ({
     rstudioPage: page,
   }) => {
@@ -2384,6 +2411,58 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         `,
       );
       await commitAll(page, 'remove first changes', [...firstPaths, subDir]);
+    }
+  });
+
+  test('leaves the cursors be when they move on before the first change is gone to', async ({
+    rstudioPage: page,
+  }) => {
+    // The Git pane's go-to-change goes on to the editor's first change once
+    // the base is fetched; the fetch is held here while the base pane takes
+    // focus and its cursor moves, which the follow-up then leaves alone.
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    await expect(base).toBeVisible({ timeout: 10000 });
+    const baseCursorRow = () =>
+      base.evaluate((el) => (el as AceEditorElement).env?.editor?.getCursorPosition().row);
+
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const holdFetch = async (route: Route) => {
+      await held;
+      await route.continue();
+    };
+    const fetches = trackBaseFetches(page);
+    await page.route('**/git_diff_base_contents*', holdFetch);
+
+    try {
+      await executeCommand(page, 'activateVcs');
+      const panel = page.locator(GIT_PANEL);
+      await expect(panel).toBeVisible({ timeout: 15000 });
+      await panel.getByRole('button', { name: 'Open script.R at its first change', exact: true }).press('Enter');
+
+      // (moved on only once the file is opened at Git's line, row 1, when
+      // the follow-up has started and its fetch is held)
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
+      await expect.poll(() => fetches.names.length, { timeout: 15000 }).toBeGreaterThan(0);
+      await base.locator('.ace_content').click({ force: true });
+      await base.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(8, 0));
+      await expect.poll(baseCursorRow).toBe(7);
+
+      release();
+      await fetches.settled();
+      expect(await baseCursorRow()).toBe(7);
+    } finally {
+      release();
+      await page.unroute('**/git_diff_base_contents*', holdFetch);
+      fetches.stop();
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
     }
   });
 

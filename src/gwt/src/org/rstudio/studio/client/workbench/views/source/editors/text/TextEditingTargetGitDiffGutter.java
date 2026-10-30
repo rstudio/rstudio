@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiffGutterNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.GitDiffSplitNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -193,14 +194,16 @@ public class TextEditingTargetGitDiffGutter
 
    // Goes to the document's first change as the markers show it, once they
    // are current -- for a gutter still attaching (a document just opened),
-   // once it has attached. Without markers the cursor stays.
+   // once it has attached, provided the cursor has stayed put meanwhile, as
+   // the gutter itself asks while the base is fetched. Without markers the
+   // cursor stays.
    public void goToFirstChange()
    {
       if (!isEnabled())
          return;
 
       if (gutter_ == null)
-         firstChangePending_ = true;
+         firstChangeCursor_ = docDisplay_.getCursorPosition();
       else
          gutter_.goToFirstChangeWhenFresh();
    }
@@ -332,9 +335,11 @@ public class TextEditingTargetGitDiffGutter
 
          // (after the refresh, which takes up the document's path: one
          // taken up afresh drops whatever was waiting on the old base)
-         if (firstChangePending_)
+         Position firstChangeCursor = firstChangeCursor_;
+         firstChangeCursor_ = null;
+         if (firstChangeCursor != null &&
+             firstChangeCursor.isEqualTo(docDisplay_.getCursorPosition()))
          {
-            firstChangePending_ = false;
             gutter_.goToFirstChangeWhenFresh();
          }
       });
@@ -424,7 +429,7 @@ public class TextEditingTargetGitDiffGutter
    {
       refreshTimer_.cancel();
       refreshDeferred_ = false;
-      firstChangePending_ = false;
+      firstChangeCursor_ = null;
       invalidation_.invalidate();
       basePath_ = null;
       baseContents_ = null;
@@ -579,7 +584,7 @@ public class TextEditingTargetGitDiffGutter
    private boolean dismissed_;
    private boolean active_;
    private boolean refreshDeferred_;
-   private boolean firstChangePending_;
+   private Position firstChangeCursor_;
 
    private final ArrayList<JavaScriptObject> baseCallbacks_ = new ArrayList<>();
    private final Invalidation invalidation_ = new Invalidation();
