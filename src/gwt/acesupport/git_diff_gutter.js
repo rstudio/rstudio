@@ -773,28 +773,33 @@ var GitDiffGutter = function(editor, strings) {
       this.showPeek(chunk);
       if (this.splitView)
          this.splitView.realignNow();
-      this.goToChunk(chunk);
 
       // gotoLine leaves a row alone that was on screen when last rendered,
-      // which the swap may have moved off it since
+      // which the swap may have moved off it since. The scroll is not
+      // animated: the check that follows would stop an animation where it
+      // started, taking its destination for where the view already is.
+      this.goToChunk(chunk, false);
       var editor = this.baseFocused() ? this.splitView.baseEditor : this.editor;
       editor.renderer.scrollCursorIntoView(null, 0.5);
    };
 
-   this.goToChunk = function(chunk) {
+   // The scroll is animated (where smooth scrolling is on) unless animate is
+   // false.
+   this.goToChunk = function(chunk, animate) {
+      animate = animate !== false;
       var row = this.displayRow(chunk);
       if (this.baseFocused())
       {
          // the base pane keeps the cursor (its scrolling brings the document
          // along); the document's cursor follows so that the two agree on
          // which change is at the cursor
-         this.splitView.goToBaseRow(this.baseDisplayRow(chunk));
+         this.splitView.goToBaseRow(this.baseDisplayRow(chunk), animate);
          this.editor.clearSelection();
          this.editor.moveCursorTo(row, 0);
          return;
       }
 
-      this.editor.gotoLine(row + 1, 0, true);
+      this.editor.gotoLine(row + 1, 0, animate);
    };
 
    // The change is the one under the cursor now; the revert itself waits

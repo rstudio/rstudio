@@ -272,13 +272,8 @@ public class GitPresenter extends BaseVcsPresenter
          if (range.rowCount == 0)
             return range.startRow + 1;
 
-         // Git replaces the last line when only the newline after it comes
-         // or goes; the editor has an empty last line come or go instead,
-         // marked after the hunk's lines (clamped as above).
-         if (isFinalNewlineOnly(chunk))
-            return range.startRow + range.rowCount;
-
-         return range.startRow;
+         // (past lines the editor sees as unchanged; clamped as above)
+         return range.startRow + unchangedLeadingLines(chunk);
       }
       catch (Exception e)
       {
@@ -288,25 +283,55 @@ public class GitPresenter extends BaseVcsPresenter
       }
    }
 
-   // Whether a hunk changes nothing but the file's final newline: it carries
-   // a "\ No newline at end of file" note, and the lines it removes are the
-   // lines it adds.
-   private static boolean isFinalNewlineOnly(DiffChunk chunk)
+   // How many of a hunk's lines, from the first, the editor sees unchanged:
+   // none, but where the newline at the end of the file comes or goes. Git
+   // then replaces the last line, where the editor (which shows a final
+   // newline as an empty line after it) leaves it alone. Such a hunk ends at
+   // the end of the file on both sides, and a "\ No newline at end of file"
+   // note follows the side whose last line has none.
+   private static int unchangedLeadingLines(DiffChunk chunk)
    {
-      boolean noted = false;
       ArrayList<String> removed = new ArrayList<>();
       ArrayList<String> added = new ArrayList<>();
+      boolean removedUnterminated = false;
+      boolean addedUnterminated = false;
+      Line.Type previous = null;
       for (Line line : chunk.getLines())
       {
-         if (line.getType() == Line.Type.Comment)
-            noted = true;
-         else if (line.getType() == Line.Type.Deletion)
+         Line.Type type = line.getType();
+         if (type == Line.Type.Comment)
+         {
+            if (previous == Line.Type.Deletion)
+               removedUnterminated = true;
+            else if (previous == Line.Type.Insertion)
+               addedUnterminated = true;
+            continue;
+         }
+
+         if (type == Line.Type.Deletion)
             removed.add(line.getText());
-         else if (line.getType() == Line.Type.Insertion)
+         else if (type == Line.Type.Insertion)
             added.add(line.getText());
+         previous = type;
       }
 
-      return noted && !removed.isEmpty() && removed.equals(added);
+      if (!removedUnterminated && !addedUnterminated)
+         return 0;
+
+      // the lines as the editor has them
+      if (!removedUnterminated)
+         removed.add("");
+      if (!addedUnterminated)
+         added.add("");
+
+      int count = 0;
+      while (count < removed.size() &&
+             count < added.size() &&
+             removed.get(count).equals(added.get(count)))
+      {
+         count++;
+      }
+      return count;
    }
 
    private void manageCommands()
