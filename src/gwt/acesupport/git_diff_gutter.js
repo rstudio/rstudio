@@ -757,17 +757,28 @@ var GitDiffGutter = function(editor, strings) {
       return true;
    };
 
-   // (the open peek goes first: the rows it takes up would otherwise come
-   // out of the scroll position worked out for the change, and carry it
-   // off screen when the peek sat above it)
+   // The peeks are swapped, and a side-by-side view realigned around them,
+   // before the scroll: worked out first, it would be thrown off by the rows
+   // that then come or go above the change -- the old peek's, the new one's
+   // above a deletion, the padding a peek at the top of the document holds.
    this.goToChange = function(chunk) {
       var peeking = this.peek != null && this.peek.chunk !== chunk;
-      if (peeking)
-         this.closePeek();
+      if (!peeking)
+      {
+         this.goToChunk(chunk);
+         return;
+      }
 
+      // (showPeek closes the open one first)
+      this.showPeek(chunk);
+      if (this.splitView)
+         this.splitView.realignNow();
       this.goToChunk(chunk);
-      if (peeking)
-         this.showPeek(chunk);
+
+      // gotoLine leaves a row alone that was on screen when last rendered,
+      // which the swap may have moved off it since
+      var editor = this.baseFocused() ? this.splitView.baseEditor : this.editor;
+      editor.renderer.scrollCursorIntoView(null, 0.5);
    };
 
    this.goToChunk = function(chunk) {

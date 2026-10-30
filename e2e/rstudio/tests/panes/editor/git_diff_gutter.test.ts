@@ -1931,6 +1931,90 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('keeps the change in view as the peek and the side-by-side padding move around it', async ({
+    rstudioPage: page,
+  }) => {
+    // A deletion's peek opens above it; 60 removed lines make it tall. At the
+    // top of the document, side by side, they make the padding above the
+    // first line (which the action bar holds while open) as tall.
+    const movePath = `${projectDir()}/peekmove.R`;
+    await executeInConsoleChecked(
+      page,
+      `writeLines(sprintf("m%d <- %d", 1:200, 1:200), ${rPathLiteral(movePath)})`,
+    );
+    await commitAll(page, 'peekmove', [movePath]);
+
+    type ScrolledEditor = {
+      renderer: {
+        scroller: HTMLElement;
+        textToScreenCoordinates(row: number, column: number): { pageY: number };
+      };
+    };
+    const rowInView = (view: Locator, row: number) =>
+      view.evaluate((el, row) => {
+        const renderer = ((el as AceEditorElement).env?.editor as unknown as ScrolledEditor).renderer;
+        const box = renderer.scroller.getBoundingClientRect();
+        const y = renderer.textToScreenCoordinates(row, 0).pageY;
+        return y >= box.top && y < box.bottom;
+      }, row);
+    const live = page
+      .locator("[class*='rstudio_source_panel'] .ace_editor:not(.ace_git-diff-base)")
+      .filter({ has: page.locator(`.${GUTTER_ATTACHED}`) });
+    const peek = page.locator(PEEK);
+    const base = page.locator(BASE_EDITOR);
+    const editor = new AceEditor(page, '');
+    const rewrite = (edit: string) =>
+      executeInConsoleChecked(
+        page,
+        heredoc`
+          {
+            lines <- sprintf("m%d <- %d", 1:200, 1:200)
+            ${edit}
+            writeLines(lines, ${rPathLiteral(movePath)})
+          }
+        `,
+      );
+
+    try {
+      // from a change near the top to the deletion of lines 25 to 84
+      await rewrite('lines[2] <- "m2 <- 0"; lines <- lines[-(25:84)]');
+      await openFile(page, movePath);
+      // (only the rows on screen have their markers read)
+      await expect.poll(async () => (await gutterMarkers(page))[1], { timeout: 30000 }).toEqual([MODIFIED]);
+      await editor.gotoLine(2);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(peek.locator(PEEK_LINE)).toHaveCount(1, { timeout: 10000 });
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(() => cursorRow(page)).toBe(24);
+      await expect(peek.locator(PEEK_LINE)).toHaveCount(60, { timeout: 10000 });
+      await expect.poll(() => rowInView(live, 24), { timeout: 10000 }).toBe(true);
+      await documentCloseAllNoSave(page);
+
+      // side by side, from the deletion of the first 60 lines to a change
+      // below them
+      await rewrite('lines[100] <- "m100 <- 0"; lines <- lines[-(1:60)]');
+      await openFile(page, movePath);
+      await expect.poll(async () => (await gutterMarkers(page))[0], { timeout: 30000 }).toEqual([DELETED]);
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await editor.gotoLine(1);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(() => cursorRow(page)).toBe(39);
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+      await expect.poll(() => rowInView(live, 39), { timeout: 10000 }).toBe(true);
+    } finally {
+      if ((await base.count()) > 0) {
+        await executeCommand(page, 'removeEditorSplit');
+        await expect(base).toHaveCount(0);
+      }
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(movePath)}))`);
+      await commitAll(page, 'remove peekmove', [movePath]);
+    }
+  });
+
   test('pins the peek for a single changed line wrapped taller than the editor', async ({
     rstudioPage: page,
   }) => {
@@ -2032,6 +2116,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           stopifnot(dir.create(${rPathLiteral(subDir)}))
           for (path in c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(`${subDir}/old.R`)}))
             writeLines(c(${seed.map(rStringLiteral).join(', ')}), path)
+          writeLines(sprintf("orig%d <- %d", 1:5, 1:5), ${rPathLiteral(`${subDir}/orig.R`)})
           cat("x <- 1", file = ${rPathLiteral(nlPath)})
         }
       `,
@@ -2040,8 +2125,9 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
     // a removed line, which the gutter marks on the line after it; a
     // whitespace-only edit ahead of a real one; a final newline added, which
-    // the gutter marks as an empty last line; a rename within a
-    // subdirectory, staged; an untracked binary file
+    // the gutter marks as an empty last line; a rename and a copy within a
+    // subdirectory, staged (copies are listed as such when status.renames
+    // says so, and their source changed too); an untracked binary file
     await executeInConsoleChecked(
       page,
       heredoc`
@@ -2049,9 +2135,15 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           writeLines(c(${seed.filter((line) => line !== 'c <- 3').map(rStringLiteral).join(', ')}), ${rPathLiteral(delPath)})
           writeLines(c("a <- 1", "b <- 2   ", "c <- 3", "d <- 40", "e <- 5"), ${rPathLiteral(wsPath)})
           writeLines("x <- 1", ${rPathLiteral(nlPath)})
-          s <- system2("git", c(${gitC()}, "mv", "sub/old.R", "sub/new.R"))
-          if (s != 0)
-            stop("git mv failed (exit status: ", s, ")")
+          stopifnot(file.copy(${rPathLiteral(`${subDir}/orig.R`)}, ${rPathLiteral(`${subDir}/copy.R`)}))
+          cat("f <- 6\n", file = ${rPathLiteral(`${subDir}/orig.R`)}, append = TRUE)
+          s <- c(
+            system2("git", c(${gitC()}, "mv", "sub/old.R", "sub/new.R")),
+            system2("git", c(${gitC()}, "config", "status.renames", "copies")),
+            system2("git", c(${gitC()}, "add", "--", "sub/orig.R", "sub/copy.R"))
+          )
+          if (any(s != 0))
+            stop("git setup failed (exit status: ", paste(s, collapse = "/"), ")")
           saveRDS(1:10, ${rPathLiteral(rdsPath)})
         }
       `,
@@ -2090,6 +2182,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         .toMatch(/\/GitGutter\/sub\/new\.R$/);
       await documentCloseAllNoSave(page);
 
+      await goTo('sub/orig.R -> sub/copy.R').click();
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('copy.R', { timeout: 15000 });
+      await expect
+        .poll(() => page.evaluate(() => window.rstudio?.documents.active()?.path ?? ''))
+        .toMatch(/\/GitGutter\/sub\/copy\.R$/);
+      await documentCloseAllNoSave(page);
+
       // an .rds has no line to go to, and opens as Open would open it: an
       // offer to read it into an object
       await goTo('first.rds').click();
@@ -2104,6 +2203,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           {
             unlink(c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(nlPath)}, ${rPathLiteral(rdsPath)}))
             unlink(${rPathLiteral(subDir)}, recursive = TRUE)
+            invisible(system2("git", c(${gitC()}, "config", "--unset", "status.renames")))
           }
         `,
       );

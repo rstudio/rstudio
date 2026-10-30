@@ -1196,6 +1196,14 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
       return this.baseEditor.getCursorPosition().row;
    };
 
+   // Runs a pending realignment now rather than on the next render, for a
+   // scroll about to be worked out from the aligned rows (see goToChange in
+   // git_diff_gutter.js).
+   this.realignNow = function() {
+      if (this.realignPending && !this.disposed)
+         this.realign();
+   };
+
    this.goToBaseRow = function(row) {
       this.baseEditor.gotoLine(row + 1, 0, true);
    };

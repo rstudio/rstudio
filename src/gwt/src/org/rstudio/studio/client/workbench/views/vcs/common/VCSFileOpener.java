@@ -117,11 +117,13 @@ public class VCSFileOpener
    // The path of the file as it is in the working tree.
    private String resolvePath(StatusAndPath item)
    {
-      // NOTE: renames need some extra processing: a rename's raw path is
-      // "<old path> -> <new path>", where only the old path is absolute; the
-      // new one is relative to the repository root, as both are in getPath()
+      // NOTE: renames (and copies) need some extra processing: the raw path
+      // is "<old path> -> <new path>", where only the old path is absolute;
+      // the new one is relative to the repository root, as both are in
+      // getPath()
       String path = item.getRawPath();
-      if (StringUtil.equals(item.getStatus(), "R "))
+      if (StringUtil.equals(item.getStatus(), "R ") ||
+          StringUtil.equals(item.getStatus(), "C "))
       {
          String[] parts = path.split(" -> ");
          String[] relativeParts = item.getPath().split(" -> ");
