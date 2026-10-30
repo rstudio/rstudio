@@ -406,49 +406,40 @@ pipeline {
       }
     }
 
-    stage('Trigger Testing Jobs') {
+    // Dispatches the GHA docker e2e suite for this build (rstudio-ide-automation#6105).
+    // Skipped for hourly and non-published builds.
+    stage('Trigger Docker E2E (GHA)') {
       agent { label 'linux' }
-
-      // Skip for hourly builds, non-published builds, and branches that don't
-      // have corresponding automation branches
       when {
+        beforeAgent true
         allOf {
           expression { return params.DAILY }
           expression { return params.PUBLISH }
-          expression { return env.BRANCH_NAME != "release-ghost-orchid" }
-          expression { return env.BRANCH_NAME != "v1.4-juliet-rose" }
+          expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME.startsWith('rel-') }
+          expression { params.OS_FILTER in ['all', 'jammy'] }
+          expression { params.ARCH_FILTER in ['all', 'x86_64'] }
+          expression { params.FLAVOR_FILTER in ['all', 'Server'] }
         }
       }
-
-      stages {
-
-        // Dispatches the GHA docker e2e suite for this build (rstudio-ide-automation#6105)
-        stage('Trigger Docker E2E (GHA)') {
-          when {
-            allOf {
-              expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME.startsWith('rel-') }
-              expression { params.OS_FILTER in ['all', 'jammy'] }
-              expression { params.ARCH_FILTER in ['all', 'x86_64'] }
-              expression { params.FLAVOR_FILTER in ['all', 'Server'] }
+      steps {
+        // A failed dispatch marks the build unstable
+        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+          script {
+            def inputs = [product: IS_PRO ? 'pro' : 'os', version: "${RSTUDIO_VERSION}", product_branch: "${env.BRANCH_NAME}"]
+            // e2e-docker.yaml always posts to #ide-builds; skip its post when this run targets another channel
+            if (params.SLACK_CHANNEL != '#ide-builds') {
+              inputs.slack_notify = 'false'
             }
-          }
-          steps {
-            // Best-effort: a failed dispatch marks this stage red but never fails the build
-            catchError(buildResult: null, stageResult: 'FAILURE') {
-              script {
-                utils.triggerGitHubWorkflow(
-                  'rstudio',
-                  'rstudio-ide-automation',
-                  'e2e-docker.yaml',
-                  'main',
-                  [product: IS_PRO ? 'pro' : 'os', version: "${RSTUDIO_VERSION}", product_branch: "${env.BRANCH_NAME}"],
-                  60 // timeoutSecs
-                )
-              }
-            }
+            utils.triggerGitHubWorkflow(
+              'rstudio',
+              'rstudio-ide-automation',
+              'e2e-docker.yaml',
+              'main',
+              inputs,
+              60 // timeoutSecs
+            )
           }
         }
-
       }
     }
   }
