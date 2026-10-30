@@ -115,9 +115,11 @@ clone_tree() {
 }
 
 # The pinned node version in a checkout's dependencies/tools/rstudio-tools.sh.
+# Prints nothing (rather than failing under set -e) when the file can't be
+# read, so callers can report it or fall back to the system node.
 pinned_node_version() {
   sed -n 's/^export RSTUDIO_NODE_VERSION="\(.*\)"$/\1/p' \
-    "$1/dependencies/tools/rstudio-tools.sh" 2>/dev/null | head -1
+    "$1/dependencies/tools/rstudio-tools.sh" 2>/dev/null | head -1 || true
 }
 
 # Locate the directory holding the pinned node: this worktree, then the main
