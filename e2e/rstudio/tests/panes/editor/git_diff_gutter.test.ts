@@ -1936,14 +1936,27 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   }) => {
     // A deletion's peek opens above it; 60 removed lines make it tall. At the
     // top of the document, side by side, they make the padding above the
-    // first line (which the action bar holds while open) as tall. And with
-    // smooth scrolling on, a distant change is scrolled to all the same.
+    // first line (which the action bar holds while open) as tall. With
+    // smooth scrolling on, a distant change is scrolled to all the same. And
+    // a deletion in a folded function is unfolded to, and aligned for.
     const movePath = `${projectDir()}/peekmove.R`;
+    const foldPath = `${projectDir()}/peekfold.R`;
     await executeInConsoleChecked(
       page,
-      `writeLines(sprintf("m%d <- %d", 1:200, 1:200), ${rPathLiteral(movePath)})`,
+      heredoc`
+        {
+          writeLines(sprintf("m%d <- %d", 1:200, 1:200), ${rPathLiteral(movePath)})
+          writeLines(c(
+            sprintf("m%d <- %d", 1:99, 1:99),
+            "f <- function() {",
+            sprintf("  b%d <- %d", 101:198, 101:198),
+            "}",
+            "tail"
+          ), ${rPathLiteral(foldPath)})
+        }
+      `,
     );
-    await commitAll(page, 'peekmove', [movePath]);
+    await commitAll(page, 'peekmove', [movePath, foldPath]);
 
     type ScrolledEditor = {
       renderer: {
@@ -2018,6 +2031,35 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => cursorRow(page)).toBe(39);
       await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
       await expect.poll(() => rowInView(live, 39), { timeout: 10000 }).toBe(true);
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+
+      // side by side, from a change near the top to the deletion of lines
+      // 120 to 179, inside the function
+      await executeInConsoleChecked(
+        page,
+        heredoc`
+          {
+            lines <- readLines(${rPathLiteral(foldPath)})
+            lines[2] <- "m2 <- 0"
+            writeLines(lines[-(120:179)], ${rPathLiteral(foldPath)})
+          }
+        `,
+      );
+      await openFile(page, foldPath);
+      await expect.poll(async () => (await gutterMarkers(page))[1], { timeout: 30000 }).toEqual([MODIFIED]);
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await editor.gotoLine(100);
+      await editor.execCommand('toggleFoldWidget');
+      await expect.poll(() => editor.getFoldCount()).toBe(1);
+      await editor.gotoLine(2);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(() => cursorRow(page)).toBe(119);
+      await expect.poll(() => rowInView(live, 119), { timeout: 10000 }).toBe(true);
     } finally {
       if ((await base.count()) > 0) {
         await executeCommand(page, 'removeEditorSplit');
@@ -2025,8 +2067,11 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       }
       await clearPref(page, 'smooth_scrolling');
       await documentCloseAllNoSave(page);
-      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(movePath)}))`);
-      await commitAll(page, 'remove peekmove', [movePath]);
+      await executeInConsoleChecked(
+        page,
+        `invisible(file.remove(${rPathLiteral(movePath)}, ${rPathLiteral(foldPath)}))`,
+      );
+      await commitAll(page, 'remove peekmove', [movePath, foldPath]);
     }
   });
 

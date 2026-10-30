@@ -778,7 +778,11 @@ var GitDiffGutter = function(editor, strings) {
       // which the swap may have moved off it since. The scroll is not
       // animated: the check that follows would stop an animation where it
       // started, taking its destination for where the view already is.
+      // (Going to the change can unfold lines around it, which a side-by-side
+      // view realigns for in turn.)
       this.goToChunk(chunk, false);
+      if (this.splitView)
+         this.splitView.realignNow();
       var editor = this.baseFocused() ? this.splitView.baseEditor : this.editor;
       editor.renderer.scrollCursorIntoView(null, 0.5);
    };
