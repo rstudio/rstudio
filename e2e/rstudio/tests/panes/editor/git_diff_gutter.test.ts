@@ -2208,6 +2208,8 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     const nlPath = `${projectDir()}/firstnl.R`;
     const nl2Path = `${projectDir()}/firstnl2.R`;
     const emptyPath = `${projectDir()}/firstempty.R`;
+    const blankPath = `${projectDir()}/firstblank.R`;
+    const dirtyPath = `${projectDir()}/firstdirty.R`;
     const subDir = `${projectDir()}/sub`;
     const rdsPath = `${projectDir()}/first.rds`;
     const seed = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5'];
@@ -2222,15 +2224,22 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           cat("x <- 1", file = ${rPathLiteral(nlPath)})
           cat("x <- 1", file = ${rPathLiteral(nl2Path)})
           stopifnot(file.create(${rPathLiteral(emptyPath)}))
+          writeLines("x <- 1", ${rPathLiteral(blankPath)})
+          writeLines(c(${seed.map(rStringLiteral).join(', ')}), ${rPathLiteral(dirtyPath)})
         }
       `,
     );
-    await commitAll(page, 'first changes', [delPath, wsPath, nlPath, nl2Path, emptyPath, subDir]);
+    const firstPaths = [delPath, wsPath, nlPath, nl2Path, emptyPath, blankPath, dirtyPath];
+    await commitAll(page, 'first changes', [...firstPaths, subDir]);
 
     // a removed line, which the gutter marks on the line after it; a
     // whitespace-only edit ahead of a real one; a final newline (or two)
     // added, which the gutter marks as empty last lines; lines written to an
-    // empty file, without a final newline; a rename and a copy within a
+    // empty file, without a final newline; a blank line added at the end of
+    // a file, after the empty line the editor shows for its final newline;
+    // two changed lines, the first of which an unsaved edit in the open
+    // document takes back (the file opens at the first change the editor
+    // marks, wherever Git places it); a rename and a copy within a
     // subdirectory, staged (copies are listed as such when status.renames
     // says so, and their source changed too); an untracked binary file
     await executeInConsoleChecked(
@@ -2242,6 +2251,8 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           writeLines("x <- 1", ${rPathLiteral(nlPath)})
           cat("x <- 1\n\n", file = ${rPathLiteral(nl2Path)})
           cat("\nx <- 1", file = ${rPathLiteral(emptyPath)})
+          writeLines(c("x <- 1", ""), ${rPathLiteral(blankPath)})
+          writeLines(c("a <- 1", "b <- 20", "c <- 3", "d <- 40", "e <- 5"), ${rPathLiteral(dirtyPath)})
           stopifnot(file.copy(${rPathLiteral(`${subDir}/orig.R`)}, ${rPathLiteral(`${subDir}/copy.R`)}))
           cat("f <- 6\n", file = ${rPathLiteral(`${subDir}/orig.R`)}, append = TRUE)
           s <- c(
@@ -2289,6 +2300,28 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(0);
       await documentCloseAllNoSave(page);
 
+      await goTo('firstblank.R').press('Enter');
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstblank.R', { timeout: 15000 });
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [ADDED] });
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(2);
+      await documentCloseAllNoSave(page);
+
+      await openFile(page, dirtyPath);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [MODIFIED], 3: [MODIFIED] });
+      await page.evaluate(() => {
+        type ReplacingEditor = { session: { getLine(row: number): string; replace(range: unknown, text: string): void } };
+        type RangeModule = { Range: new (r1: number, c1: number, r2: number, c2: number) => unknown };
+        const editor = window.rstudio?.documents.activeEditor() as unknown as ReplacingEditor;
+        const require = (window as unknown as { require(id: string): RangeModule }).require;
+        const Range = require('ace/range').Range;
+        editor.session.replace(new Range(1, 0, 1, editor.session.getLine(1).length), 'b <- 2');
+      });
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 3: [MODIFIED] });
+      await new AceEditor(page, '').gotoLine(1);
+      await goTo('firstdirty.R').press('Enter');
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(3);
+      await documentCloseAllNoSave(page);
+
       await setPref(page, 'git_diff_ignore_whitespace', true);
       await goTo('firstws.R').press('Enter');
       await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstws.R', { timeout: 15000 });
@@ -2322,13 +2355,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         page,
         heredoc`
           {
-            unlink(c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(nlPath)}, ${rPathLiteral(nl2Path)}, ${rPathLiteral(emptyPath)}, ${rPathLiteral(rdsPath)}))
+            unlink(c(${[...firstPaths, rdsPath].map(rPathLiteral).join(', ')}))
             unlink(${rPathLiteral(subDir)}, recursive = TRUE)
             invisible(system2("git", c(${gitC()}, "config", "--unset", "status.renames")))
           }
         `,
       );
-      await commitAll(page, 'remove first changes', [delPath, wsPath, nlPath, nl2Path, emptyPath, subDir]);
+      await commitAll(page, 'remove first changes', [...firstPaths, subDir]);
     }
   });
 

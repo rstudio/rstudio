@@ -191,6 +191,20 @@ public class TextEditingTargetGitDiffGutter
          gutter.showChangeAtCursor();
    }
 
+   // Goes to the document's first change as the markers show it, once they
+   // are current -- for a gutter still attaching (a document just opened),
+   // once it has attached. Without markers the cursor stays.
+   public void goToFirstChange()
+   {
+      if (!isEnabled())
+         return;
+
+      if (gutter_ == null)
+         firstChangePending_ = true;
+      else
+         gutter_.goToFirstChangeWhenFresh();
+   }
+
    // The number of changes, as seen from the given view; -1 when there is no
    // base to count them against (no gutter, an untracked file, or a base not
    // fetched yet), or the diff against it gave up.
@@ -313,7 +327,17 @@ public class TextEditingTargetGitDiffGutter
             attachSplit();
          if (diffSplitWidget_ != null)
             attachDiffSplit();
-         refresh();
+
+         // (a pending go-to-first-change fetches the base itself)
+         if (firstChangePending_)
+         {
+            firstChangePending_ = false;
+            gutter_.goToFirstChangeWhenFresh();
+         }
+         else
+         {
+            refresh();
+         }
       });
    }
 
@@ -401,6 +425,7 @@ public class TextEditingTargetGitDiffGutter
    {
       refreshTimer_.cancel();
       refreshDeferred_ = false;
+      firstChangePending_ = false;
       invalidation_.invalidate();
       basePath_ = null;
       baseContents_ = null;
@@ -555,6 +580,7 @@ public class TextEditingTargetGitDiffGutter
    private boolean dismissed_;
    private boolean active_;
    private boolean refreshDeferred_;
+   private boolean firstChangePending_;
 
    private final ArrayList<JavaScriptObject> baseCallbacks_ = new ArrayList<>();
    private final Invalidation invalidation_ = new Invalidation();

@@ -2864,6 +2864,13 @@ public class TextEditingTarget implements
       statusBar_.setChangeNavigatorVisible(true);
    }
 
+   // Goes to the document's first Git change as its markers show it (see
+   // NavigationMethods.GIT_FIRST_CHANGE).
+   public void goToFirstGitChange()
+   {
+      gitDiffGutter_.goToFirstChange();
+   }
+
    // Next and Previous Change, from the commands or the status bar. Where the
    // cursor lands is announced, as the status bar shows it.
    private void goToChange(boolean next)

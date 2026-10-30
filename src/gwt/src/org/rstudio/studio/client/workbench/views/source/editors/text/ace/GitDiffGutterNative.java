@@ -99,6 +99,12 @@ public class GitDiffGutterNative extends JavaScriptObject
       return this.getChangeIndexAtCursor();
    }-*/;
 
+   // Goes to the first change once the base is current; see
+   // goToFirstChangeWhenFresh in git_diff_gutter.js.
+   public final native void goToFirstChangeWhenFresh() /*-{
+      this.goToFirstChangeWhenFresh();
+   }-*/;
+
    // Navigation wraps around; each returns false when there are no changes.
    public final native boolean goToNextChange() /*-{
       return this.goToNextChange();

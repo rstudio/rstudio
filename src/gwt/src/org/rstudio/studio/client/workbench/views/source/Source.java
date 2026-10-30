@@ -2238,6 +2238,12 @@ public class Source implements InsertSourceEvent.Handler,
                            highlight,
                            moveCursor,
                            onNavigationCompleted);
+
+                     if (navMethod == NavigationMethods.GIT_FIRST_CHANGE &&
+                         target instanceof TextEditingTarget)
+                     {
+                        ((TextEditingTarget) target).goToFirstGitChange();
+                     }
                   }
                }
             });

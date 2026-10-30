@@ -198,13 +198,16 @@ public class GitPresenter extends BaseVcsPresenter
    }
 
    // Opens a file at its first change: the first the working tree makes to
-   // the index, as the editor's gutter marks them, or else the first staged
-   // one. An untracked file is new throughout, and opens at the top.
+   // the index, or else the first staged one. The line found here is where
+   // the file opens; from there the editor moves on to the first change its
+   // markers show, should they place it elsewhere (see
+   // VCSFileOpener.openFileAtFirstChange). An untracked file is new
+   // throughout, and opens at the top.
    private void openFileAtFirstChange(StatusAndPath item)
    {
       if ("??".equals(item.getStatus()))
       {
-         vcsFileOpener_.openFileAtLine(item, 1);
+         vcsFileOpener_.openFileAtFirstChange(item, 1);
          return;
       }
 
@@ -212,12 +215,12 @@ public class GitPresenter extends BaseVcsPresenter
       {
          if (line > 0)
          {
-            vcsFileOpener_.openFileAtLine(item, line);
+            vcsFileOpener_.openFileAtFirstChange(item, line);
             return;
          }
 
          findFirstChange(item, PatchMode.Stage, stagedLine ->
-            vcsFileOpener_.openFileAtLine(item, Math.max(stagedLine, 1)));
+            vcsFileOpener_.openFileAtFirstChange(item, Math.max(stagedLine, 1)));
       });
    }
 

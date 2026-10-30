@@ -427,6 +427,26 @@ var GitDiffGutter = function(editor, strings) {
          callback();
    };
 
+   // Goes to the document's first change, as these markers show it, once
+   // the base is current: for the Git pane's go-to-change, which opens the
+   // file at the line Git reports first, and that can be off from the
+   // markers (an unsaved edit above it, a newline at the end of the file,
+   // whitespace ignored). The cursor stays where it is without a change to
+   // go to, or if it has been moved meanwhile.
+   this.goToFirstChangeWhenFresh = function() {
+      var self = this;
+      var cursor = this.editor.getCursorPosition();
+      this.withFreshBase(function() {
+         var now = self.editor.getCursorPosition();
+         if (now.row !== cursor.row || now.column !== cursor.column)
+            return;
+
+         self.flushUpdate();
+         if (self.chunks.length > 0)
+            self.goToChange(self.chunks[0]);
+      });
+   };
+
    // Runs a revert once the base is current, unless the document was edited
    // in the meantime: an edit within the chunk's rows leaves the chunk's
    // coordinates intact, so revertChunk could not tell and would erase it.
