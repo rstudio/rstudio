@@ -545,6 +545,8 @@ runs:
       # actions/cache passes zstd no compression level, so zstd honors
       # ZSTD_CLEVEL; level 9 makes entries ~13% smaller than the default
       # level 3 at about the same save time, and restores are unaffected.
+      # The engine workflows set it workflow-wide; these cover callers that
+      # don't (the deps seed and the autocomplete workflow).
       env:
         ZSTD_CLEVEL: 9
       with:

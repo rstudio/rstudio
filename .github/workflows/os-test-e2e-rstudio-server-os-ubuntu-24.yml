@@ -158,6 +158,13 @@ permissions:
   # role (see .github/actions/os-publish-e2e-report).
   id-token: write
 
+# actions/cache passes zstd no compression level, so zstd honors ZSTD_CLEVEL;
+# level 9 makes cache entries ~13% smaller than the default level 3 at about
+# the same save time, and restores are unaffected. Set here rather than per
+# step so every save in every job, composite actions included, picks it up.
+env:
+  ZSTD_CLEVEL: 9
+
 jobs:
   # Builds RStudio Server from this PR's source on the same runner image as
   # the e2e job below, then uploads the .deb as an artifact for the e2e job to
@@ -316,11 +323,6 @@ jobs:
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        # actions/cache passes zstd no compression level, so zstd honors
-        # ZSTD_CLEVEL; level 9 makes entries ~13% smaller than the default
-        # level 3 at about the same save time, and restores are unaffected.
-        env:
-          ZSTD_CLEVEL: 9
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
@@ -328,8 +330,6 @@ jobs:
       - name: Save build-time R packages
         if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        env:
-          ZSTD_CLEVEL: 9
         with:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
@@ -374,8 +374,6 @@ jobs:
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        env:
-          ZSTD_CLEVEL: 9
         with:
           path: package/linux/build-Server-DEB/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
