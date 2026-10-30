@@ -19,6 +19,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.EditorsText
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 
 // Wraps the acesupport GitDiffGutter, which marks changed lines in the gutter.
 // Requires Ace's diff extension to be loaded; see AceEditor.loadDiffExtension().
@@ -44,6 +45,9 @@ public class GitDiffGutterNative extends JavaScriptObject
          changedLines: $entry(function(n) {
             return constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekChangedLines(I)(n);
          }),
+         changedLinesShort: $entry(function(n) {
+            return constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekChangedLinesShort(I)(n);
+         }),
          revert: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekRevert()(),
          close: constants.@org.rstudio.studio.client.workbench.views.source.editors.text.EditorsTextConstants::gitPeekClose()()
       };
@@ -68,6 +72,37 @@ public class GitDiffGutterNative extends JavaScriptObject
       this.setBaseRefresher($entry(function(callback) {
          refresher.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(callback);
       }));
+   }-*/;
+
+   // Installs what is told when the change at the cursor, or the number of
+   // changes, may have moved.
+   public final native void setStatusListener(Command listener) /*-{
+      this.setStatusListener($entry(function() {
+         listener.@com.google.gwt.user.client.Command::execute()();
+      }));
+   }-*/;
+
+   // Whether there is a base to count changes against (there is none for an
+   // untracked file, or before the first fetch), and the diff against it
+   // came through.
+   public final native boolean canCountChanges() /*-{
+      return this.canCountChanges();
+   }-*/;
+
+   public final native int getChangeCount() /*-{
+      return this.getChangeCount();
+   }-*/;
+
+   // The change at the cursor's position among the document's changes, or -1
+   // when the cursor is not on one.
+   public final native int getChangeIndexAtCursor() /*-{
+      return this.getChangeIndexAtCursor();
+   }-*/;
+
+   // Goes to the first change once the base is current; see
+   // goToFirstChangeWhenFresh in git_diff_gutter.js.
+   public final native void goToFirstChangeWhenFresh() /*-{
+      this.goToFirstChangeWhenFresh();
    }-*/;
 
    // Navigation wraps around; each returns false when there are no changes.

@@ -16,10 +16,14 @@ package org.rstudio.studio.client.workbench.views.vcs.common;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -61,6 +65,31 @@ public class VCSFileOpener
       }
    }
    
+   // Opens a file at its first change: at the (1-based) line given, the one
+   // Git reports, and from there at the change the editor's markers show
+   // first (see NavigationMethods.GIT_FIRST_CHANGE). From the main window
+   // only: the Git pane's changes table, which offers it, is not in a
+   // satellite. A file the editor can't take as text (an .rds, an image) has
+   // no line to go to, and opens as it would from the pane's Open command;
+   // editFile() would force it into the editor, which then refuses it as
+   // binary.
+   public void openFileAtFirstChange(StatusAndPath item, int line)
+   {
+      FileSystemItem file = FileSystemItem.createFile(resolvePath(item));
+      FileType type = fileTypeRegistry_.getTypeForFile(file);
+      if (type instanceof TextFileType)
+      {
+         type.openFile(file,
+                       FilePosition.create(line, 0),
+                       NavigationMethods.GIT_FIRST_CHANGE,
+                       eventBus_);
+      }
+      else
+      {
+         fileTypeRegistry_.openFile(file);
+      }
+   }
+
    private void satelliteOpenFiles(JavaScriptObject items)
    {
       JsArray<FileSystemItem> itemsArray = items.cast();
@@ -89,18 +118,7 @@ public class VCSFileOpener
       JsArray<FileSystemItem> jsItems = JavaScriptObject.createArray().cast();
       for (StatusAndPath item : items)
       {
-         // NOTE: renames need some extra processing
-         String path = item.getRawPath();
-         if (StringUtil.equals(item.getStatus(), "R "))
-         {
-            String[] parts = path.split(" -> ");
-            if (parts.length == 2)
-            {
-               String oldPath = parts[0], newPath = parts[1];
-               path = StringUtil.substring(oldPath, 0, oldPath.lastIndexOf('/')) + "/" + newPath;
-            }
-         }
-         
+         String path = resolvePath(item);
          if (item.isDirectory())
             jsItems.push(FileSystemItem.createDir(path));
          else
@@ -109,6 +127,31 @@ public class VCSFileOpener
       return jsItems;
    }
    
+   // The path of the file as it is in the working tree.
+   private String resolvePath(StatusAndPath item)
+   {
+      // NOTE: renames (and copies) need some extra processing: the raw path
+      // is "<old path> -> <new path>", where only the old path is absolute;
+      // the new one is relative to the repository root, as both are in
+      // getPath()
+      String path = item.getRawPath();
+      if (StringUtil.equals(item.getStatus(), "R ") ||
+          StringUtil.equals(item.getStatus(), "C "))
+      {
+         String[] parts = path.split(" -> ");
+         String[] relativeParts = item.getPath().split(" -> ");
+         if (parts.length == 2 &&
+             relativeParts.length == 2 &&
+             parts[0].endsWith(relativeParts[0]))
+         {
+            String oldPath = parts[0], newPath = parts[1];
+            String root = oldPath.substring(0, oldPath.length() - relativeParts[0].length());
+            path = root + newPath;
+         }
+      }
+      return path;
+   }
+
    private final native void exportOpenFilesCallback()/*-{
       var vcsUtils = this;     
       $wnd.vcsOpenFilesFromRStudioSatellite = $entry(

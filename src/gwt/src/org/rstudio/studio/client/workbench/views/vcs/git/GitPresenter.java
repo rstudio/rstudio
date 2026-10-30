@@ -24,6 +24,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -36,18 +38,27 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.common.vcs.WorktreeInfo;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.NewWorktreeDialog;
 import org.rstudio.studio.client.workbench.views.vcs.RemoveWorktreeDialog;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.WorktreeActions;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffChunk;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.Range;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -86,10 +97,12 @@ public class GitPresenter extends BaseVcsPresenter
                        GitState gitState,
                        final GlobalDisplay globalDisplay,
                        SatelliteManager satelliteManager,
-                       WorktreeActions worktreeActions)
+                       WorktreeActions worktreeActions,
+                       UserPrefs prefs)
    {
       super(view);
       worktreeActions_ = worktreeActions;
+      prefs_ = prefs;
       gitPresenterCore_ = gitCore;
       vcsFileOpener_  = vcsFileOpener;
       view_ = view;
@@ -119,6 +132,10 @@ public class GitPresenter extends BaseVcsPresenter
             if (mod != KeyboardShortcut.NONE)
                return;
 
+            // Enter and Space on a row's go-to-change button press it
+            if (GitChangelistTable.isGoToChangeEvent(event.getNativeEvent()))
+               return;
+
             if (event.getNativeKeyCode() == ' ')
             {
                event.preventDefault();
@@ -140,6 +157,9 @@ public class GitPresenter extends BaseVcsPresenter
          @Override
          public void onMouseDown(MouseDownEvent event)
          {
+            if (GitChangelistTable.isGoToChangeEvent(event.getNativeEvent()))
+               return;
+
             if (dblClick.checkForDoubleClick(event.getNativeEvent()))
             {
                event.preventDefault();
@@ -149,6 +169,8 @@ public class GitPresenter extends BaseVcsPresenter
             }
          }
       });
+
+      view_.getChangelistTable().setGoToChangeHandler(item -> openFileAtFirstChange(item));
 
       view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler(){
          @Override
@@ -173,6 +195,153 @@ public class GitPresenter extends BaseVcsPresenter
    private void openSelectedFiles()
    {
       vcsFileOpener_.openFiles(view_.getSelectedItems());
+   }
+
+   // Opens a file at its first change: the first the working tree makes to
+   // the index, or else the first staged one. The line found here is where
+   // the file opens; from there the editor moves on to the first change its
+   // markers show, should they place it elsewhere (see
+   // VCSFileOpener.openFileAtFirstChange). An untracked file is new
+   // throughout, and opens at the top.
+   private void openFileAtFirstChange(StatusAndPath item)
+   {
+      if ("??".equals(item.getStatus()))
+      {
+         vcsFileOpener_.openFileAtFirstChange(item, 1);
+         return;
+      }
+
+      findFirstChange(item, PatchMode.Working, line ->
+      {
+         if (line > 0)
+         {
+            vcsFileOpener_.openFileAtFirstChange(item, line);
+            return;
+         }
+
+         findFirstChange(item, PatchMode.Stage, stagedLine ->
+            vcsFileOpener_.openFileAtFirstChange(item, Math.max(stagedLine, 1)));
+      });
+   }
+
+   // Passes on the first line of the file's first change in the given diff,
+   // or 0 when there is none (or the diff could not be had).
+   private void findFirstChange(StatusAndPath item,
+                                PatchMode patchMode,
+                                CommandWithArg<Integer> onFound)
+   {
+      server_.gitDiffFile(
+            item.getPath(),
+            patchMode,
+            0, /* contextLines */
+            true, /* noSizeWarning */
+            prefs_.gitDiffIgnoreWhitespace().getValue(), /* ignoreWhitespace, as the gutter */
+            new ServerRequestCallback<DiffResult>()
+            {
+               @Override
+               public void onResponseReceived(DiffResult result)
+               {
+                  onFound.execute(firstChangedLine(result.getDecodedValue()));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  onFound.execute(0);
+               }
+            });
+   }
+
+   private static int firstChangedLine(String diff)
+   {
+      try
+      {
+         UnifiedParser parser = new UnifiedParser(diff);
+         if (parser.nextFilePair() == null)
+            return 0;
+
+         DiffChunk chunk = parser.nextChunk();
+         if (chunk == null)
+            return 0;
+
+         // the working tree's side of the hunk; for a deletion it starts at
+         // the line before the removed ones (0 when they were at the top),
+         // but the gutter marks the line after (see displayRow() in
+         // git_diff_gutter.js), which past the end the editor clamps to the
+         // last line, as the gutter does
+         Range[] ranges = chunk.getRanges();
+         Range range = ranges[ranges.length - 1];
+         if (range.rowCount == 0)
+            return range.startRow + 1;
+
+         // (past lines the editor sees as unchanged; clamped as above)
+         return range.startRow + unchangedLeadingLines(chunk);
+      }
+      catch (Exception e)
+      {
+         // e.g. a conflicted file's combined diff
+         Debug.logException(e);
+         return 0;
+      }
+   }
+
+   // How many of a hunk's lines, from the first, the editor sees unchanged:
+   // none, but where the newline at the end of the file comes or goes. Git
+   // then replaces the last line, where the editor (which shows a final
+   // newline as an empty line after it) leaves it alone. Such a hunk ends at
+   // the end of the file on both sides, and a "\ No newline at end of file"
+   // note follows the side whose last line has none.
+   private static int unchangedLeadingLines(DiffChunk chunk)
+   {
+      ArrayList<String> removed = new ArrayList<>();
+      ArrayList<String> added = new ArrayList<>();
+      boolean removedUnterminated = false;
+      boolean addedUnterminated = false;
+      Line.Type previous = null;
+      for (Line line : chunk.getLines())
+      {
+         Line.Type type = line.getType();
+         if (type == Line.Type.Comment)
+         {
+            if (previous == Line.Type.Deletion)
+               removedUnterminated = true;
+            else if (previous == Line.Type.Insertion)
+               addedUnterminated = true;
+            continue;
+         }
+
+         if (type == Line.Type.Deletion)
+            removed.add(line.getText());
+         else if (type == Line.Type.Insertion)
+            added.add(line.getText());
+         previous = type;
+      }
+
+      if (!removedUnterminated && !addedUnterminated)
+         return 0;
+
+      // the lines as the editor has them (an empty file has none, its "-0,0"
+      // or "+0,0" side no empty line either)
+      Range[] ranges = chunk.getRanges();
+      if (!removedUnterminated && !isEmptyFile(ranges[0]))
+         removed.add("");
+      if (!addedUnterminated && !isEmptyFile(ranges[ranges.length - 1]))
+         added.add("");
+
+      int count = 0;
+      while (count < removed.size() &&
+             count < added.size() &&
+             removed.get(count).equals(added.get(count)))
+      {
+         count++;
+      }
+      return count;
+   }
+
+   private static boolean isEmptyFile(Range range)
+   {
+      return range.startRow == 0 && range.rowCount == 0;
    }
 
    private void manageCommands()
@@ -446,5 +615,6 @@ public class GitPresenter extends BaseVcsPresenter
    private final WorktreeActions worktreeActions_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
+   private final UserPrefs prefs_;
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

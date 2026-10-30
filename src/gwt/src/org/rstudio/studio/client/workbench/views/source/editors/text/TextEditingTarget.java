@@ -61,7 +61,10 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
@@ -1691,7 +1694,8 @@ public class TextEditingTarget implements
       gitDiffGutter_ = new TextEditingTargetGitDiffGutter(docDisplay_,
                                                           docUpdateSentinel_,
                                                           releaseOnDismiss_,
-                                                          this::closeDiffSplit);
+                                                          this::closeDiffSplit,
+                                                          this::updateChangeNavigator);
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
                                           commands_,
@@ -2446,6 +2450,7 @@ public class TextEditingTarget implements
       releaseOnDismiss_.add(
          docUpdateSentinel_.addPropertyValueChangeHandler(RMD_VISUAL_MODE, (value) -> {
             updateStatusBarLanguage();
+            updateChangeNavigator();
          })
       );
 
@@ -2613,6 +2618,19 @@ public class TextEditingTarget implements
       });
       updateStatusBarPosition();
       updateStatusBarLanguage();
+
+      // A click on the status bar's Previous or Next Change brings focus to
+      // the editor, as a click on a gutter marker does, unless one of its
+      // views has it already; from the keyboard, focus stays on the button.
+      statusBar_.initChangeNavigator(commands_.vcsPreviousChange(),
+                                     commands_.vcsNextChange(),
+                                     (next, fromPointer) ->
+      {
+         goToChange(next);
+         if (fromPointer && !view_.isEditorViewFocused())
+            activeDisplay().focus();
+      });
+      updateChangeNavigator();
 
       // build file type menu dynamically (so it can change according
       // to whether e.g. knitr is installed)
@@ -2815,6 +2833,67 @@ public class TextEditingTarget implements
       statusBar_.getLanguage().setValue(fileType_.getLabel());
       boolean canShowScope = fileType_.canShowScopeTree();
       statusBar_.setScopeVisible(canShowScope);
+   }
+
+   // The status bar's Git change navigator: shown in source mode while the
+   // gutter has a base to count changes against, with the position of the
+   // change at the cursor of the view holding it.
+   private void updateChangeNavigator()
+   {
+      if (statusBar_ == null)
+         return;
+
+      DocDisplay display = activeDisplay();
+      int count = gitDiffGutter_.getChangeCount(display);
+      if (count < 0 || isVisualModeActivated())
+      {
+         statusBar_.setChangeNavigatorVisible(false);
+         return;
+      }
+
+      int index = gitDiffGutter_.getChangeIndexAtCursor(display);
+      String text;
+      if (count == 0)
+         text = constants_.gitNoChanges();
+      else if (index < 0)
+         text = constants_.gitChangeCount(count);
+      else
+         text = constants_.gitChangePosition(index + 1, count);
+
+      statusBar_.setChanges(text, count > 0);
+      statusBar_.setChangeNavigatorVisible(true);
+   }
+
+   // Goes to the document's first Git change as its markers show it (see
+   // NavigationMethods.GIT_FIRST_CHANGE). The visual editor has no markers;
+   // a document still in it stays where the navigation put it.
+   public void goToFirstGitChange()
+   {
+      if (isVisualModeActivated())
+         return;
+
+      gitDiffGutter_.goToFirstChange();
+   }
+
+   // Next and Previous Change, from the commands or the status bar. Where the
+   // cursor lands is announced, as the status bar shows it.
+   private void goToChange(boolean next)
+   {
+      DocDisplay display = activeDisplay();
+      if (next)
+         gitDiffGutter_.goToNextChange(display);
+      else
+         gitDiffGutter_.goToPreviousChange(display);
+
+      int index = gitDiffGutter_.getChangeIndexAtCursor(display);
+      if (index < 0)
+         return;
+
+      RStudioGinjector.INSTANCE.getAriaLiveService().announce(
+            AriaLiveService.GIT_CHANGE_NAVIGATION,
+            constants_.gitChangePosition(index + 1, gitDiffGutter_.getChangeCount(display)),
+            Timing.IMMEDIATE,
+            Severity.STATUS);
    }
 
    private void updateStatusBarPosition()
@@ -4098,6 +4177,13 @@ public class TextEditingTarget implements
    @Handler
    void onVcsShowChangesSideBySide()
    {
+      toggleDiffSplit();
+   }
+
+   // Also run by the editor toolbar's toggle, for its own document whether
+   // or not that is the active one.
+   void toggleDiffSplit()
+   {
       String desired = isDiffSplitActive() ? EDITOR_SPLIT_NONE : EDITOR_SPLIT_DIFF;
       docUpdateSentinel_.setProperty(EDITOR_SPLIT, desired);
    }
@@ -4278,6 +4364,9 @@ public class TextEditingTarget implements
 
       splitCodeExecution_ = null;
       splitCodeExecutionDisplay_ = null;
+
+      // the primary view holds the cursor again
+      updateChangeNavigator();
    }
 
    @Handler
@@ -4984,13 +5073,13 @@ public class TextEditingTarget implements
    @Handler
    void onVcsNextChange()
    {
-      gitDiffGutter_.goToNextChange(activeDisplay());
+      goToChange(true);
    }
 
    @Handler
    void onVcsPreviousChange()
    {
-      gitDiffGutter_.goToPreviousChange(activeDisplay());
+      goToChange(false);
    }
 
    @Handler
