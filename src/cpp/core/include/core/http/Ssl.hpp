@@ -16,7 +16,12 @@
 #ifndef CORE_HTTP_SSL_HPP
 #define CORE_HTTP_SSL_HPP
 
+#include <string>
+#include <vector>
+
 #include <boost/asio/ip/tcp.hpp>
+
+#include <shared_core/Error.hpp>
 
 #include "BoostAsioSsl.hpp"
 
@@ -29,6 +34,33 @@ namespace http {
 namespace ssl {
 
 void validateSelfSignedCertificate(const FilePath& certPath);
+
+struct ProtocolSupport
+{
+   std::vector<std::string> usable;
+   std::vector<std::string> unusable;
+};
+
+// Sorts each protocol named in protocolList into usable or unusable, by
+// running an in-memory TLS handshake that is pinned to that protocol. The
+// list uses the syntax of the nginx ssl_protocols directive: SSLv2, SSLv3,
+// TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3, separated by spaces. As in nginx,
+// names match without regard to case. Each protocol is reported once, with
+// its name as written above. Other names are skipped.
+//
+// The server side of the handshake uses the system OpenSSL library and
+// configuration, the given certificate and key, and cipherList for TLS 1.2
+// and earlier. As in nginx, the protocol limits from the system configuration
+// do not apply. The client side accepts any cipher, so only the server side
+// decides the result.
+//
+// Returns an error if the certificate or key cannot be loaded, if cipherList
+// is not valid, or if OpenSSL cannot set up a handshake.
+Error checkProtocolSupport(const std::string& protocolList,
+                           const FilePath& certificatePath,
+                           const FilePath& keyPath,
+                           const std::string& cipherList,
+                           ProtocolSupport* pSupport);
 
 bool initializeSslContext(boost::asio::ssl::context* pContext,
                           bool verify,
