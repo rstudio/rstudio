@@ -208,6 +208,27 @@ function sameChunk(a, b) {
           a.new.end.row === b.new.end.row;
 }
 
+// Puts the cursor at the start of a row, as gotoLine does, without its
+// scroll (see goToChange).
+function moveCursorTo(editor, row) {
+   if (editor.exitMultiSelectMode)
+      editor.exitMultiSelectMode();
+   editor.clearSelection();
+   editor.moveCursorTo(row, 0);
+}
+
+// Scrolls a row to the middle of the editor, as gotoLine does, unless it is
+// in view already -- going by where the rows are now, and where the view is
+// headed (an animated scroll may be under way), rather than by what was
+// last drawn.
+function revealRow(editor, row) {
+   var renderer = editor.renderer;
+   var top = renderer.$cursorLayer.getPixelPosition({ row: row, column: 0 }).top;
+   var scrollTop = editor.session.getScrollTop();
+   if (top < scrollTop || top + renderer.lineHeight > scrollTop + renderer.$size.scrollerHeight)
+      renderer.scrollToLine(row, true, true);
+}
+
 var GitDiffGutter = function(editor, strings) {
    this.editor = editor;
    this.strings = strings || DEFAULT_STRINGS;
@@ -757,53 +778,45 @@ var GitDiffGutter = function(editor, strings) {
       return true;
    };
 
-   // The peeks are swapped, and a side-by-side view realigned around them,
-   // before the scroll: worked out first, it would be thrown off by the rows
-   // that then come or go above the change -- the old peek's, the new one's
-   // above a deletion, the padding a peek at the top of the document holds.
+   // Rows come and go around the change on the way to it: a fold over it
+   // opens, the peeks are swapped (the new one opening above a deletion),
+   // and a side-by-side view realigns for both, its padding included. All
+   // of that is done first, and whether to scroll is then decided from
+   // where the rows have ended up; Ace's gotoLine would go by where they
+   // were when last drawn.
    this.goToChange = function(chunk) {
-      var peeking = this.peek != null && this.peek.chunk !== chunk;
-      if (!peeking)
-      {
-         this.goToChunk(chunk);
-         return;
-      }
+      var baseFocused = this.baseFocused();
+      var editor = baseFocused ? this.splitView.baseEditor : this.editor;
+      var row = baseFocused ? this.baseDisplayRow(chunk) : this.displayRow(chunk);
 
-      // (showPeek closes the open one first)
-      this.showPeek(chunk);
+      editor.session.unfold({ row: row, column: 0 });
+      if (this.peek != null && this.peek.chunk !== chunk)
+         this.showPeek(chunk);
       if (this.splitView)
          this.splitView.realignNow();
 
-      // gotoLine leaves a row alone that was on screen when last rendered,
-      // which the swap may have moved off it since. The scroll is not
-      // animated: the check that follows would stop an animation where it
-      // started, taking its destination for where the view already is.
-      // (Going to the change can unfold lines around it, which a side-by-side
-      // view realigns for in turn.)
-      this.goToChunk(chunk, false);
-      if (this.splitView)
-         this.splitView.realignNow();
-      var editor = this.baseFocused() ? this.splitView.baseEditor : this.editor;
-      editor.renderer.scrollCursorIntoView(null, 0.5);
+      // with the base pane holding the cursor, the document's follows (see
+      // goToChunk)
+      if (baseFocused)
+         moveCursorTo(this.editor, this.displayRow(chunk));
+      moveCursorTo(editor, row);
+      revealRow(editor, row);
    };
 
-   // The scroll is animated (where smooth scrolling is on) unless animate is
-   // false.
-   this.goToChunk = function(chunk, animate) {
-      animate = animate !== false;
+   this.goToChunk = function(chunk) {
       var row = this.displayRow(chunk);
       if (this.baseFocused())
       {
          // the base pane keeps the cursor (its scrolling brings the document
          // along); the document's cursor follows so that the two agree on
          // which change is at the cursor
-         this.splitView.goToBaseRow(this.baseDisplayRow(chunk), animate);
+         this.splitView.goToBaseRow(this.baseDisplayRow(chunk));
          this.editor.clearSelection();
          this.editor.moveCursorTo(row, 0);
          return;
       }
 
-      this.editor.gotoLine(row + 1, 0, animate);
+      this.editor.gotoLine(row + 1, 0, true);
    };
 
    // The change is the one under the cursor now; the revert itself waits
@@ -1109,22 +1122,31 @@ var GitDiffGutter = function(editor, strings) {
          return;
 
       // A peek above its change (where a notebook's output took the row
-      // below) or at removed lines has no changed lines to cover.
+      // below) or at removed lines has no changed lines to cover -- but for
+      // the action bar of a deletion at the top, side by side, which sits
+      // below the padding standing in for the removed lines (see
+      // lendRowsAbove in git_diff_split.js), and covers that.
       var widget = peek.widget;
       var chunk = peek.chunk;
       var el = widget.el;
+      var lineHeight = this.editor.renderer.layerConfig.lineHeight;
+      var floor = null;
+      if (!widget.hidden && !isDeletion(chunk) && widget.row >= chunk.new.start.row)
+         floor = this.rowScreenTop(chunk.new.start.row) + lineHeight;
+      else if (!widget.hidden && widget.gitDiffLentRows)
+         floor = this.rowScreenTop(0) - (widget.gitDiffLentRows - 1) * lineHeight;
+
+      // (the floor is the bottom of the first screen line covered, not of
+      // its row, so that a line wrapped taller than the editor brings the
+      // header up too)
       var lift = 0;
       var height = 0;
-      if (!widget.hidden && !isDeletion(chunk) && widget.row >= chunk.new.start.row)
+      if (floor != null)
       {
          var header = el.firstChild;
          height = el.clientTop + header.offsetTop + header.offsetHeight;
 
-         // (the floor is the bottom of the change's first screen line, not
-         // of its first row, so that a line wrapped taller than the editor
-         // brings the header up too)
          var top = this.rowScreenBottom(widget.row);
-         var floor = this.rowScreenTop(chunk.new.start.row) + this.editor.renderer.layerConfig.lineHeight;
          var bottom = this.editor.renderer.$size.scrollerHeight;
          lift = top - Math.max(Math.min(top, bottom - height), floor);
       }

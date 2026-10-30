@@ -318,10 +318,12 @@ public class GitPresenter extends BaseVcsPresenter
       if (!removedUnterminated && !addedUnterminated)
          return 0;
 
-      // the lines as the editor has them
-      if (!removedUnterminated)
+      // the lines as the editor has them (an empty file has none, its "-0,0"
+      // or "+0,0" side no empty line either)
+      Range[] ranges = chunk.getRanges();
+      if (!removedUnterminated && !isEmptyFile(ranges[0]))
          removed.add("");
-      if (!addedUnterminated)
+      if (!addedUnterminated && !isEmptyFile(ranges[ranges.length - 1]))
          added.add("");
 
       int count = 0;
@@ -332,6 +334,11 @@ public class GitPresenter extends BaseVcsPresenter
          count++;
       }
       return count;
+   }
+
+   private static boolean isEmptyFile(Range range)
+   {
+      return range.startRow == 0 && range.rowCount == 0;
    }
 
    private void manageCommands()

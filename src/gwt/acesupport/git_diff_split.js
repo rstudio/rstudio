@@ -1204,8 +1204,8 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          this.realign();
    };
 
-   this.goToBaseRow = function(row, animate) {
-      this.baseEditor.gotoLine(row + 1, 0, animate !== false);
+   this.goToBaseRow = function(row) {
+      this.baseEditor.gotoLine(row + 1, 0, true);
    };
 
    this.dispose = function() {

@@ -2051,15 +2051,55 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(async () => (await gutterMarkers(page))[1], { timeout: 30000 }).toEqual([MODIFIED]);
       await executeCommand(page, 'vcsShowChangesSideBySide');
       await expect(base).toBeVisible({ timeout: 10000 });
-      await editor.gotoLine(100);
-      await editor.execCommand('toggleFoldWidget');
-      await expect.poll(() => editor.getFoldCount()).toBe(1);
-      await editor.gotoLine(2);
+      const foldFunction = async () => {
+        await editor.gotoLine(100);
+        await editor.execCommand('toggleFoldWidget');
+        await expect.poll(() => editor.getFoldCount()).toBe(1);
+        await editor.gotoLine(2);
+      };
+
+      // without a peek, then with one
+      await foldFunction();
+      await executeCommand(page, 'vcsNextChange');
+      await expect.poll(() => cursorRow(page)).toBe(119);
+      await expect.poll(() => rowInView(live, 119), { timeout: 10000 }).toBe(true);
+      await foldFunction();
       await executeCommand(page, 'vcsShowChange');
       await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
       await executeCommand(page, 'vcsNextChange');
       await expect.poll(() => cursorRow(page)).toBe(119);
       await expect.poll(() => rowInView(live, 119), { timeout: 10000 }).toBe(true);
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+
+      // Side by side, with the first 100 lines removed and the base pane at
+      // its top, the document's first line lies below the view; the action
+      // bar shown from there is held up into it, and works from there.
+      await rewrite('lines <- lines[-(1:100)]');
+      await openFile(page, movePath);
+      await expect.poll(async () => (await gutterMarkers(page))[0], { timeout: 30000 }).toEqual([DELETED]);
+      await executeCommand(page, 'vcsShowChangesSideBySide');
+      await expect(base).toBeVisible({ timeout: 10000 });
+      await base.locator('.ace_content').click({ force: true });
+      await base.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(1, 0));
+      await executeCommand(page, 'vcsShowChange');
+      const bar = live.locator(PEEK_COMPACT);
+      await expect(bar).toBeVisible({ timeout: 10000 });
+      await expect
+        .poll(
+          () =>
+            live.evaluate((el) => {
+              const header = el.querySelector('.ace_git-peek-header')!.getBoundingClientRect();
+              const view = ((el as AceEditorElement).env?.editor as unknown as ScrolledEditor).renderer.scroller.getBoundingClientRect();
+              return header.top >= view.top && header.bottom <= view.bottom + 1;
+            }),
+          { timeout: 10000 },
+        )
+        .toBe(true);
+      await bar.locator(PEEK_REVERT).click();
+      await expect(peek).toHaveCount(0);
+      await expect.poll(() => viewMarkers(live), { timeout: 30000 }).toEqual({});
     } finally {
       if ((await base.count()) > 0) {
         await executeCommand(page, 'removeEditorSplit');
@@ -2167,6 +2207,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     const wsPath = `${projectDir()}/firstws.R`;
     const nlPath = `${projectDir()}/firstnl.R`;
     const nl2Path = `${projectDir()}/firstnl2.R`;
+    const emptyPath = `${projectDir()}/firstempty.R`;
     const subDir = `${projectDir()}/sub`;
     const rdsPath = `${projectDir()}/first.rds`;
     const seed = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5'];
@@ -2180,17 +2221,18 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           writeLines(sprintf("orig%d <- %d", 1:5, 1:5), ${rPathLiteral(`${subDir}/orig.R`)})
           cat("x <- 1", file = ${rPathLiteral(nlPath)})
           cat("x <- 1", file = ${rPathLiteral(nl2Path)})
+          stopifnot(file.create(${rPathLiteral(emptyPath)}))
         }
       `,
     );
-    await commitAll(page, 'first changes', [delPath, wsPath, nlPath, nl2Path, subDir]);
+    await commitAll(page, 'first changes', [delPath, wsPath, nlPath, nl2Path, emptyPath, subDir]);
 
     // a removed line, which the gutter marks on the line after it; a
     // whitespace-only edit ahead of a real one; a final newline (or two)
-    // added, which the gutter marks as empty last lines; a rename and a
-    // copy within a subdirectory, staged (copies are listed as such when
-    // status.renames says so, and their source changed too); an untracked
-    // binary file
+    // added, which the gutter marks as empty last lines; lines written to an
+    // empty file, without a final newline; a rename and a copy within a
+    // subdirectory, staged (copies are listed as such when status.renames
+    // says so, and their source changed too); an untracked binary file
     await executeInConsoleChecked(
       page,
       heredoc`
@@ -2199,6 +2241,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           writeLines(c("a <- 1", "b <- 2   ", "c <- 3", "d <- 40", "e <- 5"), ${rPathLiteral(wsPath)})
           writeLines("x <- 1", ${rPathLiteral(nlPath)})
           cat("x <- 1\n\n", file = ${rPathLiteral(nl2Path)})
+          cat("\nx <- 1", file = ${rPathLiteral(emptyPath)})
           stopifnot(file.copy(${rPathLiteral(`${subDir}/orig.R`)}, ${rPathLiteral(`${subDir}/copy.R`)}))
           cat("f <- 6\n", file = ${rPathLiteral(`${subDir}/orig.R`)}, append = TRUE)
           s <- c(
@@ -2240,6 +2283,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED], 2: [ADDED] });
       await documentCloseAllNoSave(page);
 
+      await goTo('firstempty.R').press('Enter');
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstempty.R', { timeout: 15000 });
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 0: [ADDED], 1: [ADDED] });
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(0);
+      await documentCloseAllNoSave(page);
+
       await setPref(page, 'git_diff_ignore_whitespace', true);
       await goTo('firstws.R').press('Enter');
       await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstws.R', { timeout: 15000 });
@@ -2273,13 +2322,13 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         page,
         heredoc`
           {
-            unlink(c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(nlPath)}, ${rPathLiteral(nl2Path)}, ${rPathLiteral(rdsPath)}))
+            unlink(c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(nlPath)}, ${rPathLiteral(nl2Path)}, ${rPathLiteral(emptyPath)}, ${rPathLiteral(rdsPath)}))
             unlink(${rPathLiteral(subDir)}, recursive = TRUE)
             invisible(system2("git", c(${gitC()}, "config", "--unset", "status.renames")))
           }
         `,
       );
-      await commitAll(page, 'remove first changes', [delPath, wsPath, nlPath, nl2Path, subDir]);
+      await commitAll(page, 'remove first changes', [delPath, wsPath, nlPath, nl2Path, emptyPath, subDir]);
     }
   });
 
