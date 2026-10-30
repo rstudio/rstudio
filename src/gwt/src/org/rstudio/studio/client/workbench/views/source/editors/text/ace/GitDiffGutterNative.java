@@ -83,9 +83,10 @@ public class GitDiffGutterNative extends JavaScriptObject
    }-*/;
 
    // Whether there is a base to count changes against (there is none for an
-   // untracked file, or before the first fetch).
-   public final native boolean hasBase() /*-{
-      return this.hasBase();
+   // untracked file, or before the first fetch), and the diff against it
+   // came through.
+   public final native boolean canCountChanges() /*-{
+      return this.canCountChanges();
    }-*/;
 
    public final native int getChangeCount() /*-{

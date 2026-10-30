@@ -219,6 +219,7 @@ var GitDiffGutter = function(editor, strings) {
    this.updateTimer = null;
    this.updatePending = false;
    this.lastDiffMs = 0;
+   this.diffFailed = false;
    this.ignoreWhitespace = false;
    this.peek = null;
    this.baseRefresher = null;
@@ -347,10 +348,12 @@ var GitDiffGutter = function(editor, strings) {
       this.notifyStatus();
    };
 
-   // Whether there is a base to diff against; without one (none fetched yet,
-   // an untracked file) there are no changes to count.
-   this.hasBase = function() {
-      return this.baseLines != null;
+   // Whether the changes can be counted: there is a base to diff against
+   // (none is fetched yet, or the file is untracked) and the diff came
+   // through. One that gave up or failed marks nothing, which is not to say
+   // there are no changes.
+   this.canCountChanges = function() {
+      return this.baseLines != null && !this.diffFailed;
    };
 
    this.getChangeCount = function() {
@@ -469,6 +472,7 @@ var GitDiffGutter = function(editor, strings) {
 
    this.update = function() {
       var chunks = [];
+      this.diffFailed = false;
       if (this.baseLines != null)
       {
          var base = this.baseLines;
@@ -533,7 +537,10 @@ var GitDiffGutter = function(editor, strings) {
             started = Date.now();
             chunks = dropCharChanges(new DiffProvider().compute(tokens.base, tokens.lines, options));
             if (Date.now() - started >= MAX_COMPUTATION_MS && isWholeDocument(chunks, base, lines))
+            {
+               this.diffFailed = true;
                return [];
+            }
          }
 
          return offsetChunks(chunks, common.prefix);
@@ -542,6 +549,7 @@ var GitDiffGutter = function(editor, strings) {
       {
          // better no markers than an error surfacing on every keystroke
          console.warn("git diff gutter: diff failed", error);
+         this.diffFailed = true;
          return [];
       }
    };

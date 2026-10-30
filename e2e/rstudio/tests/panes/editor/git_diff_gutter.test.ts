@@ -501,6 +501,38 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await page.keyboard.press('Escape');
     await expect(peek).toHaveCount(0);
 
+    // A diff that fails marks nothing, which is not to say "No changes": the
+    // count goes until a diff comes through again.
+    const breakDiffs = (broken: boolean) =>
+      page.evaluate((broken) => {
+        type Compute = (...args: unknown[]) => unknown;
+        type Proto = { compute: Compute; e2eCompute?: Compute };
+        const require = (window as unknown as { require(id: string): { DiffProvider: { prototype: Proto } } }).require;
+        const proto = require('ace/ext/diff/providers/default').DiffProvider.prototype;
+        if (broken) {
+          proto.e2eCompute = proto.compute;
+          proto.compute = () => {
+            throw new Error('diff failed on purpose');
+          };
+        } else if (proto.e2eCompute) {
+          proto.compute = proto.e2eCompute;
+          delete proto.e2eCompute;
+        }
+      }, broken);
+    await breakDiffs(true);
+    try {
+      await editor.gotoLine(8);
+      await editor.insert('#');
+      await expect(nav).toBeHidden({ timeout: 10000 });
+    } finally {
+      await breakDiffs(false);
+    }
+    await editor.execCommand('undo');
+    await expect.poll(() => editor.getLine(7)).toBe('h <- 8');
+    await expect(count).toHaveText('3 changes', { timeout: 10000 });
+    await editor.gotoLine(5);
+    await expect(count).toHaveText('Change 2 of 3');
+
     // gone with the markers, and back with them
     await setPref(page, PREF, false);
     try {
@@ -1989,6 +2021,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
   }) => {
     const delPath = `${projectDir()}/firstdel.R`;
     const wsPath = `${projectDir()}/firstws.R`;
+    const nlPath = `${projectDir()}/firstnl.R`;
     const subDir = `${projectDir()}/sub`;
     const rdsPath = `${projectDir()}/first.rds`;
     const seed = ['a <- 1', 'b <- 2', 'c <- 3', 'd <- 4', 'e <- 5'];
@@ -1999,13 +2032,15 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           stopifnot(dir.create(${rPathLiteral(subDir)}))
           for (path in c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(`${subDir}/old.R`)}))
             writeLines(c(${seed.map(rStringLiteral).join(', ')}), path)
+          cat("x <- 1", file = ${rPathLiteral(nlPath)})
         }
       `,
     );
-    await commitAll(page, 'first changes', [delPath, wsPath, subDir]);
+    await commitAll(page, 'first changes', [delPath, wsPath, nlPath, subDir]);
 
     // a removed line, which the gutter marks on the line after it; a
-    // whitespace-only edit ahead of a real one; a rename within a
+    // whitespace-only edit ahead of a real one; a final newline added, which
+    // the gutter marks as an empty last line; a rename within a
     // subdirectory, staged; an untracked binary file
     await executeInConsoleChecked(
       page,
@@ -2013,6 +2048,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         {
           writeLines(c(${seed.filter((line) => line !== 'c <- 3').map(rStringLiteral).join(', ')}), ${rPathLiteral(delPath)})
           writeLines(c("a <- 1", "b <- 2   ", "c <- 3", "d <- 40", "e <- 5"), ${rPathLiteral(wsPath)})
+          writeLines("x <- 1", ${rPathLiteral(nlPath)})
           s <- system2("git", c(${gitC()}, "mv", "sub/old.R", "sub/new.R"))
           if (s != 0)
             stop("git mv failed (exit status: ", s, ")")
@@ -2032,6 +2068,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstdel.R', { timeout: 15000 });
       await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(2);
       await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 2: [DELETED] });
+      await documentCloseAllNoSave(page);
+
+      await goTo('firstnl.R').click();
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('firstnl.R', { timeout: 15000 });
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 1: [ADDED] });
       await documentCloseAllNoSave(page);
 
       await setPref(page, 'git_diff_ignore_whitespace', true);
@@ -2060,12 +2102,12 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
         page,
         heredoc`
           {
-            unlink(c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(rdsPath)}))
+            unlink(c(${rPathLiteral(delPath)}, ${rPathLiteral(wsPath)}, ${rPathLiteral(nlPath)}, ${rPathLiteral(rdsPath)}))
             unlink(${rPathLiteral(subDir)}, recursive = TRUE)
           }
         `,
       );
-      await commitAll(page, 'remove first changes', [delPath, wsPath, subDir]);
+      await commitAll(page, 'remove first changes', [delPath, wsPath, nlPath, subDir]);
     }
   });
 

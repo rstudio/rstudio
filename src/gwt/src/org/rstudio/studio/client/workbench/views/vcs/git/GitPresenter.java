@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.WorktreeActions;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffChunk;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.Range;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -268,7 +269,16 @@ public class GitPresenter extends BaseVcsPresenter
          // last line, as the gutter does
          Range[] ranges = chunk.getRanges();
          Range range = ranges[ranges.length - 1];
-         return (range.rowCount == 0) ? range.startRow + 1 : range.startRow;
+         if (range.rowCount == 0)
+            return range.startRow + 1;
+
+         // Git replaces the last line when only the newline after it comes
+         // or goes; the editor has an empty last line come or go instead,
+         // marked after the hunk's lines (clamped as above).
+         if (isFinalNewlineOnly(chunk))
+            return range.startRow + range.rowCount;
+
+         return range.startRow;
       }
       catch (Exception e)
       {
@@ -276,6 +286,27 @@ public class GitPresenter extends BaseVcsPresenter
          Debug.logException(e);
          return 0;
       }
+   }
+
+   // Whether a hunk changes nothing but the file's final newline: it carries
+   // a "\ No newline at end of file" note, and the lines it removes are the
+   // lines it adds.
+   private static boolean isFinalNewlineOnly(DiffChunk chunk)
+   {
+      boolean noted = false;
+      ArrayList<String> removed = new ArrayList<>();
+      ArrayList<String> added = new ArrayList<>();
+      for (Line line : chunk.getLines())
+      {
+         if (line.getType() == Line.Type.Comment)
+            noted = true;
+         else if (line.getType() == Line.Type.Deletion)
+            removed.add(line.getText());
+         else if (line.getType() == Line.Type.Insertion)
+            added.add(line.getText());
+      }
+
+      return noted && !removed.isEmpty() && removed.equals(added);
    }
 
    private void manageCommands()

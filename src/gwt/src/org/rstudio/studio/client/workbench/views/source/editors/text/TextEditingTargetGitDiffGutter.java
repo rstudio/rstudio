@@ -193,11 +193,11 @@ public class TextEditingTargetGitDiffGutter
 
    // The number of changes, as seen from the given view; -1 when there is no
    // base to count them against (no gutter, an untracked file, or a base not
-   // fetched yet).
+   // fetched yet), or the diff against it gave up.
    public int getChangeCount(DocDisplay display)
    {
       GitDiffGutterNative gutter = gutterFor(display);
-      if (gutter == null || !gutter.hasBase())
+      if (gutter == null || !gutter.canCountChanges())
          return -1;
 
       return gutter.getChangeCount();
