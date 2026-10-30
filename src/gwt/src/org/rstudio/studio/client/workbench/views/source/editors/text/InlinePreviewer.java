@@ -31,7 +31,7 @@ public class InlinePreviewer
    public InlinePreviewer(TextEditingTarget target, DocUpdateSentinel sentinel, 
          UserPrefs prefs)
    {
-      display_ = target.getDocDisplay();
+      display_ = target.getPrimaryDisplay();
       sentinel_ = sentinel;
       prefs_ = prefs;
       regs_ = new HandlerRegistrations();

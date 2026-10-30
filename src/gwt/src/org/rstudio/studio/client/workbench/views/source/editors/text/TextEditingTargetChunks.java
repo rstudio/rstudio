@@ -51,9 +51,9 @@ public class TextEditingTargetChunks
       renderPass_ = 0;
 
       handlers_.add(
-         target.getDocDisplay().addScopeTreeReadyHandler(this),
-         target.getDocDisplay().addEditorModeChangedHandler(this),
-         target.getDocDisplay().addDocumentChangedHandler(this)
+         target.getPrimaryDisplay().addScopeTreeReadyHandler(this),
+         target.getPrimaryDisplay().addEditorModeChangedHandler(this),
+         target.getPrimaryDisplay().addDocumentChangedHandler(this)
       );
 
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -70,7 +70,7 @@ public class TextEditingTargetChunks
    @Override
    public void onScopeTreeReady(ScopeTreeReadyEvent event)
    {
-      if (target_.getDocDisplay().getModeId() == "mode/rmarkdown")
+      if (target_.getPrimaryDisplay().getModeId() == "mode/rmarkdown")
          syncWidgets(false);
    }
 
@@ -198,7 +198,7 @@ public class TextEditingTargetChunks
       renderPass_ = (renderPass_ + 1) % RENDER_PASS_MOD;
 
       // not initialized, or scope changed; do a full sync
-      ScopeList scopes = new ScopeList(target_.getDocDisplay());
+      ScopeList scopes = new ScopeList(target_.getPrimaryDisplay());
       for (Scope scope: scopes)
       {
          syncChunkToolbar(scope);
@@ -229,7 +229,7 @@ public class TextEditingTargetChunks
               row++)
          {
             Position chunkPos = Position.create(row, 0);
-            Scope scope = target_.getDocDisplay().getChunkAtPosition(chunkPos);
+            Scope scope = target_.getPrimaryDisplay().getChunkAtPosition(chunkPos);
             ChunkContextCodeUi toolbar = getToolbarForRow(row);
             
             if (toolbar != null && scope == null)
@@ -305,7 +305,7 @@ public class TextEditingTargetChunks
    
    private boolean isRunnableChunk(int row)
    {
-      return TextEditingTargetScopeHelper.isRunnableChunk(target_.getDocDisplay(), row);
+      return TextEditingTargetScopeHelper.isRunnableChunk(target_.getPrimaryDisplay(), row);
       
    }
    

@@ -373,6 +373,12 @@ public class TextEditingTargetWidget
    }
 
    @Override
+   public DocDisplay getSplitDisplay()
+   {
+      return splitEditor_;
+   }
+
+   @Override
    public boolean focusOtherEditorSplit()
    {
       // the side-by-side diff has a read-only base editor to move between,
@@ -629,18 +635,40 @@ public class TextEditingTargetWidget
       // which would clobber the margin-column wrap applied here
       applyWrapMode(splitEditor_, editor_.getUseWrapMode());
 
-      // route commands to this editing target when the split view is focused
+      // route commands to this editing target when the split view is focused,
+      // and check for changes on disk as focusing the primary view does
       splitEditorRegistrations_.add(splitEditor_.addFocusHandler(event ->
       {
          splitEditorFocusedLast_ = true;
          diffSplitFocusedLast_ = false;
          events_.fireEvent(new EditingTargetSelectedEvent(target_));
          events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
+         target_.splitEditorFocused();
       }));
+
+      // the editor's own key bindings (Esc to interrupt R, Ctrl+Up/Down
+      // between functions, continuing comments on Enter), as for the
+      // primary view
+      AceEditor splitEditor = splitEditor_;
+      splitEditorRegistrations_.add(splitEditor.addKeyDownHandler(event ->
+            target_.onEditorKeyDown(splitEditor, event)));
 
       // keep the status bar in sync with the split view's cursor
       splitEditorRegistrations_.add(splitEditor_.addCursorChangedHandler(event ->
             target_.splitEditorCursorChanged(event.getPosition())));
+
+      // keep Chat's selection context in sync with the split view
+      splitEditorRegistrations_.add(splitEditor_.addSelectionChangedHandler(event ->
+            target_.splitEditorSelectionChanged()));
+
+      // autosave on blur, as for the primary view
+      splitEditorRegistrations_.add(splitEditor_.addEditorBlurHandler(event ->
+            target_.splitEditorBlurred()));
+
+      // record jumps made in the split view (e.g. Go to Line) in source
+      // navigation history, as for the primary view
+      TextEditingTarget.addRecordNavigationPositionHandler(
+            splitEditorRegistrations_, splitEditor_, events_, target_);
 
       target_.splitEditorCreated(splitEditor_);
    }
@@ -675,6 +703,7 @@ public class TextEditingTargetWidget
          registration.removeHandler();
       splitEditorRegistrations_.clear();
 
+      splitEditor_.detachFromDocument();
       splitEditor_.getWidget().getEditor().destroy();
       splitEditor_ = null;
       splitEditorFocusedLast_ = false;

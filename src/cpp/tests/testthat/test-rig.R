@@ -541,6 +541,48 @@ test_that("RSTUDIO_WHICH_R is unset again when launchd had no value for it", {
 
 })
 
+test_that("launchd's environment is read and changed in the GUI session", {
+
+   # a session started from tmux is in a Background launchd session, whose
+   # environment is not the one applications opened from the Dock inherit
+   calls <- list()
+   uid <- "502"
+   rsEnv <- as.environment("tools:rstudio")
+   original <- get(".rs.rig.command", envir = rsEnv)
+   on.exit(assign(".rs.rig.command", original, envir = rsEnv), add = TRUE)
+   assign(".rs.rig.command", function(command, args) {
+      calls[[length(calls) + 1L]] <<- c(command, args)
+      if (identical(command, "/usr/bin/id")) uid else ""
+   }, envir = rsEnv)
+
+   .rs.rig.launchctl(c("getenv", "RSTUDIO_WHICH_R"))
+   .rs.rig.launchctl(c("setenv", "RSTUDIO_WHICH_R", "/some/R"))
+   .rs.rig.launchctl(c("unsetenv", "RSTUDIO_WHICH_R"))
+   id <- c("/usr/bin/id", "-u")
+   gui <- c("/bin/launchctl", "asuser", "502", "/bin/launchctl")
+   expect_identical(calls, list(
+      id, c(gui, "getenv", "RSTUDIO_WHICH_R"),
+      id, c(gui, "setenv", "RSTUDIO_WHICH_R", "/some/R"),
+      id, c(gui, "unsetenv", "RSTUDIO_WHICH_R")
+   ))
+
+   # the verbs for jobs already reach the GUI session's agents
+   calls <- list()
+   .rs.rig.launchctl(c("list", .rs.rig.launchAgentLabel))
+   .rs.rig.launchctl(c("unload", "/some/agent.plist"))
+   expect_identical(calls, list(
+      c("/bin/launchctl", "list", .rs.rig.launchAgentLabel),
+      c("/bin/launchctl", "unload", "/some/agent.plist")
+   ))
+
+   # without the user's ID, launchd's environment is not touched at all
+   calls <- list()
+   uid <- NULL
+   expect_null(.rs.rig.launchctl(c("unsetenv", "RSTUDIO_WHICH_R")))
+   expect_identical(calls, list(id))
+
+})
+
 test_that("links rig repoints and an agent it rewrites are put back", {
 
    skip_if(.rs.platform.isWindows, "symlinks are not available")
