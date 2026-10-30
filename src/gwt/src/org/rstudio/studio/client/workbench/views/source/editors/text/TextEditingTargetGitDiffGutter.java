@@ -331,16 +331,18 @@ public class TextEditingTargetGitDiffGutter
          if (diffSplitWidget_ != null)
             attachDiffSplit();
 
-         refresh();
-
-         // (after the refresh, which takes up the document's path: one
-         // taken up afresh drops whatever was waiting on the old base)
+         // a pending go-to-first-change makes the first fetch, and waits
+         // on it (see refreshBase)
          Position firstChangeCursor = firstChangeCursor_;
          firstChangeCursor_ = null;
          if (firstChangeCursor != null &&
              firstChangeCursor.isEqualTo(docDisplay_.getCursorPosition()))
          {
             gutter_.goToFirstChangeWhenFresh();
+         }
+         else
+         {
+            refresh();
          }
       });
    }
@@ -494,14 +496,18 @@ public class TextEditingTargetGitDiffGutter
          // The old base must not outlive the path (Save As) or the encoding
          // (Reopen with Encoding) it was fetched for: a revert in the gap
          // before the new one arrives would restore the wrong contents.
+         boolean hadPath = basePath_ != null;
          basePath_ = path;
          baseEncoding_ = encoding;
          setBase(null, null, false);
 
          // Nor must a revert still waiting on the old base: it would run
          // against the new path's base, whose chunks can share the old
-         // ones' coordinates. Settled now, it finds nothing to revert.
-         runBaseCallbacks();
+         // ones' coordinates. Settled now, it finds nothing to revert. (On
+         // the first fetch there is no old base, and what waits is for this
+         // one.)
+         if (hadPath)
+            runBaseCallbacks();
       }
 
       // A hidden document waits to be shown -- unless a revert is waiting

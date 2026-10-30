@@ -978,14 +978,23 @@ var GitDiffGutter = function(editor, strings) {
    // RStudio enumerates them to persist notebook chunk output, so a peek must
    // not displace an existing widget: it goes below the last changed line (or
    // where removed lines were), else on the other side of the change, else
-   // nowhere. A side-by-side view's alignment padding is no obstacle: the
-   // view moves it off the peek's row as it realigns (or, above the first
-   // line, onto the peek; see $addWidget in git_diff_split.js).
+   // nowhere. Side by side, the action bar of a deletion goes below the line
+   // the marker is on instead, past the padding that stands in for the
+   // removed lines in the document, so that it is in view with the marker
+   // however many lines were removed (see pinPeek); before that line, at the
+   // end of the document or below a widget on it. A side-by-side view's
+   // alignment padding is no obstacle: the view moves it off the peek's row
+   // as it realigns, or where it cannot, onto the peek (see $addWidget in
+   // git_diff_split.js).
    this.peekRow = function(chunk) {
       var session = this.editor.session;
-      var candidates = isDeletion(chunk)
-         ? [chunk.new.start.row - 1, chunk.new.start.row]
-         : [chunk.new.end.row - 1, chunk.new.start.row - 1];
+      var candidates;
+      if (isDeletion(chunk) && this.splitView)
+         candidates = [chunk.new.start.row, chunk.new.start.row - 1];
+      else if (isDeletion(chunk))
+         candidates = [chunk.new.start.row - 1, chunk.new.start.row];
+      else
+         candidates = [chunk.new.end.row - 1, chunk.new.start.row - 1];
 
       for (var i = 0; i < candidates.length; i++)
       {
@@ -1115,7 +1124,7 @@ var GitDiffGutter = function(editor, strings) {
 
       var widget = { row: row, el: el, fixedWidth: true, coverGutter: false };
       this.lineWidgetManager().addLineWidget(widget);
-      this.peek = { chunk: chunk, widget: widget };
+      this.peek = { chunk: chunk, widget: widget, compact: compact };
       return true;
    };
 
@@ -1169,18 +1178,26 @@ var GitDiffGutter = function(editor, strings) {
 
       // A peek above its change (where a notebook's output took the row
       // below) or at removed lines has no changed lines to cover -- but for
-      // the action bar of a deletion at the top, side by side, which sits
-      // below the padding standing in for the removed lines (see
-      // lendRowsAbove in git_diff_split.js), and covers that.
+      // the side-by-side action bar of a deletion below the line after it
+      // (see peekRow), which covers the padding standing in for the removed
+      // lines above that line (and the line), from the padding's top: the
+      // bottom of the line before, or above the first line, its rowsAbove.
       var widget = peek.widget;
       var chunk = peek.chunk;
       var el = widget.el;
       var lineHeight = this.editor.renderer.layerConfig.lineHeight;
       var floor = null;
       if (!widget.hidden && !isDeletion(chunk) && widget.row >= chunk.new.start.row)
+      {
          floor = this.rowScreenTop(chunk.new.start.row) + lineHeight;
-      else if (!widget.hidden && widget.gitDiffLentRows)
-         floor = this.rowScreenTop(0) - (widget.gitDiffLentRows - 1) * lineHeight;
+      }
+      else if (!widget.hidden && peek.compact && widget.row === chunk.new.start.row)
+      {
+         var paddingTop = (widget.row > 0)
+            ? this.rowScreenBottom(widget.row - 1)
+            : this.rowScreenTop(0) - (widget.rowsAbove || 0) * lineHeight;
+         floor = paddingTop + lineHeight;
+      }
 
       // (the floor is the bottom of the first screen line covered, not of
       // its row, so that a line wrapped taller than the editor brings the

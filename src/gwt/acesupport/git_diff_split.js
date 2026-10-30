@@ -136,22 +136,24 @@ function padFreeRow(session, row) {
    return !widgets || !widgets[row] || isPadding(widgets[row]);
 }
 
-// Puts padding above a line widget's line, as Ace draws a widget's
-// rowsAbove (counted in its rowCount, as with Ace's own padding); for the
-// first line, which has no line before it to pad below. The rows are given
-// back as the padding is taken out (see $removeLineWidgets).
-function lendRowsAbove(widget, rows) {
-   widget.gitDiffLentRows = (widget.gitDiffLentRows || 0) + rows;
-   widget.rowsAbove = (widget.rowsAbove || 0) + rows;
-   widget.rowCount += rows;
+// Has a line widget hold padding of its own: rows above its line, as Ace
+// draws a widget's rowsAbove, and rows below its content, all counted in
+// its rowCount as with Ace's own padding. The rows are given back as the
+// padding is taken out (see $removeLineWidgets).
+function lendRows(widget, above, below) {
+   widget.gitDiffLentAbove = (widget.gitDiffLentAbove || 0) + above;
+   widget.gitDiffLentRows = (widget.gitDiffLentRows || 0) + above + below;
+   widget.rowsAbove = (widget.rowsAbove || 0) + above;
+   widget.rowCount += above + below;
    widget.gitDiffOwnRowCount = widget.rowCount - widget.gitDiffLentRows;
 }
 
-function returnRowsAbove(widget) {
+function returnRows(widget) {
    // (a widget measured again since has a rowCount of its own already)
    if (widget.rowCount === widget.gitDiffOwnRowCount + widget.gitDiffLentRows)
       widget.rowCount = widget.gitDiffOwnRowCount;
-   widget.rowsAbove -= widget.gitDiffLentRows;
+   widget.rowsAbove -= widget.gitDiffLentAbove;
+   widget.gitDiffLentAbove = 0;
    widget.gitDiffLentRows = 0;
 }
 
@@ -945,21 +947,30 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
             // one per row. The part of the padding meant below the line
             // goes above the next line instead, right below that widget;
             // the part meant above the line goes below the line before,
-            // the same place. Neither moves onto another widget's row, and
-            // above the first line there is nowhere else to go -- but for
-            // the gutter's peek, the compact bar below the line after a
-            // deletion at the top, which takes the rows on as its own until
-            // the next alignment (chunk output, whose height RStudio keeps
-            // track of, is left alone).
+            // the same place. Neither moves onto another widget's row (nor
+            // above the first line, or below the last). Where it cannot
+            // move, the gutter's peek takes the rows on as its own until
+            // the next alignment: the action bar of a deletion, between
+            // chunk output and the padding for the removed lines, say (see
+            // peekRow in git_diff_gutter.js). Chunk output, whose height
+            // RStudio keeps track of, is left alone.
             var above = w.rowsAbove || 0;
             var below = w.rowCount - above;
+            var isPeek = this.gutter.peek != null && existing === this.gutter.peek.widget;
+            var lentAbove = 0;
+            var lentBelow = 0;
             if (below > 0 && padFreeRow(session, w.row + 1))
                this.$addWidget(session, { rowCount: below, rowsAbove: below, row: w.row + 1 });
-            if (above > 0 && padFreeRow(session, w.row - 1)) {
+            else if (below > 0 && isPeek)
+               lentBelow = below;
+            if (above > 0 && padFreeRow(session, w.row - 1))
                this.$addWidget(session, { rowCount: above, rowsAbove: 0, row: w.row - 1 });
-            } else if (above > 0 && w.row === 0 && this.gutter.peek && existing === this.gutter.peek.widget) {
-               lendRowsAbove(existing, above);
-               session.$resetRowCache(0);
+            else if (above > 0 && isPeek)
+               lentAbove = above;
+
+            if (lentAbove > 0 || lentBelow > 0) {
+               lendRows(existing, lentAbove, lentBelow);
+               session.$resetRowCache(w.row);
             }
             return;
          }
@@ -1000,7 +1011,7 @@ oop.inherits(GitDiffSplitView, SplitDiffView);
          }
 
          if (w && w.gitDiffLentRows) {
-            returnRowsAbove(w);
+            returnRows(w);
             removed = true;
          }
 
