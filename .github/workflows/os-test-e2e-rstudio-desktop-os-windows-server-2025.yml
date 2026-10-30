@@ -593,41 +593,13 @@ jobs:
           )
 
       # Drop what no later build reads before saving the tools cache (~1 GB of
-      # a ~2.1 GB entry). rstudio-tools.cmd's :install keeps each archive
-      # after extracting it but skips any dependency whose folder exists, so
-      # only copilot's archive is read again: install-dependencies.cmd
-      # deletes and re-extracts copilot on every run, which also makes the
-      # extracted copy dead weight. Only the release x64 OpenSSL build is
-      # linked (src/cpp/CMakeLists.txt; CI builds RelWithDebInfo without
-      # MULTIARCH). Every Boost variant stays: install-soci.R builds SOCI
-      # against all four whenever SOCI is rebuilt. Same condition as the save
-      # below; a failed trim only means a larger entry.
+      # a ~2.1 GB entry; see the action for what goes). The Windows 11 arm64
+      # workflow saves the same key and runs the same action. Same condition
+      # as the save below; a failed trim only means a larger entry.
       - name: Trim rstudio-tools before caching
         if: always() && steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         continue-on-error: true
-        run: |
-          $deps = "$env:RSTUDIO_TOOLS_ROOT\dependencies"
-
-          $remove = @(
-            Get-ChildItem -LiteralPath "$deps\common", "$deps\windows" -File |
-              Where-Object { $_.Name -match '\.(zip|7z|tar\.gz)$' -and $_.Name -notlike 'copilot-language-server-js-*' }
-            Get-Item -LiteralPath "$deps\common\copilot-language-server-js" -ErrorAction SilentlyContinue
-            Get-ChildItem -Path "$deps\windows\openssl-*" -Directory |
-              ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Directory } |
-              Where-Object { $_.Name -notlike '*-release-64' }
-          )
-          $freed = 0
-          foreach ($item in $remove) {
-            $bytes = if ($item.PSIsContainer) {
-              (Get-ChildItem -LiteralPath $item.FullName -Recurse -File -Force | Measure-Object -Property Length -Sum).Sum
-            } else {
-              $item.Length
-            }
-            Write-Host ("Removing {0} ({1:N0} MB)" -f $item.FullName, ($bytes / 1MB))
-            Remove-Item -LiteralPath $item.FullName -Recurse -Force
-            $freed += $bytes
-          }
-          Write-Host ("Trimmed {0:N0} MB from rstudio-tools" -f ($freed / 1MB))
+        uses: ./.github/actions/os-trim-windows-tools
 
       # Save the tools cache only from main-scoped runs (the seed and
       # scheduled workflows), and only on a key miss. A cache saved from a PR
