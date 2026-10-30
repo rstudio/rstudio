@@ -194,7 +194,10 @@ async function gutterAttached(page: Page): Promise<boolean> {
 type BaseFetches = {
   /** The file each fetch was for, by name, in order. */
   names: string[];
-  /** Resolves once a fetch has been seen and the last one is over a second old. */
+  /**
+   * Resolves once a fetch has been seen, every one has been answered, and
+   * the last request or answer is over a second old.
+   */
   settled: () => Promise<void>;
   stop: () => void;
 };
@@ -205,26 +208,41 @@ type BaseFetches = {
  * second after the editor gains focus; `settled` waits those out, so a test
  * that then moves the index knows no fetch is pending that could land after
  * the move and pick the new index up ahead of the interaction under test.
+ * It waits out the answers too, and the work they set off (a held fetch
+ * released long after it was made, say).
  */
 function trackBaseFetches(page: Page): BaseFetches {
   const names: string[] = [];
-  let lastFetchAt = 0;
+  const pending = new Set<Request>();
+  let lastActivityAt = 0;
   const onRequest = (request: Request): void => {
     if (!request.url().includes('git_diff_base_contents')) return;
     const params = (request.postDataJSON() as { params: string[] }).params;
     names.push(params[0].replace(/\\/g, '/').split('/').pop()!);
-    lastFetchAt = Date.now();
+    pending.add(request);
+    lastActivityAt = Date.now();
+  };
+  const onDone = (request: Request): void => {
+    if (pending.delete(request)) lastActivityAt = Date.now();
   };
   page.on('request', onRequest);
+  page.on('requestfinished', onDone);
+  page.on('requestfailed', onDone);
 
   return {
     names,
     settled: async () => {
       await expect
-        .poll(() => lastFetchAt > 0 && Date.now() - lastFetchAt > 1000, { timeout: 15000 })
+        .poll(() => lastActivityAt > 0 && pending.size === 0 && Date.now() - lastActivityAt > 1000, {
+          timeout: 15000,
+        })
         .toBe(true);
     },
-    stop: () => page.off('request', onRequest),
+    stop: () => {
+      page.off('request', onRequest);
+      page.off('requestfinished', onDone);
+      page.off('requestfailed', onDone);
+    },
   };
 }
 
@@ -2494,6 +2512,83 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     }
   });
 
+  test('goes on to the first change when the base fetched for it has moved', async ({
+    rstudioPage: page,
+  }) => {
+    // As above, but with the cursors left be while the fetch is held, and
+    // the index taking script.R's first change in meanwhile: the new base
+    // replaces the base pane's text, which takes the base cursor to the top,
+    // and the follow-up goes on regardless, to the change now first.
+    await openFile(page, scriptPath());
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual(EDITED_MARKERS);
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    await expect(base).toBeVisible({ timeout: 10000 });
+    await expect.poll(() => viewLines(base), { timeout: 30000 }).toEqual([...SEED_LINES, '']);
+    const baseCursorRow = () =>
+      base.evaluate((el) => (el as AceEditorElement).env?.editor?.getCursorPosition().row);
+
+    // (moved without focus, which would have the base pane hold the cursor)
+    await base.evaluate((el) => (el as AceEditorElement).env?.editor?.gotoLine(6, 0));
+    await expect.poll(baseCursorRow).toBe(5);
+
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const holdFetch = async (route: Route) => {
+      await held;
+      await route.continue();
+    };
+    const fetches = trackBaseFetches(page);
+    await page.route('**/git_diff_base_contents*', holdFetch);
+
+    try {
+      await executeCommand(page, 'activateVcs');
+      const panel = page.locator(GIT_PANEL);
+      await expect(panel).toBeVisible({ timeout: 15000 });
+      await panel.getByRole('button', { name: 'Open script.R at its first change', exact: true }).press('Enter');
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
+      await expect.poll(() => fetches.names.length, { timeout: 15000 }).toBeGreaterThan(0);
+
+      // the index entry gets the added line (the working copy is left be)
+      const indexLines = ['a <- 1', 'a2 <- 1.5', ...SEED_LINES.slice(1)];
+      await executeInConsoleChecked(
+        page,
+        heredoc`
+          {
+            blob <- system2(
+              "git", c(${gitC()}, "hash-object", "-w", "--stdin"),
+              input = c(${indexLines.map(rStringLiteral).join(', ')}), stdout = TRUE
+            )
+            s <- system2("git", c(${gitC()}, "update-index", "--cacheinfo",
+                                  paste0("100644,", blob, ",script.R")))
+            if (s != 0)
+              stop("git update-index failed (exit status: ", s, ")")
+          }
+        `,
+        { timeout: 60000 },
+      );
+
+      release();
+      await fetches.settled();
+      expect(await viewLines(base)).toEqual([...indexLines, '']);
+      expect(await baseCursorRow()).toBe(0);
+      expect(await cursorRow(page)).toBe(4);
+    } finally {
+      release();
+      await page.unroute('**/git_diff_base_contents*', holdFetch);
+      fetches.stop();
+      await executeInConsoleChecked(
+        page,
+        `invisible(system2("git", c(${gitC()}, "reset", "-q", "--", "script.R")))`,
+      );
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+    }
+  });
+
   test('goes on to the first change the editor marks when its gutter attaches late', async ({
     rstudioPage: page,
   }) => {
@@ -4172,6 +4267,89 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await documentCloseAllNoSave(page);
       await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(nbPath)}))`);
       await commitAll(page, 'remove nb-bar', [nbPath]);
+    }
+  });
+
+  test('shows the action bar by a chunk\'s output against the line it marks', async ({
+    rstudioPage: page,
+  }) => {
+    // As above, but with 100 lines removed before the fence: the padding
+    // the bar takes on below its line is taller than the editor, and the
+    // bar shows after it, against the fence, in view with the marker.
+    const consoleActions = new ConsolePaneActions(page);
+    const loadable = await consoleActions.evalRLogical('requireNamespace("rmarkdown", quietly = TRUE)');
+    test.skip(loadable !== true, 'rmarkdown is not installed');
+
+    const nbPath = `${projectDir()}/nb-tall.Rmd`;
+    const head = ['---', 'title: x', '---', '', '```{r}', '1 + 1'];
+    const tail = ['```', 'tail'];
+    const literals = (lines: string[]) => lines.map(rStringLiteral).join(', ');
+    await executeInConsoleChecked(
+      page,
+      `writeLines(c(${literals(head)}, sprintf("x%d <- %d", 1:100, 1:100), ${literals(tail)}), ${rPathLiteral(nbPath)})`,
+    );
+    await commitAll(page, 'nb-tall', [nbPath]);
+    await executeInConsoleChecked(page, `writeLines(c(${literals([...head, ...tail])}), ${rPathLiteral(nbPath)})`);
+    await openFile(page, nbPath);
+    await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 6: [DELETED] });
+
+    // run the chunk so its output widget occupies the fence row (6)
+    const editor = new AceEditor(page, '');
+    await editor.gotoLine(6);
+    await executeCommand(page, 'executeCurrentChunk');
+    await expect(page.locator('.ace_lineWidgetContainer').filter({ hasText: '[1] 2' })).toBeVisible({
+      timeout: 60000,
+    });
+
+    await executeCommand(page, 'vcsShowChangesSideBySide');
+    const base = page.locator(BASE_EDITOR);
+    const live = liveEditors(page, '1 + 1');
+    await expect(base).toBeVisible({ timeout: 10000 });
+
+    // where the bar's header is: in view, and how many whole lines above the
+    // fence (the bar keeps to the top of the rows it takes for itself)
+    const placement = () =>
+      live.evaluate((el) => {
+        type Measured = {
+          renderer: {
+            lineHeight: number;
+            scroller: HTMLElement;
+            textToScreenCoordinates(row: number, column: number): { pageY: number };
+          };
+        };
+        const editor = (el as AceEditorElement).env?.editor as unknown as Measured;
+        const header = el.querySelector('.ace_git-peek-header')!.getBoundingClientRect();
+        const view = editor.renderer.scroller.getBoundingClientRect();
+        return {
+          inView: header.top >= view.top && header.bottom <= view.bottom + 1,
+          linesAboveFence: Math.floor(
+            (editor.renderer.textToScreenCoordinates(6, 0).pageY - header.bottom) / editor.renderer.lineHeight,
+          ),
+        };
+      });
+
+    try {
+      await expect.poll(() => viewLines(base), { timeout: 30000 }).toHaveLength(head.length + 100 + tail.length + 1);
+
+      await editor.gotoLine(7);
+      await executeCommand(page, 'vcsShowChange');
+      await expect(live.locator(PEEK_COMPACT)).toBeVisible({ timeout: 10000 });
+      await expect.poll(placement, { timeout: 10000 }).toEqual({ inView: true, linesAboveFence: 0 });
+
+      // and it works from there (the document read from the active editor:
+      // `live` goes by rendered text, which the restored lines scroll away)
+      await live.locator(PEEK_REVERT).click();
+      await expect(page.locator(PEEK)).toHaveCount(0);
+      await expect
+        .poll(async () => (await editor.getValue()).split('\n'), { timeout: 10000 })
+        .toHaveLength(head.length + 100 + tail.length + 1);
+      await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({});
+    } finally {
+      await executeCommand(page, 'removeEditorSplit');
+      await expect(base).toHaveCount(0);
+      await documentCloseAllNoSave(page);
+      await executeInConsoleChecked(page, `invisible(file.remove(${rPathLiteral(nbPath)}))`);
+      await commitAll(page, 'remove nb-tall', [nbPath]);
     }
   });
 

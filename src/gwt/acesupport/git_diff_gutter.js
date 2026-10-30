@@ -250,6 +250,7 @@ var GitDiffGutter = function(editor, strings) {
    this.baseRefresher = null;
    this.revision = 0;
    this.splitView = null;
+   this.firstChangePending = null;
    this.statusListener = null;
    this.statusPending = false;
 
@@ -315,7 +316,16 @@ var GitDiffGutter = function(editor, strings) {
       this.baseLines = (text == null) ? null : splitLines(text);
       this.strippedBaseLines = null;
       if (this.splitView)
+      {
+         // Replacing the base pane's text takes its cursor to the top, which
+         // a pending go-to-first-change must not take for the user moving
+         // on (see goToFirstChangeWhenFresh).
+         var pending = this.firstChangePending;
+         var unmoved = pending != null && pending.state === this.cursorState();
          this.splitView.setBaseLines(this.baseLines);
+         if (unmoved)
+            pending.state = this.cursorState();
+      }
       this.update();
    };
 
@@ -446,12 +456,18 @@ var GitDiffGutter = function(editor, strings) {
    // file at the line Git reports first, and that can be off from the
    // markers (an unsaved edit above it, a newline at the end of the file,
    // whitespace ignored). The cursor stays where it is without a change to
-   // go to, or if the user has moved on meanwhile (see cursorState).
+   // go to, or if the user has moved on meanwhile (see cursorState). A
+   // later request supersedes this one.
    this.goToFirstChangeWhenFresh = function() {
       var self = this;
-      var state = this.cursorState();
+      var pending = { state: this.cursorState() };
+      this.firstChangePending = pending;
       this.withFreshBase(function() {
-         if (self.cursorState() !== state)
+         if (self.firstChangePending !== pending)
+            return;
+
+         self.firstChangePending = null;
+         if (self.cursorState() !== pending.state)
             return;
 
          self.flushUpdate();
@@ -1182,11 +1198,17 @@ var GitDiffGutter = function(editor, strings) {
       // (see peekRow), which covers the padding standing in for the removed
       // lines above that line (and the line), from the padding's top: the
       // bottom of the line before, or above the first line, its rowsAbove.
+      // Where chunk output holds that line's row, the bar goes on the line
+      // before and takes the padding on below it (see $addWidget in
+      // git_diff_split.js); it is drawn after the padding, against the
+      // marked line, and held up to the padding's top the same way.
       var widget = peek.widget;
       var chunk = peek.chunk;
       var el = widget.el;
       var lineHeight = this.editor.renderer.layerConfig.lineHeight;
+      var lentBelow = (widget.gitDiffLentRows || 0) - (widget.gitDiffLentAbove || 0);
       var floor = null;
+      var drop = 0;
       if (!widget.hidden && !isDeletion(chunk) && widget.row >= chunk.new.start.row)
       {
          floor = this.rowScreenTop(chunk.new.start.row) + lineHeight;
@@ -1197,6 +1219,13 @@ var GitDiffGutter = function(editor, strings) {
             ? this.rowScreenBottom(widget.row - 1)
             : this.rowScreenTop(0) - (widget.rowsAbove || 0) * lineHeight;
          floor = paddingTop + lineHeight;
+      }
+      else if (!widget.hidden && peek.compact && isDeletion(chunk) &&
+               widget.row === chunk.new.start.row - 1 &&
+               widget.row < this.displayRow(chunk) && lentBelow > 0)
+      {
+         drop = lentBelow * lineHeight;
+         floor = this.rowScreenBottom(widget.row) + lineHeight;
       }
 
       // (the floor is the bottom of the first screen line covered, not of
@@ -1209,14 +1238,15 @@ var GitDiffGutter = function(editor, strings) {
          var header = el.firstChild;
          height = el.clientTop + header.offsetTop + header.offsetHeight;
 
-         var top = this.rowScreenBottom(widget.row);
+         var top = this.rowScreenBottom(widget.row) + drop;
          var bottom = this.editor.renderer.$size.scrollerHeight;
          lift = top - Math.max(Math.min(top, bottom - height), floor);
       }
 
       var pinned = lift > 0;
+      var shift = drop - lift;
       dom.setCssClass(el, PEEK_CLASS + "-pinned", pinned);
-      el.style.transform = pinned ? "translateY(" + -lift + "px)" : "";
+      el.style.transform = (shift !== 0) ? "translateY(" + shift + "px)" : "";
 
       // (the clip leaves room above for the pinned header's shadow)
       el.style.clipPath = pinned ? "inset(-8px 0 calc(100% - " + height + "px) 0)" : "";
