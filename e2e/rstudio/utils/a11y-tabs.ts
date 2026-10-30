@@ -1,4 +1,5 @@
 import { expect, type Page, type Request } from '@playwright/test';
+import { ENV_PANEL, ENV_TAB } from '../pages/environment_pane.page';
 import { executeCommand } from './commands';
 import { TIMEOUTS } from './constants';
 
@@ -20,9 +21,9 @@ const FILES_HOME: HomeTab = {
 
 const ENVIRONMENT_HOME: HomeTab = {
   name: 'Environment',
-  tab: '#rstudio_workbench_tab_environment',
+  tab: ENV_TAB,
   command: 'activateEnvironment',
-  ready: '#rstudio_workbench_panel_environment',
+  ready: ENV_PANEL,
 };
 
 // The tab switch only schedules a passive save, 5 s out (ClientStateUpdater).
