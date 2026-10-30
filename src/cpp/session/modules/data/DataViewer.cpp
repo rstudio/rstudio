@@ -281,9 +281,8 @@ struct CachedFrame : MoveOnly
 
       // cache number of rows, but only for 'local' data
       // (avoid potentially expensive queries for remote tables)
-      nrow = Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix")
-            ? safeDim(sexp, DIM_ROWS)
-            : -1;
+      if (Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix"))
+         nrow = safeDim(sexp, DIM_ROWS);
       
       // cache number of columns
       ncol = safeDim(sexp, DIM_COLS);
