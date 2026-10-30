@@ -310,11 +310,18 @@ runWatchdogProcess() {
 
    RETCODE="$?"
    if [ "${RETCODE}" = "124" ]; then
-      # process is hanging - use gdb to collect a stack trace to find out why
+      # process is hanging - use gdb to collect a stack trace to find out why.
+      # sudo -n fails rather than prompting: a password prompt nobody answers
+      # (output sent to a log, or an unattended run) would block forever
       echo "Hang detected. Dumping backtrace..."
       PID=$(pgrep -nf "${command}")
-      sudo gdb -q -batch -ex 'thread apply all backtrace' -p "${PID}"
-      sudo kill -9 "${PID}"
+      if ! sudo -n gdb -q -batch -ex 'thread apply all backtrace' -p "${PID}"; then
+         echo "WARNING: could not collect a backtrace (gdb unavailable, or sudo needs a password)"
+      fi
+
+      # the process is ours unless the run was privileged, so a refused sudo
+      # must not leave it running
+      kill -9 "${PID}" 2> /dev/null || sudo -n kill -9 "${PID}"
       UNIT_TEST_FAILURE=true
    elif [ "${RETCODE}" != "0" ]; then
       echo "DIAGNOSTICS: runWatchDogProcess flagging a failure: RETCODE=${RETCODE}"
