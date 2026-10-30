@@ -259,44 +259,63 @@ int safeDim(SEXP data, DimType dimType)
    return 0;
 }
 
+} // anonymous namespace
+
+namespace detail {
+
+FrameShape frameShape(SEXP sexp)
+{
+   FrameShape shape;
+   if (sexp == nullptr)
+      return shape;
+
+   // cache list of column names
+   r::sexp::Protect protect;
+   SEXP namesSEXP = R_NilValue;
+   r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
+   if (!Rf_isNull(namesSEXP))
+   {
+      r::sexp::extract(namesSEXP, &shape.colNames);
+   }
+
+   // cache number of rows, but only for 'local' data
+   // (avoid potentially expensive queries for remote tables)
+   if (Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix"))
+      shape.nrow = safeDim(sexp, DIM_ROWS);
+
+   // cache number of columns
+   shape.ncol = safeDim(sexp, DIM_COLS);
+
+   return shape;
+}
+
+bool shapeChanged(const FrameShape& before, const FrameShape& after)
+{
+   return before.nrow != after.nrow ||
+          before.ncol != after.ncol ||
+          before.colNames != after.colNames;
+}
+
+} // namespace detail
+
+namespace {
+
 // CachedFrame represents an object that's currently active in a data viewer window.
 struct CachedFrame : MoveOnly
 {
    CachedFrame(const std::string& env, const std::string& obj, SEXP sexp)
       : envName(env),
         objName(obj),
+        shape(detail::frameShape(sexp)),
         observedSEXP(sexp)
    {
-      if (sexp == nullptr)
-         return;
-
-      // cache list of column names
-      r::sexp::Protect protect;
-      SEXP namesSEXP = R_NilValue;
-      r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
-      if (!Rf_isNull(namesSEXP))
-      {
-         r::sexp::extract(namesSEXP, &colNames);
-      }
-
-      // cache number of rows, but only for 'local' data
-      // (avoid potentially expensive queries for remote tables)
-      if (Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix"))
-         nrow = safeDim(sexp, DIM_ROWS);
-      
-      // cache number of columns
-      ncol = safeDim(sexp, DIM_COLS);
    };
-   
+
    // The location of the frame (if we know it)
    std::string envName;
    std::string objName;
 
-   // The number of rows and columns; used to determine whether the shape of the frame has changed
-   // (necessitating a full reload of any displayed version of the frame). -1 means unknown,
-   // including for an object that wasn't bound when the frame was created.
-   int nrow = -1, ncol = -1;
-   std::vector<std::string> colNames;
+   detail::FrameShape shape;
 
    // The current search string and filter set
    std::string workingSearch;
@@ -1396,10 +1415,7 @@ void onDetectChanges(module_context::ChangeSource source)
          typeChanged = !R_compute_identical(oldClass, newClass, 0);
       }
 
-      bool structureChanged =
-            i->second.nrow != newFrame.nrow ||
-            i->second.ncol != newFrame.ncol ||
-            i->second.colNames != newFrame.colNames;
+      bool structureChanged = detail::shapeChanged(i->second.shape, newFrame.shape);
 
       bool frameChanged = sexpChanged || typeChanged || structureChanged;
 
@@ -1424,7 +1440,7 @@ void onDetectChanges(module_context::ChangeSource source)
       // later narrowed filter transforms FROM the stale copy; wrong values
       // persist until a widened filter, a detected change, or the tab
       // closes.) Matrices are excluded because change detection never
-      // queries their row count (CachedFrame leaves nrow at -1; note that
+      // queries their row count (frameShape leaves nrow at -1; note that
       // C-level Rf_inherits sees only a real class attribute, so it is FALSE
       // for a plain matrix regardless). Everything else keeps the
       // conservative per-prompt wipe: slower, but stale for at most one
