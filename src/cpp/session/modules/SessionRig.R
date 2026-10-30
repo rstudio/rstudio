@@ -106,14 +106,7 @@
    if (!.rs.platform.isMacos || identical(machine, "arm64"))
       return(machine)
 
-   arm64 <- .rs.tryCatch(suppressWarnings(
-      system2("/usr/sbin/sysctl", c("-n", "hw.optional.arm64"), stdout = TRUE, stderr = FALSE)
-   ))
-
-   if (is.character(arm64) && identical(trimws(arm64[1L]), "1"))
-      return("arm64")
-
-   machine
+   if (.rs.isAppleSilicon()) "arm64" else machine
 })
 
 #' Run rig with the given arguments, returning its parsed JSON output.
@@ -342,17 +335,40 @@
    bytes
 })
 
-#' Run launchctl, returning its output, or NULL when it fails.
-.rs.addFunction("rig.launchctl", function(args)
+#' Run a command, returning its output, or NULL when it fails.
+.rs.addFunction("rig.command", function(command, args)
 {
    output <- .rs.tryCatch(suppressWarnings(
-      system2("/bin/launchctl", shQuote(args), stdout = TRUE, stderr = FALSE)
+      system2(command, shQuote(args), stdout = TRUE, stderr = FALSE)
    ))
 
    if (inherits(output, "error") || !is.null(attr(output, "status", exact = TRUE)))
       return(NULL)
 
    paste(output, collapse = "\n")
+})
+
+#' Run launchctl, returning its output, or NULL when it fails.
+#'
+#' 'getenv', 'setenv' and 'unsetenv' act on the caller's launchd session, and
+#' an RStudio started outside the GUI login (from tmux, say) is in a
+#' Background session of its own: there they neither see nor change the
+#' RSTUDIO_WHICH_R that rig's agent exports to the GUI session, the one
+#' applications opened from the Finder or the Dock inherit. They are run in
+#' the GUI session through 'launchctl asuser' instead. The verbs for jobs
+#' ('list', 'load', 'unload') reach the GUI session's agents from either.
+.rs.addFunction("rig.launchctl", function(args)
+{
+   if (args[[1L]] %in% c("getenv", "setenv", "unsetenv"))
+   {
+      uid <- .rs.rig.command("/usr/bin/id", "-u")
+      if (is.null(uid))
+         return(NULL)
+
+      args <- c("asuser", uid, "/bin/launchctl", args)
+   }
+
+   .rs.rig.command("/bin/launchctl", args)
 })
 
 #' The state of rig's default-R setup before a user-mode install: which of

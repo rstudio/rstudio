@@ -21,6 +21,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
@@ -132,7 +133,10 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void onDoubleClick(DoubleClickEvent event)
          {
-            SelectionCommitEvent.fire(RowTable.this, data_.get(selectedRow_));
+            // blank space below a short list's rows is not a row
+            Element rowEl = findRowElement(event.getNativeEvent());
+            if (rowEl != null)
+               SelectionCommitEvent.fire(RowTable.this, data_.get(getRowIndex(rowEl)));
          }
       }, DoubleClickEvent.getType());
       
@@ -141,16 +145,7 @@ public abstract class RowTable<T> extends ScrollPanel
          @Override
          public void onClick(ClickEvent event)
          {
-            Element eventTarget = event.getNativeEvent().getEventTarget().cast();
-            Element rowEl = DomUtils.findParentElement(eventTarget, new ElementPredicate()
-            {
-               @Override
-               public boolean test(Element el)
-               {
-                  return el.hasClassName(RES.styles().row());
-               }
-            });
-            
+            Element rowEl = findRowElement(event.getNativeEvent());
             if (rowEl != null)
             {
                selectRow(rowEl);
@@ -166,7 +161,7 @@ public abstract class RowTable<T> extends ScrollPanel
          {
             NativeEvent event = keyEvent.getNativeEvent();
             int code = event.getKeyCode();
-            
+
             int modifier = KeyboardShortcut.getModifierValue(event);
             if (modifier == KeyboardShortcut.NONE || modifier == KeyboardShortcut.SHIFT)
             {
@@ -210,6 +205,14 @@ public abstract class RowTable<T> extends ScrollPanel
                   }
                }
             }
+
+            // keyboard use means a keyboard user, even if focus arrived by
+            // mouse; shown after handling the key, so that with no option
+            // active yet the first Down lands on row 0. Tab and a lone
+            // modifier (the Shift of Shift+Tab) may only be leaving: the ring
+            // would scroll row 0 into view as focus goes
+            if (code != KeyCodes.KEY_TAB && !KeyboardHelper.isModifierKey(code))
+               showFocusRing();
          }
       }, KeyDownEvent.getType());
       
@@ -225,6 +228,7 @@ public abstract class RowTable<T> extends ScrollPanel
       
       setFocusEventListener(table_);
       addStyleName(RES.styles().panel());
+      syncEmptyState();
    }
    
    private final native void setFocusEventListener(Element table)
@@ -245,15 +249,114 @@ public abstract class RowTable<T> extends ScrollPanel
       if (StringUtil.equals(event.getType(), "focus"))
       {
          addStyleName(RES.styles().active());
+         if (matchesFocusVisible(table_))
+            showFocusRing();
       }
       else if (StringUtil.equals(event.getType(), "blur"))
       {
          removeStyleName(RES.styles().active());
+         removeStyleName(RES.styles().focusVisible());
+         setActiveRow(-1);
+         updateActiveDescendant();
       }
       else
       {
          Debug.logWarning("Unexpected event type '" + event.getType() + "'");
       }
+   }
+   
+   // The focus ring goes on the current option rather than the table, as a
+   // native listbox draws it; an empty list rings its scroll panel instead.
+   // Engines without :focus-visible (HtmlUnit in unit tests) throw on the
+   // selector; there the ring appears on the first keypress instead.
+   private static final native boolean matchesFocusVisible(Element el)
+   /*-{
+      try {
+         return el.matches(":focus-visible");
+      } catch (e) {
+         if (e.name === "SyntaxError")
+            return false;
+         throw e;
+      }
+   }-*/;
+   
+   // The ring and the active option come and go together, so what is shown,
+   // what a screen reader announces, and where the arrow keys start agree.
+   // Mouse focus shows neither: the first key press brings both. A key's
+   // handler can move focus away first (Enter opening the Save dialog's
+   // overwrite prompt), and blur has already removed the ring by then.
+   private void showFocusRing()
+   {
+      if (isFocusRingShown() || !table_.equals(DomUtils.getActiveElement()))
+         return;
+      
+      addStyleName(RES.styles().focusVisible());
+      activateFirstRowIfUnselected(true);
+   }
+   
+   private boolean isFocusRingShown()
+   {
+      return getElement().hasClassName(RES.styles().focusVisible());
+   }
+   
+   // Per the ARIA listbox pattern, focus lands on the first option when none
+   // is selected. It becomes the active descendant without being selected,
+   // since selecting it would change a dialog's chosen file or folder.
+   private void activateFirstRowIfUnselected(boolean scrollIntoView)
+   {
+      if (selectedRow_ != -1 || data_.isEmpty())
+         return;
+      
+      setActiveRow(0);
+      updateActiveDescendant();
+      if (scrollIntoView)
+         scrollIntoViewIfNeeded(0);
+   }
+   
+   private void setActiveRow(int row)
+   {
+      TableRowElement rowEl = getRenderedRowElement(activeRow_);
+      if (rowEl != null)
+         rowEl.removeClassName(RES.styles().focused());
+      
+      activeRow_ = row;
+      rowEl = getRenderedRowElement(row);
+      if (rowEl != null)
+         rowEl.addClassName(RES.styles().focused());
+   }
+   
+   // Names the current option -- the selected one, else the focused one --
+   // only while virtualization renders it: the attribute must reference an
+   // element in the document.
+   private void updateActiveDescendant()
+   {
+      int row = selectedRow_ == -1 ? activeRow_ : selectedRow_;
+      TableRowElement rowEl = getRenderedRowElement(row);
+      if (rowEl == null)
+         table_.removeAttribute("aria-activedescendant");
+      else
+         table_.setAttribute("aria-activedescendant", rowEl.getId());
+   }
+   
+   // Virtualization renders only a window of rows; returns null for rows
+   // outside it. Offsets skip the colgroup and top padding elements.
+   private TableRowElement getRenderedRowElement(int row)
+   {
+      int index = row - offset_;
+      if (row == -1 || index < 0 || index >= table_.getChildCount() - 3)
+         return null;
+      
+      return table_.getChild(index + 2).cast();
+   }
+   
+   private void syncEmptyState()
+   {
+      setStyleName(RES.styles().empty(), data_.isEmpty());
+   }
+   
+   private String getRowId(int row)
+   {
+      return id_ + "_row_" + row;
    }
    
    public T getSelectedItem()
@@ -268,6 +371,7 @@ public abstract class RowTable<T> extends ScrollPanel
       if (selectedRowElement_ != null)
       {
          selectedRowElement_.removeClassName(RES.styles().selected());
+         selectedRowElement_.removeAttribute("aria-selected");
          selectedRowElement_ = null;
       }
      
@@ -292,6 +396,8 @@ public abstract class RowTable<T> extends ScrollPanel
          selectedRow_ = -1;
          selectRow(row, ScrollType.NONE);
       }
+      
+      updateActiveDescendant();
    }
 
    public void draw(List<T> data)
@@ -305,6 +411,7 @@ public abstract class RowTable<T> extends ScrollPanel
          clear();
 
       data_ = data;
+      syncEmptyState();
 
       buffer_.setLength(0);
       bufferTimer_.cancel();
@@ -326,6 +433,13 @@ public abstract class RowTable<T> extends ScrollPanel
       
       bottomPaddingRowEl_ = drawPaddingRow(getBottomPaddingHeight());
       bottomPaddingRowEl_.setAttribute("aria-hidden", "true");
+      
+      // a redraw (e.g. a file dialog navigating) can happen while focused;
+      // blur removes the ring, so it shows only while the table has focus
+      if (isFocusRingShown())
+         activateFirstRowIfUnselected(false);
+      
+      updateActiveDescendant();
    }
    
    private void drawRow(int index, TableRowElement rowEl)
@@ -334,7 +448,13 @@ public abstract class RowTable<T> extends ScrollPanel
 
       // set internal attributes used for tracking a row's index in the DOM
       rowEl.setAttribute("__row", String.valueOf(index));
-      rowEl.setId(id_ + "_row_" + index);
+      rowEl.setId(getRowId(index));
+      
+      // redraws reuse row elements, so the class must be cleared as well as set
+      if (index == activeRow_)
+         rowEl.addClassName(RES.styles().focused());
+      else
+         rowEl.removeClassName(RES.styles().focused());
 
       // call back to implementing subclass to draw the row
       drawRowImpl(object, rowEl);
@@ -430,14 +550,17 @@ public abstract class RowTable<T> extends ScrollPanel
    public void clear()
    {
       data_.clear();
+      syncEmptyState();
       table_.removeAllChildren();
       SelectionEvent.fire(this, null);
       
       selectedRow_ = -1;
       selectedRowElement_ = null;
       selectedItem_ = null;
+      activeRow_ = -1;
       
       offset_ = 0;
+      updateActiveDescendant();
    }
    
    private void selectRow(NativeEvent event, int row)
@@ -454,9 +577,19 @@ public abstract class RowTable<T> extends ScrollPanel
    
    public void selectRow(int row, ScrollType scrollType)
    {
+      // an empty list clamps some targets (Up, End, PageUp) to row 0
+      if (data_.isEmpty())
+         return;
+
       row = MathUtil.clamp(row, 0, data_.size() - 1);
       if (row == selectedRow_)
          return;
+      
+      setActiveRow(-1);
+      
+      // callers may append to the list passed to draw() and then select the
+      // new row without redrawing (DirectoryContentsWidget.addDirectory)
+      syncEmptyState();
       
       if (selectedRowElement_ != null)
       {
@@ -469,18 +602,16 @@ public abstract class RowTable<T> extends ScrollPanel
       selectedItem_ = data_.get(selectedRow_);
       SelectionEvent.fire(this, getSelectedItem());
       
-      // check if the requested row is part of the current view;
-      // if so, apply selection styling to it. note that we need
-      // to tweak offsets to handle colgroup + padding elements
-      int index = row - offset_;
-      if (index >= 0 && index <= table_.getChildCount() - 3)
+      // if the requested row is part of the current view,
+      // apply selection styling to it
+      selectedRowElement_ = getRenderedRowElement(row);
+      if (selectedRowElement_ != null)
       {
-         selectedRowElement_ = table_.getChild(index + 2).cast();
          selectedRowElement_.addClassName(RES.styles().selected());
          selectedRowElement_.setAttribute("aria-selected", "true");
-         table_.setAttribute("aria-activedescendant", selectedRowElement_.getId());
          DomUtils.setFocus(selectedRowElement_, true);
       }
+      updateActiveDescendant();
       
       if (scrollType != ScrollType.NONE)
       {
@@ -506,15 +637,33 @@ public abstract class RowTable<T> extends ScrollPanel
    
    private void selectRow(Element rowEl)
    {
-      String row = rowEl.getAttribute("__row");
-      selectRow(Integer.valueOf(row));
+      selectRow(getRowIndex(rowEl));
+   }
+   
+   private Element findRowElement(NativeEvent event)
+   {
+      Element target = event.getEventTarget().cast();
+      return DomUtils.findParentElement(target, new ElementPredicate()
+      {
+         @Override
+         public boolean test(Element el)
+         {
+            return el.hasClassName(RES.styles().row());
+         }
+      });
+   }
+   
+   private static int getRowIndex(Element rowEl)
+   {
+      return Integer.valueOf(rowEl.getAttribute("__row"));
    }
    
    private void selectOffset(NativeEvent event, int offset)
    {
       event.stopPropagation();
       event.preventDefault();
-      selectRow(selectedRow_ + offset);
+      int current = selectedRow_ == -1 ? activeRow_ : selectedRow_;
+      selectRow(current + offset);
    }
    
    private void selectPrefix(NativeEvent event, String ch)
@@ -637,6 +786,9 @@ public abstract class RowTable<T> extends ScrollPanel
    private TableRowElement selectedRowElement_ = null;
    private T selectedItem_ = null;
    
+   // The option that has focus while none is selected, or -1.
+   private int activeRow_ = -1;
+   
    // Members related to the current rows in view, used for virtualization.
    private List<T> data_;
    private final Timer scrollTimer_;
@@ -659,7 +811,10 @@ public abstract class RowTable<T> extends ScrollPanel
       String row();
       
       String active();
+      String focusVisible();
+      String empty();
       String selected();
+      String focused();
    }
    
    public interface Resources extends ClientBundle

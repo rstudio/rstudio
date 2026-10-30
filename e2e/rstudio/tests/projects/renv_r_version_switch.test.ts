@@ -116,6 +116,14 @@ function launchctl(args: string[]): string {
   }
 }
 
+// launchctl getenv/setenv/unsetenv act on the caller's launchd session, which
+// under tmux is a Background session rather than the GUI session where rig's
+// agent exports RSTUDIO_WHICH_R (and that Dock-launched apps inherit), so
+// launchd's environment is read and changed in the GUI session instead.
+function launchdEnv(args: string[]): string {
+  return launchctl(["asuser", String(process.getuid!()), "/bin/launchctl", ...args]);
+}
+
 // The files rig creates when the first R it installs in user mode becomes the
 // default R, under the given HOME: rig's current-version link, the R and
 // Rscript quick links, and on macOS a LaunchAgent that sets RSTUDIO_WHICH_R
@@ -338,7 +346,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
     // the session creates rig's quick-link directory before running it when a
     // fresh home has none yet; rig 0.11.0 fails outright without it (r-lib/rig#491)
     const profilesBefore = SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`));
-    const whichRBefore = process.platform === "darwin" ? launchctl(["getenv", "RSTUDIO_WHICH_R"]) : "";
+    const whichRBefore = process.platform === "darwin" ? launchdEnv(["getenv", "RSTUDIO_WHICH_R"]) : "";
 
     // launchd is per user, not per home: an agent of this label that is
     // already loaded (from a rig user-mode default in the real home) is the
@@ -383,7 +391,7 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
       expect(rigDefault.files.filter(pathExists)).toEqual([]);
       expect(SHELL_PROFILES.map((profile) => readOrNull(`${home}/${profile}`))).toEqual(profilesBefore);
       if (process.platform === "darwin") {
-        expect(launchctl(["getenv", "RSTUDIO_WHICH_R"])).toBe(whichRBefore);
+        expect(launchdEnv(["getenv", "RSTUDIO_WHICH_R"])).toBe(whichRBefore);
         expect(launchctl(["list", LAUNCH_AGENT])).toBe("");
       }
     } finally {
@@ -393,8 +401,8 @@ test.describe("renv lockfile R version", { tag: ["@desktop_only"] }, () => {
       if (process.platform === "darwin") {
         if (launchctl(["list", LAUNCH_AGENT]) !== "")
           launchctl(["bootout", `gui/${process.getuid!()}/${LAUNCH_AGENT}`]);
-        if (launchctl(["getenv", "RSTUDIO_WHICH_R"]) !== whichRBefore)
-          launchctl(whichRBefore ? ["setenv", "RSTUDIO_WHICH_R", whichRBefore] : ["unsetenv", "RSTUDIO_WHICH_R"]);
+        if (launchdEnv(["getenv", "RSTUDIO_WHICH_R"]) !== whichRBefore)
+          launchdEnv(whichRBefore ? ["setenv", "RSTUDIO_WHICH_R", whichRBefore] : ["unsetenv", "RSTUDIO_WHICH_R"]);
       }
     }
   });

@@ -222,8 +222,9 @@ function(fetch)
          set(CMAKE_C_FLAGS "${_CMAKE_C_FLAGS}")
          set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS}")
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
-         set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
-         set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
+         FetchContent_GetProperties(${_NAME} SOURCE_DIR src BINARY_DIR bin)
+         set("${_PREFIX}_SOURCE_DIR" "${src}" CACHE INTERNAL "")
+         set("${_PREFIX}_BINARY_DIR" "${bin}" CACHE INTERNAL "")
       endif()
 
    endwhile()
@@ -475,7 +476,6 @@ fetch(
    fmt                   FMT
    gsl-lite              GSL_LITE
    libgit2               LIBGIT2
-   gtest                 GTEST
    hunspell              HUNSPELL
    rapidjson             RAPIDJSON
    tl-expected           TL_EXPECTED
@@ -495,6 +495,10 @@ if(EXISTS "${_LIBGIT2_GIT2_H}.prev")
    else()
       file(RENAME "${_LIBGIT2_GIT2_H}.prev" "${_LIBGIT2_GIT2_H}")
    endif()
+endif()
+
+if(RSTUDIO_UNIT_TESTS_ENABLED)
+   fetch(GTest GTEST)
 endif()
 
 restore_global_settings()

@@ -23,15 +23,20 @@ import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.TextCursorTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
+import org.rstudio.core.client.cellview.TriStateCheckboxCellTests;
+import org.rstudio.core.client.command.AppCommandMenuImageTests;
 import org.rstudio.core.client.command.EmbeddedKeyRoutingTests;
+import org.rstudio.core.client.command.KeyMapDispatchTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
 import org.rstudio.core.client.layout.BinarySplitLayoutPanelTests;
+import org.rstudio.core.client.widget.CommandShortcutReferenceTests;
 import org.rstudio.core.client.widget.FastSelectTableTests;
 import org.rstudio.core.client.widget.LayoutGridTests;
 import org.rstudio.core.client.widget.MiniPopupPanelTests;
 import org.rstudio.core.client.widget.ModalDialogTrackerTests;
+import org.rstudio.core.client.widget.RowTableTests;
 import org.rstudio.core.client.widget.WidgetListBoxTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
@@ -77,12 +82,14 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(StringUtilTests.class);
       suite.addTestSuite(DebouncedCommandTests.class);
       suite.addTestSuite(EmbeddedKeyRoutingTests.class);
+      suite.addTestSuite(KeyMapDispatchTests.class);
       suite.addTestSuite(DomUtilsTests.class);
       suite.addTestSuite(MiniPopupPanelTests.class);
       suite.addTestSuite(ModalDialogTrackerTests.class);
       suite.addTestSuite(LayoutGridTests.class);
       suite.addTestSuite(WidgetListBoxTests.class);
       suite.addTestSuite(FastSelectTableTests.class);
+      suite.addTestSuite(RowTableTests.class);
       suite.addTestSuite(BinarySplitLayoutPanelTests.class);
       suite.addTestSuite(StatusBarWidgetTests.class);
       suite.addTestSuite(AnsiCodeTests.class);
@@ -107,6 +114,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(FileIconRendererTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
+      suite.addTestSuite(CommandShortcutReferenceTests.class);
       suite.addTestSuite(LintItemTests.class);
       suite.addTestSuite(PositAiInstallManagerTests.class);
       suite.addTestSuite(PackageLinkColumnTests.class);
@@ -119,6 +127,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(PrefsTests.class);
       suite.addTestSuite(VimrcLoaderTests.class);
       suite.addTestSuite(VcsStateTests.class);
+      suite.addTestSuite(AppCommandMenuImageTests.class);
+      suite.addTestSuite(TriStateCheckboxCellTests.class);
 
       return suite;
    }

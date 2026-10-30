@@ -363,15 +363,31 @@ public class ShortcutManager implements NativePreviewHandler,
 
    // Handles a keydown that Posit Assistant forwarded from its iframe (see
    // AssistantKeyForwarder). Only workbench-level commands run, and in a satellite
-   // only those that run in another window, so PA keeps every other key.
+   // only those that run in another window. PA keeps every other key, except while
+   // the strokes typed so far lead to one of those commands.
    public boolean onAssistantKeyDown(NativeEvent event)
    {
       keyTimer_.schedule(3000);
-      if (!handleKeyDown(event, true))
+      if (handleKeyDown(event, true))
+      {
+         events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
+         return true;
+      }
+
+      // Claim keys while the buffer holds strokes, as swallowEvents() does outside
+      // PA's iframe. handleKeyDown() keeps only strokes that lead to such a command,
+      // but leaves the buffer as is for a bare modifier or while it's disabled.
+      return !keyBuffer_.isEmpty();
+   }
+
+   private static boolean canRunFromAssistant(CommandBinding binding)
+   {
+      if (!binding.getContext().isWorkbenchLevel())
          return false;
 
-      events_.fireEvent(new RStudioCommandExecutedFromShortcutEvent());
-      return true;
+      // In a satellite, commands that stay there mostly have no handler, so
+      // leave those keys with Posit Assistant (and Desktop's menu)
+      return !Satellite.isCurrentWindowSatellite() || binding.isRoutedOutOfCurrentWindow();
    }
 
    public void setEditorMode(int editorMode)
@@ -548,17 +564,8 @@ public class ShortcutManager implements NativePreviewHandler,
          {
             clearKeyBuffer();
 
-            if (fromAssistant)
-            {
-               if (!binding.getContext().isWorkbenchLevel())
-                  return false;
-
-               // In a satellite, commands that stay there mostly have no handler, so
-               // leave those keys with Posit Assistant (and Desktop's menu)
-               if (Satellite.isCurrentWindowSatellite() &&
-                   !binding.isRoutedOutOfCurrentWindow())
-                  return false;
-            }
+            if (fromAssistant && !canRunFromAssistant(binding))
+               return false;
 
             XTermWidget xterm = XTermWidget.tryGetXTerm(Element.as(event.getEventTarget()));
             if (xterm != null)
@@ -639,7 +646,14 @@ public class ShortcutManager implements NativePreviewHandler,
             reportShortcutUnbound();
          }
       }
-      
+
+      // Posit Assistant keeps keys that lead only to commands it can't run
+      if (fromAssistant && pending)
+      {
+         pending = KeyMap.canDispatchAfter(
+               keyMaps_.values(), keyBuffer_, reportShortcutBinding_,
+               ShortcutManager::canRunFromAssistant);
+      }
 
       if (!(pending || isPrefixForEditor(keyCombination, event)))
          clearKeyBuffer();
