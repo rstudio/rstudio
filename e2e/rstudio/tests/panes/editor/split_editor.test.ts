@@ -8,7 +8,7 @@ import { TIMEOUTS } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
 import type { AceEditorElement } from '@utils/ace';
-import type { Locator, Page, Route } from '@playwright/test';
+import type { Locator, Page, Request, Route } from '@playwright/test';
 
 // https://github.com/rstudio/rstudio/issues/2129
 test.describe('Split editor', () => {
@@ -22,6 +22,8 @@ test.describe('Split editor', () => {
   // Outside the directory the Files pane lists, so changes to it on disk
   // raise no file change event.
   const UNLISTED_FILE = 'unlisted/split_editor.R';
+
+  const CHECK_FOR_EXTERNAL_EDIT = /\/rpc\/check_for_external_edit(?:\?|$)/;
 
   // The marker comment identifies the source editor views in the DOM.
   const CONTENT = heredoc`
@@ -795,35 +797,48 @@ test.describe('Split editor', () => {
   });
 
   test('reloading after an external change keeps the split view\'s selection', async ({ rstudioPage: page }) => {
-    await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
-      # split_view_marker
-      reload_a <- 1
-      reload_b <- 2
-      reload_c <- 3
-    `);
-    const views = sourceViews(page);
-    await executeCommand(page, 'splitEditorRight');
-    await expect(views).toHaveCount(2);
-    const primary = viewEditor(views.first());
-    const split = viewEditor(views.nth(1));
+    let lastCheck = 0;
+    const onRequest = (request: Request) => {
+      if (CHECK_FOR_EXTERNAL_EDIT.test(request.url()))
+        lastCheck = Date.now();
+    };
+    page.on('request', onRequest);
+    try {
+      await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+        # split_view_marker
+        reload_a <- 1
+        reload_b <- 2
+        reload_c <- 3
+      `);
+      const views = sourceViews(page);
+      await executeCommand(page, 'splitEditorRight');
+      await expect(views).toHaveCount(2);
+      const primary = viewEditor(views.first());
+      const split = viewEditor(views.nth(1));
 
-    await split.click();
-    await split.select({ start: { row: 2, column: 0 }, end: { row: 2, column: 8 } });
-    expect(await split.selectedText()).toBe('reload_b');
+      await split.click();
+      await split.select({ start: { row: 2, column: 0 }, end: { row: 2, column: 8 } });
+      expect(await split.selectedText()).toBe('reload_b');
 
-    await changeFileOnDisk(FILE, ['# split_view_marker', 'reload_a <- 1', 'reload_b <- 2', 'reload_c <- 30']);
+      await changeFileOnDisk(FILE, ['# split_view_marker', 'reload_a <- 1', 'reload_b <- 2', 'reload_c <- 30']);
 
-    // Focusing the primary view checks for external changes, and the
-    // unmodified document reloads by replacing its whole text, which would
-    // otherwise move the split view's cursor to the end of the file.
-    await primary.click();
-    await expect.poll(() => documentLine(page, 3), { timeout: TIMEOUTS.fileOpen }).toBe('reload_c <- 30');
-    expect(await split.selectedText()).toBe('reload_b');
+      // A check that ran before the file changed would make the primary
+      // view's check (500 ms after focus) one within a second of it, which is
+      // skipped (see TextEditingTarget.externalEditCheckInterval_).
+      await expect.poll(() => Date.now() - lastCheck).toBeGreaterThanOrEqual(1000);
+
+      // Focusing the primary view checks for external changes, and the
+      // unmodified document reloads by replacing its whole text, which would
+      // otherwise move the split view's cursor to the end of the file.
+      await primary.click();
+      await expect.poll(() => documentLine(page, 3), { timeout: TIMEOUTS.fileOpen }).toBe('reload_c <- 30');
+      expect(await split.selectedText()).toBe('reload_b');
+    } finally {
+      page.off('request', onRequest);
+    }
   });
 
   test('focusing the split view reloads a document changed on disk', async ({ rstudioPage: page }) => {
-    const CHECK_FOR_EXTERNAL_EDIT = /\/rpc\/check_for_external_edit(?:\?|$)/;
-
     // Opening the file focuses the primary view, which checks for changes
     // on disk after a delay; let that check finish before the file changes.
     const openCheck = page.waitForResponse(CHECK_FOR_EXTERNAL_EDIT);
