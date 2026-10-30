@@ -635,6 +635,53 @@ test.describe('Split editor', () => {
     expect(await split.hasFocus()).toBe(false);
   });
 
+  test('Ctrl+Up and Ctrl+Down jump between functions in the focused view', async ({ rstudioPage: page }) => {
+    const { primary, split } = await openWithFocusedSplit(page);
+
+    // from inside cmd_b: up to its own start, up to cmd_a, back down to cmd_b
+    await page.keyboard.press('Control+ArrowUp');
+    await expect.poll(() => split.cursorRow()).toBe(5);
+    await page.keyboard.press('Control+ArrowUp');
+    await expect.poll(() => split.cursorRow()).toBe(1);
+    await page.keyboard.press('Control+ArrowDown');
+    await expect.poll(() => split.cursorRow()).toBe(5);
+    expect(await primary.cursorRow()).toBe(2);
+  });
+
+  test('Enter continues a special comment in the focused view', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILE, heredoc`
+      # split_view_marker
+      #| label: split
+      split_x <- 10
+    `);
+    const views = sourceViews(page);
+    await executeCommand(page, 'splitEditorRight');
+    await expect(views).toHaveCount(2);
+    const split = viewEditor(views.nth(1));
+    await split.click();
+    await split.gotoLine(2);
+    await expect.poll(() => split.hasFocus()).toBe(true);
+
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => documentLine(page, 2)).toBe('#| ');
+    expect(await split.cursorRow()).toBe(2);
+  });
+
+  test('Escape in the focused view interrupts R', async ({ rstudioPage: page }) => {
+    const { split } = await openWithFocusedSplit(page);
+    const consoleInput = page.locator('#rstudio_console_input');
+
+    await consoleActions.executeInConsole('Sys.sleep(30)', { wait: false });
+    await expect(consoleInput).toHaveClass(/rstudio-console-busy/);
+    await split.click();
+    await expect.poll(() => split.hasFocus()).toBe(true);
+
+    // well inside the sleep, so only the interrupt can end it in time
+    await page.keyboard.press('Escape');
+    await expect(consoleInput).not.toHaveClass(/rstudio-console-busy/, { timeout: 10000 });
+  });
+
   // Whether the active document has unsaved changes.
   function activeDocDirty(page: Page) {
     return page.evaluate(() => window.rstudio?.documents.active()?.dirty ?? null);

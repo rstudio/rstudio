@@ -254,7 +254,6 @@ import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -671,158 +670,7 @@ public class TextEditingTarget implements
       assistant_ = new TextEditingTargetAssistantHelper(this, releaseOnDismiss_);
       
       EditingTarget target = this;
-      primaryDisplay_.addKeyDownHandler(new KeyDownHandler()
-      {
-         public void onKeyDown(KeyDownEvent event)
-         {
-            NativeEvent ne = event.getNativeEvent();
-            int mod = KeyboardShortcut.getModifierValue(ne);
-
-            if ((mod == KeyboardShortcut.META || (
-                  mod == KeyboardShortcut.CTRL &&
-                  !BrowseCap.hasMetaKey() &&
-                  !primaryDisplay_.isEmacsModeOn() &&
-                  (!primaryDisplay_.isVimModeOn() || primaryDisplay_.isVimInInsertMode())))
-                && ne.getKeyCode() == 'F')
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               commands_.findReplace().execute();
-            }
-            else if (BrowseCap.hasMetaKey() &&
-                     (mod == KeyboardShortcut.META) &&
-                     (ne.getKeyCode() == 'E'))
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               commands_.findFromSelection().execute();
-            }
-            else if (mod == KeyboardShortcut.CTRL
-                     && ne.getKeyCode() == KeyCodes.KEY_UP
-                     && fileType_ == FileTypeRegistry.R)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               jumpToPreviousFunction();
-            }
-            else if (mod == KeyboardShortcut.CTRL
-                     && ne.getKeyCode() == KeyCodes.KEY_DOWN
-                     && fileType_ == FileTypeRegistry.R)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               jumpToNextFunction();
-            }
-            else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
-                     prefs_.editorKeybindings().getValue() != UserPrefs.EDITOR_KEYBINDINGS_VIM)
-            {
-               // Ace's own listener runs first on this textarea; when one of
-               // its bindings claimed the key (closing the Git gutter peek,
-               // leaving multi-select), that press is spent and must not go
-               // on to interrupt R as well.
-               if (DomUtils.isDefaultPrevented(ne))
-                  return;
-
-               event.preventDefault();
-               event.stopPropagation();
-
-               // Don't send an interrupt if a popup is visible
-               if (primaryDisplay_.isPopupVisible())
-                  return;
-
-               // Don't send an interrupt if we're in a source window
-               if (!SourceWindowManager.isMainSourceWindow())
-                  return;
-
-               if (commands_.interruptR().isEnabled())
-                  commands_.interruptR().execute();
-            }
-            else if (TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(primaryDisplay_, ne))
-            {
-               // nothing to do; continueSpecialCommentOnNewline() does all the magic
-            }
-            else if (
-                  prefs_.continueCommentsOnNewline().getValue() &&
-                  !primaryDisplay_.isPopupVisible() &&
-                  ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
-                    (fileType_.isC() || isCursorInRMode(primaryDisplay_) || isCursorInTexMode(primaryDisplay_)))
-            {
-               String line = primaryDisplay_.getCurrentLineUpToCursor();
-               
-               // validate that this line is composed of only comments and whitespace
-               // (necessary to check token type for e.g. Markdown documents)
-               // https://github.com/rstudio/rstudio/issues/6421
-               JsArray<Token> tokens =
-                     primaryDisplay_.getTokens(primaryDisplay_.getCursorPosition().getRow());
-               
-               boolean isCommentLine = true;
-               for (int i = 0, n = tokens.length(); i < n; i++)
-               {
-                  Token token = tokens.get(i);
-                  
-                  // allow for empty whitespace tokens
-                  String value = token.getValue();
-                  if (value.trim().isEmpty())
-                     continue;
-                  
-                  // allow tokens explicitly declared as comments
-                  if (token.hasType("comment"))
-                     continue;
-                  
-                  // if we got here, then we got a non-whitespace, non-comment token,
-                  // so we cannot continue the comment
-                  isCommentLine = false;
-                  break;
-               }
-               
-               Pattern pattern = null;
-               
-               if (!isCommentLine)
-               {
-                  pattern = null;
-               }
-               else if (isCursorInRMode(primaryDisplay_))
-               {
-                  pattern = Pattern.create("^(\\s*#+'?\\s*)");
-               }
-               else if (isCursorInTexMode(primaryDisplay_))
-               {
-                  pattern = Pattern.create("^(\\s*%+'?\\s*)");
-               }
-               else if (fileType_.isC())
-               {
-                  // bail on attributes
-                  if (!line.matches("^\\s*//\\s*\\[\\[.*\\]\\].*"))
-                     pattern = Pattern.create("^(\\s*//'?\\s*)");
-               }
-
-               if (pattern != null)
-               {
-                  Match match = pattern.match(line, 0);
-                  if (match != null)
-                  {
-                     event.preventDefault();
-                     event.stopPropagation();
-                     primaryDisplay_.insertCode("\n" + match.getGroup(1));
-                     primaryDisplay_.scrollCursorIntoView();
-                  }
-               }
-            }
-            else if (
-                  prefs_.continueCommentsOnNewline().getValue() &&
-                  !primaryDisplay_.isPopupVisible() &&
-                  ne.getKeyCode() == KeyCodes.KEY_ENTER &&
-                  mod == KeyboardShortcut.SHIFT)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               String indent = primaryDisplay_.getNextLineIndent();
-               primaryDisplay_.insertCode("\n" + indent);
-               primaryDisplay_.scrollCursorIntoView();
-            }
-            events_.fireEvent(new EditingTargetSelectedEvent(target));
-         }
-      });
+      primaryDisplay_.addKeyDownHandler(event -> onEditorKeyDown(primaryDisplay_, event));
 
       primaryDisplay_.addClickHandler(new ClickHandler()
       {
@@ -1657,22 +1505,174 @@ public class TextEditingTarget implements
             onInstall);
    }
 
-   private void jumpToPreviousFunction()
+   // Key bindings the editor handles outside Ace. The view also registers
+   // this on the split view, so each acts on the view it was pressed in.
+   void onEditorKeyDown(DocDisplay display, KeyDownEvent event)
    {
-      Scope jumpTo = scopeHelper_.getPreviousFunction(
-            primaryDisplay_.getCursorPosition());
+      NativeEvent ne = event.getNativeEvent();
+      int mod = KeyboardShortcut.getModifierValue(ne);
 
-      if (jumpTo != null)
-         primaryDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
+      if ((mod == KeyboardShortcut.META || (
+            mod == KeyboardShortcut.CTRL &&
+            !BrowseCap.hasMetaKey() &&
+            !display.isEmacsModeOn() &&
+            (!display.isVimModeOn() || display.isVimInInsertMode())))
+          && ne.getKeyCode() == 'F')
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         commands_.findReplace().execute();
+      }
+      else if (BrowseCap.hasMetaKey() &&
+               (mod == KeyboardShortcut.META) &&
+               (ne.getKeyCode() == 'E'))
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         commands_.findFromSelection().execute();
+      }
+      else if (mod == KeyboardShortcut.CTRL
+               && ne.getKeyCode() == KeyCodes.KEY_UP
+               && fileType_ == FileTypeRegistry.R)
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         jumpToPreviousFunction(display);
+      }
+      else if (mod == KeyboardShortcut.CTRL
+               && ne.getKeyCode() == KeyCodes.KEY_DOWN
+               && fileType_ == FileTypeRegistry.R)
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         jumpToNextFunction(display);
+      }
+      else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
+               prefs_.editorKeybindings().getValue() != UserPrefs.EDITOR_KEYBINDINGS_VIM)
+      {
+         // Ace's own listener runs first on this textarea; when one of
+         // its bindings claimed the key (closing the Git gutter peek,
+         // leaving multi-select), that press is spent and must not go
+         // on to interrupt R as well.
+         if (DomUtils.isDefaultPrevented(ne))
+            return;
+
+         event.preventDefault();
+         event.stopPropagation();
+
+         // Don't send an interrupt if a popup is visible
+         if (display.isPopupVisible())
+            return;
+
+         // Don't send an interrupt if we're in a source window
+         if (!SourceWindowManager.isMainSourceWindow())
+            return;
+
+         if (commands_.interruptR().isEnabled())
+            commands_.interruptR().execute();
+      }
+      else if (TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(display, ne))
+      {
+         // nothing to do; continueSpecialCommentOnNewline() does all the magic
+      }
+      else if (
+            prefs_.continueCommentsOnNewline().getValue() &&
+            !display.isPopupVisible() &&
+            ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
+              (fileType_.isC() || isCursorInRMode(display) || isCursorInTexMode(display)))
+      {
+         String line = display.getCurrentLineUpToCursor();
+         
+         // validate that this line is composed of only comments and whitespace
+         // (necessary to check token type for e.g. Markdown documents)
+         // https://github.com/rstudio/rstudio/issues/6421
+         JsArray<Token> tokens =
+               display.getTokens(display.getCursorPosition().getRow());
+         
+         boolean isCommentLine = true;
+         for (int i = 0, n = tokens.length(); i < n; i++)
+         {
+            Token token = tokens.get(i);
+            
+            // allow for empty whitespace tokens
+            String value = token.getValue();
+            if (value.trim().isEmpty())
+               continue;
+            
+            // allow tokens explicitly declared as comments
+            if (token.hasType("comment"))
+               continue;
+            
+            // if we got here, then we got a non-whitespace, non-comment token,
+            // so we cannot continue the comment
+            isCommentLine = false;
+            break;
+         }
+         
+         Pattern pattern = null;
+         
+         if (!isCommentLine)
+         {
+            pattern = null;
+         }
+         else if (isCursorInRMode(display))
+         {
+            pattern = Pattern.create("^(\\s*#+'?\\s*)");
+         }
+         else if (isCursorInTexMode(display))
+         {
+            pattern = Pattern.create("^(\\s*%+'?\\s*)");
+         }
+         else if (fileType_.isC())
+         {
+            // bail on attributes
+            if (!line.matches("^\\s*//\\s*\\[\\[.*\\]\\].*"))
+               pattern = Pattern.create("^(\\s*//'?\\s*)");
+         }
+
+         if (pattern != null)
+         {
+            Match match = pattern.match(line, 0);
+            if (match != null)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               display.insertCode("\n" + match.getGroup(1));
+               display.scrollCursorIntoView();
+            }
+         }
+      }
+      else if (
+            prefs_.continueCommentsOnNewline().getValue() &&
+            !display.isPopupVisible() &&
+            ne.getKeyCode() == KeyCodes.KEY_ENTER &&
+            mod == KeyboardShortcut.SHIFT)
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         String indent = display.getNextLineIndent();
+         display.insertCode("\n" + indent);
+         display.scrollCursorIntoView();
+      }
+      events_.fireEvent(new EditingTargetSelectedEvent(this));
    }
 
-   private void jumpToNextFunction()
+   private void jumpToPreviousFunction(DocDisplay display)
    {
-      Scope jumpTo = scopeHelper_.getNextFunction(
-            primaryDisplay_.getCursorPosition());
+      Scope jumpTo = new TextEditingTargetScopeHelper(display).getPreviousFunction(
+            display.getCursorPosition());
 
       if (jumpTo != null)
-         primaryDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
+         display.navigateToPosition(toSourcePosition(jumpTo), true);
+   }
+
+   private void jumpToNextFunction(DocDisplay display)
+   {
+      Scope jumpTo = new TextEditingTargetScopeHelper(display).getNextFunction(
+            display.getCursorPosition());
+
+      if (jumpTo != null)
+         display.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
    public void initialize(SourceColumn column,

@@ -646,6 +646,13 @@ public class TextEditingTargetWidget
          target_.splitEditorFocused();
       }));
 
+      // the editor's own key bindings (Esc to interrupt R, Ctrl+Up/Down
+      // between functions, continuing comments on Enter), as for the
+      // primary view
+      AceEditor splitEditor = splitEditor_;
+      splitEditorRegistrations_.add(splitEditor.addKeyDownHandler(event ->
+            target_.onEditorKeyDown(splitEditor, event)));
+
       // keep the status bar in sync with the split view's cursor
       splitEditorRegistrations_.add(splitEditor_.addCursorChangedHandler(event ->
             target_.splitEditorCursorChanged(event.getPosition())));
