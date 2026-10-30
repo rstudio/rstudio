@@ -14,9 +14,11 @@ import { getPref, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 // ---------------------------------------------------------------------------
-// Project-level skill (lives in <project>/.positai/skills/ under a sandbox
-// project. Absolute paths are computed in beforeAll once the sandbox dir
-// is known.)
+// Project-level skill (lives in <project>/.posit/assistant/skills/ under a
+// sandbox project. Absolute paths are computed in beforeAll once the sandbox
+// dir is known.) Not the legacy <project>/.positai/skills/: Posit Assistant
+// still reads it, but shows a "Legacy config" banner that, with a tip also
+// showing, pushes the tool-approval row behind the composer in a narrow pane.
 // ---------------------------------------------------------------------------
 
 const PROJECT_NAME = 'user_skills_test_project';
@@ -109,7 +111,7 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     // -----------------------------------------------------------------------
     const sandboxR = sandbox.dir.replace(/\\/g, '/');
     const projectDir = await createAndOpenProject(page, sandboxR, PROJECT_NAME);
-    projectSkillDir = `${projectDir}/.positai/skills/${PROJECT_SKILL_NAME}`;
+    projectSkillDir = `${projectDir}/.posit/assistant/skills/${PROJECT_SKILL_NAME}`;
     projectSkillPath = `${projectSkillDir}/SKILL.md`;
 
     // Re-create actions after session restart
@@ -139,7 +141,7 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     }
 
     // -----------------------------------------------------------------------
-    // Step 2: Create a project-level skill (.positai/skills/ in workspace)
+    // Step 2: Create a project-level skill (.posit/assistant/skills/ in workspace)
     // -----------------------------------------------------------------------
     await createSkillFile(
       consoleActions,
