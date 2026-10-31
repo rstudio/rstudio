@@ -1,12 +1,7 @@
-## RStudio 2026.11.0 "Montauk Daisy" Release Notes
+## RStudio 2026.12.0 "Parrot Balsam" Release Notes
 
 ### New
-- ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed is installed first, via [rig](https://github.com/r-lib/rig), in a background job, using the copy of rig bundled with RStudio. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
-- ([#19166](https://github.com/rstudio/rstudio/issues/19166)): Web hyperlink previews now show an Open in Browser icon alongside the URL.
-- ([#19114](https://github.com/rstudio/rstudio/issues/19114)): Save Plot as Image can now compress TIFF images (with LZW, the default, or ZIP, each with or without a predictor where R supports it) and choose the quality of JPEG images. TIFFs were previously uncompressed, e.g. 36 MB for a 7 x 5 in plot saved at 600 DPI, and are now typically under 1 MB.
-- ([#19142](https://github.com/rstudio/rstudio/issues/19142)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
-- ([#2846](https://github.com/rstudio/rstudio/issues/2846)): The editor gutter now marks lines that were added, changed, or removed since they were last staged or committed, for files in a Git repository. The markers update as you type; clicking one shows the previous version of those lines and offers to revert the change, and Tools > Version Control gains Next Change, Previous Change, and Revert Change at Cursor. The markers can be disabled in Global Options > Git/SVN.
-- ([#19208](https://github.com/rstudio/rstudio/issues/19208)): Tools > Version Control > Show Changes Side by Side shows the version of the current file last staged or committed beside the document, read-only, with the changes between them highlighted on both sides, unchanged lines kept level, and scrolling in step. The document stays editable, and the comparison follows as you type.
+-
 
 ### Fixed
 - ([#19298](https://github.com/rstudio/rstudio/issues/19298)): Fixed an issue where editor commands such as Comment/Uncomment Lines, Reformat Selection, Rename in Scope, Insert Chunk, folding, and scope navigation acted on the original view instead of the focused one in a split editor. Text inserted or replaced with `rstudioapi` (e.g. `insertText()`, `selectionSet()`) now also goes to the focused view, matching the selection that `getActiveDocumentContext()` reports. In the second view, Escape now interrupts R, Ctrl+Up/Down move between functions, and Enter continues comments, as in the original view. Rename in Scope also works again in Visual Mode code chunks.
@@ -84,15 +79,8 @@
 
 ### Deprecated / Removed
 - ([#19041](https://github.com/rstudio/rstudio/issues/19041)): Removed the "What's New" window from RStudio Desktop, along with its **Help** > **What's New** command, its preference, and the `RSTUDIO_DISABLE_WHATS_NEW` environment variable. Use **Help** > **Release Notes** to see what changed in a release.
+-
 
 ### Dependencies
-- Copilot Language Server 1.555.7
-- Electron 44.10.0
-- RStudio Desktop now bundles rig 0.11.0 for discovering and installing R.
-- GWT 2.13.1
-- Node.js 24.22.1 (GitHub Copilot, Posit Assistant)
-- Quarto 1.10.19
-- RStudio Desktop on macOS no longer bundles unused gettext and SQLite libraries, and RStudio Desktop Pro no longer requires the PostgreSQL client library (libpq) or Kerberos on macOS and Linux
-- Updated OpenSSL on Windows from 3.1.4 to 3.5.9
-- Updated OpenSSL on macOS from 3.6.3 to 3.5.9, the long-term support release
+-
 

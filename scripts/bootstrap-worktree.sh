@@ -20,7 +20,10 @@
 # worktree can't corrupt the parent's node_modules through a shared inode.
 #
 # Falls back to `npm ci` when the lockfiles differ (the branch changed deps) or
-# the main checkout has no node_modules to clone.
+# the main checkout has no node_modules to clone. `npm ci` runs under the
+# repo's pinned node; src/node/desktop requires it, while e2e/rstudio falls
+# back to the system node. A marker file in the git dir is set while an install
+# runs, so a rerun redoes an install that failed or was interrupted.
 #
 # Platforms: the clone mechanism is gated by OS -- clonefile on macOS (`cp -c`),
 # reflink on Linux (`cp --reflink=auto`). On filesystems without copy-on-write
@@ -111,15 +114,19 @@ clone_tree() {
   cp -R "$src" "$dst"
 }
 
-# Locate the pinned node toolchain's bin directory (version from
-# dependencies/tools/rstudio-tools.sh): this worktree, then the main checkout,
-# then the global tools location -- mirroring pinnedNodeBinDir in
+# The pinned node version in a checkout's dependencies/tools/rstudio-tools.sh.
+# Prints nothing (rather than failing under set -e) when the file can't be
+# read, so callers can report it or fall back to the system node.
+pinned_node_version() {
+  sed -n 's/^export RSTUDIO_NODE_VERSION="\(.*\)"$/\1/p' \
+    "$1/dependencies/tools/rstudio-tools.sh" 2>/dev/null | head -1 || true
+}
+
+# Locate the directory holding the pinned node: this worktree, then the main
+# checkout, then the tools roots -- mirroring pinnedNodeBinDir in
 # e2e/rstudio/scripts/dev-common.ts. Prints nothing when not found.
 pinned_node_bin() {
-  local version
-  version="$(sed -n 's/^export RSTUDIO_NODE_VERSION="\(.*\)"$/\1/p' \
-    "$WORKTREE/dependencies/tools/rstudio-tools.sh" 2>/dev/null | head -1)"
-  if [ -z "$version" ]; then
+  if [ -z "$PINNED_NODE_VERSION" ]; then
     return
   fi
 
@@ -129,14 +136,59 @@ pinned_node_bin() {
     suffix="-arm64"
   fi
 
-  local root
-  for root in "$WORKTREE" "$MAIN_CHECKOUT" /opt/rstudio-tools; do
-    local bin="$root/dependencies/common/node/$version$suffix/bin"
-    if [ -x "$bin/node" ]; then
-      echo "$bin"
+  # Windows installs node under RSTUDIO_TOOLS_ROOT, which defaults to
+  # %SYSTEMDRIVE%\rstudio-tools (dependencies/tools/rstudio-tools.cmd)
+  local roots=("$WORKTREE" "$MAIN_CHECKOUT")
+  if [ -n "${RSTUDIO_TOOLS_ROOT:-}" ]; then
+    roots+=("$RSTUDIO_TOOLS_ROOT")
+  fi
+  roots+=(/opt/rstudio-tools)
+  if command -v cygpath >/dev/null 2>&1; then
+    roots+=("${SYSTEMDRIVE:-C:}/rstudio-tools")
+  fi
+
+  local root dir
+  for root in "${roots[@]}"; do
+    # a drive letter's colon would split the PATH entry under Git Bash
+    if command -v cygpath >/dev/null 2>&1; then
+      root="$(cygpath -u "$root")"
+    fi
+
+    # the Windows zip has node.exe at its top level rather than under bin/
+    dir="$root/dependencies/common/node/$PINNED_NODE_VERSION$suffix"
+    if [ -x "$dir/bin/node" ]; then
+      echo "$dir/bin"
+      return
+    elif [ -x "$dir/node.exe" ]; then
+      echo "$dir"
       return
     fi
   done
+}
+
+# Exit with instructions for installing the pinned node. The installers read
+# the version from their own checkout, so name one that installs this
+# worktree's pin: on Windows any checkout's installer writes to the shared
+# tools root, and elsewhere the main checkout works unless this branch
+# changed the pin.
+pinned_node_missing() {
+  local pkg="$1"
+  local tools="$WORKTREE/dependencies/tools/rstudio-tools.sh"
+
+  if [ -z "$PINNED_NODE_VERSION" ]; then
+    echo "[bootstrap] ERROR: couldn't read RSTUDIO_NODE_VERSION from $tools" >&2
+    exit 1
+  fi
+
+  echo "[bootstrap] ERROR: pinned node $PINNED_NODE_VERSION not found for npm ci in $pkg; install it with:" >&2
+  if command -v cygpath >/dev/null 2>&1; then
+    echo "[bootstrap]   $(cygpath -w "$WORKTREE/dependencies/windows/install-dependencies.cmd")" >&2
+  elif [ "$(pinned_node_version "$MAIN_CHECKOUT")" = "$PINNED_NODE_VERSION" ]; then
+    echo "[bootstrap]   (cd \"$MAIN_CHECKOUT/dependencies/common\" && ./install-npm-dependencies)" >&2
+  else
+    echo "[bootstrap]   (cd \"$WORKTREE/dependencies/common\" && ./install-npm-dependencies)" >&2
+  fi
+  exit 1
 }
 
 # True when main's installed node_modules is current relative to main's own
@@ -148,7 +200,7 @@ pinned_node_bin() {
 main_tree_current() {
   local main="$1"
   [ -f "$main/node_modules/.package-lock.json" ] || return 1
-  node -e '
+  PATH="${PINNED_NODE_BIN:+$PINNED_NODE_BIN:}$PATH" node -e '
     const fs = require("fs");
     const lock = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
     const installed = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
@@ -166,18 +218,35 @@ main_tree_current() {
   ' "$main/package-lock.json" "$main/node_modules/.package-lock.json"
 }
 
+# The marker file that exists while this script installs a package's
+# node_modules in a checkout, so a tree left with it is a failed or interrupted
+# install. It lives in the checkout's git dir, where npm ci (which empties
+# node_modules) and a clone of node_modules can't touch it.
+pending_marker() {
+  git -C "$1" rev-parse --path-format=absolute --git-path "bootstrap-pending-${2//\//-}"
+}
+
 # Make sure a package dir has node_modules: clone from main when the lockfiles
-# match and main's installed tree is current, otherwise npm ci.
+# match and main's installed tree is current, otherwise npm ci. Pass
+# "require-pinned-node" to fail rather than npm ci under the system node.
 ensure_deps() {
   local pkg="$1"
+  local require_pinned="${2:-}"
   local wt="$WORKTREE/$pkg"
   local main="$MAIN_CHECKOUT/$pkg"
+  local pending main_pending
+  pending="$(pending_marker "$WORKTREE" "$pkg")"
+  # empty when the main checkout isn't a checkout (a bare repo's worktree)
+  main_pending="$(pending_marker "$MAIN_CHECKOUT" "$pkg" 2>/dev/null || true)"
 
   if [ ! -f "$wt/package-lock.json" ]; then
     echo "[bootstrap] skip $pkg (no package-lock.json)"
     return
   fi
-  if [ -d "$wt/node_modules" ]; then
+
+  if [ -f "$pending" ]; then
+    echo "[bootstrap] $pkg: the previous install failed or was interrupted; reinstalling"
+  elif [ -d "$wt/node_modules" ]; then
     echo "[bootstrap] $pkg already has node_modules; leaving as-is"
     return
   fi
@@ -185,9 +254,14 @@ ensure_deps() {
   if [ "$WORKTREE" != "$MAIN_CHECKOUT" ] \
      && [ -d "$main/node_modules" ] \
      && cmp -s "$wt/package-lock.json" "$main/package-lock.json"; then
-    if main_tree_current "$main"; then
+    if [ -f "$main_pending" ]; then
+      echo "[bootstrap] main's $pkg/node_modules is from a failed or interrupted install; falling back to npm ci"
+      echo "[bootstrap]   to clone from main again, rerun this script in the main checkout, or delete $main_pending if main's install was repaired by hand"
+    elif main_tree_current "$main"; then
       echo "[bootstrap] cloning $pkg/node_modules from main (lockfiles match)"
+      touch "$pending"
       if clone_tree "$main/node_modules" "$wt/node_modules"; then
+        rm -f "$pending"
         return
       fi
       echo "[bootstrap] clone failed; falling back to npm ci"
@@ -196,17 +270,26 @@ ensure_deps() {
     fi
   fi
 
-  # use the repo's pinned node for npm ci -- a mismatched system node can
-  # break the desktop postinstall (native rebuilds, generate.ts)
-  local node_bin
-  node_bin="$(pinned_node_bin)"
-  if [ -n "$node_bin" ]; then
-    echo "[bootstrap] npm ci in $pkg (using pinned node from $node_bin)"
-    ( cd "$wt" && PATH="$node_bin:$PATH" npm ci )
+  # Prefer the repo's pinned node for npm ci: a newer system node can break
+  # an install (electron-rebuild's yargs fails to load under Node 26), and the
+  # main checkout's dependencies/common/node lags a pin bump until its deps
+  # are reinstalled.
+  local npm_path="$PATH"
+  if [ -n "$PINNED_NODE_BIN" ]; then
+    echo "[bootstrap] npm ci in $pkg (using pinned node from $PINNED_NODE_BIN)"
+    npm_path="$PINNED_NODE_BIN:$PATH"
+  elif [ "$require_pinned" = "require-pinned-node" ]; then
+    pinned_node_missing "$pkg"
   else
     echo "[bootstrap] npm ci in $pkg (pinned node not found; using system node)"
-    ( cd "$wt" && npm ci )
   fi
+
+  touch "$pending"
+  if ! ( cd "$wt" && PATH="$npm_path" npm ci ); then
+    echo "[bootstrap] ERROR: npm ci failed in $pkg; rerun this script to retry the install" >&2
+    exit 1
+  fi
+  rm -f "$pending"
 }
 
 # Copy a generated, gitignored file from the main checkout when the worktree is
@@ -315,14 +398,19 @@ configure_build() {
   echo "[bootstrap] build dir configured; compile with: cmake --build \"$dir\""
 }
 
-# The e2e/rstudio Playwright suite -- the common case.
+PINNED_NODE_VERSION="$(pinned_node_version "$WORKTREE")"
+PINNED_NODE_BIN="$(pinned_node_bin)"
+
+# The e2e/rstudio Playwright suite -- the common case. It has no install
+# scripts, so the system node can install it.
 ensure_deps "e2e/rstudio"
 
-# The Electron desktop suite. Cloning skips its electron-rebuild and the
-# failing generate.ts postinstall; we still copy the type stub that postinstall
-# would have generated (it lives outside node_modules).
+# The Electron desktop suite. Its postinstall's electron-rebuild needs the
+# pinned node. Cloning skips that and the failing generate.ts postinstall; we
+# still copy the type stub that postinstall would have generated (it lives
+# outside node_modules).
 if [ "$SKIP_DESKTOP" -eq 0 ]; then
-  ensure_deps "src/node/desktop"
+  ensure_deps "src/node/desktop" require-pinned-node
   copy_generated "src/node/desktop/src/types/user-state-schema.d.ts"
   make_dev_shim
 else
