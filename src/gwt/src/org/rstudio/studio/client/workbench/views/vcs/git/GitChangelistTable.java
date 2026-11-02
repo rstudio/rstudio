@@ -148,15 +148,22 @@ public class GitChangelistTable extends ChangelistTable
       goToChangeHandler_ = handler;
    }
 
-   // Opens the selected file at its first change, as its row's button does;
-   // false when there is no handler, no selection, or nothing to open.
-   public boolean goToSelectedChange()
+   // Whether the selected file can be opened at its first change, as its
+   // row's button would: one file selected, with a handler and a change.
+   public boolean canGoToSelectedChange()
    {
       ArrayList<StatusAndPath> items = getSelectedItems();
-      if (goToChangeHandler_ == null || items.isEmpty() || !canGoToChange(items.get(0)))
+      return goToChangeHandler_ != null && items.size() == 1 && canGoToChange(items.get(0));
+   }
+
+   // Opens the selected file at its first change, as its row's button does;
+   // false when it cannot (see canGoToSelectedChange).
+   public boolean goToSelectedChange()
+   {
+      if (!canGoToSelectedChange())
          return false;
 
-      goToChangeHandler_.execute(items.get(0));
+      goToChangeHandler_.execute(getSelectedItems().get(0));
       return true;
    }
 

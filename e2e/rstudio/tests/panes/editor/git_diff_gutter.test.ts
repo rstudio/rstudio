@@ -2318,13 +2318,21 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // the selected row's change gone to with Ctrl+Enter (Cmd+Enter on a
     // Mac); plain Enter stages.
     await expect(goTo).toHaveAttribute('tabindex', '-1');
-    await panel.getByRole('row').filter({ hasText: 'script.R' }).first().click();
+    const row = panel.getByRole('row').filter({ hasText: 'script.R' }).first();
+    await row.click();
     await page.keyboard.press('ControlOrMeta+Enter');
     await expect(page.locator(SELECTED_DOC_TAB)).toContainText('script.R', { timeout: 15000 });
     await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
     await expect(
       panel.getByRole('checkbox', { name: 'Stage script.R', exact: true }),
     ).toHaveAttribute('aria-checked', 'false');
+    await documentCloseAllNoSave(page);
+
+    // and the row's context menu has it too
+    await row.click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Open at First Change', exact: true }).click();
+    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('script.R', { timeout: 15000 });
+    await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
     await documentCloseAllNoSave(page);
   });
 

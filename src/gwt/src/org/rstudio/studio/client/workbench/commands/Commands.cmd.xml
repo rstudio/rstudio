@@ -2911,6 +2911,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"
         context="vcs"/>
 
+   <cmd id="vcsOpenAtFirstChange"
+        label="Open Selected File at First Change"
+        menuLabel="Open at First Change"
+        desc="Open the selected file at its first change"
+        rebindable="false"
+        context="vcs"/>
+
    <cmd id="vcsIgnore"
         label="Ignore Files or Folders"
         menuLabel="Ignore..."

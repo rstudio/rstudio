@@ -367,6 +367,8 @@ public class GitPresenter extends BaseVcsPresenter
    {
       boolean anySelected = view_.getSelectedItemCount() > 0;
       commands_.vcsRevert().setEnabled(anySelected);
+      commands_.vcsOpenAtFirstChange().setEnabled(
+            view_.getChangelistTable().canGoToSelectedChange());
    }
 
    @Override
@@ -424,6 +426,14 @@ public class GitPresenter extends BaseVcsPresenter
    void onVcsOpen()
    {
       openSelectedFiles();
+   }
+
+   // The context menu's way to a row's go-to-change button (the table's
+   // own is Ctrl+Enter on the row).
+   @Handler
+   void onVcsOpenAtFirstChange()
+   {
+      view_.getChangelistTable().goToSelectedChange();
    }
 
    @Handler

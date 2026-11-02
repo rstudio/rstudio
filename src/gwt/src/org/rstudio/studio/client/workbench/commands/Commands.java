@@ -322,6 +322,7 @@ public abstract class
    public abstract AppCommand vcsRefresh();
    public abstract AppCommand vcsRefreshNoError();
    public abstract AppCommand vcsOpen();
+   public abstract AppCommand vcsOpenAtFirstChange();
    public abstract AppCommand vcsIgnore();
    public abstract AppCommand vcsNewWorktree();
    public abstract AppCommand vcsRemoveWorktree();
