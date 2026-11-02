@@ -26,9 +26,22 @@ type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 // Electron raises 'context-menu'; the params alone can't tell it from Ace's textarea.
 const kTerminalFocusedScript = "document.activeElement?.classList.contains('xterm-helper-textarea') === true";
 
-export const _isTerminalFocused = async (params: Electron.ContextMenuParams): Promise<boolean> => {
-  // null when the frame has navigated away or been destroyed since the click
-  if (params.frame === null) {
+/**
+ * Whether the menu is over the Terminal pane on a platform where its copy and paste keys
+ * differ from the role defaults.
+ */
+export const _showTerminalShortcuts = async (
+  params: Electron.ContextMenuParams,
+  platform: NodeJS.Platform = process.platform,
+): Promise<boolean> => {
+  // On macOS the terminal copies and pastes with Cmd+C / Cmd+V, matching the role defaults.
+  if (platform === 'darwin' || params.hasImageContents) {
+    return false;
+  }
+
+  // The frame is null when it has navigated away or been destroyed since the click. The
+  // terminal lives in the top-level frame, so don't run the check in Viewer or Help iframes.
+  if (params.frame === null || params.frame.parent !== null) {
     return false;
   }
 
@@ -41,8 +54,7 @@ export const _isTerminalFocused = async (params: Electron.ContextMenuParams): Pr
 };
 
 export const showContextMenu = async (sender: WebContents, params: Electron.ContextMenuParams): Promise<void> => {
-  // On macOS the terminal copies and pastes with Cmd+C / Cmd+V, matching the role defaults.
-  const terminalShortcuts = process.platform !== 'darwin' && (await _isTerminalFocused(params));
+  const terminalShortcuts = await _showTerminalShortcuts(params);
   const template = _createContextMenuTemplate(sender, params, terminalShortcuts);
 
   const menu = Menu.buildFromTemplate(template);
@@ -180,7 +192,10 @@ const createContextMenuTextTemplate = (
   // so we have to do some extra gymnastics. As is tradition.
   const template: ContextMenuItem[] = [];
 
-  if (params.editFlags.canCut) {
+  if (params.editFlags.canCut && terminalShortcuts) {
+    // No role, so no Ctrl+X hint: in the terminal Ctrl+X goes to the shell.
+    template.push({ label: i18next.t('contextMenu.cut'), click: () => sender.cut() });
+  } else if (params.editFlags.canCut) {
     template.push({ label: i18next.t('contextMenu.cut'), role: 'cut' });
   } else {
     template.push({ label: i18next.t('contextMenu.cut'), enabled: false });

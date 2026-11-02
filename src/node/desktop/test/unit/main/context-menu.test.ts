@@ -18,7 +18,7 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
 import { NullLogger, setLogger } from '../../../src/core/logger';
-import { _createContextMenuTemplate, _isTerminalFocused } from '../../../src/main/context-menu';
+import { _createContextMenuTemplate, _showTerminalShortcuts } from '../../../src/main/context-menu';
 
 describe('ContextMenu', () => {
   it('Context menu is created correctly', () => {
@@ -83,11 +83,12 @@ describe('ContextMenu', () => {
     const allEnabled: any = {
       editFlags: { canCut: true, canCopy: true, canPaste: true, canSelectAll: true },
     };
-    const [copy, paste, selectAll] = [1, 2, 3];
+    const [cut, copy, paste, selectAll] = [0, 1, 2, 3];
 
     it('keeps the role default accelerators outside the terminal', () => {
       const menu: any[] = _createContextMenuTemplate({} as any, allEnabled, false);
 
+      assert.strictEqual(menu[cut].role, 'cut');
       assert.strictEqual(menu[copy].role, 'copy');
       assert.isUndefined(menu[copy].accelerator);
       assert.strictEqual(menu[paste].role, 'paste');
@@ -106,13 +107,16 @@ describe('ContextMenu', () => {
       assert.isFalse(menu[paste].registerAccelerator);
     });
 
-    it('drops the Ctrl+A hint from Select All but keeps the action', () => {
-      const sender = { selectAll: sinon.spy() };
+    it('drops the Ctrl+X and Ctrl+A hints from Cut and Select All but keeps the actions', () => {
+      const sender = { cut: sinon.spy(), selectAll: sinon.spy() };
       const menu: any[] = _createContextMenuTemplate(sender as any, allEnabled, true);
 
-      assert.isUndefined(menu[selectAll].role);
-      assert.isUndefined(menu[selectAll].accelerator);
-      menu[selectAll].click();
+      for (const index of [cut, selectAll]) {
+        assert.isUndefined(menu[index].role);
+        assert.isUndefined(menu[index].accelerator);
+        menu[index].click();
+      }
+      assert.isTrue(sender.cut.calledOnce);
       assert.isTrue(sender.selectAll.calledOnce);
     });
 
@@ -122,14 +126,14 @@ describe('ContextMenu', () => {
       };
       const menu: any[] = _createContextMenuTemplate({} as any, allDisabled, true);
 
-      for (const index of [copy, paste, selectAll]) {
+      for (const index of [cut, copy, paste, selectAll]) {
         assert.isFalse(menu[index].enabled);
         assert.isUndefined(menu[index].accelerator);
       }
     });
   });
 
-  describe('_isTerminalFocused', () => {
+  describe('_showTerminalShortcuts', () => {
     let errorLog: sinon.SinonSpy;
 
     beforeEach(() => {
@@ -142,29 +146,53 @@ describe('ContextMenu', () => {
       sinon.restore();
     });
 
-    const paramsWithFrameResult = (result: Promise<unknown>): any => ({
-      frame: { executeJavaScript: sinon.stub().returns(result) },
+    const textParams = (executeJavaScript: sinon.SinonStub, parent: unknown = null): any => ({
+      hasImageContents: false,
+      frame: { parent, executeJavaScript },
     });
 
-    it('is true when the xterm helper textarea has focus', async () => {
-      const params = paramsWithFrameResult(Promise.resolve(true));
+    it('is true over the terminal on Windows and Linux', async () => {
+      for (const platform of ['win32', 'linux'] as const) {
+        const params = textParams(sinon.stub().resolves(true));
 
-      assert.isTrue(await _isTerminalFocused(params));
-      assert.include(params.frame.executeJavaScript.firstCall.args[0], 'xterm-helper-textarea');
+        assert.isTrue(await _showTerminalShortcuts(params, platform));
+        assert.include(params.frame.executeJavaScript.firstCall.args[0], 'xterm-helper-textarea');
+      }
     });
 
     it('is false when something else has focus', async () => {
-      assert.isFalse(await _isTerminalFocused(paramsWithFrameResult(Promise.resolve(false))));
+      assert.isFalse(await _showTerminalShortcuts(textParams(sinon.stub().resolves(false)), 'win32'));
+    });
+
+    it('is false on macOS without running the check', async () => {
+      const params = textParams(sinon.stub().resolves(true));
+
+      assert.isFalse(await _showTerminalShortcuts(params, 'darwin'));
+      assert.isTrue(params.frame.executeJavaScript.notCalled);
+    });
+
+    it('is false for image menus without running the check', async () => {
+      const params = { ...textParams(sinon.stub().resolves(true)), hasImageContents: true };
+
+      assert.isFalse(await _showTerminalShortcuts(params, 'win32'));
+      assert.isTrue(params.frame.executeJavaScript.notCalled);
+    });
+
+    it('is false in an iframe without running the check', async () => {
+      const params = textParams(sinon.stub().resolves(true), {});
+
+      assert.isFalse(await _showTerminalShortcuts(params, 'linux'));
+      assert.isTrue(params.frame.executeJavaScript.notCalled);
     });
 
     it('is false when the frame is gone', async () => {
-      assert.isFalse(await _isTerminalFocused({ frame: null } as any));
+      assert.isFalse(await _showTerminalShortcuts({ hasImageContents: false, frame: null } as any, 'win32'));
     });
 
     it('logs and is false when the check fails', async () => {
-      const params = paramsWithFrameResult(Promise.reject(new Error('frame detached')));
+      const params = textParams(sinon.stub().rejects(new Error('frame detached')));
 
-      assert.isFalse(await _isTerminalFocused(params));
+      assert.isFalse(await _showTerminalShortcuts(params, 'win32'));
       assert.isTrue(errorLog.calledOnce);
       assert.include(errorLog.firstCall.args[0], 'frame detached');
     });
