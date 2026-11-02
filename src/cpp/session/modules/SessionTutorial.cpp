@@ -205,12 +205,13 @@ void handleTutorialHomeRequest(const http::Request& request,
    bool ok = haveMinimumShinyForTutorials();
    if (!ok)
    {
+      std::string action = module_context::isPackageInstalled("shiny") ? "update" : "install";
       ss << "<p>Version 1.6.0 of the <code>shiny</code> package is required to run tutorials for RStudio.</p>"
          << "<p>Please <a"
          << " class=\"rstudio-tutorials-install-shiny-link\""
          << " href=\"javascript:void(0)\""
          << " onclick=\"window.parent.tutorialUpdateShiny(); return false;\">"
-         << "update the <code>shiny</code> package"
+         << action << " the <code>shiny</code> package"
          << "</a>.</p>";
    }
    
