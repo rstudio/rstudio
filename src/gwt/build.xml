@@ -285,6 +285,10 @@
    <set-if-exists property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-unset  property="yarn.bin" value="yarn"/>
 
+   <set-if-exists property="npm.bin" value="${node.dir}/bin/npm"/>
+   <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
+   <set-if-unset  property="npm.bin" value="npm"/>
+
    <!-- use node from dependencies if available, otherwise from the system -->
    <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
    <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
@@ -330,17 +334,18 @@
          </not>
       </condition>
 
-      <echo message="yarn location: ${yarn.bin}"/>
+      <echo message="npm location: ${npm.bin}"/>
       <echo message="panmirror location: ${panmirror.dir}"/>
       <echo message="panmirror minify: ${panmirror.minify}"/>
 
       <mkdir dir="${panmirror.build.dir}"/>
+      <!-- quarto is an npm workspace whose package-lock.json sits at its root, two levels
+           up from apps/panmirror. Install from there so npm uses that lockfile and installs
+           the packages panmirror builds from (editor, core, ...). -->
       <retry retrycount="3">
-         <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <exec executable="${npm.bin}" dir="${panmirror.dir}/../.." resolveexecutable="true" failonerror="true">
             <env key="PATH" value="${node.path}"/>
             <arg value="install"/>
-            <arg value="--network-timeout"/>
-            <arg value="240000"/>
          </exec>
       </retry>
       <!-- vite needs more than node's default heap (~2GB on CI runners) to
@@ -349,9 +354,11 @@
            any caller-provided NODE_OPTIONS; node lets later flags win, so a
            caller's own heap setting takes precedence over ours. -->
       <property name="env.NODE_OPTIONS" value=""/>
-      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+      <exec executable="${npm.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <env key="PATH" value="${node.path}"/>
+         <arg value="run"/>
          <arg value="build"/>
+         <arg value="--"/>
          <arg value="--minify"/>
          <arg value="${panmirror.minify}"/>
          <arg value="--sourcemap"/>
@@ -635,10 +642,6 @@
         aggregates per-page pass/fail counts. -->
 
    <property name="testpage.runner.dir" value="test/runner"/>
-
-   <set-if-exists property="npm.bin" value="${node.dir}/bin/npm"/>
-   <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
-   <set-if-unset  property="npm.bin" value="npm"/>
 
    <target name="testpage" depends="acesupport"
            description="Runs the standalone HTML test pages under test/ in headless chromium">
