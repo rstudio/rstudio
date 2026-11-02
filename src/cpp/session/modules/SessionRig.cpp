@@ -277,13 +277,11 @@ private:
       json::Value installed;
       if (ok)
       {
-         // later checks this session (e.g. after a reload) reuse the cached
-         // list of installations, which must include the new R
-         Error refreshError = r::exec::RFunction(".rs.rInstallations.cached")
-               .addParam("refresh", true)
-               .call();
-         if (refreshError)
-            LOG_ERROR(refreshError);
+         // later checks this session (e.g. after a reload) must not reuse a
+         // list of installations without the new R
+         Error cacheError = r::exec::RFunction(".rs.rInstallations.clearCache").call();
+         if (cacheError)
+            LOG_ERROR(cacheError);
 
          Error lookupError = r::exec::RFunction(".rs.rig.installedRVersion")
                .addParam("version", version_)
@@ -403,11 +401,13 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // the root is recorded so that its R is found again after a restart;
+   // failing to record it is no reason to refuse the install
    error = r::exec::RFunction(".rs.rig.rememberInstallDir")
          .addParam("directory", normalizedDirectory)
          .call();
    if (error)
-      return error;
+      LOG_ERROR(error);
 
    s_pInstallJob = RInstallJob::create(version, normalizedDirectory);
    pResponse->setResult(s_pInstallJob->jobId());
@@ -415,13 +415,6 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
 }
 
 } // anonymous namespace
-
-Error findInstalledRVersion(const std::string& version, json::Value* pInstalled)
-{
-   return r::exec::RFunction(".rs.findInstalledRVersion")
-         .addParam("version", version)
-         .call(pInstalled);
-}
 
 std::string installInProgress()
 {

@@ -15,19 +15,6 @@
 
 context("rig")
 
-test_that("the default R install directory follows the platform and override", {
-
-   default <- function(...) .rs.rig.defaultInstallDir(rig = "", ...)
-   expect_identical(default(windows = FALSE, override = "", home = "/home/test"),
-                    "/home/test/.local/share/rig/r")
-   expect_identical(default(windows = TRUE, override = "", appdata = "C:/Users/test/AppData/Roaming"),
-                    "C:/Users/test/AppData/Roaming/rig/data/r")
-   expect_identical(default(windows = FALSE, override = "/custom/R"), "/custom/R")
-   expect_identical(default(windows = TRUE, override = "D:/custom R"), "D:/custom R")
-   expect_error(default(windows = TRUE, override = "", appdata = ""), "application data")
-
-})
-
 test_that("R installation paths are checked before starting an installation", {
 
    root <- tempfile("r-install-path-")
@@ -142,6 +129,33 @@ fakeRig <- function(home, dirs)
    Sys.chmod(rig, "0755")
    rig
 }
+
+test_that("the default R install directory is rig's user-mode root", {
+
+   skip_if(.rs.platform.isWindows, "the stand-in rig is a shell script")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+
+   withr::with_envvar(c(RIG_R_INSTALL_DIR = NA), {
+      rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+      expect_identical(.rs.rig.defaultInstallDir(rig), root)
+
+      # rig's own override is part of its effective root
+      withr::with_envvar(c(RIG_R_INSTALL_DIR = "/custom/R"), {
+         expect_identical(.rs.rig.defaultInstallDir(rig), "/custom/R")
+      })
+
+      expect_error(.rs.rig.defaultInstallDir(fakeRig(home, list(r_root = "", binary_dir = bin))),
+                   "Unable to determine")
+      expect_error(.rs.rig.defaultInstallDir(fakeRig(home, NULL)), "rig system dirs --user failed")
+      expect_error(.rs.rig.defaultInstallDir(""), "rig was not found")
+   })
+
+})
 
 test_that("the bundled rig follows an explicit override and precedes system copies", {
 

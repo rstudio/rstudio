@@ -25,38 +25,22 @@
    if (.rs.platform.isWindows) "rig.exe" else "rig"
 })
 
-#' The initial destination shown before installing R. Ask an available rig
-#' for its effective user-mode root, including its configuration overrides.
-#' Without rig (a damaged installation), use the explicit environment
-#' override or its platform default. The confirmed path is always passed to
-#' rig.
-.rs.addFunction("rig.defaultInstallDir", function(rig = .rs.rig.find(),
-                                                  windows = .rs.platform.isWindows,
-                                                  override = Sys.getenv("RIG_R_INSTALL_DIR"),
-                                                  appdata = Sys.getenv("APPDATA"),
-                                                  home = path.expand("~"))
+#' The initial destination shown before installing R: rig's effective
+#' user-mode root, including its configuration overrides. The confirmed path
+#' is always passed to rig. rig is bundled with the desktop, so it is only
+#' missing when the installation is damaged, and nothing can be installed
+#' then anyway.
+.rs.addFunction("rig.defaultInstallDir", function(rig = .rs.rig.find())
 {
-   if (nzchar(rig))
-   {
-      dirs <- .rs.rig.json(rig, c("system", "dirs", "--user"))
-      if (is.character(dirs$r_root) && length(dirs$r_root) == 1L && nzchar(dirs$r_root))
-         return(dirs$r_root)
+   if (!nzchar(rig))
+      stop("rig was not found")
+
+   dirs <- .rs.rig.userDirs(rig)
+   root <- dirs$r_root
+   if (!is.character(root) || length(root) != 1L || !nzchar(root))
       stop("Unable to determine the R installation directory")
-   }
 
-   if (nzchar(override))
-      return(path.expand(override))
-
-   if (windows)
-   {
-      if (!nzchar(appdata))
-         stop("Unable to determine the user application data directory")
-      file.path(appdata, "rig", "data", "r")
-   }
-   else
-   {
-      file.path(home, ".local", "share", "rig", "r")
-   }
+   root
 })
 
 #' Check the selected root before starting a job or downloading anything.
@@ -1012,21 +996,44 @@
       )
    }
 
+   .rs.rInstallations.rows(lapply(entries, function(entry) {
+      list(path = entry[[1L]], home = entry[[1L]], binary = entry[[2L]])
+   }))
+})
+
+#' The R installations at the user-mode roots chosen in RStudio's install
+#' dialog, laid out as rig lays them out: one installation per directory,
+#' launched from its 'bin'.
+.rs.addFunction("rInstallations.scanRoots", function(roots)
+{
+   paths <- list.files(roots[dir.exists(roots)], full.names = TRUE)
+   .rs.rInstallations.rows(lapply(paths, function(path) {
+      list(
+         path   = path,
+         home   = .rs.rInstallations.homeFromPath(path),
+         binary = file.path(path, "bin", if (.rs.platform.isWindows) "R.exe" else "R")
+      )
+   }))
+})
+
+#' Rows in the form of rig.list() for installations found on disk, given
+#' their 'path' (as rig would report it), 'home' and 'binary'. Entries
+#' missing R's library or executable, or an unreadable version, are left out.
+.rs.addFunction("rInstallations.rows", function(entries)
+{
    rows <- lapply(entries, function(entry) {
-      home <- entry[[1L]]
-      binary <- entry[[2L]]
-      if (!.rs.rInstallations.isHome(home) || !file.exists(binary))
+      if (!.rs.rInstallations.isHome(entry$home) || !file.exists(entry$binary))
          return(NULL)
 
-      version <- .rs.rInstallations.versionFromHome(home)
+      version <- .rs.rInstallations.versionFromHome(entry$home)
       if (!nzchar(version))
          return(NULL)
 
       data.frame(
          version = version,
-         path    = home,
-         binary  = binary,
-         home    = normalizePath(home, winslash = "/", mustWork = FALSE),
+         path    = entry$path,
+         binary  = entry$binary,
+         home    = normalizePath(entry$home, winslash = "/", mustWork = FALSE),
          stringsAsFactors = FALSE
       )
    })
@@ -1035,33 +1042,14 @@
 })
 
 #' The R installations on this machine: those rig reports, plus those found
-#' in the standard locations, so that R installed without rig is found even
-#' when rig is unavailable.
+#' in the standard locations and at the roots chosen in RStudio, so that R
+#' installed without rig is found even when rig is unavailable.
 .rs.addFunction("rInstallations.list", function(rig = .rs.rig.find())
 {
    installed <- rbind(.rs.rig.list(rig), .rs.rInstallations.scan(),
                       .rs.rInstallations.scanRoots(.rs.rig.installDirs()))
    key <- ifelse(nzchar(installed$home), installed$home, installed$binary)
    installed[!duplicated(key), , drop = FALSE]
-})
-
-#' Read the standard rig user-mode layouts at roots selected in RStudio.
-.rs.addFunction("rInstallations.scanRoots", function(roots)
-{
-   paths <- list.files(roots[dir.exists(roots)], full.names = TRUE)
-   rows <- lapply(paths, function(path) {
-      home <- .rs.rInstallations.homeFromPath(path)
-      if (!nzchar(home))
-         return(NULL)
-      version <- .rs.rInstallations.versionFromHome(home)
-      binary <- file.path(path, "bin", if (.rs.platform.isWindows) "R.exe" else "R")
-      if (!nzchar(version) || !file.exists(binary))
-         return(NULL)
-
-      data.frame(version = version, path = path, binary = binary, home = home,
-                 stringsAsFactors = FALSE)
-   })
-   .rs.rInstallations.bind(rows)
 })
 
 .rs.setVar("rInstallationsCache", new.env(parent = emptyenv()))
@@ -1076,6 +1064,13 @@
       cache$installed <- .rs.rInstallations.list()
 
    cache$installed
+})
+
+#' Forget the list, so that the next lookup lists the installations afresh
+#' (as after installing R, when a reload may look for it).
+.rs.addFunction("rInstallations.clearCache", function()
+{
+   .rs.rInstallationsCache$installed <- NULL
 })
 
 #' The architectures a macOS R installation's libR.dylib was built for
