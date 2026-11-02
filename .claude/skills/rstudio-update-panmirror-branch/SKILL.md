@@ -142,13 +142,18 @@ The grep should print nothing, and the diff should show the two scripts, one lin
 #### If step 4 found a package manager change
 
 Switch the `panmirror` target in `src/gwt/build.xml` to the new tool, for both the dependency
-install and the build, and keep the diff to that target. Then build panmirror for real against the
-new branch; this replaces the scripts, the clone in `src/gwt/lib/quarto`, and the build tool, so
-nothing short of a build shows they work together:
+install and the build, and keep the diff to that target. The diff should then show the two
+scripts plus `build.xml`.
+
+#### Build panmirror from the new branch
+
+Every new cut can bring new build tooling (vite, its plugins, the package manager), and only a
+real build shows the scripts, the clone and `build.xml` still work together:
 
 ```bash
 dependencies/common/install-panmirror
 (cd src/gwt && ant -Dpanmirror.dir=./lib/quarto/apps/panmirror panmirror)
+node --check src/gwt/www/js/panmirror/panmirror.js
 ```
 
 Pass `panmirror.dir` explicitly: `build.xml` prefers a clone under `/opt/rstudio-tools` (or
@@ -156,21 +161,26 @@ Pass `panmirror.dir` explicitly: `build.xml` prefers a clone under `/opt/rstudio
 the previous branch. Check that the `panmirror location:` line ant prints is the checkout's own
 `src/gwt/lib/quarto`.
 
-If either step fails, or is not permitted in this session, stop and report it rather than
-committing an unbuilt `build.xml`. The diff should then show the two scripts plus `build.xml`.
+`BUILD SUCCESSFUL` is not enough on its own: a vite change once produced a bundle that built
+cleanly but was a syntax error, so the visual editor never loaded. `node --check` (using the
+Node.js from `dependencies/common/node/` if `node` is not on `PATH`) must print nothing.
+
+If any of the three fails, or is not permitted in this session, stop and report it rather than
+committing. A failure that needs a `build.xml` change goes in this PR as its own commit.
 
 ### 6. Commit and open a PR
 
 No NEWS.md entry: pinning a new cycle's branch is not user-facing. (A `-NN` fix branch gets a NEWS
 entry for the fix it carries, written with that fix, not by this skill.)
 
-- **Commit message**: `Pin panmirror to <branch>`. A `build.xml` switch is its own commit, before
+- **Commit message**: `Pin panmirror to <branch>`. Each `build.xml` change is its own commit, before
   the pin, e.g. `Build panmirror with npm`.
 - **PR title**: same as the commit message.
 - **PR body**: the old and new branch names, the quarto `main` SHA the branch was cut from, and the
   files changed. If step 4 found a raised Node.js requirement, name the PR that met it. If the
-  package manager changed, say from what to what, which quarto commit made the switch, and how the
-  `build.xml` target changed.
+  package manager changed, say from what to what and which quarto commit made the switch. For each
+  `build.xml` change, say what broke without it and how the target changed. Say that the bundle
+  was built and passed `node --check`.
 - **Milestone**: match `version/RELEASE` against
   `gh api repos/rstudio/rstudio/milestones --jq '.[].title'` (titles look like
   `2026.11 (Montauk Daisy)`). Set it if one matches; never create one.
