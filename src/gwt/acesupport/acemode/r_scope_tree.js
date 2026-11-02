@@ -299,21 +299,6 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          return false;
       };
 
-      // Collect, in document order, the cut braces whose '}' has not yet been
-      // matched or was matched at or after 'pos', i.e. by a token that a
-      // reparse from 'pos' will see again -- or not at all, if it was edited
-      // away, so the match is forgotten until a '}' is matched again.
-      this.$collectCutBraces = function(pos, out) {
-         if (this.isCut && (!this.matchedEnd || comparePoints(this.matchedEnd, pos) >= 0))
-         {
-            this.matchedEnd = null;
-            out.push(this);
-         }
-
-         for (var i = 0; i < this.$children.length; i++)
-            this.$children[i].$collectCutBraces(pos, out);
-      };
-
       this.$getFunctionStack = function(pos) {
          var index = this.$binarySearch(pos);
          var stack = index >= 0 ? this.$children[index].$getFunctionStack(pos)
@@ -358,7 +343,9 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       };
 
       // Invalidates everything after pos, and possibly some stuff before.
-      // Returns the position from which parsing should resume.
+      // Returns the position from which parsing should resume. Every scope
+      // removed begins at or after that position; every scope kept begins
+      // before it, or contains it and has been reopened.
       this.invalidateFrom = function(pos) {
 
          var index = this.$binarySearch(pos);
@@ -476,8 +463,11 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.$root = new this.$ScopeNodeFactory("(Top Level)", this.parsePos, null,
                                  ScopeNode.TYPE_ROOT);
 
-      // Cut braces still waiting for their '}', innermost last.
+      // Cut braces still waiting for their '}', innermost last; and every
+      // cut brace in the tree, in document order, which invalidateFrom()
+      // rebuilds the former from.
       this.$cutBraces = [];
+      this.$allCutBraces = [];
    };
 
    (function() {
@@ -561,6 +551,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             scopes[i].end = position;
             scopes[i].isCut = true;
             this.$cutBraces.push(scopes[i]);
+            this.$allCutBraces.push(scopes[i]);
          }
 
          return scopes.slice(0, first);
@@ -789,11 +780,28 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             }
             this.parsePos = resumePos;
 
-            // A reparse sees again the '}' of every cut brace matched from
-            // the resume position on, and a cut brace that was reopened is
-            // cut again when its header is reparsed.
+            // A cut brace that was reopened is no longer cut (it is cut again
+            // when its header is reparsed), and one removed from the tree
+            // began at or after the resume position; see
+            // ScopeNode.invalidateFrom(). Of the rest, a brace whose '}' was
+            // matched from the resume position on waits for it again: the
+            // reparse sees that '}' again -- or not at all, if it was edited
+            // away, so the match is forgotten until a '}' is matched again.
+            var resumePos = this.parsePos;
+            this.$allCutBraces = this.$allCutBraces.filter(function(brace) {
+               return brace.isCut && comparePoints(brace.preamble, resumePos) < 0;
+            });
+
             this.$cutBraces = [];
-            this.$root.$collectCutBraces(this.parsePos, this.$cutBraces);
+            for (var i = 0; i < this.$allCutBraces.length; i++)
+            {
+               var brace = this.$allCutBraces[i];
+               if (!brace.matchedEnd || comparePoints(brace.matchedEnd, resumePos) >= 0)
+               {
+                  brace.matchedEnd = null;
+                  this.$cutBraces.push(brace);
+               }
+            }
          }
          this.printScopeTree();
       };
