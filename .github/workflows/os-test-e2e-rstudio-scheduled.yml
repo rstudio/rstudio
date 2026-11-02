@@ -394,6 +394,10 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      # Rotation engines run once or twice a week, too rarely for their
+      # os-e2e-deps caches to outlive eviction; saving them only pushes
+      # out the caches PR builds read. Every engine call below sets this.
+      skip_e2e_deps_cache_save: true
       os: ${{ matrix.os }}
       arch: ${{ matrix.arch }}
       project: desktop
@@ -411,6 +415,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: server
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
@@ -426,6 +431,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
@@ -441,6 +447,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
@@ -456,6 +463,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       # Same universal macOS .dmg the arm64 engines test; the daily manifest
@@ -473,6 +481,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
@@ -488,6 +497,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.windows }}

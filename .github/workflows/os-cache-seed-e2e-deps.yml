@@ -41,10 +41,9 @@ jobs:
         # One entry per platform the PR orchestrator's e2e jobs run on, with
         # the same runner image and cache-scope those jobs pass to
         # os-e2e-deps, so the seeded keys are byte-for-byte the keys they
-        # restore. The two ubuntu-24.04 entries differ only in scope: the
-        # Linux Desktop workflow scopes its keys per-distro (noble-amd64,
-        # from .github/e2e-linux/ubuntu-24-x86_64.json), while the Linux
-        # Server workflow uses the legacy unscoped Linux- keys.
+        # restore. The Linux Desktop and Linux Server workflows share the
+        # noble-amd64 scope (.github/e2e-linux/ubuntu-24-x86_64.json), so
+        # one entry covers both.
         include:
           - platform: windows-desktop
             runner: windows-2025
@@ -52,12 +51,9 @@ jobs:
           - platform: macos-desktop
             runner: macos-26
             cache-scope: "macos26-arm64"
-          - platform: linux-desktop
+          - platform: linux
             runner: ubuntu-24.04
             cache-scope: "noble-amd64"
-          - platform: linux-server
-            runner: ubuntu-24.04
-            cache-scope: ""
     name: seed (${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30

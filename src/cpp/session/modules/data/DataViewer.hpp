@@ -17,6 +17,9 @@
 #define SESSION_DATA_VIEWER_HPP
 
 #include <string>
+#include <vector>
+
+typedef struct SEXPREC *SEXP;
 
 namespace rstudio {
 namespace core {
@@ -43,6 +46,22 @@ bool isSearchSubset(const std::string& outer, const std::string& inner);
 // whether rows matching the "type|value" column filter `inner` are
 // necessarily a subset of rows matching the filter `outer`
 bool isFilterSubset(const std::string& outer, const std::string& inner);
+
+// the shape of an observed object; a change in shape necessitates a full
+// reload of any displayed version of it
+struct FrameShape
+{
+   // -1 means unknown, including for an object that wasn't bound when the
+   // viewer began observing it
+   int nrow = -1;
+   int ncol = -1;
+   std::vector<std::string> colNames;
+};
+
+// the shape of `sexp`; unknown when `sexp` is null (the object isn't bound)
+FrameShape frameShape(SEXP sexp);
+
+bool shapeChanged(const FrameShape& before, const FrameShape& after);
 
 } // namespace detail
 
