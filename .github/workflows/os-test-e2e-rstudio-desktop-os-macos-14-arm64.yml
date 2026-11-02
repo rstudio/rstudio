@@ -105,6 +105,10 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+      skip_e2e_deps_cache_save:
+        description: "Don't save the os-e2e-deps caches (R library, pak downloads, Playwright browsers). Set by broad-matrix callers whose engines run too rarely for those caches to outlive eviction."
+        type: boolean
+        default: false
     outputs:
       r_version_actual:
         description: >-
@@ -135,6 +139,13 @@ permissions:
   # .github/actions/os-publish-e2e-report), but it re-declares its own
   # permissions block, which replaces this one for that job.
   id-token: write
+
+# actions/cache passes zstd no compression level, so zstd honors ZSTD_CLEVEL;
+# level 9 makes cache entries ~13% smaller than the default level 3 at about
+# the same save time, and restores are unaffected. Set here rather than per
+# step so every save in every job, composite actions included, picks it up.
+env:
+  ZSTD_CLEVEL: 9
 
 jobs:
   # Builds RStudio Desktop from this branch's source on the same runner image as
@@ -564,6 +575,7 @@ jobs:
           # by both.
           cache-scope: macos14-arm64
           r-libs-user: ${{ env.R_LIBS_USER }}
+          save-cache: ${{ !inputs.skip_e2e_deps_cache_save }}
           # PostgreSQL server plus the PostgreSQL and SQLite ODBC drivers, for
           # the Connections pane tests. Without this they all skip.
           install-database-stack: 'true'

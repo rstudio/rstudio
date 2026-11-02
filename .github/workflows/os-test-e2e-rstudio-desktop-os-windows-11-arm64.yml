@@ -142,6 +142,13 @@ permissions:
   # role (see .github/actions/os-publish-e2e-report).
   id-token: write
 
+# actions/cache passes zstd no compression level, so zstd honors ZSTD_CLEVEL;
+# level 9 makes cache entries ~13% smaller than the default level 3 at about
+# the same save time, and restores are unaffected. Set here rather than per
+# step so every save in every job, composite actions included, picks it up.
+env:
+  ZSTD_CLEVEL: 9
+
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
   # the e2e job below, then uploads a zipped Electron app directory as an
@@ -247,9 +254,14 @@ jobs:
       # land in RSTUDIO_TOOLS_ROOT\dependencies, outside any directory that
       # holds tracked files, so restoring a stale cache can never overwrite
       # this PR's install scripts. Keyed on the install scripts so a version
-      # bump forces a fresh download; the v2 prefix fences off caches saved
+      # bump forces a fresh download. The v2 prefix fenced off caches saved
       # under the old in-tree layout, whose archives would extract into
-      # dependencies/ and clobber tracked files (rstudio/rstudio#18129).
+      # dependencies/ and clobber tracked files (rstudio/rstudio#18129); v3
+      # marks entries trimmed before saving (see "Trim rstudio-tools before
+      # caching"). The v2 restore key lets the first v3 save start from an
+      # untrimmed entry instead of a cold install; it is a no-op once v2
+      # entries age out. The key and the trim match the Windows Server 2025
+      # workflow's, whose build job is the same, so the two share entries.
       # Restore-only; Save rstudio-tools cache runs after the build (from
       # main-scoped runs only) so deps are cached even when compilation fails.
       - name: Restore rstudio-tools deps
@@ -257,8 +269,9 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
+          key: rstudio-tools-win64-v3-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
           restore-keys: |
+            rstudio-tools-win64-v3-
             rstudio-tools-win64-v2-
 
       # The cache above covers dependencies/common and dependencies/windows,
@@ -579,6 +592,15 @@ jobs:
             echo GWT cache miss -- compiling GWT from scratch
             make-package.bat nozip
           )
+
+      # Drop what no later build reads before saving the tools cache (~1 GB of
+      # a ~2.1 GB entry; see the action for what goes). The Windows Server
+      # 2025 workflow saves the same key and runs the same action. Same
+      # condition as the save below; a failed trim only means a larger entry.
+      - name: Trim rstudio-tools before caching
+        if: always() && steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: ./.github/actions/os-trim-windows-tools
 
       # Save the tools cache only from main-scoped runs (the seed and
       # scheduled workflows), and only on a key miss. A cache saved from a PR

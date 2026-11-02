@@ -1,0 +1,56 @@
+name: "Trim Windows rstudio-tools"
+description: >
+  Delete what no later Windows build reads from RSTUDIO_TOOLS_ROOT before it
+  is saved to the rstudio-tools-win64 Actions cache (~1 GB of a ~2.1 GB
+  entry). Every workflow that saves that key runs this, so its entries hold
+  the same tree whichever workflow wrote them. Reads RSTUDIO_TOOLS_ROOT and
+  the checked-out install-dependencies.cmd. Windows-only.
+
+runs:
+  using: "composite"
+  steps:
+    # rstudio-tools.cmd's :install keeps each archive after extracting it but
+    # skips any dependency whose folder exists, so only copilot's archive is
+    # read again: install-dependencies.cmd deletes and re-extracts copilot on
+    # every run, which also makes the extracted copy dead weight. Only the
+    # pinned version's archive is kept -- a copilot bump restores the
+    # previous entry through the restore key, and the superseded archive
+    # (~350 MB) would otherwise ride along in every later entry. Only the
+    # release x64 OpenSSL build is linked (src/cpp/CMakeLists.txt; CI builds
+    # RelWithDebInfo without MULTIARCH). Every Boost variant stays:
+    # install-soci.R builds SOCI against all four whenever SOCI is rebuilt.
+    - name: Trim rstudio-tools
+      shell: pwsh
+      run: |
+        if (-not $env:RSTUDIO_TOOLS_ROOT) {
+          throw 'RSTUDIO_TOOLS_ROOT is not set'
+        }
+        $deps = "$env:RSTUDIO_TOOLS_ROOT\dependencies"
+
+        $copilotPin = Select-String -Path "$env:GITHUB_WORKSPACE\dependencies\windows\install-dependencies.cmd" `
+          -Pattern '^set COPILOT_VERSION=(\S+)'
+        if (-not $copilotPin) {
+          throw 'COPILOT_VERSION not found in install-dependencies.cmd'
+        }
+        $copilotArchive = "copilot-language-server-js-$($copilotPin.Matches[0].Groups[1].Value).zip"
+
+        $remove = @(
+          Get-ChildItem -LiteralPath "$deps\common", "$deps\windows" -File |
+            Where-Object { $_.Name -match '\.(zip|7z|tar\.gz)$' -and $_.Name -ne $copilotArchive }
+          Get-Item -LiteralPath "$deps\common\copilot-language-server-js" -ErrorAction SilentlyContinue
+          Get-ChildItem -Path "$deps\windows\openssl-*" -Directory |
+            ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Directory } |
+            Where-Object { $_.Name -notlike '*-release-64' }
+        )
+        $freed = 0
+        foreach ($item in $remove) {
+          $bytes = if ($item.PSIsContainer) {
+            (Get-ChildItem -LiteralPath $item.FullName -Recurse -File -Force | Measure-Object -Property Length -Sum).Sum
+          } else {
+            $item.Length
+          }
+          Write-Host ("Removing {0} ({1:N0} MB)" -f $item.FullName, ($bytes / 1MB))
+          Remove-Item -LiteralPath $item.FullName -Recurse -Force
+          $freed += $bytes
+        }
+        Write-Host ("Trimmed {0:N0} MB from rstudio-tools" -f ($freed / 1MB))
