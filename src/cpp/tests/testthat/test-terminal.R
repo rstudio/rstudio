@@ -37,8 +37,8 @@ test_that("terminal can be started and stopped", {
 # Runs the bash terminal hook script with a scratch HOME whose .bash_profile
 # contains 'profile', and reports the resulting PATH, whether the helper
 # variable was unset, and where 'rstudio' resolves. Only sentinel-prefixed
-# lines are read back, since the host's own /etc/profile may print to stdout
-# (Ubuntu's bash.bashrc sudo hint, for example).
+# lines are read back, since the host's own /etc/profile (or a profile.d
+# script it sources) may print to stdout.
 runBashHookScript <- function(profile, path, postbackDir) {
    
    home <- tempfile("home-")
@@ -53,7 +53,8 @@ runBashHookScript <- function(profile, path, postbackDir) {
    
    # Sourced rather than run via '--rcfile -i': an interactive bash started
    # from a TTY stops its whole process group (rsession too) with SIGTTIN
-   # while it waits to become the terminal's foreground job.
+   # while it waits to become the terminal's foreground job. stdin is kept off
+   # the TTY so profile snippets that read it, or check '-t 0', can't stop it.
    script <- paste(
       'source "$0"',
       'echo "RS_PATH=${PATH}"',
@@ -66,11 +67,14 @@ runBashHookScript <- function(profile, path, postbackDir) {
       Sys.which("bash"),
       c("-c", shQuote(script), shQuote(hookScript)),
       env = c(
+         # a non-interactive bash would otherwise source an inherited BASH_ENV
+         "BASH_ENV=",
          paste0("HOME=", shQuote(home)),
          paste0("PATH=", shQuote(path)),
          paste0("_REALENV=", shQuote("<unset>")),
          paste0("_RS_POSTBACK_DIR=", shQuote(postbackDir))
       ),
+      stdin = "/dev/null",
       stdout = TRUE,
       stderr = FALSE
    )
