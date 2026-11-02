@@ -255,12 +255,14 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          return brace;
       };
 
-      // Whether a brace or chunk scope enclosing this one has closed, so that
-      // no token parsed from here on can belong to this scope.
+      // Whether a function, test or chunk scope enclosing this one has
+      // closed, so that no token parsed from here on can belong to this
+      // scope. An anonymous brace enclosing this one is no such boundary:
+      // the same header cuts them both.
       this.$hasClosedBoundary = function() {
          for (var node = this.parentScope; node != null; node = node.parentScope)
          {
-            if ((node.isBrace() || node.isChunk()) && node.end)
+            if (((node.isBrace() && node.label) || node.isChunk()) && node.end)
                return true;
          }
          return false;
@@ -268,10 +270,14 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
 
       // Collect, in document order, the cut braces whose '}' has not yet been
       // matched or was matched at or after 'pos', i.e. by a token that a
-      // reparse from 'pos' will see again.
+      // reparse from 'pos' will see again -- or not at all, if it was edited
+      // away, so the match is forgotten until a '}' is matched again.
       this.$collectCutBraces = function(pos, out) {
          if (this.isCut && (!this.matchedEnd || comparePoints(this.matchedEnd, pos) >= 0))
+         {
+            this.matchedEnd = null;
             out.push(this);
+         }
 
          for (var i = 0; i < this.$children.length; i++)
             this.$children[i].$collectCutBraces(pos, out);
