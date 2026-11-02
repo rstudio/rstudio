@@ -124,9 +124,11 @@ test_that("the browser environment can be read before it is first set", {
 
    # The environment is held in a file-scope PreservedSEXP, built before R
    # starts. Until a console prompt sets it, reading it must give R's NULL,
-   # not a null pointer that .Call() warns about converting.
+   # not a null pointer that .Call() warns about converting. The test harness
+   # runs as a script and never reaches a console prompt, so it is still unset
+   # here.
    env <- expect_silent(.Call("rs_getBrowserEnv", PACKAGE = "(embedding)"))
-   expect_true(is.null(env) || is.environment(env))
+   expect_null(env)
 
 })
 
@@ -198,8 +200,9 @@ test_that("the frame being browsed keeps its own file location", {
    source(locatedFile, local = env, keep.source = TRUE)
    source(outerFile, local = env, keep.source = TRUE)
 
-   # Outside a debug session there is no browser environment, so the
-   # innermost frame stands in for the one the browser would be halted in.
+   # The test harness never reaches a console prompt, so no browser
+   # environment has been set, and the innermost frame stands in for the one
+   # the browser would be halted in.
    frame <- expect_silent(env$outer_fn())$frames[[1L]]
 
    expect_identical(as.character(frame$function_name), "located_fn")
