@@ -51,7 +51,11 @@ runBashHookScript <- function(profile, path, postbackDir) {
       "terminal", "bash", ".bash_profile"
    )
    
+   # Sourced rather than run via '--rcfile -i': an interactive bash started
+   # from a TTY stops its whole process group (rsession too) with SIGTTIN
+   # while it waits to become the terminal's foreground job.
    script <- paste(
+      'source "$0"',
       'echo "RS_PATH=${PATH}"',
       'echo "RS_POSTBACK_DIR=${_RS_POSTBACK_DIR-unset}"',
       'echo "RS_RESOLVED=$(command -v rstudio)"',
@@ -60,7 +64,7 @@ runBashHookScript <- function(profile, path, postbackDir) {
    
    output <- system2(
       Sys.which("bash"),
-      c("--rcfile", shQuote(hookScript), "-i", "-c", shQuote(script)),
+      c("-c", shQuote(script), shQuote(hookScript)),
       env = c(
          paste0("HOME=", shQuote(home)),
          paste0("PATH=", shQuote(path)),
