@@ -113,7 +113,13 @@ The last command shows which tool the `panmirror` target in `src/gwt/build.xml` 
 - If `RSTUDIO_NODE_VERSION` does not satisfy `engines.node`, stop and tell the user: Node.js must
   be raised first, in a separate PR (the rstudio-update-nodejs skill), merged before this one.
 - If `packageManager` names a different tool than the `panmirror` target runs, stop and tell the
-  user: the target must be switched to that tool in this PR, alongside the pin.
+  user: the target must be switched to that tool in this PR, alongside the pin. rstudio-pro also
+  installs quarto's dependencies, in its Snyk and SBOM workflows
+  (`.github/workflows/snyk-monitor.yml`, `.github/workflows/release-generate-sbom.yml`), so a
+  switch needs pro changes too. Find them in a local rstudio-pro clone with
+  `git grep -n "lib/quarto"`, or ask the user if there is none. A change that spans both repos is
+  made in rstudio-pro first, with an open-source companion PR here (see "Open-Source Companion
+  PRs" in `.claude/CLAUDE.md`); confirm that plan with the user before continuing.
 - If `packageManager` is `npm@<X.Y.Z>` and the npm bundled with `RSTUDIO_NODE_VERSION` has a
   different major version, report it; the user decides whether that needs a Node.js bump.
 
@@ -142,7 +148,9 @@ The grep should print nothing, and the diff should show the two scripts, one lin
 #### If step 4 found a package manager change
 
 Switch the `panmirror` target in `src/gwt/build.xml` to the new tool, for both the dependency
-install and the build, and keep the diff to that target. The diff should then show the two
+install and the build, and keep the diff to that target. Use the existing `npm.bin` or `yarn.bin`
+property rather than adding or moving a lookup: rstudio-pro's `build.xml` has its own lookups
+beside `yarn.bin`, so a moved one conflicts when this merges downstream. The diff should then show the two
 scripts plus `build.xml`.
 
 #### Build panmirror from the new branch
