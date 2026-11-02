@@ -473,6 +473,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
         // Shift left or right on key press
         case Event.ONKEYDOWN:
           if (!slidingKeyboard) {
+            slideStartValue = curValue;
             int largeStep = Math.max(1, (int) (getTotalRange() / stepSize / 10));
             int multiplier = 1;
             if (DOM.eventGetCtrlKey(event)) {
@@ -483,13 +484,11 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
               case KeyboardListener.KEY_HOME:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
-                startSliding(false, true);
                 setCurrentValue(minValue);
                 break;
               case KeyboardListener.KEY_END:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
-                startSliding(false, true);
                 setCurrentValue(maxValue);
                 break;
               case KeyboardListener.KEY_PAGEDOWN:
@@ -517,7 +516,6 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
               case 32:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
-                startSliding(false, true);
                 setCurrentValue(minValue + getTotalRange() / 2);
                 break;
             }
@@ -536,6 +534,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
         case Event.ONMOUSEDOWN:
           setFocus(true);
           slidingMouse = true;
+          slideStartValue = curValue;
           DOM.setCapture(getElement());
           startSliding(true, true);
           DOM.eventPreventDefault(event);
@@ -1006,7 +1005,6 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    * @param fireEvent true to fire the event
    */
   private void startSliding(boolean highlight, boolean fireEvent) {
-    slideStartValue = curValue;
     if (highlight) {
       DOM.setElementProperty(lineElement, "className",
           "gwt-SliderBar-line gwt-SliderBar-line-sliding");

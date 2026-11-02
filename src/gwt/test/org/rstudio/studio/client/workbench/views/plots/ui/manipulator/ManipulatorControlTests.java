@@ -28,6 +28,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.client.SliderBar;
@@ -172,6 +173,30 @@ public class ManipulatorControlTests extends GWTTestCase
       pressKey(slider, KeyCodes.KEY_END);
       pressKey(slider, KeyCodes.KEY_RIGHT);
       assertEquals(Arrays.asList("35"), reported);
+   }
+
+   public void testSliderHeldKeyReportsMoveAfterRepeatStarts()
+   {
+      // the key-repeat timer starts after 400ms; the move made by the first
+      // keydown must still be reported once the key is released
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            34, values -> reported.add(values.get("x.max").toString()))));
+      slider.dispatchEvent(Document.get().createKeyDownEvent(
+            false, false, false, false, KeyCodes.KEY_RIGHT));
+
+      delayTestFinish(5000);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            slider.dispatchEvent(Document.get().createKeyUpEvent(
+                  false, false, false, false, KeyCodes.KEY_RIGHT));
+            assertEquals(Arrays.asList("35"), reported);
+            finishTest();
+         }
+      }.schedule(600);
    }
 
    public void testSliderPageKeysMoveATenthOfTheRange()
