@@ -417,14 +417,27 @@ var defaultArg = makeSession([
   ""
 ].join("\n"));
 
+var defaultArgTree = [
+  "brace {} [0..2]",
+  "  brace {} [1..2]",
+  "function f(x) [1..4]",
+  "  section defaults [2..4]",
+  "function g() [5..5]",
+  "function h() [7..7]"
+].join("\n");
+
 check("a header in a braced default argument leaves the function intact",
       tree(defaultArg),
-      ["brace {} [0..2]",
-       "  brace {} [1..2]",
-       "function f(x) [1..4]",
-       "  section defaults [2..4]",
-       "function g() [5..5]",
-       "function h() [7..7]"].join("\n"));
+      defaultArgTree);
+
+// An edit in the default argument drops the function and reparses from its
+// preamble, which precedes the cut blocks kept beside it; they have to be
+// reparsed too, not seen a second time.
+defaultArg.insert({row: 3, column: 4}, " ");
+
+check("the function survives an edit that reparses its signature",
+      tree(defaultArg),
+      defaultArgTree);
 
 // ---------------------------------------------------------------------------
 // Header nesting by level is unchanged outside braces.

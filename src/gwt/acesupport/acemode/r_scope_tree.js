@@ -729,7 +729,17 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          debuglog("Invalidate from " + pos.row + ", " + pos.column);
          if (comparePoints(this.parsePos, pos) > 0)
          {
-            this.parsePos = this.$root.invalidateFrom(pos);
+            // Dropping a scope resumes parsing at its preamble, which can
+            // precede scopes kept beside it (a block cut by a header in the
+            // scope's own signature); their tokens will be seen again, so
+            // invalidate from there as well, until the position settles.
+            var resumePos = this.$root.invalidateFrom(pos);
+            while (comparePoints(resumePos, pos) < 0)
+            {
+               pos = resumePos;
+               resumePos = this.$root.invalidateFrom(pos);
+            }
+            this.parsePos = resumePos;
 
             // A reparse sees again the '}' of every cut brace matched from
             // the resume position on, and a cut brace that was reopened is
