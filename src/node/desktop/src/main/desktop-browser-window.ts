@@ -220,7 +220,9 @@ export class DesktopBrowserWindow extends EventEmitter {
     // register context menu (right click) handler
     this.window.webContents.on('context-menu', (_event, params) => {
       const wc = this.window.webContents;
-      showContextMenu(wc, params);
+      showContextMenu(wc, params).catch((error: unknown) => {
+        logger().logErrorMessage(`Failed to show context menu: ${error}`);
+      });
     });
 
     this.window.webContents.on('before-input-event', (event, input) => {

@@ -16,26 +16,64 @@
 import { BrowserWindow, clipboard, dialog, Menu, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
+import { logger } from '../core/logger';
 import { appState } from './app-state';
 import { queueClipboardWrite } from './clipboard-queue';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
-export const showContextMenu = (sender: WebContents, params: Electron.ContextMenuParams): void => {
-  const template = _createContextMenuTemplate(sender, params);
+// xterm.js selects its hidden helper textarea when it handles a right-click, before
+// Electron raises 'context-menu'; the params alone can't tell it from Ace's textarea.
+const kTerminalFocusedScript = "document.activeElement?.classList.contains('xterm-helper-textarea') === true";
+
+/**
+ * Whether the menu is over the Terminal pane on a platform where its copy and paste keys
+ * differ from the role defaults.
+ */
+export const _showTerminalShortcuts = async (
+  params: Electron.ContextMenuParams,
+  platform: NodeJS.Platform = process.platform,
+): Promise<boolean> => {
+  // On macOS the terminal copies and pastes with Cmd+C / Cmd+V, matching the role defaults.
+  if (platform === 'darwin' || params.hasImageContents) {
+    return false;
+  }
+
+  // The frame is null when it has navigated away or been destroyed since the click. The
+  // terminal lives in the top-level frame, so don't run the check in Viewer or Help iframes.
+  if (params.frame === null || params.frame.parent !== null) {
+    return false;
+  }
+
+  try {
+    return (await params.frame.executeJavaScript(kTerminalFocusedScript)) === true;
+  } catch (error: unknown) {
+    logger().logErrorMessage(`Failed to check whether the context menu is over the terminal: ${error}`);
+    return false;
+  }
+};
+
+export const showContextMenu = async (sender: WebContents, params: Electron.ContextMenuParams): Promise<void> => {
+  const terminalShortcuts = await _showTerminalShortcuts(params);
+  const template = _createContextMenuTemplate(sender, params, terminalShortcuts);
 
   const menu = Menu.buildFromTemplate(template);
   menu.popup();
 };
 
+/**
+ * @param terminalShortcuts Show the Terminal pane's Windows / Linux copy and paste keys
+ *   (Ctrl+Shift+C / Ctrl+Shift+V) instead of Ctrl+C / Ctrl+V, which the terminal sends to the shell.
+ */
 export const _createContextMenuTemplate = (
   sender: WebContents,
   params: Electron.ContextMenuParams,
+  terminalShortcuts = false,
 ): ContextMenuItem[] => {
   if (params.hasImageContents) {
     return createContextMenuImageTemplate(sender, params);
   } else {
-    return createContextMenuTextTemplate(sender, params);
+    return createContextMenuTextTemplate(sender, params, terminalShortcuts);
   }
 };
 
@@ -134,7 +172,16 @@ const createContextMenuImageTemplate = (sender: WebContents, params: Electron.Co
   ];
 };
 
-const createContextMenuTextTemplate = (sender: WebContents, params: Electron.ContextMenuParams): ContextMenuItem[] => {
+// Display-only accelerators: the terminal's own key handler does the work, so registering
+// them would only shadow it.
+const terminalCopyAccelerator = { accelerator: 'Ctrl+Shift+C', registerAccelerator: false };
+const terminalPasteAccelerator = { accelerator: 'Ctrl+Shift+V', registerAccelerator: false };
+
+const createContextMenuTextTemplate = (
+  sender: WebContents,
+  params: Electron.ContextMenuParams,
+  terminalShortcuts: boolean,
+): ContextMenuItem[] => {
   // We would like to just always use the already-existing roles for clipboard
   // actions, but https://www.electronjs.org/docs/api/menu-item has:
   //
@@ -145,25 +192,34 @@ const createContextMenuTextTemplate = (sender: WebContents, params: Electron.Con
   // so we have to do some extra gymnastics. As is tradition.
   const template: ContextMenuItem[] = [];
 
-  if (params.editFlags.canCut) {
+  if (params.editFlags.canCut && terminalShortcuts) {
+    // No role, so no Ctrl+X hint: in the terminal Ctrl+X goes to the shell.
+    template.push({ label: i18next.t('contextMenu.cut'), click: () => sender.cut() });
+  } else if (params.editFlags.canCut) {
     template.push({ label: i18next.t('contextMenu.cut'), role: 'cut' });
   } else {
     template.push({ label: i18next.t('contextMenu.cut'), enabled: false });
   }
 
   if (params.editFlags.canCopy) {
-    template.push({ label: i18next.t('contextMenu.copy'), role: 'copy' });
+    const accelerator = terminalShortcuts ? terminalCopyAccelerator : {};
+    template.push({ label: i18next.t('contextMenu.copy'), role: 'copy', ...accelerator });
   } else {
     template.push({ label: i18next.t('contextMenu.copy'), enabled: false });
   }
 
   if (params.editFlags.canPaste) {
-    template.push({ label: i18next.t('contextMenu.paste'), role: 'paste' });
+    const accelerator = terminalShortcuts ? terminalPasteAccelerator : {};
+    template.push({ label: i18next.t('contextMenu.paste'), role: 'paste', ...accelerator });
   } else {
     template.push({ label: i18next.t('contextMenu.paste'), enabled: false });
   }
 
-  if (params.editFlags.canSelectAll) {
+  if (params.editFlags.canSelectAll && terminalShortcuts) {
+    // No role, so no Ctrl+A hint: in the terminal Ctrl+A goes to the shell, and there is
+    // no select-all key on Windows or Linux.
+    template.push({ label: i18next.t('contextMenu.selectAll'), click: () => sender.selectAll() });
+  } else if (params.editFlags.canSelectAll) {
     template.push({ label: i18next.t('contextMenu.selectAll'), role: 'selectAll' });
   } else {
     template.push({ label: i18next.t('contextMenu.selectAll'), enabled: false });
