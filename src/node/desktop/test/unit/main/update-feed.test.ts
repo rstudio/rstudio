@@ -19,6 +19,7 @@ import {
   branchSlug,
   channelForVersion,
   compareVersions,
+  isProVersion,
   isUpdateAvailable,
   kDefaultReleaseNotesUrl,
   parseBuildIndex,
@@ -86,16 +87,18 @@ const buildIndex = {
 describe('update feed', () => {
   describe('parseVersion', () => {
     it('parses release, tagged, and pro versions', () => {
-      assert.deepEqual(parseVersion('2026.10.1+239'), { major: 2026, minor: 10, patch: 1, tag: '', build: 239 });
-      assert.deepEqual(parseVersion('2026.12.0-daily+118'), {
-        major: 2026,
-        minor: 12,
-        patch: 0,
-        tag: 'daily',
-        build: 118,
+      const v = (major: number, minor: number, patch: number, tag: string, build: number, pro = false) => ({
+        major,
+        minor,
+        patch,
+        tag,
+        build,
+        pro,
       });
-      assert.deepEqual(parseVersion('2026.10.1+239.pro3'), { major: 2026, minor: 10, patch: 1, tag: '', build: 239 });
-      assert.deepEqual(parseVersion('9999.9.9-dev+999'), { major: 9999, minor: 9, patch: 9, tag: 'dev', build: 999 });
+      assert.deepEqual(parseVersion('2026.10.1+239'), v(2026, 10, 1, '', 239));
+      assert.deepEqual(parseVersion('2026.12.0-daily+118'), v(2026, 12, 0, 'daily', 118));
+      assert.deepEqual(parseVersion('2026.10.1+239.pro3'), v(2026, 10, 1, '', 239, true));
+      assert.deepEqual(parseVersion('9999.9.9-dev+999'), v(9999, 9, 9, 'dev', 999));
     });
 
     it('rejects strings that are not versions', () => {
@@ -126,6 +129,15 @@ describe('update feed', () => {
     it('ranks unparseable versions lowest', () => {
       assert.isBelow(compareVersions('garbage', '2026.10.1+239'), 0);
       assert.equal(compareVersions('garbage', 'also garbage'), 0);
+    });
+  });
+
+  describe('isProVersion', () => {
+    it('recognizes the .pro suffix only', () => {
+      assert.isTrue(isProVersion('2026.10.1+239.pro3'));
+      assert.isTrue(isProVersion('2026.12.0-daily+8.pro1'));
+      assert.isFalse(isProVersion('2026.10.1+239'));
+      assert.isFalse(isProVersion('garbage'));
     });
   });
 

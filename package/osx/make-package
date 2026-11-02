@@ -546,11 +546,14 @@ if [ "${build_package}" = "1" ]; then
       # the in-app updater (Squirrel.Mac via Electron's autoUpdater) installs
       # from a zip holding the .app at its root, so publish one next to the
       # DMG. ditto keeps the signature-relevant metadata that zip(1) drops.
-      info "Creating '${RSTUDIO_BUNDLE_NAME}.zip ...'"
-      rm -f "${RSTUDIO_BUNDLE_NAME}.zip"
-      ditto -c -k --sequesterRsrc --keepParent "install/${app}" "${RSTUDIO_BUNDLE_NAME}.zip"
-      mv "${RSTUDIO_BUNDLE_NAME}.zip" "${PRIMARY_BUILD_DIR}/"
-      info "'${PRIMARY_BUILD_DIR}/${RSTUDIO_BUNDLE_NAME}.zip' has been created."
+      # Open-source only: Pro desktop is not updated in-app.
+      if [ -z "${RSTUDIO_PRO_SUFFIX}" ]; then
+         info "Creating '${RSTUDIO_BUNDLE_NAME}.zip ...'"
+         rm -f "${RSTUDIO_BUNDLE_NAME}.zip"
+         ditto -c -k --sequesterRsrc --keepParent "install/${app}" "${RSTUDIO_BUNDLE_NAME}.zip"
+         mv "${RSTUDIO_BUNDLE_NAME}.zip" "${PRIMARY_BUILD_DIR}/"
+         info "'${PRIMARY_BUILD_DIR}/${RSTUDIO_BUNDLE_NAME}.zip' has been created."
+      fi
 
    fi
 

@@ -448,10 +448,12 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
    private void checkForUpdates(final boolean manual)
    {
-      // the desktop frame checks its own update feed and can download and
-      // install the update itself; where it can't (Linux, no feed published
-      // for this build, feed unreachable) the session's check runs as before
-      if (!Desktop.hasDesktopFrame())
+      // the desktop frame checks the builds site itself and can download and
+      // install the update; where it can't (Linux, Pro builds, a build not on
+      // the site, site unreachable) or an administrator has turned in-app
+      // updates off, the session's check runs as before
+      if (!Desktop.hasDesktopFrame() ||
+          !session_.getSessionInfo().getAllowInAppUpdates())
       {
          checkForUpdatesViaSession(manual);
          return;

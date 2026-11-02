@@ -44,6 +44,8 @@ export interface ParsedVersion {
   tag: string;
   /** numeric build number after '+'; 0 when absent */
   build: number;
+  /** true for a Pro build (".pro<n>" suffix) */
+  pro: boolean;
 }
 
 /** One artifact of one build, as the API's products/platforms entries describe it. */
@@ -71,7 +73,7 @@ export interface PlatformKeys {
  * Returns null when the string does not look like one.
  */
 export function parseVersion(version: string): ParsedVersion | null {
-  const match = /^(\d+)\.(\d+)\.(\d+)(?:-([A-Za-z]+))?(?:\+(\d+))?/.exec(version.trim());
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:-([A-Za-z]+))?(?:\+(\d+))?(\.pro\d+)?/i.exec(version.trim());
   if (!match) {
     return null;
   }
@@ -82,6 +84,7 @@ export function parseVersion(version: string): ParsedVersion | null {
     patch: Number(match[3]),
     tag: (match[4] as string | undefined)?.toLowerCase() ?? '',
     build: (match[5] as string | undefined) === undefined ? 0 : Number(match[5]),
+    pro: (match[6] as string | undefined) !== undefined,
   };
 }
 
@@ -103,6 +106,15 @@ export function compareVersions(a: string, b: string): number {
     }
   }
   return 0;
+}
+
+/**
+ * Whether this is a Pro (Workbench) desktop build. Pro builds are not
+ * updated in-app: Workbench has its own distribution and will need its own
+ * update infrastructure.
+ */
+export function isProVersion(version: string): boolean {
+  return parseVersion(version)?.pro === true;
 }
 
 /** The channel a build belongs to, from its version's pre-release tag. */

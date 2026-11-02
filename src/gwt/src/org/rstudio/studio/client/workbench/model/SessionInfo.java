@@ -567,6 +567,16 @@ public class SessionInfo extends JavaScriptObject
       return this.disable_check_for_updates;
    }-*/;
 
+   /**
+    * Whether RStudio Desktop may download and install updates itself
+    * (allow-in-app-updates in rsession.conf, RSTUDIO_DISABLE_IN_APP_UPDATES).
+    * Absent when the session predates the option; default to allowed, which
+    * is the option's default.
+    */
+   public final native boolean getAllowInAppUpdates() /*-{
+      return this.allow_in_app_updates !== false;
+   }-*/;
+
    public final native boolean getShowIdentity() /*-{
       return this.show_identity;
    }-*/;

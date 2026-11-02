@@ -32,6 +32,7 @@ import {
   branchSlug,
   BuildArtifact,
   channelForVersion,
+  isProVersion,
   isUpdateAvailable,
   kDefaultUpdateApiBaseUrl,
   parseBuildIndex,
@@ -120,7 +121,9 @@ export class Updater {
     const branch = getenv('RSTUDIO_UPDATE_BRANCH') || branchSlug(buildInfo().RSTUDIO_RELEASE_NAME);
     const baseUrl = getenv('RSTUDIO_UPDATE_API_URL') || kDefaultUpdateApiBaseUrl;
 
-    this.keys = platformKeys(process.platform, process.arch);
+    // open-source RStudio Desktop only: Workbench has its own distribution
+    // and will need its own update infrastructure
+    this.keys = isProVersion(this.currentVersion) ? null : platformKeys(process.platform, process.arch);
     if (this.keys) {
       this.indexUrl = updateIndexUrl(baseUrl, this.channel, branch);
     }

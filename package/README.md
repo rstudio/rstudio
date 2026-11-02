@@ -237,8 +237,10 @@ installers, run `make-dist-packages.bat` from `package\win32`.
 
 ## In-app update feed
 
-RStudio Desktop on macOS and Windows can download and install updates itself
-(`src/node/desktop/src/main/updater.ts`). It reads the JSON API of the builds
+Open-source RStudio Desktop on macOS and Windows can download and install
+updates itself (`src/node/desktop/src/main/updater.ts`); Pro desktop builds
+(a `.pro` version suffix) are left to Workbench's own distribution. It reads
+the JSON API of the builds
 site, <https://dailies.rstudio.com/json-api/>, which already lists every
 published build with its download link and SHA-256:
 
@@ -260,10 +262,16 @@ no entry for a build (Linux, developer builds, a branch not yet on the site),
 the desktop falls back to the session's own check and the "Quit and Download"
 dialog; when only the DMG is listed, that dialog links to it directly.
 
-The macOS zip is published to the builds site by the Jenkins pipeline as the
-`electron/macos-zip` platform, next to the DMG. The site itself names each
-platform in a per-branch `_index.md` (in the `rstudio/latest-builds`
-repository), so a new platform needs one there before it is displayed.
+The macOS zip is produced for open-source builds only and published to the
+builds site by the Jenkins pipeline as the `electron/macos-zip` platform, next
+to the DMG. The site itself names each platform in a per-branch `_index.md`
+(in the `rstudio/latest-builds` repository), so a new platform needs one there
+before it is displayed.
+
+Administrators can keep the update notification but send users to the download
+page instead, with `allow-in-app-updates=0` in `rsession.conf` or the
+`RSTUDIO_DISABLE_IN_APP_UPDATES` environment variable; the existing
+`RSTUDIO_DISABLE_CHECK_FOR_UPDATES` still turns update checks off entirely.
 
 For testing a build against another channel or copy of the API, the desktop
 honours `RSTUDIO_UPDATE_API_URL`, `RSTUDIO_UPDATE_CHANNEL` (also enables
