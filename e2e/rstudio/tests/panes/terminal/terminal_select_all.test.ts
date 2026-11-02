@@ -14,7 +14,13 @@ import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { executeCommand } from '@utils/commands';
-import { killAllTerminals, openTerminal } from '@utils/terminal';
+import {
+  captureResult,
+  focusTerminal,
+  killAllTerminals,
+  openTerminal,
+  retryTerminalInput,
+} from '@utils/terminal';
 
 /**
  * The text a copy would put on the clipboard, read from the copy event rather
@@ -65,11 +71,33 @@ test.describe('Terminal: right-click Select All', () => {
     const stamp = Date.now();
     const first = `first_${stamp}`;
     const second = `second_${stamp}`;
-    await page.keyboard.type(`echo first_"${stamp}"; echo second_"${stamp}"`);
-    await page.keyboard.press('Enter');
+    // Wait for the output through the terminal's buffer, not Select All, so a
+    // broken Select All fails without being mistaken for lost input.
+    await retryTerminalInput(
+      page,
+      async () => {
+        await page.keyboard.type(`echo first_"${stamp}"; echo second_"${stamp}"`);
+        await page.keyboard.press('Enter');
+      },
+      () =>
+        expect
+          .poll(
+            () =>
+              captureResult(
+                page,
+                '{ b <- trimws(rstudioapi::terminalBuffer(rstudioapi::terminalList()[[1]])); ' +
+                  `any(b == "${first}") && any(b == "${second}") }`,
+              ),
+            { timeout: TIMEOUTS.consoleReady },
+          )
+          .toBe('TRUE'),
+    );
 
-    // Retried until the output has arrived. Without the terminal's listener
-    // nothing is selected, the copy carries no text, and this times out.
+    // captureResult drives the R console, which takes focus.
+    await focusTerminal(page);
+
+    // Without the terminal's listener nothing is selected, the copy carries no
+    // text, and this times out.
     await expect
       .poll(
         async () => {
