@@ -15,6 +15,7 @@
  */
 package com.google.gwt.widgetideas.client;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -315,11 +316,15 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
     DOM.setElementProperty(lineElement, "className", "gwt-SliderBar-line");
 
     // Create the knob
-    images.slider().applyTo(knobImage);
+    setKnobImage(images.slider());
     Element knobElement = knobImage.getElement();
     DOM.appendChild(getElement(), knobElement);
     DOM.setStyleAttribute(knobElement, "position", "absolute");
     DOM.setElementProperty(knobElement, "className", "gwt-SliderBar-knob");
+
+    Roles.getSliderRole().set(getElement());
+    updateAriaRange();
+    updateAriaValue();
 
     sinkEvents(Event.MOUSEEVENTS | Event.KEYEVENTS | Event.FOCUSEVENTS);
   }
@@ -478,6 +483,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
                 setCurrentValue(maxValue);
                 break;
               case KeyboardListener.KEY_LEFT:
+              case KeyboardListener.KEY_DOWN:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
                 startSliding(false, true);
@@ -485,6 +491,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
                 keyTimer.schedule(400, false, multiplier);
                 break;
               case KeyboardListener.KEY_RIGHT:
+              case KeyboardListener.KEY_UP:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
                 startSliding(false, true);
@@ -603,6 +610,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
     // Redraw the knob
     drawKnob();
+    updateAriaValue();
 
     // Fire the onValueChange event
     if (fireEvent && (changeListeners != null)) {
@@ -617,11 +625,12 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
+    Roles.getSliderRole().setAriaDisabledState(getElement(), !enabled);
     if (enabled) {
-      images.slider().applyTo(knobImage);
+      setKnobImage(images.slider());
       DOM.setElementProperty(lineElement, "className", "gwt-SliderBar-line");
     } else {
-      images.sliderDisabled().applyTo(knobImage);
+      setKnobImage(images.sliderDisabled());
       DOM.setElementProperty(lineElement, "className",
           "gwt-SliderBar-line gwt-SliderBar-line-disabled");
     }
@@ -635,6 +644,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setLabelFormatter(LabelFormatter labelFormatter) {
     this.labelFormatter = labelFormatter;
+    updateAriaValue();
   }
 
   /**
@@ -644,6 +654,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setMaxValue(double maxValue) {
     this.maxValue = maxValue;
+    updateAriaRange();
     drawLabels();
     resetCurrentValue();
   }
@@ -655,6 +666,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setMinValue(double minValue) {
     this.minValue = minValue;
+    updateAriaRange();
     drawLabels();
     resetCurrentValue();
   }
@@ -915,6 +927,29 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
   }
 
   /**
+   * Apply a knob image. The knob only depicts the value, which the slider
+   * role already exposes, so it is marked decorative; applyTo can swap in a
+   * new img element, so the alt is reapplied every time.
+   */
+  private void setKnobImage(AbstractImagePrototype image) {
+    image.applyTo(knobImage);
+    knobImage.setAltText("");
+  }
+
+  private void updateAriaRange() {
+    Roles.getSliderRole().setAriaValueminProperty(getElement(), minValue);
+    Roles.getSliderRole().setAriaValuemaxProperty(getElement(), maxValue);
+  }
+
+  // aria-valuetext carries the formatted value the user sees, since
+  // aria-valuenow can hold the raw value of a fractional step
+  private void updateAriaValue() {
+    Roles.getSliderRole().setAriaValuenowProperty(getElement(), curValue);
+    Roles.getSliderRole().setAriaValuetextProperty(getElement(),
+        formatLabel(curValue));
+  }
+
+  /**
    * Highlight this widget.
    */
   private void highlight() {
@@ -958,7 +993,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
           "gwt-SliderBar-line gwt-SliderBar-line-sliding");
       DOM.setElementProperty(knobImage.getElement(), "className",
           "gwt-SliderBar-knob gwt-SliderBar-knob-sliding");
-      images.sliderSliding().applyTo(knobImage);
+      setKnobImage(images.sliderSliding());
     }
   }
 
@@ -974,7 +1009,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
       DOM.setElementProperty(knobImage.getElement(), "className",
           "gwt-SliderBar-knob");
-      images.slider().applyTo(knobImage);
+      setKnobImage(images.slider());
     }
     if (fireEvent && (slideCompletedListeners != null)) 
        slideCompletedListeners.fireChange(this);

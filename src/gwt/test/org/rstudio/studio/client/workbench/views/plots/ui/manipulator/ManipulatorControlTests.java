@@ -18,7 +18,10 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsonUtils;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -60,10 +63,98 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals("Show axes", labelTextFor(control, input));
    }
 
+   public void testSliderExposesRoleNameAndRange()
+   {
+      Element slider = sliderElement(attach(newSlider(25)));
+
+      Element caption = Document.get().getElementById(
+            slider.getAttribute("aria-labelledby"));
+      assertNotNull("aria-labelledby must point at an element", caption);
+      assertEquals("X max:", caption.getInnerText());
+
+      assertEquals("5", slider.getAttribute("aria-valuemin"));
+      assertEquals("35", slider.getAttribute("aria-valuemax"));
+      assertEquals("25", slider.getAttribute("aria-valuenow"));
+      assertEquals("25", slider.getAttribute("aria-valuetext"));
+   }
+
+   public void testSliderArrowKeysUpdateValue()
+   {
+      Element slider = sliderElement(attach(newSlider(25)));
+
+      pressKey(slider, KeyCodes.KEY_UP);
+      assertEquals("26", slider.getAttribute("aria-valuenow"));
+      assertEquals("26", slider.getAttribute("aria-valuetext"));
+
+      pressKey(slider, KeyCodes.KEY_DOWN);
+      pressKey(slider, KeyCodes.KEY_LEFT);
+      assertEquals("24", slider.getAttribute("aria-valuenow"));
+
+      pressKey(slider, KeyCodes.KEY_RIGHT);
+      assertEquals("25", slider.getAttribute("aria-valuenow"));
+   }
+
+   public void testSliderValueTextMatchesDisplayedValue()
+   {
+      // A short range gets a fractional step, so aria-valuenow carries raw
+      // precision while the visible value is rounded; valuetext must match
+      // what sighted users see
+      Manipulator.Slider slider = JsonUtils.<Manipulator.Slider>safeEval(
+            "{\"type\":[0],\"label\":[\"Alpha\"],\"min\":[0],\"max\":[1],"
+            + "\"step\":[-1],\"ticks\":[false],\"initialValue\":[0.333]}");
+      Widget control = attach(new ManipulatorControlSlider(
+            "alpha", 0.333, slider, values -> {}));
+      Element sliderEl = sliderElement(control);
+
+      Element valueLabel = DomUtils.querySelector(
+            control.getElement(),
+            "." + ManipulatorResources.INSTANCE.manipulatorStyles().sliderValueLabel());
+      assertFalse(valueLabel.getInnerText().isEmpty());
+      assertEquals(valueLabel.getInnerText(),
+                   sliderEl.getAttribute("aria-valuetext"));
+   }
+
+   public void testSliderKnobImageIsDecorative()
+   {
+      Element slider = sliderElement(attach(newSlider(25)));
+      assertKnobIsDecorative(slider);
+
+      // releasing a key restores the knob's resting image; the alt must survive
+      pressKey(slider, KeyCodes.KEY_RIGHT);
+      assertKnobIsDecorative(slider);
+   }
+
+   private static void assertKnobIsDecorative(Element slider)
+   {
+      NodeList<Element> images = DomUtils.querySelectorAll(slider, "img");
+      assertTrue("slider has no knob image", images.getLength() > 0);
+      for (int i = 0; i < images.getLength(); i++)
+      {
+         Element img = images.getItem(i);
+         assertTrue("knob image needs an alt attribute", img.hasAttribute("alt"));
+         assertEquals("", img.getAttribute("alt"));
+      }
+   }
+
+   private static ManipulatorControlSlider newSlider(double value)
+   {
+      Manipulator.Slider slider = JsonUtils.<Manipulator.Slider>safeEval(
+            "{\"type\":[0],\"label\":[\"X max\"],\"min\":[5],\"max\":[35],"
+            + "\"step\":[-1],\"ticks\":[false],\"initialValue\":[25]}");
+      return new ManipulatorControlSlider("x.max", value, slider, values -> {});
+   }
+
    private static Widget attach(Widget widget)
    {
       RootPanel.get().add(widget);
       return widget;
+   }
+
+   private static Element sliderElement(Widget control)
+   {
+      Element slider = DomUtils.querySelector(control.getElement(), "[role=slider]");
+      assertNotNull("no element with role=slider", slider);
+      return slider;
    }
 
    private static String labelTextFor(Widget control, Element target)
@@ -73,5 +164,12 @@ public class ManipulatorControlTests extends GWTTestCase
             control.getElement(), "label[for=\"" + target.getId() + "\"]");
       assertNotNull("no <label> for the control", label);
       return label.getInnerText();
+   }
+
+   private static void pressKey(Element target, int keyCode)
+   {
+      Document doc = Document.get();
+      target.dispatchEvent(doc.createKeyDownEvent(false, false, false, false, keyCode));
+      target.dispatchEvent(doc.createKeyUpEvent(false, false, false, false, keyCode));
    }
 }
