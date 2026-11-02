@@ -72,7 +72,11 @@ var DEFAULT_STRINGS = {
 };
 
 // Mirrors how the editor loads a document (AceEditor.doSetCode strips
-// escape characters) and how Ace's Document splits lines.
+// escape characters) and how Ace's Document splits lines: a final newline
+// ends an empty last line, and an empty file has no lines at all (see
+// update). Git's diff sees these differently, which the Git pane's
+// go-to-change allows for (GitPresenter.unchangedLeadingLines); a change
+// here needs one there.
 function splitLines(text) {
    text = text.replace(/\u001b/g, "");
    return text === "" ? [] : text.split(/\r\n|\r|\n/);
@@ -1237,8 +1241,19 @@ var GitDiffGutter = function(editor, strings) {
       var height = 0;
       if (floor != null)
       {
-         var header = el.firstChild;
-         height = el.clientTop + header.offsetTop + header.offsetHeight;
+         // This runs on every render, just after Ace has written the
+         // widgets' styles, where measuring would force a layout each
+         // frame; the header's height holds while the editor's width does
+         // (its label may wrap in a narrow one), so it is measured once per
+         // width.
+         var width = this.editor.renderer.$size.width;
+         if (peek.headerHeight == null || peek.headerWidth !== width)
+         {
+            var header = el.firstChild;
+            peek.headerHeight = el.clientTop + header.offsetTop + header.offsetHeight;
+            peek.headerWidth = width;
+         }
+         height = peek.headerHeight;
 
          var top = this.rowScreenBottom(widget.row) + drop;
          var bottom = this.editor.renderer.$size.scrollerHeight;
