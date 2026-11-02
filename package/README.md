@@ -274,8 +274,12 @@ installation (each is its own process) shares it while another copy of RStudio
 on the machine does not: a verified installer already there is reused,
 downloads land under a private name until verified, and installers no newer
 than the running build are pruned at startup. "Restart Now" first checks that
+the staged installer still verifies (downloading it again otherwise) and that
 no `rstudio.exe` outside this application is running, because the installer
-refuses to replace files beside a live one.
+refuses to replace files beside a live one. On both platforms the active
+project is written to `relaunch-project.json` in the Electron user-data
+directory before quitting and reopened, once, by the relaunched RStudio; a
+quit the session refuses cancels the pending install (the download stays).
 
 The macOS zip is produced for open-source builds only and published to the
 builds site by the Jenkins pipeline as the `electron/macos-zip` platform, next

@@ -208,8 +208,8 @@ export class GwtCallback extends EventEmitter {
       return this.updater.canInstallUpdate();
     });
 
-    ipcMain.on('desktop_install_update', () => {
-      this.updater.installUpdate();
+    ipcMain.on('desktop_install_update', (_event, projectFilePath: string) => {
+      this.updater.installUpdate(projectFilePath);
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
@@ -1285,9 +1285,10 @@ export class GwtCallback extends EventEmitter {
     this.pendingQuit = pendingQuit;
 
     // a quit that was abandoned (e.g. the session refused it) leaves no R
-    // switch behind for some later, unrelated restart
+    // switch or update install behind for some later, unrelated quit
     if (pendingQuit === PendingQuit.PendingQuitNone) {
       this.pendingRVersion = '';
+      this.updater.cancelPendingInstall();
     }
   }
 

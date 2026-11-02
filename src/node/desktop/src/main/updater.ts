@@ -28,6 +28,7 @@ import { safeError } from '../core/err';
 import { logger } from '../core/logger';
 import { buildInfo } from './build-info';
 import { MainWindow } from './main-window';
+import { forgetRelaunchProject, rememberRelaunchProject } from './relaunch-project';
 import {
   branchSlug,
   BuildArtifact,
@@ -65,12 +66,13 @@ import { detectWindowsInstallMode, otherRStudioProcessCount, WindowsInstallMode 
  *      signature. Windows downloads the NSIS installer and checks its SHA-256
  *      against the API.
  *   3. We call back into GWT (`desktopHooks.onUpdateDownloaded`), which offers
- *      a restart. If accepted, GWT asks `canInstallUpdate()` (on Windows, no
- *      other RStudio process may be running), calls `installUpdate()` and
- *      runs its normal quit sequence; `applyPendingUpdate()` then runs as
- *      the main window quits: Squirrel swaps the bundle and relaunches, or
- *      the installer runs silently (`/S /update`) and relaunches RStudio
- *      when it is done.
+ *      a restart. If accepted, GWT asks `canInstallUpdate()` (on Windows, the
+ *      staged installer must still verify and no other RStudio process may
+ *      be running), calls `installUpdate()` with the active project and runs
+ *      its normal quit sequence; `applyPendingUpdate()` then runs as the
+ *      main window quits: Squirrel swaps the bundle and relaunches, or the
+ *      installer runs silently (`/S /update`) and relaunches RStudio when it
+ *      is done. The relaunch reopens the remembered project.
  *
  * Any failure to read the API answers `unsupported` or `error`, and GWT
  * falls back to the session's check and today's "Quit and Download" dialog.
@@ -105,6 +107,15 @@ const kRequestTimeoutMs = 15000;
 /** A partial download older than this was abandoned by a crashed instance. */
 const kPartialDownloadTtlMs = 24 * 60 * 60 * 1000;
 
+/** Why a downloaded update cannot be applied right now; '' when it can. */
+export type InstallBlocker = '' | 'other-instances' | 'missing';
+
+/** A verified Windows installer on disk and the API entry it was checked against. */
+interface StagedInstaller {
+  file: string;
+  entry: BuildArtifact;
+}
+
 export class Updater {
   private keys: PlatformKeys | null;
   private channel: UpdateChannel;
@@ -115,7 +126,7 @@ export class Updater {
   private available: AvailableUpdate | null = null;
   private activeDownload: BuildArtifact | null = null;
   private downloadedVersion: string | null = null;
-  private windowsInstaller: string | null = null;
+  private staged: StagedInstaller | null = null;
   private windowsInstallMode: WindowsInstallMode | null = null;
   private pendingInstall = false;
   private macListenersInstalled = false;
@@ -200,26 +211,25 @@ export class Updater {
     if (this.activeDownload) {
       return;
     }
-    if (this.downloadedVersion === entry.version) {
-      // the staged Windows installer lives on disk, where another instance
-      // may have pruned it since; only report it ready while it is still there
-      if (
-        process.platform !== 'win32' ||
-        (this.windowsInstaller && (await this.verifyInstaller(this.windowsInstaller, entry)))
-      ) {
-        this.notifyDownloaded(entry.version);
-        return;
-      }
-      logger().logDebug(`the staged installer for ${entry.version} is gone; downloading it again`);
-      this.downloadedVersion = null;
-      this.windowsInstaller = null;
-    }
 
-    // later checks may replace `available` while this download runs, so
-    // completion reports the artifact that was actually fetched
+    // taken before anything is awaited, so overlapping requests cannot both
+    // start; later checks may also replace `available` while this download
+    // runs, so completion reports the artifact that was actually fetched
     this.activeDownload = entry;
-    this.setProgress(2); // > 1 shows an indeterminate dock / taskbar bar
     try {
+      if (this.downloadedVersion === entry.version) {
+        // the staged Windows installer lives on disk, where it may have been
+        // removed since; only report it ready while it still verifies
+        if (process.platform !== 'win32' || (await this.stagedInstallerVerifies())) {
+          this.onDownloaded(entry.version);
+          return;
+        }
+        logger().logDebug(`the staged installer for ${entry.version} is gone; downloading it again`);
+        this.downloadedVersion = null;
+        this.staged = null;
+      }
+
+      this.setProgress(2); // > 1 shows an indeterminate dock / taskbar bar
       if (process.platform === 'darwin') {
         await this.downloadWithSquirrel(entry, this.available.notesUrl);
       } else if (process.platform === 'win32') {
@@ -234,14 +244,21 @@ export class Updater {
   }
 
   /**
-   * Whether the downloaded update can be applied right now. "Restart Now"
-   * quits only this window, and on Windows each window is a separate
-   * rstudio.exe that the installer refuses to run beside; GWT asks the user
-   * to close the others first.
+   * Whether the downloaded update can be applied right now, asked before
+   * "Restart Now" commits to quitting. On Windows the staged installer must
+   * still be on disk and intact ('missing' asks GWT to download it again),
+   * and no other RStudio window may be open: each window is a separate
+   * rstudio.exe that the installer refuses to run beside, and quitting this
+   * one alone would leave the user with neither RStudio nor the update.
    */
-  async canInstallUpdate(): Promise<boolean> {
+  async canInstallUpdate(): Promise<InstallBlocker> {
     if (process.platform !== 'win32') {
-      return true;
+      return '';
+    }
+
+    if (!(await this.stagedInstallerVerifies())) {
+      logger().logInfo('the staged installer is missing or altered; it must be downloaded again');
+      return 'missing';
     }
 
     // every process of this application (renderer, GPU, utility) is also an
@@ -250,17 +267,36 @@ export class Updater {
     const others = await otherRStudioProcessCount(ownPids);
     if (others > 0) {
       logger().logInfo(`not installing the update yet: ${others} other RStudio process(es) running`);
+      return 'other-instances';
     }
-    return others === 0;
+    return '';
   }
 
-  /** Record that the user accepted the restart; the quit sequence applies it. */
-  installUpdate(): void {
+  /**
+   * Record that the user accepted the restart; the quit sequence applies it.
+   * `project` is the active project file (or kProjectNone), which the
+   * relaunched RStudio reopens.
+   */
+  installUpdate(project: string): void {
     if (this.downloadedVersion === null) {
       logger().logErrorMessage('installUpdate() called before an update was downloaded');
       return;
     }
     this.pendingInstall = true;
+    rememberRelaunchProject(project);
+  }
+
+  /**
+   * The quit that was to apply the update did not happen (the session
+   * refused it, or the user cancelled), so a later ordinary quit must not
+   * install. The download itself stays staged.
+   */
+  cancelPendingInstall(): void {
+    if (this.pendingInstall) {
+      logger().logDebug('the quit was abandoned; the downloaded update stays staged');
+      this.pendingInstall = false;
+      forgetRelaunchProject();
+    }
   }
 
   /**
@@ -281,18 +317,19 @@ export class Updater {
       return true;
     }
 
-    if (process.platform === 'win32' && this.windowsInstaller && this.windowsInstallMode) {
-      // the staging directory is shared with other instances, so make sure
-      // the verified installer is still there before handing it the quit
-      if (!existsSync(this.windowsInstaller)) {
-        logger().logErrorMessage(`${this.windowsInstaller} is gone; not installing RStudio ${this.downloadedVersion}`);
+    if (process.platform === 'win32' && this.staged && this.windowsInstallMode) {
+      // canInstallUpdate() verified the installer moments ago; this is the
+      // last cheap check before handing it the quit
+      if (!existsSync(this.staged.file)) {
+        logger().logErrorMessage(`${this.staged.file} is gone; not installing RStudio ${this.downloadedVersion}`);
+        forgetRelaunchProject();
         return false;
       }
 
       // the installer waits (via /update) for this process to exit before it
       // touches the install directory, then relaunches RStudio
-      logger().logInfo(`launching ${this.windowsInstaller} to install RStudio ${this.downloadedVersion}`);
-      const child = spawn(this.windowsInstaller, ['/S', `/${this.windowsInstallMode}`, '/update'], {
+      logger().logInfo(`launching ${this.staged.file} to install RStudio ${this.downloadedVersion}`);
+      const child = spawn(this.staged.file, ['/S', `/${this.windowsInstallMode}`, '/update'], {
         detached: true,
         stdio: 'ignore',
         windowsHide: true,
@@ -462,7 +499,7 @@ export class Updater {
 
     if (await this.verifyInstaller(target, entry)) {
       logger().logDebug(`reusing the already downloaded ${target}`);
-      this.windowsInstaller = target;
+      this.staged = { file: target, entry };
       return;
     }
 
@@ -477,7 +514,11 @@ export class Updater {
       await rm(partial, { force: true });
     }
 
-    this.windowsInstaller = target;
+    this.staged = { file: target, entry };
+  }
+
+  private async stagedInstallerVerifies(): Promise<boolean> {
+    return this.staged !== null && (await this.verifyInstaller(this.staged.file, this.staged.entry));
   }
 
   private async fetchToFile(entry: BuildArtifact, file: string): Promise<void> {

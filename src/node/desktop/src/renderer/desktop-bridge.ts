@@ -57,18 +57,18 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_download_update');
     },
 
-    canInstallUpdate: async (callback: VoidCallback<boolean>) => {
+    canInstallUpdate: async (callback: VoidCallback<string>) => {
       try {
         callback(await ipcRenderer.invoke('desktop_can_install_update'));
       } catch (error: unknown) {
         // let the restart go ahead; the installer has its own running-app check
         reportIpcError('canInstallUpdate', error as Error);
-        callback(true);
+        callback('');
       }
     },
 
-    installUpdate: () => {
-      ipcRenderer.send('desktop_install_update');
+    installUpdate: (projectFilePath: string) => {
+      ipcRenderer.send('desktop_install_update', projectFilePath);
     },
 
     getOpenFileName: async (

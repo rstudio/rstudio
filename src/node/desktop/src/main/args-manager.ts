@@ -18,7 +18,8 @@ import path from 'path';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { enableDiagnosticsOutput, logger, setLogger } from '../core/logger';
-import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
+import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
+import { takeRelaunchProject } from './relaunch-project';
 import { WinstonLogger } from '../core/winston-logger';
 import { Application } from './application';
 import { appState } from './app-state';
@@ -201,6 +202,18 @@ export class ArgsManager {
         logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`);
         return true;
       });
+    }
+
+    // an in-app update relaunches RStudio with no arguments; reopen what was
+    // open when the update was accepted, as "Restart RStudio" does
+    if (!getenv(kRStudioInitialProject)) {
+      const project = takeRelaunchProject();
+      if (project === kProjectNone) {
+        setenv(kRStudioInitialProject, kProjectNone);
+      } else if (project && existsSync(project)) {
+        setenv(kRStudioInitialProject, project);
+        setenv(kRStudioInitialWorkingDir, path.dirname(project));
+      }
     }
   }
 
