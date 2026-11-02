@@ -15,7 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { parseRegQueryValue, parseTasklistPids, windowsInstallModeFor } from '../../../src/main/windows-install-mode';
+import { parseRegQueryValue, windowsInstallModeFor } from '../../../src/main/windows-install-mode';
 
 const regOutput = `
 HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RStudio
@@ -61,19 +61,6 @@ describe('windows install mode', () => {
       assert.isNull(windowsInstallModeFor('D:\\tools\\RStudio', { currentUser, allUsers }));
       assert.isNull(windowsInstallModeFor('', { currentUser, allUsers }));
       assert.isNull(windowsInstallModeFor('C:\\Program Files\\RStudio', { currentUser: '', allUsers: '' }));
-    });
-  });
-
-  describe('parseTasklistPids', () => {
-    it('reads one pid per CSV row', () => {
-      const output =
-        '"rstudio.exe","1234","Console","1","123,456 K"\r\n"rstudio.exe","5678","Console","1","98,765 K"\r\n';
-      assert.deepEqual(parseTasklistPids(output), [1234, 5678]);
-    });
-
-    it('is empty when tasklist matched nothing', () => {
-      assert.deepEqual(parseTasklistPids('INFO: No tasks are running which match the specified criteria.\r\n'), []);
-      assert.deepEqual(parseTasklistPids(''), []);
     });
   });
 });

@@ -274,11 +274,13 @@ installation (each is its own process) shares it while another copy of RStudio
 on the machine does not: a verified installer already there is reused,
 downloads land under a private name until verified, and installers no newer
 than the running build are pruned at startup. "Restart Now" first checks that
-the staged installer still verifies (downloading it again otherwise) and that
-no `rstudio.exe` outside this application is running, because the installer
-refuses to replace files beside a live one; the check runs again after the
-save prompts, and a check that cannot be made blocks the restart rather than
-letting the installer give up silently. On both platforms the active project
+the staged installer still verifies (downloading it again otherwise). On both
+platforms it also checks that no other window of this installation is running
+(`tasklist` on Windows, `ps` on macOS), because the NSIS installer refuses to
+run beside a live `rstudio.exe` and Squirrel.Mac waits for every process of
+the bundle to exit; the check runs again after the save prompts, and a check
+that cannot be made blocks the restart rather than letting the installer give
+up silently. On both platforms the active project
 is written to `relaunch-project/<install key>.json` in the Electron user-data
 directory before quitting and reopened, once, by the relaunched RStudio -- the
 marker names the build and installation it is for, so an unrelated launch in

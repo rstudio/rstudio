@@ -43,7 +43,8 @@ import {
   UpdateChannel,
   updateIndexUrl,
 } from './update-feed';
-import { detectWindowsInstallMode, otherRStudioProcessCount, WindowsInstallMode } from './windows-install-mode';
+import { otherInstanceCount } from './running-instances';
+import { detectWindowsInstallMode, WindowsInstallMode } from './windows-install-mode';
 
 /**
  * In-app updates for RStudio Desktop, modelled on Positron's updater.
@@ -245,25 +246,22 @@ export class Updater {
   /**
    * Whether the downloaded update can be applied right now, asked before
    * "Restart Now" commits to quitting. On Windows the staged installer must
-   * still be on disk and intact ('missing' asks GWT to download it again),
-   * and no other RStudio window may be open: each window is a separate
-   * rstudio.exe that the installer refuses to run beside, and quitting this
-   * one alone would leave the user with neither RStudio nor the update.
+   * still be on disk and intact ('missing' asks GWT to download it again).
+   * On both platforms no other RStudio window may be open: each window is a
+   * separate process, neither installer will swap the application while one
+   * is alive, and quitting this window alone would leave the user with
+   * neither RStudio nor the update.
    */
   async canInstallUpdate(): Promise<InstallBlocker> {
-    if (process.platform !== 'win32') {
-      return '';
-    }
-
-    if (!(await this.stagedInstallerVerifies())) {
+    if (process.platform === 'win32' && !(await this.stagedInstallerVerifies())) {
       logger().logInfo('the staged installer is missing or altered; it must be downloaded again');
       return 'missing';
     }
 
-    // every process of this application (renderer, GPU, utility) is also an
-    // rstudio.exe; only processes outside it are other windows
+    // every process of this application (renderer, GPU, utility) may run the
+    // same executable; only processes outside it are other windows
     const ownPids = app.getAppMetrics().map((metric) => metric.pid);
-    const others = await otherRStudioProcessCount(ownPids);
+    const others = await otherInstanceCount(process.execPath, ownPids);
     if (others === null) {
       logger().logErrorMessage('could not list running RStudio processes; not installing the update');
       return 'unknown';

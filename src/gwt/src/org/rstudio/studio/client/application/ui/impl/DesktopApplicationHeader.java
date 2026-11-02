@@ -737,8 +737,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             return;
          }
 
-         // on Windows every window is its own rstudio.exe, and the installer
-         // will not run while any of them is alive; quitting this one alone
+         // every window is its own process, and neither installer will swap
+         // the application while another is alive; quitting this one alone
          // would leave the user without RStudio and without the update.
          // Offer the restart again once the warning is dismissed, so closing
          // the other windows does not need a new update check.
