@@ -90,7 +90,7 @@ pin, so they follow automatically.
 
 Architecture is not a second selection axis: every engine config is
 single-arch, and the arch it runs on is spelled out in `tools_arch`, the runner
-labels, all three build cache keys, `sccache_key_prefix`, `installer_artifact`,
+labels, all three build cache keys, `installer_artifact`,
 `daily_platform_key`, and `e2e_deps_cache_scope`. Keeping the arch literal in
 each of those (rather than templating it in) is what stops two engines of
 different arch from ever sharing a cache entry or an artifact name. `pw_label`
@@ -151,7 +151,6 @@ scope is hardcoded as `cache-scope` in
 `os-test-e2e-rstudio-server-os-ubuntu-24.yml`, so change the two together.
 What must stay arch-distinct is anything that would
 otherwise collide with the engine of the other architecture:
-`sccache_key_prefix`,
 `installer_artifact`, `pw_label`, and especially `e2e_deps_cache_scope` -- an
 empty scope means `runner.os` alone (`Linux`), so any two engines that left it
 empty would hand each other ABI-incompatible R libraries. Every engine sets an
@@ -199,7 +198,6 @@ as `key=value` job outputs.
 | `tools_arch` | RSTUDIO_TOOLS_ROOT subdirectory (`x86_64` / `arm64`) |
 | `dependency_script` | script under `dependencies/linux` to run |
 | `tools_cache_key`, `rlibs_cache_key`, `gwt_cache_key` | Actions cache key prefixes; per-distro/arch isolation. The ubuntu-24-x86_64 `tools_cache_key` and `rlibs_cache_key` are deliberately shared with the Linux Server build and its cache seed; `gwt_cache_key` is not -- Server keys its GWT cache separately |
-| `sccache_key_prefix` | S3 key prefix for the shared sccache bucket |
 | `installer_artifact` | name of the built installer artifact passed from build to e2e |
 | `daily_platform_key` | key under `products.electron.platforms` in the dailies manifest |
 | `e2e_runner`, `e2e_image`, `e2e_container_options`, `e2e_bootstrap_packages` | e2e job placement (same semantics as the build_ variants) |
