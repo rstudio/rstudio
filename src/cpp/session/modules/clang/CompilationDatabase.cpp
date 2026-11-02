@@ -53,7 +53,7 @@ using namespace boost::placeholders;
 // Bump this version if you'd like newer versions of RStudio
 // to be forced to rebuild the compilation database, e.g. because
 // the methodology used to infer compilation flags has changed.
-#define kCompilationDatabaseVersion 4
+#define kCompilationDatabaseVersion 5
 
 namespace rstudio {
 namespace session {
@@ -165,6 +165,69 @@ struct SourceCppFileInfo
    std::string cppPkg;
    bool disableIndexing;
 };
+
+// Extra compiler flags from a 'compile_flags.txt', following the clangd
+// convention of one argument per line. We look in the source file's directory
+// and its parents, up to the project directory, so a project can append to or
+// override the flags we generate (the last occurrence of a flag wins).
+std::vector<std::string> compileFlagsFromFile(const FilePath& srcFile)
+{
+   using namespace projects;
+
+   FilePath dir = srcFile.getParent();
+   FilePath stopDir = dir;
+   if (projectContext().hasProject() && dir.isWithin(projectContext().directory()))
+      stopDir = projectContext().directory();
+
+   FilePath flagsFile;
+   while (true)
+   {
+      FilePath candidate = dir.completeChildPath("compile_flags.txt");
+      if (candidate.exists())
+      {
+         flagsFile = candidate;
+         break;
+      }
+
+      if (dir == stopDir)
+         break;
+
+      // guard against a stop directory we never reach (e.g. symlinks)
+      FilePath parent = dir.getParent();
+      if (parent.isEmpty() || parent == dir)
+         break;
+
+      dir = parent;
+   }
+
+   if (flagsFile.isEmpty())
+      return {};
+
+   std::string contents;
+   Error error = core::readStringFromFile(flagsFile, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return {};
+   }
+
+   std::vector<std::string> flags;
+   for (std::string line : core::algorithm::split(contents, "\n"))
+   {
+      boost::algorithm::trim(line);
+      if (!line.empty())
+         flags.push_back(line);
+   }
+
+   if (verbose(1))
+   {
+      std::cerr << "# COMPILE FLAGS FROM " << flagsFile.getAbsolutePath() << " ----" << std::endl;
+      core::debug::print(flags);
+      std::cerr << std::endl;
+   }
+
+   return flags;
+}
 
 std::string guessCppPackage(const std::string& contents)
 {
@@ -1100,6 +1163,10 @@ std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit
       args.push_back("c++");
    }
 
+   // append any user-provided flags last so they take precedence
+   std::vector<std::string> userFlags = compileFlagsFromFile(filePath);
+   args.insert(args.end(), userFlags.begin(), userFlags.end());
+
    // return args
    return args;
 }
@@ -1211,6 +1278,10 @@ std::vector<std::string> ClangCompilationDatabase::baseCompilationArgs(bool isCp
    // ask Eigen not to try to vectorize, since that involves
    // including intrinsics that aren't compatible with libclang
    args.push_back("-DEIGEN_DONT_VECTORIZE");
+
+   // clang stops parsing after 19 errors by default, which silently ends
+   // diagnostics and completions for the rest of the file (#19367)
+   args.push_back("-ferror-limit=0");
 
 #ifdef _WIN32
    // add built-in clang compiler headers

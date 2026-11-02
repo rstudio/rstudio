@@ -34,3 +34,36 @@ test_that("cppSourceFile() uses correct package", {
     call <- .rs.cppSourceFile(tf)
     expect_match(call, "Rcpp::sourceCpp")
 })
+
+test_that("diagnostics continue past clang's default error limit", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    # precompiled headers are slow to build and irrelevant here
+    op <- options(rstudio.libclang.usePrecompiledHeaders = FALSE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-diagnostics-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    # 25 errors, well past clang's default limit of 19
+    path <- file.path(dir, "errors.cpp")
+    writeLines(c(
+        "#include <Rcpp.h>",
+        "void f() {",
+        sprintf("   undeclared_%d = %d;", 1:25, 1:25),
+        "}"
+    ), path)
+
+    countErrors <- function() {
+        diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+        sum(vapply(diagnostics, function(d) d$severity >= 3, logical(1)))
+    }
+
+    expect_equal(countErrors(), 25L)
+
+    # flags from compile_flags.txt are appended, so they can override ours
+    writeLines("-ferror-limit=5", file.path(dir, "compile_flags.txt"))
+    expect_equal(countErrors(), 5L)
+})
