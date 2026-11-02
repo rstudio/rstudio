@@ -147,11 +147,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             // where the node begins, and the scopes it holds from there on --
             // the node's other default arguments -- move to the node.
             if (index >= 0) {
-               var block = this.$children[index];
-               var from = block.$binarySearch(node.preamble);
-               from = from >= 0 ? from : -(from+1);
-               adopted = block.$children.splice(from, block.$children.length - from);
-               block.end = node.preamble;
+               adopted = this.$children[index].$splitAt(node.preamble);
                index++;
             }
             else {
@@ -170,6 +166,27 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             node.parentScope = this;
             this.$children.push(node);
          }
+      };
+
+      // End this (closed) scope at 'pos' and return the scopes it held from
+      // there on, splitting a child that spans 'pos' the same way: a block
+      // nested in a block, both cut by the same header, keeps its place in
+      // the outer block.
+      this.$splitAt = function(pos) {
+         var index = this.$binarySearch(pos);
+
+         var taken = [];
+         if (index >= 0) {
+            taken = this.$children[index].$splitAt(pos);
+            index++;
+         }
+         else {
+            index = -(index+1);
+         }
+
+         taken = taken.concat(this.$children.splice(index, this.$children.length - index));
+         this.end = pos;
+         return taken;
       };
 
       this.closeScope = function(pos, scopeType) {

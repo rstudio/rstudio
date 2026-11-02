@@ -461,6 +461,36 @@ var defaultFn = makeSession([
   ""
 ].join("\n"));
 
+// Two nested blocks around such a function are both cut by the header;
+// the inner one keeps its place in the outer, and each still gets its
+// closing brace, so the enclosing function keeps its own.
+var defaultArgNested = makeSession([
+  "g <- function() {",
+  "  if (a) {",
+  "    if (b) {",
+  "      f <- function(x = {",
+  "        # defaults ----",
+  "        1",
+  "      }) { x }",
+  "    }",
+  "  }",
+  "  h <- function() {}",
+  "}",
+  "k <- function() {}",
+  ""
+].join("\n"));
+
+check("nested blocks around a function keep their nesting and their braces",
+      tree(defaultArgNested),
+      ["function g() [0..10]",
+       "  brace {} [1..3]",
+       "    brace {} [2..3]",
+       "  function f(x) [3..6]",
+       "    brace {} [3..4]",
+       "    section defaults [4..6]",
+       "  function h() [9..9]",
+       "function k() [11..11]"].join("\n"));
+
 check("default arguments seen before the header move to the function",
       tree(defaultFn),
       ["function before() [0..0]",
