@@ -19,6 +19,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "CompilationDatabase.hpp"
 #include "SourceIndex.hpp"
 
 using namespace rstudio::core;
@@ -138,22 +139,69 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    return diagnosticJson;
 }
 
+// A diagnostic of our own, anchored to the top of the file
+json::Object syntheticDiagnosticJson(const FilePath& filePath,
+                                     CXDiagnosticSeverity severity,
+                                     const std::string& message)
+{
+   json::Object diagnosticJson;
+   diagnosticJson["severity"] = safe_convert::numberTo<double>(severity, 0);
+   diagnosticJson["category"] = 0;
+   diagnosticJson["category_text"] = "";
+   diagnosticJson["enable_option"] = "";
+   diagnosticJson["disable_option"] = "";
+   diagnosticJson["message"] = message;
+   diagnosticJson["file"] = module_context::createAliasedPath(filePath);
+   diagnosticJson["position"] = locationToPositionJson(FileLocation(filePath, 1, 1));
+   diagnosticJson["ranges"] = json::Array();
+   diagnosticJson["fixits"] = json::Array();
+   diagnosticJson["children"] = json::Array();
+   return diagnosticJson;
+}
+
 json::Array getCppDiagnosticsJson(const FilePath& filePath)
 {
    json::Array diagnosticsJson;
 
+   // a bad flag in a compile_flags.txt is reported by clang against the
+   // command line rather than the file (or makes the parse fail outright),
+   // so when one is in play we surface those at the top of the file instead
+   // of silently dropping them
+   FilePath flagsFile = compileFlagsFileForSource(filePath);
+   bool hasUserFlags = !flagsFile.isEmpty();
+
    // get diagnostics from translation unit
-   TranslationUnit tu = sourceIndex().getTranslationUnit(
-      filePath.getAbsolutePath(),
-                                             true);
-   if (!tu.empty())
+   std::string filename = filePath.getAbsolutePath();
+   TranslationUnit tu = sourceIndex().getTranslationUnit(filename, true);
+   if (tu.empty())
    {
-      unsigned numDiagnostics = tu.getNumDiagnostics();
-      for (unsigned i = 0; i < numDiagnostics; i++)
+      bool indexable = !clangCompilationDatabase().compileArgsForTranslationUnit(filename, true).empty();
+      if (hasUserFlags && indexable)
       {
-         boost::shared_ptr<Diagnostic> pDiag = tu.getDiagnostic(i);
-         if (pDiag->location().getSpellingLocation().filePath == filePath)
-            diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
+         std::string message =
+               "libclang could not parse this file; check the flags in " +
+               module_context::createAliasedPath(flagsFile);
+         diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Error, message));
+      }
+
+      return diagnosticsJson;
+   }
+
+   unsigned numDiagnostics = tu.getNumDiagnostics();
+   for (unsigned i = 0; i < numDiagnostics; i++)
+   {
+      boost::shared_ptr<Diagnostic> pDiag = tu.getDiagnostic(i);
+      FileLocation location = pDiag->location().getSpellingLocation();
+      if (location.filePath == filePath)
+      {
+         diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
+      }
+      else if (hasUserFlags && location.empty())
+      {
+         json::Object diagnosticJson = diagnosticToJson(tu, *pDiag);
+         diagnosticJson["file"] = module_context::createAliasedPath(filePath);
+         diagnosticJson["position"] = locationToPositionJson(FileLocation(filePath, 1, 1));
+         diagnosticsJson.push_back(diagnosticJson);
       }
    }
 

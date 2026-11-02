@@ -56,9 +56,10 @@ test_that("diagnostics continue past clang's default error limit", {
         "}"
     ), path)
 
+    # severity 3 is an error; clang's "too many errors" stop is a fatal (4)
+    diagnostics <- function() .rs.invokeRpc("get_cpp_diagnostics", path)
     countErrors <- function() {
-        diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
-        sum(vapply(diagnostics, function(d) d$severity >= 3, logical(1)))
+        sum(vapply(diagnostics(), function(d) d$severity == 3, logical(1)))
     }
 
     expect_equal(countErrors(), 25L)
@@ -66,4 +67,77 @@ test_that("diagnostics continue past clang's default error limit", {
     # flags from compile_flags.txt are appended, so they can override ours
     writeLines("-ferror-limit=5", file.path(dir, "compile_flags.txt"))
     expect_equal(countErrors(), 5L)
+
+    # and clang's explanation for stopping, which has no location of its own,
+    # is reported at the top of the file rather than dropped
+    messages <- vapply(diagnostics(), `[[`, character(1), "message")
+    expect_match(messages, "too many errors emitted", all = FALSE)
+})
+
+test_that("compile_flags.txt paths resolve against its directory", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = FALSE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-flags-")
+    dir.create(file.path(dir, "inc"), recursive = TRUE)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    writeLines("#define ANSWER 42", file.path(dir, "inc", "answer.h"))
+    path <- file.path(dir, "answer.cpp")
+    writeLines(c(
+        "#include <Rcpp.h>",
+        "#include <answer.h>",
+        "int f() { return ANSWER; }"
+    ), path)
+
+    messages <- function() {
+        diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+        vapply(diagnostics, `[[`, character(1), "message")
+    }
+
+    expect_match(messages(), "'answer.h' file not found", all = FALSE)
+
+    # a relative -I is relative to the flags file, not the session's working
+    # directory (as in clangd); blank lines and CRLF line endings are tolerated
+    writeLines(c("", "-Iinc", ""), file.path(dir, "compile_flags.txt"), sep = "\r\n")
+    expect_length(messages(), 0L)
+})
+
+test_that("problems with compile_flags.txt are reported, not swallowed", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = FALSE)
+    on.exit(options(op), add = TRUE)
+
+    lint <- function(flags) {
+        dir <- tempfile("cpp-bad-flags-")
+        dir.create(dir)
+        on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+        path <- file.path(dir, "ok.cpp")
+        writeLines(c("#include <Rcpp.h>", "int f() { return 1; }"), path)
+        writeLines(flags, file.path(dir, "compile_flags.txt"))
+        .rs.invokeRpc("get_cpp_diagnostics", path)
+    }
+
+    # clang reports a bad flag against the command line, with no location;
+    # we anchor those to the top of the file
+    diagnostics <- lint("-Wno-unused-paramter")
+    expect_length(diagnostics, 1L)
+    expect_match(diagnostics[[1]]$message, "unknown warning option")
+    expect_equal(diagnostics[[1]]$position$line, 1)
+
+    diagnostics <- lint("--bogus-flag")
+    expect_length(diagnostics, 1L)
+    expect_match(diagnostics[[1]]$message, "unknown argument")
+
+    # an invalid value makes libclang fail to parse the file at all
+    diagnostics <- lint("-std=c++99")
+    expect_length(diagnostics, 1L)
+    expect_match(diagnostics[[1]]$message, "check the flags in .*compile_flags.txt")
+    expect_equal(diagnostics[[1]]$severity, 3)
 })

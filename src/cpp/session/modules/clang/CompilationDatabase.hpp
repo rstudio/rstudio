@@ -108,7 +108,9 @@ private:
 #endif
 
    core::system::Options compilationEnvironment() const;
-   std::vector<std::string> precompiledHeaderArgs(const CompilationConfig& config);
+   std::vector<std::string> precompiledHeaderArgs(
+         const CompilationConfig& config,
+         const std::vector<std::string>& userFlags);
 
    bool shouldIndexConfig(const CompilationConfig& config);
 
@@ -136,6 +138,14 @@ private:
 };
 
 core::libclang::CompilationDatabase clangCompilationDatabase();
+
+// Support for a 'compile_flags.txt' (one argument per line, as in clangd)
+// found in a source file's directory or, within a project, a parent directory.
+core::FilePath findCompileFlagsFile(const core::FilePath& dir,
+                                    const core::FilePath& stopDir);
+core::FilePath compileFlagsFileForSource(const core::FilePath& srcFile);
+std::vector<std::string> readCompileFlags(const core::FilePath& flagsFile);
+std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile);
 
 
 } // namespace clang

@@ -16,6 +16,7 @@
 #include "CompilationDatabase.hpp"
 
 #include <algorithm>
+#include <map>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/format.hpp>
@@ -166,68 +167,101 @@ struct SourceCppFileInfo
    bool disableIndexing;
 };
 
-// Extra compiler flags from a 'compile_flags.txt', following the clangd
-// convention of one argument per line. We look in the source file's directory
-// and its parents, up to the project directory, so a project can append to or
-// override the flags we generate (the last occurrence of a flag wins).
-std::vector<std::string> compileFlagsFromFile(const FilePath& srcFile)
+// Flags already read from a 'compile_flags.txt', keyed by the file's path
+struct CompileFlagsCacheEntry
+{
+   std::time_t lastWriteTime;
+   std::vector<std::string> flags;
+};
+
+std::map<std::string, CompileFlagsCacheEntry> s_compileFlagsCache;
+
+} // anonymous namespace
+
+FilePath findCompileFlagsFile(const FilePath& dir, const FilePath& stopDir)
+{
+   FilePath current = dir;
+   while (true)
+   {
+      FilePath candidate = current.completeChildPath("compile_flags.txt");
+      if (candidate.exists())
+         return candidate;
+
+      // isEquivalentTo() tolerates a trailing separator or symlink on either side
+      if (current == stopDir || current.isEquivalentTo(stopDir))
+         return FilePath();
+
+      // guard against a stop directory we never reach
+      FilePath parent = current.getParent();
+      if (parent.isEmpty() || parent == current)
+         return FilePath();
+
+      current = parent;
+   }
+}
+
+FilePath compileFlagsFileForSource(const FilePath& srcFile)
 {
    using namespace projects;
 
+   // only look beyond the file's own directory when it belongs to the open
+   // project, so a stray flags file higher up the tree isn't picked up
    FilePath dir = srcFile.getParent();
    FilePath stopDir = dir;
    if (projectContext().hasProject() && dir.isWithin(projectContext().directory()))
       stopDir = projectContext().directory();
 
-   FilePath flagsFile;
-   while (true)
-   {
-      FilePath candidate = dir.completeChildPath("compile_flags.txt");
-      if (candidate.exists())
-      {
-         flagsFile = candidate;
-         break;
-      }
+   return findCompileFlagsFile(dir, stopDir);
+}
 
-      if (dir == stopDir)
-         break;
-
-      // guard against a stop directory we never reach (e.g. symlinks)
-      FilePath parent = dir.getParent();
-      if (parent.isEmpty() || parent == dir)
-         break;
-
-      dir = parent;
-   }
-
-   if (flagsFile.isEmpty())
-      return {};
-
-   std::string contents;
-   Error error = core::readStringFromFile(flagsFile, &contents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return {};
-   }
-
+std::vector<std::string> readCompileFlags(const FilePath& flagsFile)
+{
+   // one argument per line (the clangd convention); blank lines are ignored
    std::vector<std::string> flags;
-   for (std::string line : core::algorithm::split(contents, "\n"))
-   {
-      boost::algorithm::trim(line);
-      if (!line.empty())
-         flags.push_back(line);
-   }
-
-   if (verbose(1))
-   {
-      std::cerr << "# COMPILE FLAGS FROM " << flagsFile.getAbsolutePath() << " ----" << std::endl;
-      core::debug::print(flags);
-      std::cerr << std::endl;
-   }
+   Error error = core::readStringVectorFromFile(flagsFile, &flags);
+   if (error)
+      LOG_ERROR(error);
 
    return flags;
 }
+
+// Extra compiler flags from a 'compile_flags.txt', following the clangd
+// convention of one argument per line. We look in the source file's directory
+// and its parents, up to the project directory, so a project can append to or
+// override the flags we generate (the last occurrence of a flag wins).
+std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
+{
+   FilePath flagsFile = compileFlagsFileForSource(srcFile);
+   if (flagsFile.isEmpty())
+      return {};
+
+   // re-read only when the file changes on disk
+   std::string key = flagsFile.getAbsolutePath();
+   std::time_t lastWriteTime = flagsFile.getLastWriteTime();
+   auto it = s_compileFlagsCache.find(key);
+   if (it == s_compileFlagsCache.end() || it->second.lastWriteTime != lastWriteTime)
+   {
+      // relative paths in the file resolve against its directory, as in clangd
+      std::vector<std::string> flags;
+      flags.push_back("-working-directory=" + flagsFile.getParent().getAbsolutePath());
+
+      std::vector<std::string> fileFlags = readCompileFlags(flagsFile);
+      flags.insert(flags.end(), fileFlags.begin(), fileFlags.end());
+
+      if (verbose(1))
+      {
+         std::cerr << "# COMPILE FLAGS FROM " << key << " ----" << std::endl;
+         core::debug::print(flags);
+         std::cerr << std::endl;
+      }
+
+      it = s_compileFlagsCache.insert_or_assign(key, CompileFlagsCacheEntry{lastWriteTime, flags}).first;
+   }
+
+   return it->second.flags;
+}
+
+namespace {
 
 std::string guessCppPackage(const std::string& contents)
 {
@@ -1140,6 +1174,10 @@ std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit
             config.args.end(),
             std::back_inserter(args));
 
+   // any user-provided flags; these also feed into the precompiled header,
+   // since libclang rejects a PCH built with different language options
+   std::vector<std::string> userFlags = compileFlagsForSource(filePath);
+
    // add precompiled headers if necessary
    if (usePrecompiledHeaders && usePrecompiledHeaders_ &&
        precompiledHeadersEnabled() &&
@@ -1148,7 +1186,7 @@ std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit
        (filePath.getExtensionLowerCase() != ".m"))
    {
       // extract any -std= argument
-      std::vector<std::string> pchArgs = precompiledHeaderArgs(config);
+      std::vector<std::string> pchArgs = precompiledHeaderArgs(config, userFlags);
       std::copy(pchArgs.begin(),
                 pchArgs.end(),
                 std::back_inserter(args));
@@ -1163,8 +1201,7 @@ std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit
       args.push_back("c++");
    }
 
-   // append any user-provided flags last so they take precedence
-   std::vector<std::string> userFlags = compileFlagsFromFile(filePath);
+   // append the user-provided flags last so they take precedence
    args.insert(args.end(), userFlags.begin(), userFlags.end());
 
    // return args
@@ -1504,10 +1541,17 @@ core::system::Options ClangCompilationDatabase::compilationEnvironment() const
 }
 
 std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
-      const CompilationConfig& config)
+      const CompilationConfig& config,
+      const std::vector<std::string>& userFlags)
 {
    // args to return
    std::vector<std::string> args;
+
+   // the PCH must be built with the same language options and macros the
+   // translation unit is parsed with, so the user flags are part of it (and
+   // of its name, so different flags don't share a PCH)
+   std::vector<std::string> baseArgs = config.args;
+   baseArgs.insert(baseArgs.end(), userFlags.begin(), userFlags.end());
 
    // get package name
    std::string pkgName = config.PCH;
@@ -1571,14 +1615,17 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
    }
 
    // now create the PCH if we need to
-   std::string stdArg = extractStdArg(config.args);
-   FilePath pchPath = platformPath.completeChildPath(pkgName + stdArg + ".pch");
+   std::string stdArg = extractStdArg(baseArgs);
+   std::string pchName = pkgName + stdArg;
+   if (!userFlags.empty())
+      pchName += "-" + core::hash::crc32HexHash(core::algorithm::join(userFlags, "\n"));
+   FilePath pchPath = platformPath.completeChildPath(pchName + ".pch");
    if (forceRebuildPrecompiledHeaders_ || !pchPath.exists())
    {
       forceRebuildPrecompiledHeaders_ = false;
       
       // state cpp file for creating precompiled headers
-      FilePath cppPath = platformPath.completeChildPath(pkgName + stdArg + ".cpp");
+      FilePath cppPath = platformPath.completeChildPath(pchName + ".cpp");
 
       boost::format fmt("#include <%1%>\n");
       std::string headerName = pkgName == "cpp11" ? "cpp11.hpp" : (pkgName + ".h");
@@ -1591,7 +1638,7 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
       }
 
       // get common compilation args
-      std::vector<std::string> args = config.args;
+      std::vector<std::string> args = baseArgs;
 
       // get the appropriate include paths for this package
       std::vector<std::string> pkgArgs;
