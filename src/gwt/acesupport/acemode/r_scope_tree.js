@@ -524,14 +524,14 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          this.$root.addNode(node);
       };
 
-      // Close the open section scopes at 'position', innermost first, for as
-      // long as 'shouldClose' accepts them. A labelled brace (a function, a
-      // test) or a chunk bounds the walk: it is not a section, and the
-      // sections inside it are its own. The root is never a section either,
-      // so the walk ends once every enclosing section has been considered.
-      this.closeSectionScopesWhile = function(position, shouldClose)
+      // Close the open sections at 'position', innermost first, for as long
+      // as 'shouldClose' accepts them. 'scopes' is the chain of open scopes
+      // at 'position', outermost first. A labelled brace (a function, a test)
+      // or a chunk bounds the walk: it is not a section, and the sections
+      // inside it are its own. The root is never a section either, so the
+      // walk ends once every enclosing section has been considered.
+      this.$closeSectionScopesWhile = function(scopes, position, shouldClose)
       {
-         var scopes = this.$root.findOpenScopeChain(position);
          for (var i = scopes.length - 1; i >= 0; i--)
          {
             if (!scopes[i].isSection() || !shouldClose(scopes[i]))
@@ -547,6 +547,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       // braces enclosing it, closing each one at the header. Their '}' tokens
       // are still to come, and must not close an enclosing function instead,
       // so each cut brace waits on a stack for its '}' (see onScopeEnd()).
+      // Returns the scopes still open at 'position', outermost first.
       this.$cutAnonymousBraces = function(position)
       {
          var scopes = this.$root.findOpenScopeChain(position);
@@ -561,6 +562,8 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             scopes[i].isCut = true;
             this.$cutBraces.push(scopes[i]);
          }
+
+         return scopes.slice(0, first);
       };
 
       // Whether the '}' at 'pos' matches a cut brace rather than an open brace
@@ -591,12 +594,12 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       };
 
       // Add the section header 'node', closing the open sections at its
-      // preamble that 'shouldClose' accepts (see closeSectionScopesWhile).
+      // preamble that 'shouldClose' accepts (see $closeSectionScopesWhile).
       this.$addSectionHeader = function(node, shouldClose)
       {
          var position = node.preamble;
-         this.$cutAnonymousBraces(position);
-         this.closeSectionScopesWhile(position, shouldClose);
+         var scopes = this.$cutAnonymousBraces(position);
+         this.$closeSectionScopesWhile(scopes, position, shouldClose);
          this.$root.addNode(node);
       };
 
