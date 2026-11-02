@@ -8,6 +8,7 @@
 - ([#19362](https://github.com/rstudio/rstudio/issues/19362)): Fixed an issue where the console could show the warning "converting NULL pointer to R NULL" from `rs_getBrowserEnv` shortly after a session started.
 - ([#19386](https://github.com/rstudio/rstudio/issues/19386)): Fixed an issue where the Terminal's right-click menu on Windows and Linux Desktop listed Ctrl+C and Ctrl+V for Copy and Paste, which the terminal sends to the shell, instead of Ctrl+Shift+C and Ctrl+Shift+V.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the `manipulate()` picker, checkbox, and slider controls without their labels, and the slider without its role or value. Pressing Home or End on the slider now also redraws the plot.
+- ([#19378](https://github.com/rstudio/rstudio/issues/19378)): [Accessibility] Fixed an issue where the Tutorial pane's links to install `learnr` or update `shiny` were named "click here" for screen reader and voice control users. The links now read "install the learnr package" and "install the shiny package" (or "update the shiny package" when an older version is installed).
 
 ### Dependencies
 -
