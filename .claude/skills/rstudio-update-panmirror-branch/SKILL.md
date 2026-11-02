@@ -59,10 +59,13 @@ git ls-remote "$QUARTO_URL" "refs/heads/release/rstudio-<release>" \
    "refs/heads/release/rstudio-<release>-*"
 ```
 
-If anything matches, someone has already cut it. Do not recreate or update it; tell the user what
-exists (name and SHA) and ask whether to pin to it.
+The rest of this skill calls the full name of the branch being pinned `<branch>`.
 
-Otherwise, get quarto's current `main` tip:
+If anything matches, someone has already cut it. Do not recreate or update it; tell the user what
+exists (name and SHA) and ask which one to pin to. That full name, suffix included, is `<branch>`;
+skip to step 4.
+
+Otherwise `<branch>` is `release/rstudio-<release>`. Get quarto's current `main` tip:
 
 ```bash
 git ls-remote --exit-code "$QUARTO_URL" refs/heads/main
@@ -76,7 +79,7 @@ clone:
 
 ```bash
 gh api repos/quarto-dev/quarto/git/refs \
-   -f ref="refs/heads/release/rstudio-<release>" -f sha="<main-sha>"
+   -f ref="refs/heads/<branch>" -f sha="<main-sha>"
 ```
 
 The call fails with `422 Reference already exists` rather than overwriting, so it cannot move an
@@ -86,7 +89,7 @@ access create the branch, then continue from step 4.
 Confirm it exists at the expected SHA:
 
 ```bash
-git ls-remote --exit-code "$QUARTO_URL" "refs/heads/release/rstudio-<release>"
+git ls-remote --exit-code "$QUARTO_URL" "refs/heads/<branch>"
 ```
 
 ### 4. Check the Node.js requirement
@@ -95,7 +98,7 @@ panmirror's root `package.json` declares `engines.node`, which Yarn enforces at 
 cut can raise it above RStudio's build-time Node.js, which breaks every build.
 
 ```bash
-gh api "repos/quarto-dev/quarto/contents/package.json?ref=release/rstudio-<release>" \
+gh api "repos/quarto-dev/quarto/contents/package.json?ref=<branch>" \
    --jq .content | base64 --decode | grep -A2 '"engines"'
 grep -n RSTUDIO_NODE_VERSION= dependencies/tools/rstudio-tools.sh
 ```
@@ -111,15 +114,15 @@ git checkout -b feature/panmirror-<release>
 
 Set the value in each file, matching the existing syntax:
 
-- `dependencies/common/install-panmirror`: `PANMIRROR_BRANCH="release/rstudio-<release>"`
+- `dependencies/common/install-panmirror`: `PANMIRROR_BRANCH="<branch>"`
 - `dependencies/windows/install-panmirror/clone-panmirror-repo.cmd`:
-  `set PANMIRROR_BRANCH=release/rstudio-<release>`
+  `set PANMIRROR_BRANCH=<branch>`
 
 Change only that line; the surrounding comments are cycle-independent. Then confirm the old name
 is gone:
 
 ```bash
-git grep -nF "release/rstudio-<old-release>" -- . ':!version/news' ':!NEWS.md'
+git grep -nF "release/rstudio-<old-release>" -- . ':!version/news' ':!NEWS.md' ':!.claude/skills'
 git diff --stat
 ```
 
@@ -130,7 +133,7 @@ The grep should print nothing, and the diff should show exactly two files, one l
 No NEWS.md entry: pinning a new cycle's branch is not user-facing. (A `-NN` fix branch gets a NEWS
 entry for the fix it carries, written with that fix, not by this skill.)
 
-- **Commit message**: `Pin panmirror to release/rstudio-<release>`
+- **Commit message**: `Pin panmirror to <branch>`
 - **PR title**: same as the commit message.
 - **PR body**: the old and new branch names, the quarto `main` SHA the branch was cut from, and the
   two files changed. If step 4 found a raised Node.js requirement, name the PR that met it.
