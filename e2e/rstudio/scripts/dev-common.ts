@@ -29,20 +29,30 @@ function gitMainWorktree(): string | null {
   }
 }
 
-// Locate the pinned node's bin directory: this checkout, then the primary
-// worktree, then the global tools location. Returns null if none has it.
+// Locate the directory holding the pinned node: this checkout, then the primary
+// worktree, then the tools roots -- mirroring pinned_node_bin in
+// scripts/bootstrap-worktree.sh. Returns null if none has it.
 export function pinnedNodeBinDir(): string | null {
   // The '-arm64' dir suffix is a macOS-only convention in this repo (see
   // rstudio-tools.sh and CMakeNodeTools.txt); on Linux aarch64 node lives in an
   // unsuffixed dir, so only apply the suffix on Darwin arm64.
   const arch = process.platform === 'darwin' && process.arch === 'arm64' ? '-arm64' : '';
-  const rel = path.join('dependencies', 'common', 'node', `${PINNED_NODE_VERSION}${arch}`, 'bin');
-  const roots = [REPO_ROOT, gitMainWorktree(), '/opt/rstudio-tools'].filter(
-    (r): r is string => !!r,
-  );
-  const exe = process.platform === 'win32' ? 'node.exe' : 'node';
+  const rel = path.join('dependencies', 'common', 'node', `${PINNED_NODE_VERSION}${arch}`);
+
+  // Windows installs node under RSTUDIO_TOOLS_ROOT, which defaults to
+  // %SYSTEMDRIVE%\rstudio-tools (dependencies/tools/rstudio-tools.cmd)
+  const roots = [
+    REPO_ROOT,
+    gitMainWorktree(),
+    process.env.RSTUDIO_TOOLS_ROOT,
+    '/opt/rstudio-tools',
+    process.platform === 'win32' ? `${process.env.SYSTEMDRIVE ?? 'C:'}\\rstudio-tools` : null,
+  ].filter((r): r is string => !!r);
+
+  // the Windows zip has node.exe at its top level rather than under bin/
+  const [sub, exe] = process.platform === 'win32' ? ['', 'node.exe'] : ['bin', 'node'];
   for (const root of roots) {
-    const bin = path.join(root, rel);
+    const bin = path.join(root, rel, sub);
     if (fs.existsSync(path.join(bin, exe)))
       return bin;
   }
@@ -62,7 +72,7 @@ export function pathWithPinnedNode(): string {
     // whatever PATH already has.
     console.warn(
       `warning: pinned node ${PINNED_NODE_VERSION} not found in this checkout, the primary ` +
-        'worktree, or /opt/rstudio-tools; spawned npm/npx will use the system node on PATH ' +
+        'worktree, or the tools roots; spawned npm/npx will use the system node on PATH ' +
         '(a mismatched version may break npm postinstall).',
     );
     return current;

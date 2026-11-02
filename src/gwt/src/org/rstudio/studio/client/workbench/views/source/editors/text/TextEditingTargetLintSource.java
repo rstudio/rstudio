@@ -36,7 +36,7 @@ public class TextEditingTargetLintSource implements LintSource
    @Override
    public DocDisplay getDisplay()
    {
-      return target_.getDocDisplay();
+      return target_.getPrimaryDisplay();
    }
 
    @Override
@@ -110,7 +110,7 @@ public class TextEditingTargetLintSource implements LintSource
             lintItem.setHtml(element.getInnerHTML());
          }
 
-         target_.getDocDisplay().showLint(lint);
+         target_.getPrimaryDisplay().showLint(lint);
       }
    }
 
@@ -126,7 +126,7 @@ public class TextEditingTargetLintSource implements LintSource
    public boolean lintOnSave()
    {
       // If the source editor is focused, we should lint when the document is saved.
-      if (target_.getDocDisplay().isFocused())
+      if (target_.getPrimaryDisplay().isFocused())
          return true;
 
       // Alternately, if this is the active tab and the visual editor is active, we should

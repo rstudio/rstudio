@@ -2248,18 +2248,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    matches <- .rs.regexMatches(pattern, url)
    parts <- as.list(matches)
 
-   # Look for valid credentials for the provided URLs.
-   for (netrcEntry in netrcEntries)
-   {
-      if (.rs.startsWith(parts$host, netrcEntry$machine))
-      {
-         userPass <- paste(netrcEntry$login, netrcEntry$password, sep = ":")
-         result <- paste("Basic", .rs.rBase64Encode(userPass))
-         return(result)
-      }
-   }
+   # netrc machine entries hold IPv6 literals without brackets.
+   host <- sub("^\\[(.*)\\]$", "\\1", parts$host)
 
-   ""
+   # Prefer an exact machine match; fall back to a 'default' entry (machine "").
+   netrcEntry <- Find(function(entry) identical(host, entry$machine), netrcEntries)
+   if (is.null(netrcEntry))
+      netrcEntry <- Find(function(entry) !nzchar(entry$machine), netrcEntries)
+
+   if (is.null(netrcEntry))
+      return("")
+
+   userPass <- paste(netrcEntry$login, netrcEntry$password, sep = ":")
+   paste("Basic", .rs.rBase64Encode(userPass))
 })
 
 .rs.addFunction("recordPackageSource", function(pkgPaths, pkgSrc = NULL, db = NULL)
