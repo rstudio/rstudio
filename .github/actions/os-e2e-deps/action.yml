@@ -57,6 +57,15 @@ inputs:
       the platform, a full source compile where it doesn't (Fedora).
     required: false
     default: "true"
+  save-cache:
+    description: >
+      When "true" (the default), save the R library, pak download, and
+      Playwright browser caches on main after a cache miss. Pass "false" for
+      engines that run too rarely for those entries to outlive the repo's LRU
+      cache eviction: the saved entries are never read again, and writing
+      them evicts the caches PR builds do read.
+    required: false
+    default: "true"
 
 outputs:
   r-version:
@@ -531,15 +540,24 @@ runs:
         Rscript "$SCRIPT"
 
     - name: Save R packages (pak download cache)
-      if: github.ref == 'refs/heads/main' && steps.pak-cache.outputs.cache-hit != 'true'
+      if: inputs.save-cache == 'true' && github.ref == 'refs/heads/main' && steps.pak-cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # actions/cache passes zstd no compression level, so zstd honors
+      # ZSTD_CLEVEL; level 9 makes entries ~13% smaller than the default
+      # level 3 at about the same save time, and restores are unaffected.
+      # The engine workflows set it workflow-wide; these cover callers that
+      # don't (the deps seed and the autocomplete workflow).
+      env:
+        ZSTD_CLEVEL: 9
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
         key: ${{ steps.pak-cache.outputs.cache-primary-key }}
 
     - name: Save R library
-      if: github.ref == 'refs/heads/main' && steps.rlib-cache.outputs.cache-hit != 'true'
+      if: inputs.save-cache == 'true' && github.ref == 'refs/heads/main' && steps.rlib-cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      env:
+        ZSTD_CLEVEL: 9
       with:
         path: ${{ inputs.r-libs-user }}
         key: ${{ steps.rlib-cache.outputs.cache-primary-key }}
@@ -614,8 +632,10 @@ runs:
         fi
 
     - name: Save Playwright browsers
-      if: github.ref == 'refs/heads/main' && steps.pw-cache.outputs.cache-hit != 'true'
+      if: inputs.save-cache == 'true' && github.ref == 'refs/heads/main' && steps.pw-cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      env:
+        ZSTD_CLEVEL: 9
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ steps.pw-cache.outputs.cache-primary-key }}

@@ -123,7 +123,6 @@ test.describe('Pane splitter aria-valuenow (#19151)', () => {
     const zoomed = await valueNow(splitter);
 
     // Ends the zoom like layoutEndZoom, but resolves only once the relayout has finished.
-    // Ending the zoom restores the default column widths, not the pre-zoom ones.
     await resetLayoutZoom(page);
     await expect.poll(() => valueNow(splitter)).toBeLessThan(zoomed);
     await expectValueNowMatchesPosition(splitter);

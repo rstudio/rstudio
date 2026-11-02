@@ -24,7 +24,7 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
-import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable.ChangelistTableCellTableResources;
+import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 
 public class SVNStatusRenderer implements SafeHtmlRenderer<String>
 {
@@ -70,12 +70,7 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
          return SafeHtmlUtils.fromString(str);
 
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
-      builder.append(SafeHtmlUtils.fromTrustedString(
-            "<span " +
-            "class=\"" + ctRes_.cellTableStyle().status() + "\" " +
-            "title=\"" +
-            SafeHtmlUtils.htmlEscape(descForStatus(str)) +
-            "\">"));
+      builder.append(ChangelistTable.statusOpenTag(descForStatus(str)));
 
       builder.append(img.getSafeHtml());
 
@@ -163,6 +158,5 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
    }
 
    private static final StatusResources resources_ = GWT.create(StatusResources.class);
-   private static final ChangelistTableCellTableResources ctRes_ = GWT.create(ChangelistTableCellTableResources.class);
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

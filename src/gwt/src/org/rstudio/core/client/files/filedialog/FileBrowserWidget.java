@@ -15,10 +15,13 @@
 package org.rstudio.core.client.files.filedialog;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -116,7 +119,16 @@ public class FileBrowserWidget extends Composite
       directory_.setContents(
             host_.ls(),
             parsedDir.length > 1 ? parsedDir[parsedDir.length-2] : null);
-      setDirectoryFocus(true);
+
+      // the dialog sets its own initial focus once shown (focusInitialControl);
+      // focusing the list for the first listing raced it, flashing focus on
+      // the list or taking it from the dialog's initial control
+      // a pending request yields to focus the user has moved meanwhile
+      boolean pendingFocus = directoryFocusPending_ && isNothingFocused();
+      if (initialListingShown_ || pendingFocus)
+         setDirectoryFocus(true);
+      initialListingShown_ = true;
+      directoryFocusPending_ = false;
    }
 
    public void cd(String path)
@@ -150,6 +162,24 @@ public class FileBrowserWidget extends Composite
    public void setDirectoryFocus(boolean focus)
    {
       directory_.setFocus(focus);
+   }
+
+   private static boolean isNothingFocused()
+   {
+      Element active = DomUtils.getActiveElement();
+      return active == null || active == Document.get().getBody();
+   }
+
+   /**
+    * Focuses the directory list now, or once the first listing arrives: until
+    * then the list is not attached and cannot take focus.
+    */
+   public void focusDirectoryWhenListed()
+   {
+      if (initialListingShown_)
+         setDirectoryFocus(true);
+      else
+         directoryFocusPending_ = true;
    }
 
    @Override
@@ -220,6 +250,8 @@ public class FileBrowserWidget extends Composite
    private DirectoryContentsWidget directory_;
    private TextBox filename_;
    private boolean navigating_;
+   private boolean initialListingShown_;
+   private boolean directoryFocusPending_;
    private FileSystemContext context_;
    private String initialFilename_;
    private Host host_;

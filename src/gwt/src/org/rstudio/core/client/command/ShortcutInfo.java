@@ -48,29 +48,29 @@ public class ShortcutInfo
       return description_;
    }
 
-   public List<String> getShortcuts()
+   public List<KeySequence> getDisplayedKeySequences()
    {
-      List<String> shortcuts = new ArrayList<>();
+      List<KeySequence> sequences = new ArrayList<>();
       for (KeyboardShortcut shortcut: shortcuts_)
       {
          // if there is a command, then the shortcut must NOT match BOTH the
          // custom shortcut AND the default shortcut for that command,
          // Add to the list otherwise.
          if (getCommand() == null) 
-            shortcuts.add(shortcut.toString(true));
+            sequences.add(shortcut.getKeySequence());
          else if ( 
                !shortcut.equals(getCommand().getShortcut(false)) &&
                !shortcut.equals(getCommand().getShortcut(true))
                )
-            shortcuts.add(shortcut.toString(true));
+            sequences.add(shortcut.getKeySequence());
       }
 
       // if there is a command, add the shortcut here. This will choose the
       // correct shortcut: the custom one if it exists, otherwise the default one
       if (getCommand() != null && getCommand().getShortcut() != null)
-         shortcuts.add(getCommand().getShortcut().toString(true));
+         sequences.add(getCommand().getShortcut().getKeySequence());
 
-      return shortcuts;
+      return sequences;
    }
 
    public List<KeyboardShortcut> getKeyboardShortcuts()

@@ -15,148 +15,50 @@
 
 package org.rstudio.core.client.command;
 
-
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.widget.ShortcutInfoPanel;
-import org.rstudio.core.client.widget.VimKeyInfoPanel;
-import org.rstudio.studio.client.application.AriaLiveService;
-import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
-import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.core.client.widget.CommandShortcutReference;
+import org.rstudio.core.client.widget.KeySymbolLegend;
+import org.rstudio.core.client.widget.ShortcutReferenceDialog;
+import org.rstudio.core.client.widget.VimKeyInfo;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.EventTarget;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ShortcutViewer implements NativePreviewHandler
+public class ShortcutViewer
 {
    public interface Binder extends CommandBinder<Commands, ShortcutViewer> {}
 
    @Inject
-   public ShortcutViewer(
-         Binder binder,
-         Commands commands,
-         Provider<UserPrefs> pPrefs,
-         Provider<AriaLiveService> pAriaLive,
-         GlobalDisplay globalDisplay)
+   public ShortcutViewer(Binder binder, Commands commands)
    {
       binder.bind(commands, this);
-      pPrefs_ = pPrefs;
-      pAriaLive_ = pAriaLive;
-      globalDisplay_ = globalDisplay;
    }
 
    @Handler
    public void onHelpKeyboardShortcuts()
    {
-      // prevent reentry
-      if (shortcutInfo_ != null)
-      {
-         return;
-      }
-
-      Command showAllShortcutsPage = ()->
-      {
-         if (Desktop.hasDesktopFrame())
-            Desktop.getFrame().showKeyboardShortcutHelp();
-         else
-            openApplicationURL("docs/keyboard.htm");
-      };
-
-      if (pPrefs_.get().enableScreenReader().getValue())
-         showAllShortcutsPage.execute();
-      else
-         showShortcutInfoPanel(new ShortcutInfoPanel(showAllShortcutsPage));
+      // shortcuts are shown with key symbols where there's a Command key
+      new ShortcutReferenceDialog(
+            constants_.shortcutHeaderText(),
+            BrowseCap.hasMetaKey() ? new KeySymbolLegend() : null,
+            new CommandShortcutReference()).showModal();
    }
 
    public void showVimKeyboardShortcuts()
    {
-      // prevent reentry
-      if (shortcutInfo_ != null)
-      {
-         return;
-      }
-      if (pPrefs_.get().enableScreenReader().getValue())
-      {
-         pAriaLive_.get().announce(AriaLiveService.INACCESSIBLE_FEATURE,
-               constants_.vimKeyboardShortcutHelpMessage(),
-               Timing.IMMEDIATE,
-               Severity.ALERT);
-      }
-      showShortcutInfoPanel(new VimKeyInfoPanel());
+      // Runs from the Vim :help command, which returns focus to the editor
+      // afterwards; wait for that so the dialog takes focus last and
+      // restores it to the editor on close
+      Scheduler.get().scheduleDeferred(() ->
+         new ShortcutReferenceDialog(
+               constants_.vimKeyboardShortcutsText(),
+               new VimKeyInfo()).showModal());
    }
 
-   private void showShortcutInfoPanel(ShortcutInfoPanel panel)
-   {
-      shortcutInfo_ = panel;
-      RootLayoutPanel.get().add(shortcutInfo_);
-      preview_ = Event.addNativePreviewHandler(this);
-   }
-
-   @Override
-   public void onPreviewNativeEvent(NativePreviewEvent event)
-   {
-      if (event.isCanceled())
-         return;
-
-      if (event.getTypeInt() == Event.ONKEYDOWN ||
-          event.getTypeInt() == Event.ONMOUSEDOWN)
-      {
-         if (event.getTypeInt() == Event.ONMOUSEDOWN &&
-             event.getNativeEvent().getButton() == NativeEvent.BUTTON_RIGHT)
-            return;
-
-         // Don't dismiss the dialog if the click is targeted for a child
-         // of the shortcut info panel's root element
-         EventTarget et = event.getNativeEvent().getEventTarget();
-         if (Element.is(et) && event.getTypeInt() == Event.ONMOUSEDOWN)
-         {
-            Element e = Element.as(et);
-            while (e != null)
-            {
-               if (e == shortcutInfo_.getRootElement())
-                  return;
-               e = e.getParentElement();
-            }
-         }
-
-         // This is a keystroke or a click outside the panel; dismiss the panel
-         if (shortcutInfo_ != null)
-            RootLayoutPanel.get().remove(shortcutInfo_);
-         shortcutInfo_ = null;
-         if (preview_ != null)
-            preview_.removeHandler();
-         preview_ = null;
-         event.cancel();
-      }
-   }
-
-   private void openApplicationURL(String relativeURL)
-   {
-      String url = GWT.getHostPageBaseURL() + relativeURL;
-      globalDisplay_.openWindow(url);
-   }
-
-   private ShortcutInfoPanel shortcutInfo_ = null;
-   private HandlerRegistration preview_;
-
-   // injected
-   private final Provider<UserPrefs> pPrefs_;
-   private final Provider<AriaLiveService> pAriaLive_;
-   private final GlobalDisplay globalDisplay_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

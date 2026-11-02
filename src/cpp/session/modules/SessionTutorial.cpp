@@ -205,17 +205,14 @@ void handleTutorialHomeRequest(const http::Request& request,
    bool ok = haveMinimumShinyForTutorials();
    if (!ok)
    {
-      std::stringstream clickHere;
-      clickHere << "<a"
-                   << " aria-label\"Install shiny\""
-                   << " class=\"rstudio-tutorials-install-shiny-link\""
-                   << " href=\"javascript:void(0)\""
-                   << " onclick=\"window.parent.tutorialUpdateShiny(); return false;\">"
-                   << "click here"
-                   << "</a>";
-         
+      std::string action = module_context::isPackageInstalled("shiny") ? "update" : "install";
       ss << "<p>Version 1.6.0 of the <code>shiny</code> package is required to run tutorials for RStudio.</p>"
-         << "<p>Please " << clickHere.str() << " to update the <code>shiny</code> package.</p>";
+         << "<p>Please <a"
+         << " class=\"rstudio-tutorials-install-shiny-link\""
+         << " href=\"javascript:void(0)\""
+         << " onclick=\"window.parent.tutorialUpdateShiny(); return false;\">"
+         << action << " the <code>shiny</code> package"
+         << "</a>.</p>";
    }
    
    if (tutorialIndex().empty())
@@ -224,17 +221,13 @@ void handleTutorialHomeRequest(const http::Request& request,
       
       if (!module_context::isPackageInstalled("learnr"))
       {
-         std::stringstream clickHere;
-         clickHere << "<a"
-                   << " aria-label\"Install learnr\""
-                   << " class=\"rstudio-tutorials-install-learnr-link\""
-                   << " href=\"javascript:void(0)\""
-                   << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\">"
-                   << "click here"
-                   << "</a>";
-         
          ss << "<p>The <code>learnr</code> package is required to run tutorials for RStudio.</p>"
-            << "<p>Please " << clickHere.str() << " to install the <code>learnr</code> package.</p>";
+            << "<p>Please <a"
+            << " class=\"rstudio-tutorials-install-learnr-link\""
+            << " href=\"javascript:void(0)\""
+            << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\">"
+            << "install the <code>learnr</code> package"
+            << "</a>.</p>";
       }
       else
       {

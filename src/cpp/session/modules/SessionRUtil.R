@@ -227,6 +227,13 @@
    .Call("rs_getSessionOverlayOption", as.character(key), PACKAGE = "(embedding)")
 })
 
+#' Is this machine an Apple silicon Mac? TRUE even when R runs under Rosetta,
+#' where Sys.info() reports the emulated architecture. FALSE elsewhere.
+.rs.addFunction("isAppleSilicon", function()
+{
+   .Call("rs_isAppleSilicon", PACKAGE = "(embedding)")
+})
+
 #' Whether a process with the given id is running. (tools::pskill(pid, 0) is
 #' no probe on Windows: R's implementation terminates the process whatever
 #' the signal.)

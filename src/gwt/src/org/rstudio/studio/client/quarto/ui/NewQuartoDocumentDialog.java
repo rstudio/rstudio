@@ -22,6 +22,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -182,7 +183,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       if (presentation)
          listTemplates_.setSelectedIndex(1);
       
-      Label engineLabel = createLabel(constants_.engineLabelCaption());
       engineSelect_ = createListBox(
          new String[] {constants_.engineSelectNoneLabel(), "Knitr", "Jupyter"},
          new String[] {
@@ -192,8 +192,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          }
       );
       setListBoxValue(engineSelect_, lastResult_.getEngine());
-            
-      Label kernelLabel = createLabel(constants_.kernelLabelCaption());
+      FormLabel engineLabel = createLabel(constants_.engineLabelCaption(), engineSelect_);
+
       JsArray<QuartoJupyterKernel> kernels = caps == null ?
               JsArray.createArray().cast() : caps.jupyterKernels();
       
@@ -207,6 +207,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       }
       kernelSelect_ = createListBox(kernelDisplayNames, kernelNames);
       setListBoxValue(kernelSelect_, lastResult_.getKernel());
+      FormLabel kernelLabel = createLabel(constants_.kernelLabelCaption(), kernelSelect_);
       
       Label editorLabel = createLabel(constants_.editorText());
       editorCheckBox_ = new QuartoVisualEditorCheckBox();
@@ -484,6 +485,13 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    private Label createLabel(String caption)
    {
       Label label = new Label(caption);
+      label.addStyleName(RES.styles().label());
+      return label;
+   }
+
+   private FormLabel createLabel(String caption, Widget control)
+   {
+      FormLabel label = new FormLabel(caption, control);
       label.addStyleName(RES.styles().label());
       return label;
    }

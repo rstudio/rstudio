@@ -124,6 +124,8 @@ export namespace Ace {
       $size: { scrollerHeight: number };
       scrollBy(deltaX: number, deltaY: number): void;
       $scrollAnimation?: { from: number; to: number } | null;
+      /** Set while ghost text (e.g. rstudioapi::setGhostText()) is shown. */
+      $ghostText?: unknown | null;
     };
     session: Session;
     selection: Selection;
@@ -136,6 +138,7 @@ export namespace Ace {
     getSelectedText(): string;
     getFirstVisibleRow(): number;
     getLastVisibleRow(): number;
+    isRowFullyVisible(row: number): boolean;
     find(needle: string): void;
     insert(text: string): void;
     navigateLineEnd(): void;

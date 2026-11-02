@@ -64,7 +64,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String consoleCommandAnnouncement();
     String filterResultCountAnnouncement();
     String commitMessageLengthAnnouncement();
-    String inaccessibleWarningAnnouncement();
     String infoBarsAnnouncement();
     String taskCompletionAnnouncement();
     String taskProgressAnnouncement();
@@ -73,6 +72,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String tabKeyFocusAnnouncement();
     String toolBarVisibilityAnnouncement();
     String warningBarsAnnouncement();
+    String plotChangedAnnouncement();
     String sessionSuspendAnnouncement();
     String unregisteredLiveAnnouncementMessage();
     String closeRemoteSessionCaption();

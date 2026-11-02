@@ -56,7 +56,8 @@ public class GitChangelistTable extends ChangelistTable
    protected void configureTable()
    {
       final Column<StatusAndPath, Boolean> stagedColumn = new Column<StatusAndPath, Boolean>(
-            new TriStateCheckboxCell<>(selectionModel_))
+            new TriStateCheckboxCell<>(selectionModel_,
+                  item -> constants_.stageFile(item.getPath())))
       {
          @Override
          public Boolean getValue(StatusAndPath object)

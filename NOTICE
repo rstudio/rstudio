@@ -38,7 +38,6 @@ Common components
 * buffer-from (MIT license)
 * callsites (MIT license)
 * caseless (Apache license)
-* Catch2 (Boost license)
 * chalk (MIT license)
 * clipboard (MIT license)
 * cliui (ISC license)
@@ -4480,14 +4479,6 @@ Source: https://github.com/mikeal/caseless
 
 Published by Mikeal Rogers <mikeal.rogers@gmail.com>
 Distributed under the Apache License version 2.0
-
-
-Catch2
-------
-Source: https://github.com/rstudio/rstudio/tree/rel-blue-mistflower/src/cpp/tests/cpp/tests/vendor/catch.hpp
-
-Copyright (c) 2022 Two Blue Cubes Ltd.
-Distributed under the Boost Software License
 
 
 chalk

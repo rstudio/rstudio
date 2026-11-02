@@ -161,16 +161,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       // if this window is a satellite but the command only wants to be handled
       // in the a different window, execute the command there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
-      if (getWindowMode() != WINDOW_MODE_ANY &&
-          Satellite.isCurrentWindowSatellite() &&
-          satellite.getSatelliteName() != getWindowMode())
+      if (isRoutedOutOfCurrentWindow())
       {
-         if (getWindowMode() == WINDOW_MODE_MAIN)
+         if (StringUtil.equals(getWindowMode(), WINDOW_MODE_MAIN))
          {
             // raise the main window if it's not a background command
             satellite.focusMainWindow();
          }
-         else if (getWindowMode() == WINDOW_MODE_BACKGROUND &&
+         else if (StringUtil.equals(getWindowMode(), WINDOW_MODE_BACKGROUND) &&
                   Desktop.hasDesktopFrame())
          {
             // for background commands, we still want the main window to be
@@ -195,6 +193,20 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       CommandEvent event = new CommandEvent(this);
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(event);
       handlers_.fireEvent(event);
+   }
+
+   public boolean isRoutedOutOfCurrentWindow()
+   {
+      return Satellite.isCurrentWindowSatellite() &&
+             isRoutedOutOfSatellite(
+                   getWindowMode(),
+                   RStudioGinjector.INSTANCE.getSatellite().getSatelliteName());
+   }
+
+   public static boolean isRoutedOutOfSatellite(String windowMode, String satelliteName)
+   {
+      return !StringUtil.equals(windowMode, WINDOW_MODE_ANY) &&
+             !StringUtil.equals(windowMode, satelliteName);
    }
 
    public boolean isEnabled()
@@ -326,6 +338,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
       Markdown, Sweave, Help, VCS, Packrat, Renv, RPresentation,
       Addin, Viewer, History, Tutorial, Diagnostics, Import, Files;
+
+      // Whether a shortcut may run while focus is in an embedded component that
+      // handles its own text input, such as the terminal or Posit Assistant.
+      // Editor- and language-specific commands leave the key with the component.
+      public boolean isWorkbenchLevel()
+      {
+         return this == Workbench || this == Addin || this == PackageDevelopment;
+      }
 
       @Override
       public String toString()
@@ -790,15 +810,35 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    private static SafeHtml createMenuImageHtml(ImageResource image)
    {
+      String width = Integer.toString(image.getWidth());
+      String height = Integer.toString(image.getHeight());
+      String src = image.getSafeUri().asString();
+
+      // Contrast themes do not recolor bitmaps; these classes let themeStyles.css
+      // redraw the checkmark in the contrast theme's text color.
+      SafeHtml tag = isMenuCheck(src)
+            ? SafeHtmlUtil.createOpenTag("img",
+                  "class", "rstudio-forced-colors-glyph rstudio-glyph-menu-check",
+                  "width", width, "height", height, "src", src, "alt", "")
+            : SafeHtmlUtil.createOpenTag("img",
+                  "width", width, "height", height, "src", src, "alt", "");
+
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      sb.append(SafeHtmlUtil.createOpenTag("img",
-        "width", Integer.toString(image.getWidth()),
-        "height", Integer.toString(image.getHeight()),
-        "src", image.getSafeUri().asString(),
-        "alt", ""));
+      sb.append(tag);
       sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
    }
+
+   // Callers pass the checkmark as a plain ImageResource, so recognize it by its URI.
+   private static boolean isMenuCheck(String uri)
+   {
+      return uri.equals(MENU_CHECK_URI) || uri.equals(MENU_CHECK_INVERTED_URI);
+   }
+
+   private static final String MENU_CHECK_URI =
+         ThemeResources.INSTANCE.menuCheck2x().getSafeUri().asString();
+   private static final String MENU_CHECK_INVERTED_URI =
+         ThemeResources.INSTANCE.menuCheckInverted2x().getSafeUri().asString();
 
    private boolean enabled_ = true;
    private boolean visible_ = true;

@@ -148,6 +148,9 @@ public class KeyCombination
          return pretty ? "PgDn" : Desktop.hasDesktopFrame() ? "PageDown" : constants_.keyNamePageDown(); //$NON-NLS-1$
       else if (keyCode_ == 8)
          return macStyle ? "&#9003;" : Desktop.hasDesktopFrame() ? "Backspace" : constants_.keyNameBackspace(); //$NON-NLS-1$
+      else if (keyCode_ == KeyCodes.KEY_DELETE && macStyle)
+         // forward delete; the key labelled Delete on Mac keyboards is Backspace
+         return "&#8998;";
       else if (keyCode_ == KeyCodes.KEY_SPACE)
          // Mac spacebar shortcut character looks too much like a 'b'
          // return macStyle? "&#9250" : "Space";

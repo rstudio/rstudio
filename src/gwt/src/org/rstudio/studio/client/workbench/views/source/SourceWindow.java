@@ -457,7 +457,7 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
             {
                TextEditingTarget textEditor = (TextEditingTarget) editor;
                if (textEditor.hasPendingChanges())
-                  contents = textEditor.getDocDisplay().getCode();
+                  contents = textEditor.getPrimaryDisplay().getCode();
             }
 
             docs.push(UnsavedDoc.create(target.getId(), contents));

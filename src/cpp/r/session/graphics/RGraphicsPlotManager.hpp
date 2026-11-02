@@ -200,6 +200,7 @@ private:
    bool suppressDeviceEvents_;
    
    int activePlot_;
+   bool activePlotChanged_;
    boost::circular_buffer<PtrPlot> plots_;
    
    boost::regex plotInfoRegex_;

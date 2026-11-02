@@ -34,7 +34,7 @@ import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform } from 'os';
 import i18next from 'i18next';
 import path, { dirname } from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { fileURLToPath } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
 import { normalizeSeparatorsNative } from '../ui/utils';
 import { logger } from '../core/logger';
@@ -62,8 +62,6 @@ import {
 } from './preferences/electron-desktop-options';
 import {
   parseFilter,
-  findRepoRoot,
-  getAppPath,
   handleLocaleCookies,
   isAutomated,
   resolveAliasedPath,
@@ -989,19 +987,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_toggle_fullscreen_mode', () => {
       this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
-    });
-
-    ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
-      let docUrl: URL;
-      if (app.isPackaged) {
-        docUrl = pathToFileURL(path.join(getAppPath(), 'www', 'docs', 'keyboard.htm'));
-      } else {
-        // dev build scenario
-        docUrl = pathToFileURL(
-          new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath(),
-        );
-      }
-      void shell.openExternal(docUrl.toString());
     });
 
     ipcMain.on('desktop_launch_session', (_event, reload) => {

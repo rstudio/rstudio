@@ -33,12 +33,19 @@ public abstract class WorkbenchPane extends ToolbarPane
    protected WorkbenchPane(String title)
    {
       title_ = title;
+      paneName_ = null;
       events_ = null;
    }
 
-   protected WorkbenchPane(String title, EventBus events)
+   /**
+    * @param title The pane's display title, which may be localized.
+    * @param paneName The pane's canonical name (e.g. PaneManager.HELP_PANE),
+    *    which names it in the ActivatePaneEvent it fires when it raises itself.
+    */
+   protected WorkbenchPane(String title, String paneName, EventBus events)
    {
       title_ = title;
+      paneName_ = paneName;
       events_ = events;
    }
 
@@ -97,11 +104,12 @@ public abstract class WorkbenchPane extends ToolbarPane
    @Override
    public void bringToFront()
    {
-      if (events_ != null && !StringUtil.isNullOrEmpty(title_))
-         events_.fireEvent(new ActivatePaneEvent(title_));
+      if (events_ != null && !StringUtil.isNullOrEmpty(paneName_))
+         events_.fireEvent(new ActivatePaneEvent(paneName_));
       super.bringToFront();
    }
 
    private final String title_;
+   private final String paneName_;
    protected final EventBus events_;
 }

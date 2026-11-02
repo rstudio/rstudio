@@ -86,7 +86,7 @@ unsigned int getNamedUserLimit()
    return 0;
 }
 
-json::Array getLicensedUsers()
+Result<json::Array> getLicensedUsers()
 {
    return getAllUsers();
 }

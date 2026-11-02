@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
@@ -115,7 +116,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                        UserPrefs prefs,
                        PackagesServerOperations server)
    {
-      super(constants_.packagesTitle(), events);
+      super(constants_.packagesTitle(), PaneManager.PACKAGES_PANE, events);
 
       commands_ = commands;
       session_ = session;
@@ -939,9 +940,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
+         // Keyboard selection is disabled, so without one tab stop nothing in
+         // the list could take focus. The scroller can't take it instead: it
+         // sits between the grid's role="table" and its rowgroups.
+         int tabIndex = context.getIndex() == 0 ? 0 : -1;
          SafeHtml checkbox = value.isAttached()
-            ? TEMPLATES.checkboxChecked(value.getName())
-            : TEMPLATES.checkboxUnchecked(value.getName());
+            ? TEMPLATES.checkboxChecked(value.getName(), tabIndex)
+            : TEMPLATES.checkboxUnchecked(value.getName(), tabIndex);
 
          sb.append(checkbox);
       }
@@ -1091,11 +1096,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
       SafeHtml description(String className, String packageDescription);
 
-      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" checked />")
-      SafeHtml checkboxChecked(String label);
+      @Template("<input type=\"checkbox\" tabindex=\"{1}\" aria-label=\"{0}\" checked />")
+      SafeHtml checkboxChecked(String label, int tabIndex);
 
-      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" />")
-      SafeHtml checkboxUnchecked(String label);
+      @Template("<input type=\"checkbox\" tabindex=\"{1}\" aria-label=\"{0}\" />")
+      SafeHtml checkboxUnchecked(String label, int tabIndex);
    }
 
    private RStudioDataGrid<PackageInfo> packagesTable_;

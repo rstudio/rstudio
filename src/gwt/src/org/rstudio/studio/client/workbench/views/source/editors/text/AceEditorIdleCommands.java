@@ -59,8 +59,8 @@ public class AceEditorIdleCommands
    private void onPreviewLatex(TextEditingTarget target, 
          DocUpdateSentinel sentinel, IdleState state)
    {
-      Position position = resolvePosition(target.getDocDisplay(), state);
-      Range range = MathJaxUtil.getLatexRange(target.getDocDisplay(), position);
+      Position position = resolvePosition(target.getPrimaryDisplay(), state);
+      Range range = MathJaxUtil.getLatexRange(target.getPrimaryDisplay(), position);
       if (range == null)
          return;
       
@@ -86,8 +86,8 @@ public class AceEditorIdleCommands
          public void execute(TextEditingTarget target, 
                DocUpdateSentinel sentinel, IdleState idleState)
          {
-            ImagePreviewer.onPreviewLink(target.getDocDisplay(), sentinel, 
-                  prefs_, resolvePosition(target.getDocDisplay(), idleState));
+            ImagePreviewer.onPreviewLink(target.getPrimaryDisplay(), sentinel, 
+                  prefs_, resolvePosition(target.getPrimaryDisplay(), idleState));
          }
       };
    }

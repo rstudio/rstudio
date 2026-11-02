@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
@@ -101,7 +102,7 @@ public class EnvironmentPane extends WorkbenchPane
                           UserPrefs prefs,
                           DependencyManager dependencyManager)
    {
-      super(constants_.environmentCapitalized(), events);
+      super(constants_.environmentCapitalized(), PaneManager.ENVIRONMENT_PANE, events);
 
       commands_ = commands;
       server_ = serverOperations;

@@ -4,7 +4,8 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import {
-  documentCloseAllNoSave, executeCommand, isCommandChecked, resetLayoutZoom,
+  dismissAllModals, documentCloseAllNoSave, executeCommand, isCommandChecked, numModalsShowing,
+  resetLayoutZoom,
 } from '@utils/commands';
 import { executeInConsole, focusConsole, waitForConsoleIdle } from '@pages/console_pane.page';
 import { captureResult, killAllTerminals, XTERM_SELECTOR } from '@utils/terminal';
@@ -13,10 +14,15 @@ import type { Locator, Page } from 'playwright';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
 const SOURCE_PANE = '#rstudio_Source_pane';
+const EXTRA_SOURCE_COLUMN_PANES = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
 const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
+const ENVIRONMENT_TAB = '#rstudio_workbench_tab_environment';
+const FILES_TAB = '#rstudio_workbench_tab_files';
 const HISTORY_TAB = '#rstudio_workbench_tab_history';
 const HELP_TAB = '#rstudio_workbench_tab_help';
+const PLOTS_TAB = '#rstudio_workbench_tab_plots';
+const VIEWER_TAB = '#rstudio_workbench_tab_viewer';
 const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
 const SIDEBAR_COLUMN_SPLITTER = '#rstudio_sidebar_column_splitter';
@@ -117,6 +123,23 @@ async function setSidebarVisible(page: Page, visible: boolean): Promise<void> {
   await expect(page.locator(SIDEBAR_PANE)).toHaveCount(visible ? 1 : 0);
 }
 
+async function isSidebarOnLeft(page: Page): Promise<boolean> {
+  const sidebar = await page.locator(SIDEBAR_PANE).boundingBox();
+  const consolePane = await page.locator(CONSOLE_PANE).boundingBox();
+  if (!sidebar || !consolePane)
+    throw new Error('Sidebar or Console pane has no bounding box; are both rendered?');
+  return sidebar.x < consolePane.x;
+}
+
+// Moves a visible sidebar to the given side; returns whether it had to move.
+async function setSidebarOnLeft(page: Page, left: boolean): Promise<boolean> {
+  if (await isSidebarOnLeft(page) === left)
+    return false;
+  await executeCommand(page, 'toggleSidebarLocation');
+  await expect.poll(() => isSidebarOnLeft(page)).toBe(left);
+  return true;
+}
+
 test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () => {
   test.afterEach(async ({ rstudioPage: page }) => {
     await resetLayoutZoom(page);
@@ -169,6 +192,107 @@ test.describe('Panes hidden by zoom leave the accessibility tree (#19181)', () =
     await executeCommand(page, 'layoutZoomLeftColumn');
     await expectHidden(page, SIDEBAR_PANE, TABSET1_PANE, TABSET2_PANE);
     await expectExposed(page, CONSOLE_PANE);
+  });
+
+  for (const side of ['left', 'right']) {
+    for (const zoom of ['layoutZoomSidebar', 'layoutZoomLeftColumn', 'layoutZoomRightColumn']) {
+      test(`End Zoom after ${zoom} with the sidebar on the ${side} restores the pre-zoom column widths (#19201)`, async ({ rstudioPage: page }) => {
+        await setSidebarVisible(page, true);
+        const moved = await setSidebarOnLeft(page, side === 'left');
+        try {
+          const columns = [SIDEBAR_PANE, CONSOLE_PANE, TABSET1_PANE];
+          const before: number[] = [];
+          for (const column of columns)
+            before.push(await getSettledWidth(page, column));
+
+          await executeCommand(page, zoom);
+          await expect.poll(() => isCommandChecked(page, zoom)).toBe(true);
+          await executeCommand(page, 'layoutEndZoom');
+          await expect.poll(() => isCommandChecked(page, zoom)).toBe(false);
+
+          for (let i = 0; i < columns.length; i++) {
+            expect(Math.abs(await getSettledWidth(page, columns[i]) - before[i]),
+                   `${columns[i]} width`).toBeLessThanOrEqual(2);
+          }
+          await expectExposed(page, ...columns);
+        } finally {
+          if (moved) {
+            await resetLayoutZoom(page);
+            await setSidebarOnLeft(page, side !== 'left');
+          }
+        }
+      });
+    }
+  }
+
+  test('End Zoom after the window shrinks scales the pre-zoom column widths (#19201)', async ({ rstudioPage: page }) => {
+    await setSidebarVisible(page, true);
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    const columns = [SIDEBAR_PANE, CONSOLE_PANE, TABSET1_PANE];
+
+    // Each column's share of the space the columns fill, so that a narrower
+    // window can be compared with a wider one.
+    const readShares = async (): Promise<number[]> => {
+      const widths: number[] = [];
+      for (const column of columns)
+        widths.push(await getSettledWidth(page, column));
+      const total = widths.reduce((a, b) => a + b, 0);
+      return widths.map(w => w / total);
+    };
+
+    const before = await readShares();
+    try {
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+      await page.setViewportSize({ width: Math.round(viewport.width * 0.6), height: viewport.height });
+      await executeCommand(page, 'layoutEndZoom');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(false);
+
+      const after = await readShares();
+      for (let i = 0; i < columns.length; i++)
+        expect(Math.abs(after[i] - before[i]), `${columns[i]} share`).toBeLessThanOrEqual(0.03);
+      await expectExposed(page, ...columns);
+    } finally {
+      await resetLayoutZoom(page);
+      await page.setViewportSize(viewport);
+      await waitForSplitterToSettle(page, MIDDLE_COLUMN_SPLITTER);
+    }
+  });
+
+  test('End Zoom after a column zoom and then a pane zoom restores the source columns (#19201)', async ({ rstudioPage: page }) => {
+    const extraColumn = page.locator(EXTRA_SOURCE_COLUMN_PANES);
+    await expect(extraColumn, 'precondition: no extra source column to start').toHaveCount(0);
+    await executeCommand(page, 'newSourceColumn');
+    await expect(extraColumn).toHaveCount(1, { timeout: 10000 });
+    try {
+      // The column's Untitled doc arrives later, and only closing it removes
+      // the column.
+      await expect(extraColumn.locator('[role="tab"]')).toHaveCount(1, { timeout: 10000 });
+      const columns = [EXTRA_SOURCE_COLUMN_PANES, CONSOLE_PANE, TABSET1_PANE];
+      const before: number[] = [];
+      for (const column of columns)
+        before.push(await getSettledWidth(page, column));
+
+      // Each zoom records the widths it would restore; the second must not
+      // record them again over the first.
+      await executeCommand(page, 'layoutZoomLeftColumn');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomLeftColumn')).toBe(true);
+      await executeCommand(page, 'layoutZoomConsole');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomConsole')).toBe(true);
+      await executeCommand(page, 'layoutEndZoom');
+      await expect.poll(() => isCommandChecked(page, 'layoutZoomConsole')).toBe(false);
+
+      for (let i = 0; i < columns.length; i++) {
+        expect(Math.abs(await getSettledWidth(page, columns[i]) - before[i]),
+               `${columns[i]} width`).toBeLessThanOrEqual(2);
+      }
+    } finally {
+      await resetLayoutZoom(page);
+      // newSourceColumn opens an Untitled doc in the new column; closing it
+      // removes the column.
+      await documentCloseAllNoSave(page);
+      await expect(extraColumn).toHaveCount(0, { timeout: 10000 });
+    }
   });
 
   test('dragging a column splitter closed hides the column and moves focus out', async ({ rstudioPage: page }) => {
@@ -727,8 +851,69 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     }
   });
 
-  // A pane raises itself under its localized title, which PaneManager doesn't
-  // know ("Aide" for Help in French), so the moved zoom must still name Help.
+  // A pane raising itself moves a zoom of another pane to the tab it raised.
+  // Clear Workspace and Clear History raise their pane before they confirm.
+  const raiseWithConfirm = (command: string) => async (page: Page) => {
+    await executeCommand(page, command);
+    await expect.poll(() => numModalsShowing(page)).toBe(1);
+    await dismissAllModals(page);
+  };
+  // Clear History has no handler until the History pane has loaded, which its
+  // list being rendered confirms, and is disabled while it shows search results or
+  // context. Environment is then reselected so the raise has to select History.
+  const loadHistory = async (page: Page) => {
+    await executeCommand(page, 'activateHistory');
+    await expect(page.locator(TABSET1_PANE)
+      .getByRole('listbox', { name: 'Console History', exact: true, includeHidden: true }))
+      .toBeAttached();
+    await executeCommand(page, 'historyDismissResults');
+    await executeCommand(page, 'activateEnvironment');
+  };
+  for (const { label, prepare, raise, zoom, pane, tab, cleanup } of [
+    { label: 'Help Home', raise: (page: Page) => executeCommand(page, 'helpHome'),
+      zoom: 'layoutZoomHelp', pane: TABSET2_PANE, tab: HELP_TAB },
+    { label: 'Go To Working Directory',
+      raise: (page: Page) => executeCommand(page, 'goToWorkingDir'),
+      zoom: 'layoutZoomFiles', pane: TABSET2_PANE, tab: FILES_TAB },
+    { label: 'a new plot',
+      raise: (page: Page) => executeInConsole(page, 'plot(1)'),
+      zoom: 'layoutZoomPlots', pane: TABSET2_PANE, tab: PLOTS_TAB, cleanup: 'graphics.off()' },
+    { label: 'a page in the Viewer',
+      raise: (page: Page) => executeInConsole(page, 'local({ f <- tempfile(fileext = ".html"); ' +
+        'writeLines("<h1>hi</h1>", f); .rs.api.viewer(f) })'),
+      zoom: 'layoutZoomViewer', pane: TABSET2_PANE, tab: VIEWER_TAB,
+      cleanup: '.rs.api.executeCommand("viewerClear")' },
+    { label: 'Clear Workspace', raise: raiseWithConfirm('clearWorkspace'),
+      zoom: 'layoutZoomEnvironment', pane: TABSET1_PANE, tab: ENVIRONMENT_TAB },
+    { label: 'Clear History', prepare: loadHistory, raise: raiseWithConfirm('clearHistory'),
+      zoom: 'layoutZoomHistory', pane: TABSET1_PANE, tab: HISTORY_TAB },
+  ]) {
+    test(`${label} during a Console zoom moves the zoom to its pane`, async ({
+      rstudioPage: page,
+    }) => {
+      try {
+        if (prepare)
+          await prepare(page);
+        await executeCommand(page, 'layoutZoomConsole');
+        await expectHidden(page, pane);
+
+        await raise(page);
+        await expectExposed(page, pane);
+        await expectHidden(page, CONSOLE_PANE);
+        await expect(page.locator(tab)).toHaveAttribute('aria-selected', 'true');
+        await expect.poll(() => isCommandChecked(page, zoom)).toBe(true);
+        expect(await isCommandChecked(page, 'layoutZoomConsole')).toBe(false);
+      } finally {
+        await dismissAllModals(page);
+        await resetLayoutZoom(page);
+        if (cleanup)
+          await executeInConsole(page, cleanup);
+      }
+    });
+  }
+
+  // A pane's localized title ("Aide" for Help in French) is not a name
+  // PaneManager knows, so the pane must name itself as Help when it raises.
   test('Search R Help during a Console zoom moves the zoom to Help in French', async ({
     rstudioPage: page,
   }) => {
@@ -818,8 +1003,8 @@ test.describe('Show pane commands reopen a column dragged shut (#19184)', () => 
     }
   });
 
-  // A left-column zoom shuts the sidebar too, and ending it leaves the sidebar
-  // shut (#19201). Three default columns in a 500px window are each narrower
+  // A left-column zoom shuts the sidebar too, and Show Chat during the zoom
+  // must reopen it. Three default columns in a 500px window are each narrower
   // than the sidebar's 175px minimum, so the reopen must aim for the minimum.
   test('Show Chat reopens a sidebar shut by a column zoom in a narrow window', async ({
     rstudioPage: page,
