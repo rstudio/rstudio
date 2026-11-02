@@ -72,8 +72,6 @@ on:
         required: false
       AWS_E2E_REPORTS_ROLE_ARN:
         required: false
-      AWS_SCCACHE_ROLE_ARN:
-        required: false
       # Every engine declares this optional, so omitting it fails nothing: each
       # cell just warns that AI-gated tests will skip, and still reports success.
       # A certification run that quietly covers less than the weekly rotation is
@@ -458,7 +456,6 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       # Certification runs are rare and span most engines; saving their
@@ -558,7 +555,6 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       skip_e2e_deps_cache_save: true
