@@ -8,7 +8,9 @@
     Anonymous braces -- the body of an 'if', a 'for', a bare block -- are
     transparent to section headers: a header inside them nests exactly as it
     would outside. Function and test_that() bodies, which have outline
-    entries of their own, contain their sections instead.
+    entries of their own, contain their sections instead. A header cuts the
+    anonymous braces enclosing it short in the tree, and their closing
+    braces are matched to them rather than to an enclosing function.
   -->
   <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
@@ -131,15 +133,13 @@ check("headers inside a bare block are siblings",
       outline(braced),
       ["section 1", "section 2"].join("\n"));
 
-// The block's closing brace still ends a brace scope of its own: the brace
-// cut by each header is continued inside the header's section.
-check("the block's closing brace is matched",
+// Each header cuts the block short; the block's closing brace then matches
+// the cut block rather than ending anything else.
+check("a header cuts the block short",
       tree(braced),
       ["brace {} [0..1]",
        "section section 1 [1..3]",
-       "  brace {} [1..3]",
-       "section section 2 [3..open]",
-       "  brace {} [3..5]"].join("\n"));
+       "section section 2 [3..open]"].join("\n"));
 
 // ---------------------------------------------------------------------------
 // A function body contains its sections, as it has an outline entry.
@@ -212,21 +212,18 @@ check("the current section ignores the braces too",
       scopeAtRows(chapters, [10, 12, 20, 22]),
       "10:2.1 Section 12:2.1 Section 20:3.2 Section 22:3.2 Section");
 
-// An edit just after a header drops and re-adds the header's section. The
-// braces it cut were cut by the earlier pass, so the reparse has to find
-// them again to continue them.
+// An edit just after a header drops and re-adds the header's section, and
+// the reparse sees the cut block's closing brace again; it must match the
+// block cut by the earlier pass.
 chapters.insert({row: 19, column: 0}, "x\n");
 
 check("the outline survives an edit just after a header",
       outline(chapters),
       chaptersOutline);
 
-check("the continued brace is matched after that edit",
-      tree(chapters).split("\n").filter(function(line) {
-        return line.indexOf("3.2 Section") >= 0 || line.indexOf("[18..21]") >= 0;
-      }).join("\n"),
-      ["  section 3.2 Section [18..23]",
-       "    brace {} [18..21]"].join("\n"));
+check("the cut block's closing brace is matched again after that edit",
+      scopeAtRows(chapters, [21, 23]),
+      "21:3.2 Section 23:3.2 Section");
 
 // ---------------------------------------------------------------------------
 // Inside a function, a header after an 'if' block used to leave the block's
@@ -270,12 +267,46 @@ var headerAfterBrace = makeSession([
   ""
 ].join("\n"));
 
-check("a header after a closing brace on the same row doesn't continue it",
+var headerAfterBraceTree = [
+  "function g() [0..6]",
+  "  section a [1..4]",
+  "    brace {} [2..4]",
+  "  section done [4..6]"
+].join("\n");
+
+check("a header after a closing brace on the same row doesn't cut it",
       tree(headerAfterBrace),
-      ["function g() [0..6]",
-       "  section a [1..4]",
-       "    brace {} [2..4]",
-       "  section done [4..6]"].join("\n"));
+      headerAfterBraceTree);
+
+// Editing the row after that header reparses from the header's row, so the
+// block's closing brace is seen again; it must end the block, not the
+// function.
+headerAfterBrace.insert({row: 5, column: 0}, "x\n");
+
+check("the block's closing brace is matched again after an edit below it",
+      tree(headerAfterBrace),
+      headerAfterBraceTree.replace("[0..6]", "[0..7]").replace("[4..6]", "[4..7]"));
+
+// A decorated header right after the closing brace starts where the block
+// ends; the block is closed, not cut.
+var bannerAfterBrace = makeSession([
+  "g <- function() {",
+  "  if (x) {",
+  "    y",
+  "  }#### done ####",
+  "  z",
+  "}",
+  "h <- function() {",
+  "}",
+  ""
+].join("\n"));
+
+check("a decorated header right after a closing brace doesn't cut it",
+      tree(bannerAfterBrace),
+      ["function g() [0..5]",
+       "  brace {} [1..3]",
+       "  section done [3..5]",
+       "function h() [6..7]"].join("\n"));
 
 var headerAfterTopBrace = makeSession([
   "{",
@@ -308,14 +339,37 @@ var nested = makeSession([
   ""
 ].join("\n"));
 
-check("nested blocks are continued inside the header's section",
+check("nested blocks are each cut and their closing braces matched",
       tree(nested),
       ["brace {} [0..2]",
        "  brace {} [1..2]",
        "section h [2..open]",
-       "  brace {} [2..6]",
-       "    brace {} [2..4]",
        "  function f() [7..8]"].join("\n"));
+
+// A header inside a braced default argument cuts the block enclosing the
+// function too. The function then adopts the header's section, which began
+// after the function did; its own closing brace must still end it, and the
+// block's must match the block.
+var defaultArg = makeSession([
+  "if (ok) {",
+  "  f <- function(x = {",
+  "    # defaults ----",
+  "    1",
+  "  }) { x }",
+  "  g <- function() {}",
+  "}",
+  "h <- function() {}",
+  ""
+].join("\n"));
+
+check("a header in a braced default argument leaves the function intact",
+      tree(defaultArg),
+      ["brace {} [0..2]",
+       "  brace {} [1..2]",
+       "function f(x) [1..4]",
+       "  section defaults [2..4]",
+       "function g() [5..5]",
+       "function h() [7..7]"].join("\n"));
 
 // ---------------------------------------------------------------------------
 // Header nesting by level is unchanged outside braces.

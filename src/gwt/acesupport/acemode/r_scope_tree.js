@@ -66,6 +66,12 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       // The end position of the scope.
       this.end = null;
 
+      // Whether a section header cut this (anonymous brace) scope short,
+      // and where the '}' matching its '{' was then found; see
+      // ScopeManager.$cutAnonymousBraces().
+      this.isCut = false;
+      this.matchedEnd = null;
+
       // The type of this scope (e.g. a braced scope, a section, and so on)
       this.scopeType = scopeType;
 
@@ -218,9 +224,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       // innermost, whether labelled or not. Unlike findNode(), this reports
       // anonymous brace scopes. A scope that has already been closed is left
       // out along with everything inside it: while the tree is being built,
-      // nothing parsed later can belong to it, even when it still spans the
-      // position -- as a block closed by '}' on a row does for a section
-      // header on the same row, whose preamble is the start of the row.
+      // nothing parsed later can belong to it.
       this.findOpenScopeChain = function(pos) {
          var chain = [this];
          var node = this;
@@ -233,6 +237,44 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             chain.push(node);
          }
          return chain;
+      };
+
+      // The innermost open brace scope, if any: the last open node of brace
+      // type along the chain of last children.
+      this.$innermostOpenBrace = function() {
+         var brace = null;
+         for (var node = this; node.$children.length > 0; )
+         {
+            node = node.$children[node.$children.length - 1];
+            if (node.end)
+               break;
+
+            if (node.isBrace())
+               brace = node;
+         }
+         return brace;
+      };
+
+      // Whether a brace or chunk scope enclosing this one has closed, so that
+      // no token parsed from here on can belong to this scope.
+      this.$hasClosedBoundary = function() {
+         for (var node = this.parentScope; node != null; node = node.parentScope)
+         {
+            if ((node.isBrace() || node.isChunk()) && node.end)
+               return true;
+         }
+         return false;
+      };
+
+      // Collect, in document order, the cut braces whose '}' has not yet been
+      // matched or was matched at or after 'pos', i.e. by a token that a
+      // reparse from 'pos' will see again.
+      this.$collectCutBraces = function(pos, out) {
+         if (this.isCut && (!this.matchedEnd || comparePoints(this.matchedEnd, pos) >= 0))
+            out.push(this);
+
+         for (var i = 0; i < this.$children.length; i++)
+            this.$children[i].$collectCutBraces(pos, out);
       };
 
       this.$getFunctionStack = function(pos) {
@@ -321,6 +363,8 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          }
 
          this.end = null;
+         this.isCut = false;
+         this.matchedEnd = null;
 
          return resumePos;
       };
@@ -380,6 +424,9 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.parsePos = {row: 0, column: 0};
       this.$root = new this.$ScopeNodeFactory("(Top Level)", this.parsePos, null,
                                  ScopeNode.TYPE_ROOT);
+
+      // Cut braces still waiting for their '}', innermost last.
+      this.$cutBraces = [];
    };
 
    (function() {
@@ -446,59 +493,50 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       // Anonymous braces are transparent to section headers: a header inside
       // 'if (x) { ... }' nests exactly as it would outside the braces. The
       // tree nests by position, though, so such a header cuts the anonymous
-      // braces enclosing it (closing each one at the header) and continues
-      // them inside the new section, so that their eventual '}' still closes
-      // a brace of their own rather than an enclosing function's.
+      // braces enclosing it, closing each one at the header. Their '}' tokens
+      // are still to come, and must not close an enclosing function instead,
+      // so each cut brace waits on a stack for its '}' (see onScopeEnd()).
       this.$cutAnonymousBraces = function(position)
       {
          var scopes = this.$root.findOpenScopeChain(position);
-         for (var i = scopes.length - 1; i >= 0; i--)
-         {
-            if (!scopes[i].isBrace() || scopes[i].label)
-               break;
 
+         var first = scopes.length;
+         while (first > 0 && scopes[first - 1].isBrace() && !scopes[first - 1].label)
+            first--;
+
+         for (var i = first; i < scopes.length; i++)
+         {
             scopes[i].end = position;
+            scopes[i].isCut = true;
+            this.$cutBraces.push(scopes[i]);
          }
       };
 
-      // Count the anonymous braces cut at 'position', which end there, at
-      // the bottom of the last-child chain. They are found again rather than
-      // remembered: an edit just after a header drops the header's section
-      // and re-adds it on reparse, after the braces were cut by the earlier
-      // pass.
-      this.$countCutBraces = function(position)
+      // Whether the '}' at 'pos' matches a cut brace rather than an open brace
+      // scope. It belongs to the most recently opened brace still waiting for
+      // one: a brace opened after the cut is an open scope nested below the
+      // cut brace's section, and comes first.
+      this.$matchCutBrace = function(pos)
       {
-         var scopes = this.$root.findOpenScopeChain(position);
-         var node = scopes[scopes.length - 1];
-
-         var count = 0;
-         while (node.$children.length > 0)
+         // A cut brace inside a function or chunk that has since closed can
+         // no longer be matched.
+         while (this.$cutBraces.length > 0 &&
+                this.$cutBraces[this.$cutBraces.length - 1].$hasClosedBoundary())
          {
-            node = node.$children[node.$children.length - 1];
-            if (!node.end || comparePoints(node.end, position) !== 0)
-               break;
-
-            if (node.isBrace() && !node.label)
-               count++;
+            this.$cutBraces.pop();
          }
 
-         return count;
-      };
+         if (this.$cutBraces.length === 0)
+            return false;
 
-      // Nest 'count' anonymous braces inside 'section', continuing the ones
-      // cut at its header. They are linked in directly: addNode() would take
-      // a nested continuation, which starts where its parent does, for a
-      // re-add of that parent.
-      this.$continueCutBraces = function(section, count)
-      {
-         var parent = section;
-         for (var i = 0; i < count; i++)
-         {
-            var brace = new this.$ScopeNodeFactory(null, section.start, null, ScopeNode.TYPE_BRACE);
-            brace.parentScope = parent;
-            parent.$children.push(brace);
-            parent = brace;
-         }
+         var cut = this.$cutBraces[this.$cutBraces.length - 1];
+         var open = this.$root.$innermostOpenBrace();
+         if (open && comparePoints(open.preamble, cut.preamble) > 0)
+            return false;
+
+         cut.matchedEnd = pos;
+         this.$cutBraces.pop();
+         return true;
       };
 
       // Add the section header 'node', closing the open sections at its
@@ -508,10 +546,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          var position = node.preamble;
          this.$cutAnonymousBraces(position);
          this.closeSectionScopesWhile(position, shouldClose);
-
-         var count = this.$countCutBraces(position);
          this.$root.addNode(node);
-         this.$continueCutBraces(node, count);
       };
 
       // A section header carrying no heading level (e.g. a bar of '#'
@@ -651,6 +686,12 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       };
 
       this.onScopeEnd = function(pos) {
+         if (this.$matchCutBrace(pos))
+         {
+            debuglog("cut brace-scope end");
+            return null;
+         }
+
          var closed = this.$root.closeScope(pos, ScopeNode.TYPE_BRACE);
          if (closed)
             debuglog("brace-scope end: " + closed.label);
@@ -681,7 +722,15 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          pos = {row: Math.max(0, pos.row-1), column: 0};
          debuglog("Invalidate from " + pos.row + ", " + pos.column);
          if (comparePoints(this.parsePos, pos) > 0)
+         {
             this.parsePos = this.$root.invalidateFrom(pos);
+
+            // A reparse sees again the '}' of every cut brace matched from
+            // the resume position on, and a cut brace that was reopened is
+            // cut again when its header is reparsed.
+            this.$cutBraces = [];
+            this.$root.$collectCutBraces(this.parsePos, this.$cutBraces);
+         }
          this.printScopeTree();
       };
 
