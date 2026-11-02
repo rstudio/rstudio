@@ -16,6 +16,7 @@
   "tools_cache_key": "rstudio-tools-linux-rocky9-arm64",
   "rlibs_cache_key": "rstudio-build-rlibs-linux-rocky9-arm64",
   "gwt_cache_key": "rstudio-gwt-linux-desktop-rocky9-arm64",
+  "sccache_backend": "s3",
   "sccache_key_prefix": "rocky9-arm64",
   "installer_artifact": "rstudio-desktop-rpm-rocky9-arm64",
   "daily_platform_key": "rhel9-arm64",

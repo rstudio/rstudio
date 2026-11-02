@@ -43,11 +43,8 @@ permissions:
 jobs:
   a11y-server-ubuntu24:
     uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
-    # Only the build cache role: in a11y mode nothing else uses a secret.
-    # Results reach neither the e2e dashboard nor S3; the HTML report stays a
-    # run artifact.
-    secrets:
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    # No secrets: in a11y mode nothing uses one. Results reach neither the
+    # e2e dashboard nor S3; the HTML report stays a run artifact.
     with:
       project: server
       a11y: true

@@ -21,8 +21,8 @@ on:
       - "dependencies/**"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
       - ".github/workflows/os-cache-seed-e2e-macos-26-arm64.yml"
-  # Nightly re-seed keeps the sccache object cache (keyed per-commit, restored
-  # by prefix) recent on main so PR builds get a high compile-cache hit rate.
+  # Nightly re-seed keeps the sccache object cache recent on main so PR
+  # builds get a high compile-cache hit rate.
   schedule:
     - cron: '0 7 * * *'
   # Also dispatched by os-cache-seed-sentinel.yml when this seed's caches
@@ -52,8 +52,5 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      # The seed is the main writer of the shared S3 sccache; without this
-      # it would fall back to the quota-constrained GHA cache backend.
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       build_only: true

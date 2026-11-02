@@ -199,7 +199,8 @@ as `key=value` job outputs.
 | `tools_arch` | RSTUDIO_TOOLS_ROOT subdirectory (`x86_64` / `arm64`) |
 | `dependency_script` | script under `dependencies/linux` to run |
 | `tools_cache_key`, `rlibs_cache_key`, `gwt_cache_key` | Actions cache key prefixes; per-distro/arch isolation. The ubuntu-24-x86_64 `tools_cache_key` and `rlibs_cache_key` are deliberately shared with the Linux Server build and its cache seed; `gwt_cache_key` is not -- Server keys its GWT cache separately |
-| `sccache_key_prefix` | S3 key prefix for the shared sccache bucket |
+| `sccache_backend` | where sccache keeps its objects: `gha` (the Actions cache; only main writes, other refs read main's entries) or `s3` (the shared sccache bucket). `gha` is for engines with a nightly cache seed on main -- today only `ubuntu-24-x86_64`, which the PR orchestrator builds. Rotation-only engines use `s3`: they compile only when dispatched from source, and writing them all into main's Actions cache would take ~1 GB each |
+| `sccache_key_prefix` | S3 key prefix for the shared sccache bucket; unused when `sccache_backend` is `gha` (Actions cache entries are keyed by object hash alone) |
 | `installer_artifact` | name of the built installer artifact passed from build to e2e |
 | `daily_platform_key` | key under `products.electron.platforms` in the dailies manifest |
 | `e2e_runner`, `e2e_image`, `e2e_container_options`, `e2e_bootstrap_packages` | e2e job placement (same semantics as the build_ variants) |

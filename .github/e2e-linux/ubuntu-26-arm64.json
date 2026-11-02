@@ -16,6 +16,7 @@
   "tools_cache_key": "rstudio-tools-linux-resolute-arm64",
   "rlibs_cache_key": "rstudio-build-rlibs-linux-resolute-arm64",
   "gwt_cache_key": "rstudio-gwt-linux-desktop-resolute-arm64",
+  "sccache_backend": "s3",
   "sccache_key_prefix": "ubuntu26-arm64",
   "installer_artifact": "rstudio-desktop-deb-ubuntu-26-arm64",
   "daily_platform_key": "resolute-arm64",

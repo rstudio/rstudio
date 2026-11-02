@@ -16,6 +16,7 @@
   "tools_cache_key": "rstudio-tools-linux-x86_64",
   "rlibs_cache_key": "rstudio-build-rlibs-linux-x86_64",
   "gwt_cache_key": "rstudio-gwt-linux-desktop-x86_64",
+  "sccache_backend": "s3",
   "sccache_key_prefix": "debian13-x86_64",
   "installer_artifact": "rstudio-desktop-deb-debian-13-x86_64",
   "daily_platform_key": "noble-amd64",
