@@ -106,6 +106,21 @@ function tree(session) {
   return treeOf(nodes, "", []).join("\n");
 }
 
+// The label of the parent of the first node with the given label.
+function parentOf(session, label) {
+  var nodes = session.getMode().codeModel.getScopeTree();
+  var found = null;
+  (function visit(list) {
+    for (var i = 0; i < list.length && !found; i++) {
+      if (list[i].label === label)
+        found = list[i];
+      else
+        visit(list[i].$children);
+    }
+  })(nodes);
+  return found && found.parentScope ? found.parentScope.label : null;
+}
+
 // The innermost labelled scope at the start of each listed row (1-based).
 function scopeAtRows(session, rows) {
   var model = session.getMode().codeModel;
@@ -402,9 +417,10 @@ check("a cut block waits for a closing brace put back farther down",
        "  section h [2..9]"].join("\n"));
 
 // A header inside a braced default argument cuts the block enclosing the
-// function too. The function then adopts the header's section, which began
-// after the function did; its own closing brace must still end it, and the
-// block's must match the block.
+// function too. The function, created at its body's brace, then takes over
+// from the cut block the default-argument scopes seen before the header,
+// and adopts the header's section; its own closing brace must still end
+// it, and the block's must match the block.
 var defaultArg = makeSession([
   "if (ok) {",
   "  f <- function(x = {",
@@ -418,13 +434,41 @@ var defaultArg = makeSession([
 ].join("\n"));
 
 var defaultArgTree = [
-  "brace {} [0..2]",
-  "  brace {} [1..2]",
+  "brace {} [0..1]",
   "function f(x) [1..4]",
+  "  brace {} [1..2]",
   "  section defaults [2..4]",
   "function g() [5..5]",
   "function h() [7..7]"
 ].join("\n");
+
+check("adopted scopes have the function as their parent",
+      parentOf(defaultArg, "defaults") + " " + parentOf(defaultArg, "f(x)"),
+      "f(x) (Top Level)");
+
+check("the function is the scope throughout its signature",
+      scopeAtRows(defaultArg, [2, 3]),
+      "2:f(x) 3:defaults");
+
+var defaultFn = makeSession([
+  "before <- function() {}",
+  "if (ok) {",
+  "  f <- function(a = function() { b }, b = {",
+  "    # defaults ----",
+  "    1",
+  "  }) { a() }",
+  "}",
+  ""
+].join("\n"));
+
+check("default arguments seen before the header move to the function",
+      tree(defaultFn),
+      ["function before() [0..0]",
+       "brace {} [1..2]",
+       "function f(a, b) [2..5]",
+       "  function a() [2..2]",
+       "  brace {} [2..3]",
+       "  section defaults [3..5]"].join("\n"));
 
 check("a header in a braced default argument leaves the function intact",
       tree(defaultArg),
@@ -436,6 +480,14 @@ check("a header in a braced default argument leaves the function intact",
 defaultArg.insert({row: 3, column: 4}, " ");
 
 check("the function survives an edit that reparses its signature",
+      tree(defaultArg),
+      defaultArgTree);
+
+// The function's preamble lies inside the cut block beside it, so the two
+// overlap; invalidation has to examine both, not just one of them.
+defaultArg.insert({row: 2, column: 4}, " ");
+
+check("the function survives an edit on the header row of its signature",
       tree(defaultArg),
       defaultArgTree);
 

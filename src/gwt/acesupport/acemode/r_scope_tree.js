@@ -138,19 +138,35 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             // children, since function scopes don't get created until we see
             // their opening brace but any argument defaults that are themselves
             // functions will have been seen already.)
-            //
+            var adopted = [];
+
             // A child that is already closed doesn't contain the node even when
             // it spans the preamble: nothing parsed after a scope closed belongs
-            // to it. A section header on the row of a block's closing brace
-            // ('} # done ----') starts at the row's first column, inside the
-            // closed block; it goes after the block instead.
-
-            index = index >= 0 ? index + 1 : -(index+1);
+            // to it. That is a block cut short by a section header inside the
+            // node's own signature (a braced default argument). The block ends
+            // where the node begins, and the scopes it holds from there on --
+            // the node's other default arguments -- move to the node.
+            if (index >= 0) {
+               var block = this.$children[index];
+               var from = block.$binarySearch(node.preamble);
+               from = from >= 0 ? from : -(from+1);
+               adopted = block.$children.splice(from, block.$children.length - from);
+               block.end = node.preamble;
+               index++;
+            }
+            else {
+               index = -(index+1);
+            }
 
             if (index < this.$children.length) {
-               node.$children = this.$children.splice(
-                                             index, this.$children.length - index);
+               adopted = adopted.concat(this.$children.splice(
+                                             index, this.$children.length - index));
             }
+
+            for (var i = 0; i < adopted.length; i++)
+               adopted[i].parentScope = node;
+            node.$children = adopted;
+
             node.parentScope = this;
             this.$children.push(node);
          }
