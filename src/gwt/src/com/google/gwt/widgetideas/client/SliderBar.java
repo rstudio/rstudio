@@ -1034,10 +1034,12 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
       setKnobImage(images.slider());
     }
     // listeners may do expensive work (manipulate() re-runs plot code), so
-    // only report a slide that moved the value
+    // only report a slide that moved the value. A key press and a drag can
+    // overlap; the one still running continues from the value reported here.
     if (fireEvent && (slideCompletedListeners != null)
         && curValue != slideStartValue)
        slideCompletedListeners.fireChange(this);
+    slideStartValue = curValue;
   }
 
   /**

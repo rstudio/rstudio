@@ -307,6 +307,31 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals(Arrays.asList(dragged), reported);
    }
 
+   public void testSliderOverlappingKeyAndDragReportBoth()
+   {
+      // when a key press and a drag overlap, whichever ends second must be
+      // compared with the value the first one reported, not the original
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            35, values -> reported.add(values.get("x.max").toString()))));
+      int left = slider.getAbsoluteLeft() + 10;
+      int right = slider.getAbsoluteLeft() + 10000;
+      int y = slider.getAbsoluteTop() + 10;
+      Document doc = Document.get();
+
+      slider.dispatchEvent(doc.createKeyDownEvent(
+            false, false, false, false, KeyCodes.KEY_HOME));
+      slider.dispatchEvent(doc.createMouseDownEvent(
+            1, left, y, left, y, false, false, false, false, NativeEvent.BUTTON_LEFT));
+      slider.dispatchEvent(doc.createKeyUpEvent(
+            false, false, false, false, KeyCodes.KEY_HOME));
+      slider.dispatchEvent(doc.createMouseUpEvent(
+            1, right, y, right, y, false, false, false, false, NativeEvent.BUTTON_LEFT));
+
+      assertEquals("35", slider.getAttribute("aria-valuenow"));
+      assertEquals(Arrays.asList("5", "35"), reported);
+   }
+
    public void testSliderBarEnabledStateAndRangeUpdateAria()
    {
       SliderBar bar = new SliderBar(0, 10);
