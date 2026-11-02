@@ -157,11 +157,12 @@ test_that("frames whose inner call is built internally keep their call site", {
    # for this lapply() shape: the sibling test below runs silently there, and
    # neither reproduces locally on any R version or architecture tried. Muffle
    # it so the test stays green, but print it so the CI log names it; once it
-   # has, replace this with a fix or an expect_warning() on that text.
+   # has, replace this with a fix or an expect_warning() on that text. This
+   # goes through cat(), since testthat swallows message() inside a test.
    result <- withCallingHandlers(
       env$outer_fn(),
       warning = function(w) {
-         message("outer_fn() warned: ", conditionMessage(w))
+         cat("outer_fn() warned:", conditionMessage(w), "\n")
          invokeRestart("muffleWarning")
       }
    )
