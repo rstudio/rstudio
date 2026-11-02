@@ -26,9 +26,7 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
 import org.rstudio.studio.client.events.ReticulateEvent;
-import org.rstudio.studio.client.renv.RenvConstants;
 import org.rstudio.studio.client.renv.events.RenvConsoleNoticeEvent;
-import org.rstudio.studio.client.renv.events.RenvRestorePromptEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
@@ -180,14 +178,6 @@ public class Console
 
       events.addHandler(ConsoleActivateEvent.TYPE, event -> activateConsole(event.getFocusWindow()));
 
-      events.addHandler(RenvRestorePromptEvent.TYPE, event ->
-         view.showRenvNotice(false, renvConstants_.renvPackagesNotInstalled(),
-                             renvConstants_.renvRestoreAction(), () ->
-         {
-            view.hideRenvNotice();
-            events.fireEvent(new SendToConsoleEvent("renv::restore()", true));
-         }, null, null));
-
       events.addHandler(RenvConsoleNoticeEvent.TYPE, event ->
       {
          if (event.getMessage() == null)
@@ -298,5 +288,4 @@ public class Console
    private final EventBus events_;
    private final Display view_;
    private final Provider<PaneManager> pPaneManager_;
-   private static final RenvConstants renvConstants_ = GWT.create(RenvConstants.class);
 }

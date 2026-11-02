@@ -24,12 +24,14 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.renv.events.ProjectRVersionMismatchEvent;
 import org.rstudio.studio.client.renv.events.RInstallCompletedEvent;
 import org.rstudio.studio.client.renv.events.RenvConsoleNoticeEvent;
+import org.rstudio.studio.client.renv.events.RenvRestorePromptEvent;
 import org.rstudio.studio.client.renv.model.RVersionInstall;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.renv.ui.InstallRDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
@@ -43,7 +45,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class RenvRVersionManager
       implements ProjectRVersionMismatchEvent.Handler,
-                 RInstallCompletedEvent.Handler
+                 RInstallCompletedEvent.Handler,
+                 RenvRestorePromptEvent.Handler
 {
    @Inject
    public RenvRVersionManager(EventBus events,
@@ -60,6 +63,7 @@ public class RenvRVersionManager
 
       events_.addHandler(ProjectRVersionMismatchEvent.TYPE, this);
       events_.addHandler(RInstallCompletedEvent.TYPE, this);
+      events_.addHandler(RenvRestorePromptEvent.TYPE, this);
    }
 
    @Override
@@ -178,6 +182,16 @@ public class RenvRVersionManager
             installDialogPending_ = false;
             globalDisplay_.showErrorMessage(constants_.installRCaption(version), error.getUserMessage());
          }
+      });
+   }
+
+   @Override
+   public void onRenvRestorePrompt(RenvRestorePromptEvent event)
+   {
+      showNotice(false, constants_.renvPackagesNotInstalled(), constants_.renvRestoreAction(), () ->
+      {
+         hideNotice();
+         events_.fireEvent(new SendToConsoleEvent("renv::restore()", true));
       });
    }
 

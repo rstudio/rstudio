@@ -47,9 +47,14 @@ public class InstallRDialog extends ModalDialog<String>
       DomUtils.addEventListener(directory_.getTextBox().getElement(), "input", false,
                                 event -> updateOkButton());
 
+      // focus lands on the folder field, so the description (own subfolder,
+      // restart afterwards) is attached to the dialog for assistive tech
+      Label description = new Label(constants_.rInstallDescription(version));
+      setARIADescribedBy(description.getElement());
+
       contents_ = new VerticalPanel();
       contents_.setWidth("440px");
-      contents_.add(new Label(constants_.rInstallDescription(version)));
+      contents_.add(description);
       contents_.add(new VerticalSpacer("12px"));
       contents_.add(directory_);
       updateOkButton();
