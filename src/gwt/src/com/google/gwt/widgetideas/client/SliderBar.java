@@ -468,9 +468,10 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
         // Shift left or right on key press
         case Event.ONKEYDOWN:
           if (!slidingKeyboard) {
+            int largeStep = Math.max(1, (int) (getTotalRange() / stepSize / 10));
             int multiplier = 1;
             if (DOM.eventGetCtrlKey(event)) {
-              multiplier = Math.max(1, (int) (getTotalRange() / stepSize / 10));
+              multiplier = largeStep;
             }
 
             switch (DOM.eventGetKeyCode(event)) {
@@ -484,6 +485,9 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
                 slidingKeyboard = true;
                 setCurrentValue(maxValue);
                 break;
+              case KeyboardListener.KEY_PAGEDOWN:
+                multiplier = largeStep;
+                // fall through
               case KeyboardListener.KEY_LEFT:
               case KeyboardListener.KEY_DOWN:
                 DOM.eventPreventDefault(event);
@@ -492,6 +496,9 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
                 shiftLeft(multiplier);
                 keyTimer.schedule(400, false, multiplier);
                 break;
+              case KeyboardListener.KEY_PAGEUP:
+                multiplier = largeStep;
+                // fall through
               case KeyboardListener.KEY_RIGHT:
               case KeyboardListener.KEY_UP:
                 DOM.eventPreventDefault(event);

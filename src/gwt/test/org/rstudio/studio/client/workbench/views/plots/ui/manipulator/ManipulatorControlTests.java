@@ -148,6 +148,20 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals("4", sliderEl.getAttribute("aria-valuenow"));
    }
 
+   public void testSliderPageKeysMoveATenthOfTheRange()
+   {
+      // Page Up/Down are the large-step keys; Ctrl+arrow is taken by the OS
+      // on macOS
+      Element slider = sliderElement(attach(newSlider(25)));
+
+      pressKey(slider, KeyCodes.KEY_PAGEDOWN);
+      assertEquals("22", slider.getAttribute("aria-valuenow"));
+
+      pressKey(slider, KeyCodes.KEY_PAGEUP);
+      pressKey(slider, KeyCodes.KEY_PAGEUP);
+      assertEquals("28", slider.getAttribute("aria-valuenow"));
+   }
+
    public void testSliderValueTextMatchesDisplayedValue()
    {
       // A short range gets a fractional step, so aria-valuenow carries raw
