@@ -56,7 +56,7 @@ runBashHookScript <- function(profile, path, postbackDir) {
    # while it waits to become the terminal's foreground job. stdin is kept off
    # the TTY so profile snippets that read it, or check '-t 0', can't stop it.
    script <- paste(
-      'source "$0"',
+      'source "$1"',
       'echo "RS_PATH=${PATH}"',
       'echo "RS_POSTBACK_DIR=${_RS_POSTBACK_DIR-unset}"',
       'echo "RS_RESOLVED=$(command -v rstudio)"',
@@ -65,7 +65,7 @@ runBashHookScript <- function(profile, path, postbackDir) {
    
    output <- system2(
       Sys.which("bash"),
-      c("-c", shQuote(script), shQuote(hookScript)),
+      c("-c", shQuote(script), "bash", shQuote(hookScript)),
       env = c(
          # a non-interactive bash would otherwise source an inherited BASH_ENV
          "BASH_ENV=",
