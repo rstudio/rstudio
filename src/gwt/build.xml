@@ -323,24 +323,17 @@
 
    <target name="panmirror" description="Compile panmirror library">
 
-      <!-- Make sure a default value for panmirror.minify is set -->
-      <condition property="panmirror.minify" value="true">
-         <not>
-            <isset property="panmirror.minify" />
-         </not>
-      </condition>
-
-      <echo message="yarn location: ${yarn.bin}"/>
+      <echo message="npm location: ${npm.bin}"/>
       <echo message="panmirror location: ${panmirror.dir}"/>
-      <echo message="panmirror minify: ${panmirror.minify}"/>
 
       <mkdir dir="${panmirror.build.dir}"/>
+      <!-- quarto is an npm workspace whose package-lock.json sits at its root, two levels
+           up from apps/panmirror. Install from there so npm uses that lockfile and installs
+           the packages panmirror builds from (editor, core, ...). -->
       <retry retrycount="3">
-         <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <exec executable="${npm.bin}" dir="${panmirror.dir}/../.." resolveexecutable="true" failonerror="true">
             <env key="PATH" value="${node.path}"/>
             <arg value="install"/>
-            <arg value="--network-timeout"/>
-            <arg value="240000"/>
          </exec>
       </retry>
       <!-- vite needs more than node's default heap (~2GB on CI runners) to
@@ -349,11 +342,17 @@
            any caller-provided NODE_OPTIONS; node lets later flags win, so a
            caller's own heap setting takes precedence over ours. -->
       <property name="env.NODE_OPTIONS" value=""/>
-      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+      <!-- Name the minifier, and minify every build. Vite's CLI keeps "true" or "false"
+           after minify as an unknown minifier name, and with vite 8.3.5 an unminified
+           bundle is a syntax error: the CSS-injection prologue comments out its own
+           closing code. -->
+      <exec executable="${npm.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <env key="PATH" value="${node.path}"/>
+         <arg value="run"/>
          <arg value="build"/>
+         <arg value="--"/>
          <arg value="--minify"/>
-         <arg value="${panmirror.minify}"/>
+         <arg value="oxc"/>
          <arg value="--sourcemap"/>
          <arg value="true"/>
          <env key="PANMIRROR_OUTDIR" value="dist-rstudio"/>
@@ -439,7 +438,6 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
-         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -448,7 +446,6 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
-         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -456,7 +453,6 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev-watch"/>
-         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
