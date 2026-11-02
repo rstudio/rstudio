@@ -92,19 +92,30 @@ Confirm it exists at the expected SHA:
 git ls-remote --exit-code "$QUARTO_URL" "refs/heads/<branch>"
 ```
 
-### 4. Check the Node.js requirement
+### 4. Check the Node.js and package manager requirements
 
-panmirror's root `package.json` declares `engines.node`, which Yarn enforces at install time. A new
-cut can raise it above RStudio's build-time Node.js, which breaks every build.
+A new cut can change how quarto expects to be built, which breaks every RStudio build. Read
+`engines.node` and `packageManager` from quarto's root `package.json`, and what RStudio builds
+with:
 
 ```bash
 gh api "repos/quarto-dev/quarto/contents/package.json?ref=<branch>" \
-   --jq .content | base64 --decode | grep -A2 '"engines"'
+   --jq .content | base64 --decode | grep -E -A2 '"(engines|packageManager)"'
 grep -n RSTUDIO_NODE_VERSION= dependencies/tools/rstudio-tools.sh
+curl -fsSL https://nodejs.org/dist/index.json \
+   | jq -r '.[] | select(.version=="v<RSTUDIO_NODE_VERSION>") | .npm'
+sed -n '/<target name="panmirror"/,/<\/target>/p' src/gwt/build.xml | grep 'exec executable'
 ```
 
-If `RSTUDIO_NODE_VERSION` does not satisfy the range, stop and tell the user: Node.js must be
-raised first, in a separate PR (the rstudio-update-nodejs skill), merged before this one.
+The last command shows which tool the `panmirror` target in `src/gwt/build.xml` runs:
+`${npm.bin}` or `${yarn.bin}`.
+
+- If `RSTUDIO_NODE_VERSION` does not satisfy `engines.node`, stop and tell the user: Node.js must
+  be raised first, in a separate PR (the rstudio-update-nodejs skill), merged before this one.
+- If `packageManager` names a different tool than the `panmirror` target runs, stop and tell the
+  user: the target must be switched to that tool in this PR, alongside the pin.
+- If `packageManager` is `npm@<X.Y.Z>` and the npm bundled with `RSTUDIO_NODE_VERSION` has a
+  different major version, report it; the user decides whether that needs a Node.js bump.
 
 ### 5. Create a branch and update both scripts
 
