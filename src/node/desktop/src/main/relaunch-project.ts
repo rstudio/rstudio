@@ -58,7 +58,12 @@ export function rememberRelaunchProject(project: string): void {
 }
 
 export function forgetRelaunchProject(): void {
-  rmSync(markerPath(), { force: true });
+  try {
+    rmSync(markerPath(), { force: true });
+  } catch (error: unknown) {
+    // startup must go on; an undeletable marker expires on its own
+    logger().logDebug(`could not remove the relaunch marker: ${safeError(error).message}`);
+  }
 }
 
 /** Consume the remembered project; null when there is none or it has expired. */

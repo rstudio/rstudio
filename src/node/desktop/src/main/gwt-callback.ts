@@ -56,6 +56,7 @@ import { MainWindow } from './main-window';
 import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
 import { Updater } from './updater';
+import { kProjectNone } from '../core/r-user-data';
 import {
   defaultFonts,
   ElectronDesktopOptions,
@@ -209,7 +210,9 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_install_update', (_event, projectFilePath: string) => {
-      this.updater.installUpdate(projectFilePath);
+      // the session reports the project with the home directory aliased (~/...)
+      const project = projectFilePath === kProjectNone ? kProjectNone : resolveAliasedPath(projectFilePath);
+      this.updater.installUpdate(project);
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
