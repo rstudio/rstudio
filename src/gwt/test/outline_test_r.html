@@ -65,8 +65,12 @@ function makeSession(code) {
   return session;
 }
 
+// What DocumentOutlineWidget.shouldDisplayNode() shows for an R file: the
+// anonymous functions it hides are labelled '<function>'.
 function isDisplayed(node) {
-  return node.isSection() || node.isFunction() || node.isTest();
+  if (node.isFunction())
+    return node.label.indexOf("<function>") !== 0;
+  return node.isSection() || node.isTest();
 }
 
 // The outline as DocumentOutlineWidget lays it out: one entry per section,
