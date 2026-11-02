@@ -93,5 +93,9 @@ FOUND=$(command -v sccache || true)
 if [ -z "${FOUND}" ]; then
     warn "sccache is not on PATH; add ${INSTALL_DIR} to PATH"
 elif [ "${FOUND}" != "${SCCACHE}" ]; then
-    warn "${FOUND} comes before ${SCCACHE} on PATH and will be used instead"
+    # e.g. sccache-action in CI puts the same version earlier on PATH; that's fine
+    FOUND_VERSION=$("${FOUND}" --version 2>/dev/null | awk '{ print $2 }' || true)
+    if [ "${FOUND_VERSION}" != "${VERSION}" ]; then
+        warn "${FOUND} (${FOUND_VERSION:-unknown version}) comes before ${SCCACHE} on PATH and will be used instead"
+    fi
 fi
