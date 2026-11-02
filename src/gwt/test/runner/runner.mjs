@@ -44,7 +44,9 @@ const MIME = {
 // reaches the file system -- which the Snyk Code scan otherwise reports
 // as path traversal and as unthrottled file operations, even for a
 // loopback server that lives for a single test run. A request for
-// anything else is a 404, which the runner reports as a failed request.
+// anything else is a 404, which fails the page like any other failed
+// request: a reference this scan misses (a single-quoted src, a script
+// injected from JS, a CSS url()) must not pass silently.
 async function loadAssets(root, pages) {
    const assets = new Map();
    const queue = [...pages];
@@ -152,7 +154,8 @@ async function runPage(page, baseUrl, relativeUrl) {
 
    return {
       url: relativeUrl,
-      status: counts.failed === 0 && pageErrors.length === 0 ? "ok" : "fail",
+      status: counts.failed === 0 && pageErrors.length === 0 && failedRequests.length === 0
+                 ? "ok" : "fail",
       passed: counts.passed,
       failed: counts.failed,
       consoleErrors,
