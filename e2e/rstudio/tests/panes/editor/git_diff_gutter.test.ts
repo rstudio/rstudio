@@ -1611,6 +1611,24 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       expect(await top(headers.last())).toBeLessThan(await top(live));
       expect(await top(headers.first())).toBe(await top(headers.last()));
 
+      // in the editor's font, and as tall as that makes them: at a large
+      // size the text is not clipped, the two are still the same height,
+      // and the editors still sit below them
+      const height = async (locator: Locator) => (await locator.boundingBox())!.height;
+      const bottom = async (locator: Locator) => (await top(locator)) + (await height(locator));
+      const clipped = (locator: Locator) =>
+        locator.evaluate((el) => el.scrollHeight > el.clientHeight);
+      await setPref(page, 'font_size_points', 18);
+      await expect.poll(() => height(headers.first()), { timeout: 10000 }).toBeGreaterThan(30);
+      await expect.poll(() => height(headers.last()), { timeout: 10000 }).toBeGreaterThan(30);
+      expect(await clipped(headers.first())).toBe(false);
+      expect(await clipped(headers.last())).toBe(false);
+      // (the live side takes the base header's height rounded to a pixel)
+      expect(Math.abs((await height(headers.first())) - (await height(headers.last())))).toBeLessThan(1);
+      expect(await top(base)).toBeGreaterThanOrEqual(await bottom(headers.first()));
+      expect(await top(live)).toBeGreaterThanOrEqual(await bottom(headers.last()));
+      await clearPref(page, 'font_size_points');
+
       await toggle.click();
       await expect(base).toHaveCount(0);
       await expect(headers).toHaveCount(0);
@@ -1622,6 +1640,7 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await setPref(page, PREF, true);
       await expect(toggle).toHaveCount(1, { timeout: 10000 });
     } finally {
+      await clearPref(page, 'font_size_points');
       await setPref(page, PREF, true);
       await executeCommand(page, 'removeEditorSplit');
       await expect(base).toHaveCount(0);
@@ -2293,6 +2312,20 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       panel.getByRole('checkbox', { name: 'Stage script.R', exact: true }),
     ).toHaveAttribute('aria-checked', 'false');
     await documentCloseAllNoSave(page);
+
+    // The buttons stay out of the Tab order, as the staging checkboxes are:
+    // the table is one Tab stop, its rows reached with the arrow keys, and
+    // the selected row's change gone to with Ctrl+Enter (Cmd+Enter on a
+    // Mac); plain Enter stages.
+    await expect(goTo).toHaveAttribute('tabindex', '-1');
+    await panel.getByRole('row').filter({ hasText: 'script.R' }).first().click();
+    await page.keyboard.press('ControlOrMeta+Enter');
+    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('script.R', { timeout: 15000 });
+    await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
+    await expect(
+      panel.getByRole('checkbox', { name: 'Stage script.R', exact: true }),
+    ).toHaveAttribute('aria-checked', 'false');
+    await documentCloseAllNoSave(page);
   });
 
   test('opens the Git pane\'s files where the gutter marks their first change', async ({
@@ -2334,9 +2367,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // a file, after the empty line the editor shows for its final newline;
     // two changed lines, the first of which an unsaved edit in the open
     // document takes back (the file opens at the first change the editor
-    // marks, wherever Git places it); a rename and a copy within a
-    // subdirectory, staged (copies are listed as such when status.renames
-    // says so, and their source changed too); an untracked binary file
+    // marks, wherever Git places it); a rename (with a line changed in the
+    // renamed file) and a copy within a subdirectory, staged (copies are
+    // listed as such when status.renames says so, and their source changed
+    // too); an untracked binary file
     await executeInConsoleChecked(
       page,
       heredoc`
@@ -2352,9 +2386,10 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           cat("f <- 6\n", file = ${rPathLiteral(`${subDir}/orig.R`)}, append = TRUE)
           s <- c(
             system2("git", c(${gitC()}, "mv", "sub/old.R", "sub/new.R")),
-            system2("git", c(${gitC()}, "config", "status.renames", "copies")),
-            system2("git", c(${gitC()}, "add", "--", "sub/orig.R", "sub/copy.R"))
+            system2("git", c(${gitC()}, "config", "status.renames", "copies"))
           )
+          writeLines(c("a <- 1", "b <- 2", "c <- 30", "d <- 4", "e <- 5"), ${rPathLiteral(`${subDir}/new.R`)})
+          s <- c(s, system2("git", c(${gitC()}, "add", "--", "sub/new.R", "sub/orig.R", "sub/copy.R")))
           if (any(s != 0))
             stop("git setup failed (exit status: ", paste(s, collapse = "/"), ")")
           saveRDS(1:10, ${rPathLiteral(rdsPath)})
@@ -2424,11 +2459,15 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => gutterMarkers(page), { timeout: 30000 }).toEqual({ 3: [MODIFIED] });
       await documentCloseAllNoSave(page);
 
+      // (at the line changed in the rename, which its staged diff shows only
+      // with both of its paths: with the new one alone, Git has the file
+      // added whole)
       await goTo('sub/old.R -> sub/new.R').press('Enter');
       await expect(page.locator(SELECTED_DOC_TAB)).toContainText('new.R', { timeout: 15000 });
       await expect
         .poll(() => page.evaluate(() => window.rstudio?.documents.active()?.path ?? ''))
         .toMatch(/\/GitGutter\/sub\/new\.R$/);
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(2);
       await documentCloseAllNoSave(page);
 
       await goTo('sub/orig.R -> sub/copy.R').press('Enter');
