@@ -100,8 +100,12 @@ interface AvailableUpdate {
 /** How long an API request may take before it counts as unreachable. */
 const kRequestTimeoutMs = 15000;
 
-/** Why a downloaded update cannot be applied right now; '' when it can. */
-export type InstallBlocker = '' | 'other-instances' | 'missing';
+/**
+ * Why a downloaded update cannot be applied right now; '' when it can.
+ * 'unknown' means the other-windows check itself failed, which must block
+ * too: the installer would otherwise give up silently after the quit.
+ */
+export type InstallBlocker = '' | 'other-instances' | 'missing' | 'unknown';
 
 /** A verified Windows installer on disk and the API entry it was checked against. */
 interface StagedInstaller {
@@ -260,6 +264,10 @@ export class Updater {
     // rstudio.exe; only processes outside it are other windows
     const ownPids = app.getAppMetrics().map((metric) => metric.pid);
     const others = await otherRStudioProcessCount(ownPids);
+    if (others === null) {
+      logger().logErrorMessage('could not list running RStudio processes; not installing the update');
+      return 'unknown';
+    }
     if (others > 0) {
       logger().logInfo(`not installing the update yet: ${others} other RStudio process(es) running`);
       return 'other-instances';
@@ -290,7 +298,7 @@ export class Updater {
     if (this.pendingInstall) {
       logger().logDebug('the quit was abandoned; the downloaded update stays staged');
       this.pendingInstall = false;
-      forgetRelaunchProject();
+      forgetRelaunchProject(this.identity().installKey);
     }
   }
 
@@ -317,7 +325,7 @@ export class Updater {
       // last cheap check before handing it the quit
       if (!existsSync(this.staged.file)) {
         logger().logErrorMessage(`${this.staged.file} is gone; not installing RStudio ${this.downloadedVersion}`);
-        forgetRelaunchProject();
+        forgetRelaunchProject(this.identity().installKey);
         return false;
       }
 

@@ -15,7 +15,7 @@
 
 import { createHash } from 'crypto';
 import { app } from 'electron';
-import { readFileSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
@@ -25,9 +25,9 @@ import { compareVersions } from './update-feed';
 // Squirrel (macOS), neither of which knows which project was open, and
 // "Restart RStudio" preserves the project. So the project is written down
 // before quitting and read back, once, by the relaunched RStudio: the build
-// that was just installed, running from the same place. Any other RStudio
-// launched in between (an older build, another installation) leaves the
-// marker alone.
+// that was just installed, running from the same place. Each installation
+// has its own marker file, and any other RStudio launched in between (an
+// older build, another installation) leaves it alone.
 
 /** Long enough for the installer to finish; short enough not to hijack a later launch. */
 export const kRelaunchProjectTtlMs = 15 * 60 * 1000;
@@ -72,51 +72,57 @@ export function markerMatches(marker: RelaunchMarker, identity: RelaunchIdentity
   return marker.installKey === identity.installKey && compareVersions(marker.version, identity.version) === 0;
 }
 
-function markerPath(): string {
-  return path.join(app.getPath('userData'), 'relaunch-project.json');
+/** One marker per installation, so installations never overwrite or cancel each other's. */
+function markerPath(installKey: string): string {
+  return path.join(app.getPath('userData'), 'relaunch-project', `${installKey}.json`);
 }
 
 /** Remember the project the relaunch into `identity` should open. */
 export function rememberRelaunchProject(project: string, identity: RelaunchIdentity): void {
   try {
+    const file = markerPath(identity.installKey);
+    mkdirSync(path.dirname(file), { recursive: true });
     const marker: RelaunchMarker = { ...identity, project, expires: Date.now() + kRelaunchProjectTtlMs };
-    writeFileSync(markerPath(), JSON.stringify(marker));
+    writeFileSync(file, JSON.stringify(marker));
   } catch (error: unknown) {
     logger().logDebug(`could not remember the project to reopen: ${safeError(error).message}`);
   }
 }
 
-export function forgetRelaunchProject(): void {
+/** Drop this installation's marker; false when it could not be removed. */
+export function forgetRelaunchProject(installKey: string): boolean {
   try {
-    rmSync(markerPath(), { force: true });
+    rmSync(markerPath(installKey), { force: true });
+    return true;
   } catch (error: unknown) {
     // startup must go on; an undeletable marker expires on its own
     logger().logDebug(`could not remove the relaunch marker: ${safeError(error).message}`);
+    return false;
   }
 }
 
 /**
  * Consume the project remembered for this RStudio: null when there is none,
- * it has expired, or it is meant for another build or installation (that one
- * is left in place for its intended reader).
+ * it has expired, it is meant for another build of this installation, or it
+ * could not be removed (reopening it on every launch until it expires would
+ * be worse than not reopening it once).
  */
 export function takeRelaunchProject(identity: RelaunchIdentity, now = Date.now()): string | null {
   let text: string;
   try {
-    text = readFileSync(markerPath(), 'utf8');
+    text = readFileSync(markerPath(identity.installKey), 'utf8');
   } catch {
     return null;
   }
 
   const marker = parseRelaunchMarker(text);
   if (!marker || markerExpired(marker, now)) {
-    forgetRelaunchProject();
+    forgetRelaunchProject(identity.installKey);
     return null;
   }
   if (!markerMatches(marker, identity)) {
     return null;
   }
 
-  forgetRelaunchProject();
-  return marker.project;
+  return forgetRelaunchProject(identity.installKey) ? marker.project : null;
 }

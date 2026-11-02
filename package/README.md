@@ -277,11 +277,13 @@ than the running build are pruned at startup. "Restart Now" first checks that
 the staged installer still verifies (downloading it again otherwise) and that
 no `rstudio.exe` outside this application is running, because the installer
 refuses to replace files beside a live one; the check runs again after the
-save prompts. On both platforms the active project is written to
-`relaunch-project.json` in the Electron user-data directory before quitting
-and reopened, once, by the relaunched RStudio -- the marker names the build
-and installation it is for, so an unrelated launch in between leaves it
-alone. A quit the session refuses cancels the pending install (the download
+save prompts, and a check that cannot be made blocks the restart rather than
+letting the installer give up silently. On both platforms the active project
+is written to `relaunch-project/<install key>.json` in the Electron user-data
+directory before quitting and reopened, once, by the relaunched RStudio -- the
+marker names the build and installation it is for, so an unrelated launch in
+between leaves it alone, and it is only reopened if the marker could be
+removed. A quit the session refuses cancels the pending install (the download
 stays).
 
 The macOS zip is produced for open-source builds only and published to the

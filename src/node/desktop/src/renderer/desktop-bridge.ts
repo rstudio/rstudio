@@ -61,9 +61,9 @@ export function getDesktopBridge() {
       try {
         callback(await ipcRenderer.invoke('desktop_can_install_update'));
       } catch (error: unknown) {
-        // let the restart go ahead; the installer has its own running-app check
+        // not knowing must block: the installer would give up silently after the quit
         reportIpcError('canInstallUpdate', error as Error);
-        callback('');
+        callback('unknown');
       }
     },
 

@@ -744,9 +744,12 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          // the other windows does not need a new update check.
          if (blocker.length() > 0)
          {
+            String message = blocker == "other-instances"
+                  ? constants_.closeOtherWindowsToUpdateMessage()
+                  : constants_.cannotCheckOtherWindowsMessage();
             globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
                   constants_.updateRStudioCaption(),
-                  constants_.closeOtherWindowsToUpdateMessage(),
+                  message,
                   (Operation) () -> offerRestart(version));
             return;
          }
