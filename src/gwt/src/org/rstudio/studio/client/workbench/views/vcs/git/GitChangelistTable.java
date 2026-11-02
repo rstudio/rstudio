@@ -148,6 +148,18 @@ public class GitChangelistTable extends ChangelistTable
       goToChangeHandler_ = handler;
    }
 
+   // Opens the selected file at its first change, as its row's button does;
+   // false when there is no handler, no selection, or nothing to open.
+   public boolean goToSelectedChange()
+   {
+      ArrayList<StatusAndPath> items = getSelectedItems();
+      if (goToChangeHandler_ == null || items.isEmpty() || !canGoToChange(items.get(0)))
+         return false;
+
+      goToChangeHandler_.execute(items.get(0));
+      return true;
+   }
+
    // Whether an event came from a row's go-to-change button, which the
    // table's own key and mouse handling (staging) should leave alone.
    public static boolean isGoToChangeEvent(NativeEvent event)
@@ -186,9 +198,13 @@ public class GitChangelistTable extends ChangelistTable
          if (value == null || !canGoToChange(value))
             return;
 
+         // Out of the Tab order, as the staging checkboxes are: the table is
+         // one Tab stop, its rows reached with the arrow keys (and the
+         // selected row's change with Ctrl+Enter; see goToSelectedChange).
          ImageResource2x icon = new ImageResource2x(CodeSearchResources.INSTANCE.gotoFunction2x());
          sb.append(SafeHtmlUtil.createOpenTag("button",
                "type", "button",
+               "tabindex", "-1",
                "class", GO_TO_CHANGE_CLASS,
                "title", constants_.goToFirstChangeTitle(),
                "aria-label", constants_.goToFirstChange(value.getPath())));

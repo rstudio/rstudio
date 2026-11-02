@@ -128,12 +128,26 @@ public class GitPresenter extends BaseVcsPresenter
          @Override
          public void onKeyDown(KeyDownEvent event)
          {
-            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            if (mod != KeyboardShortcut.NONE)
-               return;
-
             // Enter and Space on a row's go-to-change button press it
             if (GitChangelistTable.isGoToChangeEvent(event.getNativeEvent()))
+               return;
+
+            // the keyboard's way to the selected row's go-to-change button,
+            // which is out of the Tab order (Ctrl+Enter, or Cmd+Enter on a
+            // Mac); plain Enter stages
+            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER &&
+                (mod == KeyboardShortcut.CTRL || mod == KeyboardShortcut.META))
+            {
+               if (view_.getChangelistTable().goToSelectedChange())
+               {
+                  event.preventDefault();
+                  event.stopPropagation();
+               }
+               return;
+            }
+
+            if (mod != KeyboardShortcut.NONE)
                return;
 
             if (event.getNativeKeyCode() == ' ')
@@ -292,6 +306,11 @@ public class GitPresenter extends BaseVcsPresenter
    // newline as an empty line after it) leaves it alone. Such a hunk ends at
    // the end of the file on both sides, and a "\ No newline at end of file"
    // note follows the side whose last line has none.
+   //
+   // This predicts, from Git's diff, where the gutter's own diff (splitLines
+   // and update in git_diff_gutter.js, which compare the lines as the editor
+   // has them) puts the first change; the two must agree, or the line a file
+   // opens at with the markers off, or for a staged-only change, drifts.
    private static int unchangedLeadingLines(DiffChunk chunk)
    {
       ArrayList<String> removed = new ArrayList<>();
