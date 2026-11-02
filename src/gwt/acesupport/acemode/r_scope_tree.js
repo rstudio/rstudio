@@ -141,27 +141,14 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             // children, since function scopes don't get created until we see
             // their opening brace but any argument defaults that are themselves
             // functions will have been seen already.)
-            var adopted = [];
-
+            //
             // A child that is already closed doesn't contain the node even when
             // it spans the preamble: nothing parsed after a scope closed belongs
             // to it. That is a block cut short by a section header inside the
             // node's own signature (a braced default argument). The block ends
             // where the node begins, and the scopes it holds from there on --
             // the node's other default arguments -- move to the node.
-            if (index >= 0) {
-               adopted = this.$children[index].$splitAt(node.preamble);
-               index++;
-            }
-            else {
-               index = -(index+1);
-            }
-
-            if (index < this.$children.length) {
-               adopted = adopted.concat(this.$children.splice(
-                                             index, this.$children.length - index));
-            }
-
+            var adopted = this.$takeChildrenFrom(node.preamble);
             for (var i = 0; i < adopted.length; i++)
                adopted[i].parentScope = node;
             node.$children = adopted;
@@ -171,11 +158,10 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          }
       };
 
-      // End this (closed) scope at 'pos' and return the scopes it held from
-      // there on, splitting a child that spans 'pos' the same way: a block
-      // nested in a block, both cut by the same header, keeps its place in
-      // the outer block.
-      this.$splitAt = function(pos) {
+      // Remove and return the children from 'pos' on. A (closed) child that
+      // spans 'pos' is split there, so that the scopes it held from 'pos' on
+      // are taken as well.
+      this.$takeChildrenFrom = function(pos) {
          var index = this.$binarySearch(pos);
 
          var taken = [];
@@ -187,7 +173,15 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             index = -(index+1);
          }
 
-         taken = taken.concat(this.$children.splice(index, this.$children.length - index));
+         return taken.concat(this.$children.splice(index, this.$children.length - index));
+      };
+
+      // End this (closed) scope at 'pos' and return the scopes it held from
+      // there on, splitting a child that spans 'pos' the same way: a block
+      // nested in a block, both cut by the same header, keeps its place in
+      // the outer block.
+      this.$splitAt = function(pos) {
+         var taken = this.$takeChildrenFrom(pos);
          this.$endedAt = this.end;
          this.end = pos;
          return taken;
