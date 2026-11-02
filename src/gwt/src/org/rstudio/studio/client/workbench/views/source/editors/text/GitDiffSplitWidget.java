@@ -46,14 +46,15 @@ public class GitDiffSplitWidget extends Widget implements RequiresResize
       style.setOverflow(Style.Overflow.HIDDEN);
       setSize("100%", "100%");
 
-      getElement().appendChild(createHeaderElement(
+      header_ = createHeaderElement(
             constants_.gitDiffBeforeLabel(),
-            constants_.gitDiffBeforeDescription()));
+            constants_.gitDiffBeforeDescription());
+      getElement().appendChild(header_);
 
       editorContainer_ = Document.get().createDivElement();
       Style containerStyle = editorContainer_.getStyle();
       containerStyle.setPosition(Style.Position.ABSOLUTE);
-      containerStyle.setTop(HEADER_HEIGHT, Style.Unit.PX);
+      containerStyle.setTop(headerHeight_, Style.Unit.PX);
       containerStyle.setLeft(0, Style.Unit.PX);
       containerStyle.setRight(0, Style.Unit.PX);
       containerStyle.setBottom(0, Style.Unit.PX);
@@ -158,17 +159,44 @@ public class GitDiffSplitWidget extends Widget implements RequiresResize
    }
 
    @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      getHeaderHeight();
+   }
+
+   @Override
    public void onResize()
    {
+      getHeaderHeight();
       if (view_ != null)
          view_.resize();
    }
 
+   // The height of a header, which its text sets (the editor's font, at the
+   // editor's size), measured from this pane's; the editor is laid out below
+   // it as it changes. For the live side's header too, which the owning
+   // widget sizes to match (see TextEditingTargetWidget).
+   public int getHeaderHeight()
+   {
+      int height = isAttached() ? header_.getOffsetHeight() : 0;
+      if (height <= 0 || height == headerHeight_)
+         return headerHeight_;
+
+      headerHeight_ = height;
+      editorContainer_.getStyle().setTop(height, Style.Unit.PX);
+      if (view_ != null)
+         view_.resize();
+      return headerHeight_;
+   }
+
+   private final DivElement header_;
    private final DivElement editorContainer_;
    private GitDiffSplitNative view_;
    private Command focusHandler_;
 
-   public static final int HEADER_HEIGHT = 22;
+   // (until measured)
+   private int headerHeight_ = 22;
    private static final String HEADER_CLASS = "editor_diff_header";
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

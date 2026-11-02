@@ -3714,12 +3714,12 @@ body .rstudio-themes-alternate {
 }
 
 /* The headers naming the two sides of a side-by-side Git diff: the index
-   version on the left, the document on the right (see GitDiffSplitWidget). */
+   version on the left, the document on the right (see GitDiffSplitWidget).
+   In the editor's font, so as tall as that makes them: the panes measure
+   them to place their editors below. */
 .editor_diff_header {
    box-sizing: border-box;
-   height: 22px;
-   line-height: 21px;
-   padding: 0 8px;
+   padding: 2px 8px;
    overflow: hidden;
    white-space: nowrap;
    text-overflow: ellipsis;

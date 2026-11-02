@@ -491,6 +491,7 @@ public class TextEditingTargetWidget
             splitPanel_.remove(liveDiffPanel_);
             liveDiffPanel_.remove(editorWidget);
             liveDiffPanel_ = null;
+            liveDiffHeader_ = null;
          }
          else
          {
@@ -533,7 +534,9 @@ public class TextEditingTargetWidget
          // right, each below a header naming its side of the comparison (the
          // base pane carries its own)
          liveDiffPanel_ = new DockLayoutPanel(Unit.PX);
-         liveDiffPanel_.addNorth(GitDiffSplitWidget.createLiveHeader(), GitDiffSplitWidget.HEADER_HEIGHT);
+         liveDiffHeader_ = GitDiffSplitWidget.createLiveHeader();
+         liveDiffHeaderHeight_ = diffSplitWidget_.getHeaderHeight();
+         liveDiffPanel_.addNorth(liveDiffHeader_, liveDiffHeaderHeight_);
          liveDiffPanel_.add(editorWidget);
 
          splitPanel_ = new NotifyingSplitLayoutPanel(SPLITTER_SIZE, events_);
@@ -565,6 +568,23 @@ public class TextEditingTargetWidget
          splitEditor_.onResize();
       if (diffSplitWidget_ != null)
          diffSplitWidget_.onResize();
+      syncDiffHeaderHeight();
+   }
+
+   // Gives the live side's header the height the base pane measures for its
+   // own (the editor's font sets it; see GitDiffSplitWidget.getHeaderHeight).
+   private void syncDiffHeaderHeight()
+   {
+      if (liveDiffPanel_ == null || diffSplitWidget_ == null)
+         return;
+
+      int height = diffSplitWidget_.getHeaderHeight();
+      if (height == liveDiffHeaderHeight_)
+         return;
+
+      liveDiffHeaderHeight_ = height;
+      liveDiffPanel_.setWidgetSize(liveDiffHeader_, height);
+      liveDiffPanel_.forceLayout();
    }
 
    // The side-by-side diff pane; the editor inside it belongs to the editing
@@ -1624,6 +1644,7 @@ public class TextEditingTargetWidget
       if (desiredSplitState_ != null)
          manageEditorSplit(desiredSplitState_);
 
+      syncDiffHeaderHeight();
       ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
 
    }
@@ -1894,6 +1915,15 @@ public class TextEditingTargetWidget
    public void setFontSize(double size)
    {
       editor_.setFontSize(size);
+
+      // (the diff headers take the new size from the stylesheet, once it is
+      // updated)
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         if (diffSplitWidget_ != null)
+            diffSplitWidget_.onResize();
+         syncDiffHeaderHeight();
+      });
    }
 
    public StatusBar getStatusBar()
@@ -2707,6 +2737,8 @@ public class TextEditingTargetWidget
    private NotifyingSplitLayoutPanel splitPanel_;
    // the live editor below its header, while the side-by-side diff is up
    private DockLayoutPanel liveDiffPanel_;
+   private Widget liveDiffHeader_;
+   private int liveDiffHeaderHeight_ = 0;
    private AceEditor splitEditor_;
    private GitDiffSplitWidget diffSplitWidget_;
    private final ArrayList<HandlerRegistration> splitEditorRegistrations_ = new ArrayList<>();
