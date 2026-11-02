@@ -1264,13 +1264,17 @@ public:
       return runGit(args, pOutput, nullptr, nullptr);
    }
 
+   // pRenamedFrom: for a staged rename, the path the file had. Without it in
+   // the pathspec Git cannot pair the two sides, and shows the file as added
+   // whole rather than as the rename's own changes.
    core::Error diffFile(const FilePath& filePath,
+                        const FilePath* pRenamedFrom,
                         PatchMode mode,
                         int contextLines,
                         bool ignoreWhitespace,
                         std::string* pOutput)
    {
-      Error error = doDiffFile(filePath, nullptr, mode, contextLines, ignoreWhitespace, pOutput);
+      Error error = doDiffFile(filePath, pRenamedFrom, mode, contextLines, ignoreWhitespace, pOutput);
       if (error)
          return error;
 
@@ -2216,11 +2220,17 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
    if (contextLines < 0)
       contextLines = 999999999;
 
-   splitRename(path, nullptr, &path);
+   // the diff of a staged rename takes both of its paths (see diffFile)
+   std::string oldPath;
+   bool renamed = splitRename(path, &oldPath, &path);
+   FilePath renamedFrom;
+   if (renamed && mode == PatchModeStage)
+      renamedFrom = resolveAliasedPath(oldPath);
 
    std::string output;
    error = s_git_.diffFile(
                resolveAliasedPath(path),
+               renamedFrom.isEmpty() ? nullptr : &renamedFrom,
                static_cast<PatchMode>(mode),
                contextLines,
                ignoreWhitespace,
