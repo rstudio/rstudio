@@ -16,7 +16,9 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { _createContextMenuTemplate } from '../../../src/main/context-menu';
+import sinon from 'sinon';
+import { NullLogger, setLogger } from '../../../src/core/logger';
+import { _createContextMenuTemplate, _isTerminalFocused } from '../../../src/main/context-menu';
 
 describe('ContextMenu', () => {
   it('Context menu is created correctly', () => {
@@ -75,5 +77,96 @@ describe('ContextMenu', () => {
     checkParamsAndMenu(contextMenuTemplateWithoutImageA, paramsWithoutImageA);
     checkParamsAndMenu(contextMenuTemplateWithoutImageB, paramsWithoutImageB);
     checkParamsAndMenu(contextMenuTemplateWithoutImageC, paramsWithoutImageC);
+  });
+
+  describe('terminal shortcuts', () => {
+    const allEnabled: any = {
+      editFlags: { canCut: true, canCopy: true, canPaste: true, canSelectAll: true },
+    };
+    const [copy, paste, selectAll] = [1, 2, 3];
+
+    it('keeps the role default accelerators outside the terminal', () => {
+      const menu: any[] = _createContextMenuTemplate({} as any, allEnabled, false);
+
+      assert.strictEqual(menu[copy].role, 'copy');
+      assert.isUndefined(menu[copy].accelerator);
+      assert.strictEqual(menu[paste].role, 'paste');
+      assert.isUndefined(menu[paste].accelerator);
+      assert.strictEqual(menu[selectAll].role, 'selectAll');
+    });
+
+    it('shows Ctrl+Shift+C and Ctrl+Shift+V for copy and paste, without registering them', () => {
+      const menu: any[] = _createContextMenuTemplate({} as any, allEnabled, true);
+
+      assert.strictEqual(menu[copy].role, 'copy');
+      assert.strictEqual(menu[copy].accelerator, 'Ctrl+Shift+C');
+      assert.isFalse(menu[copy].registerAccelerator);
+      assert.strictEqual(menu[paste].role, 'paste');
+      assert.strictEqual(menu[paste].accelerator, 'Ctrl+Shift+V');
+      assert.isFalse(menu[paste].registerAccelerator);
+    });
+
+    it('drops the Ctrl+A hint from Select All but keeps the action', () => {
+      const sender = { selectAll: sinon.spy() };
+      const menu: any[] = _createContextMenuTemplate(sender as any, allEnabled, true);
+
+      assert.isUndefined(menu[selectAll].role);
+      assert.isUndefined(menu[selectAll].accelerator);
+      menu[selectAll].click();
+      assert.isTrue(sender.selectAll.calledOnce);
+    });
+
+    it('leaves disabled items disabled', () => {
+      const allDisabled: any = {
+        editFlags: { canCut: false, canCopy: false, canPaste: false, canSelectAll: false },
+      };
+      const menu: any[] = _createContextMenuTemplate({} as any, allDisabled, true);
+
+      for (const index of [copy, paste, selectAll]) {
+        assert.isFalse(menu[index].enabled);
+        assert.isUndefined(menu[index].accelerator);
+      }
+    });
+  });
+
+  describe('_isTerminalFocused', () => {
+    let errorLog: sinon.SinonSpy;
+
+    beforeEach(() => {
+      const log = new NullLogger();
+      setLogger(log);
+      errorLog = sinon.spy(log, 'logErrorMessage');
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    const paramsWithFrameResult = (result: Promise<unknown>): any => ({
+      frame: { executeJavaScript: sinon.stub().returns(result) },
+    });
+
+    it('is true when the xterm helper textarea has focus', async () => {
+      const params = paramsWithFrameResult(Promise.resolve(true));
+
+      assert.isTrue(await _isTerminalFocused(params));
+      assert.include(params.frame.executeJavaScript.firstCall.args[0], 'xterm-helper-textarea');
+    });
+
+    it('is false when something else has focus', async () => {
+      assert.isFalse(await _isTerminalFocused(paramsWithFrameResult(Promise.resolve(false))));
+    });
+
+    it('is false when the frame is gone', async () => {
+      assert.isFalse(await _isTerminalFocused({ frame: null } as any));
+    });
+
+    it('logs and is false when the check fails', async () => {
+      const params = paramsWithFrameResult(Promise.reject(new Error('frame detached')));
+
+      assert.isFalse(await _isTerminalFocused(params));
+      assert.isTrue(errorLog.calledOnce);
+      assert.include(errorLog.firstCall.args[0], 'frame detached');
+    });
   });
 });
