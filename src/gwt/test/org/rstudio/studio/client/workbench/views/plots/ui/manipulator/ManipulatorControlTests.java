@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -215,6 +216,67 @@ public class ManipulatorControlTests extends GWTTestCase
       // releasing a key restores the knob's resting image; the alt must survive
       pressKey(slider, KeyCodes.KEY_RIGHT);
       assertKnobIsDecorative(slider);
+   }
+
+   public void testSliderBlurDuringKeyPressReportsValue()
+   {
+      // focus can leave before the key is released; the change must still
+      // reach the plot
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            25, values -> reported.add(values.get("x.max").toString()))));
+
+      slider.dispatchEvent(Document.get().createKeyDownEvent(
+            false, false, false, false, KeyCodes.KEY_END));
+      slider.dispatchEvent(Document.get().createBlurEvent());
+      assertEquals(Arrays.asList("35"), reported);
+   }
+
+   public void testSliderSpaceJumpsToMiddle()
+   {
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            5, values -> reported.add(values.get("x.max").toString()))));
+
+      pressKey(slider, KeyCodes.KEY_SPACE);
+      assertEquals("20", slider.getAttribute("aria-valuenow"));
+      assertEquals(Arrays.asList("20"), reported);
+   }
+
+   public void testSliderKnobStaysDecorativeWhileDragging()
+   {
+      Element slider = sliderElement(attach(newSlider(25)));
+      int x = slider.getAbsoluteLeft() + 10;
+      int y = slider.getAbsoluteTop() + 10;
+      Document doc = Document.get();
+
+      slider.dispatchEvent(doc.createMouseDownEvent(
+            1, x, y, x, y, false, false, false, false, NativeEvent.BUTTON_LEFT));
+      assertKnobIsDecorative(slider);
+
+      slider.dispatchEvent(doc.createMouseUpEvent(
+            1, x, y, x, y, false, false, false, false, NativeEvent.BUTTON_LEFT));
+      assertKnobIsDecorative(slider);
+   }
+
+   public void testSliderBarEnabledStateAndRangeUpdateAria()
+   {
+      SliderBar bar = new SliderBar(0, 10);
+      bar.setStepSize(1);
+      bar.setCurrentValue(5);
+      Element el = bar.getElement();
+
+      bar.setEnabled(false);
+      assertEquals("true", el.getAttribute("aria-disabled"));
+      assertKnobIsDecorative(el);
+      bar.setEnabled(true);
+      assertEquals("false", el.getAttribute("aria-disabled"));
+
+      bar.setMinValue(6);
+      bar.setMaxValue(8);
+      assertEquals("6", el.getAttribute("aria-valuemin"));
+      assertEquals("8", el.getAttribute("aria-valuemax"));
+      assertEquals("6", el.getAttribute("aria-valuenow"));
    }
 
    private static void assertKnobIsDecorative(Element slider)
