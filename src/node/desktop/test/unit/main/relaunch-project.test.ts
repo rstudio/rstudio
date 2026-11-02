@@ -74,6 +74,7 @@ describe('relaunch project marker', () => {
 
     it('hands the project to exactly one consumer', () => {
       rememberRelaunchProject(marker.project, identity, dir);
+      assert.deepEqual(readdirSync(dir), [`${identity.installKey}.json`]); // no temp file left behind
       assert.equal(takeRelaunchProject(identity, now, dir), marker.project);
       assert.isNull(takeRelaunchProject(identity, now, dir));
       assert.deepEqual(readdirSync(dir), []);

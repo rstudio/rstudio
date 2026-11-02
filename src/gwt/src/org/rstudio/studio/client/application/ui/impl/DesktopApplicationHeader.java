@@ -541,7 +541,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
                updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
                      constants_.downloadingUpdateMessage(updateVersion));
-               Desktop.getFrame().downloadUpdate();
+               Desktop.getFrame().downloadUpdate(updateVersion);
             });
          }
          else
@@ -733,7 +733,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
             updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
                   constants_.downloadingUpdateMessage(version));
-            Desktop.getFrame().downloadUpdate();
+            Desktop.getFrame().downloadUpdate(version);
             return;
          }
 

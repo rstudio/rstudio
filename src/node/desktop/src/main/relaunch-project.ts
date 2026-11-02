@@ -15,7 +15,7 @@
 
 import { createHash } from 'crypto';
 import { app } from 'electron';
-import { mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 import path from 'path';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
@@ -89,14 +89,22 @@ function markerPath(dir: string, installKey: string): string {
   return path.join(dir, `${installKey}.json`);
 }
 
-/** Remember the project the relaunch into `identity` should open. */
+/**
+ * Remember the project the relaunch into `identity` should open. Written to
+ * a private name and renamed into place, so a reader never sees a partial
+ * marker (and never discards it as malformed).
+ */
 export function rememberRelaunchProject(project: string, identity: RelaunchIdentity, dir = defaultMarkerDir()): void {
+  const file = markerPath(dir, identity.installKey);
+  const partial = `${file}.${process.pid}.tmp`;
   try {
     mkdirSync(dir, { recursive: true });
     const marker: RelaunchMarker = { ...identity, project, expires: Date.now() + kRelaunchProjectTtlMs };
-    writeFileSync(markerPath(dir, identity.installKey), JSON.stringify(marker));
+    writeFileSync(partial, JSON.stringify(marker));
+    renameSync(partial, file);
   } catch (error: unknown) {
     logger().logDebug(`could not remember the project to reopen: ${safeError(error).message}`);
+    rmSync(partial, { force: true });
   }
 }
 

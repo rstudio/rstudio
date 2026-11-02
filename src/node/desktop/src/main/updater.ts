@@ -121,7 +121,8 @@ export class Updater {
   private baseUrl: string;
   private branch: string;
   private branchPinned: boolean;
-  private available: AvailableUpdate | null = null;
+  /** every update offered to the user this session, by version; a dialog may outlive later checks */
+  private offers = new Map<string, AvailableUpdate>();
   private activeDownload: BuildArtifact | null = null;
   private downloadedVersion: string | null = null;
   private staged: StagedInstaller | null = null;
@@ -185,7 +186,7 @@ export class Updater {
       return { status: 'up-to-date' };
     }
 
-    this.available = update;
+    this.offers.set(update.download.version, update);
     const canInstall = update.install !== null && (await this.canInstall());
     return {
       status: 'available',
@@ -198,14 +199,17 @@ export class Updater {
   }
 
   /**
-   * Start downloading the update found by the last check. Completion is
-   * reported to GWT through desktopHooks rather than a return value, since
-   * the Squirrel download runs outside our control.
+   * Start downloading the update the user accepted, named by the version its
+   * dialog showed: checks may have found a newer build since, and that one
+   * may have been declined. Completion is reported to GWT through
+   * desktopHooks rather than a return value, since the Squirrel download runs
+   * outside our control.
    */
-  async downloadUpdate(): Promise<void> {
-    const entry = this.available?.install;
-    if (!this.available || !entry) {
-      this.notifyFailed('No update is available to download.');
+  async downloadUpdate(version: string): Promise<void> {
+    const offer = this.offers.get(version);
+    const entry = offer?.install;
+    if (!offer || !entry) {
+      this.notifyFailed(`RStudio ${version} is not available to download.`);
       return;
     }
     if (this.activeDownload) {
@@ -231,7 +235,7 @@ export class Updater {
 
       this.setProgress(2); // > 1 shows an indeterminate dock / taskbar bar
       if (process.platform === 'darwin') {
-        await this.downloadWithSquirrel(entry, this.available.notesUrl);
+        await this.downloadWithSquirrel(entry, offer.notesUrl);
       } else if (process.platform === 'win32') {
         await this.downloadWindowsInstaller(entry);
         this.onDownloaded(entry.version);

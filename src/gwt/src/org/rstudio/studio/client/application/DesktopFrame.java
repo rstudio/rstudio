@@ -42,7 +42,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    // receives a JSON object with the same keys as the check_for_updates RPC
    // plus "status" and "can-install"
    void checkForUpdates(boolean manual, CommandWithArg<String> callback);
-   void downloadUpdate();
+   // the version the user accepted, as the check reported it
+   void downloadUpdate(String version);
    // "" when the update can be applied now; otherwise why not: "missing" (the
    // downloaded installer is gone, download it again), "other-instances"
    // (other RStudio windows -- separate processes -- are open) or "unknown"

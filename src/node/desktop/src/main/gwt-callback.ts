@@ -201,8 +201,8 @@ export class GwtCallback extends EventEmitter {
       return JSON.stringify(await this.updater.checkForUpdates(manual));
     });
 
-    ipcMain.on('desktop_download_update', () => {
-      void this.updater.downloadUpdate();
+    ipcMain.on('desktop_download_update', (_event, version: string) => {
+      void this.updater.downloadUpdate(version);
     });
 
     ipcMain.handle('desktop_can_install_update', async () => {

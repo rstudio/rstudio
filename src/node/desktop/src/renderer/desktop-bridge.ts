@@ -53,8 +53,8 @@ export function getDesktopBridge() {
       }
     },
 
-    downloadUpdate: () => {
-      ipcRenderer.send('desktop_download_update');
+    downloadUpdate: (version: string) => {
+      ipcRenderer.send('desktop_download_update', version);
     },
 
     canInstallUpdate: async (callback: VoidCallback<string>) => {
