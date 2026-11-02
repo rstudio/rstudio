@@ -148,8 +148,13 @@ nothing short of a build shows they work together:
 
 ```bash
 dependencies/common/install-panmirror
-(cd src/gwt && ant panmirror)
+(cd src/gwt && ant -Dpanmirror.dir=./lib/quarto/apps/panmirror panmirror)
 ```
+
+Pass `panmirror.dir` explicitly: `build.xml` prefers a clone under `/opt/rstudio-tools` (or
+`c:/rstudio-tools`) when one exists, as in the Jenkins builder images, and that clone is still on
+the previous branch. Check that the `panmirror location:` line ant prints is the checkout's own
+`src/gwt/lib/quarto`.
 
 If either step fails, or is not permitted in this session, stop and report it rather than
 committing an unbuilt `build.xml`. The diff should then show the two scripts plus `build.xml`.
