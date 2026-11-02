@@ -254,6 +254,43 @@ check("sections in a function stay in it around an 'if' block",
       outline(blockInFn),
       ["g()", "  a", "  b", "  c"].join("\n"));
 
+// A header on the same row as a block's closing brace starts at the row's
+// first column, inside the rows the block spans; the block is already closed
+// and must not be cut and continued, or the function's closing brace would
+// end the continuation instead of the function.
+var headerAfterBrace = makeSession([
+  "g <- function() {",
+  "  # a ----",
+  "  if (x) {",
+  "    y",
+  "  } # done ----",
+  "  z",
+  "}",
+  "w",
+  ""
+].join("\n"));
+
+check("a header after a closing brace on the same row doesn't continue it",
+      tree(headerAfterBrace),
+      ["function g() [0..6]",
+       "  section a [1..4]",
+       "    brace {} [2..4]",
+       "  section done [4..6]"].join("\n"));
+
+var headerAfterTopBrace = makeSession([
+  "{",
+  "  y",
+  "} # done ----",
+  "# after ----",
+  ""
+].join("\n"));
+
+check("a header after a closing brace at top level is a sibling of the next",
+      tree(headerAfterTopBrace),
+      ["brace {} [0..2]",
+       "section done [2..3]",
+       "section after [3..open]"].join("\n"));
+
 // ---------------------------------------------------------------------------
 // Nested blocks are each cut and continued, so both closing braces match.
 // ---------------------------------------------------------------------------

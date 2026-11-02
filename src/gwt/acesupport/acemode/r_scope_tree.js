@@ -121,7 +121,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             return;
 
          var index = this.$binarySearch(node.preamble);
-         if (index >= 0) {
+         if (index >= 0 && !this.$children[index].end) {
             // This node belongs inside an existing child
             this.$children[index].addNode(node);
          }
@@ -132,8 +132,14 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             // children, since function scopes don't get created until we see
             // their opening brace but any argument defaults that are themselves
             // functions will have been seen already.)
+            //
+            // A child that is already closed doesn't contain the node even when
+            // it spans the preamble: nothing parsed after a scope closed belongs
+            // to it. A section header on the row of a block's closing brace
+            // ('} # done ----') starts at the row's first column, inside the
+            // closed block; it goes after the block instead.
 
-            index = -(index+1);
+            index = index >= 0 ? index + 1 : -(index+1);
 
             if (index < this.$children.length) {
                node.$children = this.$children.splice(
@@ -208,15 +214,22 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          }
       };
 
-      // Returns the scopes that contain the position, from outermost to
+      // Returns the open scopes that contain the position, from outermost to
       // innermost, whether labelled or not. Unlike findNode(), this reports
-      // anonymous brace scopes.
-      this.findScopeChain = function(pos) {
+      // anonymous brace scopes. A scope that has already been closed is left
+      // out along with everything inside it: while the tree is being built,
+      // nothing parsed later can belong to it, even when it still spans the
+      // position -- as a block closed by '}' on a row does for a section
+      // header on the same row, whose preamble is the start of the row.
+      this.findOpenScopeChain = function(pos) {
          var chain = [this];
          var node = this;
          for (var index = node.$binarySearch(pos); index >= 0; index = node.$binarySearch(pos))
          {
             node = node.$children[index];
+            if (node.end)
+               break;
+
             chain.push(node);
          }
          return chain;
@@ -420,7 +433,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       // so the walk ends once every enclosing section has been considered.
       this.closeSectionScopesWhile = function(position, shouldClose)
       {
-         var scopes = this.$root.findScopeChain(position);
+         var scopes = this.$root.findOpenScopeChain(position);
          for (var i = scopes.length - 1; i >= 0; i--)
          {
             if (!scopes[i].isSection() || !shouldClose(scopes[i]))
@@ -438,7 +451,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       // a brace of their own rather than an enclosing function's.
       this.$cutAnonymousBraces = function(position)
       {
-         var scopes = this.$root.findScopeChain(position);
+         var scopes = this.$root.findOpenScopeChain(position);
          for (var i = scopes.length - 1; i >= 0; i--)
          {
             if (!scopes[i].isBrace() || scopes[i].label)
@@ -455,7 +468,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       // pass.
       this.$countCutBraces = function(position)
       {
-         var scopes = this.$root.findScopeChain(position);
+         var scopes = this.$root.findOpenScopeChain(position);
          var node = scopes[scopes.length - 1];
 
          var count = 0;
