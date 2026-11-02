@@ -159,13 +159,20 @@ json::Object syntheticDiagnosticJson(const FilePath& filePath,
    return diagnosticJson;
 }
 
-// Whether a diagnostic's message quotes one of the user's flags. The flags
-// we generate can produce location-less diagnostics too (an '-fopenmp' from
+// Whether a location-less diagnostic is one the user's flags caused. The
+// flags we generate can produce such diagnostics too (an '-fopenmp' from
 // Makevars that this libclang doesn't support, say), and those were never
-// shown; the user can't act on them from compile_flags.txt either.
-bool mentionsAny(const std::string& message, const std::vector<std::string>& flags)
+// shown; the user can't act on them from compile_flags.txt either. Bad
+// flags are quoted in their diagnostic, and a fatal (clang's "too many
+// errors emitted" stop) can only come from a user's '-ferror-limit', since
+// we pass '-ferror-limit=0' ourselves.
+bool causedByUserFlags(const Diagnostic& diagnostic, const std::vector<std::string>& userFlags)
 {
-   for (const std::string& flag : flags)
+   if (diagnostic.severity() == CXDiagnostic_Fatal)
+      return true;
+
+   std::string message = diagnostic.spelling();
+   for (const std::string& flag : userFlags)
    {
       if (message.find(flag) != std::string::npos)
          return true;
@@ -218,7 +225,7 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
       {
          diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
       }
-      else if (hasUserFlags && location.empty() && mentionsAny(pDiag->spelling(), userFlags))
+      else if (hasUserFlags && location.empty() && causedByUserFlags(*pDiag, userFlags))
       {
          json::Object diagnosticJson = diagnosticToJson(tu, *pDiag);
          diagnosticJson["file"] = module_context::createAliasedPath(filePath);

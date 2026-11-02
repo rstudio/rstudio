@@ -162,8 +162,11 @@ FilePath precompiledHeaderDir(const std::string& pkgName)
 // the hash of those flags follows
 const char* const kUserFlagsPchInfix = "-flags-";
 
-void removeUserFlagsPrecompiledHeaders(const FilePath& platformPath,
-                                       const std::string& pkgName)
+// Removes the package's PCHs (and their sources) from a platform directory,
+// or only those built with user flags
+void removePrecompiledHeaders(const FilePath& platformPath,
+                              const std::string& pkgName,
+                              bool userFlagsOnly)
 {
    std::vector<FilePath> children;
    Error error = platformPath.getChildren(children);
@@ -176,7 +179,8 @@ void removeUserFlagsPrecompiledHeaders(const FilePath& platformPath,
    for (const FilePath& child : children)
    {
       std::string name = child.getFilename();
-      if (boost::algorithm::starts_with(name, pkgName) && name.find(kUserFlagsPchInfix) != std::string::npos)
+      bool isUserFlagsPch = name.find(kUserFlagsPchInfix) != std::string::npos;
+      if (boost::algorithm::starts_with(name, pkgName) && (isUserFlagsPch || !userFlagsOnly))
       {
          error = child.removeIfExists();
          if (error)
@@ -1652,12 +1656,16 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
    FilePath pchPath = platformPath.completeChildPath(pchName + ".pch");
    if (forceRebuildPrecompiledHeaders_ || !pchPath.exists())
    {
+      // a forced rebuild (the package's compilation database changed) has
+      // to take every variant with it, not just the one requested first
+      if (forceRebuildPrecompiledHeaders_)
+         removePrecompiledHeaders(platformPath, pkgName, false);
       forceRebuildPrecompiledHeaders_ = false;
 
       // each distinct set of user flags gets its own PCH (~25MB), so keep
       // only the one in use rather than one per edit of compile_flags.txt
       if (!userFlags.empty())
-         removeUserFlagsPrecompiledHeaders(platformPath, pkgName);
+         removePrecompiledHeaders(platformPath, pkgName, true);
       
       // state cpp file for creating precompiled headers
       FilePath cppPath = platformPath.completeChildPath(pchName + ".cpp");
