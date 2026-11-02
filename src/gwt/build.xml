@@ -285,10 +285,6 @@
    <set-if-exists property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-unset  property="yarn.bin" value="yarn"/>
 
-   <set-if-exists property="npm.bin" value="${node.dir}/bin/npm"/>
-   <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
-   <set-if-unset  property="npm.bin" value="npm"/>
-
    <!-- use node from dependencies if available, otherwise from the system -->
    <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
    <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
@@ -635,6 +631,10 @@
         aggregates per-page pass/fail counts. -->
 
    <property name="testpage.runner.dir" value="test/runner"/>
+
+   <set-if-exists property="npm.bin" value="${node.dir}/bin/npm"/>
+   <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
+   <set-if-unset  property="npm.bin" value="npm"/>
 
    <target name="testpage" depends="acesupport"
            description="Runs the standalone HTML test pages under test/ in headless chromium">
