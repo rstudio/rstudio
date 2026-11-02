@@ -106,6 +106,12 @@ TEST_F(CompileFlagsTest, ReadsOneFlagPerLine)
    EXPECT_EQ(readCompileFlags(file), expected);
 }
 
+TEST_F(CompileFlagsTest, ReadsNothingFromBlankFile)
+{
+   EXPECT_TRUE(readCompileFlags(flagsFile(src_, "")).empty());
+   EXPECT_TRUE(readCompileFlags(flagsFile(src_, "\n  \n\r\n")).empty());
+}
+
 } // anonymous namespace
 } // namespace clang
 } // namespace modules

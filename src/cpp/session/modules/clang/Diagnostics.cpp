@@ -159,6 +159,21 @@ json::Object syntheticDiagnosticJson(const FilePath& filePath,
    return diagnosticJson;
 }
 
+// Whether a diagnostic's message quotes one of the user's flags. The flags
+// we generate can produce location-less diagnostics too (an '-fopenmp' from
+// Makevars that this libclang doesn't support, say), and those were never
+// shown; the user can't act on them from compile_flags.txt either.
+bool mentionsAny(const std::string& message, const std::vector<std::string>& flags)
+{
+   for (const std::string& flag : flags)
+   {
+      if (message.find(flag) != std::string::npos)
+         return true;
+   }
+
+   return false;
+}
+
 json::Array getCppDiagnosticsJson(const FilePath& filePath)
 {
    json::Array diagnosticsJson;
@@ -168,20 +183,27 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
    // so when one is in play we surface those at the top of the file instead
    // of silently dropping them
    FilePath flagsFile = compileFlagsFileForSource(filePath);
-   bool hasUserFlags = !flagsFile.isEmpty();
+   std::vector<std::string> userFlags;
+   if (!flagsFile.isEmpty())
+      userFlags = readCompileFlags(flagsFile);
+   bool hasUserFlags = !userFlags.empty();
 
    // get diagnostics from translation unit
    std::string filename = filePath.getAbsolutePath();
    TranslationUnit tu = sourceIndex().getTranslationUnit(filename, true);
    if (tu.empty())
    {
-      bool indexable = !clangCompilationDatabase().compileArgsForTranslationUnit(filename, true).empty();
-      if (hasUserFlags && indexable)
+      if (hasUserFlags)
       {
-         std::string message =
-               "libclang could not parse this file; check the flags in " +
-               module_context::createAliasedPath(flagsFile);
-         diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Error, message));
+         // (without the PCH, so a bad flag doesn't trigger a second failed PCH build)
+         bool indexable = !clangCompilationDatabase().compileArgsForTranslationUnit(filename, false).empty();
+         if (indexable)
+         {
+            std::string message =
+                  "libclang could not parse this file; check the flags in " +
+                  module_context::createAliasedPath(flagsFile);
+            diagnosticsJson.push_back(syntheticDiagnosticJson(filePath, CXDiagnostic_Error, message));
+         }
       }
 
       return diagnosticsJson;
@@ -196,7 +218,7 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
       {
          diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
       }
-      else if (hasUserFlags && location.empty())
+      else if (hasUserFlags && location.empty() && mentionsAny(pDiag->spelling(), userFlags))
       {
          json::Object diagnosticJson = diagnosticToJson(tu, *pDiag);
          diagnosticJson["file"] = module_context::createAliasedPath(filePath);

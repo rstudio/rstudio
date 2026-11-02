@@ -158,6 +158,33 @@ FilePath precompiledHeaderDir(const std::string& pkgName)
          .completeChildPath(pkgName);
 }
 
+// Marks a PCH (and its source) built with flags from a 'compile_flags.txt';
+// the hash of those flags follows
+const char* const kUserFlagsPchInfix = "-flags-";
+
+void removeUserFlagsPrecompiledHeaders(const FilePath& platformPath,
+                                       const std::string& pkgName)
+{
+   std::vector<FilePath> children;
+   Error error = platformPath.getChildren(children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   for (const FilePath& child : children)
+   {
+      std::string name = child.getFilename();
+      if (boost::algorithm::starts_with(name, pkgName) && name.find(kUserFlagsPchInfix) != std::string::npos)
+      {
+         error = child.removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
 struct SourceCppFileInfo
 {
    SourceCppFileInfo() : disableIndexing(false) {}
@@ -167,14 +194,8 @@ struct SourceCppFileInfo
    bool disableIndexing;
 };
 
-// Flags already read from a 'compile_flags.txt', keyed by the file's path
-struct CompileFlagsCacheEntry
-{
-   std::time_t lastWriteTime;
-   std::vector<std::string> flags;
-};
-
-std::map<std::string, CompileFlagsCacheEntry> s_compileFlagsCache;
+// Flags last read from each 'compile_flags.txt', keyed by the file's path
+std::map<std::string, std::vector<std::string>> s_compileFlagsCache;
 
 } // anonymous namespace
 
@@ -235,19 +256,21 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
    if (flagsFile.isEmpty())
       return {};
 
-   // re-read only when the file changes on disk
+   // a file with no flags in it is the same as no file, so it keeps
+   // sharing the default precompiled header
+   std::vector<std::string> flags = readCompileFlags(flagsFile);
+   if (flags.empty())
+      return {};
+
+   // relative paths in the file resolve against its directory, as in clangd
+   flags.insert(flags.begin(), "-working-directory=" + flagsFile.getParent().getAbsolutePath());
+
+   // the file is small, so re-reading it is cheaper and more reliable than
+   // watching its timestamp; we only remember it to report changes
    std::string key = flagsFile.getAbsolutePath();
-   std::time_t lastWriteTime = flagsFile.getLastWriteTime();
    auto it = s_compileFlagsCache.find(key);
-   if (it == s_compileFlagsCache.end() || it->second.lastWriteTime != lastWriteTime)
+   if (it == s_compileFlagsCache.end() || it->second != flags)
    {
-      // relative paths in the file resolve against its directory, as in clangd
-      std::vector<std::string> flags;
-      flags.push_back("-working-directory=" + flagsFile.getParent().getAbsolutePath());
-
-      std::vector<std::string> fileFlags = readCompileFlags(flagsFile);
-      flags.insert(flags.end(), fileFlags.begin(), fileFlags.end());
-
       if (verbose(1))
       {
          std::cerr << "# COMPILE FLAGS FROM " << key << " ----" << std::endl;
@@ -255,10 +278,10 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
          std::cerr << std::endl;
       }
 
-      it = s_compileFlagsCache.insert_or_assign(key, CompileFlagsCacheEntry{lastWriteTime, flags}).first;
+      s_compileFlagsCache[key] = flags;
    }
 
-   return it->second.flags;
+   return flags;
 }
 
 namespace {
@@ -1553,6 +1576,13 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
    std::vector<std::string> baseArgs = config.args;
    baseArgs.insert(baseArgs.end(), userFlags.begin(), userFlags.end());
 
+   // the PCH is always C++, so a C-only standard (say '-std=c11' from a
+   // mixed C/C++ package's flags file) is dropped here just as
+   // SourceIndex drops it when parsing the C++ sources themselves
+   core::algorithm::expel_if(baseArgs, [](const std::string& arg) {
+      return boost::algorithm::starts_with(arg, "-std=") && arg.find("++") == std::string::npos;
+   });
+
    // get package name
    std::string pkgName = config.PCH;
 
@@ -1618,11 +1648,16 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
    std::string stdArg = extractStdArg(baseArgs);
    std::string pchName = pkgName + stdArg;
    if (!userFlags.empty())
-      pchName += "-" + core::hash::crc32HexHash(core::algorithm::join(userFlags, "\n"));
+      pchName += kUserFlagsPchInfix + core::hash::crc32HexHash(core::algorithm::join(userFlags, "\n"));
    FilePath pchPath = platformPath.completeChildPath(pchName + ".pch");
    if (forceRebuildPrecompiledHeaders_ || !pchPath.exists())
    {
       forceRebuildPrecompiledHeaders_ = false;
+
+      // each distinct set of user flags gets its own PCH (~25MB), so keep
+      // only the one in use rather than one per edit of compile_flags.txt
+      if (!userFlags.empty())
+         removeUserFlagsPrecompiledHeaders(platformPath, pkgName);
       
       // state cpp file for creating precompiled headers
       FilePath cppPath = platformPath.completeChildPath(pchName + ".cpp");
@@ -1687,7 +1722,10 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
                               cppPath.getAbsolutePath());
          clang().disposeIndex(index);
 
-         Error removeError = precompiledDir.removeIfExists();
+         // when the user's flags are at fault, the default PCH is still good
+         Error removeError = userFlags.empty()
+               ? precompiledDir.removeIfExists()
+               : cppPath.removeIfExists();
          if (removeError)
             LOG_ERROR(removeError);
 
@@ -1703,7 +1741,9 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
          std::string msg = boost::str(fmt % ret % pchPath.getAbsolutePath());
          LOG_ERROR_MESSAGE(msg);
 
-         Error removeError = precompiledDir.removeIfExists();
+         Error removeError = userFlags.empty()
+               ? precompiledDir.removeIfExists()
+               : pchPath.removeIfExists();
          if (removeError)
             LOG_ERROR(removeError);
       }
