@@ -450,7 +450,6 @@ file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/*.R")
 if (RSTUDIO_UNIT_TESTS_ENABLED)
   file(GLOB_RECURSE SESSION_TEST_FILES "*Tests.cpp")
   list(APPEND SESSION_SOURCE_FILES ${SESSION_TEST_FILES})
-
 endif()
 
 # define core include dirs
@@ -552,7 +551,6 @@ include_directories(
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
-   ${LIBGIT2_SOURCE_DIR}/include
 )
 
 # link directories
@@ -613,7 +611,7 @@ list(APPEND SESSION_LIBRARIES
    rstudio-r
    rstudio-session-workers
    rstudio-core
-   libgit2package
+   libgit2::libgit2package
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS})
 
