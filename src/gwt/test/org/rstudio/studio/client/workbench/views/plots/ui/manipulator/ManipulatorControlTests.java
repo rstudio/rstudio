@@ -130,6 +130,24 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals(Arrays.asList("35"), reported);
    }
 
+   public void testSliderCtrlArrowMovesShortRange()
+   {
+      // Ctrl jumps a tenth of the range; with fewer than ten steps that must
+      // still move at least one step
+      Manipulator.Slider slider = JsonUtils.<Manipulator.Slider>safeEval(
+            "{\"type\":[0],\"label\":[\"N\"],\"min\":[1],\"max\":[5],"
+            + "\"step\":[1],\"ticks\":[false],\"initialValue\":[3]}");
+      Element sliderEl = sliderElement(attach(new ManipulatorControlSlider(
+            "n", 3, slider, values -> {})));
+
+      Document doc = Document.get();
+      sliderEl.dispatchEvent(doc.createKeyDownEvent(
+            true, false, false, false, KeyCodes.KEY_UP));
+      sliderEl.dispatchEvent(doc.createKeyUpEvent(
+            true, false, false, false, KeyCodes.KEY_UP));
+      assertEquals("4", sliderEl.getAttribute("aria-valuenow"));
+   }
+
    public void testSliderValueTextMatchesDisplayedValue()
    {
       // A short range gets a fractional step, so aria-valuenow carries raw

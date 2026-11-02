@@ -470,7 +470,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
           if (!slidingKeyboard) {
             int multiplier = 1;
             if (DOM.eventGetCtrlKey(event)) {
-              multiplier = (int) (getTotalRange() / stepSize / 10);
+              multiplier = Math.max(1, (int) (getTotalRange() / stepSize / 10));
             }
 
             switch (DOM.eventGetKeyCode(event)) {
