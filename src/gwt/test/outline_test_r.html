@@ -461,6 +461,36 @@ var defaultFn = makeSession([
   ""
 ].join("\n"));
 
+// The header also ended the section the function's signature was in,
+// which was then shortened to end where the function begins. Deleting the
+// header must give the tree a fresh parse would: the section reopens and
+// contains the function.
+var sectionSplit = makeSession([
+  "# outer ----",
+  "f <- function(x = {",
+  "  # defaults ----",
+  "  1",
+  "}) { x }",
+  "g <- function() {}",
+  ""
+].join("\n"));
+
+tree(sectionSplit);
+sectionSplit.remove(new (require("ace/range").Range)(2, 0, 3, 0));
+
+var sectionSplitFresh = makeSession(sectionSplit.getValue());
+
+check("deleting the header reopens the section the function began in",
+      tree(sectionSplit),
+      tree(sectionSplitFresh));
+
+check("(that fresh parse nests the function in the section)",
+      tree(sectionSplitFresh),
+      ["section outer [0..open]",
+       "  function f(x) [1..3]",
+       "    brace {} [1..3]",
+       "  function g() [4..4]"].join("\n"));
+
 // Two nested blocks around such a function are both cut by the header;
 // the inner one keeps its place in the outer, and each still gets its
 // closing brace, so the enclosing function keeps its own.

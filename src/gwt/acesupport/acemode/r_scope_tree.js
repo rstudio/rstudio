@@ -72,6 +72,9 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.isCut = false;
       this.matchedEnd = null;
 
+      // Where this scope really ended, when $splitAt() moved its end earlier.
+      this.$endedAt = null;
+
       // The type of this scope (e.g. a braced scope, a section, and so on)
       this.scopeType = scopeType;
 
@@ -185,6 +188,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          }
 
          taken = taken.concat(this.$children.splice(index, this.$children.length - index));
+         this.$endedAt = this.end;
          this.end = pos;
          return taken;
       };
@@ -401,7 +405,21 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             this.$children.splice(index, this.$children.length - index);
          }
 
+         // A child that $splitAt() shortened really ended at a later token.
+         // If that token is to be reparsed, reopen the child: should the
+         // token be gone, the scopes that follow belong inside it.
+         while (index > 0 &&
+                this.$children[index - 1].$endedAt &&
+                comparePoints(this.$children[index - 1].$endedAt, pos) > 0)
+         {
+            index--;
+            var childResumePos = this.$children[index].invalidateFrom(pos);
+            if (comparePoints(childResumePos, resumePos) < 0)
+               resumePos = childResumePos;
+         }
+
          this.end = null;
+         this.$endedAt = null;
          this.isCut = false;
          this.matchedEnd = null;
 
