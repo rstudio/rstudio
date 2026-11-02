@@ -109,19 +109,22 @@ export function parseTasklistPids(output: string): number[] {
 }
 
 /**
- * How many rstudio.exe processes other than this one are running. Each
+ * How many rstudio.exe processes outside this application are running. Each
  * RStudio window is its own process, and the installer refuses to replace
- * files while any of them is alive, so an update must wait for the others
- * to close. A tasklist failure counts as none, so an update is never
- * blocked by the probe itself.
+ * files while any rstudio.exe is alive, so an update must wait for the
+ * others to close. `ownPids` names this application's processes: Electron's
+ * renderer, GPU and utility children run the same executable and must not
+ * count. A tasklist failure counts as none, so an update is never blocked by
+ * the probe itself.
  */
-export async function otherRStudioProcessCount(): Promise<number> {
+export async function otherRStudioProcessCount(ownPids: number[]): Promise<number> {
+  const own = new Set([process.pid, ...ownPids]);
   return new Promise((resolve) => {
     execFile(
       'tasklist.exe',
       ['/FI', 'IMAGENAME eq rstudio.exe', '/FO', 'CSV', '/NH'],
       { windowsHide: true },
-      (error, stdout) => resolve(error ? 0 : parseTasklistPids(stdout).filter((pid) => pid !== process.pid).length),
+      (error, stdout) => resolve(error ? 0 : parseTasklistPids(stdout).filter((pid) => !own.has(pid)).length),
     );
   });
 }

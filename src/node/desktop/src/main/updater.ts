@@ -201,8 +201,18 @@ export class Updater {
       return;
     }
     if (this.downloadedVersion === entry.version) {
-      this.notifyDownloaded(entry.version);
-      return;
+      // the staged Windows installer lives on disk, where another instance
+      // may have pruned it since; only report it ready while it is still there
+      if (
+        process.platform !== 'win32' ||
+        (this.windowsInstaller && (await this.verifyInstaller(this.windowsInstaller, entry)))
+      ) {
+        this.notifyDownloaded(entry.version);
+        return;
+      }
+      logger().logDebug(`the staged installer for ${entry.version} is gone; downloading it again`);
+      this.downloadedVersion = null;
+      this.windowsInstaller = null;
     }
 
     // later checks may replace `available` while this download runs, so
@@ -234,7 +244,10 @@ export class Updater {
       return true;
     }
 
-    const others = await otherRStudioProcessCount();
+    // every process of this application (renderer, GPU, utility) is also an
+    // rstudio.exe; only processes outside it are other windows
+    const ownPids = app.getAppMetrics().map((metric) => metric.pid);
+    const others = await otherRStudioProcessCount(ownPids);
     if (others > 0) {
       logger().logInfo(`not installing the update yet: ${others} other RStudio process(es) running`);
     }
@@ -422,9 +435,18 @@ export class Updater {
     this.squirrelServer = null;
   }
 
-  /** Where Windows installers are staged; shared by every RStudio instance of this user. */
+  /**
+   * Where Windows installers are staged. Keyed by the install directory so
+   * that every window of one installation shares (and can reuse) a staged
+   * installer, while another copy of RStudio on the same machine, e.g. an
+   * unpacked zip, never prunes or reuses files meant for this one.
+   */
   private stagingDir(): string {
-    return path.join(app.getPath('temp'), 'rstudio-updates');
+    const installKey = createHash('sha1')
+      .update(path.dirname(process.execPath).toLowerCase())
+      .digest('hex')
+      .slice(0, 12);
+    return path.join(app.getPath('temp'), 'rstudio-updates', installKey);
   }
 
   /**

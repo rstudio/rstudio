@@ -268,12 +268,14 @@ receiving daily builds, since `version/new-version.sh` moves them to a new
 branch at every release cut and a build that kept polling its own branch would
 report itself up to date forever.
 
-On Windows the installer is staged in `%TEMP%\rstudio-updates`, shared by
-every RStudio window (each is its own process): a verified installer already
-there is reused, downloads land under a private name until verified, and
-installers no newer than the running build are pruned at startup. "Restart
-Now" first checks that no other `rstudio.exe` is running, because the
-installer refuses to replace files beside a live one.
+On Windows the installer is staged under `%TEMP%\rstudio-updates\<key>`,
+where the key is derived from the install directory, so every window of one
+installation (each is its own process) shares it while another copy of RStudio
+on the machine does not: a verified installer already there is reused,
+downloads land under a private name until verified, and installers no newer
+than the running build are pruned at startup. "Restart Now" first checks that
+no `rstudio.exe` outside this application is running, because the installer
+refuses to replace files beside a live one.
 
 The macOS zip is produced for open-source builds only and published to the
 builds site by the Jenkins pipeline as the `electron/macos-zip` platform, next

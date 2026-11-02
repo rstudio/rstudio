@@ -662,6 +662,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          return;
       }
 
+      offerRestart(event.getVersion());
+   }
+
+   private void offerRestart(String version)
+   {
       ArrayList<String> buttonLabels = new ArrayList<>();
       ArrayList<String> elementIds = new ArrayList<>();
       ArrayList<Operation> buttonOperations = new ArrayList<>();
@@ -678,9 +683,12 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             // without the update
             if (!canInstall)
             {
+               // offer the restart again once the warning is dismissed, so
+               // closing the other windows does not need a new update check
                globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
                      constants_.updateRStudioCaption(),
-                     constants_.closeOtherWindowsToUpdateMessage());
+                     constants_.closeOtherWindowsToUpdateMessage(),
+                     (Operation) () -> offerRestart(version));
                return;
             }
 
@@ -706,7 +714,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
       globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION,
             constants_.updateDownloadedCaption(),
-            constants_.updateDownloadedMessage(event.getVersion()),
+            constants_.updateDownloadedMessage(version),
             buttonLabels,
             elementIds,
             buttonOperations, 0);
