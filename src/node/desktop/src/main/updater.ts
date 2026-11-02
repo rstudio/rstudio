@@ -14,26 +14,22 @@
  */
 
 import { spawn } from 'child_process';
-import { createHash } from 'crypto';
 import { app, autoUpdater, net } from 'electron';
-import { createReadStream, createWriteStream, existsSync } from 'fs';
-import { mkdir, readdir, rename, rm, stat } from 'fs/promises';
+import { existsSync } from 'fs';
 import http from 'http';
 import { AddressInfo } from 'net';
 import path from 'path';
-import { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
 import { buildInfo } from './build-info';
+import { pruneStagedInstallers, stageInstaller, verifyInstaller } from './installer-staging';
 import { MainWindow } from './main-window';
-import { forgetRelaunchProject, rememberRelaunchProject } from './relaunch-project';
+import { forgetRelaunchProject, installationKey, RelaunchIdentity, rememberRelaunchProject } from './relaunch-project';
 import {
   branchSlug,
   BuildArtifact,
   channelForVersion,
-  installerVersion,
   isProVersion,
   isUpdateAvailable,
   kDefaultUpdateApiBaseUrl,
@@ -104,9 +100,6 @@ interface AvailableUpdate {
 /** How long an API request may take before it counts as unreachable. */
 const kRequestTimeoutMs = 15000;
 
-/** A partial download older than this was abandoned by a crashed instance. */
-const kPartialDownloadTtlMs = 24 * 60 * 60 * 1000;
-
 /** Why a downloaded update cannot be applied right now; '' when it can. */
 export type InstallBlocker = '' | 'other-instances' | 'missing';
 
@@ -155,7 +148,9 @@ export class Updater {
       disabled || !indexed || isProVersion(this.currentVersion) ? null : platformKeys(process.platform, process.arch);
 
     if (this.keys && process.platform === 'win32') {
-      void this.pruneStagedInstallers();
+      void pruneStagedInstallers(this.stagingDir(), this.currentVersion, Date.now(), (file, error) =>
+        logger().logDebug(`could not prune ${file}: ${safeError(error).message}`),
+      );
     }
   }
 
@@ -283,7 +278,7 @@ export class Updater {
       return;
     }
     this.pendingInstall = true;
-    rememberRelaunchProject(project);
+    rememberRelaunchProject(project, this.identity());
   }
 
   /**
@@ -479,116 +474,21 @@ export class Updater {
    * unpacked zip, never prunes or reuses files meant for this one.
    */
   private stagingDir(): string {
-    const installKey = createHash('sha1')
-      .update(path.dirname(process.execPath).toLowerCase())
-      .digest('hex')
-      .slice(0, 12);
-    return path.join(app.getPath('temp'), 'rstudio-updates', installKey);
+    return path.join(app.getPath('temp'), 'rstudio-updates', installationKey(process.execPath));
   }
 
-  /**
-   * Stage the Windows installer. The staging directory is shared, so a
-   * verified installer already there (left by another instance, or by an
-   * earlier run whose user chose "Later") is reused rather than replaced,
-   * and a fresh download lands under a private name until it is verified.
-   */
   private async downloadWindowsInstaller(entry: BuildArtifact): Promise<void> {
-    const dir = this.stagingDir();
-    await mkdir(dir, { recursive: true });
-    const target = path.join(dir, path.basename(entry.filename));
-
-    if (await this.verifyInstaller(target, entry)) {
-      logger().logDebug(`reusing the already downloaded ${target}`);
-      this.staged = { file: target, entry };
-      return;
-    }
-
-    const partial = `${target}.${process.pid}.part`;
-    try {
-      await this.fetchToFile(entry, partial);
-      if (!(await this.verifyInstaller(partial, entry))) {
-        throw new Error('the downloaded installer did not match the checksum and size published for this release');
-      }
-      await rename(partial, target);
-    } finally {
-      await rm(partial, { force: true });
-    }
-
-    this.staged = { file: target, entry };
+    const fetch = async (url: string) => net.fetch(url, { cache: 'no-store' });
+    const file = await stageInstaller(this.stagingDir(), entry, fetch, (fraction) => this.setProgress(fraction));
+    this.staged = { file, entry };
   }
 
   private async stagedInstallerVerifies(): Promise<boolean> {
-    return this.staged !== null && (await this.verifyInstaller(this.staged.file, this.staged.entry));
+    return this.staged !== null && (await verifyInstaller(this.staged.file, this.staged.entry));
   }
 
-  private async fetchToFile(entry: BuildArtifact, file: string): Promise<void> {
-    const response = await net.fetch(entry.url, { cache: 'no-store' });
-    if (!response.ok || !response.body) {
-      throw new Error(`download failed with HTTP ${response.status}`);
-    }
-
-    const total = Number(response.headers.get('content-length')) || entry.size;
-    let received = 0;
-    const source = Readable.fromWeb(response.body as import('stream/web').ReadableStream);
-    source.on('data', (chunk: Buffer) => {
-      received += chunk.length;
-      if (total > 0) {
-        this.setProgress(received / total);
-      }
-    });
-    await pipeline(source, createWriteStream(file));
-  }
-
-  /** True when `file` exists with the size and SHA-256 the API published. */
-  private async verifyInstaller(file: string, entry: BuildArtifact): Promise<boolean> {
-    try {
-      if (entry.size > 0 && (await stat(file)).size !== entry.size) {
-        return false;
-      }
-      const hash = createHash('sha256');
-      for await (const chunk of createReadStream(file)) {
-        hash.update(chunk as Buffer);
-      }
-      return hash.digest('hex') === entry.sha256;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Drop staged installers that can no longer be used: builds no newer than
-   * the running one (the update was applied, or superseded) and partial
-   * downloads abandoned by an instance that died. Newer installers stay, so
-   * "Later" followed by a relaunch does not download again.
-   */
-  private async pruneStagedInstallers(): Promise<void> {
-    let names: string[];
-    try {
-      names = await readdir(this.stagingDir());
-    } catch {
-      return;
-    }
-
-    for (const name of names) {
-      const file = path.join(this.stagingDir(), name);
-      try {
-        const version = installerVersion(name);
-        let stale: boolean;
-        if (version) {
-          stale = !isUpdateAvailable(this.currentVersion, version);
-        } else if (/\.part$/i.test(name)) {
-          stale = Date.now() - (await stat(file)).mtimeMs > kPartialDownloadTtlMs;
-        } else {
-          stale = false;
-        }
-        if (stale) {
-          logger().logDebug(`removing stale staged installer ${file}`);
-          await rm(file, { force: true });
-        }
-      } catch (error: unknown) {
-        logger().logDebug(`could not prune ${file}: ${safeError(error).message}`);
-      }
-    }
+  private identity(): RelaunchIdentity {
+    return { version: this.downloadedVersion ?? this.currentVersion, installKey: installationKey(process.execPath) };
   }
 
   private onDownloaded(version: string): void {

@@ -15,27 +15,50 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { parseRelaunchProject } from '../../../src/main/relaunch-project';
+import {
+  installationKey,
+  markerExpired,
+  markerMatches,
+  parseRelaunchMarker,
+  RelaunchMarker,
+} from '../../../src/main/relaunch-project';
 
 describe('relaunch project marker', () => {
   const now = 1_700_000_000_000;
 
-  it('returns the project while the marker is fresh', () => {
-    const text = JSON.stringify({ project: '/home/me/proj/proj.Rproj', expires: now + 1000 });
-    assert.equal(parseRelaunchProject(text, now), '/home/me/proj/proj.Rproj');
-    assert.equal(parseRelaunchProject(JSON.stringify({ project: 'none', expires: now }), now), 'none');
+  // posix paths throughout: path.dirname() only splits on the running
+  // platform's separator, and these tests run on every platform
+  const identity = { version: '2026.12.0-daily+9', installKey: installationKey('/opt/rstudio/bin/rstudio') };
+  const marker: RelaunchMarker = { ...identity, project: '/home/me/proj/proj.Rproj', expires: now + 1000 };
+
+  it('round-trips through JSON', () => {
+    assert.deepEqual(parseRelaunchMarker(JSON.stringify(marker)), marker);
   });
 
-  it('is null once expired', () => {
-    const text = JSON.stringify({ project: '/home/me/proj/proj.Rproj', expires: now - 1 });
-    assert.isNull(parseRelaunchProject(text, now));
+  it('rejects malformed markers', () => {
+    assert.isNull(parseRelaunchMarker(''));
+    assert.isNull(parseRelaunchMarker('not json'));
+    assert.isNull(parseRelaunchMarker(JSON.stringify({ ...marker, project: '' })));
+    assert.isNull(parseRelaunchMarker(JSON.stringify({ ...marker, expires: 'soon' })));
+    assert.isNull(parseRelaunchMarker(JSON.stringify({ project: marker.project, expires: now })));
   });
 
-  it('is null for malformed markers', () => {
-    assert.isNull(parseRelaunchProject('', now));
-    assert.isNull(parseRelaunchProject('not json', now));
-    assert.isNull(parseRelaunchProject(JSON.stringify({ project: '', expires: now + 1 }), now));
-    assert.isNull(parseRelaunchProject(JSON.stringify({ project: '/p.Rproj' }), now));
-    assert.isNull(parseRelaunchProject(JSON.stringify({ project: 42, expires: now + 1 }), now));
+  it('expires', () => {
+    assert.isFalse(markerExpired(marker, now));
+    assert.isTrue(markerExpired(marker, now + 1001));
+  });
+
+  it('is only for the build that was installed, in the same place', () => {
+    assert.isTrue(markerMatches(marker, identity));
+    // the old build still running (or launched again) before the relaunch
+    assert.isFalse(markerMatches(marker, { ...identity, version: '2026.12.0-daily+8' }));
+    // another installation of the same build, e.g. an unpacked zip
+    assert.isFalse(markerMatches(marker, { ...identity, installKey: installationKey('/tmp/rstudio/bin/rstudio') }));
+  });
+
+  it('keys an installation by its directory, case-insensitively', () => {
+    const app = '/Applications/RStudio.app/Contents/MacOS/RStudio';
+    assert.equal(installationKey(app), installationKey(app.toLowerCase()));
+    assert.notEqual(installationKey(app), installationKey('/tmp/RStudio.app/Contents/MacOS/RStudio'));
   });
 });

@@ -13,44 +13,73 @@
  *
  */
 
+import { createHash } from 'crypto';
 import { app } from 'electron';
 import { readFileSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
+import { compareVersions } from './update-feed';
 
 // An in-app update relaunches RStudio from the installer (Windows) or from
 // Squirrel (macOS), neither of which knows which project was open, and
 // "Restart RStudio" preserves the project. So the project is written down
-// before quitting and read back, once, by the next launch.
+// before quitting and read back, once, by the relaunched RStudio: the build
+// that was just installed, running from the same place. Any other RStudio
+// launched in between (an older build, another installation) leaves the
+// marker alone.
 
 /** Long enough for the installer to finish; short enough not to hijack a later launch. */
 export const kRelaunchProjectTtlMs = 15 * 60 * 1000;
 
-/** The remembered project, or null when the marker is malformed or expired. */
-export function parseRelaunchProject(text: string, now: number): string | null {
+/** Which RStudio a marker is meant for: a build, in an install directory. */
+export interface RelaunchIdentity {
+  version: string;
+  installKey: string;
+}
+
+export interface RelaunchMarker extends RelaunchIdentity {
+  /** the project file to reopen, or kProjectNone */
+  project: string;
+  expires: number;
+}
+
+/** A short key for the installation at `execPath`, stable across its updates. */
+export function installationKey(execPath: string): string {
+  return createHash('sha1').update(path.dirname(execPath).toLowerCase()).digest('hex').slice(0, 12);
+}
+
+/** The marker's contents, or null when it is not one. */
+export function parseRelaunchMarker(text: string): RelaunchMarker | null {
   try {
-    const doc = JSON.parse(text) as { project?: unknown; expires?: unknown };
-    if (typeof doc.project !== 'string' || doc.project.length === 0) {
+    const doc = JSON.parse(text) as Partial<Record<keyof RelaunchMarker, unknown>>;
+    const text_ = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
+    if (!text_(doc.project) || !text_(doc.version) || !text_(doc.installKey) || typeof doc.expires !== 'number') {
       return null;
     }
-    if (typeof doc.expires !== 'number' || now > doc.expires) {
-      return null;
-    }
-    return doc.project;
+    return { project: doc.project, version: doc.version, installKey: doc.installKey, expires: doc.expires };
   } catch {
     return null;
   }
+}
+
+export function markerExpired(marker: RelaunchMarker, now: number): boolean {
+  return now > marker.expires;
+}
+
+/** Whether `marker` is meant for the RStudio described by `identity`. */
+export function markerMatches(marker: RelaunchMarker, identity: RelaunchIdentity): boolean {
+  return marker.installKey === identity.installKey && compareVersions(marker.version, identity.version) === 0;
 }
 
 function markerPath(): string {
   return path.join(app.getPath('userData'), 'relaunch-project.json');
 }
 
-/** Remember the project (or kProjectNone) the relaunch after an update should open. */
-export function rememberRelaunchProject(project: string): void {
+/** Remember the project the relaunch into `identity` should open. */
+export function rememberRelaunchProject(project: string, identity: RelaunchIdentity): void {
   try {
-    const marker = { project, expires: Date.now() + kRelaunchProjectTtlMs };
+    const marker: RelaunchMarker = { ...identity, project, expires: Date.now() + kRelaunchProjectTtlMs };
     writeFileSync(markerPath(), JSON.stringify(marker));
   } catch (error: unknown) {
     logger().logDebug(`could not remember the project to reopen: ${safeError(error).message}`);
@@ -66,14 +95,28 @@ export function forgetRelaunchProject(): void {
   }
 }
 
-/** Consume the remembered project; null when there is none or it has expired. */
-export function takeRelaunchProject(now = Date.now()): string | null {
+/**
+ * Consume the project remembered for this RStudio: null when there is none,
+ * it has expired, or it is meant for another build or installation (that one
+ * is left in place for its intended reader).
+ */
+export function takeRelaunchProject(identity: RelaunchIdentity, now = Date.now()): string | null {
   let text: string;
   try {
     text = readFileSync(markerPath(), 'utf8');
   } catch {
     return null;
   }
+
+  const marker = parseRelaunchMarker(text);
+  if (!marker || markerExpired(marker, now)) {
+    forgetRelaunchProject();
+    return null;
+  }
+  if (!markerMatches(marker, identity)) {
+    return null;
+  }
+
   forgetRelaunchProject();
-  return parseRelaunchProject(text, now);
+  return marker.project;
 }

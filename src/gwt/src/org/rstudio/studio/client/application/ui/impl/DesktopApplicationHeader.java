@@ -676,36 +676,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       elementIds.add(ElementIds.DIALOG_YES_BUTTON);
       buttonOperations.add(() ->
       {
-         Desktop.getFrame().canInstallUpdate((String blocker) ->
+         // check before the save prompts, for prompt feedback, and again
+         // once they are answered, since another RStudio window may have
+         // been opened while they were up
+         whenUpdateInstallable(version, () ->
          {
-            // the staged installer has gone missing (the temp directory was
-            // cleaned, say): fetch it again, and the ready dialog follows
-            if (blocker == "missing")
-            {
-               if (updateProgress_ != null)
-                  updateProgress_.dismiss();
-
-               updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
-                     constants_.downloadingUpdateMessage(version));
-               Desktop.getFrame().downloadUpdate();
-               return;
-            }
-
-            // on Windows every window is its own rstudio.exe, and the
-            // installer will not run while any of them is alive; quitting
-            // this one alone would leave the user without RStudio and
-            // without the update. Offer the restart again once the warning
-            // is dismissed, so closing the other windows does not need a
-            // new update check.
-            if (blocker.length() > 0)
-            {
-               globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
-                     constants_.updateRStudioCaption(),
-                     constants_.closeOtherWindowsToUpdateMessage(),
-                     (Operation) () -> offerRestart(version));
-               return;
-            }
-
             // the usual quit sequence (save prompts, session shutdown) runs
             // first; the desktop frame applies the update as it quits and
             // reopens the current project, as Restart RStudio does
@@ -714,11 +689,14 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                @Override
                public void onReadyToQuit(boolean saveChanges)
                {
-                  String project = StringUtil.nullCoalesce(
-                        session_.getSessionInfo().getActiveProjectFile(),
-                        Projects.NONE);
-                  Desktop.getFrame().installUpdate(project);
-                  appQuit_.performQuit(null, saveChanges);
+                  whenUpdateInstallable(version, () ->
+                  {
+                     String project = StringUtil.nullCoalesce(
+                           session_.getSessionInfo().getActiveProjectFile(),
+                           Projects.NONE);
+                     Desktop.getFrame().installUpdate(project);
+                     appQuit_.performQuit(null, saveChanges);
+                  });
                }
             });
          });
@@ -736,6 +714,45 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             buttonLabels,
             elementIds,
             buttonOperations, 0);
+   }
+
+   /**
+    * Run `install` if the downloaded update can be applied now; otherwise
+    * deal with what blocks it, keeping the session running.
+    */
+   private void whenUpdateInstallable(String version, Operation install)
+   {
+      Desktop.getFrame().canInstallUpdate((String blocker) ->
+      {
+         // the staged installer has gone missing (the temp directory was
+         // cleaned, say): fetch it again, and the ready dialog follows
+         if (blocker == "missing")
+         {
+            if (updateProgress_ != null)
+               updateProgress_.dismiss();
+
+            updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
+                  constants_.downloadingUpdateMessage(version));
+            Desktop.getFrame().downloadUpdate();
+            return;
+         }
+
+         // on Windows every window is its own rstudio.exe, and the installer
+         // will not run while any of them is alive; quitting this one alone
+         // would leave the user without RStudio and without the update.
+         // Offer the restart again once the warning is dismissed, so closing
+         // the other windows does not need a new update check.
+         if (blocker.length() > 0)
+         {
+            globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
+                  constants_.updateRStudioCaption(),
+                  constants_.closeOtherWindowsToUpdateMessage(),
+                  (Operation) () -> offerRestart(version));
+            return;
+         }
+
+         install.execute();
+      });
    }
 
    public static boolean isSelectionEmpty()

@@ -19,7 +19,8 @@ import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { enableDiagnosticsOutput, logger, setLogger } from '../core/logger';
 import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
-import { takeRelaunchProject } from './relaunch-project';
+import { buildInfo } from './build-info';
+import { installationKey, takeRelaunchProject } from './relaunch-project';
 import { WinstonLogger } from '../core/winston-logger';
 import { Application } from './application';
 import { appState } from './app-state';
@@ -205,9 +206,12 @@ export class ArgsManager {
     }
 
     // an in-app update relaunches RStudio with no arguments; reopen what was
-    // open when the update was accepted, as "Restart RStudio" does
+    // open when the update was accepted, as "Restart RStudio" does. The
+    // marker names the build and installation it is for, so an unrelated
+    // launch in between leaves it alone.
     if (!getenv(kRStudioInitialProject)) {
-      const project = takeRelaunchProject();
+      const identity = { version: buildInfo().RSTUDIO_VERSION, installKey: installationKey(process.execPath) };
+      const project = takeRelaunchProject(identity);
       if (project === kProjectNone) {
         setenv(kRStudioInitialProject, kProjectNone);
       } else if (project && existsSync(project)) {
