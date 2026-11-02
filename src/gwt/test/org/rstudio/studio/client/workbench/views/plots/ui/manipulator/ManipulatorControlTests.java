@@ -111,6 +111,25 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals(Arrays.asList("35", "5"), reported);
    }
 
+   public void testSliderHeldEndKeyReportsOnce()
+   {
+      // each report re-runs the user's plot code, so auto-repeated keydowns
+      // must not report until the key is released
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            25, values -> reported.add(values.get("x.max").toString()))));
+
+      Document doc = Document.get();
+      for (int i = 0; i < 3; i++)
+         slider.dispatchEvent(doc.createKeyDownEvent(
+               false, false, false, false, KeyCodes.KEY_END));
+      assertTrue(reported.isEmpty());
+
+      slider.dispatchEvent(doc.createKeyUpEvent(
+            false, false, false, false, KeyCodes.KEY_END));
+      assertEquals(Arrays.asList("35"), reported);
+   }
+
    public void testSliderValueTextMatchesDisplayedValue()
    {
       // A short range gets a fractional step, so aria-valuenow carries raw

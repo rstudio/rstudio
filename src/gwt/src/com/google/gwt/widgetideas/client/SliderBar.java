@@ -476,13 +476,13 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
             switch (DOM.eventGetKeyCode(event)) {
               case KeyboardListener.KEY_HOME:
                 DOM.eventPreventDefault(event);
+                slidingKeyboard = true;
                 setCurrentValue(minValue);
-                stopSliding(false, true);
                 break;
               case KeyboardListener.KEY_END:
                 DOM.eventPreventDefault(event);
+                slidingKeyboard = true;
                 setCurrentValue(maxValue);
-                stopSliding(false, true);
                 break;
               case KeyboardListener.KEY_LEFT:
               case KeyboardListener.KEY_DOWN:
@@ -502,8 +502,8 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
                 break;
               case 32:
                 DOM.eventPreventDefault(event);
+                slidingKeyboard = true;
                 setCurrentValue(minValue + getTotalRange() / 2);
-                stopSliding(false, true);
                 break;
             }
           }
