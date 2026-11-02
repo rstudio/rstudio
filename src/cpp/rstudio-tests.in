@@ -257,14 +257,17 @@ dumpHangBacktrace() {
       return 0
    fi
 
-   # the hung process was orphaned when its shell was killed, so attaching
-   # usually needs root; try without sudo first (root, or ptrace unrestricted).
+   # gdb isn't an ancestor of the test process, so under Yama ptrace
+   # restrictions attaching usually needs root; try without sudo first (root,
+   # or ptrace unrestricted).
    # sudo -n fails rather than prompting: a password prompt nobody answers
    # (output sent to a log, or an unattended run) would block forever.
    # gdb exits 0 even when the attach fails, so look for a frame instead
    local OUTPUT
    OUTPUT="$(gdb -q -batch -ex 'thread apply all backtrace' -p "${PID}" 2>&1)"
    if ! grep -q '^#0 ' <<< "${OUTPUT}" && [ "$(id -u)" != "0" ]; then
+      # keep the first attempt's error (e.g. the ptrace refusal) in the log
+      echo "${OUTPUT}"
       OUTPUT="$(sudo -n gdb -q -batch -ex 'thread apply all backtrace' -p "${PID}" 2>&1)"
    fi
 
@@ -471,10 +474,13 @@ else
 fi
 
 # Hack: on RHEL9 (docker), the reported R_DOC_DIR doesn't exist which triggers
-# test failures; create the folder if missing. sudo -n, as an unanswered
-# password prompt would block an unattended run
+# test failures; create the folder if missing. Try without sudo first (root,
+# or a user-writable parent); sudo -n, as an unanswered password prompt would
+# block an unattended run
 if [ ! -e "${R_DOC_DIR}" ]; then
-   sudo -n mkdir "${R_DOC_DIR}" || echo "WARNING: could not create ${R_DOC_DIR}"
+   mkdir "${R_DOC_DIR}" 2> /dev/null ||
+      sudo -n mkdir "${R_DOC_DIR}" ||
+      echo "WARNING: could not create ${R_DOC_DIR}"
 fi
 
 UNIT_TEST_FAILURE=false
