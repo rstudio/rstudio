@@ -335,7 +335,10 @@ export class Updater {
   private async startSquirrelServer(document: string): Promise<string> {
     this.closeSquirrelServer();
     return new Promise((resolve, reject) => {
-      const server = http.createServer((_request, response) => {
+      // plain http is fine here: the listener is loopback-only and the
+      // document it serves names an https download url
+      const server = new http.Server();
+      server.on('request', (_request, response) => {
         response.writeHead(200, {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-store',
