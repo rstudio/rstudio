@@ -472,6 +472,11 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
         // Shift left or right on key press
         case Event.ONKEYDOWN:
+          // suppress scrolling on every slider keydown, including the
+          // auto-repeats that arrive while the first press is still sliding
+          if (isSliderKey(DOM.eventGetKeyCode(event))) {
+            DOM.eventPreventDefault(event);
+          }
           if (!slidingKeyboard) {
             // a key pressed mid-drag must not move the drag's baseline
             if (!slidingMouse) {
@@ -485,12 +490,10 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
             switch (DOM.eventGetKeyCode(event)) {
               case KeyboardListener.KEY_HOME:
-                DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
                 setCurrentValue(minValue);
                 break;
               case KeyboardListener.KEY_END:
-                DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
                 setCurrentValue(maxValue);
                 break;
@@ -499,7 +502,6 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
                 // fall through
               case KeyboardListener.KEY_LEFT:
               case KeyboardListener.KEY_DOWN:
-                DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
                 startSliding(false, true);
                 shiftLeft(multiplier);
@@ -510,14 +512,12 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
                 // fall through
               case KeyboardListener.KEY_RIGHT:
               case KeyboardListener.KEY_UP:
-                DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
                 startSliding(false, true);
                 shiftRight(multiplier);
                 keyTimer.schedule(400, true, multiplier);
                 break;
               case 32:
-                DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
                 setCurrentValue(minValue + getTotalRange() / 2);
                 break;
@@ -945,6 +945,23 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
       for (Element elem : tickElements) {
         DOM.setStyleAttribute(elem, "display", "none");
       }
+    }
+  }
+
+  private static boolean isSliderKey(int keyCode) {
+    switch (keyCode) {
+      case KeyboardListener.KEY_HOME:
+      case KeyboardListener.KEY_END:
+      case KeyboardListener.KEY_PAGEUP:
+      case KeyboardListener.KEY_PAGEDOWN:
+      case KeyboardListener.KEY_LEFT:
+      case KeyboardListener.KEY_RIGHT:
+      case KeyboardListener.KEY_UP:
+      case KeyboardListener.KEY_DOWN:
+      case 32:
+        return true;
+      default:
+        return false;
     }
   }
 

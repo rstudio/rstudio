@@ -199,6 +199,32 @@ public class ManipulatorControlTests extends GWTTestCase
       }.schedule(600);
    }
 
+   public void testSliderHeldKeysDoNotScroll()
+   {
+      // auto-repeated keydowns arrive while the first press is still
+      // sliding; their browser default (scrolling) must be suppressed too
+      int[] keys = { KeyCodes.KEY_HOME, KeyCodes.KEY_END, KeyCodes.KEY_SPACE,
+                     KeyCodes.KEY_LEFT, KeyCodes.KEY_RIGHT, KeyCodes.KEY_UP,
+                     KeyCodes.KEY_DOWN, KeyCodes.KEY_PAGEUP, KeyCodes.KEY_PAGEDOWN };
+      Element slider = sliderElement(attach(newSlider(25)));
+      Document doc = Document.get();
+      for (int key : keys)
+      {
+         for (int repeat = 0; repeat < 2; repeat++)
+         {
+            NativeEvent down = doc.createKeyDownEvent(false, false, false, false, key);
+            slider.dispatchEvent(down);
+            assertTrue("keydown " + repeat + " of key " + key + " was not prevented",
+                       isDefaultPrevented(down));
+         }
+         slider.dispatchEvent(doc.createKeyUpEvent(false, false, false, false, key));
+      }
+   }
+
+   private static native boolean isDefaultPrevented(NativeEvent event) /*-{
+      return event.defaultPrevented;
+   }-*/;
+
    public void testSliderPageKeysMoveATenthOfTheRange()
    {
       // Page Up/Down are the large-step keys; Ctrl+arrow is taken by the OS
