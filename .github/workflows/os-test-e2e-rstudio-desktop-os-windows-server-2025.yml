@@ -128,9 +128,6 @@ on:
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
-      AWS_SCCACHE_ROLE_ARN:
-        description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
-        required: false
       OP_SERVICE_ACCOUNT_TOKEN:
         description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
         required: false
@@ -170,10 +167,8 @@ jobs:
       # (rstudio/rstudio#18129). Consumed by install-dependencies.cmd,
       # make-package.bat, and CMake.
       RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}\rstudio-tools
+      # The backend is set up by the "Configure sccache" step below.
       SCCACHE_ENABLED: '1'
-      # Backend selection happens in the "Select sccache backend" step below:
-      # S3 when the OIDC role + bucket are configured, GHA cache otherwise.
-      SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
       # Compile GWT with readable (PRETTY) symbol names rather than the default
@@ -391,48 +386,20 @@ jobs:
           # looks) so packaging works on both paths.
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files (x86)\NSIS'
 
-      # Prefer the S3 sccache backend when the infra is configured (the
-      # AWS_SCCACHE_ROLE_ARN secret plus the AWS_SCCACHE_BUCKET repo
-      # variable). The GHA cache backend writes per-object entries into each
-      # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
-      # (6000+ of its entries were sccache objects) and LRU-evicting the
-      # main-scoped copies the seed maintains -- PR builds then compile at a
-      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
-      # writes one shared cache.
-      - name: Configure AWS credentials for sccache
-        id: sccache-aws
-        if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
-        # A failed OIDC exchange degrades to the GHA backend below rather
-        # than failing the build.
-        continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
-        with:
-          role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
-          aws-region: us-east-1
-          # Cold builds can run past the default 1-hour session; the role
-          # must be created with a max session duration of at least 2 hours.
-          role-duration-seconds: 7200
-
-      # Falls back to the GHA cache backend when the secret/variable are
-      # unset (e.g. fork PRs) or the credential exchange failed, preserving
-      # today's behavior. Must run before the sccache-action below: that
-      # action only exports the Actions cache URL/token the GHA backend
-      # needs when SCCACHE_GHA_ENABLED is already set as it runs.
-      - name: Select sccache backend
+      # sccache keeps one Actions cache entry per object file. Only main
+      # writes them (the nightly seed keeps them current), and every other ref
+      # reads main's. An entry written from a PR would land in that PR's
+      # merge-ref scope, which no other branch can read, and crowd main's
+      # entries out of the repo's cache limit (#18337). The Actions cache
+      # replaced an S3 bucket whose every hit was billed as egress (#19355).
+      - name: Configure sccache
         env:
-          SCCACHE_S3_BUCKET: ${{ vars.AWS_SCCACHE_BUCKET }}
-          SCCACHE_AWS_OUTCOME: ${{ steps.sccache-aws.outcome }}
+          SCCACHE_GHA_RW_MODE: ${{ github.ref == 'refs/heads/main' && 'READ_WRITE' || 'READ_ONLY' }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:SCCACHE_AWS_OUTCOME -eq 'success') {
-            Write-Host "sccache backend: S3 ($env:SCCACHE_S3_BUCKET)"
-            "SCCACHE_BUCKET=$env:SCCACHE_S3_BUCKET" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-            "SCCACHE_REGION=us-east-1" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-            "SCCACHE_S3_KEY_PREFIX=win64" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          } else {
-            Write-Host "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
-            "SCCACHE_GHA_ENABLED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          }
+          Write-Host "sccache backend: GitHub Actions cache ($env:SCCACHE_GHA_RW_MODE)"
+          "SCCACHE_GHA_ENABLED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SCCACHE_GHA_RW_MODE=$env:SCCACHE_GHA_RW_MODE" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10

@@ -16,7 +16,6 @@
   "tools_cache_key": "rstudio-tools-linux-jammy-arm64",
   "rlibs_cache_key": "rstudio-build-rlibs-linux-jammy-arm64",
   "gwt_cache_key": "rstudio-gwt-linux-desktop-jammy-arm64",
-  "sccache_key_prefix": "ubuntu22-arm64",
   "installer_artifact": "rstudio-desktop-deb-ubuntu-22-arm64",
   "daily_platform_key": "jammy-arm64",
   "e2e_runner": "ubuntu-22.04-arm",
