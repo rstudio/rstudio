@@ -19,7 +19,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.EditorsText
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
@@ -84,22 +83,27 @@ public class ChangeNavigatorWidget extends Composite
 
       // A click does not take focus to the button (the handler sends it to
       // the editor); from the keyboard, focus stays on it for the next step.
-      button.addMouseDownHandler(event -> event.preventDefault());
+      // A pointer announces itself with a mousedown first; a click without
+      // one came from the keyboard or assistive technology (which may well
+      // simulate a mouse click), and keeps focus where it is.
+      button.addMouseDownHandler(event ->
+      {
+         event.preventDefault();
+         pointerDown_ = true;
+      });
+      button.addKeyDownHandler(event -> pointerDown_ = false);
 
       // (the status bar runs a handler of its own for clicks on a message)
       button.addClickHandler(event ->
       {
          event.stopPropagation();
+         boolean fromPointer = pointerDown_;
+         pointerDown_ = false;
          if (handler_ != null)
-            handler_.onNavigate(next, clickCount(event.getNativeEvent()) > 0);
+            handler_.onNavigate(next, fromPointer);
       });
       return button;
    }
-
-   // Zero for a click synthesized from the keyboard (Enter or Space).
-   private static native int clickCount(NativeEvent event) /*-{
-      return event.detail || 0;
-   }-*/;
 
    private static void describe(Button button, AppCommand command)
    {
@@ -111,6 +115,7 @@ public class ChangeNavigatorWidget extends Composite
    private final Button next_;
    private final InlineLabel count_;
    private Handler handler_;
+   private boolean pointerDown_ = false;
 
    // Chevrons in the text colour, so that they follow the theme.
    private static final String CHEVRON_UP =
