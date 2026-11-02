@@ -205,6 +205,60 @@ TEST(SessionRTest, RActiveBindingDetection) {
    EXPECT_FALSE(error);
 }
 
+// constructed during static initialization, before R has initialized
+// R_NilValue, like the session's own file-scope instances
+static r::sexp::PreservedSEXP s_staticPreservedSEXP;
+
+TEST(SessionRTest, PreservedSEXPUnsetStaticReadsAsNil) {
+   // a never-set instance must hand back R's NULL, not a null pointer
+   ASSERT_NE(nullptr, R_NilValue);
+   EXPECT_TRUE(s_staticPreservedSEXP.isNil());
+   EXPECT_EQ(R_NilValue, s_staticPreservedSEXP.get());
+
+   // the first set() has nothing to release
+   r::sexp::Protect protect;
+   SEXP valueSEXP = r::sexp::create("value", &protect);
+   s_staticPreservedSEXP.set(valueSEXP);
+   EXPECT_FALSE(s_staticPreservedSEXP.isNil());
+   EXPECT_EQ(valueSEXP, s_staticPreservedSEXP.get());
+
+   s_staticPreservedSEXP.releaseNow();
+   EXPECT_TRUE(s_staticPreservedSEXP.isNil());
+   EXPECT_EQ(R_NilValue, s_staticPreservedSEXP.get());
+}
+
+TEST(SessionRTest, PreservedSEXPTreatsRNullAsEmpty) {
+   r::sexp::PreservedSEXP preserved(R_NilValue);
+   EXPECT_TRUE(preserved.isNil());
+   EXPECT_EQ(R_NilValue, preserved.get());
+
+   r::sexp::Protect protect;
+   SEXP valueSEXP = r::sexp::create("value", &protect);
+   preserved.set(valueSEXP);
+   EXPECT_FALSE(preserved.isNil());
+
+   preserved.set(R_NilValue);
+   EXPECT_TRUE(preserved.isNil());
+   EXPECT_EQ(R_NilValue, preserved.get());
+}
+
+TEST(SessionRTest, PreservedSEXPMovedFromIsEmpty) {
+   r::sexp::Protect protect;
+   SEXP valueSEXP = r::sexp::create("value", &protect);
+
+   r::sexp::PreservedSEXP source(valueSEXP);
+   r::sexp::PreservedSEXP constructed(std::move(source));
+   EXPECT_EQ(valueSEXP, constructed.get());
+   EXPECT_TRUE(source.isNil());
+   EXPECT_EQ(R_NilValue, source.get());
+
+   r::sexp::PreservedSEXP assigned;
+   assigned = std::move(constructed);
+   EXPECT_EQ(valueSEXP, assigned.get());
+   EXPECT_TRUE(constructed.isNil());
+   EXPECT_EQ(R_NilValue, constructed.get());
+}
+
 #ifdef _WIN32
 
 TEST(SessionRTest, SynchronizeLocaleRepairsAClobberedLocale) {
