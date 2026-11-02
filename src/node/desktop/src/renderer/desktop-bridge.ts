@@ -44,6 +44,23 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_browse_url', url);
     },
 
+    checkForUpdates: async (manual: boolean, callback: VoidCallback<string>) => {
+      try {
+        callback(await ipcRenderer.invoke('desktop_check_for_updates', manual));
+      } catch (error: unknown) {
+        reportIpcError('checkForUpdates', error as Error);
+        callback(JSON.stringify({ status: 'error', error: (error as Error).message }));
+      }
+    },
+
+    downloadUpdate: () => {
+      ipcRenderer.send('desktop_download_update');
+    },
+
+    installUpdate: () => {
+      ipcRenderer.send('desktop_install_update');
+    },
+
     getOpenFileName: async (
       caption: string,
       label: string,

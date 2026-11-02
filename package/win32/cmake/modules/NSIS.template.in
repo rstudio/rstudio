@@ -20,6 +20,8 @@
   Var RunningAsShellUser
   Var RunningFromInstaller
   Var RunningAllUsers
+  ; 1 when launched by RStudio's in-app updater (/update)
+  Var UpdateMode
 ;--------------------------------
 ;Include Modern UI
 
@@ -487,6 +489,14 @@ Section "-Core installation"
   
 @CPACK_NSIS_EXTRA_INSTALL_COMMANDS@
 
+  ;
+  ; RSTUDIO CHANGE - an in-app update ends by bringing RStudio back. Run it as
+  ; the user who launched the updater, never as the elevated installer.
+  ;
+  ${If} $UpdateMode = 1
+    !insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\rstudio.exe" "" "$INSTDIR" ""
+  ${EndIf}
+
 SectionEnd
 
 ;--------------------------------
@@ -662,10 +672,41 @@ SectionEnd
 ;--------------------------------
 Function .onInit
 
+  ;
+  ; RSTUDIO CHANGE - /update marks an installer spawned by RStudio's in-app
+  ; updater (src/node/desktop/src/main/updater.ts), always with /S and the
+  ; install mode. Parsed in both the outer and the elevated inner instance,
+  ; since NsisMultiUser relaunches with the same command line.
+  ;
+  StrCpy $UpdateMode 0
+  ${GetParameters} $R9
+  ClearErrors
+  ${GetOptions} $R9 "/update" $R8
+  ${IfNot} ${Errors}
+    StrCpy $UpdateMode 1
+  ${EndIf}
+
   ; Guard the running-app check so it runs only in the (unelevated) outer
   ; instance, before MULTIUSER_INIT (which may relaunch elevated).
   ${ifnot} ${UAC_IsInnerInstance}
-    ${nsProcess::FindProcess} "rstudio.exe" $R0
+    ${If} $UpdateMode = 1
+      ; the updater spawns this installer and then quits RStudio, so give the
+      ; process a moment to go away instead of failing the update outright
+      StrCpy $R1 0
+      ${Do}
+        ${nsProcess::FindProcess} "rstudio.exe" $R0
+        ${If} $R0 <> 0
+          ${Break}
+        ${EndIf}
+        ${If} $R1 >= 60
+          ${Break}
+        ${EndIf}
+        Sleep 1000
+        IntOp $R1 $R1 + 1
+      ${Loop}
+    ${Else}
+      ${nsProcess::FindProcess} "rstudio.exe" $R0
+    ${EndIf}
     ${If} $R0 = 0
       MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
       Abort

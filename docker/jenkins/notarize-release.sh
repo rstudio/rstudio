@@ -16,9 +16,10 @@
 #
 # Usage: 
 #
-#    notarize-release.sh [path-to-dmg]
+#    notarize-release.sh [path-to-dmg-or-zip]
 #
-# where path-to-dmg is a relative or absolute path to the DMG file to notarize.
+# where the argument is a relative or absolute path to the DMG (or, for the
+# in-app updater's artifact, the zip) to notarize.
 #
 # Expects the following environment variables to be present:
 #  
@@ -95,5 +96,14 @@ if [[ "${status}" = "invalid" ]]; then
 
 fi
 
-# Staple the result to DMG file (allows offline verification of notarization)
-xcrun stapler staple "$1"
+# Staple the result to the DMG (allows offline verification of notarization).
+# A zip cannot carry a ticket; the updater's zip is verified online by
+# Gatekeeper, and the app inside it carries the same signature as the DMG's.
+case "$1" in
+    *.zip)
+        echo "Not stapling '$1': zip archives cannot hold a notarization ticket."
+        ;;
+    *)
+        xcrun stapler staple "$1"
+        ;;
+esac

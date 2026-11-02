@@ -37,7 +37,14 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void writeStderr(String text);
    
    void browseUrl(String url);
-   
+
+   // in-app updates (see src/node/desktop/src/main/updater.ts); the callback
+   // receives a JSON object with the same keys as the check_for_updates RPC
+   // plus "status" and "can-install"
+   void checkForUpdates(boolean manual, CommandWithArg<String> callback);
+   void downloadUpdate();
+   void installUpdate();
+
    void getOpenFileName(String caption,
                         String label,
                         String dir,

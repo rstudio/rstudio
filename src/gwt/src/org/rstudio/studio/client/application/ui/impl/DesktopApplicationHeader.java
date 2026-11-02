@@ -40,12 +40,14 @@ import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopUpdateDownloadedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -171,6 +173,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             Desktop.getFrame().showFolder(StringUtil.notNull(event.getPath().getPath()));
          }
       });
+
+      events.addHandler(DesktopUpdateDownloadedEvent.TYPE, this::onUpdateDownloaded);
 
       toolbar_ = new GlobalToolbar(commands, events, pCodeSearch, pUIPrefs_.get(), trustPresenter);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
@@ -444,6 +448,28 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
    private void checkForUpdates(final boolean manual)
    {
+      // the desktop frame checks its own update feed and can download and
+      // install the update itself; where it can't (Linux, no feed published
+      // for this build, feed unreachable) the session's check runs as before
+      if (!Desktop.hasDesktopFrame())
+      {
+         checkForUpdatesViaSession(manual);
+         return;
+      }
+
+      Desktop.getFrame().checkForUpdates(manual, (String json) ->
+      {
+         UpdateCheckResult result = UpdateCheckResult.fromJson(json);
+         String status = result.getStatus();
+         if (status == "available" || status == "up-to-date")
+            respondToUpdateCheck(result, manual);
+         else
+            checkForUpdatesViaSession(manual);
+      });
+   }
+
+   private void checkForUpdatesViaSession(final boolean manual)
+   {
       server_.checkForUpdates(manual,
             new ServerRequestCallback<UpdateCheckResult>()
       {
@@ -498,23 +524,39 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          ArrayList<Operation> buttonOperations = new ArrayList<>();
          boolean isManualAndIgnored = manual && ignoredUpdate;
 
-         buttonLabels.add(constants_.quitDownloadButtonLabel());
-         elementIds.add(ElementIds.DIALOG_YES_BUTTON);
-         buttonOperations.add(new Operation() {
-            @Override
-            public void execute()
+         if (result.canInstall())
+         {
+            // the desktop frame downloads in the background and fires
+            // DesktopUpdateDownloadedEvent when the restart can be offered
+            buttonLabels.add(constants_.installAndRestartButtonLabel());
+            elementIds.add(ElementIds.DIALOG_YES_BUTTON);
+            buttonOperations.add(() ->
             {
-               appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
+               updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
+                     constants_.downloadingUpdateMessage(updateVersion));
+               Desktop.getFrame().downloadUpdate();
+            });
+         }
+         else
+         {
+            buttonLabels.add(constants_.quitDownloadButtonLabel());
+            elementIds.add(ElementIds.DIALOG_YES_BUTTON);
+            buttonOperations.add(new Operation() {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void onReadyToQuit(boolean saveChanges)
+                  appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
                   {
-                     Desktop.getFrame().browseUrl(StringUtil.notNull(result.getUpdateUrl()));
-                     appQuit_.performQuit(null, saveChanges);
-                  }
-               });
-            }
-         });
+                     @Override
+                     public void onReadyToQuit(boolean saveChanges)
+                     {
+                        Desktop.getFrame().browseUrl(StringUtil.notNull(result.getUpdateUrl()));
+                        appQuit_.performQuit(null, saveChanges);
+                     }
+                  });
+               }
+            });
+         }
 
          // Only show "Remind Later" if the user isn't manually checking for an
          // update, which happens to be an ignored version. Essentially, it's not
@@ -594,6 +636,59 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                               constants_.noUpdateAvailableCaption(),
                               constants_.usingNewestVersionMessage());
       }
+   }
+
+   private void onUpdateDownloaded(DesktopUpdateDownloadedEvent event)
+   {
+      if (updateProgress_ != null)
+      {
+         updateProgress_.dismiss();
+         updateProgress_ = null;
+      }
+
+      if (!event.succeeded())
+      {
+         globalDisplay_.showErrorMessage(constants_.updateDownloadFailedCaption(),
+               constants_.updateDownloadFailedMessage()
+               + event.getErrorMessage()
+               + "\n\n"
+               + constants_.visitWebsiteForNewVersionText());
+         return;
+      }
+
+      ArrayList<String> buttonLabels = new ArrayList<>();
+      ArrayList<String> elementIds = new ArrayList<>();
+      ArrayList<Operation> buttonOperations = new ArrayList<>();
+
+      buttonLabels.add(constants_.restartNowButtonLabel());
+      elementIds.add(ElementIds.DIALOG_YES_BUTTON);
+      buttonOperations.add(() ->
+      {
+         // the usual quit sequence (save prompts, session shutdown) runs
+         // first; the desktop frame applies the update as it quits
+         appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
+         {
+            @Override
+            public void onReadyToQuit(boolean saveChanges)
+            {
+               Desktop.getFrame().installUpdate();
+               appQuit_.performQuit(null, saveChanges);
+            }
+         });
+      });
+
+      // a downloaded update stays staged, so "Later" costs nothing: the next
+      // check offers the restart again without downloading twice
+      buttonLabels.add(constants_.restartLaterButtonLabel());
+      elementIds.add(ElementIds.DIALOG_NO_BUTTON);
+      buttonOperations.add(() -> {});
+
+      globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION,
+            constants_.updateDownloadedCaption(),
+            constants_.updateDownloadedMessage(event.getVersion()),
+            buttonLabels,
+            elementIds,
+            buttonOperations, 0);
    }
 
    public static boolean isSelectionEmpty()
@@ -783,6 +878,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    Provider<UserPrefs> pUIPrefs_;
    private ApplicationServerOperations server_;
    private IgnoredUpdatesStateValue ignoredUpdatesState_;
+   private GlobalProgressDelayer updateProgress_;
    private ApplicationQuit appQuit_;
    private WebApplicationHeaderOverlay overlay_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);

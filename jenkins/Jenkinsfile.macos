@@ -198,6 +198,11 @@ pipeline {
           script: "basename `ls package/osx/build/RStudio-*.dmg`",
           returnStdout: true
         ).trim()}"""
+        // the .app zipped for the in-app updater (see package/osx/make-package)
+        ZIP_FILE = """${sh (
+          script: "basename `ls package/osx/build/RStudio-*.zip`",
+          returnStdout: true
+        ).trim()}"""
         BUILD_TYPE = """${sh (
           script: "cat version/BUILDTYPE",
           returnStdout: true
@@ -215,6 +220,7 @@ pipeline {
 
           steps {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${PACKAGE_FILE}"
+            sh "docker/jenkins/notarize-release.sh package/osx/build/${ZIP_FILE}"
           }
         }
 
@@ -225,6 +231,43 @@ pipeline {
               retry(5) {
                 script {
                   utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${AWS_PATH}/"
+                  utils.uploadPackageToS3 "package/osx/build/${ZIP_FILE}", "${AWS_PATH}/"
+                }
+              }
+            }
+          }
+        }
+
+        // Publish the releases.json the in-app updater polls. Off until the
+        // Jenkins instance defines RSTUDIO_UPDATE_FEED_BUCKET (and optionally
+        // RSTUDIO_UPDATE_FEED_PREFIX), which must be what cdn.posit.co serves
+        // at the desktop's feed base URL (update-feed.ts). The zip's public
+        // URL defaults to the dailies host; release builds should point at
+        // the download host via RSTUDIO_UPDATE_DOWNLOAD_URL_BASE.
+        stage("Publish Update Feed") {
+          when { expression { return env.RSTUDIO_UPDATE_FEED_BUCKET } }
+
+          environment {
+            UPDATE_FEED_DIR = "package/osx/build/update-feed"
+            DOWNLOAD_URL_BASE = "${env.RSTUDIO_UPDATE_DOWNLOAD_URL_BASE ?: 'https://dl.dailies.rstudio.com'}"
+          }
+
+          steps {
+            sh """
+              cmake -DPACKAGE_FILE=package/osx/build/${ZIP_FILE} \\
+                    -DVERSION=${RSTUDIO_VERSION} \\
+                    -DURL=${DOWNLOAD_URL_BASE}/${AWS_PATH}/${ZIP_FILE} \\
+                    -DPLATFORM=macos \\
+                    -DCOMMIT=${GIT_COMMIT} \\
+                    -DOUTPUT_DIR=${UPDATE_FEED_DIR} \\
+                    -P package/update-feed.cmake
+            """
+            script {
+              def feedPath = readFile("${UPDATE_FEED_DIR}/feed-path").trim()
+              def prefix = env.RSTUDIO_UPDATE_FEED_PREFIX ? "${env.RSTUDIO_UPDATE_FEED_PREFIX}/" : ''
+              withAWS(role: 'ide-build', region: 'us-east-1') {
+                retry(5) {
+                  s3Upload acl: 'BucketOwnerFullControl', bucket: "${env.RSTUDIO_UPDATE_FEED_BUCKET}", file: "${UPDATE_FEED_DIR}/${feedPath}", path: "${prefix}${feedPath}"
                 }
               }
             }

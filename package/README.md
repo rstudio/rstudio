@@ -186,11 +186,14 @@ Other options, from `./make-package --help`:
 - `--build-gwt=0` reuses the previous GWT build, which saves several minutes
   when you are only iterating on C++ or Electron code.
 
-The build produces two artifacts:
+The build produces three artifacts:
 
 - the application bundle at `package/osx/install/RStudio.app`
 - the disk image at `package/osx/build/RStudio-<version>.dmg`, or
   `package/osx/build-arm64/` when `arm64` is the only architecture built
+- a zip of the bundle next to the disk image, `RStudio-<version>.zip`, which
+  is what the in-app updater installs from (see
+  [In-app update feed](#in-app-update-feed))
 
 Outside of Posit's CI the build is ad-hoc signed. The result runs on the machine
 that built it, but distributing it to other Macs requires signing and
@@ -231,6 +234,47 @@ path limit, then the finished files are moved into the build directory.
 
 If you already have a completed build and only want to regenerate the
 installers, run `make-dist-packages.bat` from `package\win32`.
+
+## In-app update feed
+
+RStudio Desktop on macOS and Windows can download and install updates itself
+(`src/node/desktop/src/main/updater.ts`). It polls a small JSON feed for its
+build channel at
+
+    <feed base>/<channel>/<os>/<arch>/releases.json
+
+where the feed base is `https://cdn.posit.co/rstudio/updates`, the channel
+comes from the version's pre-release tag (`release` when there is none, else
+`daily`, `hourly` or `preview`), and `<os>/<arch>` is `macos/universal` or
+`windows/x86_64`. On macOS the feed is handed to Electron's `autoUpdater`
+(Squirrel.Mac), which installs from the zip; on Windows the desktop downloads
+the NSIS installer, checks its SHA-256, and runs it with `/S /update` once
+RStudio has quit. When no feed exists for a build, the desktop falls back to
+the session's own check and the "Quit and Download" dialog.
+
+`package/update-feed.cmake` writes a feed entry for one artifact:
+
+```bash
+cmake -DPACKAGE_FILE=package/osx/build/RStudio-2026.12.0-daily-118.zip \
+      -DVERSION=2026.12.0-daily+118 \
+      -DURL=https://dl.dailies.rstudio.com/electron/macos/RStudio-2026.12.0-daily-118.zip \
+      -DPLATFORM=macos \
+      -DOUTPUT_DIR=/tmp/update-feed \
+      -P package/update-feed.cmake
+```
+
+The Jenkins macOS and Windows pipelines run it after uploading a build and
+copy the result to S3 when the Jenkins instance defines
+`RSTUDIO_UPDATE_FEED_BUCKET` (plus optional `RSTUDIO_UPDATE_FEED_PREFIX`, the
+key prefix that `cdn.posit.co/rstudio/updates` serves, and
+`RSTUDIO_UPDATE_DOWNLOAD_URL_BASE`, the public host the artifact URL should
+use; it defaults to the dailies host). Until those are set the stage is
+skipped and nothing changes for users.
+
+For testing a build against another feed, the desktop honours three
+environment variables: `RSTUDIO_UPDATE_FEED_URL` (feed base, also enables
+updates for `-dev` builds), `RSTUDIO_UPDATE_CHANNEL`, and
+`RSTUDIO_UPDATE_VERSION` (impersonate a version, as for the session's check).
 
 ## Gotchas
 

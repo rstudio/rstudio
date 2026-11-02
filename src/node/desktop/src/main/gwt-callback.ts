@@ -55,6 +55,7 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
+import { Updater } from './updater';
 import {
   defaultFonts,
   ElectronDesktopOptions,
@@ -120,6 +121,8 @@ export class GwtCallback extends EventEmitter {
 
   monospaceFonts: string[] = [];
   proportionalFonts: string[] = [];
+  // in-app updates; GWT drives it through the desktop_*_update ipc below
+  updater: Updater;
 
   /**
    * Opens a file in the main window and activates it.
@@ -152,6 +155,7 @@ export class GwtCallback extends EventEmitter {
   constructor(public mainWindow: MainWindow) {
     super();
     this.owners.add(mainWindow);
+    this.updater = new Updater(mainWindow);
 
     if (process.platform === 'linux') {
       try {
@@ -190,6 +194,18 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_write_stderr', (event, output) => {
       console.log(output);
+    });
+
+    ipcMain.handle('desktop_check_for_updates', async (_event, manual: boolean) => {
+      return JSON.stringify(await this.updater.checkForUpdates(manual));
+    });
+
+    ipcMain.on('desktop_download_update', () => {
+      void this.updater.downloadUpdate();
+    });
+
+    ipcMain.on('desktop_install_update', () => {
+      this.updater.installUpdate();
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
