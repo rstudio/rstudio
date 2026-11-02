@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
@@ -94,6 +98,19 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals("25", slider.getAttribute("aria-valuenow"));
    }
 
+   public void testSliderHomeAndEndUpdateManipulatorValue()
+   {
+      // the plot is redrawn from the values the changed handler reports, so
+      // keys that jump the value must report it like arrow keys do
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            25, values -> reported.add(values.get("x.max").toString()))));
+
+      pressKey(slider, KeyCodes.KEY_END);
+      pressKey(slider, KeyCodes.KEY_HOME);
+      assertEquals(Arrays.asList("35", "5"), reported);
+   }
+
    public void testSliderValueTextMatchesDisplayedValue()
    {
       // A short range gets a fractional step, so aria-valuenow carries raw
@@ -138,10 +155,16 @@ public class ManipulatorControlTests extends GWTTestCase
 
    private static ManipulatorControlSlider newSlider(double value)
    {
+      return newSlider(value, values -> {});
+   }
+
+   private static ManipulatorControlSlider newSlider(
+         double value, ManipulatorChangedHandler handler)
+   {
       Manipulator.Slider slider = JsonUtils.<Manipulator.Slider>safeEval(
             "{\"type\":[0],\"label\":[\"X max\"],\"min\":[5],\"max\":[35],"
             + "\"step\":[-1],\"ticks\":[false],\"initialValue\":[25]}");
-      return new ManipulatorControlSlider("x.max", value, slider, values -> {});
+      return new ManipulatorControlSlider("x.max", value, slider, handler);
    }
 
    private static Widget attach(Widget widget)
