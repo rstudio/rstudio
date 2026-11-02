@@ -137,17 +137,35 @@ git grep -nF "release/rstudio-<old-release>" -- . ':!version/news' ':!NEWS.md' '
 git diff --stat
 ```
 
-The grep should print nothing, and the diff should show exactly two files, one line each.
+The grep should print nothing, and the diff should show the two scripts, one line each.
+
+#### If step 4 found a package manager change
+
+Switch the `panmirror` target in `src/gwt/build.xml` to the new tool, for both the dependency
+install and the build, and keep the diff to that target. Then build panmirror for real against the
+new branch; this replaces the scripts, the clone in `src/gwt/lib/quarto`, and the build tool, so
+nothing short of a build shows they work together:
+
+```bash
+dependencies/common/install-panmirror
+(cd src/gwt && ant panmirror)
+```
+
+If either step fails, or is not permitted in this session, stop and report it rather than
+committing an unbuilt `build.xml`. The diff should then show the two scripts plus `build.xml`.
 
 ### 6. Commit and open a PR
 
 No NEWS.md entry: pinning a new cycle's branch is not user-facing. (A `-NN` fix branch gets a NEWS
 entry for the fix it carries, written with that fix, not by this skill.)
 
-- **Commit message**: `Pin panmirror to <branch>`
+- **Commit message**: `Pin panmirror to <branch>`. A `build.xml` switch is its own commit, before
+  the pin, e.g. `Build panmirror with npm`.
 - **PR title**: same as the commit message.
 - **PR body**: the old and new branch names, the quarto `main` SHA the branch was cut from, and the
-  two files changed. If step 4 found a raised Node.js requirement, name the PR that met it.
+  files changed. If step 4 found a raised Node.js requirement, name the PR that met it. If the
+  package manager changed, say from what to what, which quarto commit made the switch, and how the
+  `build.xml` target changed.
 - **Milestone**: match `version/RELEASE` against
   `gh api repos/rstudio/rstudio/milestones --jq '.[].title'` (titles look like
   `2026.11 (Montauk Daisy)`). Set it if one matches; never create one.
