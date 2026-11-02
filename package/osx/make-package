@@ -342,6 +342,8 @@ if [ -n "$SCCACHE_ENABLED" ]; then
         # Honor an externally-set SCCACHE_BUCKET (e.g. GitHub Actions points
         # at its own bucket via an OIDC role that cannot read the default).
         export SCCACHE_BUCKET="${SCCACHE_BUCKET:-rstudio-build-cache}"
+        # sccache's S3 backend won't start without a region
+        export SCCACHE_REGION="${SCCACHE_REGION:-us-east-1}"
     else
         echo "No valid AWS SSO session, using only local build cache"
         # Honor an externally-set SCCACHE_DIR (e.g. when a CI runner has
