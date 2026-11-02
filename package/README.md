@@ -252,7 +252,7 @@ published build with its download link and SHA-256:
 - hourly builds: `https://dailies.rstudio.com/rstudio-hourly/<branch>/index.json`.
 
 The channel comes from the version's pre-release tag (`release` when there is
-none), the branch from `version/RELEASE`, and the entry from
+none) and the entry from
 `products.electron.platforms`: `macos` and `macos-zip` on macOS, `windows` on
 Windows. On macOS the zipped `.app` is handed to Electron's `autoUpdater`
 (Squirrel.Mac) through a loopback listener that serves the feed shape Squirrel
@@ -262,6 +262,19 @@ no entry for a build (Linux, developer builds, a branch not yet on the site),
 the desktop falls back to the session's own check and the "Quit and Download"
 dialog; when only the DMG is listed, that dialog links to it directly.
 
+The branch is `version/RELEASE` for preview builds. Daily and hourly builds
+instead follow the branch the release index's `in_development` list says is
+receiving daily builds, since `version/new-version.sh` moves them to a new
+branch at every release cut and a build that kept polling its own branch would
+report itself up to date forever.
+
+On Windows the installer is staged in `%TEMP%\rstudio-updates`, shared by
+every RStudio window (each is its own process): a verified installer already
+there is reused, downloads land under a private name until verified, and
+installers no newer than the running build are pruned at startup. "Restart
+Now" first checks that no other `rstudio.exe` is running, because the
+installer refuses to replace files beside a live one.
+
 The macOS zip is produced for open-source builds only and published to the
 builds site by the Jenkins pipeline as the `electron/macos-zip` platform, next
 to the DMG. The site itself names each platform in a per-branch `_index.md`
@@ -269,9 +282,10 @@ to the DMG. The site itself names each platform in a per-branch `_index.md`
 before it is displayed.
 
 Administrators can keep the update notification but send users to the download
-page instead, with `allow-in-app-updates=0` in `rsession.conf` or the
-`RSTUDIO_DISABLE_IN_APP_UPDATES` environment variable; the existing
-`RSTUDIO_DISABLE_CHECK_FOR_UPDATES` still turns update checks off entirely.
+page instead with the `RSTUDIO_DISABLE_IN_APP_UPDATES` environment variable
+(packaged Desktop builds do not read an `rsession.conf`, so there is no option
+for it); the existing `RSTUDIO_DISABLE_CHECK_FOR_UPDATES` still turns update
+checks off entirely.
 
 For testing a build against another channel or copy of the API, the desktop
 honours `RSTUDIO_UPDATE_API_URL`, `RSTUDIO_UPDATE_CHANNEL` (also enables

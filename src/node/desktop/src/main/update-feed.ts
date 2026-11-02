@@ -144,6 +144,11 @@ export function branchSlug(releaseName: string): string {
   return releaseName.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
+/** The release API's index: current releases plus the branches in development. */
+export function releaseIndexUrl(baseUrl: string): string {
+  return `${baseUrl.replace(/\/+$/, '')}/api/v1/release/index.json`;
+}
+
 /**
  * The index the updater polls for this channel, or null when the channel
  * never updates. Release builds use the release API, which lists only
@@ -154,7 +159,7 @@ export function updateIndexUrl(baseUrl: string, channel: UpdateChannel, branch: 
   const base = baseUrl.replace(/\/+$/, '');
   switch (channel) {
     case 'release':
-      return `${base}/api/v1/release/index.json`;
+      return releaseIndexUrl(base);
     case 'preview':
     case 'daily':
       return `${base}/rstudio/${branch}/index.json`;
@@ -219,6 +224,50 @@ export function parseReleaseIndex(text: string): { buildsUrl: string; notesUrl: 
     buildsUrl: build.builds_url,
     notesUrl: typeof build.notes_url === 'string' ? build.notes_url : '',
   };
+}
+
+/**
+ * The branch currently receiving daily (and so hourly) builds, from the
+ * release index's `in_development` list: the entry whose latest build is a
+ * daily, the newest when several qualify. A branch that has moved on to
+ * release candidates (untagged builds) no longer counts. Null when no entry
+ * qualifies, e.g. right after a release cut and before the new branch's
+ * first daily.
+ */
+export function parseDevelopmentBranch(text: string): string | null {
+  const doc = asObject(JSON.parse(text), 'release index');
+  const entries = Array.isArray(doc.in_development) ? doc.in_development : [];
+
+  let best: { branch: string; version: string } | null = null;
+  for (const raw of entries) {
+    const entry = asObject(raw, 'in-development release');
+    if (typeof entry.branch !== 'string' || entry.branch.length === 0) {
+      continue;
+    }
+    const latest = typeof entry.latest_build === 'object' && entry.latest_build !== null ? entry.latest_build : {};
+    const version = (latest as Record<string, unknown>).build;
+    if (typeof version !== 'string' || channelForVersion(version) !== 'daily') {
+      continue;
+    }
+    if (!best || compareVersions(version, best.version) > 0) {
+      best = { branch: entry.branch, version };
+    }
+  }
+  return best?.branch ?? null;
+}
+
+/**
+ * The version an installer's filename encodes, as the builds site names
+ * them: RStudio-2026.12.0-daily-8.exe -> 2026.12.0-daily+8 (the build
+ * number's '+' is written as '-'). Null for any other name.
+ */
+export function installerVersion(filename: string): string | null {
+  const match = /^RStudio-(\d+\.\d+\.\d+)(?:-([A-Za-z]+))?-(\d+)\.(?:exe|dmg|zip)$/i.exec(filename);
+  if (!match) {
+    return null;
+  }
+  const tag = match[2] ? `-${match[2]}` : '';
+  return `${match[1]}${tag}+${match[3]}`;
 }
 
 /**

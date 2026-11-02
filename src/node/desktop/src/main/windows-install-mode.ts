@@ -89,3 +89,39 @@ export async function detectWindowsInstallMode(exeDir: string): Promise<WindowsI
   const [currentUser, allUsers] = await Promise.all([regQueryInstallLocation('HKCU'), regQueryInstallLocation('HKLM')]);
   return windowsInstallModeFor(exeDir, { currentUser, allUsers });
 }
+
+/**
+ * The process ids in `tasklist /FO CSV /NH` output, e.g.
+ *
+ *     "rstudio.exe","1234","Console","1","123,456 K"
+ *
+ * Empty when nothing matched (tasklist then prints an INFO line instead).
+ */
+export function parseTasklistPids(output: string): number[] {
+  const pids: number[] = [];
+  for (const line of output.split(/\r?\n/)) {
+    const match = /^"[^"]*","(\d+)"/.exec(line.trim());
+    if (match) {
+      pids.push(Number(match[1]));
+    }
+  }
+  return pids;
+}
+
+/**
+ * How many rstudio.exe processes other than this one are running. Each
+ * RStudio window is its own process, and the installer refuses to replace
+ * files while any of them is alive, so an update must wait for the others
+ * to close. A tasklist failure counts as none, so an update is never
+ * blocked by the probe itself.
+ */
+export async function otherRStudioProcessCount(): Promise<number> {
+  return new Promise((resolve) => {
+    execFile(
+      'tasklist.exe',
+      ['/FI', 'IMAGENAME eq rstudio.exe', '/FO', 'CSV', '/NH'],
+      { windowsHide: true },
+      (error, stdout) => resolve(error ? 0 : parseTasklistPids(stdout).filter((pid) => pid !== process.pid).length),
+    );
+  });
+}

@@ -450,10 +450,9 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    {
       // the desktop frame checks the builds site itself and can download and
       // install the update; where it can't (Linux, Pro builds, a build not on
-      // the site, site unreachable) or an administrator has turned in-app
-      // updates off, the session's check runs as before
-      if (!Desktop.hasDesktopFrame() ||
-          !session_.getSessionInfo().getAllowInAppUpdates())
+      // the site, site unreachable, RSTUDIO_DISABLE_IN_APP_UPDATES set) the
+      // session's check runs as before
+      if (!Desktop.hasDesktopFrame())
       {
          checkForUpdatesViaSession(manual);
          return;
@@ -534,6 +533,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             elementIds.add(ElementIds.DIALOG_YES_BUTTON);
             buttonOperations.add(() ->
             {
+               // a check during a download offers the same update again; the
+               // desktop ignores the second request, so keep a single indicator
+               if (updateProgress_ != null)
+                  updateProgress_.dismiss();
+
                updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
                      constants_.downloadingUpdateMessage(updateVersion));
                Desktop.getFrame().downloadUpdate();
@@ -666,16 +670,31 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       elementIds.add(ElementIds.DIALOG_YES_BUTTON);
       buttonOperations.add(() ->
       {
-         // the usual quit sequence (save prompts, session shutdown) runs
-         // first; the desktop frame applies the update as it quits
-         appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
+         Desktop.getFrame().canInstallUpdate((Boolean canInstall) ->
          {
-            @Override
-            public void onReadyToQuit(boolean saveChanges)
+            // on Windows every window is its own rstudio.exe, and the
+            // installer will not run while any of them is alive; quitting
+            // this one alone would leave the user without RStudio and
+            // without the update
+            if (!canInstall)
             {
-               Desktop.getFrame().installUpdate();
-               appQuit_.performQuit(null, saveChanges);
+               globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
+                     constants_.updateRStudioCaption(),
+                     constants_.closeOtherWindowsToUpdateMessage());
+               return;
             }
+
+            // the usual quit sequence (save prompts, session shutdown) runs
+            // first; the desktop frame applies the update as it quits
+            appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
+            {
+               @Override
+               public void onReadyToQuit(boolean saveChanges)
+               {
+                  Desktop.getFrame().installUpdate();
+                  appQuit_.performQuit(null, saveChanges);
+               }
+            });
          });
       });
 

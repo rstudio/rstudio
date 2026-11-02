@@ -48,50 +48,38 @@ fi
 echo "Submitting notarization request using account ${APPLE_ID_USR} ..."
 
 log=/tmp/rstudio-notarization-$$.log
-mkfifo "${log}"
 trap 'rm -f ${log}' EXIT
 
 # The team-id uniquely identifies the organization with Apple. It does not need to be generated again and is found in the Apple developer account.
+# Output streams to the console and to a log we inspect afterwards.
 xcrun notarytool submit --wait   \
     --apple-id "${APPLE_ID_USR}" \
     --password "${APPLE_ID_PSW}" \
     --team-id FYF2F5GFX4         \
     --progress                   \
-    "$1" > "${log}" 2>&1 &
+    "$1" 2>&1 | tee "${log}"
+status=${PIPESTATUS[0]}
 
-# Stream logs, and collect the UUID used for the submission.
-while IFS= read -r line < "${log}"; do
-    
-    echo "${line}"
-    
-    if [[ "${line}" =~ "id:" ]]; then
-        uuid=$(echo "${line}" | cut -d: -f2 | xargs)
+uuid=$(grep -m1 -E "^\s*id:" "${log}" | cut -d: -f2 | xargs)
+
+# notarytool reports a rejected submission in its output rather than its exit
+# status, so require an explicit acceptance as well as a clean exit before
+# calling this a success for either artifact type.
+if [[ "${status}" -ne 0 ]] || ! grep -q "status: Accepted" "${log}"; then
+
+    if [[ -n "${uuid}" ]]; then
+        echo
+        echo ----------------------------------------
+        xcrun notarytool log             \
+            --apple-id "${APPLE_ID_USR}" \
+            --password "${APPLE_ID_PSW}" \
+            --team-id FYF2F5GFX4         \
+            "${uuid}"
+        echo ----------------------------------------
+        echo
     fi
 
-    if [[ "${line}" =~ "Current status: Invalid" ]]; then
-        status="invalid"
-    fi
-
-    if [[ "${line}" =~ "Processing complete" ]]; then
-        break
-    fi
-
-done
-
-# Check for success.
-if [[ "${status}" = "invalid" ]]; then
-
-    echo
-    echo ----------------------------------------
-    xcrun notarytool log             \
-        --apple-id "${APPLE_ID_USR}" \
-        --password "${APPLE_ID_PSW}" \
-        --team-id FYF2F5GFX4         \
-        "${uuid}"
-    echo ----------------------------------------
-    echo
-
-    echo "Notarization failed."
+    echo "Notarization failed (notarytool exit status ${status})."
     exit 1
 
 fi

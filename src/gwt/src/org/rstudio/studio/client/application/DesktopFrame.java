@@ -43,6 +43,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    // plus "status" and "can-install"
    void checkForUpdates(boolean manual, CommandWithArg<String> callback);
    void downloadUpdate();
+   // false when the update cannot be applied yet (on Windows, while other
+   // RStudio windows -- separate processes -- are still open)
+   void canInstallUpdate(CommandWithArg<Boolean> callback);
    void installUpdate();
 
    void getOpenFileName(String caption,

@@ -284,9 +284,6 @@ protected:
       ("allow-file-downloads",
       value<bool>(&allowFileDownloads_)->default_value(true),
       "Indicates whether or not to allow file downloads from the files pane.")
-      ("allow-in-app-updates",
-      value<bool>(&allowInAppUpdates_)->default_value(true),
-      "Indicates whether or not RStudio Desktop may download and install RStudio updates itself. When disabled, update checks still notify users of new releases but direct them to the download page instead. Only affects open-source RStudio Desktop on macOS and Windows.")
       ("allow-file-uploads",
       value<bool>(&allowFileUploads_)->default_value(true),
       "Indicates whether or not to allow file uploads from the files pane.")
@@ -603,7 +600,6 @@ public:
    bool allowShell() const { return allowShell_ || allowOverlay(); }
    bool allowTerminalWebsockets() const { return allowTerminalWebsockets_ || allowOverlay(); }
    bool allowFileDownloads() const { return allowFileDownloads_ || allowOverlay(); }
-   bool allowInAppUpdates() const { return allowInAppUpdates_ || allowOverlay(); }
    bool allowFileUploads() const { return allowFileUploads_ || allowOverlay(); }
    bool allowRemovePublicFolder() const { return allowRemovePublicFolder_ || allowOverlay(); }
    bool allowRpubsPublish() const { return allowRpubsPublish_ || allowOverlay(); }
@@ -745,7 +741,6 @@ protected:
    bool allowShell_;
    bool allowTerminalWebsockets_;
    bool allowFileDownloads_;
-   bool allowInAppUpdates_;
    bool allowFileUploads_;
    bool allowRemovePublicFolder_;
    bool allowRpubsPublish_;

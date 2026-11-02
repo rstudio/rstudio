@@ -546,12 +546,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_shell"] = options.allowShell();
    sessionInfo["allow_terminal_websockets"] = options.allowTerminalWebsockets();
    sessionInfo["allow_file_download"] = options.allowFileDownloads();
-
-   // in-app (download and install) updates on Desktop; administrators can
-   // keep the update notification but send users to the download page
-   sessionInfo["allow_in_app_updates"] =
-      options.allowInAppUpdates() &&
-      core::system::getenv("RSTUDIO_DISABLE_IN_APP_UPDATES").empty();
    sessionInfo["allow_file_upload"] = options.allowFileUploads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
    sessionInfo["allow_full_ui"] = options.allowFullUI();

@@ -516,13 +516,6 @@
             "description": "Indicates whether or not to allow file downloads from the files pane."
          },
          {
-            "name": "allow-in-app-updates",
-            "type": "bool",
-            "memberName": "allowInAppUpdates_",
-            "defaultValue": true,
-            "description": "Indicates whether or not RStudio Desktop may download and install RStudio updates itself. When disabled, update checks still notify users of new releases but direct them to the download page instead. Only affects open-source RStudio Desktop on macOS and Windows."
-         },
-         {
             "name": "allow-file-uploads",
             "type": "bool",
             "memberName": "allowFileUploads_",

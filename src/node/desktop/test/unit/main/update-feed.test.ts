@@ -20,9 +20,11 @@ import {
   channelForVersion,
   compareVersions,
   isProVersion,
+  installerVersion,
   isUpdateAvailable,
   kDefaultReleaseNotesUrl,
   parseBuildIndex,
+  parseDevelopmentBranch,
   parseReleaseIndex,
   parseVersion,
   platformKeys,
@@ -51,7 +53,21 @@ const releaseIndex = {
       ],
     },
   ],
-  in_development: [],
+  in_development: [
+    {
+      version: '2026.11',
+      name: 'Montauk Daisy',
+      branch: 'montauk-daisy',
+      // release candidates: untagged builds, no longer the daily branch
+      latest_build: { build: '2026.11.0+202.pro4' },
+    },
+    {
+      version: '2026.12',
+      name: 'Parrot Balsam',
+      branch: 'parrot-balsam',
+      latest_build: { build: '2026.12.0-daily+8.pro1' },
+    },
+  ],
   upcoming: [],
 };
 
@@ -205,6 +221,49 @@ describe('update feed', () => {
         /https builds_url/,
       );
       assert.throws(() => parseReleaseIndex('[]'), /not a JSON object/);
+    });
+  });
+
+  describe('parseDevelopmentBranch', () => {
+    it('names the in-development branch whose latest build is a daily', () => {
+      assert.equal(parseDevelopmentBranch(JSON.stringify(releaseIndex)), 'parrot-balsam');
+    });
+
+    it('prefers the newest daily when several branches have one', () => {
+      const index = {
+        in_development: [
+          { branch: 'newer', latest_build: { build: '2027.01.0-daily+2' } },
+          { branch: 'older', latest_build: { build: '2026.12.0-daily+300' } },
+        ],
+      };
+      assert.equal(parseDevelopmentBranch(JSON.stringify(index)), 'newer');
+    });
+
+    it('is null when nothing in development has a daily build', () => {
+      assert.isNull(parseDevelopmentBranch(JSON.stringify({ in_development: [] })));
+      assert.isNull(parseDevelopmentBranch(JSON.stringify({ released: [] })));
+      assert.isNull(
+        parseDevelopmentBranch(
+          JSON.stringify({
+            in_development: [{ branch: 'rc', latest_build: { build: '2026.11.0+202' } }, { branch: 'new' }],
+          }),
+        ),
+      );
+    });
+  });
+
+  describe('installerVersion', () => {
+    it('recovers the version the builds site encodes in a filename', () => {
+      assert.equal(installerVersion('RStudio-2026.12.0-daily-8.exe'), '2026.12.0-daily+8');
+      assert.equal(installerVersion('RStudio-2026.10.1-239.exe'), '2026.10.1+239');
+      assert.equal(installerVersion('RStudio-2026.10.1-239.dmg'), '2026.10.1+239');
+      assert.equal(installerVersion('rstudio-2026.12.0-hourly-12.zip'), '2026.12.0-hourly+12');
+    });
+
+    it('is null for other files', () => {
+      assert.isNull(installerVersion('RStudio-2026.12.0-daily-8.exe.1234.part'));
+      assert.isNull(installerVersion('rstudio-2026.12.0-daily-8-amd64.deb'));
+      assert.isNull(installerVersion('notes.txt'));
     });
   });
 

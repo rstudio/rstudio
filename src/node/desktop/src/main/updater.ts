@@ -16,8 +16,8 @@
 import { spawn } from 'child_process';
 import { createHash } from 'crypto';
 import { app, autoUpdater, net } from 'electron';
-import { createWriteStream } from 'fs';
-import { mkdir, rm, stat } from 'fs/promises';
+import { createReadStream, createWriteStream, existsSync } from 'fs';
+import { mkdir, readdir, rename, rm, stat } from 'fs/promises';
 import http from 'http';
 import { AddressInfo } from 'net';
 import path from 'path';
@@ -32,18 +32,21 @@ import {
   branchSlug,
   BuildArtifact,
   channelForVersion,
+  installerVersion,
   isProVersion,
   isUpdateAvailable,
   kDefaultUpdateApiBaseUrl,
   parseBuildIndex,
+  parseDevelopmentBranch,
   parseReleaseIndex,
   PlatformKeys,
   platformKeys,
+  releaseIndexUrl,
   squirrelFeedDocument,
   UpdateChannel,
   updateIndexUrl,
 } from './update-feed';
-import { detectWindowsInstallMode, WindowsInstallMode } from './windows-install-mode';
+import { detectWindowsInstallMode, otherRStudioProcessCount, WindowsInstallMode } from './windows-install-mode';
 
 /**
  * In-app updates for RStudio Desktop, modelled on Positron's updater.
@@ -62,14 +65,17 @@ import { detectWindowsInstallMode, WindowsInstallMode } from './windows-install-
  *      signature. Windows downloads the NSIS installer and checks its SHA-256
  *      against the API.
  *   3. We call back into GWT (`desktopHooks.onUpdateDownloaded`), which offers
- *      a restart. If accepted, GWT runs its normal quit sequence after calling
- *      `installUpdate()`; `applyPendingUpdate()` then runs as the main window
- *      quits: Squirrel swaps the bundle and relaunches, or the installer runs
- *      silently (`/S /update`) and relaunches RStudio when it is done.
+ *      a restart. If accepted, GWT asks `canInstallUpdate()` (on Windows, no
+ *      other RStudio process may be running), calls `installUpdate()` and
+ *      runs its normal quit sequence; `applyPendingUpdate()` then runs as
+ *      the main window quits: Squirrel swaps the bundle and relaunches, or
+ *      the installer runs silently (`/S /update`) and relaunches RStudio
+ *      when it is done.
  *
  * Any failure to read the API answers `unsupported` or `error`, and GWT
  * falls back to the session's check and today's "Quit and Download" dialog.
- * Linux always answers `unsupported` (#4186 tracks package repos).
+ * Linux always answers `unsupported` (#4186 tracks package repos), as does
+ * any build with RSTUDIO_DISABLE_IN_APP_UPDATES set.
  */
 
 export type UpdateCheckStatus = 'available' | 'up-to-date' | 'unsupported' | 'error';
@@ -96,13 +102,18 @@ interface AvailableUpdate {
 /** How long an API request may take before it counts as unreachable. */
 const kRequestTimeoutMs = 15000;
 
+/** A partial download older than this was abandoned by a crashed instance. */
+const kPartialDownloadTtlMs = 24 * 60 * 60 * 1000;
+
 export class Updater {
-  private indexUrl: string | null = null;
   private keys: PlatformKeys | null;
   private channel: UpdateChannel;
   private currentVersion: string;
+  private baseUrl: string;
+  private branch: string;
+  private branchPinned: boolean;
   private available: AvailableUpdate | null = null;
-  private downloading = false;
+  private activeDownload: BuildArtifact | null = null;
   private downloadedVersion: string | null = null;
   private windowsInstaller: string | null = null;
   private windowsInstallMode: WindowsInstallMode | null = null;
@@ -118,34 +129,38 @@ export class Updater {
     this.currentVersion = getenv('RSTUDIO_UPDATE_VERSION') || buildInfo().RSTUDIO_VERSION;
     const channelOverride = getenv('RSTUDIO_UPDATE_CHANNEL');
     this.channel = channelOverride ? (channelOverride as UpdateChannel) : channelForVersion(this.currentVersion);
-    const branch = getenv('RSTUDIO_UPDATE_BRANCH') || branchSlug(buildInfo().RSTUDIO_RELEASE_NAME);
-    const baseUrl = getenv('RSTUDIO_UPDATE_API_URL') || kDefaultUpdateApiBaseUrl;
+    const branchOverride = getenv('RSTUDIO_UPDATE_BRANCH');
+    this.branchPinned = branchOverride.length > 0;
+    this.branch = branchOverride || branchSlug(buildInfo().RSTUDIO_RELEASE_NAME);
+    this.baseUrl = getenv('RSTUDIO_UPDATE_API_URL') || kDefaultUpdateApiBaseUrl;
 
     // open-source RStudio Desktop only: Workbench has its own distribution
-    // and will need its own update infrastructure
-    this.keys = isProVersion(this.currentVersion) ? null : platformKeys(process.platform, process.arch);
-    if (this.keys) {
-      this.indexUrl = updateIndexUrl(baseUrl, this.channel, branch);
+    // and will need its own update infrastructure. Administrators turn the
+    // whole feature off with RSTUDIO_DISABLE_IN_APP_UPDATES; the session's
+    // own check then runs as before.
+    const disabled = getenv('RSTUDIO_DISABLE_IN_APP_UPDATES').length > 0;
+    const indexed = updateIndexUrl(this.baseUrl, this.channel, this.branch) !== null;
+    this.keys =
+      disabled || !indexed || isProVersion(this.currentVersion) ? null : platformKeys(process.platform, process.arch);
+
+    if (this.keys && process.platform === 'win32') {
+      void this.pruneStagedInstallers();
     }
   }
 
-  /** Whether in-app update checks are possible on this platform and build. */
-  supported(): boolean {
-    return this.indexUrl !== null && this.keys !== null;
-  }
-
   async checkForUpdates(manual: boolean): Promise<UpdateCheckResult> {
-    if (!this.indexUrl || !this.keys) {
+    if (!this.keys) {
       return { status: 'unsupported' };
     }
 
     let update: AvailableUpdate;
     try {
-      const found = await this.readIndex(this.indexUrl, this.keys);
+      const indexUrl = await this.resolveIndexUrl();
+      const found = await this.readIndex(indexUrl, this.keys);
       if (!found) {
         // the branch is not on the site (yet), so there is nothing to compare
         // with; the session's own check still runs
-        logger().logDebug(`${this.indexUrl} lists no ${this.keys.download} build; deferring to the session check`);
+        logger().logDebug(`${indexUrl} lists no ${this.keys.download} build; deferring to the session check`);
         return { status: 'unsupported' };
       }
       update = found;
@@ -182,7 +197,7 @@ export class Updater {
       this.notifyFailed('No update is available to download.');
       return;
     }
-    if (this.downloading) {
+    if (this.activeDownload) {
       return;
     }
     if (this.downloadedVersion === entry.version) {
@@ -190,7 +205,9 @@ export class Updater {
       return;
     }
 
-    this.downloading = true;
+    // later checks may replace `available` while this download runs, so
+    // completion reports the artifact that was actually fetched
+    this.activeDownload = entry;
     this.setProgress(2); // > 1 shows an indeterminate dock / taskbar bar
     try {
       if (process.platform === 'darwin') {
@@ -204,6 +221,24 @@ export class Updater {
     } catch (error: unknown) {
       this.onDownloadFailed(safeError(error).message);
     }
+  }
+
+  /**
+   * Whether the downloaded update can be applied right now. "Restart Now"
+   * quits only this window, and on Windows each window is a separate
+   * rstudio.exe that the installer refuses to run beside; GWT asks the user
+   * to close the others first.
+   */
+  async canInstallUpdate(): Promise<boolean> {
+    if (process.platform !== 'win32') {
+      return true;
+    }
+
+    const others = await otherRStudioProcessCount();
+    if (others > 0) {
+      logger().logInfo(`not installing the update yet: ${others} other RStudio process(es) running`);
+    }
+    return others === 0;
   }
 
   /** Record that the user accepted the restart; the quit sequence applies it. */
@@ -234,6 +269,13 @@ export class Updater {
     }
 
     if (process.platform === 'win32' && this.windowsInstaller && this.windowsInstallMode) {
+      // the staging directory is shared with other instances, so make sure
+      // the verified installer is still there before handing it the quit
+      if (!existsSync(this.windowsInstaller)) {
+        logger().logErrorMessage(`${this.windowsInstaller} is gone; not installing RStudio ${this.downloadedVersion}`);
+        return false;
+      }
+
       // the installer waits (via /update) for this process to exit before it
       // touches the install directory, then relaunches RStudio
       logger().logInfo(`launching ${this.windowsInstaller} to install RStudio ${this.downloadedVersion}`);
@@ -246,6 +288,27 @@ export class Updater {
       child.unref();
     }
     return false;
+  }
+
+  /**
+   * The index to poll on this check. Daily and hourly builds move to a new
+   * branch at every release cut (version/new-version.sh), so unless a branch
+   * was pinned, follow whichever branch the site says is in development
+   * rather than the one this build came from.
+   */
+  private async resolveIndexUrl(): Promise<string> {
+    let branch = this.branch;
+    if (!this.branchPinned && (this.channel === 'daily' || this.channel === 'hourly')) {
+      const current = parseDevelopmentBranch(await this.fetchText(releaseIndexUrl(this.baseUrl)));
+      if (current) {
+        branch = current;
+      } else {
+        logger().logDebug(`the release index names no branch in development; staying on ${branch}`);
+      }
+    }
+
+    // the constructor checked that this channel has an index
+    return updateIndexUrl(this.baseUrl, this.channel, branch) as string;
   }
 
   /**
@@ -312,7 +375,7 @@ export class Updater {
       this.macListenersInstalled = true;
       autoUpdater.on('update-downloaded', (_event, _notes, releaseName) => {
         this.closeSquirrelServer();
-        this.onDownloaded(this.available?.install?.version ?? releaseName);
+        this.onDownloaded(this.activeDownload?.version ?? releaseName);
       });
       autoUpdater.on('update-not-available', () => {
         this.closeSquirrelServer();
@@ -359,12 +422,43 @@ export class Updater {
     this.squirrelServer = null;
   }
 
+  /** Where Windows installers are staged; shared by every RStudio instance of this user. */
+  private stagingDir(): string {
+    return path.join(app.getPath('temp'), 'rstudio-updates');
+  }
+
+  /**
+   * Stage the Windows installer. The staging directory is shared, so a
+   * verified installer already there (left by another instance, or by an
+   * earlier run whose user chose "Later") is reused rather than replaced,
+   * and a fresh download lands under a private name until it is verified.
+   */
   private async downloadWindowsInstaller(entry: BuildArtifact): Promise<void> {
-    const dir = path.join(app.getPath('temp'), 'rstudio-updates');
+    const dir = this.stagingDir();
     await mkdir(dir, { recursive: true });
     const target = path.join(dir, path.basename(entry.filename));
-    await rm(target, { force: true });
 
+    if (await this.verifyInstaller(target, entry)) {
+      logger().logDebug(`reusing the already downloaded ${target}`);
+      this.windowsInstaller = target;
+      return;
+    }
+
+    const partial = `${target}.${process.pid}.part`;
+    try {
+      await this.fetchToFile(entry, partial);
+      if (!(await this.verifyInstaller(partial, entry))) {
+        throw new Error('the downloaded installer did not match the checksum and size published for this release');
+      }
+      await rename(partial, target);
+    } finally {
+      await rm(partial, { force: true });
+    }
+
+    this.windowsInstaller = target;
+  }
+
+  private async fetchToFile(entry: BuildArtifact, file: string): Promise<void> {
     const response = await net.fetch(entry.url, { cache: 'no-store' });
     if (!response.ok || !response.body) {
       throw new Error(`download failed with HTTP ${response.status}`);
@@ -372,32 +466,70 @@ export class Updater {
 
     const total = Number(response.headers.get('content-length')) || entry.size;
     let received = 0;
-    const hash = createHash('sha256');
     const source = Readable.fromWeb(response.body as import('stream/web').ReadableStream);
     source.on('data', (chunk: Buffer) => {
-      hash.update(chunk);
       received += chunk.length;
       if (total > 0) {
         this.setProgress(received / total);
       }
     });
-    await pipeline(source, createWriteStream(target));
+    await pipeline(source, createWriteStream(file));
+  }
 
-    const digest = hash.digest('hex');
-    if (digest !== entry.sha256) {
-      await rm(target, { force: true });
-      throw new Error('the downloaded installer did not match the checksum published for this release');
+  /** True when `file` exists with the size and SHA-256 the API published. */
+  private async verifyInstaller(file: string, entry: BuildArtifact): Promise<boolean> {
+    try {
+      if (entry.size > 0 && (await stat(file)).size !== entry.size) {
+        return false;
+      }
+      const hash = createHash('sha256');
+      for await (const chunk of createReadStream(file)) {
+        hash.update(chunk as Buffer);
+      }
+      return hash.digest('hex') === entry.sha256;
+    } catch {
+      return false;
     }
-    if (entry.size > 0 && (await stat(target)).size !== entry.size) {
-      await rm(target, { force: true });
-      throw new Error('the downloaded installer is not the size published for this release');
+  }
+
+  /**
+   * Drop staged installers that can no longer be used: builds no newer than
+   * the running one (the update was applied, or superseded) and partial
+   * downloads abandoned by an instance that died. Newer installers stay, so
+   * "Later" followed by a relaunch does not download again.
+   */
+  private async pruneStagedInstallers(): Promise<void> {
+    let names: string[];
+    try {
+      names = await readdir(this.stagingDir());
+    } catch {
+      return;
     }
 
-    this.windowsInstaller = target;
+    for (const name of names) {
+      const file = path.join(this.stagingDir(), name);
+      try {
+        const version = installerVersion(name);
+        let stale: boolean;
+        if (version) {
+          stale = !isUpdateAvailable(this.currentVersion, version);
+        } else if (/\.part$/i.test(name)) {
+          stale = Date.now() - (await stat(file)).mtimeMs > kPartialDownloadTtlMs;
+        } else {
+          stale = false;
+        }
+        if (stale) {
+          logger().logDebug(`removing stale staged installer ${file}`);
+          await rm(file, { force: true });
+        }
+      } catch (error: unknown) {
+        logger().logDebug(`could not prune ${file}: ${safeError(error).message}`);
+      }
+    }
   }
 
   private onDownloaded(version: string): void {
-    this.downloading = false;
+    this.activeDownload = null;
     this.downloadedVersion = version;
     this.setProgress(-1);
     logger().logInfo(`RStudio ${version} downloaded and ready to install`);
@@ -405,7 +537,7 @@ export class Updater {
   }
 
   private onDownloadFailed(message: string): void {
-    this.downloading = false;
+    this.activeDownload = null;
     this.setProgress(-1);
     logger().logErrorMessage(`update download failed: ${message}`);
     this.notifyFailed(message);
