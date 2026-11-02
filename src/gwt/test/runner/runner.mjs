@@ -2,15 +2,15 @@
 //
 // Each target page is expected to populate `#passed` and `#failed` spans,
 // the same convention the existing pages use for in-browser display.
-// We serve src/gwt/ over a local HTTP server (the browser's same-origin
-// policy blocks cross-directory `<script src>` loads under file://),
-// navigate Playwright's bundled chromium to each page, wait until the
-// counts are populated, and exit non-zero on any failure, uncaught page
-// error, or failed request.
+// We serve the pages and the files they reference over a local HTTP
+// server (the browser's same-origin policy blocks cross-directory
+// `<script src>` loads under file://), navigate Playwright's bundled
+// chromium to each page, wait until the counts are populated, and exit
+// non-zero on any failure, uncaught page error, or failed request.
 
 import { createServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
-import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { dirname, extname, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
@@ -38,28 +38,63 @@ const MIME = {
    ".png": "image/png",
 };
 
-function startServer(root) {
-   const server = createServer(async (req, res) => {
+// Load each page and, transitively, the local scripts and stylesheets it
+// references, keyed by the URL path the browser will request. The request
+// handler serves only from this map, so nothing request-derived ever
+// reaches the file system -- which the Snyk Code scan otherwise reports
+// as path traversal and as unthrottled file operations, even for a
+// loopback server that lives for a single test run. A request for
+// anything else is a 404, which the runner reports as a failed request.
+async function loadAssets(root, pages) {
+   const assets = new Map();
+   const queue = [...pages];
+   while (queue.length > 0) {
+      const urlPath = queue.shift();
+      if (assets.has(urlPath))
+         continue;
+
+      const file = resolve(root, ...urlPath.split("/"));
+      const body = await readFile(file).catch((err) => {
+         if (err.code === "ENOENT" || err.code === "EISDIR")
+            return null;
+         throw err;
+      });
+      if (body === null)
+         continue;
+      assets.set(urlPath, body);
+
+      if (extname(urlPath).toLowerCase() === ".html") {
+         for (const ref of localReferences(body.toString("utf8")))
+            queue.push(posix.normalize(posix.join(posix.dirname(urlPath), ref)));
+      }
+   }
+   return assets;
+}
+
+// Relative src/href targets in a page, as written, minus query and fragment.
+function localReferences(html) {
+   const refs = [];
+   for (const match of html.matchAll(/\b(?:src|href)\s*=\s*"([^"]+)"/g)) {
+      const ref = match[1].replace(/[?#].*$/, "");
+      if (ref === "" || /^[a-z][a-z0-9+.-]*:/i.test(ref) || ref.startsWith("/"))
+         continue;
+      refs.push(ref);
+   }
+   return refs;
+}
+
+function startServer(assets) {
+   const server = createServer((req, res) => {
       try {
          const url = new URL(req.url, "http://localhost");
-         const requested = decodeURIComponent(url.pathname);
-         const safe = resolve(join(root, requested));
-         const rel = relative(root, safe);
-         if (rel.startsWith("..") || isAbsolute(rel)) {
-            res.writeHead(403).end("forbidden");
-            return;
-         }
-         const info = await stat(safe).catch((err) => {
-            if (err.code === "ENOENT") return null;
-            throw err;
-         });
-         if (!info || !info.isFile()) {
+         const urlPath = posix.normalize(decodeURIComponent(url.pathname)).replace(/^\/+/, "");
+         const body = assets.get(urlPath);
+         if (body === undefined) {
             res.writeHead(404).end("not found");
             return;
          }
-         const body = await readFile(safe);
          res.writeHead(200, {
-            "content-type": MIME[extname(safe).toLowerCase()] || "application/octet-stream",
+            "content-type": MIME[extname(urlPath).toLowerCase()] || "application/octet-stream",
             "content-length": body.length,
          });
          res.end(body);
@@ -127,7 +162,7 @@ async function runPage(page, baseUrl, relativeUrl) {
 }
 
 async function main() {
-   const server = await startServer(GWT_ROOT);
+   const server = await startServer(await loadAssets(GWT_ROOT, PAGES));
    const { port } = server.address();
    const baseUrl = `http://127.0.0.1:${port}`;
 
