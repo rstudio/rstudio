@@ -90,6 +90,8 @@ else
 fi
 
 FOUND=$(command -v sccache || true)
-if [ -n "${FOUND}" ] && [ "${FOUND}" != "${SCCACHE}" ]; then
+if [ -z "${FOUND}" ]; then
+    warn "sccache is not on PATH; add ${INSTALL_DIR} to PATH"
+elif [ "${FOUND}" != "${SCCACHE}" ]; then
     warn "${FOUND} comes before ${SCCACHE} on PATH and will be used instead"
 fi
