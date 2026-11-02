@@ -16,23 +16,71 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import {
+  branchSlug,
   channelForVersion,
   compareVersions,
   isUpdateAvailable,
-  parseReleaseFeed,
+  kDefaultReleaseNotesUrl,
+  parseBuildIndex,
+  parseReleaseIndex,
   parseVersion,
-  updateFeedUrl,
+  platformKeys,
+  squirrelFeedDocument,
+  updateIndexUrl,
 } from '../../../src/main/update-feed';
 
-const feed = {
+// shapes taken from https://dailies.rstudio.com/api/v1/openapi.json
+const releaseIndex = {
+  $schema: 'https://dailies.rstudio.com/api/v1/schema/release.json',
+  released: [
+    {
+      version: '2026.10',
+      name: 'Blue Mistflower',
+      branch: 'blue-mistflower',
+      published: [
+        {
+          build: '2026.10.1+239.pro3',
+          builds_url: 'https://dailies.rstudio.com/api/v1/build/2026.10.1+239.pro3/index.json',
+          notes_url: 'https://docs.posit.co/ide/news/#rstudio-2026.10.1',
+        },
+        {
+          build: '2026.10.0+233.pro1',
+          builds_url: 'https://dailies.rstudio.com/api/v1/build/2026.10.0+233.pro1/index.json',
+        },
+      ],
+    },
+  ],
+  in_development: [],
+  upcoming: [],
+};
+
+const macos = {
+  name: 'macOS 15+',
+  architecture: 'universal',
+  link: 'https://dl.dailies.rstudio.com/electron/macos/RStudio-2026.10.1-239.dmg',
+  filename: 'RStudio-2026.10.1-239.dmg',
+  sha256: '20C3B5978E93004E10807A273ED2E98DAFF2C44710D43C44E70D17761147F75D',
+  channel: 'Release',
   version: '2026.10.1+239',
-  name: 'RStudio 2026.10.1+239',
-  notes: 'https://docs.posit.co/ide/news/',
-  pub_date: '2026-10-20T18:51:38Z',
-  url: 'https://download1.rstudio.org/electron/macos/RStudio-2026.10.1-239.zip',
-  sha256: 'C5F52736D13ADA47E95412D2822DDCEC3D26560E73D3616F902122F6BD9E748C',
-  size: 123456789,
-  commit: '5dfc92424b4381ca7139f3f0a122a65abc2a9383',
+  size: 966474254,
+  commit: '0b06695c24e10f6de6b9166c35ae24804c21f95f',
+  date: '2026-10-23T21:18:44Z',
+};
+
+const buildIndex = {
+  build: '2026.10.1+239.pro3',
+  oss_build: '2026.10.1+239',
+  products: {
+    electron: {
+      name: 'RStudio Desktop',
+      platforms: {
+        macos,
+        'macos-zip': { ...macos, link: macos.link.replace('.dmg', '.zip'), filename: 'RStudio-2026.10.1-239.zip' },
+        windows: { ...macos, link: 'https://dl.dailies.rstudio.com/electron/windows/RStudio-2026.10.1-239.exe' },
+      },
+    },
+    server: { name: 'RStudio Server', platforms: {} },
+  },
 };
 
 describe('update feed', () => {
@@ -96,67 +144,123 @@ describe('update feed', () => {
     });
   });
 
-  describe('updateFeedUrl', () => {
-    const base = 'https://cdn.posit.co/rstudio/updates';
-
-    it('builds per-channel, per-platform feed URLs', () => {
-      assert.equal(updateFeedUrl(base, 'release', 'darwin', 'arm64'), `${base}/release/macos/universal/releases.json`);
-      assert.equal(updateFeedUrl(base, 'release', 'darwin', 'x64'), `${base}/release/macos/universal/releases.json`);
-      assert.equal(updateFeedUrl(base, 'daily', 'win32', 'x64'), `${base}/daily/windows/x86_64/releases.json`);
-      assert.equal(updateFeedUrl(base, 'daily', 'win32', 'arm64'), `${base}/daily/windows/arm64/releases.json`);
-    });
-
-    it('tolerates a trailing slash on the base URL', () => {
-      assert.equal(
-        updateFeedUrl(`${base}/`, 'release', 'darwin', 'arm64'),
-        `${base}/release/macos/universal/releases.json`,
-      );
-    });
-
-    it('has no feed for Linux', () => {
-      assert.isNull(updateFeedUrl(base, 'release', 'linux', 'x64'));
+  describe('branchSlug', () => {
+    it('slugs the codename the way the dailies site does', () => {
+      assert.equal(branchSlug('Parrot Balsam'), 'parrot-balsam');
+      assert.equal(branchSlug('  Blue Mistflower\n'), 'blue-mistflower');
     });
   });
 
-  describe('parseReleaseFeed', () => {
-    it('parses a complete feed and lower-cases the checksum', () => {
-      const entry = parseReleaseFeed(JSON.stringify(feed));
-      assert.equal(entry.version, feed.version);
-      assert.equal(entry.name, feed.name);
-      assert.equal(entry.notes, feed.notes);
-      assert.equal(entry.pubDate, feed.pub_date);
-      assert.equal(entry.url, feed.url);
-      assert.equal(entry.sha256, feed.sha256.toLowerCase());
-      assert.equal(entry.size, feed.size);
-      assert.equal(entry.commit, feed.commit);
+  describe('updateIndexUrl', () => {
+    const base = 'https://dailies.rstudio.com';
+
+    it('uses the release API for releases and branch indexes otherwise', () => {
+      assert.equal(updateIndexUrl(base, 'release', 'blue-mistflower'), `${base}/api/v1/release/index.json`);
+      assert.equal(updateIndexUrl(base, 'daily', 'parrot-balsam'), `${base}/rstudio/parrot-balsam/index.json`);
+      assert.equal(updateIndexUrl(base, 'preview', 'montauk-daisy'), `${base}/rstudio/montauk-daisy/index.json`);
+      assert.equal(updateIndexUrl(base, 'hourly', 'parrot-balsam'), `${base}/rstudio-hourly/parrot-balsam/index.json`);
     });
 
-    it('fills optional fields with defaults', () => {
-      const entry = parseReleaseFeed(JSON.stringify({ version: feed.version, url: feed.url, sha256: feed.sha256 }));
-      assert.equal(entry.name, feed.version);
-      assert.equal(entry.notes, '');
-      assert.equal(entry.pubDate, '');
-      assert.equal(entry.size, 0);
-      assert.equal(entry.commit, '');
+    it('tolerates a trailing slash and refuses the dev channel', () => {
+      assert.equal(updateIndexUrl(`${base}/`, 'release', 'x'), `${base}/api/v1/release/index.json`);
+      assert.isNull(updateIndexUrl(base, 'dev', 'parrot-balsam'));
+    });
+  });
+
+  describe('platformKeys', () => {
+    it('names the installer and the install artifact per platform', () => {
+      assert.deepEqual(platformKeys('darwin', 'arm64'), { download: 'macos', install: 'macos-zip' });
+      assert.deepEqual(platformKeys('darwin', 'x64'), { download: 'macos', install: 'macos-zip' });
+      assert.deepEqual(platformKeys('win32', 'x64'), { download: 'windows', install: 'windows' });
+      assert.deepEqual(platformKeys('win32', 'arm64'), { download: 'windows-arm64', install: 'windows-arm64' });
+      assert.isNull(platformKeys('linux', 'x64'));
+    });
+  });
+
+  describe('parseReleaseIndex', () => {
+    it('picks the current release and its newest published build', () => {
+      assert.deepEqual(parseReleaseIndex(JSON.stringify(releaseIndex)), {
+        buildsUrl: 'https://dailies.rstudio.com/api/v1/build/2026.10.1+239.pro3/index.json',
+        notesUrl: 'https://docs.posit.co/ide/news/#rstudio-2026.10.1',
+      });
     });
 
-    it('rejects malformed feeds', () => {
-      assert.throws(() => parseReleaseFeed('not json'), SyntaxError);
-      assert.throws(() => parseReleaseFeed('[]'), /not a JSON object/);
-      assert.throws(() => parseReleaseFeed(JSON.stringify({ ...feed, version: undefined })), /missing "version"/);
-      assert.throws(() => parseReleaseFeed(JSON.stringify({ ...feed, version: 'latest' })), /unrecognized version/);
-      assert.throws(() => parseReleaseFeed(JSON.stringify({ ...feed, url: 'http://example.com/x.zip' })), /https/);
-      assert.throws(() => parseReleaseFeed(JSON.stringify({ ...feed, sha256: 'abc' })), /sha256/);
+    it('rejects an index with nothing published', () => {
+      assert.throws(() => parseReleaseIndex(JSON.stringify({ released: [] })), /no released versions/);
+      assert.throws(() => parseReleaseIndex(JSON.stringify({ released: [{ published: [] }] })), /no published builds/);
+      assert.throws(
+        () => parseReleaseIndex(JSON.stringify({ released: [{ published: [{ builds_url: 'http://x' }] }] })),
+        /https builds_url/,
+      );
+      assert.throws(() => parseReleaseIndex('[]'), /not a JSON object/);
+    });
+  });
+
+  describe('parseBuildIndex', () => {
+    it('reads one platform entry and lower-cases the checksum', () => {
+      const entry = parseBuildIndex(JSON.stringify(buildIndex), 'macos-zip');
+      assert.deepEqual(entry, {
+        version: '2026.10.1+239',
+        url: 'https://dl.dailies.rstudio.com/electron/macos/RStudio-2026.10.1-239.zip',
+        filename: 'RStudio-2026.10.1-239.zip',
+        sha256: macos.sha256.toLowerCase(),
+        size: macos.size,
+        commit: macos.commit,
+        date: macos.date,
+      });
+    });
+
+    it('is null when the platform (or product) is absent', () => {
+      assert.isNull(parseBuildIndex(JSON.stringify(buildIndex), 'windows-arm64'));
+      assert.isNull(parseBuildIndex(JSON.stringify({ products: { server: {} } }), 'macos'));
+      assert.isNull(parseBuildIndex('{}', 'macos'));
+    });
+
+    it('derives the filename from the link when absent', () => {
+      const { filename: _unused, ...noFilename } = macos;
+      const doc = { products: { electron: { platforms: { macos: noFilename } } } };
+      assert.equal(parseBuildIndex(JSON.stringify(doc), 'macos')?.filename, 'RStudio-2026.10.1-239.dmg');
+    });
+
+    it('rejects malformed entries', () => {
+      const withMacos = (overrides: Record<string, unknown>) =>
+        JSON.stringify({ products: { electron: { platforms: { macos: { ...macos, ...overrides } } } } });
+      assert.throws(() => parseBuildIndex(withMacos({ version: undefined }), 'macos'), /missing "version"/);
+      assert.throws(() => parseBuildIndex(withMacos({ version: 'latest' }), 'macos'), /unrecognized version/);
+      assert.throws(() => parseBuildIndex(withMacos({ link: 'http://example.com/x.dmg' }), 'macos'), /https/);
+      assert.throws(() => parseBuildIndex(withMacos({ sha256: 'abc' }), 'macos'), /sha256/);
+      assert.throws(() => parseBuildIndex('not json', 'macos'), SyntaxError);
+    });
+  });
+
+  describe('squirrelFeedDocument', () => {
+    const artifact = parseBuildIndex(JSON.stringify(buildIndex), 'macos-zip');
+
+    it('emits the Squirrel.Mac default server shape', () => {
+      assert.isNotNull(artifact);
+      const doc = JSON.parse(squirrelFeedDocument(artifact!, 'https://docs.posit.co/ide/news/#rstudio-2026.10.1'));
+      assert.deepEqual(doc, {
+        url: 'https://dl.dailies.rstudio.com/electron/macos/RStudio-2026.10.1-239.zip',
+        name: '2026.10.1+239',
+        notes: 'https://docs.posit.co/ide/news/#rstudio-2026.10.1',
+        pub_date: macos.date,
+        sha256: macos.sha256.toLowerCase(),
+        size: macos.size,
+      });
+    });
+
+    it('fills in notes and a date when the API has none', () => {
+      const doc = JSON.parse(squirrelFeedDocument({ ...artifact!, date: '' }, ''));
+      assert.equal(doc.notes, kDefaultReleaseNotesUrl);
+      assert.match(doc.pub_date, /^\d{4}-\d{2}-\d{2}T/);
     });
   });
 
   describe('isUpdateAvailable', () => {
-    const entry = parseReleaseFeed(JSON.stringify(feed));
-
-    it('is true only for a strictly newer feed version', () => {
-      assert.isTrue(isUpdateAvailable('2026.10.0+100', entry));
-      assert.isFalse(isUpdateAvailable('2026.10.1+239', entry));
-      assert.isFalse(isUpdateAvailable('2026.11.0+1', entry));
+    it('is true only for a strictly newer version', () => {
+      assert.isTrue(isUpdateAvailable('2026.10.0+100', '2026.10.1+239'));
+      assert.isFalse(isUpdateAvailable('2026.10.1+239', '2026.10.1+239'));
+      assert.isFalse(isUpdateAvailable('2026.11.0+1', '2026.10.1+239'));
     });
   });
 });

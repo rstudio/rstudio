@@ -18,6 +18,8 @@ import { createHash } from 'crypto';
 import { app, autoUpdater, net } from 'electron';
 import { createWriteStream } from 'fs';
 import { mkdir, rm, stat } from 'fs/promises';
+import http from 'http';
+import { AddressInfo } from 'net';
 import path from 'path';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
@@ -27,13 +29,18 @@ import { logger } from '../core/logger';
 import { buildInfo } from './build-info';
 import { MainWindow } from './main-window';
 import {
+  branchSlug,
+  BuildArtifact,
   channelForVersion,
   isUpdateAvailable,
-  kDefaultUpdateFeedBaseUrl,
-  parseReleaseFeed,
-  ReleaseFeedEntry,
+  kDefaultUpdateApiBaseUrl,
+  parseBuildIndex,
+  parseReleaseIndex,
+  PlatformKeys,
+  platformKeys,
+  squirrelFeedDocument,
   UpdateChannel,
-  updateFeedUrl,
+  updateIndexUrl,
 } from './update-feed';
 import { detectWindowsInstallMode, WindowsInstallMode } from './windows-install-mode';
 
@@ -43,23 +50,25 @@ import { detectWindowsInstallMode, WindowsInstallMode } from './windows-install-
  * The flow is split between this class and the GWT client, which owns every
  * dialog so the experience matches the rest of the IDE:
  *
- *   1. GWT asks `checkForUpdates()`; we fetch the channel's releases.json and
- *      compare versions. The answer uses the same keys as the session's
- *      check_for_updates RPC so GWT can show its existing dialog, plus
- *      `can-install` when this platform can apply the update itself.
- *   2. The user accepts; GWT calls `downloadUpdate()`. macOS hands the feed to
- *      Electron's autoUpdater (Squirrel.Mac), which verifies the download and
- *      the new bundle's code signature. Windows downloads the NSIS installer
- *      and checks its SHA-256 against the feed.
+ *   1. GWT asks `checkForUpdates()`; we read the dailies.rstudio.com JSON API
+ *      for this build's channel and compare versions. The answer uses the
+ *      same keys as the session's check_for_updates RPC so GWT can show its
+ *      existing dialog, plus `can-install` when this platform can apply the
+ *      update itself.
+ *   2. The user accepts; GWT calls `downloadUpdate()`. macOS hands Electron's
+ *      autoUpdater (Squirrel.Mac) a feed served from a loopback listener,
+ *      and Squirrel verifies the download and the new bundle's code
+ *      signature. Windows downloads the NSIS installer and checks its SHA-256
+ *      against the API.
  *   3. We call back into GWT (`desktopHooks.onUpdateDownloaded`), which offers
  *      a restart. If accepted, GWT runs its normal quit sequence after calling
  *      `installUpdate()`; `applyPendingUpdate()` then runs as the main window
  *      quits: Squirrel swaps the bundle and relaunches, or the installer runs
  *      silently (`/S /update`) and relaunches RStudio when it is done.
  *
- * A feed that is missing or unreachable answers `unsupported`, so GWT falls
- * back to the session's check and users see today's "Quit and Download"
- * dialog. Linux always answers `unsupported` (#4186 tracks package repos).
+ * Any failure to read the API answers `unsupported` or `error`, and GWT
+ * falls back to the session's check and today's "Quit and Download" dialog.
+ * Linux always answers `unsupported` (#4186 tracks package repos).
  */
 
 export type UpdateCheckStatus = 'available' | 'up-to-date' | 'unsupported' | 'error';
@@ -75,76 +84,85 @@ export interface UpdateCheckResult {
   error?: string;
 }
 
-/** How long the feed fetch may take before it counts as unreachable. */
-const kFeedTimeoutMs = 15000;
+interface AvailableUpdate {
+  /** the user-facing installer, linked from the dialog's fallback path */
+  download: BuildArtifact;
+  /** what the updater installs from; null when it is not published for this build */
+  install: BuildArtifact | null;
+  notesUrl: string;
+}
+
+/** How long an API request may take before it counts as unreachable. */
+const kRequestTimeoutMs = 15000;
 
 export class Updater {
-  private feedUrl: string | null = null;
+  private indexUrl: string | null = null;
+  private keys: PlatformKeys | null;
   private channel: UpdateChannel;
   private currentVersion: string;
-  private available: ReleaseFeedEntry | null = null;
+  private available: AvailableUpdate | null = null;
   private downloading = false;
   private downloadedVersion: string | null = null;
   private windowsInstaller: string | null = null;
   private windowsInstallMode: WindowsInstallMode | null = null;
   private pendingInstall = false;
   private macListenersInstalled = false;
+  private squirrelServer: http.Server | null = null;
 
   constructor(private mainWindow: MainWindow) {
     // RSTUDIO_UPDATE_VERSION impersonates another version, as it does for the
-    // session's check; RSTUDIO_UPDATE_CHANNEL and RSTUDIO_UPDATE_FEED_URL
-    // point a build at another channel or a test feed
+    // session's check; RSTUDIO_UPDATE_CHANNEL, RSTUDIO_UPDATE_BRANCH and
+    // RSTUDIO_UPDATE_API_URL point a build (a developer build included) at
+    // another channel, branch or copy of the API
     this.currentVersion = getenv('RSTUDIO_UPDATE_VERSION') || buildInfo().RSTUDIO_VERSION;
     const channelOverride = getenv('RSTUDIO_UPDATE_CHANNEL');
     this.channel = channelOverride ? (channelOverride as UpdateChannel) : channelForVersion(this.currentVersion);
-    const baseUrl = getenv('RSTUDIO_UPDATE_FEED_URL') || kDefaultUpdateFeedBaseUrl;
+    const branch = getenv('RSTUDIO_UPDATE_BRANCH') || branchSlug(buildInfo().RSTUDIO_RELEASE_NAME);
+    const baseUrl = getenv('RSTUDIO_UPDATE_API_URL') || kDefaultUpdateApiBaseUrl;
 
-    // developer builds have nothing to update to unless a feed is forced
-    if (this.channel !== 'dev' || getenv('RSTUDIO_UPDATE_FEED_URL')) {
-      this.feedUrl = updateFeedUrl(baseUrl, this.channel, process.platform, process.arch);
+    this.keys = platformKeys(process.platform, process.arch);
+    if (this.keys) {
+      this.indexUrl = updateIndexUrl(baseUrl, this.channel, branch);
     }
   }
 
   /** Whether in-app update checks are possible on this platform and build. */
   supported(): boolean {
-    return this.feedUrl !== null;
+    return this.indexUrl !== null && this.keys !== null;
   }
 
   async checkForUpdates(manual: boolean): Promise<UpdateCheckResult> {
-    if (!this.feedUrl) {
+    if (!this.indexUrl || !this.keys) {
       return { status: 'unsupported' };
     }
 
-    let entry: ReleaseFeedEntry;
+    let update: AvailableUpdate;
     try {
-      const response = await net.fetch(this.feedUrl, {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(kFeedTimeoutMs),
-      });
-      if (!response.ok) {
-        // a feed that is not there (yet) is not an error worth surfacing:
-        // the session's own check still runs
-        logger().logDebug(`update feed ${this.feedUrl} answered ${response.status}; deferring to the session check`);
+      const found = await this.readIndex(this.indexUrl, this.keys);
+      if (!found) {
+        // the branch is not on the site (yet), so there is nothing to compare
+        // with; the session's own check still runs
+        logger().logDebug(`${this.indexUrl} lists no ${this.keys.download} build; deferring to the session check`);
         return { status: 'unsupported' };
       }
-      entry = parseReleaseFeed(await response.text());
+      update = found;
     } catch (error: unknown) {
       const message = safeError(error).message;
       logger().logDebug(`update check (${manual ? 'manual' : 'automatic'}) failed: ${message}`);
       return { status: 'error', error: message };
     }
 
-    if (!isUpdateAvailable(this.currentVersion, entry)) {
+    if (!isUpdateAvailable(this.currentVersion, update.download.version)) {
       return { status: 'up-to-date' };
     }
 
-    this.available = entry;
-    const canInstall = await this.canInstall();
+    this.available = update;
+    const canInstall = update.install !== null && (await this.canInstall());
     return {
       status: 'available',
-      'update-version': entry.version,
-      'update-url': entry.url,
-      'update-message': `RStudio ${entry.version} is now available (you're using ${this.currentVersion})`,
+      'update-version': update.download.version,
+      'update-url': update.download.url,
+      'update-message': `RStudio ${update.download.version} is now available (you're using ${this.currentVersion})`,
       'update-urgent': '0',
       'can-install': canInstall,
     };
@@ -156,8 +174,8 @@ export class Updater {
    * the Squirrel download runs outside our control.
    */
   async downloadUpdate(): Promise<void> {
-    const entry = this.available;
-    if (!entry) {
+    const entry = this.available?.install;
+    if (!this.available || !entry) {
       this.notifyFailed('No update is available to download.');
       return;
     }
@@ -173,7 +191,7 @@ export class Updater {
     this.setProgress(2); // > 1 shows an indeterminate dock / taskbar bar
     try {
       if (process.platform === 'darwin') {
-        this.downloadWithSquirrel();
+        await this.downloadWithSquirrel(entry, this.available.notesUrl);
       } else if (process.platform === 'win32') {
         await this.downloadWindowsInstaller(entry);
         this.onDownloaded(entry.version);
@@ -227,6 +245,51 @@ export class Updater {
     return false;
   }
 
+  /**
+   * Resolve the newest build on this channel. The release API needs a second
+   * request for the build's artifacts; branch indexes carry them inline.
+   */
+  private async readIndex(indexUrl: string, keys: PlatformKeys): Promise<AvailableUpdate | null> {
+    let buildIndex: string;
+    let notesUrl = '';
+    if (this.channel === 'release') {
+      const release = parseReleaseIndex(await this.fetchText(indexUrl));
+      notesUrl = release.notesUrl;
+      buildIndex = await this.fetchText(release.buildsUrl);
+    } else {
+      buildIndex = await this.fetchText(indexUrl);
+    }
+
+    const download = parseBuildIndex(buildIndex, keys.download);
+    if (!download) {
+      return null;
+    }
+
+    // the site is rebuilt a few minutes after each artifact lands, so a
+    // branch index can briefly mix two builds; only install from an artifact
+    // of the same build as the one being offered
+    let install = keys.install === keys.download ? download : parseBuildIndex(buildIndex, keys.install);
+    if (install && install.version !== download.version) {
+      logger().logDebug(
+        `${keys.install} is at ${install.version} while ${keys.download} is at ${download.version}; not installable yet`,
+      );
+      install = null;
+    }
+
+    return { download, install, notesUrl };
+  }
+
+  private async fetchText(url: string): Promise<string> {
+    const response = await net.fetch(url, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(kRequestTimeoutMs),
+    });
+    if (!response.ok) {
+      throw new Error(`${url} answered HTTP ${response.status}`);
+    }
+    return response.text();
+  }
+
   private async canInstall(): Promise<boolean> {
     if (process.platform === 'darwin') {
       return true;
@@ -241,35 +304,59 @@ export class Updater {
     return false;
   }
 
-  private downloadWithSquirrel(): void {
-    if (!this.feedUrl) {
-      throw new Error('no update feed configured');
-    }
-
+  private async downloadWithSquirrel(entry: BuildArtifact, notesUrl: string): Promise<void> {
     if (!this.macListenersInstalled) {
       this.macListenersInstalled = true;
       autoUpdater.on('update-downloaded', (_event, _notes, releaseName) => {
-        this.onDownloaded(this.available?.version ?? releaseName);
+        this.closeSquirrelServer();
+        this.onDownloaded(this.available?.install?.version ?? releaseName);
       });
       autoUpdater.on('update-not-available', () => {
+        this.closeSquirrelServer();
         this.onDownloadFailed('The update server did not offer an update.');
       });
       autoUpdater.on('error', (error) => {
+        this.closeSquirrelServer();
         this.onDownloadFailed(error.message);
       });
     }
 
-    // the feed is the Squirrel.Mac "default" server format (url, name,
-    // notes, pub_date); checkForUpdates() downloads whatever it names, which
-    // is why it only runs after our own version comparison
-    autoUpdater.setFeedURL({ url: this.feedUrl, serverType: 'default' });
+    // Squirrel.Mac wants its own feed format from an update server, and
+    // downloads whatever that feed names, so serve it a one-entry document
+    // for the build already chosen above from a loopback listener
+    const feedUrl = await this.startSquirrelServer(squirrelFeedDocument(entry, notesUrl));
+    autoUpdater.setFeedURL({ url: feedUrl, serverType: 'default' });
     autoUpdater.checkForUpdates();
   }
 
-  private async downloadWindowsInstaller(entry: ReleaseFeedEntry): Promise<void> {
+  private async startSquirrelServer(document: string): Promise<string> {
+    this.closeSquirrelServer();
+    return new Promise((resolve, reject) => {
+      const server = http.createServer((_request, response) => {
+        response.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        });
+        response.end(document);
+      });
+      server.on('error', reject);
+      server.listen(0, '127.0.0.1', () => {
+        const { port } = server.address() as AddressInfo;
+        this.squirrelServer = server;
+        resolve(`http://127.0.0.1:${port}/releases.json`);
+      });
+    });
+  }
+
+  private closeSquirrelServer(): void {
+    this.squirrelServer?.close();
+    this.squirrelServer = null;
+  }
+
+  private async downloadWindowsInstaller(entry: BuildArtifact): Promise<void> {
     const dir = path.join(app.getPath('temp'), 'rstudio-updates');
     await mkdir(dir, { recursive: true });
-    const target = path.join(dir, path.basename(new URL(entry.url).pathname) || `RStudio-${entry.version}.exe`);
+    const target = path.join(dir, path.basename(entry.filename));
     await rm(target, { force: true });
 
     const response = await net.fetch(entry.url, { cache: 'no-store' });

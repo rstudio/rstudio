@@ -238,42 +238,36 @@ installers, run `make-dist-packages.bat` from `package\win32`.
 ## In-app update feed
 
 RStudio Desktop on macOS and Windows can download and install updates itself
-(`src/node/desktop/src/main/updater.ts`). It polls a small JSON feed for its
-build channel at
+(`src/node/desktop/src/main/updater.ts`). It reads the JSON API of the builds
+site, <https://dailies.rstudio.com/json-api/>, which already lists every
+published build with its download link and SHA-256:
 
-    <feed base>/<channel>/<os>/<arch>/releases.json
+- release builds: `https://dailies.rstudio.com/api/v1/release/index.json`,
+  whose `released[0].published[0].builds_url` is the current release's newest
+  published build (a released branch's own index also lists unpublished patch
+  candidates, so the updater does not use it);
+- daily and preview builds: `https://dailies.rstudio.com/rstudio/<branch>/index.json`;
+- hourly builds: `https://dailies.rstudio.com/rstudio-hourly/<branch>/index.json`.
 
-where the feed base is `https://cdn.posit.co/rstudio/updates`, the channel
-comes from the version's pre-release tag (`release` when there is none, else
-`daily`, `hourly` or `preview`), and `<os>/<arch>` is `macos/universal` or
-`windows/x86_64`. On macOS the feed is handed to Electron's `autoUpdater`
-(Squirrel.Mac), which installs from the zip; on Windows the desktop downloads
-the NSIS installer, checks its SHA-256, and runs it with `/S /update` once
-RStudio has quit. When no feed exists for a build, the desktop falls back to
-the session's own check and the "Quit and Download" dialog.
+The channel comes from the version's pre-release tag (`release` when there is
+none), the branch from `version/RELEASE`, and the entry from
+`products.electron.platforms`: `macos` and `macos-zip` on macOS, `windows` on
+Windows. On macOS the zipped `.app` is handed to Electron's `autoUpdater`
+(Squirrel.Mac) through a loopback listener that serves the feed shape Squirrel
+expects; on Windows the desktop downloads the NSIS installer, checks its
+SHA-256, and runs it with `/S /update` once RStudio has quit. When the API has
+no entry for a build (Linux, developer builds, a branch not yet on the site),
+the desktop falls back to the session's own check and the "Quit and Download"
+dialog; when only the DMG is listed, that dialog links to it directly.
 
-`package/update-feed.cmake` writes a feed entry for one artifact:
+The macOS zip is published to the builds site by the Jenkins pipeline as the
+`electron/macos-zip` platform, next to the DMG. The site itself names each
+platform in a per-branch `_index.md` (in the `rstudio/latest-builds`
+repository), so a new platform needs one there before it is displayed.
 
-```bash
-cmake -DPACKAGE_FILE=package/osx/build/RStudio-2026.12.0-daily-118.zip \
-      -DVERSION=2026.12.0-daily+118 \
-      -DURL=https://dl.dailies.rstudio.com/electron/macos/RStudio-2026.12.0-daily-118.zip \
-      -DPLATFORM=macos \
-      -DOUTPUT_DIR=/tmp/update-feed \
-      -P package/update-feed.cmake
-```
-
-The Jenkins macOS and Windows pipelines run it after uploading a build and
-copy the result to S3 when the Jenkins instance defines
-`RSTUDIO_UPDATE_FEED_BUCKET` (plus optional `RSTUDIO_UPDATE_FEED_PREFIX`, the
-key prefix that `cdn.posit.co/rstudio/updates` serves, and
-`RSTUDIO_UPDATE_DOWNLOAD_URL_BASE`, the public host the artifact URL should
-use; it defaults to the dailies host). Until those are set the stage is
-skipped and nothing changes for users.
-
-For testing a build against another feed, the desktop honours three
-environment variables: `RSTUDIO_UPDATE_FEED_URL` (feed base, also enables
-updates for `-dev` builds), `RSTUDIO_UPDATE_CHANNEL`, and
+For testing a build against another channel or copy of the API, the desktop
+honours `RSTUDIO_UPDATE_API_URL`, `RSTUDIO_UPDATE_CHANNEL` (also enables
+updates for `-dev` builds), `RSTUDIO_UPDATE_BRANCH`, and
 `RSTUDIO_UPDATE_VERSION` (impersonate a version, as for the session's check).
 
 ## Gotchas

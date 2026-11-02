@@ -13,17 +13,21 @@
  *
  */
 
-// Pure helpers for the in-app updater: version parsing, channel and feed URL
-// selection, and parsing of the releases.json feed. Nothing here touches
-// Electron, so it is unit-testable and shared with the feed generator's
-// conventions (package/update-feed.cmake).
+// Pure helpers for the in-app updater: version parsing, channel and index
+// URL selection, and parsing of the dailies.rstudio.com JSON API, which
+// already lists every published build with its download link and SHA-256
+// (https://dailies.rstudio.com/api/v1/openapi.json). Nothing here touches
+// Electron, so it is unit-testable.
 
 /**
- * Where per-channel update feeds live. Overridable at runtime with the
- * RSTUDIO_UPDATE_FEED_URL environment variable (useful for testing against a
- * local feed).
+ * The site whose JSON API the updater reads. Overridable at runtime with the
+ * RSTUDIO_UPDATE_API_URL environment variable (useful for testing against a
+ * local copy).
  */
-export const kDefaultUpdateFeedBaseUrl = 'https://cdn.posit.co/rstudio/updates';
+export const kDefaultUpdateApiBaseUrl = 'https://dailies.rstudio.com';
+
+/** Release notes link offered when the API has none for a build. */
+export const kDefaultReleaseNotesUrl = 'https://docs.posit.co/ide/news/';
 
 /**
  * Build channels, derived from the pre-release tag of the running version.
@@ -42,16 +46,24 @@ export interface ParsedVersion {
   build: number;
 }
 
-/** One entry of a releases.json feed. */
-export interface ReleaseFeedEntry {
+/** One artifact of one build, as the API's products/platforms entries describe it. */
+export interface BuildArtifact {
   version: string;
-  name: string;
-  notes: string;
-  pubDate: string;
   url: string;
+  filename: string;
   sha256: string;
   size: number;
   commit: string;
+  /** ISO-8601 build date, or '' when absent */
+  date: string;
+}
+
+/** The API's `products.electron.platforms` keys this platform needs. */
+export interface PlatformKeys {
+  /** the user-facing installer (DMG or exe), for "Quit and Download" */
+  download: string;
+  /** what the updater installs from: the zipped .app on macOS, the exe on Windows */
+  install: string;
 }
 
 /**
@@ -75,7 +87,7 @@ export function parseVersion(version: string): ParsedVersion | null {
 
 /**
  * Compare two version strings numerically: major, minor, patch, then build
- * number. The pre-release tag is ignored: feeds are per channel, so both
+ * number. The pre-release tag is ignored: indexes are per channel, so both
  * sides carry the same tag. Unparseable versions compare as lowest.
  */
 export function compareVersions(a: string, b: string): number {
@@ -113,87 +125,165 @@ export function channelForVersion(version: string): UpdateChannel {
 }
 
 /**
- * The feed URL for this platform, or null when the platform has no in-app
- * update support (Linux installs come from the distribution's package
- * manager; see #4186).
+ * The URL slug of a release codename, as the dailies site and
+ * docker/jenkins/publish-build.sh form it: "Parrot Balsam" -> "parrot-balsam".
  */
-export function updateFeedUrl(
-  baseUrl: string,
-  channel: UpdateChannel,
-  platform: NodeJS.Platform,
-  arch: string,
-): string | null {
-  let os: string;
-  let feedArch: string;
-  switch (platform) {
-    case 'darwin':
-      // the macOS build is a universal binary, so one feed serves both
-      os = 'macos';
-      feedArch = 'universal';
-      break;
-    case 'win32':
-      os = 'windows';
-      feedArch = arch === 'arm64' ? 'arm64' : 'x86_64';
-      break;
-    default:
-      return null;
-  }
-
-  return `${baseUrl.replace(/\/+$/, '')}/${channel}/${os}/${feedArch}/releases.json`;
+export function branchSlug(releaseName: string): string {
+  return releaseName.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
 /**
- * Parse the text of a releases.json feed. Throws on malformed input so the
- * caller can report (and log) the reason rather than act on a partial entry.
+ * The index the updater polls for this channel, or null when the channel
+ * never updates. Release builds use the release API, which lists only
+ * published builds; a released branch's own index also shows unpublished
+ * patch candidates, which users must not be offered.
  */
-export function parseReleaseFeed(text: string): ReleaseFeedEntry {
-  // a SyntaxError from JSON.parse is descriptive enough to log as-is
-  const raw: unknown = JSON.parse(text);
+export function updateIndexUrl(baseUrl: string, channel: UpdateChannel, branch: string): string | null {
+  const base = baseUrl.replace(/\/+$/, '');
+  switch (channel) {
+    case 'release':
+      return `${base}/api/v1/release/index.json`;
+    case 'preview':
+    case 'daily':
+      return `${base}/rstudio/${branch}/index.json`;
+    case 'hourly':
+      return `${base}/rstudio-hourly/${branch}/index.json`;
+    default:
+      return null;
+  }
+}
 
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-    throw new Error('update feed is not a JSON object');
+/**
+ * The platform entries to read, or null when the platform has no in-app
+ * update support (Linux installs come from the distribution's package
+ * manager; see #4186).
+ */
+export function platformKeys(platform: NodeJS.Platform, arch: string): PlatformKeys | null {
+  switch (platform) {
+    case 'darwin':
+      // the macOS build is universal, so one entry serves both architectures
+      return { download: 'macos', install: 'macos-zip' };
+    case 'win32':
+      return arch === 'arm64'
+        ? { download: 'windows-arm64', install: 'windows-arm64' }
+        : { download: 'windows', install: 'windows' };
+    default:
+      return null;
+  }
+}
+
+function asObject(value: unknown, what: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error(`${what} is not a JSON object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+/**
+ * Read `/api/v1/release/index.json` for the current release's newest
+ * published build: `released[0]` is always the current release and
+ * `published[0]` its newest build, so no ordering is assumed beyond what
+ * the API documents.
+ */
+export function parseReleaseIndex(text: string): { buildsUrl: string; notesUrl: string } {
+  const doc = asObject(JSON.parse(text), 'release index');
+  const released = doc.released;
+  if (!Array.isArray(released) || released.length === 0) {
+    throw new Error('release index lists no released versions');
   }
 
-  const obj = raw as Record<string, unknown>;
+  const current = asObject(released[0], 'current release');
+  const published = current.published;
+  if (!Array.isArray(published) || published.length === 0) {
+    throw new Error('release index lists no published builds for the current release');
+  }
+
+  const build = asObject(published[0], 'published build');
+  if (typeof build.builds_url !== 'string' || !/^https:\/\//i.test(build.builds_url)) {
+    throw new Error('published build has no https builds_url');
+  }
+
+  return {
+    buildsUrl: build.builds_url,
+    notesUrl: typeof build.notes_url === 'string' ? build.notes_url : '',
+  };
+}
+
+/**
+ * Read one `products.electron.platforms` entry out of a build or branch
+ * index. Returns null when the platform is absent (e.g. the zipped .app has
+ * not been published for this build); throws when the entry is malformed.
+ */
+export function parseBuildIndex(text: string, platformKey: string): BuildArtifact | null {
+  const doc = asObject(JSON.parse(text), 'build index');
+  const products = asObject(doc.products ?? {}, 'products');
+  if (products.electron === undefined) {
+    return null;
+  }
+  const electron = asObject(products.electron, 'electron product');
+  const platforms = asObject(electron.platforms ?? {}, 'platforms');
+  if (platforms[platformKey] === undefined) {
+    return null;
+  }
+
+  const entry = asObject(platforms[platformKey], `platform "${platformKey}"`);
   const requireString = (key: string): string => {
-    const value = obj[key];
+    const value = entry[key];
     if (typeof value !== 'string' || value.length === 0) {
-      throw new Error(`update feed is missing "${key}"`);
+      throw new Error(`platform "${platformKey}" is missing "${key}"`);
     }
     return value;
   };
-  const optionalString = (key: string): string => (typeof obj[key] === 'string' ? (obj[key] as string) : '');
+  const optionalString = (key: string): string => (typeof entry[key] === 'string' ? (entry[key] as string) : '');
 
   const version = requireString('version');
   if (!parseVersion(version)) {
-    throw new Error(`update feed has an unrecognized version "${version}"`);
+    throw new Error(`platform "${platformKey}" has an unrecognized version "${version}"`);
   }
 
-  const url = requireString('url');
+  const url = requireString('link');
   if (!/^https:\/\//i.test(url)) {
-    throw new Error('update feed download URL must use https');
+    throw new Error(`platform "${platformKey}" download link must use https`);
   }
 
   const sha256 = requireString('sha256').toLowerCase();
   if (!/^[0-9a-f]{64}$/.test(sha256)) {
-    throw new Error('update feed sha256 is not a 64-digit hex string');
+    throw new Error(`platform "${platformKey}" sha256 is not a 64-digit hex string`);
   }
-
-  const size = typeof obj.size === 'number' && Number.isFinite(obj.size) ? obj.size : 0;
 
   return {
     version,
-    name: optionalString('name') || version,
-    notes: optionalString('notes'),
-    pubDate: optionalString('pub_date'),
     url,
+    filename: optionalString('filename') || url.substring(url.lastIndexOf('/') + 1),
     sha256,
-    size,
+    size: typeof entry.size === 'number' && Number.isFinite(entry.size) ? entry.size : 0,
     commit: optionalString('commit'),
+    date: optionalString('date'),
   };
 }
 
-/** True when the feed entry is newer than the running version. */
-export function isUpdateAvailable(currentVersion: string, entry: ReleaseFeedEntry): boolean {
-  return compareVersions(entry.version, currentVersion) > 0;
+/**
+ * The document Squirrel.Mac expects from an update server in its "default"
+ * format (url, name, notes, pub_date), with the sha256 and size Electron
+ * verifies before unpacking. The updater serves this from a loopback
+ * listener, since the dailies API is not in this shape.
+ */
+export function squirrelFeedDocument(artifact: BuildArtifact, notesUrl: string): string {
+  return JSON.stringify(
+    {
+      url: artifact.url,
+      name: artifact.version,
+      notes: notesUrl || kDefaultReleaseNotesUrl,
+      pub_date: artifact.date || new Date().toISOString(),
+      sha256: artifact.sha256,
+      size: artifact.size,
+    },
+    null,
+    2,
+  );
+}
+
+/** True when `candidate` is newer than the running version. */
+export function isUpdateAvailable(currentVersion: string, candidate: string): boolean {
+  return compareVersions(candidate, currentVersion) > 0;
 }
