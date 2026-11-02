@@ -284,6 +284,29 @@ public class ManipulatorControlTests extends GWTTestCase
       assertKnobIsDecorative(slider);
    }
 
+   public void testSliderKeyDuringDragKeepsDragReport()
+   {
+      // a key pressed mid-drag (e.g. Shift) must not reset where the drag
+      // started, or the release reports nothing
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            25, values -> reported.add(values.get("x.max").toString()))));
+      int x = slider.getAbsoluteLeft() + 10;
+      int y = slider.getAbsoluteTop() + 10;
+      Document doc = Document.get();
+
+      slider.dispatchEvent(doc.createMouseDownEvent(
+            1, x, y, x, y, false, false, false, false, NativeEvent.BUTTON_LEFT));
+      String dragged = slider.getAttribute("aria-valuenow");
+      assertFalse("the drag must move the value", "25".equals(dragged));
+
+      slider.dispatchEvent(doc.createKeyDownEvent(
+            false, false, true, false, KeyCodes.KEY_SHIFT));
+      slider.dispatchEvent(doc.createMouseUpEvent(
+            1, x, y, x, y, false, false, true, false, NativeEvent.BUTTON_LEFT));
+      assertEquals(Arrays.asList(dragged), reported);
+   }
+
    public void testSliderBarEnabledStateAndRangeUpdateAria()
    {
       SliderBar bar = new SliderBar(0, 10);

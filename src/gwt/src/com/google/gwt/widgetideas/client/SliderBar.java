@@ -473,7 +473,10 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
         // Shift left or right on key press
         case Event.ONKEYDOWN:
           if (!slidingKeyboard) {
-            slideStartValue = curValue;
+            // a key pressed mid-drag must not move the drag's baseline
+            if (!slidingMouse) {
+              slideStartValue = curValue;
+            }
             int largeStep = Math.max(1, (int) (getTotalRange() / stepSize / 10));
             int multiplier = 1;
             if (DOM.eventGetCtrlKey(event)) {
@@ -534,7 +537,9 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
         case Event.ONMOUSEDOWN:
           setFocus(true);
           slidingMouse = true;
-          slideStartValue = curValue;
+          if (!slidingKeyboard) {
+            slideStartValue = curValue;
+          }
           DOM.setCapture(getElement());
           startSliding(true, true);
           DOM.eventPreventDefault(event);
