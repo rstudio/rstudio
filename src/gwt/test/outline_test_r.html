@@ -1,0 +1,334 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!--
+    Regression tests for how R section headers build the scope tree behind
+    the document outline (https://github.com/rstudio/rstudio/issues/17182).
+
+    Anonymous braces -- the body of an 'if', a 'for', a bare block -- are
+    transparent to section headers: a header inside them nests exactly as it
+    would outside. Function and test_that() bodies, which have outline
+    entries of their own, contain their sections instead.
+  -->
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemixins/token_iterator.js"></script>
+</head>
+<body>
+
+<h2>R document outline tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<ol id="results"></ol>
+
+<script type="text/javascript">
+
+var passed = 0, failed = 0;
+var results = document.getElementById("results");
+
+function check(name, actual, expected) {
+  var ok = actual === expected;
+  var li = document.createElement("li");
+  li.textContent = (ok ? "[PASS] " : "[FAIL] ") + name +
+    (ok ? "" : " -- expected " + JSON.stringify(expected) +
+               ", got " + JSON.stringify(actual));
+  li.style.color = ok ? "green" : "red";
+  results.appendChild(li);
+  if (ok)
+    passed++;
+  else
+    failed++;
+}
+
+// The scope tree is built from the session's token iterator, which the
+// mixin extends with tokenizeUpToRow().
+require("mixins/token_iterator");
+var RMode = require("mode/r").Mode;
+var EditSession = require("ace/edit_session").EditSession;
+
+function makeSession(code) {
+  var session = new EditSession(code);
+  session.setMode(new RMode(false, session));
+  return session;
+}
+
+function isDisplayed(node) {
+  return node.isSection() || node.isFunction() || node.isTest();
+}
+
+// The outline as DocumentOutlineWidget lays it out: one entry per section,
+// function or test, indented under the displayed nodes that contain it.
+// Anonymous braces have no entry and add no indentation.
+function outlineOf(nodes, indent, out) {
+  for (var i = 0; i < nodes.length; i++) {
+    var childIndent = indent;
+    if (isDisplayed(nodes[i])) {
+      out.push(indent + nodes[i].label);
+      childIndent = indent + "  ";
+    }
+    outlineOf(nodes[i].$children, childIndent, out);
+  }
+  return out;
+}
+
+function outline(session) {
+  var tree = session.getMode().codeModel.getScopeTree();
+  return outlineOf(tree, "", []).join("\n");
+}
+
+// Every node, with the rows it spans; 'open' when nothing has closed it.
+function treeOf(nodes, indent, out) {
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    var kind = node.isFunction() ? "function" : node.isBrace() ? "brace" : "section";
+    out.push(indent + kind + " " + (node.label || "{}") +
+             " [" + node.preamble.row + ".." + (node.end ? node.end.row : "open") + "]");
+    treeOf(node.$children, indent + "  ", out);
+  }
+  return out;
+}
+
+function tree(session) {
+  var nodes = session.getMode().codeModel.getScopeTree();
+  return treeOf(nodes, "", []).join("\n");
+}
+
+// The innermost labelled scope at the start of each listed row (1-based).
+function scopeAtRows(session, rows) {
+  var model = session.getMode().codeModel;
+  return rows.map(function(row) {
+    var scope = model.getCurrentScope({row: row - 1, column: 0});
+    return row + ":" + (scope ? scope.label : "null");
+  }).join(" ");
+}
+
+// ---------------------------------------------------------------------------
+// The issue: two headers at the same level inside a bare block.
+// ---------------------------------------------------------------------------
+
+var braced = makeSession([
+  "{",
+  "  # section 1 ----",
+  "",
+  "  # section 2 ----",
+  "",
+  "}",
+  ""
+].join("\n"));
+
+check("headers inside a bare block are siblings",
+      outline(braced),
+      ["section 1", "section 2"].join("\n"));
+
+// The block's closing brace still ends a brace scope of its own: the brace
+// cut by each header is continued inside the header's section.
+check("the block's closing brace is matched",
+      tree(braced),
+      ["brace {} [0..1]",
+       "section section 1 [1..3]",
+       "  brace {} [1..3]",
+       "section section 2 [3..open]",
+       "  brace {} [3..5]"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// A function body contains its sections, as it has an outline entry.
+// ---------------------------------------------------------------------------
+
+var fn = makeSession([
+  "# a ----",
+  "f <- function() {",
+  "  # f1 ----",
+  "  # f2 ----",
+  "}",
+  "# b ----",
+  ""
+].join("\n"));
+
+check("a function body contains its sections",
+      outline(fn),
+      ["a", "  f()", "    f1", "    f2", "b"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// The second report: headers in 'if' bodies, with and without an open
+// section of the same level outside the braces.
+// ---------------------------------------------------------------------------
+
+var chapters = makeSession([
+  "# 1 Chapter ####",       // 1
+  "",
+  "## 1.1 Section ####",    // 3
+  "",
+  "# 2 Chapter ####",       // 5
+  "",
+  "if (something) {",       // 7
+  "",
+  "  ## 2.1 Section ####",  // 9
+  "  ",
+  "}",                      // 11
+  "",
+  "# 3 Chapter ####",       // 13
+  "",
+  "## 3.1 Section ####",    // 15
+  "",
+  "if (something_else) {",  // 17
+  "  ",
+  "  ## 3.2 Section ####",  // 19
+  "  ",
+  "}",                      // 21
+  "",
+  "# 4 Chapter ####",       // 23
+  ""
+].join("\n"));
+
+var chaptersOutline = [
+  "1 Chapter",
+  "  1.1 Section",
+  "2 Chapter",
+  "  2.1 Section",
+  "3 Chapter",
+  "  3.1 Section",
+  "  3.2 Section",
+  "4 Chapter"
+].join("\n");
+
+check("'if' bodies don't affect how headers nest",
+      outline(chapters),
+      chaptersOutline);
+
+// A header inside the braces ends the section opened before them, so the
+// line after the closing brace is still in that header's section.
+check("the current section ignores the braces too",
+      scopeAtRows(chapters, [10, 12, 20, 22]),
+      "10:2.1 Section 12:2.1 Section 20:3.2 Section 22:3.2 Section");
+
+// An edit just after a header drops and re-adds the header's section. The
+// braces it cut were cut by the earlier pass, so the reparse has to find
+// them again to continue them.
+chapters.insert({row: 19, column: 0}, "x\n");
+
+check("the outline survives an edit just after a header",
+      outline(chapters),
+      chaptersOutline);
+
+check("the continued brace is matched after that edit",
+      tree(chapters).split("\n").filter(function(line) {
+        return line.indexOf("3.2 Section") >= 0 || line.indexOf("[18..21]") >= 0;
+      }).join("\n"),
+      ["  section 3.2 Section [18..23]",
+       "    brace {} [18..21]"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// Inside a function, a header after an 'if' block used to leave the block's
+// closing brace to end the function itself.
+// ---------------------------------------------------------------------------
+
+var blockInFn = makeSession([
+  "g <- function() {",
+  "  # a ----",
+  "  if (x) {",
+  "    # b ----",
+  "  }",
+  "  # c ----",
+  "  y",
+  "}",
+  "z",
+  ""
+].join("\n"));
+
+check("a block's closing brace doesn't end the enclosing function",
+      tree(blockInFn).split("\n")[0],
+      "function g() [0..7]");
+
+check("sections in a function stay in it around an 'if' block",
+      outline(blockInFn),
+      ["g()", "  a", "  b", "  c"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// Nested blocks are each cut and continued, so both closing braces match.
+// ---------------------------------------------------------------------------
+
+var nested = makeSession([
+  "for (i in x) {",
+  "  if (y) {",
+  "    # h ----",
+  "    z",
+  "  }",
+  "  w",
+  "}",
+  "f <- function() {",
+  "}",
+  ""
+].join("\n"));
+
+check("nested blocks are continued inside the header's section",
+      tree(nested),
+      ["brace {} [0..2]",
+       "  brace {} [1..2]",
+       "section h [2..open]",
+       "  brace {} [2..6]",
+       "    brace {} [2..4]",
+       "  function f() [7..8]"].join("\n"));
+
+// ---------------------------------------------------------------------------
+// Header nesting by level is unchanged outside braces.
+// ---------------------------------------------------------------------------
+
+var levels = makeSession([
+  "# Top ----",
+  "## Sub ----",
+  "### Subsub ----",
+  "## Sub two ----",
+  "# Top two ----",
+  ""
+].join("\n"));
+
+check("headers nest by level",
+      outline(levels),
+      ["Top", "  Sub", "    Subsub", "  Sub two", "Top two"].join("\n"));
+
+var afterFn = makeSession([
+  "# a ----",
+  "f <- function() {",
+  "  x",
+  "}",
+  "# b ----",
+  ""
+].join("\n"));
+
+check("a header after a function closes the section containing it",
+      outline(afterFn),
+      ["a", "  f()", "b"].join("\n"));
+
+// A decorated header carries no level: it ends every open section and is
+// ended by the next header, inside braces as elsewhere.
+var banner = makeSession([
+  "# outer ----",
+  "if (x) {",
+  "  #### banner ####",
+  "  # inner ----",
+  "}",
+  "# after ----",
+  ""
+].join("\n"));
+
+check("a decorated header inside a block is top-level",
+      outline(banner),
+      ["outer", "banner", "inner", "after"].join("\n"));
+
+document.getElementById("passed").textContent = passed;
+document.getElementById("failed").textContent = failed;
+
+</script>
+</body>
+</html>

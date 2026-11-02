@@ -25,6 +25,7 @@ const PAGES = [
    "test/highlight_test_markdown.html",
    "test/highlight_test_r.html",
    "test/highlight_test_sql.html",
+   "test/outline_test_r.html",
 ];
 
 const MIME = {

@@ -208,6 +208,20 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          }
       };
 
+      // Returns the scopes that contain the position, from outermost to
+      // innermost, whether labelled or not. Unlike findNode(), this reports
+      // anonymous brace scopes.
+      this.findScopeChain = function(pos) {
+         var chain = [this];
+         var node = this;
+         for (var index = node.$binarySearch(pos); index >= 0; index = node.$binarySearch(pos))
+         {
+            node = node.$children[index];
+            chain.push(node);
+         }
+         return chain;
+      };
+
       this.$getFunctionStack = function(pos) {
          var index = this.$binarySearch(pos);
          var stack = index >= 0 ? this.$children[index].$getFunctionStack(pos)
@@ -400,14 +414,13 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       };
 
       // Close the open section scopes at 'position', innermost first, for as
-      // long as 'shouldClose' accepts them. A function or chunk scope bounds
-      // the walk, as it does when closing Markdown header scopes: it is
-      // reported as the innermost active scope and is not a section. The root
-      // is labelled, so getActiveScopes() always reports it and the walk
-      // terminates once every enclosing section has been considered.
+      // long as 'shouldClose' accepts them. A labelled brace (a function, a
+      // test) or a chunk bounds the walk: it is not a section, and the
+      // sections inside it are its own. The root is never a section either,
+      // so the walk ends once every enclosing section has been considered.
       this.closeSectionScopesWhile = function(position, shouldClose)
       {
-         var scopes = this.getActiveScopes(position);
+         var scopes = this.$root.findScopeChain(position);
          for (var i = scopes.length - 1; i >= 0; i--)
          {
             if (!scopes[i].isSection() || !shouldClose(scopes[i]))
@@ -417,25 +430,96 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          }
       };
 
+      // Anonymous braces are transparent to section headers: a header inside
+      // 'if (x) { ... }' nests exactly as it would outside the braces. The
+      // tree nests by position, though, so such a header cuts the anonymous
+      // braces enclosing it (closing each one at the header) and continues
+      // them inside the new section, so that their eventual '}' still closes
+      // a brace of their own rather than an enclosing function's.
+      this.$cutAnonymousBraces = function(position)
+      {
+         var scopes = this.$root.findScopeChain(position);
+         for (var i = scopes.length - 1; i >= 0; i--)
+         {
+            if (!scopes[i].isBrace() || scopes[i].label)
+               break;
+
+            scopes[i].end = position;
+         }
+      };
+
+      // Count the anonymous braces cut at 'position', which end there, at
+      // the bottom of the last-child chain. They are found again rather than
+      // remembered: an edit just after a header drops the header's section
+      // and re-adds it on reparse, after the braces were cut by the earlier
+      // pass.
+      this.$countCutBraces = function(position)
+      {
+         var scopes = this.$root.findScopeChain(position);
+         var node = scopes[scopes.length - 1];
+
+         var count = 0;
+         while (node.$children.length > 0)
+         {
+            node = node.$children[node.$children.length - 1];
+            if (!node.end || comparePoints(node.end, position) !== 0)
+               break;
+
+            if (node.isBrace() && !node.label)
+               count++;
+         }
+
+         return count;
+      };
+
+      // Nest 'count' anonymous braces inside 'section', continuing the ones
+      // cut at its header. They are linked in directly: addNode() would take
+      // a nested continuation, which starts where its parent does, for a
+      // re-add of that parent.
+      this.$continueCutBraces = function(section, count)
+      {
+         var parent = section;
+         for (var i = 0; i < count; i++)
+         {
+            var brace = new this.$ScopeNodeFactory(null, section.start, null, ScopeNode.TYPE_BRACE);
+            brace.parentScope = parent;
+            parent.$children.push(brace);
+            parent = brace;
+         }
+      };
+
+      // Add the section header 'node', closing the open sections at its
+      // preamble that 'shouldClose' accepts (see closeSectionScopesWhile).
+      this.$addSectionHeader = function(node, shouldClose)
+      {
+         var position = node.preamble;
+         this.$cutAnonymousBraces(position);
+         this.closeSectionScopesWhile(position, shouldClose);
+
+         var count = this.$countCutBraces(position);
+         this.$root.addNode(node);
+         this.$continueCutBraces(node, count);
+      };
+
       // A section header carrying no heading level (e.g. a bar of '#'
       // characters) is top-level, so it closes every open section rather than
       // just the innermost one -- matching section folding, which ends every
       // enclosing section fold when it reaches such a header.
       this.onTopLevelSectionStart = function(sectionLabel, sectionPos)
       {
-         this.closeSectionScopesWhile(sectionPos, function() { return true; });
-
          // Mark the section depthless rather than leaving it without a depth
          // at all: onMarkdownHead() has to tell a header that carries no
          // heading level apart from one that predates the notion, such as a
          // YAML block.
-         this.$root.addNode(new this.$ScopeNodeFactory(
+         var node = new this.$ScopeNodeFactory(
             sectionLabel,
             sectionPos,
             sectionPos,
             ScopeNode.TYPE_SECTION,
             {depth: ScopeNode.DEPTH_NONE}
-         ));
+         );
+
+         this.$addSectionHeader(node, function() { return true; });
       };
 
       this.onSectionEnd = function(position)
@@ -443,70 +527,33 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          this.$root.closeScope(position, ScopeNode.TYPE_SECTION);
       };
 
-      // A little tricky: a new Markdown header will implicitly
-      // close all previously open headers of greater or equal depth.
-      //
-      // For example:
-      //
-      //    # Top Level
-      //    ## Sub Section
-      //    ### Sub-sub Section
-      //    ## Sub Section Two
-      //
-      // In the above case, the '## Sub Section Two' header will close both the
-      // '### Sub-sub section' as well as the '## Sub-Section'
-      this.closeMarkdownHeaderScopes = function(node, position, depth)
-      {
-         var children = node.$children;
-         for (var i = children.length - 1; i >= 0; i--)
-         {
-            var child = children[i];
-            if (child.isFunction() || child.isChunk())
-               return;
-
-            if (child.isSection() && child.attributes.depth >= depth)
-            {
-               debuglog("Closing Markdown scope: '" + child.label + "'");
-               this.$root.closeScope(position, ScopeNode.TYPE_SECTION);
-               if (child.attributes.depth === depth)
-                  return;
-
-               if (node.isRoot() || node == null)
-                  return;
-
-               return this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
-            }
-         }
-
-         if (node.isRoot() || node == null)
-            return;
-         
-         this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
-      };
-
       this.onMarkdownHead = function(label, labelStartPos, labelEndPos, depth, isMarkdown)
       {
          debuglog("Adding Markdown header: '" + label + "' [" + depth + "]");
 
-         // A section that carries no heading level does not contain the
-         // sections that follow it, so close it before adding this header.
-         // closeMarkdownHeaderScopes() can't do it: it compares heading levels,
-         // and a depthless section has none to compare.
-         this.closeSectionScopesWhile(labelStartPos, function(scope) {
-            return scope.attributes.depth === ScopeNode.DEPTH_NONE;
-         });
-
-         var scopes = this.getActiveScopes(labelStartPos);
-         if (scopes.length > 1)
-            this.closeMarkdownHeaderScopes(scopes[scopes.length - 2], labelStartPos, depth);
-
-         this.$root.addNode(new this.$ScopeNodeFactory(
+         var node = new this.$ScopeNodeFactory(
             label,
             labelEndPos,
             labelStartPos,
             ScopeNode.TYPE_SECTION,
             {depth: depth, isMarkdown: isMarkdown}
-         ));
+         );
+
+         // A new Markdown header implicitly closes all previously open
+         // headers of greater or equal depth. For example:
+         //
+         //    # Top Level
+         //    ## Sub Section
+         //    ### Sub-sub Section
+         //    ## Sub Section Two
+         //
+         // Here '## Sub Section Two' closes both '### Sub-sub Section' and
+         // '## Sub Section'. A section that carries no heading level does not
+         // contain the sections that follow it, so it is closed as well.
+         this.$addSectionHeader(node, function(scope) {
+            return scope.attributes.depth === ScopeNode.DEPTH_NONE ||
+                   scope.attributes.depth >= depth;
+         });
       };
 
       /**
