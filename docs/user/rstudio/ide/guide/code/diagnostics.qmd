@@ -66,16 +66,18 @@ The C / C++ diagnostics engine is powered by `libclang`, and is able to report c
 
 RStudio derives the compiler flags for a file from the way it would normally be built. For sources in an R package, the flags come from `R CMD SHLIB`, so the package's `src/Makevars` and `LinkingTo` dependencies are respected. For standalone files, they come from `Rcpp::sourceCpp()` or `cpp11::cpp_source()`. All errors in a file are reported; RStudio does not stop after clang's default error limit.
 
-To add or override flags, create a `compile_flags.txt` file containing one argument per line, in the same format used by [clangd](https://clangd.llvm.org/design/compile-commands#compile_flagstxt). RStudio looks for this file in the source file's directory and its parent directories, up to the project directory, and appends its contents to the generated flags. Because they come last, they take precedence over the flags RStudio generates. For example, to stop reporting after 50 errors and silence a warning:
+To add or override flags, create a `compile_flags.txt` file containing one argument per line, in the same format used by [clangd](https://clangd.llvm.org/design/compile-commands#compile_flagstxt). For a file inside the current project, RStudio looks for this file in the source file's directory and its parent directories, up to the project directory; for any other file, only the source file's own directory is checked. Its contents are appended to the generated flags, so they take precedence over the flags RStudio generates. Relative paths, such as `-Iinst/include`, are resolved against the directory containing `compile_flags.txt`. For example, to stop reporting after 50 errors and silence a warning:
 
 ```
 -ferror-limit=50
 -Wno-unused-parameter
 ```
 
-Changes to `compile_flags.txt` take effect the next time diagnostics run; no restart is required.
+Changes to `compile_flags.txt` take effect the next time diagnostics run; no restart is required. Problems with the flags themselves, such as an unknown argument, are reported as diagnostics on the first line of the source file.
 
-To see the flags being passed to `libclang`, set the `clang_verbose` preference to `1` in [`rstudio-prefs.json`](../productivity/custom-settings.qmd) and restart the R session. The flags are then printed to the session log whenever a file is indexed.
+In an R package, add `compile_flags.txt` to `.Rbuildignore` (for example, with `usethis::use_build_ignore("compile_flags.txt")`) so that `R CMD build` leaves it out of the package and `R CMD check` does not report it as a non-standard file.
+
+To see the flags being passed to `libclang`, run `.rs.setClangDiagnostics(2)` in the R console, which restarts the R session, or set the `clang_verbose` preference to `2` in [`rstudio-prefs.json`](../productivity/custom-settings.qmd) and restart the R session yourself. The flags are then written to the R session's standard error stream whenever a file is indexed. On RStudio Server, that stream is captured in the server's logs; on RStudio Desktop, it is easiest to see by launching RStudio from a terminal.
 
 ## Viewing diagnostics
 
