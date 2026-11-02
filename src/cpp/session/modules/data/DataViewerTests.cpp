@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include <r/RSexp.hpp>
+
 #include "DataViewer.hpp"
 
 namespace rstudio {
@@ -112,6 +114,18 @@ TEST(DataViewerTest, FilterSubset_UnparseableFilterIsNotSubset)
 {
    // bare strings (no "type|value" separator) can't be proven subsets
    EXPECT_FALSE(detail::isFilterSubset("abc", "abcd"));
+}
+
+// shapeChanged: binding a previously unbound object to NULL must change the
+// shape, since an unbound object's observed SEXP may itself read as NULL.
+// NULL has no names or row count, and NCOL(NULL) is 0 (1 before R 4.4), so
+// the unknown shape's -1 column count is what tells them apart.
+TEST(DataViewerTest, ShapeChanged_UnboundDiffersFromNull)
+{
+   detail::FrameShape unbound = detail::frameShape(nullptr);
+   detail::FrameShape null = detail::frameShape(R_NilValue);
+   EXPECT_TRUE(detail::shapeChanged(unbound, null));
+   EXPECT_FALSE(detail::shapeChanged(null, detail::frameShape(R_NilValue)));
 }
 
 } // anonymous namespace
