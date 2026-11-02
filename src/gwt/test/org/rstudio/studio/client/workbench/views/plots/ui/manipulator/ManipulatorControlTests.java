@@ -148,6 +148,24 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals("4", sliderEl.getAttribute("aria-valuenow"));
    }
 
+   public void testSliderDoesNotReportUnchangedValue()
+   {
+      // each report re-runs the user's plot code; a key that leaves the
+      // value where it was must not trigger one
+      List<String> reported = new ArrayList<>();
+      Element slider = sliderElement(attach(newSlider(
+            5, values -> reported.add(values.get("x.max").toString()))));
+
+      pressKey(slider, KeyCodes.KEY_HOME);
+      pressKey(slider, KeyCodes.KEY_LEFT);
+      assertTrue(reported.isEmpty());
+
+      pressKey(slider, KeyCodes.KEY_END);
+      pressKey(slider, KeyCodes.KEY_END);
+      pressKey(slider, KeyCodes.KEY_RIGHT);
+      assertEquals(Arrays.asList("35"), reported);
+   }
+
    public void testSliderPageKeysMoveATenthOfTheRange()
    {
       // Page Up/Down are the large-step keys; Ctrl+arrow is taken by the OS

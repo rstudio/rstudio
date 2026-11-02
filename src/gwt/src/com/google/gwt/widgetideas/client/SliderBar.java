@@ -246,6 +246,11 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
   private boolean slidingMouse = false;
 
   /**
+   * The value when the current slide started.
+   */
+  private double slideStartValue;
+
+  /**
    * A bit indicating whether or not the slider is enabled
    */
   private boolean enabled = true;
@@ -478,11 +483,13 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
               case KeyboardListener.KEY_HOME:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
+                startSliding(false, true);
                 setCurrentValue(minValue);
                 break;
               case KeyboardListener.KEY_END:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
+                startSliding(false, true);
                 setCurrentValue(maxValue);
                 break;
               case KeyboardListener.KEY_PAGEDOWN:
@@ -510,6 +517,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
               case 32:
                 DOM.eventPreventDefault(event);
                 slidingKeyboard = true;
+                startSliding(false, true);
                 setCurrentValue(minValue + getTotalRange() / 2);
                 break;
             }
@@ -998,6 +1006,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    * @param fireEvent true to fire the event
    */
   private void startSliding(boolean highlight, boolean fireEvent) {
+    slideStartValue = curValue;
     if (highlight) {
       DOM.setElementProperty(lineElement, "className",
           "gwt-SliderBar-line gwt-SliderBar-line-sliding");
@@ -1021,7 +1030,10 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
           "gwt-SliderBar-knob");
       setKnobImage(images.slider());
     }
-    if (fireEvent && (slideCompletedListeners != null)) 
+    // listeners may do expensive work (manipulate() re-runs plot code), so
+    // only report a slide that moved the value
+    if (fireEvent && (slideCompletedListeners != null)
+        && curValue != slideStartValue)
        slideCompletedListeners.fireChange(this);
   }
 
