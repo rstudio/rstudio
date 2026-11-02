@@ -15,7 +15,7 @@
 
 import { createHash } from 'crypto';
 import { app } from 'electron';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 import path from 'path';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
@@ -72,57 +72,73 @@ export function markerMatches(marker: RelaunchMarker, identity: RelaunchIdentity
   return marker.installKey === identity.installKey && compareVersions(marker.version, identity.version) === 0;
 }
 
+/** Where the markers live; a parameter so tests can use a scratch directory. */
+export function defaultMarkerDir(): string {
+  return path.join(app.getPath('userData'), 'relaunch-project');
+}
+
 /** One marker per installation, so installations never overwrite or cancel each other's. */
-function markerPath(installKey: string): string {
-  return path.join(app.getPath('userData'), 'relaunch-project', `${installKey}.json`);
+function markerPath(dir: string, installKey: string): string {
+  return path.join(dir, `${installKey}.json`);
 }
 
 /** Remember the project the relaunch into `identity` should open. */
-export function rememberRelaunchProject(project: string, identity: RelaunchIdentity): void {
+export function rememberRelaunchProject(project: string, identity: RelaunchIdentity, dir = defaultMarkerDir()): void {
   try {
-    const file = markerPath(identity.installKey);
-    mkdirSync(path.dirname(file), { recursive: true });
+    mkdirSync(dir, { recursive: true });
     const marker: RelaunchMarker = { ...identity, project, expires: Date.now() + kRelaunchProjectTtlMs };
-    writeFileSync(file, JSON.stringify(marker));
+    writeFileSync(markerPath(dir, identity.installKey), JSON.stringify(marker));
   } catch (error: unknown) {
     logger().logDebug(`could not remember the project to reopen: ${safeError(error).message}`);
   }
 }
 
-/** Drop this installation's marker; false when it could not be removed. */
-export function forgetRelaunchProject(installKey: string): boolean {
+/** Drop this installation's marker, if any; idempotent, never throws. */
+export function forgetRelaunchProject(installKey: string, dir = defaultMarkerDir()): void {
   try {
-    rmSync(markerPath(installKey), { force: true });
-    return true;
+    rmSync(markerPath(dir, installKey), { force: true });
   } catch (error: unknown) {
     // startup must go on; an undeletable marker expires on its own
     logger().logDebug(`could not remove the relaunch marker: ${safeError(error).message}`);
-    return false;
   }
 }
 
 /**
  * Consume the project remembered for this RStudio: null when there is none,
- * it has expired, it is meant for another build of this installation, or it
- * could not be removed (reopening it on every launch until it expires would
- * be worse than not reopening it once).
+ * it has expired, it is meant for another build of this installation, or
+ * another launch consumed it first. Deleting the marker is what claims it:
+ * two launches may both read it, but unlink() succeeds for only one of them,
+ * so the project is reopened exactly once.
  */
-export function takeRelaunchProject(identity: RelaunchIdentity, now = Date.now()): string | null {
+export function takeRelaunchProject(
+  identity: RelaunchIdentity,
+  now = Date.now(),
+  dir = defaultMarkerDir(),
+): string | null {
+  const file = markerPath(dir, identity.installKey);
   let text: string;
   try {
-    text = readFileSync(markerPath(identity.installKey), 'utf8');
+    text = readFileSync(file, 'utf8');
   } catch {
     return null;
   }
 
   const marker = parseRelaunchMarker(text);
   if (!marker || markerExpired(marker, now)) {
-    forgetRelaunchProject(identity.installKey);
+    forgetRelaunchProject(identity.installKey, dir);
     return null;
   }
   if (!markerMatches(marker, identity)) {
     return null;
   }
 
-  return forgetRelaunchProject(identity.installKey) ? marker.project : null;
+  try {
+    unlinkSync(file);
+  } catch (error: unknown) {
+    // ENOENT: another launch claimed it first; anything else: do not reopen
+    // the project on every launch until the marker expires
+    logger().logDebug(`not reopening the remembered project: ${safeError(error).message}`);
+    return null;
+  }
+  return marker.project;
 }

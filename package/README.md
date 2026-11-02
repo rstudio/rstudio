@@ -284,9 +284,9 @@ up silently. On both platforms the active project
 is written to `relaunch-project/<install key>.json` in the Electron user-data
 directory before quitting and reopened, once, by the relaunched RStudio -- the
 marker names the build and installation it is for, so an unrelated launch in
-between leaves it alone, and it is only reopened if the marker could be
-removed. A quit the session refuses cancels the pending install (the download
-stays).
+between leaves it alone, and deleting it is what claims it, so two launches
+racing for it reopen the project once. A quit the session refuses cancels the
+pending install (the download stays).
 
 The macOS zip is produced for open-source builds only and published to the
 builds site by the Jenkins pipeline as the `electron/macos-zip` platform, next

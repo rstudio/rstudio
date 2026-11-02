@@ -59,7 +59,7 @@ export function parsePsPids(output: string, execPath: string): number[] {
   return pids;
 }
 
-function run(command: string, args: string[]): Promise<string | null> {
+async function run(command: string, args: string[]): Promise<string | null> {
   return new Promise((resolve) => {
     execFile(command, args, { windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (error, stdout) =>
       resolve(error ? null : stdout),
