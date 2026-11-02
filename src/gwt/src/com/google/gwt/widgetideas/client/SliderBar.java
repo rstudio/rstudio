@@ -307,6 +307,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
     super();
     this.minValue = minValue;
     this.maxValue = maxValue;
+    this.curValue = minValue;
     this.images = images;
     setLabelFormatter(labelFormatter);
 
@@ -329,7 +330,6 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
     Roles.getSliderRole().set(getElement());
     updateAriaRange();
-    updateAriaValue();
 
     sinkEvents(Event.MOUSEEVENTS | Event.KEYEVENTS | Event.FOCUSEVENTS);
   }

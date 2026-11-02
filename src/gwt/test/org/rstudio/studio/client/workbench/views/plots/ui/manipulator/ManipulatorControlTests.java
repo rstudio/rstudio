@@ -29,6 +29,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.widgetideas.client.SliderBar;
 
 public class ManipulatorControlTests extends GWTTestCase
 {
@@ -80,6 +81,12 @@ public class ManipulatorControlTests extends GWTTestCase
       assertEquals("35", slider.getAttribute("aria-valuemax"));
       assertEquals("25", slider.getAttribute("aria-valuenow"));
       assertEquals("25", slider.getAttribute("aria-valuetext"));
+   }
+
+   public void testNewSliderBarValueIsInRange()
+   {
+      SliderBar bar = new SliderBar(5, 35);
+      assertEquals("5", bar.getElement().getAttribute("aria-valuenow"));
    }
 
    public void testSliderArrowKeysUpdateValue()
