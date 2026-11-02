@@ -15,10 +15,11 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs';
+import { chmodSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import {
+  claimRelaunchMarker,
   forgetRelaunchProject,
   installationKey,
   markerExpired,
@@ -73,10 +74,34 @@ describe('relaunch project marker', () => {
 
     it('hands the project to exactly one consumer', () => {
       rememberRelaunchProject(marker.project, identity, dir);
-      // two launches of the updated build racing for the same marker
       assert.equal(takeRelaunchProject(identity, now, dir), marker.project);
       assert.isNull(takeRelaunchProject(identity, now, dir));
       assert.deepEqual(readdirSync(dir), []);
+    });
+
+    it('lets only one of two launches that both read the marker claim it', () => {
+      // takeRelaunchProject() is read-then-claim; interleave two launches so
+      // both have read before either claims, as two processes could
+      rememberRelaunchProject(marker.project, identity, dir);
+      const file = path.join(dir, `${identity.installKey}.json`);
+      assert.isTrue(existsSync(file)); // launch A reads
+      assert.isTrue(existsSync(file)); // launch B reads
+      assert.isTrue(claimRelaunchMarker(identity.installKey, dir)); // A claims
+      assert.isFalse(claimRelaunchMarker(identity.installKey, dir)); // B must not
+    });
+
+    it('does not reopen a project whose marker cannot be removed', function () {
+      if (process.platform === 'win32' || process.getuid?.() === 0) {
+        this.skip(); // directory permissions do not block deletion here
+      }
+      rememberRelaunchProject(marker.project, identity, dir);
+      chmodSync(dir, 0o555);
+      try {
+        assert.isNull(takeRelaunchProject(identity, now, dir));
+      } finally {
+        chmodSync(dir, 0o755);
+      }
+      assert.equal(readdirSync(dir).length, 1);
     });
 
     it('leaves a marker meant for another build or installation in place', () => {
@@ -109,9 +134,17 @@ describe('relaunch project marker', () => {
     });
   });
 
-  it('keys an installation by its directory, case-insensitively', () => {
+  it('keys an installation by its directory, folding case only on Windows', () => {
+    const exe = 'C:\\Program Files\\RStudio\\rstudio.exe';
+    assert.equal(installationKey(exe, 'win32'), installationKey(exe.toLowerCase(), 'win32'));
+
     const app = '/Applications/RStudio.app/Contents/MacOS/RStudio';
-    assert.equal(installationKey(app), installationKey(app.toLowerCase()));
-    assert.notEqual(installationKey(app), installationKey('/tmp/RStudio.app/Contents/MacOS/RStudio'));
+    assert.notEqual(
+      installationKey(app, 'darwin'),
+      installationKey('/tmp/RStudio.app/Contents/MacOS/RStudio', 'darwin'),
+    );
+    // a case-sensitive volume can hold both of these
+    assert.notEqual(installationKey(app, 'darwin'), installationKey(app.toLowerCase(), 'darwin'));
+    assert.notEqual(installationKey(app, 'linux'), installationKey(app.toLowerCase(), 'linux'));
   });
 });

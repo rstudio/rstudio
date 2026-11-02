@@ -44,9 +44,16 @@ export interface RelaunchMarker extends RelaunchIdentity {
   expires: number;
 }
 
-/** A short key for the installation at `execPath`, stable across its updates. */
-export function installationKey(execPath: string): string {
-  return createHash('sha1').update(path.dirname(execPath).toLowerCase()).digest('hex').slice(0, 12);
+/**
+ * A short key for the installation at `execPath`, stable across its updates.
+ * Case is folded only where the file system ignores it (Windows); a macOS
+ * volume may be case-sensitive, and two installations differing only by case
+ * must not share a key.
+ */
+export function installationKey(execPath: string, platform: NodeJS.Platform = process.platform): string {
+  const dir = path.dirname(execPath);
+  const folded = platform === 'win32' ? dir.toLowerCase() : dir;
+  return createHash('sha1').update(folded).digest('hex').slice(0, 12);
 }
 
 /** The marker's contents, or null when it is not one. */
@@ -104,21 +111,35 @@ export function forgetRelaunchProject(installKey: string, dir = defaultMarkerDir
 }
 
 /**
+ * Claim this installation's marker by deleting it. Two launches may both have
+ * read the marker, but unlink() succeeds for only one of them, so exactly one
+ * reopens the project. False when another launch claimed it first (ENOENT) or
+ * it cannot be removed, in which case reopening it on every launch until it
+ * expires would be worse than not reopening it once.
+ */
+export function claimRelaunchMarker(installKey: string, dir = defaultMarkerDir()): boolean {
+  try {
+    unlinkSync(markerPath(dir, installKey));
+    return true;
+  } catch (error: unknown) {
+    logger().logDebug(`not reopening the remembered project: ${safeError(error).message}`);
+    return false;
+  }
+}
+
+/**
  * Consume the project remembered for this RStudio: null when there is none,
  * it has expired, it is meant for another build of this installation, or
- * another launch consumed it first. Deleting the marker is what claims it:
- * two launches may both read it, but unlink() succeeds for only one of them,
- * so the project is reopened exactly once.
+ * another launch claimed it first.
  */
 export function takeRelaunchProject(
   identity: RelaunchIdentity,
   now = Date.now(),
   dir = defaultMarkerDir(),
 ): string | null {
-  const file = markerPath(dir, identity.installKey);
   let text: string;
   try {
-    text = readFileSync(file, 'utf8');
+    text = readFileSync(markerPath(dir, identity.installKey), 'utf8');
   } catch {
     return null;
   }
@@ -132,13 +153,5 @@ export function takeRelaunchProject(
     return null;
   }
 
-  try {
-    unlinkSync(file);
-  } catch (error: unknown) {
-    // ENOENT: another launch claimed it first; anything else: do not reopen
-    // the project on every launch until the marker expires
-    logger().logDebug(`not reopening the remembered project: ${safeError(error).message}`);
-    return null;
-  }
-  return marker.project;
+  return claimRelaunchMarker(identity.installKey, dir) ? marker.project : null;
 }

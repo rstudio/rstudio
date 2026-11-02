@@ -59,31 +59,40 @@ export function parsePsPids(output: string, execPath: string): number[] {
   return pids;
 }
 
-async function run(command: string, args: string[]): Promise<string | null> {
+/** Runs a command and resolves to its stdout, or null when it failed. */
+export type CommandRunner = (command: string, args: string[]) => Promise<string | null>;
+
+const execFileRunner: CommandRunner = async (command, args) => {
   return new Promise((resolve) => {
     execFile(command, args, { windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (error, stdout) =>
       resolve(error ? null : stdout),
     );
   });
-}
+};
 
 /**
  * How many RStudio processes outside this application are running, or null
  * when that could not be determined. `ownPids` names this application's
  * processes (Electron's renderer, GPU and utility children run the same
  * executable on Windows and must not count). Platforms without an installer
- * to protect answer 0.
+ * to protect answer 0. The platform and the command runner are parameters
+ * so the rules are testable anywhere.
  */
-export async function otherInstanceCount(execPath: string, ownPids: number[]): Promise<number | null> {
+export async function otherInstanceCount(
+  execPath: string,
+  ownPids: number[],
+  platform: NodeJS.Platform = process.platform,
+  run: CommandRunner = execFileRunner,
+): Promise<number | null> {
   const own = new Set([process.pid, ...ownPids]);
   let pids: number[];
-  if (process.platform === 'win32') {
+  if (platform === 'win32') {
     const output = await run('tasklist.exe', ['/FI', 'IMAGENAME eq rstudio.exe', '/FO', 'CSV', '/NH']);
     if (output === null) {
       return null;
     }
     pids = parseTasklistPids(output);
-  } else if (process.platform === 'darwin') {
+  } else if (platform === 'darwin') {
     const output = await run('/bin/ps', ['-axo', 'pid=,comm=']);
     if (output === null) {
       return null;

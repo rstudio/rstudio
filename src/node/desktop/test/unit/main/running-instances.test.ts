@@ -15,7 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { parsePsPids, parseTasklistPids } from '../../../src/main/running-instances';
+import { otherInstanceCount, parsePsPids, parseTasklistPids } from '../../../src/main/running-instances';
 
 describe('running instances', () => {
   describe('parseTasklistPids', () => {
@@ -51,6 +51,41 @@ describe('running instances', () => {
     it('is empty when nothing matches', () => {
       assert.deepEqual(parsePsPids(output, '/opt/RStudio'), []);
       assert.deepEqual(parsePsPids('', app), []);
+    });
+  });
+
+  describe('otherInstanceCount', () => {
+    const me = process.pid;
+    const exe = 'C:\\RStudio\\rstudio.exe';
+    const windowsOutput = [me, me + 1, me + 2, 4242]
+      .map((pid) => `"rstudio.exe","${pid}","Console","1","1,000 K"`)
+      .join('\r\n');
+    const app = '/Applications/RStudio.app/Contents/MacOS/RStudio';
+    const helper = '/Applications/RStudio.app/Contents/Frameworks/RStudio Helper.app/Contents/MacOS/RStudio Helper';
+    const macOutput = `${me} ${app}\n${me + 1} ${helper}\n4242 ${app}\n`;
+
+    it("excludes this application's own processes and counts the rest", async () => {
+      const own = [me + 1, me + 2];
+      assert.equal(await otherInstanceCount(exe, own, 'win32', async () => windowsOutput), 1);
+      assert.equal(await otherInstanceCount(app, own, 'darwin', async () => macOutput), 1);
+    });
+
+    it('is 0 when only this application is running', async () => {
+      const alone = windowsOutput.split('\r\n').slice(0, 3).join('\r\n');
+      assert.equal(await otherInstanceCount(exe, [me + 1, me + 2], 'win32', async () => alone), 0);
+      assert.equal(await otherInstanceCount(app, [], 'darwin', async () => `${me} ${app}\n`), 0);
+    });
+
+    it('is null, not 0, when the process listing fails', async () => {
+      assert.isNull(await otherInstanceCount(exe, [], 'win32', async () => null));
+      assert.isNull(await otherInstanceCount(app, [], 'darwin', async () => null));
+    });
+
+    it('is 0 on platforms without an installer to protect, without running anything', async () => {
+      const never = async () => {
+        throw new Error('should not run');
+      };
+      assert.equal(await otherInstanceCount('/usr/lib/rstudio/rstudio', [], 'linux', never), 0);
     });
   });
 });
