@@ -1078,9 +1078,7 @@
    match <- if (nrow(exact) > 0L)
       exact[1L, ]
    else
-      # which.max() cannot take a package_version before R 4.3 (it is a list
-      # underneath); xtfrm() gives it an ordinary numeric ranking instead.
-      candidates[which.max(xtfrm(package_version(candidates$version))), ]
+      candidates[which.max(package_version(candidates$version)), ]
 
    match <- as.list(match)
    if (!nzchar(match$home))
