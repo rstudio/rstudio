@@ -27,7 +27,7 @@ const SNIPPET = [
   '',
 ].join('\n');
 
-test.describe.serial('New Connection wizard (snippet file)', () => {
+test.describe('New Connection wizard (snippet file)', () => {
   const sandbox = useSuiteSandbox();
   let actions: ConnectionsPaneActions;
 
@@ -35,8 +35,10 @@ test.describe.serial('New Connection wizard (snippet file)', () => {
     actions = new ConnectionsPaneActions(page);
     const snippetPath = await seedSandboxFile(
       page, sandbox.dir, `connections/${SNIPPET_NAME}.R`, SNIPPET);
+    // options() returns the previous value, kept so afterAll can restore it
+    const snippetDir = rPathLiteral(path.dirname(snippetPath));
     await executeInConsole(
-      page, `options(\`connections-path\` = ${rPathLiteral(path.dirname(snippetPath))})`);
+      page, `.pwOldConnectionsPath <- options(\`connections-path\` = ${snippetDir})`);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
@@ -44,7 +46,7 @@ test.describe.serial('New Connection wizard (snippet file)', () => {
       await actions.wizard.cancelBtn.click();
       await actions.wizard.dialog.waitFor({ state: 'hidden', timeout: 5000 });
     }
-    await executeInConsole(page, 'options(`connections-path` = NULL)');
+    await executeInConsole(page, 'options(.pwOldConnectionsPath); rm(.pwOldConnectionsPath)');
   });
 
   test('labels every field, including the second one in the first row', async () => {
