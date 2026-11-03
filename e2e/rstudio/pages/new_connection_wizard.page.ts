@@ -71,22 +71,18 @@ export class NewConnectionWizard extends PageObject {
 
   /**
    * A snippet parameter field by its label key (e.g. "Database"). Fields are
-   * FormLabel+TextBox pairs wired with setFor, resolvable by accessible
-   * name -- except the secondary field of a two-field first row (e.g. Port
-   * beside Server), whose label carries no association; for that one, fall
-   * back to the input in the table cell after the label's cell.
+   * FormLabel+TextBox pairs wired with setFor, so each resolves by accessible
+   * name, including the second field of a two-field first row (e.g. Port
+   * beside Server).
    */
   field(key: string): Locator {
     const byLabel = this.dialog.getByLabel(`${key}:`, { exact: true });
-    const byCell = this.dialog.locator(
-      `xpath=.//td[normalize-space(.) = "${key}:"]/following-sibling::td[1]//input`,
-    );
     // Visible only: every driver's parameter grid already exists in the DOM
     // (see connectFromDropdown for why), so an unfiltered first() match can
     // land in an inactive one -- typing then goes to whichever field
     // occupies that position there, silently corrupting a different
     // parameter.
-    return byLabel.or(byCell).filter({ visible: true }).first();
+    return byLabel.filter({ visible: true }).first();
   }
 
   /**
