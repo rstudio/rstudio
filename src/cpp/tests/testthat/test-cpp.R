@@ -145,6 +145,35 @@ test_that("compile_flags.txt flags are honored with precompiled headers", {
     expect_length(messages(), 0L)
 })
 
+test_that("compile_flags.txt include directories feed header completion", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = FALSE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-header-completion-")
+    dir.create(file.path(dir, "inc"), recursive = TRUE)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+    file.create(file.path(dir, "inc", "widget.h"))
+
+    path <- file.path(dir, "main.cpp")
+    writeLines(c("#include <Rcpp.h>", "#include <wid"), path)
+
+    completions <- function() {
+        line <- "#include <wid"
+        result <- .rs.invokeRpc("get_cpp_completions", line, path, "", 1L, nchar(line), "wid")
+        vapply(result$completions, `[[`, character(1), "typed_text")
+    }
+
+    expect_false("widget.h" %in% completions())
+
+    # an include directory added by any of clang's spellings, not just -I,
+    # is searched for header completions
+    writeLines("--include-directory-after=inc", file.path(dir, "compile_flags.txt"))
+    expect_true("widget.h" %in% completions())
+})
+
 test_that("problems with compile_flags.txt are reported, not swallowed", {
     skip_if_not_installed("Rcpp")
     skip_if_not(.rs.isClangAvailable())
