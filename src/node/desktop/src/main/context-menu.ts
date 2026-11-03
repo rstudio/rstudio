@@ -26,16 +26,22 @@ type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 // Electron raises 'context-menu'; the params alone can't tell it from Ace's textarea.
 const kTerminalFocusedScript = "document.activeElement?.classList.contains('xterm-helper-textarea') === true";
 
+// The browser's select-all would only select the helper textarea's own (empty) text, so
+// the terminal listens for this event on that textarea and selects its buffer instead.
+const kTerminalSelectAllScript = `(() => {
+  const textarea = document.activeElement;
+  if (textarea?.classList.contains('xterm-helper-textarea') !== true) {
+    return false;
+  }
+  textarea.dispatchEvent(new Event('rstudio-terminal-select-all'));
+  return true;
+})()`;
+
 /**
- * Whether the menu is over the Terminal pane on a platform where its copy and paste keys
- * differ from the role defaults.
+ * Whether the menu is over the Terminal pane, i.e. xterm's helper textarea has focus.
  */
-export const _showTerminalShortcuts = async (
-  params: Electron.ContextMenuParams,
-  platform: NodeJS.Platform = process.platform,
-): Promise<boolean> => {
-  // On macOS the terminal copies and pastes with Cmd+C / Cmd+V, matching the role defaults.
-  if (platform === 'darwin' || params.hasImageContents) {
+export const _isOverTerminal = async (params: Electron.ContextMenuParams): Promise<boolean> => {
+  if (params.hasImageContents) {
     return false;
   }
 
@@ -53,27 +59,42 @@ export const _showTerminalShortcuts = async (
   }
 };
 
+export const _selectAllInTerminal = async (frame: Electron.WebFrameMain | null): Promise<void> => {
+  try {
+    if (frame === null) {
+      throw new Error('the frame is gone');
+    }
+    if ((await frame.executeJavaScript(kTerminalSelectAllScript)) !== true) {
+      throw new Error('the terminal no longer has focus');
+    }
+  } catch (error: unknown) {
+    logger().logErrorMessage(`Failed to select all in the terminal: ${error}`);
+  }
+};
+
 export const showContextMenu = async (sender: WebContents, params: Electron.ContextMenuParams): Promise<void> => {
-  const terminalShortcuts = await _showTerminalShortcuts(params);
-  const template = _createContextMenuTemplate(sender, params, terminalShortcuts);
+  const overTerminal = await _isOverTerminal(params);
+  const template = _createContextMenuTemplate(sender, params, overTerminal);
 
   const menu = Menu.buildFromTemplate(template);
   menu.popup();
 };
 
 /**
- * @param terminalShortcuts Show the Terminal pane's Windows / Linux copy and paste keys
- *   (Ctrl+Shift+C / Ctrl+Shift+V) instead of Ctrl+C / Ctrl+V, which the terminal sends to the shell.
+ * @param overTerminal The menu is over the Terminal pane: Select All selects the terminal's
+ *   buffer, and on Windows / Linux the terminal's copy and paste keys (Ctrl+Shift+C /
+ *   Ctrl+Shift+V) are shown instead of Ctrl+C / Ctrl+V, which the terminal sends to the shell.
  */
 export const _createContextMenuTemplate = (
   sender: WebContents,
   params: Electron.ContextMenuParams,
-  terminalShortcuts = false,
+  overTerminal = false,
+  platform: NodeJS.Platform = process.platform,
 ): ContextMenuItem[] => {
   if (params.hasImageContents) {
     return createContextMenuImageTemplate(sender, params);
   } else {
-    return createContextMenuTextTemplate(sender, params, terminalShortcuts);
+    return createContextMenuTextTemplate(sender, params, overTerminal, platform);
   }
 };
 
@@ -176,12 +197,17 @@ const createContextMenuImageTemplate = (sender: WebContents, params: Electron.Co
 // them would only shadow it.
 const terminalCopyAccelerator = { accelerator: 'Ctrl+Shift+C', registerAccelerator: false };
 const terminalPasteAccelerator = { accelerator: 'Ctrl+Shift+V', registerAccelerator: false };
+const terminalMacSelectAllAccelerator = { accelerator: 'Cmd+A', registerAccelerator: false };
 
 const createContextMenuTextTemplate = (
   sender: WebContents,
   params: Electron.ContextMenuParams,
-  terminalShortcuts: boolean,
+  overTerminal: boolean,
+  platform: NodeJS.Platform,
 ): ContextMenuItem[] => {
+  // On macOS the terminal's keys are Cmd+C / Cmd+V / Cmd+A, matching the role defaults.
+  const terminalShortcuts = overTerminal && platform !== 'darwin';
+
   // We would like to just always use the already-existing roles for clipboard
   // actions, but https://www.electronjs.org/docs/api/menu-item has:
   //
@@ -215,10 +241,16 @@ const createContextMenuTextTemplate = (
     template.push({ label: i18next.t('contextMenu.paste'), enabled: false });
   }
 
-  if (params.editFlags.canSelectAll && terminalShortcuts) {
-    // No role, so no Ctrl+A hint: in the terminal Ctrl+A goes to the shell, and there is
-    // no select-all key on Windows or Linux.
-    template.push({ label: i18next.t('contextMenu.selectAll'), click: () => sender.selectAll() });
+  if (overTerminal) {
+    // Enabled whatever the helper textarea's edit flags say: they don't describe the
+    // terminal's buffer. On Windows and Linux there is no hint, since Ctrl+A goes to the
+    // shell and the terminal has no select-all key there.
+    const accelerator = platform === 'darwin' ? terminalMacSelectAllAccelerator : {};
+    template.push({
+      label: i18next.t('contextMenu.selectAll'),
+      click: () => void _selectAllInTerminal(params.frame),
+      ...accelerator,
+    });
   } else if (params.editFlags.canSelectAll) {
     template.push({ label: i18next.t('contextMenu.selectAll'), role: 'selectAll' });
   } else {
