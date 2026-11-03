@@ -18,6 +18,7 @@
 - ([#19378](https://github.com/rstudio/rstudio/issues/19378)): [Accessibility] Fixed an issue where the Tutorial pane's links to install `learnr` or update `shiny` were named "click here" for screen reader and voice control users. The links now read "install the learnr package" and "install the shiny package" (or "update the shiny package" when an older version is installed).
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the "Engine path" and "Engine options" fields in the chunk options popup by their "Default" placeholder instead of their labels, and the engine path's browse button only as "...". The button is now named "Select Engine".
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the second field in the first row of a New Connection snippet (e.g. "Port" beside "Server") without its label.
+- ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text fields in custom project templates (from a package's `inst/rstudio/templates/project` or `~/.R/rstudio/templates/project`) without their labels.
 
 ### Dependencies
 -
