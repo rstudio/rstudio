@@ -23,6 +23,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.SelectWidget;
 import com.google.gwt.core.client.JsArray;
@@ -31,7 +32,6 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -183,7 +183,8 @@ public class ProjectTemplateWidget extends Composite
       
       LayoutGrid grid = new LayoutGrid(1, 2);
       DomUtils.disableSpellcheck(primaryWidget);
-      grid.setWidget(0, 0, new Label(ensureEndsWithColon(description.getLabel())));
+      FormLabel label = new FormLabel(ensureEndsWithColon(description.getLabel()), primaryWidget);
+      grid.setWidget(0, 0, label);
       grid.setWidget(0, 1, primaryWidget);
       
       return new ProjectTemplateWidgetItem(grid, new Collector()
