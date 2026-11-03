@@ -112,7 +112,12 @@ public class TerminalSessionSocket
    public void connect(ConsoleProcess consoleProcess,
                        final ConnectCallback callback)
    {
+      final int connection = connection_ + 1;
       disconnect(false);
+      // A pending input's cancellation callback may have connected again.
+      // That newer attempt owns the socket and callbacks; do not overwrite it.
+      if (connection != connection_)
+         return;
       consoleProcess_ = consoleProcess;
       connectCallback_ = callback;
 
