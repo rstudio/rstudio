@@ -15,6 +15,7 @@
  */
 package com.google.gwt.widgetideas.client;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -245,6 +246,11 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
   private boolean slidingMouse = false;
 
   /**
+   * The value when the current slide started.
+   */
+  private double slideStartValue;
+
+  /**
    * A bit indicating whether or not the slider is enabled
    */
   private boolean enabled = true;
@@ -301,6 +307,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
     super();
     this.minValue = minValue;
     this.maxValue = maxValue;
+    this.curValue = minValue;
     this.images = images;
     setLabelFormatter(labelFormatter);
 
@@ -315,11 +322,14 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
     DOM.setElementProperty(lineElement, "className", "gwt-SliderBar-line");
 
     // Create the knob
-    images.slider().applyTo(knobImage);
+    setKnobImage(images.slider());
     Element knobElement = knobImage.getElement();
     DOM.appendChild(getElement(), knobElement);
     DOM.setStyleAttribute(knobElement, "position", "absolute");
     DOM.setElementProperty(knobElement, "className", "gwt-SliderBar-knob");
+
+    Roles.getSliderRole().set(getElement());
+    updateAriaRange();
 
     sinkEvents(Event.MOUSEEVENTS | Event.KEYEVENTS | Event.FOCUSEVENTS);
   }
@@ -462,37 +472,53 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
         // Shift left or right on key press
         case Event.ONKEYDOWN:
+          // suppress scrolling on every slider keydown, including the
+          // auto-repeats that arrive while the first press is still sliding
+          if (isSliderKey(DOM.eventGetKeyCode(event))) {
+            DOM.eventPreventDefault(event);
+          }
           if (!slidingKeyboard) {
+            // a key pressed mid-drag must not move the drag's baseline
+            if (!slidingMouse) {
+              slideStartValue = curValue;
+            }
+            int largeStep = Math.max(1, (int) (getTotalRange() / stepSize / 10));
             int multiplier = 1;
             if (DOM.eventGetCtrlKey(event)) {
-              multiplier = (int) (getTotalRange() / stepSize / 10);
+              multiplier = largeStep;
             }
 
             switch (DOM.eventGetKeyCode(event)) {
               case KeyboardListener.KEY_HOME:
-                DOM.eventPreventDefault(event);
+                slidingKeyboard = true;
                 setCurrentValue(minValue);
                 break;
               case KeyboardListener.KEY_END:
-                DOM.eventPreventDefault(event);
+                slidingKeyboard = true;
                 setCurrentValue(maxValue);
                 break;
+              case KeyboardListener.KEY_PAGEDOWN:
+                multiplier = largeStep;
+                // fall through
               case KeyboardListener.KEY_LEFT:
-                DOM.eventPreventDefault(event);
+              case KeyboardListener.KEY_DOWN:
                 slidingKeyboard = true;
                 startSliding(false, true);
                 shiftLeft(multiplier);
                 keyTimer.schedule(400, false, multiplier);
                 break;
+              case KeyboardListener.KEY_PAGEUP:
+                multiplier = largeStep;
+                // fall through
               case KeyboardListener.KEY_RIGHT:
-                DOM.eventPreventDefault(event);
+              case KeyboardListener.KEY_UP:
                 slidingKeyboard = true;
                 startSliding(false, true);
                 shiftRight(multiplier);
                 keyTimer.schedule(400, true, multiplier);
                 break;
               case 32:
-                DOM.eventPreventDefault(event);
+                slidingKeyboard = true;
                 setCurrentValue(minValue + getTotalRange() / 2);
                 break;
             }
@@ -511,6 +537,9 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
         case Event.ONMOUSEDOWN:
           setFocus(true);
           slidingMouse = true;
+          if (!slidingKeyboard) {
+            slideStartValue = curValue;
+          }
           DOM.setCapture(getElement());
           startSliding(true, true);
           DOM.eventPreventDefault(event);
@@ -603,6 +632,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
     // Redraw the knob
     drawKnob();
+    updateAriaValue();
 
     // Fire the onValueChange event
     if (fireEvent && (changeListeners != null)) {
@@ -617,11 +647,12 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
+    Roles.getSliderRole().setAriaDisabledState(getElement(), !enabled);
     if (enabled) {
-      images.slider().applyTo(knobImage);
+      setKnobImage(images.slider());
       DOM.setElementProperty(lineElement, "className", "gwt-SliderBar-line");
     } else {
-      images.sliderDisabled().applyTo(knobImage);
+      setKnobImage(images.sliderDisabled());
       DOM.setElementProperty(lineElement, "className",
           "gwt-SliderBar-line gwt-SliderBar-line-disabled");
     }
@@ -635,6 +666,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setLabelFormatter(LabelFormatter labelFormatter) {
     this.labelFormatter = labelFormatter;
+    updateAriaValue();
   }
 
   /**
@@ -644,6 +676,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setMaxValue(double maxValue) {
     this.maxValue = maxValue;
+    updateAriaRange();
     drawLabels();
     resetCurrentValue();
   }
@@ -655,6 +688,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    */
   public void setMinValue(double minValue) {
     this.minValue = minValue;
+    updateAriaRange();
     drawLabels();
     resetCurrentValue();
   }
@@ -914,6 +948,46 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
     }
   }
 
+  private static boolean isSliderKey(int keyCode) {
+    switch (keyCode) {
+      case KeyboardListener.KEY_HOME:
+      case KeyboardListener.KEY_END:
+      case KeyboardListener.KEY_PAGEUP:
+      case KeyboardListener.KEY_PAGEDOWN:
+      case KeyboardListener.KEY_LEFT:
+      case KeyboardListener.KEY_RIGHT:
+      case KeyboardListener.KEY_UP:
+      case KeyboardListener.KEY_DOWN:
+      case 32:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Apply a knob image. The knob only depicts the value, which the slider
+   * role already exposes, so it is marked decorative; applyTo can swap in a
+   * new img element, so the alt is reapplied every time.
+   */
+  private void setKnobImage(AbstractImagePrototype image) {
+    image.applyTo(knobImage);
+    knobImage.setAltText("");
+  }
+
+  private void updateAriaRange() {
+    Roles.getSliderRole().setAriaValueminProperty(getElement(), minValue);
+    Roles.getSliderRole().setAriaValuemaxProperty(getElement(), maxValue);
+  }
+
+  // aria-valuetext carries the formatted value the user sees, since
+  // aria-valuenow can hold the raw value of a fractional step
+  private void updateAriaValue() {
+    Roles.getSliderRole().setAriaValuenowProperty(getElement(), curValue);
+    Roles.getSliderRole().setAriaValuetextProperty(getElement(),
+        formatLabel(curValue));
+  }
+
   /**
    * Highlight this widget.
    */
@@ -958,7 +1032,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
           "gwt-SliderBar-line gwt-SliderBar-line-sliding");
       DOM.setElementProperty(knobImage.getElement(), "className",
           "gwt-SliderBar-knob gwt-SliderBar-knob-sliding");
-      images.sliderSliding().applyTo(knobImage);
+      setKnobImage(images.sliderSliding());
     }
   }
 
@@ -974,10 +1048,15 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
 
       DOM.setElementProperty(knobImage.getElement(), "className",
           "gwt-SliderBar-knob");
-      images.slider().applyTo(knobImage);
+      setKnobImage(images.slider());
     }
-    if (fireEvent && (slideCompletedListeners != null)) 
+    // listeners may do expensive work (manipulate() re-runs plot code), so
+    // only report a slide that moved the value. A key press and a drag can
+    // overlap; the one still running continues from the value reported here.
+    if (fireEvent && (slideCompletedListeners != null)
+        && curValue != slideStartValue)
        slideCompletedListeners.fireChange(this);
+    slideStartValue = curValue;
   }
 
   /**
