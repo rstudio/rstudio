@@ -159,19 +159,24 @@ test_that("compile_flags.txt include directories feed header completion", {
 
     path <- file.path(dir, "main.cpp")
     writeLines(c("#include <Rcpp.h>", "#include <wid"), path)
+    flagsFile <- file.path(dir, "compile_flags.txt")
 
-    completions <- function() {
-        line <- "#include <wid"
+    completions <- function(line) {
         result <- .rs.invokeRpc("get_cpp_completions", line, path, "", 1L, nchar(line), "wid")
         vapply(result$completions, `[[`, character(1), "typed_text")
     }
 
-    expect_false("widget.h" %in% completions())
+    expect_false("widget.h" %in% completions("#include <wid"))
 
     # an include directory added by any of clang's spellings, not just -I,
     # is searched for header completions
-    writeLines("--include-directory-after=inc", file.path(dir, "compile_flags.txt"))
-    expect_true("widget.h" %in% completions())
+    writeLines("--include-directory-after=inc", flagsFile)
+    expect_true("widget.h" %in% completions("#include <wid"))
+
+    # but one clang only searches for "quoted" includes is offered for those alone
+    writeLines("-iquoteinc", flagsFile)
+    expect_false("widget.h" %in% completions("#include <wid"))
+    expect_true("widget.h" %in% completions('#include "wid'))
 })
 
 test_that("problems with compile_flags.txt are reported, not swallowed", {

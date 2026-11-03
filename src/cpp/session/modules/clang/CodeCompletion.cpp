@@ -172,6 +172,7 @@ core::json::Object toJson(const CodeCompleteResult& result)
 }
 
 void discoverTranslationUnitIncludePaths(const FilePath& filePath,
+                                         bool systemHeadersOnly,
                                          std::vector<std::string>* pIncludePaths)
 {
    std::vector<std::string> args =
@@ -194,6 +195,10 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
 
          // skip RStudio's libclang builtin header paths
          if (arg.find("libclang/builtin-headers") != std::string::npos)
+            break;
+
+         // '-iquote' directories are only searched for "quoted" includes
+         if (systemHeadersOnly && std::strcmp(option, "-iquote") == 0)
             break;
 
          std::string path = arg.substr(std::strlen(option));
@@ -408,7 +413,7 @@ Error getHeaderCompletionsImpl(const std::string& token,
    discoverSystemIncludePaths(&includePaths);
    
    // discover TU-related include paths
-   discoverTranslationUnitIncludePaths(filePath, &includePaths);
+   discoverTranslationUnitIncludePaths(filePath, systemHeadersOnly, &includePaths);
    
    // discover local include paths
    if (!systemHeadersOnly)
