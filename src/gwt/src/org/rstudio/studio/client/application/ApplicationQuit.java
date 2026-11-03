@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
+import org.rstudio.studio.client.application.events.QuitAbortedEvent;
 import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
@@ -49,7 +50,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
@@ -72,7 +72,7 @@ import com.google.inject.Singleton;
 public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                         HandleUnsavedChangesEvent.Handler,
                                         SuspendAndRestartEvent.Handler,
-                                        ConsolePromptEvent.Handler
+                                        QuitAbortedEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
    
@@ -109,7 +109,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
       eventBus.addHandler(SuspendAndRestartEvent.TYPE, this);
-      eventBus.addHandler(ConsolePromptEvent.TYPE, this);
+      eventBus.addHandler(QuitAbortedEvent.TYPE, this);
    }
    
   
@@ -415,16 +415,16 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    }
 
    /**
-    * R is back at its top-level prompt after the session acknowledged a
-    * quit: .Last() or saving the workspace failed, and the session goes on.
-    * The quit is over, so tell the desktop frame; otherwise it would apply
-    * what that quit was for (an R version switch, an update) at some later,
-    * unrelated quit.
+    * The session acknowledged the quit but R then refused to quit (.Last()
+    * or saving the workspace failed; R's error is in the console), so the
+    * session goes on. Tell the desktop frame the quit is over; otherwise it
+    * would apply what that quit was for (an R version switch, an update) at
+    * some later, unrelated quit.
     */
    @Override
-   public void onConsolePrompt(ConsolePromptEvent event)
+   public void onQuitAborted(QuitAbortedEvent event)
    {
-      if (!isQuitting_ || !event.getPrompt().getAddToHistory() || event.getPrompt().getBusy())
+      if (!isQuitting_)
          return;
 
       isQuitting_ = false;

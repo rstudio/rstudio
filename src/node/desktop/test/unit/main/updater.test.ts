@@ -76,6 +76,9 @@ class FakeHost implements UpdaterHost {
   readonly arch = 'x64';
   readonly execPath: string;
   index = indexFor(A);
+  /** answers for particular urls; anything else gets `index` */
+  responses = new Map<string, string | Error>();
+  requests: string[] = [];
   others: number | null = 0;
   /** when set, otherInstances() waits for it, so a test can act mid-preflight */
   othersGate: Deferred<boolean> | null = null;
@@ -83,6 +86,7 @@ class FakeHost implements UpdaterHost {
   verifies = true;
   downloads: { entry: BuildArtifact; done: Deferred<boolean> }[] = [];
   installs = 0;
+  onInstall: () => void = () => undefined;
   launched: { file: string; mode: WindowsInstallMode }[] = [];
   notifications: [UpdateHook, string][] = [];
   warnings: [string, InstallBlocker][] = [];
@@ -95,8 +99,13 @@ class FakeHost implements UpdaterHost {
       platform === 'win32' ? 'C:\\RStudio\\rstudio.exe' : '/Applications/RStudio.app/Contents/MacOS/RStudio';
   }
 
-  async fetchText(): Promise<string> {
-    return this.index;
+  async fetchText(url: string): Promise<string> {
+    this.requests.push(url);
+    const response = this.responses.get(url);
+    if (response instanceof Error) {
+      throw response;
+    }
+    return response ?? this.index;
   }
 
   async otherInstances(): Promise<number | null> {
@@ -124,6 +133,7 @@ class FakeHost implements UpdaterHost {
 
   squirrelInstall(): void {
     this.installs++;
+    this.onInstall();
   }
 
   async stageInstaller(entry: BuildArtifact): Promise<string> {
@@ -339,6 +349,27 @@ describe('updater', () => {
     assert.equal(host.downloads.length, 2);
   });
 
+  it('keeps the window from closing while the handoff decides, not once it installs', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+    assert.isFalse(updater.isHandingOff());
+
+    // Squirrel closes the windows itself from inside squirrelInstall()
+    let handingOffAtInstall: boolean | null = null;
+    host.onInstall = () => (handingOffAtInstall = updater.isHandingOff());
+    host.othersGate = deferred();
+    const applying = updater.applyPendingUpdate();
+    await flush();
+    assert.isTrue(updater.isHandingOff());
+
+    host.othersGate.resolve(true);
+    assert.isTrue(await applying);
+    assert.isFalse(updater.isHandingOff());
+    assert.isFalse(handingOffAtInstall);
+  });
+
   it('gives up at the quit handoff when another window opened meanwhile, and says so', async () => {
     const { host, updater } = setup('darwin');
     await offer(updater, host, A);
@@ -386,6 +417,67 @@ describe('updater', () => {
     await host.finishDownload();
     await downloading;
     assert.equal(await updater.canInstallUpdate(A), '');
+  });
+
+  describe('on the release channel', () => {
+    const releaseIndexUrl = 'https://api.test/api/v1/release/index.json';
+    const buildsUrl = `https://api.test/api/v1/build/${A}/index.json`;
+    const releaseIndex = JSON.stringify({
+      released: [{ published: [{ build: A, builds_url: buildsUrl, notes_url: 'https://notes.test/' }] }],
+    });
+
+    function releaseSetup(builds: string | Error) {
+      process.env.RSTUDIO_UPDATE_CHANNEL = 'release';
+      try {
+        const { host, updater } = setup('darwin');
+        host.responses.set(releaseIndexUrl, releaseIndex);
+        host.responses.set(buildsUrl, builds);
+        host.index = 'not to be read';
+        return { host, updater };
+      } finally {
+        process.env.RSTUDIO_UPDATE_CHANNEL = 'daily';
+      }
+    }
+
+    it('reads the release index, then the build it names', async () => {
+      const { host, updater } = releaseSetup(indexFor(A));
+      const result = await updater.checkForUpdates(false);
+      assert.deepEqual(host.requests, [releaseIndexUrl, buildsUrl]);
+      assert.equal(result.status, 'available');
+      assert.equal(result['update-version'], A);
+      assert.equal(result['update-url'], 'https://dl.test/RStudio-2026.12.0-daily-11.dmg');
+      assert.isTrue(result['can-install']);
+    });
+
+    it('answers error, and so the session check, when the build index cannot be read', async () => {
+      const { updater } = releaseSetup(new Error('HTTP 503'));
+      const result = await updater.checkForUpdates(false);
+      assert.equal(result.status, 'error');
+      assert.include(result.error, 'HTTP 503');
+    });
+
+    it('offers only a manual download when the macOS zip is missing or from another build', async () => {
+      const dmgOnly = JSON.parse(indexFor(A)) as { products: { electron: { platforms: Record<string, unknown> } } };
+      delete dmgOnly.products.electron.platforms['macos-zip'];
+      const dmgOnlyResult = await releaseSetup(JSON.stringify(dmgOnly)).updater.checkForUpdates(false);
+      assert.equal(dmgOnlyResult.status, 'available');
+      assert.isFalse(dmgOnlyResult['can-install']);
+
+      const mixed = JSON.parse(indexFor(A)) as { products: { electron: { platforms: Record<string, unknown> } } };
+      mixed.products.electron.platforms['macos-zip'] = artifact(B, 'zip');
+      const { host, updater } = releaseSetup(JSON.stringify(mixed));
+      const result = await updater.checkForUpdates(false);
+      assert.equal(result.status, 'available');
+      assert.equal(result['update-version'], A);
+      assert.isFalse(result['can-install']);
+
+      // and the dialog's fallback is all there is: nothing to download in-app
+      await updater.downloadUpdate(A);
+      assert.deepEqual(host.lastNotification(), [
+        'onUpdateDownloadFailed',
+        `RStudio ${A} is not available to download.`,
+      ]);
+    });
   });
 
   it('is unsupported when disabled, on Linux, and for a version never offered', async () => {

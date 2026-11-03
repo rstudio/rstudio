@@ -352,6 +352,14 @@ export class MainWindow extends GwtWindow {
   }
 
   closeEvent(event: Electron.Event): void {
+    // quit() is deciding whether an accepted update can be installed; the
+    // session has already exited, so letting this close through would end
+    // the process before the installer is launched (see Updater.isHandingOff)
+    if (appState().gwtCallback?.updater.isHandingOff()) {
+      event.preventDefault();
+      return;
+    }
+
     if (this.quitConfirmed || !this.sessionProcess || this.sessionProcess.exitCode !== null) {
       // the window really is closing, so this is where its geometry is final;
       // recording it on an earlier attempt persisted bounds from a close the

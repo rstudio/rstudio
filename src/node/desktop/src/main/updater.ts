@@ -179,6 +179,8 @@ export class Updater {
   private windowsInstallMode: WindowsInstallMode | null = null;
   /** the version whose restart the user accepted; the quit sequence installs it */
   private pendingInstall: string | null = null;
+  /** applyPendingUpdate() is deciding; the window must stay open until it has */
+  private handingOff = false;
 
   constructor(private host: UpdaterHost) {
     // RSTUDIO_UPDATE_VERSION impersonates another version, as it does for the
@@ -352,6 +354,16 @@ export class Updater {
   }
 
   /**
+   * Whether applyPendingUpdate() is between the session's exit and its
+   * decision. The window must not close meanwhile: the session is gone, so
+   * nothing else keeps the process alive, and ending it now would skip the
+   * accepted install without a word.
+   */
+  isHandingOff(): boolean {
+    return this.handingOff;
+  }
+
+  /**
    * The quit that was to apply the update did not happen (the session
    * refused it, or the user cancelled), so a later ordinary quit must not
    * run the installer or reopen the remembered project. The download stays
@@ -385,7 +397,15 @@ export class Updater {
       return false;
     }
 
-    const blocker = await this.preflight(version);
+    // cleared before an installer is invoked: Squirrel closes the windows
+    // itself, which the guard must not refuse
+    this.handingOff = true;
+    let blocker: InstallBlocker;
+    try {
+      blocker = await this.preflight(version);
+    } finally {
+      this.handingOff = false;
+    }
     this.pendingInstall = null;
     const staged = this.staged;
     const mode = this.windowsInstallMode;

@@ -657,8 +657,23 @@ bool registeredWaitForMethod(const std::string& method,
                         pRequest);
 }
 
+// set while r::session::quit() runs for a quit_session; an error in .Last()
+// long-jumps past that call to R's top-level prompt, so the prompt path
+// reports the abort as well (see notifyQuitAborted)
+bool s_quitInProgress = false;
 
 } // anonymous namespace
+
+void notifyQuitAborted()
+{
+   if (!s_quitInProgress)
+      return;
+   s_quitInProgress = false;
+
+   module_context::activeSession().setActivityState(r_util::kActivityStateRunning, true);
+   ClientEvent event(client_events::kQuitAborted, json::Value());
+   module_context::enqueClientEvent(event);
+}
 
 namespace module_context
 {
@@ -1250,11 +1265,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                status = EXIT_SUCCESS;
             }
 
-            // acknowledge request & quit session
+            // acknowledge request & quit session; quit() returns only when R
+            // refused to quit (and may not return even then: see s_quitInProgress)
             json::JsonRpcResponse response;
             response.setResult(true);
             ptrConnection->sendJsonRpcResponse(response);
-            rstudio::r::session::quit(saveWorkspace, status); // does not return
+            s_quitInProgress = true;
+            rstudio::r::session::quit(saveWorkspace, status);
+            notifyQuitAborted();
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {

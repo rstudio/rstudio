@@ -197,6 +197,11 @@ void setExecuting(bool executing)
 // queue finishes a chunk on it): not for a prompt merely reissued
 void enqueConsolePrompt(const std::string& prompt, bool addToHistory, bool notifyModules)
 {
+   // a top-level prompt while a quit_session is being handled means R
+   // abandoned the quit (readline() in .Last() is not top-level)
+   if (addToHistory)
+      http_methods::notifyQuitAborted();
+
    // save the last prompt for re-issuing, but only when R is at the
    // top-level REPL. mid-execution prompts (e.g. readline, browser)
    // should not overwrite the saved prompt, since reissueLastConsolePrompt
