@@ -703,7 +703,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                      {
                         unlessUpdateBlocked(version, installBlocker, () ->
                         {
-                           appQuit_.performQuit(null, saveChanges);
+                           // a quit may already be under way (a project
+                           // switch whose .Last() is slow, say); its exit
+                           // must not install, so take the record back
+                           if (!appQuit_.performQuit(null, saveChanges))
+                              Desktop.getFrame().cancelUpdateInstall();
                         });
                      });
                   }

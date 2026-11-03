@@ -353,60 +353,75 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       }
    }
    
-   public void performQuit(TutorialApiCallContext callContext, boolean saveChanges)
+   // every overload answers whether the quit was started: false when one is
+   // already in progress, in which case nothing more happens
+   public boolean performQuit(TutorialApiCallContext callContext, boolean saveChanges)
    {
-      performQuit(callContext, saveChanges, null, null);
+      return performQuit(callContext, saveChanges, null, null);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           boolean saveChanges,
-                           Command onQuitAcknowledged)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              boolean saveChanges,
+                              Command onQuitAcknowledged)
    {
-      performQuit(callContext, null, saveChanges, null, null, onQuitAcknowledged);
+      return performQuit(callContext, null, saveChanges, null, null, onQuitAcknowledged);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           boolean saveChanges,
-                           String switchToProject)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              boolean saveChanges,
+                              String switchToProject)
    {
-      performQuit(callContext, saveChanges, switchToProject, null);
+      return performQuit(callContext, saveChanges, switchToProject, null);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           boolean saveChanges,
-                           String switchToProject,
-                           RVersionSpec switchToRVersion)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              boolean saveChanges,
+                              String switchToProject,
+                              RVersionSpec switchToRVersion)
    {
-      performQuit(callContext, null, saveChanges, switchToProject, switchToRVersion);
+      return performQuit(callContext, null, saveChanges, switchToProject, switchToRVersion);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           String progressMessage,
-                           boolean saveChanges, 
-                           String switchToProject,
-                           RVersionSpec switchToRVersion)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              String progressMessage,
+                              boolean saveChanges, 
+                              String switchToProject,
+                              RVersionSpec switchToRVersion)
    {
-      performQuit(callContext,
-                  progressMessage,
-                  saveChanges, 
-                  switchToProject, 
-                  switchToRVersion,
-                  null);
+      return performQuit(callContext,
+                         progressMessage,
+                         saveChanges, 
+                         switchToProject, 
+                         switchToRVersion,
+                         null);
    }
    
-   public void performQuit(TutorialApiCallContext callContext,
-                           String progressMessage,
-                           boolean saveChanges, 
-                           String switchToProject,
-                           RVersionSpec switchToRVersion,
-                           Command onQuitAcknowledged)
+   public boolean performQuit(TutorialApiCallContext callContext,
+                              String progressMessage,
+                              boolean saveChanges, 
+                              String switchToProject,
+                              RVersionSpec switchToRVersion,
+                              Command onQuitAcknowledged)
    {
+      // one quit at a time: the session answers an aborted quit with an
+      // event that names no attempt, so a second quit sent before that
+      // event arrived could be cancelled by it (and its normal exit then
+      // taken for a crash). The flag clears when the attempt fails or is
+      // aborted; a successful one ends the page.
+      if (quitRequested_)
+      {
+         Debug.logToConsole("Ignoring quit request: a quit is already in progress");
+         return false;
+      }
+      quitRequested_ = true;
+
       new QuitCommand(callContext,
                       progressMessage,
                       saveChanges, 
                       switchToProject,
                       switchToRVersion,
                       onQuitAcknowledged).execute();
+      return true;
    }
    
    @Override
@@ -690,18 +705,6 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       
       public void execute()
       {
-         // one quit at a time: the session answers an aborted quit with an
-         // event that names no attempt, so a second quit sent before that
-         // event arrived could be cancelled by it (and its normal exit then
-         // taken for a crash). The flag clears when the attempt fails or is
-         // aborted; a successful one ends the page.
-         if (quitRequested_)
-         {
-            Debug.logToConsole("Ignoring quit request: a quit is already in progress");
-            return;
-         }
-         quitRequested_ = true;
-
          // show delayed progress
          String msg = progressMessage_;
          if (msg == null)

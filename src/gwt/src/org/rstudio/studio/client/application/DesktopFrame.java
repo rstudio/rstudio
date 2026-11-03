@@ -54,6 +54,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    // relaunched RStudio should open the project file (or Projects.NONE);
    // answers like canInstallUpdate(), and the quit must follow only on ""
    void installUpdate(String version, String projectFilePath, CommandWithArg<String> callback);
+   // the quit recorded by installUpdate() is not going to happen after all
+   void cancelUpdateInstall();
 
    void getOpenFileName(String caption,
                         String label,

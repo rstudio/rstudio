@@ -368,11 +368,12 @@ export class Updater {
   }
 
   /**
-   * The quit that was to apply the update did not happen (the session
-   * refused it, or the user cancelled), so a later ordinary quit must not
-   * run the installer or reopen the remembered project. The download stays
-   * staged: the next check offers the restart again, and on macOS Squirrel
-   * applies it at the next start regardless (see the class comment).
+   * The quit that was to apply the update is not happening (GWT could not
+   * start it, the session refused it, or the user cancelled), so a later
+   * ordinary quit must not run the installer or reopen the remembered
+   * project. The download stays staged: the next check offers the restart
+   * again, and on macOS Squirrel applies it at the next start regardless
+   * (see the class comment).
    */
   cancelPendingInstall(): void {
     if (this.pendingInstall !== null) {

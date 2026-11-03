@@ -215,6 +215,10 @@ export class GwtCallback extends EventEmitter {
       return this.updater.installUpdate(version, project);
     });
 
+    ipcMain.on('desktop_cancel_update_install', () => {
+      this.updater.cancelPendingInstall();
+    });
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // shell.openExternal() seems unreliable on Windows
       // https://github.com/electron/electron/issues/31347
