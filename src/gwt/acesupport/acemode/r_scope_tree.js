@@ -134,6 +134,12 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             // This node belongs inside an existing child
             this.$children[index].addNode(node);
          }
+         else if (index >= 0 && this.$children[index].$findEqual(node)) {
+            // The node is a duplicate of a scope a closed child holds: the row
+            // a parsing batch ends on is parsed again by the next one, which
+            // re-adds every scope that begins there.
+            return;
+         }
          else {
             // This node belongs directly under this scope. It's possible that
             // it subsumes some existing children under this scope. (We may not
@@ -156,6 +162,21 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             node.parentScope = this;
             this.$children.push(node);
          }
+      };
+
+      // The scope equal to 'node' in this subtree, if any. An equal scope
+      // starts where 'node' does, so every scope holding it contains that
+      // position: follow the containing children down.
+      this.$findEqual = function(node) {
+         var scope = this;
+         while (!scope.equals(node))
+         {
+            var index = scope.$binarySearch(node.preamble);
+            if (index < 0)
+               return null;
+            scope = scope.$children[index];
+         }
+         return scope;
       };
 
       // Remove and return the children from 'pos' on. A (closed) child that

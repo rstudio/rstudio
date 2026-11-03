@@ -601,6 +601,26 @@ check("a decorated header inside a block is top-level",
       outline(banner),
       ["outer", "banner", "inner", "after"].join("\n"));
 
+// The scope tree of a Stan document is built by ScopeTreeManager.java in
+// batches of rows, and each batch starts one row before where the last one
+// stopped. A scope that begins and ends on that row is already closed when
+// it is seen again, and must not be added twice.
+var ScopeManager = require("mode/r_scope_tree").ScopeManager;
+var stan = new ScopeManager();
+function stanBlock(label, row) {
+  stan.onSectionStart(label, {row: row, column: 0});
+  stan.onSectionEnd({row: row, column: label.length + 4});
+}
+stanBlock("Data", 199);
+stan.setParsePosition({row: 200, column: -1});
+stanBlock("Data", 199);
+stanBlock("Model", 200);
+
+check("a scope on the row a parsing batch resumes from is added once",
+      treeOf(stan.getScopeList(), "", []).join("\n"),
+      ["section Data [199..199]",
+       "section Model [200..200]"].join("\n"));
+
 document.getElementById("passed").textContent = passed;
 document.getElementById("failed").textContent = failed;
 
