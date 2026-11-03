@@ -1,0 +1,62 @@
+@external rstudio-themes-dark, rstudio-themes-dark-grey;
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
+.notice {
+   display: flex;
+   flex: 0 0 auto;
+   flex-wrap: wrap;
+   align-items: center;
+   gap: 8px;
+   padding: 4px 10px;
+   color: #263747;
+   background-color: #eef5fb;
+   border-bottom: 1px solid #b8c5cf;
+   font-family: proportionalFont;
+   font-size: 12px;
+}
+
+.rstudio-themes-dark .notice,
+.rstudio-themes-dark-grey .notice {
+   color: #fff;
+   background-color: THEME_DARKGREY_BACKGROUND;
+   border-bottom-color: THEME_DARKGREY_BORDER;
+}
+
+.icon {
+   flex: 0 0 auto;
+}
+
+.message {
+   flex: 1 1 200px;
+   min-width: 0;
+   overflow-wrap: break-word;
+}
+
+.actions {
+   display: flex;
+   flex: 0 1 auto;
+   flex-wrap: wrap;
+   align-items: center;
+   justify-content: flex-end;
+   gap: 8px;
+   margin-left: auto;
+}
+
+.action {
+   margin-left: 0;
+   white-space: nowrap;
+}
+
+.dismiss {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   padding: 6px;
+}
+
+.rstudio-themes-dark .dismiss,
+.rstudio-themes-dark-grey .dismiss {
+   filter: invert(100%);
+}

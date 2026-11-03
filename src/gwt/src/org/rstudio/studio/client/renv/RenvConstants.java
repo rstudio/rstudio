@@ -35,6 +35,10 @@ public interface RenvConstants extends Messages {
     String rVersionUnsupported(String requested);
     String switchToRVersion(String version);
     String installRVersion(String version);
+    String installRCaption(String version);
+    String rInstallDirectory();
+    String rInstallDescription(String version);
+    String rInstallStarting();
     String rInstallInProgress(String version);
     String rInstallFailed(String version);
     String rInstallFailedWithError(String version, String error);
@@ -44,6 +48,7 @@ public interface RenvConstants extends Messages {
     String rInstalled(String version);
     String updateRCaption();
     String updateRMessage(String version);
-    String renvLibraryEmpty();
+    String renvPackagesNotInstalled();
     String renvRestoreAction();
+    String renvDismissNotice();
 }
