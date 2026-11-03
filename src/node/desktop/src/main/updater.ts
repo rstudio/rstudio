@@ -24,6 +24,7 @@ import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { logger } from '../core/logger';
 import { appState } from './app-state';
+import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { buildInfo } from './build-info';
 import { pruneStagedInstallers, stageInstaller, verifyInstaller } from './installer-staging';
 import { MainWindow } from './main-window';
@@ -581,6 +582,20 @@ export class Updater {
   }
 }
 
+/**
+ * The environment the Windows installer runs in. This instance may have been
+ * started by opening a project, which leaves these variables set; the
+ * installer's relaunch of RStudio can inherit them (a per-user install runs
+ * as this user), and a relaunch that sees one skips the relaunch marker, as
+ * application-launch.ts does for the sessions it starts.
+ */
+export function installerEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const clean = { ...env };
+  delete clean[kRStudioInitialProject];
+  delete clean[kRStudioInitialWorkingDir];
+  return clean;
+}
+
 /** The updater's surroundings in the running application. */
 export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
   let squirrelServer: http.Server | null = null;
@@ -717,6 +732,7 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
           detached: true,
           stdio: 'ignore',
           windowsHide: true,
+          env: installerEnvironment(process.env),
         });
         child.once('spawn', () => {
           child.unref();

@@ -20,7 +20,7 @@ import os from 'os';
 import path from 'path';
 import { installationKey, takeRelaunchProject } from '../../../src/main/relaunch-project';
 import { BuildArtifact } from '../../../src/main/update-feed';
-import { InstallFailure, UpdateHook, Updater, UpdaterHost } from '../../../src/main/updater';
+import { InstallFailure, installerEnvironment, UpdateHook, Updater, UpdaterHost } from '../../../src/main/updater';
 import { WindowsInstallMode } from '../../../src/main/windows-install-mode';
 import { restore, saveAndClear } from '../unit-utils';
 
@@ -535,6 +535,15 @@ describe('updater', () => {
         `RStudio ${A} is not available to download.`,
       ]);
     });
+  });
+
+  it('keeps the project this instance was opened with out of the installer', () => {
+    const env = installerEnvironment({
+      PATH: '/usr/bin',
+      RS_INITIAL_PROJECT: '/home/me/proj/proj.Rproj',
+      RS_INITIAL_WD: '/home/me/proj',
+    });
+    assert.deepEqual(env, { PATH: '/usr/bin' });
   });
 
   it('is unsupported when disabled, on Linux, and for a version never offered', async () => {

@@ -397,8 +397,10 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
 
 /**
  * The asynchronous twin of detectREnvironment(); same query, same cache.
+ * With `timeoutMs`, an R that does not answer in time is killed and reported
+ * as an error rather than waited for.
  */
-export async function detectREnvironmentAsync(rPath: string): Promise<Expected<REnvironment>> {
+export async function detectREnvironmentAsync(rPath: string, timeoutMs = 0): Promise<Expected<REnvironment>> {
   const cached = rEnvironmentCache.get(rPath);
   if (cached) {
     return ok(cached);
@@ -420,10 +422,29 @@ export async function detectREnvironmentAsync(rPath: string): Promise<Expected<R
       env: launch.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
+    let timer: NodeJS.Timeout | null = null;
+    const settle = (outcome: RQueryResult) => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      resolve(outcome);
+    };
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        child.kill();
+        settle({
+          stdout,
+          stderr,
+          status: null,
+          error: new Error(`R did not answer within ${timeoutMs / 1000} seconds`),
+        });
+      }, timeoutMs);
+    }
     child.stdout.on('data', (data) => (stdout += data));
     child.stderr.on('data', (data) => (stderr += data));
-    child.on('error', (error) => resolve({ stdout, stderr, status: null, error }));
-    child.on('close', (code) => resolve({ stdout, stderr, status: code }));
+    child.on('error', (error) => settle({ stdout, stderr, status: null, error }));
+    child.on('close', (code) => settle({ stdout, stderr, status: code }));
 
     // R may exit before reading its input; that is reported through 'close'
     child.stdin.on('error', () => undefined);

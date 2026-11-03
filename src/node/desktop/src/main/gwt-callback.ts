@@ -99,6 +99,9 @@ function formatSelectedVersionForUi(rBinDir: string) {
   }
 }
 
+/** How long setPendingRVersion() lets the chosen R take to describe itself. */
+const kPendingRVersionTimeoutMs = 30000;
+
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
  * via the ContextBridge.
@@ -1325,8 +1328,11 @@ export class GwtCallback extends EventEmitter {
         return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
       }
 
-      // queried in the background: R can take seconds to start
-      const [, error] = await detectREnvironmentAsync(rPath);
+      // queried in the background: R can take seconds to start. Bounded,
+      // because the client holds the quit for this answer (see
+      // ApplicationQuit.claimQuit) and an R that hangs must not hold it
+      // forever; a late answer is then simply dropped
+      const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
       if (error) {
         logger().logError(error);
         return (

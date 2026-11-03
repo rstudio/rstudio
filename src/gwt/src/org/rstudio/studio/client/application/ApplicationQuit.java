@@ -403,17 +403,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                               RVersionSpec switchToRVersion,
                               Command onQuitAcknowledged)
    {
-      // one quit at a time (a held claim counts): the session answers an
-      // aborted quit with an event that names no attempt, so a second quit
-      // sent before that event arrived could be cancelled by it (and its
-      // normal exit then taken for a crash). The flag clears when the
-      // attempt fails or is aborted; a successful one ends the page.
-      if (quitRequested_)
+      if (!quitGate_.start())
       {
          Debug.logToConsole("Ignoring quit request: a quit is already in progress");
          return false;
       }
-      quitRequested_ = true;
 
       new QuitCommand(callContext,
                       progressMessage,
@@ -429,23 +423,26 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
     * (the desktop frame keeps an R version, or an update, for the relaunch),
     * so that nothing is armed for a quit that then cannot start and nothing
     * armed is consumed by a quit already under way. The claim ends with
-    * performQuit() or release(); other quits are refused meanwhile.
+    * performQuit() or release(); other quits are refused meanwhile (see
+    * {@link QuitGate}).
     */
    public class QuitClaim
    {
-      private QuitClaim() {}
+      private QuitClaim(QuitGate.Claim claim)
+      {
+         claim_ = claim;
+      }
 
       public boolean performQuit(String progressMessage,
                                  boolean saveChanges,
                                  String switchToProject,
                                  RVersionSpec switchToRVersion)
       {
-         if (activeClaim_ != this)
+         if (!claim_.start())
          {
             Debug.logToConsole("Ignoring quit request: its claim was released");
             return false;
          }
-         activeClaim_ = null;
 
          new QuitCommand(null,
                          progressMessage,
@@ -458,25 +455,22 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
       public void release()
       {
-         if (activeClaim_ == this)
-         {
-            activeClaim_ = null;
-            quitRequested_ = false;
-         }
+         claim_.release();
       }
+
+      private final QuitGate.Claim claim_;
    }
 
    /** Claim the next quit; null when one is in progress (or claimed). */
    public QuitClaim claimQuit()
    {
-      if (quitRequested_)
+      QuitGate.Claim claim = quitGate_.claim();
+      if (claim == null)
       {
          Debug.logToConsole("Refusing to claim the quit: a quit is already in progress");
          return null;
       }
-      quitRequested_ = true;
-      activeClaim_ = new QuitClaim();
-      return activeClaim_;
+      return new QuitClaim(claim);
    }
    
    @Override
@@ -499,7 +493,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          return;
 
       isQuitting_ = false;
-      quitRequested_ = false;
+      quitGate_.reopen();
 
       // a project switch keeps its progress up until the page reloads, which
       // is now not going to happen
@@ -834,7 +828,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                         private void onFailedToQuit(String message)
                         {
                            isQuitting_ = false;
-                           quitRequested_ = false;
+                           quitGate_.reopen();
                            progress.dismiss();
 
                            if (callContext_ != null)
@@ -888,8 +882,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    // saveAction() so the value client_init delivered is used in the meantime
    private SaveAction saveAction_ = null;
    private boolean isQuitting_ = false;
-   private boolean quitRequested_ = false;
-   private QuitClaim activeClaim_ = null;
+   private final QuitGate quitGate_ = new QuitGate();
    private GlobalProgressDelayer quitProgress_ = null;
    private boolean suspendingAndRestarting_ = false;
 
