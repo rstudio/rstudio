@@ -15,6 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
@@ -33,9 +36,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.sksamuel.gwt.websockets.CloseEvent;
-import com.sksamuel.gwt.websockets.Websocket;
 import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
 /**
@@ -97,35 +98,6 @@ public class TerminalSessionSocket
       localEcho_ = new TerminalLocalEcho(xterm_);
       webSocketPingInterval_ = webSocketPingInterval;
       webSocketConnectTimeout_ = webSocketConnectTimeout;
-
-      // Keep WebSocket connections alive by sending and receiving a small message
-      keepAliveTimer_ = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            if (socket_ != null)
-            {
-               socket_.send(TerminalSocketPacket.keepAlivePacket());
-            }
-            else
-            {
-               keepAliveTimer_.cancel();
-            }
-         }
-      };
-
-      // Underlying WebSocket object (JavaScript) can take up to 2 minutes to timeout
-      // for certain issues with the server; shorten that via this timer
-      connectWebSocketTimer_ = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            diagnosticError(constants_.timeoutConnectingMessage());
-            switchToRPC();
-         }
-      };
    }
 
    /**
@@ -138,13 +110,14 @@ public class TerminalSessionSocket
    public void connect(ConsoleProcess consoleProcess,
                        final ConnectCallback callback)
    {
+      disconnect(false);
       consoleProcess_ = consoleProcess;
       connectCallback_ = callback;
 
       if (consoleProcess.getProcessInfo().getZombie())
       {
          diagnostic_.log(constants_.zombieNotReconnectingMessage());
-         callback.onConnected();
+         connectionCompleted();
          return;
       }
 
@@ -159,7 +132,7 @@ public class TerminalSessionSocket
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
          diagnostic_.log(constants_.connectedWithRPCMessage());
-         callback.onConnected();
+         connectionCompleted();
          break;
 
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
@@ -192,63 +165,36 @@ public class TerminalSessionSocket
          }
 
          diagnostic_.log(constants_.connectWebSocketMessage() + url + "'");
-         socket_ = new Websocket(url);
-         socket_.addListener(new WebsocketListenerExt()
+         socket_ = new TerminalWebSocket(new WebsocketListenerExt()
          {
             @Override
             public void onClose(CloseEvent event)
             {
                diagnostic_.log(constants_.websockedClosedMessage());
-               if (socket_ != null)
-               {
-                  // if socket is already null then we're probably in the middle of switching to RPC
-                  // and don't want to kill the terminal in the middle of doing so
-                  socket_ = null;
-                  keepAliveTimer_.cancel();
-                  connectWebSocketTimer_.cancel();
-                  session_.connectionDisconnected();
-               }
+               session_.connectionDisconnected();
             }
 
             @Override
             public void onMessage(String msg)
             {
-               if (TerminalSocketPacket.isKeepAlive(msg))
-               {
-                  receivedKeepAlive();
-               }
-               else
-               {
-                  onConsoleOutput(new ConsoleOutputEvent(TerminalSocketPacket.getMessage(msg)));
-               }
+               onConsoleOutput(new ConsoleOutputEvent(TerminalSocketPacket.getMessage(msg)));
             }
 
             @Override
             public void onOpen()
             {
-               connectWebSocketTimer_.cancel();
                diagnostic_.log(constants_.websocketConnectedMessage());
-               callback.onConnected();
-               if (webSocketPingInterval_ > 0)
-               {
-                  keepAliveTimer_.scheduleRepeating(webSocketPingInterval_ * 1000);
-               }
+               connectionCompleted();
             }
 
             @Override
             public void onError()
             {
-               connectWebSocketTimer_.cancel();
                diagnosticError(constants_.websocketConnectError());
                switchToRPC();
             }
-         });
-
-         if (webSocketConnectTimeout_ > 0)
-         {
-            connectWebSocketTimer_.schedule(webSocketConnectTimeout_ * 1000);
-         }
-         socket_.open();
+         }, webSocketPingInterval_, webSocketConnectTimeout_);
+         socket_.open(url);
          break;
 
       case ConsoleProcessInfo.CHANNEL_PIPE:
@@ -260,9 +206,12 @@ public class TerminalSessionSocket
 
    private void switchToRPC()
    {
-      socket_ = null;
-      keepAliveTimer_.cancel();
-      connectWebSocketTimer_.cancel();
+      if (switchingToRpc_)
+         return;
+      switchingToRpc_ = true;
+      closeWebSocket();
+      localEcho_.clear();
+      final int connection = connection_;
 
       // Unable to connect client to server via websocket; let server
       // know we'll be using rpc, instead
@@ -271,15 +220,41 @@ public class TerminalSessionSocket
          @Override
          public void onResponseReceived(VoidResponse response)
          {
+            if (connection != connection_)
+               return;
             diagnostic_.log(constants_.switchedToRPCMessage());
-            connectCallback_.onConnected();
+            while (!pendingInput_.isEmpty())
+            {
+               if (connection != connection_)
+                  return;
+               writeRpcInput(pendingInput_.remove(0));
+            }
+            // A fallback after opening must not start the process and reload
+            // its output a second time. Only complete an initial connection.
+            if (connection == connection_)
+            {
+               switchingToRpc_ = false;
+               connectionCompleted();
+            }
          }
 
          @Override
          public void onError(ServerError error)
          {
+            if (connection != connection_)
+               return;
+            switchingToRpc_ = false;
             diagnostic_.log(constants_.failedToSwitchRPCMessage() + error.getMessage());
-            connectCallback_.onError(constants_.terminalFailedToConnectMessage());
+            List<PendingInput> pending = new ArrayList<>(pendingInput_);
+            pendingInput_.clear();
+            ConnectCallback callback = connectCallback_;
+            connectCallback_ = null;
+            if (callback != null)
+               callback.onError(constants_.terminalFailedToConnectMessage());
+            else
+               session_.connectionDisconnected();
+            for (PendingInput input : pending)
+               input.callback.onError(error);
          }
       });
    }
@@ -301,22 +276,29 @@ public class TerminalSessionSocket
       else
          localEcho_.clear();
 
+      PendingInput pending = new PendingInput(inputSequence, input, requestCallback);
+      if (switchingToRpc_)
+      {
+         pendingInput_.add(pending);
+         return;
+      }
+
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
-         consoleProcess_.writeStandardInput(
-               ShellInput.create(inputSequence, input,  true /*echo input*/),
-               requestCallback);
+         writeRpcInput(pending);
          break;
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
-         if (socket_ != null)
+         if (socket_ != null && socket_.send(TerminalSocketPacket.textPacket(input)))
          {
-            socket_.send(TerminalSocketPacket.textPacket(input));
+            requestCallback.onResponseReceived(null);
          }
          else
+         {
             diagnosticError(constants_.sendUserInputMessage());
-
-         requestCallback.onResponseReceived(null);
+            pendingInput_.add(pending);
+            switchToRPC();
+         }
          break;
       case ConsoleProcessInfo.CHANNEL_PIPE:
       default:
@@ -382,9 +364,11 @@ public class TerminalSessionSocket
    public void disconnect(boolean permanent)
    {
       diagnostic_.log(permanent ? constants_.permanentlyDisconnectedLabel() : constants_.disconnectedLabel());
-      if (socket_ != null)
-         socket_.close();
-      socket_ = null;
+      connection_++;
+      switchingToRpc_ = false;
+      connectCallback_ = null;
+      pendingInput_.clear();
+      closeWebSocket();
       registrations_.removeHandler();
       if (permanent)
       {
@@ -414,8 +398,40 @@ public class TerminalSessionSocket
       diagnostic_.log(msg);
    }
 
-   private void receivedKeepAlive()
+   private void closeWebSocket()
    {
+      TerminalWebSocket socket = socket_;
+      socket_ = null;
+      if (socket != null)
+         socket.close();
+   }
+
+   private void connectionCompleted()
+   {
+      ConnectCallback callback = connectCallback_;
+      connectCallback_ = null;
+      if (callback != null)
+         callback.onConnected();
+   }
+
+   private void writeRpcInput(PendingInput input)
+   {
+      consoleProcess_.writeStandardInput(
+            ShellInput.create(input.sequence, input.text, true /*echo input*/), input.callback);
+   }
+
+   private static class PendingInput
+   {
+      PendingInput(int sequence, String text, VoidServerRequestCallback callback)
+      {
+         this.sequence = sequence;
+         this.text = text;
+         this.callback = callback;
+      }
+
+      final int sequence;
+      final String text;
+      final VoidServerRequestCallback callback;
    }
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
@@ -424,7 +440,10 @@ public class TerminalSessionSocket
    private ConsoleProcess consoleProcess_;
    private ConnectCallback connectCallback_;
    private HandlerRegistration terminalInputHandler_;
-   private Websocket socket_;
+   private TerminalWebSocket socket_;
+   private int connection_;
+   private boolean switchingToRpc_;
+   private final List<PendingInput> pendingInput_ = new ArrayList<>();
    private final TerminalLocalEcho localEcho_;
    private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
 
@@ -433,9 +452,7 @@ public class TerminalSessionSocket
 
    public static final Pattern PASSWORD_PATTERN = Pattern.create(PASSWORD_REGEX, "im");
 
-   private final Timer keepAliveTimer_;
    private final int webSocketPingInterval_;
-   private final Timer connectWebSocketTimer_;
    private final int webSocketConnectTimeout_;
    private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }
