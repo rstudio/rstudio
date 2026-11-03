@@ -17,7 +17,10 @@ package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -47,6 +50,7 @@ public class ManipulatorControlSlider extends ManipulatorControl
       Label captionLabel = new Label();
       captionLabel.setStyleName(styles.captionLabel());
       captionLabel.setText(getLabel() + ":");
+      captionLabel.getElement().setId(DOM.createUniqueId());
       captionPanel.add(captionLabel);
       final Label valueLabel = new Label();
       valueLabel.setStyleName(styles.sliderValueLabel());
@@ -58,6 +62,8 @@ public class ManipulatorControlSlider extends ManipulatorControl
       final double max = slider.getMax();
       final double range = max - min;
       sliderBar_ = new SliderBar(min, max, this);
+      Roles.getSliderRole().setAriaLabelledbyProperty(
+            sliderBar_.getElement(), Id.of(captionLabel.getElement()));
       
       // show labels only at the beginning and end
       sliderBar_.setNumLabels(1);
