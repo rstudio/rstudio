@@ -77,7 +77,7 @@ Changes to `compile_flags.txt` take effect the next time diagnostics run; no res
 
 In an R package, add `compile_flags.txt` to `.Rbuildignore` (for example, with `usethis::use_build_ignore("compile_flags.txt")`) so that `R CMD build` leaves it out of the package and `R CMD check` does not report it as a non-standard file.
 
-To see the flags being passed to `libclang`, run `.rs.setClangDiagnostics(2)` in the R console, which restarts the R session, or set the `clang_verbose` preference to `2` in [`rstudio-prefs.json`](../productivity/custom-settings.qmd) and restart the R session yourself. The flags are then written to the R session's standard error stream whenever a file is indexed. On RStudio Server, that stream is captured in the server's logs; on RStudio Desktop, it is easiest to see by launching RStudio from a terminal.
+To see the flags being passed to `libclang`, run `.rs.setClangDiagnostics(2)` in the R console, which restarts the R session, or set the `clang_verbose` preference to `2` in [`rstudio-prefs.json`](../productivity/custom-settings.qmd) and restart the R session yourself. The flags are then printed in the R console (RStudio shows the R session's standard error stream there) the next time a file is parsed from scratch, that is, when it is first opened or when its flags change; a reparse of an already indexed file does not print them again.
 
 ## Viewing diagnostics
 

@@ -112,6 +112,32 @@ TEST_F(CompileFlagsTest, ReadsNothingFromBlankFile)
    EXPECT_TRUE(readCompileFlags(flagsFile(src_, "\n  \n\r\n")).empty());
 }
 
+TEST_F(CompileFlagsTest, ResolvesRelativePathsAgainstDirectory)
+{
+   std::string inc = pkg_.completePath("inc").getAbsolutePath();
+   std::string header = pkg_.completePath("../pre.h").getAbsolutePath();
+
+   // joined and separate operands both come out joined
+   std::vector<std::string> flags = {"-Iinc", "-I", "inc", "-isystem", "inc", "-include", "../pre.h"};
+   std::vector<std::string> expected = {"-I" + inc, "-I" + inc, "-isystem" + inc, "-include" + header};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+}
+
+TEST_F(CompileFlagsTest, LeavesAbsolutePathsAndOtherFlagsAlone)
+{
+   std::string abs = root_.getAbsolutePath();
+   std::vector<std::string> flags = {"-DFOO", "-I" + abs, "-ferror-limit=5", "-fPIC", "-Wall"};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), flags);
+}
+
+TEST_F(CompileFlagsTest, KeepsIncludePchSeparateAndDanglingOptions)
+{
+   std::string pch = pkg_.completePath("x.pch").getAbsolutePath();
+   std::vector<std::string> flags = {"-include-pch", "x.pch", "-I"};
+   std::vector<std::string> expected = {"-include-pch", pch, "-I"};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+}
+
 } // anonymous namespace
 } // namespace clang
 } // namespace modules

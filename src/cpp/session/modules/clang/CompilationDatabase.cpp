@@ -16,6 +16,7 @@
 #include "CompilationDatabase.hpp"
 
 #include <algorithm>
+#include <cstring>
 #include <map>
 #include <gsl/gsl-lite.hpp>
 
@@ -250,6 +251,65 @@ std::vector<std::string> readCompileFlags(const FilePath& flagsFile)
    return flags;
 }
 
+// A relative path in compile_flags.txt is relative to the file, as in clangd,
+// but libclang would resolve it against the session's working directory. We
+// make such paths absolute here rather than passing '-working-directory', so
+// that the flags we generate (which can carry relative paths from Makevars)
+// keep resolving as they always have, and so that header completion, which
+// only reads '-I<dir>' arguments, sees the resolved directory.
+std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
+                                                 const FilePath& dir)
+{
+   // options that take a path; longest first so '-include-pch' isn't read as
+   // '-include' with a 'pch' operand
+   static const char* const kPathOptions[] = {
+      "-include-pch", "-idirafter", "-isysroot", "-imacros", "-include",
+      "-isystem", "-iquote", "-F", "-I"
+   };
+
+   std::vector<std::string> resolved;
+   for (std::size_t i = 0; i < flags.size(); i++)
+   {
+      const std::string& flag = flags[i];
+
+      const char* option = nullptr;
+      for (const char* candidate : kPathOptions)
+      {
+         if (boost::algorithm::starts_with(flag, candidate))
+         {
+            option = candidate;
+            break;
+         }
+      }
+
+      // not a path option, or one with no operand at all (left for clang to report)
+      std::size_t optionLength = option ? std::strlen(option) : 0;
+      bool separate = option && flag.size() == optionLength;
+      if (!option || (separate && i + 1 == flags.size()))
+      {
+         resolved.push_back(flag);
+         continue;
+      }
+
+      std::string path = separate ? flags[++i] : flag.substr(optionLength);
+      path = dir.completePath(path).getAbsolutePath();
+
+      // clang accepts every option here joined to its operand except
+      // '-include-pch', so emit the joined form for a single spelling
+      if (std::strcmp(option, "-include-pch") == 0)
+      {
+         resolved.push_back(option);
+         resolved.push_back(path);
+      }
+      else
+      {
+         resolved.push_back(option + path);
+      }
+   }
+
+   return resolved;
+}
+
 // Extra compiler flags from a 'compile_flags.txt', following the clangd
 // convention of one argument per line. We look in the source file's directory
 // and its parents, up to the project directory, so a project can append to or
@@ -267,7 +327,7 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
       return {};
 
    // relative paths in the file resolve against its directory, as in clangd
-   flags.insert(flags.begin(), "-working-directory=" + flagsFile.getParent().getAbsolutePath());
+   flags = resolveCompileFlagPaths(flags, flagsFile.getParent());
 
    // the file is small, so re-reading it is cheaper and more reliable than
    // watching its timestamp; we only remember it to report changes
@@ -1754,6 +1814,12 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
                : pchPath.removeIfExists();
          if (removeError)
             LOG_ERROR(removeError);
+
+         // parse without the PCH rather than with '-include-pch' naming a
+         // file that no longer exists
+         clang().disposeTranslationUnit(tu);
+         clang().disposeIndex(index);
+         return std::vector<std::string>();
       }
 
       clang().disposeTranslationUnit(tu);

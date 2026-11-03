@@ -145,6 +145,8 @@ core::FilePath findCompileFlagsFile(const core::FilePath& dir,
                                     const core::FilePath& stopDir);
 core::FilePath compileFlagsFileForSource(const core::FilePath& srcFile);
 std::vector<std::string> readCompileFlags(const core::FilePath& flagsFile);
+std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
+                                                 const core::FilePath& dir);
 std::vector<std::string> compileFlagsForSource(const core::FilePath& srcFile);
 
 
