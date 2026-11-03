@@ -25,6 +25,7 @@ const PAGES = [
    "test/highlight_test_markdown.html",
    "test/highlight_test_r.html",
    "test/highlight_test_sql.html",
+   "test/outline_test_cpp.html",
    "test/outline_test_r.html",
 ];
 
@@ -147,9 +148,16 @@ async function runPage(page, baseUrl, relativeUrl) {
       };
    }
 
+   // The failed assertions, as the pages that log one per line report them
+   // (a "[FAIL] ..." list item or log line); the counts alone say nothing
+   // about which assertion failed.
    const counts = await page.evaluate(() => ({
       passed: parseInt(document.getElementById("passed")?.textContent || "0", 10),
       failed: parseInt(document.getElementById("failed")?.textContent || "0", 10),
+      failures: (document.body.innerText || "")
+         .split("\n")
+         .filter((line) => /^\[?FAIL\]?\s/.test(line.trim()))
+         .map((line) => line.trim()),
    }));
 
    return {
@@ -158,6 +166,7 @@ async function runPage(page, baseUrl, relativeUrl) {
                  ? "ok" : "fail",
       passed: counts.passed,
       failed: counts.failed,
+      failures: counts.failures,
       consoleErrors,
       pageErrors,
       failedRequests,
@@ -202,6 +211,7 @@ async function main() {
    for (const r of results) {
       const tag = r.status === "ok" ? "PASS" : r.status === "timeout" ? "TIMEOUT" : "FAIL";
       console.log(`[${tag}] ${r.url} -- passed=${r.passed} failed=${r.failed}`);
+      for (const msg of (r.failures || [])) console.log(`        ${msg}`);
       for (const msg of r.pageErrors) console.log(`        page error: ${msg}`);
       for (const msg of r.consoleErrors) console.log(`        console: ${msg}`);
       for (const msg of (r.failedRequests || [])) console.log(`        request failed: ${msg}`);
