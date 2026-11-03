@@ -430,6 +430,14 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
       isQuitting_ = false;
       quitRequested_ = false;
+
+      // a project switch keeps its progress up until the page reloads, which
+      // is now not going to happen
+      if (quitProgress_ != null)
+      {
+         quitProgress_.dismiss();
+         quitProgress_ = null;
+      }
       DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, null);
    }
 
@@ -707,6 +715,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                                                globalDisplay_,
                                                                250,
                                                                msg);
+         quitProgress_ = progress;
          
          // Use a barrier and LastChanceSaveEvent to allow source documents
          // and client state to be synchronized before quitting.
@@ -822,6 +831,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private SaveAction saveAction_ = null;
    private boolean isQuitting_ = false;
    private boolean quitRequested_ = false;
+   private GlobalProgressDelayer quitProgress_ = null;
    private boolean suspendingAndRestarting_ = false;
 
    // injected

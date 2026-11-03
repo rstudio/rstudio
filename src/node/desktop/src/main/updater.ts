@@ -124,6 +124,9 @@ const kRequestTimeoutMs = 15000;
  */
 export type InstallBlocker = '' | 'other-instances' | 'missing' | 'unknown';
 
+/** Why an accepted update was not installed at the quit: a blocker, or the installer would not start. */
+export type InstallFailure = Exclude<InstallBlocker, ''> | 'launch-failed';
+
 export type UpdateHook = 'onUpdateDownloaded' | 'onUpdateDownloadFailed';
 
 /**
@@ -150,12 +153,13 @@ export interface UpdaterHost {
   /** download and verify a Windows installer; resolves to the staged file */
   stageInstaller(entry: BuildArtifact, onProgress: (fraction: number) => void): Promise<string>;
   verifyInstaller(file: string, entry: BuildArtifact): Promise<boolean>;
-  launchInstaller(file: string, mode: WindowsInstallMode): void;
+  /** start the Windows installer; false when it would not start */
+  launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean>;
   /** call a desktopHooks function in the GWT client */
   notify(hook: UpdateHook, arg: string): void;
   setProgress(value: number): void;
   /** tell the user, as the window quits, that the accepted update was not installed */
-  warnNotInstalled(version: string, blocker: InstallBlocker): void;
+  warnNotInstalled(version: string, reason: InstallFailure): void;
 }
 
 /** A verified Windows installer on disk and the API entry it was checked against. */
@@ -397,38 +401,46 @@ export class Updater {
       return false;
     }
 
-    // cleared before an installer is invoked: Squirrel closes the windows
-    // itself, which the guard must not refuse
     this.handingOff = true;
-    let blocker: InstallBlocker;
     try {
-      blocker = await this.preflight(version);
+      const blocker = await this.preflight(version);
+      this.pendingInstall = null;
+      const staged = this.staged;
+      const mode = this.windowsInstallMode;
+      if (blocker || (this.host.platform === 'win32' && (!staged || !mode))) {
+        logger().logErrorMessage(`not installing RStudio ${version} on quit: ${blocker || 'no installer staged'}`);
+        this.notInstalled(version, blocker || 'missing');
+        return false;
+      }
+
+      if (this.host.platform === 'darwin') {
+        // Squirrel closes the windows itself, which the guard must not refuse
+        this.handingOff = false;
+        logger().logInfo(`installing RStudio ${version} and relaunching`);
+        this.host.squirrelInstall();
+        return true;
+      }
+
+      if (this.host.platform === 'win32' && staged && mode) {
+        // the installer waits (via /update) for this process to exit before
+        // it touches the install directory, then relaunches RStudio; until
+        // it has started, the window stays open for the same reason as above
+        logger().logInfo(`launching ${staged.file} to install RStudio ${version}`);
+        if (!(await this.host.launchInstaller(staged.file, mode))) {
+          logger().logErrorMessage(`the installer for RStudio ${version} did not start`);
+          this.notInstalled(version, 'launch-failed');
+        }
+      }
+      return false;
     } finally {
       this.handingOff = false;
     }
-    this.pendingInstall = null;
-    const staged = this.staged;
-    const mode = this.windowsInstallMode;
-    if (blocker || (this.host.platform === 'win32' && (!staged || !mode))) {
-      logger().logErrorMessage(`not installing RStudio ${version} on quit: ${blocker || 'no installer staged'}`);
-      forgetRelaunchProject(this.installKey(), this.host.markerDir());
-      this.host.warnNotInstalled(version, blocker || 'missing');
-      return false;
-    }
+  }
 
-    if (this.host.platform === 'darwin') {
-      logger().logInfo(`installing RStudio ${version} and relaunching`);
-      this.host.squirrelInstall();
-      return true;
-    }
-
-    if (this.host.platform === 'win32' && staged && mode) {
-      // the installer waits (via /update) for this process to exit before it
-      // touches the install directory, then relaunches RStudio
-      logger().logInfo(`launching ${staged.file} to install RStudio ${version}`);
-      this.host.launchInstaller(staged.file, mode);
-    }
-    return false;
+  /** the accepted update is not going to be installed by this quit; the download stays for the next check */
+  private notInstalled(version: string, reason: InstallFailure): void {
+    forgetRelaunchProject(this.installKey(), this.host.markerDir());
+    this.host.warnNotInstalled(version, reason);
   }
 
   /** Every check behind canInstallUpdate() and the install itself. */
@@ -595,12 +607,14 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
     });
   };
 
-  const blockerMessage = (blocker: InstallBlocker): string => {
-    switch (blocker) {
+  const failureMessage = (reason: InstallFailure): string => {
+    switch (reason) {
       case 'other-instances':
         return i18next.t('updaterTs.otherWindowsWereOpen');
       case 'unknown':
         return i18next.t('updaterTs.couldNotCheckOtherWindows');
+      case 'launch-failed':
+        return i18next.t('updaterTs.installerDidNotStart');
       default:
         return i18next.t('updaterTs.installerNoLongerAvailable');
     }
@@ -683,18 +697,28 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
       return verifyInstaller(file, entry);
     },
 
-    launchInstaller(file: string, mode: WindowsInstallMode): void {
+    async launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean> {
       if (!existsSync(file)) {
         logger().logErrorMessage(`${file} is gone; not installing`);
-        return;
+        return false;
       }
-      const child = spawn(file, ['/S', `/${mode}`, '/update'], {
-        detached: true,
-        stdio: 'ignore',
-        windowsHide: true,
+      // spawn() reports a refusal (a policy blocking the executable, say)
+      // through 'error' rather than by throwing
+      return new Promise((resolve) => {
+        const child = spawn(file, ['/S', `/${mode}`, '/update'], {
+          detached: true,
+          stdio: 'ignore',
+          windowsHide: true,
+        });
+        child.once('spawn', () => {
+          child.unref();
+          resolve(true);
+        });
+        child.once('error', (error) => {
+          logger().logError(error);
+          resolve(false);
+        });
       });
-      child.on('error', (error) => logger().logError(error));
-      child.unref();
     },
 
     notify(hook: UpdateHook, arg: string): void {
@@ -713,12 +737,12 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
       }
     },
 
-    warnNotInstalled(version: string, blocker: InstallBlocker): void {
+    warnNotInstalled(version: string, reason: InstallFailure): void {
       const options: Electron.MessageBoxSyncOptions = {
         type: 'warning',
         title: appState().activation().editionName(),
         message: i18next.t('updaterTs.updateNotInstalled', { version }),
-        detail: blockerMessage(blocker),
+        detail: failureMessage(reason),
       };
       appState().modalTracker.trackElectronModalSync(() =>
         mainWindow.window.isDestroyed()

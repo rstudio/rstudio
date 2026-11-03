@@ -20,7 +20,7 @@ import os from 'os';
 import path from 'path';
 import { installationKey, takeRelaunchProject } from '../../../src/main/relaunch-project';
 import { BuildArtifact } from '../../../src/main/update-feed';
-import { InstallBlocker, UpdateHook, Updater, UpdaterHost } from '../../../src/main/updater';
+import { InstallFailure, UpdateHook, Updater, UpdaterHost } from '../../../src/main/updater';
 import { WindowsInstallMode } from '../../../src/main/windows-install-mode';
 import { restore, saveAndClear } from '../unit-utils';
 
@@ -88,8 +88,11 @@ class FakeHost implements UpdaterHost {
   installs = 0;
   onInstall: () => void = () => undefined;
   launched: { file: string; mode: WindowsInstallMode }[] = [];
+  /** what launchInstaller() answers, once `launchGate` (if set) resolves */
+  launches = true;
+  launchGate: Deferred<boolean> | null = null;
   notifications: [UpdateHook, string][] = [];
-  warnings: [string, InstallBlocker][] = [];
+  warnings: [string, InstallFailure][] = [];
 
   constructor(
     readonly platform: NodeJS.Platform,
@@ -145,8 +148,12 @@ class FakeHost implements UpdaterHost {
     return this.verifies;
   }
 
-  launchInstaller(file: string, mode: WindowsInstallMode): void {
+  async launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean> {
     this.launched.push({ file, mode });
+    if (this.launchGate) {
+      await this.launchGate.promise;
+    }
+    return this.launches;
   }
 
   notify(hook: UpdateHook, arg: string): void {
@@ -157,8 +164,8 @@ class FakeHost implements UpdaterHost {
     // the fake has no window
   }
 
-  warnNotInstalled(version: string, blocker: InstallBlocker): void {
-    this.warnings.push([version, blocker]);
+  warnNotInstalled(version: string, reason: InstallFailure): void {
+    this.warnings.push([version, reason]);
   }
 
   /** complete a download (the latest by default) and let the updater react */
@@ -262,6 +269,26 @@ describe('updater', () => {
     assert.equal(host.launched[0].mode, 'allusers');
     assert.match(host.launched[0].file, /RStudio-2026\.12\.0-daily-11\.exe$/);
     assert.equal(rememberedProject(host, A), project);
+  });
+
+  it('warns, and drops the relaunch marker, when the Windows installer will not start', async () => {
+    const { host, updater } = setup('win32');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+
+    host.launches = false;
+    host.launchGate = deferred();
+    const applying = updater.applyPendingUpdate();
+    await flush();
+    assert.equal(host.launched.length, 1);
+    assert.isTrue(updater.isHandingOff()); // the window waits for the launch too
+
+    host.launchGate.resolve(true);
+    assert.isFalse(await applying);
+    assert.isFalse(updater.isHandingOff());
+    assert.deepEqual(host.warnings, [[A, 'launch-failed']]);
+    assert.isNull(rememberedProject(host, A));
   });
 
   it('offers a downloaded update again without downloading it twice', async () => {
