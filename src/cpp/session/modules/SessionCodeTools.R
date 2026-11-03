@@ -185,20 +185,36 @@
    as.list(srcref)
 })
 
-.rs.addFunction("readSrcrefLines", function(srcref, asString)
+# Returns the lines of a srcfile as a character vector, or NULL when it holds
+# none (a file-backed srcfile, for instance).
+.rs.addFunction("srcfileLines", function(srcfile)
 {
-   # Try to retrieve source references from srcfile if available
-   srcfile <- attr(srcref, "srcfile", exact = TRUE)
-   filename <- srcfile$filename
+   # A srcfilealias stands in for the source of a package installed with
+   # keep.source; its original has the text.
    if (!is.null(srcfile$original))
       srcfile <- srcfile$original
+   
+   # Those lines are lazy-loaded on first access, and when the package was
+   # installed under a different native encoding R translates them to UTF-8,
+   # warning once about any non-ASCII text (#19396 saw this on the Jenkins
+   # runners, whose packages are installed in a C locale). The translation is
+   # what we want; the warning would surface in whatever the debugger is doing.
+   lines <- suppressWarnings(srcfile$lines)
    
    # It appears the 'lines' variable can either be a single string
    # with embedded newlines, or a character vector already split by newlines.
    # Normalize here so that we're always working with a split-by-newline vector.
-   lines <- srcfile$lines
    if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
       lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
+   
+   lines
+})
+
+.rs.addFunction("readSrcrefLines", function(srcref, asString)
+{
+   srcfile <- attr(srcref, "srcfile", exact = TRUE)
+   filename <- srcfile$filename
+   lines <- .rs.srcfileLines(srcfile)
    
    # For packages installed with '--with-keep.source', it appears that
    # the source references for all files within the package are collected
@@ -302,25 +318,18 @@
 .rs.addFunction("deparseCall", function(call)
 {
    srcref <- attr(call, "srcref", exact = TRUE)
+   # as.character.srcref() reads the srcfile's lines directly, bypassing
+   # .rs.srcfileLines(), so suppress the same translation warning here.
    if (!is.null(srcref))
-      return(as.character.srcref(srcref))
-   
+      return(suppressWarnings(as.character.srcref(srcref)))
+
    deparse(call)
 })
 
 .rs.addFunction("deparseSrcref", function(srcref, asString)
 {
-   # Try to retrieve source references from srcfile if available
    srcfile <- attr(srcref, "srcfile", exact = TRUE)
-   if (!is.null(srcfile$original))
-      srcfile <- srcfile$original
-   
-   # It appears the 'lines' variable can either be a single string
-   # with embedded newlines, or a character vector already split by newlines.
-   # Normalize here so that we're always working with a split-by-newline vector.
-   lines <- srcfile$lines
-   if (length(lines) == 1L && grepl("\n", lines[[1L]], fixed = TRUE))
-      lines <- unlist(strsplit(lines, "\n", fixed = TRUE))
+   lines <- .rs.srcfileLines(srcfile)
    
    # We previously used 'as.character(srcref, useSource = TRUE)' by default, but
    # this also trims the leading indent from the function definition. This
