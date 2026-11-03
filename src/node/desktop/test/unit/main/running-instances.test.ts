@@ -56,13 +56,14 @@ describe('running instances', () => {
 
   describe('otherInstanceCount', () => {
     const me = process.pid;
+    const other = me + 3; // a pid that can never be one of the simulated own processes
     const exe = 'C:\\RStudio\\rstudio.exe';
-    const windowsOutput = [me, me + 1, me + 2, 4242]
+    const windowsOutput = [me, me + 1, me + 2, other]
       .map((pid) => `"rstudio.exe","${pid}","Console","1","1,000 K"`)
       .join('\r\n');
     const app = '/Applications/RStudio.app/Contents/MacOS/RStudio';
     const helper = '/Applications/RStudio.app/Contents/Frameworks/RStudio Helper.app/Contents/MacOS/RStudio Helper';
-    const macOutput = `${me} ${app}\n${me + 1} ${helper}\n4242 ${app}\n`;
+    const macOutput = `${me} ${app}\n${me + 1} ${helper}\n${other} ${app}\n`;
 
     it("excludes this application's own processes and counts the rest", async () => {
       const own = [me + 1, me + 2];

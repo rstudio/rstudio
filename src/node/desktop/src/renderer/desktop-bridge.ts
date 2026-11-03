@@ -57,9 +57,9 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_download_update', version);
     },
 
-    canInstallUpdate: async (callback: VoidCallback<string>) => {
+    canInstallUpdate: async (version: string, callback: VoidCallback<string>) => {
       try {
-        callback(await ipcRenderer.invoke('desktop_can_install_update'));
+        callback(await ipcRenderer.invoke('desktop_can_install_update', version));
       } catch (error: unknown) {
         // not knowing must block: the installer would give up silently after the quit
         reportIpcError('canInstallUpdate', error as Error);
@@ -67,8 +67,8 @@ export function getDesktopBridge() {
       }
     },
 
-    installUpdate: (projectFilePath: string) => {
-      ipcRenderer.send('desktop_install_update', projectFilePath);
+    installUpdate: (version: string, projectFilePath: string) => {
+      ipcRenderer.send('desktop_install_update', version, projectFilePath);
     },
 
     getOpenFileName: async (

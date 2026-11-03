@@ -124,6 +124,15 @@ describe('relaunch project marker', () => {
       assert.deepEqual(readdirSync(dir), []);
     });
 
+    it('gives up quietly when neither the marker nor its partial file can be written', () => {
+      // a file where the marker directory should be: creating the directory,
+      // writing the partial marker and removing it all fail
+      const blocked = path.join(dir, 'not-a-directory');
+      writeFileSync(blocked, '');
+      assert.doesNotThrow(() => rememberRelaunchProject(marker.project, identity, blocked));
+      assert.isNull(takeRelaunchProject(identity, now, blocked));
+    });
+
     it('keeps one marker per installation, and forgets only its own', () => {
       const other = { ...identity, installKey: installationKey('/tmp/rstudio/bin/rstudio') };
       rememberRelaunchProject('/a/a.Rproj', identity, dir);

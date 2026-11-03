@@ -534,8 +534,9 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             elementIds.add(ElementIds.DIALOG_YES_BUTTON);
             buttonOperations.add(() ->
             {
-               // a check during a download offers the same update again; the
-               // desktop ignores the second request, so keep a single indicator
+               // a check during a download may offer an update again; the
+               // desktop ignores a repeat request and reports one for another
+               // build as a failure, so keep a single indicator
                if (updateProgress_ != null)
                   updateProgress_.dismiss();
 
@@ -694,7 +695,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                      String project = StringUtil.nullCoalesce(
                            session_.getSessionInfo().getActiveProjectFile(),
                            Projects.NONE);
-                     Desktop.getFrame().installUpdate(project);
+                     Desktop.getFrame().installUpdate(version, project);
                      appQuit_.performQuit(null, saveChanges);
                   });
                }
@@ -703,7 +704,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       });
 
       // a downloaded update stays staged, so "Later" costs nothing: the next
-      // check offers the restart again without downloading twice
+      // check offers the restart again without downloading twice (and on
+      // macOS Squirrel applies it at the next launch regardless)
       buttonLabels.add(constants_.restartLaterButtonLabel());
       elementIds.add(ElementIds.DIALOG_NO_BUTTON);
       buttonOperations.add(() -> {});
@@ -722,10 +724,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
     */
    private void whenUpdateInstallable(String version, Operation install)
    {
-      Desktop.getFrame().canInstallUpdate((String blocker) ->
+      Desktop.getFrame().canInstallUpdate(version, (String blocker) ->
       {
-         // the staged installer has gone missing (the temp directory was
-         // cleaned, say): fetch it again, and the ready dialog follows
+         // this is not the downloaded update (its installer was cleaned
+         // away, or a later download replaced it): fetch it again, and the
+         // ready dialog follows
          if (blocker == "missing")
          {
             if (updateProgress_ != null)

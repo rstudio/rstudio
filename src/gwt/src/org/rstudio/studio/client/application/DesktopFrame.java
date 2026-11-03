@@ -44,13 +44,15 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void checkForUpdates(boolean manual, CommandWithArg<String> callback);
    // the version the user accepted, as the check reported it
    void downloadUpdate(String version);
-   // "" when the update can be applied now; otherwise why not: "missing" (the
-   // downloaded installer is gone, download it again), "other-instances"
-   // (other RStudio windows -- separate processes -- are open) or "unknown"
-   // (that check itself failed)
-   void canInstallUpdate(CommandWithArg<String> callback);
-   // the project file (or Projects.NONE) the relaunched RStudio should open
-   void installUpdate(String projectFilePath);
+   // "" when `version`, the update a ready dialog named, can be applied now;
+   // otherwise why not: "missing" (it is not the downloaded update -- its
+   // installer is gone, or a later download replaced it -- so download it
+   // again), "other-instances" (other RStudio windows -- separate processes
+   // -- are open) or "unknown" (that check itself failed)
+   void canInstallUpdate(String version, CommandWithArg<String> callback);
+   // the version to install, and the project file (or Projects.NONE) the
+   // relaunched RStudio should open
+   void installUpdate(String version, String projectFilePath);
 
    void getOpenFileName(String caption,
                         String label,

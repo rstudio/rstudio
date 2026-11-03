@@ -205,14 +205,14 @@ export class GwtCallback extends EventEmitter {
       void this.updater.downloadUpdate(version);
     });
 
-    ipcMain.handle('desktop_can_install_update', async () => {
-      return this.updater.canInstallUpdate();
+    ipcMain.handle('desktop_can_install_update', async (_event, version: string) => {
+      return this.updater.canInstallUpdate(version);
     });
 
-    ipcMain.on('desktop_install_update', (_event, projectFilePath: string) => {
+    ipcMain.on('desktop_install_update', (_event, version: string, projectFilePath: string) => {
       // the session reports the project with the home directory aliased (~/...)
       const project = projectFilePath === kProjectNone ? kProjectNone : resolveAliasedPath(projectFilePath);
-      this.updater.installUpdate(project);
+      this.updater.installUpdate(version, project);
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {

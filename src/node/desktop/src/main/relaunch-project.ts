@@ -103,8 +103,15 @@ export function rememberRelaunchProject(project: string, identity: RelaunchIdent
     writeFileSync(partial, JSON.stringify(marker));
     renameSync(partial, file);
   } catch (error: unknown) {
+    // the relaunch then opens no project; this must not throw into the
+    // install request, and whatever stopped the write (an unwritable or
+    // missing directory, say) is likely to stop the cleanup too
     logger().logDebug(`could not remember the project to reopen: ${safeError(error).message}`);
-    rmSync(partial, { force: true });
+    try {
+      rmSync(partial, { force: true });
+    } catch (cleanupError: unknown) {
+      logger().logDebug(`could not remove ${partial}: ${safeError(cleanupError).message}`);
+    }
   }
 }
 
