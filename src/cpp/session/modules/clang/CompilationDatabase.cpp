@@ -260,11 +260,27 @@ std::vector<std::string> readCompileFlags(const FilePath& flagsFile)
 std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>& flags,
                                                  const FilePath& dir)
 {
-   // options that take a path; longest first so '-include-pch' isn't read as
-   // '-include' with a 'pch' operand
-   static const char* const kPathOptions[] = {
-      "-include-pch", "-idirafter", "-isysroot", "-imacros", "-include",
-      "-isystem", "-iquote", "-F", "-I"
+   // how clang accepts the operand of each path option: joined to it
+   // ('-Iinc'), after an '=' ('--include-directory=inc'), or only as the
+   // next argument ('-include-pch x.pch'); all of them also take it as the
+   // next argument. Longer spellings come before the ones they extend, so
+   // '-isystem-after' isn't read as '-isystem' with a '-after...' operand.
+   enum OperandStyle { Joined, Equals, Separate };
+   struct PathOption { const char* spelling; OperandStyle style; };
+   static const PathOption kPathOptions[] = {
+      { "--include-directory-after", Equals },
+      { "--include-directory", Equals },
+      { "--sysroot", Equals },
+      { "-include-pch", Separate },
+      { "-isystem-after", Joined },
+      { "-idirafter", Joined },
+      { "-isysroot", Joined },
+      { "-imacros", Joined },
+      { "-include", Joined },
+      { "-isystem", Joined },
+      { "-iquote", Joined },
+      { "-F", Joined },
+      { "-I", Joined },
    };
 
    std::vector<std::string> resolved;
@@ -272,38 +288,52 @@ std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>&
    {
       const std::string& flag = flags[i];
 
-      const char* option = nullptr;
-      for (const char* candidate : kPathOptions)
+      const PathOption* option = nullptr;
+      bool separate = false;
+      std::string path;
+      for (const PathOption& candidate : kPathOptions)
       {
-         if (boost::algorithm::starts_with(flag, candidate))
-         {
-            option = candidate;
-            break;
-         }
+         if (!boost::algorithm::starts_with(flag, candidate.spelling))
+            continue;
+
+         std::string rest = flag.substr(std::strlen(candidate.spelling));
+         if (rest.empty())
+            separate = true;
+         else if (candidate.style == Joined)
+            path = rest;
+         else if (candidate.style == Equals && rest[0] == '=')
+            path = rest.substr(1);
+         else
+            continue;
+
+         option = &candidate;
+         break;
       }
 
       // not a path option, or one with no operand at all (left for clang to report)
-      std::size_t optionLength = option ? std::strlen(option) : 0;
-      bool separate = option && flag.size() == optionLength;
-      if (!option || (separate && i + 1 == flags.size()))
+      if (option == nullptr || (separate && i + 1 == flags.size()))
       {
          resolved.push_back(flag);
          continue;
       }
 
-      std::string path = separate ? flags[++i] : flag.substr(optionLength);
+      if (separate)
+         path = flags[++i];
       path = dir.completePath(path).getAbsolutePath();
 
-      // clang accepts every option here joined to its operand except
-      // '-include-pch', so emit the joined form for a single spelling
-      if (std::strcmp(option, "-include-pch") == 0)
+      // emit each option in a single spelling, so the same flags hash alike
+      switch (option->style)
       {
-         resolved.push_back(option);
+      case Joined:
+         resolved.push_back(option->spelling + path);
+         break;
+      case Equals:
+         resolved.push_back(option->spelling + ("=" + path));
+         break;
+      case Separate:
+         resolved.push_back(option->spelling);
          resolved.push_back(path);
-      }
-      else
-      {
-         resolved.push_back(option + path);
+         break;
       }
    }
 

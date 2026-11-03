@@ -106,6 +106,45 @@ test_that("compile_flags.txt paths resolve against its directory", {
     expect_length(messages(), 0L)
 })
 
+test_that("compile_flags.txt flags are honored with precompiled headers", {
+    skip_if_not_installed("Rcpp")
+    skip_if_not(.rs.isClangAvailable())
+
+    # R's default C++ standard has been C++14 or newer since R 4.1
+    skip_if(getRversion() < "4.1.0")
+
+    op <- options(rstudio.libclang.usePrecompiledHeaders = TRUE)
+    on.exit(options(op), add = TRUE)
+
+    dir <- tempfile("cpp-pch-flags-")
+    dir.create(dir)
+    on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+    path <- file.path(dir, "standard.cpp")
+    writeLines(c(
+        "#include <Rcpp.h>",
+        "static_assert(__cplusplus >= 201402L, \"needs C++14\");"
+    ), path)
+
+    messages <- function() {
+        diagnostics <- .rs.invokeRpc("get_cpp_diagnostics", path)
+        vapply(diagnostics, `[[`, character(1), "message")
+    }
+
+    # parsed against the default Rcpp precompiled header
+    expect_length(messages(), 0L)
+
+    # a different standard gets its own precompiled header, built with the
+    # flag, and the file is parsed with both
+    flagsFile <- file.path(dir, "compile_flags.txt")
+    writeLines("-std=c++11", flagsFile)
+    expect_match(messages(), "needs C++14", fixed = TRUE, all = FALSE)
+
+    # removing the override goes back to the default one
+    unlink(flagsFile)
+    expect_length(messages(), 0L)
+})
+
 test_that("problems with compile_flags.txt are reported, not swallowed", {
     skip_if_not_installed("Rcpp")
     skip_if_not(.rs.isClangAvailable())

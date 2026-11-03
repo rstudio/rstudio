@@ -123,6 +123,26 @@ TEST_F(CompileFlagsTest, ResolvesRelativePathsAgainstDirectory)
    EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
 }
 
+TEST_F(CompileFlagsTest, ResolvesLongOptionSpellings)
+{
+   std::string inc = pkg_.completePath("inc").getAbsolutePath();
+   std::string sys = pkg_.completePath("sys").getAbsolutePath();
+
+   // '-isystem-after' is its own option, not '-isystem' with a '-after...' operand
+   std::vector<std::string> flags = {"-isystem-afterinc", "-isystem-after", "inc"};
+   std::vector<std::string> expected = {"-isystem-after" + inc, "-isystem-after" + inc};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+
+   // '=' spellings, with and without the '=', come out with it
+   flags = {"--include-directory=inc", "--include-directory", "inc", "--include-directory-after=inc", "--sysroot=sys"};
+   expected = {"--include-directory=" + inc, "--include-directory=" + inc, "--include-directory-after=" + inc, "--sysroot=" + sys};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+
+   // something that merely starts like an '=' option is not one
+   flags = {"--sysrootx"};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), flags);
+}
+
 TEST_F(CompileFlagsTest, LeavesAbsolutePathsAndOtherFlagsAlone)
 {
    std::string abs = root_.getAbsolutePath();
