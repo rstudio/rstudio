@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerErrorCause;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.json.client.JSONValue;
 import com.sksamuel.gwt.websockets.CloseEvent;
 import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
@@ -364,15 +366,61 @@ public class TerminalSessionSocket
    public void disconnect(boolean permanent)
    {
       diagnostic_.log(permanent ? constants_.permanentlyDisconnectedLabel() : constants_.disconnectedLabel());
+      // Detach before invoking callbacks: cancellation may reconnect or queue
+      // input for another connection, which must not be cancelled with this one.
+      List<PendingInput> pending = new ArrayList<>(pendingInput_);
+      pendingInput_.clear();
       connection_++;
       switchingToRpc_ = false;
       connectCallback_ = null;
-      pendingInput_.clear();
       closeWebSocket();
       registrations_.removeHandler();
       if (permanent)
       {
          unregisterHandlers(); // gets rid of keyboard handler
+      }
+      if (!pending.isEmpty())
+      {
+         ServerError error = new ServerError()
+         {
+            @Override
+            public int getCode()
+            {
+               return ServerError.CONNECTION;
+            }
+
+            @Override
+            public String getMessage()
+            {
+               return constants_.disconnectedLabel();
+            }
+
+            @Override
+            public String getUserMessage()
+            {
+               return getMessage();
+            }
+
+            @Override
+            public String getRedirectUrl()
+            {
+               return null;
+            }
+
+            @Override
+            public ServerErrorCause getCause()
+            {
+               return null;
+            }
+
+            @Override
+            public JSONValue getClientInfo()
+            {
+               return null;
+            }
+         };
+         for (PendingInput input : pending)
+            input.callback.onError(error);
       }
    }
 
