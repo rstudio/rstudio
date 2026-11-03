@@ -286,12 +286,28 @@ export class MainWindow extends GwtWindow {
     RCommandEvaluator.setMainWindow(null);
     this.quitConfirmed = true;
 
-    // a downloaded update is applied now that the session has exited; on
+    // an accepted update is applied now that the session has exited; on
     // macOS Squirrel closes the window and relaunches the app itself
-    if (appState().gwtCallback?.updater.applyPendingUpdate()) {
+    const updater = appState().gwtCallback?.updater;
+    if (updater?.hasPendingInstall()) {
+      updater
+        .applyPendingUpdate()
+        .then((applied) => {
+          if (!applied) {
+            this.closeWindow();
+          }
+        })
+        .catch((error: unknown) => {
+          logger().logError(safeError(error));
+          this.closeWindow();
+        });
       return;
     }
 
+    this.closeWindow();
+  }
+
+  private closeWindow(): void {
     if (!this.window.isDestroyed()) {
       this.window.close();
     } else {

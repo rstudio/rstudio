@@ -49,6 +49,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
@@ -70,7 +71,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                         HandleUnsavedChangesEvent.Handler,
-                                        SuspendAndRestartEvent.Handler
+                                        SuspendAndRestartEvent.Handler,
+                                        ConsolePromptEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
    
@@ -107,6 +109,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
       eventBus.addHandler(SuspendAndRestartEvent.TYPE, this);
+      eventBus.addHandler(ConsolePromptEvent.TYPE, this);
    }
    
   
@@ -409,6 +412,23 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    public void onSaveActionChanged(SaveActionChangedEvent event)
    {
       saveAction_ = event.getAction();
+   }
+
+   /**
+    * R is back at its top-level prompt after the session acknowledged a
+    * quit: .Last() or saving the workspace failed, and the session goes on.
+    * The quit is over, so tell the desktop frame; otherwise it would apply
+    * what that quit was for (an R version switch, an update) at some later,
+    * unrelated quit.
+    */
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      if (!isQuitting_ || !event.getPrompt().getAddToHistory() || event.getPrompt().getBusy())
+         return;
+
+      isQuitting_ = false;
+      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, null);
    }
 
    /**

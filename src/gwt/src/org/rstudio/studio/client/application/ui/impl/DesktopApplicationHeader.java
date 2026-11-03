@@ -677,28 +677,37 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       elementIds.add(ElementIds.DIALOG_YES_BUTTON);
       buttonOperations.add(() ->
       {
-         // check before the save prompts, for prompt feedback, and again
-         // once they are answered, since another RStudio window may have
-         // been opened while they were up
-         whenUpdateInstallable(version, () ->
+         // check before the save prompts, for prompt feedback; installUpdate()
+         // checks again once they are answered, since another RStudio window
+         // or another download may have started while they were up
+         Desktop.getFrame().canInstallUpdate(version, (String blocker) ->
          {
-            // the usual quit sequence (save prompts, session shutdown) runs
-            // first; the desktop frame applies the update as it quits and
-            // reopens the current project, as Restart RStudio does
-            appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
+            unlessUpdateBlocked(version, blocker, () ->
             {
-               @Override
-               public void onReadyToQuit(boolean saveChanges)
+               // the usual quit sequence (save prompts, session shutdown) runs
+               // first; the desktop frame applies the update as it quits and
+               // reopens the current project, as Restart RStudio does
+               appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
                {
-                  whenUpdateInstallable(version, () ->
+                  @Override
+                  public void onReadyToQuit(boolean saveChanges)
                   {
                      String project = StringUtil.nullCoalesce(
                            session_.getSessionInfo().getActiveProjectFile(),
                            Projects.NONE);
-                     Desktop.getFrame().installUpdate(version, project);
-                     appQuit_.performQuit(null, saveChanges);
-                  });
-               }
+
+                     // quit only once the desktop frame has recorded the
+                     // install: a quit it refused would leave the user with
+                     // neither RStudio nor the update
+                     Desktop.getFrame().installUpdate(version, project, (String installBlocker) ->
+                     {
+                        unlessUpdateBlocked(version, installBlocker, () ->
+                        {
+                           appQuit_.performQuit(null, saveChanges);
+                        });
+                     });
+                  }
+               });
             });
          });
       });
@@ -719,46 +728,44 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    }
 
    /**
-    * Run `install` if the downloaded update can be applied now; otherwise
-    * deal with what blocks it, keeping the session running.
+    * Run `proceed` when the desktop frame answered that `version` can be
+    * installed (`blocker` is empty); otherwise deal with what blocks it,
+    * keeping the session running.
     */
-   private void whenUpdateInstallable(String version, Operation install)
+   private void unlessUpdateBlocked(String version, String blocker, Operation proceed)
    {
-      Desktop.getFrame().canInstallUpdate(version, (String blocker) ->
+      // this is not the downloaded update (its installer was cleaned away,
+      // or a later download replaced it): fetch it again, and the ready
+      // dialog follows
+      if (blocker == "missing")
       {
-         // this is not the downloaded update (its installer was cleaned
-         // away, or a later download replaced it): fetch it again, and the
-         // ready dialog follows
-         if (blocker == "missing")
-         {
-            if (updateProgress_ != null)
-               updateProgress_.dismiss();
+         if (updateProgress_ != null)
+            updateProgress_.dismiss();
 
-            updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
-                  constants_.downloadingUpdateMessage(version));
-            Desktop.getFrame().downloadUpdate(version);
-            return;
-         }
+         updateProgress_ = new GlobalProgressDelayer(globalDisplay_, 0,
+               constants_.downloadingUpdateMessage(version));
+         Desktop.getFrame().downloadUpdate(version);
+         return;
+      }
 
-         // every window is its own process, and neither installer will swap
-         // the application while another is alive; quitting this one alone
-         // would leave the user without RStudio and without the update.
-         // Offer the restart again once the warning is dismissed, so closing
-         // the other windows does not need a new update check.
-         if (blocker.length() > 0)
-         {
-            String message = blocker == "other-instances"
-                  ? constants_.closeOtherWindowsToUpdateMessage()
-                  : constants_.cannotCheckOtherWindowsMessage();
-            globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
-                  constants_.updateRStudioCaption(),
-                  message,
-                  (Operation) () -> offerRestart(version));
-            return;
-         }
+      // every window is its own process, and neither installer will swap
+      // the application while another is alive; quitting this one alone
+      // would leave the user without RStudio and without the update.
+      // Offer the restart again once the warning is dismissed, so closing
+      // the other windows does not need a new update check.
+      if (blocker.length() > 0)
+      {
+         String message = blocker == "other-instances"
+               ? constants_.closeOtherWindowsToUpdateMessage()
+               : constants_.cannotCheckOtherWindowsMessage();
+         globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
+               constants_.updateRStudioCaption(),
+               message,
+               (Operation) () -> offerRestart(version));
+         return;
+      }
 
-         install.execute();
-      });
+      proceed.execute();
    }
 
    public static boolean isSelectionEmpty()

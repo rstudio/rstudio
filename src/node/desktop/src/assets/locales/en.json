@@ -131,6 +131,12 @@
   "mainWindowTs": {
     "rSessionFailedToStart": "The R session failed to start."
   },
+  "updaterTs": {
+    "updateNotInstalled": "RStudio {{version}} was not installed.",
+    "otherWindowsWereOpen": "Other RStudio windows were still open when RStudio quit. Close them, then choose Help > Check for Updates the next time RStudio starts to try again.",
+    "couldNotCheckOtherWindows": "RStudio could not check whether other RStudio windows were open. Choose Help > Check for Updates the next time RStudio starts to try again.",
+    "installerNoLongerAvailable": "The downloaded update is no longer available. Choose Help > Check for Updates the next time RStudio starts to download it again."
+  },
   "i18nManager": {
     "errorLocalizingDocument": "Error localizing document:"
   },

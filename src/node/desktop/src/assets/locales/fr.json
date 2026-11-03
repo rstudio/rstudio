@@ -131,6 +131,12 @@
   "mainWindowTs": {
     "rSessionFailedToStart": "La session R n'a pas réussi à démarrer."
   },
+  "updaterTs": {
+    "updateNotInstalled": "RStudio {{version}} n'a pas été installé.",
+    "otherWindowsWereOpen": "D'autres fenêtres RStudio étaient encore ouvertes lorsque RStudio a quitté. Fermez-les, puis choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour réessayer.",
+    "couldNotCheckOtherWindows": "RStudio n'a pas pu vérifier si d'autres fenêtres RStudio étaient ouvertes. Choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour réessayer.",
+    "installerNoLongerAvailable": "La mise à jour téléchargée n'est plus disponible. Choisissez Aide > Vérifier les mises à jour au prochain démarrage de RStudio pour la télécharger à nouveau."
+  },
   "i18nManager": {
     "errorLocalizingDocument": "Erreur de localisation du document :"
   },

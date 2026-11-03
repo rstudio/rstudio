@@ -50,9 +50,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    // again), "other-instances" (other RStudio windows -- separate processes
    // -- are open) or "unknown" (that check itself failed)
    void canInstallUpdate(String version, CommandWithArg<String> callback);
-   // the version to install, and the project file (or Projects.NONE) the
-   // relaunched RStudio should open
-   void installUpdate(String version, String projectFilePath);
+   // record that the quit about to happen installs `version` and that the
+   // relaunched RStudio should open the project file (or Projects.NONE);
+   // answers like canInstallUpdate(), and the quit must follow only on ""
+   void installUpdate(String version, String projectFilePath, CommandWithArg<String> callback);
 
    void getOpenFileName(String caption,
                         String label,

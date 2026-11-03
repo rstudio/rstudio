@@ -55,7 +55,7 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
-import { Updater } from './updater';
+import { electronUpdaterHost, Updater } from './updater';
 import { kProjectNone } from '../core/r-user-data';
 import {
   defaultFonts,
@@ -156,7 +156,7 @@ export class GwtCallback extends EventEmitter {
   constructor(public mainWindow: MainWindow) {
     super();
     this.owners.add(mainWindow);
-    this.updater = new Updater(mainWindow);
+    this.updater = new Updater(electronUpdaterHost(mainWindow));
 
     if (process.platform === 'linux') {
       try {
@@ -209,10 +209,10 @@ export class GwtCallback extends EventEmitter {
       return this.updater.canInstallUpdate(version);
     });
 
-    ipcMain.on('desktop_install_update', (_event, version: string, projectFilePath: string) => {
+    ipcMain.handle('desktop_install_update', async (_event, version: string, projectFilePath: string) => {
       // the session reports the project with the home directory aliased (~/...)
       const project = projectFilePath === kProjectNone ? kProjectNone : resolveAliasedPath(projectFilePath);
-      this.updater.installUpdate(version, project);
+      return this.updater.installUpdate(version, project);
     });
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {

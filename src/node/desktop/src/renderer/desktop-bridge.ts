@@ -67,8 +67,14 @@ export function getDesktopBridge() {
       }
     },
 
-    installUpdate: (version: string, projectFilePath: string) => {
-      ipcRenderer.send('desktop_install_update', version, projectFilePath);
+    installUpdate: async (version: string, projectFilePath: string, callback: VoidCallback<string>) => {
+      try {
+        callback(await ipcRenderer.invoke('desktop_install_update', version, projectFilePath));
+      } catch (error: unknown) {
+        // not knowing must block: quitting would then install nothing
+        reportIpcError('installUpdate', error as Error);
+        callback('unknown');
+      }
     },
 
     getOpenFileName: async (
