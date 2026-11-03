@@ -696,19 +696,30 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                            session_.getSessionInfo().getActiveProjectFile(),
                            Projects.NONE);
 
+                     // a quit may already be under way (a project switch
+                     // whose .Last() is slow, say, or this dialog answered
+                     // twice): nothing is recorded for it, and the update
+                     // stays downloaded for the next check
+                     ApplicationQuit.QuitClaim claim = appQuit_.claimQuit();
+                     if (claim == null)
+                        return;
+
                      // quit only once the desktop frame has recorded the
                      // install: a quit it refused would leave the user with
                      // neither RStudio nor the update
                      Desktop.getFrame().installUpdate(version, project, (String installBlocker) ->
                      {
-                        unlessUpdateBlocked(version, installBlocker, () ->
+                        if (installBlocker.length() > 0)
                         {
-                           // a quit may already be under way (a project
-                           // switch whose .Last() is slow, say); its exit
-                           // must not install, so take the record back
-                           if (!appQuit_.performQuit(null, saveChanges))
-                              Desktop.getFrame().cancelUpdateInstall();
-                        });
+                           claim.release();
+                           unlessUpdateBlocked(version, installBlocker, () -> {});
+                           return;
+                        }
+
+                        // the claim is held, so only a released claim can
+                        // refuse; then the record is this request's to drop
+                        if (!claim.performQuit(null, saveChanges, null, null))
+                           Desktop.getFrame().cancelUpdateInstall(version);
                      });
                   }
                });

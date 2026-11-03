@@ -67,8 +67,8 @@ export function getDesktopBridge() {
       }
     },
 
-    cancelUpdateInstall: () => {
-      ipcRenderer.send('desktop_cancel_update_install');
+    cancelUpdateInstall: (version: string) => {
+      ipcRenderer.send('desktop_cancel_update_install', version);
     },
 
     installUpdate: async (version: string, projectFilePath: string, callback: VoidCallback<string>) => {

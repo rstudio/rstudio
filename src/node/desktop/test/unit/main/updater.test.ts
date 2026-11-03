@@ -397,6 +397,36 @@ describe('updater', () => {
     assert.isFalse(handingOffAtInstall);
   });
 
+  it('installs nothing when the install is cancelled while the handoff decides', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+
+    host.othersGate = deferred();
+    const applying = updater.applyPendingUpdate();
+    await flush();
+    updater.cancelPendingInstall(A);
+    host.othersGate.resolve(true);
+
+    assert.isFalse(await applying);
+    assert.equal(host.installs, 0);
+    assert.deepEqual(host.warnings, []); // the quit was given up, not blocked
+    assert.isNull(rememberedProject(host, A));
+  });
+
+  it('drops only the install record it was asked about', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+
+    updater.cancelPendingInstall(B); // a request for another build, not this one
+    assert.isTrue(updater.hasPendingInstall());
+    assert.isTrue(await updater.applyPendingUpdate());
+    assert.equal(host.installs, 1);
+  });
+
   it('gives up at the quit handoff when another window opened meanwhile, and says so', async () => {
     const { host, updater } = setup('darwin');
     await offer(updater, host, A);

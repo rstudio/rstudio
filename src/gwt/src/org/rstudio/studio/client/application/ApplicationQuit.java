@@ -403,11 +403,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                               RVersionSpec switchToRVersion,
                               Command onQuitAcknowledged)
    {
-      // one quit at a time: the session answers an aborted quit with an
-      // event that names no attempt, so a second quit sent before that
-      // event arrived could be cancelled by it (and its normal exit then
-      // taken for a crash). The flag clears when the attempt fails or is
-      // aborted; a successful one ends the page.
+      // one quit at a time (a held claim counts): the session answers an
+      // aborted quit with an event that names no attempt, so a second quit
+      // sent before that event arrived could be cancelled by it (and its
+      // normal exit then taken for a crash). The flag clears when the
+      // attempt fails or is aborted; a successful one ends the page.
       if (quitRequested_)
       {
          Debug.logToConsole("Ignoring quit request: a quit is already in progress");
@@ -422,6 +422,61 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                       switchToRVersion,
                       onQuitAcknowledged).execute();
       return true;
+   }
+
+   /**
+    * The quit a caller holds for itself while it arms what the quit is for
+    * (the desktop frame keeps an R version, or an update, for the relaunch),
+    * so that nothing is armed for a quit that then cannot start and nothing
+    * armed is consumed by a quit already under way. The claim ends with
+    * performQuit() or release(); other quits are refused meanwhile.
+    */
+   public class QuitClaim
+   {
+      private QuitClaim() {}
+
+      public boolean performQuit(String progressMessage,
+                                 boolean saveChanges,
+                                 String switchToProject,
+                                 RVersionSpec switchToRVersion)
+      {
+         if (activeClaim_ != this)
+         {
+            Debug.logToConsole("Ignoring quit request: its claim was released");
+            return false;
+         }
+         activeClaim_ = null;
+
+         new QuitCommand(null,
+                         progressMessage,
+                         saveChanges,
+                         switchToProject,
+                         switchToRVersion,
+                         null).execute();
+         return true;
+      }
+
+      public void release()
+      {
+         if (activeClaim_ == this)
+         {
+            activeClaim_ = null;
+            quitRequested_ = false;
+         }
+      }
+   }
+
+   /** Claim the next quit; null when one is in progress (or claimed). */
+   public QuitClaim claimQuit()
+   {
+      if (quitRequested_)
+      {
+         Debug.logToConsole("Refusing to claim the quit: a quit is already in progress");
+         return null;
+      }
+      quitRequested_ = true;
+      activeClaim_ = new QuitClaim();
+      return activeClaim_;
    }
    
    @Override
@@ -834,6 +889,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private SaveAction saveAction_ = null;
    private boolean isQuitting_ = false;
    private boolean quitRequested_ = false;
+   private QuitClaim activeClaim_ = null;
    private GlobalProgressDelayer quitProgress_ = null;
    private boolean suspendingAndRestarting_ = false;
 

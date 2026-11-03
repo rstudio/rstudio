@@ -233,17 +233,26 @@ public class RenvRVersionManager
 
       quit_.prepareForQuit(constants_.switchRVersionCaption(), saveChanges ->
       {
+         // claim the quit before the desktop holds the R: held for a quit
+         // that cannot start, it would be used by the quit already under way
+         ApplicationQuit.QuitClaim claim = quit_.claimQuit();
+         if (claim == null)
+         {
+            onSwitchFailed(installed, constants_.quitAlreadyInProgress());
+            return;
+         }
+
          Desktop.getFrame().setPendingRVersion(installed.binary, error ->
          {
             if (!StringUtil.isNullOrEmpty(error))
             {
+               claim.release();
                onSwitchFailed(installed, error);
                return;
             }
 
             globalDisplay_.hideWarningBar();
-            quit_.performQuit(
-                  null,
+            claim.performQuit(
                   constants_.switchingRVersionProgress(installed.version),
                   saveChanges,
                   projectFile,

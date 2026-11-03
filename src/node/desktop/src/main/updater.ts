@@ -373,14 +373,16 @@ export class Updater {
    * ordinary quit must not run the installer or reopen the remembered
    * project. The download stays staged: the next check offers the restart
    * again, and on macOS Squirrel applies it at the next start regardless
-   * (see the class comment).
+   * (see the class comment). With `version`, only that request's record
+   * is dropped, never one made since.
    */
-  cancelPendingInstall(): void {
-    if (this.pendingInstall !== null) {
-      logger().logDebug(`the quit was abandoned; RStudio ${this.pendingInstall} stays downloaded`);
-      this.pendingInstall = null;
-      forgetRelaunchProject(this.installKey(), this.host.markerDir());
+  cancelPendingInstall(version?: string): void {
+    if (this.pendingInstall === null || (version !== undefined && this.pendingInstall !== version)) {
+      return;
     }
+    logger().logDebug(`the quit was abandoned; RStudio ${this.pendingInstall} stays downloaded`);
+    this.pendingInstall = null;
+    forgetRelaunchProject(this.installKey(), this.host.markerDir());
   }
 
   /**
@@ -405,6 +407,11 @@ export class Updater {
     this.handingOff = true;
     try {
       const blocker = await this.preflight(version);
+      if (this.pendingInstall !== version) {
+        // cancelled while the checks ran; the marker went with it
+        logger().logInfo(`not installing RStudio ${version} on quit: the install was cancelled`);
+        return false;
+      }
       this.pendingInstall = null;
       const staged = this.staged;
       const mode = this.windowsInstallMode;
