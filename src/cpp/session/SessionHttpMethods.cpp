@@ -657,6 +657,24 @@ bool registeredWaitForMethod(const std::string& method,
                         pRequest);
 }
 
+
+} // anonymous namespace
+
+namespace module_context
+{
+module_context::WaitForMethodFunction registerWaitForMethod(
+      const std::string& methodName)
+{
+   s_waitForMethodNames.push_back(methodName);
+   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
+}
+
+} // namespace module_context
+
+namespace http_methods {
+
+namespace {
+
 // set while r::session::quit() runs for a quit_session; an error in .Last()
 // long-jumps past that call to R's top-level prompt, so the prompt path
 // reports the abort as well (see notifyQuitAborted)
@@ -674,19 +692,6 @@ void notifyQuitAborted()
    ClientEvent event(client_events::kQuitAborted, json::Value());
    module_context::enqueClientEvent(event);
 }
-
-namespace module_context
-{
-module_context::WaitForMethodFunction registerWaitForMethod(
-      const std::string& methodName)
-{
-   s_waitForMethodNames.push_back(methodName);
-   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
-}
-
-} // namespace module_context
-
-namespace http_methods {
 
 bool verifyRequestSignature(const core::http::Request& request)
 {

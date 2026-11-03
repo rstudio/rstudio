@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -428,6 +429,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          return;
 
       isQuitting_ = false;
+      quitRequested_ = false;
       DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, null);
    }
 
@@ -680,6 +682,18 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       
       public void execute()
       {
+         // one quit at a time: the session answers an aborted quit with an
+         // event that names no attempt, so a second quit sent before that
+         // event arrived could be cancelled by it (and its normal exit then
+         // taken for a crash). The flag clears when the attempt fails or is
+         // aborted; a successful one ends the page.
+         if (quitRequested_)
+         {
+            Debug.logToConsole("Ignoring quit request: a quit is already in progress");
+            return;
+         }
+         quitRequested_ = true;
+
          // show delayed progress
          String msg = progressMessage_;
          if (msg == null)
@@ -753,6 +767,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                         private void onFailedToQuit(String message)
                         {
                            isQuitting_ = false;
+                           quitRequested_ = false;
                            progress.dismiss();
 
                            if (callContext_ != null)
@@ -806,6 +821,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    // saveAction() so the value client_init delivered is used in the meantime
    private SaveAction saveAction_ = null;
    private boolean isQuitting_ = false;
+   private boolean quitRequested_ = false;
    private boolean suspendingAndRestarting_ = false;
 
    // injected
