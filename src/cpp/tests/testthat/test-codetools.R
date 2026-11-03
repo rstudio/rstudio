@@ -273,3 +273,31 @@ test_that("function information distinguishes primitives from closures without f
    expect_equal(as.integer(closure$is_primitive), 0L)
    
 })
+
+test_that("reading kept package source keeps R's translation warning to itself", {
+
+   # R lazy-loads the source lines of a package installed with keep.source on
+   # first access and, when the package was installed under another native
+   # encoding, warns once that it is translating them to UTF-8. Model that
+   # with a binding that warns when first forced.
+   lazySrcfile <- function(lines) {
+      srcfile <- new.env()
+      class(srcfile) <- "srcfile"
+      srcfile$filename <- "example.R"
+      delayedAssign("lines", {
+         warning("strings not representable in native encoding will be translated to UTF-8")
+         lines
+      }, assign.env = srcfile)
+      srcfile
+   }
+   lines <- c("f <- function() {", "   1", "}")
+
+   srcref <- srcref(lazySrcfile(lines), c(1L, 1L, 3L, 1L))
+   expect_no_warning(result <- .rs.readSrcrefLines(srcref, FALSE))
+   expect_identical(result, lines)
+
+   srcref <- srcref(lazySrcfile(lines), c(1L, 1L, 3L, 1L))
+   expect_no_warning(result <- .rs.deparseSrcref(srcref, TRUE))
+   expect_identical(result, paste(lines, collapse = "\n"))
+
+})
