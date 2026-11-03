@@ -28,5 +28,7 @@ public interface RenvServerOperations extends BuildServerOperations
 
    // installs the requested version of R (via rig) in a background job;
    // completion is reported through RInstallCompletedEvent
-   void rigInstallRVersion(String version, ServerRequestCallback<String> requestCallback);
+   void rigInstallRVersion(String version, String directory, ServerRequestCallback<String> requestCallback);
+
+   void rigGetInstallDir(ServerRequestCallback<String> requestCallback);
 }
