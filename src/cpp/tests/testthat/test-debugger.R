@@ -127,7 +127,7 @@ test_that("the browser environment can be read before it is first set", {
    # not a null pointer that .Call() warns about converting. The test harness
    # runs as a script and never reaches a console prompt, so it is still unset
    # here.
-   env <- expect_silent(.Call("rs_getBrowserEnv", PACKAGE = "(embedding)"))
+   env <- expect_no_warning(.Call("rs_getBrowserEnv", PACKAGE = "(embedding)"))
    expect_null(env)
 
 })
@@ -153,22 +153,11 @@ test_that("frames whose inner call is built internally keep their call site", {
    env <- new.env(parent = globalenv())
    source(file, local = env, keep.source = TRUE)
 
-   # A warning escapes this call only on the Jenkins Linux runners, and only
-   # for this lapply() shape: the sibling test below runs silently there, and
-   # neither reproduces locally on any R version or architecture tried. Muffle
-   # it so the test stays green, but print it so the CI log names it; once it
-   # has, replace this with a fix or an expect_warning() on that text. This
-   # goes through cat(), since testthat swallows message() inside a test.
-   result <- withCallingHandlers(
-      env$outer_fn(),
-      warning = function(w) {
-         cat("outer_fn() warned:", conditionMessage(w), "\n")
-         invokeRestart("muffleWarning")
-      }
-   )
-
    # lapply() wraps its result, so unwrap before reading the frame list.
-   frames <- result[[1L]]$frames
+   # expect_no_warning() rather than expect_silent(): the Jenkins runners see
+   # a warning here that nothing local reproduces, and only the former puts
+   # the warning's text in the test report.
+   frames <- expect_no_warning(env$outer_fn())[[1L]]$frames
    names <- vapply(frames, function(frame) as.character(frame$function_name), "")
 
    # Frames run innermost first, and the test harness has lapply() frames of
@@ -217,7 +206,7 @@ test_that("the frame being browsed keeps its own file location", {
    # The test harness never reaches a console prompt, so no browser
    # environment has been set, and the innermost frame stands in for the one
    # the browser would be halted in.
-   frame <- expect_silent(env$outer_fn())$frames[[1L]]
+   frame <- expect_no_warning(env$outer_fn())$frames[[1L]]
 
    expect_identical(as.character(frame$function_name), "located_fn")
    expect_true(as.logical(frame$real_sourceref))
