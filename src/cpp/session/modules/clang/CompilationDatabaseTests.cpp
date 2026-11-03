@@ -133,9 +133,15 @@ TEST_F(CompileFlagsTest, ResolvesLongOptionSpellings)
    std::vector<std::string> expected = {"-isystem-after" + inc, "-isystem-after" + inc};
    EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
 
-   // '=' spellings, with and without the '=', come out with it
-   flags = {"--include-directory=inc", "--include-directory", "inc", "--include-directory-after=inc", "--sysroot=sys"};
-   expected = {"--include-directory=" + inc, "--include-directory=" + inc, "--include-directory-after=" + inc, "--sysroot=" + sys};
+   // the long include spellings, with or without the '=', come out as the
+   // short options they alias (the form header completion reads)
+   flags = {"--include-directory=inc", "--include-directory", "inc", "--include-directory-after=inc"};
+   expected = {"-I" + inc, "-I" + inc, "-idirafter" + inc};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+
+   // other '=' options keep their spelling
+   flags = {"--sysroot=sys", "--sysroot", "sys"};
+   expected = {"--sysroot=" + sys, "--sysroot=" + sys};
    EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
 
    // something that merely starts like an '=' option is not one

@@ -265,22 +265,24 @@ std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>&
    // next argument ('-include-pch x.pch'); all of them also take it as the
    // next argument. Longer spellings come before the ones they extend, so
    // '-isystem-after' isn't read as '-isystem' with a '-after...' operand.
+   // The long include options are emitted as the short options they alias,
+   // which is the spelling header completion looks for.
    enum OperandStyle { Joined, Equals, Separate };
-   struct PathOption { const char* spelling; OperandStyle style; };
+   struct PathOption { const char* spelling; OperandStyle style; const char* alias; };
    static const PathOption kPathOptions[] = {
-      { "--include-directory-after", Equals },
-      { "--include-directory", Equals },
-      { "--sysroot", Equals },
-      { "-include-pch", Separate },
-      { "-isystem-after", Joined },
-      { "-idirafter", Joined },
-      { "-isysroot", Joined },
-      { "-imacros", Joined },
-      { "-include", Joined },
-      { "-isystem", Joined },
-      { "-iquote", Joined },
-      { "-F", Joined },
-      { "-I", Joined },
+      { "--include-directory-after", Equals, "-idirafter" },
+      { "--include-directory", Equals, "-I" },
+      { "--sysroot", Equals, nullptr },
+      { "-include-pch", Separate, nullptr },
+      { "-isystem-after", Joined, nullptr },
+      { "-idirafter", Joined, nullptr },
+      { "-isysroot", Joined, nullptr },
+      { "-imacros", Joined, nullptr },
+      { "-include", Joined, nullptr },
+      { "-isystem", Joined, nullptr },
+      { "-iquote", Joined, nullptr },
+      { "-F", Joined, nullptr },
+      { "-I", Joined, nullptr },
    };
 
    std::vector<std::string> resolved;
@@ -322,6 +324,12 @@ std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>&
       path = dir.completePath(path).getAbsolutePath();
 
       // emit each option in a single spelling, so the same flags hash alike
+      if (option->alias != nullptr)
+      {
+         resolved.push_back(option->alias + path);
+         continue;
+      }
+
       switch (option->style)
       {
       case Joined:
