@@ -628,6 +628,16 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       // Ignore nested restarts once restart starts
       if (suspendingAndRestarting_)
          return;
+
+      // nor a restart while a quit is in progress: it would replace the
+      // desktop frame's pending quit, so the session's exit would restart it
+      // instead of quitting, with the gate left closed (and an accepted
+      // update left armed) for good
+      if (quitGate_.isClosed())
+      {
+         Debug.logToConsole("Ignoring restart request: a quit is already in progress");
+         return;
+      }
       
       // set restart pending for desktop
       DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART, () ->
