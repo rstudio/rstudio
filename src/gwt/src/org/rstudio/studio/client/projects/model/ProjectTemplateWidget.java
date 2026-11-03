@@ -23,7 +23,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FileChooserTextBox;
-import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.SelectWidget;
 import com.google.gwt.core.client.JsArray;
@@ -154,7 +153,7 @@ public class ProjectTemplateWidget extends Composite
    private ProjectTemplateWidgetItem selectBoxInput(final ProjectTemplateWidgetDescription description)
    {
       String[] fields = readSelectBoxFields(description);
-      String label = ensureEndsWithColon(description.getLabel());
+      String label = StringUtil.ensureColonSuffix(description.getLabel());
       final SelectWidget widget = new SelectWidget(label, fields);
       
       String defaultValue = description.getDefault();
@@ -181,13 +180,11 @@ public class ProjectTemplateWidget extends Composite
       if (!StringUtil.isNullOrEmpty(defaultValue))
          primaryWidget.setText(defaultValue);
       
-      LayoutGrid grid = new LayoutGrid(1, 2);
       DomUtils.disableSpellcheck(primaryWidget);
-      FormLabel label = new FormLabel(ensureEndsWithColon(description.getLabel()), primaryWidget);
-      grid.setWidget(0, 0, label);
-      grid.setWidget(0, 1, primaryWidget);
+      LayoutGrid.TwoColumnLayoutGridBuilder builder = new LayoutGrid.TwoColumnLayoutGridBuilder();
+      builder.add(description.getLabel(), primaryWidget);
       
-      return new ProjectTemplateWidgetItem(grid, new Collector()
+      return new ProjectTemplateWidgetItem(builder.get(), new Collector()
       {
          @Override
          public void collectInput(JsObject receiver)
@@ -227,13 +224,6 @@ public class ProjectTemplateWidget extends Composite
       for (int i = 0; i < n; i++)
          fields[i] = jsFields.get(i);
       return fields;
-   }
-   
-   private String ensureEndsWithColon(String string)
-   {
-      return string.endsWith(":")
-            ? string
-            : string + ":";
    }
    
    private boolean isTruthy(String value)

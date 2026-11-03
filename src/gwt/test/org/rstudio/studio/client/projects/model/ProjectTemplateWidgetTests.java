@@ -48,6 +48,15 @@ public class ProjectTemplateWidgetTests extends GWTTestCase
       assertEquals("Tag:", labelTextFor(widget, textInput(widget, 1)));
    }
 
+   // Label is optional in a template's DCF; adding a colon to an empty label
+   // would name the input ":"
+   public void testTextInputWithEmptyLabelIsNotNamedColon()
+   {
+      ProjectTemplateWidget widget = newWidget(
+            "[{\"parameter\": \"name\", \"type\": \"textinput\", \"label\": \"\"}]");
+      assertEquals("", labelTextFor(widget, textInput(widget, 0)));
+   }
+
    private static ProjectTemplateWidget newWidget(String widgetsJson)
    {
       ProjectTemplateDescription description = JsonUtils.safeEval(
