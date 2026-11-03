@@ -117,8 +117,7 @@ export function resolveRHome(rPath: string, platform = process.platform): string
     return rPath;
   }
 
-  const executables =
-    platform === 'win32' ? [`bin/x64/${kWindowsRExe}`, `bin/i386/${kWindowsRExe}`] : ['bin/R'];
+  const executables = platform === 'win32' ? [`bin/x64/${kWindowsRExe}`, `bin/i386/${kWindowsRExe}`] : ['bin/R'];
   for (const executable of executables) {
     const candidate = join(rPath, executable);
     if (existsSync(candidate)) {
@@ -139,7 +138,6 @@ export function rFromRStudioWhichR(): string {
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
-
   const options = ElectronDesktopOptions();
 
   if (platform === 'win32') {
@@ -433,12 +431,7 @@ export async function detectREnvironmentAsync(rPath: string, timeoutMs = 0): Pro
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
         child.kill();
-        settle({
-          stdout,
-          stderr,
-          status: null,
-          error: new Error(`R did not answer within ${timeoutMs / 1000} seconds`),
-        });
+        settle({ stdout, stderr, status: null, error: new RQueryTimeout(timeoutMs) });
       }, timeoutMs);
     }
     child.stdout.on('data', (data) => (stdout += data));
@@ -450,6 +443,13 @@ export async function detectREnvironmentAsync(rPath: string, timeoutMs = 0): Pro
     child.stdin.on('error', () => undefined);
     child.stdin.end(rQueryScript());
   });
+
+  // an R that answered in full and then hung is not one to restart into:
+  // parseRQueryResult() would accept that output, and cache it
+  if (result.error instanceof RQueryTimeout) {
+    logger().logError(result.error);
+    return err(result.error);
+  }
 
   const parsed = rememberREnvironment(rPath, parseRQueryResult(rPath, result));
   persistEnvironment(rExecutable, environment, parsed, result);
@@ -592,6 +592,13 @@ export interface RQueryResult {
   stderr: string | null;
   status: number | null;
   error?: Error;
+}
+
+/** The query's R was killed for not answering within detectREnvironmentAsync()'s timeout. */
+class RQueryTimeout extends Error {
+  constructor(timeoutMs: number) {
+    super(`R did not answer within ${timeoutMs / 1000} seconds`);
+  }
 }
 
 /**
