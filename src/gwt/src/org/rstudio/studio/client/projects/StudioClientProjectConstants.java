@@ -250,7 +250,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String packageLabel();
     String gitLabel();
     String closeProjectLabel();
-    String placeholderLabel();
     String chkUseCacheLabel();
     String useCondaenv();
     String editingTitle();
