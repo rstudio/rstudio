@@ -55,6 +55,7 @@ public class ChunkOptionsPopupPanelTests extends GWTTestCase
 
       assertNotNull("the engine path browse button must exist", browse);
       assertEquals("Select Engine", browse.getAttribute("aria-label"));
+      assertEquals("Select Engine", browse.getTitle());
    }
 
    private static ChunkOptionsPopupPanel newCustomEnginePanel()

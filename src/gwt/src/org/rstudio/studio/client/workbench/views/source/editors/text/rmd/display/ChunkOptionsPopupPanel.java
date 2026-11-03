@@ -297,6 +297,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       SmallButton enginePathBrowseButton = new SmallButton("...");
       Roles.getButtonRole().setAriaLabelProperty(
             enginePathBrowseButton.getElement(), constants_.selectEngine());
+      enginePathBrowseButton.setTitle(constants_.selectEngine());
       enginePathBrowseButton.addClickHandler(new ClickHandler()
       {
          @Override
