@@ -30,6 +30,7 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -381,6 +382,30 @@ public class GeneralPreferencesPane extends PreferencesPane
             advanced.add(nativeFileDialogs_);
             disableRendererAccessibility_ = checkboxPref(prefs_.disableRendererAccessibility());
             advanced.add(disableRendererAccessibility_);
+         }
+
+         // macOS binds .R to its own Rez type, so only the user (via Launch
+         // Services) can make RStudio the default; this asks macOS to do so
+         if (BrowseCap.isMacintosh())
+         {
+            SmallButton defaultAppButton = new SmallButton(constants_.macDefaultAppForRFilesButtonLabel());
+            defaultAppButton.addClickHandler(event ->
+            {
+               Desktop.getFrame().setDefaultApplicationForRFiles(error ->
+               {
+                  if (StringUtil.isNullOrEmpty(error))
+                  {
+                     globalDisplay.showMessage(MessageDialog.INFO,
+                                               constants_.macDefaultAppForRFilesCaption(),
+                                               constants_.macDefaultAppForRFilesSuccessMessage());
+                  }
+                  else
+                  {
+                     globalDisplay.showErrorMessage(constants_.macDefaultAppForRFilesCaption(), error);
+                  }
+               });
+            });
+            advanced.add(spaced(defaultAppButton));
          }
       }
 

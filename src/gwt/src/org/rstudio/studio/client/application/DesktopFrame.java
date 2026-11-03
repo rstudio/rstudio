@@ -81,6 +81,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
    void showFile(String path);
+
+   // macOS only; the callback receives an error message, or an empty string on success
+   void setDefaultApplicationForRFiles(CommandWithArg<String> callback);
    void beep();
    void showWordDoc(String path);
    void showPDF(String path, int pdfPage);

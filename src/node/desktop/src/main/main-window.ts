@@ -22,6 +22,7 @@ import { logger } from '../core/logger';
 import i18next from 'i18next';
 import desktop from '../native/desktop.node';
 import { setDockLabel } from '../native/dock.node';
+import { promptForDefaultRFileHandlerOnce } from './default-file-handler';
 import { appState, getEventBus } from './app-state';
 import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { DesktopBrowserWindow } from './desktop-browser-window';
@@ -133,6 +134,9 @@ export class MainWindow extends GwtWindow {
     });
     appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
       appState().argsManager.handleAfterSessionLaunchCommands();
+    });
+    appState().gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
+      promptForDefaultRFileHandlerOnce().catch((error) => logger().logError(error));
     });
     appState().gwtCallback?.on(GwtCallback.SESSION_QUIT, () => {
       this.onSessionQuit();

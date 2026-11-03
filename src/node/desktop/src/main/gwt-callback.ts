@@ -41,6 +41,7 @@ import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
+import { setDefaultApplicationForRFiles } from './default-file-handler';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
 import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
@@ -806,6 +807,16 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
       ElectronDesktopOptions().setRenderingEngine(engine);
+    });
+
+    // resolves to an empty string on success, else a message for the user
+    ipcMain.handle('desktop_set_default_application_for_r_files', async () => {
+      try {
+        await setDefaultApplicationForRFiles();
+        return '';
+      } catch (error: unknown) {
+        return error instanceof Error ? error.message : String(error);
+      }
     });
 
     // cleanClipboard rewrites the pasteboard, so it takes its turn with the

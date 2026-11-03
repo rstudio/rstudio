@@ -32,6 +32,7 @@
 # include <CoreFoundation/CoreFoundation.h>
 # include <Carbon/Carbon.h>
 # include <CoreText/CoreText.h>
+# include "desktop_mac.h"
 #endif
 
 #ifdef _WIN32
@@ -1084,6 +1085,11 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    RS_EXPORT_FUNCTION("win32WatchSessionDialogs", rstudio::desktop::win32WatchSessionDialogs);
    RS_EXPORT_FUNCTION("win32StopWatchingSessionDialogs", rstudio::desktop::win32StopWatchingSessionDialogs);
    RS_EXPORT_FUNCTION("macOSListFonts", rstudio::desktop::macOSListFonts);
+
+#ifdef __APPLE__
+   RS_EXPORT_FUNCTION("macOSDefaultApplicationForFileExtension", rstudio::desktop::macOSDefaultApplicationForFileExtension);
+   RS_EXPORT_FUNCTION("macOSSetDefaultApplicationForFileExtension", rstudio::desktop::macOSSetDefaultApplicationForFileExtension);
+#endif
 
    return exports;
 
