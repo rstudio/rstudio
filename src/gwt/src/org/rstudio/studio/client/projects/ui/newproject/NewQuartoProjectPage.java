@@ -148,7 +148,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_CONDAENV));
       venvPanel_.add(chkUseCondaenv_);
       txtVenvPackages_ = new TextBox();
-      txtVenvPackages_.getElement().setAttribute("placeholder", constants_.txtVenvPackagesNone());
+      txtVenvPackages_.getElement().setAttribute(constants_.placeholderLabel(), constants_.txtVenvPackagesNone());
       txtVenvPackages_.addStyleName(NewProjectResources.INSTANCE.styles().quartoVenvPackages());
       DomUtils.disableSpellcheck(txtVenvPackages_);
       FontSizer.applyNormalFontSize(txtVenvPackages_.getElement());
