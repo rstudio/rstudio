@@ -318,9 +318,11 @@
 .rs.addFunction("deparseCall", function(call)
 {
    srcref <- attr(call, "srcref", exact = TRUE)
+   # as.character.srcref() reads the srcfile's lines directly, bypassing
+   # .rs.srcfileLines(), so suppress the same translation warning here.
    if (!is.null(srcref))
-      return(as.character.srcref(srcref))
-   
+      return(suppressWarnings(as.character.srcref(srcref)))
+
    deparse(call)
 })
 

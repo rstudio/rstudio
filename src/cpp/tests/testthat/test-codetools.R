@@ -300,4 +300,12 @@ test_that("reading kept package source keeps R's translation warning to itself",
    expect_no_warning(result <- .rs.deparseSrcref(srcref, TRUE))
    expect_identical(result, paste(lines, collapse = "\n"))
 
+   # as.character.srcref() reads the lines itself, but only from a srcfilecopy.
+   srcfile <- lazySrcfile(lines)
+   class(srcfile) <- c("srcfilecopy", "srcfile")
+   call <- quote(f())
+   attr(call, "srcref") <- srcref(srcfile, c(1L, 1L, 3L, 1L))
+   expect_no_warning(result <- .rs.deparseCall(call))
+   expect_identical(result, lines)
+
 })
