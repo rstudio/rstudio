@@ -6,6 +6,7 @@
  */
 
 import { test, expect } from '@fixtures/rstudio.fixture';
+import { executeInConsole } from '@pages/console_pane.page';
 import { resetSourcePaneState } from '@utils/commands';
 
 const PALETTE_LIST = '#rstudio_command_palette_list';
@@ -18,6 +19,20 @@ const CANCEL_BTN = "[id^='rstudio_dlg_cancel']";
 const VENV_PACKAGES = '#rstudio_quarto_project_use_venv_packages';
 
 test.describe('New Quarto Project venv packages', () => {
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    // Pre-warm quarto, as create_projects does: its first run on a cold
+    // runner can outlast the page's 30s capabilities timeout, which would
+    // leave the venv row hidden.
+    test.setTimeout(300000);
+    await executeInConsole(
+      page,
+      'invisible(try(suppressWarnings(' +
+        'system2("quarto", "--version", stdout = TRUE, stderr = TRUE)' +
+        '), silent = TRUE))',
+      { wait: true, timeout: 180000 },
+    );
+  });
+
   test.afterEach(async ({ rstudioPage: page }) => {
     const dialog = page.locator(WIZARD_DIALOG);
     if (await dialog.isVisible()) {
@@ -43,24 +58,34 @@ test.describe('New Quarto Project venv packages', () => {
     const dialog = page.locator(WIZARD_DIALOG);
     await expect(dialog).toBeVisible({ timeout: 90000 });
     await dialog.locator(NEW_DIRECTORY_OPTION).click();
-    await dialog.locator(QUARTO_PROJECT_OPTION).click();
 
-    // The page disables its buttons until quarto_capabilities returns (or its
-    // 30s timeout fires); the venv row's visibility depends on that result.
-    await expect(page.locator(CREATE_PROJECT_BTN)).toBeEnabled({ timeout: 30000 });
+    // The page requests capabilities once its slide-in finishes. Whether the
+    // venv row should show comes from this response, so a failed request
+    // fails the test instead of passing for "no Python".
+    const capsResponse = page.waitForResponse(
+      (r) => r.url().includes('/rpc/quarto_capabilities'), { timeout: 60000 });
+    await dialog.locator(QUARTO_PROJECT_OPTION).click();
+    const caps = await (await capsResponse).json();
+    expect(caps.error, 'quarto_capabilities returned an error').toBeUndefined();
+    const python = caps.result?.python;
+    test.skip(
+      python?.venv !== true && python?.conda !== true,
+      'Quarto reports no Python that can create a venv or conda environment',
+    );
+
+    // Visible as well as enabled: the button is hidden but enabled while the
+    // page slides in, and is disabled until the page has applied the response.
+    const createBtn = page.locator(CREATE_PROJECT_BTN);
+    await expect(createBtn).toBeVisible({ timeout: 10000 });
+    await expect(createBtn).toBeEnabled({ timeout: 10000 });
+
     // Every Quarto page (project, website, blog, ...) is in the DOM; only the
     // active one is visible.
     await dialog.getByLabel('Engine:', { exact: true }).filter({ visible: true })
       .selectOption({ label: 'Jupyter' });
 
     const venvPackages = dialog.locator(VENV_PACKAGES);
-    test.skip(
-      !(await venvPackages.isVisible()),
-      'Quarto reports no Python that can create a venv or conda environment',
-    );
-
-    await expect(
-      dialog.getByRole('textbox', { name: 'Packages to install in the environment', exact: true }),
-    ).toHaveAttribute('id', VENV_PACKAGES.slice(1));
+    await expect(venvPackages).toBeVisible();
+    await expect(venvPackages).toHaveAccessibleName('Packages to install in the environment');
   });
 });
