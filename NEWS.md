@@ -1,12 +1,19 @@
 ## RStudio 2026.12.0 "Parrot Balsam" Release Notes
 
 ### New
+- ([#12622](https://github.com/rstudio/rstudio/issues/12622)): RStudio Desktop now warns in the Console when a project asks for a different version of R than the one running (as recorded in its renv lockfile, or in the project file), and offers to switch to it. A version that is not installed can be installed first, via [rig](https://github.com/r-lib/rig), in a background job, using the copy of rig bundled with RStudio, into a folder confirmed (or changed) before the installation starts; a nearby installed version is offered as an alternative. When the renv library of a project is empty, RStudio offers to run `renv::restore()`. The check can be disabled in Global Options > Packages.
+- ([#19166](https://github.com/rstudio/rstudio/issues/19166)): Web hyperlink previews now show an Open in Browser icon alongside the URL.
+- ([#19114](https://github.com/rstudio/rstudio/issues/19114)): Save Plot as Image can now compress TIFF images (with LZW, the default, or ZIP, each with or without a predictor where R supports it) and choose the quality of JPEG images. TIFFs were previously uncompressed, e.g. 36 MB for a 7 x 5 in plot saved at 600 DPI, and are now typically under 1 MB.
+- ([#19142](https://github.com/rstudio/rstudio/issues/19142)): Reduced the work that blocks session startup: automatic Python discovery for reticulate now runs in the background, R and Quarto installation details are cached between launches, and SQL and Stan support loads on first use.
+- ([#2846](https://github.com/rstudio/rstudio/issues/2846)): The editor gutter now marks lines that were added, changed, or removed since they were last staged or committed, for files in a Git repository. The markers update as you type; clicking one shows the previous version of those lines and offers to revert the change, and Tools > Version Control gains Next Change, Previous Change, and Revert Change at Cursor. The markers can be disabled in Global Options > Git/SVN.
+- ([#19208](https://github.com/rstudio/rstudio/issues/19208)): Tools > Version Control > Show Changes Side by Side shows the version of the current file last staged or committed beside the document, read-only, with the changes between them highlighted on both sides, unchanged lines kept level, and scrolling in step. The document stays editable, and the comparison follows as you type.
 -
 
 ### Fixed
 - ([#15965](https://github.com/rstudio/rstudio/issues/15965)): Fixed several issues that prevented building with `-DRSTUDIO_USE_SYSTEM_DEPENDENCIES=ON`, where Hunspell, RapidJSON, utf8cpp, GTest and libgit2 were not found or not linked. Hunspell, dtl and websocketpp, which an installed package cannot provide, are now always fetched, and individual dependencies can be excluded with `-DRSTUDIO_USE_SYSTEM_<NAME>=OFF` (e.g. `-DRSTUDIO_USE_SYSTEM_YAML_CPP=OFF`). Thanks to [@Flamefire](https://github.com/Flamefire).
 - ([#19362](https://github.com/rstudio/rstudio/issues/19362)): Fixed an issue where the console could show the warning "converting NULL pointer to R NULL" from `rs_getBrowserEnv` shortly after a session started.
 - ([#19386](https://github.com/rstudio/rstudio/issues/19386)): Fixed an issue where the Terminal's right-click menu on Windows and Linux Desktop listed Ctrl+C and Ctrl+V for Copy and Paste, which the terminal sends to the shell, instead of Ctrl+Shift+C and Ctrl+Shift+V.
+- ([#19378](https://github.com/rstudio/rstudio/issues/19378)): [Accessibility] Fixed an issue where the Tutorial pane's links to install `learnr` or update `shiny` were named "click here" for screen reader and voice control users. The links now read "install the learnr package" and "install the shiny package" (or "update the shiny package" when an older version is installed).
 
 ### Dependencies
 -

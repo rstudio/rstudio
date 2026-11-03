@@ -22,9 +22,11 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
 import org.rstudio.studio.client.events.ReticulateEvent;
+import org.rstudio.studio.client.renv.events.RenvConsoleNoticeEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
@@ -42,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
@@ -67,6 +70,9 @@ public class Console
       void leaveMode(ConsolePane.ConsoleMode mode);
       ConsolePane.ConsoleMode mode();
       void showProgress(LocalJobProgress progress);
+      void showRenvNotice(boolean severe, String message, String actionLabel, Command onAction,
+                          String secondaryActionLabel, Command onSecondaryAction);
+      void hideRenvNotice();
       
       void adaptToLanguage(Language language);
    }
@@ -171,6 +177,22 @@ public class Console
       });
 
       events.addHandler(ConsoleActivateEvent.TYPE, event -> activateConsole(event.getFocusWindow()));
+
+      events.addHandler(RenvConsoleNoticeEvent.TYPE, event ->
+      {
+         if (event.getMessage() == null)
+            view.hideRenvNotice();
+         else
+            view.showRenvNotice(event.isSevere(), event.getMessage(),
+                                event.getActionLabel(), event.getAction(),
+                                event.getSecondaryActionLabel(), event.getSecondaryAction());
+      });
+
+      events.addHandler(RestartStatusEvent.TYPE, event ->
+      {
+         if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+            view.hideRenvNotice();
+      });
 
       events.addHandler(JobProgressEvent.TYPE, (JobProgressEvent event) ->
       {
