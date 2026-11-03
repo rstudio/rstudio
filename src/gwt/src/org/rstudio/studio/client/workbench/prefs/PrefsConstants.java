@@ -302,6 +302,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String publishCheckCertificatesLabel();
     String usePublishCaBundleLabel();
     String caBundlePath();
+    String caBundlePathLabel();
     String helpLinkTroubleshooting();
     String publishingPaneHeader();
     String showErrorCaption();
