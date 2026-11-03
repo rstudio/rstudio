@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionValue.OptionLocation;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -292,8 +293,10 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       enginePathBox_ = makeInputBox("engine.path", true);
       enginePathBox_.getElement().getStyle().setWidth(120, Unit.PX);
-      Label enginePathLabel = new Label(constants_.enginePathColon());
+      FormLabel enginePathLabel = new FormLabel(constants_.enginePathColon(), enginePathBox_);
       SmallButton enginePathBrowseButton = new SmallButton("...");
+      Roles.getButtonRole().setAriaLabelProperty(
+            enginePathBrowseButton.getElement(), constants_.selectEngine());
       enginePathBrowseButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -336,7 +339,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       engineOptsBox_ = makeInputBox("engine.opts", true);
       engineOptsBox_.getElement().getStyle().setWidth(120, Unit.PX);
-      Label engineOptsLabel = new Label(constants_.engineOptionsColon());
+      FormLabel engineOptsLabel = new FormLabel(constants_.engineOptionsColon(), engineOptsBox_);
       enginePanel_.setWidget(1, 0, engineOptsLabel);
       enginePanel_.setWidget(1, 1, engineOptsBox_);
       
