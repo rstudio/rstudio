@@ -328,10 +328,7 @@
 
 .rs.addFunction("deparseSrcref", function(srcref, asString)
 {
-   # The class check below needs the original of a srcfilealias as well.
    srcfile <- attr(srcref, "srcfile", exact = TRUE)
-   if (!is.null(srcfile$original))
-      srcfile <- srcfile$original
    lines <- .rs.srcfileLines(srcfile)
    
    # We previously used 'as.character(srcref, useSource = TRUE)' by default, but

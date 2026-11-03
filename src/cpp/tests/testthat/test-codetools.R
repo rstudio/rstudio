@@ -223,6 +223,9 @@ test_that(".rs.recoverPackageSourcePath() recovers sources from the srcref datab
    expect_true(nzchar(recoveredBanana))
    expect_equal(readLines(recoveredBanana), bananaLines)
 
+   # a srcfilealias deparses to its own file's lines, not the first file's
+   expect_equal(.rs.deparseSrcref(attr(ns$banana, "srcref"), FALSE), bananaLines)
+
    # paths which don't resolve to a known srcref are not recovered
    expect_equal(.rs.recoverPackageSourcePath(""), "")
    expect_equal(.rs.recoverPackageSourcePath("/no/such/pkg/R/file.R"), "")
