@@ -815,9 +815,10 @@ public class AceEditor implements DocDisplay
       if (!cursor.moveToPosition(position))
          return false;
 
-      // 'theme_' is a common prefix outside ggplot2 (#19415), so a theme_*
-      // call only counts once the walk finds it joined to the chain with '+'
-      boolean sawThemeCall = false;
+      // prefixes like theme_ and scale_ are common outside ggplot2 (#19415),
+      // so a prefix match only counts once the walk finds it joined to the
+      // chain with '+'; a call known by name counts on its own
+      boolean sawPrefixedCall = false;
       while (true)
       {
          if (cursor.isRightBracket())
@@ -835,17 +836,17 @@ public class AceEditor implements DocDisplay
             // a ggplot chain piped into another call is no longer a ggplot chain
             return false;
          }
-         else if (sawThemeCall && cursor.valueEquals("+"))
+         else if (sawPrefixedCall && cursor.valueEquals("+"))
          {
             return true;
          }
          else if (cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
          {
             String name = cursor.currentValue();
-            if (isGgplotFunctionName(name))
+            if (GGPLOT_FUNCTIONS.contains(name))
                return true;
-            else if (isGgplotThemeFunctionName(name))
-               sawThemeCall = true;
+            else if (isGgplotPrefixedFunctionName(name))
+               sawPrefixedCall = true;
          }
 
          int row = cursor.getRow();
@@ -865,18 +866,13 @@ public class AceEditor implements DocDisplay
       }
    }
 
-   private static boolean isGgplotFunctionName(String name)
+   private static boolean isGgplotPrefixedFunctionName(String name)
    {
       for (String prefix : GGPLOT_FUNCTION_PREFIXES)
          if (name.startsWith(prefix))
-            return true;
+            return !GGPLOT_FUNCTION_EXCLUSIONS.contains(name);
 
-      return GGPLOT_FUNCTIONS.contains(name);
-   }
-
-   private static boolean isGgplotThemeFunctionName(String name)
-   {
-      return name.startsWith("theme_") && !GGPLOT_THEME_FUNCTION_EXCLUSIONS.contains(name);
+      return false;
    }
 
    private boolean shouldIndentOnPaste()
@@ -5358,12 +5354,13 @@ public class AceEditor implements DocDisplay
          "shadow_mark", "shadow_null", "shadow_trail", "shadow_wake",
          "view_follow", "view_static", "view_step", "view_step_manual", "view_zoom", "view_zoom_manual"));
 
+   // function name prefixes used by ggplot2 (and extensions) for plot components
    private static final String[] GGPLOT_FUNCTION_PREFIXES = {
-         "geom_", "stat_", "scale_", "facet_", "coord_", "annotation_", "transition_"
+         "geom_", "stat_", "scale_", "theme_", "facet_", "coord_", "annotation_", "transition_"
    };
 
    // theme_* helpers that act on the global theme rather than on a plot
-   private static final Set<String> GGPLOT_THEME_FUNCTION_EXCLUSIONS = new HashSet<>(Arrays.asList(
+   private static final Set<String> GGPLOT_FUNCTION_EXCLUSIONS = new HashSet<>(Arrays.asList(
          "theme_set", "theme_get", "theme_update", "theme_replace"));
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;

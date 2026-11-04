@@ -21,7 +21,7 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the second field in the first row of a New Connection snippet (e.g. "Port" beside "Server") without its label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text fields in custom project templates (from a package's `inst/rstudio/templates/project` or `~/.R/rstudio/templates/project`) without their labels.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the custom CA bundle path field in Publishing options, and the environment variable list in the Publish dialog, without a label.
-- ([#19415](https://github.com/rstudio/rstudio/issues/19415)): Fixed an issue where the Insert Pipe Operator command (Ctrl+Shift+M) inserted `+` after any call to a function whose name starts with `theme_`, even outside a ggplot2 chain. A `theme_*` call now only counts as part of a ggplot2 chain when it is joined to the rest of the statement with `+`.
+- ([#19415](https://github.com/rstudio/rstudio/issues/19415)): Fixed an issue where the Insert Pipe Operator command (Ctrl+Shift+M) inserted `+` after any call to a function whose name starts with `theme_` (or `scale_`, `stat_`, and the other ggplot2 prefixes), even outside a ggplot2 chain. Such calls now only count as part of a ggplot2 chain when joined to the rest of the statement with `+`.
 
 ### Dependencies
 -

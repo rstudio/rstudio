@@ -84,6 +84,16 @@ const CASES: PipeCase[] = [
     expected: PLUS,
   },
   {
+    name: 'after a user function sharing the scale_ prefix',
+    content: 'scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a scale_ call chained onto a plot object',
+    content: 'p + scale_x_log10()',
+    expected: PLUS,
+  },
+  {
     name: 'after a ggplot chain piped into another call',
     content: 'ggplot(mtcars) + geom_point() |> ggplotly()',
     expected: PIPE,
