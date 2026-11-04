@@ -507,6 +507,35 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect.poll(() => cursorRow(page)).toBe(6);
     await editor.focus();
 
+    // A press that leaves the button and comes back before its release is
+    // a pointer's click still, and brings focus to the editor ...
+    await executeCommand(page, 'activateConsole');
+    await expect.poll(() => editor.isFocused()).toBe(false);
+    const box = (await next.boundingBox())!;
+    const [onButtonX, onButtonY] = [box.x + box.width / 2, box.y + box.height / 2];
+    await page.mouse.move(onButtonX, onButtonY);
+    await page.mouse.down();
+    await page.mouse.move(onButtonX - 40, onButtonY);
+    await page.mouse.move(onButtonX, onButtonY);
+    await page.mouse.up();
+    await expect.poll(() => cursorRow(page)).toBe(1);
+    await expect.poll(() => editor.isFocused()).toBe(true);
+
+    // ... while one released off the button is no click, and leaves no
+    // trace: a click without a mousedown (assistive technology's, say) is
+    // no pointer's, and keeps focus where it is
+    await executeCommand(page, 'activateConsole');
+    await expect.poll(() => editor.isFocused()).toBe(false);
+    await page.mouse.move(onButtonX, onButtonY);
+    await page.mouse.down();
+    await page.mouse.move(onButtonX - 40, onButtonY);
+    await page.mouse.up();
+    await expect.poll(() => cursorRow(page)).toBe(1);
+    await next.dispatchEvent('click');
+    await expect.poll(() => cursorRow(page)).toBe(4);
+    await expect.poll(() => editor.isFocused()).toBe(false);
+    await editor.focus();
+
     // an open peek comes along to the next change
     await editor.gotoLine(2);
     await executeCommand(page, 'vcsShowChange');
