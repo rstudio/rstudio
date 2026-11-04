@@ -690,14 +690,20 @@ struct SwitchRollback
    std::string projectId;
    std::string nextSessionUrl;
    std::string switchToProjectPath;
+   std::string switchToProjectWritten;
    bool rVersionChanged = false;
    std::string rVersion;
    std::string rVersionHome;
    std::string rVersionLabel;
+   bool projectRVersionChanged = false;
+   std::string projectDir;
+   std::string projectRVersion;
+   std::string projectRVersionHome;
+   std::string projectRVersionLabel;
 };
 boost::optional<SwitchRollback> s_switchRollback;
 
-SwitchRollback captureSwitchRollback()
+SwitchRollback captureSwitchRollback(const std::string& switchToProject)
 {
    r_util::ActiveSession& session = module_context::activeSession();
    SwitchRollback rollback;
@@ -707,7 +713,15 @@ SwitchRollback captureSwitchRollback()
    rollback.nextSessionUrl = s_nextSessionUrl;
    rollback.switchToProjectPath =
          projects::ProjectsSettings(options().userScratchPath()).switchToProjectPath();
+   rollback.switchToProjectWritten = switchToProject;
    return rollback;
+}
+
+RVersionSettings projectRVersionSettings()
+{
+   return RVersionSettings(
+         options().userScratchPath(),
+         FilePath(options().getOverlayOption(kSessionSharedStoragePath)));
 }
 
 void restoreSwitchRollback(const SwitchRollback& rollback)
@@ -722,11 +736,24 @@ void restoreSwitchRollback(const SwitchRollback& rollback)
    }
    else
    {
-      projects::ProjectsSettings(options().userScratchPath())
-            .setSwitchToProjectPath(rollback.switchToProjectPath);
+      // the setting is shared by every window of a desktop installation;
+      // only this session's own entry is taken back, never one another
+      // window wrote meanwhile for its own switch
+      projects::ProjectsSettings settings(options().userScratchPath());
+      if (settings.switchToProjectPath() == rollback.switchToProjectWritten)
+         settings.setSwitchToProjectPath(rollback.switchToProjectPath);
    }
    if (rollback.rVersionChanged)
       session.setRVersion(rollback.rVersion, rollback.rVersionHome, rollback.rVersionLabel);
+   if (rollback.projectRVersionChanged)
+   {
+      projectRVersionSettings().setProjectLastRVersion(
+            rollback.projectDir,
+            module_context::sharedProjectScratchPath(),
+            rollback.projectRVersion,
+            rollback.projectRVersionHome,
+            rollback.projectRVersionLabel);
+   }
 }
 
 } // anonymous namespace
@@ -1203,7 +1230,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             s_switchRollback = boost::none;
             if (!switchToProject.empty())
             {
-               SwitchRollback rollback = captureSwitchRollback();
+               SwitchRollback rollback = captureSwitchRollback(switchToProject);
 
                // if we don't have a project file then create it (can
                // occur when e.g. opening a project from a directory for
@@ -1297,10 +1324,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      {
                         FilePath projFile = resolveAliasedPath(switchToProject);
                         std::string projDir = createAliasedPath(projFile.getParent());
-                        RVersionSettings verSettings(
-                                            options().userScratchPath(),
-                                            FilePath(options().getOverlayOption(
-                                                  kSessionSharedStoragePath)));
+                        RVersionSettings verSettings = projectRVersionSettings();
+                        rollback.projectRVersionChanged = true;
+                        rollback.projectDir = projDir;
+                        verSettings.readProjectLastRVersion(projDir,
+                                                            module_context::sharedProjectScratchPath(),
+                                                            &rollback.projectRVersion,
+                                                            &rollback.projectRVersionHome,
+                                                            &rollback.projectRVersionLabel);
                         verSettings.setProjectLastRVersion(projDir,
                                                            module_context::sharedProjectScratchPath(),
                                                            version,
