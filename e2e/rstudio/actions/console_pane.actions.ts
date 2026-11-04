@@ -11,7 +11,7 @@ import {
   type EnvironmentVersions,
   type ExecuteInConsoleOptions,
 } from '../pages/console_pane.page';
-import { sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
+import { CRAN_REPOS, sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { setConsoleInput } from '../utils/console';
 import { heredoc } from '../utils/heredoc';
@@ -31,14 +31,14 @@ function getInstallRepos(): string {
   if (cachedInstallRepos) return cachedInstallRepos;
 
   if (process.platform === 'win32' || process.platform === 'darwin') {
-    cachedInstallRepos = 'https://cran.r-project.org';
+    cachedInstallRepos = CRAN_REPOS;
     return cachedInstallRepos;
   }
 
   const distro = detectLinuxDistro();
   cachedInstallRepos = distro
     ? `https://packagemanager.posit.co/cran/__linux__/${distro}/latest`
-    : 'https://cran.r-project.org';
+    : CRAN_REPOS;
   return cachedInstallRepos;
 }
 
