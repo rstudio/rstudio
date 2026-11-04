@@ -225,16 +225,16 @@ public class GitPresenter extends BaseVcsPresenter
    // throughout, and opens at the top.
    private void openFileAtFirstChange(StatusAndPath item)
    {
+      // only the latest request opens its file: an earlier one, still out
+      // for its diff (or its second, staged one), would open after it
+      navigation_.invalidate();
+      final Invalidation.Token token = navigation_.getInvalidationToken();
+
       if ("??".equals(item.getStatus()))
       {
          vcsFileOpener_.openFileAtFirstChange(item, 1);
          return;
       }
-
-      // only the latest request opens its file: an earlier one, still out
-      // for its diff (or its second, staged one), would open after it
-      navigation_.invalidate();
-      final Invalidation.Token token = navigation_.getInvalidationToken();
 
       findFirstChange(item, PatchMode.Working, line ->
       {
