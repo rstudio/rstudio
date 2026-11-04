@@ -87,11 +87,27 @@ public abstract class FileDialog extends FileSystemDialog
       // the browser filename.
       String filename = browser_.getFilename().trim();
       if (StringUtil.isNullOrEmpty(filename))
+      {
+         // a selected folder row is a request to navigate into it; the `..`
+         // row resolves to the parent, which the name validation below would
+         // otherwise reject as an illegal name (#19427)
+         FileSystemItem selected = browser_.getSelectedTarget();
+         if (selected != null && selected.isDirectory())
+         {
+            cd(selected.getPath());
+            return false;
+         }
+
          filename = browser_.getSelectedValue().trim();
-      
+      }
+
       if (filename.length() == 0)
+      {
+         browser_.selectFilename();
+         showError(constants_.nameEmptyMessage());
          return false;
-      
+      }
+
       if (filename == "~")
       {
          browser_.setFilename("");
