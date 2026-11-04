@@ -44,7 +44,10 @@
  * Detection: air.toml uses 12-space indent — unmistakable signal. Air with
  * default settings (case 6) is exercised via the save path, where the
  * built-in formatter never runs (maybeFormatOnUserInitiatedSave skips it),
- * so any formatting change on save proves Air ran.
+ * so any formatting change on save proves Air ran. Case 15 is the one
+ * manual-reformat case that relies on Air's default output: with "require
+ * air.toml" off, useBuiltinFormatter() returns false before it consults the
+ * format_context result, so the built-in formatter cannot run there either.
  */
 
 import { expect } from '@playwright/test';
@@ -390,8 +393,11 @@ function expectAirFormatted(content: string): void {
 /**
  * Air formatted without an air.toml: the suite's 12-indent config is absent
  * and the synthesized config carries the default editor settings, so the
- * output looks like ordinary tidied code. Callers must only use this on the
- * save path, where the built-in formatter cannot run -- there, any formatting
+ * output looks like ordinary tidied code -- identical to what the built-in
+ * formatter produces for this input. Callers must only use this where the
+ * built-in formatter cannot run: the save path, which never runs it, or a
+ * manual reformat with Air enabled and "require air.toml" off, where
+ * useBuiltinFormatter() returns false unconditionally. There, any formatting
  * change proves Air ran.
  */
 function expectAirDefaultFormatted(content: string): void {
