@@ -828,13 +828,10 @@ public class AceEditor implements DocDisplay
             if (!cursor.bwdToMatchingToken())
                return false;
          }
-         else if (cursor.isLeftBracket() ||
-                  cursor.valueEquals(",") ||
-                  cursor.valueEquals(";") ||
-                  cursor.valueEquals("else"))
+         else if (cursor.isLeftBracket() || cursor.valueEquals(",") || cursor.valueEquals(";"))
          {
-            // the cursor sits inside this bracket's arguments, or past a
-            // sibling argument or if-branch; any chain lies outside this expression
+            // the cursor sits inside this bracket's arguments (or past a
+            // sibling argument); any chain lies outside this expression
             return false;
          }
          else if (PIPE_OPERATORS.contains(cursor.currentValue()))
@@ -842,11 +839,18 @@ public class AceEditor implements DocDisplay
             // a ggplot chain piped into another call is no longer a ggplot chain
             return false;
          }
-         else if (cursor.valueEquals("+"))
+         else if (cursor.valueEquals("+") && hasLeftOperand(cursor))
          {
             if (sawPrefixedCall)
                return true;
             sawPlus = true;
+         }
+         else if (cursor.valueEquals("else"))
+         {
+            // the other branch is a separate expression, but an enclosing
+            // chain ('ggplot(d) + if (x) a else b') still counts
+            sawPrefixedCall = false;
+            sawPlus = false;
          }
          else if (cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
          {
@@ -875,6 +879,16 @@ public class AceEditor implements DocDisplay
             return false;
          }
       }
+   }
+
+   // whether the operator at the cursor is binary (has a left operand) rather than unary
+   private static boolean hasLeftOperand(TokenCursor cursor)
+   {
+      Token prev = cursor.peekBwd(1);
+      if (StringUtil.isNullOrEmpty(prev.getValue()))
+         return false;
+
+      return prev.isRightBracket() || !prev.hasType("keyword", "punctuation");
    }
 
    private static boolean isGgplotPrefixedFunctionName(String name)

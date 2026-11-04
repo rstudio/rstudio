@@ -114,6 +114,16 @@ const CASES: PipeCase[] = [
     expected: PIPE,
   },
   {
+    name: 'after a conditional layer added to a ggplot',
+    content: 'ggplot(mtcars) + if (flag) { geom_point() } else { geom_line() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after a user scale_ function with a unary plus',
+    content: '+scale_counts(x)',
+    expected: PIPE,
+  },
+  {
     name: 'after a ggplot chain piped into another call',
     content: 'ggplot(mtcars) + geom_point() |> ggplotly()',
     expected: PIPE,
