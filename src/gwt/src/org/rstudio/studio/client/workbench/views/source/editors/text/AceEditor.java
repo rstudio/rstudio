@@ -821,6 +821,9 @@ public class AceEditor implements DocDisplay
       // counts on its own
       boolean sawPrefixedCall = false;
       boolean sawPlus = false;
+
+      // 'else' branches being skipped back to their 'if'
+      int skippedBranches = 0;
       while (true)
       {
          if (cursor.isRightBracket())
@@ -839,19 +842,34 @@ public class AceEditor implements DocDisplay
             // a ggplot chain piped into another call is no longer a ggplot chain
             return false;
          }
+         else if (cursor.valueEquals("else"))
+         {
+            // the other branch is a separate expression: skip back to the 'if'
+            // opening it, so that only an enclosing chain ('p + if (x) a else b')
+            // joins the two branches
+            skippedBranches++;
+         }
+         else if (cursor.valueEquals("if"))
+         {
+            if (skippedBranches > 0)
+               skippedBranches--;
+         }
+         else if (skippedBranches > 0)
+         {
+            // a call in the skipped branch is evidence for an enclosing '+',
+            // but a '+' there belongs to that branch alone
+            if (cursor.hasType("identifier") &&
+                cursor.peekFwd(1).valueEquals("(") &&
+                isGgplotCallName(cursor.currentValue()))
+            {
+               sawPrefixedCall = true;
+            }
+         }
          else if (cursor.valueEquals("+") && hasLeftOperand(cursor))
          {
             if (sawPrefixedCall)
                return true;
             sawPlus = true;
-         }
-         else if (cursor.valueEquals("else"))
-         {
-            // the other branch is a separate expression: skip over it to the
-            // 'if' opening it, keeping what this branch has shown so far, so
-            // an enclosing chain ('p + if (x) a else b') still counts
-            if (!bwdToMatchingIf(cursor))
-               return false;
          }
          else if (cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
          {
@@ -911,36 +929,9 @@ public class AceEditor implements DocDisplay
       return CONTROL_FLOW_HEADER_KEYWORDS.contains(clone.peekBwd(1).getValue());
    }
 
-   // Moves the cursor from an 'else' back to the 'if' opening that conditional,
-   // skipping bracketed groups and nested conditionals along the way.
-   private static boolean bwdToMatchingIf(TokenCursor cursor)
+   private static boolean isGgplotCallName(String name)
    {
-      int depth = 1;
-      while (depth > 0)
-      {
-         if (!cursor.moveToPreviousToken())
-            return false;
-
-         if (cursor.isRightBracket())
-         {
-            if (!cursor.bwdToMatchingToken())
-               return false;
-         }
-         else if (cursor.isLeftBracket())
-         {
-            return false;
-         }
-         else if (cursor.valueEquals("else"))
-         {
-            depth++;
-         }
-         else if (cursor.valueEquals("if"))
-         {
-            depth--;
-         }
-      }
-
-      return true;
+      return GGPLOT_FUNCTIONS.contains(name) || isGgplotPrefixedFunctionName(name);
    }
 
    private static boolean isGgplotPrefixedFunctionName(String name)

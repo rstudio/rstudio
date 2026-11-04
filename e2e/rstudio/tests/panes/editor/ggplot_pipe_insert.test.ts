@@ -129,11 +129,6 @@ const CASES: PipeCase[] = [
     expected: PIPE,
   },
   {
-    name: 'after a user scale_ function with a unary plus as a first argument',
-    content: 'list(+scale_counts(x)',
-    expected: PIPE,
-  },
-  {
     name: 'after a user scale_ function in an else branch following a ggplot branch',
     content: 'if (flag) ggplot(mtcars) else scale_counts(x)',
     expected: PIPE,
@@ -141,6 +136,11 @@ const CASES: PipeCase[] = [
   {
     name: 'after a conditional layer with a NULL branch added to a plot object',
     content: 'p + if (flag) NULL else geom_point()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a NULL branch following a conditional layer added to a plot object',
+    content: 'p + if (flag) geom_point() else NULL',
     expected: PLUS,
   },
   {
@@ -234,6 +234,20 @@ test.describe('Insert Pipe Operator in ggplot2 chains', () => {
     await executeCommand(page, 'insertPipeOperator');
 
     await expect.poll(() => editor.getValue()).toBe(`${PIPE.trimStart()}${content}`);
+  });
+
+  test('inserts a pipe after a unary plus as a first argument with rainbow parentheses', async ({
+    rstudioPage: page,
+  }) => {
+    // rainbow parentheses give '(' a token type without 'keyword' in it, so
+    // the operand check must reject opening brackets by value
+    await setPref(page, 'rainbow_parentheses', true);
+    try {
+      const editor = new AceEditor(page, '');
+      expect(await insertPipeAtEnd(page, editor, 'list(+scale_counts(x)')).toBe(PIPE);
+    } finally {
+      await clearPref(page, 'rainbow_parentheses');
+    }
   });
 
   test('inserts a pipe in a ggplot chain when the pref is off', async ({ rstudioPage: page }) => {
