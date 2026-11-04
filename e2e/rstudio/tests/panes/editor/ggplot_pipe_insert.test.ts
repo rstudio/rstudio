@@ -101,9 +101,31 @@ const CASES: PipeCase[] = [
     expected: PLUS,
   },
   {
+    // the pipe hides the calls feeding it, and only '+' or '&' next to a
+    // theme_ call joins it
     name: 'after a saved theme piped through a theme_ call and added to a plot object',
     content: 'p + saved_theme |> theme_copy()',
+    expected: PIPE,
+  },
+  {
+    name: 'after a theme_ call applied with patchwork & to plots composed with |',
+    content: '(p1 | p2) & theme_bw()',
     expected: PLUS,
+  },
+  {
+    name: 'after a theme_ call applied with patchwork & to plots composed with /',
+    content: 'p1 / p2 & theme_bw()',
+    expected: PLUS,
+  },
+  {
+    name: 'after arithmetic on a user scale_ function followed by +',
+    content: 'scale_counts(x) * 2 + 1',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user scale_ function multiplied in a sum',
+    content: '1 + 2 * scale_counts(x)',
+    expected: PIPE,
   },
   {
     name: 'after a user theme_ function in an argument following arithmetic',
@@ -123,6 +145,41 @@ const CASES: PipeCase[] = [
   {
     name: 'after a conditional layer added to a ggplot',
     content: 'ggplot(mtcars) + if (flag) { geom_point() } else { geom_line() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after braced conditional layers added to a plot object',
+    content: 'p + if (flag) { geom_point() } else { geom_line() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after a braced conditional layer with a NULL branch added to a plot object',
+    content: 'p + if (flag) { NULL } else { geom_point() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after a braced conditional layer without an else branch added to a plot object',
+    content: 'p + if (flag) { geom_point() }',
+    expected: PLUS,
+  },
+  {
+    name: 'after a multi-line braced conditional layer added to a plot object',
+    content: 'p + if (flag) {\n  x <- 1\n  geom_point()\n}',
+    expected: PLUS,
+  },
+  {
+    name: 'after a braced conditional assigning a user theme_ function',
+    content: 'x <- if (flag) { theme_tmp() } else { NULL }',
+    expected: PIPE,
+  },
+  {
+    name: 'after a function body ending in a ggplot chain',
+    content: 'f <- function() {\n  ggplot(mtcars) + geom_point()\n}',
+    expected: PIPE,
+  },
+  {
+    name: 'after a layer in the last branch of an else-if chain added to a plot object',
+    content: 'p + if (a) NULL else if (b) NULL else geom_point()',
     expected: PLUS,
   },
   {
