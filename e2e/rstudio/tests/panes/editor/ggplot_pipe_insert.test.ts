@@ -94,6 +94,21 @@ const CASES: PipeCase[] = [
     expected: PLUS,
   },
   {
+    name: 'after a saved theme added to a theme_ call',
+    content: 'theme_bw() + extra_theme',
+    expected: PLUS,
+  },
+  {
+    name: 'after a user theme_ function in an argument following arithmetic',
+    content: 'list(1 + 2, theme_tmp())',
+    expected: PIPE,
+  },
+  {
+    name: 'after an argument following a ggplot argument',
+    content: 'list(ggplot(mtcars), mtcars)',
+    expected: PIPE,
+  },
+  {
     name: 'after a ggplot chain piped into another call',
     content: 'ggplot(mtcars) + geom_point() |> ggplotly()',
     expected: PIPE,

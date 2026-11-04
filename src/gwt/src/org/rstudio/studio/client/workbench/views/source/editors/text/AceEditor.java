@@ -816,9 +816,11 @@ public class AceEditor implements DocDisplay
          return false;
 
       // prefixes like theme_ and scale_ are common outside ggplot2 (#19415),
-      // so a prefix match only counts once the walk finds it joined to the
-      // chain with '+'; a call known by name counts on its own
+      // so a prefix match only counts once the walk has also found a '+'
+      // joining it to the chain (on either side); a call known by name
+      // counts on its own
       boolean sawPrefixedCall = false;
+      boolean sawPlus = false;
       while (true)
       {
          if (cursor.isRightBracket())
@@ -826,9 +828,10 @@ public class AceEditor implements DocDisplay
             if (!cursor.bwdToMatchingToken())
                return false;
          }
-         else if (cursor.isLeftBracket() || cursor.valueEquals(";"))
+         else if (cursor.isLeftBracket() || cursor.valueEquals(",") || cursor.valueEquals(";"))
          {
-            // the cursor sits inside this bracket's arguments; any chain lies outside it
+            // the cursor sits inside this bracket's arguments (or past a
+            // sibling argument); any chain lies outside this expression
             return false;
          }
          else if (PIPE_OPERATORS.contains(cursor.currentValue()))
@@ -836,9 +839,11 @@ public class AceEditor implements DocDisplay
             // a ggplot chain piped into another call is no longer a ggplot chain
             return false;
          }
-         else if (sawPrefixedCall && cursor.valueEquals("+"))
+         else if (cursor.valueEquals("+"))
          {
-            return true;
+            if (sawPrefixedCall)
+               return true;
+            sawPlus = true;
          }
          else if (cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
          {
@@ -846,7 +851,11 @@ public class AceEditor implements DocDisplay
             if (GGPLOT_FUNCTIONS.contains(name))
                return true;
             else if (isGgplotPrefixedFunctionName(name))
+            {
+               if (sawPlus)
+                  return true;
                sawPrefixedCall = true;
+            }
          }
 
          int row = cursor.getRow();
@@ -855,11 +864,10 @@ public class AceEditor implements DocDisplay
             return false;
 
          // a new row only continues the statement across a binary operator
-         // (trailing or leading) or a comma
+         // (trailing or leading)
          if (cursor.getRow() != row &&
              !leadingOperator &&
-             !cursor.isLookingAtBinaryOp() &&
-             !cursor.valueEquals(","))
+             !cursor.isLookingAtBinaryOp())
          {
             return false;
          }
