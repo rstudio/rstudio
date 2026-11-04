@@ -837,11 +837,6 @@ public class AceEditor implements DocDisplay
             // sibling argument); any chain lies outside this expression
             return false;
          }
-         else if (PIPE_OPERATORS.contains(cursor.currentValue()))
-         {
-            // a ggplot chain piped into another call is no longer a ggplot chain
-            return false;
-         }
          else if (cursor.valueEquals("else"))
          {
             // the other branch is a separate expression: skip back to the 'if'
@@ -857,13 +852,18 @@ public class AceEditor implements DocDisplay
          else if (skippedBranches > 0)
          {
             // a call in the skipped branch is evidence for an enclosing '+',
-            // but a '+' there belongs to that branch alone
+            // but a '+' or a pipe there belongs to that branch alone
             if (cursor.hasType("identifier") &&
                 cursor.peekFwd(1).valueEquals("(") &&
                 isGgplotCallName(cursor.currentValue()))
             {
                sawPrefixedCall = true;
             }
+         }
+         else if (PIPE_OPERATORS.contains(cursor.currentValue()))
+         {
+            // a ggplot chain piped into another call is no longer a ggplot chain
+            return false;
          }
          else if (cursor.valueEquals("+") && hasLeftOperand(cursor))
          {
@@ -890,8 +890,10 @@ public class AceEditor implements DocDisplay
             return false;
 
          // a new row only continues the statement across a binary operator
-         // (trailing or leading), or after 'else' or a control-flow header
-         if (cursor.getRow() != row &&
+         // (trailing or leading), or after 'else' or a control-flow header;
+         // a skipped branch is read back to its 'if' regardless
+         if (skippedBranches == 0 &&
+             cursor.getRow() != row &&
              !leadingOperator &&
              !cursor.isLookingAtBinaryOp() &&
              !cursor.valueEquals("else") &&

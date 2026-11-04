@@ -144,6 +144,16 @@ const CASES: PipeCase[] = [
     expected: PLUS,
   },
   {
+    name: 'after a NULL branch following a piped conditional layer',
+    content: 'ggplot(mtcars) + if (flag) geom_point() |> identity() else NULL',
+    expected: PLUS,
+  },
+  {
+    name: 'after a NULL branch on its own line inside a braced body',
+    content: 'function() {\n  ggplot(mtcars) + if (flag) geom_point()\n  else NULL',
+    expected: PLUS,
+  },
+  {
     name: 'after a conditional layer on a continuation line',
     content: 'p + if (flag)\n  geom_point()',
     expected: PLUS,
