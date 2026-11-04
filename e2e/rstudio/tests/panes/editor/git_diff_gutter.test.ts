@@ -699,6 +699,26 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     await expect(peek.locator(PEEK_LINE)).toHaveText(['d <- 4']);
     expect(await gutterMarkers(page)).toEqual(EDITED_MARKERS);
 
+    // The peek is pinned once Ace has placed the frame's widgets: the gutter
+    // listens for afterRender behind the widget manager, which may have
+    // been made after it (and so listened ahead of it).
+    const order = await page.evaluate(() => {
+      type Listener = (...args: unknown[]) => void;
+      type Editor = {
+        renderer: { _eventRegistry: { afterRender: Listener[] } };
+        session: { widgetManager: { renderWidgets: Listener } };
+        gitDiffGutter: { pinPeek: Listener };
+      };
+      const editor = window.rstudio?.documents.activeEditor() as unknown as Editor;
+      const listeners = editor.renderer._eventRegistry.afterRender;
+      return {
+        render: listeners.indexOf(editor.session.widgetManager.renderWidgets),
+        pin: listeners.indexOf(editor.gitDiffGutter.pinPeek),
+      };
+    });
+    expect(order.render).toBeGreaterThanOrEqual(0);
+    expect(order.pin).toBeGreaterThan(order.render);
+
     // the second click on the same marker closes the peek again
     await page.mouse.click(box.x + box.width - 3, box.y + box.height / 2);
     await expect(peek).toHaveCount(0);
