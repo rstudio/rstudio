@@ -15,10 +15,15 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { mkdtempSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'fs';
 import os from 'os';
 import path from 'path';
-import { installationKey, takeRelaunchProject } from '../../../src/main/relaunch-project';
+import {
+  installationKey,
+  kRelaunchProjectTtlMs,
+  parseRelaunchMarker,
+  takeRelaunchProject,
+} from '../../../src/main/relaunch-project';
 import { BuildArtifact } from '../../../src/main/update-feed';
 import { InstallFailure, installerEnvironment, UpdateHook, Updater, UpdaterHost } from '../../../src/main/updater';
 import { WindowsInstallMode } from '../../../src/main/windows-install-mode';
@@ -256,6 +261,24 @@ describe('updater', () => {
     assert.equal(host.installs, 1);
     assert.isFalse(updater.hasPendingInstall());
     assert.equal(rememberedProject(host, A), project);
+  });
+
+  it('remembers the project at the handoff to the installer, not when the restart is accepted', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+
+    // the session's shutdown runs between these two; the marker's lifetime
+    // must not
+    assert.isTrue(!existsSync(host.markerDir()) || readdirSync(host.markerDir()).length === 0);
+
+    const handoff = Date.now();
+    assert.isTrue(await updater.applyPendingUpdate());
+    const [file] = readdirSync(host.markerDir());
+    const marker = parseRelaunchMarker(readFileSync(path.join(host.markerDir(), file), 'utf8'));
+    assert.equal(marker?.project, project);
+    assert.isAtLeast(marker?.expires ?? 0, handoff + kRelaunchProjectTtlMs);
   });
 
   it('runs the staged Windows installer on quit', async () => {

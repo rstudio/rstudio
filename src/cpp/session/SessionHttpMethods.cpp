@@ -680,6 +680,55 @@ namespace {
 // reports the abort as well (see notifyQuitAborted)
 bool s_quitInProgress = false;
 
+// what a quit_session that switches projects (or R versions) wrote down for
+// the next session before r::session::quit() ran, to put back if the quit
+// aborts: left as written, a later ordinary quit would still switch
+struct SwitchRollback
+{
+   std::string project;
+   std::string workingDir;
+   std::string projectId;
+   std::string nextSessionUrl;
+   std::string switchToProjectPath;
+   bool rVersionChanged = false;
+   std::string rVersion;
+   std::string rVersionHome;
+   std::string rVersionLabel;
+};
+boost::optional<SwitchRollback> s_switchRollback;
+
+SwitchRollback captureSwitchRollback()
+{
+   r_util::ActiveSession& session = module_context::activeSession();
+   SwitchRollback rollback;
+   rollback.project = session.project();
+   rollback.workingDir = session.workingDir();
+   rollback.projectId = session.projectId();
+   rollback.nextSessionUrl = s_nextSessionUrl;
+   rollback.switchToProjectPath =
+         projects::ProjectsSettings(options().userScratchPath()).switchToProjectPath();
+   return rollback;
+}
+
+void restoreSwitchRollback(const SwitchRollback& rollback)
+{
+   r_util::ActiveSession& session = module_context::activeSession();
+   session.setProject(rollback.project);
+   session.setWorkingDir(rollback.workingDir);
+   if (options().switchProjectsWithUrl())
+   {
+      session.setProjectId(rollback.projectId);
+      s_nextSessionUrl = rollback.nextSessionUrl;
+   }
+   else
+   {
+      projects::ProjectsSettings(options().userScratchPath())
+            .setSwitchToProjectPath(rollback.switchToProjectPath);
+   }
+   if (rollback.rVersionChanged)
+      session.setRVersion(rollback.rVersion, rollback.rVersionHome, rollback.rVersionLabel);
+}
+
 } // anonymous namespace
 
 void notifyQuitAborted()
@@ -687,6 +736,12 @@ void notifyQuitAborted()
    if (!s_quitInProgress)
       return;
    s_quitInProgress = false;
+
+   if (s_switchRollback)
+   {
+      restoreSwitchRollback(*s_switchRollback);
+      s_switchRollback = boost::none;
+   }
 
    module_context::activeSession().setActivityState(r_util::kActivityStateRunning, true);
    ClientEvent event(client_events::kQuitAborted, json::Value());
@@ -1145,8 +1200,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                LOG_ERROR(error);
             
             // note switch to project
+            s_switchRollback = boost::none;
             if (!switchToProject.empty())
             {
+               SwitchRollback rollback = captureSwitchRollback();
+
                // if we don't have a project file then create it (can
                // occur when e.g. opening a project from a directory for
                // which we don't yet have a .Rproj file)
@@ -1226,6 +1284,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   if (!error)
                   {
                      // set version for active session
+                     rollback.rVersionChanged = true;
+                     rollback.rVersion = activeSession().rVersion();
+                     rollback.rVersionHome = activeSession().rVersionHome();
+                     rollback.rVersionLabel = activeSession().rVersionLabel();
                      activeSession().setRVersion(version, rHome, label);
 
                      // if we had a project directory as well then
@@ -1249,6 +1311,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                  else
                     LOG_ERROR(error);
                }
+               s_switchRollback = rollback;
                LOG_DEBUG_MESSAGE("Switching projects: setting activityState to shutting_down");
             }
             else

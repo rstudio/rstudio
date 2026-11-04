@@ -62,13 +62,25 @@ export function parsePsPids(output: string, execPath: string): number[] {
 /** Runs a command and resolves to its stdout, or null when it failed. */
 export type CommandRunner = (command: string, args: string[]) => Promise<string | null>;
 
-const execFileRunner: CommandRunner = async (command, args) => {
-  return new Promise((resolve) => {
-    execFile(command, args, { windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (error, stdout) =>
-      resolve(error ? null : stdout),
-    );
-  });
-};
+/**
+ * Far longer than listing processes takes. The install preflight holds the
+ * quit, and with it every later quit and project switch, until the listing
+ * answers; a stalled tasklist.exe must answer "unknown" rather than never.
+ */
+export const kProcessListTimeoutMs = 30 * 1000;
+
+export function execFileRunner(timeoutMs = kProcessListTimeoutMs): CommandRunner {
+  return async (command, args) => {
+    return new Promise((resolve) => {
+      execFile(
+        command,
+        args,
+        { windowsHide: true, maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs },
+        (error, stdout) => resolve(error ? null : stdout),
+      );
+    });
+  };
+}
 
 /**
  * How many RStudio processes outside this application are running, or null
@@ -82,7 +94,7 @@ export async function otherInstanceCount(
   execPath: string,
   ownPids: number[],
   platform: NodeJS.Platform = process.platform,
-  run: CommandRunner = execFileRunner,
+  run: CommandRunner = execFileRunner(),
 ): Promise<number | null> {
   const own = new Set([process.pid, ...ownPids]);
   let pids: number[];

@@ -184,6 +184,8 @@ export class Updater {
   private windowsInstallMode: WindowsInstallMode | null = null;
   /** the version whose restart the user accepted; the quit sequence installs it */
   private pendingInstall: string | null = null;
+  /** the project the relaunch after that install reopens */
+  private pendingProject = '';
   /** applyPendingUpdate() is deciding; the window must stay open until it has */
   private handingOff = false;
 
@@ -337,7 +339,9 @@ export class Updater {
    * still be installed (the save prompts ran since canInstallUpdate(), and a
    * download or another window may have started meanwhile); the quit
    * sequence then applies it. `project` is the active project file (or
-   * kProjectNone), which the relaunched RStudio reopens. Answers like
+   * kProjectNone), which the relaunched RStudio reopens; it is written down
+   * for that relaunch only at the handoff to the installer, so the marker's
+   * lifetime does not run out during a slow session shutdown. Answers like
    * canInstallUpdate(); GWT quits only on ''.
    */
   async installUpdate(version: string, project: string): Promise<InstallBlocker> {
@@ -350,7 +354,7 @@ export class Updater {
     // nothing is awaited between the preflight's last look at the state and
     // this, so what it checked is what gets installed
     this.pendingInstall = version;
-    rememberRelaunchProject(project, { version, installKey: this.installKey() }, this.host.markerDir());
+    this.pendingProject = project;
     return '';
   }
 
@@ -371,11 +375,10 @@ export class Updater {
   /**
    * The quit that was to apply the update is not happening (GWT could not
    * start it, the session refused it, or the user cancelled), so a later
-   * ordinary quit must not run the installer or reopen the remembered
-   * project. The download stays staged: the next check offers the restart
-   * again, and on macOS Squirrel applies it at the next start regardless
-   * (see the class comment). With `version`, only that request's record
-   * is dropped, never one made since.
+   * ordinary quit must not run the installer. The download stays staged:
+   * the next check offers the restart again, and on macOS Squirrel applies
+   * it at the next start regardless (see the class comment). With
+   * `version`, only that request's record is dropped, never one made since.
    */
   cancelPendingInstall(version?: string): void {
     if (this.pendingInstall === null || (version !== undefined && this.pendingInstall !== version)) {
@@ -383,7 +386,6 @@ export class Updater {
     }
     logger().logDebug(`the quit was abandoned; RStudio ${this.pendingInstall} stays downloaded`);
     this.pendingInstall = null;
-    forgetRelaunchProject(this.installKey(), this.host.markerDir());
   }
 
   /**
@@ -421,6 +423,11 @@ export class Updater {
         this.notInstalled(version, blocker || 'missing');
         return false;
       }
+
+      // the session is down and the installer is about to run, so the
+      // marker's lifetime starts now; written any earlier, a long shutdown
+      // (.Last(), the workspace) could outlast it and lose the project
+      rememberRelaunchProject(this.pendingProject, { version, installKey: this.installKey() }, this.host.markerDir());
 
       if (this.host.platform === 'darwin') {
         // Squirrel closes the windows itself, which the guard must not refuse

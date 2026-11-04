@@ -15,7 +15,12 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { otherInstanceCount, parsePsPids, parseTasklistPids } from '../../../src/main/running-instances';
+import {
+  execFileRunner,
+  otherInstanceCount,
+  parsePsPids,
+  parseTasklistPids,
+} from '../../../src/main/running-instances';
 
 describe('running instances', () => {
   describe('parseTasklistPids', () => {
@@ -87,6 +92,22 @@ describe('running instances', () => {
         throw new Error('should not run');
       };
       assert.equal(await otherInstanceCount('/usr/lib/rstudio/rstudio', [], 'linux', never), 0);
+    });
+  });
+
+  describe('execFileRunner', () => {
+    it('answers null, rather than waiting, when the listing command stalls', async function () {
+      if (process.platform === 'win32') {
+        this.skip(); // no sleep(1) to stall with
+      }
+      assert.isNull(await execFileRunner(100)('/bin/sleep', ['30']));
+    });
+
+    it('answers the output of a command that finishes', async function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+      assert.equal(await execFileRunner()('/bin/echo', ['listed']), 'listed\n');
     });
   });
 });
