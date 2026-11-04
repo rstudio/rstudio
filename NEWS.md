@@ -22,6 +22,7 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the second field in the first row of a New Connection snippet (e.g. "Port" beside "Server") without its label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text fields in custom project templates (from a package's `inst/rstudio/templates/project` or `~/.R/rstudio/templates/project`) without their labels.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the custom CA bundle path field in Publishing options, and the environment variable list in the Publish dialog, without a label.
+- ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the choice list in the `rstudioapi::showMenu()` dialog without a label. The list is now named by the dialog's message, or by its title when there is no message.
 
 ### Dependencies
 - Quarto 1.11.9
