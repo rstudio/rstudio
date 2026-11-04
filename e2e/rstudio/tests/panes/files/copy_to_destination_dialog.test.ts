@@ -106,6 +106,27 @@ test.describe('Copy To destination dialog', () => {
     await expect(dialog.getByRole('textbox', { name: 'File name:' })).toHaveValue('');
   });
 
+  test('Save with a typed `../` navigates to the parent folder', async ({ rstudioPage: page }) => {
+    const dialog = await openDestinationDialog(page, base);
+    await dialog.getByRole('textbox', { name: 'File name:' }).fill('../');
+    await dialog.locator(SAVE_BTN).click();
+
+    // the relative path is collapsed before listing, so the breadcrumb shows
+    // the parent itself rather than a `..` entry under the source folder
+    await expect(dialog.locator(CURRENT_LOCATION)).toHaveText(leaf(sandbox.dir), { timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(ERROR_DIALOG)).toBeHidden();
+    await expect(dialog.getByRole('textbox', { name: 'File name:' })).toHaveValue('');
+  });
+
+  test('Save with a typed `../<folder>/` path navigates through the parent', async ({ rstudioPage: page }) => {
+    const dialog = await openDestinationDialog(page, base);
+    await dialog.getByRole('textbox', { name: 'File name:' }).fill(`../${BASE_NAME}/${SOURCE}/`);
+    await dialog.locator(SAVE_BTN).click();
+
+    await expect(dialog.locator(CURRENT_LOCATION)).toHaveText(SOURCE, { timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(ERROR_DIALOG)).toBeHidden();
+  });
+
   test('a second Save while the parent listing is in flight reports nothing', async ({ rstudioPage: page }) => {
     const dialog = await openDestinationDialog(page, base);
     await dialog.getByRole('option', { name: 'Folder ..' }).click();

@@ -30,6 +30,7 @@ import org.rstudio.core.client.command.KeyMapDispatchTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
+import org.rstudio.core.client.files.PosixFileSystemContextTests;
 import org.rstudio.core.client.layout.BinarySplitLayoutPanelTests;
 import org.rstudio.core.client.widget.CommandShortcutReferenceTests;
 import org.rstudio.core.client.widget.FastSelectTableTests;
@@ -116,6 +117,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(FileSystemItemTests.class);
+      suite.addTestSuite(PosixFileSystemContextTests.class);
       suite.addTestSuite(ConfigFileBackedTests.class);
       suite.addTestSuite(FileIconTests.class);
       suite.addTestSuite(FileIconRendererTests.class);

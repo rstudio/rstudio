@@ -114,25 +114,13 @@ public abstract class FileDialog extends FileSystemDialog
          return false;
       }
 
-      if (filename == "~")
+      // a typed `..` names the parent, like the `..` row; the name validation
+      // below would reject it
+      if (filename == "~" || filename == "..")
       {
          browser_.setFilename("");
          cd(filename);
          return false;
-      }
-
-      // a typed `..` names the parent, like the `..` row: the name validation
-      // below rejects it, and the context would list it as the literal
-      // `<dir>/..` rather than the parent itself
-      if (filename == "..")
-      {
-         FileSystemItem parent = browser_.getCurrentDirectory().getContainingDir();
-         if (parent != null)
-         {
-            browser_.setFilename("");
-            cd(parent.getPath());
-            return false;
-         }
       }
       // Make sure the browser's notion of the filename is in sync.
       browser_.setFilename(filename);
