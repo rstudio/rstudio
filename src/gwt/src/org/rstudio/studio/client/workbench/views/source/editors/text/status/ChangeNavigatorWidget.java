@@ -92,6 +92,9 @@ public class ChangeNavigatorWidget extends Composite
          pointerDown_ = true;
       });
       button.addKeyDownHandler(event -> pointerDown_ = false);
+      // (a press released off the button never clicks; it must not stand
+      // in for the next click's mousedown)
+      button.addMouseOutHandler(event -> pointerDown_ = false);
 
       // (the status bar runs a handler of its own for clicks on a message)
       button.addClickHandler(event ->
