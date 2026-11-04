@@ -48,6 +48,8 @@ import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.common.shell.ConsoleErrorTrackerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
+import org.rstudio.studio.client.projects.model.ProjectTemplateWidgetTests;
+import org.rstudio.studio.client.rsconnect.ui.EnvironmentVariablesDialogTests;
 import org.rstudio.studio.client.workbench.WorkbenchListManagerTests;
 import org.rstudio.studio.client.workbench.model.SessionOpenerTests;
 import org.rstudio.studio.client.workbench.model.SessionTests;
@@ -58,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManagerTests;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumnTests;
+import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorControlTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoaderTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.VcsStateTests;
@@ -66,6 +69,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketT
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
 import org.rstudio.studio.client.rmarkdown.model.YamlTreeTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.DefaultChunkOptionsPopupPanelTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanelTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidgetTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -100,6 +104,9 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(URIUtilsTests.class);
       suite.addTestSuite(RChunkHeaderParserTests.class);
       suite.addTestSuite(DefaultChunkOptionsPopupPanelTests.class);
+      suite.addTestSuite(ChunkOptionsPopupPanelTests.class);
+      suite.addTestSuite(EnvironmentVariablesDialogTests.class);
+      suite.addTestSuite(ProjectTemplateWidgetTests.class);
       suite.addTestSuite(TextCursorTests.class);
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(SessionTests.class);
@@ -119,6 +126,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(LintItemTests.class);
       suite.addTestSuite(PositAiInstallManagerTests.class);
       suite.addTestSuite(PackageLinkColumnTests.class);
+      suite.addTestSuite(ManipulatorControlTests.class);
       suite.addTestSuite(SourceMarkerItemCodecTests.class);
       suite.addTestSuite(TestMocks.class);
       suite.addTestSuite(ApplicationUtilsTests.class);

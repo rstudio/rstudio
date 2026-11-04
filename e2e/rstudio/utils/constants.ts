@@ -28,6 +28,11 @@ export const TIMEOUTS = {
   keystrokeBudget: 50,
 };
 
+// CRAN's CDN-backed mirror. The main cran.r-project.org server is a single
+// host whose slow TLS handshakes show up as stalled or failed package
+// downloads on CI runners.
+export const CRAN_REPOS = 'https://cloud.r-project.org';
+
 export async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 
 public class ManipulatorControlCheckBox extends ManipulatorControl
 {
@@ -43,8 +42,8 @@ public class ManipulatorControlCheckBox extends ManipulatorControl
       panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
       
-      // checkbox
-      checkBox_ = new CheckBox();
+      // checkbox, with its own label so the label names and toggles it
+      checkBox_ = new CheckBox(getLabel());
       checkBox_.setValue(value);
       checkBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
 
@@ -57,12 +56,7 @@ public class ManipulatorControlCheckBox extends ManipulatorControl
          }
       });
       panel.add(checkBox_);
-      
-      // label
-      Label label = new Label(getLabel());
-      panel.add(label);
-    
-      
+
       initWidget(panel);
       addControlStyle(styles.checkBox());
    }

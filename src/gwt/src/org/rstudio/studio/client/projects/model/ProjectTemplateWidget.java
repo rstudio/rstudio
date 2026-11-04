@@ -31,7 +31,6 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -154,7 +153,7 @@ public class ProjectTemplateWidget extends Composite
    private ProjectTemplateWidgetItem selectBoxInput(final ProjectTemplateWidgetDescription description)
    {
       String[] fields = readSelectBoxFields(description);
-      String label = ensureEndsWithColon(description.getLabel());
+      String label = StringUtil.ensureColonSuffix(description.getLabel());
       final SelectWidget widget = new SelectWidget(label, fields);
       
       String defaultValue = description.getDefault();
@@ -181,12 +180,11 @@ public class ProjectTemplateWidget extends Composite
       if (!StringUtil.isNullOrEmpty(defaultValue))
          primaryWidget.setText(defaultValue);
       
-      LayoutGrid grid = new LayoutGrid(1, 2);
       DomUtils.disableSpellcheck(primaryWidget);
-      grid.setWidget(0, 0, new Label(ensureEndsWithColon(description.getLabel())));
-      grid.setWidget(0, 1, primaryWidget);
+      LayoutGrid.TwoColumnLayoutGridBuilder builder = new LayoutGrid.TwoColumnLayoutGridBuilder();
+      builder.add(description.getLabel(), primaryWidget);
       
-      return new ProjectTemplateWidgetItem(grid, new Collector()
+      return new ProjectTemplateWidgetItem(builder.get(), new Collector()
       {
          @Override
          public void collectInput(JsObject receiver)
@@ -226,13 +224,6 @@ public class ProjectTemplateWidget extends Composite
       for (int i = 0; i < n; i++)
          fields[i] = jsFields.get(i);
       return fields;
-   }
-   
-   private String ensureEndsWithColon(String string)
-   {
-      return string.endsWith(":")
-            ? string
-            : string + ":";
    }
    
    private boolean isTruthy(String value)
