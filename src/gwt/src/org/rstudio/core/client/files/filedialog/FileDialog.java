@@ -135,8 +135,16 @@ public abstract class FileDialog extends FileSystemDialog
          }
 
          browser_.setFilename(file);
-         browser_.setFilenameEnabled(false);
-         acceptOnNavigated_ = true;
+
+         // a path ending in a separator names a folder to browse, not a file
+         // to accept once there; deferring the accept would only report the
+         // empty name, unless the dialog accepts one (Open Project)
+         if (!file.isEmpty() || acceptsEmptyName())
+         {
+            browser_.setFilenameEnabled(false);
+            acceptOnNavigated_ = true;
+         }
+
          cd(dir);
          return false;
       }
@@ -191,6 +199,15 @@ public abstract class FileDialog extends FileSystemDialog
       }
 
       return true;
+   }
+
+   /**
+    * Whether accepting with nothing typed and no folder selected means
+    * something to this dialog; by default it is reported as an empty name.
+    */
+   protected boolean acceptsEmptyName()
+   {
+      return false;
    }
 
    private boolean navigateIfDirectory()

@@ -85,6 +85,17 @@ test.describe('Copy To destination dialog', () => {
     await expect(dialog).toBeVisible();
   });
 
+  test('Save with a typed path ending in a separator navigates there', async ({ rstudioPage: page }) => {
+    const dialog = await openDestinationDialog(page, base);
+    await dialog.getByRole('textbox', { name: 'File name:' }).fill(`${sandbox.dir}/`);
+    await dialog.locator(SAVE_BTN).click();
+
+    // a folder to browse, not an empty name to accept once there
+    await expect(dialog.locator(CURRENT_LOCATION)).toHaveText(leaf(sandbox.dir), { timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(ERROR_DIALOG)).toBeHidden();
+    await expect(dialog.getByRole('textbox', { name: 'File name:' })).toHaveValue('');
+  });
+
   test('Save with the `..` row selected navigates to the parent folder', async ({ rstudioPage: page }) => {
     const dialog = await openDestinationDialog(page, base);
     // a single click selects the row without navigating
