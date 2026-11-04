@@ -19,7 +19,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.EditorsText
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -90,11 +94,9 @@ public class ChangeNavigatorWidget extends Composite
       {
          event.preventDefault();
          pointerDown_ = true;
+         watchRelease(button);
       });
       button.addKeyDownHandler(event -> pointerDown_ = false);
-      // (a press released off the button never clicks; it must not stand
-      // in for the next click's mousedown)
-      button.addMouseOutHandler(event -> pointerDown_ = false);
 
       // (the status bar runs a handler of its own for clicks on a message)
       button.addClickHandler(event ->
@@ -108,6 +110,28 @@ public class ChangeNavigatorWidget extends Composite
       return button;
    }
 
+   // A press released off the button never clicks, and must not stand in
+   // for the next click's mousedown; one released on it (after leaving and
+   // coming back, perhaps) clicks, and is left for the click to read.
+   private void watchRelease(Button button)
+   {
+      if (release_ != null)
+         release_.removeHandler();
+
+      release_ = Event.addNativePreviewHandler(event ->
+      {
+         if (event.getTypeInt() != Event.ONMOUSEUP)
+            return;
+
+         EventTarget target = event.getNativeEvent().getEventTarget();
+         if (!Element.is(target) || !button.getElement().isOrHasChild(Element.as(target)))
+            pointerDown_ = false;
+
+         release_.removeHandler();
+         release_ = null;
+      });
+   }
+
    private static void describe(Button button, AppCommand command)
    {
       button.getElement().setAttribute("aria-label", command.getLabel());
@@ -119,6 +143,7 @@ public class ChangeNavigatorWidget extends Composite
    private final InlineLabel count_;
    private Handler handler_;
    private boolean pointerDown_ = false;
+   private HandlerRegistration release_ = null;
 
    // Chevrons in the text colour, so that they follow the theme.
    private static final String CHEVRON_UP =
