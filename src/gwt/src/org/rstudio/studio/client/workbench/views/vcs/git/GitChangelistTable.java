@@ -207,7 +207,7 @@ public class GitChangelistTable extends ChangelistTable
 
          // Out of the Tab order, as the staging checkboxes are: the table is
          // one Tab stop, its rows reached with the arrow keys (and the
-         // selected row's change with Ctrl+Enter; see goToSelectedChange).
+         // selected row's change with Shift+Enter; see goToSelectedChange).
          ImageResource2x icon = new ImageResource2x(CodeSearchResources.INSTANCE.gotoFunction2x());
          sb.append(SafeHtmlUtil.createOpenTag("button",
                "type", "button",

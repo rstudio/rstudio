@@ -976,6 +976,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut value="Ctrl+Down" title="Scroll Diff Down"/>
          <shortcut value="Space" title="Stage or Unstage Selected Files"/>
          <shortcut value="Enter" title="Stage or Unstage and Move to Next File"/>
+         <shortcut value="Shift+Enter" title="Open Selected File at Its First Change"/>
       </shortcutgroup>
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />

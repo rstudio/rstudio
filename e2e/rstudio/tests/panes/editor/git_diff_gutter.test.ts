@@ -2315,12 +2315,16 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
 
     // The buttons stay out of the Tab order, as the staging checkboxes are:
     // the table is one Tab stop, its rows reached with the arrow keys, and
-    // the selected row's change gone to with Ctrl+Enter (Cmd+Enter on a
-    // Mac); plain Enter stages.
+    // the selected row's change gone to with Shift+Enter; plain Enter stages.
+    // An untitled R script is open meanwhile: the active document enables
+    // the global shortcuts (Run Current Line on Ctrl+Enter / Cmd+Enter, say),
+    // and those see every keydown before the table does.
     await expect(goTo).toHaveAttribute('tabindex', '-1');
+    await executeCommand(page, 'newSourceDoc');
+    await expect(page.locator(SELECTED_DOC_TAB)).toContainText('Untitled', { timeout: 15000 });
     const row = panel.getByRole('row').filter({ hasText: 'script.R' }).first();
     await row.click();
-    await page.keyboard.press('ControlOrMeta+Enter');
+    await page.keyboard.press('Shift+Enter');
     await expect(page.locator(SELECTED_DOC_TAB)).toContainText('script.R', { timeout: 15000 });
     await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
     await expect(

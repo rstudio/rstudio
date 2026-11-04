@@ -133,11 +133,12 @@ public class GitPresenter extends BaseVcsPresenter
                return;
 
             // the keyboard's way to the selected row's go-to-change button,
-            // which is out of the Tab order (Ctrl+Enter, or Cmd+Enter on a
-            // Mac); plain Enter stages
+            // which is out of the Tab order; plain Enter stages. Shift+Enter
+            // because nothing binds it globally: ShortcutManager previews
+            // every keydown first, and with a script open Ctrl+Enter (or
+            // Cmd+Enter) would go to executeCode, not here.
             int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER &&
-                (mod == KeyboardShortcut.CTRL || mod == KeyboardShortcut.META))
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER && mod == KeyboardShortcut.SHIFT)
             {
                if (view_.getChangelistTable().goToSelectedChange())
                {
@@ -429,7 +430,7 @@ public class GitPresenter extends BaseVcsPresenter
    }
 
    // The context menu's way to a row's go-to-change button (the table's
-   // own is Ctrl+Enter on the row).
+   // own is Shift+Enter on the row).
    @Handler
    void onVcsOpenAtFirstChange()
    {
