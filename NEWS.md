@@ -23,5 +23,5 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the custom CA bundle path field in Publishing options, and the environment variable list in the Publish dialog, without a label.
 
 ### Dependencies
--
+- Electron 44.10.2
 
