@@ -123,6 +123,14 @@ describe('DesktopCallback', () => {
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
+    it('forgets the R when the client gives its quit up', async () => {
+      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
+
+      assert.equal(await callback.setPendingRVersion(rPath), '');
+      callback.clearPendingRVersion();
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
     it('forgets the R when the quit it was meant for is abandoned', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 

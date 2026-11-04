@@ -68,6 +68,18 @@ public class UpdateCheckResultTests extends GWTTestCase
       assertEquals(1, result.getUpdateUrgency());
    }
 
+   public void testTheSessionWinsWhenTheVersionsDiffer()
+   {
+      // the builds site still lists a withdrawn release while rstudio.org
+      // recommends an earlier one: the latter, as a manual download
+      UpdateCheckResult result = UpdateCheckResult.reconcile(
+            UpdateCheckResult.fromJson(DESKTOP.replace("2026.10.1+239", "2026.10.2+241")),
+            UpdateCheckResult.fromJson(SESSION));
+      assertEquals("2026.10.1+239", result.getUpdateVersion());
+      assertEquals("https://posit.co/download", result.getUpdateUrl());
+      assertFalse(result.canInstall());
+   }
+
    public void testTheSessionAloneCanReportAnUpdate()
    {
       UpdateCheckResult result = UpdateCheckResult.reconcile(

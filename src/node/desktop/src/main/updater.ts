@@ -226,6 +226,8 @@ export class Updater {
   private pendingProject = '';
   /** applyPendingUpdate() is deciding; the window must stay open until it has */
   private handingOff = false;
+  /** bumped by every cancellation, so an install request still in its checks learns of one */
+  private cancellations = 0;
 
   constructor(private host: UpdaterHost) {
     // RSTUDIO_UPDATE_VERSION impersonates another version, as it does for the
@@ -388,10 +390,17 @@ export class Updater {
    * canInstallUpdate(); GWT quits only on ''.
    */
   async installUpdate(version: string, project: string): Promise<InstallBlocker> {
+    const cancellations = this.cancellations;
     const blocker = await this.preflight(version);
     if (blocker) {
       logger().logInfo(`not installing RStudio ${version}: ${blocker}`);
       return blocker;
+    }
+    if (this.cancellations !== cancellations) {
+      // the quit this was for is gone (the session was replaced while the
+      // checks ran, say); recording it now would arm a later, unrelated quit
+      logger().logInfo(`not installing RStudio ${version}: the quit it was for was abandoned during its checks`);
+      return 'missing';
     }
 
     // nothing is awaited between the preflight's last look at the state and
@@ -424,7 +433,11 @@ export class Updater {
    * `version`, only that request's record is dropped, never one made since.
    */
   cancelPendingInstall(version?: string): void {
-    if (this.pendingInstall === null || (version !== undefined && this.pendingInstall !== version)) {
+    if (version !== undefined && this.pendingInstall !== version) {
+      return;
+    }
+    this.cancellations++;
+    if (this.pendingInstall === null) {
       return;
     }
     logger().logDebug(`the quit was abandoned; RStudio ${this.pendingInstall} stays downloaded`);
@@ -470,7 +483,11 @@ export class Updater {
       // the session is down and the installer is about to run, so the
       // marker's lifetime starts now; written any earlier, a long shutdown
       // (.Last(), the workspace) could outlast it and lose the project
-      rememberRelaunchProject(this.pendingProject, { version, installKey: this.installKey() }, this.host.markerDir());
+      rememberRelaunchProject(
+        this.pendingProject,
+        { version, installKey: this.installKey(), fromVersion: buildInfo().RSTUDIO_VERSION },
+        this.host.markerDir(),
+      );
 
       if (this.host.platform === 'darwin') {
         // Squirrel closes the windows itself, which the guard must not refuse

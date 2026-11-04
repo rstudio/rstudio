@@ -60,15 +60,17 @@ public class UpdateCheckResult extends JavaScriptObject
 
    /**
     * The answer to act on when both the desktop frame and the session have
-    * checked: the session's when it reports no update (the release was
-    * withdrawn, or the builds site is ahead of it) or when only it reports
-    * one; otherwise the desktop's installable update, with the urgency the
-    * session gives it.
+    * checked: the desktop's installable update, with the urgency the session
+    * gives it, when both name the same version; otherwise the session's,
+    * whether it reports no update (the release was withdrawn) or another
+    * version (the builds site still lists a withdrawn release, or is ahead
+    * of rstudio.org), which is then offered as a manual download.
     */
    public static UpdateCheckResult reconcile(UpdateCheckResult desktop,
                                              UpdateCheckResult session)
    {
-      if (session.getUpdateVersion().isEmpty() || desktop.getUpdateVersion().isEmpty())
+      String version = desktop.getUpdateVersion();
+      if (version.isEmpty() || !version.equals(session.getUpdateVersion()))
          return session;
       return desktop.withUrgency(session.getUpdateUrgency());
    }

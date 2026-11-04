@@ -398,6 +398,33 @@ describe('updater', () => {
     assert.isNull(rememberedProject(host, A));
   });
 
+  it('records nothing for an install whose quit was abandoned during its checks', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+
+    // the session was replaced (Terminate R, say) while the process listing ran
+    host.othersGate = deferred();
+    const installing = updater.installUpdate(A, project);
+    await flush();
+    updater.cancelPendingInstall();
+    host.othersGate.resolve(true);
+
+    assert.equal(await installing, 'missing');
+    assert.isFalse(updater.hasPendingInstall());
+    assert.isFalse(await updater.applyPendingUpdate());
+    assert.equal(host.installs, 0);
+
+    // a cancellation naming another version is not this request's
+    host.othersGate = deferred();
+    const again = updater.installUpdate(A, project);
+    await flush();
+    updater.cancelPendingInstall(B);
+    host.othersGate.resolve(true);
+    assert.equal(await again, '');
+    assert.isTrue(updater.hasPendingInstall());
+  });
+
   it('refuses downloads while an install is pending, until the quit is abandoned', async () => {
     const { host, updater } = setup('darwin');
     await offer(updater, host, A);

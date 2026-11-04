@@ -514,7 +514,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          quitProgress_.dismiss();
          quitProgress_ = null;
       }
-      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, null);
+      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
    }
 
    /**
@@ -785,6 +785,10 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                     constants_.quitRSessionMessage();
          }
          
+         // a stalled quit's indicator would otherwise stay up for good once
+         // this attempt replaces it (see QuitGate.kStaleQuitMs)
+         if (quitProgress_ != null)
+            quitProgress_.dismiss();
          final GlobalProgressDelayer progress = new GlobalProgressDelayer(
                                                                globalDisplay_,
                                                                250,
@@ -805,8 +809,16 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
             
             isQuitting_ = true;
-            DesktopFrameHelper.setPendingQuit(quitType, () ->
+            DesktopFrameHelper.setPendingQuit(quitType, (String frameError) ->
             {
+               if (!StringUtil.isNullOrEmpty(frameError))
+               {
+                  // the desktop frame does not know a quit is coming, so the
+                  // session's exit would be taken for a crash: do not quit
+                  quitNotStarted(frameError, progress);
+                  return;
+               }
+
                server_.quitSession(
                      saveChanges_,
                      switchToProject_,
@@ -849,18 +861,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
                         private void onFailedToQuit(String message)
                         {
-                           isQuitting_ = false;
-                           quitGate_.reopen();
-                           progress.dismiss();
-
-                           if (callContext_ != null)
-                           {
-                              eventBus_.fireEvent(new ApplicationTutorialEvent(
-                                    ApplicationTutorialEvent.API_ERROR,
-                                    message,
-                                    callContext_));
-                           }
-                           
+                           quitNotStarted(message, progress);
                            DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
                         }
                      });
@@ -879,6 +880,24 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          finally
          {
             token.release();
+         }
+      }
+
+      /** The quit did not start: admit the next one, and fail a tutorial caller. */
+      private void quitNotStarted(String message, GlobalProgressDelayer progress)
+      {
+         isQuitting_ = false;
+         quitGate_.reopen();
+         progress.dismiss();
+         if (quitProgress_ == progress)
+            quitProgress_ = null;
+
+         if (callContext_ != null)
+         {
+            eventBus_.fireEvent(new ApplicationTutorialEvent(
+                  ApplicationTutorialEvent.API_ERROR,
+                  message,
+                  callContext_));
          }
       }
 

@@ -36,7 +36,12 @@ describe('relaunch project marker', () => {
   // posix paths throughout: path.dirname() only splits on the running
   // platform's separator, and these tests run on every platform
   const identity = { version: '2026.12.0-daily+9', installKey: installationKey('/opt/rstudio/bin/rstudio') };
-  const marker: RelaunchMarker = { ...identity, project: '/home/me/proj/proj.Rproj', expires: now + 1000 };
+  const marker: RelaunchMarker = {
+    ...identity,
+    project: '/home/me/proj/proj.Rproj',
+    expires: now + 1000,
+    fromVersion: '2026.12.0-daily+8',
+  };
 
   it('round-trips through JSON', () => {
     assert.deepEqual(parseRelaunchMarker(JSON.stringify(marker)), marker);
@@ -55,10 +60,13 @@ describe('relaunch project marker', () => {
     assert.isTrue(markerExpired(marker, now + 1001));
   });
 
-  it('is only for the build that was installed, in the same place', () => {
+  it('is for the build that was installed, or the one the update failed on, in the same place', () => {
     assert.isTrue(markerMatches(marker, identity));
-    // the old build still running (or launched again) before the relaunch
-    assert.isFalse(markerMatches(marker, { ...identity, version: '2026.12.0-daily+8' }));
+    // the installer brings the old build back when the update fails
+    assert.isTrue(markerMatches(marker, { ...identity, version: '2026.12.0-daily+8' }));
+    assert.isFalse(markerMatches({ ...marker, fromVersion: '' }, { ...identity, version: '2026.12.0-daily+8' }));
+    // some other build of this installation
+    assert.isFalse(markerMatches(marker, { ...identity, version: '2026.12.0-daily+7' }));
     // another installation of the same build, e.g. an unpacked zip
     assert.isFalse(markerMatches(marker, { ...identity, installKey: installationKey('/tmp/rstudio/bin/rstudio') }));
   });
@@ -113,6 +121,11 @@ describe('relaunch project marker', () => {
       assert.equal(readdirSync(dir).length, 1);
       // and then the intended reader still gets it
       assert.equal(takeRelaunchProject(identity, now, dir), marker.project);
+
+      // the build an update was attempted from gets it too, once the
+      // installer has brought it back after a failed update
+      rememberRelaunchProject(marker.project, { ...identity, fromVersion: '2026.12.0-daily+8' }, dir);
+      assert.equal(takeRelaunchProject({ ...identity, version: '2026.12.0-daily+8' }, now, dir), marker.project);
     });
 
     it('removes an expired or malformed marker without reopening anything', () => {

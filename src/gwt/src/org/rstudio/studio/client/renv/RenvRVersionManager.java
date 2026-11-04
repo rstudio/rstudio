@@ -279,12 +279,21 @@ public class RenvRVersionManager
                return;
             }
 
-            hideNotice();
-            claim.performQuit(
+            // the claim may have been superseded while the R was checked (a
+            // stalled quit admits the next one, see QuitGate): the R held for
+            // it must not be picked up by that other quit
+            if (!claim.performQuit(
                   constants_.switchingRVersionProgress(installed.version),
                   saveChanges,
                   projectFile,
-                  spec);
+                  spec))
+            {
+               Desktop.getFrame().clearPendingRVersion();
+               onSwitchFailed(installed, constants_.quitAlreadyInProgress());
+               return;
+            }
+
+            hideNotice();
          });
       });
    }

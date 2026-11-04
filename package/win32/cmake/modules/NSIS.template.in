@@ -679,10 +679,15 @@ SectionEnd
 ; only one when no elevation was needed. The elevated inner instance hands
 ; its failure to the outer one through its exit code instead.
 Function RelaunchAfterFailedUpdate
-  ; shown despite /S, for the same reason
-  MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed. @CPACK_PACKAGE_NAME@ will reopen on the version you had; choose Help > Check for Updates to try again, or run the installer yourself."
+  ; shown despite /S, for the same reason. The previous version is only
+  ; there to come back to while the install failed before removing it; after
+  ; that (an extraction error, say) the installation needs repairing
   ${If} $UpdateExeDir != ""
+  ${AndIf} ${FileExists} "$UpdateExeDir\rstudio.exe"
+    MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed. @CPACK_PACKAGE_NAME@ will reopen on the version you had; choose Help > Check for Updates to try again, or run the installer yourself."
     Exec '"$UpdateExeDir\rstudio.exe"'
+  ${Else}
+    MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed, and the previous version of @CPACK_PACKAGE_NAME@ is no longer intact. Please run the @CPACK_PACKAGE_NAME@ installer to repair the installation."
   ${EndIf}
 FunctionEnd
 

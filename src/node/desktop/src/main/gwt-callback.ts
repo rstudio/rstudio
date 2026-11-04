@@ -848,6 +848,10 @@ export class GwtCallback extends EventEmitter {
       this.setPendingQuit(pendingQuit);
     });
 
+    ipcMain.on('desktop_clear_pending_r_version', () => {
+      this.clearPendingRVersion();
+    });
+
     ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
       return this.setPendingRVersion(rExecutablePath);
     });
@@ -1346,6 +1350,11 @@ export class GwtCallback extends EventEmitter {
 
     this.pendingRVersion = rPath;
     return '';
+  }
+
+  /** The quit the pending R was held for is not going to start after all. */
+  clearPendingRVersion(): void {
+    this.pendingRVersion = '';
   }
 
   /**

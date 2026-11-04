@@ -173,13 +173,17 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_AND_RESTART = 2;
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
-   void setPendingQuit(int pendingQuit, CommandWithArg<Void> callback);
+   // callback receives "" once the frame has recorded the quit, or why it
+   // could not; the quit must not go on without the record
+   void setPendingQuit(int pendingQuit, CommandWithArg<String> callback);
    void setPendingProject(String projectFilePath);
 
    // the R executable the next session (a pending restart) should use; the
    // callback receives an error message when that R can't be used, and ""
    // once it is ready for the restart
    void setPendingRVersion(String rExecutablePath, CommandWithArg<String> callback);
+   // the quit that R was held for is not going to start after all
+   void clearPendingRVersion();
 
    // make the macOS framework version of R with the given home run as itself
    // rather than as the framework's default version; the callback receives an

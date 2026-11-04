@@ -42,6 +42,12 @@ export interface RelaunchMarker extends RelaunchIdentity {
   /** the project file to reopen, or kProjectNone */
   project: string;
   expires: number;
+  /**
+   * the build the update was attempted from, which the installer relaunches
+   * instead when the update fails; '' in markers written before this was
+   * recorded
+   */
+  fromVersion: string;
 }
 
 /**
@@ -64,7 +70,13 @@ export function parseRelaunchMarker(text: string): RelaunchMarker | null {
     if (!text_(doc.project) || !text_(doc.version) || !text_(doc.installKey) || typeof doc.expires !== 'number') {
       return null;
     }
-    return { project: doc.project, version: doc.version, installKey: doc.installKey, expires: doc.expires };
+    return {
+      project: doc.project,
+      version: doc.version,
+      installKey: doc.installKey,
+      expires: doc.expires,
+      fromVersion: typeof doc.fromVersion === 'string' ? doc.fromVersion : '',
+    };
   } catch {
     return null;
   }
@@ -74,9 +86,19 @@ export function markerExpired(marker: RelaunchMarker, now: number): boolean {
   return now > marker.expires;
 }
 
-/** Whether `marker` is meant for the RStudio described by `identity`. */
+/**
+ * Whether `marker` is meant for the RStudio described by `identity`: the
+ * build that was installed, or the one the update was attempted from, which
+ * the installer brings back when the update fails.
+ */
 export function markerMatches(marker: RelaunchMarker, identity: RelaunchIdentity): boolean {
-  return marker.installKey === identity.installKey && compareVersions(marker.version, identity.version) === 0;
+  if (marker.installKey !== identity.installKey) {
+    return false;
+  }
+  return (
+    compareVersions(marker.version, identity.version) === 0 ||
+    (marker.fromVersion.length > 0 && compareVersions(marker.fromVersion, identity.version) === 0)
+  );
 }
 
 /** Where the markers live; a parameter so tests can use a scratch directory. */
@@ -94,12 +116,22 @@ function markerPath(dir: string, installKey: string): string {
  * a private name and renamed into place, so a reader never sees a partial
  * marker (and never discards it as malformed).
  */
-export function rememberRelaunchProject(project: string, identity: RelaunchIdentity, dir = defaultMarkerDir()): void {
+export function rememberRelaunchProject(
+  project: string,
+  identity: RelaunchIdentity & { fromVersion?: string },
+  dir = defaultMarkerDir(),
+): void {
   const file = markerPath(dir, identity.installKey);
   const partial = `${file}.${process.pid}.tmp`;
   try {
     mkdirSync(dir, { recursive: true });
-    const marker: RelaunchMarker = { ...identity, project, expires: Date.now() + kRelaunchProjectTtlMs };
+    const marker: RelaunchMarker = {
+      version: identity.version,
+      installKey: identity.installKey,
+      fromVersion: identity.fromVersion ?? '',
+      project,
+      expires: Date.now() + kRelaunchProjectTtlMs,
+    };
     writeFileSync(partial, JSON.stringify(marker));
     renameSync(partial, file);
   } catch (error: unknown) {

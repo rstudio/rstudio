@@ -14,28 +14,33 @@
  */
 package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.user.client.Command;
 
 public class DesktopFrameHelper
 {
+   /**
+    * Tell the desktop frame what the coming session exit is for. `command`
+    * runs once the frame has recorded it, and not at all when it could not:
+    * a session exit the frame does not know about is taken for a crash.
+    */
    public static void setPendingQuit(int quitType, Command command)
    {
-      if (Desktop.isDesktop() && Desktop.hasDesktopFrame())
+      setPendingQuit(quitType, (String error) ->
       {
-         Desktop.getFrame().setPendingQuit(quitType, (value) ->
-         {
-            if (command != null)
-            {
-               command.execute();
-            }
-         });
-      }
-      else
-      {
-         if (command != null)
-         {
+         if (StringUtil.isNullOrEmpty(error) && command != null)
             command.execute();
-         }
-      }
+      });
+   }
+
+   /** As above, with "" once recorded or the frame's error when it was not. */
+   public static void setPendingQuit(int quitType, CommandWithArg<String> onDone)
+   {
+      if (Desktop.isDesktop() && Desktop.hasDesktopFrame())
+         Desktop.getFrame().setPendingQuit(quitType, onDone);
+      else
+         onDone.execute("");
    }
 }
