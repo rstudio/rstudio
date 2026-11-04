@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
@@ -148,7 +149,10 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_CONDAENV));
       venvPanel_.add(chkUseCondaenv_);
       txtVenvPackages_ = new TextBox();
-      txtVenvPackages_.getElement().setAttribute(constants_.placeholderLabel(), constants_.txtVenvPackagesNone());
+      DomUtils.setPlaceholder(txtVenvPackages_, constants_.txtVenvPackagesNone());
+      // the checkbox captions beside the box are the checkboxes' own labels
+      Roles.getTextboxRole().setAriaLabelProperty(
+         txtVenvPackages_.getElement(), constants_.txtVenvPackagesLabel());
       txtVenvPackages_.addStyleName(NewProjectResources.INSTANCE.styles().quartoVenvPackages());
       DomUtils.disableSpellcheck(txtVenvPackages_);
       FontSizer.applyNormalFontSize(txtVenvPackages_.getElement());

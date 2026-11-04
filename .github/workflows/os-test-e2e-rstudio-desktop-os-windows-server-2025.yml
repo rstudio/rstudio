@@ -841,7 +841,7 @@ jobs:
       # set into the cached R library that PW_RSTUDIO_R_LIBS_USER (job env
       # above) points globalSetup at, so tests find every package present and
       # install nothing at test time. Without it the set is fetched from
-      # cran.r-project.org on every run, and a CRAN outage surfaces as
+      # CRAN on every run, and a CRAN outage surfaces as
       # mid-suite install hangs (s4_unloaded_package, shinytest2).
       - name: Install e2e test dependencies
         id: e2e_deps

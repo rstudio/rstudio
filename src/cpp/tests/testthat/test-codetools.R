@@ -223,6 +223,9 @@ test_that(".rs.recoverPackageSourcePath() recovers sources from the srcref datab
    expect_true(nzchar(recoveredBanana))
    expect_equal(readLines(recoveredBanana), bananaLines)
 
+   # a srcfilealias deparses to its own file's lines, not the first file's
+   expect_equal(.rs.deparseSrcref(attr(ns$banana, "srcref"), FALSE), bananaLines)
+
    # paths which don't resolve to a known srcref are not recovered
    expect_equal(.rs.recoverPackageSourcePath(""), "")
    expect_equal(.rs.recoverPackageSourcePath("/no/such/pkg/R/file.R"), "")
@@ -272,4 +275,40 @@ test_that("function information distinguishes primitives from closures without f
    expect_equal(closure$formal_names, c("x", "..."))
    expect_equal(as.integer(closure$is_primitive), 0L)
    
+})
+
+test_that("reading kept package source keeps R's translation warning to itself", {
+
+   # R lazy-loads the source lines of a package installed with keep.source on
+   # first access and, when the package was installed under another native
+   # encoding, warns once that it is translating them to UTF-8. Model that
+   # with a binding that warns when first forced.
+   lazySrcfile <- function(lines) {
+      srcfile <- new.env()
+      class(srcfile) <- "srcfile"
+      srcfile$filename <- "example.R"
+      delayedAssign("lines", {
+         warning("strings not representable in native encoding will be translated to UTF-8")
+         lines
+      }, assign.env = srcfile)
+      srcfile
+   }
+   lines <- c("f <- function() {", "   1", "}")
+
+   srcref <- srcref(lazySrcfile(lines), c(1L, 1L, 3L, 1L))
+   expect_no_warning(result <- .rs.readSrcrefLines(srcref, FALSE))
+   expect_identical(result, lines)
+
+   srcref <- srcref(lazySrcfile(lines), c(1L, 1L, 3L, 1L))
+   expect_no_warning(result <- .rs.deparseSrcref(srcref, TRUE))
+   expect_identical(result, paste(lines, collapse = "\n"))
+
+   # as.character.srcref() reads the lines itself, but only from a srcfilecopy.
+   srcfile <- lazySrcfile(lines)
+   class(srcfile) <- c("srcfilecopy", "srcfile")
+   call <- quote(f())
+   attr(call, "srcref") <- srcref(srcfile, c(1L, 1L, 3L, 1L))
+   expect_no_warning(result <- .rs.deparseCall(call))
+   expect_identical(result, lines)
+
 })
