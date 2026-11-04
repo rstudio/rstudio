@@ -466,7 +466,13 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_set_pending_quit', pendingQuit)
         .then((response) => callback(response))
-        .catch((error) => reportIpcError('setPendingQuit', error));
+        .catch((error) => {
+          // the quit sequence waits on this callback; without it the quit
+          // stalls and, as one quit at a time is admitted, so does every
+          // later one, including closing the window
+          reportIpcError('setPendingQuit', error);
+          callback(undefined);
+        });
     },
 
     openFile: (path: string) => {

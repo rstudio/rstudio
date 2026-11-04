@@ -405,7 +405,19 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    {
       if (!quitGate_.start())
       {
+         // the save prompts have usually just been answered, so say why
+         // nothing follows (and let a tutorial caller fail rather than wait)
          Debug.logToConsole("Ignoring quit request: a quit is already in progress");
+         globalDisplay_.showMessage(MessageDialog.INFO,
+                                    constants_.quitRSessionCaption(),
+                                    constants_.quitAlreadyInProgressMessage());
+         if (callContext != null)
+         {
+            eventBus_.fireEvent(new ApplicationTutorialEvent(
+                  ApplicationTutorialEvent.API_ERROR,
+                  constants_.quitAlreadyInProgressMessage(),
+                  callContext));
+         }
          return false;
       }
 

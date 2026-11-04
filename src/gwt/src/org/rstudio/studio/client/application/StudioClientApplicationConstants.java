@@ -173,6 +173,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String updateDownloadFailedCaption();
     String updateDownloadFailedMessage();
     String updateRStudioCaption();
+    String quitAlreadyInProgressMessage();
     String remindLaterButtonLabel();
     String ignoreUpdateButtonLabel();
     String updateAvailableCaption();

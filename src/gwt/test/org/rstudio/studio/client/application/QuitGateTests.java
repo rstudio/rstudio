@@ -79,4 +79,27 @@ public class QuitGateTests extends GWTTestCase
       assertFalse(claim.start());
       assertTrue(gate.start());
    }
+
+   public void testAStalledQuitNoLongerRefusesTheNext()
+   {
+      QuitGate gate = new QuitGate();
+      assertTrue(gate.start(1000));
+      assertFalse(gate.start(1000 + QuitGate.kStaleQuitMs - 1));
+      assertNull(gate.claim(1000 + QuitGate.kStaleQuitMs - 1));
+
+      // the next quit closes the gate afresh
+      assertTrue(gate.start(1000 + QuitGate.kStaleQuitMs));
+      assertTrue(gate.isClosed());
+      assertFalse(gate.start(1000 + QuitGate.kStaleQuitMs + 1));
+   }
+
+   public void testAStaleClaimIsDroppedByTheNextQuit()
+   {
+      QuitGate gate = new QuitGate();
+      QuitGate.Claim claim = gate.claim(0);
+      QuitGate.Claim next = gate.claim(QuitGate.kStaleQuitMs);
+      assertNotNull(next);
+      assertFalse(claim.start()); // superseded
+      assertTrue(next.start());
+   }
 }
