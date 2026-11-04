@@ -68,11 +68,6 @@ core::Error initializeGit(const core::FilePath& workingDir);
 // worktree (path, head, branch, detached, bare, locked, prunable, is_main).
 core::json::Array parseWorktreeList(const std::string& output);
 
-// The file pair in a unified diff whose new side is the given path
-// (repository-relative), when the diff has more than one; a diff with one
-// pair, or none naming the path (Git quotes some names), is returned whole.
-std::string filePairFor(const std::string& diff, const std::string& path);
-
 core::FilePath gitExePath();
 core::FilePath detectedGitExePath();
 

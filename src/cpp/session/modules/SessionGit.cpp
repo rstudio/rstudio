@@ -149,41 +149,6 @@ json::Array parseWorktreeList(const std::string& output)
    return worktrees;
 }
 
-std::string filePairFor(const std::string& diff, const std::string& path)
-{
-   std::vector<std::string> pairs;
-   std::size_t pos = 0;
-   while (pos < diff.size())
-   {
-      std::size_t next = diff.find("\ndiff --git ", pos);
-      std::size_t end = (next == std::string::npos) ? diff.size() : next + 1;
-      pairs.push_back(diff.substr(pos, end - pos));
-      pos = end;
-   }
-
-   if (pairs.size() < 2)
-      return diff;
-
-   // the pair's "+++ " line names its new side, with the prefix Git is
-   // configured to use ("b/" by default, none with diff.noprefix)
-   for (const std::string& pair : pairs)
-   {
-      std::size_t start = pair.find("\n+++ ");
-      if (start == std::string::npos)
-         continue;
-      start += 5;
-
-      std::string newSide = pair.substr(start, pair.find('\n', start) - start);
-      if (newSide == path)
-         return pair;
-      if (boost::algorithm::ends_with(newSide, "/" + path) &&
-          newSide.find('/') == newSide.size() - path.size() - 1)
-         return pair;
-   }
-
-   return diff;
-}
-
 namespace {
 
 
@@ -1283,7 +1248,7 @@ public:
                           PatchMode mode,
                           int contextLines,
                           bool ignoreWhitespace,
-                          bool findCopies,
+                          bool pairedOnly,
                           std::string* pOutput)
    {
       ShellArgs args = gitArgs() << "diff";
@@ -1292,8 +1257,8 @@ public:
          args << "--cached";
       if (ignoreWhitespace)
          args << "-w";
-      if (findCopies)
-         args << "-C";
+      if (pairedOnly)
+         args << "-C" << "--diff-filter=CR";
       args << "--";
       if (pCompareTo)
          args << *pCompareTo;
@@ -1304,8 +1269,10 @@ public:
 
    // pRenamedFrom: for a staged rename or copy, the path the file came from.
    // Without it in the pathspec Git cannot pair the two sides, and shows the
-   // file as added whole rather than as its own changes; a copy is paired
-   // only when asked (-C), as the status was (status.renames=copies).
+   // file as added whole rather than as its own changes. A copy is paired
+   // only when asked (-C), as the status was (status.renames=copies), and
+   // the diff is kept to the pair: the source of a copy may have staged
+   // changes of its own, which the pathspec would bring along.
    core::Error diffFile(const FilePath& filePath,
                         const FilePath* pRenamedFrom,
                         PatchMode mode,
@@ -2277,11 +2244,6 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
                &output);
    if (error)
       return error;
-
-   // (the source of a copy may have staged changes of its own, which the
-   // pathspec brings along)
-   if (!renamedFrom.isEmpty())
-      output = filePairFor(output, path);
 
    std::string sourceEncoding = projects::projectContext().defaultEncoding();
    bool usedSourceEncoding;

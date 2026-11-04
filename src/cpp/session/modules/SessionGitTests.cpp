@@ -15,8 +15,6 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/algorithm/string.hpp>
-
 #include "SessionGit.hpp"
 
 namespace rstudio {
@@ -26,50 +24,6 @@ namespace git {
 namespace {
 
 using namespace core;
-
-TEST(SessionGitTests, KeepsTheFilePairForAStagedCopy)
-{
-   // a copy's source, with staged changes of its own, comes first
-   std::string source =
-         "diff --git a/sub/orig.R b/sub/orig.R\n"
-         "index dbe1d57..c3fa9e1 100644\n"
-         "--- a/sub/orig.R\n"
-         "+++ b/sub/orig.R\n"
-         "@@ -5,0 +6 @@ e <- 5\n"
-         "+f <- 6\n";
-   std::string copy =
-         "diff --git a/sub/orig.R b/sub/zcopy.R\n"
-         "similarity index 77%\n"
-         "copy from sub/orig.R\n"
-         "copy to sub/zcopy.R\n"
-         "index dbe1d57..3daa188 100644\n"
-         "--- a/sub/orig.R\n"
-         "+++ b/sub/zcopy.R\n"
-         "@@ -2 +2 @@ a <- 1\n"
-         "-b <- 2\n"
-         "+b <- 20\n";
-
-   EXPECT_EQ(filePairFor(source + copy, "sub/zcopy.R"), copy);
-   EXPECT_EQ(filePairFor(source + copy, "sub/orig.R"), source);
-
-   // with diff.noprefix, and with a custom prefix
-   std::string noPrefix = boost::algorithm::replace_all_copy(
-         boost::algorithm::replace_all_copy(source + copy, " a/", " "), " b/", " ");
-   std::string noPrefixCopy = boost::algorithm::replace_all_copy(
-         boost::algorithm::replace_all_copy(copy, " a/", " "), " b/", " ");
-   EXPECT_EQ(filePairFor(noPrefix, "sub/zcopy.R"), noPrefixCopy);
-   std::string wPrefix = boost::algorithm::replace_all_copy(source + copy, "+++ b/", "+++ w/");
-   EXPECT_EQ(filePairFor(wPrefix, "sub/zcopy.R"),
-             boost::algorithm::replace_all_copy(copy, "+++ b/", "+++ w/"));
-
-   // a path that only ends the same is not the one
-   EXPECT_EQ(filePairFor(source + copy, "orig.R"), source + copy);
-
-   // one pair, or none for the path, stays whole
-   EXPECT_EQ(filePairFor(copy, "sub/orig.R"), copy);
-   EXPECT_EQ(filePairFor(source + copy, "other.R"), source + copy);
-   EXPECT_EQ(filePairFor("", "sub/zcopy.R"), "");
-}
 
 TEST(SessionGitTests, ParsesWorktreeListPorcelain)
 {
