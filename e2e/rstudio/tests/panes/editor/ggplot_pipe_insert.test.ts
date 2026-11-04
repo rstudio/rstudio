@@ -176,6 +176,11 @@ const CASES: PipeCase[] = [
     expected: PIPE,
   },
   {
+    name: 'after a conditional layer with a commented if header added to a plot object',
+    content: 'p + if # Heading ----\n(flag) geom_point()',
+    expected: PLUS,
+  },
+  {
     name: 'after a nested conditional with a piped inner branch added to a plot object',
     content: 'p + if (outer) if (inner) geom_point() else NULL |> identity() else NULL',
     expected: PLUS,

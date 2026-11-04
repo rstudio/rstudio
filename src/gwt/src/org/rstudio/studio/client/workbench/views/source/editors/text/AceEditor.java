@@ -892,13 +892,14 @@ public class AceEditor implements DocDisplay
             return false;
 
          // a new row only continues the statement across a binary operator
-         // (trailing or leading), or after 'else' or a control-flow header;
-         // a skipped branch is read back to its 'if' regardless
+         // (trailing or leading), after 'else', or around a control-flow
+         // header; a skipped branch is read back to its 'if' regardless
          if (skippedBranches == 0 &&
              cursor.getRow() != row &&
              !leadingOperator &&
              !cursor.isLookingAtBinaryOp() &&
              !cursor.valueEquals("else") &&
+             !CONTROL_FLOW_HEADER_KEYWORDS.contains(cursor.currentValue()) &&
              !(cursor.isRightBracket() && closesControlFlowHeader(cursor)))
          {
             return false;
