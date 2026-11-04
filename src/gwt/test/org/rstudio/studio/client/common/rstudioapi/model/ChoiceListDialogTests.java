@@ -14,8 +14,9 @@
  */
 package org.rstudio.studio.client.common.rstudioapi.model;
 
+import static org.rstudio.core.client.dom.LabelTestHelper.labelTextFor;
+
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -32,8 +33,7 @@ public class ChoiceListDialogTests extends GWTTestCase
       Element content = createContent("Accounts", "Choose an account:");
       Element select = onlySelect(content);
 
-      assertFalse("the list needs an id for <label for>", select.getId().isEmpty());
-      assertEquals("Choose an account:", labelTextFor(content, select.getId()));
+      assertEquals("Choose an account:", labelTextFor(content, select));
       assertEquals("the <label> already names the list", "",
             select.getAttribute("aria-label"));
    }
@@ -62,17 +62,5 @@ public class ChoiceListDialogTests extends GWTTestCase
       NodeList<Element> selects = content.getElementsByTagName("select");
       assertEquals("the dialog should hold one list", 1, selects.getLength());
       return selects.getItem(0);
-   }
-
-   private static String labelTextFor(Element container, String id)
-   {
-      NodeList<Element> labels = container.getElementsByTagName("label");
-      for (int i = 0; i < labels.getLength(); i++)
-      {
-         LabelElement label = labels.getItem(i).cast();
-         if (id.equals(label.getHtmlFor()))
-            return label.getInnerText();
-      }
-      return null;
    }
 }
