@@ -69,6 +69,21 @@ const CASES: PipeCase[] = [
     expected: PIPE,
   },
   {
+    name: 'after a user function sharing the theme_ prefix (#19415)',
+    content: 'theme_tmp <- function() print("foo")\ntheme_tmp()',
+    expected: PIPE,
+  },
+  {
+    name: 'after a theme_ call chained onto a plot object',
+    content: 'p + theme_bw()',
+    expected: PLUS,
+  },
+  {
+    name: 'after a theme_ call on a continuation line',
+    content: 'p +\n  theme_minimal()',
+    expected: PLUS,
+  },
+  {
     name: 'after a ggplot chain piped into another call',
     content: 'ggplot(mtcars) + geom_point() |> ggplotly()',
     expected: PIPE,
