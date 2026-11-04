@@ -822,10 +822,11 @@ public class AceEditor implements DocDisplay
       boolean sawPrefixedCall = false;
       boolean sawPlus = false;
 
-      // 'else' branches being skipped back to their 'if', and (one bit per
-      // nesting depth) whether a pipe there has made the calls before it irrelevant
+      // 'else' branches being skipped back to their 'if', and whether a pipe
+      // in the branch expression being read has made the calls before it
+      // irrelevant (an 'if' or 'else' starts a new branch expression)
       int skippedBranches = 0;
-      int pipedBranches = 0;
+      boolean skippedBranchPiped = false;
       while (true)
       {
          if (cursor.isRightBracket())
@@ -845,12 +846,13 @@ public class AceEditor implements DocDisplay
             // opening it, so that only an enclosing chain ('p + if (x) a else b')
             // joins the two branches
             skippedBranches++;
-            pipedBranches &= ~branchBit(skippedBranches);
+            skippedBranchPiped = false;
          }
          else if (cursor.valueEquals("if"))
          {
             if (skippedBranches > 0)
                skippedBranches--;
+            skippedBranchPiped = false;
          }
          else if (skippedBranches > 0)
          {
@@ -859,9 +861,9 @@ public class AceEditor implements DocDisplay
             // that branch alone
             if (PIPE_OPERATORS.contains(cursor.currentValue()))
             {
-               pipedBranches |= branchBit(skippedBranches);
+               skippedBranchPiped = true;
             }
-            else if ((pipedBranches & branchBit(skippedBranches)) == 0 &&
+            else if (!skippedBranchPiped &&
                      cursor.hasType("identifier") &&
                      cursor.peekFwd(1).valueEquals("(") &&
                      isGgplotCallName(cursor.currentValue()))
@@ -919,11 +921,6 @@ public class AceEditor implements DocDisplay
             return false;
          }
       }
-   }
-
-   private static int branchBit(int depth)
-   {
-      return 1 << Math.min(depth, 31);
    }
 
    // whether the operator at the cursor is binary (has a left operand) rather than unary

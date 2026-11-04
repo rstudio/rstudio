@@ -171,6 +171,11 @@ const CASES: PipeCase[] = [
     expected: PLUS,
   },
   {
+    name: 'after a nested conditional with a piped inner branch following a theme_ call',
+    content: 'p + if (outer) theme_bw() + if (inner) NULL else NULL |> identity() else NULL',
+    expected: PLUS,
+  },
+  {
     name: 'after a NULL branch on its own line inside a braced body',
     content: 'function() {\n  ggplot(mtcars) + if (flag) geom_point()\n  else NULL',
     expected: PLUS,
