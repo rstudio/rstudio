@@ -149,6 +149,34 @@ json::Array parseWorktreeList(const std::string& output)
    return worktrees;
 }
 
+std::string renamedPairFor(const std::string& diff, const std::string& path)
+{
+   std::vector<std::string> pairs;
+   std::size_t pos = 0;
+   while (pos < diff.size())
+   {
+      std::size_t next = diff.find("\ndiff --git ", pos);
+      std::size_t end = (next == std::string::npos) ? diff.size() : next + 1;
+      pairs.push_back(diff.substr(pos, end - pos));
+      pos = end;
+   }
+
+   if (pairs.size() < 2)
+      return diff;
+
+   for (const std::string& pair : pairs)
+   {
+      std::string lines = "\n" + pair + "\n";
+      if (lines.find("\nrename to " + path + "\n") != std::string::npos ||
+          lines.find("\ncopy to " + path + "\n") != std::string::npos)
+      {
+         return pair;
+      }
+   }
+
+   return diff;
+}
+
 namespace {
 
 
@@ -1251,7 +1279,10 @@ public:
                           bool pairedOnly,
                           std::string* pOutput)
    {
-      ShellArgs args = gitArgs() << "diff";
+      ShellArgs args = gitArgs();
+      if (pairedOnly)
+         args << "-c" << "core.quotepath=false";
+      args << "diff";
       args << "-U" + safe_convert::numberToString(contextLines);
       if (mode == PatchModeStage)
          args << "--cached";
@@ -1271,8 +1302,9 @@ public:
    // Without it in the pathspec Git cannot pair the two sides, and shows the
    // file as added whole rather than as its own changes. A copy is paired
    // only when asked (-C), as the status was (status.renames=copies), and
-   // the diff is kept to the pair: the source of a copy may have staged
-   // changes of its own, which the pathspec would bring along.
+   // the diff is kept to the pairs: the source of a copy may have staged
+   // changes of its own, which the pathspec would bring along, as it would
+   // the other files of a directory that took the source's name.
    core::Error diffFile(const FilePath& filePath,
                         const FilePath* pRenamedFrom,
                         PatchMode mode,
@@ -2244,6 +2276,9 @@ Error vcsDiffFile(const json::JsonRpcRequest& request,
                &output);
    if (error)
       return error;
+
+   if (!renamedFrom.isEmpty())
+      output = renamedPairFor(output, path);
 
    std::string sourceEncoding = projects::projectContext().defaultEncoding();
    bool usedSourceEncoding;
