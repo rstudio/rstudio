@@ -16,3 +16,6 @@ playwright-report-*/
 
 # Local rstudio preference overrides
 .prefs.local.json
+
+# Written by scripts/a11y-report.ts screenshots.
+a11y-screenshots.html

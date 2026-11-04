@@ -128,9 +128,6 @@ on:
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
-      AWS_SCCACHE_ROLE_ARN:
-        description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
-        required: false
       OP_SERVICE_ACCOUNT_TOKEN:
         description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
         required: false
@@ -141,6 +138,13 @@ permissions:
   # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
   # role (see .github/actions/os-publish-e2e-report).
   id-token: write
+
+# actions/cache passes zstd no compression level, so zstd honors ZSTD_CLEVEL;
+# level 9 makes cache entries ~13% smaller than the default level 3 at about
+# the same save time, and restores are unaffected. Set here rather than per
+# step so every save in every job, composite actions included, picks it up.
+env:
+  ZSTD_CLEVEL: 9
 
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
@@ -163,10 +167,8 @@ jobs:
       # (rstudio/rstudio#18129). Consumed by install-dependencies.cmd,
       # make-package.bat, and CMake.
       RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}\rstudio-tools
+      # The backend is set up by the "Configure sccache" step below.
       SCCACHE_ENABLED: '1'
-      # Backend selection happens in the "Select sccache backend" step below:
-      # S3 when the OIDC role + bucket are configured, GHA cache otherwise.
-      SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
       # Compile GWT with readable (PRETTY) symbol names rather than the default
@@ -247,9 +249,14 @@ jobs:
       # land in RSTUDIO_TOOLS_ROOT\dependencies, outside any directory that
       # holds tracked files, so restoring a stale cache can never overwrite
       # this PR's install scripts. Keyed on the install scripts so a version
-      # bump forces a fresh download; the v2 prefix fences off caches saved
+      # bump forces a fresh download. The v2 prefix fenced off caches saved
       # under the old in-tree layout, whose archives would extract into
-      # dependencies/ and clobber tracked files (rstudio/rstudio#18129).
+      # dependencies/ and clobber tracked files (rstudio/rstudio#18129); v3
+      # marks entries trimmed before saving (see "Trim rstudio-tools before
+      # caching"). The v2 restore key lets the first v3 save start from an
+      # untrimmed entry instead of a cold install; it is a no-op once v2
+      # entries age out. The key and the trim match the Windows Server 2025
+      # workflow's, whose build job is the same, so the two share entries.
       # Restore-only; Save rstudio-tools cache runs after the build (from
       # main-scoped runs only) so deps are cached even when compilation fails.
       - name: Restore rstudio-tools deps
@@ -257,8 +264,9 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
+          key: rstudio-tools-win64-v3-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
           restore-keys: |
+            rstudio-tools-win64-v3-
             rstudio-tools-win64-v2-
 
       # The cache above covers dependencies/common and dependencies/windows,
@@ -379,48 +387,22 @@ jobs:
           # looks) so packaging works on both paths.
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files (x86)\NSIS'
 
-      # Prefer the S3 sccache backend when the infra is configured (the
-      # AWS_SCCACHE_ROLE_ARN secret plus the AWS_SCCACHE_BUCKET repo
-      # variable). The GHA cache backend writes per-object entries into each
-      # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
-      # (6000+ of its entries were sccache objects) and LRU-evicting the
-      # main-scoped copies the seed maintains -- PR builds then compile at a
-      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
-      # writes one shared cache.
-      - name: Configure AWS credentials for sccache
-        id: sccache-aws
-        if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
-        # A failed OIDC exchange degrades to the GHA backend below rather
-        # than failing the build.
-        continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
-        with:
-          role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
-          aws-region: us-east-1
-          # Cold builds can run past the default 1-hour session; the role
-          # must be created with a max session duration of at least 2 hours.
-          role-duration-seconds: 7200
-
-      # Falls back to the GHA cache backend when the secret/variable are
-      # unset (e.g. fork PRs) or the credential exchange failed, preserving
-      # today's behavior. Must run before the sccache-action below: that
-      # action only exports the Actions cache URL/token the GHA backend
-      # needs when SCCACHE_GHA_ENABLED is already set as it runs.
-      - name: Select sccache backend
+      # sccache keeps one Actions cache entry per object file. Only main
+      # writes them, and every other ref reads main's. An entry written from
+      # a PR would land in that PR's merge-ref scope, which no other branch
+      # can read, and crowd main's entries out of the repo's cache limit
+      # (#18337). This build runs on the same windows-2025 image and
+      # toolchain as the Windows Server 2025 engine, so it reads the entries
+      # that engine's nightly seed writes. The Actions cache replaced an S3
+      # bucket whose every hit was billed as egress (#19355).
+      - name: Configure sccache
         env:
-          SCCACHE_S3_BUCKET: ${{ vars.AWS_SCCACHE_BUCKET }}
-          SCCACHE_AWS_OUTCOME: ${{ steps.sccache-aws.outcome }}
+          SCCACHE_GHA_RW_MODE: ${{ github.ref == 'refs/heads/main' && 'READ_WRITE' || 'READ_ONLY' }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:SCCACHE_AWS_OUTCOME -eq 'success') {
-            Write-Host "sccache backend: S3 ($env:SCCACHE_S3_BUCKET)"
-            "SCCACHE_BUCKET=$env:SCCACHE_S3_BUCKET" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-            "SCCACHE_REGION=us-east-1" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-            "SCCACHE_S3_KEY_PREFIX=win64" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          } else {
-            Write-Host "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
-            "SCCACHE_GHA_ENABLED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          }
+          Write-Host "sccache backend: GitHub Actions cache ($env:SCCACHE_GHA_RW_MODE)"
+          "SCCACHE_GHA_ENABLED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SCCACHE_GHA_RW_MODE=$env:SCCACHE_GHA_RW_MODE" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
@@ -518,72 +500,6 @@ jobs:
           Copy-Item -Recurse $yarnSrc $yarnDest
           Write-Host "yarn installed: $yarnDest\bin\yarn.cmd"
 
-      # The Electron packaging step runs `npm ci && electron-forge package`
-      # inside src/node/desktop-build-AMD64. Because src/node/desktop ships a
-      # binding.gyp, npm auto-runs `node-gyp rebuild` as the install lifecycle
-      # and uses npm's bundled node-gyp (v11.5.0 in node 22). v11 only knows
-      # VS 2017-2022 and aborts with "Could not find any Visual Studio
-      # installation to use" on the VS 2026 runner. node-gyp v12+ supports
-      # VS 2026.
-      #
-      # npm_config_node_gyp would normally redirect this, but npm pre-injects
-      # its bundled node-gyp directory into PATH for lifecycle scripts; the
-      # env var is documented as "the command to run for npm rebuild when
-      # node-gyp isn't in the path", so the bundled v11 wins. The surgical
-      # fix is to physically replace node-gyp inside the bundled npm tree --
-      # same pattern this workflow already uses for yarn above.
-      - name: Replace bundled node-gyp with v12 for VS 2026 support
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
-            -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
-          $bundledNodeDir = "$env:RSTUDIO_TOOLS_ROOT\dependencies\common\node\$nodeVersion"
-          $bundledGypDir  = "$bundledNodeDir\node_modules\npm\node_modules\node-gyp"
-          if (-not (Test-Path $bundledGypDir)) {
-            Write-Error "Bundled node-gyp directory not found: $bundledGypDir"
-            exit 1
-          }
-          # Install latest node-gyp v12 into a throwaway dir, then copy its
-          # contents over the bundled one. --install-strategy=nested disables
-          # npm's default hoisting so node-gyp's transitive deps (undici,
-          # semver, tar, ...) land inside node-gyp/node_modules/. Without
-          # nested install, deps hoist to the prefix's top-level node_modules,
-          # the copy leaves them behind, and node-gyp v12 then dies at runtime
-          # with "Cannot find module 'undici'" (its new HTTP client dep).
-          # Use the bundled npm so the install runs under the same node
-          # version that will spawn node-gyp during the rebuild lifecycle.
-          $gypInstallDir = "$env:RUNNER_TEMP\node-gyp-v12"
-          if (Test-Path $gypInstallDir) { Remove-Item -Recurse -Force $gypInstallDir }
-          New-Item -ItemType Directory -Force -Path $gypInstallDir | Out-Null
-          & "$bundledNodeDir\npm.cmd" install --install-strategy=nested --prefix $gypInstallDir node-gyp@^12
-          if ($LASTEXITCODE -ne 0) { Write-Error "node-gyp v12 install failed"; exit $LASTEXITCODE }
-          $newGypDir = "$gypInstallDir\node_modules\node-gyp"
-          if (-not (Test-Path "$newGypDir\bin\node-gyp.js")) {
-            Write-Error "node-gyp v12 not installed at $newGypDir"
-            exit 1
-          }
-          if (-not (Test-Path "$newGypDir\node_modules\undici")) {
-            Write-Error "Expected nested undici at $newGypDir\node_modules\undici but not found -- nested install did not behave as expected"
-            exit 1
-          }
-          $bundledVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
-          $newVersion     = (Get-Content "$newGypDir\package.json"     | ConvertFrom-Json).version
-          Write-Host "Replacing bundled node-gyp $bundledVersion with $newVersion (nested deps included)"
-          Remove-Item -Recurse -Force $bundledGypDir
-          Copy-Item -Recurse $newGypDir $bundledGypDir
-          # Sanity check: version is 12.x and undici is reachable where
-          # node-gyp's download.js does `require('undici')`.
-          $finalVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
-          if ($finalVersion -notlike '12.*') {
-            Write-Error "Replacement failed: bundled node-gyp is still $finalVersion"
-            exit 1
-          }
-          if (-not (Test-Path "$bundledGypDir\node_modules\undici")) {
-            Write-Error "undici missing from $bundledGypDir\node_modules -- nested deps were lost in copy"
-            exit 1
-          }
-          Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion with nested deps"
-
       # The setup steps above only need the runner's initial headroom; the
       # build below is what needs the space the background cleanup frees.
       # Gate on free space, not just the done-marker: detached, the cleanup
@@ -645,6 +561,15 @@ jobs:
             echo GWT cache miss -- compiling GWT from scratch
             make-package.bat nozip
           )
+
+      # Drop what no later build reads before saving the tools cache (~1 GB of
+      # a ~2.1 GB entry; see the action for what goes). The Windows Server
+      # 2025 workflow saves the same key and runs the same action. Same
+      # condition as the save below; a failed trim only means a larger entry.
+      - name: Trim rstudio-tools before caching
+        if: always() && steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: ./.github/actions/os-trim-windows-tools
 
       # Save the tools cache only from main-scoped runs (the seed and
       # scheduled workflows), and only on a key miss. A cache saved from a PR
@@ -716,13 +641,22 @@ jobs:
           path: RStudio-installer.exe
           retention-days: 7
 
+  # Reads the Windows shard count from .github/e2e/shards.json and republishes
+  # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
+  # env value itself, so the one declaration has to pass through here.
+  shards:
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: windows
+
   e2e-desktop-windows11arm:
-    needs: build
+    needs: [build, shards]
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too. build_only seeds caches without running e2e, so skip here.
     if: |
       always() &&
       inputs.build_only != true &&
+      needs.shards.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
@@ -737,15 +671,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 6 shards: per-shard setup is only ~5 minutes against a ~30 minute
-        # (at 4 shards) worst-case test step, so extra shards still convert
-        # nearly 1:1 into wall-clock savings. Playwright shards by file, not
-        # by duration, so the shard counts stay unbalanced -- at 4 shards the
-        # slowest shard ran ~30 minutes of tests against ~22 for its siblings
-        # and was the long pole of the whole PR-triggered run.
-        shard: [1, 2, 3, 4, 5, 6]
+        # Declared once in .github/e2e/shards.json (see .github/e2e/README.md
+        # for how the count was chosen); the test step derives --shard=N/M
+        # from strategy.job-total, and e2e-merge prints the same count.
+        shard: ${{ fromJSON(needs.shards.outputs.matrix) }}
     runs-on: windows-11-arm
     timeout-minutes: 120
+    # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
+    # deployment: false keeps each shard from recording a deployment on the PR.
+    environment:
+      name: e2e-playwright
+      deployment: false
     defaults:
       run:
         shell: pwsh
@@ -908,7 +844,7 @@ jobs:
       # set into the cached R library that PW_RSTUDIO_R_LIBS_USER (job env
       # above) points globalSetup at, so tests find every package present and
       # install nothing at test time. Without it the set is fetched from
-      # cran.r-project.org on every run, and a CRAN outage surfaces as
+      # CRAN on every run, and a CRAN outage surfaces as
       # mid-suite install hangs (s4_unloaded_package, shinytest2).
       - name: Install e2e test dependencies
         id: e2e_deps
@@ -1135,7 +1071,7 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-desktop-windows11arm]
+    needs: [shards, e2e-desktop-windows11arm]
     if: always() && inputs.defer_merge != true && needs.e2e-desktop-windows11arm.result != 'skipped' && needs.e2e-desktop-windows11arm.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1169,7 +1105,7 @@ jobs:
         working-directory: e2e/rstudio
         run: |
           if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            echo "::error::No blob reports found -- every shard failed to produce artifacts"
             exit 1
           fi
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
@@ -1236,7 +1172,7 @@ jobs:
             </details>
 
             ---
-            <sub>6 shards · Windows 11 arm64 (x86_64 build, emulated) · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>${{ needs.shards.outputs.count }} shards · Windows 11 arm64 (x86_64 build, emulated) · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Release-gate floor, last so the reporting above still runs. A run that
       # executed nothing must not report green: Playwright suppresses its own

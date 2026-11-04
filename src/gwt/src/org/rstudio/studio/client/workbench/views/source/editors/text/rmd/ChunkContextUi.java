@@ -292,7 +292,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       if (outerChunk_ != null)
       {
-         DocDisplay docDisplay = outerEditor_.getDocDisplay();
+         DocDisplay docDisplay = outerEditor_.getPrimaryDisplay();
          
          Position start = outerChunk_.getPreamble();
          Position end = outerChunk_.getEnd();
@@ -353,7 +353,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    
    private boolean isSetupChunk(int row)
    {
-      String line = outerEditor_.getDocDisplay().getLine(row);
+      String line = outerEditor_.getPrimaryDisplay().getLine(row);
       return line.contains("r setup");
    }
 
@@ -365,7 +365,7 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    
    private String getLabel(int row)
    {
-      String line = outerEditor_.getDocDisplay().getLine(row);
+      String line = outerEditor_.getPrimaryDisplay().getLine(row);
       return extractChunkLabel(line).label;
    }
 

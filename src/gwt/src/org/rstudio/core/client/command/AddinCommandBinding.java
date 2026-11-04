@@ -57,6 +57,14 @@ public class AddinCommandBinding implements CommandBinding
       return AppCommand.Context.Addin;
    }
 
+   // Addins aren't AppCommands, so AppCommand.doExecute() never routes them to another
+   // window. Popped-out chat forwards only routed commands, so it leaves addin keys alone.
+   @Override
+   public boolean isRoutedOutOfCurrentWindow()
+   {
+      return false;
+   }
+
    private final RAddin addin_;
    private final AddinExecutor executor_;
 }

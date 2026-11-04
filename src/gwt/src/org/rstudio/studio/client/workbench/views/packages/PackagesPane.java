@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
@@ -90,6 +92,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.DefaultCellTableBuilder;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -105,20 +108,6 @@ import jsinterop.base.Js;
 
 public class PackagesPane extends WorkbenchPane implements Packages.Display
 {
-   private class WidgetTextHeader extends TextHeader
-   {
-      public WidgetTextHeader()
-      {
-         super("");
-      }
-
-      @Override
-      public String getHeaderStyleNames()
-      {
-         return dataGridRes_.dataGridStyle().widgetColumnHeader();
-      }
-   }
-
    @Inject
    public PackagesPane(Commands commands, 
                        Session session,
@@ -127,7 +116,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                        UserPrefs prefs,
                        PackagesServerOperations server)
    {
-      super(constants_.packagesTitle(), events);
+      super(constants_.packagesTitle(), PaneManager.PACKAGES_PANE, events);
 
       commands_ = commands;
       session_ = session;
@@ -437,6 +426,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       });
       
       helpButton_ = commands_.renvHelp().createToolbarButton(false);
+      helpButton_.addStyleName(ThemeStyles.INSTANCE.packagesToolbarTextButton());
       toolbar.addRightWidget(helpButton_);
       helpButton_.setVisible(false);
       helpSeparator_ = toolbar.addRightSeparator();
@@ -456,6 +446,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          });
 
       repositoryButton_.setVisible(false);
+      repositoryButton_.addStyleName(ThemeStyles.INSTANCE.packagesToolbarTextButton());
       ElementIds.assignElementId(repositoryButton_, "packages_pane_repository_button");
       toolbar.addRightWidget(repositoryButton_);
       toolbar.addRightSeparator();
@@ -478,7 +469,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       ToolbarMenuButton moreButton = new ToolbarMenuButton(
          ToolbarMenuButton.NoText,
-         ToolbarMenuButton.NoTitle,
+         constants_.paneOptionsTitle(),
          moreMenu,
          false);
       
@@ -780,8 +771,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       };
 
       // add common columns
-      packagesTable_.addColumn(loadedColumn_, new TextHeader(""));
-      packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
+      packagesTable_.addColumn(loadedColumn_,
+            hiddenTextHeader(constants_.loadedColumnHeader()));
+      packagesTable_.addColumn(nameColumn_, new TextHeader(constants_.packageHeader()));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
       packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
@@ -850,12 +842,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesTable_.setColumnWidth(lockfileVersionColumn_, 100, Unit.PX);
       }
      
+      String widgetHeaderStyle = dataGridRes_.dataGridStyle().widgetColumnHeader();
+
       // help column is common
-      packagesTable_.addColumn(helpColumn_, new WidgetTextHeader());
+      packagesTable_.addColumn(helpColumn_,
+            hiddenTextHeader(constants_.helpColumnHeader(), widgetHeaderStyle));
       packagesTable_.setColumnWidth(helpColumn_, 20, Unit.PX);
 
       // browse column is common
-      packagesTable_.addColumn(browseColumn_, new WidgetTextHeader());
+      packagesTable_.addColumn(browseColumn_,
+            hiddenTextHeader(constants_.browseColumnHeader(), widgetHeaderStyle));
       packagesTable_.setColumnWidth(browseColumn_, 20, Unit.PX);
 
       // remove column is common (note that we allocate extra column
@@ -864,7 +860,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (scrollWidth > 0)
          scrollWidth += 3;
       
-      packagesTable_.addColumn(removeColumn_, new TextHeader(""));
+      packagesTable_.addColumn(removeColumn_,
+            hiddenTextHeader(constants_.removeColumnHeader()));
       packagesTable_.setColumnWidth(removeColumn_, 20 + scrollWidth, Unit.PX);
 
       packagesTable_.setTableBuilder(new PackageTableBuilder(packagesTable_));
@@ -916,6 +913,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    {
    }
 
+   private SafeHtmlHeader hiddenTextHeader(String label)
+   {
+      return hiddenTextHeader(label, null);
+   }
+
+   private SafeHtmlHeader hiddenTextHeader(String label, String styleNames)
+   {
+      SafeHtmlHeader header = new SafeHtmlHeader(SafeHtmlUtil.visuallyHiddenText(label));
+      header.setHeaderStyleNames(styleNames);
+      return header;
+   }
+
    private String getMetadataColumnLabel()
    {
       String label = session_.getSessionInfo().getPpmMetadataColumnLabel();
@@ -931,9 +940,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Override
       public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
       {
+         // Keyboard selection is disabled, so without one tab stop nothing in
+         // the list could take focus. The scroller can't take it instead: it
+         // sits between the grid's role="table" and its rowgroups.
+         int tabIndex = context.getIndex() == 0 ? 0 : -1;
          SafeHtml checkbox = value.isAttached()
-            ? TEMPLATES.checkboxChecked(value.getName())
-            : TEMPLATES.checkboxUnchecked(value.getName());
+            ? TEMPLATES.checkboxChecked(value.getName(), tabIndex)
+            : TEMPLATES.checkboxUnchecked(value.getName(), tabIndex);
 
          sb.append(checkbox);
       }
@@ -1083,11 +1096,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
       SafeHtml description(String className, String packageDescription);
 
-      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" checked />")
-      SafeHtml checkboxChecked(String label);
+      @Template("<input type=\"checkbox\" tabindex=\"{1}\" aria-label=\"{0}\" checked />")
+      SafeHtml checkboxChecked(String label, int tabIndex);
 
-      @Template("<input type=\"checkbox\" tabindex=\"-1\" aria-label=\"{0}\" />")
-      SafeHtml checkboxUnchecked(String label);
+      @Template("<input type=\"checkbox\" tabindex=\"{1}\" aria-label=\"{0}\" />")
+      SafeHtml checkboxUnchecked(String label, int tabIndex);
    }
 
    private RStudioDataGrid<PackageInfo> packagesTable_;

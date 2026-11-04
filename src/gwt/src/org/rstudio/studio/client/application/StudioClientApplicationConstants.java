@@ -64,7 +64,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String consoleCommandAnnouncement();
     String filterResultCountAnnouncement();
     String commitMessageLengthAnnouncement();
-    String inaccessibleWarningAnnouncement();
     String infoBarsAnnouncement();
     String taskCompletionAnnouncement();
     String taskProgressAnnouncement();
@@ -73,6 +72,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String tabKeyFocusAnnouncement();
     String toolBarVisibilityAnnouncement();
     String warningBarsAnnouncement();
+    String plotChangedAnnouncement();
     String sessionSuspendAnnouncement();
     String unregisteredLiveAnnouncementMessage();
     String closeRemoteSessionCaption();
@@ -113,6 +113,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String applicationUpdatedCaption();
     String applicationUpdatedMessage();
     String warningBarText();
+    String workbenchLabel();
     String rSessionErrorCaption();
     String previousRSessionsMessage();
     String mainLabel();
@@ -168,6 +169,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String noUpdateAvailableCaption();
     String usingNewestVersionMessage();
     String rStudioServerHomeTitle();
+    String rStudioLogoAltText();
     String browserNotAllowAccessLabel();
     String computerClipBoardLabel();
     String useKeyboardShortcutsLabel();

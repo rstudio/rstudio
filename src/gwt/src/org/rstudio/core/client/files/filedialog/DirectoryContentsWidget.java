@@ -31,7 +31,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
@@ -223,7 +222,6 @@ public class DirectoryContentsWidget extends Composite
 
    public void clearContents()
    {
-      Roles.getListboxRole().removeAriaActivedescendantProperty(table_.getElement());
       table_.clear();
       table_.scrollToTop();
       table_.scrollToLeft();

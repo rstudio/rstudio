@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -23,7 +24,6 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 
 public class ManipulatorControlPicker extends ManipulatorControl
@@ -46,7 +46,7 @@ public class ManipulatorControlPicker extends ManipulatorControl
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
   
       // caption
-      Label captionLabel = new Label();
+      FormLabel captionLabel = new FormLabel();
       captionLabel.setStyleName(styles.captionLabel());
       captionLabel.setText(getLabel() + ":");
       panel.add(captionLabel);
@@ -72,6 +72,7 @@ public class ManipulatorControlPicker extends ManipulatorControl
              new JSONString(listBox_.getItemText(listBox_.getSelectedIndex())));
          }   
       });
+      captionLabel.setFor(listBox_);
       panel.add(listBox_);
       
       initWidget(panel);

@@ -160,10 +160,6 @@ public class UserStateAccessor extends Prefs
          return this && typeof this.enableSplashScreen === "boolean" ? this.enableSplashScreen : true;
       }-*/;
 
-      public final native boolean getShowWhatsNew() /*-{
-         return this && typeof this.showWhatsNew === "boolean" ? this.showWhatsNew : true;
-      }-*/;
-
    }
 
    /**
@@ -342,6 +338,14 @@ public class UserStateAccessor extends Prefs
 
       public final native int getResolution() /*-{
          return this && this.resolution || 0;
+      }-*/;
+
+      public final native String getTiffCompression() /*-{
+         return this && this.tiffCompression || "lzw";
+      }-*/;
+
+      public final native int getJpegQuality() /*-{
+         return this && this.jpegQuality || 100;
       }-*/;
 
    }

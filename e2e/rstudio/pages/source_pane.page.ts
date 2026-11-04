@@ -37,7 +37,13 @@ export class SourcePane extends PageObject {
   constructor(page: Page) {
     super(page);
     this.selectedTab = page.locator("[class*='rstudio_source_panel'] [class*='PanelTab-selected']");
-    this.ghostText = page.locator('[class*=ace_ghost_text]');
+    // Ghost text is an inline ace_ghost_text token for the first line plus,
+    // for multi-line text, a line widget holding the rest. A suggestion that
+    // begins with a newline leaves that first token empty, so an unfiltered
+    // .first() lands on a zero-size span and reports "not visible" while the
+    // widget below it is plainly on screen (run 38982090628). Keep only the
+    // elements that carry text.
+    this.ghostText = page.locator('[class*=ace_ghost_text]').filter({ hasText: /\S/ });
     this.contentPane = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//*[@class='ace_content' and not(ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' ace_lineWidgetContainer ')])]");
     this.nesApply = page.locator("xpath=//*[text()='Apply']");
     this.nesSuggestionContent = page.locator('.ace_lineWidgetContainer .ace_content');

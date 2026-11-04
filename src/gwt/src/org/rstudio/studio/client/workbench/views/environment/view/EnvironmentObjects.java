@@ -472,7 +472,7 @@ public class EnvironmentObjects extends ResizeComposite
    {
       objectSort_.setSortColumn(col);
       observer_.setViewDirty();
-      Collections.sort(objectDataProvider_.getList(), objectSort_);
+      sortObjects();
    }
 
    @Override
@@ -491,14 +491,24 @@ public class EnvironmentObjects extends ResizeComposite
    {
       objectSort_.setAscending(ascending);
       observer_.setViewDirty();
-      Collections.sort(objectDataProvider_.getList(), objectSort_);
+      sortObjects();
    }
 
    public void setSort(int column, boolean ascending)
    {
       objectSort_.setSortColumn(column);
       objectSort_.setAscending(ascending);
+      sortObjects();
+   }
+
+   private void sortObjects()
+   {
       Collections.sort(objectDataProvider_.getList(), objectSort_);
+
+      // The grid redraws its headers only when rows are pushed, and sorting an empty
+      // list pushes none, so redraw them here or the sort icon and aria-sort go stale.
+      if (objectDisplay_ != null)
+         objectDisplay_.redrawHeaders();
    }
 
    @Override

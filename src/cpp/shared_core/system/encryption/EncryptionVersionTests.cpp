@@ -377,6 +377,64 @@ TEST(SharedCoreTest, VersionedCryptoCalls)
    }
 }
 
+namespace {
+
+std::vector<unsigned char> fromHex(const std::string& hex)
+{
+   std::vector<unsigned char> bytes;
+   for (std::size_t i = 0; i + 1 < hex.size(); i += 2)
+      bytes.push_back(static_cast<unsigned char>(std::stoi(hex.substr(i, 2), nullptr, 16)));
+   return bytes;
+}
+
+} // anonymous namespace
+
+// The v0 and v1 formats are AES-128-CBC with PKCS#7 padding, and stored data
+// and other components depend on these exact bytes. The key, IV, plaintext,
+// and first four ciphertext blocks are the CBC-AES128 example from NIST
+// SP 800-38A, appendix F.2.1. The fifth block is the padding block.
+TEST(SharedCoreTest, LegacyEncryptionVersionsMatchAes128CbcKnownAnswer)
+{
+   const std::vector<unsigned char> key = fromHex("2b7e151628aed2a6abf7158809cf4f3c");
+   const std::vector<unsigned char> iv = fromHex("000102030405060708090a0b0c0d0e0f");
+   const std::vector<unsigned char> plaintext = fromHex(
+      "6bc1bee22e409f96e93d7e117393172a"
+      "ae2d8a571e03ac9c9eb76fac45af8e51"
+      "30c81c46a35ce411e5fbc1191a0a52ef"
+      "f69f2445df4f9b17ad2b417be66c3710");
+   const std::vector<unsigned char> ciphertext = fromHex(
+      "7649abac8119b246cee98e9b12e9197d"
+      "5086cb9b507219ee95db113a917678b2"
+      "73bed6b8e3c1743b7116e69e22229516"
+      "3ff1caa1681fac09120eca307586e1a7"
+      "8cb82807230e1321d3fae00d18cc2012");
+
+   // v0: the ciphertext alone
+   {
+      std::vector<unsigned char> encrypted;
+      ASSERT_FALSE(crypto::v0::aesEncrypt(plaintext, key, iv, encrypted));
+      EXPECT_EQ(ciphertext, encrypted);
+
+      std::vector<unsigned char> decrypted;
+      ASSERT_FALSE(crypto::v0::aesDecrypt(ciphertext, key, iv, decrypted));
+      EXPECT_EQ(plaintext, decrypted);
+   }
+
+   // v1: the version byte, then the same ciphertext
+   {
+      std::vector<unsigned char> v1Ciphertext = { crypto::v1::VERSION_BYTE };
+      v1Ciphertext.insert(v1Ciphertext.end(), ciphertext.begin(), ciphertext.end());
+
+      std::vector<unsigned char> encrypted;
+      ASSERT_FALSE(crypto::v1::aesEncrypt(plaintext, key, iv, encrypted));
+      EXPECT_EQ(v1Ciphertext, encrypted);
+
+      std::vector<unsigned char> decrypted;
+      ASSERT_FALSE(crypto::v1::aesDecrypt(v1Ciphertext, key, iv, decrypted));
+      EXPECT_EQ(plaintext, decrypted);
+   }
+}
+
 } // end namespace tests
 } // end namespace system
 } // end namespace core

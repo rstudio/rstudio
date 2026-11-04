@@ -1746,6 +1746,70 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/19117
+  test('cell values keep runs of spaces and escape line breaks', async ({ rstudioPage: page }) => {
+    // Cells use white-space: pre so a run of spaces is drawn (and copied)
+    // intact. The grid draws newlines and tabs escaped, so a multi-line value
+    // still occupies a single row, while its tooltip and a copy of the cell
+    // keep the value itself.
+    const setup = `{ .rs.ws_test_df <- data.frame(a = c("test     this", "line1\\nline2\\tend"), stringsAsFactors = FALSE); View(.rs.ws_test_df) }`;
+    await consoleActions.executeInConsole(setup);
+    try {
+      await waitForViewer(dataViewer);
+
+      const cells = dataViewer.frame.locator('#gridBody .textCell');
+      await expect(cells).toHaveCount(2);
+
+      // innerText reflects the rendered text (after CSS white-space
+      // processing), unlike textContent, so it is what a copy would yield.
+      const rendered = await cells.evaluateAll((tds) =>
+        (tds as HTMLElement[]).map((td) => td.innerText));
+      expect(rendered).toEqual(['test     this', 'line1\\nline2\\tend']);
+
+      // The escaped value did not wrap onto a second line and grow its row.
+      const heights = await cells.evaluateAll((tds) =>
+        (tds as HTMLElement[]).map((td) => td.getBoundingClientRect().height));
+      expect(heights[1]).toBe(heights[0]);
+
+      const multiLine = cells.nth(1);
+      await expect(multiLine).toHaveAttribute('title', 'line1\nline2\tend');
+
+      // Record what the grid's own Ctrl/Cmd+C handler (copyActiveCell) writes.
+      // Replacing navigator.clipboard also covers insecure contexts, where
+      // it is otherwise undefined and the handler falls back to execCommand.
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const win = f?.contentWindow as (Window & { __dvCopyText?: string | null }) | null;
+        if (!win) throw new Error('data viewer iframe not accessible');
+        win.__dvCopyText = null;
+        Object.defineProperty(win.navigator, 'clipboard', {
+          configurable: true,
+          value: {
+            writeText: (text: string) => {
+              win.__dvCopyText = text;
+              return Promise.resolve();
+            },
+          },
+        });
+      }, VIEWER_FRAME);
+
+      await multiLine.click();
+      await page.keyboard.press('ControlOrMeta+c');
+      await expect.poll(
+        () => page.evaluate((sel: string) => {
+          const f = document.querySelector(sel) as HTMLIFrameElement | null;
+          const win = f?.contentWindow as (Window & { __dvCopyText?: string | null }) | null;
+          return win?.__dvCopyText ?? null;
+        }, VIEWER_FRAME),
+        { message: 'copying the active cell never wrote to the clipboard' },
+      ).toBe('line1\nline2\tend');
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.ws_test_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // https://github.com/rstudio/rstudio/issues/17800
   //
   // The grid intercepts Ctrl/Cmd+C while the viewport is focused to copy the
@@ -2334,6 +2398,59 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.recycle_wide_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18988
+  //
+  // What was pulling the reporter's grid back. With the browser reducing
+  // motion (Windows "Animation effects" off), the grid's stylesheet gave every
+  // element a near-zero transition-duration to shorten its fades. That starts
+  // a transition for every inline style change too, and an element whose
+  // transition has just started is laid out at its old value for that frame:
+  // the spacer a render grows to cover the rows it recycles did not grow until
+  // the frame after the rows were gone. The content was one recycled window
+  // short for a frame, both panes were clamped to it, and the last row stayed
+  // out of reach however the grid was scrolled. The preference is emulated for
+  // the whole page, so it reaches the grid's document.
+  test('the grid reaches the bottom when the browser reduces motion (#18988)', async ({ rstudioPage: page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // 500 rows to force vertical virtual scrolling, all in one fetch block so
+    // wheeling takes the incremental path (as in the mid-render layout test).
+    await consoleActions.executeInConsole(
+      '{ .rs.motion_df <- as.data.frame(matrix(seq_len(500 * 6), nrow = 500)); View(.rs.motion_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expectHorizontalOverflow(dataViewer);
+      // Without the preference in the grid's own document the test would pass
+      // on the very stylesheet it is meant to catch.
+      expect(await dataViewer.viewport.evaluate(
+        (el: HTMLElement) => el.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      )).toBe(true);
+
+      // Rows recycled several at a time, driven by the wheel.
+      await scrollGridToBottom(page, dataViewer, 499);
+      await expectBottomToSettle(page, dataViewer);
+      await expectLastRowInView(dataViewer, '499');
+
+      // A row at a time, driven by the keyboard: away from the bottom and back
+      // down onto the last row, which lands one row short if the content is a
+      // row short when the last ArrowDown scrolls.
+      await dataViewer.frame.locator('#gridBody tr[data-row="495"] td.numberCell').first().click();
+      await expect(dataViewer.frame.locator('#rsGridCell_495_1')).toHaveClass(/\bactiveCell\b/);
+      for (let i = 0; i < 60; i++) await page.keyboard.press('ArrowUp');
+      await expect(dataViewer.frame.locator('#rsGridCell_435_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      for (let i = 0; i < 64; i++) await page.keyboard.press('ArrowDown');
+      await expect(dataViewer.frame.locator('#rsGridCell_499_1'))
+        .toHaveClass(/\bactiveCell\b/, { timeout: TIMEOUTS.fileOpen });
+      await expectLastRowInView(dataViewer, '499');
+    } finally {
+      await page.emulateMedia({ reducedMotion: null });
+      await consoleActions.executeInConsole(
+        'rm(".rs.motion_df", envir = .GlobalEnv)',
       );
     }
   });

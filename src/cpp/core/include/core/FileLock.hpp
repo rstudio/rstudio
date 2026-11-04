@@ -199,6 +199,10 @@ public:
    static void setAfterRenameForTesting(const boost::function<void(const FilePath&)>& callback);
    static void setForceClaimDirectoryChownFailureForTesting(bool forceFailure);
    static void setForceFallbackForTesting(bool forceFallback);
+   // 0 restores the real acl_set_fd(); any other value fails it with that errno
+   static void setForceClaimDirectoryAclFailureForTesting(int errorNumber);
+   // treat new claim directories as owned by another user, as ntfs-3g reports them
+   static void setForceClaimDirectoryForeignOwnerForTesting(bool foreignOwner);
 #endif
 
    Error acquire(const FilePath& lockFilePath);

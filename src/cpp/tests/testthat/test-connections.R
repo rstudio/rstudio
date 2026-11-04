@@ -98,3 +98,22 @@ test_that("connection list filter removes duplicates appropriately", {
    # duplicates that should be removed
    expect_false(any(duplicates_reject %in% connectionList))
 })
+
+test_that("connection_add_package registers only packages that ship connections.dcf", {
+   # Run the RPC handler with .Call and system.file stubbed, recording the
+   # paths it would hand to the native registry.
+   addPackage <- function(dcfPath) {
+      registered <- character()
+      handler <- .rs.rpc.connection_add_package
+      environment(handler) <- list2env(parent = environment(handler), list(
+         system.file = function(...) dcfPath,
+         .Call = function(name, package, path, ...) registered <<- c(registered, path)
+      ))
+      handler("pkg")
+      registered
+   }
+
+   expect_equal(addPackage(""), character())
+   expect_equal(addPackage("/lib/pkg/rstudio/connections.dcf"),
+                "/lib/pkg/rstudio/connections.dcf")
+})

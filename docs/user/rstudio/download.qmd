@@ -22,7 +22,7 @@ Move from question to insight to analysis, model, or application faster than eve
 
 Positron also comes out of the box with [Posit Assistant](https://assistant.posit.co/docs/getting-started/), a data science native AI agent. It connects to your live R and Python sessions, sees your data, and helps you explore, visualize, build, and debug. Try Assistant for free with [Posit AI](https://assistant.posit.co/docs/getting-started/posit-ai/)
 
-[Download Positron](https://positron.posit.co/download.html) 
+[Download Positron](https://positron.posit.co/download.html?utm_source=docs-posit-co&utm_medium=referral&utm_campaign=rstudio-download-positron-cta&utm_content=tip-cta-button) 
 :::
 
 ## RStudio Desktop {#rstudio-ide-oss-downloads}

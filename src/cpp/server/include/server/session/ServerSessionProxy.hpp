@@ -145,17 +145,54 @@ void prepareLocalhostResponseForTest(
       const core::http::Response& response,
       core::http::Response* pPreparedResponse);
 
-// The error handlers bound to proxied rpc and content requests, which report
-// the request's outcome to the session manager (#18963).
-void handleRpcErrorForTest(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const core::r_util::SessionContext& context,
-      const core::Error& error);
+// Exposes the /p/ buffering policy (shouldBufferLocalhostResponse) -- which
+// responses proxyLocalhostRequest holds whole rather than streams.
+bool shouldBufferLocalhostResponseForTest(const core::http::Response& response);
 
+// Exercises handleLocalhostResponse()'s normal (non-websocket-upgrade)
+// branch, which writes the /p/ response to the client connection.
+void handleLocalhostResponseForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const std::string& port,
+      const std::string& baseAddress,
+      bool ipv6,
+      const core::http::Response& response);
+
+// Exposes the /s/ buffering policy (shouldBufferLocalStreamResponse) -- which
+// responses proxyRequest holds whole rather than streams.
+bool shouldBufferLocalStreamResponseForTest(const core::http::Response& response);
+
+// Exposes the /s/ content, RPC and events error handlers (handleContentError,
+// handleRpcError, handleEventsError) that proxyRequest installs on the
+// upstream client. The content and RPC handlers also report the request's
+// outcome to the session manager (#18963).
 void handleContentErrorForTest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const core::r_util::SessionContext& context,
       const core::Error& error);
+
+void handleRpcErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const core::r_util::SessionContext& context,
+      const core::http::Headers& authCookies,
+      const core::Error& error);
+
+void handleEventsErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const core::r_util::SessionContext& context,
+      const core::http::Headers& authCookies,
+      const core::Error& error);
+
+// Exposes the /p/ error handler (handleLocalhostError) that
+// proxyLocalhostRequest installs on the upstream client.
+void handleLocalhostErrorForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const core::Error& error);
+
+// Exposes the license-error mapping (handleLicenseError) the error handlers
+// above consult; returns whether it recognized error and populated *pResponse.
+bool handleLicenseErrorForTest(const core::Error& error,
+                               core::http::Response* pResponse);
 #endif
 
 } // namespace session_proxy

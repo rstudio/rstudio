@@ -222,7 +222,8 @@ public class StatusBarWidget extends Composite
 
    private void initMessage(String message,
                             boolean hideScopeWidget,
-                            ImageResource icon)
+                            ImageResource icon,
+                            String iconAltText)
    {
       if (hideScopeWidget)
       {
@@ -231,13 +232,13 @@ public class StatusBarWidget extends Composite
       }
 
       message_.setValue(message);
-      message_.setIcon(icon);
+      message_.setIcon(icon, iconAltText);
       show(message_);
    }
 
    private void initMessage(String message, boolean hideScopeWidget)
    {
-      initMessage(message, hideScopeWidget, null);
+      initMessage(message, hideScopeWidget, null, null);
    }
    
    private void endMessage()
@@ -253,27 +254,29 @@ public class StatusBarWidget extends Composite
    public void showStatus(StatusBarIconType type, String message, ClickHandler clickHandler)
    {
       ImageResource resource = null;
+      String altText = null;
 
       switch (type)
       {
-      case TYPE_OK:
-         resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
-         break;
       case TYPE_LOADING:
          // uses SVG spinner instead of image; handled below
          break;
+      case TYPE_OK:
       case TYPE_INFO:
          resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
+         altText = constants_.informationCapitalized();
          break;
       case TYPE_WARNING:
          resource = new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x());
+         altText = constants_.warningCapitalized();
          break;
       case TYPE_ERROR:
          resource = new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x());
+         altText = constants_.errorCapitalized();
          break;
       }
 
-      initMessage(message, false, resource);
+      initMessage(message, false, resource, altText);
 
       if (type == StatusBarIconType.TYPE_LOADING)
          message_.showSpinner();

@@ -5,8 +5,9 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
-import { clearPref, executeCommand, saveDocument, setPref, waitForActiveDocument } from '@utils/commands';
+import { clearPref, executeCommand, getPref, saveDocument, setPref, waitForActiveDocument } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
+import { LIGHT_THEME, expectThemeStylesheet, getThemeStylesheetHref } from '@utils/theme';
 
 // Both the console and the active editor mount a FindReplaceBar that shares
 // these automation classes. Scope to the source panel so the test never
@@ -22,6 +23,13 @@ const REPLACE_INPUT = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-replace-in
 const REPLACE_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-replace-button`;
 const WHOLE_WORD_CHECKBOX = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-whole-word-checkbox input`;
 const CLOSE_FIND_BAR = `${SOURCE_PANEL_SELECTOR} button[aria-label='Close find and replace']`;
+const FIND_NEXT_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-find-next-button`;
+const SELECT_ALL_BUTTON = `${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-select-all-button`;
+const FIND_MATCH_MARKER = `${SOURCE_PANEL_SELECTOR} .ace_marker-layer .ace_find_match`;
+// #8D6414, from applyFixups.pastel_on_dark in src/gwt/tools/compile-themes.R:
+// a translucent fill of it, outlined in it
+const FIND_MATCH_AMBER = 'rgb(141, 100, 20)';
+const FIND_MATCH_AMBER_FILL = 'rgba(141, 100, 20, 0.45)';
 
 test.describe('Editor', () => {
   const sandbox = useSuiteSandbox();
@@ -40,6 +48,7 @@ test.describe('Editor', () => {
       'editor_find_from_selection.R',
       'editor_comment_indent.R',
       'editor_soft_wrap.R',
+      'editor_find_match_marker.R',
     ]);
   });
 
@@ -202,6 +211,88 @@ test.describe('Editor', () => {
     // keyboard focus being on the bar.
     await page.locator(CLOSE_FIND_BAR).click();
     await expect(page.locator(FIND_INPUT)).toHaveCount(0, { timeout: 5000 });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/13204
+  test('find marks the current match with its own marker', async ({ rstudioPage: page }) => {
+    // The shared stylesheet only places the marker; a theme gives it its
+    // colour, and today only Pastel On Dark (the theme in the report) does.
+    // Run under it so the colour check is of what is painted, and put the
+    // original theme back afterwards. applyTheme, not setPref: a live session
+    // is not re-themed off the pref.
+    const originalTheme = (await getPref(page, 'editor_theme')) as string | null;
+    const originalThemeHref = await getThemeStylesheetHref(page);
+    await consoleActions.executeInConsole(`.rs.api.applyTheme("Pastel On Dark")`, { wait: true });
+    await expectThemeStylesheet(page, 'pastel_on_dark');
+
+    try {
+      const content = 'alpha beta\nalpha gamma\nalpha delta\n';
+      await writeAndOpenFile(page, sandbox.dir, 'editor_find_match_marker.R', content);
+
+      const editor = new AceEditor(page, 'alpha beta');
+      await expect.poll(() => editor.getValue()).toContain('alpha beta');
+
+      await waitForActiveDocument(page, `${sandbox.dir}/editor_find_match_marker.R`, TIMEOUTS.fileOpen);
+      await executeCommand(page, 'findReplace');
+      await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+      await page.locator(FIND_INPUT).click();
+      await page.locator(FIND_INPUT).pressSequentially('gamma');
+
+      // Find-as-you-type selects the match, and the match marker is drawn over
+      // exactly that selection (both are text markers of the same range, so
+      // their boxes coincide).
+      await expect.poll(() => editor.getSelectedText()).toBe('gamma');
+      const marker = page.locator(FIND_MATCH_MARKER);
+      await expect(marker).toHaveCount(1);
+      const boxes = await page.evaluate((selector) => {
+        const rect = (el: Element | null) => {
+          const b = el!.getBoundingClientRect();
+          return { x: Math.round(b.x), y: Math.round(b.y), width: Math.round(b.width), height: Math.round(b.height) };
+        };
+        const match = document.querySelector(selector)!;
+        return { match: rect(match), selection: rect(match.parentElement!.querySelector('.ace_selection')) };
+      }, FIND_MATCH_MARKER);
+      expect(boxes.match).toEqual(boxes.selection);
+
+      // Pastel On Dark paints the marker amber.
+      await expect(marker).toHaveCSS('background-color', FIND_MATCH_AMBER_FILL);
+      await expect(marker).toHaveCSS('border-top-color', FIND_MATCH_AMBER);
+
+      // Moving the cursor elsewhere drops the marker; Find Next brings it back.
+      await editor.gotoLine(1);
+      await expect(marker).toHaveCount(0);
+      await page.locator(FIND_NEXT_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('gamma');
+      await expect(marker).toHaveCount(1);
+
+      // Select All drops it too, including when the current match is the
+      // first occurrence: Ace keeps that one as the primary selection, so no
+      // selection change reports it.
+      await editor.gotoLine(1);
+      await page.locator(FIND_INPUT).click();
+      await page.locator(FIND_INPUT).press('ControlOrMeta+a');
+      await page.locator(FIND_INPUT).pressSequentially('alpha');
+      await expect.poll(() => editor.getSelectedText()).toBe('alpha');
+      await expect(marker).toHaveCount(1);
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('alpha\nalpha\nalpha');
+      await expect(marker).toHaveCount(0);
+
+      // Closing the bar removes the marker and leaves the selection in place.
+      await page.locator(FIND_NEXT_BUTTON).click();
+      await expect(marker).toHaveCount(1);
+      await page.locator(CLOSE_FIND_BAR).click();
+      await expect(page.locator(FIND_INPUT)).toHaveCount(0, { timeout: 5000 });
+      await expect(marker).toHaveCount(0);
+      expect(await editor.getSelectedText()).toBe('alpha');
+    } finally {
+      await consoleActions.executeInConsole(
+        `.rs.api.applyTheme(${JSON.stringify(originalTheme ?? LIGHT_THEME)})`,
+        { wait: true },
+      );
+      await expectThemeStylesheet(page, originalThemeHref);
+    }
   });
 
   // https://github.com/rstudio/rstudio/issues/17493

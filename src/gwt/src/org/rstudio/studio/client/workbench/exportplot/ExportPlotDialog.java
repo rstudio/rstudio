@@ -89,7 +89,9 @@ public class ExportPlotDialog extends ModalDialogBase
                                       previous.getViewAfterSave(),
                                       previous.getUseDevicePixelRatio(),
                                       previous.getCopyAsMetafile(),
-                                      previous.getResolution());
+                                      previous.getResolution(),
+                                      previous.getTiffCompression(),
+                                      previous.getJpegQuality());
    }
     
   

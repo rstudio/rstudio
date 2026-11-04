@@ -35,4 +35,7 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
     String filterCommandHistoryLabel();
     String historyTabLabel();
     String historyEntryTableText();
+    String recentCommandsListLabel();
+    String searchResultsListLabel();
+    String contextListLabel();
 }

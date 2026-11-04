@@ -79,6 +79,8 @@ enum SessionScopeState
 
 void setMinUid(uid_t minUid);
 std::string obfuscatedUserId(uid_t uid);
+// For reading persisted keys written before the MAX_UID remapping boundary fix.
+std::string legacyObfuscatedUserId(uid_t uid);
 
 class ProjectId
 {

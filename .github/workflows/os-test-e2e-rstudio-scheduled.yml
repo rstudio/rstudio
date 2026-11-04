@@ -103,8 +103,9 @@ permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
   # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC,
-  # and every engine's build job assumes the S3 sccache role via OIDC; a
-  # reusable workflow's id-token grant is capped by its caller's.
+  # and the build jobs of the engines that keep sccache on S3 (the rotation-
+  # only ones) assume the S3 sccache role via OIDC; a reusable workflow's
+  # id-token grant is capped by its caller's.
   id-token: write
 
 jobs:
@@ -391,9 +392,12 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      # Rotation engines run once or twice a week, too rarely for their
+      # os-e2e-deps caches to outlive eviction; saving them only pushes
+      # out the caches PR builds read. Every engine call below sets this.
+      skip_e2e_deps_cache_save: true
       os: ${{ matrix.os }}
       arch: ${{ matrix.arch }}
       project: desktop
@@ -408,9 +412,9 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: server
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
@@ -423,9 +427,9 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
@@ -438,9 +442,9 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
@@ -453,9 +457,9 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       # Same universal macOS .dmg the arm64 engines test; the daily manifest
@@ -470,9 +474,9 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
@@ -485,9 +489,9 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
+      skip_e2e_deps_cache_save: true
       project: desktop
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.windows }}

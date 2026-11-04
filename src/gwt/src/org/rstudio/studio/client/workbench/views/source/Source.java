@@ -37,7 +37,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BeforeShowEvent;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -584,15 +583,6 @@ public class Source implements InsertSourceEvent.Handler,
    {
       // sync UI prefs with shortcut manager
       userPrefs_ = RStudioGinjector.INSTANCE.getUserPrefs();
-
-      if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_VIM)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_EMACS)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
-      else
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
 
       initialized_ = true;
 
@@ -1718,6 +1708,12 @@ public class Source implements InsertSourceEvent.Handler,
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type)
    {
       return getUnsavedChanges(type,  null);
+   }
+
+   // The editor for the given document in this window, or null if none
+   public EditingTarget findEditor(String docId)
+   {
+      return columnManager_.findEditor(docId);
    }
 
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
@@ -2968,9 +2964,12 @@ public class Source implements InsertSourceEvent.Handler,
                }
                else
                {
+                  // the editor view holding the cursor, which may be the
+                  // document's split view -- where getEditorContext() reads
+                  // the selection from
                   target.ensureTextEditorActive(() ->
                   {
-                     command.execute(target.getDocDisplay());
+                     command.execute(target.activeDisplay());
                   });
                }
             }
@@ -3320,7 +3319,7 @@ public class Source implements InsertSourceEvent.Handler,
          RStudioApiRequestEvent.SetGhostTextData data = requestEvent.getPayload().cast();
          invokeEditorApiAction(null, (TextEditingTarget target) ->
          {
-            DocDisplay editor = target.getDocDisplay();
+            DocDisplay editor = target.activeDisplay();
             editor.setGhostText(data.getText());
             
             JsObject response = JsObject.createJsObject();

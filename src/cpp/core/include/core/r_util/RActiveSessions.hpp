@@ -146,6 +146,10 @@ public:
    static const std::string kWorkbench;
    static const std::string kId;
    static const std::string kDisplayName;
+   static const std::string kStatusMessage;
+
+   // The properties read when a caller asks for none in particular
+   static const std::set<std::string>& defaultProperties();
 
    // The rsession process has exited with an exit code
    static bool isExitedState(const std::string& state)
@@ -226,35 +230,8 @@ public:
       std::map<std::string, std::string> values;
       if (!empty())
       {
-         std::set<std::string> propsToFetch;
-         if (!propertyNames.empty())
-            propsToFetch = propertyNames;
-         else
-         {
-            // If no properties are specified, read them all
-            propsToFetch = {
-               kExecuting,
-               kInitial,
-               kLabel,
-               kLastUsed,
-               kProject,
-               kProjectId,
-               kSavePromptRequired,
-               kRunning,
-               kRVersion,
-               kRVersionHome,
-               kRVersionLabel,
-               kWorkingDir,
-               kActivityState,
-               kLastStateUpdated,
-               kEditor,
-               kLastResumed,
-               kSuspendTimestamp,
-               kBlockingSuspend,
-               kCreated,
-               kLaunchParameters
-            };
-         }
+         const std::set<std::string>& propsToFetch =
+            propertyNames.empty() ? defaultProperties() : propertyNames;
 
          Error error = storage_->readProperties(propsToFetch, pValues);
          if (!error)

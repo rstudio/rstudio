@@ -41,6 +41,7 @@ import com.google.inject.Inject;
 
 import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
@@ -251,6 +252,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftWidget(switchViewButton_);
 
       topToolbar_.addLeftWidget(branchToolbarButton);
+      ElementIds.assignElementId(branchToolbarButton, ElementIds.TB_GIT_REVIEW_BRANCH);
 
       topToolbar_.addLeftSeparator();
 

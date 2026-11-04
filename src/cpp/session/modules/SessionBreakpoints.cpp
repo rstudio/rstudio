@@ -476,10 +476,50 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP local)
    return R_NilValue;
 }
 
+// A '{ .doTrace(...); <expr> }' block, as trace() injects for a breakpoint
+bool isInjectedBreakpoint(SEXP node)
+{
+   if (TYPEOF(node) != LANGSXP || Rf_length(node) != 3)
+      return false;
+
+   if (CAR(node) != R_BraceSymbol)
+      return false;
+
+   SEXP tracer = CADR(node);
+   return TYPEOF(tracer) == LANGSXP && CAR(tracer) == Rf_install(".doTrace");
+}
+
+// Unwrap, in place, every breakpoint trace() injected into 'node'. The
+// closures a debugged file creates while it runs share these nodes with the
+// body they were evaluated from, so editing the tree cleans all of them at
+// once, wherever the file put them (a binding, a list element, an alias,
+// another environment), without re-running anything the file did and
+// without touching functions the run never created.
+void removeInjectedBreakpoints(SEXP node)
+{
+   if (TYPEOF(node) != LANGSXP)
+      return;
+
+   for (SEXP cell = node; cell != R_NilValue; cell = CDR(cell))
+   {
+      while (isInjectedBreakpoint(CAR(cell)))
+         SETCAR(cell, CADDR(CAR(cell)));
+
+      removeInjectedBreakpoints(CAR(cell));
+   }
+}
+
+SEXP rs_removeInjectedBreakpoints(SEXP body)
+{
+   removeInjectedBreakpoints(body);
+   return R_NilValue;
+}
+
 Error initBreakpoints()
 {
    // register .Call methods
    RS_REGISTER_CALL_METHOD(rs_debugSourceFile);
+   RS_REGISTER_CALL_METHOD(rs_removeInjectedBreakpoints);
    RS_REGISTER_CALL_METHOD(rs_registerShinyFunction);
 
    // Initializes the set of breakpoints the server knows about by populating

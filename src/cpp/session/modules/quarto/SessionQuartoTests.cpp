@@ -14,6 +14,7 @@
  */
 
 #include <session/SessionQuarto.hpp>
+#include <session/SessionStartupCache.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -29,6 +30,72 @@ namespace quarto {
 namespace tests {
 
 using namespace rstudio::core;
+
+TEST(StartupCache, ReusesMatchingEntriesAndRejectsStaleOrDamagedEntries)
+{
+   FilePath root;
+   ASSERT_FALSE(FilePath::tempFilePath(root));
+   FilePath path = root.completeChildPath("paths.json");
+   StartupCache cache(path);
+   json::Object key, value, result;
+   key["version"] = "1.8.0";
+   value["bin"] = "/opt/quarto/bin";
+   EXPECT_FALSE(cache.read(key, &result));
+   cache.write(key, value);
+   ASSERT_TRUE(StartupCache(path).read(key, &result));
+   EXPECT_EQ(result.write(), value.write());
+   key["version"] = "1.9.0";
+   EXPECT_FALSE(cache.read(key, &result));
+   ASSERT_FALSE(writeStringToFile(path, "broken json"));
+   EXPECT_FALSE(cache.read(key, &result));
+   ASSERT_FALSE(writeStringToFile(path, "{\"key\": 1, \"value\": []}"));
+   EXPECT_FALSE(cache.read(key, &result));
+   EXPECT_FALSE(root.removeIfExists());
+}
+
+TEST(QuartoPathsCache, HitRequiresLaunchableLauncherAndToolsDirectory)
+{
+   FilePath root;
+   ASSERT_FALSE(FilePath::tempFilePath(root));
+   FilePath bin = root.completeChildPath("bin");
+   FilePath tools = bin.completeChildPath("tools");
+   FilePath resources = root.completeChildPath("share");
+   FilePath launcher = bin.completeChildPath("quarto");
+   ASSERT_FALSE(tools.ensureDirectory());
+   ASSERT_FALSE(resources.ensureDirectory());
+   ASSERT_FALSE(launcher.ensureFile());
+#ifndef _WIN32
+   // file modes are POSIX-only; on Windows an existing launcher is launchable
+   ASSERT_FALSE(launcher.changeFileMode(FileMode::USER_READ_WRITE_EXECUTE));
+#endif
+   std::string binPath = bin.getAbsolutePath();
+   std::string resourcesPath = resources.getAbsolutePath();
+
+   EXPECT_TRUE(quartoPathsUsable(launcher, binPath, resourcesPath));
+
+#ifndef _WIN32
+   // the launcher itself can no longer run
+   ASSERT_FALSE(launcher.changeFileMode(FileMode::USER_READ_WRITE));
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+   ASSERT_FALSE(launcher.changeFileMode(FileMode::USER_READ_WRITE_EXECUTE));
+   EXPECT_TRUE(quartoPathsUsable(launcher, binPath, resourcesPath));
+#endif
+
+   // the runtime the launcher starts is gone
+   ASSERT_FALSE(tools.remove());
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+   ASSERT_FALSE(tools.ensureDirectory());
+   EXPECT_TRUE(quartoPathsUsable(launcher, binPath, resourcesPath));
+
+   // cached directories must still exist
+   ASSERT_FALSE(resources.remove());
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+   ASSERT_FALSE(resources.ensureDirectory());
+   ASSERT_FALSE(launcher.remove());
+   EXPECT_FALSE(quartoPathsUsable(launcher, binPath, resourcesPath));
+
+   EXPECT_FALSE(root.removeIfExists());
+}
 
 class ProjectTypeResolution : public ::testing::Test
 {

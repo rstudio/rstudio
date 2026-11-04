@@ -202,11 +202,21 @@
 })
 
 
+#' Save the active plot as an image
+#'
+#' @param file The path to write.
+#' @param format The image format.
+#' @param width,height The size of the image, in pixels at 96 DPI.
+#' @param compression For a TIFF, a compression as named by the 'compression'
+#'   argument of grDevices::tiff(); LZW by default.
+#' @param quality For a JPEG, the quality from 1 to 100; 100 by default.
 .rs.addApiFunction("savePlotAsImage", function(
                    file,
                    format = c("png", "jpeg", "bmp", "tiff", "emf", "svg", "eps"),
                    width,
-                   height) {
+                   height,
+                   compression = NULL,
+                   quality = NULL) {
 
    file <- path.expand(file)
    format <- match.arg(format)
@@ -214,8 +224,13 @@
       stop("width argument mut be numeric", call. = FALSE)
    if (!is.numeric(height))
       stop("height argument mut be numeric", call. = FALSE)
-   
-   invisible(.Call("rs_savePlotAsImage", file, format, width, height, PACKAGE = "(embedding)"))
+   if (!is.null(compression) && (!is.character(compression) || length(compression) != 1L || is.na(compression)))
+      stop("compression argument must be a single string", call. = FALSE)
+   if (!is.null(quality) && (!is.numeric(quality) || length(quality) != 1L || is.na(quality) ||
+                             quality != trunc(quality) || quality < 1 || quality > 100))
+      stop("quality argument must be a whole number from 1 to 100", call. = FALSE)
+
+   invisible(.Call("rs_savePlotAsImage", file, format, width, height, compression, quality, PACKAGE = "(embedding)"))
 })
 
 .rs.addApiFunction("sourceMarkers", function(name,

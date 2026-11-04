@@ -52,7 +52,16 @@ core::r_util::ProjectId s_projectId;
 
 
 
-void onSuspend(Settings*)
+// whether the reduced background file operations notice has been printed in
+// this project session. an rsession process is suspended and resumed (and
+// Restart R goes through the same path), so the flag is carried in the
+// persisted session state rather than tied to the process: the notice is then
+// printed once per project session, and again only when a restart first turns
+// the reduction on (#19240).
+const char* const kReducedFileOpsNoticeShown = "reduced-fileops-notice-shown";
+bool s_reducedFileOpsNoticeShown = false;
+
+void onSuspend(Settings* pSettings)
 {
    // on suspend write out current project path as the one to use
    // on resume. we read this back in initialize (rather than in
@@ -60,9 +69,14 @@ void onSuspend(Settings*)
    // processes lifetime and onResume happens too late
    projects::ProjectsSettings(options().userScratchPath()).
          setNextSessionProject(s_projectContext.file().getAbsolutePath());
+
+   pSettings->set(kReducedFileOpsNoticeShown, s_reducedFileOpsNoticeShown);
 }
 
-void onResume(const Settings&) {}
+void onResume(const Settings& settings)
+{
+   s_reducedFileOpsNoticeShown = settings.getBool(kReducedFileOpsNoticeShown, false);
+}
 
 // the project scratch path file, if it exists, contains the path
 // to an external project scratch path -- basically allowing users
@@ -1022,7 +1036,7 @@ void onQuit()
    saveLastProjectPath();
 }
 
-void afterSessionInitHook(bool newSession)
+void afterSessionInitHook(bool)
 {
    // After fully successful startup, wait 30 seconds (default) and then write the last project
    // path. This project path will get restored at startup, so we want to be very confident it
@@ -1037,7 +1051,16 @@ void afterSessionInitHook(bool newSession)
    // since some live-updating behaviors (file monitoring, indexing) are off.
    // emitted via R's message() so it renders as an informational console
    // message. See https://github.com/rstudio/rstudio/issues/10417.
-   if (module_context::reduceRemoteFilesystemOperations())
+   //
+   // the message is persisted with the console output and replayed when a
+   // suspended session resumes, so it is only printed when this project
+   // session has not printed it yet (#19240). the flag is dropped while the
+   // reduction is off, so turning it on again later announces it again.
+   if (!module_context::reduceRemoteFilesystemOperations())
+   {
+      s_reducedFileOpsNoticeShown = false;
+   }
+   else if (!s_reducedFileOpsNoticeShown)
    {
       std::string msg =
             "RStudio has reduced background file operations (such as file "
@@ -1049,6 +1072,8 @@ void afterSessionInitHook(bool newSession)
       Error error = r::exec::RFunction("base:::message", msg).call();
       if (error)
          LOG_ERROR(error);
+
+      s_reducedFileOpsNoticeShown = true;
    }
 }
 

@@ -19,7 +19,6 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/system/Environment.hpp>
 
 #include <gtest/gtest.h>
 
@@ -27,62 +26,56 @@ namespace rstudio {
 namespace core {
 namespace tests {
 
-namespace {
-
-FilePath tempLockFilePath()
-{
-   std::string home = core::system::getenv("USERPROFILE");
-   return FilePath(home + "\\rstudio-lock-file");
-}
-
-FilePath s_lockFilePath = tempLockFilePath();
-
-} // end anonymous namespace
-
 TEST(Win32Test, FileLockingBasicAdvisoryFileLockAssumptionsHoldTrue)
 {
    Error error;
 
+   // Use a new temporary file, not a file under %USERPROFILE%. Snyk Code
+   // reports a path built from an environment variable as cpp/PT. Keep this
+   // form.
+   FilePath lockFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(lockFilePath));
+
    // create lock file
-   error = s_lockFilePath.ensureFile();
+   error = lockFilePath.ensureFile();
    EXPECT_FALSE(error);
 
    // ensure file is not locked
    AdvisoryFileLock lock;
-   EXPECT_TRUE(s_lockFilePath.exists());
-   EXPECT_FALSE(lock.isLocked(s_lockFilePath));
+   EXPECT_TRUE(lockFilePath.exists());
+   EXPECT_FALSE(lock.isLocked(lockFilePath));
 
    // attempt to acquire that lock
-   error = lock.acquire(s_lockFilePath);
+   error = lock.acquire(lockFilePath);
    EXPECT_FALSE(error);
 
    // attempt to acquire lock with alternate object
    AdvisoryFileLock otherLock;
-   error = otherLock.acquire(s_lockFilePath);
+   error = otherLock.acquire(lockFilePath);
    EXPECT_TRUE(error);
 
    // check that attempts to ascertain lockedness
    // don't incidentally release the lock
-   EXPECT_TRUE(lock.isLocked(s_lockFilePath));
-   EXPECT_TRUE(otherLock.isLocked(s_lockFilePath));
+   EXPECT_TRUE(lock.isLocked(lockFilePath));
+   EXPECT_TRUE(otherLock.isLocked(lockFilePath));
 
    // release lock
    error = lock.release();
    EXPECT_FALSE(error);
 
    // ensure released
-   EXPECT_FALSE(lock.isLocked(s_lockFilePath));
+   EXPECT_FALSE(lock.isLocked(lockFilePath));
 
    // check that destructor releases lock
    {
       AdvisoryFileLock scopedLock;
-      error = scopedLock.acquire(s_lockFilePath);
+      error = scopedLock.acquire(lockFilePath);
    EXPECT_FALSE(error);
    }
-   EXPECT_FALSE(lock.isLocked(s_lockFilePath));
+   EXPECT_FALSE(lock.isLocked(lockFilePath));
 
    // clean up file
-   s_lockFilePath.removeIfExists();
+   lockFilePath.removeIfExists();
 }
 
 } // end namespace tests

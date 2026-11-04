@@ -52,7 +52,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -87,7 +86,6 @@ public abstract class ModalDialogBase extends DialogBox
       // a11y
       role_ = role;
       role_.set(getElement());
-      focus_ = new FocusHelper(getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
@@ -337,7 +335,6 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected void onDialogShown()
    {
-      refreshFocusableElements();
       focusInitialControl();
    }
 
@@ -722,25 +719,6 @@ public abstract class ModalDialogBase extends DialogBox
             break;
          }
          
-         case KeyCodes.KEY_TAB:
-         {
-            if (nativeEvent.getShiftKey() && focus_.isFirst(DomUtils.getActiveElement()))
-            {
-               nativeEvent.preventDefault();
-               nativeEvent.stopPropagation();
-               event.cancel();
-               focusLastControl();
-            }
-            else if (!nativeEvent.getShiftKey() && focus_.isLast(DomUtils.getActiveElement()))
-            {
-               nativeEvent.preventDefault();
-               nativeEvent.stopPropagation();
-               event.cancel();
-               focusFirstControl();
-            }
-            break;
-         }
-         
          }
       }
    }
@@ -823,37 +801,37 @@ public abstract class ModalDialogBase extends DialogBox
     */
    protected void setARIADescribedBy(Element element)
    {
-      String id = element.getId();
-      if (StringUtil.isNullOrEmpty(id))
-      {
-         id = DOM.createUniqueId();
-         element.setId(id);
-      }
+      DomUtils.ensureHasId(element);
       role_.setAriaDescribedbyProperty(getElement(), Id.of(element));
    }
 
    /**
-    * Set focus on first keyboard focusable element in dialog, as set by
-    * refreshFocusableElements or setFirstFocusableElement.
-    *
-    * Invoked when Tabbing off the last control in the modal dialog to set focus back to
-    * the first control, and by default to set initial focus when the dialog is shown.
-    *
-    * To set focus on a different control when the dialog is displayed, override
-    * focusInitialControl, instead.
+    * Name the dialog with an element inside it, for dialogs that show their own
+    * title rather than a caption set with setText
+    * @param element element containing the dialog's title
+    */
+   protected void setARIALabelledBy(Element element)
+   {
+      DomUtils.ensureHasId(element);
+      role_.setAriaLabelledbyProperty(getElement(), Id.of(element));
+   }
+
+   /**
+    * Set focus on the first keyboard focusable element in the dialog. Used by default
+    * to set initial focus when the dialog is shown.
     */
    protected void focusFirstControl()
    {
-      focus_.focusFirstControl();
-   }
+      if (!DomUtils.isEffectivelyVisible(getElement()))
+         return;
 
-    /**
-    * Set focus on last keyboard focusable element in dialog, as set by
-    * <code>refreshFocusableElements</code> or <code>setLastFocusableElement</code>.
-    */
-   protected void focusLastControl()
-   {
-      focus_.focusLastControl();
+      ArrayList<Element> focusable = getFocusableElements();
+      if (focusable.isEmpty())
+      {
+         Debug.logWarning("No potentially focusable controls found in modal dialog");
+         return;
+      }
+      focusable.get(0).focus();
    }
 
    /**
@@ -874,39 +852,12 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    /**
-    * Gets a list of keyboard focusable elements in the dialog, and tracks which ones are
-    * first and last. This is used to keep keyboard focus in the dialog when Tabbing and
-    * Shift+Tabbing off end or beginning of dialog.
-    *
-    * If the dialog is dynamic, and the first and/or last focusable elements change over time,
-    * call this function again to update the information; or, if the auto-detection
-    * is not suitable, override focusFirstControl and/or focusLastControl.
+    * Set focus on the initial control after pending DOM updates, e.g. once new
+    * content in the dialog has rendered.
     */
-   public void refreshFocusableElements()
+   protected void deferFocusInitialControl()
    {
-      if (!DomUtils.isEffectivelyVisible(getElement()))
-         return;
-
-      ArrayList<Element> focusable = getFocusableElements();
-      if (focusable.size() == 0)
-      {
-         Debug.logWarning("No potentially focusable controls found in modal dialog");
-         return;
-      }
-      focus_.setFirst(focusable.get(0));
-      focus_.setLast(focusable.get(focusable.size() - 1));
-   }
-
-   /**
-    * Perform a deferred update of focusable elements, then set focus on the initial control.
-    */
-   public void deferRefreshFocusableElements()
-   {
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         refreshFocusableElements();
-         focusInitialControl();
-      });
+      Scheduler.get().scheduleDeferred(() -> focusInitialControl());
    }
 
    public interface Styles extends CssResource
@@ -955,7 +906,6 @@ public abstract class ModalDialogBase extends DialogBox
    private Animation currentAnimation_ = null;
    private final DialogRole role_;
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
-   private final FocusHelper focus_;
    
    public static final String ALLOW_ENTER_KEY_CLASS = "__rstudio_modal_allow_enter_key";
    public static final String ALLOW_ESCAPE_KEY_CLASS = "__rstudio_modal_allow_escape_key";

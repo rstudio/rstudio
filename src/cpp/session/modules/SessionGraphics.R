@@ -27,7 +27,26 @@
       
       "ragg"
    )
-   
+
+})
+
+#' TIFF compression types
+#'
+#' The compressions offered when a plot is saved as a TIFF, in the order they
+#' are listed: the lossless ones named by the 'compression' argument of
+#' grDevices::tiff(), which ragg's agg_tiff() shares, as far as the running
+#' R offers them.
+.rs.addFunction("graphics.tiffCompressionTypes", function()
+{
+   # 'rle' (CCITT Group 3) fails for colour images, 'jpeg' is lossy at a fixed
+   # quality, and the recent additions (lerc, lzma, zstd, webp) are liable to
+   # be unsupported by libtiff and by viewers, and are unknown to ragg
+   types <- c("none", "lzw", "zip", "lzw+p", "zip+p")
+   offered <- tryCatch(
+      eval(formals(grDevices::tiff)[["compression"]]),
+      error = function(e) "none"
+   )
+   intersect(types, offered)
 })
 
 .rs.addFunction("graphics.locator", function(n = 512, type = "n", ...)

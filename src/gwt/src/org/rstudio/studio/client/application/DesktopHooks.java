@@ -116,6 +116,10 @@ public class DesktopHooks
       {
          if (pUIPrefs_.get().fullProjectPathInWindowTitle().getValue())
             return workbenchContext_.getActiveProjectDir().getPath();
+
+         String displayName = session_.getSessionInfo().getActiveProjectDisplayName();
+         if (!StringUtil.isNullOrEmpty(displayName))
+            return displayName;
          else
             return workbenchContext_.getActiveProjectDir().getName();
       }

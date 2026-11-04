@@ -19,7 +19,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class AceAnnotation extends JavaScriptObject
 {
    protected AceAnnotation() {}
-   
+
    public static native AceAnnotation create(int row,
                                              int column,
                                              String html,
@@ -28,12 +28,13 @@ public class AceAnnotation extends JavaScriptObject
                                              String className,
                                              String tooltip)
    /*-{
-      
+
       if (type !== "error" && type !== "warning") {
          type = "info";
       }
-      
-      // 'text' must be set; Ace's gutter tooltip pipes it through createTextNode and would otherwise show 'html' as literal markup.
+
+      // 'text' must be set; Ace's gutter tooltip renders it via createTextNode.
+      // 'html' carries the ANSI-rendered form, used by the diagnostics popup.
       return {
          row: row,
          column: column,
@@ -44,7 +45,7 @@ public class AceAnnotation extends JavaScriptObject
          tooltip: tooltip
       };
    }-*/;
-   
+
    public final native int row() /*-{ return this.row; }-*/;
    public final native int column() /*-{ return this.column; }-*/;
    public final native String text() /*-{ return this.text; }-*/;

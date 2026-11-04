@@ -23,6 +23,7 @@ dplyr
 evaluate
 ggplot2
 knitr
+learnr
 nycflights13
 odbc
 pillar

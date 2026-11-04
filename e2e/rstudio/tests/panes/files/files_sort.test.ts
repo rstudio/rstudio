@@ -92,10 +92,9 @@ test.describe.serial('Files pane keeps sort order when a file is added (#17872)'
     await executeCommand(page, 'activateFiles');
 
     const filesPanel = page.locator('#rstudio_workbench_panel_files');
-    // The Name column header renders with role=button and accessible name
-    // "Name"; clicking it toggles the Name sort. (Sort direction is conveyed
-    // via CSS only, not the accessible name, so we verify sorting below by
-    // comparing row positions rather than reading the header text.)
+    // The Name columnheader holds a sort button named "Name"; clicking it
+    // toggles the Name sort. This test is about where rows land, so it checks
+    // the sort below by comparing row positions.
     const nameHeader = filesPanel.getByRole('button', { name: /Name/ });
 
     // Wait for the seeded files to render, then sort by Name (the repro step).

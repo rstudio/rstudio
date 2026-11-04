@@ -205,17 +205,14 @@ void handleTutorialHomeRequest(const http::Request& request,
    bool ok = haveMinimumShinyForTutorials();
    if (!ok)
    {
-      std::stringstream clickHere;
-      clickHere << "<a"
-                   << " aria-label\"Install shiny\""
-                   << " class=\"rstudio-tutorials-install-shiny-link\""
-                   << " href=\"javascript:void(0)\""
-                   << " onclick=\"window.parent.tutorialUpdateShiny(); return false;\">"
-                   << "click here"
-                   << "</a>";
-         
+      std::string action = module_context::isPackageInstalled("shiny") ? "update" : "install";
       ss << "<p>Version 1.6.0 of the <code>shiny</code> package is required to run tutorials for RStudio.</p>"
-         << "<p>Please " << clickHere.str() << " to update the <code>shiny</code> package.</p>";
+         << "<p>Please <a"
+         << " class=\"rstudio-tutorials-install-shiny-link\""
+         << " href=\"javascript:void(0)\""
+         << " onclick=\"window.parent.tutorialUpdateShiny(); return false;\">"
+         << action << " the <code>shiny</code> package"
+         << "</a>.</p>";
    }
    
    if (tutorialIndex().empty())
@@ -224,17 +221,13 @@ void handleTutorialHomeRequest(const http::Request& request,
       
       if (!module_context::isPackageInstalled("learnr"))
       {
-         std::stringstream clickHere;
-         clickHere << "<a"
-                   << " aria-label\"Install learnr\""
-                   << " class=\"rstudio-tutorials-install-learnr-link\""
-                   << " href=\"javascript:void(0)\""
-                   << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\">"
-                   << "click here"
-                   << "</a>";
-         
          ss << "<p>The <code>learnr</code> package is required to run tutorials for RStudio.</p>"
-            << "<p>Please " << clickHere.str() << " to install the <code>learnr</code> package.</p>";
+            << "<p>Please <a"
+            << " class=\"rstudio-tutorials-install-learnr-link\""
+            << " href=\"javascript:void(0)\""
+            << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\">"
+            << "install the <code>learnr</code> package"
+            << "</a>.</p>";
       }
       else
       {
@@ -255,16 +248,23 @@ void handleTutorialHomeRequest(const http::Request& request,
 
          for (auto tutorial : tutorials)
          {
-            ss << "<div class=\"rstudio-tutorials-section\">";
+            std::string title = (tutorial.title.empty())
+                  ? "[Untitled tutorial]"
+                  : tutorial.title;
+            
+            // the data attributes feed the pane's filter box; the title is the
+            // one displayed, so a placeholder can be searched for as shown
+            ss << "<div"
+               << " class=\"rstudio-tutorials-section rstudio-tutorials-entry\""
+               << " data-tutorial-package=\"" << htmlEscape(pkgName, true) << "\""
+               << " data-tutorial-name=\"" << htmlEscape(tutorial.name, true) << "\""
+               << " data-tutorial-title=\"" << htmlEscape(title, true) << "\""
+               << ">";
             
             ss << "<div class=\"rstudio-tutorials-label-container\">";
             
-            std::string title = (tutorial.title.empty())
-                  ? "[Untitled tutorial]"
-                  : htmlEscape(tutorial.title);
-            
             ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
-               << title
+               << htmlEscape(title)
                << "</span>";
             
             ss << "<span class=\"rstudio-tutorials-run-container\">"
@@ -272,7 +272,9 @@ void handleTutorialHomeRequest(const http::Request& request,
                << "<button"
                << " class=\"rstudio-tutorials-run-button\""
                << " aria-label=\"Start tutorial '" << htmlEscape(tutorial.name, true) << "' from package '" << htmlEscape(pkgName, true) << "'\""
-               << " onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name, true) << "', '" << htmlEscape(pkgName, true) << "')\""
+               // the handler is JavaScript inside an attribute: the HTML parser
+               // decodes the attribute before JS reads it, so escape for both
+               << " onclick=\"window.parent.tutorialRun('" << htmlEscape(jsLiteralEscape(tutorial.name), true) << "', '" << htmlEscape(jsLiteralEscape(pkgName), true) << "')\""
                << ">"
                   
                << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"

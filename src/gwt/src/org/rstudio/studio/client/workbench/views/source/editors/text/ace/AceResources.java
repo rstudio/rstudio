@@ -50,5 +50,11 @@ public interface AceResources extends ClientBundle
    
    @Source("ext-language_tools-uncompressed.js")
    StaticDataResource extLanguageToolsUncompressed();
+
+   @Source("ext-diff.js")
+   StaticDataResource extDiff();
+
+   @Source("ext-diff-uncompressed.js")
+   StaticDataResource extDiffUncompressed();
    
 }

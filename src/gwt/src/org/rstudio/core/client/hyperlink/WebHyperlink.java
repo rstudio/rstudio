@@ -16,10 +16,14 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 
@@ -39,7 +43,14 @@ public class WebHyperlink extends Hyperlink {
     @Override
     public void getPopupContent(CommandWithArg<Widget> onReady)
     {
-        VerticalPanel panel = new VerticalPanel();
+        HorizontalPanel panel = new HorizontalPanel();
+        panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+
+        AppCommand openInBrowser = RStudioGinjector.INSTANCE.getCommands().openHtmlExternal();
+        Image icon = new Image(openInBrowser.getImageResource());
+        icon.setAltText(openInBrowser.getDesc());
+        icon.getElement().getStyle().setMarginLeft(5, Unit.PX);
+        panel.add(icon);
         panel.add(new HyperlinkPopupHeader(url));
         onReady.execute(panel);
     }

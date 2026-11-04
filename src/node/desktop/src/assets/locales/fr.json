@@ -110,7 +110,13 @@
   },
   "gwtCallbackTs": {
     "unimplemented": "Non implémenté",
-    "callbackNyiLowercase": "{{ipcName}} pas encore implémenté"
+    "callbackNyiLowercase": "{{ipcName}} pas encore implémenté",
+    "rExecutableMissing": "{{path}} n'existe pas",
+    "rExecutableFailed": "{{path}} n'a pas pu être exécuté : {{error}}",
+    "rExecutableNotOrthogonal": "{{path}} est configuré pour exécuter la version de R par défaut plutôt que lui-même",
+    "rUpdatePrompt": "RStudio souhaite mettre à jour R {{version}} afin qu'il puisse fonctionner avec d'autres versions de R.",
+    "rUpdateCancelled": "la mise à jour de R a été annulée",
+    "rUpdateFailed": "impossible de mettre à jour {{path}} : {{error}}"
   },
   "mainTs": {
     "unhandledException": "Exception non gérée"

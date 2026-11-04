@@ -57,7 +57,7 @@ set (R_SOURCE_FILES
    session/graphics/RGraphicsUtils.cpp
    session/graphics/RGraphicsDevDesc.cpp
    session/graphics/RGraphicsHandler.cpp
-   session/graphics/RGraphicsImageResolution.cpp
+   session/graphics/RGraphicsQuartzImage.cpp
    session/graphics/RShadowPngGraphicsHandler.cpp
 )
 

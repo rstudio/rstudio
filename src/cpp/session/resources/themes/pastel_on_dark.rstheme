@@ -761,3 +761,7 @@
 .ace_editor, .ace_editor_theme .profvis-flamegraph, .ace_editor_theme {
   color: #EAEAEA !important;
 }
+.ace_marker-layer .ace_find_match {
+  background-color: rgba(141, 100, 20, 0.45);
+  border: 1px solid #8D6414;
+}

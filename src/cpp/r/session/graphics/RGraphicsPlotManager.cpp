@@ -85,6 +85,7 @@ PlotManager::PlotManager()
       lastChange_(boost::posix_time::not_a_date_time),
       suppressDeviceEvents_(false),
       activePlot_(-1),
+      activePlotChanged_(false),
       plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)")
 {
    plots_.set_capacity(100);
@@ -164,6 +165,7 @@ Error PlotManager::setActivePlot(int index)
 
       // set index
       activePlot_ = index;
+      activePlotChanged_ = true;
       
       // render it
       renderActivePlotToDisplay();
@@ -266,11 +268,12 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    int widthPx,
                                    int heightPx,
                                    bool useDevicePixelRatio,
-                                   bool recordResolution)
+                                   bool recordResolution,
+                                   const BitmapOptions& options)
 {
    double pixelRatio = useDevicePixelRatio ?
                          r::session::graphics::device::devicePixelRatio() : 1;
-   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
+   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio, recordResolution, options);
 }
 
 
@@ -279,14 +282,15 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    int widthPx,
                                    int heightPx,
                                    double pixelRatio,
-                                   bool recordResolution)
+                                   bool recordResolution,
+                                   const BitmapOptions& options)
 {
    if (format == kPngFormat ||
        format == kBmpFormat ||
        format == kJpegFormat ||
        format == kTiffFormat)
    {
-      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio, recordResolution);
+      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio, recordResolution, options);
    }
    else if (format == kSvgFormat)
    {
@@ -311,7 +315,8 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                         int width,
                                         int height,
                                         double pixelRatio,
-                                        bool recordResolution)
+                                        bool recordResolution,
+                                        const BitmapOptions& options)
 {
    // default res
    int res = 96;
@@ -331,7 +336,17 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    width = gsl::narrow_cast<int>(scaledWidth);
    height = gsl::narrow_cast<int>(scaledHeight);
    res = gsl::narrow_cast<int>(std::lround(res * pixelRatio));
-   
+
+   // the compression is interpolated into R code below
+   const std::string& compression = options.tiffCompression;
+   if (bitmapFileType == kTiffFormat &&
+       (compression.empty() ||
+        compression.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789+") != std::string::npos))
+   {
+      return systemError(boost::system::errc::invalid_argument, "Invalid TIFF compression: " + compression, ERROR_LOCATION);
+   }
+   int quality = std::max(1, std::min(100, options.jpegQuality));
+
    // handle ragg specially
    std::string backend = getDefaultBackend();
    if (backend == "ragg" &&
@@ -357,7 +372,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                   .addParam("width", width)
                   .addParam("height", height)
                   .addParam("res", res)
-                  .addParam("quality", 100)
+                  .addParam("quality", quality)
                   .call();
          }
          else if (bitmapFileType == kTiffFormat)
@@ -367,6 +382,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                   .addParam("width", width)
                   .addParam("height", height)
                   .addParam("res", res)
+                  .addParam("compression", compression)
                   .call();
          }
          else
@@ -380,12 +396,31 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
       return savePlotAsFile(deviceFunction);
    }
 
+   // the Quartz devices ignore jpeg()'s quality and tiff()'s compression (and
+   // warn about the latter), so a JPEG is drawn as a PNG and encoded at the
+   // quality afterwards, and a TIFF is compressed afterwards
+   bool quartz = usesQuartzBitmapDevice();
+   if (quartz && bitmapFileType == kTiffFormat && tiffCompressionTag(compression) == 0)
+   {
+      return systemError(boost::system::errc::invalid_argument, "Invalid TIFF compression: " + compression, ERROR_LOCATION);
+   }
+
+   std::string deviceType = bitmapFileType;
+   FilePath devicePath = targetPath;
+   if (quartz && bitmapFileType == kJpegFormat)
+   {
+      deviceType = kPngFormat;
+      Error tempError = FilePath::tempFilePath(".png", devicePath);
+      if (tempError)
+         return tempError;
+   }
+
    // optional format specific extra params
    std::string extraParams;
-
-   // add extra quality parameter for jpegs
-   if (bitmapFileType == kJpegFormat)
-      extraParams = ", quality = 100";
+   if (deviceType == kJpegFormat)
+      extraParams = ", quality = " + std::to_string(quality);
+   else if (deviceType == kTiffFormat && !quartz)
+      extraParams = ", compression = \"" + compression + "\"";
 
    // add extra bitmap params
    extraParams += r::session::graphics::extraBitmapParams();
@@ -394,8 +429,8 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    boost::format fmt(
       "{ require(grDevices, quietly=TRUE); "
       "  %1%(filename=\"%2%\", width=%3%, height=%4%, res = %5% %6%); }");
-   std::string deviceCreationCode = boost::str(fmt % bitmapFileType %
-                                               string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % deviceType %
+                                               string_utils::utf8ToSystem(devicePath.getAbsolutePath()) %
                                                width %
                                                height %
                                                res %
@@ -403,11 +438,33 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
 
    // save the file
    Error error = savePlotAsFile(deviceCreationCode);
-   if (error || !recordResolution || !usesQuartzBitmapDevice())
+   if (!quartz)
       return error;
 
-   // the image is usable without the resolution, so don't fail the save
-   error = ensureImageResolution(targetPath, res);
+   // encode the JPEG from the PNG, which is removed either way
+   if (bitmapFileType == kJpegFormat)
+   {
+      if (!error)
+         error = writeJpegFromPng(devicePath, targetPath, quality, recordResolution ? res : 0);
+      Error removeError = devicePath.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+      return error;
+   }
+
+   if (error)
+      return error;
+
+   // RStudio's own images (the pane, the zoom window, RPubs) want neither the
+   // resolution nor a compression, so leave them as the device wrote them
+   int dpi = recordResolution ? res : 0;
+   std::string tiffCompression = bitmapFileType == kTiffFormat ? compression : std::string();
+   if (dpi == 0 && tiffCompression.empty())
+      return Success();
+
+   // the image is usable without the resolution or the compression, so don't
+   // fail the save
+   error = finishQuartzImage(targetPath, dpi, tiffCompression);
    if (error)
       LOG_ERROR(error);
 
@@ -538,6 +595,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    
    // optional manipulator structure
    json::Value plotManipulatorJson;
+   std::string altText;
 
    if (hasPlot()) // write image for active plot
    {
@@ -564,6 +622,8 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
 
       // get manipulator
       activePlot().manipulatorAsJson(&plotManipulatorJson);
+
+      altText = activePlot().altText();
    }
    else  // write "empty" image 
    {
@@ -578,6 +638,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
       }
    }
    
+   bool activePlotChanged = activePlotChanged_;
+   activePlotChanged_ = false;
+
    // call output function
    DisplayState currentState(imageFilename(),
                              plotManipulatorJson,
@@ -585,7 +648,9 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
                              r::session::graphics::device::getHeight(),
                              activePlotIndex(), 
                              plotCount(),
-                             r::session::graphics::device::hasFixedSize());
+                             r::session::graphics::device::hasFixedSize(),
+                             altText,
+                             activePlotChanged);
    outputFunction(currentState);
 }
    
@@ -873,6 +938,7 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
       // add the plot
       plots_.push_back(ptrPlot);
       activePlot_ = gsl::narrow_cast<int>(plots_.size()) - 1;
+      activePlotChanged_ = true;
    }
 
    // once we render the new plot we always reset pending manipulator state

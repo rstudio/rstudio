@@ -13,18 +13,9 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { TIMEOUTS } from '@utils/constants';
 import { openFile, seedSandboxFile } from '@utils/files';
 import { executeCommand, resetSourcePaneState } from '@utils/commands';
+import { SOURCE_WINDOW_URL, closeSourceWindows, expectNoSourceWindowAfterReload } from '@utils/source-windows';
 
 const SELECTED_DOC_TAB = "[class*='rstudio_source_panel'] [class*='PanelTab-selected']";
-const SOURCE_WINDOW_URL = /view=source_window_/;
-
-// How long to keep checking that no source window reopens after a reload. The
-// main window reopens them while the workbench initializes, so this only has
-// to outlast the delivery of the new window to Playwright.
-const REOPEN_WINDOW_MS = 3000;
-
-function sourceWindows(page: Page): Page[] {
-  return page.context().pages().filter((p) => SOURCE_WINDOW_URL.test(p.url()));
-}
 
 async function popOutActiveDoc(page: Page, caption: string): Promise<Page> {
   await expect(page.locator(SELECTED_DOC_TAB)).toContainText(caption, {
@@ -66,29 +57,12 @@ async function closeAndExpectDocumentReleased(page: Page, satellite: Page): Prom
   expect(await response.text()).not.toContain('"error"');
 }
 
-async function expectNoSourceWindowAfterReload(page: Page): Promise<void> {
-  await page.reload();
-  await page.waitForFunction(() => window.rstudio?.ready === true, null, {
-    timeout: TIMEOUTS.sessionRestart,
-    polling: 50,
-  });
-
-  // Nothing reopening is also the starting state, so sample over a window
-  // rather than polling for it.
-  const deadline = Date.now() + REOPEN_WINDOW_MS;
-  while (Date.now() < deadline) {
-    expect(sourceWindows(page).map((p) => p.url())).toEqual([]);
-    await page.waitForTimeout(TIMEOUTS.layoutSettle);
-  }
-}
-
 test.describe('Closing a popped-out source window (#18987)', () => {
   const sandbox = useSuiteSandbox();
 
   test.afterEach(async ({ rstudioPage: page }) => {
     // A failing run leaves (or reopens) the window; don't hand it to the next test.
-    for (const satellite of sourceWindows(page))
-      await satellite.close().catch(() => {});
+    await closeSourceWindows(page);
     await resetSourcePaneState(page);
   });
 

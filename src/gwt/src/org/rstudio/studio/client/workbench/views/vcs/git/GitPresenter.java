@@ -32,22 +32,28 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.WorktreeInfo;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.NewWorktreeDialog;
+import org.rstudio.studio.client.workbench.views.vcs.RemoveWorktreeDialog;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
+import org.rstudio.studio.client.workbench.views.vcs.WorktreeActions;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class GitPresenter extends BaseVcsPresenter
 {
@@ -79,9 +85,11 @@ public class GitPresenter extends BaseVcsPresenter
                        Binder commandBinder,
                        GitState gitState,
                        final GlobalDisplay globalDisplay,
-                       SatelliteManager satelliteManager)
+                       SatelliteManager satelliteManager,
+                       WorktreeActions worktreeActions)
    {
       super(view);
+      worktreeActions_ = worktreeActions;
       gitPresenterCore_ = gitCore;
       vcsFileOpener_  = vcsFileOpener;
       view_ = view;
@@ -228,6 +236,41 @@ public class GitPresenter extends BaseVcsPresenter
    void onVcsOpen()
    {
       openSelectedFiles();
+   }
+
+   @Handler
+   void onVcsNewWorktree()
+   {
+      new NewWorktreeDialog(worktreeActions_.defaultParentDir(), new OperationWithInput<NewWorktreeDialog.Input>()
+      {
+         @Override
+         public void execute(NewWorktreeDialog.Input input)
+         {
+            worktreeActions_.create(input.getPath(), input.getBranch(), null);
+         }
+      }).showModal();
+   }
+
+   @Handler
+   void onVcsRemoveWorktree()
+   {
+      List<WorktreeInfo> worktrees = worktreeActions_.removableWorktrees();
+      if (worktrees.isEmpty())
+      {
+         globalDisplay_.showMessage(MessageDialog.INFO,
+                                    constants_.removeWorktreeCapitalized(),
+                                    constants_.noWorktreesToRemove());
+         return;
+      }
+
+      new RemoveWorktreeDialog(worktrees, new OperationWithInput<RemoveWorktreeDialog.Input>()
+      {
+         @Override
+         public void execute(RemoveWorktreeDialog.Input input)
+         {
+            worktreeActions_.remove(input.getWorktree(), input.getForce());
+         }
+      }).showModal();
    }
 
    @Override
@@ -400,6 +443,7 @@ public class GitPresenter extends BaseVcsPresenter
    private final Commands commands_;
    private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
+   private final WorktreeActions worktreeActions_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);

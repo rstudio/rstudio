@@ -930,7 +930,12 @@ options(
 })
 
 .rs.addJsonRpcHandler("connection_add_package", function(package) {
+   # Packages such as odbc ship no connections.dcf; system.file() then
+   # returns "", which has nothing to register.
    extensionPath <- system.file("rstudio/connections.dcf", package = package)
+   if (!nzchar(extensionPath))
+      return(invisible(NULL))
+
    invisible(.Call("rs_connectionAddPackage", package, extensionPath, PACKAGE = "(embedding)"))
 })
 

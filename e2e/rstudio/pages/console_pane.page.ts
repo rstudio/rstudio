@@ -1,7 +1,7 @@
 import type { Page } from 'playwright';
 import type { Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
-import { sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
+import { CRAN_REPOS, sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
@@ -221,6 +221,16 @@ export async function getConsolePromptCount(page: Page): Promise<number | null> 
     const count = window.rstudio?.console?.promptCount;
     return typeof count === 'number' ? count : null;
   });
+}
+
+/**
+ * Read the text of the console's current prompt (`> `, `+ `, or an interactive
+ * read's own, e.g. `answer? `). The shell renders the prompt in the cell before
+ * the input's, in the input row of its table.
+ */
+export async function getConsolePromptText(page: Page): Promise<string> {
+  return page.evaluate(() =>
+    document.getElementById('rstudio_console_input')?.closest('tr')?.querySelector('td')?.textContent ?? '');
 }
 
 /** Set once we've warned about a missing prompt counter, to avoid log spam. */
@@ -496,12 +506,9 @@ export async function executeInConsole(
  * human typing speed and gives the editor time to dispatch input events and
  * fire completers between chars.
  */
-/** Default CRAN mirror for `ensurePackageInstalled`. */
-export const DEFAULT_CRAN_REPOS = 'https://cran.r-project.org';
-
 /** Options accepted by `ensurePackageInstalled`. */
 export interface EnsurePackageInstalledOptions {
-  /** Repos URL; defaults to `DEFAULT_CRAN_REPOS`. */
+  /** Repos URL; defaults to `CRAN_REPOS`. */
   repos?: string;
   /** Install type ("binary" / "source"); defaults to `getOption("pkgType")`. */
   type?: string;
@@ -527,7 +534,7 @@ export async function ensurePackageInstalled(
   packageName: string,
   opts: EnsurePackageInstalledOptions = {},
 ): Promise<void> {
-  const repos = opts.repos ?? DEFAULT_CRAN_REPOS;
+  const repos = opts.repos ?? CRAN_REPOS;
   const args: string[] = [
     JSON.stringify(packageName),
     `repos = ${JSON.stringify(repos)}`,

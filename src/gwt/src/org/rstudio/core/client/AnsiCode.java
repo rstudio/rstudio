@@ -28,7 +28,7 @@ public class AnsiCode
    // ANSI command constants
    public static final String CSI = "\033\133";   // Control Sequence Introducer
    public static final String OSC = "\033\135";   // Operating System Command
-   
+
    // the terminator for SGR codes
    public static final String SGR = "m";
 
@@ -700,7 +700,7 @@ public class AnsiCode
       }
       clazzes_.remove(INVERSE_BG_STYLE);
    }
-   
+
    /**
     * Remove escape sequences from a string, mirroring what the console would
     * discard from it when rendered (see VirtualConsole).
@@ -708,26 +708,36 @@ public class AnsiCode
    public static String strip(String input)
    {
       return input
-            
+
             // Custom RStudio escape (group)
             .replaceAll("\\033G\\d*;([^]*?)\\033g", "$1")
-            
+
             // Custom RStudio escape (highlight)
             .replaceAll("\\033H\\d*;([^]*?)\\033h", "$1")
-            
-            // String sequences (OSC, DCS, SOS, PM, APC and ESC 'k'), ended by
-            // BEL, ESC '\\', or another ESC which is left in place. A console
-            // control character means the string is malformed; only its
-            // introducer is then removed, below.
-            .replaceAll("\\033[\\]PX^_k][^" + CONSOLE_CONTROL_CHARS + "\\033]*(?:\\007|\\033\\\\|(?=\\033))", "")
-            
+
+            // String sequences (OSC, etc.); for a malformed one, only its
+            // introducer is removed, below.
+            .replaceAll(STRING_SEQUENCE, "")
+
             // Control Sequence Introducer (CSI) and other escape sequences,
             // as the console parses them
             .replaceAll(CSI_SEQUENCE, "")
             .replaceAll(ESCAPE_SEQUENCE, "")
-            
+
             // BEL
             .replace("\u0007", "");
+   }
+
+   // Like strip(), but preserves colors and font styling
+   public static String stripNonSgr(String input)
+   {
+      return input
+            .replaceAll("\\033G\\d*;([^]*?)\\033g", "$1")
+            .replaceAll("\\033H\\d*;([^]*?)\\033h", "$1")
+            .replaceAll(STRING_SEQUENCE, "")
+            .replaceAll("(?!" + SGR_SEQUENCE + ")" + CSI_SEQUENCE, "")
+            .replaceAll("(?!" + SGR_SEQUENCE + ")" + ESCAPE_SEQUENCE, "")
+            .replaceAll("[\\007\\b\\f]", "");
    }
 
    public static String prettyPrint(String input)
@@ -786,6 +796,18 @@ public class AnsiCode
    // final byte is missing, the match stops before the unexpected character.
    private static final String ESCAPE_SEQUENCE = "\u001b[ -/]*[0-~]?";
    public static final Pattern ESCAPE_PATTERN = Pattern.create("^" + ESCAPE_SEQUENCE, "");
+
+   // String sequences (OSC, DCS, SOS, PM, APC and ESC 'k'), ended by BEL,
+   // ESC '\\', or another ESC which is left in place. A console control
+   // character means the string is malformed, so it isn't matched.
+   private static final String STRING_SEQUENCE =
+         "\\033[\\]PX^_k][^" + CONSOLE_CONTROL_CHARS + "\\033]*(?:\\007|\\033\\\\|(?=\\033))";
+
+   // An SGR sequence the console acts on (see NUMERIC_CSI_PATTERN)
+   private static final String SGR_SEQUENCE = "(?:\u001b\\[|\u009b)[0-9;:]*m";
+
+   // Match SGR sequences and newlines - no other control codes
+   public static final Pattern SGR_ONLY_PATTERN = Pattern.create("\n|" + SGR_SEQUENCE);
 
    // An escape sequence cut off by the end of the input, which the next
    // output may complete: a CSI sequence with a private marker (ESC[?25l,

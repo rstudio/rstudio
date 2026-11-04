@@ -39,6 +39,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
@@ -253,7 +254,6 @@ import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -310,6 +310,7 @@ public class TextEditingTarget implements
    public static final String EDITOR_SPLIT_NONE  = "none";
    public static final String EDITOR_SPLIT_RIGHT = "right";
    public static final String EDITOR_SPLIT_DOWN  = "down";
+   public static final String EDITOR_SPLIT_DIFF  = "diff";
    
    public static final String QUARTO_PREVIEW_FORMAT = "quartoPreviewFormat";
 
@@ -370,22 +371,33 @@ public class TextEditingTarget implements
 
       // Editor splits: a tab can show a second view of its document
       // (EDITOR_SPLIT_RIGHT / EDITOR_SPLIT_DOWN), sharing the document and
-      // undo history but with per-view selection, scrolling, and folds.
+      // undo history but with per-view selection, scrolling, and folds; or
+      // the Git index version of the document beside it (EDITOR_SPLIT_DIFF),
+      // read-only and aligned with it.
       //
       // Note the distinction between the "active tab" and the "active editor
       // view". Command routing selects the active tab (this editing target);
-      // within the tab, docDisplay_ is always the primary view -- persistence
+      // within the tab, primaryDisplay_ is always the primary view -- persistence
       // (DocUpdateSentinel), breakpoints, lint/spelling/debug markers, chunk
-      // output line widgets, and navigation all bind to it. getActiveDisplay()
-      // returns the view that last held focus, and should be consulted only
-      // where behavior must follow the user's cursor or selection (e.g.
-      // executing code, reading the selection for rstudioapi, status bar
-      // position).
+      // output line widgets, and navigation into the document from elsewhere
+      // all bind to it. getActiveDisplay() returns the view that last held
+      // focus, and should be consulted only where behavior must follow the
+      // user's cursor or selection (e.g. editing commands, executing code,
+      // folding, back/forward navigation history, reading or replacing the
+      // selection for rstudioapi, status bar position).
       void setEditorSplit(String type);
       String getEditorSplit();
       boolean focusOtherEditorSplit();
       boolean isEditorViewFocused();
+      // whether the read-only base pane of a side-by-side diff holds focus,
+      // and whether it was the last of the document's views to
+      boolean isDiffSplitFocused();
+      boolean diffSplitHeldFocusLast();
+      // scrolls the base pane's cursor into view; false without a base pane
+      boolean ensureDiffSplitCursorVisible();
       DocDisplay getActiveDisplay();
+      // the split editor view, or null when it has not materialized
+      DocDisplay getSplitDisplay();
       void destroyEditorSplit();
       void syncSplitShowChunkOutputInline();
 
@@ -605,7 +617,7 @@ public class TextEditingTarget implements
                             Session session,
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
-                            DocDisplay docDisplay,
+                            DocDisplay primaryDisplay,
                             UserPrefs prefs,
                             UserState state,
                             BreakpointManager breakpointManager,
@@ -628,182 +640,39 @@ public class TextEditingTarget implements
       source_ = source;
       dependencyManager_ = dependencyManager;
 
-      docDisplay_ = docDisplay;
-      dirtyState_ = new DirtyState(docDisplay_, false);
+      primaryDisplay_ = primaryDisplay;
+      dirtyState_ = new DirtyState(primaryDisplay_, false);
       lintManager_ = new LintManager(new TextEditingTargetLintSource(this), releaseOnDismiss_);
       prefs_ = prefs;
       state_ = state;
-      compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
+      compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(primaryDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_,
-                                                  docDisplay_);
-      jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
-      sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
-      presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
-      presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
-      rHelper_ = new TextEditingTargetRHelper(docDisplay_);
-      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_, prefs_);
-      quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
+                                                  primaryDisplay_);
+      jsHelper_ = new TextEditingTargetJSHelper(primaryDisplay_);
+      sqlHelper_ = new TextEditingTargetSqlHelper(primaryDisplay_);
+      presentationHelper_ = new TextEditingTargetPresentationHelper(primaryDisplay_);
+      presentation2Helper_ = new TextEditingTargetPresentation2Helper(primaryDisplay_);
+      rHelper_ = new TextEditingTargetRHelper(primaryDisplay_);
+      renameHelper_ = new TextEditingTargetRenameHelper(prefs_);
+      quartoHelper_ = new TextEditingTargetQuartoHelper(this, primaryDisplay_);
 
-      docDisplay_.setRnwCompletionContext(compilePdfHelper_);
-      docDisplay_.setCppCompletionContext(cppCompletionContext_);
-      docDisplay_.setRCompletionContext(rContext_);
-      scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
+      primaryDisplay_.setRnwCompletionContext(compilePdfHelper_);
+      primaryDisplay_.setCppCompletionContext(cppCompletionContext_);
+      primaryDisplay_.setRCompletionContext(rContext_);
+      scopeHelper_ = new TextEditingTargetScopeHelper(primaryDisplay_);
 
       addRecordNavigationPositionHandler(releaseOnDismiss_,
-                                         docDisplay_,
+                                         primaryDisplay_,
                                          events_,
                                          this);
 
       assistant_ = new TextEditingTargetAssistantHelper(this, releaseOnDismiss_);
       
       EditingTarget target = this;
-      docDisplay_.addKeyDownHandler(new KeyDownHandler()
-      {
-         public void onKeyDown(KeyDownEvent event)
-         {
-            NativeEvent ne = event.getNativeEvent();
-            int mod = KeyboardShortcut.getModifierValue(ne);
+      primaryDisplay_.addKeyDownHandler(event -> onEditorKeyDown(primaryDisplay_, event));
 
-            if ((mod == KeyboardShortcut.META || (
-                  mod == KeyboardShortcut.CTRL &&
-                  !BrowseCap.hasMetaKey() &&
-                  !docDisplay_.isEmacsModeOn() &&
-                  (!docDisplay_.isVimModeOn() || docDisplay_.isVimInInsertMode())))
-                && ne.getKeyCode() == 'F')
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               commands_.findReplace().execute();
-            }
-            else if (BrowseCap.hasMetaKey() &&
-                     (mod == KeyboardShortcut.META) &&
-                     (ne.getKeyCode() == 'E'))
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               commands_.findFromSelection().execute();
-            }
-            else if (mod == KeyboardShortcut.CTRL
-                     && ne.getKeyCode() == KeyCodes.KEY_UP
-                     && fileType_ == FileTypeRegistry.R)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               jumpToPreviousFunction();
-            }
-            else if (mod == KeyboardShortcut.CTRL
-                     && ne.getKeyCode() == KeyCodes.KEY_DOWN
-                     && fileType_ == FileTypeRegistry.R)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               jumpToNextFunction();
-            }
-            else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
-                     prefs_.editorKeybindings().getValue() != UserPrefs.EDITOR_KEYBINDINGS_VIM)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-
-               // Don't send an interrupt if a popup is visible
-               if (docDisplay_.isPopupVisible())
-                  return;
-
-               // Don't send an interrupt if we're in a source window
-               if (!SourceWindowManager.isMainSourceWindow())
-                  return;
-
-               if (commands_.interruptR().isEnabled())
-                  commands_.interruptR().execute();
-            }
-            else if (TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(docDisplay_, ne))
-            {
-               // nothing to do; continueSpecialCommentOnNewline() does all the magic
-            }
-            else if (
-                  prefs_.continueCommentsOnNewline().getValue() &&
-                  !docDisplay_.isPopupVisible() &&
-                  ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
-                    (fileType_.isC() || isCursorInRMode(docDisplay_) || isCursorInTexMode(docDisplay_)))
-            {
-               String line = docDisplay_.getCurrentLineUpToCursor();
-               
-               // validate that this line is composed of only comments and whitespace
-               // (necessary to check token type for e.g. Markdown documents)
-               // https://github.com/rstudio/rstudio/issues/6421
-               JsArray<Token> tokens =
-                     docDisplay_.getTokens(docDisplay_.getCursorPosition().getRow());
-               
-               boolean isCommentLine = true;
-               for (int i = 0, n = tokens.length(); i < n; i++)
-               {
-                  Token token = tokens.get(i);
-                  
-                  // allow for empty whitespace tokens
-                  String value = token.getValue();
-                  if (value.trim().isEmpty())
-                     continue;
-                  
-                  // allow tokens explicitly declared as comments
-                  if (token.hasType("comment"))
-                     continue;
-                  
-                  // if we got here, then we got a non-whitespace, non-comment token,
-                  // so we cannot continue the comment
-                  isCommentLine = false;
-                  break;
-               }
-               
-               Pattern pattern = null;
-               
-               if (!isCommentLine)
-               {
-                  pattern = null;
-               }
-               else if (isCursorInRMode(docDisplay_))
-               {
-                  pattern = Pattern.create("^(\\s*#+'?\\s*)");
-               }
-               else if (isCursorInTexMode(docDisplay_))
-               {
-                  pattern = Pattern.create("^(\\s*%+'?\\s*)");
-               }
-               else if (fileType_.isC())
-               {
-                  // bail on attributes
-                  if (!line.matches("^\\s*//\\s*\\[\\[.*\\]\\].*"))
-                     pattern = Pattern.create("^(\\s*//'?\\s*)");
-               }
-
-               if (pattern != null)
-               {
-                  Match match = pattern.match(line, 0);
-                  if (match != null)
-                  {
-                     event.preventDefault();
-                     event.stopPropagation();
-                     docDisplay_.insertCode("\n" + match.getGroup(1));
-                     docDisplay_.ensureCursorVisible();
-                  }
-               }
-            }
-            else if (
-                  prefs_.continueCommentsOnNewline().getValue() &&
-                  !docDisplay_.isPopupVisible() &&
-                  ne.getKeyCode() == KeyCodes.KEY_ENTER &&
-                  mod == KeyboardShortcut.SHIFT)
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               String indent = docDisplay_.getNextLineIndent();
-               docDisplay_.insertCode("\n" + indent);
-            }
-            events_.fireEvent(new EditingTargetSelectedEvent(target));
-         }
-      });
-
-      docDisplay_.addClickHandler(new ClickHandler()
+      primaryDisplay_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -812,7 +681,7 @@ public class TextEditingTarget implements
          }
       });
 
-      docDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
+      primaryDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
       {
          @Override
          public void onCommandClick(CommandClickEvent event)
@@ -829,7 +698,7 @@ public class TextEditingTarget implements
 
             // force cursor position
             Position position = event.getEvent().getDocumentPosition();
-            docDisplay_.setCursorPosition(position);
+            primaryDisplay_.setCursorPosition(position);
 
             // delegate to handlers
             if (fileType_.canCompilePDF() &&
@@ -843,12 +712,12 @@ public class TextEditingTarget implements
             }
             else
             {
-               docDisplay_.goToDefinition();
+               primaryDisplay_.goToDefinition();
             }
          }
       });
 
-      docDisplay_.addFindRequestedHandler(new FindRequestedEvent.Handler() {
+      primaryDisplay_.addFindRequestedHandler(new FindRequestedEvent.Handler() {
          @Override
          public void onFindRequested(FindRequestedEvent event)
          {
@@ -856,7 +725,7 @@ public class TextEditingTarget implements
          }
       });
 
-      docDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+      primaryDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
       {
          @Override
          public void onScopeTreeReady(ScopeTreeReadyEvent event)
@@ -865,7 +734,7 @@ public class TextEditingTarget implements
          }
       });
 
-      docDisplay_.addEditorBlurHandler((BlurEvent evt) ->
+      primaryDisplay_.addEditorBlurHandler((BlurEvent evt) ->
       {
          maybeAutoSaveOnBlur();
       });
@@ -959,9 +828,10 @@ public class TextEditingTarget implements
 
    private boolean moveCursorToNextSectionOrChunk(boolean includeSections)
    {
-      Scope current = docDisplay_.getCurrentScope();
-      ScopeList scopes = new ScopeList(docDisplay_);
-      Position cursorPos = docDisplay_.getCursorPosition();
+      DocDisplay display = activeDisplay();
+      Scope current = display.getCurrentScope();
+      ScopeList scopes = new ScopeList(display);
+      Position cursorPos = display.getCursorPosition();
 
       int n = scopes.size();
       for (int i = 0; i < n; i++)
@@ -975,7 +845,7 @@ public class TextEditingTarget implements
 
          if (scope.getPreamble().isAfter(cursorPos))
          {
-            moveCursorToNextPrevSection(scope.getPreamble());
+            moveCursorToNextPrevSection(display, scope.getPreamble());
             return true;
          }
       }
@@ -985,8 +855,9 @@ public class TextEditingTarget implements
 
    private boolean moveCursorToPreviousSectionOrChunk(boolean includeSections)
    {
-      ScopeList scopes = new ScopeList(docDisplay_);
-      Position cursorPos = docDisplay_.getCursorPosition();
+      DocDisplay display = activeDisplay();
+      ScopeList scopes = new ScopeList(display);
+      Position cursorPos = display.getCursorPosition();
 
       int n = scopes.size();
       for (int i = n - 1; i >= 0; i--)
@@ -997,7 +868,7 @@ public class TextEditingTarget implements
 
          if (scope.getPreamble().isBefore(cursorPos))
          {
-            moveCursorToNextPrevSection(scope.getPreamble());
+            moveCursorToNextPrevSection(display, scope.getPreamble());
             return true;
          }
       }
@@ -1005,10 +876,10 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private void moveCursorToNextPrevSection(Position pos)
+   private void moveCursorToNextPrevSection(DocDisplay display, Position pos)
    {
-      docDisplay_.setCursorPosition(pos);
-      docDisplay_.moveCursorNearTop(5);
+      display.setCursorPosition(pos);
+      display.moveCursorNearTop(5);
    }
 
    @Handler
@@ -1023,22 +894,29 @@ public class TextEditingTarget implements
    @Handler
    void onGoToStartOfCurrentScope()
    {
-      docDisplay_.focus();
-      Scope scope = docDisplay_.getCurrentScope();
+      DocDisplay display = activeDisplay();
+      display.focus();
+      Scope scope = display.getCurrentScope();
       if (scope != null)
       {
          Position position = Position.create(
                scope.getBodyStart().getRow(),
                scope.getBodyStart().getColumn() + 1);
-         docDisplay_.setCursorPosition(position);
+         display.setCursorPosition(position);
+         display.scrollCursorIntoView();
       }
    }
 
    @Handler
    void onGoToEndOfCurrentScope()
    {
-      docDisplay_.focus();
-      Scope scope = docDisplay_.getCurrentScope();
+      DocDisplay display = activeDisplay();
+      display.focus();
+
+      // build the whole scope tree first: it may only extend a little past
+      // the cursor (e.g. in a new split view), leaving a long scope endless
+      display.getScopeTree();
+      Scope scope = display.getCurrentScope();
       if (scope != null)
       {
          Position end = scope.getEnd();
@@ -1047,7 +925,8 @@ public class TextEditingTarget implements
             Position position = Position.create(
                   end.getRow(),
                   Math.max(0, end.getColumn() - 1));
-            docDisplay_.setCursorPosition(position);
+            display.setCursorPosition(position);
+            display.scrollCursorIntoView();
          }
       }
    }
@@ -1061,14 +940,15 @@ public class TextEditingTarget implements
       }
       else
       {
-         if (docDisplay_.getFileType().canGoNextPrevSection())
+         DocDisplay display = activeDisplay();
+         if (display.getFileType().canGoNextPrevSection())
          {
             if (!moveCursorToNextSectionOrChunk(true))
-               docDisplay_.gotoPageDown();
+               display.gotoPageDown();
          }
          else
          {
-            docDisplay_.gotoPageDown();
+            display.gotoPageDown();
          }
       }
 
@@ -1083,14 +963,15 @@ public class TextEditingTarget implements
       }
       else
       {
-         if (docDisplay_.getFileType().canGoNextPrevSection())
+         DocDisplay display = activeDisplay();
+         if (display.getFileType().canGoNextPrevSection())
          {
             if (!moveCursorToPreviousSectionOrChunk(true))
-               docDisplay_.gotoPageUp();
+               display.gotoPageUp();
          }
          else
          {
-            docDisplay_.gotoPageUp();
+            display.gotoPageUp();
          }
       }
    }
@@ -1166,9 +1047,9 @@ public class TextEditingTarget implements
       else
       {
          String title = xref.getTitle();
-         for (int i = 0, n = docDisplay_.getRowCount(); i < n; i++)
+         for (int i = 0, n = primaryDisplay_.getRowCount(); i < n; i++)
          {
-            String line = docDisplay_.getLine(i);
+            String line = primaryDisplay_.getLine(i);
             int index = line.indexOf(title);
             if (index == -1)
                continue;
@@ -1255,7 +1136,7 @@ public class TextEditingTarget implements
             // editor mode.
             ensureTextEditorActive(() ->
             {
-               navCommand.execute(docDisplay_, pos);
+               navCommand.execute(primaryDisplay_, pos);
             });
          }
          else
@@ -1279,7 +1160,7 @@ public class TextEditingTarget implements
       else
       {
          // No visual editor active, so navigate directly
-         navCommand.execute(docDisplay_, pos);
+         navCommand.execute(primaryDisplay_, pos);
       }
    }
 
@@ -1296,7 +1177,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         docDisplay_.recordCurrentNavigationPosition();
+         activeDisplay().recordCurrentNavigationPosition();
       }
    }
 
@@ -1313,7 +1194,17 @@ public class TextEditingTarget implements
       else
       {
          ensureTextEditorActive(() -> {
-            docDisplay_.restorePosition(position);
+            // the saved scroll offset can be stale (e.g. recorded in the
+            // other view of a split, whose folds and horizontal scroll
+            // differ), so make sure the restored cursor ends up in sight
+            DocDisplay display = activeDisplay();
+            display.restorePosition(position);
+
+            // render first: restoring moves only the renderer's scroll offset,
+            // and scrollCursorIntoView() ignores a target that matches the
+            // session's stale one
+            display.forceImmediateRender();
+            display.scrollCursorIntoView();
          });
       }
    }
@@ -1327,15 +1218,16 @@ public class TextEditingTarget implements
       }
       else
       {
-         Position cursor = docDisplay_.getCursorPosition();
-         if (docDisplay_.hasLineWidgets())
+         DocDisplay display = activeDisplay();
+         Position cursor = display.getCursorPosition();
+         if (display.hasLineWidgets())
          {
             // if we have line widgets, they create an non-reproducible scroll
             // position, so use the cursor position only
             return SourcePosition.create(cursor.getRow(), cursor.getColumn());
          }
          return SourcePosition.create(getContext(), cursor.getRow(),
-               cursor.getColumn(), docDisplay_.getScrollTop());
+               cursor.getColumn(), display.getScrollTop());
       }
 
    }
@@ -1349,7 +1241,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         return docDisplay_.isAtSourceRow(position);
+         return activeDisplay().isAtSourceRow(position);
       }
 
    }
@@ -1357,19 +1249,24 @@ public class TextEditingTarget implements
    @Override
    public void setCursorPosition(Position position)
    {
-      docDisplay_.setCursorPosition(position);
+      primaryDisplay_.setCursorPosition(position);
    }
 
    @Override
    public void ensureCursorVisible()
    {
-      docDisplay_.ensureCursorVisible();
+      // the view focus went back to (see TextEditingTargetWidget.focus) is
+      // the one whose cursor to show; the panes scroll together
+      if (cursorInDiffBase() && view_.ensureDiffSplitCursorVisible())
+         return;
+
+      activeDisplay().ensureCursorVisible();
    }
 
    @Override
    public void forceLineHighlighting()
    {
-      docDisplay_.setHighlightSelectedLine(true);
+      primaryDisplay_.setHighlightSelectedLine(true);
    }
 
    @Override
@@ -1408,7 +1305,7 @@ public class TextEditingTarget implements
       
       debugStartPos_ = startPos;
       debugEndPos_ = endPos;
-      docDisplay_.highlightDebugLocation(startPos, endPos, executing);
+      primaryDisplay_.highlightDebugLocation(startPos, endPos, executing);
       updateDebugWarningBar();
    }
 
@@ -1421,7 +1318,7 @@ public class TextEditingTarget implements
          documentDirtyHandler_ = null;
       }
       
-      docDisplay_.endDebugHighlighting();
+      primaryDisplay_.endDebugHighlighting();
       documentChangedDuringDebugSession_ = false;
       debugStartPos_ = null;
       debugEndPos_ = null;
@@ -1434,7 +1331,7 @@ public class TextEditingTarget implements
       visualMode_.deactivate(() -> {
          // the server may notify us of a collab session we're already
          // participating in; this is okay
-         if (docDisplay_.hasActiveCollabSession())
+         if (primaryDisplay_.hasActiveCollabSession())
          {
             return;
          }
@@ -1457,8 +1354,8 @@ public class TextEditingTarget implements
    @Override
    public void endCollabSession()
    {
-      if (docDisplay_.hasActiveCollabSession())
-         docDisplay_.endCollabSession();
+      if (primaryDisplay_.hasActiveCollabSession())
+         primaryDisplay_.endCollabSession();
 
       // a collaboration session may have come and gone while the tab was not
       // focused
@@ -1493,7 +1390,7 @@ public class TextEditingTarget implements
                   @Override
                   public void execute()
                   {
-                     docDisplay_.beginCollabSession(params, dirtyState_);
+                     primaryDisplay_.beginCollabSession(params, dirtyState_);
                      queuedCollabParams_ = null;
                   }
                },
@@ -1508,7 +1405,7 @@ public class TextEditingTarget implements
                            docUpdateSentinel_.getContents()));
 
                      // let the collab session initiate in this tab
-                     docDisplay_.beginCollabSession(params, dirtyState_);
+                     primaryDisplay_.beginCollabSession(params, dirtyState_);
                      queuedCollabParams_ = null;
                   }
                },
@@ -1521,7 +1418,7 @@ public class TextEditingTarget implements
       else
       {
          // just begin the session right away
-         docDisplay_.beginCollabSession(params, dirtyState_);
+         primaryDisplay_.beginCollabSession(params, dirtyState_);
          queuedCollabParams_ = null;
       }
    }
@@ -1562,7 +1459,7 @@ public class TextEditingTarget implements
          // if we're still debugging, start highlighting the line again
          if (debugStartPos_ != null)
          {
-            docDisplay_.highlightDebugLocation(
+            primaryDisplay_.highlightDebugLocation(
                   debugStartPos_,
                   debugEndPos_, false);
          }
@@ -1608,22 +1505,174 @@ public class TextEditingTarget implements
             onInstall);
    }
 
-   private void jumpToPreviousFunction()
+   // Key bindings the editor handles outside Ace. The view also registers
+   // this on the split view, so each acts on the view it was pressed in.
+   void onEditorKeyDown(DocDisplay display, KeyDownEvent event)
    {
-      Scope jumpTo = scopeHelper_.getPreviousFunction(
-            docDisplay_.getCursorPosition());
+      NativeEvent ne = event.getNativeEvent();
+      int mod = KeyboardShortcut.getModifierValue(ne);
 
-      if (jumpTo != null)
-         docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
+      if ((mod == KeyboardShortcut.META || (
+            mod == KeyboardShortcut.CTRL &&
+            !BrowseCap.hasMetaKey() &&
+            !display.isEmacsModeOn() &&
+            (!display.isVimModeOn() || display.isVimInInsertMode())))
+          && ne.getKeyCode() == 'F')
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         commands_.findReplace().execute();
+      }
+      else if (BrowseCap.hasMetaKey() &&
+               (mod == KeyboardShortcut.META) &&
+               (ne.getKeyCode() == 'E'))
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         commands_.findFromSelection().execute();
+      }
+      else if (mod == KeyboardShortcut.CTRL
+               && ne.getKeyCode() == KeyCodes.KEY_UP
+               && fileType_ == FileTypeRegistry.R)
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         jumpToPreviousFunction(display);
+      }
+      else if (mod == KeyboardShortcut.CTRL
+               && ne.getKeyCode() == KeyCodes.KEY_DOWN
+               && fileType_ == FileTypeRegistry.R)
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         jumpToNextFunction(display);
+      }
+      else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
+               prefs_.editorKeybindings().getValue() != UserPrefs.EDITOR_KEYBINDINGS_VIM)
+      {
+         // Ace's own listener runs first on this textarea; when one of
+         // its bindings claimed the key (closing the Git gutter peek,
+         // leaving multi-select), that press is spent and must not go
+         // on to interrupt R as well.
+         if (DomUtils.isDefaultPrevented(ne))
+            return;
+
+         event.preventDefault();
+         event.stopPropagation();
+
+         // Don't send an interrupt if a popup is visible
+         if (display.isPopupVisible())
+            return;
+
+         // Don't send an interrupt if we're in a source window
+         if (!SourceWindowManager.isMainSourceWindow())
+            return;
+
+         if (commands_.interruptR().isEnabled())
+            commands_.interruptR().execute();
+      }
+      else if (TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(display, ne))
+      {
+         // nothing to do; continueSpecialCommentOnNewline() does all the magic
+      }
+      else if (
+            prefs_.continueCommentsOnNewline().getValue() &&
+            !display.isPopupVisible() &&
+            ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
+              (fileType_.isC() || isCursorInRMode(display) || isCursorInTexMode(display)))
+      {
+         String line = display.getCurrentLineUpToCursor();
+         
+         // validate that this line is composed of only comments and whitespace
+         // (necessary to check token type for e.g. Markdown documents)
+         // https://github.com/rstudio/rstudio/issues/6421
+         JsArray<Token> tokens =
+               display.getTokens(display.getCursorPosition().getRow());
+         
+         boolean isCommentLine = true;
+         for (int i = 0, n = tokens.length(); i < n; i++)
+         {
+            Token token = tokens.get(i);
+            
+            // allow for empty whitespace tokens
+            String value = token.getValue();
+            if (value.trim().isEmpty())
+               continue;
+            
+            // allow tokens explicitly declared as comments
+            if (token.hasType("comment"))
+               continue;
+            
+            // if we got here, then we got a non-whitespace, non-comment token,
+            // so we cannot continue the comment
+            isCommentLine = false;
+            break;
+         }
+         
+         Pattern pattern = null;
+         
+         if (!isCommentLine)
+         {
+            pattern = null;
+         }
+         else if (isCursorInRMode(display))
+         {
+            pattern = Pattern.create("^(\\s*#+'?\\s*)");
+         }
+         else if (isCursorInTexMode(display))
+         {
+            pattern = Pattern.create("^(\\s*%+'?\\s*)");
+         }
+         else if (fileType_.isC())
+         {
+            // bail on attributes
+            if (!line.matches("^\\s*//\\s*\\[\\[.*\\]\\].*"))
+               pattern = Pattern.create("^(\\s*//'?\\s*)");
+         }
+
+         if (pattern != null)
+         {
+            Match match = pattern.match(line, 0);
+            if (match != null)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               display.insertCode("\n" + match.getGroup(1));
+               display.scrollCursorIntoView();
+            }
+         }
+      }
+      else if (
+            prefs_.continueCommentsOnNewline().getValue() &&
+            !display.isPopupVisible() &&
+            ne.getKeyCode() == KeyCodes.KEY_ENTER &&
+            mod == KeyboardShortcut.SHIFT)
+      {
+         event.preventDefault();
+         event.stopPropagation();
+         String indent = display.getNextLineIndent();
+         display.insertCode("\n" + indent);
+         display.scrollCursorIntoView();
+      }
+      events_.fireEvent(new EditingTargetSelectedEvent(this));
    }
 
-   private void jumpToNextFunction()
+   private void jumpToPreviousFunction(DocDisplay display)
    {
-      Scope jumpTo = scopeHelper_.getNextFunction(
-            docDisplay_.getCursorPosition());
+      Scope jumpTo = new TextEditingTargetScopeHelper(display).getPreviousFunction(
+            display.getCursorPosition());
 
       if (jumpTo != null)
-         docDisplay_.navigateToPosition(toSourcePosition(jumpTo), true);
+         display.navigateToPosition(toSourcePosition(jumpTo), true);
+   }
+
+   private void jumpToNextFunction(DocDisplay display)
+   {
+      Scope jumpTo = new TextEditingTargetScopeHelper(display).getNextFunction(
+            display.getCursorPosition());
+
+      if (jumpTo != null)
+         display.navigateToPosition(toSourcePosition(jumpTo), true);
    }
 
    public void initialize(SourceColumn column,
@@ -1635,7 +1684,7 @@ public class TextEditingTarget implements
       id_ = document.getId();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
-      codeExecution_ = new EditingTargetCodeExecution(this, docDisplay_, getId(),
+      codeExecution_ = new EditingTargetCodeExecution(this, primaryDisplay_, getId(),
             this);
       extendedType_ = document.getExtendedType();
       extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
@@ -1646,7 +1695,7 @@ public class TextEditingTarget implements
 
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
-            docDisplay_,
+            primaryDisplay_,
             document,
             globalDisplay_.getProgressIndicator(constants_.saveFile()),
             dirtyState_,
@@ -1661,17 +1710,21 @@ public class TextEditingTarget implements
                }
                else
                {
-                  return docDisplay_.getChunkDefs();
+                  return primaryDisplay_.getChunkDefs();
                }
             });
 
+      gitDiffGutter_ = new TextEditingTargetGitDiffGutter(primaryDisplay_,
+                                                          docUpdateSentinel_,
+                                                          releaseOnDismiss_,
+                                                          this::closeDiffSplit);
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
                                           commands_,
                                           prefs_,
                                           state_,
                                           fileTypeRegistry_,
-                                          docDisplay_,
+                                          primaryDisplay_,
                                           fileType_,
                                           extendedType_,
                                           events_,
@@ -1795,7 +1848,7 @@ public class TextEditingTarget implements
                // editor surface; otherwise, just remove it.
                if (event.successful())
                {
-                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
+                  primaryDisplay_.addOrUpdateBreakpoint(breakpoint);
                }
                else
                {
@@ -1806,7 +1859,7 @@ public class TextEditingTarget implements
                   {
                      view_.showWarningBar(constants_.onBreakpointsSavedWarningBar());
                   }
-                  docDisplay_.removeBreakpoint(breakpoint);
+                  primaryDisplay_.removeBreakpoint(breakpoint);
                }
             }
             updateBreakpointWarningBar();
@@ -1878,7 +1931,7 @@ public class TextEditingTarget implements
                @Override
                public void onSetEditorCommandBindings(SetEditorCommandBindingsEvent event)
                {
-                  getDocDisplay().setEditorCommandBinding(
+                  getPrimaryDisplay().setEditorCommandBinding(
                         event.getId(),
                         event.getKeySequences());
                }
@@ -1892,12 +1945,12 @@ public class TextEditingTarget implements
                @Override
                public void onResetEditorCommands(ResetEditorCommandsEvent event)
                {
-                  getDocDisplay().resetCommands();
+                  getPrimaryDisplay().resetCommands();
 
                   // resetCommands() reinstalls every Ace default, which replaces
                   // the animated line navigation commands that smooth scrolling
                   // installs.
-                  getDocDisplay().setSmoothScrolling(prefs_.smoothScrolling().getValue());
+                  getPrimaryDisplay().setSmoothScrolling(prefs_.smoothScrolling().getValue());
                }
             });
 
@@ -1918,7 +1971,7 @@ public class TextEditingTarget implements
                   // make editor read only while we're dragging and dropping
                   // tabs; otherwise the editor surface will accept a tab drop
                   // as text
-                  docDisplay_.setReadOnly(!enabled);
+                  primaryDisplay_.setReadOnly(!enabled);
                }
             });
 
@@ -2026,7 +2079,7 @@ public class TextEditingTarget implements
                            public void onClick(ClickEvent event)
                            {
                               int scrollLine = completion.range.start.line - 5;
-                              docDisplay_.scrollToLine(scrollLine, false);
+                              primaryDisplay_.scrollToLine(scrollLine, false);
                            }
                         };
                      }
@@ -2067,12 +2120,12 @@ public class TextEditingTarget implements
                }
             });
       
-      packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);
+      packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, primaryDisplay_);
 
       // create notebook and forward resize events
       chunks_ = new TextEditingTargetChunks(this);
       notebook_ = new TextEditingTargetNotebook(this, chunks_, view_,
-            docDisplay_, dirtyState_, docUpdateSentinel_, document,
+            primaryDisplay_, dirtyState_, docUpdateSentinel_, document,
             releaseOnDismiss_, dependencyManager_);
       view_.addResizeHandler(notebook_);
 
@@ -2080,8 +2133,8 @@ public class TextEditingTarget implements
       projConfig_ = document.getProjectConfig();
       if (projConfig_ != null)
       {
-         docDisplay_.setUseSoftTabs(projConfig_.useSoftTabs());
-         docDisplay_.setTabSize(projConfig_.getTabSize());
+         primaryDisplay_.setUseSoftTabs(projConfig_.useSoftTabs());
+         primaryDisplay_.setTabSize(projConfig_.getTabSize());
       }
 
       // ensure that Makefile and Makevars always use tabs
@@ -2092,7 +2145,7 @@ public class TextEditingTarget implements
             view_.setAccessibleName(name_.getValue());
             FileSystemItem item = FileSystemItem.createFile(event.getValue());
             if (shouldEnforceHardTabs(item))
-               docDisplay_.setUseSoftTabs(false);
+               primaryDisplay_.setUseSoftTabs(false);
          }
       }));
 
@@ -2106,7 +2159,7 @@ public class TextEditingTarget implements
       // the server state)
       docUpdateSentinel_.withChangeDetectionSuspended(() ->
       {
-         docDisplay_.setCode(contents, false);
+         primaryDisplay_.setCode(contents, false);
       });
 
       // Discover dependencies on file first open.
@@ -2126,7 +2179,7 @@ public class TextEditingTarget implements
             docUpdateSentinel_.withChangeDetectionSuspended(() ->
             {
                for (Fold fold : folds)
-                  docDisplay_.addFold(fold.getRange());
+                  primaryDisplay_.addFold(fold.getRange());
             });
          }
       });
@@ -2144,13 +2197,13 @@ public class TextEditingTarget implements
             @Override
             public void run()
             {
-                docDisplay_.setMarks(marks);
+                primaryDisplay_.setMarks(marks);
             }
          }.schedule(100);
       }
 
       TextEditingTargetPrefsHelper.registerPrefs(
-            releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
+            releaseOnDismiss_, prefs_, projConfig_, primaryDisplay_, document);
 
       // apply and track the editor split state (a second view of this document)
       releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
@@ -2178,12 +2231,12 @@ public class TextEditingTarget implements
          dirtyState_.markDirty(false);
       else
          dirtyState_.markClean();
-      releaseOnDismiss_.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<VoidResponse>()
+      releaseOnDismiss_.add(primaryDisplay_.addValueChangeHandler(new ValueChangeHandler<VoidResponse>()
       {
          public void onValueChange(ValueChangeEvent<VoidResponse> event)
          {
             dirtyState_.markDirty(true);
-            docDisplay_.clearSelectionHistory();
+            primaryDisplay_.clearSelectionHistory();
 
             // Nudge autosave timer (so it doesn't fire while the document is
             // actively mutating)
@@ -2191,7 +2244,7 @@ public class TextEditingTarget implements
          }
       }));
 
-      docDisplay_.addFocusHandler(new FocusHandler()
+      primaryDisplay_.addFocusHandler(new FocusHandler()
       {
          public void onFocus(FocusEvent event)
          {
@@ -2202,7 +2255,7 @@ public class TextEditingTarget implements
             {
                // join an in-progress collab session if we aren't already part
                // of one
-               if (docDisplay_ != null && !docDisplay_.hasActiveCollabSession())
+               if (primaryDisplay_ != null && !primaryDisplay_.hasActiveCollabSession())
                {
                   beginQueuedCollabSession();
                }
@@ -2221,7 +2274,7 @@ public class TextEditingTarget implements
 
       if (fileType_.isR())
       {
-         docDisplay_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
+         primaryDisplay_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
          {
             @Override
             public void onBreakpointSet(BreakpointSetEvent event)
@@ -2252,7 +2305,7 @@ public class TextEditingTarget implements
                   ScopeFunction innerFunction = null;
                   if (extendedType_ == null ||
                       !extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
-                     innerFunction = docDisplay_.getFunctionAtPosition(
+                     innerFunction = primaryDisplay_.getFunctionAtPosition(
                            breakpointPosition, false);
                   if (innerFunction == null || !innerFunction.isFunction() ||
                       StringUtil.isNullOrEmpty(innerFunction.getFunctionName()))
@@ -2283,7 +2336,7 @@ public class TextEditingTarget implements
                            dirtyState().getValue() == false);
                   }
 
-                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
+                  primaryDisplay_.addOrUpdateBreakpoint(breakpoint);
                }
                else
                {
@@ -2293,7 +2346,7 @@ public class TextEditingTarget implements
             }
          });
 
-         docDisplay_.addBreakpointMoveHandler(new BreakpointMoveEvent.Handler()
+         primaryDisplay_.addBreakpointMoveHandler(new BreakpointMoveEvent.Handler()
          {
             @Override
             public void onBreakpointMove(BreakpointMoveEvent event)
@@ -2320,7 +2373,7 @@ public class TextEditingTarget implements
             }
       ));
 
-      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_, prefs_);
+      spelling_ = new TextEditingTargetSpelling(primaryDisplay_, docUpdateSentinel_, lintManager_, prefs_);
 
       // find all of the debug breakpoints set in this document and replay them
       // onto the edit surface
@@ -2328,7 +2381,7 @@ public class TextEditingTarget implements
             breakpointManager_.getBreakpointsInFile(getPath());
       for (Breakpoint breakpoint: breakpoints)
       {
-         docDisplay_.addOrUpdateBreakpoint(breakpoint);
+         primaryDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
 
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
@@ -2356,17 +2409,17 @@ public class TextEditingTarget implements
 
             properties.put(
                   PROPERTY_CURSOR_POSITION,
-                  Position.serialize(docDisplay_.getCursorPosition()));
+                  Position.serialize(primaryDisplay_.getCursorPosition()));
 
             properties.put(
                   PROPERTY_SCROLL_LINE,
-                  String.valueOf(docDisplay_.getFirstFullyVisibleRow()));
+                  String.valueOf(primaryDisplay_.getFirstFullyVisibleRow()));
 
             docUpdateSentinel_.modifyProperties(properties);
          }
       };
 
-      releaseOnDismiss_.add(docDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
+      releaseOnDismiss_.add(primaryDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
       {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
@@ -2380,7 +2433,7 @@ public class TextEditingTarget implements
       // Use AceSelectionChangedEvent instead of CursorChangedEvent because
       // the latter only fires when cursor position changes, not when selection
       // anchor changes (e.g., clicking to deselect without moving cursor)
-      releaseOnDismiss_.add(docDisplay_.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
+      releaseOnDismiss_.add(primaryDisplay_.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
       {
          @Override
          public void onSelectionChanged(AceSelectionChangedEvent event)
@@ -2395,7 +2448,7 @@ public class TextEditingTarget implements
          TextEditingTarget.this,
          view_,
          rmarkdownHelper_,
-         docDisplay_,
+         primaryDisplay_,
          dirtyState_,
          docUpdateSentinel_,
          events_,
@@ -2443,9 +2496,9 @@ public class TextEditingTarget implements
                   0);
 
             Position position = Position.deserialize(cursorPosition);
-            docDisplay_.setCursorPosition(position);
-            docDisplay_.scrollToLine(scrollLine, false);
-            docDisplay_.setScrollLeft(0);
+            primaryDisplay_.setCursorPosition(position);
+            primaryDisplay_.scrollToLine(scrollLine, false);
+            primaryDisplay_.setScrollLeft(0);
          }
       });
 
@@ -2574,12 +2627,12 @@ public class TextEditingTarget implements
    private void initStatusBar()
    {
       statusBar_ = view_.getStatusBar();
-      docDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
+      primaryDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
       {
          public void onCursorChanged(CursorChangedEvent event)
          {
             updateStatusBarPosition();
-            if (docDisplay_.isScopeTreeReady(event.getPosition().getRow()))
+            if (primaryDisplay_.isScopeTreeReady(event.getPosition().getRow()))
                updateCurrentScope();
 
          }
@@ -2649,10 +2702,13 @@ public class TextEditingTarget implements
             }
             else
             {
+               // the status bar shows the active view's scope, so the menu
+               // highlights and navigates within that view
                final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-               JsArray<Scope> tree = docDisplay_.getScopeTree();
+               DocDisplay display = activeDisplay();
+               JsArray<Scope> tree = display.getScopeTree();
                MenuItem defaultItem = addFunctionsToMenu(
-                  menu, tree, "", docDisplay_.getCurrentScope(), true);
+                  menu, tree, "", display.getCurrentScope(), true);
 
                showStatusBarPopupMenu(new StatusBarPopupRequest(menu,
                                                                 defaultItem));
@@ -2752,8 +2808,8 @@ public class TextEditingTarget implements
                   {
                      public void execute()
                      {
-                        docDisplay_.navigateToPosition(toSourcePosition(func),
-                                                       true);
+                        activeDisplay().navigateToPosition(toSourcePosition(func),
+                                                           true);
                      }
                   });
             addScopeStyle(menuItem, func);
@@ -2890,13 +2946,31 @@ public class TextEditingTarget implements
       }
       else
       {
-         return docDisplay_.getPixelWidth();
+         return primaryDisplay_.getPixelWidth();
       }
    }
 
    public void insertCode(String source, boolean blockMode)
    {
-      docDisplay_.insertCode(source, blockMode);
+      insertCode(activeDisplay(), source, blockMode);
+   }
+
+   // Inserts at the cursor of the given editor view, which a caller captures
+   // before an asynchronous request so that the result lands in the view the
+   // request came from.
+   public void insertCode(DocDisplay display, String source, boolean blockMode)
+   {
+      liveDisplay(display).insertCode(source, blockMode);
+   }
+
+   // Returns the given editor view, or the active view if the given one is
+   // gone (e.g. a split closed while a request made from it was pending).
+   private DocDisplay liveDisplay(DocDisplay display)
+   {
+      if (display != primaryDisplay_ && display != view_.getSplitDisplay())
+         return activeDisplay();
+
+      return display;
    }
 
    public HashSet<AppCommand> getSupportedCommands()
@@ -3044,13 +3118,14 @@ public class TextEditingTarget implements
       {
          ensureTextEditorActive(() ->
          {
-            if (docDisplay_.hasSelection())
+            DocDisplay display = activeDisplay();
+            if (display.hasSelection())
             {
-               docDisplay_.replaceSelection(value);
+               display.replaceSelection(value);
             }
             else
             {
-               docDisplay_.insertCode(value);
+               display.insertCode(value);
             }
 
             callback.execute();
@@ -3060,8 +3135,9 @@ public class TextEditingTarget implements
 
    public String getSelectedText()
    {
-      if (docDisplay_.hasSelection())
-         return docDisplay_.getSelectionValue();
+      DocDisplay display = activeDisplay();
+      if (display.hasSelection())
+         return display.getSelectionValue();
       else
          return "";
    }
@@ -3122,10 +3198,11 @@ public class TextEditingTarget implements
          commandHandlerReg_ = null;
       }
       commandHandlerReg_ = commandBinder.bind(commands_, this);
+      syncDiffSplitCommand();
 
       // show outline if not yet rendered (deferred so that widget itself can
       // be sized first)
-      if (!docDisplay_.isRendered())
+      if (!primaryDisplay_.isRendered())
       {
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
@@ -3155,6 +3232,7 @@ public class TextEditingTarget implements
       if (notebook_ != null)
          notebook_.onActivate();
 
+      gitDiffGutter_.onActivate();
       view_.onActivate();
    }
 
@@ -3165,6 +3243,7 @@ public class TextEditingTarget implements
       // re-usable implementation) so changes here need to be synced
 
       externalEditCheckInvalidation_.invalidate();
+      gitDiffGutter_.onDeactivate();
 
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
@@ -3214,7 +3293,7 @@ public class TextEditingTarget implements
          }
       };
 
-      if (docDisplay_.hasFollowingCollabSession())
+      if (primaryDisplay_.hasFollowingCollabSession())
       {
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
                          constants_.onBeforeDismissCaption(getName().getValue()),
@@ -3353,7 +3432,7 @@ public class TextEditingTarget implements
          final CommandWithArg<String> command)
    {
       String preferredDocumentEncoding = null;
-      if (docDisplay_.getFileType().isRmd())
+      if (primaryDisplay_.getFileType().isRmd())
          preferredDocumentEncoding = "UTF-8";
 
       final String encoding = StringUtil.firstNotNullOrEmpty(new String[] {
@@ -3485,7 +3564,7 @@ public class TextEditingTarget implements
                               // breakpoints are file-specific, so when saving
                               // as a different file, clear the display of
                               // breakpoints from the old file name
-                              docDisplay_.removeAllBreakpoints();
+                              primaryDisplay_.removeAllBreakpoints();
 
                               // update publish settings
                               syncPublishPath(saveItem.getPath());
@@ -3562,14 +3641,14 @@ public class TextEditingTarget implements
 
    private void fixupCodeBeforeSaving(Command ready)
    {
-      int lineCount = docDisplay_.getRowCount();
+      int lineCount = primaryDisplay_.getRowCount();
       if (lineCount < 1)
       {
          ready.execute();
          return;
       }
 
-      if (docDisplay_.hasActiveCollabSession())
+      if (primaryDisplay_.hasActiveCollabSession())
       {
          // mutating the code (especially as below where the entire document
          // contents are changed) during a save operation inside a collaborative
@@ -3602,21 +3681,25 @@ public class TextEditingTarget implements
 
          if (stripTrailingWhitespace)
          {
-            String code = docDisplay_.getCode();
+            String code = primaryDisplay_.getCode();
             String strippedCode = "";
             
             // If this is being performed as part of an autosave, avoid
-            // mutating lines containing the cursor.
+            // mutating lines containing the cursor of either editor view.
             if (isAutoSaving())
             {
                Pattern pattern = Pattern.create("[ \t]+$", "");
-               int startRow = docDisplay_.getSelectionStart().getRow();
-               int endRow = docDisplay_.getSelectionEnd().getRow();
+               int startRow = primaryDisplay_.getSelectionStart().getRow();
+               int endRow = primaryDisplay_.getSelectionEnd().getRow();
+               DocDisplay splitView = view_.getSplitDisplay();
+               int splitStartRow = splitView == null ? -1 : splitView.getSelectionStart().getRow();
+               int splitEndRow = splitView == null ? -1 : splitView.getSelectionEnd().getRow();
                
-               JsArrayString lines = docDisplay_.getLines();
+               JsArrayString lines = primaryDisplay_.getLines();
                for (int i = 0, n = lines.length(); i < n; i++)
                {
-                  if (i < startRow || i > endRow)
+                  if ((i < startRow || i > endRow) &&
+                      (i < splitStartRow || i > splitEndRow))
                   {
                      String line = lines.get(i);
                      lines.set(i, pattern.replaceAll(line, ""));
@@ -3631,14 +3714,7 @@ public class TextEditingTarget implements
             }
             
             if (!strippedCode.equals(code))
-            {
-               // Calling 'setCode' can remove folds in the document; cache the folds
-               // and reapply them after document mutation.
-               JsArray<AceFold> folds = docDisplay_.getFolds();
-               docDisplay_.setCode(strippedCode, true);
-               for (AceFold fold : JsUtil.asIterable(folds))
-                  docDisplay_.addFold(fold.getRange());
-            }
+               replaceCodeKeepingFolds(strippedCode);
          }
 
          boolean autoAppendNewline = (projConfig_ == null)
@@ -3655,16 +3731,39 @@ public class TextEditingTarget implements
 
          if (autoAppendNewline || isStartupFile || fileType_.isPython())
          {
-            String lastLine = docDisplay_.getLine(lineCount - 1);
+            String lastLine = primaryDisplay_.getLine(lineCount - 1);
             if (lastLine.length() != 0)
             {
-               docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
+               primaryDisplay_.insertCode(primaryDisplay_.getEnd().getEnd(), "\n");
             }
          }
 
          // callback
          ready.execute();
       });
+   }
+
+   // Replaces the document's text with code of the same line count, keeping
+   // each editor view's folds. 'setCode' keeps each view's cursor and scroll
+   // position but can remove folds in the document, so cache the folds and
+   // reapply them after document mutation. They go back after 'setCode' has
+   // restored the selections, since setting a selection unfolds any folds it
+   // spans.
+   private void replaceCodeKeepingFolds(String code)
+   {
+      JsArray<AceFold> folds = primaryDisplay_.getFolds();
+      DocDisplay splitView = view_.getSplitDisplay();
+      JsArray<AceFold> splitFolds = splitView == null ? null : splitView.getFolds();
+
+      primaryDisplay_.setCode(code, true);
+      for (AceFold fold : JsUtil.asIterable(folds))
+         primaryDisplay_.addFold(fold.getRange());
+
+      if (splitView != null)
+      {
+         for (AceFold fold : JsUtil.asIterable(splitFolds))
+            splitView.addFold(fold.getRange());
+      }
    }
 
    private void applyVisualModeFixups(Command onComplete)
@@ -3702,7 +3801,7 @@ public class TextEditingTarget implements
         
          
          // check for a file based canonical setting
-         String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
+         String yaml = YamlFrontMatter.getFrontMatter(primaryDisplay_);
          String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");
          if (!yamlCanonical.isEmpty())
             canonical = YamlTree.isTrue(yamlCanonical);
@@ -3718,15 +3817,15 @@ public class TextEditingTarget implements
          // of our source
          else if (canonical && visualMode_.canWriteCanonical())
          {
-            String code = docDisplay_.getCode();
+            String code = primaryDisplay_.getCode();
             visualMode_.getCanonicalChanges(code, (changes) -> {
                // null changes means an error occurred (user has already been shown an alert)
                if (changes != null)
                {
                   if (changes.changes != null)
-                     docDisplay_.applyChanges(changes.changes, true);
+                     primaryDisplay_.applyChanges(changes.changes, true);
                   else if (changes.code != null)
-                     docDisplay_.setCode(changes.code, true);
+                     primaryDisplay_.setCode(changes.code, true);
                }
                // need to continue in order to not permanetly break save
                // (user has seen an error message so will still likely report)
@@ -3757,7 +3856,7 @@ public class TextEditingTarget implements
             ModalDialogTracker.numModalsShowing() == 0 &&
             getPath() != null &&
             dirtyState_.getValue() &&
-            !docDisplay_.hasActiveCollabSession();
+            !primaryDisplay_.hasActiveCollabSession();
             
       if (!canAutosave)
          return;
@@ -3829,7 +3928,7 @@ public class TextEditingTarget implements
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
 
-      docDisplay_.endCollabSession();
+      primaryDisplay_.endCollabSession();
 
       codeExecution_.detachLastExecuted();
       if (splitCodeExecution_ != null)
@@ -3895,7 +3994,7 @@ public class TextEditingTarget implements
          (dirtyState().getValue() == true) ||
 
          // empty untitled document (allow for immediate save)
-         ((getPath() == null) && docDisplay_.getCode().isEmpty()) ||
+         ((getPath() == null) && primaryDisplay_.getCode().isEmpty()) ||
 
          // source on save is active
          (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave()) ||
@@ -3927,25 +4026,26 @@ public class TextEditingTarget implements
       // hasn't changed as the path may have changed
       syncPublishPath(docUpdateSentinel_.getPath());
 
-      // if autosaves are enabled and the extended type hasn't changed, then
-      // don't do any further work as adapting to the extended type can cause
-      // disruptive side effects during autosave (e.g., knocking down
-      // autocomplete dialogs, resetting vim mode)
-      if (StringUtil.equals(extendedType, extendedType_) &&
-          prefs_.autoSaveEnabled())
-      {
-         return;
-      }
-
+      // always re-adapt, even when the extended type is unchanged: a save can
+      // change the output formats in the YAML header, and the view only resets
+      // the editor when the file type itself changes
       view_.adaptToExtendedFileType(extendedType);
 
       // save new extended type (updateRmdFormat below reads it)
+      boolean extendedTypeChanged = !StringUtil.equals(extendedType, extendedType_);
       extendedType_ = extendedType;
 
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
-         updateRmdFormat();
+         // the format menu is derived from the front matter, so only rebuild it
+         // when that changed: every save (including idle autosaves) lands here,
+         // and rebuilding would also clear a format menu the user has open
+         if (extendedTypeChanged ||
+             !StringUtil.equals(getRmdFrontMatter(), rmdFormatFrontMatter_))
+         {
+            updateRmdFormat();
+         }
       }
 
       quartoHelper_.manageCommands();
@@ -4064,6 +4164,39 @@ public class TextEditingTarget implements
       view_.focusOtherEditorSplit();
    }
 
+   @Handler
+   void onVcsShowChangesSideBySide()
+   {
+      String desired = isDiffSplitActive() ? EDITOR_SPLIT_NONE : EDITOR_SPLIT_DIFF;
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, desired);
+   }
+
+   private boolean isDiffSplitActive()
+   {
+      return StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_DIFF);
+   }
+
+   // Closes the side-by-side view now (the gutter driving it is going away)
+   // and records the closed state as the commands do. The view is applied
+   // first, rather than on the property's round trip to the server as it
+   // usually is, so that the pane neither sits empty meanwhile nor stays
+   // should that round trip fail.
+   private void closeDiffSplit()
+   {
+      if (view_ != null)
+         applyEditorSplit(EDITOR_SPLIT_NONE);
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, EDITOR_SPLIT_NONE);
+   }
+
+   // The command is shared by every tab, so its checked state follows the
+   // active document: on activation, and whenever its split state changes
+   // (a restored document applies its split before any tab is active).
+   private void syncDiffSplitCommand()
+   {
+      if (commandHandlerReg_ != null)
+         commands_.vcsShowChangesSideBySide().setChecked(isDiffSplitActive());
+   }
+
    // If an editor split is active and one of this editor's views currently
    // holds focus, move focus to the other view and return true. Used by
    // activateSource (Ctrl+1), so that repeated presses toggle between the
@@ -4090,30 +4223,41 @@ public class TextEditingTarget implements
 
    private void applyEditorSplit(String type)
    {
-      // tolerate stale or unrecognized property values
-      if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
-          !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      if (StringUtil.equals(type, EDITOR_SPLIT_DIFF))
       {
+         // a restored diff split for a document that can no longer show one
+         // (e.g. the markers since turned off) falls back to a single view
+         if (!gitDiffGutter_.isAvailable())
+            type = EDITOR_SPLIT_NONE;
+      }
+      else if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
+               !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      {
+         // tolerate stale or unrecognized property values
          type = EDITOR_SPLIT_NONE;
       }
-
-      if (!StringUtil.equals(type, EDITOR_SPLIT_NONE))
+      else
+      {
+         // the kind of split that Toggle Editor Split brings back
          lastEditorSplit_ = type;
+      }
 
       view_.setEditorSplit(type);
+      syncDiffSplitCommand();
    }
 
    // The editor view holding the user's cursor -- the primary editor, or the
-   // split view when it last held focus. Selection-driven behavior (executing
-   // code, rstudioapi selection queries, status bar position) should read
-   // from this display; document-level behavior stays on docDisplay_. See
-   // the "active tab" vs "active editor view" note on Display. In visual
-   // mode the primary editor is always used, as visual mode synchronizes its
+   // split view when it last held focus. Cursor- and selection-driven
+   // behavior (editing commands, executing code, folding, rstudioapi
+   // selection reads and writes, status bar position) should use this
+   // display; document-level behavior stays on primaryDisplay_. See the "active
+   // tab" vs "active editor view" note on Display. In visual mode the
+   // primary editor is always used, as visual mode synchronizes its
    // selection into it.
-   private DocDisplay activeDisplay()
+   public DocDisplay activeDisplay()
    {
       if (view_ == null || isVisualModeActivated())
-         return docDisplay_;
+         return primaryDisplay_;
 
       return view_.getActiveDisplay();
    }
@@ -4124,7 +4268,7 @@ public class TextEditingTarget implements
    private EditingTargetCodeExecution codeExecution()
    {
       DocDisplay display = activeDisplay();
-      if (display == docDisplay_)
+      if (display == primaryDisplay_)
       {
          lastCodeExecution_ = codeExecution_;
       }
@@ -4160,21 +4304,62 @@ public class TextEditingTarget implements
          updateCurrentScope();
    }
 
+   // Called by the view when the selection changes in the split editor view,
+   // so Chat's view of the selection follows the view being edited.
+   void splitEditorSelectionChanged()
+   {
+      selectionChangedTimer_.schedule(250);
+   }
+
+   // Called by the view when the split editor view gains focus, so returning
+   // to the document through either view picks up changes made on disk.
+   void splitEditorFocused()
+   {
+      checkForExternalEdit(500);
+   }
+
+   // Called by the view when the split editor view loses focus, so autosave
+   // on blur covers edits made there.
+   void splitEditorBlurred()
+   {
+      maybeAutoSaveOnBlur();
+   }
+
    // Applies the inline-chunk-output mode to every view of this document.
    // The flag lives on each editor view, and code execution consults the
    // view that initiated it, so a stale flag on the split view would send
    // chunk code to the console instead of the notebook queue.
    public void setShowChunkOutputInline(boolean show)
    {
-      docDisplay_.setShowChunkOutputInline(show);
+      primaryDisplay_.setShowChunkOutputInline(show);
       if (view_ != null)
          view_.syncSplitShowChunkOutputInline();
+   }
+
+   // Called by the view when it creates the split editor view.
+   void splitEditorCreated(AceEditor editor)
+   {
+      gitDiffGutter_.setSplitEditor(editor);
+   }
+
+   // Called by the view as the side-by-side diff pane comes and goes; the
+   // gutter owns the base editor shown inside it.
+   void diffSplitCreated(GitDiffSplitWidget widget)
+   {
+      gitDiffGutter_.setDiffSplitWidget(widget);
+   }
+
+   void diffSplitRemoved()
+   {
+      gitDiffGutter_.setDiffSplitWidget(null);
    }
 
    // Called by the view when the split editor view is destroyed; drop any
    // executor bound to it so re-run-last-code falls back to the primary view.
    void splitEditorRemoved()
    {
+      gitDiffGutter_.setSplitEditor(null);
+
       if (lastCodeExecution_ == splitCodeExecution_)
          lastCodeExecution_ = codeExecution_;
 
@@ -4451,7 +4636,7 @@ public class TextEditingTarget implements
       final JsArray<AceFold> folds = display.getFolds();
       display.unfoldAll();
 
-      int matches = renameHelper_.renameInScope();
+      int matches = renameHelper_.renameInScope(display);
       if (matches <= 0)
       {
          if (!display.getSelectionValue().isEmpty())
@@ -4579,6 +4764,13 @@ public class TextEditingTarget implements
       docUpdateSentinel_.withSavedDocNoRetry(onsaved);
    }
 
+   // Whether the editor holds edits not yet backed up to the server's copy of
+   // the document
+   public boolean hasPendingChanges()
+   {
+      return docUpdateSentinel_ != null && docUpdateSentinel_.hasPendingChanges();
+   }
+
    @Handler
    void onWordCount()
    {
@@ -4593,13 +4785,13 @@ public class TextEditingTarget implements
          // prose, which we can't count here.
          if (!isVisualEditorActive())
          {
-            selectionRange = docDisplay_.getSelectionRange();
+            selectionRange = activeDisplay().getSelectionRange();
          }
 
-         TextFileType fileType = docDisplay_.getFileType();
-         Iterator<Range> wordIter = docDisplay_.getWords(
+         TextFileType fileType = primaryDisplay_.getFileType();
+         Iterator<Range> wordIter = primaryDisplay_.getWords(
             fileType.getTokenPredicate(),
-            docDisplay_.getFileType().getCharPredicate(),
+            primaryDisplay_.getFileType().getCharPredicate(),
             Position.create(0, 0),
             null).iterator();
 
@@ -4630,7 +4822,7 @@ public class TextEditingTarget implements
       else
       {
          ensureTextEditorActive(() -> {
-            spelling_.checkSpelling(docDisplay_.getSpellingDoc());
+            spelling_.checkSpelling(activeDisplay().getSpellingDoc());
          });
       }
 
@@ -4655,7 +4847,9 @@ public class TextEditingTarget implements
       final Command action = () -> {
          withChooseEncoding(
                docUpdateSentinel_.getEncoding(),
-               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
+               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(
+                     encoding,
+                     () -> gitDiffGutter_.documentReloaded()));
       };
 
       // NOTE: we previously attempted to save any existing document diffs
@@ -4702,7 +4896,7 @@ public class TextEditingTarget implements
    {
       try
       {
-         docDisplay_.startOperation();
+         primaryDisplay_.startOperation();
          applyEditsImpl(response);
       }
       catch (Exception e)
@@ -4710,7 +4904,7 @@ public class TextEditingTarget implements
          Debug.logException(e);
       }
 
-      docDisplay_.endOperation();
+      primaryDisplay_.endOperation();
    }
 
    private void applyEditsImpl(FormatDocumentResult response)
@@ -4720,9 +4914,9 @@ public class TextEditingTarget implements
       {
          FormatDocumentEdit edit = edits.get(n - i - 1);
 
-         Position lhs = docDisplay_.positionFromIndex(edit.offset);
-         Position rhs = docDisplay_.positionFromIndex(edit.offset + edit.size);
-         docDisplay_.replaceRange(
+         Position lhs = primaryDisplay_.positionFromIndex(edit.offset);
+         Position rhs = primaryDisplay_.positionFromIndex(edit.offset + edit.size);
+         primaryDisplay_.replaceRange(
             Range.fromPoints(lhs, rhs),
             edit.value);
       }
@@ -4841,7 +5035,7 @@ public class TextEditingTarget implements
       {
          public void execute()
          {
-            docDisplay_.print();
+            primaryDisplay_.print();
          }
       });
    }
@@ -4878,6 +5072,31 @@ public class TextEditingTarget implements
             FileSystemItem.createFile(docUpdateSentinel_.getPath())));
    }
 
+   // these follow the cursor, so they go to whichever editor view has it
+   @Handler
+   void onVcsNextChange()
+   {
+      gitDiffGutter_.goToNextChange(activeDisplay());
+   }
+
+   @Handler
+   void onVcsPreviousChange()
+   {
+      gitDiffGutter_.goToPreviousChange(activeDisplay());
+   }
+
+   @Handler
+   void onVcsRevertChange()
+   {
+      gitDiffGutter_.revertChangeAtCursor(activeDisplay());
+   }
+
+   @Handler
+   void onVcsShowChange()
+   {
+      gitDiffGutter_.showChangeAtCursor(activeDisplay());
+   }
+
    @Handler
    void onVcsViewOnGitHub()
    {
@@ -4895,10 +5114,11 @@ public class TextEditingTarget implements
       FileSystemItem file =
                   FileSystemItem.createFile(docUpdateSentinel_.getPath());
 
-      if (docDisplay_.getSelectionValue().length() > 0)
+      DocDisplay display = activeDisplay();
+      if (display.getSelectionValue().length() > 0)
       {
-         int start = docDisplay_.getSelectionStart().getRow() + 1;
-         int end = docDisplay_.getSelectionEnd().getRow() + 1;
+         int start = display.getSelectionStart().getRow() + 1;
+         int end = display.getSelectionEnd().getRow() + 1;
          events_.fireEvent(new VcsViewOnGitHubEvent(
                          new GitHubViewRequest(file, type, start, end)));
       }
@@ -5135,8 +5355,8 @@ public class TextEditingTarget implements
          if (docs.get(i).getId() == getId())
          {
             docs.get(i).getNotebookDoc().setChunkDefs(
-                  docDisplay_.getChunkDefs());
-            docs.get(i).setContents(docDisplay_.getCode());
+                  primaryDisplay_.getChunkDefs());
+            docs.get(i).setContents(primaryDisplay_.getCode());
             docs.get(i).setDirty(dirtyState_.getValue());
             break;
          }
@@ -5466,31 +5686,46 @@ public class TextEditingTarget implements
          doReflowComment(display, "()");
    }
 
+   // The Vim actions gq / gqq, == and K; like the commands they mirror, they
+   // act on the active editor view.
    public void reflowText()
    {
-      if (docDisplay_.getSelectionValue().isEmpty())
-         docDisplay_.setSelectionRange(
-               Range.fromPoints(
-                     Position.create(docDisplay_.getCursorPosition().getRow(), 0),
-                     Position.create(docDisplay_.getCursorPosition().getRow(),
-                           docDisplay_.getCurrentLine().length())));
+      withActiveEditor((disp) ->
+      {
+         if (disp.getSelectionValue().isEmpty())
+            disp.setSelectionRange(
+                  Range.fromPoints(
+                        Position.create(disp.getCursorPosition().getRow(), 0),
+                        Position.create(disp.getCursorPosition().getRow(),
+                              disp.getCurrentLine().length())));
 
-      onReflowComment();
-      docDisplay_.setCursorPosition(
-            Position.create(
-                  docDisplay_.getSelectionEnd().getRow(),
-                  0));
+         reflowComment(disp);
+         disp.setCursorPosition(
+               Position.create(
+                     disp.getSelectionEnd().getRow(),
+                     0));
+      });
+   }
+
+   public void reindent()
+   {
+      withActiveEditor((disp) ->
+      {
+         disp.reindent();
+      });
    }
 
    public void showHelpAtCursor()
    {
-      docDisplay_.goToHelp();
+      onGoToHelp();
    }
 
    @Handler
    void onDebugBreakpoint()
    {
-      docDisplay_.toggleBreakpointAtCursor();
+      // breakpoints live on the primary editor (the split view shows none),
+      // but the row comes from the view holding the cursor
+      primaryDisplay_.toggleBreakpointAtRow(activeDisplay().getCursorPosition().getRow());
    }
 
    @Handler
@@ -5547,12 +5782,12 @@ public class TextEditingTarget implements
             {
                // try to find where the YAML segment begins in the document
                // so we can show an adjusted line number for the error
-               int numLines = docDisplay_.getRowCount();
+               int numLines = primaryDisplay_.getRowCount();
                int offsetLine = 0;
                String separator = RmdFrontMatter.FRONTMATTER_SEPARATOR.trim();
                for (int i = 0; i < numLines; i++)
                {
-                  if (docDisplay_.getLine(i).equals(separator))
+                  if (primaryDisplay_.getLine(i).equals(separator))
                   {
                      offsetLine = i + 1;
                      break;
@@ -5633,7 +5868,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         return YamlFrontMatter.getFrontMatter(docDisplay_);
+         return YamlFrontMatter.getFrontMatter(primaryDisplay_);
       }
    }
 
@@ -5646,7 +5881,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         applied = YamlFrontMatter.applyFrontMatter(docDisplay_, yaml);
+         applied = YamlFrontMatter.applyFrontMatter(primaryDisplay_, yaml);
       }
       if (applied)
          updateRmdFormat();
@@ -5720,6 +5955,8 @@ public class TextEditingTarget implements
 
    private void updateRmdFormat()
    {
+      rmdFormatFrontMatter_ = getRmdFrontMatter();
+
       String formatUiName = "";
       List<String> formatList = new ArrayList<>();
       List<String> valueList = new ArrayList<>();
@@ -5835,7 +6072,7 @@ public class TextEditingTarget implements
             // if the user manually set the output to console in a notebook,
             // respect that (even though it's weird)
             String outputType = RmdEditorOptions.getString(
-                  YamlFrontMatter.getFrontMatter(docDisplay_),
+                  YamlFrontMatter.getFrontMatter(primaryDisplay_),
                   TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, null);
             if (outputType != TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE)
             {
@@ -5856,7 +6093,7 @@ public class TextEditingTarget implements
       if (isShinyDoc())
       {
          // turn off inline output in Shiny documents (if it's not already)
-         if (docDisplay_.showChunkOutputInline())
+         if (primaryDisplay_.showChunkOutputInline())
             setShowChunkOutputInline(false);
       }
    }
@@ -6132,7 +6369,7 @@ public class TextEditingTarget implements
             row += display.selectionToPosition(selection.getStart()).getRow();
             col += prefix.length();
             Position pos = Position.create(row, col);
-            display.setSelection(docDisplay_.createSelection(pos, pos));
+            display.setSelection(primaryDisplay_.createSelection(pos, pos));
          }
          else
          {
@@ -6144,6 +6381,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutFocus()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeSelection(false);
@@ -6153,6 +6393,9 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCodeWithoutFocus()
    {
+      if (cursorInDiffBase())
+         return;
+
       dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
@@ -6171,10 +6414,20 @@ public class TextEditingTarget implements
    {
       if (activeDisplay().isFocused() || visualMode_.isVisualEditorActive())
       {
+         // (the guard sits inside the branch: Alt+Enter in the Find field is
+         // Select All Matches, below, whichever pane held the cursor)
+         if (cursorInDiffBase())
+            return;
+
          withVisualModeSelection(() ->
          {
             codeExecution().executeSelection(true, false);
          });
+      }
+      else if (view_.isDiffSplitFocused())
+      {
+         // the base pane holds focus: nothing to run there, and the Find
+         // field's Select All Matches is not what was asked for
       }
       else if (view_.isAttached())
       {
@@ -6185,6 +6438,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCode()
    {
+      if (cursorInDiffBase())
+         return;
+
       if (fileType_.isScript())
       {
          codeExecution().sendSelectionToTerminal(true);
@@ -6249,6 +6505,9 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsBackgroundJob()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().runSelectionAsJob(false /*isWorkbenchJob*/);
@@ -6258,6 +6517,9 @@ public class TextEditingTarget implements
    @Handler
    void onRunSelectionAsWorkbenchJob()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().runSelectionAsJob(true /*isWorkbenchJob*/);
@@ -6267,6 +6529,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
@@ -6276,6 +6541,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentStatement()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
@@ -6285,6 +6553,9 @@ public class TextEditingTarget implements
    @Handler
    void onSelectCurrentStatement()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6297,6 +6568,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentParagraph()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
@@ -6306,6 +6580,9 @@ public class TextEditingTarget implements
    @Handler
    void onSendToTerminal()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          codeExecution().sendSelectionToTerminal(false);
@@ -6334,7 +6611,7 @@ public class TextEditingTarget implements
 
       String code = sweaveChunk != null
                     ? scopeHelper_.getSweaveChunkText(sweaveChunk, range)
-                    : docDisplay_.getCode(range.getStart(), range.getEnd());
+                    : primaryDisplay_.getCode(range.getStart(), range.getEnd());
 
       return code;
    }
@@ -6353,7 +6630,7 @@ public class TextEditingTarget implements
          prepareForVisualExecution(() ->
          {
             executeChunks(Position.create(
-                  docDisplay_.getDocumentEnd().getRow() + 1,
+                  primaryDisplay_.getDocumentEnd().getRow() + 1,
                   0),
                   TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
          });
@@ -6367,6 +6644,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteToCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6386,6 +6666,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteFromCurrentLine()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6405,6 +6688,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentFunction()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6438,6 +6724,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentSection()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          DocDisplay display = activeDisplay();
@@ -6466,22 +6755,22 @@ public class TextEditingTarget implements
 
    private Position endPosition()
    {
-      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
-      int endColumn = docDisplay_.getLength(endRow);
+      int endRow = Math.max(0, primaryDisplay_.getRowCount() - 1);
+      int endColumn = primaryDisplay_.getLength(endRow);
       return Position.create(endRow, endColumn);
    }
 
    // splits a chunk into two chunks
    // chunk 1: first chunk line to linePos (not including linePos)
    // chunk 2: linePos line to end
-   private void splitChunk(Scope chunk, int linePos)
+   private void splitChunk(DocDisplay display, Scope chunk, int linePos)
    {
       Position chunkStart = chunk.getBodyStart();
       Position chunkEnd = chunk.getEnd();
       if (chunkEnd == null)
-         chunkEnd = docDisplay_.getDocumentEnd();
+         chunkEnd = display.getDocumentEnd();
       Position preamble = chunk.getPreamble();
-      String preambleLine = docDisplay_.getLine(preamble.getRow()) + "\n";
+      String preambleLine = display.getLine(preamble.getRow()) + "\n";
 
       // if the cursor line is in the preamble of the chunk
       // reset it to the body of the chunk to get the same semantics
@@ -6491,7 +6780,7 @@ public class TextEditingTarget implements
 
       // get chunk contents from chunk start up to the specified line
       Range firstChunkRange = Range.create(chunkStart.getRow(), chunkStart.getColumn(), linePos, 0);
-      String firstChunkContents = docDisplay_.getTextForRange(firstChunkRange);
+      String firstChunkContents = display.getTextForRange(firstChunkRange);
       firstChunkContents = firstChunkContents.trim();
 
       // add preamble line and ending line for new first chunk
@@ -6502,7 +6791,7 @@ public class TextEditingTarget implements
 
       // get second chunk contents from what's left
       Range secondChunkRange = Range.create(linePos, 0, chunkEnd.getRow(), chunkEnd.getColumn());
-      String secondChunkContents = docDisplay_.getTextForRange(secondChunkRange);
+      String secondChunkContents = display.getTextForRange(secondChunkRange);
       secondChunkContents = secondChunkContents.trim();
 
       // add the preamble line of the original chunk to the second chunk (so we have the correct language)
@@ -6510,25 +6799,25 @@ public class TextEditingTarget implements
 
       // modify contents of original chunk with second chunk contents
       Range chunkRange = Range.create(chunkStart.getRow() - 1, chunkStart.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
-      docDisplay_.replaceRange(chunkRange, secondChunkContents);
+      display.replaceRange(chunkRange, secondChunkContents);
 
       // insert new chunk with first chunk contents
-      docDisplay_.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
-      docDisplay_.insertCode(firstChunkContents, false);
+      display.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
+      display.insertCode(firstChunkContents, false);
    }
 
    // splits a chunk into three chunks
    // chunk 1: first chunk line to start pos
    // chunk 2: start pos to end pos
    // chunk 3: end pos to end of chunk
-   private void splitChunk(Scope chunk, Position startPos, Position endPos)
+   private void splitChunk(DocDisplay display, Scope chunk, Position startPos, Position endPos)
    {
       Position chunkStart = chunk.getBodyStart();
       Position chunkEnd = chunk.getEnd();
       if (chunkEnd == null)
-         chunkEnd = docDisplay_.getDocumentEnd();
+         chunkEnd = display.getDocumentEnd();
       Position preamble = chunk.getPreamble();
-      String preambleLine = docDisplay_.getLine(preamble.getRow()) + "\n";
+      String preambleLine = display.getLine(preamble.getRow()) + "\n";
 
       // if the selected position is only within the preamble, do nothing as it makes no sense to do any splitting
       if (startPos.getRow() == preamble.getRow() && endPos.getRow() == startPos.getRow())
@@ -6550,7 +6839,7 @@ public class TextEditingTarget implements
 
       // get chunk contents from chunk start up to the specified start pos
       Range firstChunkRange = Range.create(chunkStart.getRow(), chunkStart.getColumn(), startPos.getRow(), startPos.getColumn());
-      String firstChunkContents = docDisplay_.getTextForRange(firstChunkRange);
+      String firstChunkContents = display.getTextForRange(firstChunkRange);
       firstChunkContents = firstChunkContents.trim();
 
       // add preamble line and ending line for new first chunk
@@ -6561,7 +6850,7 @@ public class TextEditingTarget implements
 
       // get middle chunk contents from selected positions
       Range middleChunkRange = Range.create(startPos.getRow(), startPos.getColumn(), endPos.getRow(), endPos.getColumn());
-      String middleChunkContents = docDisplay_.getTextForRange(middleChunkRange);
+      String middleChunkContents = display.getTextForRange(middleChunkRange);
       middleChunkContents = middleChunkContents.trim();
 
       // // add preamble line and ending line for middle chunk
@@ -6572,7 +6861,7 @@ public class TextEditingTarget implements
 
       // get final chunk contents from ending selection position to ending chunk position
       Range finalChunkRange = Range.create(endPos.getRow(), endPos.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
-      String finalChunkContents = docDisplay_.getTextForRange(finalChunkRange);
+      String finalChunkContents = display.getTextForRange(finalChunkRange);
       finalChunkContents = finalChunkContents.trim();
 
       // add preamble to final chunk
@@ -6580,20 +6869,28 @@ public class TextEditingTarget implements
 
       // modify contents of original chunk with final chunk contents
       Range chunkRange = Range.create(chunkStart.getRow() - 1, chunkStart.getColumn(), chunkEnd.getRow(), chunkEnd.getColumn());
-      docDisplay_.replaceRange(chunkRange, finalChunkContents);
+      display.replaceRange(chunkRange, finalChunkContents);
 
       // insert first and middle chunk contents as new chunks
-      docDisplay_.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
-      docDisplay_.insertCode(firstChunkContents, false);
-      Position middleChunkPos = docDisplay_.getCursorPosition();
-      docDisplay_.insertCode(middleChunkContents, false);
+      display.setCursorPosition(Position.create(chunkStart.getRow() - 1, chunkStart.getColumn()));
+      display.insertCode(firstChunkContents, false);
+      Position middleChunkPos = display.getCursorPosition();
+      display.insertCode(middleChunkContents, false);
 
       // reset cursor position to middle chunk (selected text)
-      docDisplay_.setCursorPosition(middleChunkPos);
+      display.setCursorPosition(middleChunkPos);
    }
 
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
+      onInsertChunk(activeDisplay(), chunkPlaceholder, rowOffset, colOffset);
+   }
+
+   private void onInsertChunk(DocDisplay display, String chunkPlaceholder, int rowOffset, int colOffset)
+   {
+      if (cursorInDiffBase())
+         return;
+
       // allow visual mode to handle
       if (visualMode_.isActivated())
       {
@@ -6612,37 +6909,43 @@ public class TextEditingTarget implements
          return;
       }
 
+      display = liveDisplay(display);
       String sel = "";
       Range selRange = null;
+
+      // build the whole scope tree first: it may only extend a little past
+      // the cursor (e.g. in a new split view), leaving a long chunk endless,
+      // which splitChunk() would treat as running to the end of the document
+      display.getScopeTree();
 
       // if currently in a chunk
       // with no selection, split this chunk into two chunks at the current line
       // with selection, split this chunk into three chunks (prior to selection, selected, post selection)
-      Scope currentChunk = docDisplay_.getCurrentChunk();
+      Scope currentChunk = display.getCurrentChunk();
       if (currentChunk != null)
       {
          // record current selection before manipulating text
-         sel = docDisplay_.getSelectionValue();
-         selRange = docDisplay_.getSelectionRange();
+         sel = display.getSelectionValue();
+         selRange = display.getSelectionRange();
 
          if (selRange.isEmpty())
          {
-            splitChunk(currentChunk, docDisplay_.getCursorPosition().getRow());
+            splitChunk(display, currentChunk, display.getCursorPosition().getRow());
             return;
          }
          else
          {
-            splitChunk(currentChunk, selRange.getStart() ,selRange.getEnd());
+            splitChunk(display, currentChunk, selRange.getStart() ,selRange.getEnd());
             return;
          }
       }
 
-      Position pos = moveCursorToNextInsertLocation();
-      InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
+      Position pos = moveCursorToNextInsertLocation(display);
+      InsertChunkInfo insertChunkInfo = display.getInsertChunkInfo();
       if (insertChunkInfo != null)
       {
          // inject the chunk skeleton
-         docDisplay_.insertCode(chunkPlaceholder, false);
+         display.insertCode(chunkPlaceholder, false);
 
          // if we had text selected, inject it into the chunk
          if (!StringUtil.isNullOrEmpty(sel))
@@ -6657,16 +6960,16 @@ public class TextEditingTarget implements
             // move over newline if selected
             if (sel.endsWith("\n"))
                endPos.setRow(endPos.getRow() + 1);
-            docDisplay_.replaceRange(
+            display.replaceRange(
                   Range.fromPoints(docContentPos, endPos), sel);
-            docDisplay_.replaceRange(selRange, "");
+            display.replaceRange(selRange, "");
          }
 
          Position cursorPosition = insertChunkInfo.getCursorPosition();
-         docDisplay_.setCursorPosition(Position.create(
+         display.setCursorPosition(Position.create(
                pos.getRow() + cursorPosition.getRow() + rowOffset,
                colOffset));
-         docDisplay_.focus();
+         display.focus();
       }
       else
       {
@@ -6676,7 +6979,7 @@ public class TextEditingTarget implements
 
    String getChunkEnd()
    {
-      InsertChunkInfo info = docDisplay_.getInsertChunkInfo();
+      InsertChunkInfo info = primaryDisplay_.getInsertChunkInfo();
       if (info == null)
          return "```"; // default to Rmd
 
@@ -6692,13 +6995,16 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       if (fileType_.isQuartoMarkdown())
       {
          onQuartoInsertChunk();
          return;
       }
       
-      InsertChunkInfo info = docDisplay_.getInsertChunkInfo();
+      InsertChunkInfo info = primaryDisplay_.getInsertChunkInfo();
       if (info == null)
          return;
 
@@ -6756,6 +7062,9 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkSQL()
    {
+      // insert into the view the command ran in, even if focus moves to
+      // another view while the connection name is requested
+      final DocDisplay display = activeDisplay();
       server_.defaultSqlConnectionName(new ServerRequestCallback<String>()
       {
          @Override
@@ -6763,11 +7072,11 @@ public class TextEditingTarget implements
          {
             if (name != null)
             {
-               onInsertChunk("```{sql connection=" + name + "}\n\n```\n", 1, 0);
+               onInsertChunk(display, "```{sql connection=" + name + "}\n\n```\n", 1, 0);
             }
             else
             {
-               onInsertChunk("```{sql connection=}\n\n```\n", 0, 19);
+               onInsertChunk(display, "```{sql connection=}\n\n```\n", 0, 19);
             }
          }
 
@@ -6775,7 +7084,7 @@ public class TextEditingTarget implements
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            onInsertChunk("```{sql connection=}\n\n```\n", 0, 19);
+            onInsertChunk(display, "```{sql connection=}\n\n```\n", 0, 19);
          }
       });
    }
@@ -6800,7 +7109,7 @@ public class TextEditingTarget implements
    // r or ojs chunk in the file
    void onQuartoInsertChunk()
    {
-      JsArrayString lines = docDisplay_.getLines();
+      JsArrayString lines = primaryDisplay_.getLines();
       for (int i=0; i<lines.length(); i++)
       {
          Match match = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN.match(lines.get(i), 0);
@@ -6824,6 +7133,10 @@ public class TextEditingTarget implements
    @Handler
    void onInsertSection()
    {
+      if (cursorInDiffBase())
+         return;
+
+      DocDisplay display = activeDisplay();
       globalDisplay_.promptForText(
          constants_.onInsertSectionTitle(),
          constants_.onInsertSectionLabel(),
@@ -6833,7 +7146,7 @@ public class TextEditingTarget implements
             public void execute(String label)
             {
                // move cursor to next insert location
-               Position pos = moveCursorToNextInsertLocation();
+               Position pos = moveCursorToNextInsertLocation(display);
 
                // truncate length to print margin - 5
                int printMarginColumn = prefs_.marginColumn().getValue();
@@ -6863,33 +7176,33 @@ public class TextEditingTarget implements
                sectionLabel.append("\n\n");
 
                // insert code and move cursor
-               docDisplay_.insertCode(sectionLabel.toString(), false);
-               docDisplay_.setCursorPosition(Position.create(pos.getRow() + 3,
-                                                             0));
-               docDisplay_.focus();
+               display.insertCode(sectionLabel.toString(), false);
+               display.setCursorPosition(Position.create(pos.getRow() + 3,
+                                                         0));
+               display.focus();
 
             }
          });
    }
 
-   private Position moveCursorToNextInsertLocation()
+   private Position moveCursorToNextInsertLocation(DocDisplay display)
    {
-      docDisplay_.collapseSelection(true);
-      if (!docDisplay_.moveSelectionToBlankLine())
+      display.collapseSelection(true);
+      if (!display.moveSelectionToBlankLine())
       {
-         int lastRow = docDisplay_.getRowCount();
-         int lastCol = docDisplay_.getLength(lastRow);
+         int lastRow = display.getRowCount();
+         int lastCol = display.getLength(lastRow);
          Position endPos = Position.create(lastRow, lastCol);
-         docDisplay_.setCursorPosition(endPos);
-         docDisplay_.insertCode("\n", false);
+         display.setCursorPosition(endPos);
+         display.insertCode("\n", false);
       }
-      return docDisplay_.getCursorPosition();
+      return display.getCursorPosition();
 
    }
 
    public void executeChunk(Position position)
    {
-      docDisplay_.getScopeTree();
+      primaryDisplay_.getScopeTree();
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position),
             NotebookQueueUnit.EXEC_MODE_SINGLE, false);
    }
@@ -6902,12 +7215,15 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection(() ->
       {
          // HACK: This is just to force the entire function tree to be built.
          // It's the easiest way to make sure getCurrentScope() returns
          // a Scope with an end.
-         docDisplay_.getScopeTree();
+         primaryDisplay_.getScopeTree();
 
          // resolve the chunk at the active view's cursor; positions are
          // document-wide, so the primary view's scope tree can service them
@@ -6920,6 +7236,9 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteNextChunk()
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection((pos) ->
       {
          Scope nextChunk = null;
@@ -6937,7 +7256,7 @@ public class TextEditingTarget implements
          {
             // Force scope tree rebuild and get chunk from source mode,
             // looking forward from the active view's selection
-            docDisplay_.getScopeTree();
+            primaryDisplay_.getScopeTree();
             nextChunk = scopeHelper_.getNextSweaveChunk(activeDisplay().getSelectionEnd());
          }
 
@@ -6970,6 +7289,9 @@ public class TextEditingTarget implements
     */
    private void executeScopedChunks(int dir)
    {
+      if (cursorInDiffBase())
+         return;
+
       withVisualModeSelection((pos) ->
       {
          if (pos == null)
@@ -6993,7 +7315,7 @@ public class TextEditingTarget implements
 
                // Clone position so we can update it without affecting the chunk scope
                pos = Position.create(scope.getEnd().getRow(), scope.getEnd().getColumn());
-               if (pos.getRow() < docDisplay_.getRowCount())
+               if (pos.getRow() < primaryDisplay_.getRowCount())
                {
                   pos.setRow(pos.getRow() + 1);
                   pos.setColumn(1);
@@ -7011,7 +7333,7 @@ public class TextEditingTarget implements
       if (position == null)
          position = activeDisplay().getSelectionStart();
 
-      if (docDisplay_.showChunkOutputInline())
+      if (primaryDisplay_.showChunkOutputInline())
       {
          executeChunksNotebookMode(position, which);
          return;
@@ -7020,54 +7342,89 @@ public class TextEditingTarget implements
       // HACK: This is just to force the entire function tree to be built.
       // It's the easiest way to make sure getCurrentScope() returns
       // a Scope with an end.
-      docDisplay_.getScopeTree();
+      primaryDisplay_.getScopeTree();
 
       // execute the chunks
       Scope[] previousScopes = scopeHelper_.getSweaveChunks(position,
             which);
 
+      // Collect the code to run. The console runs R or, through the
+      // reticulate REPL, Python, so a batch mixing both has to switch
+      // languages in document order. The first chunk's language travels
+      // with the event, which adapts the console from whatever it is in
+      // now; later switches are written into the code itself, as the same
+      // console input the session enqueues for that. The session splits
+      // multi-line console input and runs it line by line, so the switches
+      // land in order.
+      String firstLanguage = null;
+      String language = null;
+      boolean hasPython = false;
       StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
       {
-         if (isRChunk(scope) && isExecutableChunk(scope))
-         {
-            builder.append("# " + scope.getLabel() + "\n");
-            builder.append(scopeHelper_.getSweaveChunkText(scope));
-            builder.append("\n\n");
-         }
+         String chunkLanguage = chunkConsoleLanguage(scope);
+         if (chunkLanguage == null || !isExecutableChunk(scope))
+            continue;
+
+         if (language == null)
+            firstLanguage = chunkLanguage;
+         else if (!StringUtil.equals(chunkLanguage, language))
+            builder.append(ConsoleLanguageTracker.consoleLanguageSwitch(chunkLanguage) + "\n\n");
+         language = chunkLanguage;
+         hasPython = hasPython || StringUtil.equals(chunkLanguage, ConsoleLanguageTracker.LANGUAGE_PYTHON);
+
+         builder.append("# " + scope.getLabel() + "\n");
+         builder.append(scopeHelper_.getSweaveChunkText(scope));
+         builder.append("\n\n");
       }
 
-      final String code = builder.toString().trim();
-      if (fileType_.isRmd())
+      // nothing to run; in particular, don't switch the console language
+      if (firstLanguage == null)
+         return;
+
+      String batch = builder.toString().trim();
+      if (StringUtil.equals(language, ConsoleLanguageTracker.LANGUAGE_PYTHON))
+         batch = closePythonBlock(batch);
+
+      final String code = batch;
+      final String consoleLanguage = firstLanguage;
+      final Command sendToConsole = () ->
       {
-         final Position positionFinal = position;
-         docUpdateSentinel_.withSavedDoc(new Command()
+         events_.fireEvent(new SendToConsoleEvent(code, consoleLanguage, true));
+      };
+
+      final Command runChunks = () ->
+      {
+         if (fileType_.isRmd())
          {
-            @Override
-            public void execute()
+            docUpdateSentinel_.withSavedDoc(() ->
             {
                rmarkdownHelper_.prepareForRmdChunkExecution(
                      docUpdateSentinel_.getId(),
                      docUpdateSentinel_.getContents(),
-                     new Command()
-                     {
-                        @Override
-                        public void execute()
-                        {
-                           // compute the language for this chunk
-                           String language = (DocumentMode.isPositionInPythonMode(docDisplay_, positionFinal))
-                                 ? ConsoleLanguageTracker.LANGUAGE_PYTHON
-                                 : ConsoleLanguageTracker.LANGUAGE_R;
+                     sendToConsole);
+            });
+         }
+         else
+         {
+            sendToConsole.execute();
+         }
+      };
 
-                           events_.fireEvent(new SendToConsoleEvent(code, language, true));
-                        }
-                     });
-            }
-         });
+      // The console only checks for reticulate when the batch starts in
+      // Python; a batch that reaches Python later needs it just the same.
+      boolean reachesPython = hasPython &&
+            !StringUtil.equals(firstLanguage, ConsoleLanguageTracker.LANGUAGE_PYTHON);
+      if (reachesPython)
+      {
+         dependencyManager_.withReticulate(
+               constants_.executeChunksPythonProgressCaption(),
+               constants_.executeChunksPythonUserPrompt(),
+               runChunks);
       }
       else
       {
-         events_.fireEvent(new SendToConsoleEvent(code, true));
+         runChunks.execute();
       }
    }
 
@@ -7076,7 +7433,7 @@ public class TextEditingTarget implements
       // HACK: This is just to force the entire function tree to be built.
       // It's the easiest way to make sure getCurrentScope() returns
       // a Scope with an end.
-      docDisplay_.getScopeTree();
+      primaryDisplay_.getScopeTree();
 
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getSweaveChunks(position, which);
@@ -7086,7 +7443,7 @@ public class TextEditingTarget implements
       if (previousScopes.length > 0)
       {
          if (position != null &&
-             position.getRow() > docDisplay_.getDocumentEnd().getRow())
+             position.getRow() > primaryDisplay_.getDocumentEnd().getRow())
             jobDesc = constants_.runAll();
          else if (which == TextEditingTargetScopeHelper.PREVIOUS_CHUNKS)
             jobDesc = constants_.runPrevious();
@@ -7123,7 +7480,7 @@ public class TextEditingTarget implements
       // first chunk
       if (setupScope == null)
       {
-         ScopeList scopes = new ScopeList(docDisplay_);
+         ScopeList scopes = new ScopeList(primaryDisplay_);
          for (Scope scope: scopes)
          {
             if (scope.isChunk())
@@ -7162,7 +7519,8 @@ public class TextEditingTarget implements
    @Override
    public String getCurrentStatus()
    {
-      Position pos = docDisplay_.getCursorPosition();
+      // the status bar's scope (below) also tracks the active view
+      Position pos = activeDisplay().getCursorPosition();
       String scope = statusBar_.getScope().getValue();
       if (StringUtil.isNullOrEmpty(scope))
          scope = constants_.none();
@@ -7181,7 +7539,7 @@ public class TextEditingTarget implements
    
    public String getEngineForRow(int row)
    {
-      String line = getDocDisplay().getLine(row);
+      String line = getPrimaryDisplay().getLine(row);
       Map<String, String> options = RChunkHeaderParser.parse(line);
       String engine = StringUtil.stringValue(options.get("engine"));
       return engine;
@@ -7189,7 +7547,7 @@ public class TextEditingTarget implements
    
    private boolean hasREngineChunks()
    {
-      JsArray<Scope> tree = docDisplay_.getScopeTree();
+      JsArray<Scope> tree = primaryDisplay_.getScopeTree();
       for (int i=0; i<tree.length(); i++) 
       {
          Scope scope = tree.get(i);
@@ -7203,27 +7561,26 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private boolean isRChunk(Scope scope)
+   // The console language that runs this chunk, or null when the chunk's
+   // engine has no console (bash, sql, ...). 'Rscript' is left out on
+   // purpose: such chunks are typically meant to run in their own process.
+   private String chunkConsoleLanguage(Scope scope)
    {
-      String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
-      Map<String, String> chunkOptions = RChunkHeaderParser.parse(labelText);
-      if (!chunkOptions.containsKey("engine"))
-         return true;
-      
-      // NOTE: We might want to include 'Rscript' but such chunks are typically
-      // intended to be run in their own process so it might not make sense to
-      // collect those here.
-      String engine = chunkOptions.get("engine").toLowerCase();
-      return engine == "\"r\"";
+      String engine = getEngineForRow(scope.getPreamble().getRow()).toLowerCase();
+      if (engine.equals("r"))
+         return ConsoleLanguageTracker.LANGUAGE_R;
+      else if (engine.equals("python"))
+         return ConsoleLanguageTracker.LANGUAGE_PYTHON;
+      else
+         return null;
    }
-   
 
    private boolean isExecutableChunk(final Scope chunk)
    {
       if (!chunk.isChunk())
          return false;
 
-      String headerText = docDisplay_.getLine(chunk.getPreamble().getRow());
+      String headerText = primaryDisplay_.getLine(chunk.getPreamble().getRow());
       Pattern reEvalFalse = Pattern.create("eval\\s*=\\s*F(?:ALSE)?");
       if (reEvalFalse.test(headerText))
          return false;
@@ -7233,7 +7590,7 @@ public class TextEditingTarget implements
       Pattern reYamlEvalFalse = Pattern.create("eval\\s*:\\s*false");
       int start = chunk.getBodyStart().getRow();
       int end = chunk.getEnd().getRow();
-      ArrayList<String> chunkBody = JsArrayUtil.fromJsArrayString(docDisplay_.getLines(start, end));
+      ArrayList<String> chunkBody = JsArrayUtil.fromJsArrayString(primaryDisplay_.getLines(start, end));
       for (String line : chunkBody)
       {
          if (reYamlOpt.test(line))
@@ -7251,6 +7608,20 @@ public class TextEditingTarget implements
       }
 
       return true;
+   }
+
+   // The Python REPL reads console input a line at a time and only closes
+   // an indented block on a blank line, so code that ends inside one would
+   // sit at the '...' continuation prompt until the user pressed Enter. The
+   // session leaves a trailing empty line empty (fixupPendingConsoleInput()
+   // in SessionConsoleInput.cpp), so it reaches the REPL and closes the block.
+   private static String closePythonBlock(String code)
+   {
+      int lastLine = code.lastIndexOf('\n') + 1;
+      if (lastLine < code.length() && Character.isWhitespace(code.charAt(lastLine)))
+         return code + "\n";
+
+      return code;
    }
 
    private void executeSweaveChunk(final Scope chunk,
@@ -7287,7 +7658,7 @@ public class TextEditingTarget implements
                codeExecution.setLastExecuted(range.getStart(), range.getEnd());
             }
             if (fileType_.isRmd() &&
-                docDisplay_.showChunkOutputInline())
+                primaryDisplay_.showChunkOutputInline())
             {
                // in notebook mode, an empty chunk can refer to external code,
                // so always execute it
@@ -7299,8 +7670,11 @@ public class TextEditingTarget implements
 
                // compute the language for this chunk
                String language = "R";
-               if (DocumentMode.isPositionInPythonMode(docDisplay_, chunk.getBodyStart()))
+               if (DocumentMode.isPositionInPythonMode(primaryDisplay_, chunk.getBodyStart()))
+               {
                   language = "Python";
+                  code = closePythonBlock(code);
+               }
 
                events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }
@@ -7309,7 +7683,7 @@ public class TextEditingTarget implements
       };
 
       // Rmd allows server-side prep for chunk execution
-      if (fileType_.isRmd() && !docDisplay_.showChunkOutputInline())
+      if (fileType_.isRmd() && !primaryDisplay_.showChunkOutputInline())
       {
          // ensure source is synced with server
          docUpdateSentinel_.withSavedDoc(new Command() {
@@ -7341,6 +7715,7 @@ public class TextEditingTarget implements
    @Handler
    void onGoToLine()
    {
+      DocDisplay display = activeDisplay();
       globalDisplay_.promptForInteger(
             constants_.onGoToLineTitle(),
             constants_.onGoToLineLabel(),
@@ -7353,9 +7728,9 @@ public class TextEditingTarget implements
                   indicator.onCompleted();
 
                   line = Math.max(1, line);
-                  line = Math.min(docDisplay_.getRowCount(), line);
+                  line = Math.min(display.getRowCount(), line);
 
-                  docDisplay_.navigateToPosition(
+                  display.navigateToPosition(
                         SourcePosition.create(line-1, 0),
                         true);
                }
@@ -7427,7 +7802,7 @@ public class TextEditingTarget implements
 
    private String stangle(String sweaveStr)
    {
-      ScopeList chunks = new ScopeList(docDisplay_);
+      ScopeList chunks = new ScopeList(primaryDisplay_);
       chunks.selectAll(ScopeList.CHUNK);
 
       StringBuilder code = new StringBuilder();
@@ -7486,6 +7861,9 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCode()
    {
+      if (cursorInDiffBase())
+         return;
+
       dependencyManager_.withProfvis("The profiler", new Command()
       {
          @Override
@@ -7503,7 +7881,7 @@ public class TextEditingTarget implements
    {
       if (!isVisualEditorActive())
       {
-         docDisplay_.focus();
+         primaryDisplay_.focus();
       }
 
       // If this is a Python file, use reticulate.
@@ -7555,7 +7933,7 @@ public class TextEditingTarget implements
          return;
       }
 
-      String code = docDisplay_.getCode();
+      String code = primaryDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
       {
          boolean sweave =
@@ -7571,7 +7949,7 @@ public class TextEditingTarget implements
          // then you don't see any of the output
 
          boolean saveWhenSourcing = fileType_.isCpp() ||
-               docDisplay_.hasBreakpoints() || (prefs_.saveBeforeSourcing().getValue() && (getPath() != null) && !sweave);
+               primaryDisplay_.hasBreakpoints() || (prefs_.saveBeforeSourcing().getValue() && (getPath() != null) && !sweave);
 
          if ((dirtyState_.getValue() || sweave) && !saveWhenSourcing)
          {
@@ -7589,7 +7967,7 @@ public class TextEditingTarget implements
                         activeCodeIsAscii(),
                         forceEcho ? true : echo,
                         prefs_.focusConsoleAfterExec().getValue(),
-                        docDisplay_.hasBreakpoints());
+                        primaryDisplay_.hasBreakpoints());
                }
             });
          }
@@ -7720,7 +8098,7 @@ public class TextEditingTarget implements
 
    private boolean activeCodeIsAscii()
    {
-      String code = docDisplay_.getCode();
+      String code = primaryDisplay_.getCode();
       for (int i=0; i< code.length(); i++)
       {
          if (code.charAt(i) > 127)
@@ -7743,7 +8121,7 @@ public class TextEditingTarget implements
             if (codeExecution == splitCodeExecution_ && splitCodeExecutionDisplay_ != null)
                splitCodeExecutionDisplay_.focus();
             else
-               docDisplay_.focus();
+               primaryDisplay_.focus();
          }
 
          codeExecution.executeLastCode();
@@ -7812,7 +8190,7 @@ public class TextEditingTarget implements
    {
       // last ditch extended type detection
       String extendedType = extendedType_;
-      extendedType = rmarkdownHelper_.detectExtendedType(docDisplay_.getCode(),
+      extendedType = rmarkdownHelper_.detectExtendedType(primaryDisplay_.getCode(),
                                                          extendedType,
                                                          fileType_);
 
@@ -7978,7 +8356,7 @@ public class TextEditingTarget implements
                {
                   rmarkdownHelper_.renderRMarkdown(
                      docUpdateSentinel_.getPath(),
-                     docDisplay_.getCursorPosition().getRow() + 1,
+                     activeDisplay().getCursorPosition().getRow() + 1,
                      format != null ? format : quartoFormat(),
                      docUpdateSentinel_.getEncoding(),
                      paramsFile,
@@ -8534,7 +8912,7 @@ public class TextEditingTarget implements
       if (file == null)
          return null;
 
-      Position selPos = docDisplay_.getSelectionStart();
+      Position selPos = activeDisplay().getSelectionStart();
       int line = selPos.getRow() + 1;
       int column = selPos.getColumn() + 1;
       return SourceLocation.create(file, line, column, fromClick);
@@ -8603,8 +8981,24 @@ public class TextEditingTarget implements
       } else {
          withActiveEditor((disp) ->
          {
-            view_.findFromSelection(disp.getSelectionValue());
-            disp.focus();
+            // an empty or multi-line selection starts no search, so leave
+            // both views as they are
+            String selection = disp.getSelectionValue();
+            if (selection.isEmpty() || selection.indexOf('\n') != -1)
+            {
+               disp.focus();
+               return;
+            }
+
+            // the find bar searches the primary editor (it does not follow
+            // the split view), so carry the focused view's selection over
+            // to it; Find Next and repeated invocations then continue from
+            // that match, as they would in a single view
+            if (disp != primaryDisplay_)
+               primaryDisplay_.revealRange(disp.getSelectionRange(), false);
+
+            view_.findFromSelection(selection);
+            primaryDisplay_.focus();
          });
       }
 
@@ -8625,16 +9019,16 @@ public class TextEditingTarget implements
    @Override
    public Position search(Position startPos, String regex)
    {
-      InputEditorSelection sel = docDisplay_.search(regex,
-                                                    false,
-                                                    false,
-                                                    false,
-                                                    false,
-                                                    startPos,
-                                                    null,
-                                                    true);
+      InputEditorSelection sel = primaryDisplay_.search(regex,
+                                                        false,
+                                                        false,
+                                                        false,
+                                                        false,
+                                                        startPos,
+                                                        null,
+                                                        true);
       if (sel != null)
-         return docDisplay_.selectionToPosition(sel.getStart());
+         return primaryDisplay_.selectionToPosition(sel.getStart());
       else
          return null;
    }
@@ -8643,63 +9037,65 @@ public class TextEditingTarget implements
    @Handler
    void onFold()
    {
+      DocDisplay display = activeDisplay();
       if (visualMode_.isActivated())
       {
          visualMode_.fold();
       }
       else if (useScopeTreeFolding())
       {
-         Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
-                                        docDisplay_.getSelectionEnd());
+         Range range = Range.fromPoints(display.getSelectionStart(),
+                                        display.getSelectionEnd());
          if (range.isEmpty())
          {
             // If no selection, fold the innermost non-anonymous scope
-            Scope scope = docDisplay_.getCurrentScope();
+            Scope scope = display.getCurrentScope();
             while (scope != null && scope.isAnon())
                scope = scope.getParentScope();
 
             if (scope == null || scope.isTopLevel())
                return;
 
-            docDisplay_.addFoldFromRow(scope.getFoldStart().getRow());
+            display.addFoldFromRow(scope.getFoldStart().getRow());
          }
          else
          {
             // If selection, fold the selection
-            docDisplay_.addFold(range);
+            display.addFold(range);
          }
       }
       else
       {
-         int row = docDisplay_.getSelectionStart().getRow();
-         docDisplay_.addFoldFromRow(row);
+         int row = display.getSelectionStart().getRow();
+         display.addFoldFromRow(row);
       }
    }
 
    @Handler
    void onUnfold()
    {
+      DocDisplay display = activeDisplay();
       if (visualMode_.isActivated())
       {
          visualMode_.unfold();
       }
       else if (useScopeTreeFolding())
       {
-         Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
-                                        docDisplay_.getSelectionEnd());
+         Range range = Range.fromPoints(display.getSelectionStart(),
+                                        display.getSelectionEnd());
          if (range.isEmpty())
          {
             // If no selection, either:
             //
             // 1) Unfold a fold containing the cursor, or
             // 2) Unfold the closest fold on the current row.
-            Position pos = docDisplay_.getCursorPosition();
+            Position pos = display.getCursorPosition();
 
             AceFold containingCandidate = null;
             AceFold startCandidate = null;
             AceFold endCandidate = null;
 
-            for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
+            for (AceFold f : JsUtil.asIterable(display.getFolds()))
             {
                // Check to see whether this fold contains the cursor position.
                if (f.getRange().contains(pos))
@@ -8728,38 +9124,39 @@ public class TextEditingTarget implements
 
             if (containingCandidate != null)
             {
-               docDisplay_.unfold(containingCandidate);
+               display.unfold(containingCandidate);
             }
             else if (startCandidate == null ^ endCandidate == null)
             {
-               docDisplay_.unfold(startCandidate != null ? startCandidate
-                                                          : endCandidate);
+               display.unfold(startCandidate != null ? startCandidate
+                                                      : endCandidate);
             }
             else if (startCandidate != null && endCandidate != null)
             {
                // Both are candidates; see which is closer
                int startDelta = startCandidate.getStart().getColumn() - pos.getColumn();
                int endDelta = pos.getColumn() - endCandidate.getEnd().getColumn();
-               docDisplay_.unfold(startDelta <= endDelta? startCandidate
-                                                        : endCandidate);
+               display.unfold(startDelta <= endDelta? startCandidate
+                                                    : endCandidate);
             }
          }
          else
          {
             // If selection, unfold the selection
-            docDisplay_.unfold(range);
+            display.unfold(range);
          }
       }
       else
       {
-         int row = docDisplay_.getSelectionStart().getRow();
-         docDisplay_.unfold(row);
+         int row = display.getSelectionStart().getRow();
+         display.unfold(row);
       }
    }
 
    @Handler
    void onFoldAll()
    {
+      DocDisplay display = activeDisplay();
       if (visualMode_.isActivated())
       {
          visualMode_.foldAll();
@@ -8768,21 +9165,21 @@ public class TextEditingTarget implements
       {
          // Fold all except anonymous braces
          HashSet<Integer> rowsFolded = new HashSet<>();
-         for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
+         for (AceFold f : JsUtil.asIterable(display.getFolds()))
             rowsFolded.add(f.getStart().getRow());
 
-         ScopeList scopeList = new ScopeList(docDisplay_);
+         ScopeList scopeList = new ScopeList(display);
          scopeList.removeAll(ScopeList.ANON_BRACE);
          for (Scope scope : scopeList)
          {
             int row = scope.getFoldStart().getRow();
             if (!rowsFolded.contains(row))
-               docDisplay_.addFoldFromRow(row);
+               display.addFoldFromRow(row);
          }
       }
       else
       {
-         docDisplay_.foldAll();
+         display.foldAll();
       }
        
    }
@@ -8796,7 +9193,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         docDisplay_.unfoldAll();
+         activeDisplay().unfoldAll();
       }
    }
 
@@ -8809,13 +9206,13 @@ public class TextEditingTarget implements
       }
       else
       {
-         docDisplay_.toggleTokenInfo();
+         activeDisplay().toggleTokenInfo();
       }
    }
 
    boolean useScopeTreeFolding()
    {
-      return docDisplay_.hasCodeModelScopeTree();
+      return primaryDisplay_.hasCodeModelScopeTree();
    }
 
    void handlePdfCommand(final String completedAction,
@@ -8890,13 +9287,14 @@ public class TextEditingTarget implements
                isSaving_ = false;
             };
             
-            // fire source document saved event
+            // fire source document saved event; the cursor position picks
+            // the slide an Rpres preview shows
             FileSystemItem file = FileSystemItem.createFile(
                                              docUpdateSentinel_.getPath());
             events_.fireEvent(new SourceFileSaveCompletedEvent(
                                              file,
                                              docUpdateSentinel_.getContents(),
-                                             docDisplay_.getCursorPosition()));
+                                             activeDisplay().getCursorPosition()));
 
             // check for source on save
             if (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave())
@@ -8955,7 +9353,7 @@ public class TextEditingTarget implements
    {
       // Hide breakpoint warning bar if visible (since we will re-evaluate
       // breakpoints after source)
-      if (docDisplay_.hasBreakpoints())
+      if (primaryDisplay_.hasBreakpoints())
       {
          hideBreakpointWarningBar();
       }
@@ -8976,7 +9374,7 @@ public class TextEditingTarget implements
                                  activeCodeIsAscii(),
                                  forceEcho,
                                  focusAfterExec,
-                                 docDisplay_.hasBreakpoints());
+                                 primaryDisplay_.hasBreakpoints());
    }
 
    public void checkForExternalEdit()
@@ -9051,8 +9449,8 @@ public class TextEditingTarget implements
                   {
                      // If we're in a collaborative session, we need to let it
                      // reconcile the modification
-                     if (docDisplay_ != null &&
-                         docDisplay_.hasActiveCollabSession() &&
+                     if (primaryDisplay_ != null &&
+                         primaryDisplay_.hasActiveCollabSession() &&
                          response.getItem() != null)
                      {
                         events_.fireEvent(new CollabExternalEditEvent(
@@ -9241,12 +9639,13 @@ public class TextEditingTarget implements
       {
          if (isCompletionEnabled())
          {
+            // read the position now: focus may move to the other view of a
+            // split while the document syncs
+            final Position pos = activeDisplay().getSelectionStart();
             withUpdatedDoc(new CommandWith2Args<String, String>() {
                @Override
                public void execute(String docPath, String docId)
                {
-                  Position pos = docDisplay_.getSelectionStart();
-
                   operation.execute(docPath,
                                     pos.getRow() + 1,
                                     pos.getColumn() + 1);
@@ -9349,7 +9748,7 @@ public class TextEditingTarget implements
 
                // scan chunk engines
                HashSet<String> chunkEngines = new HashSet<String>();
-               ScopeList scopeList = new ScopeList(docDisplay_);
+               ScopeList scopeList = new ScopeList(primaryDisplay_);
                for (int i=0; i<scopeList.size(); i++) 
                {
                   Scope scope = scopeList.get(i);
@@ -9469,12 +9868,12 @@ public class TextEditingTarget implements
 
    public Position screenCoordinatesToDocumentPosition(int pageX, int pageY)
    {
-      return docDisplay_.screenCoordinatesToDocumentPosition(pageX, pageY);
+      return primaryDisplay_.screenCoordinatesToDocumentPosition(pageX, pageY);
    }
 
-   public DocDisplay getDocDisplay()
+   public DocDisplay getPrimaryDisplay()
    {
-      return docDisplay_;
+      return primaryDisplay_;
    }
 
    public TextEditingTargetPackageDependencyHelper getPackageDependencyHelper()
@@ -9642,7 +10041,7 @@ public class TextEditingTarget implements
 
       // set up mathjax
       if (mathjax_ == null && enabled)
-         mathjax_ = new MathJax(docDisplay_, docUpdateSentinel_, prefs_);
+         mathjax_ = new MathJax(primaryDisplay_, docUpdateSentinel_, prefs_);
 
       if (enabled)
       {
@@ -9665,7 +10064,7 @@ public class TextEditingTarget implements
          // clean up line widgets
          if (notebook_ != null)
             notebook_.onNotebookClearAllOutput();
-         docDisplay_.removeAllLineWidgets();
+         primaryDisplay_.removeAllLineWidgets();
       }
    }
 
@@ -9911,26 +10310,44 @@ public class TextEditingTarget implements
       }
    }
 
+   // Whether the cursor is in the read-only base pane of a side-by-side diff:
+   // the pane that held focus last among the document's views, since a
+   // command chosen from a menu with the mouse has taken focus to the menu.
+   // An editing or code-running command then has nothing to act on, and must
+   // not land on the document's own cursor or selection, out of sight; the
+   // commands that work on the document directly rather than through
+   // withActiveEditor check this.
+   private boolean cursorInDiffBase()
+   {
+      // (in visual mode the source views, base pane included, are hidden)
+      return view_ != null && !isVisualModeActivated() && view_.diffSplitHeldFocusLast();
+   }
+
    /**
     * Executes a command with the active Ace instance. If there is no active
     * instance (e.g. in visual mode when focus is not in an editor), then the
-    * command is not executed.
+    * command is not executed. In source mode, the active instance is the
+    * editor view (primary or split) that last held focus.
     *
     * @param cmd The command to execute.
     */
    public void withActiveEditor(CommandWithArg<DocDisplay> cmd)
    {
       // Keep routing through visual mode while its widget is loading or being
-      // rebuilt. Falling back to docDisplay_ in that window would target the
+      // rebuilt. Falling back to primaryDisplay_ in that window would target the
       // hidden source editor; the corresponding commands are disabled until
       // the visual editor is addressable again.
       if (isVisualEditorActive() || visualMode_.isActivated())
       {
          visualMode_.performWithActiveEditor(cmd);
       }
+      else if (cursorInDiffBase())
+      {
+         // nothing to edit there
+      }
       else
       {
-         cmd.execute(docDisplay_);
+         cmd.execute(activeDisplay());
       }
    }
 
@@ -10070,7 +10487,10 @@ public class TextEditingTarget implements
    }
 
    private StatusBar statusBar_;
-   private final DocDisplay docDisplay_;
+   // The document's main editor view, which owns document-level state. Code
+   // acting at the user's cursor or selection should use activeDisplay().
+   private final DocDisplay primaryDisplay_;
+   private TextEditingTargetGitDiffGutter gitDiffGutter_;
    private final UserPrefs prefs_;
    private final UserState state_;
    private Display view_;
@@ -10149,14 +10569,15 @@ public class TextEditingTarget implements
       public void run()
       {
          // Get current selections and fire event
-         Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
+         DocDisplay display = activeDisplay();
+         Range[] ranges = display.getNativeSelection().getAllRanges();
          if (ranges == null || ranges.length == 0)
             return;
 
          JsArray<JavaScriptObject> selections = JavaScriptObject.createArray().cast();
          for (Range range : ranges)
          {
-            String text = docDisplay_.getTextForRange(range);
+            String text = display.getTextForRange(range);
             selections.push(DocSelectionChangedEvent.Selection.create(range, text));
          }
 
@@ -10193,7 +10614,7 @@ public class TextEditingTarget implements
 
          // Everyone's autosave gets turned off during a collab session --
          // otherwise the autosaves all fire at once and fight
-         if (docDisplay_.hasActiveCollabSession())
+         if (primaryDisplay_.hasActiveCollabSession())
             return;
 
          // Save (and keep track of when we initiated it)
@@ -10230,9 +10651,10 @@ public class TextEditingTarget implements
 
    private boolean sourceHasFocus()
    {
-      // Check if either the regular source editor (docDisplay) has focus
-      // or if the visual editor has focus (either ProseMirror or a code chunk)
-      return docDisplay_.isFocused() || 
+      // Check if either the regular source editor (either view of a split)
+      // has focus or if the visual editor has focus (either ProseMirror or a
+      // code chunk)
+      return activeDisplay().isFocused() || 
                visualEditorHasFocus_ || 
                (visualMode_.isActivated() && visualMode_.getActiveEditor() != null);
    }
@@ -10243,6 +10665,8 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
+   // front matter the format menu was last built from
+   private String rmdFormatFrontMatter_;
 
    // prevent multiple manual saves from queuing up
    private boolean documentChangedDuringDebugSession_ = false;

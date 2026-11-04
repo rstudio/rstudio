@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
 
+import { CRAN_REPOS } from '../utils/constants';
 import { heredoc } from '../utils/heredoc';
 
 /**
@@ -192,7 +193,7 @@ function expandRLibsUserTemplate(template: string): string | null {
  * which isn't tied to a specific Ubuntu release.
  */
 function packageRepo(): string {
-  if (process.platform !== 'linux') return 'https://cran.r-project.org';
+  if (process.platform !== 'linux') return CRAN_REPOS;
 
   let codename = '';
   try {
@@ -210,7 +211,7 @@ function packageRepo(): string {
       '[r-libs] no Ubuntu codename in /etc/os-release; falling back to source CRAN ' +
         '(installs compile from source, no PPM binaries).',
     );
-    return 'https://cran.r-project.org';
+    return CRAN_REPOS;
   }
 
   return `https://packagemanager.posit.co/cran/__linux__/${codename}/latest`;

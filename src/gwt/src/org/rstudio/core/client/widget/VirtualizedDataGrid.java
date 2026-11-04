@@ -87,6 +87,9 @@ public abstract class VirtualizedDataGrid<T> extends RStudioDataGrid<T>
          String borderColor = getBorderColor();
          
          TableRowBuilder tr = startRow();
+         // Only reserves scroll height for rows that aren't rendered, so it
+         // must not read as an empty table row.
+         tr.attribute("role", "presentation");
          tr.attribute("height", heightPx + "px");
          for (int i = 0; i < cellTable.getColumnCount(); i++)
          {

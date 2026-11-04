@@ -29,6 +29,7 @@
 #include <core/RegexUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/LibraryLoader.hpp>
+#include <core/system/System.hpp>
 
 #define kMinimumSupportedLibclangVersion "5.0.2"
 
@@ -144,41 +145,54 @@ bool LibClang::load(EmbeddedLibrary embedded,
    if (!embedded.empty())
       embeddedVersion = embedded.libraryPath();
 
-   // build a list of clang versions to try
-   std::vector<std::string> versions;
-   
-   // add version from env var (mostly for debugging)
+   // build a list of clang versions to try: the path to report and record,
+   // and the path to pass to the library loader
+   struct Candidate
+   {
+      std::string path;
+      std::string loadPath;
+   };
+   std::vector<Candidate> candidates;
+
+   // add version from env var (mostly for debugging). Load it from its real
+   // path. An empty load path means that the path did not resolve. Snyk Code
+   // reports an environment variable path that reaches dlopen() as
+   // cpp/CodeInjection unless realpath() resolves it first. Keep this form.
    std::string envVersion = core::system::getenv("RSTUDIO_LIBCLANG_PATH");
    if (!envVersion.empty())
-      versions.push_back(envVersion);
-   
+   {
+      FilePath envRealPath;
+      Error error = core::system::realPath(envVersion, &envRealPath);
+      candidates.push_back({envVersion, error ? std::string() : envRealPath.getAbsolutePath()});
+   }
+
    // add embedded version
    if (!embeddedVersion.empty())
-      versions.push_back(embeddedVersion);
-   
-   // add discovered system versions
-   std::vector<std::string> sysVersions = systemClangVersions();
-   versions.insert(versions.end(), sysVersions.begin(), sysVersions.end());
+      candidates.push_back({embeddedVersion, FilePath(embeddedVersion).getAbsolutePath()});
 
-   for (const std::string& version : versions)
+   // add discovered system versions
+   for (const std::string& sysVersion : systemClangVersions())
+      candidates.push_back({sysVersion, FilePath(sysVersion).getAbsolutePath()});
+
+   for (const Candidate& candidate : candidates)
    {
-      FilePath versionPath(version);
+      FilePath versionPath(candidate.path);
       ostr << versionPath << std::endl;
-      if (!versionPath.exists())
+      if (!versionPath.exists() || candidate.loadPath.empty())
       {
          ostr << "   (Not Found)" << std::endl;
          continue;
       }
-      
-      Error error = tryLoad(versionPath.getAbsolutePath());
+
+      Error error = tryLoad(candidate.loadPath);
       if (error)
       {
          ostr << "   (" << error.getProperty("dlerror") <<  ")" << std::endl;
          continue;
       }
-         
+
       // if this was the embedded version then record it
-      if (version == embeddedVersion)
+      if (candidate.path == embeddedVersion)
          embedded_ = embedded;
 
       if (embedded_.empty())

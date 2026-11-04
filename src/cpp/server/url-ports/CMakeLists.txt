@@ -48,15 +48,6 @@ install(TARGETS rserver-url DESTINATION ${RSTUDIO_INSTALL_BIN})
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)
-   # Use gtest from vendor directory
-   set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
-   include_directories(${GTEST_SOURCE_DIR}/include)
-   
-   # Add Google Test if not already added
-   if(NOT TARGET gtest)
-      add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
-   endif()
-
    set(URL_TEST_FILES
        UrlPortsMainTests.cpp)
 
@@ -67,7 +58,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    target_link_libraries(rserver-url-tests
       rstudio-server-core
-      gtest
+      GTest::gtest
       pthread
    )
    

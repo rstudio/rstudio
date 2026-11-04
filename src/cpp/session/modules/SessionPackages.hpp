@@ -18,9 +18,15 @@
 
 #include <string>
 
+#include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
+   namespace json {
+      class Object;
+   }
 }
 }
 
@@ -39,6 +45,59 @@ void enquePackageStateChanged();
 // comments, bare expressions -- never pays for it. Exposed for testing; also
 // used by onConsolePrompt.
 bool containsCallSyntax(const std::string& input);
+
+// Serializes package-state builds that nest; see the comment above
+// buildPackageStateJson() in SessionPackages.cpp for the mechanism. Main
+// thread only. Exposed for testing.
+class PackageStateBuilder : boost::noncopyable
+{
+public:
+   typedef boost::function<core::Error(core::json::Object*)> BuildFunction;
+
+   // Upper bound on the passes one build makes. Each extra pass needs a fresh
+   // request to arrive mid-scan, so this is a guard against a pathological
+   // stream of requests. Unfinished work is deferred to an idle build.
+   static constexpr int kMaxPasses = 3;
+
+   explicit PackageStateBuilder(const BuildFunction& build);
+
+   // Build the package state into *pJson for a caller that needs the result
+   // (the get_package_state RPC). Always builds, even inside another build --
+   // the caller can't wait -- and in that case has the outer build run again,
+   // since its list is now older than this one.
+   //
+   // *pDeliverEvent is set when the caller should also enqueue *pJson as a
+   // kPackageStateChanged event, on behalf of a buildForEvent() request that
+   // was folded into this build, or left owed by an earlier build. A capped
+   // RPC returns its last scan; a deferred event supplies the fresh state.
+   core::Error build(core::json::Object* pJson, bool* pDeliverEvent);
+
+   // Build the package state into *pJson for delivery as a kPackageStateChanged
+   // event. If a build is already on the stack, the request is folded into it:
+   // *pJson is left untouched, *pDeliverEvent is false, and the in-progress
+   // build runs again and delivers the event instead. *pDeliverEvent is set
+   // only when a successful build has no outstanding refresh requests.
+   core::Error buildForEvent(core::json::Object* pJson, bool* pDeliverEvent);
+
+   // Whether a kPackageStateChanged event is still owed because the build that
+   // should have delivered it failed or hit the cap. The next build delivers it.
+   bool eventPending() const;
+
+   // True after an outer build succeeds but reaches the cap with work pending.
+   // Callers schedule an idle build only for this case, never for failures.
+   bool needsDeferredBuild() const;
+
+private:
+   core::Error run(bool needsResult,
+                   bool wantsEvent,
+                   core::json::Object* pJson,
+                   bool* pDeliverEvent);
+
+   BuildFunction build_;
+   int depth_ = 0;               // builds on the stack
+   bool rebuildPending_ = false; // a request arrived during the current pass
+   bool eventPending_ = false;   // an event is owed, even after a failed build
+};
 
 } // namespace packages
 } // namespace modules

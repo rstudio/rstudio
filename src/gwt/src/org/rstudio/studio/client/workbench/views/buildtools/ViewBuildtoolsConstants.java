@@ -20,6 +20,7 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
     String buildBookText();
     String buildWebsiteText();
     String buildBookOptionsText();
+    String installOptionsText();
     String serveBookText();
     String moreText();
     String allFormatsLabel();

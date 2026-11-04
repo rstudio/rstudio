@@ -22,6 +22,7 @@
 
 #include <core/Database.hpp>
 #include <core/ExponentialBackoff.hpp>
+#include <core/Result.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
@@ -65,7 +66,7 @@ ActiveUsersResult getActiveUserCount(
 
 unsigned int getNamedUserLimit();
 
-core::json::Array getLicensedUsers();
+core::Result<core::json::Array> getLicensedUsers();
 
 core::Error lockUser(boost::asio::io_context& ioContext,
                      const std::string& username,

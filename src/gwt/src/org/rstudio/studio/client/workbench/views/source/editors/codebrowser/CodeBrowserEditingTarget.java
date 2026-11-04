@@ -19,8 +19,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -44,7 +42,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.server.VoidResponse;
@@ -181,17 +178,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                      events_,
                                      view_,
                                      fontSizeManager_);
-
-      releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
-            new ValueChangeHandler<Boolean>()
-            {
-               public void onValueChange(ValueChangeEvent<Boolean> evt)
-               {
-                  view_.adaptToFileType(FileTypeRegistry.R);
-               }
-            }
-      ));
-
 
       // if we have contents then set them
       CodeBrowserContents contents = getContents();

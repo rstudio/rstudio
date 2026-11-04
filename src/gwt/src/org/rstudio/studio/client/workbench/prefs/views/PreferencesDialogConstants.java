@@ -23,7 +23,12 @@ package org.rstudio.studio.client.workbench.prefs.views;
 public class PreferencesDialogConstants
 {
    public static final int PANEL_CONTAINER_WIDTH  = 640;
-   public static final int PANEL_CONTAINER_HEIGHT = 630;
+
+   // Sized so Code > Editing fits with a project open under the tallest UI
+   // font we ship against: Noto Sans, the fontconfig default on Fedora and
+   // RHEL 10, renders the pane's section headers 3px taller each than DejaVu
+   // Sans does, and 630px left only 6px to spare (#19270).
+   public static final int PANEL_CONTAINER_HEIGHT = 640;
    public static final int SECTION_CHOOSER_WIDTH = 132;
    public static final int SECTION_CHOOSER_PADDING = 10;
 

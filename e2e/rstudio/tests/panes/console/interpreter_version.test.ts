@@ -3,9 +3,26 @@ import { TIMEOUTS } from '@utils/constants';
 import { restartSessionWithSentinel } from '@utils/project';
 
 const INTERPRETER_VERSION = '#rstudio_console_interpreter_version_tabbed';
+const INTERPRETER_VERSION_UNTABBED = '#rstudio_console_interpreter_version';
 const RVERSION_RPC = /\/rpc\/get_rversion_info(?:\?|$)/;
 
 test.describe('Console interpreter version', () => {
+  // axe skips its duplicate-id rule (deprecated in WCAG 2.2), but other checkers
+  // still report it, and both title variants once inlined the same logo SVG (#15320).
+  test('title variants do not duplicate element ids', async ({ rstudioPage: page }) => {
+    await expect(page.locator(INTERPRETER_VERSION)).toBeAttached();
+    await expect(page.locator(INTERPRETER_VERSION_UNTABBED)).toBeAttached();
+
+    const duplicateIds = await page.evaluate(() => {
+      const counts = new Map<string, number>();
+      for (const el of document.querySelectorAll('[id]'))
+        counts.set(el.id, (counts.get(el.id) ?? 0) + 1);
+      return [...counts].filter(([, count]) => count > 1).map(([id]) => id);
+    });
+    expect(duplicateIds).toEqual([]);
+  });
+
+
   test('uses session info at startup without requesting the R version', async ({ rstudioPage: page }) => {
     const label = page.locator(INTERPRETER_VERSION);
     await expect(label).toHaveText(/^R \d+\.\d+/);

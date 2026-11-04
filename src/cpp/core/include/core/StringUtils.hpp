@@ -26,6 +26,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Utility.hpp>
 #include <shared_core/system/Win32StringUtils.hpp>
 
 #include <core/collection/Position.hpp>
@@ -53,12 +54,12 @@ public:
       : needle_(needle)
    {
    }
-   
+
    bool operator()(const std::string& haystack)
    {
       return haystack.find(needle_) != std::string::npos;
    }
-   
+
 private:
    std::string needle_;
 };
@@ -119,11 +120,25 @@ std::string systemToUtf8(const std::string& str, int codepage);
 // 0 for text ending on a character boundary or in an invalid sequence.
 std::size_t utf8IncompleteSuffixLength(const std::string& str);
 
+// Returns the length (1-4) of the UTF-8 sequence starting at pos, or 0 if the
+// bytes there aren't a strictly valid sequence. Null characters and positions
+// past the end of the string are also considered invalid.
+std::size_t utf8SequenceLength(const std::string& str, std::size_t pos);
+
+// True if the whole string is valid UTF-8 per RFC 3629 and contains no null bytes.
+bool isValidUtf8(const std::string& str);
+
+// Removes embedded NULs from a UTF-8 string and replaces any invalid bytes
+// with U+FFFD, preserving the rest of the string.
+std::string cleanUtf8String(const std::string& value);
+
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
 std::string textToHtml(const std::string& str);
 
 std::string htmlEscape(const std::string& str, bool isAttributeValue = false);
+std::string htmlUnescape(const std::string& str);
+std::string htmlToText(const std::string& str);
 std::string jsLiteralEscape(const std::string& str);
 std::string jsonLiteralEscape(const std::string& str);
 std::string jsonLiteralUnescape(const std::string& str);
@@ -308,6 +323,12 @@ inline StringType substring(const StringType& string,
                             std::size_t startPos,
                             std::size_t endPos)
 {
+   // An inverted range returns the rest of the string. That is what the
+   // unguarded 'endPos - startPos' returned once its count wrapped, so this
+   // keeps the result for existing callers without relying on wraparound.
+   if (endPos < startPos)
+      return string.substr(startPos);
+
    return string.substr(startPos, endPos - startPos);
 }
 
@@ -320,7 +341,7 @@ inline StringType trimWhitespace(const StringType& string,
    std::size_t start = string.find_first_not_of(whitespace);
    if (start == StringType::npos)
       return StringType();
-   
+
    std::size_t end = string.find_last_not_of(whitespace);
    return substring(string, start, end + 1);
 }
@@ -356,66 +377,7 @@ std::string consumeStdin(StdinLines kind, unsigned maxChars = 1048576);
 
 } // namespace string_utils
 
-// wrappers for functions in <cctype>, as those functions normally
-// require one to cast arguments from char to unsigned char, otherwise
-// one risks bumping into undefined behavior (which MSVC is strict about)
-// see e.g. http://en.cppreference.com/w/cpp/string/byte/toupper for
-// motivation
-//
-// we also use some C++ template magic to avoid misuse; that is, we don't want
-// to allow callers to accidentally pass wchar_t or other non-char types into
-// these functions. then wrap it into a macro to generate code with less pain
-
-inline namespace cctype {
-
-namespace internal {
-
-template <typename T>
-using IsCharacter = boost::disjunction<
-    boost::is_same<T, char>,
-    boost::is_same<T, signed char>,
-    boost::is_same<T, unsigned char>
->;
-
-}
-
-#define RS_GENERATE_CCTYPE_ALIAS(__NAME__, __WNAME__)          \
-                                                               \
-template <typename T>                                          \
-inline bool __NAME__(T ch)                                     \
-{                                                              \
-   static_assert(internal::IsCharacter<T>::value, "");         \
-   return std::__NAME__(static_cast<unsigned char>(ch)) != 0;  \
-}                                                              \
-                                                               \
-template <typename T>                                          \
-inline bool __WNAME__(T ch)                                    \
-{                                                              \
-   static_assert(std::is_same<T, wchar_t>::value, "");         \
-   return std::__WNAME__(static_cast<wchar_t>(ch)) != 0;       \
-}                                                              \
-
-RS_GENERATE_CCTYPE_ALIAS(isalpha,  iswalpha)
-RS_GENERATE_CCTYPE_ALIAS(isalnum,  iswalnum)
-RS_GENERATE_CCTYPE_ALIAS(islower,  iswlower)
-RS_GENERATE_CCTYPE_ALIAS(isupper,  iswupper)
-RS_GENERATE_CCTYPE_ALIAS(isdigit,  iswdigit)
-RS_GENERATE_CCTYPE_ALIAS(isxdigit, iswxdigit)
-RS_GENERATE_CCTYPE_ALIAS(iscntrl,  iswcntrl)
-RS_GENERATE_CCTYPE_ALIAS(isgraph,  iswgraph)
-RS_GENERATE_CCTYPE_ALIAS(isspace,  iswspace)
-RS_GENERATE_CCTYPE_ALIAS(isblank,  iswblank)
-RS_GENERATE_CCTYPE_ALIAS(isprint,  iswprint)
-RS_GENERATE_CCTYPE_ALIAS(ispunct,  iswpunct)
-
-#undef RS_GENERATE_CCTYPE_ALIAS
-
-} // end inline namespace cctype
-
-} // namespace core 
+} // namespace core
 } // namespace rstudio
-
-// force our safe wrappers to be used
-using namespace rstudio::core::cctype;
 
 #endif // CORE_STRING_UTILS_HPP

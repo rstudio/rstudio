@@ -77,11 +77,33 @@ std::string escaped(const std::string& name)
    return result;
 }
 
+// Gets the real path of the timing file. Snyk Code reports an environment
+// variable path that reaches std::ofstream as cpp/PT unless realpath()
+// resolves it first. Keep this form. realpath() needs the file to exist on
+// POSIX, so create a missing file first in append mode, as std::ofstream does.
+Error resolveTimingFile(FilePath* pFile)
+{
+   if (!core::system::realPath(timingFile(), pFile))
+      return Success();
+
+   std::shared_ptr<std::ostream> pStream;
+   Error error = FilePath(timingFile()).openForWrite(pStream, false);
+   if (error)
+      return error;
+   pStream.reset();
+
+   return core::system::realPath(timingFile(), pFile);
+}
+
 void write(const std::string& name, double t, double durationMs)
 {
+   FilePath file;
+   if (resolveTimingFile(&file))
+      return;
+
    // the desktop and session processes append to the same file; small
    // O_APPEND writes are atomic enough for one line per checkpoint
-   std::ofstream out(timingFile(), std::ios::app);
+   std::ofstream out(file.getAbsolutePath(), std::ios::app);
    if (!out)
       return;
 

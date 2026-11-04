@@ -362,6 +362,46 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Revert changes to the file") // $NON-NLS-1$
     String vcsFileRevertDesc();
     
+    // vcsNextChange
+    @DefaultStringValue("Go to Next Change") // $NON-NLS-1$
+    String vcsNextChangeLabel();
+    @DefaultStringValue("_Next Change") // $NON-NLS-1$
+    String vcsNextChangeMenuLabel();
+    @DefaultStringValue("Go to the next line changed since it was last staged or committed") // $NON-NLS-1$
+    String vcsNextChangeDesc();
+    
+    // vcsPreviousChange
+    @DefaultStringValue("Go to Previous Change") // $NON-NLS-1$
+    String vcsPreviousChangeLabel();
+    @DefaultStringValue("_Previous Change") // $NON-NLS-1$
+    String vcsPreviousChangeMenuLabel();
+    @DefaultStringValue("Go to the previous line changed since it was last staged or committed") // $NON-NLS-1$
+    String vcsPreviousChangeDesc();
+    
+    // vcsRevertChange
+    @DefaultStringValue("Revert Change at Cursor") // $NON-NLS-1$
+    String vcsRevertChangeLabel();
+    @DefaultStringValue("Revert _Change at Cursor") // $NON-NLS-1$
+    String vcsRevertChangeMenuLabel();
+    @DefaultStringValue("Restore the lines at the cursor to the version last staged or committed") // $NON-NLS-1$
+    String vcsRevertChangeDesc();
+    
+    // vcsShowChange
+    @DefaultStringValue("Show Change at Cursor") // $NON-NLS-1$
+    String vcsShowChangeLabel();
+    @DefaultStringValue("_Show Change at Cursor") // $NON-NLS-1$
+    String vcsShowChangeMenuLabel();
+    @DefaultStringValue("Show the version last staged or committed of the lines at the cursor") // $NON-NLS-1$
+    String vcsShowChangeDesc();
+    
+    // vcsShowChangesSideBySide
+    @DefaultStringValue("Show Changes Side by Side") // $NON-NLS-1$
+    String vcsShowChangesSideBySideLabel();
+    @DefaultStringValue("Show Changes _Side by Side") // $NON-NLS-1$
+    String vcsShowChangesSideBySideMenuLabel();
+    @DefaultStringValue("Show the version last staged or committed beside the document, with the changes between them highlighted") // $NON-NLS-1$
+    String vcsShowChangesSideBySideDesc();
+    
     // vcsViewOnGitHub
     @DefaultStringValue("View file on GitHub") // $NON-NLS-1$
     String vcsViewOnGitHubLabel();
@@ -2307,6 +2347,26 @@ public interface CmdConstants extends Constants {
     String vcsIgnoreMenuLabel();
     @DefaultStringValue("Ignore the selected files or folders") // $NON-NLS-1$
     String vcsIgnoreDesc();
+    
+    // vcsNewWorktree
+    @DefaultStringValue("New Worktree") // $NON-NLS-1$
+    String vcsNewWorktreeLabel();
+    @DefaultStringValue("New Worktree") // $NON-NLS-1$
+    String vcsNewWorktreeButtonLabel();
+    @DefaultStringValue("New Worktree...") // $NON-NLS-1$
+    String vcsNewWorktreeMenuLabel();
+    @DefaultStringValue("Check out a branch into a new git worktree") // $NON-NLS-1$
+    String vcsNewWorktreeDesc();
+    
+    // vcsRemoveWorktree
+    @DefaultStringValue("Remove Worktree") // $NON-NLS-1$
+    String vcsRemoveWorktreeLabel();
+    @DefaultStringValue("Remove Worktree") // $NON-NLS-1$
+    String vcsRemoveWorktreeButtonLabel();
+    @DefaultStringValue("Remove Worktree...") // $NON-NLS-1$
+    String vcsRemoveWorktreeMenuLabel();
+    @DefaultStringValue("Remove a git worktree and delete its directory") // $NON-NLS-1$
+    String vcsRemoveWorktreeDesc();
     
     // vcsPull
     @DefaultStringValue("Pull") // $NON-NLS-1$
@@ -4289,9 +4349,5 @@ public interface CmdConstants extends Constants {
     // showReleaseNotes
     @DefaultStringValue("R_elease Notes") // $NON-NLS-1$
     String showReleaseNotesMenuLabel();
-    
-    // whatsNewRStudio
-    @DefaultStringValue("What's _New") // $NON-NLS-1$
-    String whatsNewRStudioMenuLabel();
     
 }

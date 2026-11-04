@@ -55,20 +55,6 @@ endif()
 # test directory
 set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
 
-# enable c++17, with GNU extensions. CMAKE_CXX_STANDARD (cmake/compiler.cmake)
-# asks for the same, but CMake leaves its -std=gnu++17 out when that is already
-# the compiler's default (CMP0128); a plain -std=c++17 here would then be the
-# only such flag, and turn the extensions off
-if(NOT MSVC)
-   include(CheckCXXCompilerFlag)
-   CHECK_CXX_COMPILER_FLAG("-std=gnu++17" COMPILER_SUPPORTS_CXX17)
-   if(NOT COMPILER_SUPPORTS_CXX17)
-      message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
-   else()
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
-   endif()
-endif()
-
 # UNIX specific global directivies
 if(UNIX)
    # cmake modules
@@ -360,12 +346,20 @@ if(NOT RSTUDIO_USE_SYSTEM_SOCI)
    include_directories(BEFORE SYSTEM ${SOCI_INCLUDE_BUILD_DIR})
 endif()
 
+# PostgreSQL is only used by Workbench server components, so builds without
+# them (e.g. packaged Desktop Pro) use SQLite alone and don't link libpq
+if(RSTUDIO_PRO_BUILD AND RSTUDIO_SERVER)
+   set(RSTUDIO_USE_POSTGRESQL TRUE)
+else()
+   set(RSTUDIO_USE_POSTGRESQL FALSE)
+endif()
+
 # database library includes
-if(RSTUDIO_PRO_BUILD AND APPLE)
+if(RSTUDIO_USE_POSTGRESQL AND APPLE)
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include")
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include/libpq")
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/libpq/include")
-elseif(RSTUDIO_PRO_BUILD AND UNIX)
+elseif(RSTUDIO_USE_POSTGRESQL AND UNIX)
    include_directories(SYSTEM "/usr/include/postgresql")
    include_directories(SYSTEM "/usr/include/pgsql")
 elseif(WIN32)
@@ -377,7 +371,7 @@ if(UNIX)
    if(NOT APPLE AND RSTUDIO_USE_SYSTEM_SOCI)
       find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" REQUIRED)
       find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" REQUIRED)
-      if(RSTUDIO_PRO_BUILD)
+      if(RSTUDIO_USE_POSTGRESQL)
          find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" REQUIRED)
       endif()
       get_filename_component(SOCI_LIBRARY_DIR "${SOCI_CORE_LIB}" DIRECTORY)
@@ -385,7 +379,7 @@ if(UNIX)
       set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
       find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH REQUIRED)
       find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH REQUIRED)
-      if(RSTUDIO_PRO_BUILD)
+      if(RSTUDIO_USE_POSTGRESQL)
          find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH REQUIRED)
       endif()
    endif()
@@ -395,13 +389,16 @@ if(UNIX)
    find_library(SQLITE_LIB "sqlite3" REQUIRED)
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
 
-   if(RSTUDIO_PRO_BUILD)
+   # use the flag rather than the found paths, which can be left in the cache
+   # when an existing server build directory is reconfigured for desktop
+   set(SOCI_POSTGRESQL_LIBRARIES "")
+   if(RSTUDIO_USE_POSTGRESQL)
       find_library(PQ_LIB "pq" HINTS ${HOMEBREW_PREFIX}/opt/libpq/lib REQUIRED)
       get_filename_component(PQ_LIB "${PQ_LIB}" REALPATH)
+      set(SOCI_POSTGRESQL_LIBRARIES ${SOCI_POSTGRESQL_LIB} ${PQ_LIB})
    endif()
 
-   list(APPEND SOCI_DEPENDENCIES ${SQLITE_LIB} ${PQ_LIB})
-   list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SOCI_POSTGRESQL_LIB} ${SQLITE_LIB} ${PQ_LIB} ${SOCI_CORE_LIB} ${DL_LIB})
+   list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SQLITE_LIB} ${SOCI_POSTGRESQL_LIBRARIES} ${SOCI_CORE_LIB} ${DL_LIB})
 else()
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/${SOCI_ARCH}/lib")
    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -432,14 +429,89 @@ message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
 set(RSTUDIO_HAS_SOCI 1)
 add_definitions(-DRSTUDIO_HAS_SOCI)
 
-if(SOCI_POSTGRESQL_LIB)
+if(RSTUDIO_USE_POSTGRESQL)
    add_definitions(-DRSTUDIO_HAS_SOCI_POSTGRESQL)
 endif()
 
 if(UNIX)
 
+   if(APPLE)
+
+      # Older configures cached Homebrew's OpenSSL as an INTERNAL value: opt/openssl@3,
+      # opt/openssl, or (before #14718) Cellar/openssl/<version>. A -DOPENSSL_ROOT_DIR
+      # re-types the entry as UNINITIALIZED, so an explicit root is never dropped here.
+      get_property(_openssl_root_type CACHE OPENSSL_ROOT_DIR PROPERTY TYPE)
+      string(FIND "${OPENSSL_ROOT_DIR}" "${HOMEBREW_PREFIX}/" _openssl_brew_index)
+      if(_openssl_root_type STREQUAL "INTERNAL" AND _openssl_brew_index EQUAL 0)
+         string(LENGTH "${HOMEBREW_PREFIX}/" _openssl_brew_length)
+         string(SUBSTRING "${OPENSSL_ROOT_DIR}" ${_openssl_brew_length} -1 _openssl_brew_path)
+         if(_openssl_brew_path MATCHES "^(opt/openssl(@3)?|Cellar/openssl/[^/]+)$")
+            unset(OPENSSL_ROOT_DIR CACHE)
+         endif()
+      endif()
+
+      # link the static OpenSSL that dependencies/osx/build-openssl builds and
+      # install-openssl puts in the tools root, unless -DOPENSSL_ROOT_DIR names
+      # another
+      if(NOT DEFINED OPENSSL_ROOT_DIR)
+         # read the pin rather than source the script, which has side effects
+         set(_openssl_pin_file "${RSTUDIO_PROJECT_ROOT}/dependencies/tools/rstudio-tools.sh")
+         set(_openssl_pin_regex "^export RSTUDIO_OPENSSL_VERSION=\"([0-9]+\\.[0-9]+\\.[0-9]+)\"$")
+         file(STRINGS "${_openssl_pin_file}" _openssl_pin REGEX "^export RSTUDIO_OPENSSL_VERSION=")
+         if(NOT _openssl_pin MATCHES "${_openssl_pin_regex}")
+            message(FATAL_ERROR
+               "Expected one line 'export RSTUDIO_OPENSSL_VERSION=\"<x.y.z>\"' in "
+               "'${_openssl_pin_file}', but found '${_openssl_pin}'.")
+         endif()
+         set(RSTUDIO_OPENSSL_VERSION "${CMAKE_MATCH_1}")
+         set(OPENSSL_ROOT_DIR "${RSTUDIO_TOOLS_ROOT}/openssl-${RSTUDIO_OPENSSL_VERSION}")
+         set(OPENSSL_USE_STATIC_LIBS TRUE)
+         if(NOT EXISTS "${OPENSSL_ROOT_DIR}/lib/libcrypto.a")
+            message(FATAL_ERROR
+               "OpenSSL not found at '${OPENSSL_ROOT_DIR}'. "
+               "Install it with dependencies/osx/install-openssl and reconfigure.")
+         endif()
+      endif()
+
+      # find_package keeps paths cached by an earlier configure, which may name
+      # another OpenSSL (e.g. Homebrew's, or an older version of ours). Compare
+      # real paths: the root may hold a /../ (as make-package passes), and the
+      # cached paths don't.
+      get_filename_component(_openssl_root "${OPENSSL_ROOT_DIR}" REALPATH)
+      foreach(_openssl_var OPENSSL_INCLUDE_DIR OPENSSL_CRYPTO_LIBRARY OPENSSL_SSL_LIBRARY)
+         get_filename_component(_openssl_real_path "${${_openssl_var}}" REALPATH)
+         cmake_path(IS_PREFIX _openssl_root "${_openssl_real_path}" NORMALIZE _openssl_in_root)
+         if(NOT _openssl_in_root)
+            unset(${_openssl_var} CACHE)
+         endif()
+      endforeach()
+
+   endif()
+
    find_package(OpenSSL REQUIRED)
-   include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+
+   # FindOpenSSL also searches pkg-config's hints, so a root missing headers or
+   # a library could quietly yield parts of another OpenSSL
+   if(APPLE)
+      foreach(_openssl_path ${OPENSSL_INCLUDE_DIR} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+         get_filename_component(_openssl_real_path "${_openssl_path}" REALPATH)
+         cmake_path(IS_PREFIX _openssl_root "${_openssl_real_path}" NORMALIZE _openssl_in_root)
+         if(NOT _openssl_in_root)
+            message(FATAL_ERROR
+               "Found OpenSSL at '${_openssl_path}', outside OPENSSL_ROOT_DIR "
+               "'${OPENSSL_ROOT_DIR}'. Check that it holds include/, lib/libcrypto "
+               "and lib/libssl, then reconfigure.")
+         endif()
+      endforeach()
+   endif()
+
+   # Add the headers as a normal (non-SYSTEM) include placed BEFORE the others,
+   # for the same reason as the bundled {fmt} headers below: on macOS, clang
+   # searches the driver-added /usr/local/include ahead of every -isystem
+   # directory, so an OpenSSL installed under the /usr/local prefix (e.g. an
+   # x86_64 Homebrew on Apple Silicon) would otherwise shadow the headers of
+   # the OpenSSL we actually link against.
+   include_directories(BEFORE "${OPENSSL_INCLUDE_DIR}")
 
 endif()
 
@@ -458,7 +530,7 @@ if(WIN32)
         set(OPENSSL_BITNESS "64")
      endif()
 
-     set(OPENSSL_NAME "openssl-3.1.4")
+     set(OPENSSL_NAME "openssl-3.5.9")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}/lib")

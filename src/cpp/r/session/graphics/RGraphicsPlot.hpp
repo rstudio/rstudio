@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include <boost/optional.hpp>
 #include <boost/utility.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -68,6 +69,10 @@ public:
    core::Error renderFromDisplay();
    core::Error renderFromDisplaySnapshot(SEXP snapshot);
    std::string imageFilename() const;
+
+   // alt text the plot's author supplied, or empty; as of the last
+   // renderFromDisplay
+   std::string altText() const;
    
    core::Error renderToDisplay();
    
@@ -85,6 +90,7 @@ private:
    bool hasManipulatorFile() const;
    core::FilePath manipulatorFilePath(const std::string& storageUuid) const;
    void loadManipulatorIfNecessary() const;
+   void readAltText();
    void saveManipulator(const std::string& storageUuid) const;
 
 private:
@@ -93,6 +99,10 @@ private:
    std::string storageUuid_;
    DisplaySize renderedSize_;
    bool needsUpdate_;
+
+   // unset until read from the display, which a plot restored from a
+   // previous session hasn't been
+   boost::optional<std::string> altText_;
 
    // manipulator and protection scope for it
    mutable PlotManipulator manipulator_;

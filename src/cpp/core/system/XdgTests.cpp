@@ -102,7 +102,6 @@ TEST(XdgTest, DirectoryResolution)
    EXPECT_EQ(homePath.completeChildPath(".cache/rstudio"), userCacheDir(s_defaultUser));
    EXPECT_EQ(FilePath("/tmp/default/.cache/rstudio"), userCacheDir(s_defaultUser, s_defaultHome));
 }
-   
 
 TEST(XdgTest, EnvironmentOverrides)
 {
@@ -286,7 +285,11 @@ TEST(XdgTest, TemporaryUserDataDir)
    ASSERT_EQ(0, ::symlink(target.getAbsolutePath().c_str(), expected.getAbsolutePath().c_str()));
    EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
 
-   ASSERT_EQ(0, ::unlink(expected.getAbsolutePath().c_str()));
+   // FilePath::remove() deletes the symlink itself and leaves its target.
+   // Snyk Code reports ::unlink() on this path, which comes from $USER, as
+   // cpp/PT. Keep this form.
+   ASSERT_FALSE(expected.remove());
+   EXPECT_TRUE(target.isDirectory());
    ASSERT_FALSE(expected.ensureFile());
    EXPECT_TRUE(temporaryUserDataDir(&temporaryDir));
 }
@@ -338,3 +341,58 @@ TEST(XdgTest, RedirectUnwritableUserDataDir)
 } // namespace rstudio
 
 #endif // _WIN32
+
+#include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
+
+namespace rstudio {
+namespace core {
+namespace system {
+namespace xdg {
+namespace tests {
+
+// Unlike the tests above this also runs on Windows, where Desktop resolves
+// $XDG_CONFIG_HOME/vim/vimrc too; paths are built from the current directory
+// because a drive-less path such as /tmp is relative there.
+TEST(XdgTest, XdgUserConfigHome)
+{
+   FilePath base = FilePath::safeCurrentPath(FilePath()).completeChildPath("xdg-test");
+   FilePath home = base.completeChildPath("home");
+   FilePath fallback = home.completeChildPath(".config");
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "");
+      EXPECT_EQ(fallback, xdgUserConfigHome(home));
+
+      EnvironmentScope rstudioScope("RSTUDIO_CONFIG_HOME", base.completeChildPath("rstudio").getAbsolutePath().c_str());
+      EXPECT_EQ(fallback, xdgUserConfigHome(home));
+   }
+
+   {
+      FilePath custom = base.completeChildPath("custom");
+      EnvironmentScope scope("XDG_CONFIG_HOME", custom.getAbsolutePath().c_str());
+      EXPECT_EQ(custom, xdgUserConfigHome(home));
+   }
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "~/configurations");
+      EXPECT_EQ(home.completeChildPath("configurations"), xdgUserConfigHome(home));
+   }
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "$HOME/configurations");
+      EXPECT_EQ(home.completeChildPath("configurations"), xdgUserConfigHome(home));
+   }
+
+   // the XDG spec requires relative values to be ignored
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", ".config");
+      EXPECT_EQ(fallback, xdgUserConfigHome(home));
+   }
+}
+
+} // namespace tests
+} // namespace xdg
+} // namespace system
+} // namespace core
+} // namespace rstudio

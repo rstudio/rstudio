@@ -196,10 +196,10 @@ public class FileTypeRegistry
                           WordWrap.DEFAULT, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 
-   public static final TextFileType H = new CppFileType("h", ".h", new ImageResource2x(ICONS.iconH2x()), true, false);
-   public static final TextFileType C = new CppFileType("c", ".c", new ImageResource2x(ICONS.iconC2x()), false, false);
-   public static final TextFileType HPP = new CppFileType("hpp", ".hpp", new ImageResource2x(ICONS.iconHpp2x()), true, false);
-   public static final TextFileType CPP = new CppFileType("cpp", ".cpp", new ImageResource2x(ICONS.iconCpp2x()), true, true);
+   public static final TextFileType H = new CppFileType("h", constants_.cHeaderFileLabel(), ".h", new ImageResource2x(ICONS.iconH2x()), true, false);
+   public static final TextFileType C = new CppFileType("c", constants_.cFileLabel(), ".c", new ImageResource2x(ICONS.iconC2x()), false, false);
+   public static final TextFileType HPP = new CppFileType("hpp", constants_.cppHeaderFileLabel(), ".hpp", new ImageResource2x(ICONS.iconHpp2x()), true, false);
+   public static final TextFileType CPP = new CppFileType("cpp", constants_.cppFileLabel(), ".cpp", new ImageResource2x(ICONS.iconCpp2x()), true, true);
 
    public static final TextFileType CLOJURE =
          new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clj", new ImageResource2x(ICONS.iconClojure2x()),

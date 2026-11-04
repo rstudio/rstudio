@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application;
 
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.AriaLiveStatusReporter;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
@@ -57,6 +58,7 @@ public interface ApplicationView extends AriaLiveStatusReporter
 
    void showLicenseWarning(boolean severe, String message);
    void showWarning(boolean severe, String message);
+   void showWarning(boolean severe, String message, String actionLabel, Command action);
    void hideWarning();
 }
 

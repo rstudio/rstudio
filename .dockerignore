@@ -3,6 +3,9 @@
 !dependencies/common/install-*
 !dependencies/common/lockfiles
 !dependencies/common/patch-node*
+!dependencies/common/rig.cmake
+!dependencies/common/rig-LICENSE
+!dependencies/common/gsudo-LICENSE
 !dependencies/linux/install-*
 !dependencies/osx/install-*
 !dependencies/windows/install-*.cmd

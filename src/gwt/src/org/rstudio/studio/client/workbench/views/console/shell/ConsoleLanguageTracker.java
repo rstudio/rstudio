@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 
@@ -40,12 +41,21 @@ import com.google.inject.Singleton;
 public class ConsoleLanguageTracker
       implements SessionInitEvent.Handler,
                  ConsolePromptEvent.Handler,
+                 ConsoleInputEvent.Handler,
                  RestartStatusEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ConsoleLanguageTracker> {}
    
    public static final String LANGUAGE_R      = "R";
    public static final String LANGUAGE_PYTHON = "Python";
+
+   // Console input that enters / leaves the reticulate REPL. The first entry
+   // of each is what the session enqueues in adaptToLanguage() and what
+   // batches of chunks embed to switch part-way; the rest are the other
+   // spellings reticulate honors, which the projection has to follow too.
+   // Mirrors isPythonReplEnter() / isPythonReplExit() in SessionConsoleInput.cpp.
+   private static final String[] REPL_ENTER_INPUTS = { "reticulate::repl_python()", "repl_python()" };
+   private static final String[] REPL_EXIT_INPUTS  = { "quit", "exit", "quit()", "exit()" };
    
    @Inject
    public ConsoleLanguageTracker(Session session,
@@ -65,6 +75,7 @@ public class ConsoleLanguageTracker
       
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(ConsolePromptEvent.TYPE, this);
+      events_.addHandler(ConsoleInputEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
       
       init();
@@ -94,7 +105,9 @@ public class ConsoleLanguageTracker
                   @Override
                   public void onResponseReceived(VoidResponse response)
                   {
-                     language_ = language;
+                     // the session projected over everything queued, so
+                     // this is where the console ends up once that drains
+                     setLanguage(language);
                      
                      if (command != null)
                         command.execute();
@@ -111,7 +124,10 @@ public class ConsoleLanguageTracker
                });
       };
       
-      if (!StringUtil.equals(language, language_))
+      // the local copy is only trusted while the last prompt confirmed it;
+      // otherwise the session decides, projecting over its pending input
+      // (adaptToLanguage() in SessionModuleContext.cpp)
+      if (!confirmed_ || !StringUtil.equals(language, language_))
       {
          if (language.equals(LANGUAGE_PYTHON))
          {
@@ -137,6 +153,43 @@ public class ConsoleLanguageTracker
       adaptToLanguage(language, null);
    }
 
+   // Console input that moves the console to 'language': the same input the
+   // session enqueues in adaptToLanguage() (SessionModuleContext.cpp).
+   public static String consoleLanguageSwitch(String language)
+   {
+      return StringUtil.equals(language, LANGUAGE_PYTHON)
+            ? REPL_ENTER_INPUTS[0]
+            : REPL_EXIT_INPUTS[0];
+   }
+
+   // The language the console is in once 'input' has run, starting from
+   // 'language'. Follows the REPL through the input's lines the same way
+   // the session does in fixupPendingConsoleInput() (SessionConsoleInput.cpp).
+   public static String languageAfterInput(String language, String input)
+   {
+      boolean python = StringUtil.equals(language, LANGUAGE_PYTHON);
+      for (String line : StringUtil.notNull(input).split("\n"))
+      {
+         if (python && isOneOf(line, REPL_EXIT_INPUTS))
+            python = false;
+         else if (!python && isOneOf(line, REPL_ENTER_INPUTS))
+            python = true;
+      }
+
+      return python ? LANGUAGE_PYTHON : LANGUAGE_R;
+   }
+
+   private static boolean isOneOf(String line, String[] candidates)
+   {
+      for (String candidate : candidates)
+      {
+         if (line.equals(candidate))
+            return true;
+      }
+
+      return false;
+   }
+
    private void init()
    {
    }
@@ -144,13 +197,44 @@ public class ConsoleLanguageTracker
    @Override
    public void onSessionInit(SessionInitEvent event)
    {
-      language_ = session_.getSessionInfo().getConsoleLanguage();
+      setLanguage(session_.getSessionInfo().getConsoleLanguage());
    }
 
    @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
+      // a prompt can arrive before input the client already sent is
+      // buffered: the session enqueues the switch adaptToLanguage() asks for
+      // itself, and the REPL it starts (or returns to) prompts if the input
+      // queued behind it has not landed yet. that prompt reports where the
+      // input starts, not where it ends, so until a later prompt agrees with
+      // the projection the local copy is not a safe basis for skipping the
+      // RPC. an error or interrupt that cut the input short reads the same.
       language_ = event.getPrompt().getLanguage();
+      confirmed_ = StringUtil.equals(language_, expected_);
+   }
+
+   @Override
+   public void onConsoleInput(ConsoleInputEvent event)
+   {
+      // no prompt arrives while queued input drains, so follow the language
+      // through the input itself: code queued behind a batch that switches
+      // languages part-way has to be judged against where that batch ends.
+      // the next prompt corrects any drift.
+      //
+      // input typed into the console gets here without going through
+      // adaptToLanguage(), so it must not re-trust a copy the last prompt
+      // disagreed with. the two readings are followed separately: the
+      // console may be idle where that prompt left it (language_), or still
+      // draining input that ends at expected_. while they agree (confirmed_)
+      // this is the same as updating both; while they disagree, confirmed_
+      // stays false and the next prompt or RPC response settles it.
+      if ((event.getFlags() & (ConsoleInputEvent.FLAG_CANCEL | ConsoleInputEvent.FLAG_EOF)) != 0)
+         return;
+
+      String input = event.getInput();
+      language_ = languageAfterInput(language_, input);
+      expected_ = languageAfterInput(expected_, input);
    }
    
    @Override
@@ -159,11 +243,28 @@ public class ConsoleLanguageTracker
       // on session restart, the console will return to R mode
       if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
       {
-         language_ = LANGUAGE_R;
+         setLanguage(LANGUAGE_R);
       }
    }
 
+   // record where the console is (or will be, once pending input drains)
+   // and that the next prompt is expected to report the same language
+   private void setLanguage(String language)
+   {
+      language_ = language;
+      expected_ = language;
+      confirmed_ = true;
+   }
+
+   // the console's language, as far as the client can tell
    private String language_;
+
+   // the language the next prompt should report, i.e. where the input the
+   // client sent leaves the console
+   private String expected_;
+
+   // whether the last prompt agreed with expected_
+   private boolean confirmed_ = true;
    
    private static final ConsoleConstants CONSTANTS = GWT.create(ConsoleConstants.class);
 

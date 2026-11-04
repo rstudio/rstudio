@@ -3,9 +3,10 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { executeCommand, isCommandChecked } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
 import { VIEWER_MAXIMIZE_R, VIEWER_TAB } from '@pages/viewer_pane.page';
+import { focusConsole } from '@pages/console_pane.page';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -32,6 +33,7 @@ const CONSOLE_MAX_BTN = `${CONSOLE_PANE} .rstudio_panel_max_btn_console`;
 
 // Pane Layout dialog selectors
 const PL_RIGHT_TOP = '#rstudio_pane_layout_right_top';
+const PL_RIGHT_BOTTOM = '#rstudio_pane_layout_right_bottom';
 const PL_SIDEBAR = '#rstudio_pane_layout_sidebar';
 const PL_SIDEBAR_VISIBLE = '#rstudio_pane_layout_sidebar_visible';
 const PREFERENCES_CONFIRM = '#rstudio_preferences_confirm';
@@ -196,6 +198,41 @@ async function collapseCenterColumn(page: Page): Promise<number> {
   return getOffsetWidth(page, CONSOLE_PANE);
 }
 
+// Press `key` on the focused middle splitter and return the Console width once
+// it has moved and settled, or null if it didn't move within the layout timeout
+// waitForStableWidth allows (e.g. the splitter is at its limit). The splitter
+// lays out on a later turn, so a settled reading taken before the width first
+// changes could still be the old width.
+async function stepSplitter(
+  page: Page,
+  key: 'ArrowLeft' | 'ArrowRight',
+  before: number,
+): Promise<number | null> {
+  await page.keyboard.press(key);
+  try {
+    await expect
+      .poll(() => getOffsetWidth(page, CONSOLE_PANE), { timeout: 5000, intervals: [25] })
+      .not.toBe(before);
+  } catch {
+    return null;
+  }
+  return waitForStableWidth(page, CONSOLE_PANE, { min: 0 });
+}
+
+// Move the middle splitter until the Console column is back within one
+// keyboard step of `width`. Ending a sidebar zoom can leave the column
+// collapsed (#19201), and the collapsed width persists into later tests.
+// Returns the final width.
+async function restoreConsoleWidth(page: Page, width: number): Promise<number> {
+  await focusSplitter(page);
+  let current: number | null = await getOffsetWidth(page, CONSOLE_PANE);
+  for (let i = 0; i < 100 && current !== null && current < width; i++)
+    current = await stepSplitter(page, 'ArrowRight', current);
+  for (let i = 0; i < 100 && current !== null && current > width; i++)
+    current = await stepSplitter(page, 'ArrowLeft', current);
+  return getOffsetWidth(page, CONSOLE_PANE);
+}
+
 // Resize the middle splitter and assert it actually moved at least one column.
 // Without this guard, a no-op resize would silently turn the preservation
 // tests into no-op cycles that can never fail.
@@ -271,6 +308,36 @@ async function toggleTab(page: Page, container: string, tabLabel: string): Promi
   await checkbox.scrollIntoViewIfNeeded();
   await checkbox.click();
   await sleep(TIMEOUTS.layoutSettle);
+}
+
+// Uncheck every tab the Pane Layout dialog shows as checked in `container`.
+// Tabs that are unavailable (e.g. Posit Assistant when the server disables it,
+// or a suppressed Presentation tab) have hidden checkboxes and are left alone;
+// they never show as tabs either way.
+async function uncheckVisibleTabs(page: Page, container: string): Promise<void> {
+  const checked = page.locator(
+    `${container} input[type="checkbox"]:checked:visible:not(${PL_SIDEBAR_VISIBLE})`);
+  for (let i = 0; i < 20 && (await checked.count()) > 0; i++) {
+    await checked.first().scrollIntoViewIfNeeded();
+    await checked.first().click();
+  }
+  await expect(checked).toHaveCount(0);
+}
+
+// Reset the pane layout and hide the sidebar, whether or not a failed test
+// left the Pane Layout dialog open.
+async function restoreDefaultPaneLayout(page: Page): Promise<void> {
+  await resetLayoutZoom(page);
+  if ((await page.locator(DIALOG_BOX).count()) === 0)
+    await openPaneLayoutOptions(page);
+  await resetPaneLayoutInDialog(page);
+  const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+  if (await sidebarVisibleCheckbox.isChecked()) {
+    await sidebarVisibleCheckbox.click();
+    await sleep(TIMEOUTS.layoutSettle);
+  }
+  await page.locator(PREFERENCES_CONFIRM).click();
+  await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
 }
 
 // ---------------------------------------------------------------------------
@@ -968,6 +1035,120 @@ test.describe('Pane and column management', () => {
     ).toBe(false);
     expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
     expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+  });
+
+  // A sidebar shown with no tabs is the Workbench default, where Posit
+  // Assistant is off. Zooming it hides the focused Console, and with no tab to
+  // focus, focus must go to the empty state's Configure Panes button rather
+  // than drop to the page body.
+  test('Zooming an empty sidebar from the Console focuses Configure Panes (#19181)', async ({ rstudioPage: page }) => {
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+    let restoredConsoleWidth = initialConsoleWidth;
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_SIDEBAR);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await showSidebar(page);
+      await expect(page.locator(`${SIDEBAR_PANE} [role="tab"]`)).toHaveCount(0);
+      const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
+      await expect(configurePanes).toBeVisible();
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomSidebar');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect(configurePanes).toBeFocused();
+    } finally {
+      await restoreDefaultPaneLayout(page);
+      restoredConsoleWidth = await restoreConsoleWidth(page, initialConsoleWidth);
+    }
+    // Checked after the finally so a failed restore can't mask a body failure.
+    expectWidthClose(restoredConsoleWidth, initialConsoleWidth, 0.1, 'restored Console');
+  });
+
+  // Focus Next Pane must reach an empty sidebar too, and leave it (#19191).
+  test('F6 moves focus into and out of an empty sidebar (#19191)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_SIDEBAR);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await showSidebar(page);
+      await expect(page.locator(`${SIDEBAR_PANE} [role="tab"]`)).toHaveCount(0);
+      const configurePanes = page.locator(`${SIDEBAR_PANE} ${CUSTOMIZE_PANES_BUTTON}`);
+      await expect(configurePanes).toBeVisible();
+
+      await page.locator(`${TABSET2_PANE} [role="tab"][aria-selected="true"]`).focus();
+      await page.keyboard.press('F6');
+      await expect(configurePanes).toBeFocused();
+
+      await page.keyboard.press('Shift+F6');
+      await expect.poll(
+        () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
+  });
+
+  // An emptied tabset minimizes, but its restore button reopens it with no
+  // tab to focus. A column zoom must then move focus to the column's other
+  // tabset rather than to the empty one, which would leave it on the body.
+  test('A column zoom from the Console skips an open empty tabset (#19181)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_RIGHT_TOP);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await expect(page.locator(`${TABSET1_PANE} [role="tab"]`)).toHaveCount(0);
+      await page.locator('.rstudio_panel_min_btn_tabset1:visible').click();
+      await expect.poll(() => getOffsetHeight(page, TABSET1_PANE)).toBeGreaterThan(50);
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomRightColumn');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect.poll(
+        () => page.locator(TABSET2_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
+  });
+
+  // With every tab moved out of the right column, TabSet1 stays open with no
+  // tab and no empty state to focus; its frame buttons are all that is left.
+  test('A column zoom onto a column of empty tabsets focuses a frame button (#19181)', async ({ rstudioPage: page }) => {
+    try {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      await uncheckVisibleTabs(page, PL_RIGHT_TOP);
+      await uncheckVisibleTabs(page, PL_RIGHT_BOTTOM);
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+
+      await expect(page.locator(`${TABSET1_PANE} [role="tab"]`)).toHaveCount(0);
+      await expect(page.locator(`${TABSET2_PANE} [role="tab"]`)).toHaveCount(0);
+      // Emptying both leaves TabSet1 open, holding the whole column.
+      await expect.poll(() => getOffsetHeight(page, TABSET1_PANE)).toBeGreaterThan(50);
+
+      await focusConsole(page);
+
+      await executeCommand(page, 'layoutZoomRightColumn');
+      await expect.poll(async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50).toBe(true);
+      await expect.poll(
+        () => page.locator(TABSET1_PANE).evaluate(el => el.contains(document.activeElement)),
+      ).toBe(true);
+    } finally {
+      await restoreDefaultPaneLayout(page);
+    }
   });
 
   // Not redundant: refreshSidebar implements the location toggle as

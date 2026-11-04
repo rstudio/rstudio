@@ -319,6 +319,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
+      // the gutter's commands come and go with the markers
+      userPrefs.showGitDiffGutter().addValueChangeHandler(event -> manageCommands(true));
+
       userPrefs.allowSourceColumns().addValueChangeHandler(event ->
       {
          boolean enabled = userPrefs.allowSourceColumns().getValue();
@@ -678,7 +681,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       EditingTarget target = activeColumn_.getActiveEditor();
       if (!(target instanceof TextEditingTarget))
          return null;
-      DocDisplay display = ((TextEditingTarget) target).getDocDisplay();
+      DocDisplay display = ((TextEditingTarget) target).getPrimaryDisplay();
       if (!(display instanceof AceEditor))
          return null;
       return ((AceEditor) display).getWidget().getEditor();
@@ -700,7 +703,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          return JavaScriptObject.createArray().cast();
 
       TextEditingTarget textTarget = (TextEditingTarget) target;
-      DocDisplay display = textTarget.getDocDisplay();
+      DocDisplay display = textTarget.activeDisplay();
 
       // Get all selection ranges (supports multi-cursor)
       Range[] ranges = display.getNativeSelection().getAllRanges();
@@ -2591,6 +2594,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.vcsFileLog());
       dynamicCommands_.add(commands_.vcsFileDiff());
       dynamicCommands_.add(commands_.vcsFileRevert());
+      dynamicCommands_.add(commands_.vcsNextChange());
+      dynamicCommands_.add(commands_.vcsPreviousChange());
+      dynamicCommands_.add(commands_.vcsRevertChange());
+      dynamicCommands_.add(commands_.vcsShowChange());
+      dynamicCommands_.add(commands_.vcsShowChangesSideBySide());
       dynamicCommands_.add(commands_.executeCode());
       dynamicCommands_.add(commands_.executeCodeWithoutFocus());
       dynamicCommands_.add(commands_.executeAllCode());
@@ -3006,13 +3014,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       EditingTarget activeEditor = activeColumn_.getActiveEditor();
       if (activeEditor instanceof TextEditingTarget)
       {
+         // insert into the view the command came from, even if focus moves
+         // to the other view of a split before the contents arrive
          final TextEditingTarget target = (TextEditingTarget) activeEditor;
+         final DocDisplay display = target.activeDisplay();
          server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
          {
             @Override
             public void onResponseReceived(String content)
             {
-               target.insertCode(content, false);
+               target.insertCode(display, content, false);
             }
 
             @Override
@@ -3026,17 +3037,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private void pasteRCodeExecutionResult(final String code)
    {
+      // insert into the view the command came from, wherever focus has moved
+      // by the time the (possibly slow) result arrives
+      if (!hasActiveEditor() ||
+          !(activeColumn_.getActiveEditor() instanceof TextEditingTarget))
+         return;
+
+      final TextEditingTarget target = (TextEditingTarget) activeColumn_.getActiveEditor();
+      final DocDisplay display = target.activeDisplay();
       server_.executeRCode(code, new ServerRequestCallback<String>()
       {
          @Override
          public void onResponseReceived(String output)
          {
-            if (hasActiveEditor() &&
-                activeColumn_.getActiveEditor() instanceof TextEditingTarget)
-            {
-               TextEditingTarget editor = (TextEditingTarget) activeColumn_.getActiveEditor();
-               editor.insertCode(output, false);
-            }
+            target.insertCode(display, output, false);
          }
 
          @Override
@@ -3063,7 +3077,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
           activeColumn_.getActiveEditor() instanceof TextEditingTarget)
       {
          TextEditingTarget editor = (TextEditingTarget) activeColumn_.getActiveEditor();
-         editor.getDocDisplay().reindent();
+         editor.reindent();
       }
    }
 

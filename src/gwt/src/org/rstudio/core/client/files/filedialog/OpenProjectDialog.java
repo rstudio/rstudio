@@ -86,8 +86,11 @@ public class OpenProjectDialog extends FileDialog
                      @Override
                      public void onError(ServerError error)
                      {
+                        // keep the dialog open: the server only fails here when
+                        // the directory is gone or the request itself failed,
+                        // so there is no project file to fall back to
                         Debug.logError(error);
-                        accept();
+                        showError(error.getUserMessage());
                      }
                   });
          }

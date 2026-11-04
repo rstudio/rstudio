@@ -6,6 +6,13 @@ dependency(LLVM
    LICENSE_PATH "LICENSE.TXT"
 )
 
+dependency(GSUDO
+   DEPNAME      "gsudo (bundled with rig)"
+   REPOSITORY   "https://github.com/gerardog/gsudo"
+   LICENSE      "MIT"
+   LICENSE_PATH "LICENSE.txt"
+)
+
 dependency(DIFFUTILS
    DEPNAME      "diffutils"
    REPOSITORY   "https://cgit.git.savannah.gnu.org/cgit/diffutils.git/plain"

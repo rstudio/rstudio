@@ -253,6 +253,16 @@
    clear = function() { .rs.clearUserPref("auto_detect_indentation") }
 )
 
+# Show Git changes in editor gutter
+#
+# Whether to mark lines added, changed, or removed since they were last staged or
+# committed in the editor gutter, for files in a Git repository.
+.rs.uiPrefs$showGitDiffGutter <- list(
+   get = function() { .rs.getUserPref("show_git_diff_gutter") },
+   set = function(value) { .rs.setUserPref("show_git_diff_gutter", value) },
+   clear = function() { .rs.clearUserPref("show_git_diff_gutter") }
+)
+
 # Show margin in editor
 #
 # Whether to show the margin guide in the RStudio code editor.
@@ -348,8 +358,8 @@
 
 # Load Vim keybindings from a vimrc file
 #
-# Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim
-# editor keybindings are enabled.
+# Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or
+# $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
 .rs.uiPrefs$vimLoadVimrc <- list(
    get = function() { .rs.getUserPref("vim_load_vimrc") },
    set = function(value) { .rs.setUserPref("vim_load_vimrc", value) },
@@ -1800,6 +1810,16 @@
    clear = function() { .rs.clearUserPref("new_proj_use_renv") }
 )
 
+# Warn when a project requests a different version of R
+#
+# Whether to warn, and offer to switch, when the version of R recorded in a
+# project's renv lockfile or project file differs from the version of R in use.
+.rs.uiPrefs$checkProjectRVersion <- list(
+   get = function() { .rs.getUserPref("check_project_r_version") },
+   set = function(value) { .rs.setUserPref("check_project_r_version", value) },
+   clear = function() { .rs.clearUserPref("check_project_r_version") }
+)
+
 # Root document for PDF compilation
 #
 # The root document to use when compiling PDF documents.
@@ -2026,16 +2046,6 @@
    get = function() { .rs.getUserPref("enable_splash_screen") },
    set = function(value) { .rs.setUserPref("enable_splash_screen", value) },
    clear = function() { .rs.clearUserPref("enable_splash_screen") }
-)
-
-# Show the What's New window automatically after updating RStudio
-#
-# Whether to automatically show the What's New window after updating to a new
-# version of RStudio Desktop.
-.rs.uiPrefs$showWhatsNew <- list(
-   get = function() { .rs.getUserPref("show_whats_new") },
-   set = function(value) { .rs.setUserPref("show_whats_new", value) },
-   clear = function() { .rs.clearUserPref("show_whats_new") }
 )
 
 # 
@@ -2375,7 +2385,9 @@
 
 # Install R package dependencies one at a time
 #
-# Whether to install R package dependencies one at a time.
+# Whether to install R package dependencies one at a time. Not used in renv
+# projects, where packages are always installed together so that renv can resolve
+# dependencies and install in parallel.
 .rs.uiPrefs$installPkgDepsIndividually <- list(
    get = function() { .rs.getUserPref("install_pkg_deps_individually") },
    set = function(value) { .rs.setUserPref("install_pkg_deps_individually", value) },

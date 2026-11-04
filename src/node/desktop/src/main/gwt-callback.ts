@@ -19,6 +19,7 @@ import {
   nativeTheme,
   BrowserWindow,
   clipboard,
+  ClipboardItem,
   ipcMain,
   Rectangle,
   screen,
@@ -30,10 +31,10 @@ import {
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, statSync, writeFileSync } from 'fs';
-import { platform, release } from 'os';
+import { platform } from 'os';
 import i18next from 'i18next';
 import path, { dirname } from 'path';
-import { pathToFileURL } from 'url';
+import { fileURLToPath } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
 import { normalizeSeparatorsNative } from '../ui/utils';
 import { logger } from '../core/logger';
@@ -42,15 +43,25 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
-import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
+import { clipboardWritesSettled, queueClipboardWrite, readClipboardText, readClipboardType } from './clipboard-queue';
+import {
+  detectREnvironmentAsync,
+  findDefault32Bit,
+  findDefault64Bit,
+  findRInstallationsWin32,
+  frameworkVersionHome,
+} from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
+import { AuthorizationCancelledError, frameworkVersion, isOrthogonal, makeOrthogonal } from './r-framework';
 import { openMinimalWindow } from './minimal-window';
-import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import {
+  defaultFonts,
+  ElectronDesktopOptions,
+  fixWindowsRExecutablePath,
+} from './preferences/electron-desktop-options';
 import {
   parseFilter,
-  findRepoRoot,
-  getAppPath,
   handleLocaleCookies,
   isAutomated,
   resolveAliasedPath,
@@ -63,8 +74,6 @@ import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
 import { showPersistentSplashScreen } from './splash-screen';
 import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
-import { showWhatsNewWindow } from './whats-new-window';
-import { toReleaseSlug, isValidSlug, resolveReleaseName, resolveWhatsNewContentPath } from './whats-new-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -98,6 +107,10 @@ export class GwtCallback extends EventEmitter {
 
   initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
+
+  // the R executable to launch the next session with (set alongside a
+  // pending restart when the user switches R versions)
+  pendingRVersion = '';
 
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
@@ -344,52 +357,60 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_clipboard_paste', () => {
-      focusedWebContents()?.paste();
+      // capture the target now; focus may move while a write is pending
+      const target = focusedWebContents();
+      clipboardWritesSettled()
+        .then(() => {
+          if (target && !target.isDestroyed()) {
+            target.paste();
+          }
+        })
+        .catch((error: unknown) => logger().logError(error));
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      clipboard.writeText(text, 'clipboard');
+      queueClipboardWrite(async () => clipboard.writeText(text));
     });
 
-    ipcMain.handle('desktop_get_clipboard_text', () => {
-      const text = clipboard.readText('clipboard');
-      return text;
+    ipcMain.handle('desktop_get_clipboard_text', async () => {
+      return readClipboardText();
     });
 
-    ipcMain.handle('desktop_get_clipboard_uris', () => {
+    ipcMain.handle('desktop_get_clipboard_uris', async () => {
       // if we don't have a URI list, nothing to do
-      if (!clipboard.has('text/uri-list')) {
+      const uriList = await readClipboardType('text/uri-list', async (blob) => blob.text());
+      if (uriList === undefined) {
         return [];
       }
 
-      // return uri list as array
-      const data = clipboard.read('text/uri-list');
-      const parts = data.split('\n');
+      // return uri list as array; entries are CRLF-separated per RFC 2483
+      const parts = uriList.split(/\r?\n/).filter((x) => x.length > 0);
 
-      // strip off file prefix, if any
-      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
-      const trimmed = parts.map((x) => {
-        if (x.startsWith(filePrefix)) {
-          x = x.substring(filePrefix.length);
+      // Electron only puts percent-encoded file:// URIs here; decode them to
+      // filesystem paths, with the forward slashes the visual editor expects
+      // on Windows, and drop anything that isn't a valid file URI
+      const paths: string[] = [];
+      for (const part of parts) {
+        try {
+          const filePath = fileURLToPath(part);
+          paths.push(process.platform === 'win32' ? filePath.replace(/\\/g, '/') : filePath);
+        } catch (error: unknown) {
+          logger().logError(error);
         }
-        return x;
-      });
+      }
 
-      return trimmed;
+      return paths;
     });
 
     // Check for an image on the clipboard; if one exists,
     // write it to file in the temporary directory and
     // return the path to that file.
-    ipcMain.handle('desktop_get_clipboard_image', () => {
+    ipcMain.handle('desktop_get_clipboard_image', async () => {
       // if we don't have any image, bail
-      if (!clipboard.availableFormats().includes('image/png')) {
+      const pngData = await readClipboardType('image/png', async (blob) => Buffer.from(await blob.arrayBuffer()));
+      if (!pngData) {
         return '';
       }
-
-      // read image from clipboard
-      const image = clipboard.readImage('clipboard');
-      const pngData = image.toPNG();
 
       const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
       const tempPathName = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard');
@@ -406,13 +427,16 @@ export class GwtCallback extends EventEmitter {
       return pngPath;
     });
 
+    // The selection clipboard exists only on Linux; clipboard.selection is
+    // undefined elsewhere.
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      clipboard.writeText(selection, 'selection');
+      if (process.platform === 'linux') {
+        queueClipboardWrite(async () => clipboard.selection.writeText(selection));
+      }
     });
 
-    ipcMain.handle('desktop_get_global_mouse_selection', () => {
-      const selection = clipboard.readText('selection');
-      return selection;
+    ipcMain.handle('desktop_get_global_mouse_selection', async () => {
+      return process.platform === 'linux' ? readClipboardText(clipboard.selection) : '';
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
@@ -633,13 +657,26 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       async (_event, x: number, y: number, width: number, height: number) => {
-        try {
-          const rect: Rectangle = { x, y, width, height };
-          const image = await this.mainWindow.window.capturePage(rect);
-          clipboard.writeImage(image);
-        } catch (e: unknown) {
-          logger().logError(e);
-        }
+        // capture now, so the image is what was on screen when Copy was
+        // requested, but queue the write now too, so a copy made while the
+        // capture is pending lands after this image rather than under it;
+        // capturePage() can also throw synchronously (destroyed window), and
+        // the handler must still resolve or the copy dialog never closes
+        const rect: Rectangle = { x, y, width, height };
+        const capture = Promise.resolve()
+          .then(async () => this.mainWindow.window.capturePage(rect))
+          .then((image) => new Blob([new Uint8Array(image.toPNG())], { type: 'image/png' }))
+          .catch((error: unknown) => {
+            logger().logError(error);
+            return undefined;
+          });
+        queueClipboardWrite(async () => {
+          const png = await capture;
+          if (png) {
+            await clipboard.write([new ClipboardItem({ 'image/png': png })]);
+          }
+        });
+        await clipboardWritesSettled();
       },
     );
 
@@ -771,12 +808,22 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
+    // cleanClipboard rewrites the pasteboard, so it takes its turn with the
+    // other clipboard writes instead of interleaving with a pending one
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
-      desktop.cleanClipboard(stripHtml);
+      queueClipboardWrite(() => desktop.cleanClipboard(stripHtml));
     });
 
     ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
-      this.pendingQuit = pendingQuit;
+      this.setPendingQuit(pendingQuit);
+    });
+
+    ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
+      return this.setPendingRVersion(rExecutablePath);
+    });
+
+    ipcMain.handle('desktop_make_r_orthogonal', async (event, rHome: string) => {
+      return this.makeROrthogonal(rHome);
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
@@ -892,10 +939,6 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setEnableSplashScreen(enable);
     });
 
-    ipcMain.on('desktop_set_show_whats_new', (_event, enable) => {
-      ElectronDesktopOptions().setShowWhatsNew(enable);
-    });
-
     ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
       this.mainWindow.window.setAutoHideMenuBar(autohide);
       this.mainWindow.window.setMenuBarVisibility(!autohide);
@@ -944,19 +987,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_toggle_fullscreen_mode', () => {
       this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
-    });
-
-    ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
-      let docUrl: URL;
-      if (app.isPackaged) {
-        docUrl = pathToFileURL(path.join(getAppPath(), 'www', 'docs', 'keyboard.htm'));
-      } else {
-        // dev build scenario
-        docUrl = pathToFileURL(
-          new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath(),
-        );
-      }
-      void shell.openExternal(docUrl.toString());
     });
 
     ipcMain.on('desktop_launch_session', (_event, reload) => {
@@ -1133,7 +1163,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
       if (varName === 'launch_failed') {
-        this.addMacOSVersionError();
         this.addRVersionTooNewError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
@@ -1142,66 +1171,6 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_show_splash_screen', () => {
       showPersistentSplashScreen();
     });
-
-    ipcMain.on('desktop_show_whats_new', () => {
-      const info = buildInfo();
-      const releaseName = resolveReleaseName(info.RSTUDIO_RELEASE_NAME, findRepoRoot());
-      const slug = toReleaseSlug(releaseName);
-
-      if (!isValidSlug(slug) || !resolveWhatsNewContentPath(slug)) {
-        const msgBoxOptions = {
-          type: 'info' as const,
-          message: "What's New",
-          detail: "What's New information is not available.",
-          buttons: ['OK'],
-        };
-        const focusedWindow = this.dialogParentWindow();
-        if (focusedWindow) {
-          void appState().modalTracker.trackElectronModalAsync(async () =>
-            dialog.showMessageBox(focusedWindow, msgBoxOptions),
-          );
-        } else {
-          void appState().modalTracker.trackElectronModalAsync(async () =>
-            dialog.showMessageBox(msgBoxOptions),
-          );
-        }
-        return;
-      }
-
-      showWhatsNewWindow({
-        releaseSlug: slug,
-        releaseName: releaseName,
-        version: info.RSTUDIO_VERSION.split(/[-+]/)[0],
-        parent: this.mainWindow.window,
-      });
-    });
-  }
-
-  addMacOSVersionError(): void {
-    if (platform() === 'darwin') {
-      ipcMain.on('desktop_console_log', async (event, output) => {
-        console.log(output);
-      });
-      const release_major = parseInt(release().substring(0, release().indexOf('.')));
-      // macOS 11.0 uses darwin 20.0.0
-      if (release_major < 20) {
-        const versionProductName = execSync('sw_vers -productName').toString().trim();
-        const versionProductVersion = execSync('sw_vers -productVersion').toString().trim();
-        let versionError =
-          'You are using an unsupported operating system: ' +
-          versionProductName +
-          ' ' +
-          versionProductVersion +
-          '. RStudio requires macOS 11 (Big Sur) or higher.';
-        if (this.errorPageData.get('process_error')) {
-          const launch_failed = this.errorPageData.get('process_error');
-          if (!launch_failed?.includes('No error available')) {
-            versionError += '\n\n' + launch_failed;
-          }
-        }
-        this.errorPageData.set('process_error', versionError);
-      }
-    }
   }
 
   addRVersionTooNewError(): void {
@@ -1290,6 +1259,96 @@ export class GwtCallback extends EventEmitter {
     } else {
       void appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(dialogOptions));
     }
+  }
+
+  setPendingQuit(pendingQuit: number): void {
+    this.pendingQuit = pendingQuit;
+
+    // a quit that was abandoned (e.g. the session refused it) leaves no R
+    // switch behind for some later, unrelated restart
+    if (pendingQuit === PendingQuit.PendingQuitNone) {
+      this.pendingRVersion = '';
+    }
+  }
+
+  /**
+   * Hold on to the R executable the next session should use, after checking
+   * that it runs as itself. Resolves to an error message when it doesn't,
+   * and '' otherwise; '' tells the client the R is ready, so a failure
+   * always says something.
+   */
+  async setPendingRVersion(rExecutablePath: string): Promise<string> {
+    // sessions launched from bin\R.exe fail to load on Windows; use the
+    // architecture-specific executable as the Choose R dialog does
+    const rPath = process.platform === 'win32' ? fixWindowsRExecutablePath(rExecutablePath) : rExecutablePath;
+
+    // the client escapes the message for display itself
+    const interpolation = { escapeValue: false };
+
+    try {
+      if (!existsSync(rPath)) {
+        return i18next.t('gwtCallbackTs.rExecutableMissing', { path: rPath, interpolation }) || rPath;
+      }
+
+      // a framework version that isn't orthogonal would run the default R
+      const home = frameworkVersionHome(rPath);
+      const version = home === null ? null : frameworkVersion(home);
+      if (version !== null && !isOrthogonal(version)) {
+        return i18next.t('gwtCallbackTs.rExecutableNotOrthogonal', { path: rPath, interpolation }) || rPath;
+      }
+
+      // queried in the background: R can take seconds to start
+      const [, error] = await detectREnvironmentAsync(rPath);
+      if (error) {
+        logger().logError(error);
+        return (
+          i18next.t('gwtCallbackTs.rExecutableFailed', { path: rPath, error: error.message, interpolation }) || rPath
+        );
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
+      return safeError(error).message || rPath;
+    }
+
+    this.pendingRVersion = rPath;
+    return '';
+  }
+
+  /**
+   * Make the macOS framework version of R with the given home orthogonal, so
+   * that it runs as itself rather than as the framework's default version.
+   * Resolves to an error message on failure, and '' otherwise.
+   */
+  async makeROrthogonal(rHome: string): Promise<string> {
+    const interpolation = { escapeValue: false };
+
+    const version = frameworkVersion(rHome);
+    if (version === null) {
+      return (
+        i18next.t('gwtCallbackTs.rUpdateFailed', { path: rHome, error: 'not a framework version', interpolation }) ||
+        rHome
+      );
+    }
+
+    try {
+      const prompt = i18next.t('gwtCallbackTs.rUpdatePrompt', { version: version.name, interpolation });
+      await makeOrthogonal(version, prompt);
+      return '';
+    } catch (error: unknown) {
+      if (error instanceof AuthorizationCancelledError) {
+        return i18next.t('gwtCallbackTs.rUpdateCancelled') || error.message;
+      }
+
+      logger().logError(error);
+      const message = safeError(error).message;
+      return i18next.t('gwtCallbackTs.rUpdateFailed', { path: rHome, error: message, interpolation }) || message;
+    }
+  }
+
+  collectPendingRVersion(): string {
+    const pending = this.pendingRVersion;
+    this.pendingRVersion = '';
+    return pending;
   }
 
   collectPendingQuitRequest(): PendingQuit {

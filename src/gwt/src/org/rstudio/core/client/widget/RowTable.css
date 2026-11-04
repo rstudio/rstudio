@@ -32,6 +32,17 @@
    background-color: rgb(214, 233, 247);
 }
 
+/* the color and width of the app-wide :focus-visible outline in
+   focus-visible.css, which is suppressed on the listbox table itself; the
+   offset is -2px rather than -1px so the ring sits wholly inside its box.
+   It marks the current option, or the whole list when there is none */
+.focusVisible .focused,
+.focusVisible .selected,
+.focusVisible.empty {
+   outline: #8AA9DB solid 2px;
+   outline-offset: -2px;
+}
+
 @external rstudio-themes-dark;
 @external rstudio-theme-aware-dialog;
 

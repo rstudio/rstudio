@@ -660,4 +660,275 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       Assert.assertEquals(1, output.getCurrentLines());
       Assert.assertEquals("<span class=\"myClass\">Message\n</span>", getInnerHTML(output));
    }
+
+   // ---- incremental line counting ----
+
+   private void assertLinesMatchDom(ConsoleOutputWriter output)
+   {
+      Assert.assertEquals(DomUtils.countLines(output.getElement(), true), output.getCurrentLines());
+   }
+
+   public void testLineCountWithInterleavedErrorAndOutput()
+   {
+      // each switch between stdout and stderr is its own chunk; the count
+      // must stay exact without re-counting the scrollback every time
+      ConsoleOutputWriter output = getCOW();
+      for (int i = 0; i < 50; i++)
+      {
+         output.outputToConsole("message " + i + "\n", myErrorClass, isError, ignoreLineCount, false);
+         output.outputToConsole("output " + i + "\n", nullClazz, notError, ignoreLineCount, false);
+      }
+
+      Assert.assertEquals(100, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
+
+   public void testLineCountWithConditionGroups()
+   {
+      // R wraps conditions in group escapes; the group's surrounding newlines
+      // are trimmed from the DOM when the next output starts
+      ConsoleOutputWriter output = getCOW();
+      for (int i = 0; i < 20; i++)
+      {
+         output.outputToConsole("\033G3;\nmessage " + i + "\n\033g", myErrorClass, isError, ignoreLineCount, false);
+         output.outputToConsole("output " + i + "\n", nullClazz, notError, ignoreLineCount, false);
+      }
+      output.normalizePreviousOutput();
+
+      assertLinesMatchDom(output);
+   }
+
+   public void testTrimmingStaysExactAcrossConditionGroups()
+   {
+      // an over-count would trim real lines each time, shrinking the visible
+      // scrollback a little further on every group
+      ConsoleOutputWriter output = getCOW();
+      int maxLines = 10;
+      output.setMaxOutputLines(maxLines);
+      for (int i = 0; i < 100; i++)
+      {
+         output.outputToConsole("\033G3;\nmessage " + i + "\n\033g", myErrorClass, isError, checkLineCount, false);
+         output.outputToConsole("output " + i + "\n", nullClazz, notError, checkLineCount, false);
+      }
+
+      Assert.assertEquals(maxLines, output.getCurrentLines());
+      Assert.assertEquals(maxLines, DomUtils.countLines(output.getElement(), true));
+   }
+
+   public void testLineCountWithCarriageReturnProgress()
+   {
+      ConsoleOutputWriter output = getCOW();
+      for (int i = 0; i < 5; i++)
+         output.outputToConsole("line " + i + "\n", nullClazz, notError, ignoreLineCount, false);
+      for (int i = 0; i < 50; i++)
+         output.outputToConsole("\rprogress " + i, nullClazz, notError, ignoreLineCount, false);
+      output.outputToConsole("\n", nullClazz, notError, ignoreLineCount, false);
+
+      Assert.assertEquals(6, output.getCurrentLines());
+      assertLinesMatchDom(output);
+      Assert.assertTrue(output.getElement().getInnerText().endsWith("line 4\nprogress 49\n"));
+   }
+
+   public void testLineCountAfterTrimmingThenOverwriting()
+   {
+      // the scrollback limit trims the front of the trailing span behind the
+      // virtual console's back; edits at the end must still land correctly
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(3);
+      for (int i = 0; i < 6; i++)
+         output.outputToConsole("line " + i + "\n", nullClazz, notError, checkLineCount, false);
+      output.outputToConsole("progress 1", nullClazz, notError, checkLineCount, false);
+      output.outputToConsole("\rprogress 2\n", nullClazz, notError, checkLineCount, false);
+
+      Assert.assertEquals("line 4\nline 5\nprogress 2\n", output.getElement().getInnerText());
+      Assert.assertEquals(3, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
+
+   public void testBulkOutputIsWrittenInFewTextNodes()
+   {
+      // 10k lines in one chunk used to mean 20k rewrites of the whole span
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < 10000; i++)
+         sb.append("line ").append(i).append("\n");
+
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole(sb.toString(), nullClazz, notError, ignoreLineCount, false);
+
+      // the first segment is written when the span is created; everything
+      // after it arrives in a single flush
+      Element span = output.getElement().getFirstChildElement().getFirstChildElement();
+      Assert.assertEquals(sb.toString(), span.getInnerText());
+      Assert.assertTrue(span.getChildCount() <= 2);
+      Assert.assertEquals(10000, output.getCurrentLines());
+   }
+
+   public void testFormFeedResetsLineCount()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("one\ntwo\n", nullClazz, notError, ignoreLineCount, false);
+      output.outputToConsole("\fthree\n", nullClazz, notError, ignoreLineCount, false);
+      output.outputToConsole("four\n", nullClazz, notError, ignoreLineCount, false);
+
+      Assert.assertEquals(2, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
+
+   public void testPromptTimeEditsAreCounted()
+   {
+      // at each prompt the shell trims the last group's newlines and makes
+      // sure the next output starts on a fresh line; both change the DOM
+      // without going through outputToConsole
+      ConsoleOutputWriter output = getCOW();
+      output.outputToConsole("\033G3;\nmessage\n\n\033g", myErrorClass, isError, ignoreLineCount, false);
+      output.normalizePreviousOutput();
+      assertLinesMatchDom(output);
+
+      output.ensureStartingOnNewLine();
+      assertLinesMatchDom(output);
+
+      output.outputToConsole("no newline", nullClazz, notError, ignoreLineCount, false);
+      output.normalizePreviousOutput();
+      output.ensureStartingOnNewLine();
+      assertLinesMatchDom(output);
+      Assert.assertTrue(output.getElement().getInnerText().endsWith("no newline\n"));
+   }
+
+   public void testTrimmingStaysExactAcrossPrompts()
+   {
+      // the uncounted newline added at each prompt would otherwise let the
+      // scrollback grow past its limit, one line per command
+      ConsoleOutputWriter output = getCOW();
+      int maxLines = 5;
+      output.setMaxOutputLines(maxLines);
+      for (int i = 0; i < 50; i++)
+      {
+         output.outputToConsole("command " + i + " output", nullClazz, notError, checkLineCount, false);
+         output.normalizePreviousOutput();
+         output.ensureStartingOnNewLine();
+         output.outputToConsole("> ", nullClazz, notError, checkLineCount, false);
+      }
+
+      Assert.assertEquals(maxLines, output.getCurrentLines());
+      Assert.assertEquals(maxLines, DomUtils.countLines(output.getElement(), true));
+   }
+
+   public void testDiscardedGroupDoesNotTrimVisibleOutput()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(2);
+      output.outputToConsole("\033G3;one\ntwo\n\033g", nullClazz, notError, checkLineCount, false);
+      output.outputToConsole("\033[2A\033G2;\nwarn\n\033g", nullClazz, notError, checkLineCount, false);
+      assertLinesMatchDom(output);
+      output.outputToConsole("next\nlast\n", nullClazz, notError, checkLineCount, false);
+
+      Assert.assertEquals("warnnext\nlast\n", output.getElement().getInnerText());
+      Assert.assertEquals(2, output.getCurrentLines());
+      assertLinesMatchDom(output);
+   }
+
+   public void testStyledOverwriteOfTrimmedRangeAfterGroupTruncation()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(3);
+      String[] chunks = {
+         "\033[31my\n\n",
+         "\n\033[F",
+         "\033G3;\n\n\033[F",
+         "\033[0m\033[A\033[F",
+         "\033[Ar",
+      };
+      for (String chunk : chunks)
+      {
+         output.outputToConsole(chunk, myClass, notError, checkLineCount, false);
+         assertLinesMatchDom(output);
+      }
+
+      // The red span has left the scrollback. Rewriting it in another style
+      // must neither insert beside a detached node nor revive its contents.
+      Assert.assertEquals("\n\n\n", output.getElement().getInnerText());
+      output.outputToConsole("\033g\033[99B\033[99Gdone\n", myClass, notError, checkLineCount, false);
+      Assert.assertEquals("\n\ndone\n", output.getElement().getInnerText());
+      assertLinesMatchDom(output);
+   }
+
+   public void testEditsWithinDiscardedRangesStayOffscreen()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(2);
+      output.outputToConsole(
+            "\033[31mabc\033[34mdef\033[0m\nkeep1\nkeep2\n",
+            myClass, notError, checkLineCount, false);
+
+      String[] edits = {
+         "\033[99F\033[32mX", // prefix of a discarded range
+         "\033[2GY",         // inside a discarded range
+         "\033[1GZZZZZZ",    // across both discarded ranges
+      };
+      for (String edit : edits)
+      {
+         output.outputToConsole(edit, myClass, notError, checkLineCount, false);
+         Assert.assertEquals("keep1\nkeep2\n", output.getElement().getInnerText());
+         assertLinesMatchDom(output);
+      }
+   }
+
+   /**
+    * Output whose first line the limit has trimmed out of the DOM, while the
+    * range still spans it logically.
+    */
+   private ConsoleOutputWriter getTrimmedCOW()
+   {
+      ConsoleOutputWriter output = getCOW();
+      output.setMaxOutputLines(2);
+      output.outputToConsole("l1\nl2\nl3\n", nullClazz, notError, checkLineCount, false);
+      Assert.assertEquals("l2\nl3\n", output.getElement().getInnerText());
+      return output;
+   }
+
+   public void testEditsIntoTrimmedPrefixOfVisibleRangeStayOffscreen()
+   {
+      // edits aimed at the trimmed line must not land on l2
+      String[][] cases = {
+         // edits that stay within the trimmed line
+         { "\033[99F\033[2GZ", "l2\nl3\n" },                 // overwrite(): replaceTail fallback
+         { "\033[99F\033[1GZ", "l2\nl3\n" },                 // appendLeft()
+         { "\033[99F\033[9GZ", "l2\nl3\n" },                 // past the line's end: extendLineBefore()
+         { "\033[99F\033[1G\033[31mZ\033[0m", "l2\nl3\n" },  // styled: split off, then right overlap
+         { "\033[3F\033[1C\033[31mZ\033[0m", "l2\nl3\n" },   // styled: split off, fully contained
+
+         // writes that run from the trimmed line into a visible one
+         { "\033[99F\033[1GXX\nYY", "YY\nl3\n" },
+         { "\033[99F\033[2G\033[31mZ\nW\033[0m", "W2\nl3\n" },
+         { "\033[99F\033[2G\033[31mZ\nZZ\nZZ\nZ\033[0m", "ZZ\nZZ\nZ" },
+      };
+      for (String[] testCase : cases)
+      {
+         ConsoleOutputWriter output = getTrimmedCOW();
+         output.outputToConsole(testCase[0], nullClazz, notError, checkLineCount, false);
+         Assert.assertEquals(testCase[0], testCase[1], output.getElement().getInnerText());
+         assertLinesMatchDom(output);
+      }
+   }
+
+   public void testEditsIntoSplitOffTrimmedPrefixStayOffscreen()
+   {
+      // Once a styled write has split the trimmed part off the visible range,
+      // later writes into it, plain or styled, single or multi-line, must be
+      // discarded in the same way, and never leak into the visible lines.
+      ConsoleOutputWriter output = getTrimmedCOW();
+      String[][] steps = {
+         { "\033[99F\033[2G\033[31mZ\033[0m", "l2\nl3\n" },
+         { "\033[99F\033[2G\033[31mZ\nW\033[0m", "W2\nl3\n" },
+         { "\033[99F\033[1GXX\nYY", "YY\nl3\n" },
+         { "\033[99F\033[9GZ", "YY\nl3\n" },
+         { "\033[99F\033[1G\033[31mA\nB\033[0m", "BY\nl3\n" },
+      };
+      for (String[] step : steps)
+      {
+         output.outputToConsole(step[0], nullClazz, notError, checkLineCount, false);
+         Assert.assertEquals(step[0], step[1], output.getElement().getInnerText());
+         assertLinesMatchDom(output);
+      }
+   }
 }

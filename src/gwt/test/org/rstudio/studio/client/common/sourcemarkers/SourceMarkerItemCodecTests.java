@@ -84,4 +84,23 @@ public class SourceMarkerItemCodecTests extends GWTTestCase
       assertFalse("plain branch must not produce an <img> element: " + html,
                   html.toLowerCase().contains("<img"));
    }
+
+   public void testRenderMessageHonorsSGROnly()
+   {
+      // SGR-only supports color
+      PreElement color = Document.get().createPreElement();
+      SourceMarkerItemCodec.renderMessage(vc(color), false, "\033[31mred\033[0m");
+      assertTrue(color.getInnerHTML().contains("xtermColor1"));
+
+      // SGR-only normalizes line endings
+      PreElement cr = Document.get().createPreElement();
+      SourceMarkerItemCodec.renderMessage(vc(cr), false, "pre\rpost");
+      assertTrue(cr.getInnerText().contains("pre\npost"));
+
+      // Links aren't SGR
+      PreElement link = Document.get().createPreElement();
+      SourceMarkerItemCodec.renderMessage(vc(link), false, "\033]8;;ide:run:test()\7c\033]8;;\7");
+      assertFalse(link.getInnerHTML().contains("<a"));
+   }
+
 }

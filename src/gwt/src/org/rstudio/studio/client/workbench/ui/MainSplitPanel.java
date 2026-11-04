@@ -18,8 +18,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -32,6 +35,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
@@ -521,6 +526,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return sidebar_ != null;
    }
 
+   /**
+    * Whether the sidebar is showing but too narrow to show anything -- shut by
+    * a zoom or a splitter drag -- so its panes are inert.
+    */
+   public boolean isSidebarCollapsed()
+   {
+      return sidebar_ != null && isCollapsed(sidebar_);
+   }
+
    public int getSidebarWidth()
    {
       if (sidebar_ != null && sidebar_.getOffsetWidth() > 0)
@@ -646,6 +660,153 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    }
 
    @Override
+   public void animate(int duration, final AnimationCallback callback)
+   {
+      // Zooms resize the columns through an animation rather than forceLayout(),
+      // so the widths are final only once it completes.
+      super.animate(duration, new AnimationCallback()
+      {
+         public void onAnimationComplete()
+         {
+            updateCollapsedColumns();
+            if (callback != null)
+               callback.onAnimationComplete();
+         }
+
+         public void onLayout(Layer layer, double progress)
+         {
+            if (callback != null)
+               callback.onLayout(layer, progress);
+         }
+      });
+   }
+
+   /**
+    * Make each column too narrow to show anything inert, taking its panes out
+    * of the accessibility tree and the Tab order (#19181). Zoom commands and
+    * splitter drags both collapse columns, so this reads the laid-out widths
+    * rather than any zoom state. forceLayout() ends in onResize(), so every
+    * non-animated layout pass arrives here.
+    */
+   private void updateCollapsedColumns()
+   {
+      // Before the first layout pass every column reads 0px wide.
+      if (center_ == null || getOffsetWidth() == 0)
+         return;
+
+      boolean hidFocus = false;
+      for (Widget column : getColumns())
+         hidFocus |= updateCollapsedColumn(column);
+
+      if (hidFocus && focusedColumnCollapsedHandler_ != null)
+         focusedColumnCollapsedHandler_.accept(getWidestColumn());
+   }
+
+   /**
+    * Update one column's inert state. Returns true if the column has just
+    * become inert while holding focus, which the browser will drop to the page
+    * body -- e.g. a mouse drag of a splitter leaves focus in the column it shuts.
+    */
+   private boolean updateCollapsedColumn(Widget column)
+   {
+      // This runs on every layout pass, splitter drags included; write the
+      // attributes only when the column's state changes.
+      Element container = getWidgetContainerElement(column);
+      boolean collapsed = isCollapsed(column);
+      if (container.hasAttribute("inert") == collapsed)
+         return false;
+
+      boolean hidFocus = collapsed &&
+                         DomUtils.contains(container, DomUtils.getActiveElement());
+      A11y.setInert(container, collapsed);
+      return hidFocus;
+   }
+
+   private boolean isCollapsed(Widget column)
+   {
+      return column.getOffsetWidth() < COLLAPSED_COLUMN_WIDTH;
+   }
+
+   /**
+    * The narrowest a column can be and stay open. A layout with the sidebar
+    * below its minimum is discarded when it is restored from saved state.
+    */
+   public int getMinimumOpenWidth(Widget column)
+   {
+      return column == sidebar_ ? MINIMUM_SIDEBAR_WIDTH : COLLAPSED_COLUMN_WIDTH;
+   }
+
+   /**
+    * The width a column is being laid out at. Unlike getOffsetWidth(), this
+    * includes sizes set since the last layout pass, e.g. by a resize that is
+    * still animating.
+    */
+   public double getTargetWidth(Widget column)
+   {
+      if (column != center_)
+         return getWidgetSize(column);
+
+      // center_ gets what the docked columns and their splitters leave.
+      double width = getOffsetWidth();
+      for (Widget docked : getColumns())
+      {
+         if (docked != center_)
+            width -= getWidgetSize(docked) + getSplitterSize();
+      }
+      return Math.max(0, width);
+   }
+
+   /**
+    * The columns now in the panel, left to right apart from the sidebar: the
+    * source columns, center_, right_, then the sidebar if it is shown.
+    */
+   public ArrayList<Widget> getColumns()
+   {
+      ArrayList<Widget> candidates = new ArrayList<>(leftList_);
+      candidates.add(center_);
+      candidates.add(right_);
+      candidates.add(sidebar_);
+
+      ArrayList<Widget> columns = new ArrayList<>();
+      for (Widget candidate : candidates)
+      {
+         if (isColumn(candidate))
+            columns.add(candidate);
+      }
+      return columns;
+   }
+
+   private Widget getWidestColumn()
+   {
+      Widget widest = null;
+      for (Widget column : getColumns())
+      {
+         if (widest == null || column.getOffsetWidth() > widest.getOffsetWidth())
+            widest = column;
+      }
+      return widest;
+   }
+
+   /**
+    * insert() and remove() lay out while initialize() or a sidebar change is
+    * partway through, when a field can name a widget that is not, or no
+    * longer, a child.
+    */
+   private boolean isColumn(Widget widget)
+   {
+      return widget != null && widget.getParent() == this;
+   }
+
+   /**
+    * Called with the widest column when a layout pass collapses the column
+    * holding focus, so focus can move somewhere still showing.
+    */
+   public void setFocusedColumnCollapsedHandler(Consumer<Widget> handler)
+   {
+      focusedColumnCollapsedHandler_ = handler;
+   }
+
+   @Override
    public void onResize()
    {
       super.onResize();
@@ -680,6 +841,12 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
            Scheduler.get().scheduleDeferred(layoutCommand_);
          }
       }
+
+      // A width change first lays out the old column sizes at the new width,
+      // which can squeeze the fill column shut; the pending layout above
+      // applies the proportional sizes and comes back here.
+      if (layoutCommand_ == null)
+         updateCollapsedColumns();
    }
 
    /**
@@ -713,7 +880,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       // Check for left column zoom: right-side columns are collapsed
       // Right widget is always the last stored width
       int rightWidth = widths[widths.length - 1];
-      boolean rightCollapsed = rightWidth < 20;
+      boolean rightCollapsed = rightWidth < COLLAPSED_COLUMN_WIDTH;
 
       // If sidebar is on the right, it's the second-to-last width
       boolean sidebarOnRight = sidebar_ != null && !"left".equals(sidebarLocation_);
@@ -722,7 +889,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       if (sidebarOnRight && widths.length >= 2)
       {
          int sidebarWidth = widths[widths.length - 2];
-         sidebarCollapsed = sidebarWidth < 20;
+         sidebarCollapsed = sidebarWidth < COLLAPSED_COLUMN_WIDTH;
       }
 
       // If right (and sidebar if on right) are collapsed, left column is zoomed
@@ -772,7 +939,11 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    // below this; if it would, the other columns are reset to default widths so
    // Source/Console can't be left at ~0 width (invisible).
    private static final int MINIMUM_CENTER_WIDTH = 50;
+   // Below this width a column shows no usable part of its panes. Zooms leave
+   // collapsed columns at 0 or 1px; isZoomedColumnState uses the same cutoff.
+   private static final int COLLAPSED_COLUMN_WIDTH = 20;
    private Command layoutCommand_;
+   private Consumer<Widget> focusedColumnCollapsedHandler_;
 
    /**
     * Check if the saved state has a sidebar width below the minimum allowed.

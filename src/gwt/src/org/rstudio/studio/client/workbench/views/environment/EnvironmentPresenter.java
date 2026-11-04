@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -775,7 +776,7 @@ public class EnvironmentPresenter extends BasePresenter
       if (contextDepth > 0 &&
           contextDepth_ == 0)
       {
-         eventBus_.fireEvent(new ActivatePaneEvent(constants_.environmentCapitalized()));
+         eventBus_.fireEvent(new ActivatePaneEvent(PaneManager.ENVIRONMENT_PANE));
          debugCommander_.enterDebugMode(DebugMode.Function);
          enteringDebugMode = true;
       }
@@ -895,7 +896,7 @@ public class EnvironmentPresenter extends BasePresenter
             if (StringUtil.isNullOrEmpty(target.getPath()))
                continue;
             
-            String editorCode = target.getDocDisplay().getCode();
+            String editorCode = target.getPrimaryDisplay().getCode();
             int index = editorCode.indexOf(currentBrowseSource_);
             if (index != -1)
             {
@@ -918,7 +919,7 @@ public class EnvironmentPresenter extends BasePresenter
             if (StringUtil.isNullOrEmpty(target.getPath()))
                continue;
             
-            String editorCode = target.getDocDisplay().getCode();
+            String editorCode = target.getPrimaryDisplay().getCode();
             int newlineIndex = currentBrowseSource_.indexOf('\n');
             String firstLine = currentBrowseSource_.substring(0, newlineIndex);
             if (firstLine.indexOf("function") != -1)
@@ -956,7 +957,7 @@ public class EnvironmentPresenter extends BasePresenter
       
       // We've found the start of the function being debugged in a
       // currently-open tab. Try to set the browse position accordingly.
-      Position position = target.getDocDisplay().positionFromIndex(codeIndex.get());
+      Position position = target.getPrimaryDisplay().positionFromIndex(codeIndex.get());
 
       // Save function line number.
       // Add one as this is a 1-based index into the document.

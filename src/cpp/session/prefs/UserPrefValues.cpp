@@ -362,6 +362,19 @@ core::Error UserPrefValues::setAutoDetectIndentation(bool val)
 }
 
 /**
+ * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+ */
+bool UserPrefValues::showGitDiffGutter()
+{
+   return readPref<bool>("show_git_diff_gutter");
+}
+
+core::Error UserPrefValues::setShowGitDiffGutter(bool val)
+{
+   return writePref("show_git_diff_gutter", val);
+}
+
+/**
  * Whether to show the margin guide in the RStudio code editor.
  */
 bool UserPrefValues::showMargin()
@@ -492,7 +505,7 @@ core::Error UserPrefValues::setEditorKeybindings(std::string val)
 }
 
 /**
- * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+ * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
  */
 bool UserPrefValues::vimLoadVimrc()
 {
@@ -2507,6 +2520,19 @@ core::Error UserPrefValues::setNewProjUseRenv(bool val)
 }
 
 /**
+ * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+ */
+bool UserPrefValues::checkProjectRVersion()
+{
+   return readPref<bool>("check_project_r_version");
+}
+
+core::Error UserPrefValues::setCheckProjectRVersion(bool val)
+{
+   return writePref("check_project_r_version", val);
+}
+
+/**
  * The root document to use when compiling PDF documents.
  */
 std::string UserPrefValues::rootDocument()
@@ -2829,19 +2855,6 @@ bool UserPrefValues::enableSplashScreen()
 core::Error UserPrefValues::setEnableSplashScreen(bool val)
 {
    return writePref("enable_splash_screen", val);
-}
-
-/**
- * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
- */
-bool UserPrefValues::showWhatsNew()
-{
-   return readPref<bool>("show_whats_new");
-}
-
-core::Error UserPrefValues::setShowWhatsNew(bool val)
-{
-   return writePref("show_whats_new", val);
 }
 
 /**
@@ -3313,7 +3326,7 @@ core::Error UserPrefValues::setFileMonitorUseGitignore(bool val)
 }
 
 /**
- * Whether to install R package dependencies one at a time.
+ * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
  */
 bool UserPrefValues::installPkgDepsIndividually()
 {
@@ -4082,6 +4095,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,
+      kShowGitDiffGutter,
       kShowMargin,
       kBlinkingCursor,
       kMarginColumn,
@@ -4247,6 +4261,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleSuspendBlockedNoticeDelay,
       kNewProjGitInit,
       kNewProjUseRenv,
+      kCheckProjectRVersion,
       kRootDocument,
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
@@ -4272,7 +4287,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRestoreProjectRVersion,
       kClangVerbose,
       kEnableSplashScreen,
-      kShowWhatsNew,
       kDefaultRVersion,
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,

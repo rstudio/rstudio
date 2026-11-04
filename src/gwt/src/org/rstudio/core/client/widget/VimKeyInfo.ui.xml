@@ -3,88 +3,84 @@
              ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
              ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
              ui:generateLocales="default">
-   <ui:style>
-
-   </ui:style>
+   <ui:with field="res"
+            type="org.rstudio.core.client.widget.ShortcutReferenceDialog.Resources"/>
 <g:HTMLPanel>
-<g:HTML>
+<g:HTML addStyleNames="{res.styles.groups}">
 <!--
 RStudio's Vim support comes from the ACE editor. Documentation on which keys
 it supports can be found here:
 
 https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 -->
-<table width="100%">
-   <tr>
-   <td width="33%">
    <h2>Motions</h2>
       <table>
          <tr>
-         <td><strong>h, j, k, l</strong></td>
+         <th scope="row">h, j, k, l</th>
          <td><ui:msg key="motions">Left, down, up, right</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>gj, gk</strong></td>
+         <th scope="row">gj, gk</th>
          <td><ui:msg key="downUp">Down, up (by screen lines)</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>w, W, e, E</strong></td>
+         <th scope="row">w, W, e, E</th>
          <td><ui:msg key="fowardToBeginning">Forward to beginning, end of next word</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>b, B, ge, gE</strong></td>
+         <th scope="row">b, B, ge, gE</th>
          <td> <ui:msg key="backToBeginning">Back to beginning, end of previous word</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>f<i>x</i>, F<i>x</i></strong></td>
+         <th scope="row">f<i>x</i>, F<i>x</i></th>
          <td><ui:msg key="backwardToCharacter">Forward, backward to character <i>x</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>t<i>x</i>, T<i>x</i></strong></td>
+         <th scope="row">t<i>x</i>, T<i>x</i></th>
          <td><ui:msg key="backwardToBefore">Forward, backward to before character <i>x</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>;, ,</strong></td>
+         <th scope="row">;, ,</th>
          <td><ui:msg key="repeatLast">Repeat last f/t command forward, backward</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>^, $</strong></td>
+         <th scope="row">^, $</th>
          <td><ui:msg key="firstLast">To first, last character on line</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>0, _</strong></td>
+         <th scope="row">0, _</th>
          <td><ui:msg key="firstColumn">To first column</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>-, +</strong></td>
+         <th scope="row">-, +</th>
          <td><ui:msg key="firstCharacter">To first character on previous, next line</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>gg, G</strong></td>
+         <th scope="row">gg, G</th>
          <td><ui:msg key="firstLastLine">To first, last line</ui:msg></td>
          </tr>
          <tr>
-         <td><strong><i>{number}</i>G</strong></td>
+         <th scope="row"><i>{number}</i>G</th>
          <td><ui:msg key="toLineNumber">To line <i>number</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>%</strong></td>
+         <th scope="row">%</th>
          <td><ui:msg key="matchingBraceBracket">To matching brace/bracket</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>'x, `x</strong></td>
+         <th scope="row">'x, `x</th>
          <td><ui:msg key="toMarkX">To mark x</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>H, M, L</strong></td>
+         <th scope="row">H, M, L</th>
          <td><ui:msg key="topMiddleBottomScreen">To top, middle, bottom of screen</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>Ctrl+U, Ctrl+D</strong></td>
+         <th scope="row">Ctrl+U, Ctrl+D</th>
          <td><ui:msg key="upDownScreen">Up, down by 1/2 screen</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>{, }</strong></td>
+         <th scope="row">{, }</th>
          <td><ui:msg key="backForwardParagraph">Back, forward by paragraph</ui:msg></td>
          </tr>
       </table>
@@ -92,60 +88,58 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
         <h2> <ui:msg key="operators">Operators</ui:msg></h2>
         <table>
          <tr>
-         <td><strong>d<i>{motion}</i></strong></td>
+         <th scope="row">d<i>{motion}</i></th>
          <td><ui:msg key="deleteText">Delete (cut) text</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>y<i>{motion}</i></strong></td>
+         <th scope="row">y<i>{motion}</i></th>
          <td> <ui:msg key="yankText">Yank (copy) text</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>c<i>{motion}</i></strong></td>
+         <th scope="row">c<i>{motion}</i></th>
          <td> <ui:msg key="changeText">Change (cut, insert) text</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>g~<i>{motion}</i></strong></td>
+         <th scope="row">g~<i>{motion}</i></th>
          <td><ui:msg key="invertTextCase">Invert text case</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>g~g~</strong></td>
+         <th scope="row">g~g~</th>
          <td><ui:msg key="invertCurrentLine">Invert current line case</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>&gt;<i>{motion}</i></strong></td>
+         <th scope="row">&gt;<i>{motion}</i></th>
          <td><ui:msg key="indentText">Indent text</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>&lt;<i>{motion}</i></strong></td>
+         <th scope="row">&lt;<i>{motion}</i></th>
          <td><ui:msg key="unindent">Unindent text</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>&gt;&gt;, &lt;&lt;</strong></td>
+         <th scope="row">&gt;&gt;, &lt;&lt;</th>
          <td><ui:msg key="indentUnindent">Indent, unindent lines</ui:msg></td>
          </tr>
         </table>
-   </td>
-   <td width="33%">
         <h2><ui:msg key="operatorMotions">Operator Motions</ui:msg></h2>
         <table>
          <tr>
-         <td><strong>x, X</strong></td>
+         <th scope="row">x, X</th>
          <td><ui:msg key="deleteCurrent">Delete current, previous character</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>D</strong></td>
+         <th scope="row">D</th>
          <td><ui:msg key="deleteEndOfLine">Delete to end of line</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>Y</strong></td>
+         <th scope="row">Y</th>
          <td><ui:msg key="yankToEndOfLine">Yank to end of line</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>C</strong></td>
+         <th scope="row">C</th>
          <td><ui:msg key="changeToEndOfLine">Change to end of line</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>~</strong></td>
+         <th scope="row">~</th>
          <td><ui:msg key="switchCase">Switch case</ui:msg></td>
          </tr>
         </table>
@@ -153,27 +147,27 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
         <h2><ui:msg key="actions">Actions</ui:msg></h2>
         <table>
            <tr>
-           <td><strong>a, A</strong></td>
+           <th scope="row">a, A</th>
            <td><ui:msg key="insertTextAfterCursor">Insert text after cursor, line</ui:msg></td>
            </tr>
            <tr>
-           <td><strong>i, I</strong></td>
+           <th scope="row">i, I</th>
            <td><ui:msg key="inserTextBeforeCursor">Insert text before cursor, line</ui:msg></td>
            </tr>
            <tr>
-           <td><strong>s, S</strong></td>
+           <th scope="row">s, S</th>
            <td><ui:msg key="changeCharacter">Change character, line</ui:msg></td>
            </tr>
            <tr>
-           <td><strong>o, O</strong></td>
+           <th scope="row">o, O</th>
            <td><ui:msg key="insertLineAfter">Insert line after, before current</ui:msg></td>
            </tr>
            <tr>
-           <td><strong>dd</strong></td>
+           <th scope="row">dd</th>
            <td><ui:msg key="deleteCurrentLine">Delete current line</ui:msg></td>
            </tr>
            <tr>
-           <td><strong>cc</strong></td>
+           <th scope="row">cc</th>
            <td><ui:msg key="changeCurrentLine">Change current line</ui:msg></td>
            </tr>
         </table>
@@ -181,84 +175,82 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
         <h2><ui:msg key="other">Other</ui:msg></h2>
         <table>
          <tr>
-         <td><strong>v, V, Ctrl+V</strong></td>
+         <th scope="row">v, V, Ctrl+V</th>
          <td><ui:msg key="selectCharacter">Select characters, lines, blocks</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>gv</strong></td>
+         <th scope="row">gv</th>
          <td><ui:msg key="reselectLast">Reselect last selection</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>p, P</strong></td>
+         <th scope="row">p, P</th>
          <td><ui:msg key="pasteAfter">Paste after, before cursor</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>R</strong></td>
+         <th scope="row">R</th>
          <td><ui:msg key="replaceMode">Replace (overwrite) mode</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>r</strong></td>
+         <th scope="row">r</th>
          <td><ui:msg key="replaceCharacter">Replace character</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>J</strong></td>
+         <th scope="row">J</th>
          <td><ui:msg key="joinLine">Join line with next</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>u, Ctrl+R</strong></td>
+         <th scope="row">u, Ctrl+R</th>
          <td><ui:msg key="undoRedo">Undo, redo</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>mx</strong></td>
+         <th scope="row">mx</th>
          <td><ui:msg key="createMark">Create mark x at cursor</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>K</strong></td>
+         <th scope="row">K</th>
          <td><ui:msg key="showHelp">Show help for topic under cursor</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>.</strong></td>
+         <th scope="row">.</th>
          <td><ui:msg key="repeatLastOperation">Repeat last operation</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>N<i>{operation}</i></strong></td>
+         <th scope="row">N<i>{operation}</i></th>
          <td><ui:msg key="performOperation">Perform <i>operation</i> N times</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>"<i>{register}</i></strong></td>
+         <th scope="row">"<i>{register}</i></th>
          <td><ui:msg key="copyPasteRegister">Copy/paste to/from <i>register</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>Ctrl+A, Ctrl+X</strong></td>
+         <th scope="row">Ctrl+A, Ctrl+X</th>
          <td><ui:msg key="incrementDecrement">Increment, decrement next number</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>Esc, Ctrl+[</strong></td>
+         <th scope="row">Esc, Ctrl+[</th>
          <td><ui:msg key="leaveInsertMode">Leave insert mode</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>gq</strong></td>
+         <th scope="row">gq</th>
          <td><ui:msg key="reflowText">Reflow text</ui:msg></td>
          </tr>
         </table>
-   </td>
-   <td width="33%">
         <h2><ui:msg key="searching">Searching</ui:msg></h2>
         <table>
          <tr>
-         <td><strong>/text, ?text</strong></td>
+         <th scope="row">/text, ?text</th>
          <td><ui:msg key="searchForward">Search forward, back for <i>text</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>*, #</strong></td>
+         <th scope="row">*, #</th>
          <td><ui:msg key="searchFowardWord">Search forward, back for word under cursor</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>g*, g#</strong></td>
+         <th scope="row">g*, g#</th>
          <td><ui:msg key="searchForwardText">Search forward, back for text under cursor</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>n, N</strong></td>
+         <th scope="row">n, N</th>
          <td><ui:msg key="goToNext">Go to next, previous search match</ui:msg></td>
          </tr>
         </table>
@@ -266,11 +258,11 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
         <h2><ui:msg key="macros">Macros</ui:msg></h2>
         <table>
          <tr>
-         <td><strong>q<i>{register}</i>, q</strong></td>
+         <th scope="row">q<i>{register}</i>, q</th>
          <td><ui:msg key="beginEndRecording">Begin, end recording macro to <i>register</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>@<i>{register}</i></strong></td>
+         <th scope="row">@<i>{register}</i></th>
          <td><ui:msg key="replayMacro">Replay macro in <i>register</i></ui:msg></td>
          </tr>
         </table>
@@ -278,11 +270,11 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
         <h2><ui:msg key="scrolling">Scrolling</ui:msg></h2>
         <table>
          <tr>
-         <td><strong>Ctrl+E, Ctrl+Y</strong></td>
+         <th scope="row">Ctrl+E, Ctrl+Y</th>
          <td><ui:msg key="scrollDownUp">Scroll down, up</ui:msg></td>
          </tr>
            <tr>
-           <td><strong>zz, zt, zb</strong></td>
+           <th scope="row">zz, zt, zb</th>
            <td><ui:msg key="scrollCurrentLine">Scroll current line to center, top, bottom</ui:msg></td>
            </tr>
         </table>
@@ -290,51 +282,51 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
         <h2><ui:msg key="exCommands">Ex Commands</ui:msg></h2>
         <table>
          <tr>
-         <td><strong>:w, :wq, wq!</strong></td>
+         <th scope="row">:w, :wq, wq!</th>
          <td><ui:msg key="saveQuit">Save, save and quit, without prompt</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:q, :bd</strong></td>
+         <th scope="row">:q, :bd</th>
          <td><ui:msg key="closeTab">Close tab</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:qall</strong></td>
+         <th scope="row">:qall</th>
          <td><ui:msg key="closeAllTabs">Close all tabs</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:bn, :bp</strong></td>
+         <th scope="row">:bn, :bp</th>
          <td><ui:msg key="previousNextTab">Go to previous, next tab</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:badd, :e <i>file</i></strong></td>
+         <th scope="row">:badd, :e <i>file</i></th>
          <td><ui:msg key="addNewTab">Add new tab, for <i>file</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:N</strong></td>
+         <th scope="row">:N</th>
          <td><ui:msg key="goToLine">Go to line N</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:R <i>expr</i></strong></td>
+         <th scope="row">:R <i>expr</i></th>
          <td><ui:msg key="evaluateR">Evaluate R expression</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:r <i>file</i></strong></td>
+         <th scope="row">:r <i>file</i></th>
          <td><ui:msg key="insertContents">Insert contents of <i>file</i></ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:%s/<i>text</i>/<i>rep</i>/g</strong></td>
+         <th scope="row">:%s/<i>text</i>/<i>rep</i>/g</th>
          <td><ui:msg key="replaceTextFile">Replace <i>text</i> with <i>rep</i> in file</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:'&lt;,'&gt;s/<i>text</i>/<i>rep</i>/g</strong></td>
+         <th scope="row">:'&lt;,'&gt;s/<i>text</i>/<i>rep</i>/g</th>
          <td><ui:msg key="replaceSelection">Replace in selection</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:'&lt;,'&gt;sort</strong></td>
+         <th scope="row">:'&lt;,'&gt;sort</th>
          <td><ui:msg key="sortSelectedLines">Sort selected lines</ui:msg></td>
          </tr>
          <tr>
-         <td><strong>:help</strong></td>
+         <th scope="row">:help</th>
          <td><ui:msg key="showScreen">Show this screen</ui:msg></td>
          </tr>
         </table>
@@ -345,9 +337,6 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
             and <strong>0-9</strong> are available. Use <strong>:registers</strong>
             to see current register contents.</ui:msg>
         </p>
-   </td>
- </tr>
-</table>
 </g:HTML>
 </g:HTMLPanel>
 </ui:UiBinder>

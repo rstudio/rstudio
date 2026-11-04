@@ -175,6 +175,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeTreeMa
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCommentHeaderHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetGitDiffGutter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetAssistantHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
@@ -234,6 +235,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
+   void injectMembers(TextEditingTargetGitDiffGutter gitDiffGutter);
    void injectMembers(RealtimeSpellChecker realtimeSpellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
    void injectMembers(FileExport fileExport);

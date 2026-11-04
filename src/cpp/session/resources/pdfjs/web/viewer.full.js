@@ -6673,10 +6673,11 @@ var PDFViewerApplication = {
         }
         this.loadingBar.show();
 
+        var self = this;
         this.disableAutoFetchLoadingBarTimeout = setTimeout(function () {
-          this.loadingBar.hide();
-          this.disableAutoFetchLoadingBarTimeout = null;
-        }.bind(this), DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT);
+          self.loadingBar.hide();
+          self.disableAutoFetchLoadingBarTimeout = null;
+        }, DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT);
       }
     }
   },

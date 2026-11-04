@@ -16,6 +16,15 @@
    padding-left: 4px;
 }
 
+/* text-overflow doesn't reach text inside a child block, so set it on the sort
+   button and, when the column is sorted, on the text box beside the sort icon. */
+th.objectGridHeader > [role="button"],
+th.objectGridHeader > [role="button"] > div > div:last-child
+{
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
 th.objectGridHeader
 {
    font-family: proportionalFont;

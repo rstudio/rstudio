@@ -133,10 +133,49 @@
    
 })
 
+#' Cache reticulate's Python Error Hint
+#'
+#' reticulate (1.29 to 1.47) computes the hint appended to Python error
+#' messages in a function-local static's initializer, by calling R. RStudio
+#' answers RPCs while that R code runs, and an Environment pane listing of
+#' Python objects can format another Python error from there; re-entering the
+#' initializer deadlocks (libstdc++) or aborts (libc++). Formatting one error
+#' now, before the client knows that Python is available, caches the hint so
+#' that no later error computes it (rstudio/reticulate#1935).
+#'
+#' @param builtins The Python builtins module, unconverted.
+#'
+#' @return Whether an error message was formatted. Errors are logged rather
+#'   than raised, since Python initialization must not fail on their account.
+.rs.addFunction("reticulate.cacheErrorHint", function(builtins)
+{
+   tryCatch(
+      .rs.reticulate.cacheErrorHintImpl(builtins),
+      error = function(e) {
+         .rs.logErrorMessage("Error caching reticulate's error hint: %s", conditionMessage(e))
+         FALSE
+      }
+   )
+})
+
+.rs.addFunction("reticulate.cacheErrorHintImpl", function(builtins)
+{
+   ns <- asNamespace("reticulate")
+   if (!exists("conditionMessage_from_py_exception", envir = ns, inherits = FALSE))
+      return(FALSE)
+
+   formatter <- get("conditionMessage_from_py_exception", envir = ns, inherits = FALSE)
+   message <- formatter(builtins$Exception(""))
+   is.character(message)
+})
+
 .rs.addFunction("reticulate.onPythonInitialized", function()
 {
    builtins <- reticulate::import_builtins(convert = FALSE)
-   
+
+   # do this before the client learns that Python is available
+   .rs.reticulate.cacheErrorHint(builtins)
+
    # override help method (Python's interactive help does
    # not play well with RStudio)
    help <- builtins$help
@@ -191,10 +230,13 @@
    if (!identical(tolower(backend), "agg"))
    {
       sys <- reticulate::import("sys", convert = TRUE)
+      # NOTE: 'warn' was removed from matplotlib.use() in matplotlib 3.3.0,
+      # and had no effect here on older versions anyway (it only governed a
+      # warning that 'force = TRUE' already suppresses)
       if ("matplotlib.backends" %in% names(sys$modules))
          matplotlib$pyplot$switch_backend("agg")
       else
-         matplotlib$use("agg", warn = FALSE, force = TRUE)
+         matplotlib$use("agg", force = TRUE)
    }
    
    moduleNames <- c("matplotlib.pyplot", "matplotlib.pylab")
@@ -280,6 +322,55 @@
    
 })
 
+#' Is Buffered REPL Input Complete?
+#'
+#' The REPL buffers code that codeop reports as incomplete. A block awaiting
+#' the blank line that closes it still compiles on its own, while an open
+#' string or bracket does not.
+#'
+#' @param code The buffered Python code, as a single string.
+.rs.addFunction("reticulate.isCompleteCode", function(code)
+{
+   builtins <- reticulate::import_builtins(convert = FALSE)
+   tryCatch({
+      builtins$compile(code, "<string>", "exec")
+      TRUE
+   }, error = function(e) FALSE)
+})
+
+#' Run Buffered REPL Code
+#'
+#' Run code the REPL has buffered the way reticulate itself does when a
+#' dedented line arrives: in interactive mode, so expression values are
+#' echoed, with Python errors reported as the REPL reports them and an
+#' interrupt ending just this evaluation.
+#'
+#' @param code The buffered Python code, as a single string.
+.rs.addFunction("reticulate.runBufferedCode", function(code)
+{
+   ns <- asNamespace("reticulate")
+   run <- if (exists("py_compile_eval", envir = ns, inherits = FALSE))
+      function() ns$py_compile_eval(code, capture = FALSE)
+   else
+      function() reticulate::py_run_string(code)
+
+   tryCatch(
+      run(),
+      error = function(e)
+      {
+         msg <- conditionMessage(e)
+         if (inherits(e, "python.builtin.BaseException"))
+         {
+            err <- reticulate::py_last_error()
+            if (!is.null(err$message))
+               msg <- err$message
+         }
+         message(msg, appendLF = !endsWith(msg, "\n"))
+      },
+      interrupt = function(c) NULL
+   )
+})
+
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
 {
    # ensure we call repl_iteration hook on exit
@@ -291,6 +382,25 @@
       add = TRUE
    )
    
+   # reticulate only honors 'quit' / 'exit' when its buffer is empty. Input
+   # scripted from the editor (e.g. a batch of chunks that moves back to R)
+   # can end a block and then ask to leave the REPL without the blank line
+   # that would close that block; run what's buffered first, as reticulate
+   # itself would on the next dedented statement, so the exit goes through
+   # rather than being evaluated as a Python expression. Only a block is
+   # treated that way: inside an open string or bracket the line is content.
+   isExit <- trimmed %in% c("quit", "exit", "quit()", "exit()")
+   if (isExit && !buffer$empty() && !grepl("^\\s", contents))
+   {
+      code <- paste(buffer$data(), collapse = "\n")
+      if (.rs.reticulate.isCompleteCode(code))
+      {
+         buffer$clear()
+         .rs.reticulate.runBufferedCode(code)
+         return(FALSE)
+      }
+   }
+
    # special handling for commands when buffer is currently empty
    if (buffer$empty())
    {
@@ -2137,7 +2247,7 @@ options(reticulate.repl.teardown = function()
 })
 
 # Attempts to infer the current Python interpreter used by reticulate
-.rs.addFunction("inferReticulatePython", function() {
+.rs.addFunction("inferReticulatePython", function(discover = TRUE) {
    
    # Use existing RETICULATE_PYTHON if set
    python <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
@@ -2170,6 +2280,10 @@ options(reticulate.repl.teardown = function()
    if (!is.na(python))
       return(python)
    if (.rs.isPackageInstalled("reticulate")) {
+      # NULL distinguishes pending automatic discovery from an explicitly
+      # configured empty path. Startup performs this discovery asynchronously.
+      if (!discover)
+         return(NULL)
       
       # avoid miniconda prompts
       prev_miniconda <- Sys.getenv("RETICULATE_MINICONDA_ENABLED")
@@ -2178,13 +2292,16 @@ options(reticulate.repl.teardown = function()
       # Then perform a Python version scan/discovery
       # do this in child process so we don't pollute the namespace
       # callback must be passed as a func within a func to avoid loading reticulate
+      # discovery looks for project environments (.venv, Pipfile) relative
+      # to the working directory, so match the asynchronous startup probe
       py_config <- NULL
       tryCatch({
          py_config <- .rs.executeFunctionInChildProcess(
             callback = function() {
                suppressWarnings(tryCatch(reticulate::py_discover_config(),
                                          error = function(e) NULL))
-      })
+            },
+            workingDir = getwd())
        }, finally = {
          Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
       })

@@ -13,7 +13,7 @@
  */
 
 import { assert, expect } from 'chai';
-import { BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import { Display } from 'electron/main';
 import { describe } from 'mocha';
 import sinon from 'sinon';
@@ -70,7 +70,6 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
     assert.deepEqual(options.windowBounds(), properties.view.default.windowBounds);
     assert.equal(options.accessibility(), properties.view.default.accessibility);
-    assert.equal(options.showWhatsNew(), properties.view.default.showWhatsNew);
     assert.deepEqual(options.ignoredUpdateVersions(), properties.general.default.ignoredUpdateVersions);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), properties.platform.default.windows.rBinDir);
@@ -88,7 +87,6 @@ describe('DesktopOptions', () => {
     const newZoom = 1.5;
     const newWindowBounds = { width: 123, height: 321, x: 0, y: 0, maximized: false };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
-    const newShowWhatsNew = !(properties.view.default.showWhatsNew as boolean);
     const newDisableRendererAccessibility = !(properties.view.default.disableRendererAccessibility as boolean);
     const newIgnoredUpdateVersions = ['test', 'Ignored', 'Update', 'Versions'];
 
@@ -105,7 +103,6 @@ describe('DesktopOptions', () => {
     options.setZoomLevel(newZoom);
     options.saveWindowBounds(newWindowBounds);
     options.setAccessibility(newAccessibility);
-    options.setShowWhatsNew(newShowWhatsNew);
     options.setDisableRendererAccessibility(newDisableRendererAccessibility);
     options.setIgnoredUpdateVersions(newIgnoredUpdateVersions);
     options.setPeferR64(newPeferR64);
@@ -116,7 +113,6 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
     assert.equal(options.accessibility(), newAccessibility);
-    assert.equal(options.showWhatsNew(), newShowWhatsNew);
     assert.equal(options.disableRendererAccessibility(), newDisableRendererAccessibility);
     assert.deepEqual(options.ignoredUpdateVersions(), newIgnoredUpdateVersions);
     if (process.platform === 'win32') {
@@ -185,6 +181,66 @@ describe('DesktopOptions', () => {
     sandbox.assert.calledTwice(testMainWindow.setSize);
     sandbox.assert.alwaysCalledWith(testMainWindow.setSize, defaultWinWidth, defaultWinHeight);
     sandbox.restore();
+  });
+  it('restores a maximized window by restoring its bounds, then maximizing it', () => {
+    const displays = [{ workArea: { width: 2000, height: 2000, x: 0, y: 0 } }];
+    const savedWinBounds = { width: 1000, height: 600, x: 100, y: 100, maximized: true };
+
+    const sandbox = sinon.createSandbox();
+    sandbox.stub(app.commandLine, 'getSwitchValue').returns('x11');
+    sandbox.stub(screen, 'getAllDisplays').returns(displays as Display[]);
+    const testMainWindow = createSinonStubInstanceForSandbox(sandbox, BrowserWindow);
+    testMainWindow.getSize.returns([savedWinBounds.width, savedWinBounds.height]);
+
+    testingDesktopOptions().saveWindowBounds(savedWinBounds);
+    ElectronDesktopOptions().restoreMainWindowBounds(testMainWindow);
+
+    sandbox.assert.calledOnceWithExactly(testMainWindow.setBounds, savedWinBounds);
+    sandbox.assert.calledOnce(testMainWindow.maximize);
+    sandbox.assert.callOrder(testMainWindow.setBounds, testMainWindow.maximize);
+    sandbox.restore();
+  });
+  it('restores a maximized window on Wayland without resizing it first', () => {
+    const sandbox = sinon.createSandbox();
+    sandbox.stub(process, 'platform').value('linux');
+    sandbox.stub(app.commandLine, 'getSwitchValue').withArgs('ozone-platform').returns('wayland');
+    const testMainWindow = createSinonStubInstanceForSandbox(sandbox, BrowserWindow);
+
+    testingDesktopOptions().saveWindowBounds({ width: 1000, height: 600, x: 100, y: 100, maximized: true });
+    ElectronDesktopOptions().restoreMainWindowBounds(testMainWindow);
+
+    sandbox.assert.calledOnce(testMainWindow.maximize);
+    sandbox.assert.notCalled(testMainWindow.setBounds);
+    sandbox.assert.notCalled(testMainWindow.setSize);
+    sandbox.assert.notCalled(testMainWindow.setPosition);
+    sandbox.restore();
+  });
+  it('restores an unmaximized window on Wayland by restoring its bounds', () => {
+    const displays = [{ workArea: { width: 2000, height: 2000, x: 0, y: 0 } }];
+    const savedWinBounds = { width: 1000, height: 600, x: 100, y: 100, maximized: false };
+
+    const sandbox = sinon.createSandbox();
+    sandbox.stub(process, 'platform').value('linux');
+    sandbox.stub(app.commandLine, 'getSwitchValue').withArgs('ozone-platform').returns('wayland');
+    sandbox.stub(screen, 'getAllDisplays').returns(displays as Display[]);
+    const testMainWindow = createSinonStubInstanceForSandbox(sandbox, BrowserWindow);
+    testMainWindow.getSize.returns([savedWinBounds.width, savedWinBounds.height]);
+
+    testingDesktopOptions().saveWindowBounds(savedWinBounds);
+    ElectronDesktopOptions().restoreMainWindowBounds(testMainWindow);
+
+    sandbox.assert.calledOnceWithExactly(testMainWindow.setBounds, savedWinBounds);
+    sandbox.assert.notCalled(testMainWindow.maximize);
+    sandbox.restore();
+  });
+  it('creates the main window at its saved size, but no smaller than the minimum', () => {
+    const options = testingDesktopOptions();
+
+    options.saveWindowBounds({ width: 1000, height: 600, x: 0, y: 0, maximized: true });
+    assert.deepEqual(options.initialMainWindowSize(), { width: 1000, height: 600 });
+
+    options.saveWindowBounds({ width: 100, height: 50, x: 0, y: 0, maximized: false });
+    assert.deepEqual(options.initialMainWindowSize(), { width: 300, height: 200 });
   });
 });
 

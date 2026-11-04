@@ -84,6 +84,7 @@ export namespace Ace {
     on(event: 'changeScrollTop', fn: (scrollTop: number) => void): void;
     off(event: 'changeScrollTop', fn: (scrollTop: number) => void): void;
     getLength(): number;
+    setScrollTop(scrollTop: number): void;
     /** Rows as rendered: with wrap mode on, one soft-wrapped line counts once per visual row. */
     getScreenLength(): number;
     getLine(row: number): string;
@@ -113,12 +114,18 @@ export namespace Ace {
   // The runtime editor instance. Hung off the .ace_editor DOM element via
   // the .env.editor backref (see AceEditorElement below).
   export interface Editor {
+    /** The .ace_editor root element. */
+    container: HTMLElement;
     /** Per-editor command table; Ace's defaults are shared until a clone is installed. */
     commands: { byName: Record<string, { scrollIntoView?: string; [key: string]: unknown }> };
     renderer: {
       scrollTop: number;
+      lineHeight: number;
+      $size: { scrollerHeight: number };
       scrollBy(deltaX: number, deltaY: number): void;
       $scrollAnimation?: { from: number; to: number } | null;
+      /** Set while ghost text (e.g. rstudioapi::setGhostText()) is shown. */
+      $ghostText?: unknown | null;
     };
     session: Session;
     selection: Selection;
@@ -131,6 +138,7 @@ export namespace Ace {
     getSelectedText(): string;
     getFirstVisibleRow(): number;
     getLastVisibleRow(): number;
+    isRowFullyVisible(row: number): boolean;
     find(needle: string): void;
     insert(text: string): void;
     navigateLineEnd(): void;

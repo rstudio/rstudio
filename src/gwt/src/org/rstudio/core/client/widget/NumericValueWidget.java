@@ -101,6 +101,11 @@ public class NumericValueWidget extends Composite
       textBoxLabel_.setVisible(visible);
    }
 
+   public NumericTextBox getTextBox()
+   {
+      return textBox_;
+   }
+
    public String getValue()
    {
       return textBox_.getValue();

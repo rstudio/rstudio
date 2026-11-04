@@ -64,6 +64,10 @@ bool isGithubRepository();
 
 core::Error initializeGit(const core::FilePath& workingDir);
 
+// Parses the output of 'git worktree list --porcelain' into one object per
+// worktree (path, head, branch, detached, bare, locked, prunable, is_main).
+core::json::Array parseWorktreeList(const std::string& output);
+
 core::FilePath gitExePath();
 core::FilePath detectedGitExePath();
 

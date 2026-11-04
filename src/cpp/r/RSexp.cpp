@@ -2168,6 +2168,7 @@ core::Error extractFunctionInfo(
    // which contain the appropriate formals.
    bool isPrimitive = Rf_isPrimitive(functionSEXP);
    pInfo->setIsPrimitive(isPrimitive);
+   pInfo->setIsBuiltin(TYPEOF(functionSEXP) == BUILTINSXP);
    if (isPrimitive)
    {
       functionSEXP = primitiveWrapper(functionSEXP);

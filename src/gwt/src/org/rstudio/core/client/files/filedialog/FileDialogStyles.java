@@ -42,4 +42,5 @@ public interface FileDialogStyles extends CssResource
    String columnDate();
 
    String fadeWrapper();
+   String fadeShown();
 }

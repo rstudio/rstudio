@@ -16,6 +16,7 @@
 
 #include <core/system/System.hpp>
 #include <shared_core/Error.hpp>
+#include <shared_core/system/Win32StringUtils.hpp>
 #include <core/Log.hpp>
 
 namespace rstudio {
@@ -56,9 +57,106 @@ Error RegistryKey::open(HKEY hKey, std::string subKey, REGSAM samDesired)
    return Success();
 }
 
+Error RegistryKey::create(HKEY hKey, std::string subKey, REGSAM samDesired)
+{
+   if (hKey_)
+      ::RegCloseKey(hKey_);
+   hKey_ = nullptr;
+
+   LONG error = ::RegCreateKeyEx(hKey,
+                                 subKey.c_str(),
+                                 0,
+                                 nullptr,
+                                 REG_OPTION_NON_VOLATILE,
+                                 samDesired,
+                                 nullptr,
+                                 &hKey_,
+                                 nullptr);
+   if (error != ERROR_SUCCESS)
+   {
+      hKey_ = nullptr;
+      return systemError(error, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
 bool RegistryKey::isOpen()
 {
    return hKey_;
+}
+
+Error RegistryKey::getValue(const std::string& name, std::string* pData, DWORD* pType)
+{
+   if (!hKey_)
+      return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
+
+   std::wstring wideName = string_utils::utf8ToWide(name);
+   std::vector<BYTE> buffer(512);
+   while (true)
+   {
+      DWORD type = REG_NONE;
+      DWORD size = static_cast<DWORD>(buffer.size());
+      LONG result = ::RegQueryValueExW(hKey_, wideName.c_str(), nullptr, &type, &buffer[0], &size);
+      if (result == ERROR_MORE_DATA)
+      {
+         buffer.resize(size);
+         continue;
+      }
+
+      if (result != ERROR_SUCCESS)
+         return systemError(result, ERROR_LOCATION);
+
+      if (type != REG_SZ && type != REG_EXPAND_SZ)
+         return systemError(ERROR_INVALID_DATATYPE, ERROR_LOCATION);
+
+      // the stored data may or may not end in a null terminator
+      std::wstring data(reinterpret_cast<const wchar_t*>(&buffer[0]), size / sizeof(wchar_t));
+      std::size_t idxNull = data.find(L'\0');
+      if (idxNull != std::wstring::npos)
+         data.resize(idxNull);
+
+      *pData = string_utils::wideToUtf8(data);
+      *pType = type;
+      return Success();
+   }
+}
+
+Error RegistryKey::setValue(const std::string& name, const std::string& data, DWORD type)
+{
+   if (!hKey_)
+      return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
+
+   if (type != REG_SZ && type != REG_EXPAND_SZ)
+      return systemError(ERROR_INVALID_DATATYPE, ERROR_LOCATION);
+
+   std::wstring wideName = string_utils::utf8ToWide(name);
+   std::wstring wideData = string_utils::utf8ToWide(data);
+   DWORD size = static_cast<DWORD>((wideData.size() + 1) * sizeof(wchar_t));
+
+   LONG result = ::RegSetValueExW(hKey_,
+                                  wideName.c_str(),
+                                  0,
+                                  type,
+                                  reinterpret_cast<const BYTE*>(wideData.c_str()),
+                                  size);
+   if (result != ERROR_SUCCESS)
+      return systemError(result, ERROR_LOCATION);
+
+   return Success();
+}
+
+Error RegistryKey::deleteValue(const std::string& name)
+{
+   if (!hKey_)
+      return systemError(ERROR_INVALID_HANDLE, ERROR_LOCATION);
+
+   std::wstring wideName = string_utils::utf8ToWide(name);
+   LONG result = ::RegDeleteValueW(hKey_, wideName.c_str());
+   if (result != ERROR_SUCCESS)
+      return systemError(result, ERROR_LOCATION);
+
+   return Success();
 }
 
 HKEY RegistryKey::handle()

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.findreplace;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.regex.Match;
@@ -148,6 +149,16 @@ public class FindReplace
          }
 
       });
+
+      // the match highlight follows the selection a find placed; drop it once
+      // the selection or the document moves on for any other reason
+      matchHandlers_.add(editor_.addSelectionChangedHandler(event ->
+      {
+         if (matchRange_ != null && !matchRange_.isEqualTo(editor_.getSelectionRange()))
+            clearMatchHighlight();
+      }));
+
+      matchHandlers_.add(editor_.addDocumentChangedHandler(event -> clearMatchHighlight()));
    }
 
    public void activate(String searchText,
@@ -182,6 +193,8 @@ public class FindReplace
    public void notifyClosing()
    {
       clearTargetSelection();
+      clearMatchHighlight();
+      matchHandlers_.removeHandler();
    }
 
    private void addClickHandler(HasClickHandlers hasClickHandlers,
@@ -211,6 +224,11 @@ public class FindReplace
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() != 0)
       {
+         // Ace's findAll makes the first match the primary selection without
+         // firing a selection change for the rest, so when the current match
+         // is that first match the selection handler would keep the marker
+         clearMatchHighlight();
+
          editor_.selectAll(searchString, range, wholeWord, caseSensitive);
          editor_.focus();
       }
@@ -312,6 +330,7 @@ public class FindReplace
          else
          {
             editor_.revealRange(resultRange, false);
+            highlightMatch(resultRange);
             return true;
          }
       }
@@ -568,12 +587,36 @@ public class FindReplace
 
    }
    private TargetSelectionTracker targetSelection_ = null;
+   private Integer matchMarkerId_ = null;
+   private Range matchRange_ = null;
+   private final HandlerRegistrations matchHandlers_ = new HandlerRegistrations();
 
    private void clearTargetSelection()
    {
       if (targetSelection_ != null)
          targetSelection_.clear();
       targetSelection_ = null;
+   }
+
+   // Give the current match a marker of its own, so a theme whose selection
+   // colour is too faint to pick a short match out by can colour it separately
+   // (https://github.com/rstudio/rstudio/issues/13204). The marker is invisible
+   // unless the theme styles ace_find_match; today only Pastel On Dark does.
+   private void highlightMatch(Range range)
+   {
+      clearMatchHighlight();
+
+      matchRange_ = range;
+      matchMarkerId_ = editor_.getSession().addMarker(range, "ace_find_match", "text", false);
+   }
+
+   private void clearMatchHighlight()
+   {
+      if (matchMarkerId_ != null)
+         editor_.getSession().removeMarker(matchMarkerId_);
+
+      matchMarkerId_ = null;
+      matchRange_ = null;
    }
 
    private void resetTargetSelection()

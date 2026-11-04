@@ -363,6 +363,13 @@ public class XTermNative extends JavaScriptObject
          nativeTerm_.focus();
          nativeTerm_.tabMovesFocus = tabMovesFocus;
 
+         // Select All in the desktop right-click menu sends this event to the
+         // focused helper textarea: the browser's own select-all would select
+         // only the textarea's text, not the terminal's buffer.
+         nativeTerm_.textarea.addEventListener('rstudio-terminal-select-all', function() {
+            nativeTerm_.selectAll();
+         });
+
          // Copy through the browser's copy command: it reaches xterm's own
          // copy handler (the path Ctrl+Insert and the context menu take) and,
          // unlike the async clipboard API, works over plain http, which is

@@ -13,7 +13,7 @@ Update both together.
 
 <div class="download-cards">
 <div id="card-macos" class="download-card">
-<h4><i class="bi bi-apple" aria-hidden="true"></i> macOS <span class="option-meta">14+</span></h4>
+<h4><i class="bi bi-apple" aria-hidden="true"></i> macOS <span class="option-meta">15+</span></h4>
 <div class="download-group">
 <div class="download-option">
 <div class="option-label">Universal<br><span class="option-meta">(Apple Silicon &amp; Intel)</span></div>

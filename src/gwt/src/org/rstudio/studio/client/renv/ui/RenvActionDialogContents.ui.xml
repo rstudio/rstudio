@@ -7,6 +7,11 @@
 
    <ui:style>
 
+   @external rstudio-themes-dark;
+   @eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
+   @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+   @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
    .headerLabel {
       margin-bottom: 12px;
    }
@@ -16,6 +21,23 @@
       height: 400px;
       border: 1px solid #BBB;
       background-color: white;
+   }
+
+   .rstudio-themes-dark .table {
+      background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+      border-color: THEME_DARKGREY_BORDER;
+      color: #eee;
+      color-scheme: dark;
+   }
+
+   .rstudio-themes-dark .table th {
+      background-color: THEME_DARKGREY_BACKGROUND;
+      border-color: THEME_DARKGREY_BORDER;
+      color: inherit;
+   }
+
+   .rstudio-themes-dark .table td {
+      border-color: transparent;
    }
 
    .scrollPanel {

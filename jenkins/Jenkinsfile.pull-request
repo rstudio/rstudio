@@ -86,6 +86,10 @@ pipeline {
             catchError(buildResult: null, stageResult: 'FAILURE') {
               sh "mkdir --parents ${TMP_SNYK_PATH}"
               sh "for FILE in \$(git diff --name-only origin/${env.CHANGE_TARGET}...HEAD); do if [ -f \$FILE ]; then cp --parents \$FILE ${TMP_SNYK_PATH}; fi; done"
+              // The task scripts sanitize their command-line paths through helpers in
+              // tasks/common.ts; Snyk only credits that when the helper's source is in
+              // the scan tree, so scan the task scripts as a unit.
+              sh "if git diff --name-only origin/${env.CHANGE_TARGET}...HEAD | grep -q '^tasks/'; then cp --parents tasks/*.ts ${TMP_SNYK_PATH}; fi"
               sh "for FILE in \$(git ls-files | grep '/.snyk'); do cp --parents \$FILE ${TMP_SNYK_PATH}; done"
               script {
                 utils.postReviewCheck(

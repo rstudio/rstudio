@@ -350,6 +350,16 @@ void abort();
 
 Error terminateProcess(PidType pid);
 
+// Terminate a process together with all of its descendants (the process
+// first, so it cannot start anything else). Descendants are best effort:
+// a failure to terminate one is logged, and the result reflects only the
+// process itself. A descendant that has already exited is not a failure.
+Error terminateProcessTree(PidType pid);
+
+// check whether a process exists; a process the caller lacks permission to
+// inspect (e.g. one owned by another user) counts as running
+bool isProcessRunning(PidType pid);
+
 struct SubprocInfo
 {
    PidType pid;

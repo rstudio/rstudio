@@ -37,7 +37,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
-import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
@@ -106,13 +106,6 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       sectionChooser_.addSelectionHandler(selectionEvent ->
       {
          Integer index = selectionEvent.getSelectedItem();
-
-         // SectionChooser is first focusable control in the modal dialog, and it
-         // uses a roving tabindex to determine the focused section tab, so notify dialog
-         // when selected tab changes (except the initial selection, which happens before
-         // the dialog is fully assembled and thus nothing is focusable, yet)
-         if (currentIndex_ != null)
-            refreshFocusableElements();
 
          if (currentIndex_ != null)
             setPaneVisibility(panes_.get(currentIndex_), false);
@@ -270,7 +263,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
    protected void reload()
    {
-      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadWithLastChanceSaveEvent());
    }
 
    protected void restart(GlobalDisplay globalDisplay,

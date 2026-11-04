@@ -55,6 +55,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    @Inject
    public SourceControlPreferencesPane(PreferencesDialogResources res,
                                        Session session,
+                                       UserPrefs prefs,
                                        GitServerOperations server,
                                        final GlobalDisplay globalDisplay,
                                        final Commands commands,
@@ -79,6 +80,11 @@ public class SourceControlPreferencesPane extends PreferencesPane
                constants_.globalDisplayVCMessage());
          }
       });
+
+      // the editor's gutter markers are the one piece of the Git UI a user
+      // may want off while keeping the rest
+      chkShowGitDiffGutter_ = checkboxPref(constants_.showGitDiffGutterLabel(), prefs.showGitDiffGutter());
+      add(chkShowGitDiffGutter_);
 
       chkSignGitCommits_ = new CheckBox(constants_.gitSignCommitLabel());
       extraSpaced(chkSignGitCommits_);
@@ -242,6 +248,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private void manageControlVisibility()
    {
       boolean vcsEnabled = chkVcsEnabled_.getValue();
+      chkShowGitDiffGutter_.setVisible(vcsEnabled);
       chkSignGitCommits_.setVisible(vcsEnabled);
       gitExePathLabel_.setVisible(vcsEnabled);
       gitExePathChooser_.setVisible(vcsEnabled);
@@ -255,6 +262,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
 
    private final CheckBox chkVcsEnabled_;
+   private final CheckBox chkShowGitDiffGutter_;
    private final CheckBox chkSignGitCommits_;
 
    private FormLabel svnExePathLabel_;

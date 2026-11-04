@@ -142,11 +142,35 @@ test("switching terminal buffers discards a pending link response", async t => {
    assert.equal(staleDelivered, false);
 });
 
-test("a delivered link cannot open a file from a previous cwd", async t => {
+test("a link delivered under a previous cwd is resolved again when clicked", async t => {
    const terminal = await createTerminal(t, "file.R");
+   const requests = [];
    const opened = [];
    const provider = new FileLinkProvider(terminal, {
-      resolve: (paths, callback) => callback(["/old/file.R"]),
+      resolve: (paths, callback) => requests.push({ paths, callback }),
+      open: path => opened.push(path)
+   });
+   let delivered;
+   provider.provideLinks(1, links => { delivered = links; });
+   requests[0].callback(["/old/file.R"]);
+
+   // the terminal's cwd changes between the hover and the click
+   provider.clearCache();
+   activate(delivered);
+   assert.deepEqual(opened, []);
+   assert.equal(requests.length, 2);
+   assert.deepEqual(requests[1].paths, ["file.R"]);
+
+   requests[1].callback(["/new/file.R"]);
+   assert.deepEqual(opened, ["/new/file.R"]);
+});
+
+test("a stale link whose text no longer names a file opens nothing", async t => {
+   const terminal = await createTerminal(t, "file.R");
+   const replies = [["/old/file.R"], [""]];
+   const opened = [];
+   const provider = new FileLinkProvider(terminal, {
+      resolve: (paths, callback) => callback(replies.shift()),
       open: path => opened.push(path)
    });
    let delivered;
@@ -154,6 +178,7 @@ test("a delivered link cannot open a file from a previous cwd", async t => {
    provider.clearCache();
    activate(delivered);
    assert.deepEqual(opened, []);
+   assert.equal(replies.length, 0);
 });
 
 /**

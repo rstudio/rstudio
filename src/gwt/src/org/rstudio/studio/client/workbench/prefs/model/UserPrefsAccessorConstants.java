@@ -232,6 +232,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoDetectIndentationDescription();
 
    /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   @DefaultStringValue("Show Git changes in editor gutter")
+   String showGitDiffGutterTitle();
+   @DefaultStringValue("Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.")
+   String showGitDiffGutterDescription();
+
+   /**
     * Whether to show the margin guide in the RStudio code editor.
     */
    @DefaultStringValue("Show margin in editor")
@@ -328,11 +336,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String editorKeybindingsEnum_sublime();
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    @DefaultStringValue("Load Vim keybindings from a vimrc file")
    String vimLoadVimrcTitle();
-   @DefaultStringValue("Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.")
+   @DefaultStringValue("Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.")
    String vimLoadVimrcDescription();
 
    /**
@@ -1608,6 +1616,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String newProjUseRenvDescription();
 
    /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   @DefaultStringValue("Warn when a project requests a different version of R")
+   String checkProjectRVersionTitle();
+   @DefaultStringValue("Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.")
+   String checkProjectRVersionDescription();
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    @DefaultStringValue("Root document for PDF compilation")
@@ -1810,14 +1826,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String enableSplashScreenTitle();
    @DefaultStringValue("Whether to show the splash screen when RStudio is starting.")
    String enableSplashScreenDescription();
-
-   /**
-    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
-    */
-   @DefaultStringValue("Show the What's New window automatically after updating RStudio")
-   String showWhatsNewTitle();
-   @DefaultStringValue("Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.")
-   String showWhatsNewDescription();
 
    /**
     * The R version to use by default.
@@ -2114,11 +2122,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fileMonitorUseGitignoreDescription();
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    @DefaultStringValue("Install R package dependencies one at a time")
    String installPkgDepsIndividuallyTitle();
-   @DefaultStringValue("Whether to install R package dependencies one at a time.")
+   @DefaultStringValue("Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.")
    String installPkgDepsIndividuallyDescription();
 
    /**

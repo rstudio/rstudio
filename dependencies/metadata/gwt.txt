@@ -1,7 +1,7 @@
 dependency(GWT
    DEPNAME      "Google Web Toolkit"
    REPOSITORY   "https://github.com/gwtproject/gwt"
-   VERSION      "2.12.2"
+   VERSION      "2.13.1"
 )
 
 dependency(ELEMENTAL2

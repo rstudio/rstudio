@@ -128,9 +128,15 @@ test.describe.serial('Console pane stays minimized across a render', () => {
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
-    await clearPref(page, 'reduced_motion');
-    // un-minimize the Console pane for whatever runs next
-    await executeCommand(page, 'activateConsolePane');
+    // Restore the fixture's value rather than clearing: the default is false,
+    // which would leave animations on for every later spec in this worker.
+    await setPref(page, 'reduced_motion', true);
+    // Un-minimize the Console pane for whatever runs next. Only when hidden:
+    // on a pane that already has focus, activateConsolePane selects the next
+    // tab, and selecting Terminal with no terminal open starts a shell that
+    // leaks into later specs.
+    if (!(await page.locator(CONSOLE_PANE).isVisible()))
+      await executeCommand(page, 'activateConsolePane');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
     if (fileName) {
       const stem = fileName.replace(/\.Rmd$/, '');
@@ -199,9 +205,27 @@ test.describe.serial('Console pane stays minimized across a render', () => {
     // automatic raise a background job uses, with no interaction inside the
     // pane. The Render tab then takes the open pane over, so it stays open.
     await executeCommand(page, 'findInFiles');
+
+    // The dialog remembers its last search scope, and an open project takes
+    // precedence over R's working directory. Select this spec's sandbox so
+    // the search finds the document regardless of earlier tests or retries.
+    await page.locator('#rstudio_tbb_button_find_in').click();
+    const chooser = page.getByRole('dialog', { name: 'Choose Directory', exact: true });
+    const location = chooser.locator('[aria-current="location"]');
+    await expect(location).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await chooser.getByRole('button', { name: 'Go to directory', exact: true }).click();
+    const prompt = page.getByRole('dialog', { name: 'Go To Folder', exact: true });
+    await prompt.locator('#rstudio_text_entry').fill(sandbox.dir);
+    await prompt.getByRole('button', { name: 'OK', exact: true }).click();
+    const directoryName = sandbox.dir.split(/[\\/]/).pop()!;
+    await expect(location).toHaveText(directoryName, { timeout: TIMEOUTS.fileOpen });
+    await chooser.locator('#rstudio_file_accept_choose').click();
+    await expect(chooser).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+
     const searchInput = page.locator(FIND_SEARCH_INPUT);
     await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
-    await searchInput.click();
+    // GWT enables Find on keyup, so clear the remembered query before typing.
+    await searchInput.fill('');
     await searchInput.pressSequentially('Raised by another tab');
     await page.locator(FIND_OK_BTN).click();
     await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });

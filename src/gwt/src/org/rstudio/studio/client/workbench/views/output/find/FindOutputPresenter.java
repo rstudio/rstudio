@@ -689,6 +689,10 @@ public class FindOutputPresenter extends BasePresenter
    @Handler
    public void onRefreshFindInFiles()
    {
+      // no search has been run in this project yet, so there's nothing to refresh
+      if (dialogState_ == null)
+         return;
+
       view_.bringToFront();
       findInFilesBeginFind();
    }

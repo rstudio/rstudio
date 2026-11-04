@@ -27,8 +27,6 @@
 #endif
 
 #include <boost/current_function.hpp>
-#include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
@@ -122,13 +120,18 @@ struct AssistantRequest
    json::Value params;
 };
 
+// Requests are held, unwritten, until the agent has answered 'initialize', so
+// they get as long as 'initialize' does before the sweep gives up on them.
+const std::chrono::seconds kAgentInitializeTimeout(60);
+const std::chrono::seconds kAgentRequestTimeout(10);
+const std::chrono::seconds kHeldAgentRequestTimeout = kAgentInitializeTimeout;
+
 class AssistantContinuation
 {
 public:
 
    explicit AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation)
-      : continuation_(continuation),
-        time_(boost::posix_time::second_clock::local_time())
+      : continuation_(continuation)
    {
    }
    
@@ -136,6 +139,19 @@ public:
    AssistantContinuation()
       : AssistantContinuation(json::JsonRpcFunctionContinuation())
    {
+   }
+
+   // Start (or restart) the clock on this request, in serviced time.
+   void startClock(std::chrono::steady_clock::duration now,
+                   std::chrono::steady_clock::duration timeout)
+   {
+      started_ = now;
+      timeout_ = timeout;
+   }
+
+   bool isExpired(std::chrono::steady_clock::duration now) const
+   {
+      return now - started_ > timeout_;
    }
 
    void invoke(json::Object resultJson)
@@ -161,14 +177,10 @@ public:
          continuation_(Success(), &response);
    }
 
-   boost::posix_time::ptime time()
-   {
-      return time_;
-   }
-
 private:
    json::JsonRpcFunctionContinuation continuation_;
-   boost::posix_time::ptime time_;
+   std::chrono::steady_clock::duration started_{};
+   std::chrono::steady_clock::duration timeout_{};
 };
 
 // keep in sync with AssistantResponseTypes.AssistantAgentNotRunningReason
@@ -230,12 +242,25 @@ boost::posix_time::ptime s_agentLastLaunchFailure(boost::posix_time::not_a_date_
 // Primarily done to allow proper sequencing of Assistant callbacks.
 bool s_agentInitialized = false;
 
+// Whether the running agent has answered 'initialize'. Notifications queued
+// from then on follow 'initialized' in s_pendingRequests, so they may be
+// queued before s_agentInitialized is set.
+bool s_agentInitializeAnswered = false;
+
+// The ID of the document most recently focused, whether or not an agent was
+// running to be told. Nothing else tells a new agent which document has focus.
+boost::optional<std::string> s_focusedDocumentId;
+
 // A queue of pending requests, to be sent via the agent's stdin.
 std::vector<AssistantRequest> s_pendingRequests;
 
 // Metadata related to pending requests.
 // Mainly used to map responses to their expected result types.
 std::map<std::string, AssistantContinuation> s_pendingContinuations;
+
+// Clock for timing out agent requests. Background processing runs every 50ms
+// or so while R services events, so a longer gap means R was blocked.
+ServicedClock s_servicedClock(std::chrono::seconds(1));
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
@@ -689,6 +714,14 @@ std::string formatRequest(const AssistantRequest& request)
 }
 
 
+void addPendingContinuation(const std::string& requestId,
+                            const AssistantContinuation& continuation)
+{
+   AssistantContinuation& pending = s_pendingContinuations[requestId];
+   pending = continuation;
+   pending.startClock(s_servicedClock.elapsed(), kHeldAgentRequestTimeout);
+}
+
 void sendRequest(const std::string& method,
                  const std::string& requestId,
                  const json::Value& paramsJson,
@@ -697,10 +730,24 @@ void sendRequest(const std::string& method,
    DLOG("Enqueuing request '{}' with id '{}'.", method, requestId);
    
    // Add the continuation, which is executed in response to the request.
-   s_pendingContinuations[requestId] = continuation;
+   addPendingContinuation(requestId, continuation);
 
    // Create and enqueue the request.
    s_pendingRequests.push_back({ method, requestId, paramsJson });
+}
+
+// The agent can't start on a request until it has been written to the agent,
+// so restart the request's clock then. Writes happen in the supervisor poll,
+// before this pass's background handler ticks the clock, so tick it first;
+// otherwise the gap before the write would count against the request.
+void onRequestWritten(const AssistantRequest& request,
+                      std::chrono::steady_clock::time_point now)
+{
+   s_servicedClock.tick(now);
+
+   auto it = s_pendingContinuations.find(request.id);
+   if (it != s_pendingContinuations.end())
+      it->second.startClock(s_servicedClock.elapsed(), agentRequestTimeout(request.method));
 }
 
 // Should only be used for debugging, as this will block the R session
@@ -864,7 +911,7 @@ void setPositAiConfiguration()
 
 bool supportsSessionNotifications()
 {
-   return s_agentInitialized &&
+   return s_agentInitializeAnswered &&
           s_runningAgentType == kAssistantPosit;
 }
 
@@ -1057,6 +1104,7 @@ bool onContinue(ProcessOperations& operations, uint64_t generation)
          std::string htmlRequest = formatRequest(request);
          debugCallback(htmlRequest);
          operations.writeToStdin(htmlRequest, false);
+         onRequestWritten(request, std::chrono::steady_clock::now());
       }
       s_pendingRequests.clear();
    }
@@ -1079,6 +1127,7 @@ bool onContinue(ProcessOperations& operations, uint64_t generation)
          std::string htmlRequest = formatRequest(request);
          debugCallback(htmlRequest);
          operations.writeToStdin(htmlRequest, false);
+         onRequestWritten(request, std::chrono::steady_clock::now());
          return true;
       });
    }
@@ -1154,9 +1203,18 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t
          break;
       }
 
+      // A negative length would wrap bodyEnd to before bodyStart and move
+      // startIndex backwards, which can repeat the same response forever.
+      int bodyLength = safe_convert::stringTo<int>(contentLength, 0);
+      if (bodyLength < 0)
+      {
+         ELOG("Internal error: response has a negative Content-Length header ({}).", contentLength);
+         break;
+      }
+
       // Consume that text.
       auto bodyStart = splitIndex + splitSize;
-      auto bodyEnd = bodyStart + safe_convert::stringTo<int>(contentLength, 0);
+      auto bodyEnd = bodyStart + static_cast<std::size_t>(bodyLength);
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
 
@@ -1292,8 +1350,27 @@ bool stopAgentSync(int maxIterations = 100)
    return waitFor([]() { return s_agentPid == -1; }, maxIterations);
 }
 
-// Forward declaration; defined after docOpened()
+// Forward declarations; defined after docOpened() and didClose()
 void syncOpenDocuments();
+void resendFocus();
+
+void resetForNewAgent()
+{
+   // Every agent process, including a restart of the same assistant, must
+   // answer 'initialize' before it is sent other requests.
+   s_agentInitialized = false;
+   s_agentInitializeAnswered = false;
+
+   // Requests still queued or awaiting a reply were meant for the previous
+   // process, which can't answer them. Cancel them so callers aren't left
+   // waiting, then drop anything still queued, including what they queue.
+   std::map<std::string, AssistantContinuation> continuations;
+   continuations.swap(s_pendingContinuations);
+   for (auto&& entry : continuations)
+      entry.second.cancel();
+
+   s_pendingRequests.clear();
+}
 
 Error startAgent(const std::string& assistantType = "")
 {
@@ -1382,6 +1459,7 @@ Error startAgent(const std::string& assistantType = "")
    bool overrideInEffect = !agentPathOverride.isEmpty();
 
    uint64_t agentGeneration = ++s_agentGeneration;
+   resetForNewAgent();
 
    // Resolve the agent executable once and reuse it in the launch branches
    // below.
@@ -1590,6 +1668,8 @@ Error startAgent(const std::string& assistantType = "")
          }
       }
 
+      s_agentInitializeAnswered = true;
+
       // newer versions of Assistant require an 'initialized' notification, which is
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
@@ -1603,8 +1683,9 @@ Error startAgent(const std::string& assistantType = "")
       else if (assistant == kAssistantPosit)
          setPositAiConfiguration();
 
-      // Sync currently open documents with the agent
+      // Sync currently open documents, and which of them has focus, with the agent
       syncOpenDocuments();
+      resendFocus();
 
       // For Posit AI, set up session notifications and warmup
       if (assistant == kAssistantPosit)
@@ -1666,9 +1747,6 @@ bool ensureAgentRunning(const std::string& assistantType = "",
             ELOG("Failed to stop current agent for assistant type switch");
             return false;
          }
-
-         // Reset initialized flag so we properly initialize the new agent
-         s_agentInitialized = false;
       }
       else
       {
@@ -1947,53 +2025,65 @@ void didClose(lsp::DidCloseTextDocumentParams params)
    docClosed(params.textDocument.uri);
 }
 
-void didFocus(lsp::DidFocusTextDocumentParams params,
-              boost::shared_ptr<source_database::SourceDocument> pDoc)
+void sendFocus(const std::string& uri,
+               const boost::shared_ptr<source_database::SourceDocument>& pDoc)
 {
-   if (!checkAgentRunning())
-      return;
-
-   // Note: unlike the handlers above, we intentionally don't skip when the
-   // agent hasn't finished initializing. Pre-init requests are held in
-   // s_pendingRequests (onContinue only drains initialization methods until
-   // 'initialized' is sent), and unlike document state -- which
-   // syncOpenDocuments() re-sends after initialization -- nothing re-sends
-   // focus, so dropping the notification here would lose it.
-
    // If document is NOT indexable we tell the agent that no file has focus via an empty request.
    // This is to prevent the agent from attempting to read the contents of the file.
    // (pDoc arrives without contents loaded, so skip the contents-based check.)
    json::Object paramsJson;
    if (isIndexableDocument(pDoc, false))
+   {
+      lsp::DidFocusTextDocumentParams params = {
+         .textDocument = {
+            .uri = uri,
+         }
+      };
       paramsJson = lsp::toJson(params);
+   }
 
    sendNotification("textDocument/didFocus", paramsJson);
 }
 
-void onBackgroundProcessing(bool isIdle)
+void resendFocus()
 {
-   // extract requests that appear to have been dropped
-   if (isIdle)
+   if (!s_focusedDocumentId)
+      return;
+
+   // Look the document up again: it may have been saved under a new name,
+   // reopened, or closed since it was focused.
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   Error error = source_database::get(*s_focusedDocumentId, false, pDoc);
+   if (error)
    {
-      auto currentTime = boost::posix_time::second_clock::local_time();
-
-      std::vector<std::string> keys;
-      boost::copy(
-               s_pendingContinuations | boost::adaptors::map_keys,
-               std::back_inserter(keys));
-
-      for (auto&& key : keys)
-      {
-         auto&& continuation = s_pendingContinuations[key];
-         auto elapsedTime = currentTime - continuation.time();
-         if (elapsedTime.seconds() > 10)
-         {
-            DLOG("Cancelling old continuation with id '{}'.", key);
-            continuation.cancel();
-            s_pendingContinuations.erase(key);
-         }
-      }
+      if (isFileNotFoundError(error))
+         s_focusedDocumentId = boost::none;
+      else
+         LOG_ERROR(error);
+      return;
    }
+
+   sendFocus(lsp::uriFromDocument(pDoc), pDoc);
+}
+
+void didFocus(lsp::DidFocusTextDocumentParams params,
+              boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   s_focusedDocumentId = pDoc->id();
+
+   if (!checkAgentRunning())
+      return;
+
+   // Note: unlike the handlers above, we intentionally don't skip when the
+   // agent hasn't finished initializing: this is held until 'initialized' is
+   // written. A focus change after the initialize callback re-sent the focus
+   // would otherwise be lost.
+   sendFocus(params.textDocument.uri, pDoc);
+}
+
+void onBackgroundProcessing(bool isIdle, std::chrono::steady_clock::time_point now)
+{
+   s_servicedClock.tick(now);
 
    // process any pending requests
    while (!s_pendingResponses.empty())
@@ -2139,6 +2229,26 @@ void onBackgroundProcessing(bool isIdle)
       }
    }
    
+   // extract requests that appear to have been dropped; this runs after the
+   // queue above so that a reply which arrived while R was busy is delivered
+   // rather than cancelled
+   if (isIdle)
+   {
+      for (auto it = s_pendingContinuations.begin(); it != s_pendingContinuations.end(); )
+      {
+         if (it->second.isExpired(s_servicedClock.elapsed()))
+         {
+            DLOG("Cancelling old continuation with id '{}'.", it->first);
+            it->second.cancel();
+            it = s_pendingContinuations.erase(it);
+         }
+         else
+         {
+            ++it;
+         }
+      }
+   }
+
    // index files in the queue
    if (isIdle && !s_indexQueue.empty())
    {
@@ -2156,8 +2266,8 @@ void onBackgroundProcessing(bool isIdle)
             break;
          
          // check for finished
-         auto now = boost::chrono::steady_clock::now();
-         auto elapsed = boost::chrono::duration_cast<boost::chrono::milliseconds>(now - start);
+         auto end = boost::chrono::steady_clock::now();
+         auto elapsed = boost::chrono::duration_cast<boost::chrono::milliseconds>(end - start);
          if (elapsed.count() >= 100)
             break;
       }
@@ -2955,6 +3065,102 @@ FilePath nesLanguageServerPath(const FilePath& installPath)
    return FilePath();
 }
 
+ServicedClock::ServicedClock(std::chrono::steady_clock::duration maxGap)
+   : maxGap_(maxGap),
+     elapsed_(std::chrono::steady_clock::duration::zero())
+{
+}
+
+void ServicedClock::tick(std::chrono::steady_clock::time_point now)
+{
+   if (ticked_ && now > lastTick_)
+      elapsed_ += std::min(now - lastTick_, maxGap_);
+
+   lastTick_ = now;
+   ticked_ = true;
+}
+
+std::chrono::steady_clock::duration ServicedClock::elapsed() const
+{
+   return elapsed_;
+}
+
+std::chrono::steady_clock::duration agentRequestTimeout(const std::string& method)
+{
+   // Cancelling 'initialize' means 'initialized' is never sent, leaving the
+   // agent unusable until it restarts, so allow for a slow cold start.
+   if (method == "initialize")
+      return kAgentInitializeTimeout;
+
+   return kAgentRequestTimeout;
+}
+
+void addPendingAgentRequestForTesting(const std::string& requestId,
+                                      const std::string& method,
+                                      bool written,
+                                      std::chrono::steady_clock::time_point now,
+                                      const std::function<void(bool)>& onResult)
+{
+   auto continuation = [=](const Error&, json::JsonRpcResponse* pResponse)
+   {
+      json::Value cancelledJson = pResponse->result().getObject()["cancelled"];
+      onResult(cancelledJson.isBool() && cancelledJson.getBool());
+   };
+   addPendingContinuation(requestId, AssistantContinuation(continuation));
+   if (written)
+      onRequestWritten({ method, requestId, json::Value() }, now);
+}
+
+void queueAgentNotificationForTesting(const std::string& method)
+{
+   sendNotification(method, json::Object());
+}
+
+void focusDocumentForTesting(const std::string& documentId)
+{
+   // As lsp::lspDocFocused() reports focus
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   Error error = source_database::get(documentId, false, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   lsp::DidFocusTextDocumentParams params = {
+      .textDocument = {
+         .uri = lsp::uriFromDocument(pDoc),
+      }
+   };
+   didFocus(params, pDoc);
+}
+
+void resendFocusForTesting()
+{
+   resendFocus();
+}
+
+void resetForNewAgentForTesting()
+{
+   resetForNewAgent();
+}
+
+void writeQueuedAgentRequestsForTesting(core::system::ProcessOperations& operations)
+{
+   agent::onContinue(operations, s_agentGeneration);
+}
+
+void queueAgentReplyForTesting(const std::string& reply)
+{
+   s_pendingResponses.push(reply);
+}
+
+void runBackgroundProcessingForTesting(bool isIdle,
+                                       std::chrono::steady_clock::time_point now)
+{
+   onBackgroundProcessing(isIdle, now);
+}
+
 bool stopAgentForUpdate()
 {
    return stopAgentSync();
@@ -3007,7 +3213,10 @@ Error initialize()
    // Synchronize user + project preferences with internal caches
    synchronize();
 
-   events().onBackgroundProcessing.connect(onBackgroundProcessing);
+   events().onBackgroundProcessing.connect([](bool isIdle)
+   {
+      onBackgroundProcessing(isIdle, std::chrono::steady_clock::now());
+   });
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onShutdown.connect(onShutdown);

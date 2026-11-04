@@ -15,10 +15,10 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -45,13 +45,10 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -72,6 +69,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       commands_ = commands;
       instance_ = instance;
       
+      sessionInfo_ = sessionInfo;
       activeProjectFile_ = sessionInfo.getActiveProjectFile();
    }
    
@@ -164,11 +162,13 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    {
       if (activeProjectFile_ != null)
       {
-         if (pUserPrefs_.get().projectName().getValue().length() > 0)
-            return pUserPrefs_.get().projectName().getValue();
-         else
-            return mruList_.getQualifiedLabel(activeProjectFile_);
-
+         // the configured name is read live, so that a rename shows at once
+         String name = pUserPrefs_.get().projectName().getValue();
+         if (StringUtil.isNullOrEmpty(name))
+            name = sessionInfo_.getActiveProjectDisplayName();
+         if (StringUtil.isNullOrEmpty(name))
+            name = mruList_.getQualifiedLabel(activeProjectFile_);
+         return name;
       } else {
          return constants_.toolBarButtonText();
       }
@@ -187,16 +187,13 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
          super(true);
       }
       
+      // the MRU entries are global commands with no handle on this menu, so
+      // the gesture reaches them through a static instead
       @Override
-      public void onBrowserEvent(Event event) {
-        Element element = DOM.eventGetTarget(event);
-        switch (DOM.eventGetType(event)) {
-          case Event.ONCLICK: {
-             if (element.getClassName() == ThemeStyles.INSTANCE.menuRightImage())
-                ProjectMRUList.setOpenInNewWindow(true);
-          }
-        }
-        super.onBrowserEvent(event);
+      protected void onItemClicked(boolean rightImage)
+      {
+         super.onItemClicked(rightImage);
+         ProjectMRUList.setOpenInNewWindow(rightImage);
       }
    }
    
@@ -341,6 +338,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private static final Resources RESOURCES = GWT.create(Resources.class);
    private static final int MAX_SHARED_PROJECTS = 5;
    private static final int MAX_MRU_ENTRIES = 10;
+   private final SessionInfo sessionInfo_;
    private final String activeProjectFile_;
    private ToolbarMenuButton toolbarButton_ = null;
    private HandlerRegistration projectNameHandler_;

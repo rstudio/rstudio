@@ -21,9 +21,8 @@ import com.google.gwt.user.client.Timer;
 
 public class TextEditingTargetRenameHelper
 {
-   public TextEditingTargetRenameHelper(DocDisplay docDisplay, UserPrefs prefs)
+   public TextEditingTargetRenameHelper(UserPrefs prefs)
    {
-      editor_ = (AceEditor) docDisplay;
       ranges_ = new ArrayList<>();
       state_ = new Stack<>();
       protectedNamesList_ = new ArrayList<>();
@@ -36,15 +35,32 @@ public class TextEditingTargetRenameHelper
       renameChunkState_.cancel();
    }
 
-   public int renameInScope()
+   // Renames from the selection of the editor view the command came from,
+   // which may be a document's split view or a Visual Mode chunk editor.
+   public int renameInScope(DocDisplay display)
    {
-      init();
+      // repeated renames cycle through one view's chunk ranges; a rename from
+      // another view starts over rather than reusing that view's identifier
+      if (!renameChunkState_.isForDisplay(display))
+         renameChunkState_.reset();
 
-      TextFileType type = editor_.getFileType();
-      if (type.isR() || type.isRhtml() || type.isRmd() || type.isRnw() || type.isRpres())
-         return renameInScopeR();
-      
-      return 0;
+      // hold the view only for this call: the helper outlives a removed split
+      // view or a rebuilt Visual Mode chunk editor
+      editor_ = (AceEditor) display;
+      try
+      {
+         init();
+
+         TextFileType type = editor_.getFileType();
+         if (type.isR() || type.isRhtml() || type.isRmd() || type.isRnw() || type.isRpres())
+            return renameInScopeR();
+
+         return 0;
+      }
+      finally
+      {
+         editor_ = null;
+      }
    }
    
    private int renameInScopeR()
@@ -158,7 +174,7 @@ public class TextEditingTargetRenameHelper
          // apply the refactor across all R chunks.
          if (scope.isChunk())
          {
-            int count = renameChunkState_.nudge();
+            int count = renameChunkState_.nudge(editor_);
             if (count == 0)
                renameChunkState_.setCursorPosition(editor_.getCursorPosition());
             
@@ -621,10 +637,16 @@ public class TextEditingTargetRenameHelper
          };
       }
 
-      public int nudge()
+      public int nudge(DocDisplay display)
       {
+         display_ = display;
          resetTimer_.schedule(CHUNK_RENAME_TIMEOUT_MS);
          return renameCount_++;
+      }
+
+      public boolean isForDisplay(DocDisplay display)
+      {
+         return display_ == null || display_ == display;
       }
 
       public List<Range> getCurrentChunkRanges()
@@ -670,17 +692,19 @@ public class TextEditingTargetRenameHelper
          allChunkRanges_.clear();
          cursorPosition_ = null;
          renameCount_ = 0;
+         display_ = null;
       }
 
       private int renameCount_;
       private Position cursorPosition_;
+      private DocDisplay display_;
 
       private final List<Range> currentChunkRanges_;
       private final List<Range> allChunkRanges_;
       private final Timer resetTimer_;
    }
 
-   private final AceEditor editor_;
+   private AceEditor editor_;
    private final List<Range> ranges_;
    private final Stack<Integer> state_;
    private final List<Set<String>> protectedNamesList_;

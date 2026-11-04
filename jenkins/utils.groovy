@@ -418,51 +418,90 @@ def prApiUrl() {
   return "https://api.github.com/repos/${ownerAndRepo}/check-runs"
 }
 
-def checkRunsRequestWithRetry(String method, String payload = "", String url = prApiUrl(), int maxRetries = 3) {
+/**
+  * Low-level authenticated GitHub API request via the HTTP Request plugin.
+  * Retries on HTTP 401 (fresh credentials each attempt) with exponential backoff.
+  *
+  * Args:
+  *    method:      HTTP method (e.g. 'GET', 'POST')
+  *    url:         Full request URL
+  *    payload:     Request body for non-GET requests (optional)
+  *    maxRetries:  Attempts on 401 before giving up (default 3)
+  *    timeoutSecs: httpRequest connect/read timeout in seconds (default 0 = no timeout)
+  * Returns: the last httpRequest response object.
+  */
+def githubApiRequest(String method, String url, String payload = "", int maxRetries = 3, int timeoutSecs = 0) {
   def lastResponse = null
-  
+
   for (int attempt = 1; attempt <= maxRetries; attempt++) {
     echo "Attempt ${attempt} of ${maxRetries} - using fresh credentials"
-    
+
     withCredentials([usernamePassword(credentialsId: 'posit-jenkins-rstudio', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+      def customHeaders = [
+        [name: "Authorization", value: 'token ' + GITHUB_TOKEN, maskValue: true],
+        [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
+        [name: 'Accept', value: 'application/vnd.github+json'],
+      ]
+
       if (method == "GET") {
         lastResponse = httpRequest(
           url: url,
           httpMode: method,
-          customHeaders: [
-            [name: "Authorization", value: 'token ' + GITHUB_TOKEN, maskValue: true],
-            [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
-            [name: 'Accept', value: 'application/vnd.github+json'],
-          ],
-          validResponseCodes: "100:599"
+          customHeaders: customHeaders,
+          validResponseCodes: "100:599",
+          timeout: timeoutSecs
         )
       } else {
         lastResponse = httpRequest(
           url: url,
           httpMode: method,
           requestBody: payload,
-          customHeaders: [
-            [name: "Authorization", value: 'token ' + GITHUB_TOKEN, maskValue: true],
-            [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
-            [name: 'Accept', value: 'application/vnd.github+json'],
-          ],
-          validResponseCodes: "100:599"
+          customHeaders: customHeaders,
+          validResponseCodes: "100:599",
+          timeout: timeoutSecs
         )
       }
     }
-    
+
     if (lastResponse.status != 401) {
       return lastResponse
     }
-    
+
     if (attempt < maxRetries) {
       echo "Received 401 response. Waiting before retry..."
       sleep time: Math.pow(2, attempt), unit: 'SECONDS' // Exponential backoff
     }
   }
-  
+
   echo "All ${maxRetries} attempts failed with 401. Returning last response."
   return lastResponse
+}
+
+def checkRunsRequestWithRetry(String method, String payload = "", String url = prApiUrl(), int maxRetries = 3) {
+  return githubApiRequest(method, url, payload, maxRetries)
+}
+
+/**
+  * Dispatches a GitHub Actions workflow via the workflow_dispatch API.
+  *
+  * Args:
+  *    owner:       GitHub owner (e.g. 'rstudio')
+  *    repo:        GitHub repository name (e.g. 'rstudio-pro')
+  *    workflow:    Workflow filename or ID (e.g. 'trigger-workbench-image-build.yml')
+  *    ref:         Git ref to dispatch on (e.g. 'main')
+  *    inputs:      Map of workflow_dispatch inputs (optional)
+  *    timeoutSecs: httpRequest connect/read timeout in seconds (optional, default 0 = no timeout)
+  */
+def triggerGitHubWorkflow(String owner, String repo, String workflow, String ref, Map inputs = [:], int timeoutSecs = 0) {
+  def inputsJson = groovy.json.JsonOutput.toJson(inputs)
+  def payload = """{"ref": "${ref}", "inputs": ${inputsJson}}"""
+  def url = "https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches"
+
+  def response = githubApiRequest('POST', url, payload, 3, timeoutSecs)
+  if (response.status != 204) {
+    error "Failed to dispatch ${owner}/${repo} workflow '${workflow}': HTTP ${response.status} - ${response.content}"
+  }
+  echo "Dispatched ${owner}/${repo} workflow '${workflow}' on ref '${ref}'"
 }
 
 @Field

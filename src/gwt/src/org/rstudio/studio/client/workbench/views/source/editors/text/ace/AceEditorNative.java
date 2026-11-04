@@ -139,6 +139,10 @@ public class AceEditorNative extends JavaScriptObject
       return this.isRowFullyVisible(row);
    }-*/;
 
+   public native final void scrollCursorIntoView() /*-{
+      this.renderer.scrollCursorIntoView();
+   }-*/;
+
    public native final void blur() /*-{
       this.blur();
    }-*/;

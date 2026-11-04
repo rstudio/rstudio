@@ -127,6 +127,12 @@ public class KeyboardShortcut
       return modifiers;
    }
 
+   // true for the keydowns a held key auto-repeats
+   public static native boolean isRepeating(NativeEvent e)
+   /*-{
+      return e.repeat || false;
+   }-*/;
+
    private static KeySequence keySequence(String key,
                                           int keyCode,
                                           int modifiers)

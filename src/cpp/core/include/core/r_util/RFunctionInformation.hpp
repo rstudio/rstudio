@@ -137,7 +137,19 @@ public:
    {
       isPrimitive_ = isPrimitive;
    }
-   
+
+   // Builtins evaluate all of their arguments eagerly, so an empty
+   // argument is always an error; specials (e.g. 'switch') need not.
+   bool isBuiltin()
+   {
+      return bool(isBuiltin_);
+   }
+
+   void setIsBuiltin(bool isBuiltin)
+   {
+      isBuiltin_ = isBuiltin;
+   }
+
    const std::vector<FormalInformation>& formals() const
    {
       return formals_;
@@ -193,6 +205,7 @@ private:
    std::vector<FormalInformation> formals_;
    std::vector<std::string> formalNames_;
    boost::tribool isPrimitive_;
+   boost::tribool isBuiltin_;
    boost::tribool performsNse_;
    
    // Provided so that 'infoForFormal' can return by reference

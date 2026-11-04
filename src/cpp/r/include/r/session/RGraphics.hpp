@@ -16,6 +16,9 @@
 #ifndef R_SESSION_GRAPHICS_HPP
 #define R_SESSION_GRAPHICS_HPP
 
+#include <string>
+#include <vector>
+
 #include <boost/system/error_code.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
@@ -109,14 +112,18 @@ struct DisplayState
                 int height,
                 int activePlotIndex,
                 int plotCount,
-                bool fixedSize)
+                bool fixedSize,
+                const std::string& altText,
+                bool activePlotChanged)
       : imageFilename(imageFilename), 
         manipulatorJson(manipulatorJson),
         width(width),
         height(height),
         activePlotIndex(activePlotIndex),
         plotCount(plotCount),
-        fixedSize(fixedSize)
+        fixedSize(fixedSize),
+        altText(altText),
+        activePlotChanged(activePlotChanged)
    {
    }
    
@@ -127,6 +134,13 @@ struct DisplayState
    int activePlotIndex;
    int plotCount;
    bool fixedSize;
+
+   // alt text the plot's author supplied, or empty
+   std::string altText;
+
+   // whether a different plot is shown than in the last state sent to the
+   // client, as opposed to the same plot redrawn (e.g. after a resize)
+   bool activePlotChanged;
 };
 
 extern const char * const kPngFormat;
@@ -136,6 +150,22 @@ extern const char * const kBmpFormat;
 extern const char * const kMetafileFormat;
 extern const char * const kSvgFormat;
 extern const char * const kPostscriptFormat;
+
+// How saved bitmaps are encoded; the defaults match the Save Plot as Image
+// dialog's.
+struct BitmapOptions
+{
+   // a compression as named by grDevices::tiff()'s compression argument
+   // (which ragg's agg_tiff() shares); "none" leaves the TIFF uncompressed
+   std::string tiffCompression = "lzw";
+
+   // the quality of a JPEG, from 1 to 100
+   int jpegQuality = 100;
+};
+
+// The compressions offered when a plot is saved as a TIFF, as named by
+// grDevices::tiff()'s compression argument.
+std::vector<std::string> tiffCompressionTypes();
 
 class Display
 {
@@ -152,20 +182,23 @@ public:
 
    // actions on active plot; recordResolution makes sure a bitmap records
    // the resolution it was drawn at, which only matters for files that leave
-   // RStudio (and costs a rewrite on macOS)
+   // RStudio (and costs a rewrite on macOS), and options say how a TIFF or
+   // JPEG is encoded
    virtual core::Error savePlotAsImage(const core::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
                                        bool useDevicePixelRatio,
-                                       bool recordResolution = false) = 0;
+                                       bool recordResolution = false,
+                                       const BitmapOptions& options = BitmapOptions()) = 0;
 
    virtual core::Error savePlotAsImage(const core::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
                                        double devicePixelRatio,
-                                       bool recordResolution = false) = 0;
+                                       bool recordResolution = false,
+                                       const BitmapOptions& options = BitmapOptions()) = 0;
 
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,

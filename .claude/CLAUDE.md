@@ -115,7 +115,7 @@ Error initialize()
 ### Key module infrastructure
 
 - `src/cpp/session/include/session/SessionModuleContext.hpp` -- module registration API (`registerRpcMethod`, `registerAsyncRpcMethod`, `sourceModuleRFile`, `enqueClientEvent`, etc.)
-- `src/cpp/session/include/session/SessionClientEvent.hpp` -- all client event type constants
+- `src/cpp/session/include/session/worker_safe/session/SessionClientEvent.hpp` -- client event type constants (declarations)
 
 
 ## Client-Server Communication
@@ -141,7 +141,12 @@ The frontend and backend communicate via JSON-RPC over HTTP. Understanding this 
    }
    ```
 
-   The method name is auto-converted from snake_case to camelCase (e.g. `chat_start_backend` → `chatStartBackend`).
+   `RemoteServer.java` implements the method and names the RPC explicitly -- there is no automatic
+   snake_case to camelCase mapping:
+
+   ```java
+   sendRequest(RPC_SCOPE, "chat_start_backend", requestCallback);
+   ```
 
 3. **Frontend** calls it from a presenter or view via the injected server operations interface.
 
@@ -151,11 +156,12 @@ The frontend and backend communicate via JSON-RPC over HTTP. Understanding this 
 1. **Backend** fires an event using `module_context::enqueClientEvent()`:
 
    ```cpp
-   ClientEvent event(client_events::kChatOutput, data);
+   ClientEvent event(client_events::kExecuteAppCommand, data);
    module_context::enqueClientEvent(event);
    ```
 
-   Event type constants are defined in `SessionClientEvent.hpp`.
+   Event type constants are declared in `worker_safe/session/SessionClientEvent.hpp` and given their
+   values and wire names in `src/cpp/session/SessionClientEvent.cpp`.
 
 2. **Frontend** receives the event through the `EventBus` and dispatches it to registered handlers.
 
@@ -191,14 +197,26 @@ Components communicate through a central `EventBus` using typed events. Fire eve
 Each feature area defines a `*ServerOperations` interface for its RPC calls. These are aggregated into `Server.java`, which is the main server interface.
 
 
+## Accessibility
+
+UI work should aim for [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/) conformance, with
+particular attention to keyboard operability and screen reader support. Much of RStudio's
+existing UI doesn't meet it yet, so treat this as a goal, not a requirement:
+
+- **New UI** should be built to conform from the start.
+- **Changes to existing UI** should not make accessibility worse. Fix nearby problems when the
+  fix is small and self-contained; flag larger gaps instead of growing a small change into an
+  accessibility rewrite.
+
+
 ## Adding a New Feature (Checklist)
 
 When implementing a new feature end-to-end:
 
 1. **Backend module**: Create `src/cpp/session/modules/SessionXxx.cpp` with `initialize()`, RPC handlers, and optionally a companion `.R` file.
 2. **Wire the module**: Register the module's `initialize()` in the session startup sequence.
-3. **Client events** (if needed): Add event type constants to `SessionClientEvent.hpp`.
-4. **Server operations**: Create a `*ServerOperations.java` interface in the GWT frontend and add it to `Server.java`.
+3. **Client events** (if needed): Declare the constant in `worker_safe/session/SessionClientEvent.hpp`, define its value and wire name in `SessionClientEvent.cpp`, then add the wire name to the frontend's `ClientEvent.java` and dispatch it in `ClientEventDispatcher.java`.
+4. **Server operations**: Create a `*ServerOperations.java` interface in the GWT frontend, add it to the `extends` list of `WorkbenchServerOperations.java` (which `Server.java` extends), and implement its methods in `RemoteServer.java`.
 5. **Frontend view**: Add UI under `src/gwt/.../workbench/views/`.
 6. **Commands** (if needed): Add to `Commands.cmd.xml`, add stubs to `Commands.java`, and update the MD5 checksum.
 7. **DI wiring**: Bind new classes in `RStudioGinModule.java`.
@@ -208,7 +226,7 @@ When implementing a new feature end-to-end:
 
 Backend:
 - `src/cpp/session/include/session/SessionModuleContext.hpp` -- module registration API
-- `src/cpp/session/include/session/SessionClientEvent.hpp` -- client event type constants
+- `src/cpp/session/include/session/worker_safe/session/SessionClientEvent.hpp` -- client event type constants
 - `src/cpp/session/resources/schema/user-prefs-schema.json` -- user preferences schema
 - `src/cpp/session/resources/schema/user-state-schema.json` -- UI state schema
 - `src/cpp/session/session-options.json` -- session CLI options schema
@@ -227,7 +245,7 @@ Frontend:
 - **Find where an RPC is handled**: grep for the RPC name (e.g. `"chat_start_backend"`) in `src/cpp/session/modules/`.
 - **Find a command handler**: grep for `on<CommandName>` with `@Handler` in `src/gwt/`.
 - **Find where a preference is used**: search for its key from `user-prefs-schema.json` in both `src/cpp/` and `src/gwt/`.
-- **Trace a client event**: find the event constant in `SessionClientEvent.hpp`, then grep for it in both backend (where it's fired) and frontend (where it's handled).
+- **Trace a client event**: the wire name (e.g. `execute_app_command`) links the C++ constant in `SessionClientEvent.cpp` (`kExecuteAppCommand`) to the Java constant in `ClientEvent.java` (`ClientEvent.ExecuteAppCommand`). Grep for the C++ constant to find where it's fired, and for the Java constant to find where it's dispatched.
 
 
 ## Building RStudio
@@ -252,6 +270,9 @@ Use `ant draft` after making changes you need to test in the browser. Use `ant j
 If you modify JavaScript components (e.g. in `src/gwt/acesupport`), also run:
 
     cd src/gwt && ant acesupport
+
+RStudio builds against a fork of GWT. To change the fork or update the GWT version, see
+`src/gwt/tools/build-gwt-README.md`.
 
 
 ### Backend
@@ -290,6 +311,20 @@ localhost URL. The processes outlive the task; logs and state land in
 `<checkout>/.rstudio-dev/`, including the sessions' own RStudio config and
 data homes (pass `--user-config` to use yours), so preferences changed while
 testing stay out of `~/.config/rstudio`. See `tasks/README.md` for the options.
+
+
+### Git Worktrees
+
+A new worktree has no gitignored dependencies. The GWT and CMake builds fall back
+to the primary checkout's `dependencies/`, so install and build there only. Then
+run this once per worktree, from inside it:
+
+    scripts/bootstrap-worktree.sh --with-build-dir
+
+It clones `node_modules` from the primary checkout (or runs `npm ci` when the
+lockfile differs) and configures a fresh `build/`. Never copy or symlink the
+primary checkout's `build/` -- its absolute paths would build and serve the
+primary checkout's code. After that, build and test as usual from the worktree.
 
 
 ## Writing Automated Tests
@@ -419,7 +454,7 @@ When a command is added here, a stub will also need to be added to the file at:
 
     src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.java
 
-When Commands.cmd.xml is modified in any way, a checksum stored in src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml.MD5 MUST be updated to match, and that file included in the commit. The MD5 file is updated when the GWT code is built using `ant` or `ant draft`.
+When Commands.cmd.xml changes, build with `ant` or `ant draft` to regenerate src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml.MD5 (it is generated; don't edit it by hand), and include it in the commit.
 
 
 ### Command Handlers
@@ -465,6 +500,23 @@ Exceptions — do NOT add a NEWS.md entry for:
 - Pull requests that fix an existing issue, and also include tests, should include "Fixes #<issue>." in their body.
 - Pull requests that only partially address an issue, or require manual verification, should include "Addresses #<issue>." in their body.
 - When generating a pull request, set the Milestone of the pull request to match contents of @version/RELEASE, if there is a matching milestone already defined. Never create a new milestone.
+
+
+### Open-Source Companion PRs
+
+A change spanning open-source and pro-only code is made in rstudio-pro first: the whole change is
+opened as a PR there, reviewed, and approved, but not merged. An "open-source companion" PR here
+then carries just the open-source portion. It gets a cursory review and is merged, rstudio is
+merged downstream into rstudio-pro, and then the rstudio-pro PR is merged. This only works if the
+companion's changes exactly match the open-source portion of the rstudio-pro PR.
+
+When reviewing a PR that mentions an associated rstudio-pro PR (a link to a pro-repo PR/issue, or
+wording like "open-source companion"), flag it first and ask the author to confirm the rstudio-pro
+PR has already been reviewed and approved, and that this PR matches its open-source portion, before
+any detailed review. If you can read the rstudio-pro PR, compare the diffs yourself and report any
+divergence. Once confirmed, keep the review cursory, and note that any requested change must also
+be made in the rstudio-pro PR, or the two will be out of sync. If it hasn't been reviewed yet,
+recommend that it be reviewed in rstudio-pro first, rather than iterating here.
 
 
 ## Git Conventions

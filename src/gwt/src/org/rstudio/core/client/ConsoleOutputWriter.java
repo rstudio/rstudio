@@ -103,27 +103,15 @@ public class ConsoleOutputWriter
          virtualConsole_ = vcFactory_.create(trailing);
       }
 
-      // set the appendTarget to the VirtualConsole bucket if possible
-      Element appendTarget = virtualConsole_.getParent();
-
-      // we never want to count lines based on the trailing element so grab its parent, if possible
-      // otherwise just grab the outElement
-      if (appendTarget.getAttribute("tabindex").equals("-1") && appendTarget.getTagName().equalsIgnoreCase("span"))
-      {
-         if (appendTarget.getParentElement() != null)
-            appendTarget = appendTarget.getParentElement();
-         else {
-            appendTarget = outEl;
-         }
-      }
-
-      // TODO: Can we defer this computation until it's actually needed?
-      int oldLineCount = DomUtils.countLines(appendTarget, true);
+      // The virtual console tracks the newlines it writes, so the lines this
+      // submit adds can be read off it; counting them in the DOM meant walking
+      // the whole scrollback twice for every chunk of output.
+      int oldLineCount = virtualConsole_.getNewlinesWritten();
       if (StringUtil.equals(className, OUTPUT_ERROR_CLASS))
          virtualConsole_.submit(text, VirtualConsole.Type.STDERR, isError, ariaLiveAnnounce);
       else
          virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
-      int newLineCount = DomUtils.countLines(appendTarget, true);
+      int newLineCount = virtualConsole_.getNewlinesWritten();
 
       lines_ += newLineCount - oldLineCount;
 
@@ -159,7 +147,10 @@ public class ConsoleOutputWriter
    {
       if (virtualConsole_ != null)
       {
+         // trimming a group's surrounding newlines changes the line count
+         int before = virtualConsole_.getNewlinesWritten();
          virtualConsole_.normalizePreviousOutput();
+         lines_ += virtualConsole_.getNewlinesWritten() - before;
       }
    }
    
@@ -169,8 +160,10 @@ public class ConsoleOutputWriter
       {
          // no more output will reach this console, so show anything it was
          // still waiting on
+         int before = virtualConsole_.getNewlinesWritten();
          virtualConsole_.flushPartialAnsiCode();
          virtualConsole_.ensureStartingOnNewLine();
+         lines_ += virtualConsole_.getNewlinesWritten() - before;
 
          // clear the virtual console so we start with a fresh slate
          virtualConsole_ = null;

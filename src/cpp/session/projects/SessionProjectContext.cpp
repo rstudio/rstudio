@@ -21,6 +21,7 @@
 
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -60,12 +61,32 @@ namespace {
 
 static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
 
+// The directory whose DESCRIPTION file is indexed by the project file
+// monitor. For package projects this is the package directory, which can
+// differ from the project directory; for other build types it is the project
+// directory itself. (Note that buildTargetPath() is empty for build type
+// 'None', and a relative "DESCRIPTION" path would resolve against the working
+// directory rather than the project.)
+FilePath packageDescriptionDirectory()
+{
+   ProjectContext& context = projectContext();
+   if (context.config().buildType == r_util::kBuildTypePackage)
+      return context.buildTargetPath();
+
+   return context.directory();
+}
+
 void onDescriptionChanged()
 {
    s_pIndexedPackageInfo.reset();
 
+   // a removed DESCRIPTION simply means the project is no longer a package
+   FilePath descDir = packageDescriptionDirectory();
+   if (!descDir.completeChildPath("DESCRIPTION").exists())
+      return;
+
    std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
-   Error error = pInfo->read(projectContext().buildTargetPath());
+   Error error = pInfo->read(descDir);
    if (error)
       LOG_ERROR(error);
 
@@ -74,7 +95,7 @@ void onDescriptionChanged()
 
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   FilePath descPath = projectContext().buildTargetPath().completeChildPath("DESCRIPTION");
+   FilePath descPath = packageDescriptionDirectory().completeChildPath("DESCRIPTION");
    for (auto& event : events)
    {
       auto& info = event.fileInfo();
@@ -1145,6 +1166,86 @@ void ProjectContext::updatePackageInfo()
    }
 }
 
+void ProjectContext::worktreeNames(std::string* pPrimaryName, std::string* pDirectoryName) const
+{
+   pPrimaryName->clear();
+   pDirectoryName->clear();
+
+   // the worktree root is the nearest ancestor holding a .git entry
+   FilePath worktreeRoot = directory_;
+   FilePath gitPath;
+   while (!worktreeRoot.isEmpty())
+   {
+      gitPath = worktreeRoot.completeChildPath(".git");
+      if (gitPath.exists())
+         break;
+      worktreeRoot = worktreeRoot.getParent();
+   }
+
+   // a linked worktree's .git is a file: "gitdir: <common dir>/worktrees/<id>",
+   // where the common dir is "<primary>/.git" or, for a bare repository, the
+   // repository itself (the primary checkout has a directory, and a submodule
+   // points at .git/modules)
+   if (worktreeRoot.isEmpty() || gitPath.isDirectory())
+      return;
+
+   std::string contents;
+   Error error = core::readStringFromFile(gitPath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   boost::algorithm::trim(contents);
+   if (!boost::algorithm::starts_with(contents, "gitdir:"))
+      return;
+
+   FilePath gitDir = worktreeRoot.completePath(
+         boost::algorithm::trim_copy(contents.substr(std::strlen("gitdir:"))));
+   if (gitDir.getParent().getFilename() != "worktrees")
+      return;
+
+   // a bare repository has no checkout to take a name from: use its own,
+   // without the conventional .git suffix
+   FilePath commonDir = gitDir.getParent().getParent();
+   if (commonDir.getFilename() != ".git")
+   {
+      std::string name = commonDir.getFilename();
+      if (boost::algorithm::ends_with(name, ".git"))
+         name.resize(name.size() - std::strlen(".git"));
+      *pPrimaryName = name;
+      *pDirectoryName = worktreeRoot.getFilename();
+      return;
+   }
+
+   // prefer the primary checkout's own project name, then its directory
+   // name; a project in a subdirectory of the repository is looked for at
+   // the same offset there (as the worktree menu does)
+   FilePath primary = commonDir.getParent();
+   if (directory_ != worktreeRoot)
+      primary = primary.completePath(directory_.getRelativePath(worktreeRoot));
+
+   std::string primaryName = primary.getFilename();
+   FilePath primaryProject;
+   if (primary.isDirectory())
+      primaryProject = r_util::projectFromDirectory(primary);
+
+   if (primaryProject.exists())
+   {
+      primaryName = primaryProject.getStem();
+
+      r_util::RProjectConfig config;
+      std::string userErrMsg;
+      error = r_util::readProjectFile(primaryProject, &config, &userErrMsg);
+      if (!error && !config.projectName.empty())
+         primaryName = config.projectName;
+   }
+
+   *pPrimaryName = primaryName;
+   *pDirectoryName = worktreeRoot.getFilename();
+}
+
 json::Object ProjectContext::uiPrefs() const
 {
    using namespace r_util;
@@ -1419,6 +1520,20 @@ void ProjectContext::setWebsiteOutputFormat(
 
 bool ProjectContext::isPackageProject()
 {
+   // Without a project, there is no project directory to inspect. (Note that
+   // directory() is empty in this case, so r_util::isPackageDirectory() would
+   // otherwise look for a DESCRIPTION file in the current working directory.)
+   if (!hasProject())
+      return false;
+
+   // Prefer the indexed DESCRIPTION, which is kept current by the project
+   // file monitor; otherwise check the project directory itself. A package
+   // project whose package lives in a subdirectory (PackagePath) is thus not
+   // classified as one until its DESCRIPTION has been indexed; callers such
+   // as augmentRbuildignore() assume the package directory is the project
+   // directory, so this is left as it was. Callers that would otherwise hit
+   // this path repeatedly (e.g. the R parser, once per function call in a
+   // document) cache the result themselves.
    if (s_pIndexedPackageInfo != nullptr)
       return s_pIndexedPackageInfo->type() == kPackageType;
 

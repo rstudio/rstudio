@@ -91,7 +91,7 @@ export class ChatPane extends FramePageObject {
       name: /Configure (AI providers|LLM providers|Posit AI)/i,
     });
     this.aboutItem = this.frame.locator("xpath=//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]");
-    this.newConversationBtn = this.frame.getByRole('button', { name: 'New conversation' });
+    this.newConversationBtn = this.frame.getByRole('button', { name: 'New conversation', exact: true });
     this.historyBtn = this.frame.getByRole('button', { name: 'Conversation history' });
     // The history panel container and its per-conversation rows. The panel is
     // removed from the DOM when the history is closed, so its presence is the
@@ -231,6 +231,19 @@ export class ChatPane extends FramePageObject {
   }
 
   /**
+   * The text Send's aria-describedby points at, which says why it is disabled
+   * when no model is selected (PA #2779); '' when it has no description.
+   * Read just after a wait on Send, so a Send that is gone fails within 1s
+   * rather than holding up that wait's failure for the full action timeout.
+   */
+  async sendDescription(): Promise<string> {
+    return this.sendBtn.evaluate((button) => {
+      const ids = (button.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+      return ids.map((id) => button.ownerDocument.getElementById(id)?.textContent ?? '').join(' ');
+    }, undefined, { timeout: 1000 });
+  }
+
+  /**
    * Type into the chat composer. Playwright's fill() is unreliable on a
    * ProseMirror contenteditable (it bypasses the editor's input handling), so
    * focus the editor and dispatch real key events instead.
@@ -238,6 +251,21 @@ export class ChatPane extends FramePageObject {
   async typeMessage(text: string): Promise<void> {
     await this.chatInput.click();
     await this.chatInput.pressSequentially(text, { timeout: typingTimeout(text) });
+  }
+
+  /**
+   * Empty the chat composer. typeMessage() only appends, and a draft whose
+   * send was refused (e.g. while readline() blocks the turn) is still there
+   * after the turn ends.
+   */
+  async clearMessage(): Promise<void> {
+    if (!(await this.chatInput.textContent())) {
+      return;
+    }
+
+    await this.chatInput.click();
+    await this.chatInput.press('ControlOrMeta+a');
+    await this.chatInput.press('Backspace');
   }
 
   /**

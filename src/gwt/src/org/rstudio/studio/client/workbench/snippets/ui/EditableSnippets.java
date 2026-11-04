@@ -32,6 +32,7 @@ public class EditableSnippets extends Composite
    
    public EditableSnippets(String name, TextFileType fileType)
    {
+      name_ = name;
       fileType_ = fileType;
       HorizontalPanel panel = new HorizontalPanel();
       Image icon = new Image(fileType.getDefaultIcon());
@@ -49,9 +50,9 @@ public class EditableSnippets extends Composite
       return fileType_.getEditorLanguage().getModeName();
    }
    
-   public String getFileTypeLabel()
+   public String getName()
    {
-      return fileType_.getLabel();
+      return name_;
    }
    
    public String getSnippetText()
@@ -105,6 +106,7 @@ public class EditableSnippets extends Composite
       return "";
    }-*/;
    
+   private final String name_;
    private final TextFileType fileType_;
    private String pendingEdits_ = null;
    private int scrollPosition_ = 0;

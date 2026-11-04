@@ -142,6 +142,11 @@ public abstract class
    public abstract AppCommand vcsFileLog();
    public abstract AppCommand vcsFileDiff();
    public abstract AppCommand vcsFileRevert();
+   public abstract AppCommand vcsNextChange();
+   public abstract AppCommand vcsPreviousChange();
+   public abstract AppCommand vcsRevertChange();
+   public abstract AppCommand vcsShowChange();
+   public abstract AppCommand vcsShowChangesSideBySide();
    public abstract AppCommand popoutDoc();
    public abstract AppCommand returnDocToMain();
    public abstract AppCommand quickAddNext();
@@ -318,6 +323,8 @@ public abstract class
    public abstract AppCommand vcsRefreshNoError();
    public abstract AppCommand vcsOpen();
    public abstract AppCommand vcsIgnore();
+   public abstract AppCommand vcsNewWorktree();
+   public abstract AppCommand vcsRemoveWorktree();
    public abstract AppCommand vcsPull();
    public abstract AppCommand vcsPullRebase();
    public abstract AppCommand vcsPush();
@@ -547,7 +554,6 @@ public abstract class
    public abstract AppCommand showLicenseDialog();
    public abstract AppCommand checkForUpdates();
    public abstract AppCommand showReleaseNotes();
-   public abstract AppCommand whatsNewRStudio();
    public abstract AppCommand helpUsingRStudio();
    public abstract AppCommand helpKeyboardShortcuts();
    public abstract AppCommand showRequestLog();

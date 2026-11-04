@@ -66,15 +66,6 @@ target_link_libraries(
 
 # define executable (for running unit tests)
 if (RSTUDIO_UNIT_TESTS_ENABLED)
-   # Use gtest from vendor directory
-   set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
-   include_directories(${GTEST_SOURCE_DIR}/include)
-   
-   # Add Google Test if not already added
-   if(NOT TARGET gtest)
-      add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
-   endif()
-
    file(GLOB_RECURSE SERVER_CORE_TEST_FILES "*Tests.cpp")
    add_executable(rstudio-server-core-tests
       TestMain.cpp
@@ -83,7 +74,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    )
    target_link_libraries(rstudio-server-core-tests
       rstudio-server-core
-      gtest
+      GTest::gtest
       pthread
    )
    

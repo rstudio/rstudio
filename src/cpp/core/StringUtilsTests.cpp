@@ -19,6 +19,7 @@
 
 #include <clocale>
 #include <string>
+#include <vector>
 
 #include <core/Algorithm.hpp>
 #include <core/StringUtils.hpp>
@@ -66,7 +67,7 @@ TEST(StringTest, StrippedOfBackQuotesWorks)
    std::string string = "`abc`";
    std::string stripped = strippedOfBackQuotes(string);
    EXPECT_EQ(std::string("abc"), stripped);
-   
+
    EXPECT_EQ(std::string("abc"), strippedOfBackQuotes("abc"));
 }
 
@@ -74,6 +75,11 @@ TEST(StringTest, SubstringWorks)
 {
    std::string string("  abc  ");
    EXPECT_EQ(std::string("abc"), substring(string, 2, 5));
+   EXPECT_EQ(std::string(""), substring(string, 2, 2));
+   EXPECT_EQ(std::string("abc  "), substring(string, 2, std::string::npos));
+
+   // an inverted range returns the rest of the string
+   EXPECT_EQ(std::string("abc  "), substring(string, 2, 1));
 }
 
 TEST(StringTest, TrimWhitespaceWorks)
@@ -109,13 +115,13 @@ TEST(StringTest, CommentHeadersCanBeExtracted)
             "% Let's hope the text is extracted.\n"
             "\n"
             "This should be ignored.");
-   
+
    std::string extracted;
    bool success = extractCommentHeader(text, kLatexStyleLineCommentRegex, &extracted);
    std::string expected(
             "This is a header.\n"
             "Let's hope the text is extracted.\n");
-   
+
    EXPECT_TRUE(success);
    EXPECT_EQ(expected, extracted);
 }
@@ -123,11 +129,11 @@ TEST(StringTest, CommentHeadersCanBeExtracted)
 TEST(StringTest, CommentHeadersWithNoTrailingNewlineAreHandled)
 {
    std::string text("% Hello\n% World");
-   
+
    std::string extracted;
    bool success = extractCommentHeader(text, kLatexStyleLineCommentRegex, &extracted);
    std::string expected("Hello\nWorld\n");
-   
+
    EXPECT_TRUE(success);
    EXPECT_EQ(expected, extracted);
 }
@@ -136,7 +142,7 @@ TEST(StringTest, CommentHeaderEdgeCasesAreHandled)
 {
    std::string extracted;
    EXPECT_FALSE(extractCommentHeader("", kLatexStyleLineCommentRegex, &extracted));
-   
+
    std::string text(
             "There is a comment\n"
             "% but not at the start of the document.\n");
@@ -159,10 +165,10 @@ TEST(StringTest, HtmlTagsInJsonAreEscaped)
 TEST(StringTest, SomeSimpleStringsCanBeFormatted)
 {
    std::string s;
-   
+
    s = string_utils::sprintf("%s, %s!", "Hello", "world");
    EXPECT_EQ(std::string("Hello, world!"), s);
-   
+
    s = string_utils::sprintf("%i + %i == %i", 2, 2, 2 + 2);
    EXPECT_EQ(std::string("2 + 2 == 4"), s);
 }
@@ -445,6 +451,116 @@ TEST(StringTest, Utf8IncompleteSuffixLengthIgnoresInvalidSequences)
    // a complete sequence followed by nothing more is not truncated, even
    // though its last bytes are continuation bytes
    EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xE2\x94\x80"));
+}
+
+TEST(StringTest, Utf8ValidationFollowsRfc3629)
+{
+   struct Case
+   {
+      const char* name;
+      std::string text;
+      bool valid;
+      std::size_t firstLength; // utf8SequenceLength at 0; unused for empty text
+   };
+
+   const std::vector<Case> cases = {
+      {"empty", "", true, 0},
+      {"ASCII", "hello", true, 1},
+      {"two bytes", "\xC3\xA9", true, 2},                   // U+00E9
+      {"three bytes", "\xE2\x82\xAC", true, 3},             // U+20AC
+      {"four bytes", "\xF0\x9F\x98\x80", true, 4},          // U+1F600
+      {"last code point", "\xF4\x8F\xBF\xBF", true, 4},     // U+10FFFF
+      {"last before surrogates", "\xED\x9F\xBF", true, 3},  // U+D7FF
+      {"embedded NUL", std::string("a\0b", 3), false, 1},
+      {"past U+10FFFF", "\xF4\x90\x80\x80", false, 0},
+      {"surrogate", "\xED\xA0\x80", false, 0},              // U+D800
+      {"overlong two bytes", "\xC0\xAF", false, 0},
+      {"overlong three bytes", "\xE0\x80\xAF", false, 0},
+      {"overlong four bytes", "\xF0\x80\x80\xAF", false, 0},
+      {"stray continuation", "\x80", false, 0},
+      {"truncated", "\xE2\x82", false, 0},
+      {"bad continuation", "\xE2\x28\xA1", false, 0},
+      {"invalid lead", "\xF5\x80\x80\x80", false, 0},
+      {"invalid byte after valid text", "abc\xFF", false, 1},
+   };
+
+   for (const Case& testCase : cases)
+   {
+      SCOPED_TRACE(testCase.name);
+      EXPECT_EQ(isValidUtf8(testCase.text), testCase.valid);
+      if (!testCase.text.empty())
+         EXPECT_EQ(utf8SequenceLength(testCase.text, 0), testCase.firstLength);
+   }
+}
+
+TEST(StringTest, CleanUtf8StringKeepsValidTextAndReplacesEachBadByte)
+{
+   struct Case
+   {
+      const char* name;
+      std::string input;
+      std::string expected;
+   };
+
+   const std::string replacement = "\xEF\xBF\xBD"; // U+FFFD
+   const std::vector<Case> cases = {
+      {"empty", "", ""},
+      {"valid text unchanged", "caf\xC3\xA9 \xF0\x9F\x98\x80", "caf\xC3\xA9 \xF0\x9F\x98\x80"},
+      {"NUL dropped", std::string("a\0b\0", 4), "ab"},
+      {"invalid byte replaced", "a\xFF" "b", "a" + replacement + "b"},
+      {"each byte replaced on its own", "\xFF\xFE", replacement + replacement},
+      {"surrogate replaced byte by byte", "\xED\xA0\x80", replacement + replacement + replacement},
+      {"truncated sequence at the end", "ab\xE2\x82", "ab" + replacement + replacement},
+      {"valid text after a bad byte survives", "\xC0" "caf\xC3\xA9", replacement + "caf\xC3\xA9"},
+   };
+
+   for (const Case& testCase : cases)
+   {
+      SCOPED_TRACE(testCase.name);
+      const std::string cleaned = cleanUtf8String(testCase.input);
+      EXPECT_EQ(cleaned, testCase.expected);
+      EXPECT_TRUE(isValidUtf8(cleaned));
+   }
+}
+
+TEST(StringTest, HtmlUnescapeReversesHtmlEscape)
+{
+   // round-trips the full entity set htmlEscape emits
+   std::string raw = "object 'y' not found in R/foo.R <a> & \"b\"";
+   EXPECT_EQ(raw, htmlUnescape(htmlEscape(raw)));
+
+   // a literal entity in the source survives the round trip
+   std::string literal = "use &lt; to mean less-than";
+   EXPECT_EQ(literal, htmlUnescape(htmlEscape(literal)));
+
+   // decoding does not cascade: an escaped entity decodes to the entity, not
+   // to the character it names
+   EXPECT_EQ("&lt;", htmlUnescape("&amp;lt;"));
+   EXPECT_EQ("&amp;", htmlUnescape("&amp;amp;"));
+
+   // text with no entities is returned unchanged
+   EXPECT_EQ("nothing to decode", htmlUnescape("nothing to decode"));
+
+   // an unrecognized or truncated entity is left alone rather than eaten
+   EXPECT_EQ("a & b", htmlUnescape("a & b"));
+   EXPECT_EQ("&nbsp;", htmlUnescape("&nbsp;"));
+   EXPECT_EQ("&lt", htmlUnescape("&lt"));
+
+   // adjacent entities decode independently, and matching is case-sensitive
+   EXPECT_EQ("<>", htmlUnescape("&lt;&gt;"));
+   EXPECT_EQ("&LT;", htmlUnescape("&LT;"));
+}
+
+TEST(StringTest, HtmlToTextDropsTagsThenDecodesEntities)
+{
+   // remove tags, including attributes
+   EXPECT_EQ("foo bar baz", htmlToText("<a href=\"a\">foo</a> <b>bar</b> <span class='c'>baz</span>"));
+
+   // entities are decoded once and only once
+   EXPECT_EQ("<b>foo</b>", htmlToText("&lt;b&gt;foo&lt;&#x2F;b&gt;"));
+
+   // stray < doesn't eat the whole message
+   EXPECT_EQ("a < b", htmlToText("a < b"));
 }
 
 #ifdef _WIN32

@@ -276,8 +276,9 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
     const satellitePromise = page.context().waitForEvent('page', { timeout: 60000 });
     await executeCommand(page, 'vcsCommit');
     satellitePage = await satellitePromise;
-    await satellitePage.waitForLoadState('domcontentloaded');
-    expect(satellitePage.url()).toContain('view=review_changes');
+    // the page event can fire while the window is still on its initial blank
+    // document, so wait for the satellite URL rather than its first load
+    await satellitePage.waitForURL(/view=review_changes/);
 
     // the global theme classes reach the satellite's container...
     await expect(satellitePage.locator(`${THEME_CONTAINER}.rstudio-themes-dark`)).toBeAttached({

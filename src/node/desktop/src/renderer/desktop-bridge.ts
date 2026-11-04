@@ -403,6 +403,28 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
+    // these answer with an error message, or '' on success; a failed call
+    // still answers, so the client never waits on it forever
+    setPendingRVersion: (rExecutablePath: string, callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_set_pending_r_version', rExecutablePath)
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('setPendingRVersion', error);
+          callback(String(error) || 'setPendingRVersion failed');
+        });
+    },
+
+    makeROrthogonal: (rHome: string, callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_make_r_orthogonal', rHome)
+        .then((error) => callback(error))
+        .catch((error) => {
+          reportIpcError('makeROrthogonal', error);
+          callback(String(error) || 'makeROrthogonal failed');
+        });
+    },
+
     setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
       ipcRenderer
         .invoke('desktop_set_pending_quit', pendingQuit)
@@ -493,10 +515,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_splash_screen', enable);
     },
 
-    setShowWhatsNew: (enable: boolean) => {
-      ipcRenderer.send('desktop_set_show_whats_new', enable);
-    },
-
     setAutohideMenubar: (enable: boolean) => {
       ipcRenderer.send('desktop_set_autohide_menubar', enable);
     },
@@ -562,10 +580,6 @@ export function getDesktopBridge() {
 
     toggleFullscreenMode: () => {
       ipcRenderer.send('desktop_toggle_fullscreen_mode');
-    },
-
-    showKeyboardShortcutHelp: () => {
-      ipcRenderer.send('desktop_show_keyboard_shortcut_help');
     },
 
     launchSession: (reload: boolean) => {
@@ -745,14 +759,6 @@ export function getDesktopBridge() {
 
     showSplashScreen: () => {
       ipcRenderer.send('desktop_show_splash_screen');
-    },
-
-    showWhatsNew: () => {
-      ipcRenderer.send('desktop_show_whats_new');
-    },
-
-    consoleLog: (output: string) => {
-      ipcRenderer.send('desktop_console_log', output);
     },
 
     getPathForFile: (file: File) => {

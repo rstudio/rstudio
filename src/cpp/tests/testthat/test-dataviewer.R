@@ -44,6 +44,26 @@ test_that(".rs.formatDataColumn() truncates lists", {
     )
 })
 
+# https://github.com/rstudio/rstudio/issues/19117
+test_that(".rs.formatDataColumn() sends character values as-is", {
+   # the grid escapes control characters for display only; the values it
+   # receives are the data, which its tooltip and cell copy rely on
+   x <- c("test     this", "a\nb", "e\tf", "C:\\Users", NA)
+   expect_equal(.rs.formatDataColumn(x, 1, length(x)), x)
+})
+
+test_that(".rs.formatDataColumn() drops format() padding from non-character columns", {
+   skip_if_not_installed("survival")
+
+   # format.Surv() pads to a common width despite 'trim = TRUE'
+   x <- survival::Surv(c(5, 10, 100), c(0, 1, 0))
+   expect_equal(.rs.formatDataColumn(x, 1, 3), c("5+", "10", "100+"))
+
+   # a character column's own leading spaces are data
+   x <- I(c("  indented", "x"))
+   expect_equal(.rs.formatDataColumn(x, 1, 2), c("  indented", "x"))
+})
+
 test_that(".rs.flattenFrame() handles matrices and data frames", {
    tbl1 <- data.frame(x = 1:2)
    df_col <- data.frame(y = 1:2, z = 1:2)

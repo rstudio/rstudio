@@ -4347,17 +4347,17 @@ synctex_updater_t synctex_updater_new_with_output_file(const char * output, cons
 	char * synctex = NULL;
 	synctex_io_mode_t io_mode = 0;
 	const char * mode = NULL;
-	/*  prepare the updater, the memory is the only one dynamically allocated */
-	updater = (synctex_updater_t)_synctex_malloc(sizeof(synctex_updater_t));
+	/*  prepare the updater, the memory is the only one dynamically allocated.
+	 *  RStudio: allocate the struct. synctex_updater_t is a pointer type, so
+	 *  sizeof(synctex_updater_t) is too small for the fields set below. */
+	updater = (synctex_updater_t)_synctex_malloc(sizeof(_synctex_updater_t));
 	if (NULL == updater) {
 		_synctex_error("!  synctex_updater_new_with_file: malloc problem");
 		return NULL;
 	}
 	if (_synctex_open(output,build_directory,&synctex,&SYNCTEX_FILE,synctex_ADD_QUOTES,&io_mode)
 		&& _synctex_open(output,build_directory,&synctex,&SYNCTEX_FILE,synctex_DONT_ADD_QUOTES,&io_mode)) {
-return_on_error:
 		free(updater);
-        updater = NULL;
 		return NULL;
 	}
 	/*  OK, the file exists, we close it and reopen it with the correct mode.
@@ -4366,19 +4366,22 @@ return_on_error:
 	SYNCTEX_FILE = NULL;
 	SYNCTEX_NO_GZ = (io_mode&synctex_io_gz_mask)?synctex_NO:synctex_YES;
     mode = _synctex_get_io_mode_name(io_mode|synctex_io_append_mask);/* either "a" or "ab", depending on the file extension */
+	/*  RStudio: handle the open failure in one place, without gotos into the
+	 *  middle of other blocks, so each path frees synctex once. Snyk Code
+	 *  reports the goto form as cpp/UseAfterFree and cpp/DoubleFree.
+	 *  Keep this form. */
 	if (SYNCTEX_NO_GZ) {
-		if (NULL == (SYNCTEX_FILE = (void *)fopen(synctex,mode))) {
-no_write_error:
-			_synctex_error("!  synctex_updater_new_with_file: Can't append to %s",synctex);
-			free(synctex);
-			goto return_on_error;
-		}
+		SYNCTEX_FILE = (void *)fopen(synctex,mode);
 		updater->fprintf = (synctex_fprintf_t)(&fprintf);
 	} else {
-		if (NULL == (SYNCTEX_FILE = (void *)gzopen(synctex,mode))) {
-			goto no_write_error;
-		}
+		SYNCTEX_FILE = (void *)gzopen(synctex,mode);
 		updater->fprintf = (synctex_fprintf_t)(&gzprintf);
+	}
+	if (NULL == SYNCTEX_FILE) {
+		_synctex_error("!  synctex_updater_new_with_file: Can't append to %s",synctex);
+		free(synctex);
+		free(updater);
+		return NULL;
 	}
 	printf("SyncTeX: updating %s...",synctex);
 	free(synctex);

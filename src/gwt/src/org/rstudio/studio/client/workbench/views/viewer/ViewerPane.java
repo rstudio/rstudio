@@ -44,6 +44,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
@@ -68,7 +69,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                      Provider<UserState> pUserState,
                      HtmlMessageListener htmlMessageListener)
    {
-      super(constants_.viewerTitle(), events);
+      super(constants_.viewerTitle(), PaneManager.VIEWER_PANE, events);
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       server_ = server;

@@ -27,8 +27,8 @@ if(RSTUDIO_DISABLE_CHECK_FOR_UPDATES)
    message(STATUS "Configured to remove check for updates feature")
 endif()
 
-# verify that install-dictionaries, install-mathjax, install-pandoc,
-# and install-rmarkdown have been run as required
+# Verify the dependency installers have been run as required.
+include("${RSTUDIO_PROJECT_ROOT}/dependencies/common/rig.cmake")
 
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
@@ -36,6 +36,7 @@ if(WIN32)
    set(RSTUDIO_DEPENDENCIES_MATHJAX4_DIR     "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-4")
    set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
    set(RSTUDIO_DEPENDENCIES_COPILOT_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/copilot-language-server-js")
+   set(RSTUDIO_DEPENDENCIES_RIG_DIR          "${RSTUDIO_DEPENDENCIES_DIR}/common/rig/${RSTUDIO_RIG_VERSION}")
 else()
 
    # indirection to help build machine find these libraries?
@@ -68,6 +69,12 @@ else()
    else()
       set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_DEPENDENCIES_DIR}/copilot-language-server-js")
    endif()
+
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/rig/${RSTUDIO_RIG_VERSION}")
+      set(RSTUDIO_DEPENDENCIES_RIG_DIR "${RSTUDIO_TOOLS_ROOT}/rig/${RSTUDIO_RIG_VERSION}")
+   else()
+      set(RSTUDIO_DEPENDENCIES_RIG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/rig/${RSTUDIO_RIG_VERSION}")
+   endif()
 endif()
 
 
@@ -89,7 +96,8 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
             RSTUDIO_DEPENDENCIES_MATHJAX4_DIR
             RSTUDIO_DEPENDENCIES_PANDOC_DIR
             RSTUDIO_DEPENDENCIES_QUARTO_DIR
-            RSTUDIO_DEPENDENCIES_COPILOT_DIR)
+            RSTUDIO_DEPENDENCIES_COPILOT_DIR
+            RSTUDIO_DEPENDENCIES_RIG_DIR)
 
  
    # skip quarto if not enabled
@@ -102,6 +110,11 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
       continue()
    endif()
 
+   # skip rig unless building the desktop, which alone installs R with it
+   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_RIG_DIR" AND NOT RSTUDIO_ELECTRON)
+      continue()
+   endif()
+
    # validate existence
    if(NOT EXISTS "${${VAR}}")
       message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
@@ -111,6 +124,11 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
    set("${VAR}" "${${VAR}}" CACHE INTERNAL "")
    
 endforeach()
+
+# Fail at configure time if rig was only partially installed.
+if(RSTUDIO_ELECTRON AND NOT EXISTS "${RSTUDIO_DEPENDENCIES_RIG_DIR}/bin/rig${CMAKE_EXECUTABLE_SUFFIX}")
+   message(FATAL_ERROR "rig executable not found (re-run install-dependencies script to install)")
+endif()
 
 # verify embedded packages are available
 foreach(PKG ${RSTUDIO_EMBEDDED_PACKAGES})
@@ -248,6 +266,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRenv.cpp
+   modules/SessionRig.cpp
    modules/SessionReticulate.cpp
    modules/SessionRHooks.cpp
    modules/SessionRParser.cpp
@@ -429,18 +448,8 @@ file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/*.R")
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)
-  # Use gtest from vendor directory
-  set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
-  include_directories(${GTEST_SOURCE_DIR}/include)
-   
-  # Add Google Test if not already added
-  if(NOT TARGET gtest)
-    add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
-  endif()
-  
   file(GLOB_RECURSE SESSION_TEST_FILES "*Tests.cpp")
   list(APPEND SESSION_SOURCE_FILES ${SESSION_TEST_FILES})
-
 endif()
 
 # define core include dirs
@@ -542,7 +551,6 @@ include_directories(
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
-   ${LIBGIT2_SOURCE_DIR}/include
 )
 
 # link directories
@@ -603,13 +611,13 @@ list(APPEND SESSION_LIBRARIES
    rstudio-r
    rstudio-session-workers
    rstudio-core
-   libgit2package
+   libgit2::libgit2package
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS})
 
 # Add gtest to libraries when unit tests are enabled
 if(RSTUDIO_UNIT_TESTS_ENABLED)
-   list(APPEND SESSION_LIBRARIES gtest)
+   list(APPEND SESSION_LIBRARIES GTest::gtest)
    if(NOT WIN32)
       list(APPEND SESSION_LIBRARIES pthread)
    endif()
@@ -859,14 +867,29 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
               USE_SOURCE_PERMISSIONS)
    endif()
 
+   # Only the desktop installs R with rig (server installations are managed
+   # by administrators). Keep rig's distribution layout: Windows needs the
+   # adjacent shim and elevation helper, and Linux needs share/rig/cacert.pem.
+   if(RSTUDIO_ELECTRON)
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_RIG_DIR}/"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}/rig"
+              USE_SOURCE_PERMISSIONS
+              PATTERN ".installed" EXCLUDE
+              PATTERN "._*" EXCLUDE)
+   endif()
+
    # install Copilot Language Server
    #
    # the copilot-language-server-js distribution bundles native binaries for
-   # every platform and architecture it supports; the binaries that can never
-   # run on the target platform account for the bulk of the distribution's
-   # size, so exclude them. revisit these patterns when updating the bundled
-   # Copilot version in case the package layout changes -- files that stop
-   # matching are installed again (larger package), never broken.
+   # every platform and architecture it supports: per-platform bin/ and
+   # compiled/ folders, plus one Copilot SDK package per platform/arch under
+   # node_modules/@github/copilot-sdk-<platform>-<arch> (the SDK loads only
+   # the one matching process.platform/process.arch). the binaries that can
+   # never run on the target platform account for the bulk of the
+   # distribution's size, so exclude them. a pattern that stops matching after
+   # a Copilot update fails silently (those files are installed again, a
+   # larger package but never a broken one), so each pattern is checked
+   # against the package below, and the update skill re-checks the layout.
    if(RSTUDIO_ENABLE_COPILOT)
 
       if(APPLE)
@@ -877,31 +900,21 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
          set(COPILOT_EXCLUDED_PLATFORMS "darwin|win32")
       endif()
 
-      set(COPILOT_EXCLUDES
-         REGEX "copilot-language-server-js/(bin|compiled)/(${COPILOT_EXCLUDED_PLATFORMS})$" EXCLUDE
-         REGEX "@github/copilot/sdk/prebuilds/(${COPILOT_EXCLUDED_PLATFORMS})-" EXCLUDE)
+      set(COPILOT_EXCLUDE_REGEXES
+         "copilot-language-server-js/(bin|compiled)/(${COPILOT_EXCLUDED_PLATFORMS})$"
+         "@github/copilot-sdk-(${COPILOT_EXCLUDED_PLATFORMS})-[^/]+$")
 
-      # mxc-bin mixes binaries for all platforms within its per-architecture
-      # folders, so those are excluded file-by-file; the crypt32*.node modules
-      # at the package root are Windows-only
-      if(WIN32)
-         list(APPEND COPILOT_EXCLUDES
-            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec|mxc-exec-mac)$" EXCLUDE)
-      elseif(APPLE)
-         list(APPEND COPILOT_EXCLUDES
-            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec)$" EXCLUDE
-            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
-            REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
-      else()
-         list(APPEND COPILOT_EXCLUDES
-            REGEX "@github/copilot/mxc-bin/[^/]+/mxc-exec-mac$" EXCLUDE
-            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
-            REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
+      # the crypt32*.node modules at the package root are Windows-only
+      if(NOT WIN32)
+         list(APPEND COPILOT_EXCLUDE_REGEXES
+            "copilot-language-server-js/crypt32[^/]*\\.node$")
       endif()
 
       # non-macOS packages are architecture-specific, so also exclude binaries
-      # built for the other architecture (macOS packages are universal and
-      # keep both)
+      # built for the other architecture. macOS keeps both: universal packages
+      # ship an x64 and an arm64 node, and an arm64-only package can bundle
+      # the x64 node (see the node install above), so the target architecture
+      # doesn't tell us which binaries Copilot will load
       if(NOT APPLE)
          string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" COPILOT_TARGET_PROCESSOR)
          if(COPILOT_TARGET_PROCESSOR MATCHES "^(x86_64|amd64)$")
@@ -910,12 +923,24 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
             set(COPILOT_EXCLUDED_ARCH "x64")
          endif()
          if(DEFINED COPILOT_EXCLUDED_ARCH)
-            list(APPEND COPILOT_EXCLUDES
-               REGEX "copilot-language-server-js/(bin|compiled)/[^/]+/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
-               REGEX "@github/copilot/sdk/prebuilds/[^/]+-${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
-               REGEX "@github/copilot/mxc-bin/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE)
+            list(APPEND COPILOT_EXCLUDE_REGEXES
+               "copilot-language-server-js/(bin|compiled)/[^/]+/${COPILOT_EXCLUDED_ARCH}$"
+               "@github/copilot-sdk-[^/]+-${COPILOT_EXCLUDED_ARCH}$")
          endif()
       endif()
+
+      # check each pattern against the package (see above), matching against
+      # full source paths as install(DIRECTORY) does
+      file(GLOB_RECURSE COPILOT_FILES LIST_DIRECTORIES true "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}/*")
+      set(COPILOT_EXCLUDES)
+      foreach(COPILOT_REGEX IN LISTS COPILOT_EXCLUDE_REGEXES)
+         set(COPILOT_MATCHES "${COPILOT_FILES}")
+         list(FILTER COPILOT_MATCHES INCLUDE REGEX "${COPILOT_REGEX}")
+         if(NOT COPILOT_MATCHES)
+            message(WARNING "Copilot install exclude '${COPILOT_REGEX}' matches nothing in '${RSTUDIO_DEPENDENCIES_COPILOT_DIR}', so the package layout has likely changed. Update the excludes here to match it.")
+         endif()
+         list(APPEND COPILOT_EXCLUDES REGEX "${COPILOT_REGEX}" EXCLUDE)
+      endforeach()
 
       if(APPLE)
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"

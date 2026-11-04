@@ -91,6 +91,7 @@ namespace prefs {
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
 #define kAutoDetectIndentation "auto_detect_indentation"
+#define kShowGitDiffGutter "show_git_diff_gutter"
 #define kShowMargin "show_margin"
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
@@ -328,6 +329,7 @@ namespace prefs {
 #define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
 #define kNewProjGitInit "new_proj_git_init"
 #define kNewProjUseRenv "new_proj_use_renv"
+#define kCheckProjectRVersion "check_project_r_version"
 #define kRootDocument "root_document"
 #define kShowUserHomePage "show_user_home_page"
 #define kShowUserHomePageAlways "always"
@@ -358,7 +360,6 @@ namespace prefs {
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
 #define kEnableSplashScreen "enable_splash_screen"
-#define kShowWhatsNew "show_whats_new"
 #define kDefaultRVersion "default_r_version"
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
@@ -680,6 +681,12 @@ public:
    core::Error setAutoDetectIndentation(bool val);
 
    /**
+    * Whether to mark lines added, changed, or removed since they were last staged or committed in the editor gutter, for files in a Git repository.
+    */
+   bool showGitDiffGutter();
+   core::Error setShowGitDiffGutter(bool val);
+
+   /**
     * Whether to show the margin guide in the RStudio code editor.
     */
    bool showMargin();
@@ -740,7 +747,7 @@ public:
    core::Error setEditorKeybindings(std::string val);
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    bool vimLoadVimrc();
    core::Error setVimLoadVimrc(bool val);
@@ -1670,6 +1677,12 @@ public:
    core::Error setNewProjUseRenv(bool val);
 
    /**
+    * Whether to warn, and offer to switch, when the version of R recorded in a project's renv lockfile or project file differs from the version of R in use.
+    */
+   bool checkProjectRVersion();
+   core::Error setCheckProjectRVersion(bool val);
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    std::string rootDocument();
@@ -1818,12 +1831,6 @@ public:
     */
    bool enableSplashScreen();
    core::Error setEnableSplashScreen(bool val);
-
-   /**
-    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
-    */
-   bool showWhatsNew();
-   core::Error setShowWhatsNew(bool val);
 
    /**
     * The R version to use by default.
@@ -2042,7 +2049,7 @@ public:
    core::Error setFileMonitorUseGitignore(bool val);
 
    /**
-    * Whether to install R package dependencies one at a time.
+    * Whether to install R package dependencies one at a time. Not used in renv projects, where packages are always installed together so that renv can resolve dependencies and install in parallel.
     */
    bool installPkgDepsIndividually();
    core::Error setInstallPkgDepsIndividually(bool val);

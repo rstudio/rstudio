@@ -1,0 +1,945 @@
+{
+  "doi": {
+    "10.3133/93888": {
+      "indexed": {
+        "date-parts": [
+          [
+            2023,
+            8,
+            24
+          ]
+        ],
+        "date-time": "2023-08-24T04:29:17Z",
+        "timestamp": 1692851357650
+      },
+      "reference-count": 0,
+      "publisher": "US Geological Survey",
+      "content-domain": {
+        "domain": [],
+        "crossmark-restriction": false
+      },
+      "DOI": "10.3133/93888",
+      "type": "report",
+      "created": {
+        "date-parts": [
+          [
+            2018,
+            8,
+            17
+          ]
+        ],
+        "date-time": "2018-08-17T20:52:38Z",
+        "timestamp": 1534539158000
+      },
+      "source": "Crossref",
+      "is-referenced-by-count": 0,
+      "title": "Effects of management practices on grassland birds: Bobolink",
+      "prefix": "10.3133",
+      "member": "1689",
+      "published-online": {
+        "date-parts": [
+          [
+            1999
+          ]
+        ]
+      },
+      "container-title": [],
+      "original-title": [],
+      "deposited": {
+        "date-parts": [
+          [
+            2023,
+            8,
+            23
+          ]
+        ],
+        "date-time": "2023-08-23T13:33:07Z",
+        "timestamp": 1692797587000
+      },
+      "score": 1,
+      "resource": {
+        "primary": {
+          "URL": "https://pubs.usgs.gov/publication/93888"
+        }
+      },
+      "subtitle": [],
+      "short-title": [],
+      "issued": {
+        "date-parts": [
+          [
+            1999
+          ]
+        ]
+      },
+      "references-count": 0,
+      "URL": "http://dx.doi.org/10.3133/93888",
+      "relation": {},
+      "subject": [],
+      "published": {
+        "date-parts": [
+          [
+            1999
+          ]
+        ]
+      }
+    },
+    "10.5281/zenodo.4266706": {
+      "type": "article-journal",
+      "id": "https://doi.org/10.5281/zenodo.4266706",
+      "categories": [
+        "Macrophages",
+        "COVID-19",
+        "Logical model",
+        "Systems Biology",
+        "Disease map"
+      ],
+      "language": "en",
+      "author": [
+        {
+          "family": "Berm\u00fadez",
+          "given": "Viviam"
+        },
+        {
+          "family": "Fari\u00f1as",
+          "given": "Marco"
+        },
+        {
+          "family": "Tsirvouli",
+          "given": "Eirini"
+        },
+        {
+          "family": "Kuiper",
+          "given": "Martin"
+        }
+      ],
+      "issued": {
+        "date-parts": [
+          [
+            2020,
+            11,
+            10
+          ]
+        ]
+      },
+      "abstract": "The COVID-19 Disease Map project aims to map and explore the many molecular processes involved in SARS-CoV-2 infection. To represent and understand the complexity of the multicellular events triggered by this virus infection, the information gathered in this repository may be used to assemble and refine cell-specific logical models. Macrophages, being part of the innate immune system, are involved in the inflammatory response and are one of the cell types directly affected by the virus. Understanding the role of macrophages in the progression of viral infection may lead to new insights for treatments. A logical model of macrophage polarization developed recently at NTNU is now further enhanced using knowledge of the COVID-19 Disease Map and configured to represent the effects of SARS-CoV-2 drug treatments in a cell and pathogen-specific way. Curated signaling pathway mechanisms represented as molecular interaction diagrams in the COVID-19 Disease Map are converted and upgraded to meet Boolean modeling criteria and validated to ensure they specifically occur in macrophages. Also, adaptations to the macrophage polarization model are performed to represent the biological outcomes related to the disease (e.g., inflammatory response, phagocytosis, viral replication). Finally, these different modules are integrated into one Boolean model, and stable state analysis and drug perturbation simulations are performed. The results will provide insight into the biological processes affected in macrophages during acute COVID-19 infection and how treatment with specific drugs may alleviate the detrimental effects of viral infection. Our poster describes how to <em>covidize </em>a relevant cellular model and the steps that it takes to validate the disease model, and can be used to guide the development of multicellular models representing the COVID-19 disease.",
+      "DOI": "10.5281/ZENODO.4266706",
+      "publisher": "Zenodo",
+      "title": "From COVID-19 Disease Map Molecular Mechanisms to Executable Cell-specific Logical Models",
+      "URL": "https://zenodo.org/record/4266706",
+      "copyright": "Creative Commons Attribution 4.0 International"
+    }
+  },
+  "crossref": {
+    "bobolink": {
+      "status": "ok",
+      "message-type": "work-list",
+      "message-version": "1.0.0",
+      "message": {
+        "total-results": 5,
+        "items": [
+          {
+            "indexed": {
+              "date-parts": [
+                [
+                  2024,
+                  9,
+                  13
+                ]
+              ],
+              "date-time": "2024-09-13T07:10:06Z",
+              "timestamp": 1726211406053
+            },
+            "edition-number": "3",
+            "reference-count": 0,
+            "publisher": "Oxford University Press",
+            "content-domain": {
+              "domain": [],
+              "crossmark-restriction": false
+            },
+            "published-print": {
+              "date-parts": [
+                [
+                  2023,
+                  3,
+                  2
+                ]
+              ]
+            },
+            "DOI": "10.1093/oed/4664662318",
+            "type": "book-chapter",
+            "created": {
+              "date-parts": [
+                [
+                  2023,
+                  7,
+                  20
+                ]
+              ],
+              "date-time": "2023-07-20T03:02:33Z",
+              "timestamp": 1689822153000
+            },
+            "source": "Crossref",
+            "is-referenced-by-count": 0,
+            "title": [
+              "bobolink, n."
+            ],
+            "prefix": "10.1093",
+            "member": "286",
+            "container-title": [
+              "Oxford English Dictionary"
+            ],
+            "language": "en",
+            "deposited": {
+              "date-parts": [
+                [
+                  2023,
+                  7,
+                  20
+                ]
+              ],
+              "date-time": "2023-07-20T03:10:24Z",
+              "timestamp": 1689822624000
+            },
+            "score": 20.964434,
+            "resource": {
+              "primary": {
+                "URL": "https://oed.com/dictionary/bobolink_n"
+              }
+            },
+            "issued": {
+              "date-parts": [
+                [
+                  2023,
+                  3,
+                  2
+                ]
+              ]
+            },
+            "references-count": 0,
+            "URL": "https://doi.org/10.1093/oed/4664662318",
+            "published": {
+              "date-parts": [
+                [
+                  2023,
+                  3,
+                  2
+                ]
+              ]
+            }
+          },
+          {
+            "indexed": {
+              "date-parts": [
+                [
+                  2023,
+                  8,
+                  24
+                ]
+              ],
+              "date-time": "2023-08-24T04:29:17Z",
+              "timestamp": 1692851357650
+            },
+            "reference-count": 0,
+            "publisher": "US Geological Survey",
+            "content-domain": {
+              "domain": [],
+              "crossmark-restriction": false
+            },
+            "DOI": "10.3133/93888",
+            "type": "report",
+            "created": {
+              "date-parts": [
+                [
+                  2018,
+                  8,
+                  17
+                ]
+              ],
+              "date-time": "2018-08-17T20:52:38Z",
+              "timestamp": 1534539158000
+            },
+            "source": "Crossref",
+            "is-referenced-by-count": 0,
+            "title": [
+              "Effects of management practices on grassland birds: Bobolink"
+            ],
+            "prefix": "10.3133",
+            "member": "1689",
+            "published-online": {
+              "date-parts": [
+                [
+                  1999
+                ]
+              ]
+            },
+            "deposited": {
+              "date-parts": [
+                [
+                  2023,
+                  8,
+                  23
+                ]
+              ],
+              "date-time": "2023-08-23T13:33:07Z",
+              "timestamp": 1692797587000
+            },
+            "score": 20.768562,
+            "resource": {
+              "primary": {
+                "URL": "https://pubs.usgs.gov/publication/93888"
+              }
+            },
+            "issued": {
+              "date-parts": [
+                [
+                  1999
+                ]
+              ]
+            },
+            "references-count": 0,
+            "URL": "https://doi.org/10.3133/93888",
+            "published": {
+              "date-parts": [
+                [
+                  1999
+                ]
+              ]
+            }
+          },
+          {
+            "indexed": {
+              "date-parts": [
+                [
+                  2024,
+                  9,
+                  8
+                ]
+              ],
+              "date-time": "2024-09-08T05:51:46Z",
+              "timestamp": 1725774706945
+            },
+            "edition-number": "0",
+            "reference-count": 0,
+            "publisher": "Routledge",
+            "isbn-type": [
+              {
+                "type": "electronic",
+                "value": "9780203484272"
+              }
+            ],
+            "content-domain": {
+              "domain": [],
+              "crossmark-restriction": false
+            },
+            "published-print": {
+              "date-parts": [
+                [
+                  2004,
+                  11,
+                  12
+                ]
+              ]
+            },
+            "DOI": "10.4324/9780203484272-104",
+            "type": "book-chapter",
+            "created": {
+              "date-parts": [
+                [
+                  2020,
+                  12,
+                  11
+                ]
+              ],
+              "date-time": "2020-12-11T06:45:52Z",
+              "timestamp": 1607669152000
+            },
+            "page": "255-255",
+            "source": "Crossref",
+            "is-referenced-by-count": 0,
+            "title": [
+              "BOBOLINK TALKING BOOK"
+            ],
+            "prefix": "10.4324",
+            "member": "301",
+            "container-title": [
+              "Encyclopedia of Recorded Sound"
+            ],
+            "language": "en",
+            "deposited": {
+              "date-parts": [
+                [
+                  2020,
+                  12,
+                  11
+                ]
+              ],
+              "date-time": "2020-12-11T06:47:22Z",
+              "timestamp": 1607669242000
+            },
+            "score": 19.912731,
+            "resource": {
+              "primary": {
+                "URL": "https://www.taylorfrancis.com/books/9781135949501/chapters/10.4324/9780203484272-104"
+              }
+            },
+            "issued": {
+              "date-parts": [
+                [
+                  2004,
+                  11,
+                  12
+                ]
+              ]
+            },
+            "ISBN": [
+              "9780203484272"
+            ],
+            "references-count": 0,
+            "URL": "https://doi.org/10.4324/9780203484272-104",
+            "published": {
+              "date-parts": [
+                [
+                  2004,
+                  11,
+                  12
+                ]
+              ]
+            }
+          },
+          {
+            "indexed": {
+              "date-parts": [
+                [
+                  2022,
+                  4,
+                  3
+                ]
+              ],
+              "date-time": "2022-04-03T14:14:40Z",
+              "timestamp": 1648995280357
+            },
+            "reference-count": 0,
+            "publisher": "University of Arizona Press",
+            "content-domain": {
+              "domain": [],
+              "crossmark-restriction": false
+            },
+            "published-print": {
+              "date-parts": [
+                [
+                  2021,
+                  10,
+                  19
+                ]
+              ]
+            },
+            "DOI": "10.2307/j.ctv1zm2t5q.4",
+            "type": "book-chapter",
+            "created": {
+              "date-parts": [
+                [
+                  2021,
+                  10,
+                  19
+                ]
+              ],
+              "date-time": "2021-10-19T21:06:28Z",
+              "timestamp": 1634677588000
+            },
+            "page": "1-10",
+            "source": "Crossref",
+            "is-referenced-by-count": 0,
+            "title": [
+              "The Bobolink"
+            ],
+            "prefix": "10.2307",
+            "member": "1121",
+            "container-title": [
+              "Orioles, Blackbirds, and Their Kin"
+            ],
+            "deposited": {
+              "date-parts": [
+                [
+                  2021,
+                  10,
+                  19
+                ]
+              ],
+              "date-time": "2021-10-19T21:08:20Z",
+              "timestamp": 1634677700000
+            },
+            "score": 19.599321,
+            "resource": {
+              "primary": {
+                "URL": "http://www.jstor.org/stable/10.2307/j.ctv1zm2t5q.4"
+              }
+            },
+            "issued": {
+              "date-parts": [
+                [
+                  2021,
+                  10,
+                  19
+                ]
+              ]
+            },
+            "references-count": 0,
+            "URL": "https://doi.org/10.2307/j.ctv1zm2t5q.4",
+            "published": {
+              "date-parts": [
+                [
+                  2021,
+                  10,
+                  19
+                ]
+              ]
+            }
+          },
+          {
+            "indexed": {
+              "date-parts": [
+                [
+                  2022,
+                  4,
+                  5
+                ]
+              ],
+              "date-time": "2022-04-05T04:19:10Z",
+              "timestamp": 1649132350682
+            },
+            "reference-count": 0,
+            "publisher": "University of Iowa Press",
+            "content-domain": {
+              "domain": [],
+              "crossmark-restriction": false
+            },
+            "DOI": "10.2307/j.ctt20ks130.50",
+            "type": "book-chapter",
+            "created": {
+              "date-parts": [
+                [
+                  2018,
+                  2,
+                  14
+                ]
+              ],
+              "date-time": "2018-02-14T15:22:43Z",
+              "timestamp": 1518621763000
+            },
+            "page": "93-93",
+            "source": "Crossref",
+            "is-referenced-by-count": 0,
+            "title": [
+              "Bobolink"
+            ],
+            "prefix": "10.2307",
+            "member": "1121",
+            "container-title": [
+              "Fifty Common Birds of the Upper Midwest"
+            ],
+            "deposited": {
+              "date-parts": [
+                [
+                  2018,
+                  5,
+                  9
+                ]
+              ],
+              "date-time": "2018-05-09T12:21:47Z",
+              "timestamp": 1525868507000
+            },
+            "score": 19.576775,
+            "resource": {
+              "primary": {
+                "URL": "https://www.jstor.org/stable/10.2307/j.ctt20ks130.50"
+              }
+            },
+            "subtitle": [
+              "Dolichonyx oryzivorus"
+            ],
+            "issued": {
+              "date-parts": [
+                [
+                  null
+                ]
+              ]
+            },
+            "references-count": 0,
+            "URL": "https://doi.org/10.2307/j.ctt20ks130.50"
+          }
+        ],
+        "items-per-page": 5,
+        "query": {
+          "start-index": 0,
+          "search-terms": "bobolink"
+        }
+      }
+    }
+  },
+  "datacite": {
+    "bobolink": {
+      "data": [
+        {
+          "id": "10.82465/119",
+          "type": "dois",
+          "attributes": {
+            "doi": "10.82465/119",
+            "titles": [
+              {
+                "lang": "",
+                "title": "Temporal changes in grassland songbird density in pastures with increasing exotic vegetation cover"
+              }
+            ],
+            "creators": [
+              {
+                "name": "Bell, Kelsey Diane"
+              }
+            ],
+            "publisher": "Faculty of Graduate Studies and Research, University of Regina",
+            "publicationYear": 2026,
+            "types": {
+              "resourceTypeGeneral": "Other",
+              "citeproc": "article",
+              "resourceType": "master thesis"
+            }
+          }
+        },
+        {
+          "id": "10.82308/18014",
+          "type": "dois",
+          "attributes": {
+            "doi": "10.82308/18014",
+            "titles": [
+              {
+                "title": "Ecology and management of Bobolinks in hayfields of Quebec and Ontario"
+              }
+            ],
+            "creators": [
+              {
+                "name": "Frei, Barbara"
+              }
+            ],
+            "publisher": "McGill University",
+            "publicationYear": 2009,
+            "types": {
+              "resourceTypeGeneral": "Dissertation",
+              "citeproc": "thesis",
+              "resourceType": "https://vocabularies.coar-repositories.org/resource_types/c_46ec/"
+            }
+          }
+        },
+        {
+          "id": "10.7282/t3j38rzs",
+          "type": "dois",
+          "attributes": {
+            "doi": "10.7282/t3j38rzs",
+            "titles": [
+              {
+                "title": "Bobolink, Dolichonyx oryzivorus"
+              }
+            ],
+            "creators": [
+              {
+                "name": "No Name Supplied"
+              }
+            ],
+            "publisher": "No Publisher Supplied",
+            "publicationYear": 2004,
+            "types": {
+              "resourceTypeGeneral": "Text",
+              "citeproc": "article-journal"
+            }
+          }
+        }
+      ]
+    },
+    "10.5281/zenodo.4266706": {
+      "data": [
+        {
+          "id": "10.5281/zenodo.4266706",
+          "type": "dois",
+          "attributes": {
+            "doi": "10.5281/zenodo.4266706",
+            "titles": [
+              {
+                "title": "From COVID-19 Disease Map Molecular Mechanisms to Executable Cell-specific Logical Models"
+              }
+            ],
+            "creators": [
+              {
+                "givenName": "Viviam",
+                "familyName": "Berm\u00fadez",
+                "name": "Berm\u00fadez, Viviam"
+              },
+              {
+                "givenName": "Marco",
+                "familyName": "Fari\u00f1as",
+                "name": "Fari\u00f1as, Marco"
+              },
+              {
+                "givenName": "Eirini",
+                "familyName": "Tsirvouli",
+                "name": "Tsirvouli, Eirini"
+              },
+              {
+                "givenName": "Martin",
+                "familyName": "Kuiper",
+                "name": "Kuiper, Martin"
+              }
+            ],
+            "publisher": "Zenodo",
+            "publicationYear": 2020,
+            "types": {
+              "resourceTypeGeneral": "Text",
+              "citeproc": "article-journal",
+              "resourceType": "Poster"
+            }
+          }
+        },
+        {
+          "id": "10.5281/zenodo.4266707",
+          "type": "dois",
+          "attributes": {
+            "doi": "10.5281/zenodo.4266707",
+            "titles": [
+              {
+                "title": "From COVID-19 Disease Map Molecular Mechanisms to Executable Cell-specific Logical Models"
+              }
+            ],
+            "creators": [
+              {
+                "givenName": "Viviam",
+                "familyName": "Berm\u00fadez",
+                "name": "Berm\u00fadez, Viviam"
+              },
+              {
+                "givenName": "Marco",
+                "familyName": "Fari\u00f1as",
+                "name": "Fari\u00f1as, Marco"
+              },
+              {
+                "givenName": "Eirini",
+                "familyName": "Tsirvouli",
+                "name": "Tsirvouli, Eirini"
+              },
+              {
+                "givenName": "Martin",
+                "familyName": "Kuiper",
+                "name": "Kuiper, Martin"
+              }
+            ],
+            "publisher": "Zenodo",
+            "publicationYear": 2020,
+            "types": {
+              "resourceTypeGeneral": "Text",
+              "citeproc": "article-journal",
+              "resourceType": "Poster"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "pubmed": {
+    "esearch": {
+      "bobolink": {
+        "header": {
+          "type": "esearch",
+          "version": "0.3"
+        },
+        "esearchresult": {
+          "count": "34",
+          "retmax": "3",
+          "retstart": "0",
+          "idlist": [
+            "19996329",
+            "34573626",
+            "40342705"
+          ],
+          "translationset": [
+            {
+              "from": "bobolink",
+              "to": "\"bobolink\"[All Fields] OR \"bobolinks\"[All Fields]"
+            }
+          ],
+          "querytranslation": "\"bobolink\"[All Fields] OR \"bobolinks\"[All Fields]"
+        }
+      }
+    },
+    "esummary": {
+      "19996329": {
+        "uid": "19996329",
+        "pubdate": "2010 Apr",
+        "source": "Br J Sports Med",
+        "authors": [
+          {
+            "name": "Kibler WB",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Sciascia A",
+            "authtype": "Author",
+            "clusterid": ""
+          }
+        ],
+        "title": "Current concepts: scapular dyskinesis.",
+        "volume": "44",
+        "issue": "5",
+        "pubtype": [
+          "Journal Article"
+        ],
+        "articleids": [
+          {
+            "idtype": "pubmed",
+            "idtypen": 1,
+            "value": "19996329"
+          },
+          {
+            "idtype": "doi",
+            "idtypen": 3,
+            "value": "10.1136/bjsm.2009.058834"
+          },
+          {
+            "idtype": "pii",
+            "idtypen": 4,
+            "value": "bjsm.2009.058834"
+          }
+        ],
+        "sortfirstauthor": "Kibler WB"
+      },
+      "34573626": {
+        "uid": "34573626",
+        "pubdate": "2021 Sep 10",
+        "source": "Animals (Basel)",
+        "authors": [
+          {
+            "name": "Kaplan RH",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Rosamond KM",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Goded S",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Soultan A",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Glass A",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Kim DH",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Arcilla N",
+            "authtype": "Author",
+            "clusterid": ""
+          }
+        ],
+        "title": "Bobolink (Dolichonyx oryzivorus) Declines Follow Bison (Bison bison) Reintroduction on Private Conservation Grasslands.",
+        "volume": "11",
+        "issue": "9",
+        "pubtype": [
+          "Journal Article"
+        ],
+        "articleids": [
+          {
+            "idtype": "pubmed",
+            "idtypen": 1,
+            "value": "34573626"
+          },
+          {
+            "idtype": "pmc",
+            "idtypen": 8,
+            "value": "PMC8471021"
+          },
+          {
+            "idtype": "pmcid",
+            "idtypen": 5,
+            "value": "pmc-id: PMC8471021;"
+          },
+          {
+            "idtype": "doi",
+            "idtypen": 3,
+            "value": "10.3390/ani11092661"
+          },
+          {
+            "idtype": "pii",
+            "idtypen": 4,
+            "value": "ani11092661"
+          }
+        ],
+        "sortfirstauthor": "Kaplan RH"
+      },
+      "40342705": {
+        "uid": "40342705",
+        "pubdate": "2025 May",
+        "source": "Ecol Evol",
+        "authors": [
+          {
+            "name": "McGee K",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Perlut NG",
+            "authtype": "Author",
+            "clusterid": ""
+          },
+          {
+            "name": "Travis SE",
+            "authtype": "Author",
+            "clusterid": ""
+          }
+        ],
+        "title": "Eight Novel Microsatellite Loci in a Declining Grassland Songbird, the Bobolink (Dolichonyx oryzivorus).",
+        "volume": "15",
+        "issue": "5",
+        "pubtype": [
+          "Journal Article"
+        ],
+        "articleids": [
+          {
+            "idtype": "pubmed",
+            "idtypen": 1,
+            "value": "40342705"
+          },
+          {
+            "idtype": "pmc",
+            "idtypen": 8,
+            "value": "PMC12058644"
+          },
+          {
+            "idtype": "pmcid",
+            "idtypen": 5,
+            "value": "pmc-id: PMC12058644;"
+          },
+          {
+            "idtype": "doi",
+            "idtypen": 3,
+            "value": "10.1002/ece3.71400"
+          },
+          {
+            "idtype": "pii",
+            "idtypen": 4,
+            "value": "ECE371400"
+          }
+        ],
+        "sortfirstauthor": "McGee K"
+      }
+    }
+  }
+}

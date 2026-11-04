@@ -17,14 +17,50 @@
 
 #include <boost/optional.hpp>
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/FileSerializer.hpp>
+#include <core/r_util/RPackageInfo.hpp>
+
 #include <gtest/gtest.h>
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
 namespace projects {
 namespace {
+
+TEST(SessionProjectsTests, IsPackageProjectFalseWithoutProject)
+{
+   // with no project open, isPackageProject() used to look for DESCRIPTION
+   // in the working directory (#19056); this only applies to sessions that
+   // have no project open, which is how the test session runs
+   if (projectContext().hasProject())
+      GTEST_SKIP() << "a project is open";
+
+   FilePath packageDir;
+   Error error = FilePath::tempFilePath(packageDir);
+   ASSERT_FALSE(error) << error.asString();
+   error = packageDir.ensureDirectory();
+   ASSERT_FALSE(error) << error.asString();
+   error = writeStringToFile(
+            packageDir.completeChildPath("DESCRIPTION"),
+            "Package: foo\nVersion: 0.1.0\nType: Package\n");
+   ASSERT_FALSE(error) << error.asString();
+
+   // declared in reverse order of teardown: restore the working directory
+   // before removing the temporary package directory
+   RemoveOnExitScope removeScope(packageDir, ERROR_LOCATION);
+   RestoreCurrentPathScope restoreScope(FilePath::safeCurrentPath(packageDir), ERROR_LOCATION);
+
+   error = packageDir.makeCurrentPath();
+   ASSERT_FALSE(error) << error.asString();
+   ASSERT_TRUE(r_util::isPackageDirectory(FilePath::safeCurrentPath(packageDir)));
+
+   EXPECT_FALSE(projectContext().isPackageProject());
+}
 
 TEST(SessionProjectsTests, ResolveWrittenEditorThemePreservesWhenKeyOmitted)
 {

@@ -80,14 +80,16 @@ public:
                                        int widthPx,
                                        int heightPx,
                                        bool useDevicePixelRatio = false,
-                                       bool recordResolution = false);
+                                       bool recordResolution = false,
+                                       const BitmapOptions& options = BitmapOptions());
 
    virtual core::Error savePlotAsImage(const core::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
                                        double devicePixelRatio,
-                                       bool recordResolution = false);
+                                       bool recordResolution = false,
+                                       const BitmapOptions& options = BitmapOptions());
 
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
@@ -164,7 +166,8 @@ private:
                                     int width,
                                     int height,
                                     double pixelRatio,
-                                    bool recordResolution);
+                                    bool recordResolution,
+                                    const BitmapOptions& options);
 
    core::Error savePlotAsSvg(const core::FilePath& targetPath,
                              int width,
@@ -197,6 +200,7 @@ private:
    bool suppressDeviceEvents_;
    
    int activePlot_;
+   bool activePlotChanged_;
    boost::circular_buffer<PtrPlot> plots_;
    
    boost::regex plotInfoRegex_;

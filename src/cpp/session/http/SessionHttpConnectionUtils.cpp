@@ -317,7 +317,18 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // we avoid sending an interrupt, and instead tell the client that R is not
       // busy and it should instead send an explicit request to canncel the current
       // console read request.
-      bool busy = session::console_input::executing();
+      //
+      // R is also busy, with the console at its prompt, while it runs an input
+      // handler dispatched from the idle loop (a later callback); the interrupt
+      // is what ends a long-running one (#19236). the dispatch itself does not
+      // count: an interrupt landing in it would be swallowed, and one at an
+      // interactive read must cancel it. so a dispatch is first waited out
+      // (see http_methods::idleEventsPastDispatch) -- during which the handlers
+      // may have returned to a read that took queued input and started a
+      // command, hence the second look at executing().
+      bool busy = session::console_input::executing() ||
+                  http_methods::idleEventsPastDispatch() ||
+                  session::console_input::executing();
       if (http_methods::protocolDebugEnabled())
       {
          if (busy)

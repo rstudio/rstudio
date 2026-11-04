@@ -31,7 +31,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -102,7 +102,6 @@ public class UserPrefs extends UserPrefsComputed
       {
          autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
          enableSplashScreen().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableSplashScreen(enabled.getValue()));
-         showWhatsNew().addValueChangeHandler(enabled -> Desktop.getFrame().setShowWhatsNew(enabled.getValue()));
          enableScreenReader().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableAccessibility(enabled.getValue()));
          enableMousewheelZoom().addValueChangeHandler(enabled -> Desktop.getFrame().setMousewheelZoomEnabled(enabled.getValue()));
          mousewheelZoomDebounceMs().addValueChangeHandler(debounceMs -> Desktop.getFrame().setMousewheelZoomDebounce(debounceMs.getValue()));
@@ -328,7 +327,6 @@ public class UserPrefs extends UserPrefsComputed
          Desktop.getFrame().setMousewheelZoomDebounce(mousewheelZoomDebounceMs().getValue());
          Desktop.getFrame().setEnableAccessibility(enableScreenReader().getValue());
          Desktop.getFrame().setEnableSplashScreen(enableSplashScreen().getValue());
-         Desktop.getFrame().setShowWhatsNew(showWhatsNew().getValue());
       }
    }
 
@@ -403,7 +401,7 @@ public class UserPrefs extends UserPrefsComputed
                      if (Desktop.isDesktop())
                         quit_.doRestart(session_);
                      else
-                        eventBus_.fireEvent(new ReloadEvent());
+                        eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
                   }
                   else
                   {

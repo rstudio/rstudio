@@ -272,7 +272,7 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir,
 
    for (const FilePath& child : children)
    {
-      // The same rule resolveSlot() applies to a selection: staging
+      // The same rule selectedSlot() applies to a selection: staging
       // directories and other dot-prefixed bookkeeping, and any name that
       // could not be recorded and read back as a selection. Without it a
       // hand-made directory with a trailing space would be recorded as the

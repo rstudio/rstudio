@@ -180,4 +180,12 @@ test.describe('Workbench tabs', () => {
     await envTab.click();
     await expect(page.locator(ENV_PANEL)).toBeVisible();
   });
+
+  test('a minimized pane names its tab strip after the pane', async ({ rstudioPage: page }) => {
+    // The minimized strip's tablist once read "accessibleName_ minimized".
+    await executeCommand(page, 'maximizeTabSet2');
+    const minimizedTablist = page.locator('table[role="tablist"]').filter({ visible: true });
+    await expect(minimizedTablist).toHaveCount(1);
+    await expect(minimizedTablist).toHaveAttribute('aria-label', 'TabSet1 minimized');
+  });
 });

@@ -105,6 +105,10 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+      skip_e2e_deps_cache_save:
+        description: "Don't save the os-e2e-deps caches (R library, pak downloads, Playwright browsers). Set by broad-matrix callers whose engines run too rarely for those caches to outlive eviction."
+        type: boolean
+        default: false
     outputs:
       r_version_actual:
         description: >-
@@ -120,9 +124,6 @@ on:
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
-      AWS_SCCACHE_ROLE_ARN:
-        description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
-        required: false
       OP_SERVICE_ACCOUNT_TOKEN:
         description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
         required: false
@@ -133,6 +134,13 @@ permissions:
   # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
   # role (see .github/actions/os-publish-e2e-report).
   id-token: write
+
+# actions/cache passes zstd no compression level, so zstd honors ZSTD_CLEVEL;
+# level 9 makes cache entries ~13% smaller than the default level 3 at about
+# the same save time, and restores are unaffected. Set here rather than per
+# step so every save in every job, composite actions included, picks it up.
+env:
+  ZSTD_CLEVEL: 9
 
 jobs:
   # Builds RStudio Desktop from this PR's source on the same runner image as
@@ -157,10 +165,8 @@ jobs:
       # version (e.g. x86_64-apple-darwin20/4.5), which keeps libraries
       # built for different R versions / platforms in separate subtrees.
       R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
+      # The backend is set up by the "Configure sccache" step below.
       SCCACHE_ENABLED: '1'
-      # Backend selection happens in the "Select sccache backend" step below:
-      # S3 when the OIDC role + bucket are configured, GHA cache otherwise.
-      SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
       # Compile GWT with readable (PRETTY) symbol names rather than the default
@@ -182,7 +188,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          key: rstudio-tools-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/common/rig.cmake', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
           restore-keys: |
             rstudio-tools-x86_64-
 
@@ -250,49 +256,21 @@ jobs:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
 
-      # Prefer the S3 sccache backend when the infra is configured (the
-      # AWS_SCCACHE_ROLE_ARN secret plus the AWS_SCCACHE_BUCKET repo
-      # variable). The GHA cache backend writes per-object entries into each
-      # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
-      # (6000+ of its entries were sccache objects) and LRU-evicting the
-      # main-scoped copies the seed maintains -- PR builds then compile at a
-      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
-      # writes one shared cache.
-      - name: Configure AWS credentials for sccache
-        id: sccache-aws
-        if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
-        # A failed OIDC exchange degrades to the GHA backend below rather
-        # than failing the build.
-        continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
-        with:
-          role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
-          aws-region: us-east-1
-          # Cold builds can run past the default 1-hour session; the role
-          # must be created with a max session duration of at least 2 hours.
-          role-duration-seconds: 7200
-
-      # Falls back to the GHA cache backend when the secret/variable are
-      # unset (e.g. fork PRs) or the credential exchange failed, preserving
-      # today's behavior. Must run before the sccache-action below: that
-      # action only exports the Actions cache URL/token the GHA backend
-      # needs when SCCACHE_GHA_ENABLED is already set as it runs.
-      - name: Select sccache backend
+      # sccache keeps one Actions cache entry per object file. Only main
+      # writes them (the nightly seed keeps them current), and every other ref
+      # reads main's. An entry written from a PR would land in that PR's
+      # merge-ref scope, which no other branch can read, and crowd main's
+      # entries out of the repo's cache limit (#18337). The Actions cache
+      # replaced an S3 bucket whose every hit was billed as egress (#19355).
+      - name: Configure sccache
         env:
-          SCCACHE_S3_BUCKET: ${{ vars.AWS_SCCACHE_BUCKET }}
-          SCCACHE_AWS_OUTCOME: ${{ steps.sccache-aws.outcome }}
+          SCCACHE_GHA_RW_MODE: ${{ github.ref == 'refs/heads/main' && 'READ_WRITE' || 'READ_ONLY' }}
         run: |
-          if [ "$SCCACHE_AWS_OUTCOME" = "success" ]; then
-            echo "sccache backend: S3 ($SCCACHE_S3_BUCKET)"
-            {
-              echo "SCCACHE_BUCKET=$SCCACHE_S3_BUCKET"
-              echo "SCCACHE_REGION=us-east-1"
-              echo "SCCACHE_S3_KEY_PREFIX=macos-x86_64"
-            } >> "$GITHUB_ENV"
-          else
-            echo "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
-            echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
-          fi
+          echo "sccache backend: GitHub Actions cache ($SCCACHE_GHA_RW_MODE)"
+          {
+            echo "SCCACHE_GHA_ENABLED=true"
+            echo "SCCACHE_GHA_RW_MODE=$SCCACHE_GHA_RW_MODE"
+          } >> "$GITHUB_ENV"
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
@@ -349,8 +327,16 @@ jobs:
           path: RStudio.app.tar.gz
           retention-days: 7
 
+  # Reads the macOS shard count from .github/e2e/shards.json and republishes
+  # it as job outputs: the e2e job's strategy.matrix cannot read a file or an
+  # env value itself, so the one declaration has to pass through here.
+  shards:
+    uses: ./.github/workflows/os-test-e2e-rstudio-shards.yml
+    with:
+      platform: macos
+
   e2e-desktop-macos15:
-    needs: build
+    needs: [build, shards]
     # build is skipped when build_from_source is false; allow this job to
     # run in that case too. needs.build.result is "success" on a normal run
     # and "skipped" on the daily-download path. build_only seeds the build
@@ -358,6 +344,7 @@ jobs:
     if: |
       always() &&
       inputs.build_only != true &&
+      needs.shards.result == 'success' &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
     # This job is a shard matrix, so this is one output value for the whole matrix
     # rather than one per shard. Every shard that reaches the deps step installs
@@ -372,9 +359,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        # Declared once in .github/e2e/shards.json (see .github/e2e/README.md
+        # for how the count was chosen); the test step derives --shard=N/M
+        # from strategy.job-total, and e2e-merge prints the same count.
+        shard: ${{ fromJSON(needs.shards.outputs.matrix) }}
     runs-on: macos-15-intel
     timeout-minutes: 120
+    # The environment scopes OP_SERVICE_ACCOUNT_TOKEN (a security-team requirement);
+    # deployment: false keeps each shard from recording a deployment on the PR.
+    environment:
+      name: e2e-playwright
+      deployment: false
     env:
       # os-e2e-deps installs the harness's required packages here and exports
       # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
@@ -516,6 +511,7 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          save-cache: ${{ !inputs.skip_e2e_deps_cache_save }}
           # runner.os is just "macOS" for both the arm64 (macos26) and x86_64
           # (macos15) engines, so without a scope they share one R-library cache
           # and each restores the other's wrong-arch binaries (pak/cli .so fail
@@ -633,6 +629,29 @@ jobs:
           path: e2e/rstudio/test-results/
           if-no-files-found: ignore
 
+      # Whatever rsession is still running at the end of a failed shard gets
+      # its threads and a `sample` call graph dumped. A session wedged by code
+      # on the idle event loop (#19236) looks idle from the outside -- the
+      # call graph is what names the culprit. sample works unprivileged on
+      # the runner user's own processes.
+      - name: Collect rsession diagnostics
+        if: always()
+        run: |
+          if [ "${{ job.status }}" != "success" ]; then
+            bash e2e/rstudio/scripts/ci/rsession-diagnostics.sh "${{ github.workspace }}/rsession-diagnostics" || true
+          fi
+          if [ -d rsession-diagnostics ]; then
+            cat rsession-diagnostics/summary.txt || true
+          fi
+
+      - name: Upload rsession diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rsession-diagnostics-macos15-${{ matrix.shard }}
+          path: rsession-diagnostics/
+          if-no-files-found: ignore
+
       # Preserved per-spec sandbox tree on failure; includes rsession logs,
       # the spec's RStudio config / data home, and per-test working dirs.
       # globalTeardown leaves this in place when any test failed; if every
@@ -661,7 +680,7 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-desktop-macos15]
+    needs: [shards, e2e-desktop-macos15]
     if: always() && inputs.defer_merge != true && needs.e2e-desktop-macos15.result != 'skipped' && needs.e2e-desktop-macos15.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -695,7 +714,7 @@ jobs:
         working-directory: e2e/rstudio
         run: |
           if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
-            echo "::error::No blob reports found; both shards failed to produce artifacts"
+            echo "::error::No blob reports found; every shard failed to produce artifacts"
             exit 1
           fi
           npx playwright merge-reports --config merge.config.ts ./all-blob-reports
@@ -762,7 +781,7 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · macos-15-intel · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>${{ needs.shards.outputs.count }} shards · macos-15-intel · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Release-gate floor, last so the reporting above still runs. A run that
       # executed nothing must not report green: Playwright suppresses its own

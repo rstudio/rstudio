@@ -192,6 +192,7 @@
    <target name="acesupport-watch-install" description="Install acesupport watcher dependencies">
       <retry retrycount="3">
          <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
+            <env key="PATH" value="${node.path}"/>
             <arg value="install"/>
             <arg value="--network-timeout"/>
             <arg value="240000"/>
@@ -235,6 +236,7 @@
 
    <target name="acesupport-watch-windows" if="is.windows">
       <exec executable="cmd" dir="${acesupport.watcher.dir}" spawn="true">
+         <env key="PATH" value="${node.path}"/>
          <arg value="/c"/>
          <arg value="node"/>
          <arg value="watch.js"/>
@@ -242,7 +244,7 @@
    </target>
 
    <target name="acesupport-watch-unix" unless="is.windows">
-      <exec executable="node" dir="${acesupport.watcher.dir}" spawn="true">
+      <exec executable="${node.bin}" dir="${acesupport.watcher.dir}" spawn="true">
          <arg value="watch.js"/>
       </exec>
    </target>
@@ -258,7 +260,13 @@
 
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
-   <property name="node.version" value="22.22.2"/>
+   <property name="node.version" value="24.22.1"/>
+   <!-- Apple Silicon installs go in an -arm64 folder (see install-npm-dependencies); check it
+        first so a native arm64 node wins over any x64 install of the same version -->
+   <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}-arm64"/>
+   <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}-arm64"/>
    <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}"/>
@@ -282,6 +290,22 @@
    <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
    <set-if-unset  property="node.bin" value="node"/>
 
+   <!-- yarn and npm are scripts that run whichever node is first on PATH, so put the
+        pinned node there; otherwise they use the developer's default node, which may
+        be older than the build requires. Windows env vars arrive as env.Path. -->
+   <condition property="env.PATH" value="${env.Path}">
+      <isset property="env.Path"/>
+   </condition>
+   <condition property="node.bin.dir" value="${node.dir}/bin">
+      <available file="${node.dir}/bin/node"/>
+   </condition>
+   <condition property="node.bin.dir" value="${node.dir}">
+      <available file="${node.dir}/node.exe"/>
+   </condition>
+   <condition property="node.path" value="${node.bin.dir}${path.separator}${env.PATH}" else="${env.PATH}">
+      <isset property="node.bin.dir"/>
+   </condition>
+
    <!-- similar lookup for panmirror -->
    <set-if-exists property="panmirror.dir" value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="c:/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
@@ -299,23 +323,17 @@
 
    <target name="panmirror" description="Compile panmirror library">
 
-      <!-- Make sure a default value for panmirror.minify is set -->
-      <condition property="panmirror.minify" value="true">
-         <not>
-            <isset property="panmirror.minify" />
-         </not>
-      </condition>
-
-      <echo message="yarn location: ${yarn.bin}"/>
+      <echo message="npm location: ${npm.bin}"/>
       <echo message="panmirror location: ${panmirror.dir}"/>
-      <echo message="panmirror minify: ${panmirror.minify}"/>
 
       <mkdir dir="${panmirror.build.dir}"/>
+      <!-- quarto is an npm workspace whose package-lock.json sits at its root, two levels
+           up from apps/panmirror. Install from there so npm uses that lockfile and installs
+           the packages panmirror builds from (editor, core, ...). -->
       <retry retrycount="3">
-         <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <exec executable="${npm.bin}" dir="${panmirror.dir}/../.." resolveexecutable="true" failonerror="true">
+            <env key="PATH" value="${node.path}"/>
             <arg value="install"/>
-            <arg value="--network-timeout"/>
-            <arg value="240000"/>
          </exec>
       </retry>
       <!-- vite needs more than node's default heap (~2GB on CI runners) to
@@ -324,10 +342,17 @@
            any caller-provided NODE_OPTIONS; node lets later flags win, so a
            caller's own heap setting takes precedence over ours. -->
       <property name="env.NODE_OPTIONS" value=""/>
-      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+      <!-- Name the minifier, and minify every build. Vite's CLI keeps "true" or "false"
+           after minify as an unknown minifier name, and with vite 8.3.5 an unminified
+           bundle is a syntax error: the CSS-injection prologue comments out its own
+           closing code. -->
+      <exec executable="${npm.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <env key="PATH" value="${node.path}"/>
+         <arg value="run"/>
          <arg value="build"/>
+         <arg value="--"/>
          <arg value="--minify"/>
-         <arg value="${panmirror.minify}"/>
+         <arg value="oxc"/>
          <arg value="--sourcemap"/>
          <arg value="true"/>
          <env key="PANMIRROR_OUTDIR" value="dist-rstudio"/>
@@ -413,7 +438,6 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
-         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -422,7 +446,6 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
-         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -430,7 +453,6 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev-watch"/>
-         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -622,6 +644,7 @@
       </exec>
       <retry retrycount="3">
          <exec executable="${npm.bin}" dir="${testpage.runner.dir}" resolveexecutable="true" failonerror="true">
+            <env key="PATH" value="${node.path}"/>
             <arg value="ci"/>
          </exec>
       </retry>

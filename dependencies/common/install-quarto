@@ -21,7 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Quarto"
 
 # variables that control download + installation process
-QUARTO_VERSION=1.10.18
+QUARTO_VERSION=1.10.19
 
 # each release is mirrored into the build tools bucket by
 # dependencies/tools/upload-quarto.sh, so that builds do not depend on the

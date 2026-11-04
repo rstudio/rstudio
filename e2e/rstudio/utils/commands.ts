@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { waitForConsoleIdle } from '../pages/console_pane.page';
 import type { Ace } from './ace';
 import { sleep } from './constants';
+import { withDeadline } from './deadline';
 
 // `window.rstudio` is registered when rsession runs with --automation-agent
 // (the Desktop fixture forwards that flag). The bridge lets tests trigger and
@@ -207,6 +208,16 @@ type ShinyBridge = {
   stopForegroundApp(): Promise<void>;
 };
 
+type SessionBridge = {
+  /**
+   * Resolves once the session's main thread has answered a `ping` RPC;
+   * rejects if the RPC fails. Never settles while that thread is not
+   * serving requests (a session wedged by code on the idle event loop,
+   * #19236), so always bound it -- see probeSessionLiveness().
+   */
+  ping(): Promise<void>;
+};
+
 type CompletionsBridge = {
   /**
    * Automation-only override: when true, a completion request that returns
@@ -233,6 +244,8 @@ type RStudioBridge = {
   console?: ConsoleBridge;
   /** Shiny-app automation surface. */
   shiny?: ShinyBridge;
+  /** Session liveness surface. Absent on builds that predate it. */
+  session?: SessionBridge;
   /** Completion-popup overrides. Absent on builds that predate the knob. */
   completions?: CompletionsBridge;
   /** Chat-pane state surface (populated lazily by ChatPresenter). */
@@ -617,6 +630,13 @@ const RETRYABLE_PREF_WRITE_ERRORS = [
   'frame was detached',
 ];
 
+// A pref write resolves only when the setUserPrefs RPC has landed. On a
+// session that has stopped serving requests it never does, and the evaluate
+// has no timeout of its own: a hook or test would then sit for its whole
+// 120s budget, and two such hooks back to back push the shard past the CI
+// heartbeat's kill window (run 39884727549). 30s is far past any real write.
+const PREF_WRITE_DEADLINE_MS = 30_000;
+
 // A pref write is a full-payload set_user_prefs RPC, so it is idempotent and
 // safe to retry. Busy CI runners can drop the XHR at the transport layer
 // (winsock ERR_NO_BUFFER_SPACE, connection resets around a session rebuild),
@@ -671,15 +691,19 @@ async function withPrefWriteRetry(
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
   const camel = snakeToCamel(name);
   await withPrefWriteRetry(page, camel, () =>
-    page.evaluate(async ({ prefName, prefValue }) => {
-      const r = window.rstudio;
-      if (!r)
-        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-      const entry = r.prefs[prefName];
-      if (!entry)
-        throw new Error(`Unknown user preference: ${prefName}`);
-      await entry.set(prefValue);
-    }, { prefName: camel, prefValue: value }),
+    withDeadline(
+      page.evaluate(async ({ prefName, prefValue }) => {
+        const r = window.rstudio;
+        if (!r)
+          throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+        const entry = r.prefs[prefName];
+        if (!entry)
+          throw new Error(`Unknown user preference: ${prefName}`);
+        await entry.set(prefValue);
+      }, { prefName: camel, prefValue: value }),
+      PREF_WRITE_DEADLINE_MS,
+      `setPref(${name})`,
+    ),
   );
 }
 
@@ -691,15 +715,19 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
 export async function clearPref(page: Page, name: string): Promise<void> {
   const camel = snakeToCamel(name);
   await withPrefWriteRetry(page, camel, () =>
-    page.evaluate(async (prefName) => {
-      const r = window.rstudio;
-      if (!r)
-        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-      const entry = r.prefs[prefName];
-      if (!entry)
-        throw new Error(`Unknown user preference: ${prefName}`);
-      await entry.clear();
-    }, camel),
+    withDeadline(
+      page.evaluate(async (prefName) => {
+        const r = window.rstudio;
+        if (!r)
+          throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+        const entry = r.prefs[prefName];
+        if (!entry)
+          throw new Error(`Unknown user preference: ${prefName}`);
+        await entry.clear();
+      }, camel),
+      PREF_WRITE_DEADLINE_MS,
+      `clearPref(${name})`,
+    ),
   );
 }
 
@@ -809,6 +837,21 @@ export async function openProject(
     r.project.open(p);
   }, projectFilePath);
 
+  await waitForProjectOpen(page, projectFilePath, timeout);
+}
+
+/**
+ * Wait until the session has switched to the project at `projectFilePath`
+ * and is ready for automation. Use after a project switch the test started
+ * itself (e.g. through the Open Project dialog); `openProject` calls it.
+ * Set `window.rstudio.ready = false` before starting the switch, as
+ * `project.open()` does: the QuitEvent reset arrives a round-trip later.
+ */
+export async function waitForProjectOpen(
+  page: Page,
+  projectFilePath: string,
+  timeout = 60000,
+): Promise<void> {
   // The Server mode page may navigate as part of the project switch; let it
   // settle before polling the bridge. On Desktop this is a no-op.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
@@ -832,7 +875,7 @@ export async function openProject(
       .evaluate(() => typeof window.rstudio === 'object' && window.rstudio !== null)
       .catch(() => false);
     if (!bridgeInstalled) {
-      console.log(`openProject: automation bridge missing ${grace}ms after the switch; reloading once`);
+      console.log(`waitForProjectOpen: automation bridge missing ${grace}ms after the switch; reloading once`);
       await page.reload({ timeout: 30000 }).catch(() => {});
     }
     await page.waitForFunction(
@@ -848,7 +891,10 @@ export async function openProject(
   // path before its own deferred initialization has completed. Poll both so
   // the helper's post-condition is "the bridge agrees this project is
   // active" rather than "ready flipped true." Case-insensitive to match
-  // waitForActiveDocument's handling of HFS+ / NTFS.
+  // waitForActiveDocument's handling of HFS+ / NTFS, and like it, accepts
+  // the home-aliased form ("~/sub/proj.Rproj") the session reports for a
+  // project under the rsession's home directory -- e.g. a sandbox under
+  // %TEMP% on Windows, which lives in the user profile.
   //
   // Every hop is optional: a Desktop project switch navigates the window to
   // the new session, and GWT's bootstrap (rstudio.nocache.js) defines a
@@ -861,8 +907,11 @@ export async function openProject(
     await page.waitForFunction(
       (target) => {
         const path = window.rstudio?.project?.path?.() ?? null;
-        return window.rstudio?.ready === true && path !== null &&
-          path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
+        if (window.rstudio?.ready !== true || path === null) return false;
+        const pp = path.replace(/\\/g, '/').toLowerCase();
+        const expected = target.replace(/\\/g, '/').toLowerCase();
+        return pp === expected
+          || (pp.startsWith('~/') && expected.endsWith(pp.slice(1)));
       },
       projectFilePath,
       { timeout, polling: 100 },
@@ -876,7 +925,7 @@ export async function openProject(
         .evaluate(() => window.rstudio?.project?.path?.() ?? null)
         .catch(() => null);
       throw new Error(
-        `openProject: session did not become ready with the active project ` +
+        `waitForProjectOpen: session did not become ready with the active project ` +
         `"${projectFilePath}" within ${timeout}ms (active project: ` +
         `${actual ?? 'none'}).`,
       );

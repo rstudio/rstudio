@@ -63,6 +63,7 @@ public class TutorialPresenter
       void home();
       
       String getUrl();
+      boolean isHomePage();
       
       void launchTutorial(Tutorial tutorial);
       
@@ -173,7 +174,7 @@ public class TutorialPresenter
       // tutorials, we should refresh to get an updated view.
       else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_INDEXING_COMPLETED))
       {
-         if (display_.getUrl().endsWith(TutorialPresenter.URLS_HOME))
+         if (display_.isHomePage())
          {
             display_.refresh();
          }

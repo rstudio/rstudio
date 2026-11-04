@@ -69,6 +69,8 @@ public interface PlotsServerOperations
                    boolean overwrite,
                    boolean useDevicePixelRatio,
                    int resolution,
+                   String tiffCompression,
+                   int jpegQuality,
                    ServerRequestCallback<Bool> requestCallback);
    
    void savePlotAsPdf(FileSystemItem file,

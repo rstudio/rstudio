@@ -22,6 +22,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
+
 public class SafeHtmlUtil
 {
    public static void appendDiv(SafeHtmlBuilder sb, 
@@ -87,6 +89,17 @@ public class SafeHtmlUtil
                                            "height", Integer.toString(image.getHeight()),
                                            "src", image.getSafeUri().asString()));
       sb.appendHtmlConstant("</img>");   
+   }
+
+   // Text only screen readers get, e.g. the header of a column too narrow for
+   // visible text: an empty <th> leaves the column header unnamed.
+   public static SafeHtml visuallyHiddenText(String text)
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      sb.append(createOpenTag("span", "class", ThemeStyles.INSTANCE.visuallyHidden()));
+      sb.appendEscaped(text);
+      sb.appendHtmlConstant("</span>");
+      return sb.toSafeHtml();
    }
 
    public static SafeHtml createOpenTag(String tagName,

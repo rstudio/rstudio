@@ -100,6 +100,7 @@ export class MainWindow extends GwtWindow {
       baseUrl: url,
       allowExternalNavigate: false,
       addApiKeys: ['desktop', 'desktopMenuCallback'],
+      initialSize: ElectronDesktopOptions().initialMainWindowSize(),
     });
 
     appState().gwtCallback = new GwtCallback(this);
@@ -372,6 +373,10 @@ export class MainWindow extends GwtWindow {
 
   collectPendingQuitRequest(): PendingQuit {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
+  }
+
+  collectPendingRVersion(): string {
+    return appState().gwtCallback?.collectPendingRVersion() ?? '';
   }
 
   onActivated(): void {

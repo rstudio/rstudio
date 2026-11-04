@@ -351,7 +351,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();
    sessionInfo["latex_program_types"] = modules::authoring::supportedLatexProgramTypes();
-   sessionInfo["tex_capabilities"] = modules::authoring::texCapabilitiesAsJson();
+   // TeX checks already have on-demand RPCs; the client caches the first
+   // answer in place of this empty placeholder when authoring is first used.
+   sessionInfo["tex_capabilities"] = json::Object();
    sessionInfo["compile_pdf_state"] = modules::authoring::compilePdfStateAsJson();
 
    sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
@@ -407,6 +409,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
       sessionInfo["active_project_name"] = projects::projectContext().projectName();
+
+      std::string worktreePrimary, worktreeDirectory;
+      projects::projectContext().worktreeNames(&worktreePrimary, &worktreeDirectory);
+      sessionInfo["active_project_worktree_primary"] = worktreePrimary;
+      sessionInfo["active_project_worktree_directory"] = worktreeDirectory;
+
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
       sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
       sessionInfo["project_supports_sharing"] = 

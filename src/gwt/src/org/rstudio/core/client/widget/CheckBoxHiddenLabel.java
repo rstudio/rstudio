@@ -28,11 +28,12 @@ public class CheckBoxHiddenLabel extends FormCheckBox
       super();
 
       // CheckBox consists of a span with input (checkbox) element followed
-      // by a label element (empty in this case).
-      Element label = DOM.getChild(getElement(), 1);
-      if (label != null)
+      // by a label element (empty in this case). The name goes on the input:
+      // aria-label isn't permitted on a <label>, which has no ARIA role.
+      Element input = DOM.getChild(getElement(), 0);
+      if (input != null)
       {
-         Roles.getCheckboxRole().setAriaLabelProperty(label, visuallyHiddenLabel);
+         Roles.getCheckboxRole().setAriaLabelProperty(input, visuallyHiddenLabel);
       }
       setElementId(id);
    }

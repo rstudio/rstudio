@@ -22,6 +22,7 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RActiveSessionsOverlay.hpp>
 #include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/system/FileMonitor.hpp>
@@ -81,6 +82,39 @@ const std::string ActiveSession::kSuspendSize = "suspend_size";
 const std::string ActiveSession::kWorkbench = "workbench";
 const std::string ActiveSession::kId = "id";
 const std::string ActiveSession::kDisplayName = "display_name";
+const std::string ActiveSession::kStatusMessage = "status_message";
+
+const std::set<std::string>& ActiveSession::defaultProperties()
+{
+   static const std::set<std::string> properties = []()
+   {
+      std::set<std::string> props = {
+         kExecuting,
+         kInitial,
+         kLabel,
+         kLastUsed,
+         kProject,
+         kProjectId,
+         kSavePromptRequired,
+         kRunning,
+         kRVersion,
+         kRVersionHome,
+         kRVersionLabel,
+         kWorkingDir,
+         kActivityState,
+         kLastStateUpdated,
+         kEditor,
+         kLastResumed,
+         kSuspendTimestamp,
+         kBlockingSuspend,
+         kCreated,
+         kLaunchParameters
+      };
+      overlay::addDefaultProperties(&props);
+      return props;
+   }();
+   return properties;
+}
 
 ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath) :
    storage_(storage)

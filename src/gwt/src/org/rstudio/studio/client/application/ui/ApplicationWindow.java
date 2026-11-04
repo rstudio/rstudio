@@ -17,8 +17,10 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
@@ -194,6 +196,9 @@ public class ApplicationWindow extends Composite
 
       applicationHeader_.asWidget().setVisible(true);
       applicationPanel_.add(workbenchScreen_);
+      Element mainEl = applicationPanel_.getWidgetContainerElement(workbenchScreen_);
+      Roles.getMainRole().set(mainEl);
+      Roles.getMainRole().setAriaLabelProperty(mainEl, constants_.workbenchLabel());
       updateWorkbenchTopBottom();
       applicationPanel_.setWidgetLeftRight(workbenchScreen_,
                                            COMPONENT_SPACING,
@@ -203,6 +208,15 @@ public class ApplicationWindow extends Composite
    }
 
    private void showWarning(boolean severe, String message, boolean showLicenseButton)
+   {
+      showWarning(severe, message, showLicenseButton, null, null);
+   }
+
+   private void showWarning(boolean severe,
+                            String message,
+                            boolean showLicenseButton,
+                            String actionLabel,
+                            Command action)
    {
       if (warningBar_ == null)
       {
@@ -229,6 +243,7 @@ public class ApplicationWindow extends Composite
       warningBar_.setSeverity(severe);
       warningBar_.setText(message);
       warningBar_.showLicenseButton(showLicenseButton);
+      warningBar_.setAction(actionLabel, action);
    }
 
    @Override
@@ -242,6 +257,12 @@ public class ApplicationWindow extends Composite
    public void showWarning(boolean severe, String message)
    {
       showWarning(severe, message, false);
+   }
+
+   @Override
+   public void showWarning(boolean severe, String message, String actionLabel, Command action)
+   {
+      showWarning(severe, message, false, actionLabel, action);
    }
 
    private void updateHeaderTopBottom()

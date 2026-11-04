@@ -28,7 +28,9 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
                                                        boolean viewAfterSave,
                                                        boolean useDevicePixelRatio,
                                                        boolean copyAsMetafile,
-                                                       int resolution)
+                                                       int resolution,
+                                                       String tiffCompression,
+                                                       int jpegQuality)
    /*-{
       var options = new Object();
       options.width = width;
@@ -39,9 +41,11 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
       options.useDevicePixelRatio = useDevicePixelRatio;
       options.copyAsMetafile = copyAsMetafile;
       options.resolution = resolution;
+      options.tiffCompression = tiffCompression;
+      options.jpegQuality = jpegQuality;
       return options;
    }-*/;
-   
+
    public static final ExportPlotOptions adaptToSize(ExportPlotOptions options,
                                                      Size size)
    {
@@ -52,7 +56,9 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
                                       options.getViewAfterSave(),
                                       options.getUseDevicePixelRatio(),
                                       options.getCopyAsMetafile(),
-                                      options.getResolution());
+                                      options.getResolution(),
+                                      options.getTiffCompression(),
+                                      options.getJpegQuality());
    }
 
    public static native boolean areEqual(ExportPlotOptions a, ExportPlotOptions b) /*-{
@@ -67,6 +73,8 @@ public class ExportPlotOptions extends UserStateAccessor.ExportPlotOptions
              a.viewAfterSave === b.viewAfterSave &&
              a.useDevicePixelRatio === b.useDevicePixelRatio &&
              a.copyAsMetafile === b.copyAsMetafile &&
-             a.resolution === b.resolution;
+             a.resolution === b.resolution &&
+             a.tiffCompression === b.tiffCompression &&
+             a.jpegQuality === b.jpegQuality;
    }-*/;
 }

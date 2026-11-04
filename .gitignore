@@ -4,7 +4,6 @@
 build_*/
 build-*/
 *-build/
-!src/node/desktop/src/assets/whats-new/developer-build/
 *_build/
 *-build-*/
 *_build_*/
@@ -36,7 +35,7 @@ CMakeLists.txt.user
 .#*
 *.autosave
 *~
-*swp
+*.swp
 .orig
 .vagrant
 tags
@@ -75,3 +74,6 @@ spec/
 # Never wanted in a commit.
 /r-version.txt
 /r-outcome.txt
+
+# roborev snapshots
+/.roborev/

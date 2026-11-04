@@ -19,7 +19,7 @@ import { assertAbsolutePath } from './paths';
  * Callers fall back to R-side operations (executed by rsession, same uid as
  * the workdir owner) when this returns false.
  */
-function canWriteDir(dir: string): boolean {
+export function canWriteDir(dir: string): boolean {
   try {
     fs.accessSync(dir, fs.constants.W_OK);
     return true;

@@ -90,6 +90,65 @@ namespace git {
 
 const char * const kVcsId = "Git";
 
+json::Array parseWorktreeList(const std::string& output)
+{
+   json::Array worktrees;
+
+   // entries are blank-line separated blocks of 'key [value]' lines
+   json::Object worktree;
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, output, boost::algorithm::is_any_of("\n"));
+   lines.push_back(std::string());
+   for (std::string line : lines)
+   {
+      boost::algorithm::trim_right_if(line, boost::algorithm::is_any_of("\r"));
+      if (line.empty())
+      {
+         if (worktree.hasMember("path"))
+         {
+            worktree["is_main"] = worktrees.isEmpty();
+            worktrees.push_back(worktree);
+         }
+
+         worktree = json::Object();
+         continue;
+      }
+
+      std::string key = line, value;
+      std::size_t space = line.find(' ');
+      if (space != std::string::npos)
+      {
+         key = line.substr(0, space);
+         value = line.substr(space + 1);
+      }
+
+      if (key == "worktree")
+      {
+         worktree["path"] = value;
+         worktree["head"] = std::string();
+         worktree["branch"] = std::string();
+         worktree["detached"] = false;
+         worktree["bare"] = false;
+         worktree["locked"] = false;
+         worktree["prunable"] = false;
+      }
+      else if (key == "HEAD")
+      {
+         worktree["head"] = value.substr(0, 8);
+      }
+      else if (key == "branch")
+      {
+         worktree["branch"] = boost::algorithm::replace_first_copy(value, "refs/heads/", "");
+      }
+      else if (key == "detached" || key == "bare" || key == "locked" || key == "prunable")
+      {
+         worktree[key] = true;
+      }
+   }
+
+   return worktrees;
+}
+
 namespace {
 
 
@@ -744,7 +803,110 @@ public:
       s_branches = *pBranches;
       return Success();
    }
-   
+
+   // Lists the linked worktrees of this repository (including the main one),
+   // as reported by 'git worktree list --porcelain'. Each entry also carries
+   // the directory the project lives in within that worktree and the .Rproj
+   // file found there (if any), so that the client can open it as a project
+   // directly. A project in a subdirectory of the repository is looked for at
+   // the same offset in every worktree.
+   core::Error listWorktrees(json::Array* pWorktrees)
+   {
+      std::string output;
+      Error error = runGit(gitArgs() << "worktree" << "list" << "--porcelain", &output);
+      if (error)
+         return error;
+
+      std::string projectOffset;
+      std::string canonicalRoot = root_.getCanonicalPath();
+      FilePath currentRoot(canonicalRoot);
+      if (projects::projectContext().hasProject())
+      {
+         FilePath currentProjectDir(projects::projectContext().directory().getCanonicalPath());
+         if (currentProjectDir != currentRoot && currentProjectDir.isWithin(currentRoot))
+            projectOffset = currentProjectDir.getRelativePath(currentRoot);
+      }
+
+      for (json::Value value : parseWorktreeList(output))
+      {
+         json::Object worktree = value.getObject();
+         FilePath path(worktree["path"].getString());
+         worktree["path"] = module_context::createAliasedPath(path);
+
+         // a prunable entry's directory is gone, and can't be canonicalized
+         // (which would log an error on every refresh)
+         bool exists = path.isDirectory();
+         worktree["is_current"] = exists && path.getCanonicalPath() == canonicalRoot;
+
+         // bare and prunable entries have no checkout to look in
+         FilePath projectDir = path;
+         FilePath projectFile;
+         if (exists && !worktree["bare"].getBool() && !worktree["prunable"].getBool())
+         {
+            if (!projectOffset.empty() && path.completePath(projectOffset).isDirectory())
+               projectDir = path.completePath(projectOffset);
+
+            projectFile = r_util::projectFromDirectory(projectDir);
+         }
+
+         worktree["project_dir"] = module_context::createAliasedPath(projectDir);
+         if (projectFile.exists())
+            worktree["project_file"] = module_context::createAliasedPath(projectFile);
+         else
+            worktree["project_file"] = std::string();
+
+         pWorktrees->push_back(worktree);
+      }
+
+      return Success();
+   }
+
+   core::Error addWorktree(const std::string& path,
+                           const std::string& branch,
+                           bool createBranch,
+                           const std::string& startPoint,
+                           boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      // a relative path would be resolved against the working directory --
+      // typically this very checkout -- rather than where the user expects
+      FilePath worktreePath = module_context::resolveAliasedPath(path);
+      if (!worktreePath.isAbsolute())
+         return systemError(boost::system::errc::invalid_argument, "worktree path must be absolute: " + path, ERROR_LOCATION);
+
+      // a new branch starts from `startPoint` (a remote branch, which it then
+      // tracks) when given, else from HEAD; otherwise the branch is checked out
+      ShellArgs args = gitArgs() << "worktree" << "add";
+      if (createBranch)
+      {
+         if (!startPoint.empty())
+            args << "--track";
+         args << "-b" << branch;
+      }
+
+      args << worktreePath;
+      if (!createBranch)
+         args << branch;
+      else if (!startPoint.empty())
+         args << startPoint;
+
+      return createConsoleProc(args, "Git Worktree Add", ppCP);
+   }
+
+   core::Error removeWorktree(const std::string& path,
+                              bool force,
+                              boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      // forced once, git removes a worktree with uncommitted changes; forced
+      // twice, a locked one as well -- the user has confirmed either way
+      ShellArgs args = gitArgs() << "worktree" << "remove";
+      if (force)
+         args << "--force" << "--force";
+
+      args << module_context::resolveAliasedPath(path);
+
+      return createConsoleProc(args, "Git Worktree Remove", ppCP);
+   }
+
    core::Error listRemotes(json::Array* pRemotes)
    {
       Error error;
@@ -1778,14 +1940,65 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
                   std::back_inserter(jsonBranches),
                   json::toJsonValue<std::string>);
 
+   // a failure to list worktrees shouldn't prevent listing branches; as this
+   // runs on every status refresh, report it once rather than each time (a
+   // git older than 2.7 has no 'worktree list' at all)
+   static bool s_loggedWorktreeError = false;
+   json::Array worktrees;
+   error = s_git_.listWorktrees(&worktrees);
+   if (error && !s_loggedWorktreeError)
+   {
+      s_loggedWorktreeError = true;
+      LOG_ERROR(error);
+   }
+
    json::Object result;
    result["branches"] = jsonBranches;
    result["activeIndex"] =
          activeIndex
             ? json::Value(static_cast<boost::uint64_t>(activeIndex.get()))
             : json::Value();
+   result["worktrees"] = worktrees;
 
    pResponse->setResult(result);
+
+   return Success();
+}
+
+Error vcsAddWorktree(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string path, branch, startPoint;
+   bool createBranch = false;
+   Error error = json::readParams(request.params, &path, &branch, &createBranch, &startPoint);
+   if (error)
+      return error;
+
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.addWorktree(path, branch, createBranch, startPoint, &pCP);
+   if (error)
+      return error;
+
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
+
+   return Success();
+}
+
+Error vcsRemoveWorktree(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   bool force = false;
+   Error error = json::readParams(request.params, &path, &force);
+   if (error)
+      return error;
+
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.removeWorktree(path, force, &pCP);
+   if (error)
+      return error;
+
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
 
    return Success();
 }
@@ -2474,6 +2687,136 @@ Error vcsShowFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+// Returns the index version of a file for the editor's Git diff gutter. The
+// result is { "tracked": bool, "id": string, "unchanged": bool, "contents":
+// string }; tracked is false when the file is outside the repository or not
+// in the index (untracked, ignored), in which case there is nothing to diff
+// against. A tracked file whose blob cannot be read is an error instead,
+// which the client tells from the absence of a base (it says so in the
+// side-by-side view). The id names the base as decoded (blob sha plus encoding); a
+// client that already holds that base passes its id back and gets
+// "unchanged" with no contents, which spares the blob read and the transfer.
+Error vcsDiffBaseContents(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   std::string path, encoding, knownId;
+   Error error = json::readParams(request.params, &path, &encoding, &knownId);
+   if (error)
+      return error;
+
+   json::Object result;
+   result["tracked"] = false;
+   result["id"] = "";
+   result["unchanged"] = false;
+   result["contents"] = "";
+   pResponse->setResult(result);
+
+   FilePath root = s_git_.root();
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   if (root.isEmpty() || !filePath.isWithin(root))
+      return Success();
+
+   std::string relativePath = filePath.getRelativePath(root);
+   if (relativePath.empty())
+      return Success();
+
+   // Only a regular file has contents to diff against: a symlink's index
+   // entry holds its target path, and a submodule's a commit id. The path
+   // is matched literally (a name like "report[1].R" is otherwise a glob)
+   // and the entry for exactly that path is the one checked; no entry means
+   // the path isn't in the index, the normal case for new files.
+   core::system::ProcessResult stageResult;
+   error = gitExec(gitArgs() << "ls-files" << "--stage" << "-z" << "--" << ":(literal)" + relativePath,
+                   root,
+                   &stageResult);
+   if (error)
+      return error;
+
+   if (stageResult.exitStatus != EXIT_SUCCESS)
+   {
+      // a path not in the index lists nothing with status 0; a failure is
+      // an index that could not be read, not a file without a base
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("path", relativePath);
+      error.addProperty("stderr", stageResult.stdErr);
+      return error;
+   }
+
+   // entries are "<mode> <sha> <stage>\t<path>", NUL-terminated
+   bool regularFile = false;
+   std::string sha;
+   std::vector<std::string> entries;
+   boost::algorithm::split(entries, stageResult.stdOut, boost::is_any_of(std::string(1, '\0')));
+   for (const std::string& entry : entries)
+   {
+      std::size_t tab = entry.find('\t');
+      if (tab == std::string::npos)
+         continue;
+
+      if (entry.substr(tab + 1) == relativePath)
+      {
+         std::vector<std::string> fields;
+         boost::algorithm::split(fields, entry.substr(0, tab), boost::is_any_of(" "));
+         regularFile = fields.size() == 3 && boost::algorithm::starts_with(fields[0], "100");
+         if (regularFile)
+            sha = fields[1];
+         break;
+      }
+   }
+
+   if (!regularFile)
+      return Success();
+
+   if (encoding.empty())
+      encoding = projects::projectContext().defaultEncoding();
+
+   std::string id = sha + ":" + encoding;
+   result["tracked"] = true;
+   result["id"] = id;
+   if (!knownId.empty() && knownId == id)
+   {
+      result["unchanged"] = true;
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   // The blob is read through the file's smudge filters (git-crypt, LFS,
+   // ident, eol conversion), as the working copy in the editor was; "git
+   // show" would hand back the stored form, and every line would differ.
+   // The stage is spelled out, or a name such as "0:script.R" would be read
+   // as stage 0 of script.R.
+   core::system::ProcessResult procResult;
+   error = gitExec(gitArgs() << "cat-file" << "--filters" << ":0:" + relativePath, root, &procResult);
+   if (error)
+      return error;
+
+   if (procResult.exitStatus != EXIT_SUCCESS)
+   {
+      // e.g. a smudge filter that fails: the file has a base, it just
+      // cannot be read right now
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("path", relativePath);
+      error.addProperty("stderr", procResult.stdErr);
+      return error;
+   }
+
+   std::string contents;
+   error = module_context::convertToUtf8(procResult.stdOut, encoding, true, &contents);
+   if (error)
+      contents = procResult.stdOut;
+
+   // the editor's copy had its line endings normalized when the document was
+   // loaded, so the base gets the same treatment or every line would differ
+   string_utils::convertLineEndings(&contents, session::options().sourceLineEnding());
+
+   // control characters are kept: the editor keeps them too, and JSON
+   // escapes them fine
+   result["contents"] = contents;
+   pResponse->setResult(result);
+
+   return Success();
+}
 
 Error vcsExportFile(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
@@ -3510,6 +3853,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_unstage", vcsUnstage))
       (bind(registerRpcMethod, "git_create_branch", vcsCreateBranch))
       (bind(registerRpcMethod, "git_list_branches", vcsListBranches))
+      (bind(registerRpcMethod, "git_add_worktree", vcsAddWorktree))
+      (bind(registerRpcMethod, "git_remove_worktree", vcsRemoveWorktree))
       (bind(registerRpcMethod, "git_checkout", vcsCheckout))
       (bind(registerRpcMethod, "git_checkout_remote", vcsCheckoutRemote))
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))
@@ -3525,6 +3870,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_history", vcsHistory))
       (bind(registerRpcMethod, "git_show", vcsShow))
       (bind(registerRpcMethod, "git_show_file", vcsShowFile))
+      (bind(registerRpcMethod, "git_diff_base_contents", vcsDiffBaseContents))
       (bind(registerRpcMethod, "git_export_file", vcsExportFile))
       (bind(registerRpcMethod, "git_ssh_public_key", vcsSshPublicKey))
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))

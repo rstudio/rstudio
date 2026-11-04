@@ -63,20 +63,7 @@ brew-prefix () {
 check-arch-prerequisites () {
    local ARCH="$1"
 
-   case "${ARCH}" in
-   x86_64|arm64) ;;
-   *) error "unknown architecture '${ARCH}'; expected x86_64 or arm64" ;;
-   esac
-
-   if [ "${ARCH}" = "arm64" ] && [ "${NATIVE_ARCH}" != "arm64" ]; then
-      error "cannot install arm64 dependencies on an ${NATIVE_ARCH} machine"
-   fi
-
-   if [ "${ARCH}" = "x86_64" ] && [ "${NATIVE_ARCH}" = "arm64" ]; then
-      if ! arch -x86_64 /usr/bin/true 2> /dev/null; then
-         error "Rosetta 2 is required to install x86_64 dependencies on Apple Silicon; install it with 'softwareupdate --install-rosetta --agree-to-license', or drop --arch=x86_64"
-      fi
-   fi
+   require-runnable-arch "${ARCH}"
 
    local BREW
    BREW="$(brew-prefix "${ARCH}")/bin/brew"

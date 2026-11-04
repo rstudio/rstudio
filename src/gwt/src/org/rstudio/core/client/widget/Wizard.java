@@ -290,7 +290,7 @@ public class Wizard<I,T> extends ModalDialog<T>
          setOkButtonVisible(pageIsFinal(firstPage_));
          firstPage_.onActivate(getProgressIndicator());
       }
-      deferRefreshFocusableElements();
+      deferFocusInitialControl();
    }
 
    @Override
@@ -418,7 +418,7 @@ public class Wizard<I,T> extends ModalDialog<T>
                   onPageActivated(page, okButtonVisible);
                   page.onActivate(getProgressIndicator());
 
-                  deferRefreshFocusableElements();
+                  deferFocusInitialControl();
             })
          );
       }, this);
@@ -467,7 +467,7 @@ public class Wizard<I,T> extends ModalDialog<T>
             // call hook
             onSelectorActivated();
 
-            deferRefreshFocusableElements();
+            deferFocusInitialControl();
 
             // set focus
             focusWidget.focus();

@@ -143,7 +143,6 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
                
                selectAllButton_.setEnabled(true);
                selectNoneButton_.setEnabled(true);
-               refreshFocusableElements();
                focusInitialControl();
             }
             else

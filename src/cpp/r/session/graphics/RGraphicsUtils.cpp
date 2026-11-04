@@ -15,6 +15,8 @@
 
 #include "RGraphicsUtils.hpp"
 
+#include <algorithm>
+
 #include <boost/format.hpp>
 
 #include <shared_core/Error.hpp>
@@ -27,6 +29,7 @@
 #include <r/RUtil.hpp>
 #include <r/RErrorCategory.hpp>
 
+#include <r/session/RGraphics.hpp>
 #include <r/session/RGraphicsConstants.h>
 
 #define R_USE_PROTOTYPES 1
@@ -100,6 +103,26 @@ bool hasRequiredGraphicsDevices(std::string* pMessage)
 
 #endif
 
+// The graphics backend option, or "default" when it names a backend the
+// running R doesn't offer (a configuration migrated from another OS, say)
+std::string supportedBackend()
+{
+   std::string backend = getDefaultBackend();
+   if (backend == "default")
+      return backend;
+
+   std::vector<std::string> supportedBackends;
+   Error error = r::exec::RFunction(".rs.graphics.supportedBackends").call(&supportedBackends);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "default";
+   }
+
+   auto it = std::find(supportedBackends.begin(), supportedBackends.end(), backend);
+   return it == supportedBackends.end() ? "default" : backend;
+}
+
 } // anonymous namespace
 
 std::string getDefaultBackend()
@@ -169,27 +192,10 @@ bool validateRequirements(std::string* pMessage)
 std::string extraBitmapParams()
 {
    std::vector<std::string> params;
-   
-   std::vector<std::string> supportedBackends;
-   Error error = r::exec::RFunction(".rs.graphics.supportedBackends").call(&supportedBackends);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return "";
-   }
-   
-   std::string backend = getDefaultBackend();
-   
-   // if the requested backend is not supported, silently use the default
-   // (this could happen if a package's configuration was migrated from
-   // one machine to another on a different OS)
-   if (backend != "default")
-   {
-      auto it = std::find(supportedBackends.begin(), supportedBackends.end(), backend);
-      if (it == supportedBackends.end())
-         backend = "default";
-   }
-   
+
+   // an unsupported backend silently falls back to the default
+   std::string backend = supportedBackend();
+
    // don't use the 'ragg' backend here (these parameters are normally passed
    // to devices defined by the 'grDevices' package, and it doesn't handle
    // 'ragg')
@@ -218,10 +224,10 @@ std::string extraBitmapParams()
 bool usesQuartzBitmapDevice()
 {
 #ifdef __APPLE__
-   // extraBitmapParams() passes an explicit backend as the device's type;
-   // otherwise the device uses R's bitmapType option, which grDevices sets to
-   // quartz when it's available
-   std::string backend = getDefaultBackend();
+   // extraBitmapParams() passes an explicit (supported) backend as the
+   // device's type; otherwise the device uses R's bitmapType option, which
+   // grDevices sets to quartz when it's available
+   std::string backend = supportedBackend();
    if (backend == "default")
       backend = r::options::getOption<std::string>("bitmapType", "", false);
 
@@ -229,6 +235,30 @@ bool usesQuartzBitmapDevice()
 #else
    return false;
 #endif
+}
+
+std::vector<std::string> tiffCompressionTypes()
+{
+   std::vector<std::string> types;
+   Error error = r::exec::RFunction(".rs.graphics.tiffCompressionTypes").call(&types);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return { "none" };
+   }
+
+   // the Quartz device ignores the argument, and the TIFF is compressed
+   // through ImageIO instead, which knows some of the types only
+   if (usesQuartzBitmapDevice())
+   {
+      types.erase(
+               std::remove_if(types.begin(), types.end(), [](const std::string& type) {
+                  return tiffCompressionTag(type) == 0;
+               }),
+               types.end());
+   }
+
+   return types;
 }
 
 struct RestorePreviousGraphicsDeviceScope::Impl

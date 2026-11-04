@@ -249,13 +249,24 @@ FileLinkProvider.prototype._createLink = function(range, match, path)
       text: match.text,
       decorations: createDecorations(),
       activate: function(event) {
-         if (event.button !== 0 || cacheGeneration !== self._cacheGeneration)
+         if (event.button !== 0 || !hasModifier(event))
             return;
 
-         if (!hasModifier(event))
+         // The path was resolved against the cwd of the hover. If the cwd
+         // has changed since (the first report lands a couple of seconds
+         // after the shell starts), resolve the text again rather than open
+         // a stale path or drop the click with nothing to show for it.
+         if (cacheGeneration === self._cacheGeneration)
+         {
+            host.open(path, match.line, match.column);
             return;
+         }
 
-         host.open(path, match.line, match.column);
+         host.resolve([match.path], function(resolved) {
+            var fresh = resolved && resolved[0];
+            if (fresh)
+               host.open(fresh, match.line, match.column);
+         });
       },
       hover: function() {
          modifier.link = link;

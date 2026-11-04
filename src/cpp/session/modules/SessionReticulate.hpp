@@ -31,6 +31,37 @@ namespace session {
 namespace modules {
 namespace reticulate {
 
+// What startup's background Python discovery has established so far, and
+// how a terminal that needs RETICULATE_PYTHON should obtain its answer.
+class PythonDiscoveryState
+{
+public:
+   enum class TerminalAction
+   {
+      ProbeSynchronously,
+      UseRecordedAnswer,
+      RetryInBackground
+   };
+
+   // the interpreter (possibly none, when empty) is settled for the session
+   void recordAnswer(const std::string& python);
+
+   // discovery itself failed; nothing more will be learned this session
+   void recordFailure();
+
+   // discovery ran out of time, so the answer stays open for a later retry
+   void recordTimeout();
+
+   bool resolved() const { return resolved_; }
+   const std::string& python() const { return python_; }
+   TerminalAction terminalAction() const;
+
+private:
+   std::string python_;
+   bool resolved_ = false;
+   bool timedOut_ = false;
+};
+
 bool isPythonInitialized();
 bool isReplActive();
 

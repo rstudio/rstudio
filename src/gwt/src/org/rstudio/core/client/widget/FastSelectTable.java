@@ -26,6 +26,8 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -108,6 +110,9 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       table_.getStyle().setCursor(Cursor.DEFAULT);
       setClassId(title);
       setElement(table_);
+      Roles.getListboxRole().set(table_);
+      if (allowMultiSelect_)
+         Roles.getListboxRole().setAriaMultiselectableProperty(table_, true);
       
       addDomHandler(new FocusHandler()
       {
@@ -295,6 +300,10 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
             setSelectedPhysical(offset, length, true);
          }
       }
+
+      // A Ctrl+click can deselect the row and a Shift+click selects up to it,
+      // so neither leaves it as the last row selected.
+      setActiveRow(row);
    }
 
    private void handleKeyDown(KeyDownEvent event)
@@ -419,6 +428,66 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
          getElement().appendChild(tbody);
 
       codec_.onRowsChanged(tbody);
+      applyRowRoles(tbody);
+   }
+
+   // A listbox may own only options, so table sections and non-value rows
+   // (group headers such as a file name or timestamp) are presentational.
+   // Each option is described by the header above it, which arrow-key
+   // navigation skips over.
+   private void applyRowRoles(TableSectionElement tbody)
+   {
+      Roles.getPresentationRole().set(tbody);
+      String headerId = findPrecedingHeaderId(tbody);
+      NodeList<TableRowElement> rows = tbody.getRows();
+      for (int i = 0; i < rows.getLength(); i++)
+      {
+         TableRowElement row = rows.getItem(i);
+         if (codec_.isValueRow(row))
+         {
+            Roles.getOptionRole().set(row);
+            Roles.getOptionRole().setAriaSelectedState(row, SelectedValue.of(isSelected(row)));
+            if (headerId != null)
+               row.setAttribute("aria-describedby", headerId);
+            else
+               row.removeAttribute("aria-describedby");
+         }
+         else
+         {
+            Roles.getPresentationRole().set(row);
+            headerId = DomUtils.ensureHasId(row);
+         }
+      }
+   }
+
+   private String findPrecedingHeaderId(TableSectionElement tbody)
+   {
+      if (!codec_.hasNonValueRows())
+         return null;
+
+      for (Element el = tbody.getPreviousSiblingElement();
+           el != null && el.getTagName().equalsIgnoreCase("tbody");
+           el = el.getPreviousSiblingElement())
+      {
+         NodeList<TableRowElement> rows = ((TableSectionElement) el).getRows();
+         for (int i = rows.getLength() - 1; i >= 0; i--)
+         {
+            if (!codec_.isValueRow(rows.getItem(i)))
+               return DomUtils.ensureHasId(rows.getItem(i));
+         }
+      }
+      return null;
+   }
+
+   // Focus stays on the table, so aria-activedescendant is how assistive
+   // technology learns which row the user moved to.
+   private void setActiveRow(TableRowElement row)
+   {
+      activeRow_ = row;
+      if (row == null)
+         table_.removeAttribute("aria-activedescendant");
+      else
+         table_.setAttribute("aria-activedescendant", DomUtils.ensureHasId(row));
    }
 
    protected void addToTop(TableSectionElement tbody)
@@ -430,6 +499,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       table_.setInnerText("");
       selectedRows_.clear();
+      setActiveRow(null);
    }
 
    public void focus()
@@ -448,28 +518,30 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       if (rowCount <= 0)
          return;
 
+      // A tbody emptied below is removed, so the next one is always first.
       NodeList<TableSectionElement> tBodies = table_.getTBodies();
-      for (int i = 0; i < tBodies.getLength(); i++)
-      {
-         rowCount = removeTopRows(tBodies.getItem(i), rowCount);
-         if (rowCount == 0)
-            return;
-      }
+      while (rowCount > 0 && tBodies.getLength() > 0)
+         rowCount = removeTopRows(tBodies.getItem(0), rowCount);
    }
 
    private int removeTopRows(TableSectionElement tbody, int rowCount)
    {
-      while (rowCount > 0 && tbody.getRows().getLength() >= 0)
+      while (rowCount > 0 && tbody.getRows().getLength() > 0)
       {
          TableRowElement topRow = tbody.getRows().getItem(0);
          if (codec_.isValueRow(topRow))
             rowCount--;
          selectedRows_.remove(topRow);
+         if (topRow == activeRow_)
+            setActiveRow(null);
          topRow.removeFromParent();
       }
 
       if (tbody.getRows().getLength() > 0)
+      {
          codec_.onRowsChanged(tbody);
+         applyRowRoles(tbody);
+      }
       else
          tbody.removeFromParent();
 
@@ -524,36 +596,56 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
 
    private void setSelectedPhysical(int offset, int length, boolean selected)
    {
+      // Announce only the end of a range, not each row along the way.
+      TableRowElement last = null;
       for (int i = 0; i < length; i++)
-         setSelected(getRow(offset + i), selected);
+      {
+         TableRowElement row = getRow(offset + i);
+         if (setSelected(row, selected, false) && selected)
+            last = row;
+      }
+      if (last != null)
+         setActiveRow(last);
    }
 
    public void setSelected(TableRowElement row, boolean selected)
    {
+      setSelected(row, selected, true);
+   }
+
+   // Returns whether the row is a selected row of this table afterwards; a row
+   // not in the table, such as one past the end, is ignored.
+   private boolean setSelected(TableRowElement row, boolean selected, boolean updateActive)
+   {
       try
       {
          if (row.getParentElement().getParentElement() != table_)
-            return;
+            return false;
       }
       catch (NullPointerException npe)
       {
-         return;
+         return false;
       }
       catch (JavaScriptException ex)
       {
-         return;
+         return false;
       }
 
       boolean isCurrentlySelected = isSelected(row);
       if (isCurrentlySelected == selected)
-         return;
+         return isCurrentlySelected;
 
       if (selected && !codec_.isValueRow(row))
-         return;
+         return false;
 
       setStyleName(row, selectedClassName_, selected);
+      Roles.getOptionRole().setAriaSelectedState(row, SelectedValue.of(selected));
       if (selected)
+      {
          selectedRows_.add(row);
+         if (updateActive)
+            setActiveRow(row);
+      }
       else
          selectedRows_.remove(row);
 
@@ -567,6 +659,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
             }
          });
       }
+      return selected;
    }
 
    public ArrayList<TItemOutput> getSelectedValues()
@@ -775,6 +868,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    private final String selectedClassName_;
    private final boolean allowMultiSelect_;
    private ScrollPanel scrollPanel_;
+   private TableRowElement activeRow_;
    private final boolean focusable_;
    private boolean isFocused_;
 }

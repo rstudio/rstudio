@@ -1,0 +1,1392 @@
+#
+# test-rig.R
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+context("rig")
+
+test_that("R installation paths are checked before starting an installation", {
+
+   root <- tempfile("r-install-path-")
+   dir.create(root)
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   expect_identical(.rs.rig.validateInstallDir(root), normalizePath(root, winslash = "/"))
+   target <- file.path(root, "R versions", "new")
+   expect_identical(.rs.rig.validateInstallDir(target), normalizePath(target, winslash = "/", mustWork = FALSE))
+   expect_false(dir.exists(target))
+   expect_error(.rs.rig.validateInstallDir(""), "Choose")
+   expect_error(.rs.rig.validateInstallDir(NA_character_), "Choose")
+   expect_error(.rs.rig.validateInstallDir("relative/path"), "absolute path")
+   expect_error(.rs.rig.validateInstallDir(paste0(root, "\nother")), "Choose")
+
+   file <- file.path(root, "file")
+   file.create(file)
+   expect_error(.rs.rig.validateInstallDir(file), "must be a directory")
+   expect_error(.rs.rig.validateInstallDir(file.path(file, "R")), "must be a directory")
+
+})
+
+test_that("custom installation roots remain discoverable and select the exact R", {
+
+   root <- tempfile("custom R-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+   registry <- file.path(root, "settings", "r-install-dirs")
+   installs <- file.path(root, "R versions")
+   expect_identical(.rs.rig.installDirs(registry), character())
+   .rs.rig.rememberInstallDir(installs, registry)
+   .rs.rig.rememberInstallDir(installs, registry)
+   expect_identical(.rs.rig.installDirs(registry), installs)
+
+   # a directory another session added in the meantime is kept, and one
+   # both added is listed once
+   other <- file.path(root, "other R versions")
+   cat(other, installs, sep = "\n", file = registry, append = TRUE)
+   .rs.rig.rememberInstallDir(file.path(root, "third"), registry)
+   expect_identical(.rs.rig.installDirs(registry), c(installs, other, file.path(root, "third")))
+
+   # Exercise the user-mode layouts used by Windows, macOS and Linux.
+   for (layout in c(".", "Resources", "lib/R"))
+   {
+      prefix <- file.path(installs, gsub("[/\\.]", "_", layout))
+      home <- file.path(prefix, layout)
+      dir.create(file.path(home, "library", "base"), recursive = TRUE)
+      dir.create(file.path(home, "include"), recursive = TRUE)
+      writeLines(c('#define R_MAJOR "4"', '#define R_MINOR "5.2"'),
+                 file.path(home, "include", "Rversion.h"))
+      dir.create(file.path(prefix, "bin"), showWarnings = FALSE)
+      file.create(file.path(prefix, "bin", if (.rs.platform.isWindows) "R.exe" else "R"))
+   }
+
+   installed <- .rs.rInstallations.scanRoots(.rs.rig.installDirs(registry))
+   expect_equal(nrow(installed), 3L)
+   expect_true(all(installed$version == "4.5.2"))
+   expect_true(all(file.exists(installed$binary)))
+   expect_equal(.rs.rig.installedRVersion("4.5.2", installs)$version, .rs.scalar("4.5.2"))
+   expect_null(.rs.rig.installedRVersion("4.5.3", installs))
+   expect_equal(.rs.rig.installedRVersion("4.5", installs)$version, .rs.scalar("4.5.2"))
+   expect_equal(nrow(.rs.rInstallations.scanRoots(file.path(root, "missing"))), 0L)
+
+})
+
+# A stand-in for launchctl: 'state' holds whether rig's agent is loaded and
+# the RSTUDIO_WHICH_R launchd exports, 'calls' records every invocation, and
+# the verbs in 'failing' fail (as a missing launchctl would, with NULL).
+fakeLaunchd <- function(loaded = FALSE, whichR = "")
+{
+   state <- new.env(parent = emptyenv())
+   state$loaded <- loaded
+   state$whichR <- whichR
+   state$calls <- list()
+   state$failing <- character()
+
+   launchctl <- function(args)
+   {
+      state$calls[[length(state$calls) + 1L]] <- args
+      verb <- args[[1L]]
+      if (verb %in% state$failing)
+         return(NULL)
+
+      switch(verb,
+         list = if (state$loaded) "{ \"Label\" = \"io.r-lib.rig.rstudio-which-r\"; }" else NULL,
+         getenv = state$whichR,
+         load = { state$loaded <- TRUE; "" },
+         unload = { state$loaded <- FALSE; "" },
+         setenv = { state$whichR <- args[[3L]]; "" },
+         unsetenv = { state$whichR <- ""; "" },
+         stop("unexpected launchctl verb: ", verb))
+   }
+
+   verbs <- function()
+   {
+      vapply(state$calls, function(call) call[[1L]], character(1))
+   }
+
+   list(state = state, launchctl = launchctl, verbs = verbs)
+}
+
+# A stand-in for rig that answers 'rig system dirs --user --json' with the
+# given directories, or fails when none are given.
+fakeRig <- function(home, dirs)
+{
+   rig <- file.path(home, "rig")
+   lines <- if (is.null(dirs))
+      c("#!/bin/sh", "exit 1")
+   else
+      c("#!/bin/sh", sprintf('echo "{\\"r_root\\": \\"${RIG_R_INSTALL_DIR:-%s}\\", \\"binary_dir\\": \\"%s\\"}"', dirs$r_root, dirs$binary_dir))
+
+   writeLines(lines, rig)
+   Sys.chmod(rig, "0755")
+   rig
+}
+
+test_that("the default R install directory is rig's user-mode root", {
+
+   skip_if(.rs.platform.isWindows, "the stand-in rig is a shell script")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+
+   withr::with_envvar(c(RIG_R_INSTALL_DIR = NA), {
+      rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+      expect_identical(.rs.rig.defaultInstallDir(rig), root)
+
+      # rig's own override is part of its effective root
+      withr::with_envvar(c(RIG_R_INSTALL_DIR = "/custom/R"), {
+         expect_identical(.rs.rig.defaultInstallDir(rig), "/custom/R")
+      })
+
+      expect_error(.rs.rig.defaultInstallDir(fakeRig(home, list(r_root = "", binary_dir = bin))),
+                   "Unable to determine")
+      expect_error(.rs.rig.defaultInstallDir(fakeRig(home, NULL)), "rig system dirs --user failed")
+      expect_error(.rs.rig.defaultInstallDir(""), "rig was not found")
+   })
+
+})
+
+test_that("the bundled rig follows an explicit override and precedes system copies", {
+
+   bundled <- file.path(tempdir(), "RStudio", "bin", "rig")
+   override <- file.path(tempdir(), "custom", .rs.rig.exeName())
+   candidates <- .rs.rig.candidatePaths(override = override, bundled = bundled)
+   expect_identical(candidates[1:2], c(override, file.path(bundled, "bin", .rs.rig.exeName())))
+   expect_identical(
+      .rs.rig.candidatePaths(override = "", bundled = bundled)[[1L]],
+      file.path(bundled, "bin", .rs.rig.exeName())
+   )
+
+})
+
+test_that("the configured bundled rig is usable without an external installation", {
+
+   # rig is bundled with the desktop only
+   skip_if_not(identical(.rs.api.versionInfo()$mode, "desktop"), "not a desktop session")
+
+   bundled <- file.path(.Call("rs_rigPath", PACKAGE = "(embedding)"), "bin", .rs.rig.exeName())
+   expect_true(file.exists(bundled))
+   expect_equal(.rs.rig.version(bundled), package_version(.rs.rig.pinnedVersion))
+   expect_identical(
+      .rs.rig.find(paths = c(tempfile("missing-rig-"), bundled)),
+      normalizePath(bundled, winslash = "/")
+   )
+
+})
+
+test_that("R versions match on major.minor only", {
+
+   expect_true(.rs.rVersionMatches("4.4.1", "4.4.1"))
+   expect_true(.rs.rVersionMatches("4.4.1", "4.4.3"))
+   expect_true(.rs.rVersionMatches("4.4", "4.4.0"))
+   expect_false(.rs.rVersionMatches("4.4.1", "4.5.0"))
+   expect_false(.rs.rVersionMatches("4.4.1", "3.4.1"))
+
+   # vectorized over candidates
+   expect_identical(
+      .rs.rVersionMatches("4.4.1", c("4.3.3", "4.4.0", "4.5.1")),
+      c(FALSE, TRUE, FALSE)
+   )
+
+   # malformed versions never match
+   expect_false(.rs.rVersionMatches("not-a-version", "4.4.1"))
+   expect_false(.rs.rVersionMatches("4.4.1", "release"))
+   expect_identical(.rs.rVersionMatches("oops", character()), logical())
+
+})
+
+test_that("an installed R is matched by major.minor, preferring the exact patch", {
+
+   installed <- data.frame(
+      version = c("4.3.3", "4.4.0", "4.4.2", "4.5.1"),
+      path    = paste0("/opt/R/", c("4.3.3", "4.4.0", "4.4.2", "4.5.1")),
+      binary  = paste0("/opt/R/", c("4.3.3", "4.4.0", "4.4.2", "4.5.1"), "/bin/R"),
+      home    = paste0("/opt/R/", c("4.3.3", "4.4.0", "4.4.2", "4.5.1"), "/lib/R"),
+      stringsAsFactors = FALSE
+   )
+
+   # exact match wins
+   match <- .rs.findInstalledRVersion("4.4.0", installed, architecture = NULL)
+   expect_equal(match$version, .rs.scalar("4.4.0"))
+   expect_equal(match$binary, .rs.scalar("/opt/R/4.4.0/bin/R"))
+   expect_equal(match$home, .rs.scalar("/opt/R/4.4.0/lib/R"))
+
+   # otherwise the newest patch release of the same minor
+   match <- .rs.findInstalledRVersion("4.4.1", installed, architecture = NULL)
+   expect_equal(match$version, .rs.scalar("4.4.2"))
+
+   # a version spec without a patch component also works
+   match <- .rs.findInstalledRVersion("4.3", installed, architecture = NULL)
+   expect_equal(match$version, .rs.scalar("4.3.3"))
+
+   # nothing installed from that minor
+   expect_null(.rs.findInstalledRVersion("4.2.0", installed, architecture = NULL))
+   expect_null(.rs.findInstalledRVersion("4.4.1", installed[0, ], architecture = NULL))
+   expect_null(.rs.findInstalledRVersion("bogus", installed, architecture = NULL))
+
+})
+
+test_that("the newest patch release is chosen by version, not by position or text", {
+
+   # 4.4.10 sorts before 4.4.9 as text, and is listed first here, so neither
+   # the last row nor a lexical ranking would pick it
+   versions <- c("4.4.10", "4.4.9")
+   installed <- data.frame(
+      version = versions,
+      path    = paste0("/opt/R/", versions),
+      binary  = paste0("/opt/R/", versions, "/bin/R"),
+      home    = paste0("/opt/R/", versions, "/lib/R"),
+      stringsAsFactors = FALSE
+   )
+
+   match <- .rs.findInstalledRVersion("4.4.1", installed, architecture = NULL)
+   expect_equal(match$version, .rs.scalar("4.4.10"))
+
+   match <- .rs.findInstalledRVersion("4.4.1", installed[2:1, ], architecture = NULL)
+   expect_equal(match$version, .rs.scalar("4.4.10"))
+
+})
+
+test_that("the architectures of an R build are read from libR", {
+
+   root <- tempfile("r-builds-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   # thin images carry their CPU type after the magic; universal images
+   # carry a table of them (arm64 is 0x0100000c, x86_64 is 0x01000007)
+   headers <- list(
+      arm64     = as.raw(c(0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0x00, 0x00, 0x01)),
+      x86_64    = as.raw(c(0xcf, 0xfa, 0xed, 0xfe, 0x07, 0x00, 0x00, 0x01)),
+      universal = as.raw(c(
+         0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00, 0x00, 0x02,
+         0x01, 0x00, 0x00, 0x07, rep(0x00, 16),
+         0x01, 0x00, 0x00, 0x0c, rep(0x00, 16)
+      )),
+      text      = charToRaw("#!/bin/sh\n")
+   )
+
+   for (name in names(headers))
+   {
+      dir.create(file.path(root, name, "lib"), recursive = TRUE)
+      writeBin(headers[[name]], file.path(root, name, "lib", "libR.dylib"))
+   }
+
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "arm64")), "arm64")
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "x86_64")), "x86_64")
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "universal")), c("x86_64", "arm64"))
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "text")), character())
+
+   # a universal image whose table is cut short
+   dir.create(file.path(root, "truncated", "lib"), recursive = TRUE)
+   writeBin(headers$universal[1:10], file.path(root, "truncated", "lib", "libR.dylib"))
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "truncated")), character())
+   expect_identical(.rs.rInstallations.architectures(file.path(root, "missing")), character())
+
+   # a build for the preferred architecture wins over an emulated one
+   installed <- data.frame(
+      version = c("4.4.1", "4.4.1"),
+      path    = file.path(root, c("x86_64", "arm64")),
+      binary  = file.path(root, c("x86_64", "arm64"), "bin", "R"),
+      home    = file.path(root, c("x86_64", "arm64")),
+      stringsAsFactors = FALSE
+   )
+
+   match <- .rs.findInstalledRVersion("4.4.1", installed, architecture = "arm64")
+   expect_equal(match$home, .rs.scalar(file.path(root, "arm64")))
+
+   # an emulated build is still used when it is the only one
+   match <- .rs.findInstalledRVersion("4.4.1", installed[1L, ], architecture = "arm64")
+   expect_equal(match$home, .rs.scalar(file.path(root, "x86_64")))
+
+   # no preference otherwise
+   match <- .rs.findInstalledRVersion("4.4.1", installed, architecture = NULL)
+   expect_equal(match$home, .rs.scalar(file.path(root, "x86_64")))
+
+})
+
+test_that("only version numbers are accepted as R versions", {
+
+   expect_true(.rs.rVersionIsValid("4.4"))
+   expect_true(.rs.rVersionIsValid("4.4.1"))
+
+   expect_false(.rs.rVersionIsValid("release"))
+   expect_false(.rs.rVersionIsValid("4"))
+   expect_false(.rs.rVersionIsValid("4.4.1.1"))
+   expect_false(.rs.rVersionIsValid("<img src=x onerror=alert(1)>"))
+   expect_false(.rs.rVersionIsValid("4.4.1 <b>"))
+   expect_false(.rs.rVersionIsValid(NA_character_))
+   expect_false(.rs.rVersionIsValid(c("4.4.1", "4.5.0")))
+   expect_false(.rs.rVersionIsValid(441))
+   expect_false(.rs.rVersionIsValid(NULL))
+
+})
+
+test_that("the pinned rig version is the bundled one", {
+
+   # the bundled release is pinned in dependencies/common/rig.cmake, reached
+   # from the source tree the tests are run from
+   testsDir <- Sys.getenv("TESTTHAT_TESTS_DIR", unset = NA)
+   skip_if(is.na(testsDir), "TESTTHAT_TESTS_DIR is not set")
+   cmake <- file.path(testsDir, "..", "..", "..", "..", "dependencies", "common", "rig.cmake")
+   skip_if_not(file.exists(cmake), "dependencies/common/rig.cmake not found")
+   contents <- readLines(cmake, warn = FALSE)
+
+   version <- grep("^set\\(RSTUDIO_RIG_VERSION ", contents, value = TRUE)
+   expect_length(version, 1L)
+   expect_identical(sub('.*"(.*)".*', "\\1", version), as.character(.rs.rig.pinnedVersion))
+
+})
+
+test_that("the home of an R installation is found from its root", {
+
+   root <- tempfile("r-install-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   # nothing that looks like R
+   dir.create(root)
+   expect_identical(.rs.rInstallations.homeFromPath(root), "")
+   expect_identical(.rs.rInstallations.homeFromPath(""), "")
+
+   # a Linux-style prefix, with the home under lib/R
+   home <- file.path(root, "lib", "R")
+   dir.create(file.path(home, "library", "base"), recursive = TRUE)
+   expect_identical(
+      .rs.rInstallations.homeFromPath(root),
+      normalizePath(home, winslash = "/")
+   )
+
+   # the version comes from the installation's headers
+   expect_identical(.rs.rInstallations.versionFromHome(home), "")
+   dir.create(file.path(home, "include"))
+   writeLines(
+      c("#define R_MAJOR  \"4\"", "#define R_MINOR  \"4.2\"", "#define R_STATUS \"\""),
+      file.path(home, "include", "Rversion.h")
+   )
+   expect_identical(.rs.rInstallations.versionFromHome(home), "4.4.2")
+
+})
+
+test_that("R installations found without rig are well-formed", {
+
+   installed <- .rs.rInstallations.scan()
+   expect_identical(names(installed), c("version", "path", "binary", "home"))
+   expect_true(all(vapply(installed$version, .rs.rVersionIsValid, logical(1))))
+   expect_true(all(file.exists(installed$binary)))
+
+})
+
+test_that("listing installed R versions without rig gives an empty table", {
+
+   installed <- .rs.rig.list(rig = "")
+   expect_s3_class(installed, "data.frame")
+   expect_equal(nrow(installed), 0L)
+   expect_identical(names(installed), c("version", "path", "binary", "home"))
+
+})
+
+test_that("only the minimum R version is enforced", {
+
+   expect_true(.rs.rVersionSupported("4.4.1", "3.6.0"))
+   expect_true(.rs.rVersionSupported("3.6.0", "3.6.0"))
+
+   # newer than RStudio was tested with still runs
+   expect_true(.rs.rVersionSupported("4.7.0", "3.6.0"))
+   expect_true(.rs.rVersionSupported("5.0.0", "3.6.0"))
+
+   expect_false(.rs.rVersionSupported("3.5.3", "3.6.0"))
+   expect_false(.rs.rVersionSupported("release", "3.6.0"))
+
+})
+
+test_that("the home of a macOS framework install is derived from its path", {
+   
+   binary <- "/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/bin/R"
+   expect_identical(
+      .rs.rig.rHome(binary),
+      "/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources"
+   )
+   
+   # a missing binary elsewhere has no known home
+   expect_identical(.rs.rig.rHome("/opt/R/none/bin/R"), "")
+   
+})
+
+test_that("macOS framework versions that run the default R are recognized", {
+
+   root <- tempfile("r-framework-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   home <- file.path(root, "R.framework", "Versions", "4.4-arm64", "Resources")
+   dir.create(file.path(home, "bin"), recursive = TRUE)
+
+   # as installed by CRAN: the launcher names the framework's shared home
+   writeLines(
+      c("#!/bin/sh", "R_HOME_DIR=/Library/Frameworks/R.framework/Resources"),
+      file.path(home, "bin", "R")
+   )
+   expect_false(.rs.rInstallations.isOrthogonal(home))
+
+   # as rewritten by 'rig system make-orthogonal'
+   writeLines(
+      c("#!/bin/sh", "R_HOME_DIR=/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources"),
+      file.path(home, "bin", "R")
+   )
+   expect_true(.rs.rInstallations.isOrthogonal(home))
+
+   # other installations are unaffected
+   expect_true(.rs.rInstallations.isOrthogonal("/opt/R/4.4.1/lib/R"))
+
+})
+
+test_that("the current macOS framework version runs as itself", {
+
+   skip_on_os("windows")
+
+   root <- tempfile("r-framework-")
+   on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+   versions <- file.path(root, "R.framework", "Versions")
+   for (name in c("4.4-arm64", "4.5-arm64"))
+   {
+      home <- file.path(versions, name, "Resources")
+      dir.create(file.path(home, "bin"), recursive = TRUE)
+      writeLines(
+         c("#!/bin/sh", "R_HOME_DIR=/Library/Frameworks/R.framework/Resources"),
+         file.path(home, "bin", "R")
+      )
+   }
+
+   # the shared paths resolve to the current version, so it needs no rewrite
+   file.symlink("4.5-arm64", file.path(versions, "Current"))
+   expect_true(.rs.rInstallations.isOrthogonal(file.path(versions, "4.5-arm64", "Resources")))
+   expect_false(.rs.rInstallations.isOrthogonal(file.path(versions, "4.4-arm64", "Resources")))
+
+   # also when the current version is asked about through the link
+   expect_true(.rs.rInstallations.isOrthogonal(file.path(versions, "Current", "Resources")))
+
+})
+
+test_that("installed R versions are listed once per session unless refreshed", {
+
+   cache <- .rs.rInstallationsCache
+   old <- cache$installed
+   on.exit({
+      if (is.null(old))
+         rm(list = "installed", envir = cache)
+      else
+         cache$installed <- old
+   }, add = TRUE)
+
+   installed <- data.frame(
+      version = "4.4.1",
+      path    = "/opt/R/4.4.1",
+      binary  = "/opt/R/4.4.1/bin/R",
+      home    = "/opt/R/4.4.1/lib/R",
+      stringsAsFactors = FALSE
+   )
+   cache$installed <- installed
+
+   expect_identical(.rs.rInstallations.cached(), installed)
+   match <- .rs.findInstalledRVersion("4.4", architecture = NULL, refresh = FALSE)
+   expect_equal(match$binary, .rs.scalar("/opt/R/4.4.1/bin/R"))
+
+})
+
+test_that("rig older than the pinned release is passed over", {
+
+   dir <- tempfile("rig-bin-")
+   dir.create(dir)
+   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+   rig <- file.path(dir, if (.rs.platform.isWindows) "rig.cmd" else "rig")
+   writeRig <- function(output)
+   {
+      writeLines(c(if (.rs.platform.isWindows) "@echo off" else "#!/bin/sh",
+                   paste("echo", output)), rig)
+      Sys.chmod(rig, "0755")
+   }
+   writeRig("RIG -- The R Installation Manager 0.9.1")
+   expect_equal(.rs.rig.version(rig), package_version("0.9.1"))
+   expect_identical(.rs.rig.find(paths = rig), "")
+
+   writeRig(paste("RIG -- The R Installation Manager", .rs.rig.pinnedVersion))
+   expect_equal(.rs.rig.version(rig), package_version(.rs.rig.pinnedVersion))
+   expect_identical(.rs.rig.find(paths = rig), normalizePath(rig, winslash = "/"))
+
+   writeRig("not rig")
+   expect_null(.rs.rig.version(rig))
+
+})
+
+test_that("the machine architecture is reported as is where it can't differ", {
+
+   expect_identical(.rs.rig.machine("arm64"), "arm64")
+   if (!.rs.platform.isMacos)
+   {
+      expect_false(.rs.isAppleSilicon())
+      expect_identical(.rs.rig.machine("x86_64"), "x86_64")
+   }
+
+})
+
+test_that("an x86_64 R on Apple silicon reports the hardware", {
+
+   skip_if_not(.rs.platform.isMacos, "Apple silicon is a macOS concern")
+
+   # sysctl is the oracle the in-process check replaced; the key is absent
+   # on Intel Macs, where sysctl fails
+   arm64 <- suppressWarnings(
+      system2("/usr/sbin/sysctl", c("-n", "hw.optional.arm64"), stdout = TRUE, stderr = FALSE)
+   )
+   expected <- identical(trimws(arm64[1L]), "1")
+
+   expect_identical(.rs.isAppleSilicon(), expected)
+   expect_identical(.rs.rig.machine("x86_64"), if (expected) "arm64" else "x86_64")
+
+})
+
+test_that("a user-mode install leaves rig's default R setup as it was", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   launchd <- fakeLaunchd(whichR = "/opt/homebrew/bin/R")
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
+   expect_setequal(names(paths), c("current", "R", "Rscript", "launchAgent"))
+
+   # a quick link from before the install is kept
+   writeLines("#!/bin/sh", paths[["Rscript"]])
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   expect_identical(snapshot$pid, Sys.getpid())
+   expect_false(snapshot$loaded)
+   expect_identical(snapshot$whichR, "/opt/homebrew/bin/R")
+
+   # nothing added: nothing removed, and launchd only consulted
+   nothing <- list(removed = character(), restored = character(), failed = character())
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchd$launchctl), nothing)
+   expect_identical(launchd$verbs(), c("list", "getenv", "list", "getenv"))
+   expect_identical(.rs.rig.restoreMessages(nothing), character())
+
+   # rig sets a default: the links (one of them dangling) and the agent,
+   # which it loads, and loading sets RSTUDIO_WHICH_R
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+   expect_true(file.symlink(file.path(installed, "bin", "R"), paths[["R"]]))
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   writeLines("<plist/>", paths[["launchAgent"]])
+   launchd$state$loaded <- TRUE
+   launchd$state$whichR <- file.path(installed, "bin", "R")
+   launchd$state$calls <- list()
+
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_setequal(result$removed, unname(paths[c("current", "R", "launchAgent")]))
+   expect_identical(result$restored, character())
+   expect_identical(result$failed, character())
+   expect_false(any(.rs.rig.pathExists(paths[c("current", "R", "launchAgent")])))
+   expect_true(file.exists(paths[["Rscript"]]))
+   expect_true(dir.exists(installed))
+
+   # the agent is unloaded, and the variable it exported put back
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv", "setenv"))
+   expect_false(launchd$state$loaded)
+   expect_identical(launchd$state$whichR, "/opt/homebrew/bin/R")
+
+   messages <- .rs.rig.restoreMessages(result)
+   expect_length(messages, 1L)
+   expect_match(messages, "^Removed the default R setup rig added outside RStudio: ")
+
+})
+
+test_that("RSTUDIO_WHICH_R is unset again when launchd had no value for it", {
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   launchd <- fakeLaunchd()
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   expect_identical(snapshot$whichR, "")
+
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   writeLines("<plist/>", paths[["launchAgent"]])
+   launchd$state$loaded <- TRUE
+   launchd$state$whichR <- "/some/R"
+   launchd$state$calls <- list()
+
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$removed, unname(paths[["launchAgent"]]))
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv", "unsetenv"))
+   expect_identical(launchd$state$whichR, "")
+
+   # off macOS there is no agent, and launchd is never consulted
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "linux")
+   expect_identical(names(paths), c("current", "R", "Rscript"))
+   expect_identical(basename(paths[["current"]]), "current")
+   launchd$state$calls <- list()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, launchd$launchctl)$failed, character())
+   expect_length(launchd$state$calls, 0L)
+
+})
+
+test_that("launchd's environment is read and changed in the GUI session", {
+
+   # a session started from tmux is in a Background launchd session, whose
+   # environment is not the one applications opened from the Dock inherit
+   calls <- list()
+   uid <- "502"
+   rsEnv <- as.environment("tools:rstudio")
+   original <- get(".rs.rig.command", envir = rsEnv)
+   on.exit(assign(".rs.rig.command", original, envir = rsEnv), add = TRUE)
+   assign(".rs.rig.command", function(command, args) {
+      calls[[length(calls) + 1L]] <<- c(command, args)
+      if (identical(command, "/usr/bin/id")) uid else ""
+   }, envir = rsEnv)
+
+   .rs.rig.launchctl(c("getenv", "RSTUDIO_WHICH_R"))
+   .rs.rig.launchctl(c("setenv", "RSTUDIO_WHICH_R", "/some/R"))
+   .rs.rig.launchctl(c("unsetenv", "RSTUDIO_WHICH_R"))
+   id <- c("/usr/bin/id", "-u")
+   gui <- c("/bin/launchctl", "asuser", "502", "/bin/launchctl")
+   expect_identical(calls, list(
+      id, c(gui, "getenv", "RSTUDIO_WHICH_R"),
+      id, c(gui, "setenv", "RSTUDIO_WHICH_R", "/some/R"),
+      id, c(gui, "unsetenv", "RSTUDIO_WHICH_R")
+   ))
+
+   # the verbs for jobs already reach the GUI session's agents
+   calls <- list()
+   .rs.rig.launchctl(c("list", .rs.rig.launchAgentLabel))
+   .rs.rig.launchctl(c("unload", "/some/agent.plist"))
+   expect_identical(calls, list(
+      c("/bin/launchctl", "list", .rs.rig.launchAgentLabel),
+      c("/bin/launchctl", "unload", "/some/agent.plist")
+   ))
+
+   # without the user's ID, launchd's environment is not touched at all
+   calls <- list()
+   uid <- NULL
+   expect_null(.rs.rig.launchctl(c("unsetenv", "RSTUDIO_WHICH_R")))
+   expect_identical(calls, list(id))
+
+})
+
+test_that("links rig repoints and an agent it rewrites are put back", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
+
+   # the default R was removed with 'rig rm': 'Current' and the quick links
+   # dangle, and the agent (which rig keeps while any R is left) still names
+   # the removed R, with launchd still exporting it from the last login
+   removed <- file.path(root, "4.3.3")
+   expect_true(file.symlink(removed, paths[["current"]]))
+   expect_true(file.symlink(file.path(removed, "bin", "R"), paths[["R"]]))
+   expect_true(file.symlink(file.path(removed, "bin", "Rscript"), paths[["Rscript"]]))
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   oldAgent <- sprintf("<plist>%s</plist>\n", file.path(removed, "bin", "R"))
+   writeBin(charToRaw(oldAgent), paths[["launchAgent"]])
+   launchd <- fakeLaunchd(loaded = TRUE, whichR = file.path(removed, "bin", "R"))
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   expect_true(all(snapshot$existed))
+   expect_identical(snapshot$agent, charToRaw(oldAgent))
+   expect_true(snapshot$loaded)
+
+   # rig sees no default (a dangling link does not exist to it), repoints
+   # 'Current' at the new R, cannot replace the dangling quick links, and
+   # rewrites, reloads and so re-exports the agent
+   installed <- file.path(root, "4.2.3")
+   dir.create(installed)
+   unlink(paths[["current"]])
+   expect_true(file.symlink(installed, paths[["current"]]))
+   writeBin(charToRaw(sprintf("<plist>%s</plist>\n", file.path(installed, "bin", "R"))), paths[["launchAgent"]])
+   launchd$state$whichR <- file.path(installed, "bin", "R")
+   launchd$state$calls <- list()
+
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$removed, character())
+   expect_setequal(result$restored, unname(paths[c("current", "launchAgent")]))
+   expect_identical(result$failed, character())
+
+   # the links dangle as before, the agent is the old one, loaded, and
+   # exporting the old R again
+   expect_identical(unname(Sys.readlink(paths[["current"]])), removed)
+   expect_identical(unname(Sys.readlink(paths[["R"]])), file.path(removed, "bin", "R"))
+   expect_identical(.rs.rig.readBytes(paths[["launchAgent"]]), charToRaw(oldAgent))
+   expect_identical(launchd$verbs(), c("list", "unload", "load", "getenv", "setenv"))
+   expect_true(launchd$state$loaded)
+   expect_identical(launchd$state$whichR, file.path(removed, "bin", "R"))
+   expect_match(.rs.rig.restoreMessages(result), "^Put back the default R setup rig changed outside RStudio: ")
+
+   # an agent rig merely loads (one that was up to date but unloaded) is
+   # unloaded again
+   launchd$state$calls <- list()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   launchd$state$loaded <- FALSE
+   snapshot$loaded <- FALSE
+   launchd$state$loaded <- TRUE
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result, list(removed = character(), restored = character(), failed = character()))
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv"))
+   expect_false(launchd$state$loaded)
+
+})
+
+test_that("a repointed link whose directory was removed by hand is left alone", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
+
+   # 'Current' dangled, rig repointed it at the new R, the session exited
+   # mid-install, and the user then removed rig's R directory wholesale
+   removed <- file.path(root, "4.3.3")
+   expect_true(file.symlink(removed, paths[["current"]]))
+   launchd <- fakeLaunchd()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   installed <- file.path(root, "4.2.3")
+   dir.create(installed)
+   unlink(paths[["current"]])
+   expect_true(file.symlink(installed, paths[["current"]]))
+   unlink(root, recursive = TRUE)
+
+   # the old link is not recreated in a directory the user chose to remove,
+   # and (so that it does not block later installs) that is not a failure
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result, list(removed = character(), restored = character(), failed = character()))
+   expect_false(dir.exists(root))
+
+})
+
+test_that("what could not be undone after a user-mode install is reported", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+   skip_if(identical(Sys.info()[["effective_user"]], "root"), "root can remove anything")
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit({
+      Sys.chmod(bin, "0755")
+      unlink(c(root, bin, home), recursive = TRUE)
+   }, add = TRUE)
+
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
+   launchd <- fakeLaunchd()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+
+   # rig sets a default, but the agent will not unload and the quick-link
+   # directory cannot be written to any more
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+   expect_true(file.symlink(file.path(installed, "bin", "R"), paths[["R"]]))
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   writeLines("<plist/>", paths[["launchAgent"]])
+   launchd$state$loaded <- TRUE
+   launchd$state$whichR <- file.path(installed, "bin", "R")
+   launchd$state$failing <- c("unload", "unsetenv")
+   Sys.chmod(bin, "0555")
+
+   # the agent keeps its file, which the next try needs to unload it
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$removed, unname(paths[["current"]]))
+   expect_true(file.exists(paths[["launchAgent"]]))
+   expect_identical(result$restored, character())
+   expect_length(result$failed, 3L)
+   expect_match(result$failed, "launchctl unload", all = FALSE)
+   expect_match(result$failed, "launchctl unsetenv", all = FALSE)
+   expect_match(result$failed, paste("could not remove", paths[["R"]]), fixed = TRUE, all = FALSE)
+   expect_true(.rs.rig.pathExists(paths[["R"]]))
+
+   # one line per failure, after what did get done
+   messages <- .rs.rig.restoreMessages(result)
+   expect_length(messages, 4L)
+   expect_match(messages[[1L]], "^Removed the default R setup")
+   expect_match(messages[-1L], "^Could not undo a change rig made outside RStudio: ")
+
+})
+
+test_that("rig's default R setup is remembered before, and put back after, a user-mode install", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   dir.create(root)
+
+   rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   file <- file.path(home, "rig-install-snapshot.rds")
+   launchd <- fakeLaunchd(whichR = "/opt/homebrew/bin/R")
+   state <- .rs.rig.installState
+
+   # the snapshot is taken (with rig's quick-link directory created first)
+   # and kept on disk, for a session that does not outlive the install
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
+   })
+   expect_true(dir.exists(bin))
+   expect_true(file.exists(file))
+   expect_identical(state$file, file)
+   expect_identical(readRDS(file), state$snapshot)
+   expect_identical(state$snapshot$pid, Sys.getpid())
+   expect_false(any(state$snapshot$existed))
+   if (.rs.platform.isMacos)
+   {
+      expect_identical(basename(state$snapshot$paths[["launchAgent"]]), "io.r-lib.rig.rstudio-which-r.plist")
+      expect_true(startsWith(state$snapshot$paths[["launchAgent"]], home))
+   }
+   else
+   {
+      expect_false("launchAgent" %in% names(state$snapshot$paths))
+   }
+
+   # rig sets a default while installing
+   paths <- state$snapshot$paths
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+   expect_true(file.symlink(file.path(installed, "bin", "R"), paths[["R"]]))
+   expect_true(file.symlink(file.path(installed, "bin", "Rscript"), paths[["Rscript"]]))
+
+   # once rig runs, its process is recorded in the snapshot too
+   expect_identical(.rs.rig.userInstallStarted(4242L), character())
+   expect_identical(state$snapshot$rigPid, 4242L)
+   expect_identical(readRDS(file)$rigPid, 4242L)
+
+   # which the end of the install undoes, dropping the snapshot
+   messages <- .rs.rig.userInstallEnd(launchd$launchctl)
+   expect_length(messages, 1L)
+   expect_match(messages, "^Removed the default R setup rig added outside RStudio: ")
+   expect_false(any(.rs.rig.pathExists(paths)))
+   expect_true(dir.exists(installed))
+   expect_false(file.exists(file))
+   expect_null(state$snapshot)
+   expect_null(state$file)
+
+   # with no install under way there is nothing to undo
+   expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+
+   # without a saved snapshot there is no undoing the install: it is refused
+   unwritable <- file.path(home, "missing", "snapshot.rds")
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      expect_error(.rs.rig.userInstallBegin(rig, unwritable, launchd$launchctl), "^Could not save rig's default R setup to ")
+   })
+   expect_null(state$snapshot)
+   expect_null(state$file)
+   expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+
+   # when rig cannot say where its files are, nothing is remembered
+   failing <- fakeRig(home, NULL)
+   expect_error(.rs.rig.userInstallBegin(failing, file, launchd$launchctl), "rig system dirs --user failed")
+   expect_null(state$snapshot)
+   expect_false(file.exists(file))
+   expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+
+})
+
+test_that("the snapshot before a user-mode install covers the confirmed destination", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   custom <- file.path(home, "custom R")
+   dir.create(root)
+   dir.create(custom)
+
+   rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   launchd <- fakeLaunchd()
+   state <- .rs.rig.installState
+
+   # rig's 'Current' link lands in the destination, so that is where the
+   # snapshot looks for it, and the session's environment is left as it was
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      expect_identical(.rs.rig.userInstallBegin(rig, NULL, launchd$launchctl, directory = custom), character())
+      expect_identical(dirname(state$snapshot$paths[["current"]]), custom)
+      expect_identical(Sys.getenv("RIG_R_INSTALL_DIR", unset = NA), NA_character_)
+      expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+
+      expect_identical(.rs.rig.userInstallBegin(rig, NULL, launchd$launchctl), character())
+      expect_identical(dirname(state$snapshot$paths[["current"]]), root)
+      expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+   })
+
+   # an override of the user's own is put back afterward
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = root), {
+      expect_identical(.rs.rig.userInstallBegin(rig, NULL, launchd$launchctl, directory = custom), character())
+      expect_identical(dirname(state$snapshot$paths[["current"]]), custom)
+      expect_identical(Sys.getenv("RIG_R_INSTALL_DIR"), root)
+      expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+   })
+
+})
+
+test_that("the snapshot is kept, and installs refused, while something is left to undo", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+   skip_if(identical(Sys.info()[["effective_user"]], "root"), "root can remove anything")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit({
+      Sys.chmod(file.path(home, "R"), "0755")
+      unlink(home, recursive = TRUE)
+   }, add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   for (dir in c(root, bin))
+      dir.create(dir, recursive = TRUE)
+
+   rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   file <- file.path(home, "rig-install-snapshot.rds")
+   launchd <- fakeLaunchd()
+   state <- .rs.rig.installState
+
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      expect_identical(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), character())
+   })
+   paths <- state$snapshot$paths
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+
+   # the link cannot be removed: the snapshot stays for a later try
+   Sys.chmod(root, "0555")
+   messages <- .rs.rig.userInstallEnd(launchd$launchctl)
+   expect_match(messages, "^Could not undo a change rig made outside RStudio: could not remove ", all = FALSE)
+   expect_true(file.exists(file))
+   expect_null(state$snapshot)
+
+   # until then, no further install (whose snapshot would take the leftover
+   # for setup to keep, and forget it was ever absent)
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), "not all undone yet")
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl), file, fixed = TRUE)
+   })
+   expect_true(file.exists(file))
+   expect_identical(readRDS(file)$existed[["current"]], FALSE)
+
+   Sys.chmod(root, "0755")
+   messages <- .rs.rig.userInstallRecover(file, launchctl = launchd$launchctl)
+   expect_match(messages, "^Removed the default R setup")
+   expect_false(file.exists(file))
+   expect_false(.rs.rig.pathExists(paths[["current"]]))
+
+})
+
+test_that("a new agent that would not unload keeps its file for the next try", {
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "macos")
+   agent <- paths[["launchAgent"]]
+   launchd <- fakeLaunchd()
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+
+   # rig adds and loads the agent, which then will not unload: unloading
+   # needs the file, so it stays
+   dir.create(dirname(agent), recursive = TRUE)
+   writeBin(charToRaw("<plist/>\n"), agent)
+   launchd$state$loaded <- TRUE
+   launchd$state$whichR <- "/new/R"
+   launchd$state$failing <- "unload"
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$removed, character())
+   expect_match(result$failed, "launchctl unload")
+   expect_true(file.exists(agent))
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv", "unsetenv"))
+
+   # the next try unloads it and removes it
+   launchd$state$failing <- character()
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$removed, unname(agent))
+   expect_identical(result$failed, character())
+   expect_false(file.exists(agent))
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv"))
+   expect_false(launchd$state$loaded)
+
+})
+
+test_that("an agent that would not unload is left for the next try", {
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "macos")
+   agent <- paths[["launchAgent"]]
+   dir.create(dirname(agent), recursive = TRUE)
+   writeBin(charToRaw("<plist>old</plist>\n"), agent)
+   launchd <- fakeLaunchd(loaded = TRUE, whichR = "/old/R")
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+
+   # rig rewrites and reloads the agent, which then will not unload: its
+   # file is left as rig wrote it
+   writeBin(charToRaw("<plist>new</plist>\n"), agent)
+   launchd$state$whichR <- "/new/R"
+   launchd$state$failing <- "unload"
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$restored, character())
+   expect_match(result$failed, "launchctl unload")
+   expect_identical(.rs.rig.readBytes(agent), charToRaw("<plist>new</plist>\n"))
+   expect_identical(launchd$verbs(), c("list", "unload", "getenv", "setenv"))
+
+   # the next try starts over: unload, put back, load
+   launchd$state$failing <- character()
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$restored, unname(agent))
+   expect_identical(result$failed, character())
+   expect_identical(.rs.rig.readBytes(agent), charToRaw("<plist>old</plist>\n"))
+   expect_identical(launchd$verbs(), c("list", "unload", "load", "getenv"))
+   expect_true(launchd$state$loaded)
+
+})
+
+test_that("an agent that failed to load again is loaded by the next try", {
+
+   root <- tempfile("rig-r-")
+   bin <- tempfile("rig-bin-")
+   home <- tempfile("rig-home-")
+   for (dir in c(root, bin, home))
+      dir.create(dir)
+   on.exit(unlink(c(root, bin, home), recursive = TRUE), add = TRUE)
+
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "macos")
+   dir.create(dirname(paths[["launchAgent"]]), recursive = TRUE)
+   writeBin(charToRaw("<plist>old</plist>\n"), paths[["launchAgent"]])
+   launchd <- fakeLaunchd(loaded = TRUE, whichR = "/old/R")
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+
+   # rig rewrites the agent; putting it back works, loading it does not
+   writeBin(charToRaw("<plist>new</plist>\n"), paths[["launchAgent"]])
+   launchd$state$whichR <- "/new/R"
+   launchd$state$failing <- "load"
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result$restored, unname(paths[["launchAgent"]]))
+   expect_match(result$failed, "launchctl load")
+   expect_identical(launchd$verbs(), c("list", "unload", "load", "getenv", "setenv"))
+   expect_false(launchd$state$loaded)
+
+   # the file is already as it was, so the next try only loads it
+   launchd$state$failing <- character()
+   launchd$state$calls <- list()
+   result <- .rs.rig.userDefaultRestore(snapshot, launchd$launchctl)
+   expect_identical(result, list(removed = character(), restored = character(), failed = character()))
+   expect_identical(launchd$verbs(), c("list", "load", "getenv"))
+   expect_true(launchd$state$loaded)
+
+})
+
+test_that("a user-mode install waits for, and undoes, one another session started", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   for (dir in c(root, bin))
+      dir.create(dir, recursive = TRUE)
+
+   rig <- fakeRig(home, list(r_root = root, binary_dir = bin))
+   file <- file.path(home, "rig-install-snapshot.rds")
+   launchd <- fakeLaunchd()
+   state <- .rs.rig.installState
+   paths <- .rs.rig.userDefaultPaths(list(r_root = root, binary_dir = bin), home = home, platform = "linux")
+
+   # another session took a snapshot and its rig has set the default
+   theirs <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   theirs$pid <- 999998L
+   theirs$rigPid <- 999999L
+   saveRDS(theirs, file)
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+
+   # while that session, or just its rig, runs, this one does not install
+   alive <- function(pids) function(pid) pid %in% pids
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999998L)), "another RStudio session")
+      expect_error(.rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(999999L)), "another RStudio session")
+   })
+   expect_null(state$snapshot)
+   expect_true(file.exists(file))
+   expect_true(.rs.rig.pathExists(paths[["current"]]))
+
+   # once both are gone, their default is undone before this install's
+   # snapshot is taken, so it does not pass for setup to keep
+   withr::with_envvar(c(HOME = home, RIG_R_INSTALL_DIR = NA), {
+      messages <- .rs.rig.userInstallBegin(rig, file, launchd$launchctl, alive(integer()))
+   })
+   expect_match(messages, "^Removed the default R setup")
+   expect_false(.rs.rig.pathExists(paths[["current"]]))
+   expect_identical(readRDS(file)$pid, Sys.getpid())
+   expect_false(any(state$snapshot$existed))
+   expect_identical(.rs.rig.userInstallEnd(launchd$launchctl), character())
+   expect_false(file.exists(file))
+
+})
+
+test_that("an install a previous session did not get to undo is undone at startup", {
+
+   skip_if(.rs.platform.isWindows, "symlinks are not available")
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+   root <- file.path(home, "R")
+   bin <- file.path(home, ".local", "bin")
+   for (dir in c(root, bin))
+      dir.create(dir, recursive = TRUE)
+
+   dirs <- list(r_root = root, binary_dir = bin)
+   paths <- .rs.rig.userDefaultPaths(dirs, home = home, platform = "macos")
+   launchd <- fakeLaunchd()
+   file <- file.path(home, "rig-install-snapshot.rds")
+
+   # no snapshot: nothing to do
+   expect_identical(.rs.rig.userInstallRecover(file, launchctl = launchd$launchctl), character())
+
+   # the session that took the snapshot exited mid-install, after rig had
+   # set the default
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, launchd$launchctl)
+   snapshot$pid <- 999999L
+   saveRDS(snapshot, file)
+   installed <- file.path(root, "4.3.3")
+   dir.create(installed)
+   expect_true(file.symlink(installed, paths[["current"]]))
+   expect_true(file.symlink(file.path(installed, "bin", "R"), paths[["R"]]))
+
+   # while that session runs, its install may still be under way
+   stillRunning <- function(pid) identical(pid, 999999L)
+   expect_identical(.rs.rig.userInstallRecover(file, stillRunning, launchd$launchctl), character())
+   expect_true(file.exists(file))
+   expect_true(.rs.rig.pathExists(paths[["current"]]))
+
+   # as it may while the rig it started runs on without it
+   snapshot$rigPid <- 999997L
+   saveRDS(snapshot, file)
+   rigRunning <- function(pid) identical(pid, 999997L)
+   expect_identical(.rs.rig.userInstallRecover(file, rigRunning, launchd$launchctl), character())
+   expect_true(file.exists(file))
+
+   # once it is gone, the default is undone and the snapshot dropped
+   gone <- function(pid) FALSE
+   messages <- .rs.rig.userInstallRecover(file, gone, launchd$launchctl)
+   expect_match(messages, "^Removed the default R setup rig added outside RStudio: ")
+   expect_false(any(.rs.rig.pathExists(paths)))
+   expect_false(file.exists(file))
+
+   # a snapshot that cannot be read is dropped, and said so
+   writeLines("not an rds file", file)
+   messages <- .rs.rig.userInstallRecover(file, gone, launchd$launchctl)
+   expect_match(messages, "^Could not read rig's default R setup from ")
+   expect_false(file.exists(file))
+
+   # this session's own process counts as running, a finished one does not
+   expect_true(.rs.isProcessRunning(Sys.getpid()))
+   expect_false(.rs.isProcessRunning(999999L))
+
+})
+
+test_that("rig's quick-link directory is created before a user-mode install", {
+
+   home <- tempfile("rig-home-")
+   dir.create(home)
+   on.exit(unlink(home, recursive = TRUE), add = TRUE)
+
+   # a fresh home has no ~/.local/bin yet (r-lib/rig#491)
+   bin <- file.path(home, ".local", "bin")
+   expect_false(dir.exists(bin))
+   expect_true(.rs.rig.ensureBinaryDir(list(binary_dir = bin)))
+   expect_true(dir.exists(bin))
+
+   # an existing directory is left alone, contents included
+   marker <- file.path(bin, "R-4.6.1")
+   writeLines("#!/bin/sh", marker)
+   expect_true(.rs.rig.ensureBinaryDir(list(binary_dir = bin)))
+   expect_true(file.exists(marker))
+
+   # nothing to create when rig did not report a directory
+   expect_false(.rs.rig.ensureBinaryDir(list()))
+   expect_false(.rs.rig.ensureBinaryDir(list(binary_dir = "")))
+
+})
+
+test_that("a Windows user-mode install leaves the registry default and user PATH as they were", {
+
+   bin <- tempfile("rig-bin-")
+   dir.create(bin)
+   on.exit(unlink(bin, recursive = TRUE), add = TRUE)
+
+   # an in-memory registry in place of the session's registry routines
+   store <- new.env(parent = emptyenv())
+   registry <- function() as.list(store)
+   registryWrite <- function(ops)
+   {
+      for (op in ops)
+      {
+         id <- .rs.rig.registryId(op$key, op$name)
+         if (identical(op$op, "remove"))
+            rm(list = id, envir = store)
+         else
+            assign(id, list(type = op$type, data = op$data), envir = store)
+      }
+   }
+
+   pathId  <- .rs.rig.registryId("HKCU\\Environment", "Path")
+   rId     <- .rs.rig.registryId("HKCU\\Software\\R-core\\R", "Current Version")
+   rPathId <- .rs.rig.registryId("HKCU\\Software\\R-core\\R", "InstallPath")
+   r64Id   <- .rs.rig.registryId("HKCU\\Software\\R-core\\R64", "Current Version")
+   assign(pathId, list(type = "ExpandString", data = "C:\\Windows;%USERPROFILE%\\bin"), envir = store)
+   assign(rId, list(type = "String", data = "4.6.1"), envir = store)
+
+   paths <- .rs.rig.userDefaultPaths(list(binary_dir = bin), platform = "windows")
+   expect_identical(basename(unname(paths)), c("R.exe", "RS.exe", "Rscript.exe"))
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, registry = registry, binaryDir = bin)
+   expect_identical(snapshot$registry, as.list(store))
+   expect_identical(snapshot$binaryDir, bin)
+
+   # nothing changed: nothing to revert
+   nothing <- list(removed = character(), restored = character(), failed = character())
+   expect_identical(
+      .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = registryWrite),
+      nothing
+   )
+
+   # rig sets its default: the shims, the registry default, and its PATH entry
+   for (shim in paths)
+      writeLines("", shim)
+   assign(pathId, list(type = "ExpandString", data = paste0(bin, ";C:\\Windows;%USERPROFILE%\\bin")), envir = store)
+   assign(rId, list(type = "String", data = "4.2.3"), envir = store)
+   assign(rPathId, list(type = "String", data = "C:\\Users\\me\\AppData\\Roaming\\rig\\data\\r\\R-4.2.3"), envir = store)
+   assign(r64Id, list(type = "String", data = "4.2.3"), envir = store)
+
+   result <- .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = registryWrite)
+   expect_false(any(file.exists(paths)))
+   expect_setequal(result$removed, c(unname(paths), rPathId, r64Id))
+   expect_setequal(result$restored, c(rId, sprintf("user PATH entry %s", bin)))
+   expect_identical(result$failed, character())
+   expect_identical(store[[pathId]], list(type = "ExpandString", data = "C:\\Windows;%USERPROFILE%\\bin"))
+   expect_identical(store[[rId]], list(type = "String", data = "4.6.1"))
+   expect_false(exists(rPathId, envir = store, inherits = FALSE))
+   expect_false(exists(r64Id, envir = store, inherits = FALSE))
+
+   messages <- .rs.rig.restoreMessages(result)
+   expect_length(messages, 2L)
+   expect_match(messages[[2L]], "^Put back the default R setup rig changed outside RStudio: ")
+
+   # a registry that cannot be written is reported, for the next try
+   assign(rId, list(type = "String", data = "4.2.3"), envir = store)
+   failing <- function(ops) stop("no powershell")
+   result <- .rs.rig.userDefaultRestore(snapshot, registry = registry, registryWrite = failing)
+   expect_identical(result$restored, character())
+   expect_match(result$failed, "could not restore the registry values .*: no powershell")
+   expect_identical(store[[rId]], list(type = "String", data = "4.2.3"))
+
+   # a registry that cannot be read is left out of the snapshot, with the reason
+   broken <- function() stop("no powershell")
+   snapshot <- .rs.rig.userDefaultSnapshot(paths, registry = broken, binaryDir = bin)
+   expect_null(snapshot$registry)
+   expect_identical(snapshot$registryError, "no powershell")
+   expect_identical(.rs.rig.userDefaultRestore(snapshot, registry = broken, registryWrite = registryWrite), nothing)
+
+})
+
+test_that("rig's PATH entry is taken out without disturbing other changes", {
+
+   bin <- "C:\\Users\\me\\.local\\bin"
+   pathId <- .rs.rig.registryId("HKCU\\Environment", "Path")
+
+   # no user PATH before, only rig's entry after: the value goes away
+   ops <- .rs.rig.registryRestoreOps(list(), setNames(list(list(type = "ExpandString", data = bin)), pathId), bin)
+   expect_length(ops, 1L)
+   expect_identical(ops[[1L]]$op, "remove")
+
+   # rig's entry (in another case) plus one added by something else: only rig's goes
+   before <- setNames(list(list(type = "String", data = "C:\\Windows")), pathId)
+   after <- setNames(list(list(type = "String", data = paste0(toupper(bin), ";C:\\Windows;D:\\tools"))), pathId)
+   ops <- .rs.rig.registryRestoreOps(before, after, bin)
+   expect_length(ops, 1L)
+   expect_identical(ops[[1L]]$op, "set")
+   expect_identical(ops[[1L]]$type, "String")
+   expect_identical(ops[[1L]]$data, "C:\\Windows;D:\\tools")
+
+   # already on the PATH beforehand: left alone, as is a value that disappeared
+   expect_length(.rs.rig.registryRestoreOps(after, after, bin), 0L)
+   expect_length(.rs.rig.registryRestoreOps(before, list(), bin), 0L)
+
+})
+
+test_that("a running process is told from one that is gone, without being signalled", {
+
+   expect_true(.rs.isProcessRunning(Sys.getpid()))
+   expect_false(.rs.isProcessRunning(2147483000L))
+
+})

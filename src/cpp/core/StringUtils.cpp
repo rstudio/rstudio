@@ -62,11 +62,11 @@ bool hasSubstringAtOffset(
 {
    if (substring.size() + offset > string.size())
       return false;
-   
+
    for (std::size_t i = 0, n = substring.size(); i < n; i++)
       if (string[offset + i] != substring[i])
          return false;
-   
+
    return true;
 }
 
@@ -75,7 +75,7 @@ bool hasTruthyValue(const std::string& string)
    for (const char* value : { "TRUE", "True", "true", "YES", "Yes", "yes", "1" })
       if (string == value)
          return true;
-   
+
    return false;
 }
 
@@ -84,7 +84,7 @@ bool hasFalsyValue(const std::string& string)
    for (const char* value : { "FALSE", "False", "false", "NO", "No", "no", "0" })
       if (string == value)
          return true;
-   
+
    return false;
 }
 
@@ -98,7 +98,7 @@ bool isTruthy(const std::string& string,
    // check for 'falsy' values
    if (hasFalsyValue(string))
       return false;
-   
+
    // assume all other values are 'truthy'
    return true;
 }
@@ -179,11 +179,11 @@ std::vector<int> subsequenceIndices(std::string const& sequence,
       std::string::size_type index = sequence.find(query[i], prevMatchIndex + 1);
       if (index == std::string::npos)
          continue;
-      
+
       result.push_back(gsl::narrow_cast<int>(index));
       prevMatchIndex = index;
    }
-   
+
    return result;
 }
 
@@ -193,20 +193,20 @@ bool subsequenceIndices(std::string const& sequence,
 {
    pIndices->clear();
    pIndices->reserve(query.length());
-   
+
    int query_n = gsl::narrow_cast<int>(query.length());
    int prevMatchIndex = -1;
-   
+
    for (int i = 0; i < query_n; i++)
    {
       int index = gsl::narrow_cast<int>(sequence.find(query[i], prevMatchIndex + 1));
       if (index == -1)
          return false;
-      
+
       pIndices->push_back(index);
       prevMatchIndex = index;
    }
-   
+
    return true;
 }
 
@@ -350,9 +350,14 @@ std::string utf8ToSystemImpl(const std::string& str,
           wide[i + 1] >= 0xDC00 && wide[i + 1] <= 0xDFFF)
       {
          wideChars = 2;
+
+         // The range checks above make '& 0x3FF' equal to subtracting 0xD800
+         // or 0xDC00, and the two halves occupy separate bits, so '|' equals
+         // '+'. Keep this form: Snyk Code reports the subtraction form as a
+         // possible integer overflow.
          codepoint = 0x10000 +
-               ((static_cast<uint32_t>(wide[i]) - 0xD800) << 10) +
-               (static_cast<uint32_t>(wide[i + 1]) - 0xDC00);
+               (((static_cast<uint32_t>(wide[i]) & 0x3FF) << 10) |
+                (static_cast<uint32_t>(wide[i + 1]) & 0x3FF));
       }
 
       int n;
@@ -538,6 +543,93 @@ std::size_t utf8IncompleteSuffixLength(const std::string& str)
    return (available < expected) ? available : 0;
 }
 
+std::size_t utf8SequenceLength(const std::string& str, std::size_t pos)
+{
+   if (pos >= str.size())
+      return 0;
+
+   const auto bytes = reinterpret_cast<const unsigned char*>(str.data());
+
+   const auto lead = bytes[pos];
+   if (!lead)
+      return 0;
+   if (lead < 0x80)
+      return 1;
+
+   // the first continuation byte's range is narrowed where a wider one would
+   // allow an overlong form, a surrogate, or a code point past U+10FFFF
+   std::size_t length = 0;
+   unsigned char low = 0x80;
+   unsigned char high = 0xBF;
+   if (lead >= 0xC2 && lead <= 0xDF)
+      length = 2;
+   else if (lead == 0xE0)
+      length = 3, low = 0xA0;
+   else if (lead == 0xED)
+      length = 3, high = 0x9F;
+   else if (lead >= 0xE1 && lead <= 0xEF)
+      length = 3;
+   else if (lead == 0xF0)
+      length = 4, low = 0x90;
+   else if (lead == 0xF4)
+      length = 4, high = 0x8F;
+   else if (lead >= 0xF1 && lead <= 0xF3)
+      length = 4;
+   else
+      return 0;
+
+   if (pos + length > str.size() || bytes[pos + 1] < low || bytes[pos + 1] > high)
+      return 0;
+
+   for (std::size_t i = 2; i < length; ++i)
+   {
+      if (bytes[pos + i] < 0x80 || bytes[pos + i] > 0xBF)
+         return 0;
+   }
+   return length;
+}
+
+bool isValidUtf8(const std::string& str)
+{
+   std::size_t stringLen = str.size();
+   for (std::size_t pos = 0; pos < stringLen;)
+   {
+      std::size_t seqLen = utf8SequenceLength(str, pos);
+      if (seqLen == 0)
+         return false;
+      pos += seqLen;
+   }
+   return true;
+}
+
+std::string cleanUtf8String(const std::string& value)
+{
+   std::string result;
+   result.reserve(value.size());
+   for (std::size_t pos = 0; pos < value.size();)
+   {
+      if (value[pos] == '\0')
+      {
+         // skip nulls, which should never occur anyway
+         ++pos;
+         continue;
+      }
+
+      const std::size_t length = utf8SequenceLength(value, pos);
+      if (length == 0)
+      {
+         // replace invalid characters with a Unicode replacement character
+         result += "\xEF\xBF\xBD";
+         ++pos;
+         continue;
+      }
+
+      result.append(value, pos, length);
+      pos += length;
+   }
+   return result;
+}
+
 // https://en.cppreference.com/w/cpp/string/byte/toupper#Notes
 std::string toUpper(const std::string& str)
 {
@@ -559,7 +651,7 @@ std::string toLower(const std::string& str)
    });
    return lower;
 }
-   
+
 std::string textToHtml(const std::string& str)
 {
    std::string html = str;
@@ -616,6 +708,81 @@ std::string htmlEscape(const std::string& str, bool isAttributeValue)
    }
 
    return escape(escapes, subs, str);
+}
+
+// Inverse of htmlEscape for the non-attribute entity set. Keep the table in
+// sync with htmlEscape above and with StringUtil.htmlUnescape on the client
+// (src/gwt/src/org/rstudio/core/client/StringUtil.java).
+std::string htmlUnescape(const std::string& str)
+{
+   if (str.find('&') == std::string::npos)
+      return str;
+
+   static const std::vector<std::pair<std::string, char>> entities = {
+      { "&lt;",   '<'  },
+      { "&gt;",   '>'  },
+      { "&quot;", '"'  },
+      { "&#x27;", '\'' },
+      { "&#x2F;", '/'  },
+      { "&amp;",  '&'  },
+   };
+
+   std::string result;
+   result.reserve(str.size());
+
+   std::size_t i = 0;
+   while (i < str.size())
+   {
+      // A leading & only ever gets decoded once.
+      // This ensures that "&amp;lt;" decodes to "&lt;" instead of ">".
+      if (str[i] == '&')
+      {
+         bool matched = false;
+         for (const auto& entity : entities)
+         {
+            if (str.compare(i, entity.first.size(), entity.first) == 0)
+            {
+               result.push_back(entity.second);
+               i += entity.first.size();
+               matched = true;
+               break;
+            }
+         }
+
+         if (matched)
+            continue;
+      }
+
+      result.push_back(str[i]);
+      i += 1;
+   }
+
+   return result;
+}
+
+std::string htmlToText(const std::string& str)
+{
+   std::string stripped;
+   stripped.reserve(str.size());
+
+   std::size_t i = 0;
+   while (i < str.size())
+   {
+      if (str[i] == '<')
+      {
+         std::size_t close = str.find('>', i + 1);
+         if (close != std::string::npos)
+         {
+            i = close + 1;
+            continue;
+         }
+      }
+
+      stripped.push_back(str[i]);
+      i += 1;
+   }
+
+   return htmlUnescape(stripped);
 }
 
 std::string jsLiteralEscape(const std::string& str)
@@ -678,14 +845,14 @@ std::string jsonLiteralUnescape(const std::string& str)
 Error jsonLiteralUnescape(const std::string& str, std::string* pEscaped)
 {
    json::Value value;
-   
+
    Error error = value.parse(str);
    if (error)
       return error;
-   
+
    if (!json::isType<std::string>(value))
       return Error(boost::system::errc::invalid_argument, ERROR_LOCATION);
-   
+
    *pEscaped = value.getString();
    return Success();
 }
@@ -810,14 +977,14 @@ std::string strippedOfBackQuotes(const std::string& string)
 {
    if (string.length() < 2)
       return string;
-   
+
    std::size_t startIndex = 0;
    std::size_t n = string.length();
    std::size_t endIndex = n;
-   
+
    startIndex += string[0] == '`';
    endIndex   -= string[n - 1] == '`';
-   
+
    return string.substr(startIndex, endIndex - startIndex);
 }
 
@@ -836,17 +1003,17 @@ std::string strippedOfQuotes(const std::string& string)
 {
    std::string::size_type n = string.length();
    if (n < 2) return string;
-   
+
    char first = string[0];
    char last  = string[n - 1];
-   
+
    if ((first == '\'' && last == '\'') ||
        (first == '"' && last == '"') |\
        (first == '`' && last == '`'))
    {
       return string.substr(1, n - 2);
    }
-   
+
    return string;
 }
 
@@ -859,9 +1026,9 @@ Iter countNewlinesImpl(Iter begin,
 {
    std::size_t newlineCount = 0;
    Iter it = begin;
-   
+
    Iter lastNewline = end;
-   
+
    for (; it != end; ++it)
    {
       // Detect '\r\n'
@@ -876,7 +1043,7 @@ Iter countNewlinesImpl(Iter begin,
             continue;
          }
       }
-      
+
       // Detect '\n'
       if (*it == LF)
       {
@@ -884,7 +1051,7 @@ Iter countNewlinesImpl(Iter begin,
          ++newlineCount;
       }
    }
-   
+
    *pNewlineCount = newlineCount;
    return lastNewline;
 }
@@ -952,7 +1119,7 @@ bool extractCommentHeader(const std::string& contents,
             reNewline,
             -1);
    boost::sregex_token_iterator end;
-   
+
    // first, skip blank lines
    boost::regex reWhitespace("^\\s*$");
    while (it != end)
@@ -962,20 +1129,20 @@ bool extractCommentHeader(const std::string& contents,
          ++it;
          continue;
       }
-      
+
       break;
    }
-   
+
    // if we're at the end now, bail
    if (it == end)
       return false;
-   
+
    // check to see if we landed on our comment prefix and
    // quit early if we haven't
    boost::regex rePrefix(reCommentPrefix);
    if (!boost::regex_search(it->begin(), it->end(), rePrefix))
       return false;
-   
+
    // we have a prefix: start iterating and extracting these
    for (; it != end; ++it)
    {
@@ -985,12 +1152,12 @@ bool extractCommentHeader(const std::string& contents,
          // this is no longer a commented line; time to go home
          break;
       }
-         
+
       // extract the line (sans prefix)
       std::string line(it->begin() + match.length(), it->end());
       pHeader->append(line + "\n");
    }
-   
+
    // report success to the user
    return true;
 }
@@ -1000,10 +1167,10 @@ std::string getCommonPrefix(const std::string& code)
    // Split the code into views of each line
    std::vector<std::string_view> lines;
    std::string_view codeView(code);
-   
+
    std::string_view::size_type start = 0;
    std::string_view::size_type end = codeView.find('\n', start);
-   
+
    while (end != std::string_view::npos)
    {
       std::string_view line = codeView.substr(start, end - start);
@@ -1011,7 +1178,7 @@ std::string getCommonPrefix(const std::string& code)
       start = end + 1;
       end = codeView.find('\n', start);
    }
-   
+
    // Add the final line (if any)
    if (start < codeView.length())
    {
@@ -1128,16 +1295,16 @@ std::string sprintf(const char* fmt, ...)
       n = std::vsnprintf(nullptr, 0, fmt, args);
       va_end(args);
    }
-   
+
    if (n == 0)
    {
       return std::string();
    }
-   
+
    // allocate buffer of required size
    // (include space for null pointer)
    std::vector<char> buffer(n + 1);
-   
+
    // write formatted string to buffer
    {
       va_list args;
@@ -1145,7 +1312,7 @@ std::string sprintf(const char* fmt, ...)
       std::vsnprintf(&buffer[0], buffer.size(), fmt, args);
       va_end(args);
    }
-   
+
    // return as string
    return std::string(&buffer[0], n);
 }
@@ -1193,7 +1360,7 @@ collection::Position offsetToPosition(const std::string& str, std::size_t offset
 {
    int line = 0;
    int column = 0;
-   
+
    for (size_t i = 0; i < offset && i < str.length(); i++)
    {
       if (str[i] == '\n')
@@ -1217,5 +1384,5 @@ collection::Position offsetToPosition(const std::string& str, std::size_t offset
 }
 
 } // namespace string_utils
-} // namespace core 
+} // namespace core
 } // namespace rstudio

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsMap;
@@ -44,6 +45,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
@@ -172,7 +174,7 @@ public class DiagnosticsBackgroundPopup
                EventTarget eventTarget = event.getNativeEvent().getEventTarget();
                if (!Element.is(eventTarget))
                   return;
-               
+
                Element target = Element.as(eventTarget);
                if (target.hasClassName("ace_gutter-cell"))
                {
@@ -239,7 +241,7 @@ public class DiagnosticsBackgroundPopup
             {
                currentPos = docDisplay_.getCursorPosition();
             }
-            
+
             JsMap<Marker> markers = editor_.getSession().getMarkers(true);
             JsArray<Marker> markerValues = markers.values();
             for (int i = 0; i < markerValues.length(); i++)
@@ -275,10 +277,7 @@ public class DiagnosticsBackgroundPopup
              marker.getRange().getEnd().getRow() >= row)
          {
             activeMarker_ = marker;
-            String text = annotation.html();
-            if (StringUtil.isNullOrEmpty(text))
-               text = annotation.text();
-            showPopup(text, marker.getRange());
+            showPopup(annotation, marker.getRange());
 
             return;
          }
@@ -287,7 +286,7 @@ public class DiagnosticsBackgroundPopup
 
    private class DiagnosticsPopupPanel extends PopupPanel
    {
-      public DiagnosticsPopupPanel(String text, Range range)
+      public DiagnosticsPopupPanel(AceAnnotation annotation, Range range)
       {
          super(true, false);
          range_ = range;
@@ -301,7 +300,16 @@ public class DiagnosticsBackgroundPopup
             }
          });
          addStyleName(RES.styles().popup());
-         setWidget(new HTML(text));
+         ElementIds.assignElementId(this, ElementIds.POPUP_DIAGNOSTICS);
+
+         // 'html' is produced by VirtualConsole with preserveHTML off, so its
+         // only markup is the styling it generated itself. Items that never
+         // went through that pass (visual mode, Stan) carry text only.
+         String html = annotation.html();
+         if (StringUtil.isNullOrEmpty(html))
+            setWidget(new Label(StringUtil.notNull(annotation.text())));
+         else
+            setWidget(new HTML(html));
       }
 
       @Override
@@ -319,10 +327,10 @@ public class DiagnosticsBackgroundPopup
       private HandlerRegistration cursorHandler_;
    }
 
-   private void showPopup(String text, Range range)
+   private void showPopup(AceAnnotation annotation, Range range)
    {
       hidePopup();
-      popup_ = new DiagnosticsPopupPanel(text, range);
+      popup_ = new DiagnosticsPopupPanel(annotation, range);
       final Rectangle coords = editor_.toScreenCoordinates(range);
       popup_.setTitle(constants_.diagnosticsLabel());
       popup_.setPopupPositionAndShow(new PositionCallback()

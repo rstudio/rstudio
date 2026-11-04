@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
@@ -87,6 +88,8 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceWindowUnloadingEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceWindowUnloadingEvent.UnsavedDoc;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -127,7 +130,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocSelectionChangedEvent.Handler,
                                             EditorCommandDispatchEvent.Handler,
                                             RestartStatusEvent.Handler,
-                                            ScrollToPositionEvent.Handler
+                                            ScrollToPositionEvent.Handler,
+                                            SourceWindowUnloadingEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -166,6 +170,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(SourceFileSavedEvent.TYPE, this);
          events_.addHandler(CodeBrowserCreatedEvent.TYPE, this);
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
+         events_.addHandler(SourceWindowUnloadingEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
          events_.addHandler(DocTabActivatedEvent.TYPE, this);
@@ -809,7 +814,28 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          {
             closeSourceWindowDocs(closingWindowId);
          }
-      }, null);
+      }, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            // the window reloaded and kept its documents
+            unsavedDocsByWindow_.remove(closingWindowId);
+         }
+      });
+   }
+
+   @Override
+   public void onSourceWindowUnloading(SourceWindowUnloadingEvent event)
+   {
+      if (windowsClosing_)
+         return;
+
+      // remember the window's unsaved documents until we learn whether it
+      // closed (keep them) or reloaded (it keeps them itself); a window that
+      // reloaded and then unloads again within that time replaces its entry
+      unsavedDocsByWindow_.put(sourceWindowId(event.originWindowName()),
+                               event.getUnsavedDocs());
    }
 
    @Override
@@ -1331,31 +1357,99 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    private void closeSourceWindowDocs(String windowId)
    {
+      // unsaved docs the window could not prompt about (if any); these move
+      // here instead of closing
+      JsArray<UnsavedDoc> unsavedDocs = unsavedDocsByWindow_.remove(windowId);
+
       // when the user closes a source window, close all the source docs it
       // contained
       for (int i = 0; i < sourceDocs_.length(); i++)
       {
          final SourceDocument doc = sourceDocs_.get(i);
-         if (doc.getSourceWindowId() == windowId)
+         if (doc.getSourceWindowId() != windowId)
+            continue;
+
+         UnsavedDoc unsaved = findUnsavedDoc(unsavedDocs, doc.getId());
+         if (unsaved != null)
          {
-            // change the window ID of the doc back to the main window
-            modifyDocumentProperties(doc.getId(),
-                  assignSourceDocWindowId(doc.getId(), ""),
-                  new Command()
-                  {
-                     @Override
-                     public void execute()
-                     {
-                        // close the document when finished
-                        server_.closeDocument(doc.getId(),
-                              new VoidServerRequestCallback());
-               }
-            });
+            adoptSourceWindowDoc(doc.getId(), windowId, unsaved.getContents());
+            continue;
          }
+
+         // change the window ID of the doc back to the main window
+         modifyDocumentProperties(doc.getId(),
+               assignSourceDocWindowId(doc.getId(), ""),
+               new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     // close the document when finished
+                     server_.closeDocument(doc.getId(),
+                           new VoidServerRequestCallback());
+                  }
+               });
       }
 
       // clean up our own reference to the window
       sourceWindows_.remove(windowId);
+   }
+
+   private static UnsavedDoc findUnsavedDoc(JsArray<UnsavedDoc> docs, String docId)
+   {
+      if (docs == null)
+         return null;
+
+      for (int i = 0; i < docs.length(); i++)
+      {
+         if (docs.get(i).getId() == docId)
+            return docs.get(i);
+      }
+
+      return null;
+   }
+
+   // Open a document from a closed source window here, as dropping its tab on
+   // this window would. Edits the window had not backed up are written to
+   // the server first, since the adopting editor loads the server copy.
+   private void adoptSourceWindowDoc(final String docId,
+                                     final String windowId,
+                                     String pendingContents)
+   {
+      final Command adopt = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            // the adopting window reads the event's 'pos' as its open mode
+            events_.fireEvent(new DocWindowChangedEvent(
+                  docId, windowId, null, null, Source.OPEN_INTERACTIVE, -1));
+         }
+      };
+
+      if (pendingContents == null)
+      {
+         adopt.execute();
+         return;
+      }
+
+      server_.saveDocument(docId, null, null, null, null, null, pendingContents, false,
+            new ServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String hash)
+               {
+                  adopt.execute();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // keep the document open with what the server has
+                  Debug.logError(error);
+                  adopt.execute();
+               }
+            });
    }
 
    private static boolean canActivateSourceWindows()
@@ -1551,6 +1645,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final UserPrefs userPrefs_;
 
    private final HashMap<String, Integer> sourceWindows_ = new HashMap<>();
+
+   // unsaved docs reported by source windows that unloaded without a prompt,
+   // keyed by window id, until the window is known to have closed or reloaded
+   private final HashMap<String, JsArray<UnsavedDoc>> unsavedDocsByWindow_ = new HashMap<>();
    private JsArray<SourceDocument> sourceDocs_ =
          JsArray.createArray().cast();
    private boolean windowsClosing_ = false;

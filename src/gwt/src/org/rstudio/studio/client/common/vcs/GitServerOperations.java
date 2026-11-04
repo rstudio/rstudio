@@ -79,6 +79,16 @@ public interface GitServerOperations extends VCSServerOperations
    void gitCheckout(String id,
                     ServerRequestCallback<ConsoleProcess> requestCallback);
 
+   void gitAddWorktree(String path,
+                       String branch,
+                       boolean createBranch,
+                       String startPoint,
+                       ServerRequestCallback<ConsoleProcess> requestCallback);
+
+   void gitRemoveWorktree(String path,
+                          boolean force,
+                          ServerRequestCallback<ConsoleProcess> requestCallback);
+
    void gitCheckoutRemote(String branch,
                           String remote,
                           ServerRequestCallback<ConsoleProcess> requestCallback);
@@ -129,6 +139,10 @@ public interface GitServerOperations extends VCSServerOperations
                     String filename,
                     ServerRequestCallback<String> requestCallback);
 
+   void gitDiffBaseContents(String path,
+                            String encoding,
+                            String knownId,
+                            ServerRequestCallback<GitDiffBaseContents> requestCallback);
    void gitExportFile(String rev,
                       String filename,
                       String targetPath,

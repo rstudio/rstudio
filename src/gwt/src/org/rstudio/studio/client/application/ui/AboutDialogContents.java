@@ -16,10 +16,11 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
@@ -67,10 +68,17 @@ public class AboutDialogContents extends Composite
       versionMajorLabel.setText(info.version_major + "." + info.version_minor + "." + info.version_patch);
       versionBuildLabel.setText(constants_.versionBuildLabel() + info.version_suffix.split("\\+")[1]);
 
-      // a11y
+      // Automated tests locate the dialog's content by this id
       productInfo.getElement().setId("productinfo");
-      gplLinkLabel.getElement().setId("gplLinkLabel");
-      Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
+
+      // a11y
+      productName.getElement().setTabIndex(-1);
+      // Read the hint as each new-window link's description, not as a separate item
+      A11y.setARIAHidden(newWindowHint);
+      DomUtils.ensureHasId(newWindowHint.getElement());
+      Id newWindowHintId = Id.of(newWindowHint.getElement());
+      Roles.getLinkRole().setAriaDescribedbyProperty(trademarkLink.getElement(), newWindowHintId);
+      Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), newWindowHintId);
 
       userAgentLabel.setText(Window.Navigator.getUserAgent() + quartoDetails);
       buildLabel.setText(
@@ -133,9 +141,9 @@ public class AboutDialogContents extends Composite
       }
    }
 
-   public Element getDescriptionElement()
+   public void focusProductName()
    {
-      return productInfo.getElement();
+      productName.getElement().focus();
    }
 
    public void appendToUserAgent(String text)
@@ -156,7 +164,8 @@ public class AboutDialogContents extends Composite
    @UiField Label productName;
    @UiField HTMLPanel productInfo;
    @UiField InlineLabel supportNotice;
+   @UiField Anchor trademarkLink;
    @UiField Anchor gplLink;
-   @UiField Label gplLinkLabel;
+   @UiField InlineLabel newWindowHint;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

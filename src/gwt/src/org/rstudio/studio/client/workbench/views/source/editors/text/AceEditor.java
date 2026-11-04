@@ -361,6 +361,9 @@ public class AceEditor implements DocDisplay
    public AceEditor(AceEditor attachTo)
    {
       widget_ = new AceEditorWidget(true, attachTo == null ? null : attachTo.widget_.getEditor());
+      attachedTo_ = attachTo;
+      if (attachTo != null)
+         attachTo.documentViews_.add(this);
       snippets_ = new SnippetHelper(this);
       monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
@@ -1339,11 +1342,20 @@ public class AceEditor implements DocDisplay
 
       if (preserveCursorPosition)
       {
+         // replacing the whole document moves the cursor of every other view
+         // of it to the end, so keep their selections and scroll positions
+         List<Command> restoreViews = new ArrayList<>();
+         for (AceEditor view : documentViews_)
+            restoreViews.add(view.saveSelectionAndScroll());
+
          withPreservedCursorPosition(() -> {
             // Setting the value directly on the document prevents undo/redo
             // stack from being blown away
             widget_.getEditor().getSession().getDocument().setValue(normalizedCode);
          });
+
+         for (Command restore : restoreViews)
+            restore.execute();
       }
       else
       {
@@ -1375,6 +1387,36 @@ public class AceEditor implements DocDisplay
          scrollToY(scrollTop, 0);
          scrollToX(scrollLeft);
       });
+   }
+
+   // Returns a command restoring this view's current selection and scroll
+   // position, as withPreservedCursorPosition() does for its own editor's
+   // cursor.
+   private Command saveSelectionAndScroll()
+   {
+      final Range selection = getSelectionRange();
+      final int scrollTop = getScrollTop();
+      final int scrollLeft = getScrollLeft();
+
+      return () ->
+      {
+         setSelectionRange(selection);
+         scrollToY(scrollTop, 0);
+         scrollToX(scrollLeft);
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            scrollToY(scrollTop, 0);
+            scrollToX(scrollLeft);
+         });
+      };
+   }
+
+   // Stops tracking a view created with AceEditor(AceEditor) as one of its
+   // source editor's document views; call before destroying the view.
+   public void detachFromDocument()
+   {
+      if (attachedTo_ != null)
+         attachedTo_.documentViews_.remove(this);
    }
 
    public int getScrollLeft()
@@ -2741,10 +2783,24 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().retokenizeDocument();
    }
 
+   // The rainbow flags are global to the highlight rules, so an editor's
+   // tokens are only stale if a flag changed after it last tokenized. Each
+   // flag has a generation counter, bumped on change, so that re-syncing
+   // an unchanged flag (every save does, via adaptToFileType) does not
+   // retokenize the whole document.
    public void setRainbowParentheses(boolean rainbow)
    {
-      _setRainbowParenthesesImpl(rainbow);
-      widget_.getEditor().retokenizeDocument();
+      if (_getRainbowParenthesesImpl() != rainbow)
+      {
+         _setRainbowParenthesesImpl(rainbow);
+         rainbowParenthesesGeneration_++;
+      }
+
+      if (rainbowParenthesesTokenized_ != rainbowParenthesesGeneration_)
+      {
+         rainbowParenthesesTokenized_ = rainbowParenthesesGeneration_;
+         widget_.getEditor().retokenizeDocument();
+      }
    }
 
    public boolean getRainbowParentheses()
@@ -2754,8 +2810,17 @@ public class AceEditor implements DocDisplay
 
    public void setRainbowFencedDivs(boolean rainbow)
    {
-      _setRainbowFencedDivsImpl(rainbow);
-      widget_.getEditor().retokenizeDocument();
+      if (_getRainbowFencedDivsImpl() != rainbow)
+      {
+         _setRainbowFencedDivsImpl(rainbow);
+         rainbowFencedDivsGeneration_++;
+      }
+
+      if (rainbowFencedDivsTokenized_ != rainbowFencedDivsGeneration_)
+      {
+         rainbowFencedDivsTokenized_ = rainbowFencedDivsGeneration_;
+         widget_.getEditor().retokenizeDocument();
+      }
    }
 
    public boolean getRainbowFencedDivs()
@@ -3230,6 +3295,15 @@ public class AceEditor implements DocDisplay
          moveCursorNearTop();
    }
 
+   // Scrolls just far enough to show the cursor, as Ace does after its own
+   // editing commands. Prefer this over ensureCursorVisible() after inserting
+   // text: that one jumps the cursor to near the top of the viewport.
+   @Override
+   public void scrollCursorIntoView()
+   {
+      widget_.getEditor().scrollCursorIntoView();
+   }
+
    @Override
    public void ensureRowVisible(int row)
    {
@@ -3283,6 +3357,7 @@ public class AceEditor implements DocDisplay
       navigate(pos, false);
    }
 
+   @Override
    public void revealRange(Range range, boolean animate)
    {
       widget_.getEditor().revealRange(range, animate);
@@ -3629,9 +3704,9 @@ public class AceEditor implements DocDisplay
    }
 
    @Override
-   public void toggleBreakpointAtCursor()
+   public void toggleBreakpointAtRow(int row)
    {
-      widget_.toggleBreakpointAtCursor();
+      widget_.toggleBreakpointAtRow(row);
    }
 
    @Override
@@ -5224,6 +5299,12 @@ public class AceEditor implements DocDisplay
          NATIVE_R_PIPE, MAGRITTR_PIPE, "%<>%", "%T>%", "%$%"));
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
+
+   // the editor whose document this view shares, if any, and the views
+   // sharing this editor's document (see AceEditor(AceEditor))
+   private final AceEditor attachedTo_;
+   private final List<AceEditor> documentViews_ = new ArrayList<>();
+
    private final SnippetHelper snippets_;
    private final AceEditorMonitor monitor_;
    private ScrollAnimator scrollAnimator_;
@@ -5237,6 +5318,12 @@ public class AceEditor implements DocDisplay
    private EventBus events_;
    private TextFileType fileType_;
    private boolean isAttached_ = false;
+
+   // see setRainbowParentheses
+   private static int rainbowParenthesesGeneration_ = 0;
+   private static int rainbowFencedDivsGeneration_ = 0;
+   private int rainbowParenthesesTokenized_ = -1;
+   private int rainbowFencedDivsTokenized_ = -1;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
@@ -5317,6 +5404,21 @@ public class AceEditor implements DocDisplay
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
          getLoader(AceResources.INSTANCE.extLanguageTools(),
                    AceResources.INSTANCE.extLanguageToolsUncompressed());
+
+   private static final ExternalJavaScriptLoader extDiffLoader_ =
+         getLoader(AceResources.INSTANCE.extDiff(),
+                   AceResources.INSTANCE.extDiffUncompressed());
+
+   // ext-diff is only needed by the Git diff gutter, so it loads on demand
+   private static final AsyncJavaScriptLoader diffLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(extDiffLoader_);
+
+   public static void loadDiffExtension(Command onLoaded)
+   {
+      diffLoader_.execute(onLoaded);
+   }
 
    private static final List<Command> keybindingsLoadedCommands_ = new ArrayList<>();
 

@@ -226,10 +226,8 @@ bool isPositAssistantEnabledByAdmin();
 // open-source builds define as always true, and this must work in open-source
 // RStudio Server.
 // When false the session ignores the user's own installation and makes no
-// manifest requests. It runs only the installation configured with
-// posit-assistant-path, or the copy bundled with RStudio when that option is
-// unset; a posit-assistant-path holding no installation leaves nothing to run
-// rather than falling back to the bundled copy. Independent of isPositAssistantEnabledByAdmin():
+// manifest requests. It runs only the newer of the administrator's selected
+// version and the copy bundled with RStudio. Independent of isPositAssistantEnabledByAdmin():
 // a session with Posit Assistant disabled outright never reaches these gates.
 bool isPositAssistantInstallationEnabledByAdmin();
 
@@ -537,6 +535,9 @@ core::Error convertToUtf8(const std::string& encodedContent,
 
 // source R files
 core::Error sourceModuleRFile(const std::string& rSourceFile);
+// For modules without startup hooks: install proxies for the module's
+// definitions and source it on first use.
+core::Error sourceModuleRFileOnDemand(const std::string& rSourceFile);
 core::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                         const core::FilePath& workingDir,
                                         core::system::ProcessResult* pResult);

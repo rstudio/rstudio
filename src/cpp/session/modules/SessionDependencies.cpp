@@ -373,9 +373,8 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 // Builds an installation script which will install all the dependencies at once.
-std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
+std::string buildCombinedInstallScript(const std::vector<Dependency>& deps, bool isRenv)
 {
-   bool isRenv = module_context::isRenvActive();
    std::vector<std::string> cranPackages;
    std::vector<std::string> cranSourcePackages;
    std::vector<std::string> embeddedPackages;
@@ -401,12 +400,13 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
    }
 
    // Install the CRAN packages with a single call. Note that we do not pass the repos option to
-   // install.packages() since default CRAN repos are already set in the session via
-   // an earlier call to .rs.CRANDownloadOptionsString().
+   // install.packages() since default CRAN repos are already set in the session via an earlier
+   // call to .rs.CRANDownloadOptionsString(). These go first so that dependencies shared with
+   // the source set below are installed as binaries.
    if (!cranPackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
-      
+
       if (isRenv)
       {
          cmd += "renv::install(c(" + pkgList + "))\n\n";
@@ -417,14 +417,17 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
    }
 
-   // Install the CRAN source packages with a single call
+   // Install the CRAN source packages. The type is passed to renv::install() rather than set
+   // via options(pkgType), which would leak into later calls in the same script. rebuild = TRUE
+   // is needed because the binary install above may already have pulled in a binary build of
+   // one of these packages, and renv would otherwise link that back in from its cache.
    if (!cranSourcePackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
 
       if (isRenv)
       {
-         cmd += "options(pkgType = 'source'); renv::install(c(" + pkgList + "))\n\n";
+         cmd += "renv::install(c(" + pkgList + "), type = 'source', rebuild = TRUE)\n\n";
       }
       else
       {
@@ -499,8 +502,6 @@ namespace {
 // and also gives us greater control over installation order.
 std::string buildIndividualInstallScript(const std::vector<Dependency>& dependencies)
 {
-   bool isRenv = module_context::isRenvActive();
-
    // Convert dependencies list to an R list
    r::sexp::Protect protect;
    r::sexp::ListBuilder list(&protect);
@@ -518,7 +519,7 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
    {
       LOG_ERROR(error);
       // Use simple version of installation script as a fallback
-      return buildCombinedInstallScript(dependencies);
+      return buildCombinedInstallScript(dependencies, false);
    }
 
    // Create a new list of dependencies from the expanded list returned from R
@@ -529,12 +530,6 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
    }
 
    std::string script;
-
-   if (isRenv)
-   {
-      // For renv, remember default setting for package type
-      script += "defaultPkgType <- getOption('pkgType')\n";
-   }
 
    // Loop over each dependency and add it to the installation script
    for (size_t i = 0; i < deps.size(); i++)
@@ -558,37 +553,16 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
 
       if (dep.location == kCRANPackageDependency)
       {
-         if (isRenv)
-         {
-            // renv used the 'pkgType' option to decide whether to install a package
-            // from sources or not; set it to source explicitly to force source installs
-            if (dep.source)
-            {
-               script += "options(pkgType = 'source'); ";
-            }
-            else
-            {
-               script += "options(pkgType = defaultPkgType); ";
-            }
-            
-            // NOTE: renv will use the repositories as set in the lockfile here;
-            // should we override this based on the current repositories set in
-            // the session?
-            script += "renv::install('" + dep.name + "')";
-         }
-         else
-         {
-            // Build install command for CRAN. 
-            script += "utils::install.packages('" + dep.name + "'";
+         // Build install command for CRAN.
+         script += "utils::install.packages('" + dep.name + "'";
 
-            if (dep.source) 
-            {
-               // Install from source if requested
-               script += ", type = 'source'";
-            }
-
-            script += ")";
+         if (dep.source)
+         {
+            // Install from source if requested
+            script += ", type = 'source'";
          }
+
+         script += ")";
       }
       else if (dep.location == kEmbeddedPackageDependency)
       {
@@ -603,6 +577,22 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
 
    return script;
 }
+
+} // anonymous namespace
+
+std::string buildInstallScript(const std::vector<Dependency>& deps,
+                               bool isRenv,
+                               bool installIndividually)
+{
+   // Let renv resolve dependencies and install packages together so it can use
+   // parallel installation, regardless of the individual-install preference.
+   if (!isRenv && installIndividually)
+      return buildIndividualInstallScript(deps);
+
+   return buildCombinedInstallScript(deps, isRenv);
+}
+
+namespace {
 
 Error installDependencies(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
@@ -665,14 +655,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
    }
 
    // Build an installation script to install the required packages.
-   if (prefs::userPrefs().installPkgDepsIndividually())
-   {
-      script += buildIndividualInstallScript(deps);
-   }
-   else
-   {
-      script += buildCombinedInstallScript(deps);
-   }
+   script += buildInstallScript(deps, isRenv, prefs::userPrefs().installPkgDepsIndividually());
 
    // install.packages() reports a failed installation as a warning, not an error, so the script
    // would otherwise carry on and claim success. Check the outcome, and abort if anything is
@@ -739,7 +722,6 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
 
 } // anonymous namespace
-
 
 Error initialize()
 {         

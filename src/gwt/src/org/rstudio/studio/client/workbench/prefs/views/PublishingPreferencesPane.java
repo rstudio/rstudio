@@ -40,6 +40,7 @@ import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -233,6 +234,10 @@ public class PublishingPreferencesPane extends PreferencesPane
       caBundlePath_ = new FileChooserTextBox(
          "", constants_.caBundlePath(), ElementIds.TextBoxButtonId.CA_BUNDLE, false, null, null);
       caBundlePath_.setText(userPrefs_.publishCaBundle().getValue());
+      // the checkbox above stands in for this field's visible label, so the
+      // field needs its own accessible name
+      Roles.getTextboxRole().setAriaLabelProperty(
+            caBundlePath_.getTextBox().getElement(), constants_.caBundlePathLabel());
       caBundlePath_.setVisible(userPrefs_.usePublishCaBundle().getValue());
       add(caBundlePath_);
 
