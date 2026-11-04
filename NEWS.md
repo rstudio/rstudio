@@ -20,6 +20,7 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the venv or condaenv packages field on the New Quarto Project pages by its "(none)" placeholder. The field is now named "Packages to install in the environment".
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the second field in the first row of a New Connection snippet (e.g. "Port" beside "Server") without its label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text fields in custom project templates (from a package's `inst/rstudio/templates/project` or `~/.R/rstudio/templates/project`) without their labels.
+- ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the custom CA bundle path field in Publishing options, and the environment variable list in the Publish dialog, without a label.
 
 ### Dependencies
 -
