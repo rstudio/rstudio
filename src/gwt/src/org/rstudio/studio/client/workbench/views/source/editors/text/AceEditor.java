@@ -822,11 +822,12 @@ public class AceEditor implements DocDisplay
       boolean sawPrefixedCall = false;
       boolean sawPlus = false;
 
-      // 'else' branches being skipped back to their 'if', and whether a pipe
-      // in the branch expression being read has made the calls before it
-      // irrelevant (an 'if' or 'else' starts a new branch expression)
+      // 'else' branches being skipped back to their 'if'
       int skippedBranches = 0;
-      boolean skippedBranchPiped = false;
+
+      // whether the calls still to be read feed a pipe, so are not part of
+      // the chain; an 'if' or 'else' starts a new expression and resets this
+      boolean piped = false;
       while (true)
       {
          if (cursor.isRightBracket())
@@ -846,47 +847,37 @@ public class AceEditor implements DocDisplay
             // opening it, so that only an enclosing chain ('p + if (x) a else b')
             // joins the two branches
             skippedBranches++;
-            skippedBranchPiped = false;
+            piped = false;
          }
          else if (cursor.valueEquals("if"))
          {
             if (skippedBranches > 0)
                skippedBranches--;
-            skippedBranchPiped = false;
-         }
-         else if (skippedBranches > 0)
-         {
-            // a call in the skipped branch is evidence for an enclosing '+',
-            // unless its result is piped elsewhere; a '+' there belongs to
-            // that branch alone
-            if (PIPE_OPERATORS.contains(cursor.currentValue()))
-            {
-               skippedBranchPiped = true;
-            }
-            else if (!skippedBranchPiped &&
-                     cursor.hasType("identifier") &&
-                     cursor.peekFwd(1).valueEquals("(") &&
-                     isGgplotCallName(cursor.currentValue()))
-            {
-               sawPrefixedCall = true;
-            }
+            piped = false;
          }
          else if (PIPE_OPERATORS.contains(cursor.currentValue()))
          {
-            // a ggplot chain piped into another call is no longer a ggplot chain
-            return false;
+            piped = true;
          }
-         else if (cursor.valueEquals("+") && hasLeftOperand(cursor))
+         else if (skippedBranches == 0 && cursor.valueEquals("+") && hasLeftOperand(cursor))
          {
             if (sawPrefixedCall)
                return true;
             sawPlus = true;
          }
-         else if (cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
+         else if (!piped && cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
          {
             String name = cursor.currentValue();
-            if (GGPLOT_FUNCTIONS.contains(name))
+            if (skippedBranches > 0)
+            {
+               // a call in a skipped branch only counts for an enclosing '+'
+               if (isGgplotCallName(name))
+                  sawPrefixedCall = true;
+            }
+            else if (GGPLOT_FUNCTIONS.contains(name))
+            {
                return true;
+            }
             else if (isGgplotPrefixedFunctionName(name))
             {
                if (sawPlus)

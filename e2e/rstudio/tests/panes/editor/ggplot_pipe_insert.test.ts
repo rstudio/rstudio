@@ -101,6 +101,11 @@ const CASES: PipeCase[] = [
     expected: PLUS,
   },
   {
+    name: 'after a saved theme piped through a theme_ call and added to a plot object',
+    content: 'p + saved_theme |> theme_copy()',
+    expected: PLUS,
+  },
+  {
     name: 'after a user theme_ function in an argument following arithmetic',
     content: 'list(1 + 2, theme_tmp()',
     expected: PIPE,
