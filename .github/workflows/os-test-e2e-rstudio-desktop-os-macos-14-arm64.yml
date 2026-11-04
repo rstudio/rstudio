@@ -256,7 +256,7 @@ jobs:
       # Save the tools / R-libs caches only from main-scoped runs, and only on a
       # key miss. A cache saved from a PR run lands in that PR's merge-ref
       # scope, which no other branch can restore; each copy is pure pressure on
-      # the repo's 10 GB Actions cache quota, and that pressure is what evicts
+      # the repo's Actions cache quota, and that pressure is what evicts
       # main's copies -- the ones the PR-facing engines depend on.
       #
       # This engine has no cache seed, matching the rotation-only Linux configs
@@ -321,7 +321,7 @@ jobs:
 
       # Save only from main-scoped runs, and only on a key miss. A cache saved
       # from a PR run lands in that PR's merge-ref scope, which no other
-      # branch can restore; each copy is pure pressure on the repo's 10 GB
+      # branch can restore; each copy is pure pressure on the repo's
       # Actions cache quota, and that pressure is what evicts main's copy (see
       # the tools / R-libs save steps above for why that matters here).
       - name: Save GWT output
@@ -489,7 +489,7 @@ jobs:
       # already S3/CDN-backed, and GH Actions cache scoping means concurrent
       # PRs can't share a cache entry with each other anyway (only with their
       # base branch), so caching here would just duplicate the same bytes
-      # into the shared 10 GB cache quota without saving meaningful time.
+      # into the shared cache quota without saving meaningful time.
       - name: Download RStudio .dmg
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
