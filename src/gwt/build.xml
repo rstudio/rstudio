@@ -308,7 +308,9 @@
 
    <!-- similar lookup for panmirror -->
    <set-if-exists property="panmirror.dir" value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
-   <set-if-exists property="panmirror.dir" value="c:/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
+   <!-- keep C: uppercase to match the working directory vite runs in: panmirror's
+        static-copy step compares paths case-sensitively, so c: vs C: fails the build -->
+   <set-if-exists property="panmirror.dir" value="C:/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="./lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="${git.main.worktree}/src/gwt/lib/quarto/apps/panmirror"/>
    <!-- write panmirror to ${www.dir} so it tracks the same output tree as every

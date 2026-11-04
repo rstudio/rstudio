@@ -14,6 +14,9 @@
 - ([#15965](https://github.com/rstudio/rstudio/issues/15965)): Fixed several issues that prevented building with `-DRSTUDIO_USE_SYSTEM_DEPENDENCIES=ON`, where Hunspell, RapidJSON, utf8cpp, GTest and libgit2 were not found or not linked. Hunspell, dtl and websocketpp, which an installed package cannot provide, are now always fetched, and individual dependencies can be excluded with `-DRSTUDIO_USE_SYSTEM_<NAME>=OFF` (e.g. `-DRSTUDIO_USE_SYSTEM_YAML_CPP=OFF`). Thanks to [@Flamefire](https://github.com/Flamefire).
 - ([#19362](https://github.com/rstudio/rstudio/issues/19362)): Fixed an issue where the console could show the warning "converting NULL pointer to R NULL" from `rs_getBrowserEnv` shortly after a session started.
 - ([#19386](https://github.com/rstudio/rstudio/issues/19386)): Fixed an issue where the Terminal's right-click menu on Windows and Linux Desktop listed Ctrl+C and Ctrl+V for Copy and Paste, which the terminal sends to the shell, instead of Ctrl+Shift+C and Ctrl+Shift+V.
+- ([#17182](https://github.com/rstudio/rstudio/issues/17182)): Fixed inconsistent nesting of section headers inside braces (e.g. the body of an `if`) in the document outline. A section header is now nested by its heading level as if the braces were not there: a header following one of the same level is shown beside it rather than under it, and a header inside braces no longer cuts short an enclosing function.
+- ([#19416](https://github.com/rstudio/rstudio/issues/19416)): Fixed an issue where the link to the content in the republish dialog led to a blank or 404 page on Posit Connect 2026.01.0 and later.
+- ([#19428](https://github.com/rstudio/rstudio/issues/19428)): Fixed an issue where the Configure Application command opened a blank or 404 page on Posit Connect 2026.01.0 and later.
 - ([#19390](https://github.com/rstudio/rstudio/issues/19390)): Fixed an issue where choosing Select All from the Terminal's right-click menu in RStudio Desktop did not select the terminal's output.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the `manipulate()` picker, checkbox, and slider controls without their labels, and the slider without its role or value. Pressing Home or End on the slider now also redraws the plot.
 - ([#19378](https://github.com/rstudio/rstudio/issues/19378)): [Accessibility] Fixed an issue where the Tutorial pane's links to install `learnr` or update `shiny` were named "click here" for screen reader and voice control users. The links now read "install the learnr package" and "install the shiny package" (or "update the shiny package" when an older version is installed).
@@ -21,7 +24,9 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the venv or condaenv packages field on the New Quarto Project pages by its "(none)" placeholder. The field is now named "Packages to install in the environment".
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the second field in the first row of a New Connection snippet (e.g. "Port" beside "Server") without its label.
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the text fields in custom project templates (from a package's `inst/rstudio/templates/project` or `~/.R/rstudio/templates/project`) without their labels.
+- ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the custom CA bundle path field in Publishing options, and the environment variable list in the Publish dialog, without a label.
 
 ### Dependencies
--
+- Quarto 1.11.9
+- Electron 44.10.2
 
