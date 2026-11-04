@@ -1243,10 +1243,11 @@ var GitDiffGutter = function(editor, strings) {
       {
          // This runs on every render, just after Ace has written the
          // widgets' styles, where measuring would force a layout each
-         // frame; the header's height holds while the editor's width (its
-         // label may wrap in a narrow one) and line height (its font) do,
-         // so it is measured once per pair.
-         var width = this.editor.renderer.$size.width;
+         // frame; the header's height holds while the width it has (the
+         // scroller's, short of the gutter: its label may wrap in a narrow
+         // one) and the line height (its font) do, so it is measured once
+         // per pair.
+         var width = this.editor.renderer.$size.scrollerWidth;
          if (peek.headerHeight == null ||
              peek.headerWidth !== width ||
              peek.headerLineHeight !== lineHeight)
