@@ -149,6 +149,51 @@ json::Array parseWorktreeList(const std::string& output)
    return worktrees;
 }
 
+// A path as Git prints it with core.quotepath off: in double quotes, with
+// backslashes, double quotes and control characters escaped as C does
+// (quote.c), when it has any; as it is otherwise.
+static std::string gitQuotedPath(const std::string& path)
+{
+   bool quote = false;
+   for (unsigned char c : path)
+   {
+      if (c == '"' || c == '\\' || c < 0x20 || c == 0x7f)
+         quote = true;
+   }
+   if (!quote)
+      return path;
+
+   std::string quoted = "\"";
+   for (unsigned char c : path)
+   {
+      switch (c)
+      {
+      case '"':  quoted += "\\\""; break;
+      case '\\': quoted += "\\\\"; break;
+      case '\a': quoted += "\\a"; break;
+      case '\b': quoted += "\\b"; break;
+      case '\t': quoted += "\\t"; break;
+      case '\n': quoted += "\\n"; break;
+      case '\v': quoted += "\\v"; break;
+      case '\f': quoted += "\\f"; break;
+      case '\r': quoted += "\\r"; break;
+      default:
+         if (c < 0x20 || c == 0x7f)
+         {
+            quoted += '\\';
+            quoted += static_cast<char>('0' + ((c >> 6) & 7));
+            quoted += static_cast<char>('0' + ((c >> 3) & 7));
+            quoted += static_cast<char>('0' + (c & 7));
+         }
+         else
+         {
+            quoted += static_cast<char>(c);
+         }
+      }
+   }
+   return quoted + "\"";
+}
+
 std::string renamedPairFor(const std::string& diff, const std::string& path)
 {
    std::vector<std::string> pairs;
@@ -164,11 +209,12 @@ std::string renamedPairFor(const std::string& diff, const std::string& path)
    if (pairs.size() < 2)
       return diff;
 
+   std::string quotedPath = gitQuotedPath(path);
    for (const std::string& pair : pairs)
    {
       std::string lines = "\n" + pair + "\n";
-      if (lines.find("\nrename to " + path + "\n") != std::string::npos ||
-          lines.find("\ncopy to " + path + "\n") != std::string::npos)
+      if (lines.find("\nrename to " + quotedPath + "\n") != std::string::npos ||
+          lines.find("\ncopy to " + quotedPath + "\n") != std::string::npos)
       {
          return pair;
       }
