@@ -484,9 +484,10 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.$root = new this.$ScopeNodeFactory("(Top Level)", this.parsePos, null,
                                  ScopeNode.TYPE_ROOT);
 
-      // Cut braces still waiting for their '}', innermost last; and every
-      // cut brace in the tree, in document order, which invalidateFrom()
-      // rebuilds the former from.
+      // Cut braces still waiting for their '}', most recently cut last; and
+      // every cut brace in the tree, in the order they were cut, which
+      // invalidateFrom() rebuilds the former from (so the rebuilt stack is
+      // ordered as a fresh parse would have left it).
       this.$cutBraces = [];
       this.$allCutBraces = [];
    };
