@@ -12,6 +12,8 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
+import { useSuiteSandbox } from '@utils/sandbox';
+import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 
 const PLUS = ' + ';
 const PIPE = ' |> ';
@@ -159,6 +161,16 @@ const CASES: PipeCase[] = [
     expected: PLUS,
   },
   {
+    name: 'after a user scale_ function with a unary plus following a section heading comment',
+    content: 'if (flag)\n# Heading ----\n+scale_counts(x)',
+    expected: PIPE,
+  },
+  {
+    name: 'after a nested conditional with a piped inner branch added to a plot object',
+    content: 'p + if (outer) if (inner) geom_point() else NULL |> identity() else NULL',
+    expected: PLUS,
+  },
+  {
     name: 'after a NULL branch on its own line inside a braced body',
     content: 'function() {\n  ggplot(mtcars) + if (flag) geom_point()\n  else NULL',
     expected: PLUS,
@@ -211,6 +223,7 @@ async function insertPipeAtEnd(page: Page, editor: AceEditor, content: string): 
 }
 
 test.describe('Insert Pipe Operator in ggplot2 chains', () => {
+  const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
 
@@ -267,6 +280,34 @@ test.describe('Insert Pipe Operator in ggplot2 chains', () => {
       expect(await insertPipeAtEnd(page, editor, 'list(+scale_counts(x)')).toBe(PIPE);
     } finally {
       await clearPref(page, 'rainbow_parentheses');
+    }
+  });
+
+  test('inserts a pipe after a user theme_ function in the chunk after an unfinished +', async ({
+    rstudioPage: page,
+  }) => {
+    // the code model keeps Sweave chunk delimiters as comment tokens; the
+    // walk must stop at them rather than reading into the previous chunk
+    const fileName = 'ggplot_pipe_chunks.Rnw';
+    const content = `<<>>=
+p +
+@
+
+<<>>=
+theme_tmp()
+@
+`;
+    await writeAndOpenFile(page, sandbox.dir, fileName, content);
+    try {
+      const editor = new AceEditor(page, '<<>>=');
+      await expect.poll(() => editor.getValue()).toBe(content);
+      await editor.gotoLine(6, 'theme_tmp()'.length);
+
+      await executeCommand(page, 'insertPipeOperator');
+
+      await expect.poll(() => editor.getValue()).toBe(content.replace('theme_tmp()', `theme_tmp()${PIPE}`));
+    } finally {
+      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
     }
   });
 

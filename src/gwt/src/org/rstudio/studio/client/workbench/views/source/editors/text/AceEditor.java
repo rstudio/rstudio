@@ -822,10 +822,10 @@ public class AceEditor implements DocDisplay
       boolean sawPrefixedCall = false;
       boolean sawPlus = false;
 
-      // 'else' branches being skipped back to their 'if', and whether a pipe
-      // in the branch being skipped has made the calls before it irrelevant
+      // 'else' branches being skipped back to their 'if', and (one bit per
+      // nesting depth) whether a pipe there has made the calls before it irrelevant
       int skippedBranches = 0;
-      boolean skippedBranchPiped = false;
+      int pipedBranches = 0;
       while (true)
       {
          if (cursor.isRightBracket())
@@ -845,13 +845,12 @@ public class AceEditor implements DocDisplay
             // opening it, so that only an enclosing chain ('p + if (x) a else b')
             // joins the two branches
             skippedBranches++;
+            pipedBranches &= ~branchBit(skippedBranches);
          }
          else if (cursor.valueEquals("if"))
          {
             if (skippedBranches > 0)
                skippedBranches--;
-            if (skippedBranches == 0)
-               skippedBranchPiped = false;
          }
          else if (skippedBranches > 0)
          {
@@ -860,9 +859,9 @@ public class AceEditor implements DocDisplay
             // that branch alone
             if (PIPE_OPERATORS.contains(cursor.currentValue()))
             {
-               skippedBranchPiped = true;
+               pipedBranches |= branchBit(skippedBranches);
             }
-            else if (!skippedBranchPiped &&
+            else if ((pipedBranches & branchBit(skippedBranches)) == 0 &&
                      cursor.hasType("identifier") &&
                      cursor.peekFwd(1).valueEquals("(") &&
                      isGgplotCallName(cursor.currentValue()))
@@ -899,10 +898,13 @@ public class AceEditor implements DocDisplay
          if (!cursor.moveToPreviousToken())
             return false;
 
-         // the code model keeps section-heading comments; they are not code
+         // the code model keeps section-heading comments, which are not code,
+         // and chunk delimiters, which end the statement
          while (cursor.hasType("comment"))
-            if (!cursor.moveToPreviousToken())
+         {
+            if (cursor.hasType("codebegin", "codeend") || !cursor.moveToPreviousToken())
                return false;
+         }
 
          // a new row only continues the statement across a binary operator
          // (trailing or leading), or after 'else' or a control-flow header;
@@ -919,20 +921,28 @@ public class AceEditor implements DocDisplay
       }
    }
 
+   private static int branchBit(int depth)
+   {
+      return 1 << Math.min(depth, 31);
+   }
+
    // whether the operator at the cursor is binary (has a left operand) rather than unary
    private static boolean hasLeftOperand(TokenCursor cursor)
    {
-      Token prev = cursor.peekBwd(1);
-      if (StringUtil.isNullOrEmpty(prev.getValue()) || prev.isLeftBracket())
-         return false;
-
-      if (prev.isRightBracket())
+      TokenCursor clone = cursor.cloneCursor();
+      do
       {
-         TokenCursor clone = cursor.cloneCursor();
-         return clone.moveToPreviousToken() && !closesControlFlowHeader(clone);
+         if (!clone.moveToPreviousToken() || clone.hasType("codebegin", "codeend"))
+            return false;
       }
+      while (clone.hasType("comment"));
 
-      return !prev.hasType("keyword", "punctuation");
+      if (clone.isLeftBracket())
+         return false;
+      else if (clone.isRightBracket())
+         return !closesControlFlowHeader(clone);
+      else
+         return !clone.hasType("keyword", "punctuation");
    }
 
    // whether the right bracket at the cursor closes the header of an 'if',
