@@ -208,6 +208,12 @@ test_that("problems with compile_flags.txt are reported, not swallowed", {
     expect_length(diagnostics, 1L)
     expect_match(diagnostics[[1]]$message, "unknown argument")
 
+    # a bad value is quoted apart from its option, which the parse still survives
+    diagnostics <- lint("-fsanitize=bogus")
+    expect_length(diagnostics, 1L)
+    expect_match(diagnostics[[1]]$message, "unsupported argument 'bogus'")
+    expect_equal(diagnostics[[1]]$position$line, 1)
+
     # an invalid value makes libclang fail to parse the file at all
     diagnostics <- lint("-std=c++99")
     expect_length(diagnostics, 1L)

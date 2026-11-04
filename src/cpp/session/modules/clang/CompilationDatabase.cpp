@@ -1251,16 +1251,9 @@ bool ClangCompilationDatabase::shouldIndexConfig(const CompilationConfig& config
 }
 
 
-std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit(
-      const std::string& filename,
-      bool usePrecompiledHeaders)
+bool ClangCompilationDatabase::configForTranslationUnit(const FilePath& filePath,
+                                                        CompilationConfig* pConfig)
 {
-   // args to return
-   std::vector<std::string> args;
-
-   // get a file path object
-   FilePath filePath(filename);
-
    // if this is a package source file then return the package args
    CompilationConfig config;
    if (isProjectTranslationUnit(filePath.getAbsolutePath()))
@@ -1288,10 +1281,48 @@ std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit
    if (!shouldIndexConfig(config))
    {
       if (verbose(1))
-         std::cerr << "CLANG SKIP INDEXING (no config available): " << filename << std::endl;
+         std::cerr << "CLANG SKIP INDEXING (no config available): " << filePath << std::endl;
 
-      return std::vector<std::string>();
+      return false;
    }
+
+   *pConfig = config;
+   return true;
+}
+
+std::vector<std::string> ClangCompilationDatabase::generatedCompileArgs(
+      const std::string& filename)
+{
+   FilePath filePath(filename);
+   CompilationConfig config;
+   if (!configForTranslationUnit(filePath, &config))
+      return std::vector<std::string>();
+
+   std::vector<std::string> args = config.args;
+
+   // force C++ for a .h file in a C++ config, as compileArgsForTranslationUnit() does
+   if (filePath.getExtensionLowerCase() == ".h" && config.isCpp)
+   {
+      args.push_back("-x");
+      args.push_back("c++");
+   }
+
+   return args;
+}
+
+std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit(
+      const std::string& filename,
+      bool usePrecompiledHeaders)
+{
+   // args to return
+   std::vector<std::string> args;
+
+   // get a file path object
+   FilePath filePath(filename);
+
+   CompilationConfig config;
+   if (!configForTranslationUnit(filePath, &config))
+      return std::vector<std::string>();
 
    // copy the args
    std::copy(
@@ -1886,6 +1917,9 @@ core::libclang::CompilationDatabase clangCompilationDatabase()
    compilationDatabase.compileArgsForTranslationUnit =
       boost::bind(&ClangCompilationDatabase::compileArgsForTranslationUnit,
                   &instance, _1, _2);
+   compilationDatabase.generatedCompileArgs =
+      boost::bind(&ClangCompilationDatabase::generatedCompileArgs,
+                  &instance, _1);
    compilationDatabase.rebuildPackageCompilationDatabase =
          boost::bind(&ClangCompilationDatabase::rebuildPackageCompilationDatabase,
                      &instance);

@@ -15,6 +15,9 @@
 
 #include "Diagnostics.hpp"
 
+#include <map>
+#include <set>
+
 #include <core/libclang/LibClang.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -159,26 +162,26 @@ json::Object syntheticDiagnosticJson(const FilePath& filePath,
    return diagnosticJson;
 }
 
-// Whether a location-less diagnostic is one the user's flags caused. The
-// flags we generate can produce such diagnostics too (an '-fopenmp' from
-// Makevars that this libclang doesn't support, say), and those were never
-// shown; the user can't act on them from compile_flags.txt either. Bad
-// flags are quoted in their diagnostic, and a fatal (clang's "too many
-// errors emitted" stop) can only come from a user's '-ferror-limit', since
-// we pass '-ferror-limit=0' ourselves.
-bool causedByUserFlags(const Diagnostic& diagnostic, const std::vector<std::string>& userFlags)
+// The location-less diagnostics clang emits for the flags we generate (an
+// '-fopenmp' from Makevars that this libclang doesn't support, say). Those
+// were never shown, and the user can't act on them from compile_flags.txt,
+// so when a flags file is in play we show only the location-less
+// diagnostics beyond this baseline. Clang doesn't say which flag produced a
+// diagnostic, so the baseline comes from parsing an empty copy of the file
+// with just the generated flags, once per distinct set of them.
+const std::set<std::string>& baselineDiagnostics(const std::string& filename)
 {
-   if (diagnostic.severity() == CXDiagnostic_Fatal)
-      return true;
+   static std::map<std::vector<std::string>, std::set<std::string>> s_baselines;
 
-   std::string message = diagnostic.spelling();
-   for (const std::string& flag : userFlags)
+   std::vector<std::string> args = clangCompilationDatabase().generatedCompileArgs(filename);
+   auto it = s_baselines.find(args);
+   if (it == s_baselines.end())
    {
-      if (message.find(flag) != std::string::npos)
-         return true;
+      std::vector<std::string> messages = sourceIndex().commandLineDiagnostics(filename, args);
+      it = s_baselines.emplace(args, std::set<std::string>(messages.begin(), messages.end())).first;
    }
 
-   return false;
+   return it->second;
 }
 
 json::Array getCppDiagnosticsJson(const FilePath& filePath)
@@ -190,10 +193,7 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
    // so when one is in play we surface those at the top of the file instead
    // of silently dropping them
    FilePath flagsFile = compileFlagsFileForSource(filePath);
-   std::vector<std::string> userFlags;
-   if (!flagsFile.isEmpty())
-      userFlags = readCompileFlags(flagsFile);
-   bool hasUserFlags = !userFlags.empty();
+   bool hasUserFlags = !flagsFile.isEmpty() && !readCompileFlags(flagsFile).empty();
 
    // get diagnostics from translation unit
    std::string filename = filePath.getAbsolutePath();
@@ -216,6 +216,8 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
       return diagnosticsJson;
    }
 
+   const std::set<std::string>* pBaseline = nullptr;
+
    unsigned numDiagnostics = tu.getNumDiagnostics();
    for (unsigned i = 0; i < numDiagnostics; i++)
    {
@@ -225,8 +227,14 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
       {
          diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
       }
-      else if (hasUserFlags && location.empty() && causedByUserFlags(*pDiag, userFlags))
+      else if (hasUserFlags && location.empty())
       {
+         if (pBaseline == nullptr)
+            pBaseline = &baselineDiagnostics(filename);
+
+         if (pBaseline->count(pDiag->spelling()) > 0)
+            continue;
+
          json::Object diagnosticJson = diagnosticToJson(tu, *pDiag);
          diagnosticJson["file"] = module_context::createAliasedPath(filePath);
          diagnosticJson["position"] = locationToPositionJson(FileLocation(filePath, 1, 1));

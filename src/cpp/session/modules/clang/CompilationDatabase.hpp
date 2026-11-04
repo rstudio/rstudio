@@ -55,6 +55,10 @@ public:
    std::vector<std::string> compileArgsForTranslationUnit(
            const std::string& filename, bool usePrecompiledHeaders);
 
+   // the args we derive for the file, without the precompiled header or
+   // any compile_flags.txt additions
+   std::vector<std::string> generatedCompileArgs(const std::string& filename);
+
    bool isProjectTranslationUnit(const std::string& filename) const;
 
    std::vector<std::string> projectTranslationUnits() const;
@@ -113,6 +117,8 @@ private:
          const std::vector<std::string>& userFlags);
 
    bool shouldIndexConfig(const CompilationConfig& config);
+   bool configForTranslationUnit(const core::FilePath& filePath,
+                                 CompilationConfig* pConfig);
 
 private:
 

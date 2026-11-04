@@ -41,6 +41,8 @@ struct CompilationDatabase
    boost::function<std::vector<std::string>()> translationUnits;
    boost::function<std::vector<std::string>(const std::string&, bool)>
                                     compileArgsForTranslationUnit;
+   boost::function<std::vector<std::string>(const std::string&)>
+                                    generatedCompileArgs;
    boost::function<void()> rebuildPackageCompilationDatabase;
 };
 
@@ -80,6 +82,13 @@ public:
    // or a header file)
    TranslationUnit getTranslationUnit(const std::string& filename,
                                       bool alwaysReparse = false);
+
+   // the diagnostics clang reports against the command line itself (with no
+   // source location) when the file is parsed with these args; found by
+   // parsing an empty copy of the file, so this costs no more than clang's
+   // own argument handling
+   std::vector<std::string> commandLineDiagnostics(const std::string& filename,
+                                                   std::vector<std::string> args);
 
    Cursor referencedCursorForFileLocation(const FileLocation& loc);
 
