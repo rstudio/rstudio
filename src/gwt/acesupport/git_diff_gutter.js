@@ -991,6 +991,14 @@ var GitDiffGutter = function(editor, strings) {
          session.widgetManager = new LineWidgets(session);
          session.widgetManager.attach(this.editor);
       }
+
+      // pinPeek reads the widgets' styles, so it listens for afterRender
+      // behind the manager's renderWidgets, which writes them: the manager
+      // may have come after the gutter (made here, or for chunk output),
+      // and so listen ahead of it.
+      var renderer = this.editor.renderer;
+      renderer.off("afterRender", this.pinPeek);
+      renderer.on("afterRender", this.pinPeek);
       return session.widgetManager;
    };
 
