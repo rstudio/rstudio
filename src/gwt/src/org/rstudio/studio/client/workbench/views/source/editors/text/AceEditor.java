@@ -822,8 +822,10 @@ public class AceEditor implements DocDisplay
       boolean sawPrefixedCall = false;
       boolean sawPlus = false;
 
-      // 'else' branches being skipped back to their 'if'
+      // 'else' branches being skipped back to their 'if', and whether a pipe
+      // in the branch being skipped has made the calls before it irrelevant
       int skippedBranches = 0;
+      boolean skippedBranchPiped = false;
       while (true)
       {
          if (cursor.isRightBracket())
@@ -848,14 +850,22 @@ public class AceEditor implements DocDisplay
          {
             if (skippedBranches > 0)
                skippedBranches--;
+            if (skippedBranches == 0)
+               skippedBranchPiped = false;
          }
          else if (skippedBranches > 0)
          {
             // a call in the skipped branch is evidence for an enclosing '+',
-            // but a '+' or a pipe there belongs to that branch alone
-            if (cursor.hasType("identifier") &&
-                cursor.peekFwd(1).valueEquals("(") &&
-                isGgplotCallName(cursor.currentValue()))
+            // unless its result is piped elsewhere; a '+' there belongs to
+            // that branch alone
+            if (PIPE_OPERATORS.contains(cursor.currentValue()))
+            {
+               skippedBranchPiped = true;
+            }
+            else if (!skippedBranchPiped &&
+                     cursor.hasType("identifier") &&
+                     cursor.peekFwd(1).valueEquals("(") &&
+                     isGgplotCallName(cursor.currentValue()))
             {
                sawPrefixedCall = true;
             }
@@ -888,6 +898,11 @@ public class AceEditor implements DocDisplay
          boolean leadingOperator = cursor.isLookingAtBinaryOp();
          if (!cursor.moveToPreviousToken())
             return false;
+
+         // the code model keeps section-heading comments; they are not code
+         while (cursor.hasType("comment"))
+            if (!cursor.moveToPreviousToken())
+               return false;
 
          // a new row only continues the statement across a binary operator
          // (trailing or leading), or after 'else' or a control-flow header;
