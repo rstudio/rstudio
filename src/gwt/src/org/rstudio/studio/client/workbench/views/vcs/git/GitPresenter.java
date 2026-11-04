@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -120,6 +121,9 @@ public class GitPresenter extends BaseVcsPresenter
          public void onVcsRefresh(VcsRefreshEvent event)
          {
             view_.setItems(gitState_.getStatus());
+
+            // (a refresh can change what the selected file allows)
+            manageCommands();
          }
       });
 
@@ -192,6 +196,7 @@ public class GitPresenter extends BaseVcsPresenter
          public void onContextMenu(ContextMenuEvent event)
          {
             NativeEvent nativeEvent = event.getNativeEvent();
+            manageCommands();
             view_.showContextMenu(nativeEvent.getClientX(),
                                   nativeEvent.getClientY());
          }
@@ -226,8 +231,16 @@ public class GitPresenter extends BaseVcsPresenter
          return;
       }
 
+      // only the latest request opens its file: an earlier one, still out
+      // for its diff (or its second, staged one), would open after it
+      navigation_.invalidate();
+      final Invalidation.Token token = navigation_.getInvalidationToken();
+
       findFirstChange(item, PatchMode.Working, line ->
       {
+         if (token.isInvalid())
+            return;
+
          if (line > 0)
          {
             vcsFileOpener_.openFileAtFirstChange(item, line);
@@ -235,7 +248,12 @@ public class GitPresenter extends BaseVcsPresenter
          }
 
          findFirstChange(item, PatchMode.Stage, stagedLine ->
-            vcsFileOpener_.openFileAtFirstChange(item, Math.max(stagedLine, 1)));
+         {
+            if (token.isInvalid())
+               return;
+
+            vcsFileOpener_.openFileAtFirstChange(item, Math.max(stagedLine, 1));
+         });
       });
    }
 
@@ -645,6 +663,7 @@ public class GitPresenter extends BaseVcsPresenter
    private final WorktreeActions worktreeActions_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
+   private final Invalidation navigation_ = new Invalidation();
    private final UserPrefs prefs_;
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }
