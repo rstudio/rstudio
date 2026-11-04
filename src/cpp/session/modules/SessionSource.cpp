@@ -924,9 +924,13 @@ Error formatContext(
       const json::JsonRpcRequest& request,
       const json::JsonRpcFunctionContinuation& continuation)
 {
+   // The client sends the document path as null for an untitled document;
+   // read it as a json::Value so that case is not rejected as a type
+   // mismatch. See #19406.
    std::string id;
-   std::string path;
-   Error error = json::readParams(request.params, &id, &path);
+   json::Value pathJson;
+   Error error = json::readParams(request.params, &id, &pathJson);
+   std::string path = pathJson.isString() ? pathJson.getString() : std::string();
    if (error || path.empty())
    {
       json::Object contextJson = JSON {
@@ -1053,12 +1057,15 @@ Error formatCode(
    
    Error error;
 
-   std::string id, path, code;
-   error = json::readParams(request.params, &id, &path, &code);
+   // As in formatContext(), the path is null for an untitled document.
+   std::string id, code;
+   json::Value pathJson;
+   error = json::readParams(request.params, &id, &pathJson, &code);
    if (error)
       return onError(error, ERROR_LOCATION);
 
    // Resolve the document path if available
+   std::string path = pathJson.isString() ? pathJson.getString() : std::string();
    FilePath documentPath;
    if (!path.empty())
       documentPath = module_context::resolveAliasedPath(path);

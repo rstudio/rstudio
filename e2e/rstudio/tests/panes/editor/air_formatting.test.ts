@@ -37,6 +37,9 @@
  *   14. checked + file outside the active project + save       → Air formats
  *       (the format-on-save path is no longer gated on project membership,
  *       #17774)
+ *   15. checked + untitled document + manual reformat          → Air formats
+ *       (the format_code RPC used to reject the untitled document's null
+ *       path, #19406)
  *
  * Detection: air.toml uses 12-space indent — unmistakable signal. Air with
  * default settings (case 6) is exercised via the save path, where the
@@ -700,6 +703,40 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     // The afterEach cleanup closes all source tabs; remove the out-of-project
     // file explicitly since it lives outside the dir cleanup() unlinks.
     await consoleActions.executeInConsole(`unlink("${outsidePath}")`, { wait: true });
+  });
+
+  // --- Reformat Selection works in an untitled document (#19406) ---
+
+  test('15: checked, untitled document, manual reformat uses Air', async () => {
+    // #19406: with Air enabled, "Reformat Selection" silently did nothing in
+    // an unsaved document while "Reformat Document" worked. The client sends
+    // the document path with the format_code request, and an untitled
+    // document has none -- the backend rejected the null path with a
+    // parameter type mismatch before formatting anything. With "require
+    // air.toml" off the client never falls back to the built-in formatter
+    // when Air is enabled, so any change to the buffer proves the RPC round
+    // trip succeeded.
+    test.skip(!airAvailable, 'Air binary not available (.rs.air.ensureAvailable could not resolve it)');
+    await setAirPrefs(page, true, false);
+    await removeAirConfig(consoleActions);
+
+    await executeCommand(page, 'newSourceDoc');
+    // An untitled document reports a null path; a missing active document
+    // reads as undefined so the two can't be confused.
+    await expect
+      .poll(() => page.evaluate(() => window.rstudio?.documents.active()?.path))
+      .toBeNull();
+    // Type through the Ace API rather than the keyboard: focus can drift off
+    // a freshly created tab on slow CI, and the text itself isn't under test.
+    await page.evaluate(() => {
+      const editor = window.rstudio?.documents.activeEditor();
+      if (!editor) throw new Error('no active source editor for the untitled document');
+      editor.setValue('x<-1+2+3\ny<-list(a=1,b=2,c=3)');
+    });
+
+    await reformatCode(page, sourceActions);
+    const content = await sourceActions.getEditorContent();
+    expectAirDefaultFormatted(content);
   });
 
 });
