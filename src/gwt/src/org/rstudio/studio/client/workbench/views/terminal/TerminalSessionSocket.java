@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
@@ -24,7 +25,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
@@ -33,13 +33,10 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONValue;
-import com.sksamuel.gwt.websockets.CloseEvent;
-import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
 /**
  * Manages input and output for the terminal session.
@@ -83,6 +80,27 @@ public class TerminalSessionSocket
    }
 
    /**
+    * The console-process operations a connection uses. ConsoleProcess
+    * implements it; tests substitute controlled RPC completions.
+    */
+   public interface Process
+   {
+      ConsoleProcessInfo getProcessInfo();
+      int getChannelMode();
+      HandlerRegistration addConsoleOutputHandler(ConsoleOutputEvent.Handler handler);
+      void useRpcMode(ServerRequestCallback<VoidResponse> callback);
+      void writeStandardInput(ShellInput input, ServerRequestCallback<VoidResponse> callback);
+   }
+
+   /**
+    * The terminal emulator that provides user input and displays output.
+    */
+   public interface Emulator extends Consumer<String>
+   {
+      HandlerRegistration addTerminalDataInputHandler(TerminalDataInputEvent.Handler handler);
+   }
+
+   /**
     * Constructor
     * @param session Session to callback with user input and server output.
     * @param xterm Terminal emulator that provides user input, and displays output.
@@ -91,15 +109,25 @@ public class TerminalSessionSocket
     *                                switching to RPC, or zero for no timeout (in seconds)
     */
    public TerminalSessionSocket(Session session,
-                                XTermWidget xterm,
+                                Emulator xterm,
                                 int webSocketPingInterval,
                                 int webSocketConnectTimeout)
+   {
+      this(session, xterm, webSocketPingInterval, webSocketConnectTimeout, TerminalWebSocket::new);
+   }
+
+   TerminalSessionSocket(Session session,
+                         Emulator xterm,
+                         int webSocketPingInterval,
+                         int webSocketConnectTimeout,
+                         TerminalWebSocket.Factory socketFactory)
    {
       session_ = session;
       xterm_ = xterm;
       localEcho_ = new TerminalLocalEcho(xterm_);
       webSocketPingInterval_ = webSocketPingInterval;
       webSocketConnectTimeout_ = webSocketConnectTimeout;
+      socketFactory_ = socketFactory;
    }
 
    /**
@@ -109,7 +137,7 @@ public class TerminalSessionSocket
     * @param consoleProcess
     * @param callback result of connect attempt
     */
-   public void connect(ConsoleProcess consoleProcess,
+   public void connect(Process consoleProcess,
                        final ConnectCallback callback)
    {
       final int connection = connection_ + 1;
@@ -172,10 +200,10 @@ public class TerminalSessionSocket
          }
 
          diagnostic_.log(constants_.connectWebSocketMessage() + url + "'");
-         socket_ = new TerminalWebSocket(new WebsocketListenerExt()
+         socket_ = socketFactory_.create(new TerminalWebSocket.Listener()
          {
             @Override
-            public void onClose(CloseEvent event)
+            public void onClose()
             {
                diagnostic_.log(constants_.websockedClosedMessage());
                session_.connectionDisconnected();
@@ -195,9 +223,9 @@ public class TerminalSessionSocket
             }
 
             @Override
-            public void onError()
+            public void onFailure(TerminalWebSocket.Failure failure)
             {
-               diagnosticError(constants_.websocketConnectError());
+               diagnosticError(failureMessage(failure));
                switchToRPC();
             }
          }, webSocketPingInterval_, webSocketConnectTimeout_);
@@ -232,17 +260,15 @@ public class TerminalSessionSocket
             diagnostic_.log(constants_.switchedToRPCMessage());
             while (!pendingInput_.isEmpty())
             {
+               writeRpcInput(pendingInput_.remove(0));
                if (connection != connection_)
                   return;
-               writeRpcInput(pendingInput_.remove(0));
             }
             // A fallback after opening must not start the process and reload
-            // its output a second time. Only complete an initial connection.
-            if (connection == connection_)
-            {
-               switchingToRpc_ = false;
-               connectionCompleted();
-            }
+            // its output a second time; connectionCompleted() only completes
+            // an initial connection.
+            switchingToRpc_ = false;
+            connectionCompleted();
          }
 
          @Override
@@ -260,8 +286,7 @@ public class TerminalSessionSocket
                callback.onError(constants_.terminalFailedToConnectMessage());
             else
                session_.connectionDisconnected();
-            for (PendingInput input : pending)
-               input.callback.onError(error);
+            cancelPendingInput(pending, error);
          }
       });
    }
@@ -325,7 +350,7 @@ public class TerminalSessionSocket
          // If user is changing password, temporarily stop local-echo
          // to reduce chances of showing their password. Note that echo
          // stops automatically once the terminal enters "busy" state, but
-         // there's a delay before that happens. Also, if the user has 
+         // there's a delay before that happens. Also, if the user has
          // already started typing before the Password: prompt is sent back
          // by the server, those characters will local-echo. Still, between
          // the two mechanisms this reduces the chances of most or all of
@@ -384,49 +409,7 @@ public class TerminalSessionSocket
       {
          unregisterHandlers(); // gets rid of keyboard handler
       }
-      if (!pending.isEmpty())
-      {
-         ServerError error = new ServerError()
-         {
-            @Override
-            public int getCode()
-            {
-               return ServerError.CONNECTION;
-            }
-
-            @Override
-            public String getMessage()
-            {
-               return constants_.disconnectedLabel();
-            }
-
-            @Override
-            public String getUserMessage()
-            {
-               return getMessage();
-            }
-
-            @Override
-            public String getRedirectUrl()
-            {
-               return null;
-            }
-
-            @Override
-            public ServerErrorCause getCause()
-            {
-               return null;
-            }
-
-            @Override
-            public JSONValue getClientInfo()
-            {
-               return null;
-            }
-         };
-         for (PendingInput input : pending)
-            input.callback.onError(error);
-      }
+      cancelPendingInput(pending, new DisconnectedError());
    }
 
    public void resetDiagnostics()
@@ -451,6 +434,20 @@ public class TerminalSessionSocket
       diagnostic_.log(msg);
    }
 
+   private static String failureMessage(TerminalWebSocket.Failure failure)
+   {
+      switch (failure)
+      {
+      case CONNECT_TIMEOUT:
+         return constants_.timeoutConnectingMessage();
+      case KEEP_ALIVE_EXPIRED:
+         return constants_.keepAliveExpiredMessage();
+      case ERROR:
+      default:
+         return constants_.websocketConnectError();
+      }
+   }
+
    private void closeWebSocket()
    {
       TerminalWebSocket socket = socket_;
@@ -473,6 +470,15 @@ public class TerminalSessionSocket
             ShellInput.create(input.sequence, input.text, true /*echo input*/), input.callback);
    }
 
+   // Queued input is one burst of typing that was lost together, so report
+   // its failure once: every callback would otherwise print its own error
+   // line in the terminal. The remaining callbacks are never invoked.
+   private static void cancelPendingInput(List<PendingInput> pending, ServerError error)
+   {
+      if (!pending.isEmpty())
+         pending.get(0).callback.onError(error);
+   }
+
    private static class PendingInput
    {
       PendingInput(int sequence, String text, VoidServerRequestCallback callback)
@@ -487,10 +493,50 @@ public class TerminalSessionSocket
       final VoidServerRequestCallback callback;
    }
 
+   private static class DisconnectedError implements ServerError
+   {
+      @Override
+      public int getCode()
+      {
+         return ServerError.CONNECTION;
+      }
+
+      @Override
+      public String getMessage()
+      {
+         return constants_.disconnectedLabel();
+      }
+
+      @Override
+      public String getUserMessage()
+      {
+         return getMessage();
+      }
+
+      @Override
+      public String getRedirectUrl()
+      {
+         return null;
+      }
+
+      @Override
+      public ServerErrorCause getCause()
+      {
+         return null;
+      }
+
+      @Override
+      public JSONValue getClientInfo()
+      {
+         return null;
+      }
+   }
+
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final Session session_;
-   private final XTermWidget xterm_;
-   private ConsoleProcess consoleProcess_;
+   private final Emulator xterm_;
+   private final TerminalWebSocket.Factory socketFactory_;
+   private Process consoleProcess_;
    private ConnectCallback connectCallback_;
    private HandlerRegistration terminalInputHandler_;
    private TerminalWebSocket socket_;

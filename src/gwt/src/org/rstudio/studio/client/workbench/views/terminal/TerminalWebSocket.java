@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.function.Function;
 
+import org.rstudio.core.client.Debug;
+
 import com.google.gwt.user.client.Timer;
 import com.sksamuel.gwt.websockets.CloseEvent;
 import com.sksamuel.gwt.websockets.Websocket;
@@ -24,12 +26,38 @@ import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 /** Owns a terminal WebSocket and the timers and callbacks for that connection. */
 class TerminalWebSocket
 {
+   /** Why a connection was given up on; the diagnostics log names each cause. */
+   enum Failure
+   {
+      /** The socket reported an error, or a keep-alive could not be sent. */
+      ERROR,
+
+      /** The socket did not open before the connect timeout. */
+      CONNECT_TIMEOUT,
+
+      /** The server stopped answering keep-alives on an open socket. */
+      KEEP_ALIVE_EXPIRED
+   }
+
+   interface Listener
+   {
+      void onOpen();
+      void onMessage(String message);
+      void onClose();
+      void onFailure(Failure failure);
+   }
+
+   interface Factory
+   {
+      TerminalWebSocket create(Listener listener, int pingInterval, int connectTimeout);
+   }
+
    interface Scheduler
    {
       Runnable schedule(int delayMs, Runnable command);
    }
 
-   TerminalWebSocket(WebsocketListenerExt listener, int pingInterval, int connectTimeout)
+   TerminalWebSocket(Listener listener, int pingInterval, int connectTimeout)
    {
       this(listener, pingInterval, connectTimeout, Websocket::new, (delay, command) ->
       {
@@ -46,7 +74,7 @@ class TerminalWebSocket
       });
    }
 
-   TerminalWebSocket(WebsocketListenerExt listener, int pingInterval, int connectTimeout,
+   TerminalWebSocket(Listener listener, int pingInterval, int connectTimeout,
                      Function<String, Websocket> factory, Scheduler scheduler)
    {
       listener_ = listener;
@@ -79,7 +107,7 @@ class TerminalWebSocket
          {
             if (socket_ != socket)
                return;
-            if (TerminalSocketPacket.keepAlivePacket().equals(message))
+            if (TerminalSocketPacket.isKeepAlive(message))
                unansweredPings_ = 0;
             else
                listener_.onMessage(message);
@@ -92,13 +120,13 @@ class TerminalWebSocket
                return;
             // Invalidate before notifying the session, which may reconnect.
             close();
-            listener_.onClose(event);
+            listener_.onClose();
          }
 
          @Override
          public void onError()
          {
-            fail(socket);
+            fail(socket, Failure.ERROR);
          }
       });
 
@@ -106,7 +134,7 @@ class TerminalWebSocket
          cancelConnect_ = scheduler_.schedule(connectTimeoutMs_, () ->
          {
             if (!opened_)
-               fail(socket);
+               fail(socket, Failure.CONNECT_TIMEOUT);
          });
       socket.open();
    }
@@ -125,6 +153,7 @@ class TerminalWebSocket
       }
       catch (RuntimeException error)
       {
+         Debug.log("WebSocket send failed: " + error.getMessage());
          return false;
       }
    }
@@ -143,12 +172,12 @@ class TerminalWebSocket
          socket.close();
    }
 
-   private void fail(Websocket socket)
+   private void fail(Websocket socket, Failure failure)
    {
       if (socket_ != socket)
          return;
       close();
-      listener_.onError();
+      listener_.onFailure(failure);
    }
 
    private void scheduleKeepAlive(Websocket socket)
@@ -161,7 +190,7 @@ class TerminalWebSocket
             return;
          if (unansweredPings_ >= MAX_UNANSWERED_PINGS)
          {
-            fail(socket);
+            fail(socket, Failure.KEEP_ALIVE_EXPIRED);
             return;
          }
          // Count probes actually sent, not wall time. Browser suspension or
@@ -169,7 +198,7 @@ class TerminalWebSocket
          unansweredPings_++;
          if (!send(TerminalSocketPacket.keepAlivePacket()))
          {
-            fail(socket);
+            fail(socket, Failure.ERROR);
             return;
          }
          scheduleKeepAlive(socket);
@@ -178,7 +207,7 @@ class TerminalWebSocket
 
    private static final int OPEN = 1;
    private static final int MAX_UNANSWERED_PINGS = 3;
-   private final WebsocketListenerExt listener_;
+   private final Listener listener_;
    private final int pingIntervalMs_;
    private final int connectTimeoutMs_;
    private final Function<String, Websocket> factory_;

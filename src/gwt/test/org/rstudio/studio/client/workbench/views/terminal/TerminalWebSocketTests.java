@@ -15,87 +15,56 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import com.sksamuel.gwt.websockets.CloseEvent;
-import com.sksamuel.gwt.websockets.Websocket;
-import com.sksamuel.gwt.websockets.WebsocketListenerExt;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSocketTestDoubles.Clock;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSocketTestDoubles.Socket;
 
-import junit.framework.TestCase;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /** Uses real listener dispatch with controlled network events and one-shot timers. */
-public class TerminalWebSocketTests extends TestCase
+public class TerminalWebSocketTests extends GWTTestCase
 {
-   private static class Clock implements TerminalWebSocket.Scheduler
+   @Override
+   public String getModuleName()
    {
-      static class Task
+      return "org.rstudio.studio.RStudioTests";
+   }
+
+   private static class Listener implements TerminalWebSocket.Listener
+   {
+      @Override
+      public void onOpen()
       {
-         Task(Runnable command) { this.command = command; }
-         final Runnable command;
-         boolean cancelled;
+         opens++;
       }
 
       @Override
-      public Runnable schedule(int delayMs, Runnable command)
+      public void onClose()
       {
-         assertTrue(delayMs > 0);
-         Task task = new Task(command);
-         tasks.add(task);
-         return () -> task.cancelled = true;
+         closes++;
       }
 
-      void tick()
+      @Override
+      public void onFailure(TerminalWebSocket.Failure failure)
       {
-         while (!tasks.isEmpty())
-         {
-            Task task = tasks.remove(0);
-            if (!task.cancelled)
-            {
-               task.command.run();
-               return;
-            }
-         }
-         fail("No scheduled task");
+         failures.add(failure);
       }
 
-      final List<Task> tasks = new ArrayList<>();
-   }
-
-   private static class Socket extends Websocket
-   {
-      Socket(String url) { super(url); }
-      @Override public void open() { }
-      @Override public void close() { closes++; state = 3; }
-      @Override public int getState() { return state; }
-      @Override public void send(String message)
+      @Override
+      public void onMessage(String message)
       {
-         if (throwOnSend)
-            throw new IllegalStateException("send failed");
-         sent.add(message);
+         messages.add(message);
       }
-      void opened() { state = 1; onOpen(); }
-      void message(String message) { onMessage(message); }
-      void error() { onError(); }
-      void closed() { state = 3; onClose((short)1000, "", true); }
-      int state;
-      int closes;
-      boolean throwOnSend;
-      final List<String> sent = new ArrayList<>();
-   }
 
-   private static class Listener implements WebsocketListenerExt
-   {
-      @Override public void onOpen() { opens++; }
-      @Override public void onClose(CloseEvent event) { closes++; }
-      @Override public void onError() { errors++; }
-      @Override public void onMessage(String message) { messages.add(message); }
       int opens;
       int closes;
-      int errors;
+      final List<TerminalWebSocket.Failure> failures = new ArrayList<>();
       final List<String> messages = new ArrayList<>();
    }
 
-   private class Harness
+   private static class Harness
    {
       Harness(int pingInterval, int connectTimeout)
       {
@@ -108,7 +77,11 @@ public class TerminalWebSocketTests extends TestCase
          transport.open("ws://localhost/terminal/test/");
       }
 
-      Socket socket() { return sockets.get(sockets.size() - 1); }
+      Socket socket()
+      {
+         return sockets.get(sockets.size() - 1);
+      }
+
       final Clock clock = new Clock();
       final Listener listener = new Listener();
       final List<Socket> sockets = new ArrayList<>();
@@ -132,7 +105,7 @@ public class TerminalWebSocketTests extends TestCase
    {
       Harness h = new Harness(10, 10);
       h.clock.tick();
-      assertEquals(1, h.listener.errors);
+      assertEquals(Collections.singletonList(TerminalWebSocket.Failure.CONNECT_TIMEOUT), h.listener.failures);
       assertEquals(1, h.socket().closes);
       h.socket().opened();
       h.socket().message("alate output");
@@ -140,8 +113,17 @@ public class TerminalWebSocketTests extends TestCase
       h.socket().closed();
       assertEquals(0, h.listener.opens);
       assertEquals(0, h.listener.closes);
-      assertEquals(1, h.listener.errors);
+      assertEquals(1, h.listener.failures.size());
       assertTrue(h.listener.messages.isEmpty());
+   }
+
+   public void testSocketErrorIsReportedAsError()
+   {
+      Harness h = new Harness(10, 10);
+      h.socket().opened();
+      h.socket().error();
+      assertEquals(Collections.singletonList(TerminalWebSocket.Failure.ERROR), h.listener.failures);
+      assertEquals(1, h.socket().closes);
    }
 
    public void testReplacedSocketCannotAffectCurrentConnection()
@@ -158,7 +140,7 @@ public class TerminalWebSocketTests extends TestCase
       oldTimeout.command.run(); // even an already-queued timeout is harmless
       assertEquals(1, h.listener.opens);
       assertEquals(0, h.listener.closes);
-      assertEquals(0, h.listener.errors);
+      assertTrue(h.listener.failures.isEmpty());
       assertTrue(h.listener.messages.isEmpty());
       assertTrue(h.transport.send("anew"));
       assertEquals("anew", h.socket().sent.get(0));
@@ -170,7 +152,7 @@ public class TerminalWebSocketTests extends TestCase
       Clock.Task timeout = h.clock.tasks.get(0);
       h.socket().opened();
       timeout.command.run();
-      assertEquals(0, h.listener.errors);
+      assertTrue(h.listener.failures.isEmpty());
       assertTrue(h.transport.send("astill connected"));
    }
 
@@ -181,12 +163,12 @@ public class TerminalWebSocketTests extends TestCase
       for (int i = 0; i < 3; i++)
          h.clock.tick();
       assertEquals(3, h.socket().sent.size());
-      assertEquals(0, h.listener.errors);
+      assertTrue(h.listener.failures.isEmpty());
       h.clock.tick();
-      assertEquals(1, h.listener.errors);
+      assertEquals(Collections.singletonList(TerminalWebSocket.Failure.KEEP_ALIVE_EXPIRED), h.listener.failures);
       assertEquals(1, h.socket().closes);
       h.socket().error();
-      assertEquals(1, h.listener.errors);
+      assertEquals(1, h.listener.failures.size());
    }
 
    public void testPongResetsUnansweredProbeCount()
@@ -199,7 +181,7 @@ public class TerminalWebSocketTests extends TestCase
          h.clock.tick();
          h.socket().message(TerminalSocketPacket.keepAlivePacket());
       }
-      assertEquals(0, h.listener.errors);
+      assertTrue(h.listener.failures.isEmpty());
       assertTrue(h.listener.messages.isEmpty());
       assertTrue(h.transport.send("astill connected"));
    }
@@ -216,7 +198,7 @@ public class TerminalWebSocketTests extends TestCase
          assertTrue(task.cancelled);
          task.command.run();
       }
-      assertEquals(0, h.listener.errors);
+      assertTrue(h.listener.failures.isEmpty());
       assertTrue(h.socket().sent.isEmpty());
    }
 
@@ -232,7 +214,7 @@ public class TerminalWebSocketTests extends TestCase
    {
       Harness h = new Harness(10, 10);
       h.socket().opened();
-      h.socket().state = 2; // closing, before the asynchronous close event
+      h.socket().state = Socket.CLOSING; // before the asynchronous close event
       assertFalse(h.transport.send("anot sent"));
       assertTrue(h.socket().sent.isEmpty());
    }
@@ -244,7 +226,7 @@ public class TerminalWebSocketTests extends TestCase
       h.socket().throwOnSend = true;
       assertFalse(h.transport.send("anot sent"));
       h.clock.tick();
-      assertEquals(1, h.listener.errors);
+      assertEquals(Collections.singletonList(TerminalWebSocket.Failure.ERROR), h.listener.failures);
    }
 
    public void testCloseEventOnlyNotifiesOnce()
@@ -254,6 +236,6 @@ public class TerminalWebSocketTests extends TestCase
       h.socket().closed();
       h.socket().closed();
       assertEquals(1, h.listener.closes);
-      assertEquals(0, h.listener.errors);
+      assertTrue(h.listener.failures.isEmpty());
    }
 }

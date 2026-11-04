@@ -612,19 +612,7 @@
       </java-compile>
    </target>
 
-   <!-- Compile the actual session/transport classes against controlled RPC and
-        timer dependencies, so callback races can be tested without a browser. -->
-   <target name="test-terminal-session-socket" description="Tests terminal session connection and input lifecycles">
-      <exec executable="${python.bin}" failifexecutionfails="true" failonerror="true">
-         <arg value="${test.dir}/terminal_session_socket.test.py"/>
-         <arg value="--java-home"/>
-         <arg value="${java.home}"/>
-         <arg value="--build-dir"/>
-         <arg value="${build.dir}/terminal-session-socket-test"/>
-      </exec>
-   </target>
-
-   <target name="unittest" description="Runs JUnit unit tests" depends="test-terminal-session-socket,build-unittests">
+   <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">
       <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
          <classpath>
             <pathelement location="${test.dir}"/>

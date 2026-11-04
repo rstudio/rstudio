@@ -14,7 +14,27 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerErrorCause;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSocketTestDoubles.Clock;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSocketTestDoubles.Socket;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.junit.client.GWTTestCase;
+
 import junit.framework.Assert;
 
 public class TerminalSessionSocketTests extends GWTTestCase
@@ -59,4 +79,426 @@ public class TerminalSessionSocketTests extends GWTTestCase
             TerminalSessionSocket.PASSWORD_PATTERN.test("passphrasepasswordpassphrase: "));
    }
 
+   // The remaining tests drive the production TerminalSessionSocket and
+   // TerminalWebSocket with controlled socket events, timers and RPC
+   // completions, so late network events and reentrant input callbacks can be
+   // ordered explicitly. They cover connection and input lifecycles, not the
+   // browser or the network.
+
+   private static class Session implements TerminalSessionSocket.Session
+   {
+      @Override
+      public void receivedInput(String input)
+      {
+      }
+
+      @Override
+      public void receivedOutput(String output)
+      {
+      }
+
+      @Override
+      public void connectionDisconnected()
+      {
+         disconnected++;
+      }
+
+      int disconnected;
+   }
+
+   private static class Emulator implements TerminalSessionSocket.Emulator
+   {
+      @Override
+      public HandlerRegistration addTerminalDataInputHandler(TerminalDataInputEvent.Handler handler)
+      {
+         return () -> {};
+      }
+
+      @Override
+      public void accept(String output)
+      {
+      }
+   }
+
+   private static class Callback implements TerminalSessionSocket.ConnectCallback
+   {
+      @Override
+      public void onConnected()
+      {
+         connected++;
+      }
+
+      @Override
+      public void onError(String message)
+      {
+         errors++;
+      }
+
+      int connected;
+      int errors;
+   }
+
+   private static class Ack extends VoidServerRequestCallback
+   {
+      @Override
+      public void onResponseReceived(VoidResponse response)
+      {
+         count++;
+      }
+
+      @Override
+      public void onError(ServerError error)
+      {
+         errors++;
+      }
+
+      int count;
+      int errors;
+   }
+
+   /** A console process whose RPC completions the test delivers explicitly. */
+   private static class Process implements TerminalSessionSocket.Process
+   {
+      @Override
+      public ConsoleProcessInfo getProcessInfo()
+      {
+         return ConsoleProcessInfo.createNewTerminalInfo(false, "");
+      }
+
+      @Override
+      public int getChannelMode()
+      {
+         return mode;
+      }
+
+      @Override
+      public HandlerRegistration addConsoleOutputHandler(ConsoleOutputEvent.Handler handler)
+      {
+         return () -> {};
+      }
+
+      @Override
+      public void useRpcMode(ServerRequestCallback<VoidResponse> callback)
+      {
+         fallbacks++;
+         mode = ConsoleProcessInfo.CHANNEL_RPC;
+         pendingRpc = callback;
+      }
+
+      @Override
+      public void writeStandardInput(ShellInput input, ServerRequestCallback<VoidResponse> callback)
+      {
+         inputs.add(input.getText());
+         callback.onResponseReceived(null);
+      }
+
+      int mode = ConsoleProcessInfo.CHANNEL_WEBSOCKET;
+      int fallbacks;
+      ServerRequestCallback<VoidResponse> pendingRpc;
+      final List<String> inputs = new ArrayList<>();
+   }
+
+   private static class Harness
+   {
+      Harness()
+      {
+         socket = new TerminalSessionSocket(session, new Emulator(), 10, 10, (listener, ping, timeout) ->
+               new TerminalWebSocket(listener, ping, timeout, url ->
+               {
+                  Socket created = new Socket(url);
+                  sockets.add(created);
+                  return created;
+               }, clock));
+      }
+
+      Process connect(Callback callback)
+      {
+         Process process = new Process();
+         socket.connect(process, callback);
+         return process;
+      }
+
+      /** Connects and opens the socket, then puts it in the CLOSING state so the next send is rejected. */
+      Process connectClosing(Callback callback)
+      {
+         Process process = connect(callback);
+         latest().opened();
+         latest().state = Socket.CLOSING;
+         return process;
+      }
+
+      Socket latest()
+      {
+         return sockets.get(sockets.size() - 1);
+      }
+
+      final Session session = new Session();
+      final Clock clock = new Clock();
+      final List<Socket> sockets = new ArrayList<>();
+      final TerminalSessionSocket socket;
+   }
+
+   private static ServerError rpcError()
+   {
+      return new ServerError()
+      {
+         @Override
+         public int getCode()
+         {
+            return ServerError.EXECUTION;
+         }
+
+         @Override
+         public String getMessage()
+         {
+            return "error";
+         }
+
+         @Override
+         public String getUserMessage()
+         {
+            return "error";
+         }
+
+         @Override
+         public String getRedirectUrl()
+         {
+            return null;
+         }
+
+         @Override
+         public ServerErrorCause getCause()
+         {
+            return null;
+         }
+
+         @Override
+         public JSONValue getClientInfo()
+         {
+            return null;
+         }
+      };
+   }
+
+   public void testLiveFallbackQueuesNewInputWithoutReplay()
+   {
+      Harness h = new Harness();
+      Callback callback = new Callback();
+      Process process = h.connect(callback);
+      Socket old = h.latest();
+      old.opened();
+      assertEquals(1, callback.connected);
+      h.socket.dispatchInput(0, "already sent", false, new Ack());
+      assertEquals("aalready sent", old.sent.get(0));
+
+      // three unanswered keep-alives, then expiry
+      for (int i = 0; i < 4; i++)
+         h.clock.tick();
+      assertEquals(1, process.fallbacks);
+      assertEquals(1, old.closes);
+      assertTrue(h.socket.getConnectionDiagnostics().contains(constants().keepAliveExpiredMessage()));
+
+      Ack a = new Ack();
+      Ack b = new Ack();
+      h.socket.dispatchInput(1, "queued A", false, a);
+      h.socket.dispatchInput(2, "queued B", false, b);
+      assertTrue("input must wait for RPC confirmation", process.inputs.isEmpty());
+      assertEquals(0, a.count);
+      assertEquals(0, b.count);
+
+      process.pendingRpc.onResponseReceived(null);
+      assertEquals(Arrays.asList("queued A", "queued B"), process.inputs);
+      assertEquals(1, a.count);
+      assertEquals(1, b.count);
+      assertEquals("connection completed only once", 1, callback.connected);
+
+      // stale events from the abandoned socket
+      old.opened();
+      old.error();
+      old.closed();
+      assertEquals(1, callback.connected);
+      assertEquals(1, process.fallbacks);
+      assertEquals(0, h.session.disconnected);
+   }
+
+   public void testReplacementIgnoresOldCloseAndRetriesRejectedSend()
+   {
+      Harness h = new Harness();
+      h.connect(new Callback());
+      Socket old = h.latest();
+      old.opened();
+
+      h.socket.disconnect(false);
+      Callback callback = new Callback();
+      Process process = h.connect(callback);
+      Socket next = h.latest();
+      next.opened();
+      old.closed();
+      assertEquals(1, callback.connected);
+      assertEquals("old close cannot disconnect replacement", 0, h.session.disconnected);
+
+      next.state = Socket.CLOSING;
+      Ack unsent = new Ack();
+      h.socket.dispatchInput(3, "not accepted by closing socket", false, unsent);
+      assertEquals(1, process.fallbacks);
+      assertEquals("failed send not acknowledged", 0, unsent.count);
+      assertTrue(h.socket.getConnectionDiagnostics().contains(constants().sendUserInputMessage()));
+
+      process.pendingRpc.onResponseReceived(null);
+      assertEquals(1, unsent.count);
+      assertEquals(Arrays.asList("not accepted by closing socket"), process.inputs);
+   }
+
+   public void testStaleRpcResponseAndLateOpenCannotCompleteNewConnection()
+   {
+      Harness h = new Harness();
+      Callback pendingCallback = new Callback();
+      Process pending = h.connect(pendingCallback);
+      h.clock.tick(); // connect timeout
+      Socket abandoned = h.latest();
+      assertEquals(1, pending.fallbacks);
+      assertTrue(h.socket.getConnectionDiagnostics().contains(constants().timeoutConnectingMessage()));
+
+      h.socket.disconnect(false);
+      Callback currentCallback = new Callback();
+      h.connect(currentCallback);
+      pending.pendingRpc.onResponseReceived(null);
+      abandoned.opened();
+      assertEquals(0, pendingCallback.connected);
+      assertEquals("stale RPC response completed a new connection", 0, currentCallback.connected);
+
+      h.latest().opened();
+      assertEquals(1, currentCallback.connected);
+   }
+
+   public void testFallbackErrorSurfacesForQueuedInputAndDisconnects()
+   {
+      Harness h = new Harness();
+      Process process = h.connectClosing(new Callback());
+      Ack ack = new Ack();
+      h.socket.dispatchInput(4, "failed", false, ack);
+      process.pendingRpc.onError(rpcError());
+      assertEquals(1, ack.errors);
+      assertEquals(0, ack.count);
+      assertEquals(1, h.session.disconnected);
+   }
+
+   public void testDisconnectCancelsQueuedInputOnce()
+   {
+      for (boolean permanent : new boolean[] { false, true })
+      {
+         Harness h = new Harness();
+         Process process = h.connectClosing(new Callback());
+         Ack first = new Ack();
+         Ack second = new Ack();
+         h.socket.dispatchInput(5, "cancel A", false, first);
+         h.socket.dispatchInput(6, "cancel B", false, second);
+
+         h.socket.disconnect(permanent);
+         assertEquals("one failure for the burst", 1, first.errors);
+         assertEquals(0, second.errors);
+         assertEquals(0, first.count);
+         assertEquals(0, second.count);
+
+         // late fallback replies must not complete cancelled input
+         process.pendingRpc.onResponseReceived(null);
+         process.pendingRpc.onError(rpcError());
+         h.socket.disconnect(permanent);
+         assertEquals(1, first.errors);
+         assertEquals(0, second.errors);
+         assertTrue(process.inputs.isEmpty());
+      }
+   }
+
+   public void testReconnectCancelsQueuedInput()
+   {
+      Harness h = new Harness();
+      h.connectClosing(new Callback());
+      Ack ack = new Ack();
+      h.socket.dispatchInput(7, "cancel on reconnect", false, ack);
+      h.connect(new Callback());
+      assertEquals(1, ack.errors);
+      assertEquals(0, ack.count);
+   }
+
+   public void testCancellationCallbackCanReconnectAndQueueInput()
+   {
+      Harness h = new Harness();
+      Process old = h.connectClosing(new Callback());
+      Process[] replacement = new Process[1];
+      Ack replacementAck = new Ack();
+      Ack reconnectingAck = new Ack()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            super.onError(error);
+            replacement[0] = h.connectClosing(new Callback());
+            h.socket.dispatchInput(8, "keep replacement input", false, replacementAck);
+         }
+      };
+      Ack trailingAck = new Ack();
+      h.socket.dispatchInput(9, "old A", false, reconnectingAck);
+      h.socket.dispatchInput(10, "old B", false, trailingAck);
+
+      h.socket.disconnect(true);
+      assertEquals(1, reconnectingAck.errors);
+      assertEquals("later input in the burst is dropped without a second error", 0, trailingAck.errors);
+      assertEquals("reentrant replacement queue must survive", 0, replacementAck.errors);
+      assertEquals(0, replacementAck.count);
+
+      old.pendingRpc.onResponseReceived(null);
+      old.pendingRpc.onError(rpcError());
+      assertEquals("old RPC reply must not flush replacement input", 0, replacementAck.count);
+
+      replacement[0].pendingRpc.onResponseReceived(null);
+      assertEquals(1, replacementAck.count);
+      assertEquals(Arrays.asList("keep replacement input"), replacement[0].inputs);
+   }
+
+   public void testReconnectFromCancellationSupersedesOuterConnect()
+   {
+      Harness h = new Harness();
+      Process original = h.connectClosing(new Callback());
+      Callback winnerCallback = new Callback();
+      Socket[] winningSocket = new Socket[1];
+      Ack connectDuringCancellation = new Ack()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            super.onError(error);
+            h.connect(winnerCallback);
+            winningSocket[0] = h.latest();
+         }
+      };
+      h.socket.dispatchInput(11, "old queued input", false, connectDuringCancellation);
+
+      int socketsBefore = h.sockets.size();
+      Callback supersededCallback = new Callback();
+      h.connect(supersededCallback);
+      assertEquals("superseded connect must not install a second socket", socketsBefore + 1, h.sockets.size());
+
+      winningSocket[0].opened();
+      Ack winnerAck = new Ack();
+      h.socket.dispatchInput(12, "winner input", false, winnerAck);
+      assertEquals(1, winnerCallback.connected);
+      assertEquals("only the winning connection can complete", 0, supersededCallback.connected);
+      assertTrue(winningSocket[0].sent.contains("awinner input"));
+      assertEquals(1, winnerAck.count);
+
+      original.pendingRpc.onResponseReceived(null);
+      original.pendingRpc.onError(rpcError());
+      assertEquals(1, winnerCallback.connected);
+
+      h.socket.disconnect(false);
+      assertEquals("the winning socket must remain owned and get closed", 1, winningSocket[0].closes);
+   }
+
+   // GWT.create() is only legal once the test runs in the GWT module, not in a
+   // static initializer, which the JUnit runner evaluates in the JVM.
+   private static TerminalConstants constants()
+   {
+      return GWT.create(TerminalConstants.class);
+   }
 }
