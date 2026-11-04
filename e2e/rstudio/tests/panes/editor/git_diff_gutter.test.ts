@@ -2382,7 +2382,8 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
     // marks, wherever Git places it); a rename (with a line changed in the
     // renamed file) and a copy within a subdirectory, staged (copies are
     // listed as such when status.renames says so, and their source changed
-    // too); an untracked binary file
+    // too), with a line of its own changed and sorted after its source; an
+    // untracked binary file
     await executeInConsoleChecked(
       page,
       heredoc`
@@ -2394,14 +2395,14 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
           cat("\nx <- 1", file = ${rPathLiteral(emptyPath)})
           writeLines(c("x <- 1", ""), ${rPathLiteral(blankPath)})
           writeLines(c("a <- 1", "b <- 20", "c <- 3", "d <- 40", "e <- 5"), ${rPathLiteral(dirtyPath)})
-          stopifnot(file.copy(${rPathLiteral(`${subDir}/orig.R`)}, ${rPathLiteral(`${subDir}/copy.R`)}))
+          writeLines(sprintf("orig%d <- %d", 1:5, c(1, 20, 3:5)), ${rPathLiteral(`${subDir}/zcopy.R`)})
           cat("f <- 6\n", file = ${rPathLiteral(`${subDir}/orig.R`)}, append = TRUE)
           s <- c(
             system2("git", c(${gitC()}, "mv", "sub/old.R", "sub/new.R")),
             system2("git", c(${gitC()}, "config", "status.renames", "copies"))
           )
           writeLines(c("a <- 1", "b <- 2", "c <- 30", "d <- 4", "e <- 5"), ${rPathLiteral(`${subDir}/new.R`)})
-          s <- c(s, system2("git", c(${gitC()}, "add", "--", "sub/new.R", "sub/orig.R", "sub/copy.R")))
+          s <- c(s, system2("git", c(${gitC()}, "add", "--", "sub/new.R", "sub/orig.R", "sub/zcopy.R")))
           if (any(s != 0))
             stop("git setup failed (exit status: ", paste(s, collapse = "/"), ")")
           saveRDS(1:10, ${rPathLiteral(rdsPath)})
@@ -2482,11 +2483,15 @@ test.describe.serial('Git diff markers in the editor gutter (#2846)', () => {
       await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(2);
       await documentCloseAllNoSave(page);
 
-      await goTo('sub/orig.R -> sub/copy.R').press('Enter');
-      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('copy.R', { timeout: 15000 });
+      // (at the copy's own changed line: Git pairs a copy with its source
+      // only when asked, and a diff of the two leads with the source's own
+      // staged change, which is not the copy's)
+      await goTo('sub/orig.R -> sub/zcopy.R').press('Enter');
+      await expect(page.locator(SELECTED_DOC_TAB)).toContainText('zcopy.R', { timeout: 15000 });
       await expect
         .poll(() => page.evaluate(() => window.rstudio?.documents.active()?.path ?? ''))
-        .toMatch(/\/GitGutter\/sub\/copy\.R$/);
+        .toMatch(/\/GitGutter\/sub\/zcopy\.R$/);
+      await expect.poll(() => cursorRow(page), { timeout: 15000 }).toBe(1);
       await documentCloseAllNoSave(page);
 
       // an .rds has no line to go to, and opens as Open would open it: an
