@@ -149,6 +149,22 @@ TEST_F(CompileFlagsTest, ResolvesLongOptionSpellings)
    EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), flags);
 }
 
+TEST_F(CompileFlagsTest, ResolvesLessCommonPathOptions)
+{
+   std::string inc = pkg_.completePath("inc").getAbsolutePath();
+   std::string file = pkg_.completePath("x.yaml").getAbsolutePath();
+
+   std::vector<std::string> flags = {
+      "-iframeworkinc", "-cxx-isystem", "inc", "-ivfsoverlay", "x.yaml",
+      "-fmodule-map-file=x.yaml", "--gcc-toolchain=inc"
+   };
+   std::vector<std::string> expected = {
+      "-iframework" + inc, "-cxx-isystem" + inc, "-ivfsoverlay" + file,
+      "-fmodule-map-file=" + file, "--gcc-toolchain=" + inc
+   };
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+}
+
 TEST_F(CompileFlagsTest, LeavesAbsolutePathsAndOtherFlagsAlone)
 {
    std::string abs = root_.getAbsolutePath();
