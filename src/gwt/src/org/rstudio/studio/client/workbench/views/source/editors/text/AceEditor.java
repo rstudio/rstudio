@@ -847,10 +847,11 @@ public class AceEditor implements DocDisplay
          }
          else if (cursor.valueEquals("else"))
          {
-            // the other branch is a separate expression, but an enclosing
-            // chain ('ggplot(d) + if (x) a else b') still counts
-            sawPrefixedCall = false;
-            sawPlus = false;
+            // the other branch is a separate expression: skip over it to the
+            // 'if' opening it, keeping what this branch has shown so far, so
+            // an enclosing chain ('p + if (x) a else b') still counts
+            if (!bwdToMatchingIf(cursor))
+               return false;
          }
          else if (cursor.hasType("identifier") && cursor.peekFwd(1).valueEquals("("))
          {
@@ -871,10 +872,12 @@ public class AceEditor implements DocDisplay
             return false;
 
          // a new row only continues the statement across a binary operator
-         // (trailing or leading)
+         // (trailing or leading), or after 'else' or a control-flow header
          if (cursor.getRow() != row &&
              !leadingOperator &&
-             !cursor.isLookingAtBinaryOp())
+             !cursor.isLookingAtBinaryOp() &&
+             !cursor.valueEquals("else") &&
+             !(cursor.isRightBracket() && closesControlFlowHeader(cursor)))
          {
             return false;
          }
@@ -885,10 +888,59 @@ public class AceEditor implements DocDisplay
    private static boolean hasLeftOperand(TokenCursor cursor)
    {
       Token prev = cursor.peekBwd(1);
-      if (StringUtil.isNullOrEmpty(prev.getValue()))
+      if (StringUtil.isNullOrEmpty(prev.getValue()) || prev.isLeftBracket())
          return false;
 
-      return prev.isRightBracket() || !prev.hasType("keyword", "punctuation");
+      if (prev.isRightBracket())
+      {
+         TokenCursor clone = cursor.cloneCursor();
+         return clone.moveToPreviousToken() && !closesControlFlowHeader(clone);
+      }
+
+      return !prev.hasType("keyword", "punctuation");
+   }
+
+   // whether the right bracket at the cursor closes the header of an 'if',
+   // 'for', 'while' or 'function', rather than a call or a grouped expression
+   private static boolean closesControlFlowHeader(TokenCursor cursor)
+   {
+      TokenCursor clone = cursor.cloneCursor();
+      if (!clone.bwdToMatchingToken())
+         return false;
+
+      return CONTROL_FLOW_HEADER_KEYWORDS.contains(clone.peekBwd(1).getValue());
+   }
+
+   // Moves the cursor from an 'else' back to the 'if' opening that conditional,
+   // skipping bracketed groups and nested conditionals along the way.
+   private static boolean bwdToMatchingIf(TokenCursor cursor)
+   {
+      int depth = 1;
+      while (depth > 0)
+      {
+         if (!cursor.moveToPreviousToken())
+            return false;
+
+         if (cursor.isRightBracket())
+         {
+            if (!cursor.bwdToMatchingToken())
+               return false;
+         }
+         else if (cursor.isLeftBracket())
+         {
+            return false;
+         }
+         else if (cursor.valueEquals("else"))
+         {
+            depth++;
+         }
+         else if (cursor.valueEquals("if"))
+         {
+            depth--;
+         }
+      }
+
+      return true;
    }
 
    private static boolean isGgplotPrefixedFunctionName(String name)
@@ -5387,6 +5439,9 @@ public class AceEditor implements DocDisplay
    // theme_* helpers that act on the global theme rather than on a plot
    private static final Set<String> GGPLOT_FUNCTION_EXCLUSIONS = new HashSet<>(Arrays.asList(
          "theme_set", "theme_get", "theme_update", "theme_replace"));
+
+   private static final Set<String> CONTROL_FLOW_HEADER_KEYWORDS = new HashSet<>(Arrays.asList(
+         "if", "for", "while", "function", "\\"));
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
    private CompletionContext context_ = null;
