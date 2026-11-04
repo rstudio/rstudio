@@ -237,6 +237,27 @@ test_that("an installed R is matched by major.minor, preferring the exact patch"
 
 })
 
+test_that("the newest patch release is chosen by version, not by position or text", {
+
+   # 4.4.10 sorts before 4.4.9 as text, and is listed first here, so neither
+   # the last row nor a lexical ranking would pick it
+   versions <- c("4.4.10", "4.4.9")
+   installed <- data.frame(
+      version = versions,
+      path    = paste0("/opt/R/", versions),
+      binary  = paste0("/opt/R/", versions, "/bin/R"),
+      home    = paste0("/opt/R/", versions, "/lib/R"),
+      stringsAsFactors = FALSE
+   )
+
+   match <- .rs.findInstalledRVersion("4.4.1", installed, architecture = NULL)
+   expect_equal(match$version, .rs.scalar("4.4.10"))
+
+   match <- .rs.findInstalledRVersion("4.4.1", installed[2:1, ], architecture = NULL)
+   expect_equal(match$version, .rs.scalar("4.4.10"))
+
+})
+
 test_that("the architectures of an R build are read from libR", {
 
    root <- tempfile("r-builds-")

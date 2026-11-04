@@ -222,7 +222,7 @@ public class RSConnectDeploy extends Composite
             setWidth("360px");
             setHeight("300px");
          
-            container_.add(new Label(constants_.envVarsSelectMessage(contentType)));
+            container_.add(new FormLabel(constants_.envVarsSelectMessage(contentType), listBox_));
             container_.add(new VerticalSpacer("12px"));
 
             listBox_.setHeight("200px");

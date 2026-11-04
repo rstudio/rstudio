@@ -538,5 +538,6 @@ For branch naming:
 - When instructed to investigate or fix a GitHub issue, update the Assignee to the current user (`gh api user --jq .login`), and check that the issue has been added to the RStudio IDE project with an "In Progress" status.
 - If the issue describes a bug, add the label `bug`
 - If the issue is for a new feature or enhancements to an existing feature, add the label `enhancement`
+- If the issue reports a product defect or regression and was filed by someone outside Posit, also add the label `support`. Check the reporter with `gh api repos/rstudio/rstudio/issues/<N> --jq .author_association`; `MEMBER` means Posit staff, so skip the label. Staff-filed bugs, accessibility audit items, and CI, build, or tech-debt issues do not get it.
 - These labels apply to issues only, not to pull requests
 
