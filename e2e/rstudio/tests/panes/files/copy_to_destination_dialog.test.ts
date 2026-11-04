@@ -96,6 +96,16 @@ test.describe('Copy To destination dialog', () => {
     await expect(dialog.getByRole('textbox', { name: 'File name:' })).toHaveValue('');
   });
 
+  test('Save with a typed `..` navigates to the parent folder', async ({ rstudioPage: page }) => {
+    const dialog = await openDestinationDialog(page, base);
+    await dialog.getByRole('textbox', { name: 'File name:' }).fill('..');
+    await dialog.locator(SAVE_BTN).click();
+
+    await expect(dialog.locator(CURRENT_LOCATION)).toHaveText(leaf(sandbox.dir), { timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(ERROR_DIALOG)).toBeHidden();
+    await expect(dialog.getByRole('textbox', { name: 'File name:' })).toHaveValue('');
+  });
+
   test('a second Save while the parent listing is in flight reports nothing', async ({ rstudioPage: page }) => {
     const dialog = await openDestinationDialog(page, base);
     await dialog.getByRole('option', { name: 'Folder ..' }).click();
