@@ -171,6 +171,11 @@ const CASES: PipeCase[] = [
     expected: PIPE,
   },
   {
+    name: 'after a user scale_ function with a unary plus following a commented if header',
+    content: 'if # Heading ----\n(flag) +scale_counts(x)',
+    expected: PIPE,
+  },
+  {
     name: 'after a nested conditional with a piped inner branch added to a plot object',
     content: 'p + if (outer) if (inner) geom_point() else NULL |> identity() else NULL',
     expected: PLUS,

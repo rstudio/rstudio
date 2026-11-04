@@ -888,16 +888,8 @@ public class AceEditor implements DocDisplay
 
          int row = cursor.getRow();
          boolean leadingOperator = cursor.isLookingAtBinaryOp();
-         if (!cursor.moveToPreviousToken())
+         if (!moveToPreviousCodeToken(cursor))
             return false;
-
-         // the code model keeps section-heading comments, which are not code,
-         // and chunk delimiters, which end the statement
-         while (cursor.hasType("comment"))
-         {
-            if (cursor.hasType("codebegin", "codeend") || !cursor.moveToPreviousToken())
-               return false;
-         }
 
          // a new row only continues the statement across a binary operator
          // (trailing or leading), or after 'else' or a control-flow header;
@@ -914,16 +906,27 @@ public class AceEditor implements DocDisplay
       }
    }
 
+   // Moves to the previous token that is code. The code model keeps
+   // section-heading comments, which are stepped over, and chunk delimiters,
+   // which end the statement (false, as does the start of the document).
+   private static boolean moveToPreviousCodeToken(TokenCursor cursor)
+   {
+      do
+      {
+         if (!cursor.moveToPreviousToken() || cursor.hasType("codebegin", "codeend"))
+            return false;
+      }
+      while (cursor.hasType("comment"));
+
+      return true;
+   }
+
    // whether the operator at the cursor is binary (has a left operand) rather than unary
    private static boolean hasLeftOperand(TokenCursor cursor)
    {
       TokenCursor clone = cursor.cloneCursor();
-      do
-      {
-         if (!clone.moveToPreviousToken() || clone.hasType("codebegin", "codeend"))
-            return false;
-      }
-      while (clone.hasType("comment"));
+      if (!moveToPreviousCodeToken(clone))
+         return false;
 
       if (clone.isLeftBracket())
          return false;
@@ -938,10 +941,10 @@ public class AceEditor implements DocDisplay
    private static boolean closesControlFlowHeader(TokenCursor cursor)
    {
       TokenCursor clone = cursor.cloneCursor();
-      if (!clone.bwdToMatchingToken())
+      if (!clone.bwdToMatchingToken() || !moveToPreviousCodeToken(clone))
          return false;
 
-      return CONTROL_FLOW_HEADER_KEYWORDS.contains(clone.peekBwd(1).getValue());
+      return CONTROL_FLOW_HEADER_KEYWORDS.contains(clone.currentValue());
    }
 
    private static boolean isGgplotCallName(String name)
