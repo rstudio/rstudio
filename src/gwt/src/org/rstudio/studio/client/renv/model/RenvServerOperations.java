@@ -32,4 +32,9 @@ public interface RenvServerOperations extends BuildServerOperations
    void rigInstallRVersion(String version,
                            String architecture,
                            ServerRequestCallback<String> requestCallback);
+
+   // asks rig, for each build of R this machine runs, whether it has an
+   // installer for the requested version
+   void rigCheckRVersion(String version,
+                         ServerRequestCallback<JsArray<RBuildAvailability>> requestCallback);
 }

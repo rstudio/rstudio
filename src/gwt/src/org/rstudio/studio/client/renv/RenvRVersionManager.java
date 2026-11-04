@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.renv;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
@@ -23,6 +26,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.renv.events.ProjectRVersionMismatchEvent;
 import org.rstudio.studio.client.renv.events.RInstallCompletedEvent;
 import org.rstudio.studio.client.renv.events.RenvRestorePromptEvent;
+import org.rstudio.studio.client.renv.model.RBuildAvailability;
 import org.rstudio.studio.client.renv.model.RVersionInstall;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -31,6 +35,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -113,7 +118,7 @@ public class RenvRVersionManager
                false,
                message,
                constants_.installRVersion(data.requested_version),
-               () -> chooseArchitectureAndInstall(data.requested_version, data.install_architectures));
+               () -> checkAndInstall(data.requested_version, message));
       }
       else
       {
@@ -166,24 +171,94 @@ public class RenvRVersionManager
             });
    }
 
-   // where both builds run (ARM64 Windows, Apple silicon Macs), ask which to install
-   private void chooseArchitectureAndInstall(String version, String[] architectures)
+   // Ask rig which builds of the version it has before installing, so that one
+   // it has no installer for is reported here rather than failing in rig.
+   private void checkAndInstall(String version, String message)
    {
-      if (architectures == null || architectures.length == 0)
+      if (checking_)
+         return;
+      checking_ = true;
+
+      server_.rigCheckRVersion(version, new ServerRequestCallback<JsArray<RBuildAvailability>>()
       {
-         installR(version, "");
+         @Override
+         public void onResponseReceived(JsArray<RBuildAvailability> builds)
+         {
+            checking_ = false;
+            onRVersionChecked(version, message, builds);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            checking_ = false;
+            onRVersionCheckFailed(version, message);
+         }
+      });
+   }
+
+   private void onRVersionChecked(String version, String message, JsArray<RBuildAvailability> builds)
+   {
+      List<String> available = new ArrayList<>();
+      boolean unknown = false;
+      for (int i = 0; i < builds.length(); i++)
+      {
+         String status = builds.get(i).getStatus();
+         if (StringUtil.equals(status, "available"))
+            available.add(builds.get(i).getArchitecture());
+         else if (!StringUtil.equals(status, "unavailable"))
+            unknown = true;
+      }
+
+      // a build rig couldn't be asked about might still exist
+      if (unknown)
+      {
+         onRVersionCheckFailed(version, message);
          return;
       }
 
-      // the only build rig has, named so rig doesn't pick the native one
-      if (architectures.length == 1)
+      if (available.isEmpty())
       {
-         installR(version, architectures[0]);
+         globalDisplay_.showWarningBar(false, message + " " + constants_.rVersionUnavailable(escape(version)));
          return;
       }
 
-      String nativeArch = architectures[0];
-      String otherArch = architectures[1];
+      if (available.size() > 1)
+      {
+         chooseArchitectureAndInstall(version, available.get(0), available.get(1));
+         return;
+      }
+
+      // an x64 build where the native one is missing runs under emulation, so
+      // the user is asked first
+      String architecture = available.get(0);
+      if (builds.length() > 1 && StringUtil.equals(architecture, "x86_64"))
+      {
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_QUESTION,
+               constants_.chooseRArchitectureCaption(),
+               constants_.rVersionX64Only(version),
+               () -> installR(version, architecture),
+               true);
+         return;
+      }
+
+      installR(version, architecture);
+   }
+
+   // the offer stays up, so the check can be tried again
+   private void onRVersionCheckFailed(String version, String message)
+   {
+      globalDisplay_.showWarningBar(
+            false,
+            message + " " + constants_.rVersionCheckFailed(escape(version)),
+            constants_.installRVersion(version),
+            () -> checkAndInstall(version, message));
+   }
+
+   // where rig has both builds (ARM64 Windows, Apple silicon Macs), ask which to install
+   private void chooseArchitectureAndInstall(String version, String nativeArch, String otherArch)
+   {
       globalDisplay_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
             constants_.chooseRArchitectureCaption(),
@@ -305,6 +380,7 @@ public class RenvRVersionManager
    }
 
    private String pendingInstall_ = null;
+   private boolean checking_ = false;
 
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;

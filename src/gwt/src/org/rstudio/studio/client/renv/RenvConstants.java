@@ -50,4 +50,7 @@ public interface RenvConstants extends Messages {
     String chooseRArchitectureMessage(String version);
     String arm64RLabel();
     String x64RLabel();
+    String rVersionX64Only(String version);
+    String rVersionUnavailable(String version);
+    String rVersionCheckFailed(String version);
 }

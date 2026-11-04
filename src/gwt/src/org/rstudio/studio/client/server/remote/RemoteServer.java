@@ -119,6 +119,7 @@ import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
+import org.rstudio.studio.client.renv.model.RBuildAvailability;
 import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
@@ -6336,6 +6337,13 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void rigCheckRVersion(String version,
+                                ServerRequestCallback<JsArray<RBuildAvailability>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, RIG_CHECK_R_VERSION, version, requestCallback);
+   }
+
+   @Override
    public void markersTabClosed(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
@@ -7771,6 +7779,7 @@ public class RemoteServer implements Server
    private static final String RENV_INIT = "renv_init";
    private static final String RENV_ACTIONS = "renv_actions";
    private static final String RIG_INSTALL_R_VERSION = "rig_install_r_version";
+   private static final String RIG_CHECK_R_VERSION = "rig_check_r_version";
 
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";

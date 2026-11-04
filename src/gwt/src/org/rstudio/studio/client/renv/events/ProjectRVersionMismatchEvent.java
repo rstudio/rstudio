@@ -48,10 +48,6 @@ public class ProjectRVersionMismatchEvent extends GwtEvent<ProjectRVersionMismat
 
       // the version of R being installed, or "" when no installation runs
       public String installing_version;
-
-      // the builds of R to choose between when installing, the native one
-      // first ("arm64", "x86_64"); empty where there's no choice
-      public String[] install_architectures;
    }
 
    public interface Handler extends EventHandler

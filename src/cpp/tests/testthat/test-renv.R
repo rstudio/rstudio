@@ -263,8 +263,7 @@ test_that("the project's R version is compared with the running one", {
    expect_equal(check$source, .rs.scalar("lockfile"))
    expect_true(check$supported)
    expect_null(check$installed)
-   expect_identical(check$architectures, character())
-   
+
    # the project file wins over the lockfile
    check <- .rs.projectRVersionCheck(project, "4.1", "3.6.0", TRUE, FALSE, current = "4.4.1")
    expect_equal(check$requested, .rs.scalar("4.1"))
@@ -288,35 +287,6 @@ test_that("the project's R version is compared with the running one", {
    # no restore for a version set in the project file
    check <- .rs.projectRVersionCheck(project, "4.2", "3.6.0", TRUE, FALSE, current = "4.2.1")
    expect_equal(check$type, .rs.scalar("none"))
-
-   # where both builds run, only those rig has the version for are offered,
-   # and a version rig has no build of can't be installed
-   both <- c("arm64", "x86_64")
-   x64Only <- function(version, architectures) "x86_64"
-   none <- function(version, architectures) character()
-   check <- .rs.projectRVersionCheck(project, "5.7.3", "3.6.0", TRUE, TRUE, current = "4.4.1",
-                                     architectures = both, architecturesFor = x64Only)
-   expect_identical(check$architectures, "x86_64")
-   expect_true(check$installable)
-   check <- .rs.projectRVersionCheck(project, "5.7.3", "3.6.0", TRUE, TRUE, current = "4.4.1",
-                                     architectures = both, architecturesFor = none)
-   expect_identical(check$architectures, character())
-   expect_false(check$installable)
-
-   # rig isn't asked when nothing would be installed, or there's no choice
-   unasked <- function(version, architectures) stop("rig was asked")
-   check <- .rs.projectRVersionCheck(project, "3.5.3", "3.6.0", TRUE, TRUE, current = "4.4.1",
-                                     architectures = both, architecturesFor = unasked)
-   expect_identical(check$architectures, both)
-   expect_true(check$installable)
-   check <- .rs.projectRVersionCheck(project, "5.7.3", "3.6.0", TRUE, TRUE, current = "4.4.1",
-                                     architectures = character(), architecturesFor = unasked)
-   expect_identical(check$architectures, character())
-   expect_true(check$installable)
-   check <- .rs.projectRVersionCheck(project, "5.7.3", "3.6.0", TRUE, FALSE, current = "4.4.1",
-                                     architectures = both, architecturesFor = unasked)
-   expect_identical(check$architectures, character())
-   expect_true(check$installable)
 
    # an empty library needs no restore when the lockfile records no packages
    # other than renv, which is already active

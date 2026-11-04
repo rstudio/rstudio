@@ -1288,50 +1288,93 @@ test_that("installing R offers a choice of build only where both builds run", {
 
 })
 
-test_that("the versions rig can install are its releases, without previews", {
+test_that("rig's answer on whether it has an installer for an R version is read", {
 
-   json <- function(rig, args)
+   # what 'rig resolve --json' prints (stdout and stderr together), as seen
+   # from rig 0.11.0
+   found <- c(
+      "[INFO] RIG START [pid:1] rig resolve 4.4.3 --json --arch aarch64",
+      "[",
+      "  {",
+      "    \"version\": \"4.4.3\",",
+      "    \"url\": \"https://github.com/r-hub/R/releases/download/v4.4.3/R-4.4.3-aarch64.exe\",",
+      "    \"arch\": \"aarch64\"",
+      "  }",
+      "]"
+   )
+   noInstaller <- c("[", "  {", "    \"version\": \"4.4.3\",", "    \"url\": null", "  }", "]")
+   notFound <- structure(
+      "Error: Failed to resolve R version: Cannot download JSON: HTTP status client error (404 Not Found) for url (https://api.r-hub.io/rversions/resolve/4.3.3/windows/aarch64)",
+      status = 1L
+   )
+   offline <- structure(
+      "Error: Failed to resolve R version: Cannot download JSON: error sending request for url (https://api.r-hub.io/rversions/resolve/4.4.3/windows/x86_64)",
+      status = 1L
+   )
+   timedOut <- structure(character(), status = 124L)
+
+   answering <- function(output)
    {
-      expect_identical(args, c("available", "--all", "--arch", "arm64"))
-      list(
-         list(name = "4.4.3", version = "4.4.3", type = "release"),
-         list(name = "4.6.2", version = "4.6.2", type = "release"),
-         list(name = "next", version = "4.6.3", type = "next"),
-         list(name = "devel", version = "4.7.0", type = "devel"),
-         list(name = "broken", type = "release")
-      )
+      force(output)
+      function(rig, args) output
    }
 
-   expect_identical(.rs.rig.availableVersions("arm64", "rig", json), c("4.4.3", "4.6.2"))
-   expect_error(.rs.rig.availableVersions("arm64", "", json), "rig was not found")
+   expect_identical(.rs.rig.resolve("4.4.3", "aarch64", "rig", answering(found)), "available")
+   expect_identical(.rs.rig.resolve("4.4.3", "aarch64", "rig", answering(noInstaller)), "unavailable")
+   expect_identical(.rs.rig.resolve("4.3.3", "aarch64", "rig", answering(notFound)), "unavailable")
+
+   # rig couldn't be asked, so it's not known whether the installer exists
+   expect_identical(.rs.rig.resolve("4.4.3", "x86_64", "rig", answering(offline)), "unknown")
+   expect_identical(.rs.rig.resolve("4.4.3", "x86_64", "rig", answering(timedOut)), "unknown")
+   failing <- function(rig, args) stop("rig could not be started")
+   expect_identical(.rs.rig.resolve("4.4.3", "x86_64", "rig", failing), "unknown")
+   unasked <- function(rig, args) stop("rig was asked")
+   expect_identical(.rs.rig.resolve("4.4.3", "x86_64", "", unasked), "unknown")
 
 })
 
-test_that("installing R offers only the builds rig has the version for", {
+test_that("rig is asked about the requested version and build", {
 
-   both <- c("arm64", "x86_64")
-   available <- function(architecture)
+   calls <- list()
+   recording <- function(rig, args)
    {
-      switch(architecture,
-         arm64  = c("4.4.0", "4.4.3", "4.5.3", "4.6.2"),
-         x86_64 = c("4.3.3", "4.4.0", "4.4.3", "4.5.3", "4.6.2"))
+      calls[[length(calls) + 1L]] <<- list(rig = rig, args = args)
+      "[]"
    }
 
-   # a version with a patch level must exist as is; a major.minor needs any release
-   expect_identical(.rs.rig.installArchitecturesFor("4.4.3", both, available), both)
-   expect_identical(.rs.rig.installArchitecturesFor("4.4", both, available), both)
-   expect_identical(.rs.rig.installArchitecturesFor("4.3.3", both, available), "x86_64")
-   expect_identical(.rs.rig.installArchitecturesFor("4.3", both, available), "x86_64")
-   expect_identical(.rs.rig.installArchitecturesFor("4.4.9", both, available), character())
-   expect_identical(.rs.rig.installArchitecturesFor("5.7.3", both, available), character())
+   .rs.rig.resolve("4.3.3", "x86_64", "path/to/rig", recording)
+   .rs.rig.resolve("4.3", "", "path/to/rig", recording)
 
-   # with no choice to narrow, rig isn't asked
-   unasked <- function(architecture) stop("rig was asked")
-   expect_identical(.rs.rig.installArchitecturesFor("4.3.3", character(), unasked), character())
+   expect_identical(calls[[1L]]$rig, "path/to/rig")
+   expect_identical(calls[[1L]]$args, c("resolve", "4.3.3", "--json", "--arch", "x86_64"))
 
-   # where rig can't say, every build is offered
-   offline <- function(architecture) stop("offline")
-   expect_identical(.rs.rig.installArchitecturesFor("4.3.3", both, offline), both)
+   # no build named where there's no choice: rig uses the machine's own
+   expect_identical(calls[[2L]]$args, c("resolve", "4.3", "--json"))
+
+})
+
+test_that("each build of R this machine runs is checked, native first", {
+
+   resolve <- function(version, architecture, rig)
+   {
+      expect_identical(version, "4.3.3")
+      expect_identical(rig, "path/to/rig")
+      if (identical(architecture, "x86_64")) "available" else "unavailable"
+   }
+
+   expect_identical(
+      .rs.rig.checkRVersion("4.3.3", c("arm64", "x86_64"), "path/to/rig", resolve),
+      list(
+         list(architecture = .rs.scalar("arm64"), status = .rs.scalar("unavailable")),
+         list(architecture = .rs.scalar("x86_64"), status = .rs.scalar("available"))
+      )
+   )
+
+   # where there's no choice of build, rig's default build is checked
+   expect_identical(
+      .rs.rig.checkRVersion("4.3.3", character(), "path/to/rig", resolve),
+      list(list(architecture = .rs.scalar(""), status = .rs.scalar("unavailable")))
+   )
 
 })
 

@@ -386,6 +386,31 @@ Error rigInstallRVersion(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// asked when the user chooses to install R, so that a version or build rig
+// has no installer for is reported before any install starts
+Error rigCheckRVersion(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   if (options().programMode() != kSessionProgramModeDesktop)
+      return Error(json::errc::MethodUnexpected, ERROR_LOCATION);
+
+   std::string version;
+   Error error = json::readParams(request.params, &version);
+   if (error)
+      return error;
+
+   if (!boost::regex_match(version, boost::regex("\\d+\\.\\d+(\\.\\d+)?")))
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+
+   json::Value builds;
+   error = r::exec::RFunction(".rs.rig.checkRVersion", version).call(&builds);
+   if (error)
+      return error;
+
+   pResponse->setResult(builds);
+   return Success();
+}
+
 } // anonymous namespace
 
 Error findInstalledRVersion(const std::string& version,
@@ -417,6 +442,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "rig_install_r_version", rigInstallRVersion))
+      (bind(registerRpcMethod, "rig_check_r_version", rigCheckRVersion))
       (bind(sourceModuleRFile, "SessionRig.R"));
 
    return initBlock.execute();

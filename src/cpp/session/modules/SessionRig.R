@@ -1031,51 +1031,74 @@
    if (is.null(preferred)) character() else c(preferred, "x86_64")
 })
 
-#' The released versions of R rig can install for an architecture. Previews
-#' ('next', 'devel') are left out, as a project never names one.
-.rs.addFunction("rig.availableVersions", function(architecture,
-                                                  rig = .rs.rig.find(),
-                                                  json = .rs.rig.json)
+#' Run rig, returning its output (stdout and stderr together) with any exit
+#' status as the "status" attribute, as system2() does. A rig that hasn't
+#' finished after 'timeout' seconds is stopped (status 124).
+.rs.addFunction("rig.run", function(rig, args, timeout = 30)
 {
-   if (!nzchar(rig))
-      stop("rig was not found")
-
-   entries <- json(rig, c("available", "--all", "--arch", architecture))
-   versions <- vapply(entries, function(entry) {
-      release <- identical(entry$type, "release") && is.character(entry$version)
-      if (release) entry$version else NA_character_
-   }, character(1), USE.NAMES = FALSE)
-
-   versions[!is.na(versions)]
+   suppressWarnings(system2(rig, args, stdout = TRUE, stderr = TRUE, timeout = timeout))
 })
 
-#' Which of 'architectures' rig has the given version of R for: a version
-#' with a patch level must exist as is, a major.minor needs any release of it.
-#' Where rig can't say, every build is offered and the install reports why.
-.rs.addFunction("rig.installArchitecturesFor", function(version,
-                                                        architectures = .rs.rig.installArchitectures(),
-                                                        available = .rs.rig.availableVersions)
+#' Ask rig whether it has an installer for a version of R, for one build of R
+#' ("" for rig's default build): "available", "unavailable", or "unknown"
+#' when rig couldn't be asked (e.g. offline), which is logged.
+.rs.addFunction("rig.resolve", function(version,
+                                        architecture,
+                                        rig = .rs.rig.find(),
+                                        run = .rs.rig.run)
+{
+   reason <- if (!nzchar(rig))
+   {
+      "rig was not found"
+   }
+   else
+   {
+      args <- c("resolve", version, "--json")
+      if (nzchar(architecture))
+         args <- c(args, "--arch", architecture)
+
+      output <- .rs.tryCatch(run(rig, args))
+      if (inherits(output, "error"))
+      {
+         conditionMessage(output)
+      }
+      else
+      {
+         exit <- attr(output, "status", exact = TRUE)
+         if (is.null(exit) || identical(as.integer(exit), 0L))
+            return(if (any(grepl("\"url\":\\s*\"http", output))) "available" else "unavailable")
+
+         # rig's lookup answers 404 for a version or build it has no installer for
+         if (any(grepl("404 Not Found", output, fixed = TRUE)))
+            return("unavailable")
+
+         lines <- output[nzchar(trimws(output))]
+         sprintf("exit status %s: %s", exit, if (length(lines)) lines[[length(lines)]] else "no output")
+      }
+   }
+
+   build <- if (nzchar(architecture)) architecture else "the default build"
+   .rs.logWarningMessage("could not ask rig whether it has R %s for %s: %s", version, build, reason)
+   "unknown"
+})
+
+#' Ask rig, for each build of R this machine runs (native first; "" where
+#' there's no choice), whether it has an installer for the given version.
+#' Returns a list of each build and its status from .rs.rig.resolve().
+.rs.addFunction("rig.checkRVersion", function(version,
+                                              architectures = .rs.rig.installArchitectures(),
+                                              rig = .rs.rig.find(),
+                                              resolve = .rs.rig.resolve)
 {
    if (length(architectures) == 0L)
-      return(architectures)
+      architectures <- ""
 
-   exact <- !grepl("^[0-9]+[.][0-9]+$", version)
-   offered <- vapply(architectures, function(architecture) {
-      versions <- .rs.tryCatch(available(architecture))
-      if (inherits(versions, "error"))
-      {
-         .rs.logWarningMessage(
-            "error listing the versions of R rig can install for %s: %s",
-            architecture,
-            conditionMessage(versions)
-         )
-         return(NA)
-      }
-
-      if (exact) version %in% versions else any(.rs.rVersionMatches(version, versions))
-   }, logical(1), USE.NAMES = FALSE)
-
-   if (anyNA(offered)) architectures else architectures[offered]
+   lapply(architectures, function(architecture) {
+      list(
+         architecture = .rs.scalar(architecture),
+         status       = .rs.scalar(resolve(version, architecture, rig))
+      )
+   })
 })
 
 #' Whether an installation of R runs as itself when it isn't the default.
