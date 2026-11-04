@@ -227,6 +227,37 @@ export function parseReleaseIndex(text: string): { buildsUrl: string; notesUrl: 
 }
 
 /**
+ * The newest published build of `branch` from the release index's
+ * `released` list, in the shape of parseReleaseIndex(), or null when that
+ * branch has not been released. A released branch's own index goes on
+ * listing its patch candidates before they are published, so a preview (or
+ * stranded daily) build of that branch must read the release API instead.
+ */
+export function parseReleasedBranch(text: string, branch: string): { buildsUrl: string; notesUrl: string } | null {
+  const doc = asObject(JSON.parse(text), 'release index');
+  const released = Array.isArray(doc.released) ? doc.released : [];
+  for (const raw of released) {
+    const entry = asObject(raw, 'released version');
+    if (entry.branch !== branch) {
+      continue;
+    }
+    const published = entry.published;
+    if (!Array.isArray(published) || published.length === 0) {
+      return null;
+    }
+    const build = asObject(published[0], 'published build');
+    if (typeof build.builds_url !== 'string' || !/^https:\/\//i.test(build.builds_url)) {
+      throw new Error(`the published build of ${branch} has no https builds_url`);
+    }
+    return {
+      buildsUrl: build.builds_url,
+      notesUrl: typeof build.notes_url === 'string' ? build.notes_url : '',
+    };
+  }
+  return null;
+}
+
+/**
  * The branch currently receiving daily (and so hourly) builds, from the
  * release index's `in_development` list: the entry whose latest build is a
  * daily, the newest when several qualify. A branch that has moved on to

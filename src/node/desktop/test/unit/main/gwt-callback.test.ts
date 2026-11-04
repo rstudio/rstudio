@@ -134,6 +134,38 @@ describe('DesktopCallback', () => {
     });
   });
 
+  describe('collectPendingQuitRequest', () => {
+    afterEach(() => {
+      callback.setPendingQuit(PendingQuit.PendingQuitNone);
+    });
+
+    it('hands the pending quit over once', () => {
+      callback.setPendingQuit(PendingQuit.PendingQuitAndExit);
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitAndExit);
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
+    });
+
+    it('keeps an accepted update only for the quit-and-exit it was recorded for', () => {
+      const cancel = sinon.stub(callback.updater, 'cancelPendingInstall');
+
+      callback.setPendingQuit(PendingQuit.PendingQuitAndExit);
+      callback.collectPendingQuitRequest();
+      assert.isTrue(cancel.notCalled);
+
+      // the session exits to restart (Terminate R, a project switch), or crashed
+      for (const other of [
+        PendingQuit.PendingQuitRestartAndReload,
+        PendingQuit.PendingQuitAndRestart,
+        PendingQuit.PendingQuitNone,
+      ]) {
+        cancel.resetHistory();
+        callback.setPendingQuit(other);
+        callback.collectPendingQuitRequest();
+        assert.isTrue(cancel.called, `collected as ${PendingQuit[other]}`);
+      }
+    });
+  });
+
   describe('makeROrthogonal', () => {
     it('only touches versions in the R framework', async () => {
       assert.isNotEmpty(await callback.makeROrthogonal('/opt/R/4.4.1/lib/R'));

@@ -48,6 +48,39 @@ public class UpdateCheckResult extends JavaScriptObject
       return this['can-install'] === true;
    }-*/;
 
+   /**
+    * Set by the desktop frame for release builds: the builds site knows what
+    * is published, but the session's check (rstudio.org) is where a release
+    * is withdrawn or marked urgent, so that check must run too and have the
+    * final say -- see {@link #reconcile}.
+    */
+   public final native boolean confirmWithSession() /*-{
+      return this['confirm-with-session'] === true;
+   }-*/;
+
+   /**
+    * The answer to act on when both the desktop frame and the session have
+    * checked: the session's when it reports no update (the release was
+    * withdrawn, or the builds site is ahead of it) or when only it reports
+    * one; otherwise the desktop's installable update, with the urgency the
+    * session gives it.
+    */
+   public static UpdateCheckResult reconcile(UpdateCheckResult desktop,
+                                             UpdateCheckResult session)
+   {
+      if (session.getUpdateVersion().isEmpty() || desktop.getUpdateVersion().isEmpty())
+         return session;
+      return desktop.withUrgency(session.getUpdateUrgency());
+   }
+
+   private final native UpdateCheckResult withUrgency(int urgency) /*-{
+      var result = {};
+      for (var key in this)
+         result[key] = this[key];
+      result['update-urgent'] = String(urgency);
+      return result;
+   }-*/;
+
    public final native String getUpdateMessage() /*-{
       return (this['update-message'] || "").trim();
    }-*/;

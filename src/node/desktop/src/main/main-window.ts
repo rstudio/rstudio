@@ -287,9 +287,12 @@ export class MainWindow extends GwtWindow {
     this.quitConfirmed = true;
 
     // an accepted update is applied now that the session has exited; on
-    // macOS Squirrel closes the window and relaunches the app itself
+    // macOS Squirrel closes the window and relaunches the app itself. A quit
+    // with the session still alive (the renderer crashed and the window was
+    // closed) is not that exit: the installer would run beside the session,
+    // so the install is forgotten and the next check offers it again
     const updater = appState().gwtCallback?.updater;
-    if (updater?.hasPendingInstall()) {
+    if (updater?.hasPendingInstall() && !this.sessionAlive()) {
       updater
         .applyPendingUpdate()
         .then((applied) => {
@@ -304,7 +307,17 @@ export class MainWindow extends GwtWindow {
       return;
     }
 
+    if (updater?.hasPendingInstall()) {
+      logger().logInfo('quitting with the session still running; the accepted update is not installed');
+      updater.cancelPendingInstall();
+    }
     this.closeWindow();
+  }
+
+  /** whether a session process is attached and has not exited */
+  private sessionAlive(): boolean {
+    const session = this.sessionProcess;
+    return session !== undefined && session.exitCode === null && session.signalCode === null;
   }
 
   private closeWindow(): void {

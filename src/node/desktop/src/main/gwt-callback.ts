@@ -1385,14 +1385,20 @@ export class GwtCallback extends EventEmitter {
     return pending;
   }
 
+  /**
+   * What the session's exit is for, asked once when it exits. An accepted
+   * update is installed only by the quit-and-exit it was recorded for: an
+   * exit that restarts the session instead (Terminate R, a project switch
+   * accepted during a slow shutdown) or that nothing asked for (a crash)
+   * forgets it, or a later, unrelated quit would run the installer.
+   */
   collectPendingQuitRequest(): PendingQuit {
-    if (this.pendingQuit != PendingQuit.PendingQuitNone) {
-      const currentPendingQuit = this.pendingQuit;
-      this.pendingQuit = PendingQuit.PendingQuitNone;
-      return currentPendingQuit;
-    } else {
-      return PendingQuit.PendingQuitNone;
+    const pendingQuit = this.pendingQuit;
+    this.pendingQuit = PendingQuit.PendingQuitNone;
+    if (pendingQuit !== PendingQuit.PendingQuitAndExit) {
+      this.updater.cancelPendingInstall();
     }
+    return pendingQuit;
   }
 
   convertMessageBoxType(type: number): 'info' | 'warning' | 'error' | 'question' {

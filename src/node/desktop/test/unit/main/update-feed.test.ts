@@ -25,6 +25,7 @@ import {
   kDefaultReleaseNotesUrl,
   parseBuildIndex,
   parseDevelopmentBranch,
+  parseReleasedBranch,
   parseReleaseIndex,
   parseVersion,
   platformKeys,
@@ -221,6 +222,31 @@ describe('update feed', () => {
         /https builds_url/,
       );
       assert.throws(() => parseReleaseIndex('[]'), /not a JSON object/);
+    });
+  });
+
+  describe('parseReleasedBranch', () => {
+    it('finds a released branch and its newest published build', () => {
+      assert.deepEqual(parseReleasedBranch(JSON.stringify(releaseIndex), 'blue-mistflower'), {
+        buildsUrl: 'https://dailies.rstudio.com/api/v1/build/2026.10.1+239.pro3/index.json',
+        notesUrl: 'https://docs.posit.co/ide/news/#rstudio-2026.10.1',
+      });
+    });
+
+    it('is null for a branch that is not released, or released with nothing published', () => {
+      assert.isNull(parseReleasedBranch(JSON.stringify(releaseIndex), 'parrot-balsam'));
+      assert.isNull(parseReleasedBranch(JSON.stringify({ in_development: [] }), 'blue-mistflower'));
+      assert.isNull(
+        parseReleasedBranch(
+          JSON.stringify({ released: [{ branch: 'blue-mistflower', published: [] }] }),
+          'blue-mistflower',
+        ),
+      );
+    });
+
+    it('rejects a published build without an https builds_url', () => {
+      const index = { released: [{ branch: 'b', published: [{ builds_url: 'http://x' }] }] };
+      assert.throws(() => parseReleasedBranch(JSON.stringify(index), 'b'), /https builds_url/);
     });
   });
 

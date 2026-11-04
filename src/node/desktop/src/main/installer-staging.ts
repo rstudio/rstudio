@@ -26,7 +26,10 @@ import { BuildArtifact, installerVersion, isUpdateAvailable } from './update-fee
 // reuse and pruning rules are unit-tested against real files.
 
 /** The part of fetch() these functions use; Electron's net.fetch satisfies it. */
-export type FetchLike = (url: string) => Promise<{
+export type FetchLike = (
+  url: string,
+  signal?: AbortSignal,
+) => Promise<{
   ok: boolean;
   status: number;
   body: ReadableStream<Uint8Array> | null;
@@ -35,6 +38,29 @@ export type FetchLike = (url: string) => Promise<{
 
 /** A partial download older than this was abandoned by an instance that died. */
 export const kPartialDownloadTtlMs = 24 * 60 * 60 * 1000;
+
+/**
+ * A download that delivers nothing for this long has stalled. Without it a
+ * connection dropped mid-body never settles the download, and every later
+ * "Restart Now" is told the download is still running.
+ */
+export const kDownloadIdleTimeoutMs = 60 * 1000;
+
+/** What identifies a file's contents short of reading it: its size and modification time. */
+export interface FileStamp {
+  size: number;
+  mtimeMs: number;
+}
+
+/** The stamp of `file`, or null when it cannot be read. */
+export async function fileStamp(file: string): Promise<FileStamp | null> {
+  try {
+    const info = await stat(file);
+    return { size: info.size, mtimeMs: info.mtimeMs };
+  } catch {
+    return null;
+  }
+}
 
 /** True when `file` exists with the size and SHA-256 the API published. */
 export async function verifyInstaller(file: string, entry: BuildArtifact): Promise<boolean> {
@@ -66,6 +92,7 @@ export async function stageInstaller(
   entry: BuildArtifact,
   fetch: FetchLike,
   onProgress: (fraction: number) => void = () => undefined,
+  idleTimeoutMs = kDownloadIdleTimeoutMs,
 ): Promise<string> {
   await mkdir(dir, { recursive: true });
   const target = path.join(dir, path.basename(entry.filename));
@@ -75,7 +102,7 @@ export async function stageInstaller(
 
   const partial = `${target}.${process.pid}.part`;
   try {
-    await download(entry, partial, fetch, onProgress);
+    await download(entry, partial, fetch, onProgress, idleTimeoutMs);
     if (!(await verifyInstaller(partial, entry))) {
       throw new Error('the downloaded installer did not match the checksum and size published for this release');
     }
@@ -91,22 +118,50 @@ async function download(
   file: string,
   fetch: FetchLike,
   onProgress: (fraction: number) => void,
+  idleTimeoutMs: number,
 ): Promise<void> {
-  const response = await fetch(entry.url);
-  if (!response.ok || !response.body) {
-    throw new Error(`download failed with HTTP ${response.status}`);
-  }
-
-  const total = Number(response.headers.get('content-length')) || entry.size;
-  let received = 0;
-  const source = Readable.fromWeb(response.body as import('stream/web').ReadableStream);
-  source.on('data', (chunk: Buffer) => {
-    received += chunk.length;
-    if (total > 0) {
-      onProgress(received / total);
+  // the response headers, then every chunk of the body, must arrive within
+  // the idle timeout of the previous one; the stream is torn down otherwise
+  const controller = new AbortController();
+  let source: Readable | null = null;
+  let timer: NodeJS.Timeout | null = null;
+  const stalled = () => {
+    const error = new Error(`the download stalled: nothing was received for ${idleTimeoutMs / 1000} seconds`);
+    controller.abort(error);
+    source?.destroy(error);
+  };
+  const disarm = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
     }
-  });
-  await pipeline(source, createWriteStream(file));
+  };
+  const arm = () => {
+    disarm();
+    timer = setTimeout(stalled, idleTimeoutMs);
+  };
+
+  arm();
+  try {
+    const response = await fetch(entry.url, controller.signal);
+    if (!response.ok || !response.body) {
+      throw new Error(`download failed with HTTP ${response.status}`);
+    }
+
+    const total = Number(response.headers.get('content-length')) || entry.size;
+    let received = 0;
+    source = Readable.fromWeb(response.body as import('stream/web').ReadableStream);
+    source.on('data', (chunk: Buffer) => {
+      arm();
+      received += chunk.length;
+      if (total > 0) {
+        onProgress(received / total);
+      }
+    });
+    await pipeline(source, createWriteStream(file));
+  } finally {
+    disarm();
+  }
 }
 
 /**

@@ -16,6 +16,7 @@
 import { spawn } from 'child_process';
 import { app, autoUpdater, dialog, net } from 'electron';
 import { existsSync } from 'fs';
+import { rm } from 'fs/promises';
 import http from 'http';
 import i18next from 'i18next';
 import { AddressInfo } from 'net';
@@ -26,7 +27,7 @@ import { logger } from '../core/logger';
 import { appState } from './app-state';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { buildInfo } from './build-info';
-import { pruneStagedInstallers, stageInstaller, verifyInstaller } from './installer-staging';
+import { FileStamp, fileStamp, pruneStagedInstallers, stageInstaller, verifyInstaller } from './installer-staging';
 import { MainWindow } from './main-window';
 import { defaultMarkerDir, forgetRelaunchProject, installationKey, rememberRelaunchProject } from './relaunch-project';
 import {
@@ -39,6 +40,7 @@ import {
   parseBuildIndex,
   parseDevelopmentBranch,
   parseReleaseIndex,
+  parseReleasedBranch,
   PlatformKeys,
   platformKeys,
   releaseIndexUrl,
@@ -46,8 +48,22 @@ import {
   UpdateChannel,
   updateIndexUrl,
 } from './update-feed';
-import { otherInstanceCount } from './running-instances';
+import { execFileRunner, otherInstanceCount } from './running-instances';
+import { isAdministrator } from './windows-administrator';
+import {
+  installerSignature,
+  isTrustedInstallerSignature,
+  kInstallerSigner,
+  kSignatureCheckTimeoutMs,
+} from './windows-authenticode';
 import { detectWindowsInstallMode, WindowsInstallMode } from './windows-install-mode';
+
+/**
+ * The environment RStudio was launched with. Detecting R rewrites
+ * process.env for the sessions (R_HOME, PATH, RSTUDIO_WHICH_R, ...), and the
+ * Windows installer, and the RStudio it relaunches, must not inherit that.
+ */
+const kLaunchEnvironment: NodeJS.ProcessEnv = { ...process.env };
 
 /**
  * In-app updates for RStudio Desktop, modelled on Positron's updater.
@@ -90,6 +106,13 @@ import { detectWindowsInstallMode, WindowsInstallMode } from './windows-install-
  * falls back to the session's check and today's "Quit and Download" dialog.
  * Linux always answers `unsupported` (#4186 tracks package repos), as does
  * any build with RSTUDIO_DISABLE_IN_APP_UPDATES set.
+ *
+ * For release builds the answer is marked `confirm-with-session`: the
+ * builds site says what is published, but rstudio.org's check_for_update
+ * (the session's check) is where Posit withdraws a release and marks one
+ * urgent, so GWT runs that check too and lets it have the final say. The
+ * site knows nothing about daily and preview builds, so those are offered
+ * from the builds site alone, never as urgent.
  */
 
 export type UpdateCheckStatus = 'available' | 'up-to-date' | 'unsupported' | 'error';
@@ -102,6 +125,8 @@ export interface UpdateCheckResult {
   'update-message'?: string;
   'update-urgent'?: string;
   'can-install'?: boolean;
+  /** GWT should run the session's check as well and defer to its answer (see the class comment) */
+  'confirm-with-session'?: boolean;
   error?: string;
 }
 
@@ -144,16 +169,20 @@ export interface UpdaterHost {
   /** other RStudio processes of this installation (each window is one); null when the listing failed */
   otherInstances(): Promise<number | null>;
   detectWindowsInstallMode(): Promise<WindowsInstallMode | null>;
+  /** whether this Windows user can consent to the UAC prompt an all-users install raises; null when unknown */
+  isAdministrator(): Promise<boolean | null>;
   /** where Windows installers are staged */
   stagingDir(): string;
   /** where relaunch-project markers live */
   markerDir(): string;
   /** have Squirrel.Mac download and verify `entry`; resolves once it is staged */
   squirrelDownload(entry: BuildArtifact, notesUrl: string): Promise<void>;
-  squirrelInstall(): void;
+  squirrelInstall(version: string): void;
   /** download and verify a Windows installer; resolves to the staged file */
   stageInstaller(entry: BuildArtifact, onProgress: (fraction: number) => void): Promise<string>;
   verifyInstaller(file: string, entry: BuildArtifact): Promise<boolean>;
+  /** the size and modification time of a staged installer; null when it is gone */
+  fileStamp(file: string): Promise<FileStamp | null>;
   /** start the Windows installer; false when it would not start */
   launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean>;
   /** call a desktopHooks function in the GWT client */
@@ -167,6 +196,15 @@ export interface UpdaterHost {
 interface StagedInstaller {
   file: string;
   entry: BuildArtifact;
+  /** the file as it was when it last hashed correctly; null when it must be hashed again */
+  stamp: FileStamp | null;
+}
+
+/** Where a check reads the newest build from: the release API, or a branch index. */
+type UpdateIndex = { kind: 'release'; buildsUrl: string; notesUrl: string } | { kind: 'branch'; url: string };
+
+function describeIndex(index: UpdateIndex): string {
+  return index.kind === 'release' ? index.buildsUrl : index.url;
 }
 
 export class Updater {
@@ -225,12 +263,15 @@ export class Updater {
 
     let update: AvailableUpdate;
     try {
-      const indexUrl = await this.resolveIndexUrl();
-      const found = await this.readIndex(indexUrl, this.keys);
+      const index = await this.resolveIndex();
+      const found = await this.readIndex(index, this.keys);
       if (!found) {
-        // the branch is not on the site (yet), so there is nothing to compare
-        // with; the session's own check still runs
-        logger().logDebug(`${indexUrl} lists no ${this.keys.download} build; deferring to the session check`);
+        // the branch is not on the site (yet), or its newest build is not on
+        // this channel, so there is nothing to compare with; the session's
+        // own check still runs
+        logger().logDebug(
+          `${describeIndex(index)} offers no ${this.keys.download} build; deferring to the session check`,
+        );
         return { status: 'unsupported' };
       }
       update = found;
@@ -240,8 +281,9 @@ export class Updater {
       return { status: 'error', error: message };
     }
 
+    const confirm = this.channel === 'release';
     if (!isUpdateAvailable(this.currentVersion, update.download.version)) {
-      return { status: 'up-to-date' };
+      return { status: 'up-to-date', 'confirm-with-session': confirm };
     }
 
     this.offers.set(update.download.version, update);
@@ -253,6 +295,7 @@ export class Updater {
       'update-message': `RStudio ${update.download.version} is now available (you're using ${this.currentVersion})`,
       'update-urgent': '0',
       'can-install': canInstall,
+      'confirm-with-session': confirm,
     };
   }
 
@@ -310,7 +353,7 @@ export class Updater {
         await this.host.squirrelDownload(entry, offer.notesUrl);
       } else if (this.host.platform === 'win32') {
         const file = await this.host.stageInstaller(entry, (fraction) => this.host.setProgress(fraction));
-        this.staged = { file, entry };
+        this.staged = { file, entry, stamp: null };
       } else {
         throw new Error('in-app updates are not supported on this platform');
       }
@@ -433,7 +476,7 @@ export class Updater {
         // Squirrel closes the windows itself, which the guard must not refuse
         this.handingOff = false;
         logger().logInfo(`installing RStudio ${version} and relaunching`);
-        this.host.squirrelInstall();
+        this.host.squirrelInstall(version);
         return true;
       }
 
@@ -493,43 +536,61 @@ export class Updater {
   }
 
   /**
-   * The index to poll on this check. Daily and hourly builds move to a new
-   * branch at every release cut (version/new-version.sh), so unless a branch
-   * was pinned, follow whichever branch the site says is in development
-   * rather than the one this build came from.
+   * Where this check reads the newest build from. Release builds read the
+   * release API. Daily and hourly builds move to a new branch at every
+   * release cut (version/new-version.sh), so unless a branch was pinned they
+   * follow whichever branch the release index says is receiving dailies.
+   * Otherwise (preview builds, and dailies with no such branch) the build's
+   * own branch is read -- through the release API once that branch has been
+   * released, since a released branch's own index lists unpublished patch
+   * candidates, which must never be offered.
    */
-  private async resolveIndexUrl(): Promise<string> {
-    let branch = this.branch;
-    if (!this.branchPinned && (this.channel === 'daily' || this.channel === 'hourly')) {
-      const current = parseDevelopmentBranch(await this.host.fetchText(releaseIndexUrl(this.baseUrl)));
-      if (current) {
-        branch = current;
-      } else {
-        logger().logDebug(`the release index names no branch in development; staying on ${branch}`);
-      }
+  private async resolveIndex(): Promise<UpdateIndex> {
+    const releaseIndex = await this.host.fetchText(releaseIndexUrl(this.baseUrl));
+    if (this.channel === 'release') {
+      return { kind: 'release', ...parseReleaseIndex(releaseIndex) };
     }
 
+    if (!this.branchPinned && (this.channel === 'daily' || this.channel === 'hourly')) {
+      const current = parseDevelopmentBranch(releaseIndex);
+      if (current) {
+        return { kind: 'branch', url: this.branchIndexUrl(current) };
+      }
+      logger().logDebug(`the release index names no branch in development; staying on ${this.branch}`);
+    }
+
+    const released = parseReleasedBranch(releaseIndex, this.branch);
+    if (released) {
+      logger().logDebug(`${this.branch} has been released; reading its published builds`);
+      return { kind: 'release', ...released };
+    }
+    return { kind: 'branch', url: this.branchIndexUrl(this.branch) };
+  }
+
+  private branchIndexUrl(branch: string): string {
     // the constructor checked that this channel has an index
     return updateIndexUrl(this.baseUrl, this.channel, branch) as string;
   }
 
   /**
-   * Resolve the newest build on this channel. The release API needs a second
-   * request for the build's artifacts; branch indexes carry them inline.
+   * Resolve the newest build in `index`. The release API needs a second
+   * request for the build's artifacts; branch indexes carry them inline. A
+   * branch index may hold builds of another channel (release candidates
+   * once a branch moves towards release), which are not offered: those are
+   * published through the release API, or not at all.
    */
-  private async readIndex(indexUrl: string, keys: PlatformKeys): Promise<AvailableUpdate | null> {
-    let buildIndex: string;
-    let notesUrl = '';
-    if (this.channel === 'release') {
-      const release = parseReleaseIndex(await this.host.fetchText(indexUrl));
-      notesUrl = release.notesUrl;
-      buildIndex = await this.host.fetchText(release.buildsUrl);
-    } else {
-      buildIndex = await this.host.fetchText(indexUrl);
-    }
+  private async readIndex(index: UpdateIndex, keys: PlatformKeys): Promise<AvailableUpdate | null> {
+    const notesUrl = index.kind === 'release' ? index.notesUrl : '';
+    const buildIndex = await this.host.fetchText(index.kind === 'release' ? index.buildsUrl : index.url);
 
     const download = parseBuildIndex(buildIndex, keys.download);
     if (!download) {
+      return null;
+    }
+    if (index.kind === 'branch' && channelForVersion(download.version) !== this.channel) {
+      logger().logDebug(
+        `${index.url} is at ${download.version}, which is not a ${this.channel} build; not offering it`,
+      );
       return null;
     }
 
@@ -551,18 +612,65 @@ export class Updater {
     if (this.host.platform === 'darwin') {
       return true;
     }
-    if (this.host.platform === 'win32') {
-      this.windowsInstallMode = await this.host.detectWindowsInstallMode();
-      if (!this.windowsInstallMode) {
-        logger().logDebug('RStudio is not registered as an NSIS install; offering a manual download instead');
-      }
-      return this.windowsInstallMode !== null;
+    if (this.host.platform !== 'win32') {
+      return false;
     }
-    return false;
+
+    // the mode is kept from the last check that could read it: the registry
+    // read can fail transiently, and a null here after a download would send
+    // the user through the quit only to find no installer to run
+    const mode = await this.host.detectWindowsInstallMode();
+    if (mode) {
+      this.windowsInstallMode = mode;
+    } else if (!this.windowsInstallMode) {
+      logger().logDebug('RStudio is not registered as an NSIS install; offering a manual download instead');
+      return false;
+    }
+
+    // an all-users install elevates, and a user who is not an administrator
+    // gets a credentials prompt they most likely cannot answer, after which
+    // the installer gives up; they are sent to the download page instead
+    if (this.windowsInstallMode === 'allusers') {
+      const admin = await this.host.isAdministrator();
+      if (!admin) {
+        logger().logDebug(
+          admin === null
+            ? 'could not tell whether this user is an administrator; offering a manual download instead'
+            : 'this user is not an administrator, so an all-users install cannot be updated in-app',
+        );
+        return false;
+      }
+    }
+    return true;
   }
 
+  /**
+   * Whether the staged installer still has the bytes that were verified.
+   * Hashing it reads a few hundred megabytes, and one restart asks three
+   * times (before the save prompts, after them, and at the quit handoff),
+   * so an unchanged file (same size and modification time as when it last
+   * hashed correctly) is trusted without reading it again.
+   */
   private async stagedInstallerVerifies(): Promise<boolean> {
-    return this.staged !== null && (await this.host.verifyInstaller(this.staged.file, this.staged.entry));
+    const staged = this.staged;
+    if (!staged) {
+      return false;
+    }
+
+    // stamped before hashing: a change after the stat shows up as a new
+    // stamp next time, so the file is hashed again rather than trusted
+    const stamp = await this.host.fileStamp(staged.file);
+    if (!stamp) {
+      staged.stamp = null;
+      return false;
+    }
+    if (staged.stamp && staged.stamp.size === stamp.size && staged.stamp.mtimeMs === stamp.mtimeMs) {
+      return true;
+    }
+
+    const verified = await this.host.verifyInstaller(staged.file, staged.entry);
+    staged.stamp = verified ? stamp : null;
+    return verified;
   }
 
   private installKey(): string {
@@ -590,27 +698,76 @@ export class Updater {
 }
 
 /**
- * The environment the Windows installer runs in. This instance may have been
- * started by opening a project, which leaves these variables set; the
- * installer's relaunch of RStudio can inherit them (a per-user install runs
- * as this user), and a relaunch that sees one skips the relaunch marker, as
- * application-launch.ts does for the sessions it starts.
+ * The environment the Windows installer runs in, from `env`, the one RStudio
+ * was launched with (not process.env, which detecting R has rewritten for
+ * the sessions). The installer's relaunch of RStudio inherits it, so it must
+ * not carry what this instance was launched for: the project a new window
+ * was opened with, which would make the relaunch skip the relaunch marker
+ * (as application-launch.ts does for the sessions it starts), or a version
+ * impersonated for testing, which would have the new build offer the same
+ * update again.
  */
 export function installerEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const clean = { ...env };
   delete clean[kRStudioInitialProject];
   delete clean[kRStudioInitialWorkingDir];
+  delete clean.RSTUDIO_UPDATE_VERSION;
   return clean;
 }
 
 /** The updater's surroundings in the running application. */
 export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
   let squirrelServer: http.Server | null = null;
+  /** the version quitAndInstall() was asked to install, until it has */
+  let squirrelInstalling: string | null = null;
 
   const closeSquirrelServer = () => {
     squirrelServer?.close();
     squirrelServer = null;
   };
+
+  const failureMessage = (reason: InstallFailure): string => {
+    switch (reason) {
+      case 'other-instances':
+        return i18next.t('updaterTs.otherWindowsWereOpen');
+      case 'unknown':
+        return i18next.t('updaterTs.couldNotCheckOtherWindows');
+      case 'launch-failed':
+        return i18next.t('updaterTs.installerDidNotStart');
+      default:
+        return i18next.t('updaterTs.installerNoLongerAvailable');
+    }
+  };
+
+  const warnNotInstalled = (version: string, reason: InstallFailure): void => {
+    const options: Electron.MessageBoxSyncOptions = {
+      type: 'warning',
+      title: appState().activation().editionName(),
+      message: i18next.t('updaterTs.updateNotInstalled', { version }),
+      detail: failureMessage(reason),
+    };
+    appState().modalTracker.trackElectronModalSync(() =>
+      mainWindow.window.isDestroyed()
+        ? dialog.showMessageBoxSync(options)
+        : dialog.showMessageBoxSync(mainWindow.window, options),
+    );
+  };
+
+  // Squirrel reports every failure through 'error', including ones from
+  // quitAndInstall() after the download's own listener is gone (the windows
+  // are closed by then); an 'error' nobody listens for is thrown instead
+  if (process.platform === 'darwin') {
+    autoUpdater.on('error', (error: Error) => {
+      if (squirrelInstalling !== null) {
+        const version = squirrelInstalling;
+        squirrelInstalling = null;
+        logger().logErrorMessage(`Squirrel did not install RStudio ${version}: ${error.message}`);
+        warnNotInstalled(version, 'launch-failed');
+      } else {
+        logger().logDebug(`Squirrel: ${error.message}`);
+      }
+    });
+  }
 
   // Squirrel.Mac wants its own feed format from an update server, and
   // downloads whatever that feed names, so serve it a one-entry document for
@@ -635,19 +792,6 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
         resolve(`http://127.0.0.1:${port}/releases.json`);
       });
     });
-  };
-
-  const failureMessage = (reason: InstallFailure): string => {
-    switch (reason) {
-      case 'other-instances':
-        return i18next.t('updaterTs.otherWindowsWereOpen');
-      case 'unknown':
-        return i18next.t('updaterTs.couldNotCheckOtherWindows');
-      case 'launch-failed':
-        return i18next.t('updaterTs.installerDidNotStart');
-      default:
-        return i18next.t('updaterTs.installerNoLongerAvailable');
-    }
   };
 
   return {
@@ -707,24 +851,51 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
             autoUpdater.on('update-downloaded', onDownloaded);
             autoUpdater.on('update-not-available', onNotAvailable);
             autoUpdater.on('error', onError);
-            autoUpdater.setFeedURL({ url: feedUrl, serverType: 'default' });
-            autoUpdater.checkForUpdates();
+            try {
+              autoUpdater.setFeedURL({ url: feedUrl, serverType: 'default' });
+              autoUpdater.checkForUpdates();
+            } catch (error: unknown) {
+              // thrown rather than reported, e.g. an unsigned build's "Could
+              // not get code signature"; the listeners and server go too
+              settle(() => reject(safeError(error)));
+            }
           })
           .catch(reject);
       });
     },
 
-    squirrelInstall(): void {
+    squirrelInstall(version: string): void {
+      squirrelInstalling = version;
       autoUpdater.quitAndInstall();
     },
 
     async stageInstaller(entry: BuildArtifact, onProgress: (fraction: number) => void): Promise<string> {
-      const fetch = async (url: string) => net.fetch(url, { cache: 'no-store' });
-      return stageInstaller(this.stagingDir(), entry, fetch, onProgress);
+      const fetch = async (url: string, signal?: AbortSignal) => net.fetch(url, { cache: 'no-store', signal });
+      const file = await stageInstaller(this.stagingDir(), entry, fetch, onProgress);
+
+      // the checksum only proves the file is what the API named; the
+      // installer runs silently (no UAC prompt for a per-user install), so
+      // it must also be what Posit signed. Checked once per download: later
+      // checks compare the file against this very checksum.
+      const signature = await installerSignature(file, execFileRunner(kSignatureCheckTimeoutMs));
+      if (!isTrustedInstallerSignature(signature, kInstallerSigner)) {
+        await rm(file, { force: true });
+        const found = signature ? `${signature.status}, signed by "${signature.subject}"` : 'unknown';
+        throw new Error(`the downloaded installer is not signed by ${kInstallerSigner} (${found})`);
+      }
+      return file;
     },
 
     async verifyInstaller(file: string, entry: BuildArtifact): Promise<boolean> {
       return verifyInstaller(file, entry);
+    },
+
+    async fileStamp(file: string): Promise<FileStamp | null> {
+      return fileStamp(file);
+    },
+
+    async isAdministrator(): Promise<boolean | null> {
+      return isAdministrator(execFileRunner());
     },
 
     async launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean> {
@@ -739,7 +910,7 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
           detached: true,
           stdio: 'ignore',
           windowsHide: true,
-          env: installerEnvironment(process.env),
+          env: installerEnvironment(kLaunchEnvironment),
         });
         child.once('spawn', () => {
           child.unref();
@@ -768,18 +939,6 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
       }
     },
 
-    warnNotInstalled(version: string, reason: InstallFailure): void {
-      const options: Electron.MessageBoxSyncOptions = {
-        type: 'warning',
-        title: appState().activation().editionName(),
-        message: i18next.t('updaterTs.updateNotInstalled', { version }),
-        detail: failureMessage(reason),
-      };
-      appState().modalTracker.trackElectronModalSync(() =>
-        mainWindow.window.isDestroyed()
-          ? dialog.showMessageBoxSync(options)
-          : dialog.showMessageBoxSync(mainWindow.window, options),
-      );
-    },
+    warnNotInstalled,
   };
 }

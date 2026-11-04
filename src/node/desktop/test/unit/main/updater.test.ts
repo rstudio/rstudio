@@ -24,6 +24,7 @@ import {
   parseRelaunchMarker,
   takeRelaunchProject,
 } from '../../../src/main/relaunch-project';
+import { FileStamp } from '../../../src/main/installer-staging';
 import { BuildArtifact } from '../../../src/main/update-feed';
 import { InstallFailure, installerEnvironment, UpdateHook, Updater, UpdaterHost } from '../../../src/main/updater';
 import { WindowsInstallMode } from '../../../src/main/windows-install-mode';
@@ -88,9 +89,15 @@ class FakeHost implements UpdaterHost {
   /** when set, otherInstances() waits for it, so a test can act mid-preflight */
   othersGate: Deferred<boolean> | null = null;
   installMode: WindowsInstallMode | null = 'allusers';
+  admin: boolean | null = true;
   verifies = true;
+  /** how often the staged installer was hashed */
+  verifications = 0;
+  /** what fileStamp() answers per file; a file without one is gone */
+  stamps = new Map<string, FileStamp>();
   downloads: { entry: BuildArtifact; done: Deferred<boolean> }[] = [];
   installs = 0;
+  installedVersions: string[] = [];
   onInstall: () => void = () => undefined;
   launched: { file: string; mode: WindowsInstallMode }[] = [];
   /** what launchInstaller() answers, once `launchGate` (if set) resolves */
@@ -127,6 +134,10 @@ class FakeHost implements UpdaterHost {
     return this.installMode;
   }
 
+  async isAdministrator(): Promise<boolean | null> {
+    return this.admin;
+  }
+
   stagingDir(): string {
     return path.join(this.dir, 'staging');
   }
@@ -139,18 +150,26 @@ class FakeHost implements UpdaterHost {
     await this.download(entry).promise;
   }
 
-  squirrelInstall(): void {
+  squirrelInstall(version: string): void {
     this.installs++;
+    this.installedVersions.push(version);
     this.onInstall();
   }
 
   async stageInstaller(entry: BuildArtifact): Promise<string> {
     await this.download(entry).promise;
-    return path.join(this.stagingDir(), entry.filename);
+    const file = path.join(this.stagingDir(), entry.filename);
+    this.stamps.set(file, { size: 100, mtimeMs: 1 });
+    return file;
   }
 
   async verifyInstaller(): Promise<boolean> {
+    this.verifications++;
     return this.verifies;
+  }
+
+  async fileStamp(file: string): Promise<FileStamp | null> {
+    return this.stamps.get(file) ?? null;
   }
 
   async launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean> {
@@ -499,6 +518,73 @@ describe('updater', () => {
     assert.equal(await updater.canInstallUpdate(A), '');
   });
 
+  it('hashes the staged installer once while it is unchanged, and again once it changes', async () => {
+    const { host, updater } = setup('win32');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    const file = path.join(host.stagingDir(), 'RStudio-2026.12.0-daily-11.exe');
+
+    assert.equal(await updater.canInstallUpdate(A), '');
+    assert.equal(await updater.installUpdate(A, project), '');
+    assert.equal(host.verifications, 1);
+
+    // touched: not trusted until it hashes again
+    host.stamps.set(file, { size: 100, mtimeMs: 2 });
+    assert.equal(await updater.canInstallUpdate(A), '');
+    assert.equal(host.verifications, 2);
+    assert.equal(await updater.canInstallUpdate(A), '');
+    assert.equal(host.verifications, 2);
+
+    // gone: missing without hashing
+    host.stamps.delete(file);
+    assert.equal(await updater.canInstallUpdate(A), 'missing');
+    assert.equal(host.verifications, 2);
+  });
+
+  it('keeps the install mode from the last check that could read it', async () => {
+    const { host, updater } = setup('win32');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+
+    // a transient registry failure on a later check must not strand the
+    // downloaded installer with no mode to run it in
+    host.installMode = null;
+    await offer(updater, host, B);
+    assert.equal(await updater.installUpdate(A, project), '');
+    assert.isFalse(await updater.applyPendingUpdate());
+    assert.equal(host.launched.length, 1);
+    assert.equal(host.launched[0].mode, 'allusers');
+    assert.deepEqual(host.warnings, []);
+  });
+
+  it('offers a non-administrator only a manual download of an all-users install', async () => {
+    const { host, updater } = setup('win32');
+    host.admin = false;
+    host.index = indexFor(A);
+    let result = await updater.checkForUpdates(true);
+    assert.equal(result.status, 'available');
+    assert.isFalse(result['can-install']);
+
+    // nor when that could not be determined
+    host.admin = null;
+    result = await updater.checkForUpdates(true);
+    assert.isFalse(result['can-install']);
+
+    // a per-user install needs no elevation
+    host.installMode = 'currentuser';
+    result = await updater.checkForUpdates(true);
+    assert.isTrue(result['can-install']);
+  });
+
+  it('tells Squirrel which version it is installing', async () => {
+    const { host, updater } = setup('darwin');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+    assert.isTrue(await updater.applyPendingUpdate());
+    assert.deepEqual(host.installedVersions, [A]);
+  });
+
   describe('on the release channel', () => {
     const releaseIndexUrl = 'https://api.test/api/v1/release/index.json';
     const buildsUrl = `https://api.test/api/v1/build/${A}/index.json`;
@@ -527,6 +613,13 @@ describe('updater', () => {
       assert.equal(result['update-version'], A);
       assert.equal(result['update-url'], 'https://dl.test/RStudio-2026.12.0-daily-11.dmg');
       assert.isTrue(result['can-install']);
+
+      // rstudio.org's check_for_update has the final say for releases
+      assert.isTrue(result['confirm-with-session']);
+      host.responses.set(buildsUrl, indexFor(current));
+      const upToDate = await updater.checkForUpdates(false);
+      assert.equal(upToDate.status, 'up-to-date');
+      assert.isTrue(upToDate['confirm-with-session']);
     });
 
     it('answers error, and so the session check, when the build index cannot be read', async () => {
@@ -560,11 +653,72 @@ describe('updater', () => {
     });
   });
 
-  it('keeps the project this instance was opened with out of the installer', () => {
+  describe('on a branch that has been released', () => {
+    const releaseIndexUrl = 'https://api.test/api/v1/release/index.json';
+    const branchUrl = 'https://api.test/rstudio/parrot-balsam/index.json';
+    const releasedBuild = '2026.12.1+300';
+    const buildsUrl = `https://api.test/api/v1/build/${releasedBuild}/index.json`;
+    const releaseIndex = JSON.stringify({
+      released: [{ branch: 'parrot-balsam', published: [{ build: releasedBuild, builds_url: buildsUrl }] }],
+      in_development: [],
+    });
+
+    function previewSetup() {
+      process.env.RSTUDIO_UPDATE_VERSION = '2026.12.0-preview+200';
+      process.env.RSTUDIO_UPDATE_CHANNEL = 'preview';
+      try {
+        const { host, updater } = setup('darwin');
+        host.responses.set(releaseIndexUrl, releaseIndex);
+        // the branch's own index lists an unpublished patch candidate
+        host.responses.set(branchUrl, indexFor('2026.12.2+310'));
+        host.responses.set(buildsUrl, indexFor(releasedBuild));
+        return { host, updater };
+      } finally {
+        process.env.RSTUDIO_UPDATE_VERSION = current;
+        process.env.RSTUDIO_UPDATE_CHANNEL = 'daily';
+      }
+    }
+
+    it('offers a preview build the published release, never the branch index', async () => {
+      const { host, updater } = previewSetup();
+      const result = await updater.checkForUpdates(false);
+      assert.deepEqual(host.requests, [releaseIndexUrl, buildsUrl]);
+      assert.equal(result.status, 'available');
+      assert.equal(result['update-version'], releasedBuild);
+      assert.isTrue(result['can-install']);
+    });
+
+    it('reads the branch index while the branch is unreleased, but offers only builds of its channel', async () => {
+      const { host, updater } = previewSetup();
+      host.responses.set(releaseIndexUrl, JSON.stringify({ released: [], in_development: [] }));
+      host.responses.set(branchUrl, indexFor('2026.12.0-preview+201'));
+      let result = await updater.checkForUpdates(false);
+      assert.deepEqual(host.requests, [releaseIndexUrl, branchUrl]);
+      assert.equal(result['update-version'], '2026.12.0-preview+201');
+
+      // release candidates land on the branch index before it is released
+      host.responses.set(branchUrl, indexFor('2026.12.0+205'));
+      result = await updater.checkForUpdates(false);
+      assert.equal(result.status, 'unsupported');
+    });
+
+    it('sends a daily build left on a released branch through the release API too', async () => {
+      const { host } = previewSetup();
+      // RSTUDIO_UPDATE_BRANCH pins the branch throughout these tests, as a
+      // release cut with no new daily branch yet would leave it
+      const daily = new Updater(host);
+      const result = await daily.checkForUpdates(false);
+      assert.deepEqual(host.requests, [releaseIndexUrl, buildsUrl]);
+      assert.equal(result['update-version'], releasedBuild);
+    });
+  });
+
+  it('keeps what this instance was launched for out of the installer', () => {
     const env = installerEnvironment({
       PATH: '/usr/bin',
       RS_INITIAL_PROJECT: '/home/me/proj/proj.Rproj',
       RS_INITIAL_WD: '/home/me/proj',
+      RSTUDIO_UPDATE_VERSION: '2020.01.0+1',
     });
     assert.deepEqual(env, { PATH: '/usr/bin' });
   });

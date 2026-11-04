@@ -29,6 +29,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -463,10 +464,43 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       {
          UpdateCheckResult result = UpdateCheckResult.fromJson(json);
          String status = result.getStatus();
-         if (status == "available" || status == "up-to-date")
-            respondToUpdateCheck(result, manual);
-         else
+         if (status != "available" && status != "up-to-date")
             checkForUpdatesViaSession(manual);
+         else if (result.confirmWithSession())
+            confirmUpdateCheckWithSession(result, manual);
+         else
+            respondToUpdateCheck(result, manual);
+      });
+   }
+
+   /**
+    * For release builds the session's check (rstudio.org's check_for_update)
+    * runs as well: it is where Posit withdraws a release and marks one
+    * urgent, which the builds site does not know, so its answer decides
+    * whether, and how urgently, the desktop's installable update is offered.
+    */
+   private void confirmUpdateCheckWithSession(UpdateCheckResult desktopResult,
+                                              boolean manual)
+   {
+      server_.checkForUpdates(manual,
+            new ServerRequestCallback<UpdateCheckResult>()
+      {
+         @Override
+         public void onResponseReceived(UpdateCheckResult sessionResult)
+         {
+            respondToUpdateCheck(
+                  UpdateCheckResult.reconcile(desktopResult, sessionResult),
+                  manual);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // the builds site answered, so go with what it said
+            Debug.logToConsole("Could not confirm the update check with the session: " +
+                               error.getMessage());
+            respondToUpdateCheck(desktopResult, manual);
+         }
       });
    }
 
@@ -558,8 +592,9 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                      @Override
                      public void onReadyToQuit(boolean saveChanges)
                      {
-                        Desktop.getFrame().browseUrl(StringUtil.notNull(result.getUpdateUrl()));
-                        appQuit_.performQuit(null, saveChanges);
+                        // the download page only once the quit is under way
+                        if (appQuit_.performQuit(null, saveChanges))
+                           Desktop.getFrame().browseUrl(StringUtil.notNull(result.getUpdateUrl()));
                      }
                   });
                }
@@ -702,7 +737,12 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                      // stays downloaded for the next check
                      ApplicationQuit.QuitClaim claim = appQuit_.claimQuit();
                      if (claim == null)
+                     {
+                        globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
+                              constants_.updateRStudioCaption(),
+                              constants_.quitAlreadyInProgressMessage());
                         return;
+                     }
 
                      // quit only once the desktop frame has recorded the
                      // install: a quit it refused would leave the user with

@@ -110,6 +110,51 @@ describe('installer staging', () => {
       assert.deepEqual(readdirSync(dir), []);
     });
 
+    it('gives up on a download that stalls, and leaves nothing behind', async () => {
+      const entry = artifact('RStudio-2026.12.0-daily-9.exe');
+      // a few bytes arrive, then nothing, ever
+      const stalling: FetchLike = async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new Uint8Array(bytes.subarray(0, 5)));
+            },
+          }),
+          { status: 200, headers: { 'content-length': String(bytes.length) } },
+        );
+
+      let rejection: Error | null = null;
+      try {
+        await stageInstaller(dir, entry, stalling, () => undefined, 50);
+      } catch (error: unknown) {
+        rejection = error as Error;
+      }
+      assert.include(rejection?.message, 'stalled');
+      assert.deepEqual(readdirSync(dir), []);
+    });
+
+    it('gives up when the response itself never arrives', async () => {
+      const entry = artifact('RStudio-2026.12.0-daily-9.exe');
+      let aborted = false;
+      const silent: FetchLike = async (_url, signal) =>
+        new Promise((_resolve, reject) => {
+          signal?.addEventListener('abort', () => {
+            aborted = true;
+            reject(signal.reason as Error);
+          });
+        });
+
+      let rejection: Error | null = null;
+      try {
+        await stageInstaller(dir, entry, silent, () => undefined, 50);
+      } catch (error: unknown) {
+        rejection = error as Error;
+      }
+      assert.isTrue(aborted);
+      assert.include(rejection?.message, 'stalled');
+      assert.deepEqual(readdirSync(dir), []);
+    });
+
     it('reuses an installer already staged and verified, without fetching', async () => {
       const entry = artifact('RStudio-2026.12.0-daily-9.exe');
       writeFileSync(path.join(dir, entry.filename), bytes);

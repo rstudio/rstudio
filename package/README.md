@@ -266,15 +266,38 @@ The branch is `version/RELEASE` for preview builds. Daily and hourly builds
 instead follow the branch the release index's `in_development` list says is
 receiving daily builds, since `version/new-version.sh` moves them to a new
 branch at every release cut and a build that kept polling its own branch would
-report itself up to date forever.
+report itself up to date forever. A branch that the release index lists as
+released is read through the release API rather than its own index (which
+goes on listing unpublished patch candidates), and a branch index whose newest
+build is not on the build's own channel -- release candidates, say -- offers
+nothing.
+
+For release builds the desktop's answer is marked `confirm-with-session`, and
+GWT runs the session's check (rstudio.org's `check_for_update`) as well: that
+is where Posit withdraws a release or marks one urgent, which the builds site
+does not know, so its answer decides whether the installable update is
+offered and how urgently. Daily and preview builds are offered from the builds
+site alone.
 
 On Windows the installer is staged under `%TEMP%\rstudio-updates\<key>`,
 where the key is derived from the install directory, so every window of one
 installation (each is its own process) shares it while another copy of RStudio
 on the machine does not: a verified installer already there is reused,
 downloads land under a private name until verified, and installers no newer
-than the running build are pruned at startup. "Restart Now" first checks that
-the staged installer still verifies (downloading it again otherwise). On both
+than the running build are pruned at startup. A download that delivers nothing
+for a minute is abandoned. The checksum only proves the file is what the API
+named, and the installer runs silently (with no UAC prompt for a per-user
+install), so a staged installer must also carry a valid Authenticode signature
+from Posit's certificate (checked with PowerShell's
+`Get-AuthenticodeSignature`, as Squirrel.Mac checks the new bundle's signature
+on macOS); one that does not is deleted and the download reported as failed.
+"Restart Now" first checks that the staged installer still verifies
+(downloading it again otherwise); a file unchanged in size and modification
+time since it last hashed correctly is trusted without being hashed again. An
+all-users install elevates, so it is only updated in-app for a user in the
+Administrators group; anyone else is sent to the download page. Should the
+installer still fail (a declined UAC prompt, an install error), it reopens the
+RStudio it was updating and says so. On both
 platforms it also checks that no other window of this installation is running
 (`tasklist` on Windows, `ps` on macOS), because the NSIS installer refuses to
 run beside a live `rstudio.exe` and Squirrel.Mac waits for every process of
