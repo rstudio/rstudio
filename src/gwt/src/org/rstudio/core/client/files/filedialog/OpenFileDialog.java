@@ -55,13 +55,6 @@ public class OpenFileDialog extends FileDialog
    }
 
    @Override
-   protected boolean acceptsEmptyName()
-   {
-      // an empty accept opens the listed directory as a project
-      return canChooseDirectories_;
-   }
-
-   @Override
    protected void onBrowserNavigated()
    {
       super.onBrowserNavigated();

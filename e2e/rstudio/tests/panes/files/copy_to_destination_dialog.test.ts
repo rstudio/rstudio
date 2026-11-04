@@ -90,10 +90,22 @@ test.describe('Copy To destination dialog', () => {
     await dialog.getByRole('textbox', { name: 'File name:' }).fill(`${sandbox.dir}/`);
     await dialog.locator(SAVE_BTN).click();
 
-    // a folder to browse, not an empty name to accept once there
+    // a folder to browse; the accept deferred past it finds no name to report
     await expect(dialog.locator(CURRENT_LOCATION)).toHaveText(leaf(sandbox.dir), { timeout: TIMEOUTS.fileOpen });
     await expect(page.locator(ERROR_DIALOG)).toBeHidden();
     await expect(dialog.getByRole('textbox', { name: 'File name:' })).toHaveValue('');
+  });
+
+  test('a second Save while the parent listing is in flight reports nothing', async ({ rstudioPage: page }) => {
+    const dialog = await openDestinationDialog(page, base);
+    await dialog.getByRole('option', { name: 'Folder ..' }).click();
+    // the first click navigates; the second lands while the listing is in
+    // flight and is deferred until it arrives, where it finds no name
+    await dialog.locator(SAVE_BTN).dblclick();
+
+    await expect(dialog.locator(CURRENT_LOCATION)).toHaveText(leaf(sandbox.dir), { timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(ERROR_DIALOG)).toBeHidden();
+    await expect(dialog).toBeVisible();
   });
 
   test('Save with the `..` row selected navigates to the parent folder', async ({ rstudioPage: page }) => {

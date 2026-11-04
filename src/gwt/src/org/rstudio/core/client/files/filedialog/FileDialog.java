@@ -103,8 +103,14 @@ public abstract class FileDialog extends FileSystemDialog
 
       if (filename.length() == 0)
       {
-         browser_.selectFilename();
-         showError(constants_.nameEmptyMessage());
+         // a deferred accept (#18922) arriving to find no name followed a
+         // navigation (a typed `dir/`, or a second Save during the listing);
+         // only a direct accept asked to save with an empty name
+         if (!inDeferredAccept_)
+         {
+            browser_.selectFilename();
+            showError(constants_.nameEmptyMessage());
+         }
          return false;
       }
 
@@ -135,16 +141,8 @@ public abstract class FileDialog extends FileSystemDialog
          }
 
          browser_.setFilename(file);
-
-         // a path ending in a separator names a folder to browse, not a file
-         // to accept once there; deferring the accept would only report the
-         // empty name, unless the dialog accepts one (Open Project)
-         if (!file.isEmpty() || acceptsEmptyName())
-         {
-            browser_.setFilenameEnabled(false);
-            acceptOnNavigated_ = true;
-         }
-
+         browser_.setFilenameEnabled(false);
+         acceptOnNavigated_ = true;
          cd(dir);
          return false;
       }
@@ -199,15 +197,6 @@ public abstract class FileDialog extends FileSystemDialog
       }
 
       return true;
-   }
-
-   /**
-    * Whether accepting with nothing typed and no folder selected means
-    * something to this dialog; by default it is reported as an empty name.
-    */
-   protected boolean acceptsEmptyName()
-   {
-      return false;
    }
 
    private boolean navigateIfDirectory()
