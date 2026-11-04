@@ -720,12 +720,18 @@ test.describe('Air Formatting (#16721)', { tag: ['@parallel_safe'] }, () => {
     await setAirPrefs(page, true, false);
     await removeAirConfig(consoleActions);
 
+    // The afterEach reset leaves an untitled placeholder active, which also
+    // has a null path -- so wait for a *different* active document with a
+    // null path, or the text below could land in the placeholder while the
+    // new tab is still being created.
+    const placeholderId = await page.evaluate(() => window.rstudio?.documents.active()?.id ?? null);
     await executeCommand(page, 'newSourceDoc');
-    // An untitled document reports a null path; a missing active document
-    // reads as undefined so the two can't be confused.
     await expect
-      .poll(() => page.evaluate(() => window.rstudio?.documents.active()?.path))
-      .toBeNull();
+      .poll(async () => {
+        const doc = await page.evaluate(() => window.rstudio?.documents.active() ?? null);
+        return doc !== null && doc.id !== placeholderId && doc.path === null;
+      })
+      .toBe(true);
     // Type through the Ace API rather than the keyboard: focus can drift off
     // a freshly created tab on slow CI, and the text itself isn't under test.
     await page.evaluate(() => {
