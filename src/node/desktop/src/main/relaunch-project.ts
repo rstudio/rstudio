@@ -53,7 +53,7 @@ export interface RelaunchMarker extends RelaunchIdentity {
 export function installationKey(execPath: string, platform: NodeJS.Platform = process.platform): string {
   const dir = path.dirname(execPath);
   const folded = platform === 'win32' ? dir.toLowerCase() : dir;
-  return createHash('sha1').update(folded).digest('hex').slice(0, 12);
+  return createHash('sha256').update(folded).digest('hex').slice(0, 12);
 }
 
 /** The marker's contents, or null when it is not one. */
