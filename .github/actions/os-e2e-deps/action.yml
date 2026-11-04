@@ -529,6 +529,11 @@ runs:
               install.packages(still, lib = lib, type = "source")
               still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
             }
+            # odbc 1.7.2 needs R 4.2; 1.7.1 is the newest release that still installs on R 4.1.
+            if ("odbc" %in% still && getRversion() < "4.2.0") {
+              remotes::install_version("odbc", version = "1.7.1", lib = lib, upgrade = "never")
+              still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
+            }
             if (length(still))
               stop("[os-e2e-deps] failed to install required-packages: ", paste(still, collapse = ", "))
           } else {
