@@ -100,12 +100,17 @@ const CASES: PipeCase[] = [
   },
   {
     name: 'after a user theme_ function in an argument following arithmetic',
-    content: 'list(1 + 2, theme_tmp())',
+    content: 'list(1 + 2, theme_tmp()',
     expected: PIPE,
   },
   {
     name: 'after an argument following a ggplot argument',
-    content: 'list(ggplot(mtcars), mtcars)',
+    content: 'list(ggplot(mtcars), mtcars',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user scale_ function in an else branch following arithmetic',
+    content: 'if (flag) 1 + 2 else scale_counts(x)',
     expected: PIPE,
   },
   {

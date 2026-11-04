@@ -828,10 +828,13 @@ public class AceEditor implements DocDisplay
             if (!cursor.bwdToMatchingToken())
                return false;
          }
-         else if (cursor.isLeftBracket() || cursor.valueEquals(",") || cursor.valueEquals(";"))
+         else if (cursor.isLeftBracket() ||
+                  cursor.valueEquals(",") ||
+                  cursor.valueEquals(";") ||
+                  cursor.valueEquals("else"))
          {
-            // the cursor sits inside this bracket's arguments (or past a
-            // sibling argument); any chain lies outside this expression
+            // the cursor sits inside this bracket's arguments, or past a
+            // sibling argument or if-branch; any chain lies outside this expression
             return false;
          }
          else if (PIPE_OPERATORS.contains(cursor.currentValue()))
