@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Hash.hpp>
+#include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
 
 #include "CompilationDatabase.hpp"
@@ -178,6 +180,40 @@ TEST_F(CompileFlagsTest, KeepsIncludePchSeparateAndDanglingOptions)
    std::vector<std::string> flags = {"-include-pch", "x.pch", "-I"};
    std::vector<std::string> expected = {"-include-pch", pch, "-I"};
    EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+}
+
+TEST_F(CompileFlagsTest, LeavesSysrootRelativePathsAlone)
+{
+   std::vector<std::string> flags = {"-I=/usr/include/foo", "-isystem", "$SYSROOT/include", "-iquote=lib"};
+   std::vector<std::string> expected = {"-I=/usr/include/foo", "-isystem$SYSROOT/include", "-iquote=lib"};
+   EXPECT_EQ(resolveCompileFlagPaths(flags, pkg_), expected);
+}
+
+TEST_F(CompileFlagsTest, RemovesUserFlagsPchOnceItsFlagsFileIsGone)
+{
+   FilePath file = flagsFile(src_, "-DFOO\n");
+   FilePath source = src_.completeChildPath("a.cpp");
+   std::vector<std::string> flags = compileFlagsForSource(source);
+   ASSERT_EQ(flags, std::vector<std::string>{"-DFOO"});
+
+   // the PCH directory holds the default PCH and the variant for those flags
+   FilePath platform = root_.completeChildPath("pch");
+   platform.ensureDirectory();
+   std::string variant = "Rcpp-std=gnu++17-flags-" + hash::crc32HexHash(algorithm::join(flags, "\n"));
+   std::vector<std::string> names = {"Rcpp-std=gnu++17.pch", "Rcpp-std=gnu++17.cpp", variant + ".pch", variant + ".cpp"};
+   for (const std::string& name : names)
+      writeStringToFile(platform.completeChildPath(name), "");
+
+   // the file is still there, so nothing happens
+   removeOrphanedUserFlagsPchs(platform, "Rcpp");
+   EXPECT_TRUE(platform.completeChildPath(variant + ".pch").exists());
+
+   file.remove();
+   removeOrphanedUserFlagsPchs(platform, "Rcpp");
+   EXPECT_FALSE(platform.completeChildPath(variant + ".pch").exists());
+   EXPECT_FALSE(platform.completeChildPath(variant + ".cpp").exists());
+   EXPECT_TRUE(platform.completeChildPath("Rcpp-std=gnu++17.pch").exists());
+   EXPECT_TRUE(platform.completeChildPath("Rcpp-std=gnu++17.cpp").exists());
 }
 
 } // anonymous namespace

@@ -163,6 +163,11 @@ FilePath precompiledHeaderDir(const std::string& pkgName)
 // the hash of those flags follows
 const char* const kUserFlagsPchInfix = "-flags-";
 
+std::string userFlagsPchSuffix(const std::vector<std::string>& userFlags)
+{
+   return kUserFlagsPchInfix + core::hash::crc32HexHash(core::algorithm::join(userFlags, "\n"));
+}
+
 // Removes the package's PCHs (and their sources) from a platform directory,
 // or only those built with user flags
 void removePrecompiledHeaders(const FilePath& platformPath,
@@ -326,7 +331,14 @@ std::vector<std::string> resolveCompileFlagPaths(const std::vector<std::string>&
 
       if (separate)
          path = flags[++i];
-      path = dir.completePath(path).getAbsolutePath();
+
+      // clang replaces a leading '=' or '$SYSROOT' with the sysroot, so
+      // such an operand isn't relative to the flags file
+      bool sysrootRelative =
+            boost::algorithm::starts_with(path, "=") ||
+            boost::algorithm::starts_with(path, "$SYSROOT");
+      if (!sysrootRelative)
+         path = dir.completePath(path).getAbsolutePath();
 
       // emit each option in a single spelling, so the same flags hash alike
       if (option->alias != nullptr)
@@ -389,6 +401,43 @@ std::vector<std::string> compileFlagsForSource(const FilePath& srcFile)
    }
 
    return flags;
+}
+
+// A user-flags PCH would otherwise outlive its 'compile_flags.txt': once the
+// file is gone (or emptied) its sources share the default PCH again, and
+// nothing else touches the variant. So drop the variants built from any
+// flags file we have read that no longer supplies flags.
+void removeOrphanedUserFlagsPchs(const FilePath& platformPath,
+                                 const std::string& pkgName)
+{
+   for (auto it = s_compileFlagsCache.begin(); it != s_compileFlagsCache.end(); )
+   {
+      FilePath flagsFile(it->first);
+      if (flagsFile.exists() && !readCompileFlags(flagsFile).empty())
+      {
+         ++it;
+         continue;
+      }
+
+      std::string suffix = userFlagsPchSuffix(it->second);
+      std::vector<FilePath> children;
+      Error error = platformPath.getChildren(children);
+      if (error)
+         LOG_ERROR(error);
+
+      for (const FilePath& child : children)
+      {
+         std::string name = child.getFilename();
+         if (boost::algorithm::starts_with(name, pkgName) && name.find(suffix) != std::string::npos)
+         {
+            error = child.removeIfExists();
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+
+      it = s_compileFlagsCache.erase(it);
+   }
 }
 
 namespace {
@@ -1782,11 +1831,13 @@ std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
       }
    }
 
+   removeOrphanedUserFlagsPchs(platformPath, pkgName);
+
    // now create the PCH if we need to
    std::string stdArg = extractStdArg(baseArgs);
    std::string pchName = pkgName + stdArg;
    if (!userFlags.empty())
-      pchName += kUserFlagsPchInfix + core::hash::crc32HexHash(core::algorithm::join(userFlags, "\n"));
+      pchName += userFlagsPchSuffix(userFlags);
    FilePath pchPath = platformPath.completeChildPath(pchName + ".pch");
    if (forceRebuildPrecompiledHeaders_ || !pchPath.exists())
    {
