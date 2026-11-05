@@ -268,9 +268,28 @@ test.describe('Editor', () => {
       await page.locator(SELECT_ALL_BUTTON).click();
       await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 0, column: 0 });
 
+      // An actual line end, selected without its newline, remains a match.
+      await page.locator(FIND_INPUT).fill('$');
+      await consoleActions.executeInConsole(
+        '.rs.api.setSelectionRanges(c(1, 1, 2, 2), id = .rs.api.getSourceEditorContext()$id)',
+        { wait: true },
+      );
+      await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectionRanges()).toEqual([
+        { start: { row: 0, column: 1 }, end: { row: 0, column: 1 } },
+        { start: { row: 1, column: 1 }, end: { row: 1, column: 1 } },
+      ]);
+
       // An alternative crossing the range end must not hide valid matches,
       // including an alternative starting at the same position.
-      for (const [pattern, expected] of [['a\\nb\\nx|b', 'b'], ['a\\nb\\nx|a', 'a']]) {
+      const patterns = [
+        ['a\\nb\\nx|b', 'b'],
+        ['a\\nb\\nx|a', 'a'],
+        // Consuming matches use the selected text's end, as Replace All does.
+        ['a\\nb\\n$', 'a\nb\n'],
+      ];
+      for (const [pattern, expected] of patterns) {
         await page.locator(FIND_INPUT).fill(pattern);
         await consoleActions.executeInConsole(
           '.rs.api.setSelectionRanges(c(1, 1, 3, 1), id = .rs.api.getSourceEditorContext()$id)',

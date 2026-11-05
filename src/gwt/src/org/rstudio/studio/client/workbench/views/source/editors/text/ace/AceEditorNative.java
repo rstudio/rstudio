@@ -522,7 +522,7 @@ public class AceEditorNative extends JavaScriptObject
       var text = doc.getValue();
       var offset = range ? doc.positionToIndex(range.start) : 0;
       var end = range ? doc.positionToIndex(range.end) : text.length;
-      var artificialEnd = end < text.length;
+      var artificialEnd = end < text.length && end > offset && text.charAt(end - 1) == "\n";
       // Match the selected text, as Replace All does. In Selection expands
       // its range to whole lines, so the only artificial line boundary is
       // the empty line after a trailing newline at a non-document endpoint.
