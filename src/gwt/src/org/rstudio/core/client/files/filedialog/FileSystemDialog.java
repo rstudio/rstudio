@@ -256,7 +256,15 @@ public abstract class FileSystemDialog extends ModalDialogBase
       if (acceptOnNavigated_)
       {
          acceptOnNavigated_ = false;
-         maybeAccept();
+         inDeferredAccept_ = true;
+         try
+         {
+            maybeAccept();
+         }
+         finally
+         {
+            inDeferredAccept_ = false;
+         }
       }
    }
 
@@ -453,6 +461,9 @@ public abstract class FileSystemDialog extends ModalDialogBase
    private final ProgressIndicator progress_;
    protected FileBrowserWidget browser_;
    protected boolean acceptOnNavigated_ = false;
+
+   // true while onNavigated() runs the accept deferred to it
+   protected boolean inDeferredAccept_ = false;
    private String initialFilename_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
