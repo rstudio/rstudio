@@ -37,6 +37,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ImageButton;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
@@ -105,7 +106,10 @@ public class WarningBar extends Composite
       Roles.getButtonRole().setAriaDescribedbyProperty(dismiss_.getElement(), Id.of(label_.getId()));
       details_.setText(constants_.warningDetailsText());
       details_.addClickHandler(event -> globalDisplay.showMessage(
-            GlobalDisplay.MSG_WARNING, constants_.warningDetailsCaption(), getText()));
+            GlobalDisplay.MSG_WARNING,
+            constants_.warningDetailsCaption(),
+            getText(),
+            detailsReturnFocus_));
    }
 
    public void setText(String value)
@@ -125,6 +129,16 @@ public class WarningBar extends Composite
       Roles.getGroupRole().setAriaLabelProperty(getElement(), constants_.warningNumberLabel(number));
       dismiss_.setDescription(constants_.dismissWarningLabel(number));
       Roles.getButtonRole().setAriaLabelProperty(details_.getElement(), constants_.warningDetailsLabel(number));
+   }
+
+   public void setDetailsReturnFocus(CanFocus returnFocus)
+   {
+      detailsReturnFocus_ = returnFocus;
+   }
+
+   public void focusDetailsButton()
+   {
+      details_.setFocus(true);
    }
 
    public void focusDismissButton()
@@ -208,6 +222,7 @@ public class WarningBar extends Composite
    ImageButton dismiss_;
 
    private Command action_;
+   private CanFocus detailsReturnFocus_ = this::focusDetailsButton;
 
    private static final Styles styles_ =
          ((Resources) GWT.create(Resources.class)).styles();

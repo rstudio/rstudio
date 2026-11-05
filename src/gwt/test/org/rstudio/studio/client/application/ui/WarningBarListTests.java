@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.studio.client.common.DummyGlobalDisplay;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -72,7 +73,7 @@ public class WarningBarListTests extends GWTTestCase
          WarningBar bar = new WarningBar(events_, new DummyGlobalDisplay()
          {
             @Override
-            public void showMessage(int type, String caption, String message)
+            public void showMessage(int type, String caption, String message, CanFocus focusAfter)
             {
                detailsMessage_ = message;
             }

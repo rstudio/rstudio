@@ -78,6 +78,15 @@ public class WarningBarList extends Composite implements RequiresResize
          bar.setWarningNumber(nextWarningNumber_++);
          bar.setHeight(bar.getHeight() + "px");
          bar.addCloseHandler(event -> dismiss(id));
+         bar.setDetailsReturnFocus(() ->
+         {
+            // The warning can resolve while its modal details dialog is open.
+            WarningBar current = warnings_.get(id);
+            if (current != null)
+               current.focusDetailsButton();
+            else
+               focusWarning(0);
+         });
          warnings_.put(id, bar);
          rows_.add(bar);
       }
@@ -146,13 +155,16 @@ public class WarningBarList extends Composite implements RequiresResize
          rows_.remove(bar);
          onChange_.execute();
          if (hadFocus)
-         {
-            if (rows_.getWidgetCount() > 0)
-               ((WarningBar) rows_.getWidget(Math.min(index, rows_.getWidgetCount() - 1))).focusDismissButton();
-            else
-               onEmptyFocus_.execute();
-         }
+            focusWarning(index);
       }
+   }
+
+   private void focusWarning(int index)
+   {
+      if (rows_.getWidgetCount() > 0)
+         ((WarningBar) rows_.getWidget(Math.min(index, rows_.getWidgetCount() - 1))).focusDismissButton();
+      else
+         onEmptyFocus_.execute();
    }
 
    /** Kept outside the warning landmark so browsing a row reads its message once. */

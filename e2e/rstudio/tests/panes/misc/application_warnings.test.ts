@@ -179,6 +179,7 @@ test('warnings follow the workbench and retain keyboard focus while dismissing',
 
 test('clipped warning details are keyboard accessible and return focus', { tag: '@desktop_only' }, async ({ rstudioPage: page }) => {
   const originalSize = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+  const warnings = page.getByRole('contentinfo', { name: 'Warning bar' });
   const message = 'This license warning contains important details that must remain readable when the window is narrow or the text is enlarged.';
   const row = warningRow(page, message);
   // Use the real desktop license-warning producer, which remains stable while
@@ -192,6 +193,8 @@ test('clipped warning details are keyboard accessible and return focus', { tag: 
   const largeText = await page.addStyleTag({ content: '[role="contentinfo"] span[title] { font-size: 200%; }' });
   try {
     await page.setViewportSize({ width: 500, height: 700 });
+    while (await warnings.getByRole('button', { name: dismissName }).count())
+      await warnings.getByRole('button', { name: dismissName }).last().click();
     await showLicenseWarning(message);
     await expect.poll(() => row.locator('td').nth(1).evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
     const details = row.getByRole('button', { name: /^Details for warning / });
@@ -204,6 +207,31 @@ test('clipped warning details are keyboard accessible and return focus', { tag: 
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
     await expect(details).toBeFocused();
+
+    // A warning may resolve while the dialog owns focus. Returning to its
+    // detached Details button must fall back to another row, then the console.
+    for (const withOtherWarning of [true, false]) {
+      const other = warningRow(page, 'This is a warning!');
+      if (withOtherWarning)
+        await executeCommand(page, 'showWarningBar');
+      await showLicenseWarning(message);
+      await details.focus();
+      await page.keyboard.press('Enter');
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByRole('button', { name: 'OK', exact: true })).toBeFocused();
+      await showLicenseWarning('');
+      await expect(row).toHaveCount(0);
+      // Resolving the row must not pull focus out of the open dialog.
+      expect(await dialog.evaluate(el => el.contains(document.activeElement))).toBe(true);
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+      if (withOtherWarning) {
+        await expect(other.getByRole('button', { name: dismissName })).toBeFocused();
+        await other.getByRole('button', { name: dismissName }).click();
+      } else {
+        await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest('[role="main"]'))).toBe(true);
+      }
+    }
   } finally {
     await page.keyboard.press('Escape');
     await showLicenseWarning('');
