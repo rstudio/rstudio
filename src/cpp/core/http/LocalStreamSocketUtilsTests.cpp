@@ -18,6 +18,8 @@
 #include <core/http/LocalStreamSocketUtils.hpp>
 
 #include <array>
+#include <cstdio>
+#include <memory>
 #include <thread>
 
 #include <poll.h>
@@ -336,13 +338,11 @@ TEST_F(LocalStreamSocketUtilsTest, ClaimsLeaveTheSameUnlockedFile)
 
    LocalStreamIdentity lockIdentity;
    ASSERT_FALSE(getLocalStreamIdentity(lockPath_, &lockIdentity));
-   int lockFd = ::open(lockPath_.getAbsolutePath().c_str(), O_RDWR);
-   ASSERT_NE(lockFd, -1);
-   BOOST_SCOPE_EXIT(lockFd)
-   {
-      ::close(lockFd);
-   }
-   BOOST_SCOPE_EXIT_END
+   std::unique_ptr<std::FILE, decltype(&std::fclose)> lockFile(
+      std::fopen(lockPath_.getAbsolutePath().c_str(), "r+"),
+      &std::fclose);
+   ASSERT_NE(lockFile, nullptr);
+   int lockFd = ::fileno(lockFile.get());
    ASSERT_EQ(::flock(lockFd, LOCK_EX | LOCK_NB), 0);
    ASSERT_EQ(::flock(lockFd, LOCK_UN), 0);
 
