@@ -190,12 +190,17 @@ public class TerminalSessionSocketTests extends GWTTestCase
       {
          inputs.add(input.getText());
          sequences.add(input.getSequence());
-         callback.onResponseReceived(null);
+         if (answerWrites)
+            callback.onResponseReceived(null);
+         else
+            pendingWrites.add(callback);
       }
 
       int mode = ConsoleProcessInfo.CHANNEL_WEBSOCKET;
       int fallbacks;
+      boolean answerWrites = true;
       ServerRequestCallback<VoidResponse> pendingRpc;
+      final List<ServerRequestCallback<VoidResponse>> pendingWrites = new ArrayList<>();
       final List<String> inputs = new ArrayList<>();
       final List<Integer> sequences = new ArrayList<>();
    }
@@ -314,7 +319,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
       assertEquals(0, b.count);
 
       process.pendingRpc.onResponseReceived(null);
-      assertEquals(Arrays.asList("queued A", "queued B"), process.inputs);
+      assertEquals("the burst is one write", Arrays.asList("queued Aqueued B"), process.inputs);
       assertEquals(1, a.count);
       assertEquals(1, b.count);
       assertEquals("connection completed only once", 1, callback.connected);
@@ -511,8 +516,8 @@ public class TerminalSessionSocketTests extends GWTTestCase
       process.pendingRpc.onResponseReceived(null);
       h.socket.dispatchInput("typed after switch", false, new Ack());
 
-      assertEquals(Arrays.asList("rejected", "typed during switch", "typed after switch"), process.inputs);
-      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
+      assertEquals(Arrays.asList("rejectedtyped during switch", "typed after switch"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0), process.sequences);
 
       // a new connection flushes the server queue again
       h.socket.disconnect(false);
@@ -520,6 +525,68 @@ public class TerminalSessionSocketTests extends GWTTestCase
       next.mode = ConsoleProcessInfo.CHANNEL_RPC;
       h.socket.dispatchInput("after reconnect", false, new Ack());
       assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE), next.sequences);
+   }
+
+   public void testQueuedInputIsWrittenAsOneBurstAndLaterInputWaitsForIt()
+   {
+      Harness h = new Harness();
+      Callback callback = new Callback();
+      Process process = h.connectClosing(callback);
+      process.answerWrites = false;
+      Ack a = new Ack();
+      Ack b = new Ack();
+      Ack c = new Ack();
+      h.socket.dispatchInput("rejected", false, a);
+      h.socket.dispatchInput(" and typed during the switch", false, b);
+      process.pendingRpc.onResponseReceived(null);
+      assertEquals(Arrays.asList("rejected and typed during the switch"), process.inputs);
+      assertEquals(0, a.count);
+      assertEquals(0, b.count);
+
+      // typed while the burst is in flight: written after it, not raced with it
+      h.socket.dispatchInput("typed during the burst", false, c);
+      assertEquals(1, process.inputs.size());
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, a.count);
+      assertEquals(1, b.count);
+      assertEquals(0, c.count);
+      assertEquals(Arrays.asList("rejected and typed during the switch", "typed during the burst"), process.inputs);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, c.count);
+      assertEquals("connection completed only once", 1, callback.connected);
+
+      // the switch is complete: input goes straight out
+      h.socket.dispatchInput("after the switch", false, new Ack());
+      assertEquals(3, process.inputs.size());
+      assertEquals(1, process.pendingWrites.size());
+   }
+
+   public void testFailedBurstIsReportedOnceAndLaterInputStillWritten()
+   {
+      Harness h = new Harness();
+      Process process = h.connectClosing(new Callback());
+      process.answerWrites = false;
+      Ack a = new Ack();
+      Ack b = new Ack();
+      Ack c = new Ack();
+      h.socket.dispatchInput("lost A", false, a);
+      h.socket.dispatchInput("lost B", false, b);
+      process.pendingRpc.onResponseReceived(null);
+      h.socket.dispatchInput("typed during the burst", false, c);
+
+      process.pendingWrites.remove(0).onError(rpcError());
+      assertEquals("one failure for the burst", 1, a.errors);
+      assertEquals(0, b.errors);
+      assertEquals(0, a.count);
+      assertEquals(0, b.count);
+      assertEquals(Arrays.asList("lost Alost B", "typed during the burst"), process.inputs);
+
+      process.pendingWrites.remove(0).onResponseReceived(null);
+      assertEquals(1, c.count);
+      assertEquals(0, c.errors);
+      assertEquals(0, h.session.disconnected);
    }
 
    public void testServerInputIsNotSequenced()

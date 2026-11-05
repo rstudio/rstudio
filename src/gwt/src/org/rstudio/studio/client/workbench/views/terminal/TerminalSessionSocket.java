@@ -264,17 +264,7 @@ public class TerminalSessionSocket
             if (connection != connection_)
                return;
             diagnostic_.log(constants_.switchedToRPCMessage());
-            while (!pendingInput_.isEmpty())
-            {
-               writeRpcInput(pendingInput_.remove(0));
-               if (connection != connection_)
-                  return;
-            }
-            // A fallback after opening must not start the process and reload
-            // its output a second time; connectionCompleted() only completes
-            // an initial connection.
-            switchingToRpc_ = false;
-            connectionCompleted();
+            flushPendingInput(connection);
          }
 
          @Override
@@ -467,6 +457,52 @@ public class TerminalSessionSocket
       connectCallback_ = null;
       if (callback != null)
          callback.onConnected();
+   }
+
+   // Input queued while the switch to RPC was in flight is written as one
+   // request. Sent as a request per keystroke, a burst can reach the server
+   // out of order, and only desktop numbers RPC input so the server can put
+   // it back in order. Input typed while the burst is in flight stays queued
+   // behind it, so the switch completes once nothing is left to write.
+   private void flushPendingInput(final int connection)
+   {
+      if (pendingInput_.isEmpty())
+      {
+         // A fallback after opening must not start the process and reload
+         // its output a second time; connectionCompleted() only completes
+         // an initial connection.
+         switchingToRpc_ = false;
+         connectionCompleted();
+         return;
+      }
+
+      final List<PendingInput> pending = new ArrayList<>(pendingInput_);
+      pendingInput_.clear();
+      StringBuilder text = new StringBuilder();
+      for (PendingInput input : pending)
+         text.append(input.text);
+
+      writeRpcInput(new PendingInput(text.toString(), new VoidServerRequestCallback()
+      {
+         @Override
+         public void onResponseReceived(VoidResponse response)
+         {
+            for (PendingInput input : pending)
+               input.callback.onResponseReceived(response);
+            if (connection != connection_)
+               return;
+            flushPendingInput(connection);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            cancelPendingInput(pending, error);
+            if (connection != connection_)
+               return;
+            flushPendingInput(connection);
+         }
+      }));
    }
 
    // Sequence numbers are assigned here, when input is actually written over
