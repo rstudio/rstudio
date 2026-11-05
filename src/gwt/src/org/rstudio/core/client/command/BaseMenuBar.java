@@ -289,14 +289,7 @@ public class BaseMenuBar extends MenuBar
       if (role.equals("menu") || role.equals("menubar"))
          return false;
 
-      return focusTracker().save(previous);
-   }
-
-   private FocusTracker focusTracker()
-   {
-      if (focusTracker_ == null)
-         focusTracker_ = new FocusTracker();
-      return focusTracker_;
+      return focusTracker_.save(previous);
    }
 
    @Override
@@ -480,8 +473,7 @@ public class BaseMenuBar extends MenuBar
       // the correct focused element when it does its own focus push/pop. This comes after
       // closing menus, which can focus a parent menu. The menubar's own registration is
       // used, since onUnload() removes all of them.
-      if (focusTracker_ != null)
-         focusTracker_.restore();
+      focusTracker_.restore();
    }
 
    /**
@@ -496,5 +488,6 @@ public class BaseMenuBar extends MenuBar
    private final EventBus eventBus_;
    private final boolean vertical_;
    private final HandlerRegistrations commandHandler_;
-   private FocusTracker focusTracker_;
+   // Inert until save(), so every menu can have one
+   private final FocusTracker focusTracker_ = new FocusTracker();
 }
