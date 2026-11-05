@@ -10,7 +10,8 @@ const { performance } = require('node:perf_hooks');
 const vm = require('node:vm');
 
 const ROOT = path.resolve(__dirname, '../../../..');
-const STRATEGIES = ['current', 'bare', 'indent', 'padded', 'indent-padded', 'structured'];
+const TOKEN_STRATEGIES = ['bare', 'indent', 'padded', 'indent-padded', 'structured'];
+const STRATEGIES = ['current', ...TOKEN_STRATEGIES, 'line-only'];
 
 // Standalone so the same function can run inside Ace's VM. The first four
 // token variants key on complete lines, like the existing fallback. The
@@ -69,6 +70,30 @@ function createEngine() {
    );
    provider = replaceOnce(
       provider,
+      'lineAlignments = removeVeryShortMatchingLinesBetweenDiffs(sequence1, sequence2, lineAlignments);',
+      `lineAlignments = removeVeryShortMatchingLinesBetweenDiffs(sequence1, sequence2, lineAlignments);
+        experiment.lineAlignments.push(lineAlignments.map(function(diff) {
+            return [diff.seq1Range.start, diff.seq1Range.endExclusive,
+                    diff.seq2Range.start, diff.seq2Range.endExclusive];
+        }));`
+   );
+   // Keep the original line alignment, placement, joining, and whitespace
+   // scanning. Only replace character refinement with its full line mapping.
+   provider = replaceOnce(
+      provider,
+      'var rangeMapping = lineRangeMapping.toRangeMapping2(originalLines, modifiedLines);',
+      `var rangeMapping = lineRangeMapping.toRangeMapping2(originalLines, modifiedLines);
+        if (options.skipCharacterRefinement) {
+            return { mappings: [rangeMapping], hitTimeout: false };
+        }`
+   );
+   provider = replaceOnce(
+      provider,
+      'var innerChanges = changes.innerChanges;',
+      'var innerChanges = options.skipCharacterRefinement ? undefined : changes.innerChanges;'
+   );
+   provider = replaceOnce(
+      provider,
       'exports.computeDiff = computeDiff;',
       'exports.computeDiff = computeDiff; exports.experimentComputer = DefaultLinesDiffComputer;'
    );
@@ -77,6 +102,8 @@ function createEngine() {
    const refine = Computer.prototype.refineDiff;
    Computer.prototype.refineDiff = function(...args) {
       const started = performance.now();
+      if (!args[5].skipCharacterRefinement)
+         state.characterRefinementCalls++;
       const result = refine.apply(this, args);
       state.refinementMs += performance.now() - started;
       state.refinementTimeouts += result.hitTimeout ? 1 : 0;
@@ -96,6 +123,17 @@ function createEngine() {
       gutter,
       'var options = { maxComputationTimeMs: MAX_COMPUTATION_MS };',
       `var options = { maxComputationTimeMs: MAX_COMPUTATION_MS };
+         if (experiment.strategy === "line-only" && !this.splitView) {
+            options.skipCharacterRefinement = true;
+            var lineStarted = Date.now();
+            var lineChunks = new DiffProvider().compute(base, lines, options);
+            this.lastDiffMs = Date.now() - lineStarted;
+            if (this.lastDiffMs >= MAX_COMPUTATION_MS && isWholeDocument(lineChunks, base, lines)) {
+               this.diffFailed = true;
+               return [];
+            }
+            return offsetChunks(lineChunks, common.prefix);
+         }
          if (experiment.strategy !== "current" && !this.splitView) {
             var tokenStarted = Date.now();
             var encoded = experimentTokenize(base, lines, experiment.strategy);
@@ -122,7 +160,8 @@ function createEngine() {
       assert(Number.isInteger(budgetMs) && budgetMs > 0);
       Object.assign(state, {
          strategy, budgetMs, rawOnly: !!options.rawOnly,
-         alignmentTimeouts: [], refinementTimeouts: 0, refinementMs: 0
+         alignmentTimeouts: [], lineAlignments: [], refinementTimeouts: 0,
+         refinementMs: 0, characterRefinementCalls: 0
       });
       let chunks;
       const model = {
@@ -138,7 +177,9 @@ function createEngine() {
       return {
          ms,
          refinementMs: state.refinementMs,
+         characterRefinementCalls: state.characterRefinementCalls,
          alignmentTimeouts: state.alignmentTimeouts.slice(),
+         lineAlignments: JSON.parse(JSON.stringify(state.lineAlignments)),
          refinementTimeouts: state.refinementTimeouts,
          failed: model.diffFailed,
          // Convert out of the VM so assertions use the host Array prototype.
@@ -146,7 +187,11 @@ function createEngine() {
             chunk.old.start.row, chunk.old.end.row,
             chunk.new.start.row, chunk.new.end.row
          ]),
-         characterChanges: Array.from(chunks, chunk => chunk.charChanges?.length || 0)
+         characterChanges: Array.from(chunks, chunk => chunk.charChanges?.length || 0),
+         characterRanges: Array.from(chunks, chunk => Array.from(chunk.charChanges || [], change => [
+            change.old.start.row, change.old.start.column, change.old.end.row, change.old.end.column,
+            change.new.start.row, change.new.start.column, change.new.end.row, change.new.end.column
+         ]))
       };
    }
    return { compute };
@@ -177,4 +222,4 @@ function validateChunks(base, lines, chunks) {
    assert.deepEqual(restored, base);
 }
 
-module.exports = { ROOT, STRATEGIES, createEngine, timedOut, tokenize, validateChunks };
+module.exports = { ROOT, STRATEGIES, TOKEN_STRATEGIES, createEngine, timedOut, tokenize, validateChunks };

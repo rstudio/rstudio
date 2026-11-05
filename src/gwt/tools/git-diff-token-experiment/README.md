@@ -1,7 +1,7 @@
-# Token-first Git gutter experiment
+# Git gutter diff experiments
 
 Experiment for [rstudio/rstudio#19218](https://github.com/rstudio/rstudio/issues/19218).
-This directory contains a runnable prototype and comparison harness. It does not
+This directory contains runnable prototypes and a comparison harness. It does not
 change the shipped editor or vendored Ace files.
 
 ## Run
@@ -11,6 +11,8 @@ From the repository root, with Node.js and Git available:
 ```sh
 node --test src/gwt/tools/git-diff-token-experiment/experiment.test.cjs
 node src/gwt/tools/git-diff-token-experiment/run.cjs --samples 5
+# Use a separate output directory to keep an earlier run:
+node src/gwt/tools/git-diff-token-experiment/run.cjs --samples 5 --output .cache/git-diff-provider-experiment
 ```
 
 No npm packages or network access are needed. The historical commits in
@@ -28,10 +30,10 @@ The production `update` path still handles whitespace preferences, and the real
 `computeChunks` still trims common prefixes/suffixes and handles empty sides.
 Exact-match instrumentation sites fail loudly if the source changes.
 
-The candidate encodes the remaining lines before the first provider call, drops
-character ranges that describe tokens, and retains the existing elapsed-time /
-whole-range failure guard. It measures tokenization as part of the elapsed time.
-With a side-by-side review view attached it uses the current raw-text path, so
+The token candidates encode the remaining lines before the first provider call, drop
+character ranges that describe tokens, and retain the existing elapsed-time /
+whole-range failure guard. They measure tokenization as part of the elapsed time.
+With a side-by-side review view attached all candidates use the current raw-text path, so
 character highlights remain available. This branch is exercised without a DOM;
 view attachment, rendering, and switching between modes are not implemented or
 validated in the IDE.
@@ -44,6 +46,7 @@ validated in the IDE.
 | padded | Identifier padded with periods to at least `min(5, non-whitespace length)`; blank lines preserved |
 | indent-padded | Padding plus original leading spaces/tabs |
 | structured | Identifiers keyed on trimmed text, with original leading/trailing whitespace and padding |
+| line-only | Original lines with the provider's experimental `skipCharacterRefinement` option |
 
 The structured variant preserves both exact equality and the provider's initial
 trimmed-line equality, as well as indentation and the short-line threshold for
@@ -51,6 +54,16 @@ single-character identifiers. It still changes length-weighted matching and
 character-refinement heuristics. Above 20,992 unique lines identifiers grow to
 multiple characters, so very short lines may also grow. Identity remains exact;
 the tests check uniqueness across this boundary.
+
+The provider option is inserted into `DefaultLinesDiffComputer.refineDiff` in
+memory. It returns the existing full line-range mapping before constructing
+character sequences or running the character diff algorithm. Original line
+hashes, weighted matching, boundary placement, short-line joining, and whitespace
+scanning are unchanged. Coarse internal mappings still go through the existing
+line-range conversion; the public result omits character changes when the option
+is enabled. The option defaults off and stays off while review is attached.
+This prototype retains the existing elapsed-time/whole-range failure guard and
+does not add a public timeout-status API.
 
 ## Measurement and checks
 
@@ -74,14 +87,20 @@ used to select the history. The engine itself always comes from this checkout.
   differently. Different valid diff algorithms can select different boundaries;
   disagreement with Git alone is not a correctness failure.
 - Focused tests cover identity, padding, a meaningful unchanged separator,
-  character highlights with review attached, whitespace preferences, empty
-  inputs, EOF changes, diff coverage, and Git hunk parsing.
+  exact character ranges with review attached, whitespace preferences, empty
+  inputs, EOF changes, diff coverage, and Git hunk parsing. They also verify the
+  provider's intermediate line alignments and expose cases where removing
+  refinement changes the final hunk grouping.
+- For the provider option, the full corpus also compares the review-mode hunks
+  and character ranges with raw text. `reviewBoundaryChanges` records cases
+  where enabling review changes the final hunks even though the line alignment
+  heuristics are unchanged. This is a headless mode comparison, not a UI test.
 
 Absolute timings depend on machine load and the Node VM; they are not browser
 latency guarantees. No wall-clock threshold is asserted in the tests. No IDE
 build or E2E run is required for this isolated experiment, and neither was run.
 
-## Results
+## Token-first results
 
 Measured on an Apple M4 Pro, macOS arm64, Node v26.13.0, using
 the bundled engine at `9bebbdec74` and five measured samples
@@ -110,13 +129,13 @@ Both combined strategies differ from raw text on two historical changes:
   replacement together. This is a user-visible change in navigation/revert scope,
   not just a different character highlight.
 
-The 800-line replacement exhausted character refinement on every timing sample,
-for every strategy; line alignment did not time out. The existing failure guard
+The 800-line replacement exhausted character refinement on every timing sample
+in this original token-first run; line alignment did not time out. The existing failure guard
 then discarded the result. Tokens therefore do not make the elapsed-time test
 an unambiguous indication of alignment failure. They halve the worst-case wait
 here by avoiding the first raw-text pass, but still leave no markers.
 
-## Decision
+## Token-first assessment
 
 The speedup is promising for moderate bulk replacements. Bare tokens are not a
 suitable default. Structured tokens are a better candidate but still change
@@ -124,9 +143,59 @@ chunk grouping and retain refinement timeouts. Switching to the raw path for
 review also means opening the review view can change hunk boundaries; the
 headless character-highlight check does not resolve that interaction.
 
-Keep this as an experiment, without a production change or PR. Before promoting
-it, choose the intended chunk-boundary behavior and validate view switching,
-peek/navigation, and individual reverts in the IDE. A provider option that keeps
-original line metadata while skipping character refinement, with explicit
-alignment/refinement timeout reporting, remains the more direct approach to the
-underlying problem. That approach is not implemented by this experiment.
+These results motivated the provider-level experiment below.
+
+## Provider-level results
+
+The same 29 cases were rerun with five measured samples per strategy, on the
+same machine and Node version. The table uses medians from this run, so the
+provider option and token variants share the same measurement conditions.
+Detailed output is in `.cache/git-diff-provider-experiment/` for this checkout.
+
+| Strategy | Historical hunk mismatches vs raw (of 13) | 100-line replacement | 300-line replacement | 800-line replacement |
+| --- | ---: | ---: | ---: | ---: |
+| current | 0 | 25.4 ms | 290.1 ms | 499.6 ms (no markers) |
+| bare | 8 | 8.5 ms | 40.8 ms | 250.0 ms (no markers) |
+| structured | 2 | 5.7 ms | 44.5 ms | 250.1 ms (no markers) |
+| line-only | 1 | 1.7 ms | 15.1 ms | 104.8 ms |
+
+For the provider option:
+
+- All 29 intermediate line alignments matched the unskipped raw-text provider.
+  No character refinement algorithms ran with the option enabled.
+- There were no failed timing samples. In particular, all five 800-line
+  replacement samples retained the expected full replacement hunk.
+- At the 5,000 ms validation budget, attaching review preserved the raw provider's
+  exact hunks and character ranges in all 29 cases. The optimization applies
+  only while review is closed; review retains the existing refinement cost and
+  timeout behavior at the normal 250 ms budget.
+- Final hunks differed in one of 13 historical file changes and three synthetic
+  cases. The historical difference is `8a832cdbfb` in `TextEditingTarget.java`:
+  three pairs of changes become three larger hunks. In the synthetic cases,
+  changes separated by an unchanged `}`, empty line, or whitespace-only line
+  become one hunk instead of two. The meaningful-statement separator stays
+  separate. Coverage and complete-base reconstruction checks pass throughout.
+
+The intermediate line heuristics already join these short-line groups. The
+character pass subsequently splits some of them back apart. Preserving the line
+heuristics therefore does not guarantee identical final hunks when refinement
+is skipped. The tests explicitly retain this counterexample, and the report
+records the resulting boundary changes between gutter-only and review modes.
+
+## Assessment
+
+The provider option is the strongest performance candidate so far: it removes
+the expensive character pass rather than shortening its input, preserves the
+original line alignment, and fixes the tested 800-line gutter failure. It also
+preserves character highlights by leaving review on the existing path.
+
+The remaining design decision is hunk granularity. Accepting the coarser hunks
+also accepts changes to navigation/revert grouping when review opens. If exact
+current hunks are required, a pure refinement bypass is insufficient; bounded or
+selective refinement would need its own experiment. The timing guard still
+infers failure from elapsed time, and large line-alignment problems can still
+exhaust the budget. Public timeout reporting remains follow-up work.
+
+This remains a headless experiment. Before a production PR, choose the hunk
+contract and validate mode switching, peeks, navigation, and individual reverts
+in the IDE. No shipped source or generated Ace bundle has been modified.

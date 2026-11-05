@@ -5,13 +5,13 @@
 
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const { STRATEGIES, createEngine, timedOut, tokenize, validateChunks } = require('./engine.cjs');
+const { STRATEGIES, TOKEN_STRATEGIES, createEngine, timedOut, tokenize, validateChunks } = require('./engine.cjs');
 const { syntheticCases } = require('./fixtures.cjs');
 const engine = createEngine();
 
 test('tokens preserve exact equality across the single-character token limit', () => {
    const lines = Array.from({ length: 21010 }, (_, i) => `statement_${i}()`);
-   for (const strategy of STRATEGIES.filter(name => name !== 'current')) {
+   for (const strategy of TOKEN_STRATEGIES) {
       const result = tokenize(lines, lines.slice().reverse(), strategy);
       assert.equal(new Set(result.base).size, lines.length);
       assert.deepEqual(result.base.slice().reverse(), result.lines);
@@ -47,7 +47,7 @@ test('the experiment exposes the bare-token hunk merging regression', () => {
    }
 });
 
-test('token strategies keep raw character highlights when a review view is attached', () => {
+test('experimental strategies keep exact raw character ranges when review is attached', () => {
    const base = ['first()', 'x <- 4', 'last()'];
    const lines = ['first()', 'x <- 40', 'last()'];
    const current = engine.compute(base, lines);
@@ -58,6 +58,33 @@ test('token strategies keep raw character highlights when a review view is attac
       const review = engine.compute(base, lines, strategy, { splitView: true });
       assert.deepEqual(review.chunks, current.chunks);
       assert.deepEqual(review.characterChanges, current.characterChanges);
+      assert.deepEqual(review.characterRanges, current.characterRanges);
+   }
+});
+
+test('the provider bypass preserves line alignment heuristics and skips character refinement', () => {
+   for (const fixture of syntheticCases().filter(item => !item.name.startsWith('replace-'))) {
+      const raw = engine.compute(fixture.base, fixture.lines, 'current', { budgetMs: 5000, rawOnly: true });
+      const candidate = engine.compute(fixture.base, fixture.lines, 'line-only', { budgetMs: 5000 });
+      assert(!timedOut(raw) && !timedOut(candidate));
+      assert.deepEqual(candidate.lineAlignments, raw.lineAlignments, fixture.name);
+      assert.equal(candidate.characterRefinementCalls, 0, fixture.name);
+      assert(candidate.characterRanges.every(ranges => ranges.length === 0));
+      validateChunks(fixture.base, fixture.lines, candidate.chunks);
+   }
+   const review = engine.compute(['x <- 1'], ['x <- 2'], 'line-only', { splitView: true });
+   assert(review.characterRefinementCalls > 0);
+});
+
+test('skipping refinement retains short-line groups that the character pass splits apart', () => {
+   for (const separator of ['}', '', '    ']) {
+      const fixture = syntheticCases().find(item => item.name === `separated-blocks-${JSON.stringify(separator)}`);
+      const candidate = engine.compute(fixture.base, fixture.lines, 'line-only', { budgetMs: 5000 });
+      const review = engine.compute(fixture.base, fixture.lines, 'line-only', { budgetMs: 5000, splitView: true });
+      assert(!candidate.failed && !review.failed && !timedOut(candidate) && !timedOut(review));
+      assert.deepEqual(candidate.lineAlignments, review.lineAlignments);
+      assert.deepEqual(candidate.chunks, [[0, 7, 0, 7]]);
+      assert.deepEqual(review.chunks, [[0, 3, 0, 3], [4, 7, 4, 7]]);
    }
 });
 

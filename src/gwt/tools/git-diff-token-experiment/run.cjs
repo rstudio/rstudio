@@ -126,10 +126,25 @@ function main(args) {
             entry.strategies[strategy] = {
                accurate, complete,
                matchesRaw: complete && rawComplete ? same(accurate.chunks, raw.chunks) : null,
+               matchesLineAlignments: complete && rawComplete ? same(accurate.lineAlignments, raw.lineAlignments) : null,
                matchesGit: complete && sameFinalNewline ? same(accurate.chunks, gitResult) : null,
                matchesExpected: complete && fixture.expected ? same(accurate.chunks, fixture.expected) : null,
                samples: []
             };
+            if (strategy === 'line-only') {
+               const review = engine.compute(base, lines, strategy, {
+                  budgetMs: 5000, rawOnly: true, splitView: true
+               });
+               const reviewComplete = !review.failed && !timedOut(review);
+               if (reviewComplete)
+                  validateChunks(base, lines, review.chunks);
+               Object.assign(entry.strategies[strategy], {
+                  review,
+                  reviewMatchesRawChunks: reviewComplete && rawComplete ? same(review.chunks, raw.chunks) : null,
+                  reviewMatchesRawCharacterRanges: reviewComplete && rawComplete ? same(review.characterRanges, raw.characterRanges) : null,
+                  matchesReviewBoundaries: reviewComplete && complete ? same(accurate.chunks, review.chunks) : null
+               });
+            }
             engine.compute(base, lines, strategy); // warm-up, excluded from timing
          }
          // Rotate order across samples to reduce systematic warm-up/load bias.
@@ -156,11 +171,22 @@ function main(args) {
       summary[strategy] = {
          historyRawComparable: history.filter(item => item.matchesRaw !== null).length,
          historyRawMismatches: history.filter(item => item.matchesRaw === false).length,
+         historyLineAlignmentMismatches: history.filter(item => item.matchesLineAlignments === false).length,
          historyGitComparable: history.filter(item => item.matchesGit !== null).length,
          historyGitMismatches: history.filter(item => item.matchesGit === false).length,
          expectedMismatches: report.cases.filter(item => item.strategies[strategy].matchesExpected === false).map(item => item.name),
          failedTimingRuns: report.cases.reduce((n, item) => n + item.strategies[strategy].timing.failedRuns, 0)
       };
+      if (strategy === 'line-only') {
+         const all = report.cases.map(item => item.strategies[strategy]);
+         Object.assign(summary[strategy], {
+            reviewRawComparable: all.filter(item => item.reviewMatchesRawCharacterRanges !== null).length,
+            reviewRawCharacterRangeMismatches: all.filter(item => item.reviewMatchesRawCharacterRanges === false).length,
+            reviewRawChunkMismatches: all.filter(item => item.reviewMatchesRawChunks === false).length,
+            reviewBoundaryChanges: report.cases.filter(item => item.strategies[strategy].matchesReviewBoundaries === false).map(item => item.name),
+            characterRefinementCalls: all.reduce((n, item) => n + item.accurate.characterRefinementCalls, 0)
+         });
+      }
    }
    fs.mkdirSync(output, { recursive: true });
    fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
