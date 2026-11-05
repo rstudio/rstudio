@@ -18,6 +18,7 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     String terminalBusyMessage(String question);
     String terminalDiagnosticsText();
     String globalTerminalInformationText();
+    String currentTerminalSessionInformationText();
     String captionText();
     String titleText();
     String colsText();
