@@ -1062,6 +1062,14 @@ void afterSessionInitHook(bool)
    }
    else if (!s_reducedFileOpsNoticeShown)
    {
+      // Skip the notice when an administrator has explicitly enabled the
+      // reduction in system preferences.
+      auto systemPref = prefs::userPrefs().readValue(
+            kUserPrefsSystemLayer,
+            kReduceRemoteFilesystemOperations);
+      if (systemPref && systemPref->isBool() && systemPref->getBool())
+         return;
+
       std::string msg =
             "RStudio has reduced background file operations (such as file "
             "monitoring and code indexing) for this project to improve "
