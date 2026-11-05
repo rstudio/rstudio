@@ -13,8 +13,8 @@
  *
  */
 
-// macOS-only entry points implemented in Objective-C++ (desktop_mac.mm) and
-// exported from desktop.cc.
+// macOS entry points implemented in Objective-C++ (desktop_mac.mm) and
+// exported from desktop.cc, which provides stubs on other platforms.
 
 #ifndef RSTUDIO_DESKTOP_MAC_H
 #define RSTUDIO_DESKTOP_MAC_H
@@ -24,7 +24,7 @@
 namespace rstudio {
 namespace desktop {
 
-Napi::Value macOSDefaultApplicationForFileExtension(const Napi::CallbackInfo& info);
+Napi::Value macOSIsDefaultApplicationForFileExtension(const Napi::CallbackInfo& info);
 Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo& info);
 
 } // end namespace desktop

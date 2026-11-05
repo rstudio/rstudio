@@ -14,6 +14,7 @@
  */
 
 import { app } from 'electron';
+import { safeError } from '../core/err';
 import { logger } from '../core/logger';
 import desktop from '../native/desktop.node';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -38,35 +39,69 @@ export const kRFileExtensions = [
 ];
 
 export function isMacOSDefaultApplicationForFileExtension(extension: string): boolean {
-  return desktop.macOSDefaultApplicationForFileExtension(extension).isCurrentApplication;
+  return desktop.macOSIsDefaultApplicationForFileExtension(extension);
 }
 
 /**
  * Make RStudio the default application for the given extensions, skipping any
  * it already owns: macOS asks the user to confirm each change away from another
- * application, so skipping avoids needless prompts.
+ * application, so skipping avoids needless prompts. Each extension is asked
+ * about on its own, so declining or failing one still offers the rest.
+ *
+ * @returns One message per extension macOS failed to change; a declined
+ *   confirmation is the user's answer, not a failure.
  */
-export async function setMacOSDefaultApplicationForFileExtensions(extensions: string[]): Promise<void> {
+export async function setMacOSDefaultApplicationForFileExtensions(extensions: string[]): Promise<string[]> {
+  const errors: string[] = [];
+
   for (const extension of extensions) {
-    if (!isMacOSDefaultApplicationForFileExtension(extension)) {
+    if (isMacOSDefaultApplicationForFileExtension(extension)) {
+      continue;
+    }
+
+    try {
       await desktop.macOSSetDefaultApplicationForFileExtension(extension);
+    } catch (error: unknown) {
+      errors.push(`.${extension}: ${safeError(error).message}`);
     }
   }
+
+  return errors;
 }
 
-export async function setDefaultApplicationForRFiles(): Promise<void> {
+export interface DefaultApplicationForRFilesResult {
+  // the R file extensions that still open in another application
+  elsewhere: string[];
+  // why some could not be changed, or empty
+  error: string;
+}
+
+/**
+ * Make RStudio the default application for every R file type, for the Options
+ * button. Never rejects, so the button always hears back.
+ */
+export async function setDefaultApplicationForRFiles(): Promise<DefaultApplicationForRFilesResult> {
   if (process.platform !== 'darwin') {
-    throw new Error('Setting the default application for R files is only supported on macOS');
+    return { elsewhere: [], error: 'Setting the default application for R files is only supported on macOS' };
   }
-  await setMacOSDefaultApplicationForFileExtensions(kRFileExtensions);
+
+  // unpackaged, this bundle is Electron.app, which would become the default instead
+  if (!app.isPackaged) {
+    return { elsewhere: [], error: 'Only an installed copy of RStudio can become the default application for R files' };
+  }
+
+  const errors = await setMacOSDefaultApplicationForFileExtensions(kRFileExtensions);
+  const elsewhere = kRFileExtensions.filter((extension) => !isMacOSDefaultApplicationForFileExtension(extension));
+  return { elsewhere, error: errors.join('\n') };
 }
 
 /**
  * macOS binds .R to its own legacy Rez source type, and Xcode wins that type
  * whenever it is installed, so no Info.plist declaration can make RStudio the
- * default. Ask macOS to switch it once per installation: the OS shows the
- * confirmation and records the user's answer, so a declined request is never
- * repeated. Only installed builds ask; development and automated runs stay quiet.
+ * default. Ask macOS to switch it once per user: the OS shows the confirmation,
+ * and a declined request is never repeated. The offer is only used up once
+ * macOS is actually asked, so installing Xcode after RStudio still gets one.
+ * Only installed builds ask; development and automated runs stay quiet.
  */
 export async function promptForDefaultRFileHandlerOnce(): Promise<void> {
   if (process.platform !== 'darwin' || !app.isPackaged || isAutomated()) {
@@ -74,20 +109,16 @@ export async function promptForDefaultRFileHandlerOnce(): Promise<void> {
   }
 
   const options = ElectronDesktopOptions();
-  if (options.macOSDefaultFileHandlerPrompted()) {
+  if (options.macOSDefaultFileHandlerPrompted() || isMacOSDefaultApplicationForFileExtension('R')) {
     return;
   }
+
   options.setMacOSDefaultFileHandlerPrompted(true);
-
-  if (isMacOSDefaultApplicationForFileExtension('R')) {
-    return;
-  }
-
   try {
     await desktop.macOSSetDefaultApplicationForFileExtension('R');
   } catch (error: unknown) {
     logger().logErrorMessage(
-      `Unable to set RStudio as the default application for R files: ${error instanceof Error ? error.message : String(error)}`,
+      `Unable to set RStudio as the default application for R files: ${safeError(error).message}`,
     );
   }
 }

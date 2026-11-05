@@ -200,6 +200,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String advancedRenderingEngineLabel();
     String macDefaultAppForRFilesButtonLabel();
     String macDefaultAppForRFilesCaption();
+    String macDefaultAppForRFilesElsewhereMessage(String extensions);
     String macDefaultAppForRFilesSuccessMessage();
     String renderingEngineAutoDetectOption();
     String renderingEngineDesktopOption();

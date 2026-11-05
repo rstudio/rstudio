@@ -19,6 +19,7 @@ import org.rstudio.core.client.Point;
 import org.rstudio.core.client.SessionServer;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
+import org.rstudio.core.client.js.JsObject;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
@@ -82,8 +83,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showFolder(String path);
    void showFile(String path);
 
-   // macOS only; the callback receives an error message, or an empty string on success
-   void setDefaultApplicationForRFiles(CommandWithArg<String> callback);
+   // macOS only; the callback receives { elsewhere: the extensions still owned
+   // by another application, error: why some could not be changed, or empty }
+   void setDefaultApplicationForRFiles(CommandWithArg<JsObject> callback);
    void beep();
    void showWordDoc(String path);
    void showPDF(String path, int pdfPage);

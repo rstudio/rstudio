@@ -105,24 +105,21 @@ export declare function macOSListFonts(): {
 /**
  * (macOS only)
  *
- * Describe the application Launch Services would use to open files with the
- * given extension. The bundle identifier is empty when no application is
- * registered for the extension; isCurrentApplication is true when that
- * application shares this one's bundle identifier.
+ * Whether the application Launch Services would use to open files with the
+ * given extension shares this one's bundle identifier. Always false elsewhere.
  *
  * @param extension A file extension, without the leading dot.
  */
-export declare function macOSDefaultApplicationForFileExtension(extension: string): {
-  bundleIdentifier: string;
-  isCurrentApplication: boolean;
-};
+export declare function macOSIsDefaultApplicationForFileExtension(extension: string): boolean;
 
 /**
  * (macOS only)
  *
  * Make this application the default application for files with the given
- * extension. macOS may ask the user to confirm the change; the user's choice
- * is recorded by the OS, so a declined request still resolves.
+ * extension. macOS may ask the user to confirm the change. Resolves once the
+ * user has answered, whether they accepted or declined (check
+ * macOSIsDefaultApplicationForFileExtension to see which); rejects only when
+ * macOS could not make the request. Always rejects elsewhere.
  *
  * @param extension A file extension, without the leading dot.
  */

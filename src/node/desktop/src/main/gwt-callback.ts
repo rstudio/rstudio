@@ -809,15 +809,7 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
-    // resolves to an empty string on success, else a message for the user
-    ipcMain.handle('desktop_set_default_application_for_r_files', async () => {
-      try {
-        await setDefaultApplicationForRFiles();
-        return '';
-      } catch (error: unknown) {
-        return error instanceof Error ? error.message : String(error);
-      }
-    });
+    ipcMain.handle('desktop_set_default_application_for_r_files', async () => setDefaultApplicationForRFiles());
 
     // cleanClipboard rewrites the pasteboard, so it takes its turn with the
     // other clipboard writes instead of interleaving with a pending one

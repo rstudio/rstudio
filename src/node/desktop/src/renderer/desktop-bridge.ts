@@ -395,10 +395,10 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('desktopRenderingEngine', error));
     },
 
-    setDefaultApplicationForRFiles: (callback: VoidCallback<string>) => {
+    setDefaultApplicationForRFiles: (callback: VoidCallback<Record<string, unknown>>) => {
       ipcRenderer
         .invoke('desktop_set_default_application_for_r_files')
-        .then((error) => callback(error))
+        .then((result) => callback(result))
         .catch((error) => reportIpcError('setDefaultApplicationForRFiles', error));
     },
 

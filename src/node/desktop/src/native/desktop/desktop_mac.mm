@@ -39,6 +39,20 @@ std::string toStdString(NSString* value)
    return value == nil ? std::string() : std::string([value UTF8String]);
 }
 
+// Declining the confirmation completes with an error: NSCocoaErrorDomain 256
+// wrapping userCanceledErr (-128). The user answered, so it is not a failure.
+bool isUserCancelled(NSError* error)
+{
+   for (NSError* current = error; current != nil; current = current.userInfo[NSUnderlyingErrorKey])
+   {
+      if ([current.domain isEqualToString:NSOSStatusErrorDomain] && current.code == userCanceledErr)
+         return true;
+      if ([current.domain isEqualToString:NSCocoaErrorDomain] && current.code == NSUserCancelledError)
+         return true;
+   }
+   return false;
+}
+
 // The outcome of a set-default request, carried from the completion handler
 // (which may run on any thread) back to the JavaScript thread.
 struct SetDefaultResult
@@ -59,12 +73,11 @@ void settleSetDefault(Napi::Env env, Napi::Function, SetDefaultResult* result)
 
 } // end anonymous namespace
 
-Napi::Value macOSDefaultApplicationForFileExtension(const Napi::CallbackInfo& info)
+Napi::Value macOSIsDefaultApplicationForFileExtension(const Napi::CallbackInfo& info)
 {
    Napi::Env env = info.Env();
    std::string extension = info[0].As<Napi::String>().Utf8Value();
 
-   std::string bundleIdentifier;
    bool isCurrentApplication = false;
 
    @autoreleasepool
@@ -74,14 +87,10 @@ Napi::Value macOSDefaultApplicationForFileExtension(const Napi::CallbackInfo& in
       NSBundle* bundle = url ? [NSBundle bundleWithURL:url] : nil;
 
       // any copy of this application counts, e.g. an older RStudio alongside this one
-      bundleIdentifier = toStdString([bundle bundleIdentifier]);
       isCurrentApplication = bundle != nil && [[bundle bundleIdentifier] isEqualToString:[[NSBundle mainBundle] bundleIdentifier]];
    }
 
-   Napi::Object result = Napi::Object::New(env);
-   result.Set("bundleIdentifier", Napi::String::New(env, bundleIdentifier));
-   result.Set("isCurrentApplication", Napi::Boolean::New(env, isCurrentApplication));
-   return result;
+   return Napi::Boolean::New(env, isCurrentApplication);
 }
 
 Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo& info)
@@ -92,10 +101,13 @@ Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo&
 
    @autoreleasepool
    {
+      // an extension no application declares still gets a dynamic (dyn.*) type, as
+      // do most of RStudio's own, which it claims by extension; nil means the
+      // extension itself is invalid, e.g. empty
       UTType* type = [UTType typeWithFilenameExtension:toNSString(extension)];
       if (type == nil)
       {
-         deferred.Reject(Napi::Error::New(env, "No file type is registered for extension '" + extension + "'").Value());
+         deferred.Reject(Napi::Error::New(env, "'" + extension + "' is not a valid file extension").Value());
          return deferred.Promise();
       }
 
@@ -112,7 +124,8 @@ Napi::Value macOSSetDefaultApplicationForFileExtension(const Napi::CallbackInfo&
       [[NSWorkspace sharedWorkspace] setDefaultApplicationAtURL:applicationUrl
                                              toOpenContentType:type
                                              completionHandler:^(NSError* error) {
-         SetDefaultResult* result = new SetDefaultResult{deferred, toStdString([error localizedDescription])};
+         std::string message = isUserCancelled(error) ? std::string() : toStdString([error localizedDescription]);
+         SetDefaultResult* result = new SetDefaultResult{deferred, message};
          tsfn.BlockingCall(result, settleSetDefault);
          tsfn.Release();
       }];

@@ -26,10 +26,7 @@ import {
   setMacOSDefaultApplicationForFileExtensions,
 } from '../../../src/main/default-file-handler';
 import DesktopOptions from '../../../src/main/preferences/desktop-options';
-import {
-  clearOptionsSingleton,
-  ElectronDesktopOptions,
-} from '../../../src/main/preferences/electron-desktop-options';
+import { clearOptionsSingleton, ElectronDesktopOptions } from '../../../src/main/preferences/electron-desktop-options';
 import desktop from '../../../src/native/desktop.node';
 import { tempDirectory } from '../unit-utils';
 
@@ -47,52 +44,52 @@ class DesktopOptionsStub extends DesktopOptions {
   }
 }
 
-// The native functions only exist in the macOS build of the addon, so install
-// fakes by assignment rather than with sinon.stub(), which needs an existing property.
-type NativeModule = {
-  macOSDefaultApplicationForFileExtension?: (extension: string) => {
-    bundleIdentifier: string;
-    isCurrentApplication: boolean;
-  };
-  macOSSetDefaultApplicationForFileExtension?: (extension: string) => Promise<void>;
-};
+// exercises the real addon; the test runner is Electron.app, never the default for .R
+(process.platform === 'darwin' ? describe : describe.skip)('DefaultFileHandler native', () => {
+  it('reports whether this application opens an extension', () => {
+    assert.isFalse(desktop.macOSIsDefaultApplicationForFileExtension('R'));
+    assert.isFalse(desktop.macOSIsDefaultApplicationForFileExtension('rstudio-no-such-extension'));
+  });
+
+  it('refuses an invalid extension without asking', async () => {
+    try {
+      await desktop.macOSSetDefaultApplicationForFileExtension('');
+      assert.fail('expected rejection');
+    } catch (error: unknown) {
+      assert.match((error as Error).message, /not a valid file extension/);
+    }
+  });
+});
 
 describe('DefaultFileHandler', () => {
-  const native = desktop as unknown as NativeModule;
-  const originalQuery = native.macOSDefaultApplicationForFileExtension;
-  const originalSet = native.macOSSetDefaultApplicationForFileExtension;
-
-  // exercises the real addon; the test runner is Electron.app, never the default for .R
-  (process.platform === 'darwin' ? describe : describe.skip)('native', () => {
-    it('describes the application registered for an extension', () => {
-      const result = originalQuery!('R');
-      assert.isString(result.bundleIdentifier);
-      assert.isFalse(result.isCurrentApplication);
-      assert.isFunction(originalSet);
-    });
-
-    it('reports no application for an unknown extension', () => {
-      const result = originalQuery!('rstudio-no-such-extension');
-      assert.equal(result.bundleIdentifier, '');
-      assert.isFalse(result.isCurrentApplication);
-    });
-  });
-  let query: sinon.SinonStub;
   let set: sinon.SinonStub;
+  let elsewhere: Set<string>;
 
-  // the extensions some other application currently owns
+  // the extensions some other application currently owns; accepting a
+  // confirmation moves one to RStudio
   function ownedElsewhere(...extensions: string[]) {
-    query.callsFake((extension: string) => ({
-      bundleIdentifier: extensions.includes(extension) ? 'com.example.other' : 'com.rstudio.desktop',
-      isCurrentApplication: !extensions.includes(extension),
-    }));
+    elsewhere = new Set(extensions);
+  }
+
+  // the user answers "keep" to the confirmation for these extensions
+  function declines(...extensions: string[]) {
+    for (const extension of extensions) {
+      set.withArgs(extension).resolves();
+    }
+  }
+
+  function askedFor(): string[] {
+    return set.getCalls().map((call) => call.args[0] as string);
   }
 
   beforeEach(() => {
-    query = sinon.stub();
-    set = sinon.stub().resolves();
-    native.macOSDefaultApplicationForFileExtension = query;
-    native.macOSSetDefaultApplicationForFileExtension = set;
+    elsewhere = new Set();
+    sinon
+      .stub(desktop, 'macOSIsDefaultApplicationForFileExtension')
+      .callsFake((extension: string) => !elsewhere.has(extension));
+    set = sinon.stub(desktop, 'macOSSetDefaultApplicationForFileExtension').callsFake(async (extension: string) => {
+      elsewhere.delete(extension);
+    });
     sinon.stub(process, 'platform').value('darwin');
     sinon.stub(app, 'isPackaged').value(true);
     sinon.stub(app.commandLine, 'hasSwitch').returns(false);
@@ -101,8 +98,6 @@ describe('DefaultFileHandler', () => {
 
   afterEach(() => {
     sinon.restore();
-    native.macOSDefaultApplicationForFileExtension = originalQuery;
-    native.macOSSetDefaultApplicationForFileExtension = originalSet;
     clearOptionsSingleton();
     new FilePath(kTestingConfigDirectory).removeIfExistsSync();
   });
@@ -111,24 +106,20 @@ describe('DefaultFileHandler', () => {
     it('only asks for the extensions another application owns', async () => {
       ownedElsewhere('R', 'Rd');
 
-      await setMacOSDefaultApplicationForFileExtensions(['R', 'Rmd', 'Rd']);
+      const errors = await setMacOSDefaultApplicationForFileExtensions(['R', 'Rmd', 'Rd']);
 
-      assert.deepEqual(
-        set.getCalls().map((call) => call.args[0]),
-        ['R', 'Rd'],
-      );
+      assert.deepEqual(askedFor(), ['R', 'Rd']);
+      assert.deepEqual(errors, []);
     });
 
-    it('propagates a failure from macOS', async () => {
-      ownedElsewhere('R');
-      set.rejects(new Error('nope'));
+    it('keeps asking after a failure partway through', async () => {
+      ownedElsewhere('R', 'Rmd', 'Rd');
+      set.withArgs('Rmd').rejects(new Error('nope'));
 
-      try {
-        await setMacOSDefaultApplicationForFileExtensions(['R']);
-        assert.fail('expected rejection');
-      } catch (error: unknown) {
-        assert.equal((error as Error).message, 'nope');
-      }
+      const errors = await setMacOSDefaultApplicationForFileExtensions(['R', 'Rmd', 'Rd']);
+
+      assert.deepEqual(askedFor(), ['R', 'Rmd', 'Rd']);
+      assert.deepEqual(errors, ['.Rmd: nope']);
     });
   });
 
@@ -136,24 +127,50 @@ describe('DefaultFileHandler', () => {
     it('covers every R file extension', async () => {
       ownedElsewhere(...kRFileExtensions);
 
-      await setDefaultApplicationForRFiles();
+      const result = await setDefaultApplicationForRFiles();
 
-      assert.deepEqual(
-        set.getCalls().map((call) => call.args[0]),
-        kRFileExtensions,
-      );
+      assert.deepEqual(askedFor(), kRFileExtensions);
+      assert.deepEqual(result, { elsewhere: [], error: '' });
     });
 
-    it('rejects off macOS', async () => {
+    it('still offers the rest after a decline, and reports what was kept', async () => {
+      ownedElsewhere('R', 'Rmd', 'Rproj');
+      declines('R');
+
+      const result = await setDefaultApplicationForRFiles();
+
+      assert.deepEqual(askedFor(), ['R', 'Rmd', 'Rproj']);
+      assert.deepEqual(result, { elsewhere: ['R'], error: '' });
+    });
+
+    it('reports each failure alongside what is still elsewhere', async () => {
+      ownedElsewhere('R', 'Rmd', 'Rproj');
+      set.withArgs('Rmd').rejects(new Error('nope'));
+      set.withArgs('Rproj').rejects(new Error('also nope'));
+
+      const result = await setDefaultApplicationForRFiles();
+
+      assert.deepEqual(result, { elsewhere: ['Rmd', 'Rproj'], error: '.Rmd: nope\n.Rproj: also nope' });
+    });
+
+    it('refuses when not packaged, since Electron.app would become the default', async () => {
+      ownedElsewhere('R');
+      sinon.stub(app, 'isPackaged').value(false);
+
+      const result = await setDefaultApplicationForRFiles();
+
+      assert.isTrue(set.notCalled);
+      assert.deepEqual(result.elsewhere, []);
+      assert.match(result.error, /installed copy/);
+    });
+
+    it('refuses off macOS', async () => {
       sinon.stub(process, 'platform').value('linux');
 
-      try {
-        await setDefaultApplicationForRFiles();
-        assert.fail('expected rejection');
-      } catch (error: unknown) {
-        assert.match((error as Error).message, /macOS/);
-      }
+      const result = await setDefaultApplicationForRFiles();
+
       assert.isTrue(set.notCalled);
+      assert.match(result.error, /macOS/);
     });
   });
 
@@ -168,13 +185,28 @@ describe('DefaultFileHandler', () => {
       assert.isTrue(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
     });
 
-    it('records the check without asking when RStudio already owns .R', async () => {
-      ownedElsewhere();
+    it('does not ask again after a decline', async () => {
+      ownedElsewhere('R');
+      declines('R');
 
+      await promptForDefaultRFileHandlerOnce();
+      await promptForDefaultRFileHandlerOnce();
+
+      assert.isTrue(set.calledOnceWithExactly('R'));
+      assert.isTrue(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
+    });
+
+    it('keeps the offer while RStudio already owns .R', async () => {
       await promptForDefaultRFileHandlerOnce();
 
       assert.isTrue(set.notCalled);
-      assert.isTrue(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
+      assert.isFalse(ElectronDesktopOptions().macOSDefaultFileHandlerPrompted());
+
+      // e.g. Xcode was installed later and took .R
+      ownedElsewhere('R');
+      await promptForDefaultRFileHandlerOnce();
+
+      assert.isTrue(set.calledOnceWithExactly('R'));
     });
 
     it('does not ask again after a previous run', async () => {
@@ -217,7 +249,7 @@ describe('DefaultFileHandler', () => {
 
     it('swallows a failure from macOS', async () => {
       ownedElsewhere('R');
-      set.rejects(new Error('nope'));
+      set.withArgs('R').rejects(new Error('nope'));
 
       await promptForDefaultRFileHandlerOnce();
 

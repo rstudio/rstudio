@@ -22,6 +22,7 @@ import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -391,17 +392,31 @@ public class GeneralPreferencesPane extends PreferencesPane
             SmallButton defaultAppButton = new SmallButton(constants_.macDefaultAppForRFilesButtonLabel());
             defaultAppButton.addClickHandler(event ->
             {
-               Desktop.getFrame().setDefaultApplicationForRFiles(error ->
+               // macOS asks about each file type in turn; a second click would ask again
+               defaultAppButton.setEnabled(false);
+               Desktop.getFrame().setDefaultApplicationForRFiles(result ->
                {
-                  if (StringUtil.isNullOrEmpty(error))
+                  defaultAppButton.setEnabled(true);
+
+                  String caption = constants_.macDefaultAppForRFilesCaption();
+                  String error = result.getString("error");
+                  JsArrayString elsewhere = result.getObject("elsewhere");
+                  if (!StringUtil.isNullOrEmpty(error))
                   {
+                     globalDisplay.showErrorMessage(caption, error);
+                  }
+                  else if (elsewhere.length() > 0)
+                  {
+                     String extensions = "." + elsewhere.join(", ."); //$NON-NLS-1$ //$NON-NLS-2$
                      globalDisplay.showMessage(MessageDialog.INFO,
-                                               constants_.macDefaultAppForRFilesCaption(),
-                                               constants_.macDefaultAppForRFilesSuccessMessage());
+                                               caption,
+                                               constants_.macDefaultAppForRFilesElsewhereMessage(extensions));
                   }
                   else
                   {
-                     globalDisplay.showErrorMessage(constants_.macDefaultAppForRFilesCaption(), error);
+                     globalDisplay.showMessage(MessageDialog.INFO,
+                                               caption,
+                                               constants_.macDefaultAppForRFilesSuccessMessage());
                   }
                });
             });
