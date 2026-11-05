@@ -69,6 +69,7 @@ public class WarningBar extends Composite
       String left();
       String right();
       String center();
+      String message();
       String warningIcon();
       String label();
       String action();

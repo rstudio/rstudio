@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONException;
@@ -40,6 +41,7 @@ public class WarningBarList extends Composite implements RequiresResize
       onChange_ = onChange;
       onDismiss_ = onDismiss;
       initWidget(scroll_);
+      scroll_.getElement().getStyle().setOverflowX(Overflow.HIDDEN);
    }
 
    public void show(String id,

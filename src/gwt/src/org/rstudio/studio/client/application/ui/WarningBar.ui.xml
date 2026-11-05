@@ -13,17 +13,17 @@
           cellpadding="0" cellspacing="0" border="0" width="100%">
       <tr>
          <td class="{res.styles.left}"/>
-         <td class="{res.styles.center}" valign="top">
+         <td class="{res.styles.center} {res.styles.message}" valign="top">
             <rw:DecorativeImage resource="{res.warningIconSmall2x}"
                      width="21"
                      height="17"
                      styleName="{res.styles.warningIcon}"/>
             <span ui:field="label_" class="{res.styles.label}"/>
             <div ui:field="live_" class="{themeRes.themeStyles.visuallyHidden}"/>
-            <g:Button ui:field="moreButton_"/>
          </td>
          <td class="{res.styles.center}" align="right">
-            <!-- kept by the dismiss button, where a long message can't push it out of view -->
+            <!-- Keep actions outside the message's clipping area. -->
+            <g:Button ui:field="moreButton_"/>
             <rw:HyperlinkLabel ui:field="actionLink_" addStyleNames="{res.styles.action}"/>
             <rw:ImageButton ui:field="dismiss_"
                      resource="{themeRes.closeTab2x}"

@@ -5,8 +5,7 @@
 }
 
 .warningBar {
-   margin-left: 1px;
-   margin-right: 1px;
+   width: 100%;
 }
 
 @sprite .left {
@@ -21,6 +20,14 @@
    gwt-image: 'warningBarTile';
    white-space: nowrap;
    overflow-x: hidden;
+}
+
+/* Let the message shrink inside the table while keeping its controls visible. */
+.message {
+   width: 100%;
+   max-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 
 .warningIcon {
@@ -47,9 +54,16 @@
 }
 
 .dismiss {
+   position: relative;
    right: 0;
    width: 9px;
    height: 9px;
+}
+
+/* Keep the visually hidden accessible name inside the scrollable row. */
+.dismiss > span {
+   left: 0;
+   top: 0;
 }
 
 .dismiss .gwt-Image {
