@@ -88,7 +88,7 @@ private:
 
              // next, write the chunk body
              boost::asio::mutable_buffer buff(buffer->data, buffer->size);
-             boost::asio::async_write(socket_, buff,
+             boost::asio::async_write(sharedThis->socket_, buff,
               [=](const boost::system::error_code& ec, size_t written) mutable
               {
                  // capture buffer here to ensure the chunk data is not freed until after

@@ -31,6 +31,7 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the list in the dialog for choosing a Posit Connect Cloud account without a label.
 
 ### Dependencies
+- ([#19095](https://github.com/rstudio/rstudio/issues/19095)): macOS builds now require C++20; Linux retains its C++17 minimum.
 - Quarto 1.11.9
 - Electron 44.10.2
 
