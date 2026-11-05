@@ -245,6 +245,9 @@ budgets ensure that opening review cannot consume work reserved for a later
 hunk or choose a different partition just because the machine ran more slowly.
 Tests cover both per-group and shared-budget exhaustion, including a zero
 allocation budget, and verify that review still cannot repartition the result.
+An additional check uses Ace's actual position mapping to verify selections in
+coarse review hunks after an insertion. Missing character ranges must be
+`undefined`, not an empty array, to preserve its line-position fallback.
 
 Line alignment retains its 250 ms timeout. The harness preserves the provider's
 existing `hitTimeout` flag on the returned chunk array. The bounded gutter checks

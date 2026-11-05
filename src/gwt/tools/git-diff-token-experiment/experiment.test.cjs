@@ -112,6 +112,29 @@ test('ambiguous groups above the small-group limit get bounded refinement', () =
    assert.deepEqual(bounded.chunks, raw.chunks);
 });
 
+test('coarse review hunks map selections across preceding inserted lines', () => {
+   const base = ['header()', 'first_unchanged_statement()', 'second_unchanged_statement()',
+      'old_a()', 'old_b()', 'tail()'];
+   const lines = ['header()', 'inserted()', 'first_unchanged_statement()', 'second_unchanged_statement()',
+      'new_a()', 'new_b()', 'tail()'];
+   const transformPositions = [
+      { row: 3, column: 2, isOriginal: true },
+      { row: 4, column: 2, isOriginal: false }
+   ];
+   for (const boundedLimits of [
+      { characters: 0, highlightCharacters: 0 },
+      { groupReads: 0, highlightGroupReads: 0 }
+   ]) {
+      const review = engine.compute(base, lines, 'bounded', {
+         splitView: true, boundedLimits, transformPositions
+      });
+      assert(!review.failed);
+      assert.deepEqual(review.chunks, [[1, 1, 1, 2], [3, 5, 4, 6]]);
+      assert(review.characterChanges.every(count => count === 0));
+      assert.deepEqual(review.transformedPositions, [{ row: 4, column: 2 }, { row: 3, column: 2 }]);
+   }
+});
+
 test('refinement budgets are shared across groups and isolated from review decoration', () => {
    const base = ['a <- 1', 'first_unchanged_statement()', 'b <- 2', 'second_unchanged_statement()', 'c <- 3'];
    const lines = base.map(line => line.replace('<-', '='));

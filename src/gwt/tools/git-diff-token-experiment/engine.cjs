@@ -110,6 +110,9 @@ function createEngine() {
             innerChanges = innerChanges.flatMap(function(mapping) {
                 return mapping.boundedHighlights === undefined ? [mapping] : mapping.boundedHighlights;
             });
+            // An empty array suppresses BaseDiffView's line-position fallback.
+            if (!innerChanges.length)
+                innerChanges = undefined;
         }`
    );
    // Preserve the existing timeout status at the provider boundary. Bounded
@@ -282,9 +285,24 @@ function createEngine() {
             });
          }
       }
+      let transformedPositions;
+      if (options.transformPositions) {
+         const BaseDiffView = context.require('ace/ext/diff/base_diff_view').BaseDiffView;
+         const EditSession = context.require('ace/edit_session').EditSession;
+         const view = Object.assign(Object.create(BaseDiffView.prototype), {
+            chunks,
+            sessionA: new EditSession(base.join('\n')),
+            sessionB: new EditSession(lines.join('\n'))
+         });
+         transformedPositions = options.transformPositions.map(({ row, column, isOriginal }) =>
+            ({ ...view.transformPosition({ row, column }, isOriginal) }));
+         view.sessionA.destroy();
+         view.sessionB.destroy();
+      }
       return {
          ms: performance.now() - started,
          transitions,
+         transformedPositions,
          refinementMs: state.refinementMs,
          characterRefinementCalls: state.characterRefinementCalls,
          boundedGroups: JSON.parse(JSON.stringify(state.boundedGroups)),
