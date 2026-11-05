@@ -63,6 +63,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
 
       dirChooser_ = new DirectoryChooserTextBox(constants_.installationPath(), "", ElementIds.TextBoxButtonId.ODBC_PATH, null);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      licenseLabel_.setText(constants_.licenseLabel());
       licenseLabel_.setFor(license_);
  
       initWidget(createWidget());

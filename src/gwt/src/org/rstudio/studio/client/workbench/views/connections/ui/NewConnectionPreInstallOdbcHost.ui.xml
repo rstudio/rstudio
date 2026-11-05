@@ -79,7 +79,7 @@
       </div>
 
       <div class="{style.licenseArea}">
-        <widget:FormLabel ui:field="licenseLabel_" text="License:"/>
+        <widget:FormLabel ui:field="licenseLabel_"/>
         <g:TextArea ui:field="license_" styleName="{style.license}"
             visibleLines="7" readOnly="true"></g:TextArea>
       </div>
