@@ -71,10 +71,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_cancel_update_install', version);
     },
 
-    clearPendingRVersion: () => {
-      ipcRenderer.send('desktop_clear_pending_r_version');
-    },
-
     installUpdate: async (version: string, projectFilePath: string, callback: VoidCallback<string>) => {
       try {
         callback(await ipcRenderer.invoke('desktop_install_update', version, projectFilePath));
@@ -469,10 +465,10 @@ export function getDesktopBridge() {
     // answers '' once the quit is recorded, or why it could not be: the quit
     // sequence waits on this, and must not go on without the record (the
     // session's exit would be taken for a crash) nor stall without an answer
-    setPendingQuit: (pendingQuit: number, callback: VoidCallback<string>) => {
+    setPendingQuit: (pendingQuit: number, rExecutablePath: string, callback: VoidCallback<string>) => {
       ipcRenderer
-        .invoke('desktop_set_pending_quit', pendingQuit)
-        .then(() => callback(''))
+        .invoke('desktop_set_pending_quit', pendingQuit, rExecutablePath)
+        .then((error: unknown) => callback(typeof error === 'string' ? error : ''))
         .catch((error) => {
           reportIpcError('setPendingQuit', error);
           callback(String(error) || 'setPendingQuit failed');

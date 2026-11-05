@@ -28,18 +28,24 @@ public class DesktopFrameHelper
     */
    public static void setPendingQuit(int quitType, Command command)
    {
-      setPendingQuit(quitType, (String error) ->
+      setPendingQuit(quitType, null, (String error) ->
       {
          if (StringUtil.isNullOrEmpty(error) && command != null)
             command.execute();
       });
    }
 
-   /** As above, with "" once recorded or the frame's error when it was not. */
-   public static void setPendingQuit(int quitType, CommandWithArg<String> onDone)
+   /**
+    * As above, naming the R (prepared by the frame's setPendingRVersion)
+    * the next session should run with, or null; `onDone` receives "" once
+    * recorded or the frame's error when it was not.
+    */
+   public static void setPendingQuit(int quitType,
+                                     String rExecutablePath,
+                                     CommandWithArg<String> onDone)
    {
       if (Desktop.isDesktop() && Desktop.hasDesktopFrame())
-         Desktop.getFrame().setPendingQuit(quitType, onDone);
+         Desktop.getFrame().setPendingQuit(quitType, StringUtil.notNull(rExecutablePath), onDone);
       else
          onDone.execute("");
    }

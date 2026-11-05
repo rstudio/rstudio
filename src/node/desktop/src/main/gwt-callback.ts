@@ -116,6 +116,8 @@ export class GwtCallback extends EventEmitter {
   // the R executable to launch the next session with (set alongside a
   // pending restart when the user switches R versions)
   pendingRVersion = '';
+  /** the R executables setPendingRVersion() found usable, which a quit may then name */
+  preparedRVersions = new Set<string>();
 
   private hasFontConfig = false;
   private owners = new Set<GwtWindow>();
@@ -844,12 +846,8 @@ export class GwtCallback extends EventEmitter {
       queueClipboardWrite(() => desktop.cleanClipboard(stripHtml));
     });
 
-    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
-      this.setPendingQuit(pendingQuit);
-    });
-
-    ipcMain.on('desktop_clear_pending_r_version', () => {
-      this.clearPendingRVersion();
+    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number, rExecutablePath: string) => {
+      return this.setPendingQuit(pendingQuit, rExecutablePath);
     });
 
     ipcMain.handle('desktop_set_pending_r_version', async (event, rExecutablePath: string) => {
@@ -1295,22 +1293,37 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  setPendingQuit(pendingQuit: number): void {
+  /**
+   * Record what the coming session exit is for, and the R it should restart
+   * with (one setPendingRVersion() prepared), if any. The R is published
+   * only here, with the quit it was prepared for: a quit prepared but never
+   * recorded (its claim superseded, its save prompts cancelled) then leaves
+   * nothing for a later, unrelated quit to pick up. Answers '' once
+   * recorded, or why not.
+   */
+  setPendingQuit(pendingQuit: number, rExecutablePath = ''): string {
+    if (rExecutablePath && !this.preparedRVersions.has(rExecutablePath)) {
+      const interpolation = { escapeValue: false };
+      return i18next.t('gwtCallbackTs.rExecutableNotPrepared', { path: rExecutablePath, interpolation }) || rExecutablePath;
+    }
+
     this.pendingQuit = pendingQuit;
+    this.pendingRVersion = rExecutablePath;
 
     // a quit that was abandoned (e.g. the session refused it) leaves no R
     // switch or update install behind for some later, unrelated quit
     if (pendingQuit === PendingQuit.PendingQuitNone) {
-      this.pendingRVersion = '';
       this.updater.cancelPendingInstall();
     }
+    return '';
   }
 
   /**
-   * Hold on to the R executable the next session should use, after checking
-   * that it runs as itself. Resolves to an error message when it doesn't,
-   * and '' otherwise; '' tells the client the R is ready, so a failure
-   * always says something.
+   * Prepare an R executable for the restart a quit is about to ask for, by
+   * checking that it runs as itself. Resolves to an error message when it
+   * doesn't, and '' otherwise; '' tells the client the R is ready, so a
+   * failure always says something. The R is used only by a quit that names
+   * it (see setPendingQuit).
    */
   async setPendingRVersion(rExecutablePath: string): Promise<string> {
     // sessions launched from bin\R.exe fail to load on Windows; use the
@@ -1335,7 +1348,7 @@ export class GwtCallback extends EventEmitter {
       // queried in the background: R can take seconds to start. Bounded,
       // because the client holds the quit for this answer (see
       // ApplicationQuit.claimQuit) and an R that hangs must not hold it
-      // forever; a late answer is then simply dropped
+      // forever; a late answer prepares an R that no quit will name
       const [, error] = await detectREnvironmentAsync(rPath, kPendingRVersionTimeoutMs);
       if (error) {
         logger().logError(error);
@@ -1348,13 +1361,8 @@ export class GwtCallback extends EventEmitter {
       return safeError(error).message || rPath;
     }
 
-    this.pendingRVersion = rPath;
+    this.preparedRVersions.add(rPath);
     return '';
-  }
-
-  /** The quit the pending R was held for is not going to start after all. */
-  clearPendingRVersion(): void {
-    this.pendingRVersion = '';
   }
 
   /**

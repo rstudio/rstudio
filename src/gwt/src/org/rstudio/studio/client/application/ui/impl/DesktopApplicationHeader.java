@@ -758,7 +758,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
                         // the claim is held, so only a released claim can
                         // refuse; then the record is this request's to drop
-                        if (!claim.performQuit(null, saveChanges, null, null))
+                        if (!claim.performQuit(null, saveChanges, null, null, null))
                            Desktop.getFrame().cancelUpdateInstall(version);
                      });
                   }

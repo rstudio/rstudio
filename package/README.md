@@ -306,10 +306,12 @@ that cannot be made blocks the restart rather than letting the installer give
 up silently. On both platforms the active project
 is written to `relaunch-project/<install key>.json` in the Electron user-data
 directory before quitting and reopened, once, by the relaunched RStudio -- the
-marker names the build and installation it is for (and the build the update
-was attempted from, which the Windows installer brings back when the update
-fails), so an unrelated launch in between leaves it alone, and deleting it is
-what claims it, so two launches racing for it reopen the project once. A quit the session refuses cancels the
+marker names the build and installation it is for, so an unrelated launch in
+between leaves it alone, and deleting it is what claims it, so two launches
+racing for it reopen the project once. It also names the build the update was
+attempted from, which takes the marker only when launched with
+`--after-failed-update`, as the Windows installer does when it brings that
+build back after a failed update. A quit the session refuses cancels the
 pending install (the download stays).
 
 The macOS zip is produced for open-source builds only and published to the

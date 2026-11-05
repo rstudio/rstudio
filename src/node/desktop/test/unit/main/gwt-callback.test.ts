@@ -95,11 +95,22 @@ describe('DesktopCallback', () => {
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
     });
 
-    it('records an R that runs and hands it over once', async () => {
+    it('hands over an R that runs, once the quit names it, and only once', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
       assert.equal(await callback.setPendingRVersion(rPath), '');
+      // prepared is not pending: a quit that does not name it leaves it alone
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload), '');
+      assert.equal(callback.collectPendingRVersion(), '');
+
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
       assert.equal(callback.collectPendingRVersion(), rPath);
+      assert.equal(callback.collectPendingRVersion(), '');
+    });
+
+    it('refuses a quit naming an R that was not prepared', () => {
+      assert.isNotEmpty(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, '/no/such/R'));
+      assert.equal(callback.collectPendingQuitRequest(), PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
@@ -123,19 +134,11 @@ describe('DesktopCallback', () => {
       assert.equal(callback.collectPendingRVersion(), '');
     });
 
-    it('forgets the R when the client gives its quit up', async () => {
-      sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
-
-      assert.equal(await callback.setPendingRVersion(rPath), '');
-      callback.clearPendingRVersion();
-      assert.equal(callback.collectPendingRVersion(), '');
-    });
-
     it('forgets the R when the quit it was meant for is abandoned', async () => {
       sinon.stub(DetectR, 'detectREnvironmentAsync').resolves([{} as never, null]);
 
-      callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload);
       assert.equal(await callback.setPendingRVersion(rPath), '');
+      assert.equal(callback.setPendingQuit(PendingQuit.PendingQuitRestartAndReload, rPath), '');
 
       callback.setPendingQuit(PendingQuit.PendingQuitNone);
       assert.equal(callback.collectPendingRVersion(), '');

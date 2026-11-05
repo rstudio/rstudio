@@ -112,6 +112,7 @@
     "unimplemented": "Unimplemented",
     "callbackNyiLowercase": "{{ipcName}} callback NYI",
     "rExecutableMissing": "{{path}} does not exist",
+    "rExecutableNotPrepared": "R at {{path}} has not been checked for this restart.",
     "rExecutableFailed": "{{path}} could not be run: {{error}}",
     "rExecutableNotOrthogonal": "{{path}} is set up to run the default version of R rather than itself",
     "rUpdatePrompt": "RStudio wants to update R {{version}} so it can run alongside other versions of R.",

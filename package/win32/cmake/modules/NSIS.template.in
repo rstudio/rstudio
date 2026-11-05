@@ -24,6 +24,11 @@
   Var UpdateMode
   ; the RStudio to bring back when an in-app update fails
   Var UpdateExeDir
+  ; 1 once the sections have started changing the installation, after which
+  ; there may be no intact RStudio to bring back
+  Var UpdateInstallBegun
+  ; the elevated instance's exit code for a failure after that point
+  !define RSTUDIO_UPDATE_ERROR_INSTALL_BEGUN 666670
 ;--------------------------------
 ;Include Modern UI
 
@@ -414,6 +419,9 @@ Function RunCrossModeUninstaller
 FunctionEnd
 
 Section "-Remove previous installation"
+  ; from here on a failed in-app update cannot simply bring the previous
+  ; RStudio back (see RelaunchAfterFailedUpdate)
+  StrCpy $UpdateInstallBegun 1
 
   ; remove an installation of the opposite mode (per-user vs all-users)
   !insertmacro UAC_AsUser_Call Function GetCrossModeUninstaller ${UAC_SYNCREGISTERS}
@@ -680,22 +688,36 @@ SectionEnd
 ; its failure to the outer one through its exit code instead.
 Function RelaunchAfterFailedUpdate
   ; shown despite /S, for the same reason. The previous version is only
-  ; there to come back to while the install failed before removing it; after
-  ; that (an extraction error, say) the installation needs repairing
-  ${If} $UpdateExeDir != ""
+  ; there to come back to while the install failed before the sections
+  ; started changing it (an elevation refused, say); after that (an
+  ; extraction error) the installation needs repairing, as it does when the
+  ; relaunch itself fails. --after-failed-update lets that RStudio reopen
+  ; the project remembered for the update (see args-manager.ts)
+  ${If} $UpdateInstallBegun = 0
+  ${AndIf} $UpdateExeDir != ""
   ${AndIf} ${FileExists} "$UpdateExeDir\rstudio.exe"
     MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed. @CPACK_PACKAGE_NAME@ will reopen on the version you had; choose Help > Check for Updates to try again, or run the installer yourself."
-    Exec '"$UpdateExeDir\rstudio.exe"'
-  ${Else}
-    MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed, and the previous version of @CPACK_PACKAGE_NAME@ is no longer intact. Please run the @CPACK_PACKAGE_NAME@ installer to repair the installation."
+    ClearErrors
+    Exec '"$UpdateExeDir\rstudio.exe" --after-failed-update'
+    ${IfNot} ${Errors}
+      Return
+    ${EndIf}
   ${EndIf}
+  MessageBox MB_OK|MB_ICONEXCLAMATION "The update could not be installed, and the previous version of @CPACK_PACKAGE_NAME@ could not be started. Please run the @CPACK_PACKAGE_NAME@ installer to repair the installation."
 FunctionEnd
 
 Function .onInstFailed
   ${If} $UpdateMode = 1
-  ${AndIfNot} ${UAC_IsInnerInstance}
-    StrCpy $UpdateExeDir $INSTDIR
-    Call RelaunchAfterFailedUpdate
+    ${If} ${UAC_IsInnerInstance}
+      ; the outer instance brings RStudio back, or says the installation
+      ; needs repairing; it only needs to know which
+      ${If} $UpdateInstallBegun = 1
+        SetErrorLevel ${RSTUDIO_UPDATE_ERROR_INSTALL_BEGUN}
+      ${EndIf}
+    ${Else}
+      StrCpy $UpdateExeDir $INSTDIR
+      Call RelaunchAfterFailedUpdate
+    ${EndIf}
   ${EndIf}
 FunctionEnd
 
@@ -709,6 +731,7 @@ Function .onInit
   ; since NsisMultiUser relaunches with the same command line.
   ;
   StrCpy $UpdateMode 0
+  StrCpy $UpdateInstallBegun 0
   ${GetParameters} $R9
   ClearErrors
   ${GetOptions} $R9 "/update" $R8
@@ -779,6 +802,9 @@ Function .onInit
             ; the elevated instance ran and set the error level to its exit
             ; code ($2); it relaunched RStudio itself when that is 0
             ${If} $2 <> 0
+              ${If} $2 = ${RSTUDIO_UPDATE_ERROR_INSTALL_BEGUN}
+                StrCpy $UpdateInstallBegun 1
+              ${EndIf}
               Call RelaunchAfterFailedUpdate
             ${EndIf}
           ${Else}

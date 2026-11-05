@@ -88,16 +88,21 @@ export function markerExpired(marker: RelaunchMarker, now: number): boolean {
 
 /**
  * Whether `marker` is meant for the RStudio described by `identity`: the
- * build that was installed, or the one the update was attempted from, which
- * the installer brings back when the update fails.
+ * build that was installed, or, when `afterFailedUpdate` (this launch is
+ * the installer bringing the previous build back), the build the update was
+ * attempted from. Not on an ordinary launch of that build, which could
+ * happen while the installer is still waiting and would take the marker
+ * from the launch it is for.
  */
-export function markerMatches(marker: RelaunchMarker, identity: RelaunchIdentity): boolean {
+export function markerMatches(marker: RelaunchMarker, identity: RelaunchIdentity, afterFailedUpdate = false): boolean {
   if (marker.installKey !== identity.installKey) {
     return false;
   }
+  if (compareVersions(marker.version, identity.version) === 0) {
+    return true;
+  }
   return (
-    compareVersions(marker.version, identity.version) === 0 ||
-    (marker.fromVersion.length > 0 && compareVersions(marker.fromVersion, identity.version) === 0)
+    afterFailedUpdate && marker.fromVersion.length > 0 && compareVersions(marker.fromVersion, identity.version) === 0
   );
 }
 
@@ -183,6 +188,7 @@ export function takeRelaunchProject(
   identity: RelaunchIdentity,
   now = Date.now(),
   dir = defaultMarkerDir(),
+  afterFailedUpdate = false,
 ): string | null {
   let text: string;
   try {
@@ -196,7 +202,7 @@ export function takeRelaunchProject(
     forgetRelaunchProject(identity.installKey, dir);
     return null;
   }
-  if (!markerMatches(marker, identity)) {
+  if (!markerMatches(marker, identity, afterFailedUpdate)) {
     return null;
   }
 

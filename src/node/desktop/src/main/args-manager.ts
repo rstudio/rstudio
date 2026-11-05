@@ -33,6 +33,8 @@ import { safeError } from '../core/err';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
+/** passed by the Windows installer when it brings the previous build back after a failed in-app update */
+export const kAfterFailedUpdateOption = '--after-failed-update';
 export const kVersion = '--version';
 export const kVersionJson = '--version-json';
 export const kLogLevel = 'log-level';
@@ -208,10 +210,12 @@ export class ArgsManager {
     // an in-app update relaunches RStudio with no arguments; reopen what was
     // open when the update was accepted, as "Restart RStudio" does. The
     // marker names the build and installation it is for, so an unrelated
-    // launch in between leaves it alone.
+    // launch in between leaves it alone; the previous build takes it only
+    // when the installer brings it back after a failed update, and says so.
     if (!getenv(kRStudioInitialProject)) {
       const identity = { version: buildInfo().RSTUDIO_VERSION, installKey: installationKey(process.execPath) };
-      const project = takeRelaunchProject(identity);
+      const afterFailedUpdate = process.argv.indexOf(kAfterFailedUpdateOption) > -1;
+      const project = takeRelaunchProject(identity, Date.now(), undefined, afterFailedUpdate);
       if (project === kProjectNone) {
         setenv(kRStudioInitialProject, kProjectNone);
       } else if (project && existsSync(project)) {

@@ -112,6 +112,7 @@
     "unimplemented": "Non implémenté",
     "callbackNyiLowercase": "{{ipcName}} pas encore implémenté",
     "rExecutableMissing": "{{path}} n'existe pas",
+    "rExecutableNotPrepared": "R dans {{path}} n'a pas été vérifié pour ce redémarrage.",
     "rExecutableFailed": "{{path}} n'a pas pu être exécuté : {{error}}",
     "rExecutableNotOrthogonal": "{{path}} est configuré pour exécuter la version de R par défaut plutôt que lui-même",
     "rUpdatePrompt": "RStudio souhaite mettre à jour R {{version}} afin qu'il puisse fonctionner avec d'autres versions de R.",

@@ -423,9 +423,10 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
 
       new QuitCommand(callContext,
                       progressMessage,
-                      saveChanges, 
+                      saveChanges,
                       switchToProject,
                       switchToRVersion,
+                      null,
                       onQuitAcknowledged).execute();
       return true;
    }
@@ -445,10 +446,16 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          claim_ = claim;
       }
 
+      /**
+       * `rExecutablePath` names the R the desktop frame should restart
+       * with (prepared with its setPendingRVersion), or null; the frame
+       * uses it only for this quit.
+       */
       public boolean performQuit(String progressMessage,
                                  boolean saveChanges,
                                  String switchToProject,
-                                 RVersionSpec switchToRVersion)
+                                 RVersionSpec switchToRVersion,
+                                 String rExecutablePath)
       {
          if (!claim_.start())
          {
@@ -461,6 +468,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                          saveChanges,
                          switchToProject,
                          switchToRVersion,
+                         rExecutablePath,
                          null).execute();
          return true;
       }
@@ -761,9 +769,10 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    {
       public QuitCommand(TutorialApiCallContext callContext,
                          String progressMessage,
-                         boolean saveChanges, 
+                         boolean saveChanges,
                          String switchToProject,
                          RVersionSpec switchToRVersion,
+                         String rExecutablePath,
                          Command onQuitAcknowledged)
       {
          callContext_ = callContext;
@@ -771,6 +780,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
          switchToRVersion_ = switchToRVersion;
+         rExecutablePath_ = rExecutablePath;
          onQuitAcknowledged_ = onQuitAcknowledged;
       }
       
@@ -809,7 +819,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
             
             isQuitting_ = true;
-            DesktopFrameHelper.setPendingQuit(quitType, (String frameError) ->
+            DesktopFrameHelper.setPendingQuit(quitType, rExecutablePath_, (String frameError) ->
             {
                if (!StringUtil.isNullOrEmpty(frameError))
                {
@@ -862,7 +872,6 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                         private void onFailedToQuit(String message)
                         {
                            quitNotStarted(message, progress);
-                           DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
                         }
                      });
             });
@@ -883,7 +892,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          }
       }
 
-      /** The quit did not start: admit the next one, and fail a tutorial caller. */
+      /**
+       * The quit did not start: admit the next one, fail a tutorial caller,
+       * and leave nothing armed in the desktop frame (an update install
+       * recorded for this quit, the R it named) for a later, unrelated quit.
+       */
       private void quitNotStarted(String message, GlobalProgressDelayer progress)
       {
          isQuitting_ = false;
@@ -891,6 +904,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          progress.dismiss();
          if (quitProgress_ == progress)
             quitProgress_ = null;
+         DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
 
          if (callContext_ != null)
          {
@@ -905,6 +919,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       private final boolean saveChanges_;
       private final String switchToProject_;
       private final RVersionSpec switchToRVersion_;
+      private final String rExecutablePath_;
       private final String progressMessage_;
       private final Command onQuitAcknowledged_;
    }
