@@ -15,6 +15,7 @@
 
 import { assert } from 'chai';
 import { spawnSync } from 'child_process';
+import { app } from 'electron';
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
@@ -125,11 +126,18 @@ esac
           const { app } = require('electron');
           require(${JSON.stringify(detectR)}).startRDetection = () => app.exit(98);
           app.on('browser-window-created', () => app.exit(97));
+          process.argv = process.argv.filter((arg) => arg !== '--no-sandbox');
           require(${JSON.stringify(main)});
         `,
       );
       delete env.ELECTRON_RUN_AS_NODE;
-      const result = spawnSync(process.execPath, [bootstrap, 'file.R:2:3'], {
+      // Linux CI may need the runner's sandbox setting to start Electron.
+      // Keep that runtime switch out of the file-opening command above.
+      const args = [bootstrap, 'file.R:2:3'];
+      if (app.commandLine.hasSwitch('no-sandbox')) {
+        args.splice(1, 0, '--no-sandbox');
+      }
+      const result = spawnSync(process.execPath, args, {
         cwd: dir,
         env,
         encoding: 'utf8',
