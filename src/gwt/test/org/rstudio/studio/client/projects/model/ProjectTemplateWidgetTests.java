@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import static org.rstudio.core.client.dom.LabelTestHelper.labelTextFor;
+
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -33,7 +34,7 @@ public class ProjectTemplateWidgetTests extends GWTTestCase
    {
       ProjectTemplateWidget widget = newWidget(
             "[{\"parameter\": \"name\", \"type\": \"textinput\", \"label\": \"Author name\"}]");
-      assertEquals("Author name:", labelTextFor(widget, textInput(widget, 0)));
+      assertEquals("Author name:", labelTextFor(widget.getElement(), textInput(widget, 0)));
    }
 
    // the two-column layout places the inputs in separate panels; each must
@@ -44,8 +45,8 @@ public class ProjectTemplateWidgetTests extends GWTTestCase
             "[{\"parameter\": \"name\", \"type\": \"textinput\", \"label\": \"Author name\"}," +
             " {\"parameter\": \"tag\", \"type\": \"textinput\", \"label\": \"Tag:\"," +
             "  \"position\": \"right\"}]");
-      assertEquals("Author name:", labelTextFor(widget, textInput(widget, 0)));
-      assertEquals("Tag:", labelTextFor(widget, textInput(widget, 1)));
+      assertEquals("Author name:", labelTextFor(widget.getElement(), textInput(widget, 0)));
+      assertEquals("Tag:", labelTextFor(widget.getElement(), textInput(widget, 1)));
    }
 
    // Label is optional in a template's DCF; adding a colon to an empty label
@@ -54,7 +55,7 @@ public class ProjectTemplateWidgetTests extends GWTTestCase
    {
       ProjectTemplateWidget widget = newWidget(
             "[{\"parameter\": \"name\", \"type\": \"textinput\", \"label\": \"\"}]");
-      assertEquals("", labelTextFor(widget, textInput(widget, 0)));
+      assertEquals("", labelTextFor(widget.getElement(), textInput(widget, 0)));
    }
 
    private static ProjectTemplateWidget newWidget(String widgetsJson)
@@ -76,23 +77,6 @@ public class ProjectTemplateWidgetTests extends GWTTestCase
             return input;
       }
       fail("expected text input " + index);
-      return null;
-   }
-
-   // a <label for> only names the control if the id matches, so look the
-   // label up by the control's id rather than trusting widget wiring
-   private static String labelTextFor(ProjectTemplateWidget container, Element control)
-   {
-      String id = control.getId();
-      assertFalse("the control needs an id for <label for>", id.isEmpty());
-
-      NodeList<Element> labels = container.getElement().getElementsByTagName("label");
-      for (int i = 0; i < labels.getLength(); i++)
-      {
-         LabelElement label = labels.getItem(i).cast();
-         if (id.equals(label.getHtmlFor()))
-            return label.getInnerText();
-      }
       return null;
    }
 }
