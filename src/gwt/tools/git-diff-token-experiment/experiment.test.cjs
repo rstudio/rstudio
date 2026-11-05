@@ -45,6 +45,36 @@ test('shipped mode switching preserves coarse selection mapping and character hi
    }
 });
 
+test('both shipped bundles bound asymmetric character searches in either view', () => {
+   for (const minified of [false, true]) {
+      const production = createProductionEngine({ minified });
+      for (const length of [4000, 8190]) {
+         const short = ['a'];
+         const long = ['a' + 'b'.repeat(length)];
+         for (const [base, lines] of [[short, long], [long, short]]) {
+            for (const splitView of [false, true]) {
+               const result = production.compute(base, lines, 'current', { splitView });
+               assert(!result.failed && !timedOut(result));
+               assert.deepEqual(result.chunks, [[0, 1, 0, 1]]);
+               assert.deepEqual(result.characterChanges, [0]);
+            }
+         }
+      }
+   }
+});
+
+test('shipped coarse selections clamp to the destination line end', () => {
+   for (const minified of [false, true]) {
+      const production = createProductionEngine({ minified });
+      const result = production.compute(['    aaa', '    bbb'], ['  ccc'], 'current', {
+         boundedLimits: { groupReads: 0 }, splitView: true,
+         transformPositions: [{ row: 1, column: 7, isOriginal: true }]
+      });
+      assert(!result.failed);
+      assert.deepEqual(result.transformedPositions, [{ row: 0, column: 5 }]);
+   }
+});
+
 test('tokens preserve exact equality across the single-character token limit', () => {
    const lines = Array.from({ length: 21010 }, (_, i) => `statement_${i}()`);
    for (const strategy of TOKEN_STRATEGIES) {

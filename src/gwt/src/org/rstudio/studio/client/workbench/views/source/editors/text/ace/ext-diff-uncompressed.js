@@ -788,6 +788,7 @@ var BaseDiffView = /** @class */ (function () {
                 if (result.row >= chunk[to].end.row) {
                     result.row = chunk[to].end.row - 1;
                     result.column = (isOriginal ? this.sessionB : this.sessionA).getLine(result.row).length;
+                    ignoreIndent = true;
                 }
             }
         }
@@ -3022,7 +3023,7 @@ var DynamicProgrammingDiffing = /** @class */ (function () {
 var MyersDiffAlgorithm = /** @class */ (function () {
     function MyersDiffAlgorithm() {
     }
-    MyersDiffAlgorithm.prototype.compute = function (seq1, seq2, timeout) {
+    MyersDiffAlgorithm.prototype.compute = function (seq1, seq2, timeout, workBudget) {
         if (timeout === void 0) { timeout = InfiniteTimeout.instance; }
         if (seq1.length === 0 || seq2.length === 0) {
             return DiffAlgorithmResult.trivial(seq1, seq2);
@@ -3050,6 +3051,8 @@ var MyersDiffAlgorithm = /** @class */ (function () {
             var lowerBound = -Math.min(d, seqY.length + d % 2);
             var upperBound = Math.min(d, seqX.length + d % 2);
             for (k = lowerBound; k <= upperBound; k += 2) {
+                if (workBudget)
+                    workBudget.consume();
                 var maxXofDLineTop = k === upperBound ? -1 : V.get(k + 1);
                 var maxXofDLineLeft = k === lowerBound ? -1 : V.get(k - 1) + 1;
                 var x = Math.min(Math.max(maxXofDLineTop, maxXofDLineLeft), seqX.length);
@@ -4277,7 +4280,7 @@ var DefaultLinesDiffComputer = /** @class */ (function () {
     DefaultLinesDiffComputer.prototype.refineCharacters = function (originalLines, modifiedLines, rangeMapping, timeout, considerWhitespaceChanges, options, readBudget) {
         var slice1 = new LinesSliceCharSequence(originalLines, rangeMapping.originalRange, considerWhitespaceChanges, readBudget);
         var slice2 = new LinesSliceCharSequence(modifiedLines, rangeMapping.modifiedRange, considerWhitespaceChanges, readBudget);
-        var diffResult = slice1.length + slice2.length < 500 ? this.dynamicProgrammingDiffing.compute(slice1, slice2, timeout) : this.myersDiffingAlgorithm.compute(slice1, slice2, timeout);
+        var diffResult = slice1.length + slice2.length < 500 ? this.dynamicProgrammingDiffing.compute(slice1, slice2, timeout) : this.myersDiffingAlgorithm.compute(slice1, slice2, timeout, readBudget);
         var diffs = diffResult.diffs;
         diffs = optimizeSequenceDiffs(slice1, slice2, diffs);
         diffs = extendDiffsToEntireWordIfAppropriate(slice1, slice2, diffs, function (seq, idx) { return seq.findWordContaining(idx); });

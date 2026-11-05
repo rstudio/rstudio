@@ -88,6 +88,12 @@
       check("coarse mapping survives the common-prefix offset", gutter.chunks[1].isCoarse, true);
       check("mixed hunk maps original selections", review.transformPosition({row: 3, column: 0}, true), {row: 4, column: 0});
       check("mixed hunk maps modified selections", review.transformPosition({row: 4, column: 0}, false), {row: 3, column: 0});
+
+      original = ["    " + "a".repeat(2500), "    " + "b".repeat(2500)];
+      editor.setValue("  ccc", -1);
+      gutter.setBase(original.join("\n"));
+      check("unequal line counts retain coarse metadata", gutter.chunks[0].isCoarse, true);
+      check("clamped selection keeps the destination line end", review.transformPosition({row: 1, column: 2504}, true), {row: 0, column: 5});
    } catch (error) {
       check("integration completes", String(error.stack || error), "no exception");
    } finally {

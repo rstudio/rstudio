@@ -316,24 +316,28 @@ an `ACE_SOURCE_DIR` environment override for building a dedicated Ace worktree;
 its output paths always refer to this RStudio checkout. The complete build
 changed only the two diff bundles.
 
-The five-sample production run used the same 29 cases. All production hunks and
-review character ranges matched the bounded prototype. All 145 timing pairs and
+The five-sample production run used the same 29 cases. All production hunks matched
+the bounded prototype. Production additionally charges Myers frontier advances
+against the work budgets, closing a quadratic path for highly asymmetric edits
+that the original prototype did not bound. This reduces character-highlight
+detail in two historical cases relative to that prototype; 24/29 cases still
+match raw character ranges exactly. All 145 timing pairs and
 29 open/close/reopen checks preserved boundaries, with no failed samples. Medians:
 
 | Case | Baseline gutter | Production gutter | Production review |
 | --- | ---: | ---: | ---: |
-| 300-line replacement | 289.6 ms | 13.9 ms | 14.1 ms |
-| 800-line replacement | 499.8 ms (no markers) | 99.4 ms | 99.8 ms |
-| Large historical Java change | 253.3 ms | 221.4 ms | 228.8 ms |
+| 300-line replacement | 294.1 ms | 15.8 ms | 15.9 ms |
+| 800-line replacement | 499.7 ms (no markers) | 110.1 ms | 108.2 ms |
+| Large historical Java change | 252.8 ms | 211.3 ms | 227.9 ms |
 
 The original granularity/highlight caveats still apply. Production timing uses
 the actual algorithms and getter instrumentation is absent; internal alignment
 and read-count comparisons are reported only for the instrumented candidates.
 
-Verification includes both minified and uncompressed bundles, the 20-test Node
+Verification includes both minified and uncompressed bundles, the 22-test Node
 suite, and `test/git_diff_test.html` in the existing browser runner. The browser
 test uses the real RStudio editor, gutter, and split-view components and checks
 character/whole-line rendering, mode switches, navigation, peeks, individual
-reverts, and selection mapping through mixed coarse/refined hunks. The complete
-browser suite passed 731 checks across 10 pages. These are component tests, not
+reverts, and selection mapping through mixed coarse/refined hunks and unequal line counts. The complete
+browser suite passed 733 checks across 10 pages. These are component tests, not
 a full RStudio application/session E2E run.
