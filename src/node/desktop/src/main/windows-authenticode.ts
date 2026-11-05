@@ -35,21 +35,23 @@ export interface SignatureInfo {
   subject: string;
 }
 
+/** The environment variable that names the file for the script. */
+export const kSignatureFileVariable = 'RSTUDIO_AUTHENTICODE_FILE';
+
 /**
- * The PowerShell that reports the signature of `file` as one JSON object:
+ * The PowerShell that reports the signature of the file named by
+ * `$env:RSTUDIO_AUTHENTICODE_FILE` as one JSON object:
  * `{"status":"Valid","subject":"CN=\"Posit Software, PBC\", O=..."}`.
+ * The path never appears in the script's text: it ends in a filename the
+ * builds API supplies, and PowerShell ends a quoted string at several
+ * characters besides the ASCII quote (U+2018 to U+201B among them).
  */
-export function signatureScript(file: string): string {
-  // a single-quoted PowerShell string takes everything literally except the
-  // quote itself, which is doubled
-  const literal = `'${file.replace(/'/g, "''")}'`;
-  return [
-    `$s = Get-AuthenticodeSignature -LiteralPath ${literal}`,
-    '$c = $s.SignerCertificate',
-    "$o = @{ status = [string]$s.Status; subject = if ($c) { [string]$c.Subject } else { '' } }",
-    '[Console]::Out.Write(($o | ConvertTo-Json -Compress))',
-  ].join('; ');
-}
+export const kSignatureScript = [
+  `$s = Get-AuthenticodeSignature -LiteralPath $env:${kSignatureFileVariable}`,
+  '$c = $s.SignerCertificate',
+  "$o = @{ status = [string]$s.Status; subject = if ($c) { [string]$c.Subject } else { '' } }",
+  '[Console]::Out.Write(($o | ConvertTo-Json -Compress))',
+].join('; ');
 
 /** Read the script's answer; null when it is not the expected object. */
 export function parseSignatureInfo(output: string): SignatureInfo | null {
@@ -116,13 +118,10 @@ export const kSignatureCheckTimeoutMs = 2 * 60 * 1000;
  * (PowerShell missing or blocked, say), which callers treat as untrusted.
  */
 export async function installerSignature(file: string, run: CommandRunner): Promise<SignatureInfo | null> {
-  const output = await run('powershell.exe', [
-    '-NoProfile',
-    '-NonInteractive',
-    '-ExecutionPolicy',
-    'Bypass',
-    '-Command',
-    signatureScript(file),
-  ]);
+  const output = await run(
+    'powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', kSignatureScript],
+    { [kSignatureFileVariable]: file },
+  );
   return output === null ? null : parseSignatureInfo(output);
 }

@@ -59,8 +59,11 @@ export function parsePsPids(output: string, execPath: string): number[] {
   return pids;
 }
 
-/** Runs a command and resolves to its stdout, or null when it failed. */
-export type CommandRunner = (command: string, args: string[]) => Promise<string | null>;
+/**
+ * Runs a command, with `env` added to its environment, and resolves to its
+ * stdout, or null when it failed.
+ */
+export type CommandRunner = (command: string, args: string[], env?: Record<string, string>) => Promise<string | null>;
 
 /**
  * Far longer than listing processes takes. The install preflight holds the
@@ -70,12 +73,17 @@ export type CommandRunner = (command: string, args: string[]) => Promise<string 
 export const kProcessListTimeoutMs = 30 * 1000;
 
 export function execFileRunner(timeoutMs = kProcessListTimeoutMs): CommandRunner {
-  return async (command, args) => {
+  return async (command, args, env) => {
     return new Promise((resolve) => {
       execFile(
         command,
         args,
-        { windowsHide: true, maxBuffer: 16 * 1024 * 1024, timeout: timeoutMs },
+        {
+          windowsHide: true,
+          maxBuffer: 16 * 1024 * 1024,
+          timeout: timeoutMs,
+          env: env ? { ...process.env, ...env } : undefined,
+        },
         (error, stdout) => resolve(error ? null : stdout),
       );
     });

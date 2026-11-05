@@ -19,8 +19,9 @@ import {
   installerSignature,
   isTrustedInstallerSignature,
   kInstallerSigner,
+  kSignatureFileVariable,
+  kSignatureScript,
   parseSignatureInfo,
-  signatureScript,
   subjectCommonName,
 } from '../../../src/main/windows-authenticode';
 
@@ -65,22 +66,26 @@ describe('windows authenticode', () => {
     assert.isNull(parseSignatureInfo('[]'));
   });
 
-  it('quotes the file for PowerShell', () => {
-    const script = signatureScript("C:\\Users\\O'Brien\\AppData\\Local\\Temp\\RStudio-2026.12.0-daily-9.exe");
-    assert.include(script, "-LiteralPath 'C:\\Users\\O''Brien\\AppData\\Local\\Temp\\RStudio-2026.12.0-daily-9.exe'");
-    assert.include(script, 'ConvertTo-Json');
+  it('hands PowerShell the file through the environment, never in the script', async () => {
+    // quotes PowerShell ends a string at: ASCII, and U+2018 to U+201B
+    const file = "C:\\Users\\D\u2019Arcy\\Temp\\RStudio-x'; Start-Process calc; \u2018.exe";
+    const calls: [string, string[], Record<string, string> | undefined][] = [];
+    const run = async (command: string, args: string[], env?: Record<string, string>) => {
+      calls.push([command, args, env]);
+      return '{"status":"Valid","subject":"CN=x"}';
+    };
+    assert.deepEqual(await installerSignature(file, run), { status: 'Valid', subject: 'CN=x' });
+
+    const [command, args, env] = calls[0];
+    assert.equal(command, 'powershell.exe');
+    assert.include(args, '-NonInteractive');
+    assert.equal(args[args.length - 1], kSignatureScript);
+    assert.include(kSignatureScript, `-LiteralPath $env:${kSignatureFileVariable}`);
+    assert.notInclude(args.join(' '), 'Start-Process');
+    assert.deepEqual(env, { [kSignatureFileVariable]: file });
   });
 
   it('runs PowerShell and answers null when it cannot', async () => {
-    const calls: [string, string[]][] = [];
-    const run = async (command: string, args: string[]) => {
-      calls.push([command, args]);
-      return '{"status":"Valid","subject":"CN=x"}';
-    };
-    assert.deepEqual(await installerSignature('C:\\x.exe', run), { status: 'Valid', subject: 'CN=x' });
-    assert.equal(calls[0][0], 'powershell.exe');
-    assert.include(calls[0][1], '-NonInteractive');
-    assert.include(calls[0][1][calls[0][1].length - 1], "-LiteralPath 'C:\\x.exe'");
 
     assert.isNull(await installerSignature('C:\\x.exe', async () => null));
     assert.isNull(await installerSignature('C:\\x.exe', async () => 'garbage'));

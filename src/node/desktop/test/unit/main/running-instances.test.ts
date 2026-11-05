@@ -109,5 +109,15 @@ describe('running instances', () => {
       }
       assert.equal(await execFileRunner()('/bin/echo', ['listed']), 'listed\n');
     });
+
+    it('adds the given variables to the environment it inherits', async function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+      const output = await execFileRunner()('/bin/sh', ['-c', 'printf "%s|%s" "$RS_RUNNER_TEST" "$PATH"'], {
+        RS_RUNNER_TEST: "it's ’quoted’",
+      });
+      assert.equal(output, `it's ’quoted’|${process.env.PATH ?? ''}`);
+    });
   });
 });
