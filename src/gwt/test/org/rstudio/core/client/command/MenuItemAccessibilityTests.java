@@ -74,6 +74,39 @@ public class MenuItemAccessibilityTests extends GWTTestCase
       assertNull(DomUtils.getFirstElementWithClassName(label, AppCommand.MENU_SHORTCUT_CLASS));
    }
 
+   public void testCommandItemMovesShortcutToAriaKeyShortcuts()
+   {
+      AppCommand cmd = new AppCommand();
+      cmd.setMenuLabel("Item");
+      cmd.setShortcut(shortcut("Ctrl+K"));
+      AppMenuItem item = new AppMenuItem(cmd, true);
+      assertEquals("Control+K", item.getElement().getAttribute("aria-keyshortcuts"));
+      assertEquals("true", shortcutCell(item).getAttribute("aria-hidden"));
+
+      // A shortcut the attribute can't express stays in the name.
+      cmd.setCustomShortcut(shortcut("Ctrl+K Ctrl+S"));
+      item.onShow();
+      assertFalse(item.getElement().hasAttribute("aria-keyshortcuts"));
+      assertFalse(shortcutCell(item).hasAttribute("aria-hidden"));
+
+      cmd.setCustomShortcut(null);
+      cmd.setShortcut(null);
+      item.onShow();
+      assertFalse(item.getElement().hasAttribute("aria-keyshortcuts"));
+      assertNull(shortcutCell(item));
+   }
+
+   private static KeyboardShortcut shortcut(String keys)
+   {
+      return new KeyboardShortcut(KeySequence.fromShortcutString(keys));
+   }
+
+   private static Element shortcutCell(AppMenuItem item)
+   {
+      return DomUtils.getFirstElementWithClassName(
+            item.getElement(), AppCommand.MENU_SHORTCUT_CLASS);
+   }
+
    private static Element render(String html)
    {
       Element div = Document.get().createDivElement();
