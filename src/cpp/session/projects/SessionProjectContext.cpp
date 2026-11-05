@@ -1139,10 +1139,20 @@ FilePath ProjectContext::packageDirectory() const
 FilePath ProjectContext::packageDirectoryInProject() const
 {
    FilePath packageDir = packageDirectory();
-   if (!packageDir.isEmpty() && packageDir.isWithin(directory()))
-      return packageDir;
+   if (packageDir.isEmpty() || !packageDir.isWithin(directory()))
+      return FilePath();
 
-   return FilePath();
+   // The monitor and source index preserve the project directory's spelling,
+   // including any dot components. Normalize only the package-relative suffix
+   // so PackagePath: . and ./pkg match those registered index keys.
+   std::string relativePath = packageDir.getRelativePath(directory());
+   if (relativePath.empty() || relativePath == ".")
+      return directory();
+
+   FilePath indexedDir = directory().completeChildPath(relativePath);
+   if (indexedDir.getFilename() == ".")
+      indexedDir = indexedDir.getParent();
+   return indexedDir;
 }
 
 const r_util::RPackageInfo& ProjectContext::packageInfo() const

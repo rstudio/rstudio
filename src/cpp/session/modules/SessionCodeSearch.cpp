@@ -858,15 +858,8 @@ public:
                   boost::function<void(const Entry&)> operation,
                   boost::function<bool(const Entry&)> filter = boost::function<bool(const Entry&)>())
    {
-      // Match monitor paths for PackagePath values such as . and ./pkg.
-      // Lexical normalization keeps a trailing dot, so remove that directory
-      // marker explicitly without resolving symlinks or touching the filesystem.
-      FilePath lookupPath(parentPath.getLexicallyNormalPath());
-      if (lookupPath.getFilename() == ".")
-         lookupPath = lookupPath.getParent();
-
       EntryTree::iterator parentItr;
-      if (!findParent(lookupPath, &parentItr))
+      if (!findParent(parentPath, &parentItr))
          return;
       
       EntryTree::leaf_iterator it = pEntries_->begin_leaf(parentItr);
@@ -2895,12 +2888,28 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
 
 // Keep this test alongside the private SourceFileIndex implementation.
-TEST(SourceFileIndexTests, WalkFilesExcludesSiblingSymbols)
+class SourceFileIndexTests : public ::testing::TestWithParam<std::string>
 {
-   FilePath projectDir;
-   ASSERT_FALSE(FilePath::tempFilePath(projectDir));
+};
+
+TEST_P(SourceFileIndexTests, WalkFilesExcludesSiblingSymbols)
+{
+   FilePath tempDir;
+   ASSERT_FALSE(FilePath::tempFilePath(tempDir));
+   ASSERT_FALSE(tempDir.ensureDirectory());
+   RemoveOnExitScope removeScope(tempDir, ERROR_LOCATION);
+   FilePath projectDir = tempDir.completeChildPath(GetParam());
    ASSERT_FALSE(projectDir.ensureDirectory());
-   RemoveOnExitScope removeScope(projectDir, ERROR_LOCATION);
+
+   FilePath projectFile = projectDir.completeChildPath("test.Rproj");
+   ASSERT_FALSE(writeStringToFile(projectFile, R"(Version: 1.0
+EnableCodeIndexing: No
+BuildType: None
+)"));
+   projects::ProjectContext context;
+   std::string userError;
+   Error error = context.startup(projectFile, &userError);
+   ASSERT_FALSE(error) << error.asString();
 
    std::vector<std::pair<std::string, std::string>> sources = {
       {"before/before.R", "before"},
@@ -2924,24 +2933,29 @@ TEST(SourceFileIndexTests, WalkFilesExcludesSiblingSymbols)
    ASSERT_TRUE(index.get(projectDir.completeChildPath("pkg/R/inside.R")));
    ASSERT_TRUE(index.get(projectDir.completeChildPath("scripts/outside.R")));
 
-   for (const std::string& packagePath : {"pkg", "./pkg", "pkg/."})
+   for (const std::string& packagePath : {"pkg", "./pkg", "pkg/.", "."})
    {
       SCOPED_TRACE(packagePath);
+      r_util::RProjectConfig config = context.config();
+      config.buildType = r_util::kBuildTypePackage;
+      config.packagePath = packagePath;
+      context.setConfig(config);
+
       std::set<std::string> symbols;
       index.walkFiles(
-            projectDir.completeChildPath(packagePath),
+            context.packageDirectoryInProject(),
             boost::bind(callbacks::addAllProjectSymbols, _1, &symbols));
-      const std::set<std::string> expected = {"inside", "deeper"};
+      std::set<std::string> expected = {"inside", "deeper"};
+      if (packagePath == ".")
+         expected.insert({"before", "outside"});
       EXPECT_EQ(expected, symbols);
    }
-
-   std::set<std::string> rootSymbols;
-   index.walkFiles(
-         projectDir.completeChildPath("."),
-         boost::bind(callbacks::addAllProjectSymbols, _1, &rootSymbols));
-   const std::set<std::string> expectedRoot = {"before", "inside", "deeper", "outside"};
-   EXPECT_EQ(expectedRoot, rootSymbols);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+      ProjectRootSpellings,
+      SourceFileIndexTests,
+      ::testing::Values("project", "./project"));
 
 #endif
 
