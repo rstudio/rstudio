@@ -536,8 +536,9 @@ public class TextEditingTarget implements
       {
          isSaving_ = false;
 
-         // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
-         // when attempting to save files that are being backed up by external software
+         // do not show the error if it is a transient autosave related issue - this can
+         // occur fairly frequently when attempting to save files that are being backed up
+         // by external software
          if (fileInUse && suppressFileLockError_)
          {
             if (executeOnSilentFailure_ != null)
