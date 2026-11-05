@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
@@ -93,8 +94,13 @@ public class ApplicationWindow extends Composite
 
       warnings_ = new WarningBarList(
             pWarningBar,
+            ariaLive,
             this::updateWarnings,
-            () -> events.fireEvent(new PushClientStateEvent(true)));
+            () -> events.fireEvent(new PushClientStateEvent(true)),
+            () -> events.fireEvent(new ConsoleActivateEvent(true)));
+      Widget announcements = warnings_.getAnnouncementWidget();
+      applicationPanel_.add(announcements);
+      A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(announcements));
       Roles.getContentinfoRole().set(warnings_.getElement());
       Roles.getContentinfoRole().setAriaLabelProperty(warnings_.getElement(), constants_.warningBarText());
       applicationPanel_.add(warnings_);
@@ -227,8 +233,11 @@ public class ApplicationWindow extends Composite
       workbenchScreen_ = workbenchScreen;
 
       applicationHeader_.asWidget().setVisible(true);
-      applicationPanel_.add(workbenchScreen_);
+      applicationPanel_.insert(workbenchScreen_, applicationPanel_.getWidgetIndex(warnings_));
       Element mainEl = applicationPanel_.getWidgetContainerElement(workbenchScreen_);
+      // LayoutPanel.insert orders its widgets but appends their DOM layers.
+      // Keep reading and tab order consistent with the visual layout too.
+      mainEl.getParentElement().insertBefore(mainEl, applicationPanel_.getWidgetContainerElement(warnings_));
       Roles.getMainRole().set(mainEl);
       Roles.getMainRole().setAriaLabelProperty(mainEl, constants_.workbenchLabel());
       updateWorkbenchTopBottom();

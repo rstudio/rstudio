@@ -14,10 +14,10 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.inject.Inject;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
@@ -40,11 +40,10 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.ImageButton;
 import org.rstudio.studio.client.application.StudioClientApplicationConstants;
-import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
-import org.rstudio.studio.client.common.Timers;
 
 public class WarningBar extends Composite
       implements HasCloseHandlers<WarningBar>
@@ -70,6 +69,8 @@ public class WarningBar extends Composite
       String right();
       String center();
       String message();
+      String controls();
+      String details();
       String warningIcon();
       String label();
       String action();
@@ -83,7 +84,7 @@ public class WarningBar extends Composite
    static final Binder binder = GWT.create(Binder.class);
 
    @Inject
-   public WarningBar(EventBus events, AriaLiveService ariaLive)
+   public WarningBar(EventBus events, GlobalDisplay globalDisplay)
    {
       events_ = events;
       initWidget(binder.createAndBindUi(this));
@@ -100,19 +101,35 @@ public class WarningBar extends Composite
             action_.execute();
       });
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
-      A11y.setARIAHidden(label_);
-      if (!ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
-         Roles.getAlertRole().set(live_);
+      label_.setId(Document.get().createUniqueId());
+      Roles.getButtonRole().setAriaDescribedbyProperty(dismiss_.getElement(), Id.of(label_.getId()));
+      details_.setText(constants_.warningDetailsText());
+      details_.addClickHandler(event -> globalDisplay.showMessage(
+            GlobalDisplay.MSG_WARNING, constants_.warningDetailsCaption(), getText()));
    }
 
    public void setText(String value)
    {
       label_.setInnerHTML(value);
-      Roles.getGroupRole().set(getElement());
-      Roles.getGroupRole().setAriaLabelProperty(getElement(), label_.getInnerText());
+      label_.setTitle(getText());
+   }
 
-      // Give screen reader time to process page to improve chance it will notice the live region
-      Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setInnerText(value));
+   public String getText()
+   {
+      return label_.getInnerText();
+   }
+
+   public void setWarningNumber(int number)
+   {
+      Roles.getGroupRole().set(getElement());
+      Roles.getGroupRole().setAriaLabelProperty(getElement(), constants_.warningNumberLabel(number));
+      dismiss_.setDescription(constants_.dismissWarningLabel(number));
+      Roles.getButtonRole().setAriaLabelProperty(details_.getElement(), constants_.warningDetailsLabel(number));
+   }
+
+   public void focusDismissButton()
+   {
+      dismiss_.setFocus(true);
    }
 
    /**
@@ -182,7 +199,7 @@ public class WarningBar extends Composite
    @UiField
    SpanElement label_;
    @UiField
-   DivElement live_;
+   Button details_;
    @UiField
    Button moreButton_;
    @UiField

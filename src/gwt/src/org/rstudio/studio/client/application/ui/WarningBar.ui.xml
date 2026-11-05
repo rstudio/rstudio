@@ -19,18 +19,17 @@
                      height="17"
                      styleName="{res.styles.warningIcon}"/>
             <span ui:field="label_" class="{res.styles.label}"/>
-            <div ui:field="live_" class="{themeRes.themeStyles.visuallyHidden}"/>
          </td>
-         <td class="{res.styles.center}" align="right">
+         <td class="{res.styles.center} {res.styles.controls}" align="right">
             <!-- Keep actions outside the message's clipping area. -->
+            <g:Button ui:field="details_" styleName="{res.styles.details}"/>
             <g:Button ui:field="moreButton_"/>
             <rw:HyperlinkLabel ui:field="actionLink_" addStyleNames="{res.styles.action}"/>
             <rw:ImageButton ui:field="dismiss_"
                      resource="{themeRes.closeTab2x}"
                      width="9"
                      height="9"
-                     addStyleNames="{res.styles.dismiss}"
-                     description="Dismiss Warning Bar"><ui:attribute name="description" key="dismissWarningText"/></rw:ImageButton>
+                     addStyleNames="{res.styles.dismiss}"/>
          </td>
          <td class="{res.styles.right}"/>
       </tr>

@@ -21,6 +21,10 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.Timer;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.common.DummyGlobalDisplay;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
@@ -39,6 +43,8 @@ public class WarningBarListTests extends GWTTestCase
       bars_ = new ArrayList<>();
       closed_ = new ArrayList<>();
       dismissals_ = 0;
+      focusReturns_ = 0;
+      announcementsDisabled_ = true;
       events_ = new EventBus(null, null);
       events_.addHandler(WarningBarClosedEvent.TYPE, event -> closed_.add(event.getId()));
       list_ = createList();
@@ -58,15 +64,22 @@ public class WarningBarListTests extends GWTTestCase
          @Override
          public boolean isDisabled(String id)
          {
-            return true;
+            return announcementsDisabled_;
          }
       };
       return new WarningBarList(() ->
       {
-         WarningBar bar = new WarningBar(events_, aria);
+         WarningBar bar = new WarningBar(events_, new DummyGlobalDisplay()
+         {
+            @Override
+            public void showMessage(int type, String caption, String message)
+            {
+               detailsMessage_ = message;
+            }
+         });
          bars_.add(bar);
          return bar;
-      }, () -> {}, () -> dismissals_++);
+      }, aria, () -> {}, () -> dismissals_++, () -> focusReturns_++);
    }
 
    private void show(String id, String message)
@@ -186,6 +199,103 @@ public class WarningBarListTests extends GWTTestCase
       assertFalse(WarningBarList.messageId("ab", "c").equals(WarningBarList.messageId("a", "bc")));
    }
 
+   public void testRemovingFocusedRowsSelectsNextThenPreviousThenWorkbench()
+   {
+      show("first", "First");
+      show("middle", "Middle");
+      show("last", "Last");
+      bars_.get(1).focusDismissButton();
+      list_.dismiss("middle");
+      assertEquals(bars_.get(2).dismiss_.getElement(), DomUtils.getActiveElement());
+      list_.hide("last");
+      assertEquals(bars_.get(0).dismiss_.getElement(), DomUtils.getActiveElement());
+      list_.dismiss("first");
+      assertEquals(1, focusReturns_);
+   }
+
+   public void testBackgroundRemovalDoesNotMoveFocus()
+   {
+      TextBox editor = new TextBox();
+      RootPanel.get().add(editor);
+      try
+      {
+         show("first", "First");
+         editor.setFocus(true);
+         list_.hide("first");
+         assertEquals(editor.getElement(), DomUtils.getActiveElement());
+         assertEquals(0, focusReturns_);
+      }
+      finally
+      {
+         editor.removeFromParent();
+      }
+   }
+
+   public void testLabelsAreDistinctAndDetailsUseFullPlainText()
+   {
+      show("first", "First <b>warning</b>");
+      show("second", "Second warning");
+      WarningBar first = bars_.get(0);
+      WarningBar second = bars_.get(1);
+      assertEquals("Warning 1", first.getElement().getAttribute("aria-label"));
+      assertEquals("Warning 2", second.getElement().getAttribute("aria-label"));
+      assertEquals("Dismiss warning 1", first.dismiss_.getElement().getInnerText());
+      assertEquals("Dismiss warning 2", second.dismiss_.getElement().getInnerText());
+      assertEquals(first.label_.getId(), first.dismiss_.getElement().getAttribute("aria-describedby"));
+      assertFalse(first.label_.hasAttribute("aria-hidden"));
+      click(first.details_.getElement());
+      assertEquals("First warning", detailsMessage_);
+      show("first", "Updated <b>warning</b>");
+      click(first.details_.getElement());
+      assertEquals("Updated warning", detailsMessage_);
+   }
+
+   public void testAnnouncementsBatchLatestMessagesAndExcludeRemovedRows()
+   {
+      announcementsDisabled_ = false;
+      show("first", "Old message");
+      show("first", "Updated <b>message</b>");
+      show("second", "Second message");
+      show("dismissed", "Dismissed message");
+      list_.dismiss("dismissed");
+      show("resolved", "Resolved message");
+      list_.hide("resolved");
+      delayTestFinish(4000);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            String expected = "Updated message\nSecond message";
+            assertEquals("status", list_.getAnnouncementWidget().getElement().getAttribute("role"));
+            assertEquals(expected, list_.getAnnouncementWidget().getElement().getInnerText());
+            show("first", "Updated <b>message</b>");
+            // An exact duplicate neither clears nor schedules a new announcement.
+            assertEquals(expected, list_.getAnnouncementWidget().getElement().getInnerText());
+            finishTest();
+         }
+      }.schedule(1500);
+   }
+
+   public void testDisabledAnnouncementsStillExposeMessages()
+   {
+      show("first", "Visible message");
+      assertEquals("Visible message", bars_.get(0).getText());
+      delayTestFinish(4000);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            assertEquals("", list_.getAnnouncementWidget().getElement().getInnerText());
+            finishTest();
+         }
+      }.schedule(1500);
+   }
+
+   private boolean announcementsDisabled_;
+   private int focusReturns_;
+   private String detailsMessage_;
    private WarningBarList list_;
    private EventBus events_;
    private List<WarningBar> bars_;

@@ -30,6 +30,23 @@
    text-overflow: ellipsis;
 }
 
+/* Leave room for the focus outline inside the scroll container. */
+.controls {
+   padding: 0 4px;
+   overflow: visible;
+}
+
+.details {
+   border: none;
+   background: transparent;
+   color: inherit;
+   font: inherit;
+   text-decoration: underline;
+   cursor: pointer;
+   margin-right: 8px;
+   padding: 2px;
+}
+
 .warningIcon {
    position: relative;
    top: 4px;

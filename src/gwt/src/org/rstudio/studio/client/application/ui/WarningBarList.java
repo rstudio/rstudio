@@ -18,7 +18,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONException;
@@ -31,15 +35,24 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Provider;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.application.AriaLiveService;
 
 /** Application warnings, with independent actions and dismissals. */
 public class WarningBarList extends Composite implements RequiresResize
 {
-   public WarningBarList(Provider<WarningBar> provider, Command onChange, Command onDismiss)
+   public WarningBarList(Provider<WarningBar> provider,
+                         AriaLiveService ariaLive,
+                         Command onChange,
+                         Command onDismiss,
+                         Command onEmptyFocus)
    {
       provider_ = provider;
+      ariaLive_ = ariaLive;
       onChange_ = onChange;
       onDismiss_ = onDismiss;
+      onEmptyFocus_ = onEmptyFocus;
+      Roles.getStatusRole().set(announcement_.getElement());
       initWidget(scroll_);
       scroll_.getElement().getStyle().setOverflowX(Overflow.HIDDEN);
    }
@@ -62,6 +75,7 @@ public class WarningBarList extends Composite implements RequiresResize
       {
          bar = provider_.get();
          bar.setWarningId(id);
+         bar.setWarningNumber(nextWarningNumber_++);
          bar.setHeight(bar.getHeight() + "px");
          bar.addCloseHandler(event -> dismiss(id));
          warnings_.put(id, bar);
@@ -73,6 +87,7 @@ public class WarningBarList extends Composite implements RequiresResize
          bar.setSeverity(severe);
          bar.setText(message);
          bar.showLicenseButton(showLicenseButton);
+         queueAnnouncement(id, bar.getText());
       }
       bar.setAction(actionLabel, action);
       signatures_.put(id, signature);
@@ -123,11 +138,50 @@ public class WarningBarList extends Composite implements RequiresResize
    {
       WarningBar bar = warnings_.remove(id);
       signatures_.remove(id);
+      pendingAnnouncements_.remove(id);
       if (bar != null)
       {
+         boolean hadFocus = bar.getElement().isOrHasChild(DomUtils.getActiveElement());
+         int index = rows_.getWidgetIndex(bar);
          rows_.remove(bar);
          onChange_.execute();
+         if (hadFocus)
+         {
+            if (rows_.getWidgetCount() > 0)
+               ((WarningBar) rows_.getWidget(Math.min(index, rows_.getWidgetCount() - 1))).focusDismissButton();
+            else
+               onEmptyFocus_.execute();
+         }
       }
+   }
+
+   /** Kept outside the warning landmark so browsing a row reads its message once. */
+   public Widget getAnnouncementWidget()
+   {
+      return announcement_;
+   }
+
+   private void queueAnnouncement(String id, String message)
+   {
+      if (ariaLive_.isDisabled(AriaLiveService.WARNING_BAR))
+         return;
+      pendingAnnouncements_.put(id, message);
+      if (!announceTimer_.isRunning())
+      {
+         clearAnnouncementTimer_.cancel();
+         announcement_.setText("");
+         announceTimer_.schedule(AriaLiveService.UI_ANNOUNCEMENT_DELAY);
+      }
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      announceTimer_.cancel();
+      clearAnnouncementTimer_.cancel();
+      pendingAnnouncements_.clear();
+      announcement_.setText("");
+      super.onUnload();
    }
 
    public String getDismissedState()
@@ -180,6 +234,41 @@ public class WarningBarList extends Composite implements RequiresResize
       return parts.toString();
    }
 
+   // Coalesce updates to each row and announce a startup burst in one polite
+   // update. Using the general status reporter here would replace earlier messages.
+   private final Timer announceTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         if (!ariaLive_.isDisabled(AriaLiveService.WARNING_BAR))
+         {
+            StringBuilder message = new StringBuilder();
+            for (String text : pendingAnnouncements_.values())
+            {
+               if (message.length() > 0)
+                  message.append("\n");
+               message.append(text);
+            }
+            announcement_.setText(message.toString());
+            clearAnnouncementTimer_.schedule(4000);
+         }
+         pendingAnnouncements_.clear();
+      }
+   };
+   private final Timer clearAnnouncementTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         announcement_.setText("");
+      }
+   };
+   private final Label announcement_ = new Label();
+   private final Map<String, String> pendingAnnouncements_ = new LinkedHashMap<>();
+   private final AriaLiveService ariaLive_;
+   private final Command onEmptyFocus_;
+   private int nextWarningNumber_ = 1;
    private final FlowPanel rows_ = new FlowPanel();
    private final ScrollPanel scroll_ = new ScrollPanel(rows_);
    private final Map<String, WarningBar> warnings_ = new LinkedHashMap<>();

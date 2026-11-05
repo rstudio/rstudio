@@ -47,11 +47,11 @@ public class ApplicationWindowTests extends GWTTestCase
       Provider<WarningBar> provider = () ->
       {
          created[0]++;
-         return new WarningBar(events, aria);
+         return new WarningBar(events, null);
       };
       StudioClientApplicationConstants constants = GWT.create(StudioClientApplicationConstants.class);
       String status = "90 of 100 MB";
-      WarningBarList previous = new WarningBarList(provider, () -> {}, () -> {});
+      WarningBarList previous = new WarningBarList(provider, aria, () -> {}, () -> {}, () -> {});
       previous.show(
             "memory-limit",
             true,
