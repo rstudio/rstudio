@@ -47,6 +47,9 @@ test.describe('Editor', () => {
       'editor_whitespace.R',
       'editor_whole_word.R',
       'editor_select_all_regex.R',
+      'editor_select_all_multiline.R',
+      'editor_select_all_rename.R',
+      'editor_select_all_empty.R',
       'editor_shortcuts.R',
       'editor_find_from_selection.R',
       'editor_comment_indent.R',
@@ -157,7 +160,7 @@ test.describe('Editor', () => {
 
   // https://github.com/rstudio/rstudio/issues/19249
   test('select all honors regex and literal find modes', async ({ rstudioPage: page }) => {
-    const content = 'a1\na2\nA3\nxa4\na[0-9]\na[0-9]\n';
+    const content = 'a1\na2\nA3\nxa4\na[0-9]\na[0-9]\nfalse\n';
     await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_regex.R', content);
 
     const editor = new AceEditor(page, 'a1');
@@ -181,6 +184,11 @@ test.describe('Editor', () => {
 
       await page.locator(SELECT_ALL_BUTTON).click();
       await expect.poll(() => editor.getSelectedText()).toBe('a1\na2\nA3\na4');
+
+      await page.locator(FIND_INPUT).fill('(?<letter>a)[0-9]');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a1\na2\nA3\na4');
+      await page.locator(FIND_INPUT).fill('a[0-9]');
 
       await matchCase.check();
       await page.locator(SELECT_ALL_BUTTON).click();
@@ -207,10 +215,103 @@ test.describe('Editor', () => {
       await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
       await page.locator(SELECT_ALL_BUTTON).click();
       await expect.poll(() => editor.getSelectedText()).toBe('a1\na2');
+
+      await page.locator(FIND_INPUT).fill('[');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect(page.getByText('Invalid search term.', { exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'OK', exact: true }).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a1\na2');
     } finally {
       await regex.setChecked(originalRegex);
       await matchCase.setChecked(originalMatchCase);
       await wholeWord.setChecked(originalWholeWord);
+      await page.locator(CLOSE_FIND_BAR).click();
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19249
+  test('select all finds multiline regexes within a selection below the first row', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_multiline.R', 'a\nb\nx\nx\na\nb\n');
+    const editor = new AceEditor(page, 'a\nb\nx');
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_select_all_multiline.R`, TIMEOUTS.fileOpen);
+    await executeCommand(page, 'findReplace');
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+    const regex = page.locator(REGEX_CHECKBOX);
+    const originalRegex = await regex.isChecked();
+    try {
+      await regex.check();
+      await page.locator(FIND_INPUT).fill('a\\nb');
+      await consoleActions.executeInConsole(
+        '.rs.api.setSelectionRanges(c(3, 1, 7, 1), id = .rs.api.getSourceEditorContext()$id)',
+        { wait: true },
+      );
+      await page.locator(`${SOURCE_PANEL_SELECTOR} .rstudio-find-replace-in-selection-checkbox input`).check();
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a\nb');
+      await expect.poll(() => editor.getCursorPosition()).toEqual({ row: 5, column: 1 });
+    } finally {
+      await regex.setChecked(originalRegex);
+      await page.locator(CLOSE_FIND_BAR).click();
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19249
+  test('regex select all does not change literal string rename matching', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_rename.R', 'c("a.b", "axb", "a.b")\n');
+    const editor = new AceEditor(page, 'c("a.b"');
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_select_all_rename.R`, TIMEOUTS.fileOpen);
+    await executeCommand(page, 'findReplace');
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+    const regex = page.locator(REGEX_CHECKBOX);
+    const originalRegex = await regex.isChecked();
+    try {
+      await regex.check();
+      await page.locator(FIND_INPUT).fill('a.b');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      await expect.poll(() => editor.getSelectedText()).toBe('a.b\naxb\na.b');
+    } finally {
+      await regex.setChecked(originalRegex);
+      await page.locator(CLOSE_FIND_BAR).click();
+    }
+
+    await editor.gotoLine(1, 4);
+    await executeCommand(page, 'renameInScope');
+    try {
+      await expect.poll(() => editor.getSelectedText()).toBe('"a.b"\n"a.b"');
+    } finally {
+      // Finish renaming before the next test opens a document.
+      await editor.focus();
+      await page.keyboard.press('Escape');
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/19249
+  test('select all advances past empty regex matches and Unicode code points', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, 'editor_select_all_empty.R', '😀\nb');
+    const editor = new AceEditor(page, '😀');
+    await waitForActiveDocument(page, `${sandbox.dir}/editor_select_all_empty.R`, TIMEOUTS.fileOpen);
+    await executeCommand(page, 'findReplace');
+    await expect(page.locator(FIND_INPUT)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+
+    const regex = page.locator(REGEX_CHECKBOX);
+    const originalRegex = await regex.isChecked();
+    try {
+      await regex.check();
+      await page.locator(FIND_INPUT).fill('(?=.)|$');
+      await page.locator(SELECT_ALL_BUTTON).click();
+      const positions = [
+        { row: 0, column: 0 },
+        { row: 0, column: 2 },
+        { row: 1, column: 0 },
+        { row: 1, column: 1 },
+      ];
+      await expect.poll(() => editor.getSelectionRanges()).toEqual(
+        positions.map(position => ({ start: position, end: position })),
+      );
+    } finally {
+      await regex.setChecked(originalRegex);
       await page.locator(CLOSE_FIND_BAR).click();
     }
   });

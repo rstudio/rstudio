@@ -485,7 +485,7 @@ public class AceEditorNative extends JavaScriptObject
    }-*/;
    
    public final native int findAll(String needle) /*-{
-      return this.findAll(needle);
+      return this.findAll(needle, {regExp: false});
    }-*/;
    
    public final native int findAll(
@@ -494,12 +494,69 @@ public class AceEditorNative extends JavaScriptObject
          boolean wholeWord,
          boolean caseSensitive,
          boolean regex) /*-{
-      return this.findAll(needle, {
+      var options = {
+         needle: needle,
          range: range,
          wholeWord: wholeWord,
          caseSensitive: caseSensitive,
          regExp: regex
-      });
+      };
+      if (!regex)
+         return this.findAll(needle, options);
+
+      // Ace's bulk regex search mishandles named captures and multiline
+      // matches in a range. Reuse its pattern options, but collect offsets
+      // from exec() without changing the editor's persistent search state.
+      var Search = $wnd.require("ace/search").Search;
+      var re = new Search().$assembleRegExp(options, true);
+      if (!re)
+         throw new Error("Invalid regular expression");
+
+      var Document = $wnd.require("ace/document").Document;
+      var Range = $wnd.require("ace/range").Range;
+      var lang = $wnd.require("ace/lib/lang");
+      // Normalize newlines for regex matching and offset conversion alike.
+      var lines = this.session.getDocument().getAllLines();
+      var doc = new Document(lines);
+      var text = doc.getValue();
+      var offset = range ? doc.positionToIndex(range.start) : 0;
+      var end = range ? doc.positionToIndex(range.end) : text.length;
+      text = text.substring(offset, end);
+
+      // Matches are ordered; walk the lines once instead of scanning from
+      // the start of the document for every match's offset conversion.
+      var row = 0;
+      var lineOffset = 0;
+      var toPosition = function(index)
+      {
+         while (row + 1 < lines.length && index > lineOffset + lines[row].length)
+            lineOffset += lines[row++].length + 1;
+         return {row: row, column: index - lineOffset};
+      };
+
+      var ranges = [];
+      var match;
+      while ((match = re.exec(text)))
+      {
+         ranges.push(Range.fromPoints(
+            toPosition(offset + match.index),
+            toPosition(offset + match.index + match[0].length)));
+
+         // Empty matches must advance, including past Unicode code points.
+         if (!match[0].length)
+         {
+            if (re.lastIndex >= text.length)
+               break;
+            re.lastIndex += lang.skipEmptyMatch(text, re.lastIndex, re.unicode);
+         }
+      }
+
+      if (!ranges.length)
+         return 0;
+      this.multiSelect.toSingleRange(ranges[0]);
+      for (var i = ranges.length; i--;)
+         this.multiSelect.addRange(ranges[i], true);
+      return ranges.length;
    }-*/;
    
    public final native void insert(String text) /*-{

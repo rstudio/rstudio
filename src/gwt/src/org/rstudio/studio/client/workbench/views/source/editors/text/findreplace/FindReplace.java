@@ -230,8 +230,17 @@ public class FindReplace
          // is that first match the selection handler would keep the marker
          clearMatchHighlight();
 
-         editor_.selectAll(searchString, range, wholeWord, caseSensitive, regex);
-         editor_.focus();
+         try
+         {
+            editor_.selectAll(searchString, range, wholeWord, caseSensitive, regex);
+            editor_.focus();
+         }
+         catch (Throwable e)
+         {
+            globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
+                  errorCaption_,
+                  constants_.invalidSearchTerm());
+         }
       }
    }
 
