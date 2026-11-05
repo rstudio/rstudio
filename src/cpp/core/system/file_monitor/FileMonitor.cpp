@@ -17,6 +17,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <list>
+#include <set>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
@@ -280,9 +281,7 @@ Error discoverAndProcessFileChanges(
                                                                onFilesChanged)
 {
    // find this path in our fileTree
-   tree<FileInfo>::iterator it = std::find(pTree->begin(),
-                                           pTree->end(),
-                                           fileInfo);
+   tree<FileInfo>::iterator it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
 
    // if we don't find it then it may have been excluded by a filter, just bail
    if (it == pTree->end())
@@ -296,11 +295,10 @@ Error discoverAndProcessFileChanges(
    options.filter = filter;
    options.onBeforeScanDir = onBeforeScanDir;
    Error error = scanFiles(fileInfo, options, &subdirTree);
-   if (error)
-      return error;
-
-   // handle recursive vs. non-recursive scan differently
-   if (recursive)
+   // Publish failed scans as well so consumers cannot mistake an incomplete
+   // directory for a covered subtree. Replacing its old contents also ensures
+   // a successful retry announces the recovered descendants.
+   if (recursive || error)
    {
       // check for changes on full subtree
       std::vector<FileChangeEvent> fileChanges;
@@ -320,6 +318,17 @@ Error discoverAndProcessFileChanges(
    }
    else
    {
+      // A shallow scan cannot establish whether existing child directories
+      // have recovered; retain their status until they are actually scanned.
+      std::set<std::string> failedChildren;
+      for (auto child = pTree->begin(it); child != pTree->end(it); ++child)
+         if (child->isDirectory() && child->scanFailed())
+            failedChildren.insert(child->absolutePath());
+      auto scannedRoot = subdirTree.begin();
+      for (auto child = subdirTree.begin(scannedRoot); child != subdirTree.end(scannedRoot); ++child)
+         if (child->isDirectory())
+            child->setScanFailed(failedChildren.count(child->absolutePath()) != 0);
+
       // scan for changes on just the children
       std::vector<FileChangeEvent> childrenFileChanges;
       collectFileChangeEvents(pTree->begin(it),
@@ -330,6 +339,11 @@ Error discoverAndProcessFileChanges(
 
       // build up actual file changes and mutate the tree as appropriate
       std::vector<FileChangeEvent> fileChanges;
+      if (it->scanFailed() != scannedRoot->scanFailed())
+      {
+         it->setScanFailed(scannedRoot->scanFailed());
+         fileChanges.emplace_back(FileChangeEvent::FileModified, *it);
+      }
       for (const FileChangeEvent& fileChange : childrenFileChanges)
       {
          switch(fileChange.type())
@@ -370,7 +384,7 @@ Error discoverAndProcessFileChanges(
       onFilesChanged(fileChanges);
    }
 
-   return Success();
+   return error;
 }
 
 std::list<void*> activeEventContexts()

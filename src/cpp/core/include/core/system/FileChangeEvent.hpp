@@ -125,7 +125,8 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
 
       if (comp == 0)
       {
-         if (currFile.lastWriteTime() != prevFile.lastWriteTime())
+         if (currFile.lastWriteTime() != prevFile.lastWriteTime() ||
+             currFile.scanFailed() != prevFile.scanFailed())
          {
             if (!filter || filter(currFile))
             {

@@ -15,6 +15,11 @@
 
 #include <algorithm>
 
+#ifndef _WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
@@ -74,6 +79,44 @@ TEST(FileScannerTests, RecordsFailedRegistrationAndClearsFailureAfterRetry)
       }
    }
 }
+
+#ifndef _WIN32
+TEST(FileScannerTests, RecordsUnreadableChildMetadata)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "Root can search directories without execute permission";
+
+   FilePath root;
+   ASSERT_FALSE(FilePath::tempFilePath(root));
+   ASSERT_FALSE(root.ensureDirectory());
+   RemoveOnExitScope removeScope(root, ERROR_LOCATION);
+   FilePath blocked = root.completeChildPath("blocked");
+   ASSERT_FALSE(blocked.ensureDirectory());
+   FilePath source = blocked.completeChildPath("source.R");
+   ASSERT_FALSE(writeStringToFile(source, "x <- 1\n"));
+   ASSERT_EQ(0, ::chmod(blocked.getAbsolutePath().c_str(), 0400));
+
+   tree<FileInfo> files;
+   system::FileScannerOptions options;
+   options.recursive = true;
+   Error error = system::scanFiles(FileInfo(root), options, &files);
+   // Restore access before any assertions so cleanup also works on failure.
+   ASSERT_EQ(0, ::chmod(blocked.getAbsolutePath().c_str(), 0700));
+   ASSERT_FALSE(error);
+   auto failed = std::find_if(files.begin(), files.end(), [blocked](const FileInfo& info)
+   {
+      return FilePath(info.absolutePath()) == blocked;
+   });
+   ASSERT_NE(files.end(), failed);
+   EXPECT_TRUE(failed->scanFailed());
+   EXPECT_EQ(0, files.number_of_children(failed));
+
+   ASSERT_FALSE(system::scanFiles(failed, options, &files));
+   EXPECT_FALSE(failed->scanFailed());
+   ASSERT_EQ(1, files.number_of_children(failed));
+   EXPECT_EQ(source.getAbsolutePath(), files.begin(failed)->absolutePath());
+}
+#endif
 
 } // anonymous namespace
 } // namespace core

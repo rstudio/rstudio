@@ -149,11 +149,18 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       int res = ::lstat(path.c_str(), &st);
       if (res == -1)
       {
-         if (errno != ENOENT && errno != EACCES)
+         // A disappeared entry is an ordinary scan race. Other failures
+         // leave the directory incomplete, even when scandir succeeded.
+         int scanErrno = errno;
+         if (scanErrno != ENOENT)
          {
-            Error error = systemError(errno, ERROR_LOCATION);
-            error.addProperty("path", path);
-            LOG_ERROR(error);
+            fromNode->setScanFailed(true);
+            if (scanErrno != EACCES)
+            {
+               Error error = systemError(scanErrno, ERROR_LOCATION);
+               error.addProperty("path", path);
+               LOG_ERROR(error);
+            }
          }
          continue;
       }
