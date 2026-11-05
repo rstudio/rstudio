@@ -18,6 +18,10 @@
 
 #include "SessionCodeSearch.hpp"
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+#include <gtest/gtest.h>
+#endif
+
 #include <iostream>
 #include <vector>
 #include <set>
@@ -858,8 +862,9 @@ public:
       if (!findParent(parentPath, &parentItr))
          return;
       
-      EntryTree::leaf_iterator it = parentItr.begin();
-      for (; pEntries_->is_valid(it); ++it)
+      EntryTree::leaf_iterator it = pEntries_->begin_leaf(parentItr);
+      EntryTree::leaf_iterator end = pEntries_->end_leaf(parentItr);
+      for (; it != end; ++it)
       {
          if (filter && filter(*it))
             continue;
@@ -2879,6 +2884,48 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
       pSymbols->insert(nativeRoutineNames.begin(), nativeRoutineNames.end());
    }
 }
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+
+// Keep this test alongside the private SourceFileIndex implementation.
+TEST(SourceFileIndexTests, WalkFilesExcludesSiblingSymbols)
+{
+   FilePath projectDir;
+   ASSERT_FALSE(FilePath::tempFilePath(projectDir));
+   ASSERT_FALSE(projectDir.ensureDirectory());
+   RemoveOnExitScope removeScope(projectDir, ERROR_LOCATION);
+
+   std::vector<std::pair<std::string, std::string>> sources = {
+      {"before/before.R", "before"},
+      {"pkg/R/inside.R", "inside"},
+      {"pkg/R/sub/deeper.R", "deeper"},
+      {"scripts/outside.R", "outside"}
+   };
+   std::vector<FileInfo> files;
+   for (const auto& source : sources)
+   {
+      FilePath path = projectDir.completeChildPath(source.first);
+      ASSERT_FALSE(path.getParent().ensureDirectory());
+      ASSERT_FALSE(writeStringToFile(path, source.second + R"( <- function() TRUE
+)"));
+      files.push_back(core::toFileInfo(path));
+   }
+
+   SourceFileIndex index;
+   // The initial synchronous indexing batch consumes this small fixture.
+   index.enqueFiles(files.begin(), files.end());
+   ASSERT_TRUE(index.get(projectDir.completeChildPath("pkg/R/inside.R")));
+   ASSERT_TRUE(index.get(projectDir.completeChildPath("scripts/outside.R")));
+
+   std::set<std::string> symbols;
+   index.walkFiles(
+         projectDir.completeChildPath("pkg"),
+         boost::bind(callbacks::addAllProjectSymbols, _1, &symbols));
+   const std::set<std::string> expected = {"inside", "deeper"};
+   EXPECT_EQ(expected, symbols);
+}
+
+#endif
 
 } // namespace code_search
 } // namespace modules
