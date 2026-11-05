@@ -59,7 +59,7 @@ bool searchCodePattern(
    const CodePattern& pattern,
    const std::string& input,
    std::string::const_iterator pos,
-   const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
+   const std::vector<std::pair<std::size_t, std::size_t>>& protectedRanges,
    boost::match_flag_type flags,
    boost::smatch* pMatch)
 {
@@ -69,11 +69,11 @@ bool searchCodePattern(
          return true;
       std::size_t offset = (*pMatch)[0].first - input.begin();
       auto block = std::upper_bound(
-         htmlBlocks.begin(), htmlBlocks.end(), offset,
+         protectedRanges.begin(), protectedRanges.end(), offset,
          [](std::size_t offset, const auto& range) { return offset < range.first; });
-      if (block == htmlBlocks.begin() || offset >= std::prev(block)->second)
+      if (block == protectedRanges.begin() || offset >= std::prev(block)->second)
          return true;
-      // A fence-like line in raw HTML is content, not a Markdown opener.
+      // Fence text in raw HTML or recognized math is not a Markdown opener.
       if (flags & boost::match_continuous)
          break;
       pos = input.begin() + std::prev(block)->second;
@@ -88,20 +88,26 @@ bool searchCodePattern(
 MathJaxFilter::MathJaxFilter(std::string* pInput,
                              std::string* pHTMLOutput,
                              bool escapeHtml,
-                             const std::vector<std::pair<std::size_t, std::size_t>>& htmlBlocks,
-                             bool maskOnly)
-   : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml), maskOnly_(maskOnly)
+                             const std::vector<std::pair<std::size_t, std::size_t>>& protectedRanges,
+                             std::vector<std::pair<std::size_t, std::size_t>>* pMathRanges)
+   : pHTMLOutput_(pHTMLOutput), escapeHtml_(escapeHtml), pMathRanges_(pMathRanges)
 {
+   if (pMathRanges_)
+      pMathRanges_->clear();
    // Retain column-zero fence openers: the legacy filter cannot determine
    // where an enclosing list ends. Match only the opener until it is selected,
    // so a fence nested in another code block never scans for its own closer.
    const std::vector<CodePattern> patterns = {
       CodePattern(R"(^(`{3,})(?!`)[^`\r\n]*(?:\r?\n|\z))", true),
       CodePattern(R"(^(~{3,})(?!~)[^\r\n]*(?:\r?\n|\z))", true),
-      // Prefer matching backtick runs on one line, with the historical
-      // pattern retained as a fallback for other inputs.
+      // Match the pinned inline parser's MAXBACKTICKS limit. No fallback may
+      // split a longer run into shorter delimiters and hide ordinary math.
+#ifdef RSTUDIO_USE_CMARK_GFM
+      CodePattern(R"((?<!`)(`{1,80})(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
+#else
       CodePattern(R"((?<!`)(`+)(?!`)[^\r\n]*?(?<!`)\1(?!`))"),
       CodePattern(R"(`[^\n]+?`)"),
+#endif
       CodePattern(R"((\A|\A\s*\n|\n\s*\n)(( {4}|\t)[^\n]*\n)*(( {4}|\t)[^\n]*))")
    };
 
@@ -127,7 +133,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
          // where a new block can start without a blank line. Inline spans do
          // not create this boundary: following spaces are still paragraph text.
          boost::smatch atBoundary;
-         if (afterFence && searchCodePattern(patterns[i], *pInput, pos, htmlBlocks,
+         if (afterFence && searchCodePattern(patterns[i], *pInput, pos, protectedRanges,
                                              flags | boost::match_continuous, &atBoundary))
          {
             next = atBoundary;
@@ -137,7 +143,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
             next = boost::smatch();
             if (pos != pInput->begin())
                flags |= boost::match_not_bob;
-            searchCodePattern(patterns[i], *pInput, pos, htmlBlocks, flags, &next);
+            searchCodePattern(patterns[i], *pInput, pos, protectedRanges, flags, &next);
          }
          searched[i] = true;
          if (!next.empty() &&
@@ -197,6 +203,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
 
       if (range.process)
       {
+         mathRangeOffset_ = range.begin - pInput->begin();
          // native mathjax display equations
          filter(boost::regex("\\\\\\[([\\s\\S]+?)\\\\\\]"),
                              &rangeText,
@@ -233,7 +240,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
 
 MathJaxFilter::~MathJaxFilter()
 {
-   if (maskOnly_)
+   if (pMathRanges_)
       return;
    try
    {
@@ -264,6 +271,7 @@ void MathJaxFilter::filter(const boost::regex& re,
                               boost::bind(&MathJaxFilter::substitute,
                                           this, condition, _1, pMathBlocks);
 
+   mathRangeBegin_ = pInput->begin();
    *pInput = boost::regex_replace(*pInput, re, formatter);
 }
 
@@ -286,9 +294,18 @@ std::string MathJaxFilter::substitute(
       // Match the normal placeholder's plain-text semantics, including
       // removing embedded newlines, but retain byte offsets for the HTML
       // block prepass. This mode never registers output restorations.
-      if (maskOnly_)
-         return std::string(match.length(), 'x');
-      std::string guid = core::system::generateUuid(false);
+      if (pMathRanges_)
+      {
+         std::size_t begin = mathRangeOffset_ + (match[0].first - mathRangeBegin_);
+         pMathRanges_->emplace_back(begin, begin + match.length());
+         std::string mask(match.length(), '0');
+         if (mask.size() > 1)
+            mask[1] = 'x';
+         return mask;
+      }
+      // A fixed digit-and-letter prefix prevents HTML-tag and ordered-list
+      // classification in both this placeholder and the shorter source mask.
+      std::string guid = "0x" + core::system::generateUuid(false);
       std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
       pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
       return guid;

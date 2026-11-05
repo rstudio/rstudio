@@ -16,6 +16,7 @@
 #include <core/markdown/Markdown.hpp>
 
 #include <iostream>
+#include <algorithm>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
@@ -383,10 +384,25 @@ Error markdownToHTML(const std::string& markdownInput,
          // Masking keeps byte offsets while replacing newlines like the real
          // math placeholders, so these ranges still refer to the source input.
          std::string masked = input;
-         MathJaxFilter mask(&masked, nullptr, false, htmlBlocks, true);
+         std::vector<std::pair<std::size_t, std::size_t>> mathRanges;
+         MathJaxFilter mask(&masked, nullptr, false, htmlBlocks, &mathRanges);
          error = cmarkHtmlBlockRanges(masked, extensions, &htmlBlocks);
          if (error)
             return error;
+
+         // Fence text removed by the math mask must not become an opener
+         // when the final filter scans the original source. Merge overlapping
+         // math/HTML ranges so candidate lookup can still use binary search.
+         mathRanges.insert(mathRanges.end(), htmlBlocks.begin(), htmlBlocks.end());
+         std::sort(mathRanges.begin(), mathRanges.end());
+         htmlBlocks.clear();
+         for (const auto& range : mathRanges)
+         {
+            if (htmlBlocks.empty() || range.first > htmlBlocks.back().second)
+               htmlBlocks.push_back(range);
+            else
+               htmlBlocks.back().second = std::max(htmlBlocks.back().second, range.second);
+         }
       }
 #endif
       pMathFilter.reset(new MathJaxFilter(&input, pHTMLOutput, options.escape, htmlBlocks));

@@ -242,6 +242,13 @@ TEST(MarkdownTest, MathExclusionRespectsCodeDelimiterLengths)
                                         std::string(255, '`') + "\n\n$x_1$")));
    EXPECT_TRUE(isMathJaxRequired(render(std::string(256, '~') + "\ncode\n" +
                                         std::string(255, '~') + "\n\n$x_1$")));
+   for (std::size_t count : {80, 81})
+   {
+      std::string ticks(count, '`');
+      std::string html = render("text " + ticks + " $x_1$ " + ticks);
+      EXPECT_EQ(count == 81, isMathJaxRequired(html));
+      EXPECT_EQ(count == 80, html.find("<code>") != std::string::npos);
+   }
 }
 
 TEST(MarkdownTest, FenceTextInHtmlDoesNotHideFollowingMath)
@@ -268,6 +275,13 @@ TEST(MarkdownTest, FenceTextInHtmlDoesNotHideFollowingMath)
                 .find("<code>$x_1$\n</code>"));
    EXPECT_NE(std::string::npos,
              render("<div>\rcontent\r</div>\n\n~~~\n$x_1$\n~~~\n").find("<code>$x_1$\n</code>"));
+   std::string output = render("$$\n<pre>\n~~~\n</pre>\n$$\n\n$x_1$");
+   EXPECT_NE(std::string::npos, output.find("\\[ \n<pre>\n~~~\n</pre>\n \\]"));
+   EXPECT_NE(std::string::npos, output.find("\\( x_1 \\)"));
+   EXPECT_EQ("<p>&lt;\\( x_1 \\)&gt;</p>\n<pre><code>$y_1$\n</code></pre>\n",
+             render("<$x_1$>\n~~~\n$y_1$\n~~~\n"));
+   EXPECT_NE(std::string::npos,
+             render("$x_1$.\n<custom>\n~~~\n$y_1$\n~~~\n").find("<code>$y_1$\n</code>"));
 }
 
 TEST(MarkdownTest, MathExclusionPreservesExistingBlockBehavior)
