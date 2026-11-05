@@ -278,7 +278,8 @@ Error discoverAndProcessFileChanges(
    const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
    tree<FileInfo>* pTree,
    const  boost::function<void(const std::vector<FileChangeEvent>&)>&
-                                                               onFilesChanged)
+                                                               onFilesChanged,
+   bool recursiveMonitor)
 {
    // find this path in our fileTree
    tree<FileInfo>::iterator it = impl::findFile(pTree->begin(), pTree->end(), fileInfo);
@@ -286,6 +287,15 @@ Error discoverAndProcessFileChanges(
    // if we don't find it then it may have been excluded by a filter, just bail
    if (it == pTree->end())
       return Success();
+
+   // A queued directory event may outlive replacement by a file or symlink.
+   // Only registered monitor roots are allowed to traverse a symlink.
+   if (!it->isDirectory() || (it->isSymlink() && it != pTree->begin()))
+      return Success();
+
+   // macOS ordinarily rescans only one directory even for recursive monitors.
+   // Recovery must rebuild the failed subtree before advertising coverage.
+   recursive = recursive || (recursiveMonitor && it->scanFailed());
 
    // scan this directory into a new tree which we can compare to the old tree
    tree<FileInfo> subdirTree;

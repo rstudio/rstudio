@@ -642,7 +642,8 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              recursive,
                                              pContext->filter,
                                              &(pContext->fileTree),
-                                             pContext->callbacks.onFilesChanged);
+                                             pContext->callbacks.onFilesChanged,
+                                             pContext->recursive);
          if (error &&
             !isNotFoundError(error))
          {

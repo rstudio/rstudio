@@ -13,6 +13,10 @@
  *
  */
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
@@ -51,7 +55,7 @@ protected:
       EXPECT_FALSE(root_.removeIfExists());
    }
 
-   Error reconcile(const FilePath& path, bool recursive = true)
+   Error reconcile(const FilePath& path, bool recursive = true, bool recursiveMonitor = false)
    {
       events_.clear();
       return monitor::discoverAndProcessFileChanges(
@@ -60,7 +64,8 @@ protected:
          options_.filter,
          options_.onBeforeScanDir,
          &files_,
-         [this](const std::vector<FileChangeEvent>& events) { events_ = events; });
+         [this](const std::vector<FileChangeEvent>& events) { events_ = events; },
+         recursiveMonitor);
    }
 
    void expectScanStatus(bool failed)
@@ -163,6 +168,70 @@ TEST_F(FileMonitorReconciliationTests, ShallowRescanPreservesUnscannedChildFailu
    EXPECT_TRUE(dir->scanFailed());
    EXPECT_TRUE(events_.empty());
 }
+
+TEST_F(FileMonitorReconciliationTests, ShallowRecoveryRebuildsNestedSourcesForRecursiveMonitor)
+{
+   FilePath nested = blocked_.completeChildPath("R/sub/helper.R");
+   ASSERT_FALSE(nested.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(nested, "helper <- function() TRUE\n"));
+   failScan_ = true;
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+
+   failScan_ = false;
+   ASSERT_FALSE(reconcile(blocked_, false, true));
+   expectScanStatus(false);
+   EXPECT_NE(files_.end(), monitor::findFile(files_.begin(), files_.end(), nested.getAbsolutePath()));
+   EXPECT_NE(events_.end(), std::find_if(events_.begin(), events_.end(), [nested](const FileChangeEvent& event)
+   {
+      return event.type() == FileChangeEvent::FileAdded &&
+             event.fileInfo().absolutePath() == nested.getAbsolutePath();
+   }));
+}
+
+TEST_F(FileMonitorReconciliationTests, IgnoresStaleDirectoryEventAfterFileReplacement)
+{
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   ASSERT_FALSE(blocked_.remove());
+   ASSERT_FALSE(writeStringToFile(blocked_, "now a file\n"));
+   ASSERT_FALSE(reconcile(root_));
+   ASSERT_FALSE(reconcile(blocked_));
+   EXPECT_TRUE(events_.empty());
+   auto file = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), file);
+   EXPECT_FALSE(file->isDirectory());
+}
+
+#ifndef _WIN32
+TEST_F(FileMonitorReconciliationTests, IgnoresStaleDirectoryEventAfterSymlinkReplacement)
+{
+   FilePath target = root_.completeChildPath("target");
+   ASSERT_FALSE(target.ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(target.completeChildPath("external.R"), "x <- 1\n"));
+   ASSERT_FALSE(system::scanFiles(FileInfo(root_), options_, &files_));
+   ASSERT_FALSE(blocked_.remove());
+   ASSERT_EQ(0, ::symlink(target.getAbsolutePath().c_str(), blocked_.getAbsolutePath().c_str()));
+   ASSERT_FALSE(reconcile(root_));
+   ASSERT_FALSE(reconcile(blocked_));
+   EXPECT_TRUE(events_.empty());
+   EXPECT_EQ(files_.end(), monitor::findFile(
+         files_.begin(), files_.end(), blocked_.completeChildPath("external.R").getAbsolutePath()));
+   auto link = monitor::findFile(files_.begin(), files_.end(), blocked_.getAbsolutePath());
+   ASSERT_NE(files_.end(), link);
+   EXPECT_TRUE(link->isSymlink());
+   EXPECT_EQ(0, files_.number_of_children(link));
+}
+
+TEST_F(FileMonitorReconciliationTests, AllowsSymlinkAtRegisteredMonitorRoot)
+{
+   FilePath link = root_.completeChildPath("root-link");
+   ASSERT_EQ(0, ::symlink(blocked_.getAbsolutePath().c_str(), link.getAbsolutePath().c_str()));
+   ASSERT_FALSE(system::scanFiles(FileInfo(link, true), options_, &files_));
+   ASSERT_FALSE(writeStringToFile(source_, "x <- 1\n"));
+   ASSERT_FALSE(reconcile(link));
+   EXPECT_NE(files_.end(), monitor::findFile(
+         files_.begin(), files_.end(), link.completeChildPath("source.R").getAbsolutePath()));
+}
+#endif
 
 } // anonymous namespace
 } // namespace core

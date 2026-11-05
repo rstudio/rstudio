@@ -960,13 +960,20 @@ void ProjectContext::fileMonitorFilesChanged(
       }
 
       if ((event.type() == core::system::FileChangeEvent::FileRemoved ||
-           !info.isDirectory() || info.isSymlink() || info.scanFailed()) &&
+           !info.isDirectory() || info.isSymlink()) &&
           (info.isDirectory() || monitoredDirectories_.count(path) != 0))
       {
          eraseDirectoriesWithin(&monitoredDirectories_, path);
       }
+      else if (info.scanFailed())
+      {
+         // The failed-directory set blocks package coverage until recovery.
+         // Keep observed descendants: a partial scan can retain healthy R
+         // directories that will not emit another event when the error clears.
+         monitoredDirectories_.erase(path);
+      }
       else if (event.type() != core::system::FileChangeEvent::FileRemoved &&
-               info.isDirectory() && !info.isSymlink() && !info.scanFailed())
+               info.isDirectory() && !info.isSymlink())
       {
          monitoredDirectories_.insert(path);
       }

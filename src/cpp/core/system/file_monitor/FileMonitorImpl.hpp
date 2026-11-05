@@ -74,6 +74,8 @@ void processFileRemoved(tree<FileInfo>::iterator parentIt,
                         tree<FileInfo>* pTree,
                         std::vector<FileChangeEvent>* pFileChanges);
 
+// A recursive monitor must rebuild failed subtrees even when the current
+// event ordinarily requests only a shallow scan.
 Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
    bool recursive,
@@ -81,7 +83,8 @@ Error discoverAndProcessFileChanges(
    const boost::function<Error(const FileInfo&)>& onBeforeScanDir,
    tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>&
-                                                            onFilesChanged);
+                                                            onFilesChanged,
+   bool recursiveMonitor = false);
 
 inline Error discoverAndProcessFileChanges(
    const FileInfo& fileInfo,
@@ -89,7 +92,8 @@ inline Error discoverAndProcessFileChanges(
    const boost::function<bool(const FileInfo&)>& filter,
    tree<FileInfo>* pTree,
    const boost::function<void(const std::vector<FileChangeEvent>&)>&
-                                                            onFilesChanged)
+                                                            onFilesChanged,
+   bool recursiveMonitor = false)
 {
    return discoverAndProcessFileChanges(
                                  fileInfo,
@@ -97,7 +101,8 @@ inline Error discoverAndProcessFileChanges(
                                  filter,
                                  boost::function<Error(const FileInfo&)>(),
                                  pTree,
-                                 onFilesChanged);
+                                 onFilesChanged,
+                                 recursiveMonitor);
 }
 
 template <typename Iterator>

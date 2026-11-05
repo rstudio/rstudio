@@ -135,6 +135,23 @@ protected:
       });
    }
 
+   void reconcileScanStatus(ProjectContext* pContext, bool failed)
+   {
+      // The R directory was observed in both snapshots; only an unrelated
+      // metadata-read failure changed the containing directory's scan status.
+      std::vector<FileInfo> before = {
+         FileInfo(projectDir_), FileInfo(projectDir_.completeChildPath("R"))
+      };
+      before.front().setScanFailed(!failed);
+      std::vector<FileInfo> after = before;
+      after.front().setScanFailed(failed);
+      std::vector<core::system::FileChangeEvent> events;
+      core::system::collectFileChangeEvents(
+            before.begin(), before.end(), after.begin(), after.end(), &events);
+      ASSERT_EQ(1, events.size());
+      pContext->fileMonitorFilesChanged(events);
+   }
+
    void augmentBuildIgnores(ProjectContext* pContext)
    {
       pContext->augmentRbuildignore();
@@ -603,6 +620,26 @@ TEST_F(PackageProjectInfoTests, FailedDirectoryRegistrationDisablesPackageCovera
       EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
       EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
    }
+}
+
+TEST_F(PackageProjectInfoTests, PartialScanFailureRetainsHealthyDescendantCoverage)
+{
+   writeDescription("Package: localpkg\nVersion: 0.1.0\n");
+   ASSERT_FALSE(projectDir_.completeChildPath("R").ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("R/helper.R"), "helper <- function() TRUE\n"));
+   ASSERT_FALSE(writeStringToFile(projectDir_.completeChildPath("NAMESPACE"), "import(compiler)\n"));
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   modules::diagnostics::monitorProjectNamespace(context);
+   ASSERT_EQ(projectDir_, context.packageDirectoryInProject());
+
+   reconcileScanStatus(&context, true);
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+
+   reconcileScanStatus(&context, false);
+   EXPECT_EQ(projectDir_, context.packageDirectoryInProject());
+   EXPECT_EQ(std::set<std::string>{"compiler"}, r_util::RSourceIndex::getImportedPackages());
 }
 
 TEST_F(PackageProjectInfoTests, RefreshesImportsAcrossIgnoreRuleChanges)
