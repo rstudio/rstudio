@@ -268,12 +268,23 @@ public abstract class FileSystemDialog extends ModalDialogBase
       }
    }
 
+   @Override
+   public final void onNavigatedToFallback(String errorMessage)
+   {
+      // A fallback is useful for browsing, but it is not the destination the
+      // user accepted. Never run a deferred Save, Open, or Choose against it.
+      acceptOnNavigated_ = false;
+      onNavigated();
+      // The context can finish navigating after Cancel or Escape closed us.
+      if (isAttached())
+         onError(errorMessage);
+   }
+
    /**
     * Called when a directory listing arrives, after the browser shows it and
     * before any deferred accept runs. A navigation that fails outright skips
-    * it (see onError()), but one the context recovers from by listing a
-    * fallback directory instead (RemoteFileSystemContext.cd() falls back to
-    * the project or default working directory) arrives here as usual.
+    * it (see onError()). A fallback arrival also calls it, after canceling
+    * any deferred accept (see onNavigatedToFallback()).
     */
    protected void onBrowserNavigated()
    {
