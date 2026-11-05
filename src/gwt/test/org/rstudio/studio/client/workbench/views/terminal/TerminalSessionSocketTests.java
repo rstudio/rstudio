@@ -189,6 +189,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
       public void writeStandardInput(ShellInput input, ServerRequestCallback<VoidResponse> callback)
       {
          inputs.add(input.getText());
+         sequences.add(input.getSequence());
          callback.onResponseReceived(null);
       }
 
@@ -196,11 +197,17 @@ public class TerminalSessionSocketTests extends GWTTestCase
       int fallbacks;
       ServerRequestCallback<VoidResponse> pendingRpc;
       final List<String> inputs = new ArrayList<>();
+      final List<Integer> sequences = new ArrayList<>();
    }
 
    private static class Harness
    {
       Harness()
+      {
+         this(false);
+      }
+
+      Harness(boolean sequenceRpcInput)
       {
          socket = new TerminalSessionSocket(session, new Emulator(), 10, 10, (listener, ping, timeout) ->
                new TerminalWebSocket(listener, ping, timeout, url ->
@@ -208,7 +215,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
                   Socket created = new Socket(url);
                   sockets.add(created);
                   return created;
-               }, clock));
+               }, clock), sequenceRpcInput);
       }
 
       Process connect(Callback callback)
@@ -288,7 +295,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
       Socket old = h.latest();
       old.opened();
       assertEquals(1, callback.connected);
-      h.socket.dispatchInput(0, "already sent", false, new Ack());
+      h.socket.dispatchInput("already sent", false, new Ack());
       assertEquals("aalready sent", old.sent.get(0));
 
       // three unanswered keep-alives, then expiry
@@ -300,8 +307,8 @@ public class TerminalSessionSocketTests extends GWTTestCase
 
       Ack a = new Ack();
       Ack b = new Ack();
-      h.socket.dispatchInput(1, "queued A", false, a);
-      h.socket.dispatchInput(2, "queued B", false, b);
+      h.socket.dispatchInput("queued A", false, a);
+      h.socket.dispatchInput("queued B", false, b);
       assertTrue("input must wait for RPC confirmation", process.inputs.isEmpty());
       assertEquals(0, a.count);
       assertEquals(0, b.count);
@@ -339,7 +346,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
 
       next.state = Socket.CLOSING;
       Ack unsent = new Ack();
-      h.socket.dispatchInput(3, "not accepted by closing socket", false, unsent);
+      h.socket.dispatchInput("not accepted by closing socket", false, unsent);
       assertEquals(1, process.fallbacks);
       assertEquals("failed send not acknowledged", 0, unsent.count);
       assertTrue(h.socket.getConnectionDiagnostics().contains(constants().sendUserInputMessage()));
@@ -376,7 +383,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
       Harness h = new Harness();
       Process process = h.connectClosing(new Callback());
       Ack ack = new Ack();
-      h.socket.dispatchInput(4, "failed", false, ack);
+      h.socket.dispatchInput("failed", false, ack);
       process.pendingRpc.onError(rpcError());
       assertEquals(1, ack.errors);
       assertEquals(0, ack.count);
@@ -391,8 +398,8 @@ public class TerminalSessionSocketTests extends GWTTestCase
          Process process = h.connectClosing(new Callback());
          Ack first = new Ack();
          Ack second = new Ack();
-         h.socket.dispatchInput(5, "cancel A", false, first);
-         h.socket.dispatchInput(6, "cancel B", false, second);
+         h.socket.dispatchInput("cancel A", false, first);
+         h.socket.dispatchInput("cancel B", false, second);
 
          h.socket.disconnect(permanent);
          assertEquals("one failure for the burst", 1, first.errors);
@@ -415,7 +422,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
       Harness h = new Harness();
       h.connectClosing(new Callback());
       Ack ack = new Ack();
-      h.socket.dispatchInput(7, "cancel on reconnect", false, ack);
+      h.socket.dispatchInput("cancel on reconnect", false, ack);
       h.connect(new Callback());
       assertEquals(1, ack.errors);
       assertEquals(0, ack.count);
@@ -434,12 +441,12 @@ public class TerminalSessionSocketTests extends GWTTestCase
          {
             super.onError(error);
             replacement[0] = h.connectClosing(new Callback());
-            h.socket.dispatchInput(8, "keep replacement input", false, replacementAck);
+            h.socket.dispatchInput("keep replacement input", false, replacementAck);
          }
       };
       Ack trailingAck = new Ack();
-      h.socket.dispatchInput(9, "old A", false, reconnectingAck);
-      h.socket.dispatchInput(10, "old B", false, trailingAck);
+      h.socket.dispatchInput("old A", false, reconnectingAck);
+      h.socket.dispatchInput("old B", false, trailingAck);
 
       h.socket.disconnect(true);
       assertEquals(1, reconnectingAck.errors);
@@ -472,7 +479,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
             winningSocket[0] = h.latest();
          }
       };
-      h.socket.dispatchInput(11, "old queued input", false, connectDuringCancellation);
+      h.socket.dispatchInput("old queued input", false, connectDuringCancellation);
 
       int socketsBefore = h.sockets.size();
       Callback supersededCallback = new Callback();
@@ -481,7 +488,7 @@ public class TerminalSessionSocketTests extends GWTTestCase
 
       winningSocket[0].opened();
       Ack winnerAck = new Ack();
-      h.socket.dispatchInput(12, "winner input", false, winnerAck);
+      h.socket.dispatchInput("winner input", false, winnerAck);
       assertEquals(1, winnerCallback.connected);
       assertEquals("only the winning connection can complete", 0, supersededCallback.connected);
       assertTrue(winningSocket[0].sent.contains("awinner input"));
@@ -493,6 +500,36 @@ public class TerminalSessionSocketTests extends GWTTestCase
 
       h.socket.disconnect(false);
       assertEquals("the winning socket must remain owned and get closed", 1, winningSocket[0].closes);
+   }
+
+   public void testRejectedInputIsSequencedInOrderWithLaterInput()
+   {
+      Harness h = new Harness(true);
+      Process process = h.connectClosing(new Callback());
+      h.socket.dispatchInput("rejected", false, new Ack());
+      h.socket.dispatchInput("typed during switch", false, new Ack());
+      process.pendingRpc.onResponseReceived(null);
+      h.socket.dispatchInput("typed after switch", false, new Ack());
+
+      assertEquals(Arrays.asList("rejected", "typed during switch", "typed after switch"), process.inputs);
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE, 0, 1), process.sequences);
+
+      // a new connection flushes the server queue again
+      h.socket.disconnect(false);
+      Process next = h.connect(new Callback());
+      next.mode = ConsoleProcessInfo.CHANNEL_RPC;
+      h.socket.dispatchInput("after reconnect", false, new Ack());
+      assertEquals(Arrays.asList(ShellInput.FLUSH_SEQUENCE), next.sequences);
+   }
+
+   public void testServerInputIsNotSequenced()
+   {
+      Harness h = new Harness();
+      Process process = h.connectClosing(new Callback());
+      h.socket.dispatchInput("rejected", false, new Ack());
+      process.pendingRpc.onResponseReceived(null);
+      h.socket.dispatchInput("typed after switch", false, new Ack());
+      assertEquals(Arrays.asList(ShellInput.IGNORE_SEQUENCE, ShellInput.IGNORE_SEQUENCE), process.sequences);
    }
 
    // GWT.create() is only legal once the test runs in the GWT module, not in a

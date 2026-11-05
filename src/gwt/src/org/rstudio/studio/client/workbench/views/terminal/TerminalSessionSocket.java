@@ -113,14 +113,19 @@ public class TerminalSessionSocket
                                 int webSocketPingInterval,
                                 int webSocketConnectTimeout)
    {
-      this(session, xterm, webSocketPingInterval, webSocketConnectTimeout, TerminalWebSocket::new);
+      // On desktop, rapid typing sometimes causes RPC messages for
+      // writeStandardInput to arrive out of sequence in the terminal; send a
+      // sequence number with each message so the server can put them back in order.
+      this(session, xterm, webSocketPingInterval, webSocketConnectTimeout,
+           TerminalWebSocket::new, Desktop.hasDesktopFrame());
    }
 
    TerminalSessionSocket(Session session,
                          Emulator xterm,
                          int webSocketPingInterval,
                          int webSocketConnectTimeout,
-                         TerminalWebSocket.Factory socketFactory)
+                         TerminalWebSocket.Factory socketFactory,
+                         boolean sequenceRpcInput)
    {
       session_ = session;
       xterm_ = xterm;
@@ -128,6 +133,7 @@ public class TerminalSessionSocket
       webSocketPingInterval_ = webSocketPingInterval;
       webSocketConnectTimeout_ = webSocketConnectTimeout;
       socketFactory_ = socketFactory;
+      sequenceRpcInput_ = sequenceRpcInput;
    }
 
    /**
@@ -293,13 +299,11 @@ public class TerminalSessionSocket
 
    /**
     * Send user input to the server.
-    * @param inputSequence used to fix out-of-order RPC calls
     * @param input text to send
     * @param localEcho echo input locally
     * @param requestCallback callback
     */
-   public void dispatchInput(int inputSequence,
-                             String input,
+   public void dispatchInput(String input,
                              boolean localEcho,
                              VoidServerRequestCallback requestCallback)
    {
@@ -308,7 +312,7 @@ public class TerminalSessionSocket
       else
          localEcho_.clear();
 
-      PendingInput pending = new PendingInput(inputSequence, input, requestCallback);
+      PendingInput pending = new PendingInput(input, requestCallback);
       if (switchingToRpc_)
       {
          pendingInput_.add(pending);
@@ -403,6 +407,7 @@ public class TerminalSessionSocket
       connection_++;
       switchingToRpc_ = false;
       connectCallback_ = null;
+      inputSequence_ = ShellInput.IGNORE_SEQUENCE;
       closeWebSocket();
       registrations_.removeHandler();
       if (permanent)
@@ -464,10 +469,43 @@ public class TerminalSessionSocket
          callback.onConnected();
    }
 
+   // Sequence numbers are assigned here, when input is actually written over
+   // RPC, rather than when it was typed. Input typed while the WebSocket was
+   // still in use, and queued after its send was rejected, is then numbered
+   // in order with the input that follows it.
    private void writeRpcInput(PendingInput input)
    {
       consoleProcess_.writeStandardInput(
-            ShellInput.create(input.sequence, input.text, true /*echo input*/), input.callback);
+            ShellInput.create(nextInputSequence(), input.text, true /*echo input*/), input.callback);
+   }
+
+   private int nextInputSequence()
+   {
+      if (!sequenceRpcInput_)
+         return ShellInput.IGNORE_SEQUENCE;
+
+      if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
+      {
+         // First message sent for this connection: flush the server-side
+         // queue to reset the server's "last sequence" back to default.
+         inputSequence_ = ShellInput.FLUSH_SEQUENCE;
+      }
+      else if (inputSequence_ == ShellInput.FLUSH_SEQUENCE)
+      {
+         // Last message has flushed the server, start tracking sequences again.
+         inputSequence_ = 0;
+      }
+      else if (inputSequence_ >= Integer.MAX_VALUE - 100)
+      {
+         // Very diligent typist! Tell the server to flush its input
+         // queue, temporarily ignoring sequences.
+         inputSequence_ = ShellInput.FLUSH_SEQUENCE;
+      }
+      else
+      {
+         inputSequence_++;
+      }
+      return inputSequence_;
    }
 
    // Queued input is one burst of typing that was lost together, so report
@@ -481,14 +519,12 @@ public class TerminalSessionSocket
 
    private static class PendingInput
    {
-      PendingInput(int sequence, String text, VoidServerRequestCallback callback)
+      PendingInput(String text, VoidServerRequestCallback callback)
       {
-         this.sequence = sequence;
          this.text = text;
          this.callback = callback;
       }
 
-      final int sequence;
       final String text;
       final VoidServerRequestCallback callback;
    }
@@ -542,6 +578,7 @@ public class TerminalSessionSocket
    private TerminalWebSocket socket_;
    private int connection_;
    private boolean switchingToRpc_;
+   private int inputSequence_ = ShellInput.IGNORE_SEQUENCE;
    private final List<PendingInput> pendingInput_ = new ArrayList<>();
    private final TerminalLocalEcho localEcho_;
    private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
@@ -553,5 +590,6 @@ public class TerminalSessionSocket
 
    private final int webSocketPingInterval_;
    private final int webSocketConnectTimeout_;
+   private final boolean sequenceRpcInput_;
    private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }
