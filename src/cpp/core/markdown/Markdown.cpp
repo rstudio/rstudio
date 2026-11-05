@@ -238,6 +238,10 @@ void stripMetadata(std::string* pInput)
          hasPandocTitleBlock = true;
          break;
       }
+      else
+      {
+         break;
+      }
    }
 
    std::size_t firstDocumentLine = 0;

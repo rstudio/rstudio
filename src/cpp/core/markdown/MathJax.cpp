@@ -84,6 +84,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
    // entire suffix for every pattern after each inline code span.
    std::vector<boost::smatch> nextMatches(patterns.size());
    std::vector<bool> searched(patterns.size(), false);
+   bool afterFence = false;
    while (pos != inputEnd)
    {
       std::size_t closest = patterns.size();
@@ -91,12 +92,12 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
       {
          boost::smatch& next = nextMatches[i];
          auto flags = pos == pInput->begin() ? boost::match_default : boost::match_prev_avail;
-         // The indented-code pattern's \A also applies at an exclusion's end
-         // (e.g. indented code immediately following a closing fence). Probe
-         // only this position before reusing a cached future match or miss.
+         // The indented-code pattern's \A also applies just after a fence,
+         // where a new block can start without a blank line. Inline spans do
+         // not create this boundary: following spaces are still paragraph text.
          boost::smatch atBoundary;
-         if (regex_utils::search(pos, inputEnd, atBoundary, patterns[i].begin,
-                                 flags | boost::match_continuous))
+         if (afterFence && regex_utils::search(pos, inputEnd, atBoundary, patterns[i].begin,
+                                               flags | boost::match_continuous))
          {
             next = atBoundary;
          }
@@ -141,6 +142,7 @@ MathJaxFilter::MathJaxFilter(std::string* pInput,
 
          // update the position
          pos = range.end;
+         afterFence = patterns[closest].fenced;
       }
 
       // no match -- consume remaining input and tag it for processing

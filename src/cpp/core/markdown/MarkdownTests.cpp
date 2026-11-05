@@ -172,6 +172,12 @@ TEST(MarkdownTest, MetadataAndMath)
    EXPECT_EQ("<p>\\[ x_1 \\]</p>\n", render("% $$\n\n$$x_1$$"));
    EXPECT_EQ("<p>body</p>\n", render("---\ntitle: |\n  $$\n\n  x_1\n  $$\n---\n\nbody"));
    EXPECT_EQ("<p>body</p>\n", render("---\ntitle: example\n\nauthor: name\n---\n\nbody"));
+   html = render("Note: intro\n\n---\n\nDetail: text\n\n---\n\nBody");
+   EXPECT_NE(std::string::npos, html.find("Note: intro"));
+   EXPECT_NE(std::string::npos, html.find("Detail: text"));
+   EXPECT_NE(std::string::npos, html.find("Body"));
+   EXPECT_EQ("<p><code>code</code>    \\( x_1 \\)</p>\n", render("`code`    $x_1$"));
+   EXPECT_NE(std::string::npos, render("`code`\n    $x_1$").find("\\( x_1 \\)"));
 }
 
 TEST(MarkdownTest, MathAmongManyCodeSpans)
