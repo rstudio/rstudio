@@ -1407,6 +1407,26 @@ bool isJsonFile(const FilePath& filePath)
    return boost::algorithm::ends_with(mimeType, "json");
 }
 
+// lock files known to be text; the '.lock' extension alone says nothing, as
+// some (git's index.lock, for one) are binary
+bool hasTextLockFileName(const FilePath& filePath)
+{
+   static const char* const kTextLockFiles[] = {
+      "renv.lock",
+      "packrat.lock",
+      "poetry.lock",
+      "Pipfile.lock",
+      "uv.lock",
+      "yarn.lock",
+      "Cargo.lock",
+      "Gemfile.lock",
+   };
+
+   std::string name = filePath.getFilename();
+   return std::find(std::begin(kTextLockFiles), std::end(kTextLockFiles), name) !=
+          std::end(kTextLockFiles);
+}
+
 // The content heuristic used when file(1) is unavailable or gives no answer.
 // Text has no null bytes, except UTF-16 (recognized by its BOM), where they
 // pad ASCII characters; a null code unit there still marks binary data. Like
@@ -1467,6 +1487,9 @@ FilePath findFileCommand()
 bool isTextFileImpl(const FilePath& targetPath, const FilePath* pFileCommand)
 {
    if (hasTextMimeType(targetPath))
+      return true;
+
+   if (hasTextLockFileName(targetPath))
       return true;
 
    if (isJsonFile(targetPath))

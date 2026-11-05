@@ -1257,6 +1257,23 @@ protected:
       return path;
    }
 
+   // a file with exactly the given name, in a fresh temp directory
+   core::FilePath makeNamedTempFile(const std::string& name,
+                                    const std::string& contents)
+   {
+      core::FilePath dir;
+      core::Error error = core::FilePath::tempFilePath(dir);
+      EXPECT_FALSE(error) << error.asString();
+      error = dir.ensureDirectory();
+      EXPECT_FALSE(error) << error.asString();
+      tempFiles_.push_back(dir);
+
+      core::FilePath path = dir.completeChildPath(name);
+      error = core::writeStringToFile(path, contents);
+      EXPECT_FALSE(error) << error.asString();
+      return path;
+   }
+
    static std::string binaryContents()
    {
       std::string contents = "PK";
@@ -1280,13 +1297,18 @@ protected:
    std::vector<core::FilePath> tempFiles_;
 };
 
-TEST_F(IsTextFileTest, LockFilesAreTextByExtension)
+TEST_F(IsTextFileTest, KnownLockFilesAreTextByName)
 {
-   // renv.lock is JSON, but .lock is answered from the mime table so that
-   // no subprocess is needed at all
-   core::FilePath lockFile = makeTempFile(".lock", "{\n  \"R\": {}\n}\n");
-   EXPECT_EQ("text/plain", lockFile.getMimeContentType());
-   EXPECT_TRUE(isTextFile(lockFile, core::FilePath()));
+   // answered from the name alone: even binary contents are not inspected
+   core::FilePath renvLock = makeNamedTempFile("renv.lock", binaryContents());
+   EXPECT_TRUE(isTextFile(renvLock, core::FilePath()));
+
+   // other .lock files are inspected, as some (git's index.lock) are binary
+   core::FilePath textLock = makeNamedTempFile("other.lock", "{}\n");
+   EXPECT_TRUE(isTextFile(textLock, core::FilePath()));
+
+   core::FilePath indexLock = makeNamedTempFile("index.lock", binaryContents());
+   EXPECT_FALSE(isTextFile(indexLock, core::FilePath()));
 }
 
 TEST_F(IsTextFileTest, UnavailableFileCommandInspectsContents)

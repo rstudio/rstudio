@@ -526,7 +526,6 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "ps1",   "text/plain");
       MIME_TYPES.put( "rst",   "text/plain");
       MIME_TYPES.put( "gitignore",   "text/plain");
-      MIME_TYPES.put( "lock",  "text/plain");
       MIME_TYPES.put( "rbuildignore","text/plain");
       MIME_TYPES.put( "rprofile", "text/x-r-source");
       MIME_TYPES.put( "rprofvis", "text/x-r-profile");
