@@ -340,10 +340,11 @@ public class Workbench implements BusyEvent.Handler,
 
          nearQuotaWarningShown_ = true;
       }
-      else if (!quotaStatus.isNearQuota())
+      else if (wasOverQuota_ || !quotaStatus.isNearQuota())
       {
          globalDisplay_.hideWarningBar("quota");
       }
+      wasOverQuota_ = quotaStatus.isOverQuota();
    }
 
    @Override
@@ -790,6 +791,7 @@ public class Workbench implements BusyEvent.Handler,
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private final WorkbenchNewSession newSession_;
    private boolean nearQuotaWarningShown_ = false;
+   private boolean wasOverQuota_ = false;
    
    @SuppressWarnings("unused") private final SourceWindowManager sourceWindowManager_;
    private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);

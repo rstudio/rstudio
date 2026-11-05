@@ -199,8 +199,6 @@ public class ApplicationWindow extends Composite
    @Override
    public void showMemoryLimitWarning(String status, boolean updateOnly, boolean overLimit)
    {
-      if (!updateOnly)
-         warnings_.hide(MEMORY_WARNING);
       if (!updateOnly || warnings_.contains(MEMORY_WARNING))
          showWarning(MEMORY_WARNING, true,
                (overLimit ? constants_.overMemoryLimit() : constants_.approachingMemoryLimit()) + " " + status,
