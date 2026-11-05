@@ -1122,7 +1122,7 @@ public class VirtualConsole
       {
          data = StringUtil.normalizeNewLines(data);
          if (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
-             data = AnsiCode.strip(data);
+            data = AnsiCode.strip(data).replaceAll("[\\b\\f]", "");
          else
             data = AnsiCode.stripNonSgr(data);
       }
@@ -1483,11 +1483,7 @@ public class VirtualConsole
    private Match nextMatch(String data, int offset)
    {
       if (sgrOnly_)
-      {
-         return ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF
-            ? CONTROL.match(data, offset)
-            : AnsiCode.SGR_ONLY_PATTERN.match(data, offset);
-      }
+         return AnsiCode.SGR_ONLY_PATTERN.match(data, offset);
       return (ansiColorMode_ == UserPrefs.ANSI_CONSOLE_MODE_OFF)
          ? CONTROL.match(data, offset)
          : AnsiCode.CONTROL_PATTERN.match(data, offset);

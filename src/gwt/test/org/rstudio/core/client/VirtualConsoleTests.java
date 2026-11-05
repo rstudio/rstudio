@@ -307,6 +307,64 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("one\ntwo", crlf.getInnerText());
    }
 
+   public void testSgrOnlyBackspace()
+   {
+      assertSgrOnlyText("expected foo\bbar", "expected foobar");
+   }
+
+   public void testSgrOnlyFormFeed()
+   {
+      assertSgrOnlyText("line 1 is fine\fline 2 is not", "line 1 is fineline 2 is not");
+   }
+
+   public void testSgrOnlyNewlinesAndEscapes()
+   {
+      assertSgrOnlyText("one\r\ntwo\rthree\n\033[31mred\033[0m\007", "one\ntwo\nthree\nred");
+   }
+
+   private void assertSgrOnlyText(String input, String expected)
+   {
+      for (String mode : new String[] {
+            UserPrefs.ANSI_CONSOLE_MODE_ON,
+            UserPrefs.ANSI_CONSOLE_MODE_STRIP,
+            UserPrefs.ANSI_CONSOLE_MODE_OFF})
+      {
+         PreElement ele = Document.get().createPreElement();
+         FakePrefs prefs = new FakePrefs();
+         prefs.ansiMode_ = mode;
+         VirtualConsole vc = new VirtualConsole(ele, prefs);
+         vc.setSgrOnly(true);
+         vc.submit(input);
+         Assert.assertEquals(mode, expected, ele.getInnerText());
+         Assert.assertEquals(mode, expected, vc.toString());
+      }
+   }
+
+   public void testDynamicControlsInAllAnsiModes()
+   {
+      for (String mode : new String[] {
+            UserPrefs.ANSI_CONSOLE_MODE_ON,
+            UserPrefs.ANSI_CONSOLE_MODE_STRIP,
+            UserPrefs.ANSI_CONSOLE_MODE_OFF})
+      {
+         PreElement ele = Document.get().createPreElement();
+         FakePrefs prefs = new FakePrefs();
+         prefs.ansiMode_ = mode;
+         VirtualConsole vc = new VirtualConsole(ele, prefs);
+         vc.submit("foo\bbar");
+         Assert.assertEquals(mode, "fobar", ele.getInnerText());
+         Assert.assertEquals(mode, "fobar", vc.toString());
+
+         vc.submit("\rreplace");
+         Assert.assertEquals(mode, "replace", ele.getInnerText());
+         Assert.assertEquals(mode, "replace", vc.toString());
+
+         vc.submit("\fnext");
+         Assert.assertEquals(mode, "next", ele.getInnerText());
+         Assert.assertEquals(mode, "next", vc.toString());
+      }
+   }
+
    public void testAnsiColorStyleHelper()
    {
       Assert.assertEquals("xtermColor0",
