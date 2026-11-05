@@ -77,7 +77,7 @@ public class DocUpdateSentinel
    }
 
    // Reports how a save went. A save refused because another process had the
-   // file open -- backup and antivirus software do so briefly -- goes to
+   // file open or locked -- backup and antivirus software do so briefly -- goes to
    // onFileInUseError, which callers may override to treat it as transient.
    public static abstract class SaveIndicator implements ProgressIndicator
    {
@@ -737,7 +737,7 @@ public class DocUpdateSentinel
       ServerErrorCause cause = error.getCause();
       return BrowseCap.isWindowsDesktop() &&
              cause != null &&
-             cause.isWindowsSharingViolation();
+             cause.isWindowsFileInUse();
    }
 
    private void onSaveComplete()
