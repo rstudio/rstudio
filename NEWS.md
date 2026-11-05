@@ -10,6 +10,7 @@
 
 ### Fixed
 - ([#19218](https://github.com/rstudio/rstudio/issues/19218)): Reduced the time spent computing Git change markers for large replacements, while keeping change boundaries consistent when opening side-by-side review.
+- ([#18386](https://github.com/rstudio/rstudio/issues/18386)): Improved terminal recovery when a WebSocket stops responding, and prevented callbacks from an old connection from interrupting a replacement connection.
 - ([#15965](https://github.com/rstudio/rstudio/issues/15965)): Fixed several issues that prevented building with `-DRSTUDIO_USE_SYSTEM_DEPENDENCIES=ON`, where Hunspell, RapidJSON, utf8cpp, GTest and libgit2 were not found or not linked. Hunspell, dtl and websocketpp, which an installed package cannot provide, are now always fetched, and individual dependencies can be excluded with `-DRSTUDIO_USE_SYSTEM_<NAME>=OFF` (e.g. `-DRSTUDIO_USE_SYSTEM_YAML_CPP=OFF`). Thanks to [@Flamefire](https://github.com/Flamefire).
 - ([#19362](https://github.com/rstudio/rstudio/issues/19362)): Fixed an issue where the console could show the warning "converting NULL pointer to R NULL" from `rs_getBrowserEnv` shortly after a session started.
 - ([#19406](https://github.com/rstudio/rstudio/issues/19406)): Fixed an issue where Reformat Selection did nothing in an unsaved document when Air was the code formatter. Unsaved documents now also use the open project's `air.toml`.
