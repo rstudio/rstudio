@@ -29,6 +29,7 @@
 - ([#19381](https://github.com/rstudio/rstudio/issues/19381)): [Accessibility] Fixed an issue where screen readers announced the list in the dialog for choosing a Posit Connect Cloud account without a label.
 
 ### Dependencies
+- ([#18904](https://github.com/rstudio/rstudio/issues/18904)): Replaced the built-in Sundown Markdown renderer with cmark-gfm for Markdown previews, help descriptions, tutorials, and R Presentations. Rendering now follows CommonMark rules, with GFM tables, strikethrough, and autolinks; RStudio superscripts and MathJax support are retained.
 - Quarto 1.11.9
 - Electron 44.10.2
 

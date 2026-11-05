@@ -45,6 +45,15 @@ dependency(SUNDOWN
    LICENSE      "ISC"
 )
 
+dependency(CMARK_GFM
+   DEPNAME      "cmark-gfm"
+   PATH         "src/cpp/core/markdown/cmark-gfm"
+   REPOSITORY   "https://github.com/github/cmark-gfm"
+   REVISION     "27d942c8b0a62d192f616e5bf3578f4b6a89e180"
+   LICENSE      "BSD-2-Clause AND MIT"
+   LICENSE_PATH "COPYING"
+)
+
 dependency(PROMETHEUS_CPP
    DEPNAME      "Prometheus Client Library for Modern C++"
    PATH         "src/cpp/ext/prometheus-cpp"

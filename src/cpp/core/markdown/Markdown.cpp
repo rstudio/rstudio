@@ -32,8 +32,12 @@
 
 #include "MathJax.hpp"
 
-#include "sundown/markdown.h"
-#include "sundown/html.h"
+#ifdef RSTUDIO_USE_CMARK_GFM
+# include "CmarkGfm.hpp"
+#else
+# include "sundown/markdown.h"
+# include "sundown/html.h"
+#endif
 
 namespace rstudio {
 namespace core {
@@ -41,6 +45,7 @@ namespace markdown {
 
 namespace {
 
+#ifndef RSTUDIO_USE_CMARK_GFM
 class SundownBuffer : boost::noncopyable
 {
 public:
@@ -204,7 +209,7 @@ Error renderMarkdown(const SundownBuffer& inputBuffer,
 
    return Success();
 }
-
+#endif
 
 void stripMetadata(std::string* pInput)
 {
@@ -354,8 +359,10 @@ Error markdownToHTML(const std::string& markdownInput,
    // exclude fenced code blocks
    using namespace rstudio::core::html_utils;
    std::vector<ExcludePattern> excludePatterns;
-   excludePatterns.push_back(ExcludePattern(boost::regex("^`{3,}[^\\n]*?$"),
-                                            boost::regex("^`{3,}\\s*$")));
+   excludePatterns.push_back(ExcludePattern(boost::regex("^ {0,3}`{3,}[^\\n]*?$"),
+                                            boost::regex("^ {0,3}`{3,}\\s*$")));
+   excludePatterns.push_back(ExcludePattern(boost::regex("^ {0,3}~{3,}[^\\n]*?$"),
+                                            boost::regex("^ {0,3}~{3,}\\s*$")));
 
    // exclude inline verbatim code
    excludePatterns.push_back(ExcludePattern(boost::regex("`[^\\n]+?`")));
@@ -389,6 +396,12 @@ Error markdownToHTML(const std::string& markdownInput,
       return Success();
    }
 
+#ifdef RSTUDIO_USE_CMARK_GFM
+   std::string output;
+   Error error = renderCmarkGfm(input, extensions, options, &output);
+   if (error)
+      return error;
+#else
    // setup input buffer
    SundownBuffer inputBuffer(input);
    if (!inputBuffer.allocated())
@@ -451,6 +464,7 @@ Error markdownToHTML(const std::string& markdownInput,
    if (error)
       return error;
 
+#endif
    // append output
    pHTMLOutput->append(output);
 

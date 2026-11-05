@@ -88,7 +88,7 @@ std::string divWrap(const std::string& classNames,
 std::string mediaClass(const std::string& html)
 {
    boost::regex imageRegex(
-     "\\s*<p>\\s*<img src=\"([^\"]+)\"(?: [\\w]+=\"[^\"]*\")*/>\\s*</p>\\s*");
+     "\\s*<p>\\s*<img src=\"([^\"]+)\"(?: [\\w]+=\"[^\"]*\")*\\s*/>\\s*</p>\\s*");
 
    boost::smatch match;
    if (regex_utils::search(html, match, imageRegex))

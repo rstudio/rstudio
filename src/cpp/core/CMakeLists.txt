@@ -17,6 +17,13 @@ project (CORE)
 
 add_subdirectory(tex/synctex)
 
+# Keep Sundown available temporarily for differential testing and rollback.
+# See markdown/README.md for the intentional CommonMark behavior changes.
+option(RSTUDIO_USE_CMARK_GFM "Use the cmark-gfm Markdown renderer" ON)
+if(RSTUDIO_USE_CMARK_GFM)
+   include(markdown/CmarkGfm.cmake)
+endif()
+
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
 
@@ -97,14 +104,6 @@ set(CORE_SOURCE_FILES
    http/Util.cpp
    markdown/Markdown.cpp
    markdown/MathJax.cpp
-   markdown/sundown/autolink.c
-   markdown/sundown/buffer.c
-   markdown/sundown/houdini_href_e.c
-   markdown/sundown/houdini_html_e.c
-   markdown/sundown/html.c
-   markdown/sundown/html_smartypants.c
-   markdown/sundown/markdown.c
-   markdown/sundown/stack.c
    r_util/RActiveSessions.cpp
    r_util/RActiveSessionsOverlay.cpp
    r_util/RActiveSessionStorage.cpp
@@ -139,6 +138,21 @@ set(CORE_SOURCE_FILES
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp
 )
+
+if(RSTUDIO_USE_CMARK_GFM)
+   list(APPEND CORE_SOURCE_FILES markdown/CmarkGfm.cpp)
+else()
+   list(APPEND CORE_SOURCE_FILES
+      markdown/sundown/autolink.c
+      markdown/sundown/buffer.c
+      markdown/sundown/houdini_href_e.c
+      markdown/sundown/houdini_html_e.c
+      markdown/sundown/html.c
+      markdown/sundown/html_smartypants.c
+      markdown/sundown/markdown.c
+      markdown/sundown/stack.c
+   )
+endif()
 
 if (RSTUDIO_HAS_SOCI)
    list(APPEND CORE_SOURCE_FILES Database.cpp)
@@ -345,6 +359,11 @@ include_directories(
 add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 define_source_file_names(rstudio-core)
 
+if(RSTUDIO_USE_CMARK_GFM)
+   target_compile_definitions(rstudio-core PUBLIC RSTUDIO_USE_CMARK_GFM)
+   target_link_libraries(rstudio-core rstudio-cmark-gfm)
+endif()
+
 # link dependencies
 target_link_libraries(rstudio-core
    rstudio-shared-core
@@ -368,6 +387,10 @@ endif()
 
 # define executable (for running unit tests)
 if (RSTUDIO_UNIT_TESTS_ENABLED)
+
+   # Test-only stdin/stdout driver for Markdown differential testing.
+   add_executable(rstudio-markdown ../tools/MarkdownRender.cpp)
+   target_link_libraries(rstudio-markdown rstudio-core)
 
    # Find all test files (including both standard tests and gtest files)
    file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")

@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""Refresh the vendored cmark-gfm source from an immutable GitHub revision."""
+
+import argparse
+import io
+from pathlib import Path
+import re
+import subprocess
+import tarfile
+
+
+def main():
+    target = Path(__file__).resolve().parent.parent / "core/markdown/cmark-gfm"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--revision", default=(target / "REVISION").read_text().strip())
+    args = parser.parse_args()
+    if not re.fullmatch(r"[0-9a-f]{40}", args.revision):
+        parser.error("--revision must be a full 40-character commit SHA")
+
+    archive = subprocess.check_output(
+        ["gh", "api", f"repos/github/cmark-gfm/tarball/{args.revision}"]
+    )
+    files = {}
+    with tarfile.open(fileobj=io.BytesIO(archive), mode="r:gz") as tar:
+        for member in tar.getmembers():
+            path = Path(*Path(member.name).parts[1:])
+            if not member.isfile() or ".." in path.parts or path.is_absolute():
+                continue
+            if path.parts[0] in {"src", "extensions"} or str(path) in {
+                "COPYING", "README.md", "CMakeLists.txt"
+            }:
+                files[path] = tar.extractfile(member).read()
+
+    if Path("src/cmark.c") not in files or Path("COPYING") not in files:
+        raise RuntimeError("archive does not contain the expected cmark-gfm sources")
+    for path, data in files.items():
+        output = target / path
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(data)
+    for path in target.rglob("*"):
+        if path.is_file() and path.name != "REVISION" and path.relative_to(target) not in files:
+            path.unlink()
+    (target / "REVISION").write_text(args.revision + "\n")
+    print(f"Vendored {len(files)} files at {args.revision}.")
+    print("Review CmarkGfm.cmake, dependency metadata and NOTICE when updating the revision.")
+
+
+if __name__ == "__main__":
+    main()

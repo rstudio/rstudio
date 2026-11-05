@@ -1,0 +1,62 @@
+Markdown compatibility
+========================================================
+author: RStudio
+autosize: true
+
+Text and equations
+========================================================
+
+**Bold**, *italic*, `code`, snake_case and ~~deleted~~ text.
+
+"Smart quotes", don't, --, --- and ...
+
+x^2 and x^(a + b), with $x_1 + x^2$ and $$a_b < c_d$$.
+
+Links and lists
+========================================================
+
+- [Website](https://example.com)
+- Bare URL: https://example.com
+- [Relative link](other.html)
+    - Nested item
+
+> A quotation with **formatting**.
+
+Tables
+========================================================
+
+Left | Right
+:--- | ---:
+one | two
+three | four
+
+Code
+========================================================
+
+```{r}
+summary(cars)
+```
+
+```cpp
+if (x < 2) return "<escaped>";
+```
+
+```text
+$not_math$ and x^2
+```
+
+Plot
+========================================================
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Authored HTML
+========================================================
+
+<div class="custom">
+<strong>Authored HTML</strong>
+</div>
+
+<video id="example" controls src="example.mp4"></video>
