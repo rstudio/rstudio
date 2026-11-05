@@ -34,7 +34,7 @@ test.describe('Save File dialog fallback', () => {
       await filename.fill(relative ? path : `${sandbox.dir}/${path}`);
       await dialog.getByRole('button', { name: 'Save', exact: true }).click();
 
-      const error = page.getByRole('dialog', { name: 'Error', exact: true });
+      const error = page.getByRole('alertdialog', { name: 'Error', exact: true });
       await expect(error).toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await error.getByRole('button', { name: 'OK' }).click();
       await expect(dialog).toBeVisible();

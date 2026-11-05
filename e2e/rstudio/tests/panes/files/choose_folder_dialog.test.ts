@@ -150,7 +150,7 @@ test.describe('Choose Directory dialog', () => {
       await chooser.locator(CHOOSE_BTN).click();
 
       listing.release();
-      const error = page.getByRole('dialog', { name: 'Error', exact: true });
+      const error = page.getByRole('alertdialog', { name: 'Error', exact: true });
       await expect(error).toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await error.getByRole('button', { name: 'OK' }).click();
       await expect(chooser).toBeVisible();
