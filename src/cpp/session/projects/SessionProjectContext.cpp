@@ -718,7 +718,7 @@ Error ProjectContext::initialize()
 
 namespace {
 
-std::vector<std::string> fileMonitorIgnoredComponents()
+std::vector<std::string> fileMonitorIgnoredComponents(const ProjectContext& context)
 {
    // first, built-in ignores
    std::vector<std::string> ignores = {
@@ -783,9 +783,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
    
 #ifndef RSTUDIO_PACKAGE_BUILD
    // hard-code some extra ignores for RStudio
-   if (projects::projectContext().hasProject())
+   if (context.hasProject())
    {
-      FilePath projFilePath = projects::projectContext().file();
+      FilePath projFilePath = context.file();
       if (projFilePath.getFilename() == "rstudio.Rproj")
       {
          ignores.push_back("/src/build-cpp-");
@@ -803,17 +803,32 @@ std::vector<std::string> fileMonitorIgnoredComponents()
          ignores.push_back(userIgnore.getString());
 
    // don't monitor python envs
-   if (projects::projectContext().hasProject())
+   if (context.hasProject())
    {
-      const std::vector<FilePath>& envs = projects::projectContext().pythonEnvs();
-      std::transform(envs.begin(), envs.end(), std::back_inserter(ignores), [](const FilePath& envPath) {
-         return "/" + envPath.getRelativePath(projects::projectContext().directory());
+      const std::vector<FilePath>& envs = context.pythonEnvs();
+      std::transform(envs.begin(), envs.end(), std::back_inserter(ignores), [&context](const FilePath& envPath) {
+         return "/" + envPath.getRelativePath(context.directory());
       });
    }
 
    // return vector of ignored components
    return ignores;
 
+}
+
+FileMonitorFilterContext createFileMonitorFilterContext(const ProjectContext& project)
+{
+   FileMonitorFilterContext context;
+   context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
+   context.ignoredComponents = fileMonitorIgnoredComponents(project);
+
+   // Each caller keeps its own Git handle: libgit2 caches ignore rules and
+   // reloads changed files, but a handle cannot be shared between the monitor
+   // thread and session-thread package diagnostics.
+   if (prefs::userPrefs().fileMonitorUseGitignore())
+      context.pGit = boost::make_shared<modules::libgit2::Git>(project.directory());
+
+   return context;
 }
 
 } // end anonymous namespace
@@ -837,24 +852,9 @@ void ProjectContext::onDeferredInit(bool newSession)
    cb.onUnregistered = bind(&ProjectContext::fileMonitorTermination,
                             this, Success());
 
-   FileMonitorFilterContext context;
-   context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
-   context.ignoredComponents = fileMonitorIgnoredComponents();
-
-   // Initialize gitignore support. The Git object (and its underlying
-   // git_repository handle) is kept alive for the lifetime of the file
-   // monitor. This is safe because libgit2 uses an internal attribute
-   // cache that checks .gitignore file timestamps and reloads when they
-   // change, so updated rules are picked up without re-opening the repo.
-   //
-   // NOTE: git_repository objects are not thread-safe for concurrent access.
-   // This is fine here because the file monitor filter callback is invoked
-   // from a single thread.
-   if (prefs::userPrefs().fileMonitorUseGitignore())
-   {
-      using modules::libgit2::Git;
-      context.pGit = boost::make_shared<Git>(directory());
-   }
+   // Use separate Git handles for monitor and session-thread filtering.
+   packageFilterContext_.reset();
+   FileMonitorFilterContext context = createFileMonitorFilterContext(*this);
 
    // High-churn directories that fileMonitorFilter always excludes. Passing
    // them to the file monitor as well lets backends with source-level
@@ -1143,7 +1143,7 @@ FilePath ProjectContext::packageDirectory() const
 FilePath ProjectContext::packageDirectoryInProject() const
 {
    FilePath packageDir = packageDirectory();
-   if (packageDir.isEmpty() || !packageDir.isWithin(directory()))
+   if (!hasFileMonitor() || packageDir.isEmpty() || !packageDir.isWithin(directory()))
       return FilePath();
 
    // The monitor and source index preserve the project directory's spelling,
@@ -1164,11 +1164,27 @@ FilePath ProjectContext::packageDirectoryInProject() const
    if (packageDir != indexedDir && !packageDir.isEquivalentTo(indexedDir))
       return FilePath();
 
-   // The project scanner does not recurse into directory symlinks below its
-   // registered root. Those packages need the same fallback as external ones.
+   if (!packageFilterContext_)
+      packageFilterContext_ = boost::make_shared<FileMonitorFilterContext>(
+            createFileMonitorFilterContext(*this));
+
+   // The scanner does not recurse into symlinked or excluded directories.
+   // Check every ancestor, since filtering one removes its whole subtree.
    for (FilePath dir = indexedDir; dir != directory(); dir = dir.getParent())
    {
-      if (dir.isSymlink())
+      if (dir.isSymlink() ||
+          !fileMonitorFilter(FileInfo(dir.getAbsolutePath(), true), *packageFilterContext_))
+      {
+         return FilePath();
+      }
+   }
+
+   // Root-level exclusions can filter package contents without filtering the
+   // registered root itself. Both metadata files and R sources need coverage.
+   for (const std::string& name : {"DESCRIPTION", "NAMESPACE", "R"})
+   {
+      FileInfo info(indexedDir.completeChildPath(name).getAbsolutePath(), name == "R");
+      if (!fileMonitorFilter(info, *packageFilterContext_))
          return FilePath();
    }
    return indexedDir;

@@ -228,9 +228,9 @@ public:
    // The package build target, or the project directory for other build types.
    core::FilePath packageDirectory() const;
 
-   // Package sources outside the project or below directory symlinks are not
-   // covered by its source index. Return an empty path for those packages (or
-   // when no project is open).
+   // Return the package directory only when project indexing covers it.
+   // Disabled indexing, external paths, symlinks, and excluded directories
+   // return an empty path (as does a session with no project).
    core::FilePath packageDirectoryInProject() const;
 
    // Metadata and package detection share the DESCRIPTION refreshed by the
@@ -315,6 +315,7 @@ private:
    bool isNewProject_;
 
    bool hasFileMonitor_;
+   mutable boost::shared_ptr<FileMonitorFilterContext> packageFilterContext_;
    std::vector<std::string> monitorSubscribers_;
 
    // cached result of reduceRemoteFilesystemOperations(); resolved at most once

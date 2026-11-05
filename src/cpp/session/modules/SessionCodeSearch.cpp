@@ -2903,7 +2903,7 @@ TEST_P(SourceFileIndexTests, WalkFilesExcludesSiblingSymbols)
 
    FilePath projectFile = projectDir.completeChildPath("test.Rproj");
    ASSERT_FALSE(writeStringToFile(projectFile, R"(Version: 1.0
-EnableCodeIndexing: No
+EnableCodeIndexing: Yes
 BuildType: None
 )"));
    projects::ProjectContext context;

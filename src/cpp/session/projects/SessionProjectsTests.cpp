@@ -17,6 +17,8 @@
 
 #include "../modules/SessionDiagnostics.hpp"
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include <boost/optional.hpp>
 
 #ifndef _WIN32
@@ -30,6 +32,7 @@
 #include <core/r_util/RPackageInfo.hpp>
 
 #include <gtest/gtest.h>
+#include <git2.h>
 
 using namespace rstudio::core;
 
@@ -75,6 +78,7 @@ class PackageProjectInfoTests : public ::testing::Test
 protected:
    void SetUp() override
    {
+      fileMonitorUseGitignore_ = prefs::userPrefs().fileMonitorUseGitignore();
       importedPackages_ = r_util::RSourceIndex::getImportedPackages();
       importFromDirectives_ = r_util::RSourceIndex::getImportFromDirectives();
       ASSERT_FALSE(FilePath::tempFilePath(projectDir_));
@@ -83,6 +87,7 @@ protected:
 
    void TearDown() override
    {
+      EXPECT_FALSE(prefs::userPrefs().setFileMonitorUseGitignore(fileMonitorUseGitignore_));
       r_util::RSourceIndex::setImportedPackages(importedPackages_);
       r_util::RSourceIndex::setImportFromDirectives(importFromDirectives_);
       EXPECT_FALSE(projectDir_.remove());
@@ -140,6 +145,7 @@ protected:
    }
 
    FilePath projectDir_;
+   bool fileMonitorUseGitignore_;
    std::set<std::string> importedPackages_;
    r_util::RSourceIndex::ImportFromMap importFromDirectives_;
 };
@@ -340,7 +346,7 @@ TEST_F(PackageProjectInfoTests, RefreshesNamespaceImportsWhenPackagePathChanges)
          "import(splines)\nimportFrom(stats, median)\n"));
 
    ProjectContext context;
-   openProject(&context, "None");
+   openProject(&context, "None", "", true);
    modules::diagnostics::monitorProjectNamespace(context);
 
    r_util::RProjectConfig config = context.config();
@@ -404,6 +410,80 @@ TEST_F(PackageProjectInfoTests, RefreshesNamespaceEventsWithDotPackagePath)
    notifyFileChanged(&context, namespaceFile, core::system::FileChangeEvent::FileRemoved);
    EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
    EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+}
+
+TEST_F(PackageProjectInfoTests, KeepsMetadataWithoutCodeIndexing)
+{
+   writeDescription("Package: before\nVersion: 0.1.0\n");
+   ASSERT_FALSE(writeStringToFile(
+         projectDir_.completeChildPath("NAMESPACE"),
+         "import(splines)\nimportFrom(stats, median)\n"));
+   ProjectContext context;
+   openProject(&context, "None");
+   modules::diagnostics::monitorProjectNamespace(context);
+   ASSERT_FALSE(context.hasFileMonitor());
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+
+   r_util::RSourceIndex::setImportedPackages({});
+   r_util::RSourceIndex::setImportFromDirectives({});
+   notifyFileChanged(
+         &context,
+         projectDir_.completeChildPath("NAMESPACE"),
+         core::system::FileChangeEvent::FileModified);
+   EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+   EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+
+   writeDescription("Package: after\nVersion: 0.2.0\n");
+   EXPECT_EQ("after", context.packageInfo().name());
+}
+
+TEST_F(PackageProjectInfoTests, KeepsMetadataForExcludedPackageDirectories)
+{
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorUseGitignore(true));
+   ASSERT_TRUE(prefs::userPrefs().fileMonitorUseGitignore());
+   // Match libgit2's workdir spelling (macOS temporary paths can use /var).
+   projectDir_ = FilePath(projectDir_.getCanonicalPath());
+   git_repository* repo = nullptr;
+   ASSERT_EQ(0, git_repository_init(&repo, projectDir_.getAbsolutePath().c_str(), 0));
+   git_repository_free(repo);
+   ASSERT_FALSE(writeStringToFile(
+         projectDir_.completeChildPath(".gitignore"),
+         "/pkg/\n/ignored/\n/ignored-r/R/\n"));
+
+   for (const std::string& packagePath : {"pkg", "ignored/pkg", ".hidden/pkg", "node_modules/pkg", "ignored-r"})
+   {
+      SCOPED_TRACE(packagePath);
+      writeDescription("Package: before\nVersion: 0.1.0\n", packagePath);
+      FilePath packageDir = projectDir_.completeChildPath(packagePath);
+      ASSERT_FALSE(packageDir.completeChildPath("R").ensureDirectory());
+      ASSERT_FALSE(writeStringToFile(
+            packageDir.completeChildPath("NAMESPACE"),
+            "import(splines)\nimportFrom(stats, median)\n"));
+      ProjectContext context;
+      openProject(&context, "Package", packagePath, true);
+      modules::diagnostics::monitorProjectNamespace(context);
+      EXPECT_TRUE(context.hasFileMonitor());
+      EXPECT_TRUE(context.isPackageProject());
+      EXPECT_TRUE(context.packageDirectoryInProject().isEmpty());
+
+      r_util::RSourceIndex::setImportedPackages({});
+      r_util::RSourceIndex::setImportFromDirectives({});
+      notifyFileChanged(
+            &context,
+            packageDir.completeChildPath("NAMESPACE"),
+            core::system::FileChangeEvent::FileModified);
+      EXPECT_TRUE(r_util::RSourceIndex::getImportedPackages().empty());
+      EXPECT_TRUE(r_util::RSourceIndex::getImportFromDirectives().empty());
+
+      writeDescription("Package: after\nVersion: 0.2.0\n", packagePath);
+      EXPECT_EQ("after", context.packageInfo().name());
+   }
+
+   ASSERT_FALSE(prefs::userPrefs().setFileMonitorUseGitignore(false));
+   ProjectContext context;
+   openProject(&context, "Package", "pkg", true);
+   EXPECT_EQ(projectDir_.completeChildPath("pkg"), context.packageDirectoryInProject());
 }
 
 TEST_F(PackageProjectInfoTests, ExternalPackageKeepsMetadataWithoutPackageDiagnostics)
