@@ -90,6 +90,9 @@ class FakeHost implements UpdaterHost {
   othersGate: Deferred<boolean> | null = null;
   installMode: WindowsInstallMode | null = 'allusers';
   admin: boolean | null = true;
+  /** what canCheckSignatures() answers, and how often it was asked */
+  signaturesCheckable = true;
+  signatureProbes = 0;
   verifies = true;
   /** how often the staged installer was hashed */
   verifications = 0;
@@ -136,6 +139,11 @@ class FakeHost implements UpdaterHost {
 
   async isAdministrator(): Promise<boolean | null> {
     return this.admin;
+  }
+
+  async canCheckSignatures(): Promise<boolean> {
+    this.signatureProbes++;
+    return this.signaturesCheckable;
   }
 
   stagingDir(): string {
@@ -566,6 +574,56 @@ describe('updater', () => {
     host.stamps.delete(file);
     assert.equal(await updater.canInstallUpdate(A), 'missing');
     assert.equal(host.verifications, 2);
+  });
+
+  it('hashes the installer in full at the handoff, whatever its stamp says', async () => {
+    const { host, updater } = setup('win32');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+    assert.equal(host.verifications, 1);
+
+    assert.isFalse(await updater.applyPendingUpdate());
+    assert.equal(host.verifications, 2);
+    assert.equal(host.launched.length, 1);
+    assert.deepEqual(host.warnings, []);
+  });
+
+  it('does not launch an installer swapped for one with the same stamp', async () => {
+    const { host, updater } = setup('win32');
+    await offer(updater, host, A);
+    await download(updater, host, A);
+    assert.equal(await updater.installUpdate(A, project), '');
+
+    // same size and mtime, other bytes
+    host.verifies = false;
+    assert.isFalse(await updater.applyPendingUpdate());
+    assert.deepEqual(host.launched, []);
+    assert.deepEqual(host.warnings, [[A, 'missing']]);
+
+    // nor is the stamp trusted afterwards
+    const verifications = host.verifications;
+    assert.equal(await updater.canInstallUpdate(A), 'missing');
+    assert.equal(host.verifications, verifications + 1);
+  });
+
+  it('offers only a manual download where installer signatures cannot be checked', async () => {
+    const { host, updater } = setup('win32');
+    host.signaturesCheckable = false;
+    host.index = indexFor(A);
+    let result = await updater.checkForUpdates(true);
+    assert.equal(result.status, 'available');
+    assert.isFalse(result['can-install']);
+
+    // probed once per process
+    result = await updater.checkForUpdates(true);
+    assert.isFalse(result['can-install']);
+    assert.equal(host.signatureProbes, 1);
+
+    // macOS has Squirrel check the signature, and never probes
+    const mac = setup('darwin');
+    await offer(mac.updater, mac.host, A);
+    assert.equal(mac.host.signatureProbes, 0);
   });
 
   it('keeps the install mode from the last check that could read it', async () => {

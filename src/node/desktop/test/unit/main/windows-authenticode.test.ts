@@ -86,7 +86,6 @@ describe('windows authenticode', () => {
   });
 
   it('runs PowerShell and answers null when it cannot', async () => {
-
     assert.isNull(await installerSignature('C:\\x.exe', async () => null));
     assert.isNull(await installerSignature('C:\\x.exe', async () => 'garbage'));
   });

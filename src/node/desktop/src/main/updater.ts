@@ -171,6 +171,8 @@ export interface UpdaterHost {
   detectWindowsInstallMode(): Promise<WindowsInstallMode | null>;
   /** whether this Windows user can consent to the UAC prompt an all-users install raises; null when unknown */
   isAdministrator(): Promise<boolean | null>;
+  /** whether the Authenticode check a downloaded installer must pass runs here at all */
+  canCheckSignatures(): Promise<boolean>;
   /** where Windows installers are staged */
   stagingDir(): string;
   /** where relaunch-project markers live */
@@ -228,6 +230,8 @@ export class Updater {
   private handingOff = false;
   /** bumped by every cancellation, so an install request still in its checks learns of one */
   private cancellations = 0;
+  /** canCheckSignatures(), asked once: the answer holds for the life of the process */
+  private signaturesCheckable: Promise<boolean> | null = null;
 
   constructor(private host: UpdaterHost) {
     // RSTUDIO_UPDATE_VERSION impersonates another version, as it does for the
@@ -500,7 +504,13 @@ export class Updater {
       if (this.host.platform === 'win32' && staged && mode) {
         // the installer waits (via /update) for this process to exit before
         // it touches the install directory, then relaunches RStudio; until
-        // it has started, the window stays open for the same reason as above
+        // it has started, the window stays open for the same reason as above.
+        // The file it runs is hashed in full first, whatever its stamp says.
+        if (!(await this.stagedInstallerVerifies(true))) {
+          logger().logErrorMessage(`the staged installer for RStudio ${version} no longer verifies; not installing`);
+          this.notInstalled(version, 'missing');
+          return false;
+        }
         logger().logInfo(`launching ${staged.file} to install RStudio ${version}`);
         if (!(await this.host.launchInstaller(staged.file, mode))) {
           logger().logErrorMessage(`the installer for RStudio ${version} did not start`);
@@ -658,6 +668,16 @@ export class Updater {
         return false;
       }
     }
+
+    // the signature is checked only once the installer is downloaded; where
+    // the check cannot run (PowerShell missing, blocked, or in Constrained
+    // Language Mode) every download would fetch the whole installer and then
+    // fail the same way
+    this.signaturesCheckable ??= this.host.canCheckSignatures();
+    if (!(await this.signaturesCheckable)) {
+      logger().logDebug('installer signatures cannot be checked here; offering a manual download instead');
+      return false;
+    }
     return true;
   }
 
@@ -666,9 +686,12 @@ export class Updater {
    * Hashing it reads a few hundred megabytes, and one restart asks three
    * times (before the save prompts, after them, and at the quit handoff),
    * so an unchanged file (same size and modification time as when it last
-   * hashed correctly) is trusted without reading it again.
+   * hashed correctly) is trusted without reading it again -- except with
+   * `rehash`, which the handoff passes: a process running as the user can
+   * swap in a file of the same size and restore its modification time, and
+   * for an all-users install the installer then runs elevated.
    */
-  private async stagedInstallerVerifies(): Promise<boolean> {
+  private async stagedInstallerVerifies(rehash = false): Promise<boolean> {
     const staged = this.staged;
     if (!staged) {
       return false;
@@ -681,7 +704,7 @@ export class Updater {
       staged.stamp = null;
       return false;
     }
-    if (staged.stamp && staged.stamp.size === stamp.size && staged.stamp.mtimeMs === stamp.mtimeMs) {
+    if (!rehash && staged.stamp && staged.stamp.size === stamp.size && staged.stamp.mtimeMs === stamp.mtimeMs) {
       return true;
     }
 
@@ -913,6 +936,12 @@ export function electronUpdaterHost(mainWindow: MainWindow): UpdaterHost {
 
     async isAdministrator(): Promise<boolean | null> {
       return isAdministrator(execFileRunner());
+    },
+
+    async canCheckSignatures(): Promise<boolean> {
+      // any answer will do, as it only shows the check runs: hourly builds
+      // sign only their installer, so rstudio.exe may well be NotSigned
+      return (await installerSignature(process.execPath, execFileRunner())) !== null;
     },
 
     async launchInstaller(file: string, mode: WindowsInstallMode): Promise<boolean> {
