@@ -152,6 +152,44 @@ test('refinement budgets are shared across groups and isolated from review decor
    validateChunks(base, lines, noAllocation.chunks);
 });
 
+test('partial highlights in coarse or mixed hunks preserve line-position mapping', () => {
+   const separated = syntheticCases().find(item => item.name === 'separated-blocks-"}"');
+   const prefix = ['header()', 'keep_this_meaningful_statement()'];
+   const fixtures = [
+      {
+         base: [...prefix, ...separated.base, 'tail()'],
+         lines: [prefix[0], 'inserted()', prefix[1], ...separated.lines, 'tail()'],
+         boundedLimits: { groupReads: 0 },
+         row: 5
+      },
+      {
+         base: [...prefix, '  keep_indented()', 'x'.repeat(5000) + 'old', 'tail()'],
+         lines: [prefix[0], 'inserted()', prefix[1], '    keep_indented()', 'y'.repeat(5000) + 'new', 'tail()'],
+         row: 3
+      }
+   ];
+   for (const fixture of fixtures) {
+      const options = { boundedLimits: fixture.boundedLimits };
+      const gutter = engine.compute(fixture.base, fixture.lines, 'bounded', options);
+      const review = engine.compute(fixture.base, fixture.lines, 'bounded', {
+         ...options, splitView: true,
+         transformPositions: [
+            { row: fixture.row, column: 0, isOriginal: true },
+            { row: fixture.row + 1, column: 0, isOriginal: false }
+         ]
+      });
+      assert(!gutter.failed && !review.failed);
+      assert.deepEqual(review.chunks, gutter.chunks);
+      assert.equal(review.chunks.length, 2);
+      assert(review.characterChanges[1] > 0);
+      assert(review.boundedGroups.some(group => !group.refined));
+      assert.deepEqual(review.transformedPositions, [
+         { row: fixture.row + 1, column: 0 },
+         { row: fixture.row, column: 0 }
+      ]);
+   }
+});
+
 test('review can decorate an oversized group without changing its bounded hunk', () => {
    const base = ['x'.repeat(3000) + ' a'];
    const lines = ['x'.repeat(3000) + ' b'];

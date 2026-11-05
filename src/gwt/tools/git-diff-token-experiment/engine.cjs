@@ -106,6 +106,9 @@ function createEngine() {
       provider,
       'var innerChanges = changes.innerChanges;',
       `var innerChanges = options.skipCharacterRefinement ? undefined : changes.innerChanges;
+        var boundedCoarse = options.boundedRefinement && innerChanges && innerChanges.some(function(mapping) {
+            return mapping.boundedHighlights !== undefined;
+        });
         if (options.boundedRefinement && innerChanges) {
             innerChanges = innerChanges.flatMap(function(mapping) {
                 return mapping.boundedHighlights === undefined ? [mapping] : mapping.boundedHighlights;
@@ -114,6 +117,19 @@ function createEngine() {
             if (!innerChanges.length)
                 innerChanges = undefined;
         }`
+   );
+   // Partial decorations do not form a complete character-position mapping.
+   // Keep line-based selection mapping for any hunk containing a coarse group,
+   // including when Ace merges it with a neighboring refined whitespace edit.
+   provider = replaceOnce(
+      provider,
+      'origStart: originalStartLineNumber,',
+      'origStart: originalStartLineNumber, boundedCoarse: !!boundedCoarse,'
+   );
+   provider = replaceOnce(
+      provider,
+      'else if (chunk.charChanges) {',
+      'else if (chunk.charChanges && !chunk.boundedCoarse) {'
    );
    // Preserve the existing timeout status at the provider boundary. Bounded
    // character work degrades to coarse mappings, so a failure here is a line
@@ -131,7 +147,11 @@ function createEngine() {
    provider = replaceOnce(
       provider,
       'return chunks.map(function (c) { return new DiffChunk(new AceRange(c.origStart, 0, c.origEnd, 0), new AceRange(c.editStart, 0, c.editEnd, 0), c.charChanges); });',
-      `var mapped = chunks.map(function (c) { return new DiffChunk(new AceRange(c.origStart, 0, c.origEnd, 0), new AceRange(c.editStart, 0, c.editEnd, 0), c.charChanges); });
+      `var mapped = chunks.map(function (c) {
+            var chunk = new DiffChunk(new AceRange(c.origStart, 0, c.origEnd, 0), new AceRange(c.editStart, 0, c.editEnd, 0), c.charChanges);
+            chunk.boundedCoarse = c.boundedCoarse;
+            return chunk;
+        });
         mapped.hitTimeout = chunks.hitTimeout;
         return mapped;`
    );
@@ -159,6 +179,11 @@ function createEngine() {
 
    vm.runInContext(`var experimentTokenize = ${tokenize.toString()};`, context);
    let gutter = fs.readFileSync(path.join(ROOT, 'src/gwt/acesupport/git_diff_gutter.js'), 'utf8');
+   gutter = replaceOnce(
+      gutter,
+      'if (chunk.charChanges)',
+      'result.boundedCoarse = chunk.boundedCoarse;\n      if (chunk.charChanges)'
+   );
    gutter = replaceOnce(
       gutter,
       'this.computeChunks = function(base, lines) {',
