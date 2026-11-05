@@ -125,6 +125,16 @@ protected:
       pContext->augmentRbuildignore();
    }
 
+   void registerFileMonitor(ProjectContext* pContext)
+   {
+      tree<FileInfo> files;
+      auto root = files.insert(files.begin(), FileInfo(projectDir_.getAbsolutePath(), true));
+      files.append_child(
+            root,
+            FileInfo(projectDir_.completeChildPath("DESCRIPTION").getAbsolutePath(), false));
+      pContext->fileMonitorRegistered(core::system::file_monitor::Handle(), files);
+   }
+
    FilePath projectDir_;
    std::set<std::string> importedPackages_;
    r_util::RSourceIndex::ImportFromMap importFromDirectives_;
@@ -253,6 +263,32 @@ TEST_F(PackageProjectInfoTests, RefreshesSharedMetadataWhenDescriptionChanges)
          core::system::FileChangeEvent::FileRemoved);
    EXPECT_FALSE(context.isPackageProject());
    EXPECT_TRUE(context.packageInfo().empty());
+}
+
+TEST_F(PackageProjectInfoTests, RefreshesDescriptionBeforeNotifyingMonitorSubscribers)
+{
+   ProjectContext context;
+   openProject(&context, "None", "", true);
+   ASSERT_TRUE(context.hasFileMonitor());
+   ASSERT_FALSE(context.isPackageProject());
+
+   // A file created after the initial read can appear only in the initial
+   // monitor snapshot, without a later file-added event to refresh the cache.
+   writeDescription("Package: created\nVersion: 0.1.0\n");
+   bool notified = false;
+   FileMonitorCallbacks callbacks;
+   callbacks.onMonitoringEnabled = [&](const tree<FileInfo>&)
+   {
+      notified = true;
+      EXPECT_TRUE(context.isPackageProject());
+      EXPECT_EQ("created", context.packageInfo().name());
+      EXPECT_TRUE(projectDir_.completeChildPath(".Rbuildignore").exists());
+   };
+   context.subscribeToFileMonitor("Test", callbacks);
+   registerFileMonitor(&context);
+   EXPECT_TRUE(notified);
+   EXPECT_TRUE(context.isPackageProject());
+   EXPECT_EQ("created", context.packageInfo().name());
 }
 
 TEST_F(PackageProjectInfoTests, RespectsDescriptionType)

@@ -890,6 +890,10 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
+   // Changes between the initial metadata read and monitor registration may
+   // appear only in the initial snapshot, without a separate file event.
+   updatePackageInfo();
+
    // re-augment .Rbuildignore to pick up any AI tool-state directories
    // (.posit/assistant, legacy .positai) that were created between project
    // init and file monitor start (small but real window). augmentRbuildignore
