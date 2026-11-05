@@ -37,6 +37,8 @@ describe('MenuCallback', () => {
     // which eventually triggers a warning about potential leaks. We could up the limit,
     // but opting to cleanup after each test, instead.
     ipcMain.removeAllListeners();
+    callback.debounceUpdateMenuLong.cancel();
+    callback.debounceUpdateMenuMedium.cancel();
     callback.debounceUpdateMenuShort.cancel();
     clearApplicationSingleton();
   });
