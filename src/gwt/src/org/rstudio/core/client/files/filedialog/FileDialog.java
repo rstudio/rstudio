@@ -103,10 +103,11 @@ public abstract class FileDialog extends FileSystemDialog
 
       if (filename.length() == 0)
       {
-         // a deferred accept (#18922) arriving to find no name followed a
-         // navigation (a typed `dir/`, or a second Save during the listing);
-         // only a direct accept asked to save with an empty name
-         if (!inDeferredAccept_)
+         // an accept deferred (#18922) behind a navigation that an earlier
+         // accept turned into (a selected folder row, `~`, `..`, a typed
+         // `dir/`) arrives to find the name that navigation consumed; any
+         // other accept asked to save with an empty name
+         if (!(inDeferredAccept_ && arrivedFromAccept_))
          {
             browser_.selectFilename();
             showError(constants_.nameEmptyMessage());
@@ -234,9 +235,15 @@ public abstract class FileDialog extends FileSystemDialog
       return false;
    }
 
+   /**
+    * Navigates on behalf of an accept (see shouldAccept()); the dialog's
+    * initial listing and the browser's own navigations do not come through
+    * here.
+    */
    protected void cd(String path)
    {
       browser_.setFilenameEnabled(false);
+      navigatingFromAccept_ = true;
       browser_.cd(path);
    }
 
@@ -247,6 +254,11 @@ public abstract class FileDialog extends FileSystemDialog
 
       // re-enable before the deferred accept, which may cd() and disable again
       browser_.setFilenameEnabled(true);
+
+      // for the deferred accept that may follow: whether the listing it
+      // waited for was one of ours
+      arrivedFromAccept_ = navigatingFromAccept_;
+      navigatingFromAccept_ = false;
    }
 
    @Override
@@ -254,6 +266,7 @@ public abstract class FileDialog extends FileSystemDialog
    {
       // a failed cd() does not reach onNavigated()
       browser_.setFilenameEnabled(true);
+      navigatingFromAccept_ = false;
       super.onError(errorMessage);
    }
 
@@ -276,5 +289,9 @@ public abstract class FileDialog extends FileSystemDialog
 
    protected boolean promptOnOverwrite_;
    protected boolean allowNonexistentFile_;
+
+   // a cd() of ours is in flight / the last listing came from one
+   private boolean navigatingFromAccept_ = false;
+   private boolean arrivedFromAccept_ = false;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
